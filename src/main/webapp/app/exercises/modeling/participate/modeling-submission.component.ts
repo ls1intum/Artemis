@@ -30,14 +30,13 @@ import * as moment from 'moment';
 import { JhiAlertService } from 'ng-jhipster';
 import { Subject } from 'rxjs';
 import { Subscription } from 'rxjs/Subscription';
-import { addParticipationToResult } from 'app/exercises/shared/result/result-utils';
+import { addParticipationToResult, getUnreferencedFeedback } from 'app/exercises/shared/result/result-utils';
 
 @Component({
     selector: 'jhi-modeling-submission',
     templateUrl: './modeling-submission.component.html',
     styleUrls: ['./modeling-submission.component.scss'],
 })
-// TODO CZ: move assessment functionality to separate assessment result view?
 export class ModelingSubmissionComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
     readonly addParticipationToResult = addParticipationToResult;
     @ViewChild(ModelingEditorComponent, { static: false })
@@ -402,6 +401,20 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     }
 
     /**
+     * Check whether or not a assessmentResult exists and if, returns the unreferenced feedback of it
+     */
+    get unreferencedFeedback(): Feedback[] | undefined {
+        return this.assessmentResult ? getUnreferencedFeedback(this.assessmentResult.feedbacks) : undefined;
+    }
+
+    /**
+     * Find "Referenced Feedback" item for Result, if it exists.
+     */
+    get referencedFeedback(): Feedback[] | undefined {
+        return this.assessmentResult?.feedbacks?.filter((feedbackElement) => feedbackElement.reference != undefined);
+    }
+
+    /**
      * Updates the model of the submission with the current Apollon model state
      * and the explanation text of submission with current explanation if explanation is defined
      */
@@ -469,7 +482,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     /**
      * Checks whether a model element in the modeling editor is selected.
      */
-    isSelected(feedback: Feedback): boolean {
+    shouldBeDisplayed(feedback: Feedback): boolean {
         if ((!this.selectedEntities || this.selectedEntities.length === 0) && (!this.selectedRelationships || this.selectedRelationships.length === 0)) {
             return true;
         }

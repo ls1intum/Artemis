@@ -100,7 +100,7 @@ public class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrati
         assertThat(result.getFeedbacks().get(0).getCredits()).isEqualTo(feedbacks.get(0).getCredits());
         assertThat(result.getFeedbacks().get(1).getCredits()).isEqualTo(feedbacks.get(1).getCredits());
 
-        Course course = request.get("/api/courses/" + afterReleaseFileUploadExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-tutor-dashboard", HttpStatus.OK,
+        Course course = request.get("/api/courses/" + afterReleaseFileUploadExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-assessment-dashboard", HttpStatus.OK,
                 Course.class);
         Exercise exercise = database.findFileUploadExerciseWithTitle(course.getExercises(), "released");
         assertThat(exercise.getNumberOfAssessmentsOfCorrectionRounds().length).isEqualTo(1L);

@@ -20,6 +20,7 @@ import { AlertComponent } from 'app/shared/alert/alert.component';
 import { CircularProgressBarComponent } from 'app/shared/circular-progress-bar/circular-progress-bar.component';
 import { CustomMinDirective } from 'app/shared/validators/custom-min-validator.directive';
 import { CustomMaxDirective } from 'app/shared/validators/custom-max-validator.directive';
+import { AdditionalFeedbackComponent } from './additional-feedback/additional-feedback.component';
 
 @NgModule({
     imports: [ArtemisSharedLibsModule, ArtemisSharedCommonModule, ArtemisSharedPipesModule],
@@ -30,6 +31,7 @@ import { CustomMaxDirective } from 'app/shared/validators/custom-max-validator.d
         HasAnyAuthorityDirective,
         SecuredImageComponent,
         DeleteDialogComponent,
+        AdditionalFeedbackComponent,
         DeleteButtonDirective,
         ResizeableContainerComponent,
         SecureLinkDirective,
@@ -48,6 +50,7 @@ import { CustomMaxDirective } from 'app/shared/validators/custom-max-validator.d
         FindLanguageFromKeyPipe,
         AlertComponent,
         AlertErrorComponent,
+        AdditionalFeedbackComponent,
         HasAnyAuthorityDirective,
         ArtemisSharedCommonModule,
         ArtemisSharedPipesModule,

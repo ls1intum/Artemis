@@ -82,6 +82,14 @@ public class ShortAnswerSubmittedText extends DomainObject {
      * @return boolean true if submittedText fits the restrictions above, false when not
      */
     public boolean isSubmittedTextCorrect(String submittedText, String solution) {
+        if (Objects.equals(submittedText, solution)) {
+            // when both values are identical, we can return early
+            return true;
+        }
+        if (submittedText == null) {
+            // prevent null pointer exceptions
+            return false;
+        }
         ShortAnswerQuestion saQuestion = (ShortAnswerQuestion) submittedAnswer.getQuizQuestion();
         int similarityValue = Objects.requireNonNullElse(saQuestion.getSimilarityValue(), 85); // default value
         if (Boolean.TRUE.equals(saQuestion.matchLetterCase())) {

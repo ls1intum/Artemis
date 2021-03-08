@@ -14,7 +14,7 @@
                 <span class="d-none d-md-inline">{{ 'artemisApp.examManagement.studentExams' | translate }}</span>
             </a>
 
-            <a id="tutor-exam-dashboard-button" *ngIf="isAtLeastInstructor" [routerLink]="getExamRoutesByIdentifier('tutor-exam-dashboard')" class="btn btn-primary">
+            <a id="assessment-dashboard-button" *ngIf="isAtLeastInstructor" [routerLink]="getExamRoutesByIdentifier('assessment-dashboard')" class="btn btn-primary">
                 <fa-icon [icon]="'th-list'"></fa-icon>
                 <span>{{ 'artemisApp.examManagement.assessmentDashboard' | translate }}</span>
             </a>

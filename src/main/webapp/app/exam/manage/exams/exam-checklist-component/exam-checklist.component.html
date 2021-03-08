@@ -288,12 +288,7 @@
                     <br />
                 </td>
                 <td>
-                    <a
-                        *ngIf="isAtLeastInstructor"
-                        [routerLink]="getExamRoutesByIdentifier('tutor-exam-dashboard')"
-                        class="btn btn-primary"
-                        id="tutor-dashboard-button-table-submission"
-                    >
+                    <a *ngIf="isAtLeastInstructor" [routerLink]="getExamRoutesByIdentifier('assessment-dashboard')" class="btn btn-primary">
                         <fa-icon [icon]="'th-list'"></fa-icon>
                         <span>{{ 'artemisApp.examManagement.assessmentDashboard' | translate }}</span>
                     </a>
