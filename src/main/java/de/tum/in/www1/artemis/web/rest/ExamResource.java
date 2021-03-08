@@ -1,5 +1,21 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.service.util.TimeLogUtil.formatDurationFrom;
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
+
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
+import java.util.*;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
+
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
@@ -26,21 +42,6 @@ import de.tum.in.www1.artemis.web.rest.dto.ExamInformationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.ExamScoresDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.*;
-
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.time.ZonedDateTime;
-import java.time.temporal.ChronoUnit;
-import java.util.*;
-
-import static de.tum.in.www1.artemis.service.util.TimeLogUtil.formatDurationFrom;
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 
 /**
  * REST controller for managing Exam.
@@ -700,7 +701,8 @@ public class ExamResource {
      */
     @DeleteMapping(value = "/courses/{courseId}/exams/{examId}/allstudents")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Void> removeAllStudentsFromExam(@PathVariable Long courseId, @PathVariable Long examId, @RequestParam(defaultValue = "false") boolean withParticipationsAndSubmission){
+    public ResponseEntity<Void> removeAllStudentsFromExam(@PathVariable Long courseId, @PathVariable Long examId,
+            @RequestParam(defaultValue = "false") boolean withParticipationsAndSubmission) {
         log.debug("REST request to remove all students from exam {} with courseId {}", examId, courseId);
 
         Optional<ResponseEntity<Void>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccessForInstructor(courseId, examId);
@@ -711,8 +713,6 @@ public class ExamResource {
         examRegistrationService.unregisterAllStudentFromExam(examId, withParticipationsAndSubmission);
         return ResponseEntity.ok().body(null);
     }
-
-
 
     /**
      * GET /courses/{courseId}/exams/{examId}/start : Get an exam for the exam start.
