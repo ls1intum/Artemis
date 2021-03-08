@@ -112,7 +112,7 @@ public class TestResultsDTO extends AbstractBuildResultNotificationDTO {
     @Override
     public Double getBuildScore() {
         final var testSum = getSum();
-        return testSum == 0 ? 0D : ((double)getSuccessful() / testSum) * 100D;
+        return testSum == 0 ? 0D : ((double) getSuccessful() / testSum) * 100D;
     }
 
     @Override
