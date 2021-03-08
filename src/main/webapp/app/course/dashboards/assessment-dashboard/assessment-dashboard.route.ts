@@ -6,7 +6,7 @@ import { CourseResolve } from 'app/course/manage/course-management.route';
 
 export const assessmentDashboardRoute: Routes = [
     {
-        path: ':courseId/tutor-dashboard',
+        path: ':courseId/assessment-dashboard',
         component: AssessmentDashboardComponent,
         resolve: {
             course: CourseResolve,

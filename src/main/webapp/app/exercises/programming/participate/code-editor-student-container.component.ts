@@ -22,6 +22,7 @@ import { ActivatedRoute } from '@angular/router';
 import { CodeEditorContainerComponent } from 'app/exercises/programming/shared/code-editor/container/code-editor-container.component';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
+import { getUnreferencedFeedback } from 'app/exercises/shared/result/result-utils';
 
 @Component({
     selector: 'jhi-code-editor-student',
@@ -76,7 +77,7 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy, C
                         const isEditingAfterDueAllowed = !this.exercise.buildAndTestStudentSubmissionsAfterDueDate && this.exercise.assessmentType === AssessmentType.AUTOMATIC;
                         this.repositoryIsLocked = !isEditingAfterDueAllowed && !!this.exercise.dueDate && dueDateHasPassed;
                         this.latestResult = this.participation.results ? this.participation.results[0] : undefined;
-                        this.checkForTutorAssessment();
+                        this.checkForTutorAssessment(dueDateHasPassed);
                     }),
                     switchMap(() => {
                         return this.loadExerciseHints();
@@ -150,7 +151,8 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy, C
     canDeactivate() {
         return this.codeEditorContainer.canDeactivate();
     }
-    checkForTutorAssessment() {
+
+    checkForTutorAssessment(dueDateHasPassed: boolean) {
         let isManualResult = false;
         let hasTutorFeedback = false;
         if (!!this.latestResult) {
@@ -160,6 +162,14 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy, C
                 hasTutorFeedback = this.latestResult.feedbacks!.some((feedback) => feedback.type === FeedbackType.MANUAL);
             }
         }
-        this.hasTutorAssessment = isManualResult && hasTutorFeedback;
+        // Also check for assessment due date to never show manual feedback before the deadline
+        this.hasTutorAssessment = dueDateHasPassed && isManualResult && hasTutorFeedback;
+    }
+
+    /**
+     * Check whether or not a latestResult exists and if, returns the unreferenced feedback of it
+     */
+    get unreferencedFeedback(): Feedback[] | undefined {
+        return this.latestResult ? getUnreferencedFeedback(this.latestResult.feedbacks) : undefined;
     }
 }

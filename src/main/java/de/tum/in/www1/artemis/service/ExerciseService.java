@@ -346,6 +346,7 @@ public class ExerciseService {
         participantScoreRepository.removeAllByExercise(exercise);
         // Programming exercises have some special stuff that needs to be cleaned up (solution/template participation, build plans, etc.).
         if (exercise instanceof ProgrammingExercise) {
+            // TODO: delete all schedules related to this programming exercise
             programmingExerciseService.delete(exercise.getId(), deleteBaseReposBuildPlans);
         }
         else {

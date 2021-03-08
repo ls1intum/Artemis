@@ -39,7 +39,7 @@
                     <fa-icon [icon]="'eye'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.scores">Scores</span>
                 </a>
                 <a [routerLink]="['/course-management', course.id, 'exams']" class="btn btn-info mr-1 mb-1"> <fa-icon [icon]="'list-alt'"></fa-icon>&nbsp;<span>Exams</span> </a>
-                <a [routerLink]="['/course-management', course.id, 'tutor-dashboard']" class="btn btn-info mr-1 mb-1">
+                <a [routerLink]="['/course-management', course.id, 'assessment-dashboard']" class="btn btn-info mr-1 mb-1">
                     <fa-icon [icon]="'th-list'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.assessmentDashboard">Assessment Dashboard</span>
                 </a>
                 <a *ngIf="course.isAtLeastInstructor" [routerLink]="['/course-management', course.id, 'instructor-dashboard']" class="btn btn-info mr-1 mb-1">

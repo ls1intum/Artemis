@@ -48,7 +48,7 @@ describe('ExamDetailComponent', () => {
                 RouterTestingModule.withRoutes([
                     { path: 'course-management/:courseId/exams/:examId/edit', component: DummyComponent },
                     { path: 'course-management/:courseId/exams/:examId/exercise-groups', component: DummyComponent },
-                    { path: 'course-management/:courseId/exams/:examId/tutor-exam-dashboard', component: DummyComponent },
+                    { path: 'course-management/:courseId/exams/:examId/assessment-dashboard', component: DummyComponent },
                     { path: 'course-management/:courseId/exams/:examId/scores', component: DummyComponent },
                     { path: 'course-management/:courseId/exams/:examId/student-exams', component: DummyComponent },
                     { path: 'course-management/:courseId/exams/:examId/test-runs', component: DummyComponent },
@@ -148,10 +148,10 @@ describe('ExamDetailComponent', () => {
     it('should correctly route to dashboard', fakeAsync(() => {
         const location = examDetailComponentFixture.debugElement.injector.get(Location);
         examDetailComponentFixture.detectChanges();
-        const dashboardButton = examDetailComponentFixture.debugElement.query(By.css('#tutor-exam-dashboard-button')).nativeElement;
+        const dashboardButton = examDetailComponentFixture.debugElement.query(By.css('#assessment-dashboard-button')).nativeElement;
         dashboardButton.click();
         examDetailComponentFixture.whenStable().then(() => {
-            expect(location.path()).to.equal('/course-management/1/exams/1/tutor-exam-dashboard');
+            expect(location.path()).to.equal('/course-management/1/exams/1/assessment-dashboard');
         });
     }));
 

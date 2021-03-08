@@ -102,14 +102,14 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
                 database.addResultToSubmission(textSubmission, AssessmentType.SEMI_AUTOMATIC, database.getUserByLogin("instructor1"));
             }
         }
-        StatsForInstructorDashboardDTO statsForInstructorDashboardDTO = request.get("/api/exercises/" + textExercise.getId() + "/stats-for-tutor-dashboard", HttpStatus.OK,
+        StatsForInstructorDashboardDTO statsForInstructorDashboardDTO = request.get("/api/exercises/" + textExercise.getId() + "/stats-for-assessment-dashboard", HttpStatus.OK,
                 StatsForInstructorDashboardDTO.class);
         assertThat(statsForInstructorDashboardDTO.getNumberOfSubmissions().getInTime()).isEqualTo(submissions.size() + 1);
         assertThat(statsForInstructorDashboardDTO.getTotalNumberOfAssessments().getInTime()).isEqualTo(3);
         assertThat(statsForInstructorDashboardDTO.getNumberOfAutomaticAssistedAssessments().getInTime()).isEqualTo(1);
 
         for (Exercise exercise : course.getExercises()) {
-            StatsForInstructorDashboardDTO stats = request.get("/api/exercises/" + exercise.getId() + "/stats-for-tutor-dashboard", HttpStatus.OK,
+            StatsForInstructorDashboardDTO stats = request.get("/api/exercises/" + exercise.getId() + "/stats-for-assessment-dashboard", HttpStatus.OK,
                     StatsForInstructorDashboardDTO.class);
             assertThat(stats.getNumberOfComplaints()).isEqualTo(0);
             assertThat(stats.getNumberOfMoreFeedbackRequests()).isEqualTo(0);
@@ -408,7 +408,7 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
         List<Course> courses = database.createCoursesWithExercisesAndLectures(true);
         for (Course course : courses) {
             for (Exercise exercise : course.getExercises()) {
-                Exercise exerciseForAssessmentDashboard = request.get("/api/exercises/" + exercise.getId() + "/for-tutor-dashboard", HttpStatus.OK, Exercise.class);
+                Exercise exerciseForAssessmentDashboard = request.get("/api/exercises/" + exercise.getId() + "/for-assessment-dashboard", HttpStatus.OK, Exercise.class);
                 assertThat(exerciseForAssessmentDashboard.getTutorParticipations().size()).as("Tutor participation was created").isEqualTo(1);
                 assertThat(exerciseForAssessmentDashboard.getExampleSubmissions().size()).as("Example submissions are not null").isZero();
 
@@ -448,7 +448,7 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
         var exercise = exerciseRepository.findAll().get(0);
         var exampleSubmission = database.generateExampleSubmission(validModel, exercise, true);
         database.addExampleSubmission(exampleSubmission);
-        Exercise receivedExercise = request.get("/api/exercises/" + exercise.getId() + "/for-tutor-dashboard", HttpStatus.OK, Exercise.class);
+        Exercise receivedExercise = request.get("/api/exercises/" + exercise.getId() + "/for-assessment-dashboard", HttpStatus.OK, Exercise.class);
         assertThat(receivedExercise.getExampleSubmissions()).as("Example submission without assessment is removed from exercise").isEmpty();
     }
 
@@ -456,14 +456,14 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
     @WithMockUser(value = "tutor6", roles = "TA")
     public void testGetExerciseForAssessmentDashboard_forbidden() throws Exception {
         database.addCourseWithOneReleasedTextExercise();
-        request.get("/api/exercises/" + exerciseRepository.findAll().get(0).getId() + "/for-tutor-dashboard", HttpStatus.FORBIDDEN, Exercise.class);
+        request.get("/api/exercises/" + exerciseRepository.findAll().get(0).getId() + "/for-assessment-dashboard", HttpStatus.FORBIDDEN, Exercise.class);
     }
 
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
     public void testGetExerciseForAssessmentDashboard_programmingExerciseWithAutomaticAssessment() throws Exception {
         database.addCourseWithOneProgrammingExercise();
-        request.get("/api/exercises/" + exerciseRepository.findAll().get(0).getId() + "/for-tutor-dashboard", HttpStatus.BAD_REQUEST, Exercise.class);
+        request.get("/api/exercises/" + exerciseRepository.findAll().get(0).getId() + "/for-assessment-dashboard", HttpStatus.BAD_REQUEST, Exercise.class);
     }
 
     @Test
@@ -474,7 +474,7 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
         var tutorParticipation = new TutorParticipation().tutor(database.getUserByLogin("tutor1")).assessedExercise(exercise)
                 .status(TutorParticipationStatus.REVIEWED_INSTRUCTIONS);
         tutorParticipationRepo.save(tutorParticipation);
-        var textExercise = request.get("/api/exercises/" + exercise.getId() + "/for-tutor-dashboard", HttpStatus.OK, TextExercise.class);
+        var textExercise = request.get("/api/exercises/" + exercise.getId() + "/for-assessment-dashboard", HttpStatus.OK, TextExercise.class);
         assertThat(textExercise.getTutorParticipations().iterator().next().getStatus()).as("Status was changed to trained").isEqualTo(TutorParticipationStatus.TRAINED);
     }
 
@@ -496,7 +496,7 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
         for (Course course : courses) {
             var tutors = findTutors(course);
             for (Exercise exercise : course.getExercises()) {
-                StatsForInstructorDashboardDTO stats = request.get("/api/exercises/" + exercise.getId() + "/stats-for-tutor-dashboard", HttpStatus.OK,
+                StatsForInstructorDashboardDTO stats = request.get("/api/exercises/" + exercise.getId() + "/stats-for-assessment-dashboard", HttpStatus.OK,
                         StatsForInstructorDashboardDTO.class);
                 assertThat(stats.getTotalNumberOfAssessments().getInTime()).as("Number of in-time assessments is correct").isEqualTo(0);
                 assertThat(stats.getTotalNumberOfAssessments().getLate()).as("Number of late assessments is correct").isEqualTo(0);
@@ -531,7 +531,7 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
     @WithMockUser(value = "tutor6", roles = "TA")
     public void testGetStatsForExerciseAssessmentDashboard_forbidden() throws Exception {
         database.addCourseWithOneReleasedTextExercise();
-        request.get("/api/exercises/" + exerciseRepository.findAll().get(0).getId() + "/stats-for-tutor-dashboard", HttpStatus.FORBIDDEN, Exercise.class);
+        request.get("/api/exercises/" + exerciseRepository.findAll().get(0).getId() + "/stats-for-assessment-dashboard", HttpStatus.FORBIDDEN, Exercise.class);
     }
 
     @Test
