@@ -85,18 +85,18 @@
                 </div>
                 <div class="form-group">
                     <label class="form-control-label" jhiTranslate="artemisApp.course.organizations">Course organizations</label>
-                    <div class="w-100">
-                        <div class="btn-group">
-                            <div *ngFor="let organization of courseOrganizations">
-                                <span class="badge badge-primary m-1"
-                                    >{{ organization.name
-                                    }}<button type="button" class="btn btn-outline-primary" (click)="removeOrganizationFromCourse(organization)">
-                                        <fa-icon [icon]="'times'"></fa-icon></button
+                    <div class="btn-group d-flex flex-wrap">
+                        <div *ngFor="let organization of courseOrganizations">
+                            <h5>
+                            <span class="badge badge-primary font-weight-normal m-1 pl-3"
+                            >{{ organization.name
+                                }}<button type="button" class="btn btn-outline-primary" (click)="removeOrganizationFromCourse(organization)">
+                                    <fa-icon [icon]="'times'"></fa-icon></button
                                 ></span>
-                            </div>
+                            </h5>
                         </div>
-                        <button type="button" class="btn btn-outline-primary float-right" (click)="openOrganizationsModal()">Add</button>
                     </div>
+                    <button type="button" class="btn btn-outline-primary" (click)="openOrganizationsModal()">Add</button>
                 </div>
                 <div class="d-flex">
                     <div class="form-group flex-grow-1">
