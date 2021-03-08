@@ -1258,7 +1258,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         assertEquals(participationCounter, noGeneratedParticipations);
 
         // Score used for all exercise results
-        Long resultScore = 75L;
+        Double resultScore = 75D;
 
         // Assign results to participations and submissions
         for (var exercise : exercisesInExam) {

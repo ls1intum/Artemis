@@ -45,7 +45,7 @@ public class PlagiarismSubmission<E extends PlagiarismSubmissionElement> {
     /**
      * Result score of the related submission.
      */
-    private Long score;
+    private Double score;
 
     /**
      * Create a new PlagiarismSubmission instance from an existing JPlag Submission
@@ -132,11 +132,11 @@ public class PlagiarismSubmission<E extends PlagiarismSubmissionElement> {
         this.size = size;
     }
 
-    public Long getScore() {
+    public Double getScore() {
         return score;
     }
 
-    public void setScore(Long score) {
+    public void setScore(Double score) {
         this.score = score;
     }
 }
