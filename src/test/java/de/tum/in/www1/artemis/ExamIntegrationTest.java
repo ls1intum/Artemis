@@ -21,6 +21,7 @@ import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.in.www1.artemis.connector.jira.JiraRequestMockProvider;
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
 import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
 import de.tum.in.www1.artemis.domain.exam.Exam;
@@ -1613,6 +1614,9 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         assertThat(stats.getNumberOfAssessmentsOfCorrectionRounds()[0].getInTime()).isEqualTo(0L);
         assertThat(stats.getTotalNumberOfAssessmentLocks()).isEqualTo(0L);
 
+        var lockedSubmissions = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/lockedSubmissions", HttpStatus.OK, List.class);
+        assertThat(lockedSubmissions.size()).isEqualTo(0);
+
         // register users. Instructors are ignored from scores as they are exclusive for test run exercises
         Set<User> registeredStudents = users.stream().filter(user -> !user.getLogin().contains("instructor") && !user.getLogin().contains("admin")).collect(Collectors.toSet());
         exam.setRegisteredUsers(registeredStudents);
@@ -1683,6 +1687,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
                 if (exercise instanceof QuizExercise) {
                     result.completionDate(ZonedDateTime.now().minusMinutes(4));
                 }
+                result.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
                 result.setParticipation(participation);
                 result.setAssessor(examInstructor);
                 result = resultRepository.save(result);
@@ -1701,6 +1706,9 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         assertThat(stats.getNumberOfAssessmentsOfCorrectionRounds()[0].getInTime()).isEqualTo(15L);
         assertThat(stats.getNumberOfComplaints()).isEqualTo(0L);
         assertThat(stats.getTotalNumberOfAssessmentLocks()).isEqualTo(75L);
+
+        lockedSubmissions = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/lockedSubmissions", HttpStatus.OK, List.class);
+        assertThat(lockedSubmissions.size()).isEqualTo(75);
 
         // Lock all submissions
         for (var exercise : exercisesInExam) {
@@ -1724,6 +1732,9 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         assertThat(stats.getNumberOfAssessmentsOfCorrectionRounds()[0].getInTime()).isEqualTo(90L);
         assertThat(stats.getNumberOfComplaints()).isEqualTo(0L);
         assertThat(stats.getTotalNumberOfAssessmentLocks()).isEqualTo(0L);
+
+        lockedSubmissions = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/lockedSubmissions", HttpStatus.OK, List.class);
+        assertThat(lockedSubmissions.size()).isEqualTo(0);
 
     }
 }
