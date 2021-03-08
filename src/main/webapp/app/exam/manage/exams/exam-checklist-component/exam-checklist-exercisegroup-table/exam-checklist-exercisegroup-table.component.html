@@ -1,9 +1,11 @@
-<table class="table tabel-striped table-bordered" style="background-color: white">
+<div>
+
+<table class="table table-striped table-bordered table-responsive" style="background-color: white">
     <thead>
         <tr style="background-color: white">
-            <!-- <th style="max-width: 20px">
+            <th style="max-width: 20px">
                 <span>#</span>
-            </th> -->
+            </th>
             <th style="max-width: 100px">
                 <span>
                     {{ 'artemisApp.examManagement.checklist.textitems.exerciseStart' | translate }}
@@ -28,9 +30,9 @@
     </thead>
     <tbody>
         <tr *ngFor="let exercise of allExercises; let i = index">
-            <!-- <td style="max-width: 20px">
+            <td style="max-width: 20px">
                 <div *ngIf="i ==  0 || i > 0 &&  allExercises[i-1].exerciseGroup !== exercise.exerciseGroup">{{i+1}}</div>
-            </td> -->
+            </td>
             <td style="max-width: 100px; font-weight: bold">
                 <div *ngIf="i == 0 || (i > 0 && allExercises[i - 1].exerciseGroup !== exercise.exerciseGroup)">
                     {{ exercise.exerciseGroup.title }}
@@ -63,3 +65,4 @@
         </tr>
     </tbody>
 </table>
+</div>
