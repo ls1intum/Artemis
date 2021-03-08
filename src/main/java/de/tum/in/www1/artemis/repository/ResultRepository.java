@@ -140,6 +140,8 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
     List<Long> countNumberOfFinishedAssessmentsByExerciseIdIgnoreTestRuns(@Param("exerciseId") Long exerciseId);
 
     /**
+     * count the number of finsished assessments of an exam with given examId
+     *
      * @param examId id of the exam
      * @return a list that contains the count of manual assessments for each studentParticipation of the exam
      */

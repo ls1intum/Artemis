@@ -48,7 +48,7 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
      *
      * @param examId      - the id of the exam we want to filter by
      * @param complaintType - type of complaint we want to filter by
-     * @return number of more feedback requests associated to course courseId
+     * @return number of complaints  associated to course examId
      */
     long countByResult_Participation_Exercise_ExerciseGroup_Exam_IdAndComplaintType(Long examId, ComplaintType complaintType);
 
@@ -143,7 +143,7 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
     List<Complaint> getAllByResult_Participation_Exercise_Course_Id(Long courseId);
 
     /**
-     * Given a course id, retrieve all complaints related to assessments related to that course
+     * Given a examId id, retrieve all complaints related to assessments related to that course
      *
      * @param examId - the id of the course
      * @return a list of complaints

@@ -409,9 +409,7 @@ public class ComplaintResource {
             throw new AccessForbiddenException("Insufficient permission for these complaints");
         }
 
-        List<Complaint> complaints;
-
-        complaints = complaintService.getAllComplaintsByExamId(examId);
+        List<Complaint> complaints = complaintService.getAllComplaintsByExamId(examId);
         filterOutUselessDataFromComplaints(complaints, !isAtLeastInstructor);
 
         return ResponseEntity.ok(getComplaintsByComplaintType(complaints, ComplaintType.COMPLAINT));
