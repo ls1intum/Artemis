@@ -185,6 +185,7 @@ public class ExamResource {
 
         // We can't test dates for equality as the dates retrieved from the database lose precision. Also use instant to take timezones into account
         Comparator<ZonedDateTime> comparator = Comparator.comparing(date -> date.truncatedTo(ChronoUnit.SECONDS).toInstant());
+        // TODO: we could limit this to changes in the start date
         if (comparator.compare(originalExam.getVisibleDate(), updatedExam.getVisibleDate()) != 0
                 || comparator.compare(originalExam.getStartDate(), updatedExam.getStartDate()) != 0) {
             // get all exercises
@@ -473,7 +474,6 @@ public class ExamResource {
     public ResponseEntity<List<StudentExam>> generateStudentExams(@PathVariable Long courseId, @PathVariable Long examId) {
         long start = System.nanoTime();
         log.info("REST request to generate student exams for exam {}", examId);
-
         final var exam = examRepository.findByIdWithRegisteredUsersExerciseGroupsAndExercisesElseThrow(examId);
 
         Optional<ResponseEntity<List<StudentExam>>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccessForInstructor(courseId, exam);
@@ -783,23 +783,7 @@ public class ExamResource {
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<ExamInformationDTO> getLatestIndividualEndDateOfExam(@PathVariable Long courseId, @PathVariable Long examId) {
         log.debug("REST request to get latest individual end date of exam : {}", examId);
-
         Optional<ResponseEntity<ExamInformationDTO>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccessForTeachingAssistant(courseId, examId);
-
-        if (courseAndExamAccessFailure.isPresent()) {
-            return courseAndExamAccessFailure.get();
-        }
-
-        ZonedDateTime latestIndividualEndDateOfExam = examDateService.getLatestIndividualExamEndDate(examId);
-
-        if (latestIndividualEndDateOfExam == null) {
-            return ResponseEntity.notFound().build();
-        }
-        else {
-            ExamInformationDTO examInformationDTO = new ExamInformationDTO();
-            examInformationDTO.latestIndividualEndDate = latestIndividualEndDateOfExam;
-            return ResponseEntity.ok().body(examInformationDTO);
-        }
+        return courseAndExamAccessFailure.orElseGet(() -> ResponseEntity.ok().body(new ExamInformationDTO(examDateService.getLatestIndividualExamEndDate(examId))));
     }
-
 }

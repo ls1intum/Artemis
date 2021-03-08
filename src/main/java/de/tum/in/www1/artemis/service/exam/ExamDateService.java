@@ -4,6 +4,8 @@ import java.time.ZonedDateTime;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import javax.validation.constraints.NotNull;
+
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.exam.Exam;
@@ -32,9 +34,9 @@ public class ExamDateService {
      * @return true if the exam is over and the students cannot submit anymore
      * @throws EntityNotFoundException if no exam with the given examId can be found
      */
-    public boolean isExamOver(Long examId) {
+    public boolean isExamWithGracePeriodOver(Long examId) {
         final var exam = examRepository.findByIdElseThrow(examId);
-        return isExamOver(exam);
+        return isExamWithGracePeriodOver(exam);
     }
 
     /**
@@ -46,7 +48,7 @@ public class ExamDateService {
      * @return true if the exam is over and the students cannot submit anymore
      * @throws EntityNotFoundException if no exam with the given examId can be found
      */
-    public boolean isExamOver(Exam exam) {
+    public boolean isExamWithGracePeriodOver(Exam exam) {
         var now = ZonedDateTime.now();
         return getLatestIndividualExamEndDate(exam).plusSeconds(exam.getGracePeriod()).isBefore(now);
     }
@@ -60,6 +62,7 @@ public class ExamDateService {
      * @return the latest end date or the exam end date if no student exams are found. May return <code>null</code>, if the exam has no start/end date.
      * @throws EntityNotFoundException if no exam with the given examId can be found
      */
+    @NotNull
     public ZonedDateTime getLatestIndividualExamEndDate(Long examId) {
         final var exam = examRepository.findByIdElseThrow(examId);
         return getLatestIndividualExamEndDate(exam);
@@ -73,10 +76,8 @@ public class ExamDateService {
      * @param exam the exam
      * @return the latest end date or the exam end date if no student exams are found. May return <code>null</code>, if the exam has no start/end date.
      */
+    @NotNull
     public ZonedDateTime getLatestIndividualExamEndDate(Exam exam) {
-        if (exam.getStartDate() == null) {
-            return null;
-        }
         var maxWorkingTime = studentExamRepository.findMaxWorkingTimeByExamId(exam.getId());
         return maxWorkingTime.map(timeInSeconds -> exam.getStartDate().plusSeconds(timeInSeconds)).orElse(exam.getEndDate());
     }

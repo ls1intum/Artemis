@@ -33,7 +33,13 @@
         >
             Result
         </button>
-        <jhi-submission-result-status [exercise]="exercise" [studentParticipation]="studentParticipation" updatingResultClass="mr-2" [showGradedBadge]="true">
+        <jhi-submission-result-status
+            [exercise]="exercise"
+            [studentParticipation]="studentParticipation"
+            updatingResultClass="mr-2"
+            [showGradedBadge]="true"
+            [triggerLastGraded]="false"
+        >
         </jhi-submission-result-status>
         <div class="col-auto d-md-flex align-items-center" *ngIf="exercise.isAtLeastInstructor">
             <span class="mr-1">{{ 'artemisApp.courseOverview.exerciseDetails.instructorActions.title' | translate }}</span>
