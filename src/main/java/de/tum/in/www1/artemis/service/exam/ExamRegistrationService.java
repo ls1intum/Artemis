@@ -229,6 +229,12 @@ public class ExamRegistrationService {
         studentExamService.deleteStudentExam(studentExam.getId());
     }
 
+    /**
+     * Unregisters all students from the exam
+     *
+     * @param examId the exam for which a student should be unregistered
+     * @param deleteParticipationsAndSubmission whether the participations and submissions of the student should be deleted
+     */
     public void unregisterAllStudentFromExam(Long examId, boolean deleteParticipationsAndSubmission) {
         var exam = examRepository.findWithRegisteredUsersById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
 
