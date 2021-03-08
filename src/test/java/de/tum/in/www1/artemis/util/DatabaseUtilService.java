@@ -506,9 +506,9 @@ public class DatabaseUtilService {
             Submission modelingSubmission2 = ModelFactory.generateModelingSubmission("model2", true);
             Submission textSubmission = ModelFactory.generateTextSubmission("text", Language.ENGLISH, true);
 
-            Result result1 = ModelFactory.generateResult(true, 10);
-            Result result2 = ModelFactory.generateResult(true, 12);
-            Result result3 = ModelFactory.generateResult(false, 0);
+            Result result1 = ModelFactory.generateResult(true, 10D);
+            Result result2 = ModelFactory.generateResult(true, 12D);
+            Result result3 = ModelFactory.generateResult(false, 0D);
 
             participation1 = studentParticipationRepo.save(participation1);
             participation2 = studentParticipationRepo.save(participation2);
@@ -695,23 +695,23 @@ public class DatabaseUtilService {
         participationProgramming = studentParticipationRepo.save(participationProgramming);
 
         // Setup results
-        Result resultModeling = ModelFactory.generateResult(true, 10);
+        Result resultModeling = ModelFactory.generateResult(true, 10D);
         resultModeling.setAssessmentType(AssessmentType.MANUAL);
         resultModeling.setCompletionDate(ZonedDateTime.now());
 
-        Result resultText = ModelFactory.generateResult(true, 12);
+        Result resultText = ModelFactory.generateResult(true, 12D);
         resultText.setAssessmentType(AssessmentType.MANUAL);
         resultText.setCompletionDate(ZonedDateTime.now());
 
-        Result resultFileUpload = ModelFactory.generateResult(true, 0);
+        Result resultFileUpload = ModelFactory.generateResult(true, 0D);
         resultFileUpload.setAssessmentType(AssessmentType.MANUAL);
         resultFileUpload.setCompletionDate(ZonedDateTime.now());
 
-        Result resultQuiz = ModelFactory.generateResult(true, 0);
+        Result resultQuiz = ModelFactory.generateResult(true, 0D);
         resultQuiz.setAssessmentType(AssessmentType.AUTOMATIC);
         resultQuiz.setCompletionDate(ZonedDateTime.now());
 
-        Result resultProgramming = ModelFactory.generateResult(true, 20);
+        Result resultProgramming = ModelFactory.generateResult(true, 20D);
         resultProgramming.setAssessmentType(AssessmentType.AUTOMATIC);
         resultProgramming.setCompletionDate(ZonedDateTime.now());
 
@@ -1210,7 +1210,7 @@ public class DatabaseUtilService {
     }
 
     public Result addResultToParticipation(AssessmentType assessmentType, ZonedDateTime completionDate, Participation participation) {
-        Result result = new Result().participation(participation).resultString("x of y passed").successful(false).rated(true).score(100L).assessmentType(assessmentType)
+        Result result = new Result().participation(participation).resultString("x of y passed").successful(false).rated(true).score(100D).assessmentType(assessmentType)
                 .completionDate(completionDate);
         return resultRepo.save(result);
     }
@@ -1223,7 +1223,7 @@ public class DatabaseUtilService {
     }
 
     public Result addResultToParticipation(Participation participation, Submission submission) {
-        Result result = new Result().participation(participation).resultString("x of y passed").successful(false).score(100L);
+        Result result = new Result().participation(participation).resultString("x of y passed").successful(false).score(100D);
         result = resultRepo.save(result);
         result.setSubmission(submission);
         submission.addResult(result);
@@ -1264,7 +1264,7 @@ public class DatabaseUtilService {
         return resultRepo.save(result);
     }
 
-    public Submission addResultToSubmission(final Submission submission, AssessmentType assessmentType, User user, String resultString, Long score, boolean rated,
+    public Submission addResultToSubmission(final Submission submission, AssessmentType assessmentType, User user, String resultString, Double score, boolean rated,
             ZonedDateTime completionDate) {
         Result result = new Result().participation(submission.getParticipation()).assessmentType(assessmentType).resultString(resultString).score(score).rated(rated)
                 .completionDate(completionDate);
@@ -1277,14 +1277,14 @@ public class DatabaseUtilService {
     }
 
     public Submission addResultToSubmission(Submission submission, AssessmentType assessmentType) {
-        return addResultToSubmission(submission, assessmentType, null, "x of y passed", 100L, true, null);
+        return addResultToSubmission(submission, assessmentType, null, "x of y passed", 100D, true, null);
     }
 
     public Submission addResultToSubmission(Submission submission, AssessmentType assessmentType, User user) {
-        return addResultToSubmission(submission, assessmentType, user, "x of y passed", 100L, true, ZonedDateTime.now());
+        return addResultToSubmission(submission, assessmentType, user, "x of y passed", 100D, true, ZonedDateTime.now());
     }
 
-    public Submission addResultToSubmission(Submission submission, AssessmentType assessmentType, User user, Long score, boolean rated) {
+    public Submission addResultToSubmission(Submission submission, AssessmentType assessmentType, User user, Double score, boolean rated) {
         return addResultToSubmission(submission, assessmentType, user, "x of y passed", score, rated, ZonedDateTime.now());
     }
 
@@ -1597,10 +1597,6 @@ public class DatabaseUtilService {
         assertThat(programmingExercise.getPresentationScoreEnabled()).as("presentation score is enabled").isTrue();
 
         return courseRepo.findWithEagerExercisesAndLecturesById(course.getId());
-    }
-
-    private void populateProgrammingExercise(ProgrammingExercise programmingExercise, String shortName) {
-        populateProgrammingExercise(programmingExercise, shortName, "Programming", false);
     }
 
     private void populateProgrammingExercise(ProgrammingExercise programmingExercise, String shortName, String title, boolean enableStaticCodeAnalysis) {
@@ -1934,7 +1930,7 @@ public class DatabaseUtilService {
         Result result = new Result();
         result.setAssessor(getUserByLogin(assessorLogin));
         result.setAssessmentType(assessmentType);
-        result.setScore(50L);
+        result.setScore(50D);
         if (hasCompletionDate) {
             result.setCompletionDate(ZonedDateTime.now());
         }
@@ -2045,7 +2041,7 @@ public class DatabaseUtilService {
         participation.addSubmission(fileUploadSubmission);
         Result result = new Result();
         result.setAssessor(getUserByLogin(assessorLogin));
-        result.setScore(100L);
+        result.setScore(100D);
         if (exercise.getReleaseDate() != null) {
             result.setCompletionDate(exercise.getReleaseDate());
         }
@@ -2085,7 +2081,7 @@ public class DatabaseUtilService {
         participation.addSubmission(submission);
         Result result = new Result();
         result.setAssessor(getUserByLogin(assessorLogin));
-        result.setScore(100L);
+        result.setScore(100D);
         if (exercise.getReleaseDate() != null) {
             result.setCompletionDate(exercise.getReleaseDate());
         }
@@ -2735,4 +2731,5 @@ public class DatabaseUtilService {
         params.forEach(paramMap::add);
         return paramMap;
     }
+
 }
