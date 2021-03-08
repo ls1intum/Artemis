@@ -294,7 +294,7 @@ export class ExerciseService {
      */
     getForTutors(exerciseId: number): Observable<HttpResponse<Exercise>> {
         return this.http
-            .get<Exercise>(`${this.resourceUrl}/${exerciseId}/for-tutor-dashboard`, { observe: 'response' })
+            .get<Exercise>(`${this.resourceUrl}/${exerciseId}/for-assessment-dashboard`, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
     }
 
@@ -303,7 +303,7 @@ export class ExerciseService {
      * @param { number } exerciseId - Id of exercise to retreive the stats for
      */
     getStatsForTutors(exerciseId: number): Observable<HttpResponse<StatsForDashboard>> {
-        return this.http.get<StatsForDashboard>(`${this.resourceUrl}/${exerciseId}/stats-for-tutor-dashboard`, { observe: 'response' });
+        return this.http.get<StatsForDashboard>(`${this.resourceUrl}/${exerciseId}/stats-for-assessment-dashboard`, { observe: 'response' });
     }
 
     /**

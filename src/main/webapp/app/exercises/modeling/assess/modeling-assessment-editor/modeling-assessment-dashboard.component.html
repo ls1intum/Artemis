@@ -41,7 +41,7 @@
                     <th>
                         <a class="th-link">#</a>
                     </th>
-                    <th>
+                    <th *ngIf="exercise.isAtLeastInstructor">
                         <a class="th-link" jhiTranslate="artemisApp.exercise.studentName">Student name</a>
                     </th>
                     <th>
@@ -56,7 +56,9 @@
             <tbody>
                 <tr *ngFor="let submission of optimalSubmissions; let i = index" [ngStyle]="submission.optimal && { 'font-weight': 'bold' }">
                     <td>{{ i + 1 }}</td>
-                    <td>{{ submission.participation.participantName }}</td>
+                    <td *ngIf="exercise.isAtLeastInstructor">
+                        {{ submission.participation.participantName }}
+                    </td>
                     <td>
                         <span *ngIf="submission.latestResult && submission.latestResult!.assessor">{{ submission.latestResult!.assessor!.name }} (lock)</span>
                     </td>
@@ -104,7 +106,7 @@
                         <a class="th-link" jhiTranslate="artemisApp.exercise.teamName">Team name</a>
                         <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
-                    <th *ngIf="!exercise.teamMode" jhiSortBy="participation.student.name">
+                    <th *ngIf="!exercise.teamMode && exercise.isAtLeastInstructor" jhiSortBy="participation.student.name">
                         <a class="th-link" jhiTranslate="artemisApp.exercise.studentName">Student name</a>
                         <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
@@ -129,7 +131,8 @@
                         <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
                     <th jhiSortBy="latestResult.assessor.name">
-                        <a class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.assessor">Reviewer</a>
+                        <a *ngIf="numberOfCorrectionrounds == 1" class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.assessor">Reviewer</a>
+                        <a *ngIf="numberOfCorrectionrounds == 2" class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.assessors">Reviewers</a>
                         <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
                     <th *ngIf="exercise.course || (exercise.exerciseGroup && numberOfCorrectionrounds == 1)">
@@ -147,19 +150,31 @@
             <tbody>
                 <tr *ngFor="let submission of otherSubmissions; let i = index" [ngStyle]="submission.optimal && { 'font-weight': 'bold' }">
                     <td>{{ i + 1 }}</td>
-                    <td>{{ submission.participation.participantName }}</td>
+                    <td *ngIf="exercise.isAtLeastInstructor">
+                        {{ submission.participation.participantName }}
+                    </td>
                     <td>{{ submission.submissionDate | artemisDate }}</td>
                     <td>
                         <jhi-result [participation]="submission.participation"></jhi-result>
                     </td>
-                    <td>{{ submission.participation.submissions.length }}</td>
+                    <td>
+                        <ng-container *ngIf="submission.participation.submissions">
+                            <a
+                                *ngIf="exercise.isAtLeastInstructor"
+                                [routerLink]="['/course-management', courseId, 'exercises', exercise.id, 'participations', submission.participation.id, 'submissions']"
+                            >
+                                {{ submission.participation.submissions.length }}
+                            </a>
+                        </ng-container>
+                    </td>
                     <td>
                         {{ submission.durationInMinutes }}
                         minutes
                     </td>
                     <td>{{ submission.latestResult && submission.latestResult!.assessmentType }}</td>
                     <td>
-                        <span *ngIf="submission.latestResult && submission.latestResult!.assessor">{{ submission.latestResult!.assessor!.name }}</span>
+                        <div *ngIf="submission.results?.length > 1 && submission.results[0].assessor">{{ submission.results[0].assessor!.name }}</div>
+                        <div *ngIf="submission.latestResult && submission.latestResult!.assessor">{{ submission.latestResult!.assessor!.name }}</div>
                     </td>
 
                     <td *ngFor="let item of [].constructor(numberOfCorrectionrounds); let correctionRound = index">
