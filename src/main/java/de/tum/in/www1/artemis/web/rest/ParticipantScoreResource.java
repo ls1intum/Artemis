@@ -172,7 +172,7 @@ public class ParticipantScoreResource {
      */
     @GetMapping("/courses/{courseId}/participant-scores/average")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Long> getAverageScoreOfCourse(@PathVariable Long courseId, @RequestParam(defaultValue = "true", required = false) boolean onlyConsiderRatedScores) {
+    public ResponseEntity<Double> getAverageScoreOfCourse(@PathVariable Long courseId, @RequestParam(defaultValue = "true", required = false) boolean onlyConsiderRatedScores) {
         long start = System.currentTimeMillis();
         if (onlyConsiderRatedScores) {
             log.debug("REST request to get average rated scores for course : {}", courseId);
@@ -186,7 +186,7 @@ public class ParticipantScoreResource {
         }
         Set<Exercise> includedExercisesOfCourse = course.getExercises().stream().filter(Exercise::isCourseExercise)
                 .filter(exercise -> !exercise.getIncludedInOverallScore().equals(IncludedInOverallScore.NOT_INCLUDED)).collect(Collectors.toSet());
-        Long averageScore = participantScoreService.getAverageScore(onlyConsiderRatedScores, includedExercisesOfCourse);
+        Double averageScore = participantScoreService.getAverageScore(onlyConsiderRatedScores, includedExercisesOfCourse);
         log.info("getAverageScoreOfCourse took " + (System.currentTimeMillis() - start) + "ms");
         return ResponseEntity.ok().body(averageScore);
     }
@@ -236,7 +236,7 @@ public class ParticipantScoreResource {
      */
     @GetMapping("/exams/{examId}/participant-scores/average")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Long> getAverageScoreOfExam(@PathVariable Long examId, @RequestParam(defaultValue = "true", required = false) boolean onlyConsiderRatedScores) {
+    public ResponseEntity<Double> getAverageScoreOfExam(@PathVariable Long examId, @RequestParam(defaultValue = "true", required = false) boolean onlyConsiderRatedScores) {
         long start = System.currentTimeMillis();
         if (onlyConsiderRatedScores) {
             log.debug("REST request to get average rated scores for exam : {}", examId);
@@ -255,7 +255,7 @@ public class ParticipantScoreResource {
         Set<Exercise> includedExercisesOfExam = exercisesOfExam.stream().filter(exercise -> !exercise.getIncludedInOverallScore().equals(IncludedInOverallScore.NOT_INCLUDED))
                 .collect(Collectors.toSet());
 
-        Long averageScore = participantScoreService.getAverageScore(onlyConsiderRatedScores, includedExercisesOfExam);
+        Double averageScore = participantScoreService.getAverageScore(onlyConsiderRatedScores, includedExercisesOfExam);
         log.info("getAverageScoreOfExam took " + (System.currentTimeMillis() - start) + "ms");
         return ResponseEntity.ok().body(averageScore);
     }

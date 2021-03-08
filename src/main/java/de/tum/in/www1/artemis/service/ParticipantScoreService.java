@@ -195,8 +195,8 @@ public class ParticipantScoreService {
      * @param includedExercises       exercises to include in the average calculation
      * @return average last score or average last rated score achieved in the given exercises
      */
-    public Long getAverageScore(@RequestParam(defaultValue = "true", required = false) boolean onlyConsiderRatedScores, Set<Exercise> includedExercises) {
-        Long averageScore;
+    public Double getAverageScore(@RequestParam(defaultValue = "true", required = false) boolean onlyConsiderRatedScores, Set<Exercise> includedExercises) {
+        Double averageScore;
         if (onlyConsiderRatedScores) {
             averageScore = participantScoreRepository.findAvgRatedScore(includedExercises);
         }

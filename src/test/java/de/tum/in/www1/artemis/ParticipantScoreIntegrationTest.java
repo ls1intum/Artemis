@@ -154,8 +154,8 @@ public class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationBa
         assertThat(participantScoresOfCourse.size()).isEqualTo(2);
         ParticipantScoreDTO student1Result = participantScoresOfCourse.stream().filter(participantScoreDTO -> participantScoreDTO.userId != null).findFirst().get();
         ParticipantScoreDTO team1Result = participantScoresOfCourse.stream().filter(participantScoreDTO -> participantScoreDTO.teamId != null).findFirst().get();
-        assertParticipantScoreDTOStructure(student1Result, idOfStudent1, null, idOfIndividualTextExercise, 50L, 50L, 5.0, 5.0);
-        assertParticipantScoreDTOStructure(team1Result, null, idOfTeam1, idOfTeamTextExercise, 50L, 50L, 5.0, 5.0);
+        assertParticipantScoreDTOStructure(student1Result, idOfStudent1, null, idOfIndividualTextExercise, 50D, 50D, 5.0, 5.0);
+        assertParticipantScoreDTOStructure(team1Result, null, idOfTeam1, idOfTeamTextExercise, 50D, 50D, 5.0, 5.0);
     }
 
     @Test
@@ -175,10 +175,10 @@ public class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationBa
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void getAverageScoreOfCourses_asInstructorOfCourse_shouldReturnAverageScore() throws Exception {
-        Long averageRated = request.get("/api/courses/" + idOfCourse + "/participant-scores/average?onlyConsiderRatedScores=true", HttpStatus.OK, Long.class);
-        assertThat(averageRated).isEqualTo(50L);
-        Long average = request.get("/api/courses/" + idOfCourse + "/participant-scores/average?onlyConsiderRatedScores=false", HttpStatus.OK, Long.class);
-        assertThat(average).isEqualTo(50L);
+        Double averageRated = request.get("/api/courses/" + idOfCourse + "/participant-scores/average?onlyConsiderRatedScores=true", HttpStatus.OK, Double.class);
+        assertThat(averageRated).isEqualTo(50D);
+        Double average = request.get("/api/courses/" + idOfCourse + "/participant-scores/average?onlyConsiderRatedScores=false", HttpStatus.OK, Double.class);
+        assertThat(average).isEqualTo(50D);
     }
 
     @Test
@@ -187,7 +187,7 @@ public class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationBa
         List<ParticipantScoreDTO> participantScoresOfExam = request.getList("/api/exams/" + idOfExam + "/participant-scores", HttpStatus.OK, ParticipantScoreDTO.class);
         assertThat(participantScoresOfExam.size()).isEqualTo(1);
         ParticipantScoreDTO student1Result = participantScoresOfExam.stream().filter(participantScoreDTO -> participantScoreDTO.userId != null).findFirst().get();
-        assertParticipantScoreDTOStructure(student1Result, idOfStudent1, null, getIdOfIndividualTextExerciseOfExam, 50L, 50L, 5.0, 5.0);
+        assertParticipantScoreDTOStructure(student1Result, idOfStudent1, null, getIdOfIndividualTextExerciseOfExam, 50D, 50D, 5.0, 5.0);
     }
 
     @Test
@@ -204,10 +204,10 @@ public class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationBa
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void getAverageScoreOfExam_asInstructorOfCourse_shouldReturnAverageScore() throws Exception {
-        Long averageRated = request.get("/api/exams/" + idOfExam + "/participant-scores/average?onlyConsiderRatedScores=true", HttpStatus.OK, Long.class);
-        assertThat(averageRated).isEqualTo(50L);
-        Long average = request.get("/api/exams/" + idOfExam + "/participant-scores/average?onlyConsiderRatedScores=false", HttpStatus.OK, Long.class);
-        assertThat(average).isEqualTo(50L);
+        Double averageRated = request.get("/api/exams/" + idOfExam + "/participant-scores/average?onlyConsiderRatedScores=true", HttpStatus.OK, Double.class);
+        assertThat(averageRated).isEqualTo(50D);
+        Double average = request.get("/api/exams/" + idOfExam + "/participant-scores/average?onlyConsiderRatedScores=false", HttpStatus.OK, Double.class);
+        assertThat(average).isEqualTo(50D);
     }
 
     private void createIndividualTextExerciseForExam() {
@@ -222,7 +222,7 @@ public class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationBa
     }
 
     private void assertParticipantScoreDTOStructure(ParticipantScoreDTO participantScoreDTO, Long expectedUserId, Long expectedTeamId, Long expectedExerciseId,
-            Long expectedLastResultScore, Long expectedLastRatedResultScore, Double expectedLastPoints, Double exptectedLastRatedPoints) {
+            Double expectedLastResultScore, Double expectedLastRatedResultScore, Double expectedLastPoints, Double exptectedLastRatedPoints) {
         assertThat(participantScoreDTO.userId).isEqualTo(expectedUserId);
         assertThat(participantScoreDTO.teamId).isEqualTo(expectedTeamId);
         assertThat(participantScoreDTO.exerciseId).isEqualTo(expectedExerciseId);

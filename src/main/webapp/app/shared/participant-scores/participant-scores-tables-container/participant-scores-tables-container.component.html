@@ -5,9 +5,11 @@
 </div>
 
 <ng-template #tipContent>{{ 'artemisApp.participantScores.notIncluded' | translate }}</ng-template>
-<span class="badge rounded-pill bg-primary text-white" [ngbTooltip]="tipContent">{{ 'artemisApp.participantScores.averageScore' | translate: { avg: avgScore } }} </span>
+<span class="badge rounded-pill bg-primary text-white" [ngbTooltip]="tipContent">{{ 'artemisApp.participantScores.averageScore' | translate: { avg: round(avgScore, 1) } }} </span>
 
-<span class="badge rounded-pill bg-primary text-white" [ngbTooltip]="tipContent">{{ 'artemisApp.participantScores.averageRatedScore' | translate: { avg: avgRatedScore } }} </span>
+<span class="badge rounded-pill bg-primary text-white" [ngbTooltip]="tipContent"
+    >{{ 'artemisApp.participantScores.averageRatedScore' | translate: { avg: round(avgRatedScore, 1) } }}
+</span>
 
 <div [ngSwitch]="mode">
     <jhi-participant-scores-table *ngSwitchCase="'individual'" [isLoading]="isLoading" [participantScores]="participantScores"></jhi-participant-scores-table>

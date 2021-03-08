@@ -45,12 +45,12 @@ public interface ParticipantScoreRepository extends JpaRepository<ParticipantSco
             FROM ParticipantScore p
                 WHERE p.exercise IN :exercises
                 """)
-    Long findAvgRatedScore(@Param("exercises") Set<Exercise> exercises);
+    Double findAvgRatedScore(@Param("exercises") Set<Exercise> exercises);
 
     @Query("""
             SELECT AVG(p.lastScore)
             FROM ParticipantScore p
             WHERE p.exercise IN :exercises
             """)
-    Long findAvgScore(@Param("exercises") Set<Exercise> exercises);
+    Double findAvgScore(@Param("exercises") Set<Exercise> exercises);
 }
