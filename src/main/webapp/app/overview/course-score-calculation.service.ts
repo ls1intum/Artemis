@@ -52,6 +52,11 @@ export class CourseScoreCalculationService {
                             score = 0;
                         }
                         // Note: It is important that we round on the individual exercise level first and then sum up.
+                        // This is necessary so that the student arrives at the same overall result when doing his own recalculation.
+                        // Let's assume that the student achieved 1.05 points in each of 5 exercises.
+                        // In the client, these are now displayed rounded as 1.1 points.
+                        // If the student adds up the displayed points, he gets a total of 5.5 points.
+                        // In order to get the same total result as the student, we have to round before summing.
                         pointsAchievedByStudentInCourse += round(score * this.SCORE_NORMALIZATION_VALUE * maxPointsReachableInExercise, 1);
                     }
                     presentationScore += participation.presentationScore ? participation.presentationScore : 0;

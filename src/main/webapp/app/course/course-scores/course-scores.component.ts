@@ -228,6 +228,11 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
                     }
 
                     // Note: It is important that we round on the individual exercise level first and then sum up.
+                    // This is necessary so that the student arrives at the same overall result when doing his own recalculation.
+                    // Let's assume that the student achieved 1.05 points in each of 5 exercises.
+                    // In the client, these are now displayed rounded as 1.1 points.
+                    // If the student adds up the displayed points, he gets a total of 5.5 points.
+                    // In order to get the same total result as the student, we have to round before summing.
                     const pointsAchievedByStudentInExercise = round((result.score! * relevantMaxPoints) / 100, 1);
                     student.overallPoints += pointsAchievedByStudentInExercise;
                     student.pointsPerExercise.set(exercise.id!, pointsAchievedByStudentInExercise);
