@@ -399,6 +399,18 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
     }
 
     @Override
+    public void mockGetBuildPlan(String porjectKey, String planName, boolean planExistsInCi, boolean planIsActive, boolean planIsBuilding) throws Exception {
+        var buildPlanToReturn = planExistsInCi ? new BambooBuildPlanDTO(planIsActive, planIsBuilding) : null;
+        bambooRequestMockProvider.mockGetBuildPlan(planName, buildPlanToReturn);
+    }
+
+    @Override
+    public void mockHealthInCiService(boolean isRunning, HttpStatus httpStatus) throws Exception {
+        var state = isRunning ? "RUNNING" : "PAUSED";
+        bambooRequestMockProvider.mockHealth(state, httpStatus);
+    }
+
+    @Override
     public void resetMockProvider() {
         bitbucketRequestMockProvider.reset();
         bambooRequestMockProvider.reset();

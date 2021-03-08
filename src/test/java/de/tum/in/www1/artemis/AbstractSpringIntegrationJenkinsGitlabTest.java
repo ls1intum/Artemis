@@ -234,7 +234,11 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
     @Override
     public void mockTriggerFailedBuild(ProgrammingExerciseStudentParticipation participation) throws Exception {
         doReturn(COMMIT_HASH_OBJECT_ID).when(gitService).getLastCommitHash(any());
-        jenkinsRequestMockProvider.mockGetBuildStatus(participation);
+
+        var projectKey = participation.getProgrammingExercise().getProjectKey();
+        var buildPlanId = participation.getBuildPlanId();
+        jenkinsRequestMockProvider.mockGetBuildStatus(projectKey, buildPlanId, true, false, false);
+
         mockCopyBuildPlan(participation);
         mockConfigureBuildPlan(participation);
         jenkinsRequestMockProvider.mockTriggerBuild();
@@ -329,6 +333,16 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
         gitlabRequestMockProvider.mockUpdateVcsUser(user.getLogin(), user, Set.of(group), Set.of(), false);
         jenkinsRequestMockProvider.mockRemoveUserFromGroups(Set.of(group));
         jenkinsRequestMockProvider.mockAddUsersToGroups(user.getLogin(), Set.of(group));
+    }
+
+    @Override
+    public void mockGetBuildPlan(String projectKey, String planName, boolean planExistsInCi, boolean planIsActive, boolean planIsBuilding) throws Exception {
+        jenkinsRequestMockProvider.mockGetBuildStatus(projectKey, planName, planExistsInCi, planIsActive, planIsBuilding);
+    }
+
+    @Override
+    public void mockHealthInCiService(boolean isRunning, HttpStatus httpStatus) throws Exception {
+        jenkinsRequestMockProvider.mockHealth(isRunning, httpStatus);
     }
 
     @Override

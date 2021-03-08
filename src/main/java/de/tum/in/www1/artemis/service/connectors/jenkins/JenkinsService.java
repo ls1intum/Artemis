@@ -553,7 +553,9 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
             return new ConnectorHealth(true, Map.of("url", serverUrl));
         }
         catch (Exception emAll) {
-            return new ConnectorHealth(new JenkinsException("Jenkins Server is down!"));
+            var health = new ConnectorHealth(false, Map.of("url", serverUrl));
+            health.setException(new JenkinsException("Jenkins Server is down!"));
+            return health;
         }
     }
 

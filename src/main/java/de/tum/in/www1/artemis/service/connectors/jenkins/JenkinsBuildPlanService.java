@@ -165,9 +165,8 @@ public class JenkinsBuildPlanService {
     public ContinuousIntegrationService.BuildStatus getBuildStatusOfPlan(String projectKey, String planKey) throws JenkinsException {
         var job = jenkinsJobService.getJobInFolder(projectKey, planKey);
         if (job == null) {
-            // TODO: Throw exception or fail silently?
             // Plan doesn't exist.
-            return null;
+            return ContinuousIntegrationService.BuildStatus.INACTIVE;
         }
 
         if (job.isInQueue()) {

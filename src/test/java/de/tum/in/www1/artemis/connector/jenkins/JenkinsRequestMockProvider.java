@@ -59,6 +59,10 @@ public class JenkinsRequestMockProvider {
 
     private MockRestServiceServer mockServer;
 
+    private final RestTemplate shortTimeoutRestTemplate;
+
+    private MockRestServiceServer shortTimeoutMockServer;
+
     @SpyBean
     @InjectMocks
     private JenkinsServer jenkinsServer;
@@ -76,23 +80,28 @@ public class JenkinsRequestMockProvider {
     @Autowired
     private ProgrammingExerciseRepository programmingExerciseRepository;
 
-    public JenkinsRequestMockProvider(@Qualifier("jenkinsRestTemplate") RestTemplate restTemplate) {
+    public JenkinsRequestMockProvider(@Qualifier("jenkinsRestTemplate") RestTemplate restTemplate,
+            @Qualifier("shortTimeoutJenkinsRestTemplate") RestTemplate shortTimeoutRestTemplate) {
         this.restTemplate = restTemplate;
+        this.shortTimeoutRestTemplate = shortTimeoutRestTemplate;
         // We remove JenkinsAuthorizationInterceptor because the tests hit the intercept() method
         // which has its' own instance of RestTemplate (in order to get a crumb(. Since that template
         // isn't mocked, it will throw an exception.
         // TODO: Find a way to either mock the interceptor or mock its RestTemplate
         this.restTemplate.setInterceptors(List.of());
+        this.shortTimeoutRestTemplate.setInterceptors(List.of());
     }
 
     public void enableMockingOfRequests(JenkinsServer jenkinsServer) {
         mockServer = MockRestServiceServer.bindTo(restTemplate).ignoreExpectOrder(true).bufferContent().build();
+        shortTimeoutMockServer = MockRestServiceServer.bindTo(shortTimeoutRestTemplate).ignoreExpectOrder(true).bufferContent().build();
         this.jenkinsServer = jenkinsServer;
         MockitoAnnotations.openMocks(this);
     }
 
     public void reset() {
         mockServer.reset();
+        shortTimeoutMockServer.reset();
     }
 
     public void mockCreateProjectForExercise(ProgrammingExercise exercise) throws IOException {
@@ -223,21 +232,6 @@ public class JenkinsRequestMockProvider {
         final var jobWithDetails = new JobWithDetails();
         doReturn(jobWithDetails).when(jenkinsServer).getJob(folderName);
         doReturn(com.google.common.base.Optional.of(folderJobToReturn)).when(jenkinsServer).getFolderJob(jobWithDetails);
-    }
-
-    public void mockGetBuildStatus(ProgrammingExerciseStudentParticipation participation) throws IOException, URISyntaxException {
-        final var job = mock(JobWithDetails.class);
-        mockGetJob(participation.getProgrammingExercise().getProjectKey(), participation.getBuildPlanId(), job);
-        doReturn(false).when(job).isInQueue();
-
-        final var projectKey = participation.getProgrammingExercise().getProjectKey();
-        final var planKey = participation.getBuildPlanId();
-        final var uri = UriComponentsBuilder.fromUri(jenkinsServerUrl.toURI()).pathSegment("job", projectKey, "job", planKey).path("/lastBuild/api/json").build(true).toUri();
-
-        final var mockResponse = Map.of("building", false);
-        final var body = new ObjectMapper().writeValueAsString(mockResponse);
-        mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.GET)).andRespond(withSuccess().body(body).contentType(MediaType.APPLICATION_JSON));
-
     }
 
     public BuildWithDetails mockGetLatestBuildLogs(ProgrammingExerciseStudentParticipation participation) throws IOException {
@@ -400,5 +394,35 @@ public class JenkinsRequestMockProvider {
 
     public void mockDeleteBuildPlanProject(String projectKey) throws IOException {
         doNothing().when(jenkinsServer).deleteJob(projectKey, useCrumb);
+    }
+
+    public void mockGetBuildStatus(String projectKey, String planName, boolean planExistsInCi, boolean planIsActive, boolean planIsBuilding)
+            throws IOException, URISyntaxException {
+        if (!planExistsInCi) {
+            mockGetJob(projectKey, planName, null);
+            return;
+        }
+
+        var jobWithDetails = mock(JobWithDetails.class);
+        mockGetJob(projectKey, planName, jobWithDetails);
+
+        if (planIsActive && !planIsBuilding) {
+            doReturn(true).when(jobWithDetails).isInQueue();
+            return;
+        }
+
+        final var uri = UriComponentsBuilder.fromUri(jenkinsServerUrl.toURI()).pathSegment("job", projectKey, "job", planName, "lastBuild", "api", "json").build().toUri();
+        final var body = new ObjectMapper().writeValueAsString(Map.of("building", planIsBuilding && planIsActive));
+        mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.GET)).andRespond(withSuccess().body(body).contentType(MediaType.APPLICATION_JSON));
+    }
+
+    public void mockHealth(boolean isRunning, HttpStatus httpStatus) throws URISyntaxException {
+        final var uri = UriComponentsBuilder.fromUri(jenkinsServerUrl.toURI()).pathSegment("login").build().toUri();
+        if (isRunning) {
+            shortTimeoutMockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.GET)).andRespond(withStatus(httpStatus).body("lol"));
+        }
+        else {
+            shortTimeoutMockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.GET)).andRespond(withStatus(HttpStatus.INTERNAL_SERVER_ERROR));
+        }
     }
 }
