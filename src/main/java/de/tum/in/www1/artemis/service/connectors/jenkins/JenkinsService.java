@@ -112,6 +112,7 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
             case JAVA, KOTLIN, PYTHON, C, HASKELL, SWIFT -> jenkinsBuildPlanCreator;
             case VHDL -> throw new UnsupportedOperationException("VHDL templates are not available for Jenkins.");
             case ASSEMBLER -> throw new UnsupportedOperationException("Assembler templates are not available for Jenkins.");
+            case OCAML -> throw new UnsupportedOperationException("OCaml templates are not available for Jenkins.");
         };
     }
 
