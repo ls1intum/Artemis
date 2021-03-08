@@ -8,5 +8,6 @@ public class BubbleSort {
     */
     public func performSort(_ input: [Date]) -> [Date] {
         /// TODO: implement
+        return input
     }
 }

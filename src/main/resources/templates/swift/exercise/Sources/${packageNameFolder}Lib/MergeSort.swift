@@ -8,5 +8,6 @@ public class MergeSort {
     */
     public func performSort(_ input: [Date]) -> [Date] {
         /// TODO: implement
+        return input
     }
 }
