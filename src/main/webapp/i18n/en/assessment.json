@@ -3,7 +3,8 @@
         "assessment": {
             "assessment": "Assessment",
             "testRunAssessment": "Test Run Assessment",
-            "unreferencedFeedback": "Feedback for Missing Elements",
+            "additionalFeedback": "Additional feedback",
+            "feedback": "Feedback",
             "automaticGenerated": "Automatically generated feedback",
             "error": {
                 "assessmentDueDateOver": "The assessment due date of this exercise is over."
@@ -47,6 +48,7 @@
                     "assessmentType": "Assessment Type",
                     "student": "Student",
                     "assessor": "Reviewer",
+                    "assessors": "Reviewers",
                     "action": "Assessment Actions",
                     "assessmentFirst": "Correction Round 1",
                     "assessmentSecond": "Correction Round 2"

@@ -5,9 +5,11 @@ import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -122,7 +124,6 @@ public class FeedbackService {
             if (errorMessageString.length() > FEEDBACK_DETAIL_TEXT_MAX_CHARACTERS) {
                 errorMessageString = errorMessageString.substring(0, FEEDBACK_DETAIL_TEXT_MAX_CHARACTERS);
             }
-
             feedback.setDetailText(errorMessageString);
         }
         else if (!testMessages.isEmpty()) {
@@ -149,6 +150,28 @@ public class FeedbackService {
      * @return A filtered and better formatted error message
      */
     private static String processResultErrorMessage(final ProgrammingLanguage programmingLanguage, final String message) {
+        final String timeoutDetailText = "The test case execution timed out. This indicates issues in your code such as endless for / while loops or issues with recursion. Please carefully review your code to avoid such issues. In case you are absolutely sure that there are no issues like this, please contact your instructor to check the setup of the test.";
+        final String exceptionPrefix = "Exception message: ";
+        // Overwrite timeout exception messages for Junit4, Junit5 and other
+        List<String> exceptions = Arrays.asList("org.junit.runners.model.TestTimedOutException", "java.util.concurrent.TimeoutException",
+                "org.awaitility.core.ConditionTimeoutException", "Timed?OutException");
+        // Defining two pattern groups, (1) the exception name and (2) the exception text
+        Pattern findTimeoutPattern = Pattern.compile("^.*(" + String.join("|", exceptions) + "):?(.*)");
+        Matcher matcher = findTimeoutPattern.matcher(message);
+        if (matcher.find()) {
+            String exceptionText = matcher.group(2);
+            return timeoutDetailText + "\n" + exceptionPrefix + exceptionText.trim();
+        }
+        // Defining one pattern group, (1) the exception text
+        Pattern findGeneralTimeoutPattern = Pattern.compile("^.*:(.*timed out after.*)", Pattern.CASE_INSENSITIVE);
+        matcher = findGeneralTimeoutPattern.matcher(message);
+        if (matcher.find()) {
+            // overwrite AJTS: TimeoutException
+            String generalTimeOutExceptionText = matcher.group(1);
+            return timeoutDetailText + "\n" + exceptionPrefix + generalTimeOutExceptionText.trim();
+        }
+
+        // Filter out unneeded Exception classnames
         if (programmingLanguage == ProgrammingLanguage.JAVA || programmingLanguage == ProgrammingLanguage.KOTLIN) {
             String messageWithoutStackTrace = message.lines().takeWhile(IS_NOT_STACK_TRACE_LINE).collect(Collectors.joining("\n")).trim();
             return JVM_RESULT_MESSAGE_MATCHER.matcher(messageWithoutStackTrace).replaceAll("");
