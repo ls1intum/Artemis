@@ -10,13 +10,13 @@ cp -R Sources assignment
 cp -R Tests assignment
 cp Package.swift assignment
 
-echo "---------- swift build ----------"
+# swift build
 cd assignment
 swift build || error=true
 
 if [ ! $error ]
 then
-    echo "---------- swift test ----------"
+    # swift test
     swift test || true
 fi
 
