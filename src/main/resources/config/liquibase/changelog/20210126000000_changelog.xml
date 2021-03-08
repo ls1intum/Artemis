@@ -12,9 +12,9 @@
             <column name="exercise_id" type="BIGINT"/>
             <column name="last_result_id" type="BIGINT"/>
             <column name="last_rated_result_id" type="BIGINT"/>
-            <column name="last_score" type="BIGINT"/>
+            <column name="last_score" type="DOUBLE"/>
             <column name="last_points" type="DOUBLE"/>
-            <column name="last_rated_score" type="BIGINT"/>
+            <column name="last_rated_score" type="DOUBLE"/>
             <column name="last_rated_points" type="DOUBLE"/>
             <column name="discriminator" type="VARCHAR(31)">
                 <constraints nullable="false"/>

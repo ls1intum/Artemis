@@ -46,13 +46,13 @@ public abstract class ParticipantScore extends DomainObject {
     private Result lastRatedResult;
 
     @Column(name = "last_score")
-    private Long lastScore;
+    private Double lastScore;
 
     @Column(name = "last_points")
     private Double lastPoints;
 
     @Column(name = "last_rated_score")
-    private Long lastRatedScore;
+    private Double lastRatedScore;
 
     @Column(name = "last_rated_points")
     private Double lastRatedPoints;
@@ -81,19 +81,19 @@ public abstract class ParticipantScore extends DomainObject {
         this.lastRatedResult = lastRatedResult;
     }
 
-    public Long getLastScore() {
+    public Double getLastScore() {
         return lastScore;
     }
 
-    public void setLastScore(Long lastScore) {
+    public void setLastScore(Double lastScore) {
         this.lastScore = lastScore;
     }
 
-    public Long getLastRatedScore() {
+    public Double getLastRatedScore() {
         return lastRatedScore;
     }
 
-    public void setLastRatedScore(Long lastRatedScore) {
+    public void setLastRatedScore(Double lastRatedScore) {
         this.lastRatedScore = lastRatedScore;
     }
 
