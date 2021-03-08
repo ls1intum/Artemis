@@ -594,7 +594,7 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
     private void overrideAssessment(HttpStatus httpStatus) throws Exception {
         var participation = programmingSubmission.getParticipation();
         var result = programmingSubmission.getLatestResult();
-        assert result != null;
+        assertThat(result).isNotNull();
         result.setScore(75D);
         List<Feedback> feedbacks = ModelFactory.generateFeedback().stream().peek(feedback -> feedback.setDetailText("Good work here")).collect(Collectors.toList());
         result.setCompletionDate(ZonedDateTime.now());

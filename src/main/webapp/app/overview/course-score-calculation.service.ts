@@ -51,7 +51,7 @@ export class CourseScoreCalculationService {
                         if (score == undefined) {
                             score = 0;
                         }
-                        pointsAchievedByStudentInCourse += round(score) * this.SCORE_NORMALIZATION_VALUE * maxPointsReachableInExercise;
+                        pointsAchievedByStudentInCourse += round(score * this.SCORE_NORMALIZATION_VALUE * maxPointsReachableInExercise);
                     }
                     presentationScore += participation.presentationScore ? participation.presentationScore : 0;
                 }
