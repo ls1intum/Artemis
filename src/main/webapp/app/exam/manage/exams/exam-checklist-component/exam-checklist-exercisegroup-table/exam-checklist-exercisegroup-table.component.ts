@@ -10,7 +10,7 @@ export class ExamChecklistExerciseGroupTableComponent implements OnInit, OnChang
     @Input() exerciseGroups: ExerciseGroup[];
 
     groupsWithoutExercises: ExerciseGroup[] = [];
-    allExercises: Exercise[] = [];
+    groupsWithExercises: Exercise[] = [];
 
     ngOnInit() {}
 
@@ -20,7 +20,7 @@ export class ExamChecklistExerciseGroupTableComponent implements OnInit, OnChang
                 if (exerciseGroup.exercises) {
                     exerciseGroup.exercises!.forEach((exercise) => {
                         exercise.exerciseGroup = exerciseGroup;
-                        this.allExercises.push(exercise);
+                        this.groupsWithExercises.push(exercise);
                     });
                     const maxPoints = exerciseGroup.exercises?.[0].maxPoints;
                     exerciseGroup.allPointsEqual = exerciseGroup.exercises?.some((exercise) => {
@@ -31,6 +31,5 @@ export class ExamChecklistExerciseGroupTableComponent implements OnInit, OnChang
                 }
             });
         }
-        console.log('test');
     }
 }
