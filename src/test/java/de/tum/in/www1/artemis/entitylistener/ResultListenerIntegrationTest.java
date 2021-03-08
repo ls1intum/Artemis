@@ -96,7 +96,7 @@ public class ResultListenerIntegrationTest extends AbstractSpringIntegrationBamb
         Exercise teamExercise = database.createTeamTextExercise(course, pastTimestamp, pastTimestamp, pastTimestamp);
         idOfTeamTextExercise = teamExercise.getId();
         User tutor1 = userRepository.findOneByLogin("tutor1").get();
-        idOfTeam1 = database.createTeam(Set.of(student1), tutor1, teamExercise).getId();
+        idOfTeam1 = database.createTeam(Set.of(student1), tutor1, teamExercise, "team1").getId();
     }
 
     @ParameterizedTest

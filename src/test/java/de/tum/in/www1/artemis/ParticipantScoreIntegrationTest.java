@@ -82,7 +82,7 @@ public class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationBa
         User student1 = userRepository.findOneByLogin("student1").get();
         idOfStudent1 = student1.getId();
         User tutor1 = userRepository.findOneByLogin("tutor1").get();
-        idOfTeam1 = database.createTeam(Set.of(student1), tutor1, teamExercise).getId();
+        idOfTeam1 = database.createTeam(Set.of(student1), tutor1, teamExercise, "team1").getId();
 
         // Creating result for student1
         database.createParticipationSubmissionAndResult(idOfIndividualTextExercise, student1, 10.0, 10.0, 50, true);

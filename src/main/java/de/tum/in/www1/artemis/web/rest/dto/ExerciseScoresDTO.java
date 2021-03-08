@@ -18,10 +18,10 @@ public class ExerciseScoresDTO {
 
     public ZonedDateTime releaseDate;
 
-    public Long scoreOfStudent;
+    public Double scoreOfStudent;
 
-    public Long averageScoreAchieved;
+    public Double averageScoreAchieved;
 
-    public Long maxScoreAchieved;
+    public Double maxScoreAchieved;
 
 }

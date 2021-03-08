@@ -359,14 +359,14 @@ public class DatabaseUtilService {
         return exerciseRepo.save(textExercise);
     }
 
-    public Team createTeam(Set<User> students, User owner, Exercise exercise) {
+    public Team createTeam(Set<User> students, User owner, Exercise exercise, String teamName) {
         Team team = new Team();
         for (User student : students) {
             team.addStudents(student);
         }
         team.setOwner(owner);
-        team.setShortName("team1");
-        team.setName("team1");
+        team.setShortName(teamName);
+        team.setName(teamName);
         team.setExercise(exercise);
         return teamRepo.saveAndFlush(team);
     }

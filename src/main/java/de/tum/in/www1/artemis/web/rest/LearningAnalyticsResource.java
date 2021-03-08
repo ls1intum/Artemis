@@ -52,9 +52,9 @@ public class LearningAnalyticsResource {
      * GET /courses/:courseId/analytics/exercise-scores
      * <p>
      * This call returns the the information used for the exercise-scores-chart. It will get get the score of
-     * the requesting user and the average score of the course in course exercises
+     * the requesting user,the average score and the best score in course exercises
      * <p>
-     * Only released course exercises are considered
+     * Only released course exercises with assessment due date over are considered!
      * <p>
      *
      * @return the ResponseEntity with status 200 (OK) and with the exercise scores in the body
@@ -72,9 +72,9 @@ public class LearningAnalyticsResource {
         if (!authorizationCheckService.isAtLeastStudentInCourse(course, user)) {
             return forbidden();
         }
-
-        Set<Exercise> exercisesToConsider = course.getExercises().stream().filter(Exercise::isVisibleToStudents).collect(Collectors.toSet());
-
+        // we only consider exercises in which the student had a chance to earn a score (released and due date over)
+        Set<Exercise> exercisesToConsider = course.getExercises().stream().filter(Exercise::isVisibleToStudents).filter(Exercise::isAssessmentDueDateOver)
+                .collect(Collectors.toSet());
         List<ExerciseScoresDTO> exerciseScoresDTOList = learningAnalyticsService.getExerciseScores(exercisesToConsider, user);
         return ResponseEntity.ok(exerciseScoresDTOList);
     }
