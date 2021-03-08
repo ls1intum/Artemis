@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.domain;
 
+import static de.tum.in.www1.artemis.service.util.RoundingUtil.round;
+
 import java.text.DecimalFormat;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -138,8 +140,9 @@ public class Result extends DomainObject {
      * @return String with result string in this format "2 of 13 points"
      */
     public String createResultString(Double totalPoints, Double maxPoints) {
+        Double pointsRounded = round(totalPoints);
         DecimalFormat formatter = new DecimalFormat("#.#");
-        return formatter.format(totalPoints) + " of " + formatter.format(maxPoints) + " points";
+        return formatter.format(pointsRounded) + " of " + formatter.format(maxPoints) + " points";
     }
 
     public ZonedDateTime getCompletionDate() {
