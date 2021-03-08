@@ -3,7 +3,7 @@ import { Subscription } from 'rxjs/Subscription';
 import { ActivatedRoute } from '@angular/router';
 import { User } from 'app/core/user/user.model';
 import * as moment from 'moment';
-import { round, sum } from 'lodash';
+import { sum } from 'lodash';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ExportToCsv } from 'export-to-csv';
 import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
