@@ -82,7 +82,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
      * 2. The left boundary of a spot if it is not immediately followed by a whitespace character
      * 3. The right boundary of a spot if it is not immediately preceded by a whitespace character
      */
-    regex = /(?<!\[-spot\s*)\s+|(?<=\[-spot\s*\d+\])(?=\S)|(?<=\S)(?=\[-spot\s*\d+\])/g;
+    wordParserRegex = /(?<!\[-spot\s*)\s+|(?<=\[-spot\s*\d+\])(?=\S)|(?<=\S)(?=\[-spot\s*\d+\])/g;
 
     backupQuestion: ShortAnswerQuestion;
 
@@ -102,9 +102,9 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
          * 2. Now each line of the question text will be divided into each word (we use whitespace and the borders of spots as separator, see {@link #regex}).
          */
         const textForEachLine = this.question.text!.split(/\n+/g);
-        this.textParts = textForEachLine.map((t) => {
-            const indentation = this.shortAnswerQuestionUtil.getIndentation(t);
-            const lineParts = t.split(this.regex);
+        this.textParts = textForEachLine.map((line) => {
+            const indentation = this.shortAnswerQuestionUtil.getIndentation(line);
+            const lineParts = line.split(this.wordParserRegex);
             if (lineParts.length > 1) {
                 lineParts[1] = indentation.concat(lineParts[1]);
             }
@@ -626,7 +626,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
         this.question.spots = cloneDeep(this.backupQuestion.spots);
         // split on every whitespace. !!!only exception: [-spot 1] is not split!!! for more details see description in ngOnInit.
         const textForEachLine = this.question.text!.split(/\n+/g);
-        this.textParts = textForEachLine.map((t) => t.split(this.regex));
+        this.textParts = textForEachLine.map((line) => line.split(this.wordParserRegex));
         this.question.explanation = this.backupQuestion.explanation;
         this.question.hint = this.backupQuestion.hint;
     }
@@ -672,7 +672,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
 
         // split on every whitespace. !!!only exception: [-spot 1] is not split!!! for more details see description in ngOnInit.
         const textForEachLine = this.question.text!.split(/\n+/g);
-        this.textParts = textForEachLine.map((t) => t.split(this.regex));
+        this.textParts = textForEachLine.map((line) => line.split(this.wordParserRegex));
 
         this.textParts = this.textParts.map((part) => part.filter((text) => !text || !text.includes('[-spot ' + spotToDelete.spotNr + ']')));
 
@@ -702,7 +702,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
         this.question.text = this.textParts.map((textPart) => textPart.join(' ')).join('\n');
         // split on every whitespace. !!!only exception: [-spot 1] is not split!!! for more details see description in ngOnInit.
         const textForEachLine = this.question.text.split(/\n+/g);
-        this.textParts = textForEachLine.map((t) => t.split(this.regex));
+        this.textParts = textForEachLine.map((line) => line.split(this.wordParserRegex));
     }
 
     /**
