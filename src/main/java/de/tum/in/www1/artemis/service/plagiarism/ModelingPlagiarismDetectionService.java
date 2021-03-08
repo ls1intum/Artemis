@@ -142,7 +142,7 @@ public class ModelingPlagiarismDetectionService {
                 comparison.setSubmissionA(submissionA);
                 comparison.setSubmissionB(submissionB);
                 // TODO: Add matches to highlight similar modeling elements
-                comparison.setMatches(new ArrayList<>());
+                comparison.setMatches(new HashSet<>());
 
                 comparisons.add(comparison);
             }
