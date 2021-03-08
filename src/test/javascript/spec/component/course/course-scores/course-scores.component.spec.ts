@@ -301,7 +301,7 @@ describe('CourseScoresComponent', () => {
         component.exportResults();
         const generatedRows = exportAsCsvStub.getCall(0).args[0];
         const user1Row = generatedRows[0];
-        validateUserRow(user1Row, user1.name!, user1.login!, user1.email!, '0', '0%', '10', '100%', '20', '200%', '10', '0%', '40', '133%');
+        validateUserRow(user1Row, user1.name!, user1.login!, user1.email!, '0', '0%', '10', '100%', '20', '200%', '10', '0%', '40', '133.3%');
         const user2Row = generatedRows[1];
         validateUserRow(user2Row, user2.name!, user2.login!, user2.email!, '0', '0%', '5', '50%', '0', '0%', '10', '0%', '15', '50%');
         const maxRow = generatedRows[3];
