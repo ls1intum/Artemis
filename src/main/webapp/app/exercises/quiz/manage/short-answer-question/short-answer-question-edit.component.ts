@@ -616,7 +616,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
         this.question.spots = cloneDeep(this.backupQuestion.spots);
         // split on every whitespace. !!!only exception: [-spot 1] is not split!!! for more details see description in ngOnInit.
         const textForEachLine = this.question.text!.split(/\n+/g);
-        this.textParts = textForEachLine.map((t) => t.split(/\s+(?![^[]]*])/g));
+        this.textParts = textForEachLine.map((t) => t.split(/\s+(?![^[]?[\d]]*])/g));
         this.question.explanation = this.backupQuestion.explanation;
         this.question.hint = this.backupQuestion.hint;
     }
@@ -662,9 +662,9 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
 
         // split on every whitespace. !!!only exception: [-spot 1] is not split!!! for more details see description in ngOnInit.
         const textForEachLine = this.question.text!.split(/\n+/g);
-        this.textParts = textForEachLine.map((t) => t.split(/\s+(?![^[]]*])/g));
+        this.textParts = textForEachLine.map((t) => t.split(/\s+(?![^[]?[\d]]*])/g));
 
-        this.textParts = this.textParts.map((part) => part.filter((text) => text !== '[-spot ' + spotToDelete.spotNr + ']'));
+        this.textParts = this.textParts.map((part) => part.filter((text) => !text || !text.includes('[-spot ' + spotToDelete.spotNr + ']')));
 
         this.question.text = this.textParts.map((textPart) => textPart.join(' ')).join('\n');
     }
@@ -692,7 +692,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
         this.question.text = this.textParts.map((textPart) => textPart.join(' ')).join('\n');
         // split on every whitespace. !!!only exception: [-spot 1] is not split!!! for more details see description in ngOnInit.
         const textForEachLine = this.question.text.split(/\n+/g);
-        this.textParts = textForEachLine.map((t) => t.split(/\s+(?![^[]]*])/g));
+        this.textParts = textForEachLine.map((t) => t.split(/\s+(?![^[]?[\d]]*])/g));
     }
 
     /**
