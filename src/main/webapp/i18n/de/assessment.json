@@ -3,7 +3,8 @@
         "assessment": {
             "assessment": "Bewertung",
             "testRunAssessment": "Bewertungstestlauf",
-            "unreferencedFeedback": "Feedback für fehlende Elemente",
+            "additionalFeedback": "Zusätzliches Feedback",
+            "feedback": "Feedback",
             "automaticGenerated": "Automatisch erstelltes Feedback",
             "error": {
                 "assessmentDueDateOver": "Die Einreichungsfrist der Bewertung für diese Aufgabe ist vorbei."
@@ -47,6 +48,7 @@
                     "assessmentType": "Bewertungsart",
                     "student": "Student",
                     "assessor": "Prüfer/in",
+                    "assessors": "Prüfer/innen",
                     "action": "Bewertungsaktionen",
                     "assessmentFirst": "Korrekturrunde 1",
                     "assessmentSecond": "Korrekturrunde 2"

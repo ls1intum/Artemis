@@ -338,7 +338,7 @@ export class ExampleModelingSubmissionComponent implements OnInit {
     async back() {
         const courseId = this.exercise.course?.id || this.exercise.exerciseGroup?.exam?.course?.id;
         if (this.readOnly || this.toComplete) {
-            await this.router.navigate(['/course-management', courseId, 'exercises', this.exerciseId, 'tutor-dashboard']);
+            await this.router.navigate(['/course-management', courseId, 'assessment-dashboard', this.exerciseId]);
         } else if (this.isExamMode) {
             await this.router.navigate([
                 '/course-management',
