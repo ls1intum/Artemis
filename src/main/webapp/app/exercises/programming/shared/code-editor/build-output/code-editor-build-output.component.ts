@@ -16,6 +16,7 @@ import { Annotation } from '../ace/code-editor-ace.component';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { findLatestResult } from 'app/shared/util/utils';
 import { StaticCodeAnalysisIssue } from 'app/entities/static-code-analysis-issue.model';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 
 @Component({
     selector: 'jhi-code-editor-build-output',
@@ -110,7 +111,8 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnInit, On
      * and emits them to the parent component
      */
     private extractAnnotations() {
-        const buildLogErrors = this.rawBuildLogs.extractErrors();
+        const programmingLanguage = (this.participation!.exercise as ProgrammingExercise).programmingLanguage!;
+        const buildLogErrors = this.rawBuildLogs.extractErrors(programmingLanguage);
         const codeAnalysisIssues = (this.result!.feedbacks || [])
             .filter(Feedback.isStaticCodeAnalysisFeedback)
             .map<StaticCodeAnalysisIssue>((feedback) => JSON.parse(feedback.detailText!));
