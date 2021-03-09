@@ -4,7 +4,6 @@
         <ng-content select="[editorTitleActions]"></ng-content>
         <div class="d-flex align-items-center ml-auto">
             <ng-content select="[editorToolbar]"></ng-content>
-            <!-- TODO: undo !isTutorAssessment      -->
             <jhi-code-editor-actions
                 *ngIf="!isTutorAssessment || commitState === CommitState.CONFLICT"
                 [buildable]="buildable"

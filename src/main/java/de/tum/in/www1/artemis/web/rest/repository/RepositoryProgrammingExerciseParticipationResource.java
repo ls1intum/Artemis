@@ -300,9 +300,6 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
     @PostMapping(value = "/repository/{participationId}/reset", produces = MediaType.APPLICATION_JSON_VALUE)
     @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
     public ResponseEntity<Void> resetToLastCommit(@PathVariable Long participationId) {
-        // Participation participation = participationService.findParticipation(participationId);
-        // var exercise = participation.getExercise();
-        // var isAtLeastTutor = !authCheckService.isAtLeastTeachingAssistantForExercise(exercise);
         return super.resetToLastCommit(participationId);
     }
 
