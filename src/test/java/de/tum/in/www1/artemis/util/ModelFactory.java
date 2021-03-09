@@ -721,7 +721,7 @@ public class ModelFactory {
         return studentParticipation;
     }
 
-    public static Result generateResult(boolean rated, long score) {
+    public static Result generateResult(boolean rated, double score) {
         Result result = new Result();
         result.setRated(rated);
         result.setScore(score);
