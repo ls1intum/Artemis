@@ -1674,7 +1674,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         assertThat(stats.getTotalNumberOfAssessmentLocks()).isEqualTo(0L);
 
         // Score used for all exercise results
-        Long resultScore = 75L;
+        Double resultScore = 75.0;
 
         // Lock all submissions
         for (var exercise : exercisesInExam) {
