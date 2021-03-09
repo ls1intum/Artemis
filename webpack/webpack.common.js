@@ -2,7 +2,7 @@ const webpack = require('webpack');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const AngularCompilerPlugin = require('@ngtools/webpack').AngularCompilerPlugin;
-const MergeJsonWebpackPlugin = require("merge-jsons-webpack-plugin");
+const MergeJsonWebpackPlugin = require('merge-jsons-webpack-plugin');
 
 const utils = require('./utils.js');
 
@@ -13,16 +13,16 @@ module.exports = (options) => ({
         mainFields: ['es2015', 'browser', 'module', 'main'],
         alias: utils.mapTypescriptAliasToWebpackAlias(),
         fallback: {
-            "crypto": require.resolve("crypto-browserify"),
-            "stream": require.resolve("stream-browserify"),
+            crypto: require.resolve('crypto-browserify'),
+            stream: require.resolve('stream-browserify'),
         },
     },
     stats: {
-        children: false
+        children: false,
     },
     performance: {
-        maxEntrypointSize: 1024*1024,
-        maxAssetSize: 1024*1024,
+        maxEntrypointSize: 1024 * 1024,
+        maxAssetSize: 1024 * 1024,
     },
     output: {
         publicPath: '',
@@ -31,7 +31,7 @@ module.exports = (options) => ({
         rules: [
             {
                 test: /(?:\.ngfactory\.js|\.ngstyle\.js|\.ts)$/,
-                loader: '@ngtools/webpack'
+                loader: '@ngtools/webpack',
             },
             {
                 test: /\.html$/,
@@ -41,45 +41,46 @@ module.exports = (options) => ({
                         caseSensitive: true,
                         removeAttributeQuotes: false,
                         minifyJS: false,
-                        minifyCSS: false
-                    }
+                        minifyCSS: false,
+                    },
                 },
-                exclude: utils.root('src/main/webapp/index.html')
+                exclude: utils.root('src/main/webapp/index.html'),
             },
             {
                 test: /\.(jpe?g|png|gif|svg|woff2?|ttf|eot)$/i,
-                loader: 'file-loader',
-                options: {
-                    digest: 'hex',
-                    hash: 'sha512',
-                    name: 'content/[hash].[ext]'
-                }
+                type: 'asset/resource',
+                generator: {
+                    filename: 'content/[hash][ext][query]',
+                },
             },
             {
                 test: /manifest.webapp$/,
-                loader: 'file-loader',
-                options: {
-                    name: 'manifest.webapp'
-                }
+                type: 'asset/resource',
+                generator: {
+                    filename: 'manifest.webapp',
+                },
             },
             // Ignore warnings about System.import in Angular
             { test: /[\/\\]@angular[\/\\].+\.js$/, parser: { system: true } },
-        ]
+        ],
     },
     plugins: [
+        new webpack.ProvidePlugin({
+            process: 'process/browser',
+        }),
         new webpack.DefinePlugin({
             'process.env': {
                 NODE_ENV: `'${options.env}'`,
                 BUILD_TIMESTAMP: `'${new Date().getTime()}'`,
                 // APP_VERSION is passed as an environment variable from the Gradle / Maven build tasks.
-                VERSION: `'${process.env.hasOwnProperty('APP_VERSION') && process.env.APP_VERSION !== "unspecified" ? process.env.APP_VERSION : utils.parseVersion()}'`,
+                VERSION: `'${process.env.hasOwnProperty('APP_VERSION') && process.env.APP_VERSION !== 'unspecified' ? process.env.APP_VERSION : utils.parseVersion()}'`,
                 DEBUG_INFO_ENABLED: options.env === 'development',
                 // The root URL for API calls, ending with a '/' - for example: `"https://www.jhipster.tech:8081/myservice/"`.
                 // If this URL is left empty (""), then it will be relative to the current context.
                 // If you use an API server, in `prod` mode, you will need to enable CORS
                 // (see the `jhipster.cors` common JHipster property in the `application-*.yml` configurations)
-                SERVER_API_URL: `''`
-            }
+                SERVER_API_URL: `''`,
+            },
         }),
         new CopyWebpackPlugin({
             patterns: [
@@ -92,22 +93,22 @@ module.exports = (options) => ({
         new MergeJsonWebpackPlugin({
             output: {
                 groupBy: [
-                    { pattern: "./src/main/webapp/i18n/en/*.json", fileName: "./i18n/en.json" },
-                    { pattern: "./src/main/webapp/i18n/de/*.json", fileName: "./i18n/de.json" }
-                ]
-            }
+                    { pattern: './src/main/webapp/i18n/en/*.json', fileName: './i18n/en.json' },
+                    { pattern: './src/main/webapp/i18n/de/*.json', fileName: './i18n/de.json' },
+                ],
+            },
         }),
         new HtmlWebpackPlugin({
             template: './src/main/webapp/index.html',
             chunks: ['polyfills', 'main', 'global'],
             chunksSortMode: 'manual',
             inject: 'body',
-            'base': '/'
+            base: '/',
         }),
         new AngularCompilerPlugin({
             mainPath: utils.root('src/main/webapp/app/app.main.ts'),
             tsConfigPath: utils.root('tsconfig.app.json'),
-            sourceMap: true
-        })
-    ]
+            sourceMap: true,
+        }),
+    ],
 });
