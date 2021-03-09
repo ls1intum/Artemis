@@ -98,15 +98,15 @@ describe('AssessmentDashboardInformationComponent', () => {
 
     const numberOfAssessmentsOfCorrectionRounds = [{ inTime: 1, late: 1 } as DueDateStat, { inTime: 8, late: 0 } as DueDateStat];
     const tutorLeaderboardEntries = [] as TutorLeaderboardElement[];
-    let courseTutorStats = {
+    const courseTutorStats = {
         numberOfSubmissions: { inTime: 5, late: 0 } as DueDateStat,
         totalNumberOfAssessments: { inTime: 3, late: 0 } as DueDateStat,
-        numberOfAssessmentsOfCorrectionRounds: numberOfAssessmentsOfCorrectionRounds,
+        numberOfAssessmentsOfCorrectionRounds,
         numberOfComplaints: 0,
         numberOfMoreFeedbackRequests: 0,
         numberOfOpenMoreFeedbackRequests: 0,
         numberOfAssessmentLocks: 2,
-        tutorLeaderboardEntries: tutorLeaderboardEntries,
+        tutorLeaderboardEntries,
         numberOfStudents: 5,
         numberOfAutomaticAssistedAssessments: { inTime: 0, late: 0 },
         numberOfOpenComplaints: 0,
@@ -170,14 +170,14 @@ describe('AssessmentDashboardInformationComponent', () => {
 
     describe('ngOnInit', () => {
         it('should loadAll for course', () => {
-            const route = ({
+            const newRoute = ({
                 snapshot: {
                     paramMap: convertToParamMap({ courseId: course.id }),
                     url: { path: '/course-management/10/assessment-dashboard', parameterMap: {}, parameters: {} } as UrlSegment,
                 },
             } as any) as ActivatedRoute;
-            let activatedRoute: ActivatedRoute = fixture.debugElement.injector.get(ActivatedRoute);
-            activatedRoute.snapshot = route.snapshot;
+            const activatedRoute: ActivatedRoute = fixture.debugElement.injector.get(ActivatedRoute);
+            activatedRoute.snapshot = newRoute.snapshot;
             TestBed.inject(ActivatedRoute);
 
             // TODO: for some very odd reason those two stubs do not work. I could not figure out why. This test tests nothing atm.
@@ -196,6 +196,7 @@ describe('AssessmentDashboardInformationComponent', () => {
         it('should loadAll for exam', () => {
             getExamWithInterestingExercisesForAssessmentDashboardStub.returns(of({ body: exam }));
             getStatsForExamAssessmentDashboardStub.returns(of(courseTutorStats));
+            isAtLeastInstructorInCourseStub.returns(of(true));
 
             comp.ngOnInit();
             expect(getExamWithInterestingExercisesForAssessmentDashboardStub).to.have.been.called;

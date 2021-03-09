@@ -1,8 +1,8 @@
-import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed } from '@angular/core/testing';
 import { RouterTestingModule } from '@angular/router/testing';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { AccountService } from 'app/core/auth/account.service';
-import { of, Subject, throwError } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { cloneDeep } from 'lodash';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
@@ -13,8 +13,7 @@ import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.s
 import { MockComponent } from 'ng-mocks';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
-
-import { ActivatedRoute, convertToParamMap, Params, Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { FileUploadAssessmentComponent } from 'app/exercises/file-upload/assess/file-upload-assessment.component';
 import { DebugElement } from '@angular/core';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
@@ -36,7 +35,6 @@ import { Result } from 'app/entities/result.model';
 import { ModelingAssessmentModule } from 'app/exercises/modeling/assess/modeling-assessment.module';
 import { routes } from 'app/exercises/file-upload/assess/file-upload-assessment.route';
 import { By } from '@angular/platform-browser';
-import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
 import { Participation, ParticipationType } from 'app/entities/participation/participation.model';
 import { CollapsableAssessmentInstructionsComponent } from 'app/assessment/assessment-instructions/collapsable-assessment-instructions/collapsable-assessment-instructions.component';
 import { AssessmentInstructionsComponent } from 'app/assessment/assessment-instructions/assessment-instructions/assessment-instructions.component';
@@ -63,7 +61,6 @@ describe('FileUploadAssessmentComponent', () => {
     let router: Router;
     let navigateByUrlStub: SinonStub;
     let alertService: JhiAlertService;
-    let route: ActivatedRoute;
 
     const exercise = { id: 20, type: ExerciseType.FILE_UPLOAD, maxPoints: 100, bonusPoints: 0 } as FileUploadExercise;
     const map1 = new Map<string, Object>().set('testRun', true).set('correction-round', 1);
@@ -205,7 +202,7 @@ describe('FileUploadAssessmentComponent', () => {
         }));
 
         it('should load optimal submission', () => {
-            let activatedRoute: ActivatedRoute = fixture.debugElement.injector.get(ActivatedRoute);
+            const activatedRoute: ActivatedRoute = fixture.debugElement.injector.get(ActivatedRoute);
             activatedRoute.params = of(params2);
             TestBed.inject(ActivatedRoute);
             const submission = createSubmission(exercise);
@@ -222,7 +219,7 @@ describe('FileUploadAssessmentComponent', () => {
 
         it('should get 404 error when loading optimal submission', () => {
             navigateByUrlStub.returns(Promise.resolve(true));
-            let activatedRoute: ActivatedRoute = fixture.debugElement.injector.get(ActivatedRoute);
+            const activatedRoute: ActivatedRoute = fixture.debugElement.injector.get(ActivatedRoute);
             activatedRoute.params = of(params2);
             TestBed.inject(ActivatedRoute);
             getFileUploadSubmissionForExerciseWithoutAssessmentStub.returns(throwError({ status: 404 }));
@@ -232,7 +229,7 @@ describe('FileUploadAssessmentComponent', () => {
         });
         it('should get lock limit reached error when loading optimal submission', () => {
             navigateByUrlStub.returns(Promise.resolve(true));
-            let activatedRoute: ActivatedRoute = fixture.debugElement.injector.get(ActivatedRoute);
+            const activatedRoute: ActivatedRoute = fixture.debugElement.injector.get(ActivatedRoute);
             activatedRoute.params = of(params2);
             TestBed.inject(ActivatedRoute);
             getFileUploadSubmissionForExerciseWithoutAssessmentStub.returns(throwError({ error: { errorKey: 'lockedSubmissionsLimitReached' } }));
@@ -242,7 +239,7 @@ describe('FileUploadAssessmentComponent', () => {
         });
         it('should fail to load optimal submission', () => {
             navigateByUrlStub.returns(Promise.resolve(true));
-            let activatedRoute: ActivatedRoute = fixture.debugElement.injector.get(ActivatedRoute);
+            const activatedRoute: ActivatedRoute = fixture.debugElement.injector.get(ActivatedRoute);
             activatedRoute.params = of(params2);
             TestBed.inject(ActivatedRoute);
             getFileUploadSubmissionForExerciseWithoutAssessmentStub.returns(throwError({ status: 403 }));
@@ -335,7 +332,7 @@ describe('FileUploadAssessmentComponent', () => {
         });
 
         it('should not save the assessment if error', () => {
-            //errorResponse
+            // errorResponse
             const errorResponse = new HttpErrorResponse({ error: 'Forbidden', status: 403 });
             const alertServiceErrorSpy = sinon.spy(alertService, 'error');
             const submission = createSubmission(exercise);
@@ -558,7 +555,6 @@ describe('FileUploadAssessmentComponent', () => {
     });
     describe('getComplaint', () => {
         it('should get Complaint', () => {
-            const submission = createSubmission(exercise);
             comp.result = createResult(comp.submission);
             comp.result.hasComplaint = true;
             const complaint = new Complaint();
