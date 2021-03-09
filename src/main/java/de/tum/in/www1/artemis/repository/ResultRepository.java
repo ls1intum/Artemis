@@ -128,7 +128,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
      */
     @Query("""
             SELECT COUNT(r.id)
-            FROM StudentParticipation p join  p.submissions s join s.results r
+            FROM StudentParticipation p join p.submissions s join s.results r
             WHERE p.exercise.id = :exerciseId
                 AND p.testRun = FALSE
                 AND s.submitted = TRUE
@@ -138,6 +138,25 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
                 GROUP BY p.id
             """)
     List<Long> countNumberOfFinishedAssessmentsByExerciseIdIgnoreTestRuns(@Param("exerciseId") Long exerciseId);
+
+    /**
+     * count the number of finsished assessments of an exam with given examId
+     *
+     * @param examId id of the exam
+     * @return a list that contains the count of manual assessments for each studentParticipation of the exam
+     */
+    @Query("""
+            SELECT COUNT(r.id)
+            FROM StudentParticipation p join p.submissions s join s.results r
+            WHERE p.exercise.exerciseGroup.exam.id = :examId
+                AND p.testRun = FALSE
+                AND s.submitted = TRUE
+                AND r.completionDate IS NOT NULL
+                AND r.rated = TRUE
+                AND r.assessor IS NOT NULL
+                GROUP BY p.id
+            """)
+    List<Long> countNumberOfFinishedAssessmentsByExamIdIgnoreTestRuns(@Param("examId") Long examId);
 
     @EntityGraph(type = LOAD, attributePaths = { "feedbacks" })
     List<Result> findAllWithEagerFeedbackByAssessorIsNotNullAndParticipation_ExerciseIdAndCompletionDateIsNotNull(Long exerciseId);
@@ -214,12 +233,39 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
      * @param numberOfCorrectionRounds - the correction round we want finished assessments for
      * @return an array of the number of assessments for the exercise for a given correction round
      */
-    default DueDateStat[] countNumberOfFinishedAssessmentsForExamExerciseForCorrectionRound(Exercise exercise, int numberOfCorrectionRounds) {
-        DueDateStat[] correctionRoundsDataStats = new DueDateStat[numberOfCorrectionRounds];
+    default DueDateStat[] countNumberOfFinishedAssessmentsForExamExerciseForCorrectionRounds(Exercise exercise, int numberOfCorrectionRounds) {
 
         // here we receive a list which contains an entry for each studentparticipation of the exercise.
         // the entry simply is the number of already created and submitted manual results, so the number is either 1 or 2
         List<Long> countlist = countNumberOfFinishedAssessmentsByExerciseIdIgnoreTestRuns(exercise.getId());
+        return convertDatabaseResponseToDueDateStats(countlist, numberOfCorrectionRounds);
+    }
+
+    /**
+     * Use this method only for exams!
+     * Given an exerciseId and the number of correctionRounds, return the number of assessments that have been finished, for that exerciseId and each correctionRound
+     *
+     * @param examId   - the id of the exam we are interested in
+     * @param numberOfCorrectionRounds - the correction round we want finished assessments for
+     * @return an array of the number of assessments for the exercise for a given correction round
+     */
+    default DueDateStat[] countNumberOfFinishedAssessmentsForExamForCorrectionRounds(Long examId, int numberOfCorrectionRounds) {
+
+        // here we receive a list which contains an entry for each studentparticipation of the exam.
+        // the entry simply is the number of already created and submitted manual results, so the number is either 1 or 2
+        List<Long> countlist = countNumberOfFinishedAssessmentsByExamIdIgnoreTestRuns(examId);
+        return convertDatabaseResponseToDueDateStats(countlist, numberOfCorrectionRounds);
+    }
+
+    /**
+     * Takes the Long List database response and converts it to the according DueDateStats
+     *
+     * @param countlist                 - the lists returned from the database
+     * @param numberOfCorrectionRounds  - numbmer of the correction rounds which is set for the given exam
+     * @return an array of DueDateStats which contains a DueDateStat with the number of assessments for each correction round.
+     */
+    default DueDateStat[] convertDatabaseResponseToDueDateStats(List<Long> countlist, int numberOfCorrectionRounds) {
+        DueDateStat[] correctionRoundsDataStats = new DueDateStat[numberOfCorrectionRounds];
 
         // depending on the number of correctionRounds we create 1 or 2 DueDateStats that contain the sum of all participations:
         // with either 1 or more manual results, OR 2 or more manual results
@@ -265,6 +311,16 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
     default DueDateStat countNumberOfAssessments(Long courseId) {
         return new DueDateStat(countByAssessorIsNotNullAndParticipation_Exercise_CourseIdAndRatedAndCompletionDateIsNotNull(courseId, true),
                 countByAssessorIsNotNullAndParticipation_Exercise_CourseIdAndRatedAndCompletionDateIsNotNull(courseId, false));
+    }
+
+    /**
+     * Given a courseId, return the number of assessments for that course that have been completed (e.g. no draft!)
+     *
+     * @param courseId - the course we are interested in
+     * @return a number of assessments for the course
+     */
+    default DueDateStat countNumberOfAssessmentsOfExam(Long courseId) {
+        return new DueDateStat(countByAssessorIsNotNullAndParticipation_Exercise_CourseIdAndRatedAndCompletionDateIsNotNull(courseId, true), 0);
     }
 
 }

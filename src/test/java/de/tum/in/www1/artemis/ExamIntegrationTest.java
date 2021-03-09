@@ -21,6 +21,7 @@ import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.in.www1.artemis.connector.jira.JiraRequestMockProvider;
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
 import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
 import de.tum.in.www1.artemis.domain.exam.Exam;
@@ -30,6 +31,7 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
 import de.tum.in.www1.artemis.service.exam.ExamDateService;
@@ -37,9 +39,7 @@ import de.tum.in.www1.artemis.service.exam.ExamRegistrationService;
 import de.tum.in.www1.artemis.service.exam.ExamService;
 import de.tum.in.www1.artemis.service.ldap.LdapUserDto;
 import de.tum.in.www1.artemis.util.ModelFactory;
-import de.tum.in.www1.artemis.web.rest.dto.ExamChecklistDTO;
-import de.tum.in.www1.artemis.web.rest.dto.ExamInformationDTO;
-import de.tum.in.www1.artemis.web.rest.dto.ExamScoresDTO;
+import de.tum.in.www1.artemis.web.rest.dto.*;
 
 public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -1584,5 +1584,151 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
         var updatedCourse = courseRepo.findById(courseId).get();
         assertThat(updatedCourse.getCourseArchivePath()).isNotEmpty();
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testGetStatsForExamAssessmentDashboard() throws Exception {
+        User examInstructor = userRepo.findOneByLogin("instructor1").get();
+        var examVisibleDate = ZonedDateTime.now().minusMinutes(5);
+        var examStartDate = ZonedDateTime.now().plusMinutes(5);
+        var examEndDate = ZonedDateTime.now().plusMinutes(20);
+        Course course = database.addEmptyCourse();
+        Exam exam = database.addExam(course, examVisibleDate, examStartDate, examEndDate);
+
+        exam = database.addExerciseGroupsAndExercisesToExam(exam, false);
+
+        var stats = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/stats-for-exam-assessment-dashboard", HttpStatus.OK,
+                StatsForInstructorDashboardDTO.class);
+        assertThat(stats.getNumberOfSubmissions()).isInstanceOf(DueDateStat.class);
+        assertThat(stats.getTutorLeaderboardEntries()).isInstanceOf(List.class);
+        assertThat(stats.getNumberOfAssessmentsOfCorrectionRounds()).isInstanceOf(DueDateStat[].class);
+        assertThat(stats.getNumberOfAssessmentLocks()).isEqualTo(0L);
+        assertThat(stats.getNumberOfSubmissions().getInTime()).isEqualTo(0L);
+        assertThat(stats.getNumberOfAssessmentsOfCorrectionRounds()[0].getInTime()).isEqualTo(0L);
+        assertThat(stats.getTotalNumberOfAssessmentLocks()).isEqualTo(0L);
+
+        var lockedSubmissions = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/lockedSubmissions", HttpStatus.OK, List.class);
+        assertThat(lockedSubmissions.size()).isEqualTo(0);
+
+        // register users. Instructors are ignored from scores as they are exclusive for test run exercises
+        Set<User> registeredStudents = users.stream().filter(user -> !user.getLogin().contains("instructor") && !user.getLogin().contains("admin")).collect(Collectors.toSet());
+        exam.setRegisteredUsers(registeredStudents);
+        exam.setNumberOfExercisesInExam(exam.getExerciseGroups().size());
+        exam.setRandomizeExerciseOrder(false);
+        exam = examRepository.save(exam);
+        exam = examRepository.findWithRegisteredUsersAndExerciseGroupsAndExercisesById(exam.getId()).get();
+
+        // generate individual student exams
+        List<StudentExam> studentExams = request.postListWithResponseBody("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/generate-student-exams", Optional.empty(),
+                StudentExam.class, HttpStatus.OK);
+        Integer noGeneratedParticipations = request.postWithResponseBody("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/student-exams/start-exercises",
+                Optional.empty(), Integer.class, HttpStatus.OK);
+
+        // set start and submitted date as results are created below
+        studentExams.forEach(studentExam -> {
+            studentExam.setStarted(true);
+            studentExam.setStartedDate(ZonedDateTime.now().minusMinutes(2));
+            studentExam.setSubmitted(true);
+            studentExam.setSubmissionDate(ZonedDateTime.now().minusMinutes(1));
+        });
+        studentExamRepository.saveAll(studentExams);
+
+        // Fetch the created participations and assign them to the exercises
+        int participationCounter = 0;
+        List<Exercise> exercisesInExam = exam.getExerciseGroups().stream().map(ExerciseGroup::getExercises).flatMap(Collection::stream).collect(Collectors.toList());
+        SecurityUtils.setAuthorizationObject();
+        for (var exercise : exercisesInExam) {
+            List<StudentParticipation> participations = studentParticipationRepository.findByExerciseIdWithEagerSubmissionsResult(exercise.getId());
+            exercise.setStudentParticipations(new HashSet<>(participations));
+            participationCounter += exercise.getStudentParticipations().size();
+        }
+        assertEquals(participationCounter, noGeneratedParticipations);
+
+        // Assign submissions to the participations
+        for (var exercise : exercisesInExam) {
+            for (var participation : exercise.getStudentParticipations()) {
+                Submission submission;
+                assertThat(participation.getSubmissions()).hasSize(1);
+                submission = participation.getSubmissions().iterator().next();
+                submission.submitted(true);
+                submission.setSubmissionDate(ZonedDateTime.now().minusMinutes(6));
+                submissionRepository.save(submission);
+            }
+        }
+
+        // check the stats again - check the count of submitted submissions
+        stats = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/stats-for-exam-assessment-dashboard", HttpStatus.OK,
+                StatsForInstructorDashboardDTO.class);
+        assertThat(stats.getNumberOfAssessmentLocks()).isEqualTo(0L);
+        // 75 = (15 users * 5 exercises); quiz submissions are not counted
+        assertThat(stats.getNumberOfSubmissions().getInTime()).isEqualTo(75L);
+        assertThat(stats.getNumberOfAssessmentsOfCorrectionRounds()[0].getInTime()).isEqualTo(0L);
+        assertThat(stats.getNumberOfComplaints()).isEqualTo(0L);
+        assertThat(stats.getTotalNumberOfAssessmentLocks()).isEqualTo(0L);
+
+        // Score used for all exercise results
+        Double resultScore = 75.0;
+
+        // Lock all submissions
+        for (var exercise : exercisesInExam) {
+            for (var participation : exercise.getStudentParticipations()) {
+                Submission submission;
+                assertThat(participation.getSubmissions()).hasSize(1);
+                submission = participation.getSubmissions().iterator().next();
+                // Create results
+                var result = new Result().score(resultScore).rated(true).resultString("Good");
+                if (exercise instanceof QuizExercise) {
+                    result.completionDate(ZonedDateTime.now().minusMinutes(4));
+                }
+                result.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+                result.setParticipation(participation);
+                result.setAssessor(examInstructor);
+                result = resultRepository.save(result);
+                result.setSubmission(submission);
+                submission.addResult(result);
+                submissionRepository.save(submission);
+            }
+        }
+        // check the stats again
+        stats = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/stats-for-exam-assessment-dashboard", HttpStatus.OK,
+                StatsForInstructorDashboardDTO.class);
+        assertThat(stats.getNumberOfAssessmentLocks()).isEqualTo(75L);
+        // 75 = (15 users * 5 exercises); quiz submissions are not counted
+        assertThat(stats.getNumberOfSubmissions().getInTime()).isEqualTo(75L);
+        // the 15 quiz submissions are already assessed
+        assertThat(stats.getNumberOfAssessmentsOfCorrectionRounds()[0].getInTime()).isEqualTo(15L);
+        assertThat(stats.getNumberOfComplaints()).isEqualTo(0L);
+        assertThat(stats.getTotalNumberOfAssessmentLocks()).isEqualTo(75L);
+
+        lockedSubmissions = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/lockedSubmissions", HttpStatus.OK, List.class);
+        assertThat(lockedSubmissions.size()).isEqualTo(75);
+
+        // Lock all submissions
+        for (var exercise : exercisesInExam) {
+            for (var participation : exercise.getStudentParticipations()) {
+                Submission submission;
+                assertThat(participation.getSubmissions()).hasSize(1);
+                submission = participation.getSubmissions().iterator().next();
+                var result = submission.getLatestResult().completionDate(ZonedDateTime.now().minusMinutes(5));
+                resultRepository.save(result);
+
+            }
+        }
+
+        // check the stats again
+        stats = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/stats-for-exam-assessment-dashboard", HttpStatus.OK,
+                StatsForInstructorDashboardDTO.class);
+        assertThat(stats.getNumberOfAssessmentLocks()).isEqualTo(0L);
+        // 75 = (15 users * 5 exercises); quiz submissions are not counted
+        assertThat(stats.getNumberOfSubmissions().getInTime()).isEqualTo(75L);
+        // 75 + the 15 quiz submissions
+        assertThat(stats.getNumberOfAssessmentsOfCorrectionRounds()[0].getInTime()).isEqualTo(90L);
+        assertThat(stats.getNumberOfComplaints()).isEqualTo(0L);
+        assertThat(stats.getTotalNumberOfAssessmentLocks()).isEqualTo(0L);
+
+        lockedSubmissions = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/lockedSubmissions", HttpStatus.OK, List.class);
+        assertThat(lockedSubmissions.size()).isEqualTo(0);
+
     }
 }
