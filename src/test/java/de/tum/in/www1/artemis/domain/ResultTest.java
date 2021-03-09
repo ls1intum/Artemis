@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import org.assertj.core.data.Offset;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -48,7 +49,7 @@ public class ResultTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
         result.setScore(totalPoints, maxPoints);
         result.setResultString(totalPoints, maxPoints);
 
-        assertThat(result.getScore()).isEqualTo(Math.round(5.0 / maxPoints * 100));
+        assertThat(result.getScore()).isEqualTo(5.0 / maxPoints * 100, Offset.offset(0.00001));
         assertThat(result.getResultString()).isEqualToIgnoringCase("5 of 7 points");
     }
 

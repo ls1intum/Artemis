@@ -457,12 +457,12 @@ public class ProgrammingExerciseGradingService {
             }
 
             // The score is calculated as a percentage of the maximum points
-            long score = Math.round(successfulTestPoints / programmingExercise.getMaxPoints() * 100.0);
+            double score = successfulTestPoints / programmingExercise.getMaxPoints() * 100.0;
 
             result.setScore(score);
         }
         else {
-            result.setScore(0L);
+            result.setScore(0D);
         }
     }
 
@@ -565,7 +565,7 @@ public class ProgrammingExerciseGradingService {
     private void removeAllTestCaseFeedbackAndSetScoreToZero(Result result, List<Feedback> staticCodeAnalysisFeedback) {
         result.setFeedbacks(staticCodeAnalysisFeedback);
         result.hasFeedback(staticCodeAnalysisFeedback.size() > 0);
-        result.setScore(0L);
+        result.setScore(0D);
     }
 
     /**
