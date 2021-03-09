@@ -248,7 +248,7 @@ public class SubmissionService {
                 // make sure that sensitive information is not sent to the client for students
                 if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
                     exercise.filterSensitiveInformation();
-                    submission.setResults(new ArrayList<Result>());
+                    submission.setResults(new ArrayList<>());
                 }
                 // remove information about the student or team from the submission for tutors to ensure a double-blind assessment
                 if (!authCheckService.isAtLeastInstructorForExercise(exercise, user)) {
@@ -353,7 +353,7 @@ public class SubmissionService {
      * @param feedbackText the feedback text for the
      * @param correctionRound the correction round (1 or 2)
      */
-    public void addResultWithFeedbackByCorrectionRound(StudentParticipation studentParticipation, User assessor, long score, String feedbackText, int correctionRound) {
+    public void addResultWithFeedbackByCorrectionRound(StudentParticipation studentParticipation, User assessor, double score, String feedbackText, int correctionRound) {
         if (studentParticipation.getExercise().isExamExercise()) {
             var latestSubmission = studentParticipation.findLatestSubmission();
             if (latestSubmission.isPresent() && latestSubmission.get().getResultForCorrectionRound(correctionRound) == null) {
