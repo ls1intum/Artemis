@@ -46,7 +46,7 @@ SELECT lr.student_id,
        lr.last_result_id,
        lr.last_result_score,
        'SS',
-       IF(lr.last_result_score IS NOT NULL, ROUND(lr.last_result_score * 0.01 * lr.exercise_max_points, 3), NULL)
+       IF(lr.last_result_score IS NOT NULL, ROUND(lr.last_result_score * 0.01 * lr.exercise_max_points, 1), NULL)
 FROM last_result lr;
 
 
@@ -99,7 +99,7 @@ UPDATE participant_score ps,
 SET ps.last_rated_result_id = lr.last_rated_result_id,
     ps.last_rated_score     = lr.last_rated_result_score,
     ps.last_rated_points    = IF(lr.last_rated_result_score IS NOT NULL,
-                                 ROUND(lr.last_rated_result_score * 0.01 * lr.exercise_max_points, 3), NULL)
+                                 ROUND(lr.last_rated_result_score * 0.01 * lr.exercise_max_points, 1), NULL)
 WHERE ps.exercise_id = lr.exercise_id
   AND ps.user_id = lr.student_id;
 
@@ -152,7 +152,7 @@ SELECT lr.team_id,
        lr.last_result_id,
        lr.last_result_score,
        'TS',
-       IF(lr.last_result_score IS NOT NULL, ROUND(lr.last_result_score * 0.01 * lr.exercise_max_points, 3), NULL)
+       IF(lr.last_result_score IS NOT NULL, ROUND(lr.last_result_score * 0.01 * lr.exercise_max_points, 1), NULL)
 FROM last_result lr;
 
 -- UPDATE LAST RATED SCORE TEAM
@@ -205,6 +205,6 @@ UPDATE participant_score ps,
 SET ps.last_rated_result_id = lr.last_rated_result_id,
     ps.last_rated_score     = lr.last_rated_result_score,
     ps.last_rated_points    = IF(lr.last_rated_result_score IS NOT NULL,
-                                 ROUND(lr.last_rated_result_score * 0.01 * lr.exercise_max_points, 3), NULL)
+                                 ROUND(lr.last_rated_result_score * 0.01 * lr.exercise_max_points, 1), NULL)
 WHERE ps.exercise_id = lr.exercise_id
   AND ps.team_id = lr.team_id;
