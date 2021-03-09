@@ -79,7 +79,7 @@ export class ListOfComplaintsComponent implements OnInit {
             if (this.exerciseId) {
                 complaintResponse = this.complaintService.findAllByExerciseId(this.exerciseId, this.complaintType);
             } else if (this.examId) {
-                complaintResponse = this.complaintService.findAllByCourseIdAndExamId(this.courseId, this.examId, this.complaintType);
+                complaintResponse = this.complaintService.findAllByCourseIdAndExamId(this.courseId, this.examId);
             } else {
                 complaintResponse = this.complaintService.findAllByCourseId(this.courseId, this.complaintType);
             }
