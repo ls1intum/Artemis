@@ -14,7 +14,7 @@ import { MockRouter } from '../../helpers/mocks/mock-router';
 import { QuizExercisePopupService } from 'app/exercises/quiz/manage/quiz-exercise-popup.service';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
-import { restore, SinonStub, stub } from 'sinon';
+import { restore, SinonStub, spy, stub } from 'sinon';
 import { ReEvaluateMultipleChoiceQuestionComponent } from 'app/exercises/quiz/manage/re-evaluate/multiple-choice-question/re-evaluate-multiple-choice-question.component';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { ReEvaluateDragAndDropQuestionComponent } from 'app/exercises/quiz/manage/re-evaluate/drag-and-drop-question/re-evaluate-drag-and-drop-question.component';
@@ -23,14 +23,16 @@ import { MockTranslateValuesDirective } from '../course/course-scores/course-sco
 import { NgModel } from '@angular/forms';
 import { JhiTranslateDirective } from 'ng-jhipster';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { QuizQuestion, QuizQuestionType } from 'app/entities/quiz/quiz-question.model';
 import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
 import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.model';
+import { Duration } from 'app/exercises/quiz/manage/quiz-exercise-interfaces';
+import { QuizQuestionType } from 'app/entities/quiz/quiz-question.model';
+import { SimpleChange } from '@angular/core';
 
 chai.use(sinonChai);
 const expect = chai.expect;
 
-describe('QuizExercise Management Component', () => {
+describe('QuizExercise Re-evaluate Component', () => {
     let comp: QuizReEvaluateComponent;
     let fixture: ComponentFixture<QuizReEvaluateComponent>;
     let quizService: QuizExerciseService;
@@ -38,6 +40,8 @@ describe('QuizExercise Management Component', () => {
 
     const course = { id: 123 } as Course;
     const quizExercise = new QuizExercise(course, undefined);
+    quizExercise.id = 456;
+    quizExercise.title = 'MyQuiz';
 
     const route = ({ params: of({ exerciseId: 123 }) } as any) as ActivatedRoute;
 
@@ -66,7 +70,6 @@ describe('QuizExercise Management Component', () => {
         fixture = TestBed.createComponent(QuizReEvaluateComponent);
         comp = fixture.componentInstance;
         quizService = fixture.debugElement.injector.get(QuizExerciseService);
-        quizExercise.id = 456;
         const quizQuestion1 = new MultipleChoiceQuestion();
         const quizQuestion2 = new DragAndDropQuestion();
         quizExercise.quizQuestions = [quizQuestion1, quizQuestion2];
@@ -79,8 +82,20 @@ describe('QuizExercise Management Component', () => {
 
     it('Should initialize quiz exercise', () => {
         comp.ngOnInit();
+        expect(comp.validQuiz()).to.be.true;
         expect(comp.quizExercise).to.equal(quizExercise);
         expect(quizServiceFindSpy).to.have.been.calledOnce;
+    });
+
+    it('Should create correct duration strings', () => {
+        comp.duration = new Duration(1, 0);
+        expect(comp.durationString()).to.equal('1:00');
+
+        comp.duration = new Duration(1, 9);
+        expect(comp.durationString()).to.equal('1:09');
+
+        comp.duration = new Duration(1, 10);
+        expect(comp.durationString()).to.equal('1:10');
     });
 
     it('Should delete quiz question', () => {
@@ -90,23 +105,52 @@ describe('QuizExercise Management Component', () => {
         expect(comp.quizExercise.quizQuestions!.length).to.equal(1);
     });
 
-    it('Should update quiz questions', () => {
+    it('Should update and reset quiz questions', () => {
         comp.ngOnInit();
-        quizExercise.quizQuestions![0].points = 5;
+        comp.quizExercise.title = 'New Title';
+        comp.quizExercise.quizQuestions![0].points = 5;
+        // update question
         comp.onQuestionUpdated();
         expect(comp.quizExercise).to.equal(quizExercise);
-    });
-
-    it('Should update quiz questions', () => {
-        comp.ngOnInit();
-        quizExercise.quizQuestions![0].points = 5;
-        comp.onQuestionUpdated();
-        expect(comp.quizExercise).to.equal(quizExercise);
+        // reset title
+        comp.resetQuizTitle();
+        expect(comp.quizExercise.title).to.equal(comp.backupQuiz.title);
+        // reset all
+        comp.resetAll();
+        expect(comp.quizExercise).to.deep.equal(comp.backupQuiz);
     });
 
     it('Should have pending changes', () => {
         comp.ngOnInit();
         comp.quizExercise.quizQuestions![0].points = 5;
         expect(comp.pendingChanges()).to.be.true;
+    });
+
+    it('Should move down the quiz question', () => {
+        comp.ngOnInit();
+        expect(comp.quizExercise.quizQuestions![0].type).to.equal(QuizQuestionType.MULTIPLE_CHOICE);
+        comp.moveDown(comp.quizExercise.quizQuestions![0]);
+        expect(comp.quizExercise.quizQuestions![1].type).to.equal(QuizQuestionType.MULTIPLE_CHOICE);
+    });
+
+    it('Should move up the quiz question', () => {
+        comp.ngOnInit();
+        expect(comp.quizExercise.quizQuestions![1].type).to.equal(QuizQuestionType.DRAG_AND_DROP);
+        comp.moveUp(comp.quizExercise.quizQuestions![1]);
+        expect(comp.quizExercise.quizQuestions![0].type).to.equal(QuizQuestionType.DRAG_AND_DROP);
+    });
+
+    it('Updates quiz on changes', () => {
+        const prepareEntitySpy = spy(comp, 'prepareEntity');
+        comp.ngOnInit();
+        comp.ngOnChanges({
+            quizExercise: { currentValue: quizExercise } as SimpleChange,
+        });
+
+        expect(prepareEntitySpy).to.have.been.called;
+    });
+
+    it('Should save a quiz', () => {
+        comp.ngOnInit();
     });
 });
