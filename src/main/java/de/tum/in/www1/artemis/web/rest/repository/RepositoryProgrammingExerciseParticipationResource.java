@@ -77,13 +77,31 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
         if (repositoryAction == RepositoryActionType.WRITE && programmingParticipation.isLocked()) {
             throw new IllegalAccessException();
         }
-        // Error case 4: The user is not (any longer) allowed to submit to the exam/exercise. This check is only relevant for students.
+
         User user = userRepository.getUserWithGroupsAndAuthorities();
         var programmingExercise = programmingParticipation.getProgrammingExercise();
+        boolean isStudent = !authCheckService.isAtLeastTeachingAssistantForExercise(programmingExercise);
+        // Error case 4: The student can reset the repository only before and a tutor/instructor only after the due date has passed
+        if (repositoryAction == RepositoryActionType.RESET) {
+            if (isStudent && programmingParticipation.isLocked()) {
+                throw new IllegalAccessException();
+            }
+            else if (!isStudent) {
+                // Check for a regular course exercise
+                if (!programmingParticipation.isLocked()) {
+                    throw new IllegalAccessException();
+                }
+                // Check for an exam exercise, as it might not be locked but a student might still be allowed to submit
+                var optStudent = ((StudentParticipation) participation).getStudent();
+                if (optStudent.isPresent() && programmingExercise.isExamExercise() && examSubmissionService.isAllowedToSubmitDuringExam(programmingExercise, optStudent.get())) {
+                    throw new IllegalAccessException();
+                }
+            }
+        }
+        // Error case 5: The user is not (any longer) allowed to submit to the exam/exercise. This check is only relevant for students.
         // This must be a student participation as hasPermissions would have been false and an error already thrown
-        var isStudentParticipation = participation instanceof ProgrammingExerciseStudentParticipation;
-        if (isStudentParticipation && !authCheckService.isAtLeastTeachingAssistantForExercise(programmingExercise)
-                && !examSubmissionService.isAllowedToSubmitDuringExam(programmingExercise, user)) {
+        boolean isStudentParticipation = participation instanceof ProgrammingExerciseStudentParticipation;
+        if (isStudentParticipation && isStudent && !examSubmissionService.isAllowedToSubmitDuringExam(programmingExercise, user)) {
             throw new IllegalAccessException();
         }
         var repositoryUrl = programmingParticipation.getVcsRepositoryUrl();
@@ -282,6 +300,9 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
     @PostMapping(value = "/repository/{participationId}/reset", produces = MediaType.APPLICATION_JSON_VALUE)
     @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
     public ResponseEntity<Void> resetToLastCommit(@PathVariable Long participationId) {
+        // Participation participation = participationService.findParticipation(participationId);
+        // var exercise = participation.getExercise();
+        // var isAtLeastTutor = !authCheckService.isAtLeastTeachingAssistantForExercise(exercise);
         return super.resetToLastCommit(participationId);
     }
 
