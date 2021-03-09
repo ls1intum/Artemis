@@ -471,7 +471,8 @@ public class CourseResource {
         return allRegistrable.stream().filter(course -> {
             if (course.getOrganizations() != null && course.getOrganizations().size() > 0) {
                 return checkIfUserIsMemberOfCourseOrganizations(user, course);
-            } else {
+            }
+            else {
                 return true;
             }
         }).collect(Collectors.toList());

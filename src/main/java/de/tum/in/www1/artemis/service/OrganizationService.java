@@ -53,8 +53,7 @@ public class OrganizationService {
         usersToAssign.forEach(user -> {
             for (Organization organization : organizations) {
                 /*
-                 * TODO: strict re-indexing policy or additive?
-                 * if (user.getOrganizations().contains(organization) && !match(user, organization)) {
+                 * TODO: strict re-indexing policy or additive? if (user.getOrganizations().contains(organization) && !match(user, organization)) {
                  * log.debug("User {} does not match {} email pattern anymore. Removing", user.getLogin(), organization.getName()); removeUserFromOrganization(user,
                  * organization.getId()); continue; }
                  */
