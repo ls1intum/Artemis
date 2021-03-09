@@ -2,21 +2,15 @@ package de.tum.in.www1.artemis.service;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
-import javax.annotation.PostConstruct;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Organization;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.OrganizationRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
@@ -37,48 +31,6 @@ public class OrganizationService {
     }
 
     /**
-     * Called at application startup, this method tries to assign organizations to
-     * users which do not belong to any. For each user without organization, the email
-     * patterns of the organization are used to find any matching, resulting in the assignment
-     * of the user to the matcher organization.
-     */
-    @PostConstruct
-    public void init() {
-        // to avoid 'Authentication object cannot be null'
-        SecurityUtils.setAuthorizationObject();
-
-        log.debug("Start assigning organizations to users");
-        List<User> usersToAssign = userRepository.findAllWithEagerOrganizations();
-        List<Organization> organizations = organizationRepository.findAll();
-        usersToAssign.forEach(user -> {
-            for (Organization organization : organizations) {
-                /*
-                 * TODO: strict re-indexing policy or additive? if (user.getOrganizations().contains(organization) && !match(user, organization)) {
-                 * log.debug("User {} does not match {} email pattern anymore. Removing", user.getLogin(), organization.getName()); removeUserFromOrganization(user,
-                 * organization.getId()); continue; }
-                 */
-                if (!user.getOrganizations().contains(organization) && match(user, organization)) {
-                    log.debug("User {} matches {} email pattern. Adding", user.getLogin(), organization.getName());
-                    organizationRepository.addUserToOrganization(user, organization.getId());
-                }
-            }
-        });
-        log.debug("Finished assigning organizations to users");
-    }
-
-    /**
-     * Utility method to try if a user's email matches a organization's email pattern
-     * @param user the user to match
-     * @param organization the organization to match
-     * @return true if the user matches and false if not
-     */
-    private boolean match(User user, Organization organization) {
-        Pattern pattern = Pattern.compile(organization.getEmailPattern());
-        Matcher matcher = pattern.matcher(user.getEmail());
-        return matcher.matches();
-    }
-
-    /**
      * Performs indexing over all users using the email pattern of the provided organization.
      * Users matching the pattern will be added to the organization.
      * Users not matching the pattern will be removed from the organization (if contained).
@@ -86,16 +38,11 @@ public class OrganizationService {
      */
     public void indexing(Organization organization) {
         log.debug("Start indexing for organization: {}", organization.getName());
-        List<User> usersToAssign = userRepository.findAllWithEagerOrganizations();
+        List<User> usersToAssign = userRepository.findAllMatchingEmailPattern(organization.getEmailPattern());
+        organizationRepository.removeAllUsersFromOrganization(organization.getId());
         usersToAssign.forEach(user -> {
-            if (user.getOrganizations().contains(organization) && !match(user, organization)) {
-                log.debug("User {} does not match {} email pattern anymore. Removing", user.getLogin(), organization.getName());
-                organizationRepository.removeUserFromOrganization(user, organization.getId());
-            }
-            else if (!user.getOrganizations().contains(organization) && match(user, organization)) {
-                log.debug("User {} matches {} email pattern. Adding", user.getLogin(), organization.getName());
-                organizationRepository.addUserToOrganization(user, organization.getId());
-            }
+            log.debug("User {} matches {} email pattern. Adding", user.getLogin(), organization.getName());
+            organizationRepository.addUserToOrganization(user, organization.getId());
         });
     }
 

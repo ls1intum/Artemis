@@ -358,9 +358,9 @@ public interface UserRepository extends JpaRepository<User, Long> {
         updateUserNotificationReadDate(userId, ZonedDateTime.now());
     }
 
-    @Query("select user from User user left join fetch user.organizations")
-    List<User> findAllWithEagerOrganizations();
-
     @Query("select user from User user left join fetch user.organizations where user.login like :#{#login}")
     Optional<User> findOneWithOrganizations(@Param("login") String login);
+
+    @Query(value = "SELECT * from jhi_user u where u.email regexp ?1", nativeQuery = true)
+    List<User> findAllMatchingEmailPattern(@Param("emailPattern") String emailPattern);
 }
