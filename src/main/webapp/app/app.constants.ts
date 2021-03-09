@@ -7,8 +7,8 @@ export const DEBUG_INFO_ENABLED: boolean = !!process.env.DEBUG_INFO_ENABLED;
 export const SERVER_API_URL = process.env.SERVER_API_URL;
 export const BUILD_TIMESTAMP = process.env.BUILD_TIMESTAMP;
 
-export const MIN_POINTS_GREEN = 80;
-export const MIN_POINTS_ORANGE = 40;
+export const MIN_SCORE_GREEN = 80;
+export const MIN_SCORE_ORANGE = 40;
 
 export const SCORE_PATTERN = '^[0-9]{1,2}$|^100$';
 

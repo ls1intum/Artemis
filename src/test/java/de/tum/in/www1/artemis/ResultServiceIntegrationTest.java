@@ -24,10 +24,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
-import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
-import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
-import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
+import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
@@ -121,7 +118,7 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
         modelingExerciseRepository.save(modelingExercise);
         studentParticipation = database.createAndSaveParticipationForExercise(modelingExercise, "student2");
 
-        Result result = ModelFactory.generateResult(true, 200).resultString("Good effort!").participation(programmingExerciseStudentParticipation);
+        Result result = ModelFactory.generateResult(true, 200D).resultString("Good effort!").participation(programmingExerciseStudentParticipation);
         List<Feedback> feedbacks = ModelFactory.generateFeedback().stream().peek(feedback -> feedback.setText("Good work here")).collect(Collectors.toList());
         result.setFeedbacks(feedbacks);
         result.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
@@ -203,6 +200,23 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
         List<Feedback> feedback = request.getList("/api/results/" + result.getId() + "/details", HttpStatus.OK, Feedback.class);
 
         assertThat(feedback).isEqualTo(result.getFeedbacks());
+    }
+
+    @Test
+    @WithMockUser(value = "student1", roles = "USER")
+    public void shouldReturnOnlyAutomaticFeedbackForAProgrammingExerciseStudentParticipationBeforeAssessDueDate() throws Exception {
+        Result result = database.addResultToParticipation(AssessmentType.MANUAL, ZonedDateTime.now(), programmingExerciseStudentParticipation);
+        Feedback feedback1 = new Feedback().detailText("automatic1").type(FeedbackType.AUTOMATIC);
+        Feedback feedback2 = new Feedback().detailText("automatic2").type(FeedbackType.AUTOMATIC);
+        Feedback feedback3 = new Feedback().detailText("manual1").type(FeedbackType.MANUAL);
+        result = database.addFeedbackToResult(feedback1, result);
+        result = database.addFeedbackToResult(feedback2, result);
+        result = database.addFeedbackToResult(feedback3, result);
+
+        List<Feedback> feedbacks = request.getList("/api/results/" + result.getId() + "/details", HttpStatus.OK, Feedback.class);
+
+        assertThat(feedbacks).isEqualTo(result.getFeedbacks().stream().filter(f -> f.getType().equals(FeedbackType.AUTOMATIC)).collect(Collectors.toList()));
+        assertThat(feedbacks.size()).isEqualTo(2);
     }
 
     @Test
@@ -293,10 +307,10 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
             programmingSubmission.submissionDate(now.minusHours(3));
             database.addSubmission(programmingExercise, programmingSubmission, "student" + i);
             if (i % 3 == 0) {
-                database.addResultToSubmission(programmingSubmission, AssessmentType.AUTOMATIC, null, 10L, true);
+                database.addResultToSubmission(programmingSubmission, AssessmentType.AUTOMATIC, null, 10D, true);
             }
             else if (i % 4 == 0) {
-                database.addResultToSubmission(programmingSubmission, AssessmentType.AUTOMATIC, null, 20L, true);
+                database.addResultToSubmission(programmingSubmission, AssessmentType.AUTOMATIC, null, 20D, true);
             }
         }
 
@@ -320,10 +334,10 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
             quizSubmission.submissionDate(now.minusHours(3));
             database.addSubmission(quizExercise, quizSubmission, "student" + i);
             if (i % 3 == 0) {
-                database.addResultToSubmission(quizSubmission, AssessmentType.AUTOMATIC, null, 10L, true);
+                database.addResultToSubmission(quizSubmission, AssessmentType.AUTOMATIC, null, 10D, true);
             }
             else if (i % 4 == 0) {
-                database.addResultToSubmission(quizSubmission, AssessmentType.AUTOMATIC, null, 20L, true);
+                database.addResultToSubmission(quizSubmission, AssessmentType.AUTOMATIC, null, 20D, true);
             }
         }
 
@@ -343,10 +357,10 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
             modelingSubmission.submissionDate(now.minusHours(3));
             database.addSubmission(modelingExercise, modelingSubmission, "student" + i);
             if (i % 3 == 0) {
-                database.addResultToSubmission(modelingSubmission, AssessmentType.MANUAL, database.getUserByLogin("instructor1"), 10L, true);
+                database.addResultToSubmission(modelingSubmission, AssessmentType.MANUAL, database.getUserByLogin("instructor1"), 10D, true);
             }
             else if (i % 4 == 0) {
-                database.addResultToSubmission(modelingSubmission, AssessmentType.SEMI_AUTOMATIC, database.getUserByLogin("instructor1"), 20L, true);
+                database.addResultToSubmission(modelingSubmission, AssessmentType.SEMI_AUTOMATIC, database.getUserByLogin("instructor1"), 20D, true);
             }
         }
 
@@ -370,10 +384,10 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
             textSubmission.submissionDate(now.minusHours(3));
             database.addSubmission(textExercise, textSubmission, "student" + i);
             if (i % 3 == 0) {
-                database.addResultToSubmission(textSubmission, AssessmentType.MANUAL, database.getUserByLogin("instructor1"), 10L, true);
+                database.addResultToSubmission(textSubmission, AssessmentType.MANUAL, database.getUserByLogin("instructor1"), 10D, true);
             }
             else if (i % 4 == 0) {
-                database.addResultToSubmission(textSubmission, AssessmentType.SEMI_AUTOMATIC, database.getUserByLogin("instructor1"), 20L, true);
+                database.addResultToSubmission(textSubmission, AssessmentType.SEMI_AUTOMATIC, database.getUserByLogin("instructor1"), 20D, true);
             }
         }
 
@@ -396,10 +410,10 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
             fileUploadSubmission.submissionDate(now.minusHours(3));
             database.addSubmission(fileUploadExercise, fileUploadSubmission, "student" + i);
             if (i % 3 == 0) {
-                database.addResultToSubmission(fileUploadSubmission, AssessmentType.MANUAL, database.getUserByLogin("instructor1"), 10L, true);
+                database.addResultToSubmission(fileUploadSubmission, AssessmentType.MANUAL, database.getUserByLogin("instructor1"), 10D, true);
             }
             else if (i % 4 == 0) {
-                database.addResultToSubmission(fileUploadSubmission, AssessmentType.MANUAL, database.getUserByLogin("instructor1"), 20L, true);
+                database.addResultToSubmission(fileUploadSubmission, AssessmentType.MANUAL, database.getUserByLogin("instructor1"), 20D, true);
             }
         }
 

@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.exam;
 
+import static de.tum.in.www1.artemis.service.util.RoundingUtil.round;
+
 import java.security.SecureRandom;
 import java.time.Duration;
 import java.util.*;
@@ -228,11 +230,17 @@ public class ExamService {
                 // Relevant Result is already calculated
                 if (studentParticipation.getResults() != null && !studentParticipation.getResults().isEmpty()) {
                     Result relevantResult = studentParticipation.getResults().iterator().next();
-                    double achievedPoints = relevantResult.getScore() / 100.0 * exercise.getMaxPoints();
+                    // Note: It is important that we round on the individual exercise level first and then sum up.
+                    // This is necessary so that the student arrives at the same overall result when doing his own recalculation.
+                    // Let's assume that the student achieved 1.05 points in each of 5 exercises.
+                    // In the client, these are now displayed rounded as 1.1 points.
+                    // If the student adds up the displayed points, he gets a total of 5.5 points.
+                    // In order to get the same total result as the student, we have to round before summing.
+                    double achievedPoints = round(relevantResult.getScore() / 100.0 * exercise.getMaxPoints());
 
                     // points earned in NOT_INCLUDED exercises do not count towards the students result in the exam
                     if (!exercise.getIncludedInOverallScore().equals(IncludedInOverallScore.NOT_INCLUDED)) {
-                        studentResult.overallPointsAchieved += Math.round(achievedPoints * 10) / 10.0;
+                        studentResult.overallPointsAchieved += achievedPoints;
                     }
 
                     // Check whether the student attempted to solve the exercise
@@ -356,11 +364,6 @@ public class ExamService {
         List<ExerciseGroup> exerciseGroups = exam.getExerciseGroups();
         long numberOfExercises = exam.getNumberOfExercisesInExam() != null ? exam.getNumberOfExercisesInExam() : 0;
         long numberOfOptionalExercises = numberOfExercises - exerciseGroups.stream().filter(ExerciseGroup::getIsMandatory).count();
-
-        // Check that the start and end date of the exam is set
-        if (exam.getStartDate() == null || exam.getEndDate() == null) {
-            throw new BadRequestAlertException("The start and end date must be set for the exam", "Exam", "artemisApp.exam.validation.startAndEndMustBeSet");
-        }
 
         // Ensure that all exercise groups have at least one exercise
         for (ExerciseGroup exerciseGroup : exam.getExerciseGroups()) {

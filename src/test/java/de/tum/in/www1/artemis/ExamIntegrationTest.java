@@ -410,18 +410,6 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testGenerateStudentExamsNoDates_badRequest() throws Exception {
-        Exam exam = database.setupExamWithExerciseGroupsExercisesRegisteredStudents(course1);
-        exam.setStartDate(null);
-        examRepository.save(exam);
-
-        // invoke generate student exams
-        request.postListWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/generate-student-exams", Optional.empty(), StudentExam.class,
-                HttpStatus.BAD_REQUEST);
-    }
-
-    @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGenerateStudentExamsNoExerciseGroups_badRequest() throws Exception {
         Exam exam = database.addExamWithExerciseGroup(course1, true);
         exam.setStartDate(now());
@@ -1276,7 +1264,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         assertEquals(participationCounter, noGeneratedParticipations);
 
         // Score used for all exercise results
-        Long resultScore = 75L;
+        Double resultScore = 75D;
 
         // Assign results to participations and submissions
         for (var exercise : exercisesInExam) {
@@ -1434,14 +1422,6 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testLatestExamEndDate_noStartDate_notFound() throws Exception {
-        exam1.setStartDate(null);
-        examRepository.save(exam1);
-        request.get("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/latest-end-date", HttpStatus.NOT_FOUND, ExamInformationDTO.class);
-    }
-
-    @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testLatestExamEndDate() throws Exception {
         // Setup exam and user
         User user = userRepo.findOneByLogin("student1").get();
@@ -1460,7 +1440,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         ExamInformationDTO examInfo = request.get("/api/courses/" + exam2.getCourse().getId() + "/exams/" + exam2.getId() + "/latest-end-date", HttpStatus.OK,
                 ExamInformationDTO.class);
         // Check that latest end date is equal to endDate (no specific student working time). Do not check for equality as we lose precision when saving to the database
-        assertThat(examInfo.latestIndividualEndDate).isEqualToIgnoringNanos(exam2.getEndDate());
+        assertThat(examInfo.getLatestIndividualEndDate()).isEqualToIgnoringNanos(exam2.getEndDate());
 
         // Set student exam with working time and save
         studentExam.setWorkingTime(3600);
@@ -1470,7 +1450,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         ExamInformationDTO examInfo2 = request.get("/api/courses/" + exam2.getCourse().getId() + "/exams/" + exam2.getId() + "/latest-end-date", HttpStatus.OK,
                 ExamInformationDTO.class);
         // Check that latest end date is equal to startDate + workingTime
-        assertThat(examInfo2.latestIndividualEndDate).isEqualToIgnoringNanos(exam2.getStartDate().plusHours(1));
+        assertThat(examInfo2.getLatestIndividualEndDate()).isEqualToIgnoringNanos(exam2.getStartDate().plusHours(1));
     }
 
     @Test
@@ -1521,17 +1501,6 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testGetAllIndividualExamEndDates_noStartDate() {
-        final var now = ZonedDateTime.now().truncatedTo(ChronoUnit.MINUTES);
-        exam1.setStartDate(null);
-        exam1.setEndDate(now);
-        final var exam = examRepository.save(exam1);
-        final var individualExamEndDates = examDateService.getAllIndividualExamEndDates(exam);
-        assertThat(individualExamEndDates).isNull();
-    }
-
-    @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGetAllIndividualExamEndDates() {
         final var now = ZonedDateTime.now().truncatedTo(ChronoUnit.MINUTES);
         exam1.setStartDate(now.minusHours(2));
@@ -1571,7 +1540,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         exam1.setEndDate(now);
         exam1.setGracePeriod(180);
         final var exam = examRepository.save(exam1);
-        final var isOver = examDateService.isExamOver(exam.getId());
+        final var isOver = examDateService.isExamWithGracePeriodOver(exam.getId());
         assertThat(isOver).isFalse();
     }
 

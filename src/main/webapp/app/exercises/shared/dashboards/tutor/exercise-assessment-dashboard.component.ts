@@ -37,6 +37,7 @@ import { TextSubmission } from 'app/entities/text-submission.model';
 import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
 import { Result } from 'app/entities/result.model';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { round } from 'app/shared/util/utils';
 
 export interface ExampleSubmissionQueryParams {
     readOnly?: boolean;
@@ -50,6 +51,7 @@ export interface ExampleSubmissionQueryParams {
     providers: [CourseManagementService],
 })
 export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewInit {
+    readonly round = round;
     exercise: Exercise;
     modelingExercise: ModelingExercise;
     courseId: number;
@@ -144,7 +146,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
     ngOnInit(): void {
         this.exerciseId = Number(this.route.snapshot.paramMap.get('exerciseId'));
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
-        this.isTestRun = this.route.snapshot.url[3]?.toString() === 'test-run-exercise-assessment-dashboard';
+        this.isTestRun = this.router.url.indexOf('test-assessment-dashboard') >= 0;
         this.unassessedSubmissionByCorrectionRound = new Map<number, Submission>();
 
         this.loadAll();
@@ -609,12 +611,12 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
      */
     back() {
         if (!this.isExamMode) {
-            this.router.navigate([`/course-management/${this.courseId}/tutor-dashboard`]);
+            this.router.navigate([`/course-management/${this.courseId}/assessment-dashboard`]);
         } else {
             if (this.isTestRun) {
                 this.router.navigate([`/course-management/${this.courseId}/exams/${this.exercise!.exerciseGroup!.exam!.id}/test-runs/assess`]);
             } else {
-                this.router.navigate([`/course-management/${this.courseId}/exams/${this.exercise!.exerciseGroup!.exam!.id}/tutor-exam-dashboard`]);
+                this.router.navigate([`/course-management/${this.courseId}/exams/${this.exercise!.exerciseGroup!.exam!.id}/assessment-dashboard`]);
             }
         }
     }
