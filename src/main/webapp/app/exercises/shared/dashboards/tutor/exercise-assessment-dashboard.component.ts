@@ -38,6 +38,7 @@ import { SubmissionService } from 'app/exercises/shared/submission/submission.se
 import { Result } from 'app/entities/result.model';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { SortService } from 'app/shared/service/sort.service';
+import { round } from 'app/shared/util/utils';
 
 export interface ExampleSubmissionQueryParams {
     readOnly?: boolean;
@@ -51,6 +52,7 @@ export interface ExampleSubmissionQueryParams {
     providers: [CourseManagementService],
 })
 export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewInit {
+    readonly round = round;
     exercise: Exercise;
     modelingExercise: ModelingExercise;
     courseId: number;
