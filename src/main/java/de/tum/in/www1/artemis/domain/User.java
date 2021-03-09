@@ -14,6 +14,7 @@ import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import org.apache.commons.lang3.StringUtils;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Cache;
@@ -120,7 +121,7 @@ public class User extends AbstractAuditingEntity implements Participant {
     @JoinTable(name = "user_organization", joinColumns = { @JoinColumn(name = "user_id", referencedColumnName = "id") }, inverseJoinColumns = {
             @JoinColumn(name = "organization_id", referencedColumnName = "id") })
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    @BatchSize(size = 20)
+    @JsonIgnoreProperties("user")
     private Set<Organization> organizations = new HashSet<>();
 
     public String getLogin() {

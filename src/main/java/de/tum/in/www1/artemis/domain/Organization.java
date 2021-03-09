@@ -7,7 +7,7 @@ import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 
-import org.hibernate.annotations.BatchSize;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
@@ -46,14 +46,14 @@ public class Organization extends DomainObject {
     @JoinTable(name = "user_organization", joinColumns = { @JoinColumn(name = "organization_id", referencedColumnName = "id") }, inverseJoinColumns = {
             @JoinColumn(name = "user_id", referencedColumnName = "id") })
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    @BatchSize(size = 20)
+    @JsonIgnoreProperties("organization")
     private Set<User> users = new HashSet<>();
 
     @ManyToMany
     @JoinTable(name = "course_organization", joinColumns = { @JoinColumn(name = "organization_id", referencedColumnName = "id") }, inverseJoinColumns = {
             @JoinColumn(name = "course_id", referencedColumnName = "id") })
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    @BatchSize(size = 20)
+    @JsonIgnoreProperties("organization")
     private Set<Course> courses = new HashSet<>();
 
     public String getName() {
