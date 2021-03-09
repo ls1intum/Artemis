@@ -258,7 +258,7 @@ public class LtiServiceTest {
         participation.setExercise(exercise);
         participation.setId(27L);
         Result result = new Result();
-        result.setScore(3L);
+        result.setScore(3D);
         LtiOutcomeUrl ltiOutcomeUrl = new LtiOutcomeUrl();
         ltiOutcomeUrl.setUrl("https://some.url.com/");
         ltiOutcomeUrl.setSourcedId("sourceId");
