@@ -218,6 +218,10 @@ public class ComplaintService {
         return complaintRepository.getAllByResult_Participation_Exercise_Course_Id(courseId);
     }
 
+    public List<Complaint> getAllComplaintsByExamId(Long examId) {
+        return complaintRepository.getAllByResult_Participation_Exercise_ExerciseGroup_Exam_Id(examId);
+    }
+
     public List<Complaint> getAllComplaintsByCourseIdAndTutorId(Long courseId, Long tutorId) {
         return complaintRepository.getAllByResult_Assessor_IdAndResult_Participation_Exercise_Course_Id(tutorId, courseId);
     }
