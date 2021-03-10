@@ -25,7 +25,7 @@ public class TutorLeaderboardComplaints {
         return acceptedComplaints;
     }
 
-    public Long getPoints() {
+    public long getPoints() {
         return points;
     }
 

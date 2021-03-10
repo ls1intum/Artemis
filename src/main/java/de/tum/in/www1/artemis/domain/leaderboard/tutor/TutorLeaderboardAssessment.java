@@ -16,25 +16,10 @@ public class TutorLeaderboardAssessment {
 
     private final Long courseId;
 
-    public long getAssessments() {
-        return assessments;
-    }
-
-    public long getPoints() {
-        return points;
-    }
-
-    public User getUser() {
-        return user;
-    }
-
-    public Long getCourseId() {
-        return courseId;
-    }
-
-    public Long getExerciseId() {
-        return exerciseId;
-    }
+    /*
+     * public long getAssessments() { return assessments; } public long getPoints() { return points; } public User getUser() { return user; } public Long getCourseId() { return
+     * courseId; } public Long getExerciseId() { return exerciseId; }
+     */
 
     public TutorLeaderboardAssessment(Long exerciseId, User user, long assessments, long points, Long courseId) {
         this.exerciseId = exerciseId;
