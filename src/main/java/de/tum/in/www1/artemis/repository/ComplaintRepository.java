@@ -188,8 +188,8 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
                 -1L,
                 complaint.result.assessor.id,
                 count(complaint),
-                sum( CASE WHEN (complaint.accepted = true) THEN 1 ELSE 0 END),
-                sum( CASE WHEN (complaint.accepted = true) THEN complaint.result.participation.exercise.maxPoints ELSE 0 END),
+                sum( CASE WHEN (complaint.accepted = true) THEN 1L ELSE 0L END),
+                sum( CASE WHEN (complaint.accepted = true) THEN complaint.result.participation.exercise.maxPoints ELSE 0.0 END),
                 complaint.result.participation.exercise.course.id
             )
             FROM
@@ -209,9 +209,9 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
             new de.tum.in.www1.artemis.domain.leaderboard.tutor.TutorLeaderboardComplaints(
                 :exerciseId,
                 complaint.result.assessor.id,
-                count(complaint),
-                sum( CASE WHEN (complaint.accepted = true ) THEN 1 ELSE 0 END),
-                sum( CASE WHEN (complaint.accepted = true) THEN complaint.result.participation.exercise.maxPoints ELSE 0 END),
+                (count(complaint) + 0L),
+                sum( CASE WHEN (complaint.accepted = true ) THEN 1L ELSE 0L END),
+                sum( CASE WHEN (complaint.accepted = true) THEN complaint.result.participation.exercise.maxPoints ELSE 0.0 END),
                 complaint.result.participation.exercise.course.id
             )
             FROM
@@ -238,7 +238,7 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
             new de.tum.in.www1.artemis.domain.leaderboard.tutor.TutorLeaderboardComplaintResponses(
                 -1L,
                 complaint.result.assessor.id,
-                count(complaint),
+                (count(complaint) + 0L),
                 sum(complaint.result.participation.exercise.maxPoints),
                 :#{#courseId}
             )
@@ -260,7 +260,7 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
              new de.tum.in.www1.artemis.domain.leaderboard.tutor.TutorLeaderboardComplaintResponses(
                  :exerciseId,
                  complaint.result.assessor.id,
-                 count(complaint),
+                 (count(complaint) + 0L),
                  sum(complaint.result.participation.exercise.maxPoints),
                  complaint.result.participation.exercise.course.id
              )
@@ -273,7 +273,7 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
                  and TYPE(complaint.result.participation.exercise) in (ModelingExercise, TextExercise, FileUploadExercise, ProgrammingExercise)
                  and complaint.result.completionDate IS NOT NULL
                  and complaint.accepted IS NOT NULL
-             GROUP BY complaint.complaintResponse.reviewer.id, complaint.result.participation.exercise.course.id
+             GROUP BY complaint.complaintResponse.reviewer.id, complaint.result.participation.exercise.id
              """)
     List<TutorLeaderboardComplaintResponses> findTutorLeaderboardComplaintResponsesByExerciseId(@Param("groupName") String groupName, @Param("exerciseId") long exerciseId);
 
@@ -298,9 +298,9 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
              new de.tum.in.www1.artemis.domain.leaderboard.tutor.TutorLeaderboardMoreFeedbackRequests(
                  -1L,
                  complaint.result.assessor.id,
-                 count(complaint),
-                 sum( CASE WHEN (complaint.accepted IS NULL) THEN 1 ELSE 0 END),
-                 sum( CASE WHEN (complaint.accepted IS NULL) THEN complaint.result.participation.exercise.maxPoints ELSE 0 END),
+                 (count(complaint) + 0L),
+                 sum( CASE WHEN (complaint.accepted IS NULL) THEN 1L ELSE 0L END),
+                 sum( CASE WHEN (complaint.accepted IS NULL) THEN complaint.result.participation.exercise.maxPoints ELSE 0.0 END),
                  :courseId
              )
              FROM
@@ -321,8 +321,8 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
                 :exerciseId,
                 complaint.result.assessor.id,
                 count(complaint),
-                sum( CASE WHEN (complaint.accepted IS NULL) THEN 1 ELSE 0 END),
-                sum( CASE WHEN (complaint.accepted IS NULL) THEN complaint.result.participation.exercise.maxPoints ELSE 0 END),
+                sum( CASE WHEN (complaint.accepted IS NULL) THEN 1L ELSE 0L END),
+                sum( CASE WHEN (complaint.accepted IS NULL) THEN complaint.result.participation.exercise.maxPoints ELSE 0.0 END),
                 complaint.result.participation.exercise.course.id
             )
             FROM
@@ -330,10 +330,10 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
             WHERE
                 complaint.complaintType = 'FEEDBACK_REQUEST'
                 and :#{#groupName} member of complaint.result.assessor.groups
-                and complaint.result.participation.exercise.course.id = :courseId
+                and complaint.result.participation.exercise.id = :exerciseId
                 and TYPE(complaint.result.participation.exercise) in (ModelingExercise, TextExercise, FileUploadExercise, ProgrammingExercise)
                 and complaint.result.completionDate IS NOT NULL
-            GROUP BY complaint.complaintResponse.reviewer.id, complaint.result.participation.exercise.course.id
+            GROUP BY complaint.complaintResponse.reviewer.id, complaint.result.participation.exercise.id
             """)
     List<TutorLeaderboardMoreFeedbackRequests> findTutorLeaderboardMoreFeedbackRequestsByExerciseId(@Param("groupName") String groupName, @Param("exerciseId") long exerciseId);
 
@@ -349,9 +349,9 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
             SELECT
             new de.tum.in.www1.artemis.domain.leaderboard.tutor.TutorLeaderboardAnsweredMoreFeedbackRequests(
                 -1L,
-                complaint.result.assessor.id,
-                count(complaint),
                 0L,
+                0L,
+                0.0,
                 :courseId
             )
             FROM
@@ -374,19 +374,19 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
                 :exerciseId,
                 complaint.result.assessor.id,
                 count(complaint),
-                0L,
-                complaint.result.participation.exercise.course.id
+                0.0,
+                0L
             )
             FROM
                 Complaint complaint
             WHERE
                 complaint.complaintType = 'FEEDBACK_REQUEST'
                 and :#{#groupName} member of complaint.result.assessor.groups
-                and complaint.result.participation.exercise.course.id = :courseId
+                and complaint.result.participation.exercise.id = :exerciseId
                 and TYPE(complaint.result.participation.exercise) in (ModelingExercise, TextExercise, FileUploadExercise, ProgrammingExercise)
                 and complaint.result.completionDate IS NOT NULL
                 and complaint.accepted = true
-            GROUP BY complaint.complaintResponse.reviewer.id, complaint.result.participation.exercise.course.id
+            GROUP BY complaint.complaintResponse.reviewer.id, complaint.result.participation.exercise.id
             """)
     List<TutorLeaderboardAnsweredMoreFeedbackRequests> findTutorLeaderboardAnsweredMoreFeedbackRequestsByExerciseId(@Param("groupName") String groupName,
             @Param("exerciseId") long exerciseId);
