@@ -13,12 +13,12 @@
         [class.bottom-left]="position == 'bottom-left'"
         [class.bottom-right]="position == 'bottom-right'"
         (click)="toggleFullscreen()"
-        [ngbTooltip]="'artemisApp.modelingEditor.fullscreen.tooltip' | translate"
+        [ngbTooltip]="'artemisApp.modelingEditor.fullscreen.tooltip' | artemisTranslate"
     >
         <fa-icon [icon]="buttonIcon" *ngSwitchCase="'compact'"></fa-icon>
         <span *ngSwitchCase="'extended'"
-            ><ng-container *ngIf="!isFullScreen(); else exitButtonText"> {{ 'artemisApp.modelingEditor.fullscreen.enterButtonText' | translate }}</ng-container>
-            <ng-template #exitButtonText>{{ 'artemisApp.modelingEditor.fullscreen.exitButtonText' | translate }}</ng-template>
+            ><ng-container *ngIf="!isFullScreen(); else exitButtonText"> {{ 'artemisApp.modelingEditor.fullscreen.enterButtonText' | artemisTranslate }}</ng-container>
+            <ng-template #exitButtonText>{{ 'artemisApp.modelingEditor.fullscreen.exitButtonText' | artemisTranslate }}</ng-template>
         </span>
     </button>
 </ng-container>

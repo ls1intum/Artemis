@@ -51,7 +51,7 @@
                                 <tr *ngFor="let attachment of attachments; trackBy: trackId" class="position-relative">
                                     <td [ngClass]="{ 'edit-overlay': attachmentToBeCreated && attachmentToBeCreated.id === attachment.id }">
                                         <span *ngIf="attachmentToBeCreated && attachmentToBeCreated.id === attachment.id">{{
-                                            'artemisApp.lecture.attachments.isBeingEdited' | translate
+                                            'artemisApp.lecture.attachments.isBeingEdited' | artemisTranslate
                                         }}</span>
                                         <span *ngIf="!attachmentToBeCreated || attachmentToBeCreated.id !== attachment.id">{{ attachment.id }}</span>
                                     </td>
@@ -62,7 +62,7 @@
                                             {{ attachment.name }}
                                         </a>
                                         <a class="text-primary" *ngIf="isDownloadingAttachmentLink === attachment.link">
-                                            <fa-icon [icon]="'spinner'" [spin]="true"></fa-icon> {{ 'artemisApp.courseOverview.lectureDetails.isDownloading' | translate }}
+                                            <fa-icon [icon]="'spinner'" [spin]="true"></fa-icon> {{ 'artemisApp.courseOverview.lectureDetails.isDownloading' | artemisTranslate }}
                                         </a>
                                     </td>
                                     <td>{{ attachment.releaseDate | artemisDate }}</td>
@@ -129,7 +129,7 @@
                         </div>
                         <div class="form-group">
                             <jhi-date-time-picker
-                                labelName="{{ 'artemisApp.lecture.attachments.releaseDate' | translate }}"
+                                labelName="{{ 'artemisApp.lecture.attachments.releaseDate' | artemisTranslate }}"
                                 [(ngModel)]="attachmentToBeCreated.releaseDate"
                                 name="endDate"
                             ></jhi-date-time-picker>
@@ -141,7 +141,7 @@
                                 class="form-control"
                                 id="notificationText"
                                 name="attachmentName"
-                                [placeholder]="'artemisApp.lecture.attachments.notificationPlaceholder' | translate"
+                                [placeholder]="'artemisApp.lecture.attachments.notificationPlaceholder' | artemisTranslate"
                                 [(ngModel)]="notificationText"
                             />
                         </div>

@@ -5,7 +5,7 @@
                 [icon]="'chalkboard-teacher'"
                 size="2x"
                 placement="right"
-                [ngbTooltip]="'artemisApp.courseOverview.lectureList.isLecture' | translate"
+                [ngbTooltip]="'artemisApp.courseOverview.lectureList.isLecture' | artemisTranslate"
                 container="body"
             ></fa-icon>
         </div>
@@ -25,7 +25,7 @@
                 ({{ lecture.startDate | amTimeAgo }})
             </div>
             <ng-template #noDate>
-                <div class="col-auto mb-2">{{ 'artemisApp.courseOverview.exerciseList.noDueDate' | translate }}</div>
+                <div class="col-auto mb-2">{{ 'artemisApp.courseOverview.exerciseList.noDueDate' | artemisTranslate }}</div>
             </ng-template>
         </div>
     </div>

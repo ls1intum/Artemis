@@ -8,7 +8,7 @@
 
                 <a *ngIf="course.isAtLeastInstructor" [routerLink]="['/course-management', course.id, 'goal-management']" class="btn btn-primary mr-1 mb-1">
                     <fa-icon [icon]="'flag'"></fa-icon>
-                    <span [innerHTML]="'artemisApp.learningGoal.learningGoalButton' | translate" class="d-none d-md-inline"></span>
+                    <span [innerHTML]="'artemisApp.learningGoal.learningGoalButton' | artemisTranslate" class="d-none d-md-inline"></span>
                 </a>
 
                 <a
@@ -152,22 +152,22 @@
                 <dt><span jhiTranslate="artemisApp.course.semester">Semester</span></dt>
                 <dd>
                     <span *ngIf="course.semester && course.semester !== ''">{{ course.semester }}</span>
-                    <span *ngIf="!course.semester || course.semester === ''">{{ 'global.generic.unset' | translate }}</span>
+                    <span *ngIf="!course.semester || course.semester === ''">{{ 'global.generic.unset' | artemisTranslate }}</span>
                 </dd>
                 <dt><span jhiTranslate="artemisApp.course.testCourse.title">Test Course</span></dt>
                 <dd>
-                    <span *ngIf="course.testCourse">{{ 'global.generic.yes' | translate }}</span>
-                    <span *ngIf="!course.testCourse">{{ 'global.generic.no' | translate }}</span>
+                    <span *ngIf="course.testCourse">{{ 'global.generic.yes' | artemisTranslate }}</span>
+                    <span *ngIf="!course.testCourse">{{ 'global.generic.no' | artemisTranslate }}</span>
                 </dd>
                 <dt><span jhiTranslate="artemisApp.course.onlineCourse.title">Online Course</span></dt>
                 <dd>
-                    <span *ngIf="course.onlineCourse">{{ 'global.generic.yes' | translate }}</span>
-                    <span *ngIf="!course.onlineCourse">{{ 'global.generic.no' | translate }}</span>
+                    <span *ngIf="course.onlineCourse">{{ 'global.generic.yes' | artemisTranslate }}</span>
+                    <span *ngIf="!course.onlineCourse">{{ 'global.generic.no' | artemisTranslate }}</span>
                 </dd>
                 <dt><span jhiTranslate="artemisApp.course.presentationScoreEnabled.title">Presentation Score Enabled</span></dt>
                 <dd>
-                    <span *ngIf="course.presentationScore !== 0">{{ 'global.generic.yes' | translate }}</span>
-                    <span *ngIf="course.presentationScore === 0">{{ 'global.generic.no' | translate }}</span>
+                    <span *ngIf="course.presentationScore !== 0">{{ 'global.generic.yes' | artemisTranslate }}</span>
+                    <span *ngIf="course.presentationScore === 0">{{ 'global.generic.no' | artemisTranslate }}</span>
                 </dd>
                 <ng-container *ngIf="course.presentationScore !== 0">
                     <dt><span jhiTranslate="artemisApp.course.presentationScore">Presentation Score</span></dt>

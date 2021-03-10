@@ -129,14 +129,18 @@
                     <fa-icon
                         [icon]="'question-circle'"
                         class="text-secondary"
-                        ngbTooltip="{{ 'artemisApp.programmingExercise.combineTemplateCommitsWarning' | translate }}"
+                        ngbTooltip="{{ 'artemisApp.programmingExercise.combineTemplateCommitsWarning' | artemisTranslate }}"
                     ></fa-icon>
                 </span>
                 <span *ngIf="programmingExercise.programmingLanguage === ProgrammingLanguage.JAVA && programmingExercise.isAtLeastInstructor" class="mr-1">
                     <button [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES" type="button" (click)="generateStructureOracle()" class="btn btn-secondary btn-sm">
                         <span jhiTranslate="artemisApp.programmingExercise.structureTestOracle">Update Structure Test Oracle</span>
                     </button>
-                    <fa-icon [icon]="'question-circle'" class="text-secondary" ngbTooltip="{{ 'artemisApp.programmingExercise.structureTestOracleWarning' | translate }}"></fa-icon>
+                    <fa-icon
+                        [icon]="'question-circle'"
+                        class="text-secondary"
+                        ngbTooltip="{{ 'artemisApp.programmingExercise.structureTestOracleWarning' | artemisTranslate }}"
+                    ></fa-icon>
                 </span>
                 <button
                     id="unlockAllRepositoriesButton"

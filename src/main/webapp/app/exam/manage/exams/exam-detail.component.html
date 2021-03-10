@@ -11,32 +11,32 @@
 
             <a id="studentExamsButton" *ngIf="isAtLeastInstructor" [routerLink]="getExamRoutesByIdentifier('student-exams')" class="btn btn-info">
                 <fa-icon [icon]="'eye'"></fa-icon>
-                <span class="d-none d-md-inline">{{ 'artemisApp.examManagement.studentExams' | translate }}</span>
+                <span class="d-none d-md-inline">{{ 'artemisApp.examManagement.studentExams' | artemisTranslate }}</span>
             </a>
 
             <a id="assessment-dashboard-button" *ngIf="isAtLeastInstructor" [routerLink]="getExamRoutesByIdentifier('assessment-dashboard')" class="btn btn-primary">
                 <fa-icon [icon]="'th-list'"></fa-icon>
-                <span>{{ 'artemisApp.examManagement.assessmentDashboard' | translate }}</span>
+                <span>{{ 'artemisApp.examManagement.assessmentDashboard' | artemisTranslate }}</span>
             </a>
 
             <a *ngIf="isAtLeastInstructor" [routerLink]="getExamRoutesByIdentifier('scores')" class="btn btn-info" id="scores-button">
                 <fa-icon [icon]="'eye'"></fa-icon>
-                <span>{{ 'entity.action.scores' | translate }}</span>
+                <span>{{ 'entity.action.scores' | artemisTranslate }}</span>
             </a>
 
             <a *ngIf="isAtLeastInstructor" type="submit" [routerLink]="getExamRoutesByIdentifier('exercise-groups')" class="btn btn-primary" id="exercises-button-groups">
                 <fa-icon [icon]="'list-alt'"></fa-icon>
-                <span>{{ 'artemisApp.examManagement.exerciseGroups' | translate }}</span>
+                <span>{{ 'artemisApp.examManagement.exerciseGroups' | artemisTranslate }}</span>
             </a>
 
             <a id="testrun-button" *ngIf="isAtLeastInstructor" [routerLink]="getExamRoutesByIdentifier('test-runs')" class="btn btn-info">
                 <fa-icon [icon]="'user'"></fa-icon>
-                <span>{{ 'artemisApp.examManagement.testRun.testRun' | translate }}</span>
+                <span>{{ 'artemisApp.examManagement.testRun.testRun' | artemisTranslate }}</span>
             </a>
 
             <a id="students-button" *ngIf="isAtLeastInstructor" [routerLink]="getExamRoutesByIdentifier('students')" class="btn btn-info">
                 <fa-icon [icon]="'user'"></fa-icon>
-                <span>{{ 'artemisApp.examManagement.students' | translate }}</span>
+                <span>{{ 'artemisApp.examManagement.students' | artemisTranslate }}</span>
             </a>
 
             <hr />

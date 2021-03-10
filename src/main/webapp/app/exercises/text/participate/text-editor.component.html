@@ -1,6 +1,6 @@
 <jhi-header-participation-page class="d-block mb-4" [exercise]="textExercise" [participation]="participation">
     <span pagetitle>
-        {{ 'artemisApp.textSubmission.textEditor' | translate }}: <span class="font-weight-normal">{{ textExercise?.title }}</span>
+        {{ 'artemisApp.textSubmission.textEditor' | artemisTranslate }}: <span class="font-weight-normal">{{ textExercise?.title }}</span>
     </span>
     <jhi-button
         *ngIf="isOwnerOfParticipation"
@@ -32,10 +32,10 @@
         <div class="grid-area-main">
             <div>
                 <span class="badge badge-primary mb-2">
-                    {{ 'artemisApp.textExercise.wordCount' | translate: { count: wordCount } }}
+                    {{ 'artemisApp.textExercise.wordCount' | artemisTranslate: { count: wordCount } }}
                 </span>
                 <span class="badge badge-primary mb-2">
-                    {{ 'artemisApp.textExercise.characterCount' | translate: { count: characterCount } }}
+                    {{ 'artemisApp.textExercise.characterCount' | artemisTranslate: { count: characterCount } }}
                 </span>
             </div>
 
@@ -64,8 +64,8 @@
                         <b>
                             {{
                                 isOwnerOfParticipation
-                                    ? ('artemisApp.textExercise.assessedSubmission' | translate)
-                                    : ('artemisApp.textExercise.assessedSubmissionInstructor' | translate)
+                                    ? ('artemisApp.textExercise.assessedSubmission' | artemisTranslate)
+                                    : ('artemisApp.textExercise.assessedSubmissionInstructor' | artemisTranslate)
                             }}:
                         </b>
                         <hr />

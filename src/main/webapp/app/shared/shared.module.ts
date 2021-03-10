@@ -22,6 +22,7 @@ import { CustomMaxDirective } from 'app/shared/validators/custom-max-validator.d
 import { CustomMinDirective } from 'app/shared/validators/custom-min-validator.directive';
 import { AdditionalFeedbackComponent } from './additional-feedback/additional-feedback.component';
 import { ResizeableContainerComponent } from './resizeable-container/resizeable-container.component';
+import { TranslatePipe } from '@ngx-translate/core';
 
 @NgModule({
     imports: [ArtemisSharedLibsModule, ArtemisSharedCommonModule, ArtemisSharedPipesModule],
@@ -70,6 +71,6 @@ import { ResizeableContainerComponent } from './resizeable-container/resizeable-
         ArtemisTranslatePipe,
         ArtemisTimeAgoPipe,
     ],
-    providers: [ArtemisDatePipe],
+    providers: [ArtemisDatePipe, TranslatePipe],
 })
 export class ArtemisSharedModule {}
