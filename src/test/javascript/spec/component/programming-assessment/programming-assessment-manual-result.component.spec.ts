@@ -116,7 +116,6 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         gradingInstructions: 'Grading Instructions',
         course: <Course>{ instructorGroupName: 'instructorGroup' },
     } as unknown) as ProgrammingExercise;
-    // const automaticResult: Result = { feedbacks: [new Feedback()], assessmentType: AssessmentType.AUTOMATIC, id: 1, resultString: '1 of 13 passed' };
     const participation: ProgrammingExerciseStudentParticipation = new ProgrammingExerciseStudentParticipation();
     participation.results = [result];
     participation.exercise = exercise;
