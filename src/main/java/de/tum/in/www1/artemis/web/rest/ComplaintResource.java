@@ -385,6 +385,37 @@ public class ComplaintResource {
     }
 
     /**
+     * Get /courses/:courseId/exams/:examId/complaints
+     * <p>
+     * Get all the complaints filtered by courseId, complaintType and optionally tutorId.
+     * @param examId the id of the tutor by which we want to filter
+     * @param courseId the id of the course we are interested in
+     * @return the ResponseEntity with status 200 (OK) and a list of complaints. The list can be empty
+     */
+    @GetMapping("/courses/{courseId}/exams/{examId}/complaints")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<List<Complaint>> getComplaintsByCourseIdAndExamId(@PathVariable Long courseId, @PathVariable Long examId) {
+        // Filtering by courseId
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        boolean isAtLeastTutor = authCheckService.isAtLeastTeachingAssistantInCourse(course, user);
+        boolean isAtLeastInstructor = authCheckService.isAtLeastInstructorInCourse(course, user);
+
+        if (!isAtLeastTutor) {
+            throw new AccessForbiddenException("Insufficient permission for these complaints");
+        }
+        if (!isAtLeastInstructor) {
+            // At the moment the complete list of all exam-complaints should only be visible for instructors
+            throw new AccessForbiddenException("Insufficient permission for these complaints");
+        }
+
+        List<Complaint> complaints = complaintService.getAllComplaintsByExamId(examId);
+        filterOutUselessDataFromComplaints(complaints, !isAtLeastInstructor);
+
+        return ResponseEntity.ok(getComplaintsByComplaintType(complaints, ComplaintType.COMPLAINT));
+    }
+
+    /**
      * Filter out all complaints that are not of a specified type.
      *
      * @param complaints    list of complaints
