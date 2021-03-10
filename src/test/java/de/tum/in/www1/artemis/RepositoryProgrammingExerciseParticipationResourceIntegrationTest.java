@@ -600,6 +600,51 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
+    public void testResetNotAllowedForBuildAndTestAfterDueDate() throws Exception {
+        programmingExercise.setReleaseDate(ZonedDateTime.now().minusHours(2));
+        programmingExercise.setDueDate(ZonedDateTime.now().minusHours(1));
+        programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().plusHours(1));
+        programmingExercise.setAssessmentType(AssessmentType.AUTOMATIC);
+        programmingExerciseRepository.save(programmingExercise);
+
+        var receivedStatusBeforeCommit = request.get(studentRepoBaseUrl + participation.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
+        assertThat(receivedStatusBeforeCommit.repositoryStatus.toString()).isEqualTo("UNCOMMITTED_CHANGES");
+        request.postWithoutLocation(studentRepoBaseUrl + participation.getId() + "/reset", null, HttpStatus.FORBIDDEN, null);
+        assertThat(receivedStatusBeforeCommit.repositoryStatus.toString()).isEqualTo("UNCOMMITTED_CHANGES");
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testResetNotAllowedForManuallyAssessedAfterDueDate() throws Exception {
+        programmingExercise.setReleaseDate(ZonedDateTime.now().minusHours(2));
+        programmingExercise.setDueDate(ZonedDateTime.now().minusHours(1));
+        programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(null);
+        programmingExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+        programmingExerciseRepository.save(programmingExercise);
+
+        var receivedStatusBeforeCommit = request.get(studentRepoBaseUrl + participation.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
+        assertThat(receivedStatusBeforeCommit.repositoryStatus.toString()).isEqualTo("UNCOMMITTED_CHANGES");
+        request.postWithoutLocation(studentRepoBaseUrl + participation.getId() + "/reset", null, HttpStatus.FORBIDDEN, null);
+        assertThat(receivedStatusBeforeCommit.repositoryStatus.toString()).isEqualTo("UNCOMMITTED_CHANGES");
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testResetNotAllowedForBuildAndTestBeforeDueDate() throws Exception {
+        programmingExercise.setReleaseDate(ZonedDateTime.now().minusHours(2));
+        programmingExercise.setDueDate(ZonedDateTime.now().plusHours(1));
+        programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().plusHours(2));
+        programmingExercise.setAssessmentType(AssessmentType.AUTOMATIC);
+        programmingExerciseRepository.save(programmingExercise);
+
+        var receivedStatusBeforeCommit = request.get(studentRepoBaseUrl + participation.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
+        assertThat(receivedStatusBeforeCommit.repositoryStatus.toString()).isEqualTo("UNCOMMITTED_CHANGES");
+        request.postWithoutLocation(studentRepoBaseUrl + participation.getId() + "/reset", null, HttpStatus.FORBIDDEN, null);
+        assertThat(receivedStatusBeforeCommit.repositoryStatus.toString()).isEqualTo("UNCOMMITTED_CHANGES");
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
     void testStashChanges() throws Exception {
         // Make initial commit and save files afterwards
         initialCommitAndSaveFiles(HttpStatus.OK);

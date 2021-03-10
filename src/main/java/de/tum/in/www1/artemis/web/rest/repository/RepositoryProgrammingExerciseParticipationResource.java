@@ -88,7 +88,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
             }
             else if (!isStudent) {
                 // Check for a regular course exercise
-                if (!programmingParticipation.isLocked()) {
+                if (!programmingExercise.isExamExercise() && !programmingParticipation.isLocked()) {
                     throw new IllegalAccessException();
                 }
                 // Check for an exam exercise, as it might not be locked but a student might still be allowed to submit
