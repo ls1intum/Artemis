@@ -198,7 +198,6 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
                  :#{#groupName} member of complaint.result.assessor.groups
                 and complaint.complaintType = 'COMPLAINT'
                 and complaint.result.participation.exercise.course.id = :courseId
-                and TYPE(complaint.result.participation.exercise) in (ModelingExercise, TextExercise, FileUploadExercise, ProgrammingExercise)
                 and complaint.result.completionDate IS NOT NULL
             GROUP BY complaint.result.assessor.id
             """)
@@ -209,7 +208,7 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
             new de.tum.in.www1.artemis.domain.leaderboard.tutor.TutorLeaderboardComplaints(
                 complaint.result.participation.exercise.id,
                 complaint.result.assessor.id,
-                (count(complaint) + 0L),
+                count(complaint),
                 sum( CASE WHEN (complaint.accepted = true ) THEN 1L ELSE 0L END),
                 sum( CASE WHEN (complaint.accepted = true) THEN complaint.result.participation.exercise.maxPoints ELSE 0.0 END),
                 complaint.result.participation.exercise.course.id
@@ -220,7 +219,6 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
                  :#{#groupName} member of complaint.result.assessor.groups
                 and complaint.complaintType = 'COMPLAINT'
                 and complaint.result.participation.exercise.id = :#{#exerciseId}
-                and TYPE(complaint.result.participation.exercise) in (ModelingExercise, TextExercise, FileUploadExercise, ProgrammingExercise)
                 and complaint.result.completionDate IS NOT NULL
             GROUP BY complaint.result.assessor.id
             """)
@@ -248,7 +246,6 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
                 complaint.complaintType = 'COMPLAINT'
                 and :#{#groupName} member of complaint.result.assessor.groups
                 and complaint.result.participation.exercise.course.id = :courseId
-                and TYPE(complaint.result.participation.exercise) in (ModelingExercise, TextExercise, FileUploadExercise, ProgrammingExercise)
                 and complaint.result.completionDate IS NOT NULL
                 and complaint.accepted IS NOT NULL
             GROUP BY complaint.complaintResponse.reviewer.id
@@ -270,7 +267,6 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
                  complaint.complaintType = 'COMPLAINT'
                  and :#{#groupName} member of complaint.result.assessor.groups
                  and complaint.result.participation.exercise.id = :exerciseId
-                 and TYPE(complaint.result.participation.exercise) in (ModelingExercise, TextExercise, FileUploadExercise, ProgrammingExercise)
                  and complaint.result.completionDate IS NOT NULL
                  and complaint.accepted IS NOT NULL
              GROUP BY complaint.complaintResponse.reviewer.id
@@ -309,7 +305,6 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
                  complaint.complaintType = 'FEEDBACK_REQUEST'
                  and :#{#groupName} member of complaint.result.assessor.groups
                  and complaint.result.participation.exercise.course.id = :courseId
-                 and TYPE(complaint.result.participation.exercise) in (ModelingExercise, TextExercise, FileUploadExercise, ProgrammingExercise)
                  and complaint.result.completionDate IS NOT NULL
              GROUP BY complaint.result.assessor.id
              """)
@@ -331,7 +326,6 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
                 complaint.complaintType = 'FEEDBACK_REQUEST'
                 and :#{#groupName} member of complaint.result.assessor.groups
                 and complaint.result.participation.exercise.id = :exerciseId
-                and TYPE(complaint.result.participation.exercise) in (ModelingExercise, TextExercise, FileUploadExercise, ProgrammingExercise)
                 and complaint.result.completionDate IS NOT NULL
             GROUP BY complaint.result.assessor.id
             """)
@@ -360,7 +354,6 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
                 complaint.complaintType = 'FEEDBACK_REQUEST'
                 and :#{#groupName} member of complaint.result.assessor.groups
                 and complaint.result.participation.exercise.course.id = :courseId
-                and TYPE(complaint.result.participation.exercise) in (ModelingExercise, TextExercise, FileUploadExercise, ProgrammingExercise)
                 and complaint.result.completionDate IS NOT NULL
                 and complaint.accepted = true
             GROUP BY complaint.complaintResponse.reviewer.id
@@ -383,7 +376,6 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
                 complaint.complaintType = 'FEEDBACK_REQUEST'
                 and :#{#groupName} member of complaint.result.assessor.groups
                 and complaint.result.participation.exercise.id = :exerciseId
-                and TYPE(complaint.result.participation.exercise) in (ModelingExercise, TextExercise, FileUploadExercise, ProgrammingExercise)
                 and complaint.result.completionDate IS NOT NULL
                 and complaint.accepted = true
             GROUP BY complaint.complaintResponse.reviewer.id, complaint.result.participation.exercise.id
