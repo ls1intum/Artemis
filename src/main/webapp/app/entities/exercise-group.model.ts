@@ -8,6 +8,4 @@ export class ExerciseGroup implements BaseEntity {
     public isMandatory?: boolean;
     public exam?: Exam;
     public exercises?: Exercise[];
-
-    public allPointsEqual = false; // transient
 }
