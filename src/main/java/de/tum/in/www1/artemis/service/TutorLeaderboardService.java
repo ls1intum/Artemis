@@ -118,7 +118,7 @@ public class TutorLeaderboardService {
             long points = 0L;
 
             for (var assessment : tutorLeaderboardAssessments) {
-                if (tutor.equals(assessment.getUser())) {
+                if (tutor.getId().equals(assessment.getUserId())) {
                     numberOfAssessments += assessment.getAssessments();
                     points += assessment.getPoints();
                 }
