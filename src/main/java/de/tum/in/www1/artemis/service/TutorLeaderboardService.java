@@ -21,25 +21,13 @@ public class TutorLeaderboardService {
 
     private final ResultRepository resultRepository;
 
-    private final TutorLeaderboardComplaintsRepository tutorLeaderboardComplaintsRepository;
-
-    private final TutorLeaderboardMoreFeedbackRequestsRepository tutorLeaderboardMoreFeedbackRequestsRepository;
-
-    private final TutorLeaderboardComplaintResponsesRepository tutorLeaderboardComplaintResponsesRepository;
-
-    private final TutorLeaderboardAnsweredMoreFeedbackRequestsRepository tutorLeaderboardAnsweredMoreFeedbackRequestsRepository;
+    private final ComplaintRepository complaintRepository;
 
     private final UserRepository userRepository;
 
-    public TutorLeaderboardService(ResultRepository resultRepository, TutorLeaderboardComplaintsRepository tutorLeaderboardComplaintsRepository,
-            TutorLeaderboardMoreFeedbackRequestsRepository tutorLeaderboardMoreFeedbackRequestsRepository,
-            TutorLeaderboardComplaintResponsesRepository tutorLeaderboardComplaintResponsesRepository,
-            TutorLeaderboardAnsweredMoreFeedbackRequestsRepository tutorLeaderboardAnsweredMoreFeedbackRequestsRepository, UserRepository userRepository) {
+    public TutorLeaderboardService(ResultRepository resultRepository, ComplaintRepository complaintRepository, UserRepository userRepository) {
         this.resultRepository = resultRepository;
-        this.tutorLeaderboardComplaintsRepository = tutorLeaderboardComplaintsRepository;
-        this.tutorLeaderboardMoreFeedbackRequestsRepository = tutorLeaderboardMoreFeedbackRequestsRepository;
-        this.tutorLeaderboardComplaintResponsesRepository = tutorLeaderboardComplaintResponsesRepository;
-        this.tutorLeaderboardAnsweredMoreFeedbackRequestsRepository = tutorLeaderboardAnsweredMoreFeedbackRequestsRepository;
+        this.complaintRepository = complaintRepository;
         this.userRepository = userRepository;
     }
 
@@ -52,15 +40,16 @@ public class TutorLeaderboardService {
     public List<TutorLeaderboardDTO> getCourseLeaderboard(Course course) {
 
         List<User> tutors = userRepository.getTutors(course);
+        String groupName = course.getTeachingAssistantGroupName();
 
         List<TutorLeaderboardAssessment> tutorLeaderboardAssessments = resultRepository.findTutorLeaderboardAssessmentByCourseId(course.getId());
-        List<TutorLeaderboardComplaints> tutorLeaderboardComplaints = tutorLeaderboardComplaintsRepository.findTutorLeaderboardComplaintsByCourseId(course.getId());
-        List<TutorLeaderboardMoreFeedbackRequests> tutorLeaderboardMoreFeedbackRequests = tutorLeaderboardMoreFeedbackRequestsRepository
-                .findTutorLeaderboardMoreFeedbackRequestsByCourseId(course.getId());
-        List<TutorLeaderboardComplaintResponses> tutorLeaderboardComplaintResponses = tutorLeaderboardComplaintResponsesRepository
-                .findTutorLeaderboardComplaintResponsesByCourseId(course.getId());
-        List<TutorLeaderboardAnsweredMoreFeedbackRequests> tutorLeaderboardAnsweredMoreFeedbackRequests = tutorLeaderboardAnsweredMoreFeedbackRequestsRepository
-                .findTutorLeaderboardAnsweredMoreFeedbackRequestsByCourseId(course.getId());
+        List<TutorLeaderboardComplaints> tutorLeaderboardComplaints = complaintRepository.findTutorLeaderboardComplaintsByCourseId(groupName, course.getId());
+        List<TutorLeaderboardMoreFeedbackRequests> tutorLeaderboardMoreFeedbackRequests = complaintRepository.findTutorLeaderboardMoreFeedbackRequestsByCourseId(groupName,
+                course.getId());
+        List<TutorLeaderboardComplaintResponses> tutorLeaderboardComplaintResponses = complaintRepository.findTutorLeaderboardComplaintResponsesByCourseId(groupName,
+                course.getId());
+        List<TutorLeaderboardAnsweredMoreFeedbackRequests> tutorLeaderboardAnsweredMoreFeedbackRequests = complaintRepository
+                .findTutorLeaderboardAnsweredMoreFeedbackRequestsByCourseId(groupName, course.getId());
 
         return aggregateTutorLeaderboardData(tutors, tutorLeaderboardAssessments, tutorLeaderboardComplaints, tutorLeaderboardMoreFeedbackRequests,
                 tutorLeaderboardComplaintResponses, tutorLeaderboardAnsweredMoreFeedbackRequests);
@@ -96,13 +85,14 @@ public class TutorLeaderboardService {
 
         List<User> tutors = userRepository.getTutors(exercise.getCourseViaExerciseGroupOrCourseMember());
         String groupName = exercise.getCourseViaExerciseGroupOrCourseMember().getTeachingAssistantGroupName();
+
         List<TutorLeaderboardAssessment> tutorLeaderboardAssessments = resultRepository.findTutorLeaderboardAssessmentByExerciseId(groupName, exercise.getId());
-        List<TutorLeaderboardComplaints> tutorLeaderboardComplaints = tutorLeaderboardComplaintsRepository.findTutorLeaderboardComplaintsByExerciseId(groupName, exercise.getId());
-        List<TutorLeaderboardMoreFeedbackRequests> tutorLeaderboardMoreFeedbackRequests = tutorLeaderboardMoreFeedbackRequestsRepository
-                .findTutorLeaderboardMoreFeedbackRequestsByExerciseId(groupName, exercise.getId());
-        List<TutorLeaderboardComplaintResponses> tutorLeaderboardComplaintResponses = tutorLeaderboardComplaintResponsesRepository
-                .findTutorLeaderboardComplaintResponsesByExerciseId(groupName, exercise.getId());
-        List<TutorLeaderboardAnsweredMoreFeedbackRequests> tutorLeaderboardAnsweredMoreFeedbackRequests = tutorLeaderboardAnsweredMoreFeedbackRequestsRepository
+        List<TutorLeaderboardComplaints> tutorLeaderboardComplaints = complaintRepository.findTutorLeaderboardComplaintsByExerciseId(groupName, exercise.getId());
+        List<TutorLeaderboardMoreFeedbackRequests> tutorLeaderboardMoreFeedbackRequests = complaintRepository.findTutorLeaderboardMoreFeedbackRequestsByExerciseId(groupName,
+                exercise.getId());
+        List<TutorLeaderboardComplaintResponses> tutorLeaderboardComplaintResponses = complaintRepository.findTutorLeaderboardComplaintResponsesByExerciseId(groupName,
+                exercise.getId());
+        List<TutorLeaderboardAnsweredMoreFeedbackRequests> tutorLeaderboardAnsweredMoreFeedbackRequests = complaintRepository
                 .findTutorLeaderboardAnsweredMoreFeedbackRequestsByExerciseId(groupName, exercise.getId());
 
         return aggregateTutorLeaderboardData(tutors, tutorLeaderboardAssessments, tutorLeaderboardComplaints, tutorLeaderboardMoreFeedbackRequests,
