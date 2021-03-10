@@ -2,7 +2,7 @@ import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import * as sinon from 'sinon';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { TranslatePipe } from '@ngx-translate/core';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe.ts';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { LearningGoalService } from 'app/course/learning-goals/learningGoal.service';
 import { of } from 'rxjs';
@@ -40,7 +40,7 @@ describe('LearningGoalManagementComponent', () => {
             declarations: [
                 LearningGoalManagementComponent,
                 LearningGoalCardStubComponent,
-                MockPipe(TranslatePipe),
+                MockPipe(ArtemisTranslatePipe),
                 MockComponent(AlertComponent),
                 MockComponent(FaIconComponent),
                 MockDirective(DeleteButtonDirective),

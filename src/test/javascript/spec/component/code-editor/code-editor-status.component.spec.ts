@@ -8,6 +8,9 @@ import { TranslateModule } from '@ngx-translate/core';
 import { By } from '@angular/platform-browser';
 import { CodeEditorStatusComponent } from 'app/exercises/programming/shared/code-editor/status/code-editor-status.component';
 import { CommitState, EditorState } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe.ts';
+import { MockPipe } from 'ng-mocks';
+import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
 
 const expect = chai.expect;
 
@@ -18,7 +21,7 @@ describe('CodeEditorStatusComponent', () => {
     beforeEach(async(() => {
         TestBed.configureTestingModule({
             imports: [TranslateModule.forRoot(), ArtemisTestModule, AceEditorModule, NgbModule],
-            declarations: [CodeEditorStatusComponent],
+            declarations: [CodeEditorStatusComponent, TranslatePipeMock],
         })
             .compileComponents()
             .then(() => {

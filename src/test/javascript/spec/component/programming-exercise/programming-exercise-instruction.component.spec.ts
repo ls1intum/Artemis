@@ -42,6 +42,8 @@ import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.s
 import { MockParticipationWebsocketService } from '../../helpers/mocks/service/mock-participation-websocket.service';
 import { MockExerciseHintService } from '../../helpers/mocks/service/mock-exercise-hint.service';
 import { ExerciseType } from 'app/entities/exercise.model';
+import { MockPipe } from 'ng-mocks';
+import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -67,7 +69,12 @@ describe('ProgrammingExerciseInstructionComponent', () => {
     beforeEach(async () => {
         return TestBed.configureTestingModule({
             imports: [TranslateModule.forRoot(), ArtemisTestModule, ArtemisSharedModule, NgbModule],
-            declarations: [ProgrammingExerciseInstructionComponent, ProgrammingExerciseInstructionStepWizardComponent, ProgrammingExerciseInstructionTaskStatusComponent],
+            declarations: [
+                ProgrammingExerciseInstructionComponent,
+                ProgrammingExerciseInstructionStepWizardComponent,
+                ProgrammingExerciseInstructionTaskStatusComponent,
+                TranslatePipeMock,
+            ],
             providers: [
                 ProgrammingExerciseTaskExtensionWrapper,
                 ProgrammingExercisePlantUmlExtensionWrapper,

@@ -1,5 +1,5 @@
-import { Pipe, PipeTransform } from '@angular/core';
-import { TranslatePipe } from '@ngx-translate/core';
+import { ChangeDetectorRef, Pipe, PipeTransform } from '@angular/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
 @Pipe({
     name: 'artemisTranslate',
@@ -9,9 +9,16 @@ import { TranslatePipe } from '@ngx-translate/core';
  * a simple wrapper to prevent compile errors in IntelliJ
  */
 export class ArtemisTranslatePipe implements PipeTransform {
-    constructor(private translatePipe: TranslatePipe) {}
+    private translatePipe: TranslatePipe;
+    constructor(private translateService: TranslateService, private changeDetectorRef: ChangeDetectorRef) {
+        this.translatePipe = new TranslatePipe(translateService, changeDetectorRef);
+    }
 
     transform(query: any, args?: any): any {
         return this.translatePipe.transform(query, args);
+    }
+
+    ngOnDestroy() {
+        this.translatePipe.ngOnDestroy();
     }
 }

@@ -1,28 +1,29 @@
-import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
-import * as sinon from 'sinon';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { OrionFilterDirective } from 'app/shared/orion/orion-filter.directive';
-import { AlertComponent } from 'app/shared/alert/alert.component';
-import { TranslatePipe, TranslateService } from '@ngx-translate/core';
-import { JhiSortByDirective, JhiSortDirective, JhiTranslateDirective } from 'ng-jhipster';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
-import { MomentModule } from 'ngx-moment';
-import { CourseScoresComponent, EMAIL_KEY, NAME_KEY, OVERALL_COURSE_POINTS_KEY, OVERALL_COURSE_SCORE_KEY, USERNAME_KEY } from 'app/course/course-scores/course-scores.component';
-import { ArtemisTestModule } from '../../../test.module';
-import { Directive, Input } from '@angular/core';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { ActivatedRoute } from '@angular/router';
-import { of } from 'rxjs';
-import { Course } from 'app/entities/course.model';
 import { HttpResponse } from '@angular/common/http';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
-import * as moment from 'moment';
+import { Directive, Input } from '@angular/core';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ActivatedRoute } from '@angular/router';
+import { TranslateService } from '@ngx-translate/core';
 import { User } from 'app/core/user/user.model';
+import { CourseScoresComponent, EMAIL_KEY, NAME_KEY, OVERALL_COURSE_POINTS_KEY, OVERALL_COURSE_SCORE_KEY, USERNAME_KEY } from 'app/course/course-scores/course-scores.component';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { Course } from 'app/entities/course.model';
+import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
+import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { Result } from 'app/entities/result.model';
+import { AlertComponent } from 'app/shared/alert/alert.component';
+import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
+import { OrionFilterDirective } from 'app/shared/orion/orion-filter.directive';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe.ts';
+import * as chai from 'chai';
+import * as moment from 'moment';
+import { JhiSortByDirective, JhiSortDirective, JhiTranslateDirective } from 'ng-jhipster';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { MomentModule } from 'ngx-moment';
+import { of } from 'rxjs';
+import * as sinon from 'sinon';
+import * as sinonChai from 'sinon-chai';
+import { ArtemisTestModule } from '../../../test.module';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -215,7 +216,7 @@ describe('CourseScoresComponent', () => {
             declarations: [
                 CourseScoresComponent,
                 MockComponent(AlertComponent),
-                MockPipe(TranslatePipe),
+                MockPipe(ArtemisTranslatePipe),
                 MockPipe(ArtemisDatePipe),
                 MockDirective(OrionFilterDirective),
                 MockDirective(JhiSortByDirective),

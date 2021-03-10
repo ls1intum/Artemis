@@ -1,26 +1,27 @@
-import * as chai from 'chai';
-import { MockComponent, MockModule, MockPipe, MockProvider } from 'ng-mocks';
-import * as sinon from 'sinon';
-import * as sinonChai from 'sinon-chai';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { FormsModule } from '@angular/forms';
+import { By } from '@angular/platform-browser';
 import { RouterTestingModule } from '@angular/router/testing';
-import { TranslatePipe, TranslateService } from '@ngx-translate/core';
-import { ExerciseGroup } from 'app/entities/exercise-group.model';
-import { Course } from 'app/entities/course.model';
+import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
-import { ArtemisQuizQuestionTypesModule } from 'app/exercises/quiz/shared/questions/artemis-quiz-question-types.module';
+import { TranslateService } from '@ngx-translate/core';
+import { Course } from 'app/entities/course.model';
+import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { TextExamSubmissionComponent } from 'app/exam/participate/exercises/text/text-exam-submission.component';
+import { ArtemisQuizQuestionTypesModule } from 'app/exercises/quiz/shared/questions/artemis-quiz-question-types.module';
+import { IncludedInScoreBadgeComponent } from 'app/exercises/shared/exercise-headers/included-in-score-badge.component';
 import { TextEditorService } from 'app/exercises/text/participate/text-editor.service';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
-import { JhiAlertService } from 'ng-jhipster';
-import { FormsModule } from '@angular/forms';
-import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe.ts';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { By } from '@angular/platform-browser';
-import { IncludedInScoreBadgeComponent } from 'app/exercises/shared/exercise-headers/included-in-score-badge.component';
+import * as chai from 'chai';
+import { JhiAlertService } from 'ng-jhipster';
+import { MockComponent, MockModule, MockPipe, MockProvider } from 'ng-mocks';
+import * as sinon from 'sinon';
+import * as sinonChai from 'sinon-chai';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -45,7 +46,7 @@ describe('TextExamSubmissionComponent', () => {
                 MockModule(FontAwesomeModule),
                 MockModule(ArtemisSharedModule),
             ],
-            declarations: [TextExamSubmissionComponent, MockPipe(TranslatePipe), MockPipe(HtmlForMarkdownPipe), MockComponent(IncludedInScoreBadgeComponent)],
+            declarations: [TextExamSubmissionComponent, MockPipe(ArtemisTranslatePipe), MockPipe(HtmlForMarkdownPipe), MockComponent(IncludedInScoreBadgeComponent)],
             providers: [MockProvider(TextEditorService), MockProvider(JhiAlertService), MockProvider(TranslateService), MockProvider(ArtemisMarkdownService)],
         })
             .compileComponents()
