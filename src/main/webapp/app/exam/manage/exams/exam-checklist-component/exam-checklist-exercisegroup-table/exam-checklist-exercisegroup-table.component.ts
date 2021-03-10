@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, OnInit } from '@angular/core';
+import { Component, Input, OnChanges } from '@angular/core';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { ExerciseGroupVariantColumn } from 'app/entities/exercise-group-variant-column.model';
 
@@ -6,69 +6,54 @@ import { ExerciseGroupVariantColumn } from 'app/entities/exercise-group-variant-
     selector: 'jhi-exam-checklist-exercisegroup-table',
     templateUrl: './exam-checklist-exercisegroup-table.component.html',
 })
-export class ExamChecklistExerciseGroupTableComponent implements OnInit, OnChanges {
+export class ExamChecklistExerciseGroupTableComponent implements OnChanges {
     @Input() exerciseGroups: ExerciseGroup[];
     exerciseGroupVariantColumns: ExerciseGroupVariantColumn[] = [];
-
-    ngOnInit() {}
 
     ngOnChanges() {
         if (this.exerciseGroups) {
             let exerciseGroupIndex = 1;
-            let exerciseVariantIndex = 1;
             this.exerciseGroups.forEach((exerciseGroup) => {
                 const exerciseGroupVariantColumn = new ExerciseGroupVariantColumn();
                 exerciseGroupVariantColumn.exerciseGroupTitle = exerciseGroup.title;
-
                 exerciseGroupVariantColumn.indexExerciseGroup = exerciseGroupIndex;
-                exerciseGroupIndex++;
 
-                const maxPoints = exerciseGroup.exercises?.[0].maxPoints;
-                exerciseGroupVariantColumn.exerciseGroupPointsEqual = exerciseGroup.exercises?.some((exercise) => {
-                    return exercise.maxPoints !== maxPoints;
-                });
                 if (!exerciseGroup.exercises || exerciseGroup.exercises.length === 0) {
                     exerciseGroupVariantColumn.noExercises = true;
+                    this.exerciseGroupVariantColumns.push(exerciseGroupVariantColumn);
                 } else {
+                    // set points and checks
+                    const maxPoints = exerciseGroup.exercises?.[0].maxPoints;
+                    exerciseGroupVariantColumn.exerciseGroupPointsEqual = true;
+                    exerciseGroupVariantColumn.exerciseGroupPointsEqual = !exerciseGroup.exercises?.some((exercise) => {
+                        return exercise.maxPoints !== maxPoints;
+                    });
+
                     exerciseGroupVariantColumn.noExercises = false;
+                    let exerciseVariantIndex = 1;
                     exerciseGroup.exercises!.forEach((exercise, index) => {
+                        // generate columns for each exercise
                         let exerciseVariantColumn;
                         if (index === 0) {
+                            // the first exercise uses the exercisegroup column
                             exerciseVariantColumn = exerciseGroupVariantColumn;
                             exerciseVariantColumn.indexExercise = exerciseVariantIndex;
                         } else {
                             exerciseVariantColumn = new ExerciseGroupVariantColumn();
                             exerciseVariantColumn.indexExercise = exerciseVariantIndex;
+                            exerciseVariantColumn.exerciseGroupTitle = '';
                         }
+                        // set properties
                         exerciseVariantColumn.exerciseTitle = exercise.title;
-                        exerciseVariantColumn.exerciseNumberOfParticipations = exercise.numberOfParticipations;
+                        exerciseVariantColumn.exerciseNumberOfParticipations = exercise.numberOfParticipations ? exercise.numberOfParticipations : 0;
                         exerciseVariantColumn.exerciseMaxPoints = exercise.maxPoints;
 
+                        this.exerciseGroupVariantColumns.push(exerciseVariantColumn);
                         exerciseVariantIndex++;
                     });
                 }
+                exerciseGroupIndex++;
             });
         }
     }
 }
-
-/*
-    ngOnChanges() {
-        if (this.exerciseGroups) {
-            this.exerciseGroups.forEach((exerciseGroup) => {
-                if (exerciseGroup.exercises) {
-                    exerciseGroup.exercises!.forEach((exercise) => {
-                        exercise.exerciseGroup = exerciseGroup;
-                        this.groupsWithExercises.push(exercise);
-                    });
-                    const maxPoints = exerciseGroup.exercises?.[0].maxPoints;
-                    exerciseGroup.allPointsEqual = exerciseGroup.exercises?.some((exercise) => {
-                        return exercise.maxPoints !== maxPoints;
-                    });
-                } else {
-                    this.groupsWithoutExercises.push(exerciseGroup);
-                }
-            });
-        }
-    }
- */

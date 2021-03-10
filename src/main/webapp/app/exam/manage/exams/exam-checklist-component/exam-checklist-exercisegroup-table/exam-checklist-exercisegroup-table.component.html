@@ -32,13 +32,13 @@
     <tbody>
         <tr *ngFor="let column of exerciseGroupVariantColumns; let i = index">
             <td style="max-width: 30px">
-                <div>{{ column.indexExerciseGroup }}</div>
+                <div *ngIf="column.indexExerciseGroup">{{ column.indexExerciseGroup }}</div>
             </td>
             <td style="max-width: 100px; font-weight: bold">
-                <div>
+                <div *ngIf="column.exerciseGroupTitle">
                     {{ column.exerciseGroupTitle }}
                     <fa-icon
-                        *ngIf="column.allPointsEqual"
+                        *ngIf="!column.noExercises && !column.exerciseGroupPointsEqual"
                         ngbTooltip="Exercises within this group do not have the same number of maximum points!"
                         [icon]="'exclamation-triangle'"
                         style="color: rgba(255, 193, 7, 0.6)"
@@ -53,10 +53,22 @@
                     ></fa-icon>
                 </div>
             </td>
-            <td style="max-width: 30px">{{ column.indexExercise }}</td>
-            <td>{{ column.title }}</td>
-            <td>{{ column.maxPoints }}</td>
-            <td>{{ column.numberOfParticipations }}</td>
+            <td style="max-width: 30px">
+                <span *ngIf="!column.noExercises">{{ column.indexExercise }}</span>
+                <span *ngIf="column.noExercises">-</span>
+            </td>
+            <td>
+                <span *ngIf="column.exerciseTitle">{{ column.exerciseTitle }}</span>
+                <span *ngIf="!column.exerciseTitle">-</span>
+            </td>
+            <td>
+                <span *ngIf="column.exerciseMaxPoints">{{ column.exerciseMaxPoints }}</span>
+                <span *ngIf="!column.exerciseMaxPoints">-</span>
+            </td>
+            <td>
+                <span *ngIf="column.exerciseNumberOfParticipations">{{ column.exerciseNumberOfParticipations }}</span>
+                <span *ngIf="!column.exerciseNumberOfParticipations">-</span>
+            </td>
         </tr>
     </tbody>
 </table>
