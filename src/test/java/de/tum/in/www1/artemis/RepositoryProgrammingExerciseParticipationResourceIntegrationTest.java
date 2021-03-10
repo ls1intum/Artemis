@@ -594,6 +594,7 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
     }
 
     private void assertUnchangedRepositoryStatusForForbiddenCommit() throws Exception {
+        // Committing is not allowed
         var receivedStatusBeforeCommit = request.get(studentRepoBaseUrl + participation.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
         assertThat(receivedStatusBeforeCommit.repositoryStatus.toString()).isEqualTo("UNCOMMITTED_CHANGES");
         request.postWithoutLocation(studentRepoBaseUrl + participation.getId() + "/commit", null, HttpStatus.FORBIDDEN, null);
@@ -615,6 +616,7 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
     }
 
     private void assertUnchangedRepositoryStatusForForbiddenReset() throws Exception {
+        // Reset the repo is not allowed
         var receivedStatusBeforeCommit = request.get(studentRepoBaseUrl + participation.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
         assertThat(receivedStatusBeforeCommit.repositoryStatus.toString()).isEqualTo("UNCOMMITTED_CHANGES");
         request.postWithoutLocation(studentRepoBaseUrl + participation.getId() + "/reset", null, HttpStatus.FORBIDDEN, null);
@@ -650,14 +652,12 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     public void testResetNotAllowedForExamBeforeDueDate() throws Exception {
+        // Create an exam programming exercise
         programmingExercise = database.addCourseExamExerciseGroupWithOneProgrammingExerciseAndTestCases();
-        programmingExercise.setReleaseDate(ZonedDateTime.now().minusHours(2));
-        programmingExercise.setDueDate(ZonedDateTime.now().plusHours(1));
-        programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(null);
-        programmingExercise.setAssessmentType(AssessmentType.AUTOMATIC);
         programmingExerciseRepository.save(programmingExercise);
         participation.setExercise(programmingExercise);
         studentParticipationRepository.save(participation);
+        // Create an exam which has already started
         Exam exam = examRepository.findByIdElseThrow(programmingExercise.getExerciseGroup().getExam().getId());
         exam.setStartDate(ZonedDateTime.now().minusHours(1));
         examRepository.save(exam);
@@ -666,7 +666,7 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
         studentExam.setUser(participation.getStudent().get());
         studentExam.addExercise(programmingExercise);
         studentExamRepository.save(studentExam);
-
+        // A tutor is not allowed to reset the repository during the exam time
         assertUnchangedRepositoryStatusForForbiddenReset();
     }
 
