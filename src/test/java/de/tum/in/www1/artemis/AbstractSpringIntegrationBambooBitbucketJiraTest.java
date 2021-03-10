@@ -455,6 +455,12 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
     }
 
     @Override
+    public void mockTriggerBuildFailed(AbstractBaseProgrammingExerciseParticipation programmingExerciseParticipation) throws Exception {
+        final var buildPlan = programmingExerciseParticipation.getBuildPlanId();
+        bambooRequestMockProvider.mockTriggerBuildFailed(buildPlan);
+    }
+
+    @Override
     public void mockSetRepositoryPermissionsToReadOnly(VcsRepositoryUrl repositoryUrl, String projectKey, Set<User> users) throws Exception {
         var repositorySlug = urlService.getRepositorySlugFromRepositoryUrl(repositoryUrl);
         bitbucketRequestMockProvider.mockSetRepositoryPermissionsToReadOnly(repositorySlug, projectKey, users);

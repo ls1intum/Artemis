@@ -595,6 +595,12 @@ class ProgrammingExerciseIntegrationBambooBitbucketJiraTest extends AbstractSpri
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void updateTestCases_asInstrutor_triggerBuildFails() throws Exception {
+        programmingExerciseIntegrationServiceTest.updateTestCases_asInstrutor_triggerBuildFails();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void updateTestCases_nonExistingExercise_notFound() throws Exception {
         programmingExerciseIntegrationServiceTest.updateTestCases_nonExistingExercise_notFound();
     }

@@ -133,7 +133,7 @@ public class JenkinsBuildPlanService {
         try {
             jenkinsJobService.getJobInFolder(projectKey, planKey).build(useCrumb);
         }
-        catch (IOException e) {
+        catch (JenkinsException | IOException e) {
             log.error(e.getMessage(), e);
             throw new JenkinsException("Error triggering build: " + planKey, e);
         }

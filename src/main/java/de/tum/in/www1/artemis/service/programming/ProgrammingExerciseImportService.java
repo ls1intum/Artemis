@@ -10,7 +10,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import org.apache.http.HttpException;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -177,9 +176,9 @@ public class ProgrammingExerciseImportService {
      *
      * @param templateExercise The template exercise which plans should get copied
      * @param newExercise The new exercise to which all plans should get copied
-     * @throws HttpException If the copied build plans could not get triggered
+     * @throws Exception If the copied build plans could not get triggered
      */
-    public void importBuildPlans(final ProgrammingExercise templateExercise, final ProgrammingExercise newExercise) throws HttpException {
+    public void importBuildPlans(final ProgrammingExercise templateExercise, final ProgrammingExercise newExercise) throws Exception {
         final var templateParticipation = newExercise.getTemplateParticipation();
         final var solutionParticipation = newExercise.getSolutionParticipation();
         final var targetExerciseProjectKey = newExercise.getProjectKey();
@@ -195,7 +194,7 @@ public class ProgrammingExerciseImportService {
             continuousIntegrationService.get().triggerBuild(templateParticipation);
             continuousIntegrationService.get().triggerBuild(solutionParticipation);
         }
-        catch (HttpException e) {
+        catch (Exception e) {
             log.error("Unable to trigger imported build plans", e);
             throw e;
         }

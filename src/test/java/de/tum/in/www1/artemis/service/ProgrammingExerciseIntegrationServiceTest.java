@@ -962,6 +962,29 @@ public class ProgrammingExerciseIntegrationServiceTest {
         });
     }
 
+    public void updateTestCases_asInstrutor_triggerBuildFails() throws Exception {
+        programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExercise.getId()).get();
+        mockDelegate.mockTriggerBuildFailed(programmingExercise.getSolutionParticipation());
+        mockDelegate.mockTriggerBuildFailed(programmingExercise.getTemplateParticipation());
+
+        final var testCases = programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId());
+        final var updates = testCases.stream().map(testCase -> {
+            final var testCaseUpdate = new ProgrammingExerciseTestCaseDTO();
+            testCaseUpdate.setId(testCase.getId());
+            testCaseUpdate.setAfterDueDate(true);
+            testCaseUpdate.setWeight(testCase.getId() + 42.0);
+            testCaseUpdate.setBonusMultiplier(testCase.getId() + 1.0);
+            testCaseUpdate.setBonusPoints(testCase.getId() + 2.0);
+            return testCaseUpdate;
+        }).collect(Collectors.toList());
+        final var endpoint = ProgrammingExerciseTestCaseResource.Endpoints.UPDATE_TEST_CASES.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
+
+        final var testCasesResponse = request.patchWithResponseBody(ROOT + endpoint, updates, new TypeReference<List<ProgrammingExerciseTestCase>>() {
+        }, HttpStatus.OK);
+
+        assertThat(testCasesResponse).isNotNull();
+    }
+
     public void updateTestCases_nonExistingExercise_notFound() throws Exception {
         final var update = new ProgrammingExerciseTestCaseDTO();
         final var endpoint = ProgrammingExerciseTestCaseResource.Endpoints.UPDATE_TEST_CASES.replace("{exerciseId}", String.valueOf(programmingExercise.getId() + 1337));

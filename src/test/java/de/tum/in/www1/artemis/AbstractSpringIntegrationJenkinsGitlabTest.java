@@ -91,8 +91,8 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
         jenkinsRequestMockProvider.mockCreateProjectForExercise(exercise);
         jenkinsRequestMockProvider.mockCreateBuildPlan(projectKey, TEMPLATE.getName());
         jenkinsRequestMockProvider.mockCreateBuildPlan(projectKey, SOLUTION.getName());
-        jenkinsRequestMockProvider.mockTriggerBuild(projectKey, TEMPLATE.getName());
-        jenkinsRequestMockProvider.mockTriggerBuild(projectKey, SOLUTION.getName());
+        jenkinsRequestMockProvider.mockTriggerBuild(projectKey, TEMPLATE.getName(), false);
+        jenkinsRequestMockProvider.mockTriggerBuild(projectKey, SOLUTION.getName(), false);
 
         doNothing().when(gitService).pushSourceToTargetRepo(any(), any());
     }
@@ -170,8 +170,8 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
         jenkinsRequestMockProvider.mockCreateProjectForExercise(exerciseToBeImported);
         jenkinsRequestMockProvider.mockCreateBuildPlan(targetProjectKey, TEMPLATE.getName());
         jenkinsRequestMockProvider.mockCreateBuildPlan(targetProjectKey, SOLUTION.getName());
-        jenkinsRequestMockProvider.mockTriggerBuild(targetProjectKey, TEMPLATE.getName());
-        jenkinsRequestMockProvider.mockTriggerBuild(targetProjectKey, SOLUTION.getName());
+        jenkinsRequestMockProvider.mockTriggerBuild(targetProjectKey, TEMPLATE.getName(), false);
+        jenkinsRequestMockProvider.mockTriggerBuild(targetProjectKey, SOLUTION.getName(), false);
     }
 
     @Override
@@ -265,7 +265,7 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
 
         mockCopyBuildPlan(participation);
         mockConfigureBuildPlan(participation);
-        jenkinsRequestMockProvider.mockTriggerBuild(projectKey, buildPlanId);
+        jenkinsRequestMockProvider.mockTriggerBuild(projectKey, buildPlanId, false);
     }
 
     @Override
@@ -274,7 +274,7 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
         final String hash = "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d";
         final String projectKey = participation.getProgrammingExercise().getProjectKey();
         mockFetchCommitInfo(projectKey, slug, hash);
-        jenkinsRequestMockProvider.mockTriggerBuild(projectKey, participation.getBuildPlanId());
+        jenkinsRequestMockProvider.mockTriggerBuild(projectKey, participation.getBuildPlanId(), false);
     }
 
     @Override
@@ -282,7 +282,7 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
         doReturn(COMMIT_HASH_OBJECT_ID).when(gitService).getLastCommitHash(any());
         mockCopyBuildPlan(participation);
         mockConfigureBuildPlan(participation);
-        jenkinsRequestMockProvider.mockTriggerBuild(participation.getProgrammingExercise().getProjectKey(), participation.getBuildPlanId());
+        jenkinsRequestMockProvider.mockTriggerBuild(participation.getProgrammingExercise().getProjectKey(), participation.getBuildPlanId(), false);
     }
 
     @Override
@@ -290,7 +290,7 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
         doReturn(COMMIT_HASH_OBJECT_ID).when(gitService).getLastCommitHash(any());
         mockCopyBuildPlan(participation);
         mockConfigureBuildPlan(participation);
-        jenkinsRequestMockProvider.mockTriggerBuild(participation.getProgrammingExercise().getProjectKey(), participation.getBuildPlanId());
+        jenkinsRequestMockProvider.mockTriggerBuild(participation.getProgrammingExercise().getProjectKey(), participation.getBuildPlanId(), false);
     }
 
     @Override
@@ -394,7 +394,14 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
     public void mockTriggerBuild(AbstractBaseProgrammingExerciseParticipation programmingExerciseParticipation) throws Exception {
         var projectKey = programmingExerciseParticipation.getProgrammingExercise().getProjectKey();
         var buildPlanId = programmingExerciseParticipation.getBuildPlanId();
-        jenkinsRequestMockProvider.mockTriggerBuild(projectKey, buildPlanId);
+        jenkinsRequestMockProvider.mockTriggerBuild(projectKey, buildPlanId, false);
+    }
+
+    @Override
+    public void mockTriggerBuildFailed(AbstractBaseProgrammingExerciseParticipation programmingExerciseParticipation) throws Exception {
+        var projectKey = programmingExerciseParticipation.getProgrammingExercise().getProjectKey();
+        var buildPlanId = programmingExerciseParticipation.getBuildPlanId();
+        jenkinsRequestMockProvider.mockTriggerBuild(projectKey, buildPlanId, true);
     }
 
     @Override

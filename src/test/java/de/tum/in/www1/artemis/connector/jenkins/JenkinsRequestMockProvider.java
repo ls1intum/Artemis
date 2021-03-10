@@ -114,7 +114,7 @@ public class JenkinsRequestMockProvider {
         var job = jobFolder + "-" + planKey;
         mockCreateJobInFolder(jobFolder, job);
         mockGivePlanPermissions(jobFolder, job);
-        mockTriggerBuild(jobFolder, job);
+        mockTriggerBuild(jobFolder, job, false);
     }
 
     public void mockCreateJobInFolder(String jobFolder, String job) throws IOException {
@@ -190,8 +190,8 @@ public class JenkinsRequestMockProvider {
         final var uri = UriComponentsBuilder.fromUri(jenkinsServerUrl.toURI()).pathSegment("job", projectKey, "job", planName, "config.xml").build().toUri();
         mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.POST)).andRespond(withStatus(HttpStatus.OK));
 
-        mockTriggerBuild(projectKey, planName);
-        mockTriggerBuild(projectKey, planName);
+        mockTriggerBuild(projectKey, planName, false);
+        mockTriggerBuild(projectKey, planName, false);
     }
 
     private void mockGetJobXmlForBuildPlanWith(String projectKey, String xmlToReturn) throws IOException {
@@ -215,10 +215,15 @@ public class JenkinsRequestMockProvider {
         mockCopyBuildPlan(projectKey, projectKey);
     }
 
-    private void mockGetJob(String projectKey, String jobName, JobWithDetails jobToReturn) throws IOException {
+    private void mockGetJob(String projectKey, String jobName, JobWithDetails jobToReturn, boolean getJobFails) throws IOException {
         final var folder = new FolderJob();
         mockGetFolderJob(projectKey, folder);
-        doReturn(jobToReturn).when(jenkinsServer).getJob(folder, jobName);
+        if (!getJobFails) {
+            doReturn(jobToReturn).when(jenkinsServer).getJob(folder, jobName);
+        }
+        else {
+            doThrow(IOException.class).when(jenkinsServer).getJob(folder, jobName);
+        }
     }
 
     private void mockGetFolderJob(String folderName, FolderJob folderJobToReturn) throws IOException {
@@ -232,7 +237,7 @@ public class JenkinsRequestMockProvider {
         String buildPlanId = participation.getBuildPlanId();
 
         final var job = mock(JobWithDetails.class);
-        mockGetJob(projectKey, buildPlanId, job);
+        mockGetJob(projectKey, buildPlanId, job, false);
 
         final var buildLogResponse = loadFileFromResources("test-data/jenkins-response/failed-build-log.html");
 
@@ -392,12 +397,12 @@ public class JenkinsRequestMockProvider {
     public void mockGetBuildStatus(String projectKey, String planName, boolean planExistsInCi, boolean planIsActive, boolean planIsBuilding)
             throws IOException, URISyntaxException {
         if (!planExistsInCi) {
-            mockGetJob(projectKey, planName, null);
+            mockGetJob(projectKey, planName, null, false);
             return;
         }
 
         var jobWithDetails = mock(JobWithDetails.class);
-        mockGetJob(projectKey, planName, jobWithDetails);
+        mockGetJob(projectKey, planName, jobWithDetails, false);
 
         if (planIsActive && !planIsBuilding) {
             doReturn(true).when(jobWithDetails).isInQueue();
@@ -421,13 +426,15 @@ public class JenkinsRequestMockProvider {
 
     public void mockCheckIfBuildPlanExists(String projectKey, String buildPlanId, boolean buildPlanExists) throws IOException {
         var toReturn = buildPlanExists ? new JobWithDetails() : null;
-        mockGetJob(projectKey, buildPlanId, toReturn);
+        mockGetJob(projectKey, buildPlanId, toReturn, false);
     }
 
-    public void mockTriggerBuild(String projectKey, String buildPlanId) throws IOException {
+    public void mockTriggerBuild(String projectKey, String buildPlanId, boolean triggerBuildFails) throws IOException {
         var jobWithDetails = mock(JobWithDetails.class);
-        mockGetJob(projectKey, buildPlanId, jobWithDetails);
-        doReturn(new QueueReference("")).when(jobWithDetails).build();
+        mockGetJob(projectKey, buildPlanId, jobWithDetails, triggerBuildFails);
+        if (!triggerBuildFails) {
+            doReturn(new QueueReference("")).when(jobWithDetails).build();
+        }
     }
 
 }
