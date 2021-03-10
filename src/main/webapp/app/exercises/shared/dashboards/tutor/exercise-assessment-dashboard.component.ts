@@ -37,6 +37,7 @@ import { TextSubmission } from 'app/entities/text-submission.model';
 import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
 import { Result } from 'app/entities/result.model';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { SortService } from 'app/shared/service/sort.service';
 import { round } from 'app/shared/util/utils';
 
 export interface ExampleSubmissionQueryParams {
@@ -138,6 +139,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
         private modalService: NgbModal,
         private guidedTourService: GuidedTourService,
         private artemisDatePipe: ArtemisDatePipe,
+        private sortService: SortService,
     ) {}
 
     /**
@@ -251,8 +253,8 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
                     this.numberOfMoreFeedbackRequests = this.statsForDashboard.numberOfMoreFeedbackRequests;
                     this.numberOfOpenMoreFeedbackRequests = this.statsForDashboard.numberOfOpenMoreFeedbackRequests;
                     const tutorLeaderboardEntry = this.statsForDashboard.tutorLeaderboardEntries?.find((entry) => entry.userId === this.tutor!.id);
-
                     if (tutorLeaderboardEntry) {
+                        this.sortService.sortByProperty(this.statsForDashboard.tutorLeaderboardEntries, 'points', false);
                         this.numberOfTutorAssessments = tutorLeaderboardEntry.numberOfAssessments;
                         this.numberOfTutorComplaints = tutorLeaderboardEntry.numberOfTutorComplaints;
                         this.numberOfTutorMoreFeedbackRequests = tutorLeaderboardEntry.numberOfTutorMoreFeedbackRequests;
