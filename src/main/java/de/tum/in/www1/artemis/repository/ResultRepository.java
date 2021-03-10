@@ -295,8 +295,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
             FROM
                 Result r join r.participation p join p.exercise e join e.course c join r.assessor a
             WHERE
-                c.teachingAssistantGroupName member of a.groups
-                and r.completionDate is not null
+                r.completionDate is not null
                 and c.id = :#{#courseId}
             GROUP BY a.id
             """)
@@ -316,11 +315,10 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
             FROM
                 Result r join r.participation p join p.exercise e join r.assessor a
             WHERE
-                :#{#groupName} member of a.groups
-                and r.completionDate is not null
+                r.completionDate is not null
                 and e.id = :#{#exerciseId}
             GROUP BY a.id
             """)
-    List<TutorLeaderboardAssessment> findTutorLeaderboardAssessmentByExerciseId(@Param("groupName") String groupName, @Param("exerciseId") long exerciseId);
+    List<TutorLeaderboardAssessment> findTutorLeaderboardAssessmentByExerciseId(@Param("exerciseId") long exerciseId);
 
 }
