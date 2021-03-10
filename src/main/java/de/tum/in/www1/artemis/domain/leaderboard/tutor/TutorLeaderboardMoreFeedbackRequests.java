@@ -14,7 +14,7 @@ public class TutorLeaderboardMoreFeedbackRequests {
 
     private final long notAnsweredRequests;
 
-    private final long points;
+    private final double points;
 
     private final long courseId;
 
@@ -26,7 +26,7 @@ public class TutorLeaderboardMoreFeedbackRequests {
         return notAnsweredRequests;
     }
 
-    public long getPoints() {
+    public double getPoints() {
         return points;
     }
 
@@ -42,7 +42,7 @@ public class TutorLeaderboardMoreFeedbackRequests {
         return exerciseId;
     }
 
-    public TutorLeaderboardMoreFeedbackRequests(long exerciseId, long userId, long allRequests, long notAnsweredRequests, long points, long courseId) {
+    public TutorLeaderboardMoreFeedbackRequests(long exerciseId, long userId, long allRequests, long notAnsweredRequests, double points, long courseId) {
         this.exerciseId = exerciseId;
         this.userId = userId;
         this.allRequests = allRequests;

@@ -12,7 +12,7 @@ public class TutorLeaderboardAnsweredMoreFeedbackRequests {
 
     private final long answeredRequests;
 
-    private final long points;
+    private final double points;
 
     private final long courseId;
 
@@ -20,7 +20,7 @@ public class TutorLeaderboardAnsweredMoreFeedbackRequests {
         return answeredRequests;
     }
 
-    public long getPoints() {
+    public double getPoints() {
         return points;
     }
 
@@ -36,7 +36,7 @@ public class TutorLeaderboardAnsweredMoreFeedbackRequests {
         return exerciseId;
     }
 
-    public TutorLeaderboardAnsweredMoreFeedbackRequests(long exerciseId, long userId, long answeredRequests, long points, long courseId) {
+    public TutorLeaderboardAnsweredMoreFeedbackRequests(long exerciseId, long userId, long answeredRequests, double points, long courseId) {
         this.exerciseId = exerciseId;
         this.userId = userId;
         this.answeredRequests = answeredRequests;

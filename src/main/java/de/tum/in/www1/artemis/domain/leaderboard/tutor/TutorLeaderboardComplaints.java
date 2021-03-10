@@ -14,7 +14,7 @@ public class TutorLeaderboardComplaints {
 
     private final long acceptedComplaints;
 
-    private final long points;
+    private final double points;
 
     private final long courseId;
 
@@ -26,7 +26,7 @@ public class TutorLeaderboardComplaints {
         return acceptedComplaints;
     }
 
-    public long getPoints() {
+    public double getPoints() {
         return points;
     }
 
@@ -42,7 +42,7 @@ public class TutorLeaderboardComplaints {
         return exerciseId;
     }
 
-    public TutorLeaderboardComplaints(long exerciseId, long userId, long allComplaints, long acceptedComplaints, long points, long courseId) {
+    public TutorLeaderboardComplaints(long exerciseId, long userId, long allComplaints, long acceptedComplaints, double points, long courseId) {
         this.exerciseId = exerciseId;
         this.userId = userId;
         this.allComplaints = allComplaints;
