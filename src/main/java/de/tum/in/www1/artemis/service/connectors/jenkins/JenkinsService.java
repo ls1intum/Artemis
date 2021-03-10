@@ -526,11 +526,6 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
     }
 
     @Override
-    public boolean isBuildPlanEnabled(String projectKey, String planId) {
-        return jenkinsBuildPlanService.isBuildPlanEnabled(projectKey, planId);
-    }
-
-    @Override
     public void enablePlan(String projectKey, String planKey) {
         jenkinsBuildPlanService.enablePlan(projectKey, planKey);
     }

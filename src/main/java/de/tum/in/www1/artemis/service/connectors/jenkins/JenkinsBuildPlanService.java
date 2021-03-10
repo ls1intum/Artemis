@@ -193,16 +193,6 @@ public class JenkinsBuildPlanService {
     }
 
     /**
-     * Returns true if the build plan is enabled
-     * @param projectKey the project key
-     * @param planId the plan id
-     * @return whether the plan is enabled
-     */
-    public boolean isBuildPlanEnabled(String projectKey, String planId) {
-        return jenkinsJobService.getJobInFolder(projectKey, planId).isBuildable();
-    }
-
-    /**
      * Returns true if the build plan exists.
      * @param projectKey the project key
      * @param buildPlanId the build plan id
