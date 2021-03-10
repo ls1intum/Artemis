@@ -19,7 +19,7 @@ import de.tum.in.www1.artemis.web.rest.dto.TutorLeaderboardDTO;
 @Service
 public class TutorLeaderboardService {
 
-    private final TutorLeaderboardAssessmentViewRepository tutorLeaderboardAssessmentViewRepository;
+    private final TutorLeaderboardAssessmentRepository tutorLeaderboardAssessmentRepository;
 
     private final TutorLeaderboardComplaintsViewRepository tutorLeaderboardComplaintsViewRepository;
 
@@ -31,12 +31,12 @@ public class TutorLeaderboardService {
 
     private final UserRepository userRepository;
 
-    public TutorLeaderboardService(TutorLeaderboardAssessmentViewRepository tutorLeaderboardAssessmentViewRepository,
+    public TutorLeaderboardService(TutorLeaderboardAssessmentRepository tutorLeaderboardAssessmentRepository,
             TutorLeaderboardComplaintsViewRepository tutorLeaderboardComplaintsViewRepository,
             TutorLeaderboardMoreFeedbackRequestsViewRepository tutorLeaderboardMoreFeedbackRequestsViewRepository,
             TutorLeaderboardComplaintResponsesViewRepository tutorLeaderboardComplaintResponsesViewRepository,
             TutorLeaderboardAnsweredMoreFeedbackRequestsViewRepository tutorLeaderboardAnsweredMoreFeedbackRequestsViewRepository, UserRepository userRepository) {
-        this.tutorLeaderboardAssessmentViewRepository = tutorLeaderboardAssessmentViewRepository;
+        this.tutorLeaderboardAssessmentRepository = tutorLeaderboardAssessmentRepository;
         this.tutorLeaderboardComplaintsViewRepository = tutorLeaderboardComplaintsViewRepository;
         this.tutorLeaderboardMoreFeedbackRequestsViewRepository = tutorLeaderboardMoreFeedbackRequestsViewRepository;
         this.tutorLeaderboardComplaintResponsesViewRepository = tutorLeaderboardComplaintResponsesViewRepository;
@@ -54,7 +54,7 @@ public class TutorLeaderboardService {
 
         List<User> tutors = userRepository.getTutors(course);
 
-        List<TutorLeaderboardAssessmentView> tutorLeaderboardAssessments = tutorLeaderboardAssessmentViewRepository.findAllByCourseId(course.getId());
+        List<TutorLeaderboardAssessment> tutorLeaderboardAssessments = tutorLeaderboardAssessmentRepository.findTutorLeaderboardAssessmentByCourseId(course.getId());
         List<TutorLeaderboardComplaintsView> tutorLeaderboardComplaints = tutorLeaderboardComplaintsViewRepository.findAllByCourseId(course.getId());
         List<TutorLeaderboardMoreFeedbackRequestsView> tutorLeaderboardMoreFeedbackRequests = tutorLeaderboardMoreFeedbackRequestsViewRepository.findAllByCourseId(course.getId());
         List<TutorLeaderboardComplaintResponsesView> tutorLeaderboardComplaintResponses = tutorLeaderboardComplaintResponsesViewRepository.findAllByCourseId(course.getId());
@@ -109,7 +109,7 @@ public class TutorLeaderboardService {
     }
 
     @NotNull
-    private List<TutorLeaderboardDTO> aggregateTutorLeaderboardData(List<User> tutors, List<TutorLeaderboardAssessmentView> tutorLeaderboardAssessments,
+    private List<TutorLeaderboardDTO> aggregateTutorLeaderboardData(List<User> tutors, List<TutorLeaderboardAssessment> tutorLeaderboardAssessments,
             List<TutorLeaderboardComplaintsView> tutorLeaderboardComplaints, List<TutorLeaderboardMoreFeedbackRequestsView> tutorLeaderboardMoreFeedbackRequests,
             List<TutorLeaderboardComplaintResponsesView> tutorLeaderboardComplaintResponses,
             List<TutorLeaderboardAnsweredMoreFeedbackRequestsView> tutorLeaderboardAnsweredMoreFeedbackRequests) {
@@ -124,17 +124,12 @@ public class TutorLeaderboardService {
             long numberOfComplaintResponses = 0L;
             long numberOfAnsweredMoreFeedbackRequests = 0L;
             long numberOfTutorMoreFeedbackRequests = 0L;
-            Long points = 0L;
+            long points = 0L;
 
-            for (TutorLeaderboardAssessmentView assessmentsView : tutorLeaderboardAssessments) {
-                if (tutor.getId().equals(assessmentsView.getUserId())) {
-                    numberOfAssessments += assessmentsView.getAssessments();
-                    if (assessmentsView.getPoints() != null) {   // this can happen when max points is null, then we could simply count the assessments
-                        points += assessmentsView.getPoints();
-                    }
-                    else {
-                        points += assessmentsView.getAssessments();
-                    }
+            for (var assessment : tutorLeaderboardAssessments) {
+                if (tutor.equals(assessment.getUser())) {
+                    numberOfAssessments += assessment.getAssessments();
+                    points += assessment.getPoints();
                 }
             }
 
