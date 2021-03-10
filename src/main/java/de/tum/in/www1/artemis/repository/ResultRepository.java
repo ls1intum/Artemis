@@ -287,18 +287,18 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
             SELECT
             new de.tum.in.www1.artemis.domain.leaderboard.tutor.TutorLeaderboardAssessment(
                 -1L,
-                result.assessor.id,
-                count(result),
-                sum(result.participation.exercise.maxPoints),
-                result.participation.exercise.course.id
+                r.assessor.id,
+                count(r),
+                sum(e.maxPoints),
+                c.id
                 )
             FROM
-                Result result
+                Result r join r.participation p join p.exercise e join e.course c join r.assessor a
             WHERE
-                result.participation.exercise.course.teachingAssistantGroupName member of result.assessor.groups
-                and result.completionDate is not null
-                and result.participation.exercise.course.id = :#{#courseId}
-            GROUP BY result.assessor.id
+                c.teachingAssistantGroupName member of a.groups
+                and r.completionDate is not null
+                and c.id = :#{#courseId}
+            GROUP BY a.id
             """)
     List<TutorLeaderboardAssessment> findTutorLeaderboardAssessmentByCourseId(@Param("courseId") long courseId);
 
@@ -307,19 +307,19 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
     @Query("""
             SELECT
             new de.tum.in.www1.artemis.domain.leaderboard.tutor.TutorLeaderboardAssessment(
-                result.participation.exercise.id,
-                result.assessor.id,
-                count(result),
-                sum(result.participation.exercise.maxPoints),
-                result.participation.exercise.course.id
+                e.id,
+                a.id,
+                count(r),
+                sum(e.maxPoints),
+                -1L
                 )
             FROM
-                Result result
+                Result r join r.participation p join p.exercise e join r.assessor a
             WHERE
-                :#{#groupName} member of result.assessor.groups
-                and result.completionDate is not null
-                and result.participation.exercise.id = :#{#exerciseId}
-            GROUP BY result.assessor.id
+                :#{#groupName} member of a.groups
+                and r.completionDate is not null
+                and e.id = :#{#exerciseId}
+            GROUP BY a.id
             """)
     List<TutorLeaderboardAssessment> findTutorLeaderboardAssessmentByExerciseId(@Param("groupName") String groupName, @Param("exerciseId") long exerciseId);
 
