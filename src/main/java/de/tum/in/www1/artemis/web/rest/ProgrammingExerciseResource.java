@@ -20,7 +20,6 @@ import javax.validation.constraints.NotNull;
 
 import jplag.ExitException;
 
-import org.apache.http.HttpException;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -601,7 +600,7 @@ public class ProgrammingExerciseResource {
             }
             responseHeaders = HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, importedProgrammingExercise.getTitle());
         }
-        catch (HttpException e) {
+        catch (Exception e) {
             responseHeaders = HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "importExerciseTriggerPlanFail", "Unable to trigger imported build plans");
         }
 

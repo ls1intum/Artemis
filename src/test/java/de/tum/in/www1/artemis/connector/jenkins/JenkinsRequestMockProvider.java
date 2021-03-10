@@ -179,7 +179,7 @@ public class JenkinsRequestMockProvider {
         final var projectKey = exercise.getProjectKey();
         final var planKey = projectKey + "-" + username.toUpperCase();
         mockUpdatePlanRepository(projectKey, planKey);
-        mockEnablePlan(projectKey, planKey);
+        mockEnablePlan(projectKey, planKey, true, false);
     }
 
     public void mockUpdatePlanRepository(String projectKey, String planName) throws IOException, URISyntaxException {
@@ -199,9 +199,15 @@ public class JenkinsRequestMockProvider {
         doReturn(xmlToReturn).when(jenkinsServer).getJobXml(any(), any());
     }
 
-    public void mockEnablePlan(String projectKey, String planKey) throws URISyntaxException, IOException {
+    public void mockEnablePlan(String projectKey, String planKey, boolean planExistsInCi, boolean shouldFail) throws URISyntaxException, IOException {
         final var uri = UriComponentsBuilder.fromUri(jenkinsServerUrl.toURI()).pathSegment("job", projectKey, "job", planKey, "enable").build().toUri();
-        mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.POST)).andRespond(withStatus(HttpStatus.FOUND));
+        if (shouldFail) {
+            mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.POST)).andRespond(withStatus(HttpStatus.BAD_REQUEST));
+        }
+        else {
+            var status = planExistsInCi ? HttpStatus.FOUND : HttpStatus.NOT_FOUND;
+            mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.POST)).andRespond(withStatus(status));
+        }
     }
 
     public void mockCopyBuildPlanForParticipation(ProgrammingExercise exercise, String username) throws IOException {

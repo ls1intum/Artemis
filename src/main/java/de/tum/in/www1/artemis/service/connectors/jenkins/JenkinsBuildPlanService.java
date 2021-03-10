@@ -9,7 +9,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
@@ -241,14 +240,10 @@ public class JenkinsBuildPlanService {
     public void enablePlan(String projectKey, String planKey) {
         try {
             var uri = UriComponentsBuilder.fromHttpUrl(serverUrl.toString()).pathSegment("job", projectKey, "job", planKey, "enable").build(true).toUri();
-            var response = restTemplate.postForEntity(uri, null, String.class);
-            if (response.getStatusCode() != HttpStatus.FOUND) {
-                throw new JenkinsException(
-                        "Unable to enable plan " + planKey + "; statusCode=" + response.getStatusCode() + "; headers=" + response.getHeaders() + "; body=" + response.getBody());
-            }
+            restTemplate.postForEntity(uri, null, String.class);
         }
         catch (HttpClientErrorException e) {
-            throw new JenkinsException("Unable to enable plan " + planKey, e);
+            throw new JenkinsException("Unable to enable plan " + planKey + "; statusCode=" + e.getStatusCode() + "; body=" + e.getResponseBodyAsString());
         }
     }
 }

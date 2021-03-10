@@ -99,15 +99,34 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
 
     @Override
     public void mockConnectorRequestsForImport(ProgrammingExercise sourceExercise, ProgrammingExercise exerciseToBeImported, boolean recreateBuildPlans) throws Exception {
-        final var targetProjectKey = exerciseToBeImported.getProjectKey();
+        mockImportRepositories(exerciseToBeImported);
+        doNothing().when(gitService).pushSourceToTargetRepo(any(), any());
+
+        if (!recreateBuildPlans) {
+            mockCloneAndEnableAllBuildPlans(sourceExercise, exerciseToBeImported, true, false);
+            mockUpdatePlanRepositoriesInBuildPlans(exerciseToBeImported);
+        }
+        else {
+            mockSetupBuildPlansForNewExercise(exerciseToBeImported);
+        }
+    }
+
+    @Override
+    public void mockImportProgrammingExerciseWithFailingEnablePlan(ProgrammingExercise sourceExercise, ProgrammingExercise exerciseToBeImported, boolean planExistsInCi,
+            boolean shouldPlanEnableFail) throws Exception {
+        mockImportRepositories(exerciseToBeImported);
+        doNothing().when(gitService).pushSourceToTargetRepo(any(), any());
+        mockCloneAndEnableAllBuildPlans(sourceExercise, exerciseToBeImported, planExistsInCi, shouldPlanEnableFail);
+        mockUpdatePlanRepositoriesInBuildPlans(exerciseToBeImported);
+    }
+
+    private void mockImportRepositories(ProgrammingExercise exerciseToBeImported) throws Exception {
         final var targetTemplateRepoName = exerciseToBeImported.generateRepositoryName(RepositoryType.TEMPLATE);
         final var targetSolutionRepoName = exerciseToBeImported.generateRepositoryName(RepositoryType.SOLUTION);
         final var targetTestsRepoName = exerciseToBeImported.generateRepositoryName(RepositoryType.TESTS);
 
         gitlabRequestMockProvider.mockCheckIfProjectExists(exerciseToBeImported, false);
-        jenkinsRequestMockProvider.mockCheckIfProjectExists(exerciseToBeImported, false);
 
-        // Mock ProgramingExerciseImportService::importRepositories
         gitlabRequestMockProvider.mockCreateProjectForExercise(exerciseToBeImported);
         gitlabRequestMockProvider.mockCreateRepository(exerciseToBeImported, targetTemplateRepoName);
         gitlabRequestMockProvider.mockCreateRepository(exerciseToBeImported, targetSolutionRepoName);
@@ -115,36 +134,44 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
         gitlabRequestMockProvider.mockAddAuthenticatedWebHook();
         gitlabRequestMockProvider.mockAddAuthenticatedWebHook();
         gitlabRequestMockProvider.mockAddAuthenticatedWebHook();
+    }
 
-        doNothing().when(gitService).pushSourceToTargetRepo(any(), any());
+    private void mockCloneAndEnableAllBuildPlans(ProgrammingExercise sourceExercise, ProgrammingExercise exerciseToBeImported, boolean planExistsInCi, boolean shouldPlanEnableFail)
+            throws Exception {
+        final var targetProjectKey = exerciseToBeImported.getProjectKey();
+        String templateBuildPlanId = targetProjectKey + "-" + TEMPLATE.getName();
+        String solutionBuildPlanId = targetProjectKey + "-" + SOLUTION.getName();
 
-        if (!recreateBuildPlans) {
-            String templateBuildPlanId = targetProjectKey + "-" + TEMPLATE.getName();
-            String solutionBuildPlanId = targetProjectKey + "-" + SOLUTION.getName();
+        jenkinsRequestMockProvider.mockCreateProjectForExercise(exerciseToBeImported);
+        jenkinsRequestMockProvider.mockCopyBuildPlan(sourceExercise.getProjectKey(), targetProjectKey);
+        jenkinsRequestMockProvider.mockCopyBuildPlan(sourceExercise.getProjectKey(), targetProjectKey);
+        jenkinsRequestMockProvider.mockGivePlanPermissions(targetProjectKey, templateBuildPlanId);
+        jenkinsRequestMockProvider.mockGivePlanPermissions(targetProjectKey, solutionBuildPlanId);
+        jenkinsRequestMockProvider.mockEnablePlan(targetProjectKey, templateBuildPlanId, planExistsInCi, shouldPlanEnableFail);
+        jenkinsRequestMockProvider.mockEnablePlan(targetProjectKey, solutionBuildPlanId, planExistsInCi, shouldPlanEnableFail);
+    }
 
-            // Mocks ProgramingExerciseImportService::cloneAndEnableAllBuildPlans
-            jenkinsRequestMockProvider.mockCreateProjectForExercise(exerciseToBeImported);
-            jenkinsRequestMockProvider.mockCopyBuildPlan(sourceExercise.getProjectKey(), targetProjectKey);
-            jenkinsRequestMockProvider.mockCopyBuildPlan(sourceExercise.getProjectKey(), targetProjectKey);
-            jenkinsRequestMockProvider.mockGivePlanPermissions(targetProjectKey, templateBuildPlanId);
-            jenkinsRequestMockProvider.mockGivePlanPermissions(targetProjectKey, solutionBuildPlanId);
-            jenkinsRequestMockProvider.mockEnablePlan(targetProjectKey, templateBuildPlanId);
-            jenkinsRequestMockProvider.mockEnablePlan(targetProjectKey, solutionBuildPlanId);
+    private void mockUpdatePlanRepositoriesInBuildPlans(ProgrammingExercise exerciseToBeImported) throws Exception {
+        String templateBuildPlanId = exerciseToBeImported.getProjectKey() + "-" + TEMPLATE.getName();
+        String solutionBuildPlanId = exerciseToBeImported.getProjectKey() + "-" + SOLUTION.getName();
 
-            // Mocks ProgramingExerciseImportService::updatePlanRepositoriesInBuildPlans
-            mockUpdatePlanRepository(exerciseToBeImported, templateBuildPlanId, ASSIGNMENT_REPO_NAME, targetTemplateRepoName, List.of(ASSIGNMENT_REPO_NAME));
-            mockUpdatePlanRepository(exerciseToBeImported, templateBuildPlanId, TEST_REPO_NAME, targetTestsRepoName, List.of());
-            mockUpdatePlanRepository(exerciseToBeImported, solutionBuildPlanId, ASSIGNMENT_REPO_NAME, targetSolutionRepoName, List.of());
-            mockUpdatePlanRepository(exerciseToBeImported, solutionBuildPlanId, TEST_REPO_NAME, targetTestsRepoName, List.of());
-        }
-        else {
-            // Mocks for recreating the build plans
-            jenkinsRequestMockProvider.mockCreateProjectForExercise(exerciseToBeImported);
-            jenkinsRequestMockProvider.mockCreateBuildPlan(targetProjectKey, TEMPLATE.getName());
-            jenkinsRequestMockProvider.mockCreateBuildPlan(targetProjectKey, SOLUTION.getName());
-            jenkinsRequestMockProvider.mockTriggerBuild(targetProjectKey, TEMPLATE.getName());
-            jenkinsRequestMockProvider.mockTriggerBuild(targetProjectKey, SOLUTION.getName());
-        }
+        final var targetTemplateRepoName = exerciseToBeImported.generateRepositoryName(RepositoryType.TEMPLATE);
+        final var targetSolutionRepoName = exerciseToBeImported.generateRepositoryName(RepositoryType.SOLUTION);
+        final var targetTestsRepoName = exerciseToBeImported.generateRepositoryName(RepositoryType.TESTS);
+
+        mockUpdatePlanRepository(exerciseToBeImported, templateBuildPlanId, ASSIGNMENT_REPO_NAME, targetTemplateRepoName, List.of(ASSIGNMENT_REPO_NAME));
+        mockUpdatePlanRepository(exerciseToBeImported, templateBuildPlanId, TEST_REPO_NAME, targetTestsRepoName, List.of());
+        mockUpdatePlanRepository(exerciseToBeImported, solutionBuildPlanId, ASSIGNMENT_REPO_NAME, targetSolutionRepoName, List.of());
+        mockUpdatePlanRepository(exerciseToBeImported, solutionBuildPlanId, TEST_REPO_NAME, targetTestsRepoName, List.of());
+    }
+
+    private void mockSetupBuildPlansForNewExercise(ProgrammingExercise exerciseToBeImported) throws Exception {
+        final var targetProjectKey = exerciseToBeImported.getProjectKey();
+        jenkinsRequestMockProvider.mockCreateProjectForExercise(exerciseToBeImported);
+        jenkinsRequestMockProvider.mockCreateBuildPlan(targetProjectKey, TEMPLATE.getName());
+        jenkinsRequestMockProvider.mockCreateBuildPlan(targetProjectKey, SOLUTION.getName());
+        jenkinsRequestMockProvider.mockTriggerBuild(targetProjectKey, TEMPLATE.getName());
+        jenkinsRequestMockProvider.mockTriggerBuild(targetProjectKey, SOLUTION.getName());
     }
 
     @Override

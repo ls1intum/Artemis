@@ -438,10 +438,12 @@ public class BambooRequestMockProvider {
         mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.POST)).andRespond(withStatus(HttpStatus.OK));
     }
 
-    public void mockEnablePlan(String projectKey, String planName) throws URISyntaxException {
+    public void mockEnablePlan(String projectKey, String planName, boolean planExistsInCi, boolean shouldPlanEnableFail) throws URISyntaxException {
         final var planKey = projectKey + "-" + planName;
         var uri = UriComponentsBuilder.fromUri(bambooServerUrl.toURI()).path("/rest/api/latest/plan/" + planKey.toUpperCase() + "/enable").build().toUri();
-        mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.POST)).andRespond(withStatus(HttpStatus.OK));
+
+        var status = !planExistsInCi || shouldPlanEnableFail ? HttpStatus.NOT_FOUND : HttpStatus.OK;
+        mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.POST)).andRespond(withStatus(status));
     }
 
     public void mockDeleteBambooBuildProject(String projectKey) throws URISyntaxException, JsonProcessingException {

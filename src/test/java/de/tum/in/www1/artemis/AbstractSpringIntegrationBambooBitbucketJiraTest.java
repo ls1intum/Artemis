@@ -16,7 +16,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import org.eclipse.jgit.api.errors.GitAPIException;
 import org.junit.jupiter.api.AfterEach;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -126,7 +125,7 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
         final var projectKey = exercise.getProjectKey();
         final var bitbucketRepoName = projectKey.toLowerCase() + "-" + username;
         mockUpdatePlanRepository(exercise, username, ASSIGNMENT_REPO_NAME, bitbucketRepoName, List.of());
-        bambooRequestMockProvider.mockEnablePlan(exercise.getProjectKey(), username);
+        bambooRequestMockProvider.mockEnablePlan(exercise.getProjectKey(), username, true, false);
     }
 
     @Override
@@ -194,12 +193,36 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
     }
 
     @Override
-    public void mockConnectorRequestsForImport(ProgrammingExercise sourceExercise, ProgrammingExercise exerciseToBeImported, boolean recreateBuildPlans)
-            throws IOException, URISyntaxException, GitAPIException {
+    public void mockConnectorRequestsForImport(ProgrammingExercise sourceExercise, ProgrammingExercise exerciseToBeImported, boolean recreateBuildPlans) throws Exception {
+
+        mockImportRepositories(sourceExercise, exerciseToBeImported);
+        doNothing().when(gitService).pushSourceToTargetRepo(any(), any());
+
+        bambooRequestMockProvider.mockCheckIfProjectExists(exerciseToBeImported, false);
+        if (!recreateBuildPlans) {
+            mockCloneAndEnableAllBuildPlans(sourceExercise, exerciseToBeImported, true, false);
+        }
+        else {
+            // Mocks for recreating the build plans
+            mockBambooBuildPlanCreation(exerciseToBeImported);
+        }
+    }
+
+    @Override
+    public void mockImportProgrammingExerciseWithFailingEnablePlan(ProgrammingExercise sourceExercise, ProgrammingExercise exerciseToBeImported, boolean planExistsInCi,
+            boolean shouldPlanEnableFail) throws Exception {
+        mockImportRepositories(sourceExercise, exerciseToBeImported);
+        doNothing().when(gitService).pushSourceToTargetRepo(any(), any());
+        bambooRequestMockProvider.mockCheckIfProjectExists(exerciseToBeImported, false);
+        mockCloneAndEnableAllBuildPlans(sourceExercise, exerciseToBeImported, planExistsInCi, shouldPlanEnableFail);
+    }
+
+    private void mockImportRepositories(ProgrammingExercise sourceExercise, ProgrammingExercise exerciseToBeImported) throws Exception {
         final var projectKey = exerciseToBeImported.getProjectKey();
         final var templateRepoName = exerciseToBeImported.generateRepositoryName(RepositoryType.TEMPLATE);
         final var solutionRepoName = exerciseToBeImported.generateRepositoryName(RepositoryType.SOLUTION);
         final var testsRepoName = exerciseToBeImported.generateRepositoryName(RepositoryType.TESTS);
+
         var nextParticipationId = sourceExercise.getTemplateParticipation().getId() + 1;
         final var artemisSolutionHookPath = artemisServerUrl + PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + nextParticipationId++;
         final var artemisTemplateHookPath = artemisServerUrl + PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + nextParticipationId;
@@ -216,30 +239,28 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
         bitbucketRequestMockProvider.mockAddWebhook(projectKey, solutionRepoName, artemisSolutionHookPath);
         bitbucketRequestMockProvider.mockGetExistingWebhooks(projectKey, testsRepoName);
         bitbucketRequestMockProvider.mockAddWebhook(projectKey, testsRepoName, artemisTestsHookPath);
+    }
 
-        doNothing().when(gitService).pushSourceToTargetRepo(any(), any());
+    private void mockCloneAndEnableAllBuildPlans(ProgrammingExercise sourceExercise, ProgrammingExercise exerciseToBeImported, boolean planExistsInCi, boolean shouldPlanEnableFail)
+            throws Exception {
+        final var projectKey = exerciseToBeImported.getProjectKey();
+        final var templateRepoName = exerciseToBeImported.generateRepositoryName(RepositoryType.TEMPLATE);
+        final var solutionRepoName = exerciseToBeImported.generateRepositoryName(RepositoryType.SOLUTION);
+        final var testsRepoName = exerciseToBeImported.generateRepositoryName(RepositoryType.TESTS);
 
-        bambooRequestMockProvider.mockCheckIfProjectExists(exerciseToBeImported, false);
-        if (!recreateBuildPlans) {
-            // Mocks for copying the build plans
-            bambooRequestMockProvider.mockCopyBuildPlan(sourceExercise.getProjectKey(), TEMPLATE.getName(), projectKey, TEMPLATE.getName(), false);
-            bambooRequestMockProvider.mockCopyBuildPlan(sourceExercise.getProjectKey(), SOLUTION.getName(), projectKey, SOLUTION.getName(), true);
-            // TODO: Mock continuousIntegrationService.givePlanPermissions for Template and Solution plan
-            doReturn(null).when(bambooServer).publish(any());
-            bambooRequestMockProvider.mockGiveProjectPermissions(exerciseToBeImported);
-            bambooRequestMockProvider.mockEnablePlan(projectKey, TEMPLATE.getName());
-            bambooRequestMockProvider.mockEnablePlan(projectKey, SOLUTION.getName());
-            mockUpdatePlanRepository(exerciseToBeImported, TEMPLATE.getName(), ASSIGNMENT_REPO_NAME, templateRepoName, List.of(ASSIGNMENT_REPO_NAME));
-            mockUpdatePlanRepository(exerciseToBeImported, TEMPLATE.getName(), TEST_REPO_NAME, testsRepoName, List.of());
-            mockUpdatePlanRepository(exerciseToBeImported, SOLUTION.getName(), ASSIGNMENT_REPO_NAME, solutionRepoName, List.of());
-            mockUpdatePlanRepository(exerciseToBeImported, SOLUTION.getName(), TEST_REPO_NAME, testsRepoName, List.of());
-            bambooRequestMockProvider.mockTriggerBuild(exerciseToBeImported.getProjectKey() + "-" + TEMPLATE.getName());
-            bambooRequestMockProvider.mockTriggerBuild(exerciseToBeImported.getProjectKey() + "-" + SOLUTION.getName());
-        }
-        else {
-            // Mocks for recreating the build plans
-            mockBambooBuildPlanCreation(exerciseToBeImported);
-        }
+        bambooRequestMockProvider.mockCopyBuildPlan(sourceExercise.getProjectKey(), TEMPLATE.getName(), projectKey, TEMPLATE.getName(), false);
+        bambooRequestMockProvider.mockCopyBuildPlan(sourceExercise.getProjectKey(), SOLUTION.getName(), projectKey, SOLUTION.getName(), true);
+        // TODO: Mock continuousIntegrationService.givePlanPermissions for Template and Solution plan
+        doReturn(null).when(bambooServer).publish(any());
+        bambooRequestMockProvider.mockGiveProjectPermissions(exerciseToBeImported);
+        bambooRequestMockProvider.mockEnablePlan(projectKey, TEMPLATE.getName(), planExistsInCi, shouldPlanEnableFail);
+        bambooRequestMockProvider.mockEnablePlan(projectKey, SOLUTION.getName(), planExistsInCi, shouldPlanEnableFail);
+        mockUpdatePlanRepository(exerciseToBeImported, TEMPLATE.getName(), ASSIGNMENT_REPO_NAME, templateRepoName, List.of(ASSIGNMENT_REPO_NAME));
+        mockUpdatePlanRepository(exerciseToBeImported, TEMPLATE.getName(), TEST_REPO_NAME, testsRepoName, List.of());
+        mockUpdatePlanRepository(exerciseToBeImported, SOLUTION.getName(), ASSIGNMENT_REPO_NAME, solutionRepoName, List.of());
+        mockUpdatePlanRepository(exerciseToBeImported, SOLUTION.getName(), TEST_REPO_NAME, testsRepoName, List.of());
+        bambooRequestMockProvider.mockTriggerBuild(exerciseToBeImported.getProjectKey() + "-" + TEMPLATE.getName());
+        bambooRequestMockProvider.mockTriggerBuild(exerciseToBeImported.getProjectKey() + "-" + SOLUTION.getName());
     }
 
     @Override
@@ -293,7 +314,7 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
 
         // Isn't mockEnablePlan() written incorrectly since projectKey isn't even used by the bamboo service?
         var splitted = buildPlanId.split("-");
-        bambooRequestMockProvider.mockEnablePlan(splitted[0], splitted[1]);
+        bambooRequestMockProvider.mockEnablePlan(splitted[0], splitted[1], true, false);
     }
 
     @Override
