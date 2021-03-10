@@ -81,12 +81,15 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
         User user = userRepository.getUserWithGroupsAndAuthorities();
         var programmingExercise = programmingParticipation.getProgrammingExercise();
         boolean isStudent = !authCheckService.isAtLeastTeachingAssistantForExercise(programmingExercise);
+        boolean isOwner = authCheckService.isOwnerOfParticipation((StudentParticipation) participation);
         // Error case 4: The student can reset the repository only before and a tutor/instructor only after the due date has passed
         if (repositoryAction == RepositoryActionType.RESET) {
             if (isStudent && programmingParticipation.isLocked()) {
                 throw new IllegalAccessException();
             }
-            else if (!isStudent) {
+            // A tutor/instructor who is owner of the exercise should always be able to reset the repository
+            else if (!isStudent && !isOwner) {
+                // Check if a tutor is allowed to reset during the assessment
                 // Check for a regular course exercise
                 if (!programmingExercise.isExamExercise() && !programmingParticipation.isLocked()) {
                     throw new IllegalAccessException();
