@@ -81,9 +81,12 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
         User user = userRepository.getUserWithGroupsAndAuthorities();
         var programmingExercise = programmingParticipation.getProgrammingExercise();
         boolean isStudent = !authCheckService.isAtLeastTeachingAssistantForExercise(programmingExercise);
-        boolean isOwner = authCheckService.isOwnerOfParticipation((StudentParticipation) participation);
         // Error case 4: The student can reset the repository only before and a tutor/instructor only after the due date has passed
         if (repositoryAction == RepositoryActionType.RESET) {
+            boolean isOwner = true; // true for Solution- and TemplateProgrammingExerciseParticipation
+            if (participation instanceof StudentParticipation) {
+                isOwner = authCheckService.isOwnerOfParticipation((StudentParticipation) participation);
+            }
             if (isStudent && programmingParticipation.isLocked()) {
                 throw new IllegalAccessException();
             }
