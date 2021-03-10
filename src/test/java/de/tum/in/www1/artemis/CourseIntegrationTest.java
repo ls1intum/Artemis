@@ -82,9 +82,6 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     NotificationRepository notificationRepo;
 
     @Autowired
-    TutorLeaderboardAssessmentRepository tutorLeaderboardAssessmentRepository;
-
-    @Autowired
     TutorLeaderboardComplaintsRepository tutorLeaderboardComplaintsRepository;
 
     @Autowired

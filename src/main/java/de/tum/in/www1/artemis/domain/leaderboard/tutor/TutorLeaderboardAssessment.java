@@ -3,24 +3,25 @@ package de.tum.in.www1.artemis.domain.leaderboard.tutor;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.in.www1.artemis.domain.User;
 
+// Custom object for sql query
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class TutorLeaderboardAssessment {
 
-    private final Long exerciseId;
+    private final long exerciseId;
 
     private final User user;
 
     private final long assessments;
 
-    private final long points;
+    private final double points;
 
-    private final Long courseId;
+    private final long courseId;
 
     public long getAssessments() {
         return assessments;
     }
 
-    public long getPoints() {
+    public double getPoints() {
         return points;
     }
 
@@ -28,15 +29,15 @@ public class TutorLeaderboardAssessment {
         return user;
     }
 
-    public Long getCourseId() {
+    public long getCourseId() {
         return courseId;
     }
 
-    public Long getExerciseId() {
+    public long getExerciseId() {
         return exerciseId;
     }
 
-    public TutorLeaderboardAssessment(Long exerciseId, User user, long assessments, long points, Long courseId) {
+    public TutorLeaderboardAssessment(long exerciseId, User user, long assessments, double points, long courseId) {
         this.exerciseId = exerciseId;
         this.user = user;
         this.assessments = assessments;

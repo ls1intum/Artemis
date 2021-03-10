@@ -19,7 +19,7 @@ import de.tum.in.www1.artemis.web.rest.dto.TutorLeaderboardDTO;
 @Service
 public class TutorLeaderboardService {
 
-    private final TutorLeaderboardAssessmentRepository tutorLeaderboardAssessmentRepository;
+    private final ResultRepository resultRepository;
 
     private final TutorLeaderboardComplaintsRepository tutorLeaderboardComplaintsRepository;
 
@@ -31,12 +31,11 @@ public class TutorLeaderboardService {
 
     private final UserRepository userRepository;
 
-    public TutorLeaderboardService(TutorLeaderboardAssessmentRepository tutorLeaderboardAssessmentRepository,
-            TutorLeaderboardComplaintsRepository tutorLeaderboardComplaintsRepository,
+    public TutorLeaderboardService(ResultRepository resultRepository, TutorLeaderboardComplaintsRepository tutorLeaderboardComplaintsRepository,
             TutorLeaderboardMoreFeedbackRequestsRepository tutorLeaderboardMoreFeedbackRequestsRepository,
             TutorLeaderboardComplaintResponsesRepository tutorLeaderboardComplaintResponsesRepository,
             TutorLeaderboardAnsweredMoreFeedbackRequestsRepository tutorLeaderboardAnsweredMoreFeedbackRequestsRepository, UserRepository userRepository) {
-        this.tutorLeaderboardAssessmentRepository = tutorLeaderboardAssessmentRepository;
+        this.resultRepository = resultRepository;
         this.tutorLeaderboardComplaintsRepository = tutorLeaderboardComplaintsRepository;
         this.tutorLeaderboardMoreFeedbackRequestsRepository = tutorLeaderboardMoreFeedbackRequestsRepository;
         this.tutorLeaderboardComplaintResponsesRepository = tutorLeaderboardComplaintResponsesRepository;
@@ -54,7 +53,7 @@ public class TutorLeaderboardService {
 
         List<User> tutors = userRepository.getTutors(course);
 
-        List<TutorLeaderboardAssessment> tutorLeaderboardAssessments = tutorLeaderboardAssessmentRepository.findTutorLeaderboardAssessmentByCourseId(course.getId());
+        List<TutorLeaderboardAssessment> tutorLeaderboardAssessments = resultRepository.findTutorLeaderboardAssessmentByCourseId(course.getId());
         List<TutorLeaderboardComplaints> tutorLeaderboardComplaints = tutorLeaderboardComplaintsRepository.findTutorLeaderboardComplaintsByCourseId(course.getId());
         List<TutorLeaderboardMoreFeedbackRequests> tutorLeaderboardMoreFeedbackRequests = tutorLeaderboardMoreFeedbackRequestsRepository
                 .findTutorLeaderboardMoreFeedbackRequestsByCourseId(course.getId());
@@ -97,7 +96,7 @@ public class TutorLeaderboardService {
 
         List<User> tutors = userRepository.getTutors(exercise.getCourseViaExerciseGroupOrCourseMember());
         String groupName = exercise.getCourseViaExerciseGroupOrCourseMember().getTeachingAssistantGroupName();
-        List<TutorLeaderboardAssessment> tutorLeaderboardAssessments = tutorLeaderboardAssessmentRepository.findTutorLeaderboardAssessmentByExerciseId(groupName, exercise.getId());
+        List<TutorLeaderboardAssessment> tutorLeaderboardAssessments = resultRepository.findTutorLeaderboardAssessmentByExerciseId(groupName, exercise.getId());
         List<TutorLeaderboardComplaints> tutorLeaderboardComplaints = tutorLeaderboardComplaintsRepository.findTutorLeaderboardComplaintsByExerciseId(groupName, exercise.getId());
         List<TutorLeaderboardMoreFeedbackRequests> tutorLeaderboardMoreFeedbackRequests = tutorLeaderboardMoreFeedbackRequestsRepository
                 .findTutorLeaderboardMoreFeedbackRequestsByExerciseId(groupName, exercise.getId());
