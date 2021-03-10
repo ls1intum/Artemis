@@ -190,7 +190,7 @@ describe('StudentExamDetailComponent', () => {
         expect(findCourseSpy).to.have.been.calledOnce;
         expect(course.id).to.equal(1);
         expect(studentExamDetailComponent.workingTimeForm).to.not.be.null;
-        expect(studentExamDetailComponent.achievedTotalScore).to.equal(40);
+        expect(studentExamDetailComponent.achievedTotalPoints).to.equal(40);
     });
 
     it('should return the right icon based on exercise type', () => {
@@ -216,8 +216,8 @@ describe('StudentExamDetailComponent', () => {
         expect(studentExamDetailComponent.isSavingWorkingTime).to.equal(false);
         expect(course.id).to.equal(1);
         expect(studentExamDetailComponent.workingTimeForm).to.not.be.null;
-        expect(studentExamDetailComponent.achievedTotalScore).to.equal(40);
-        expect(studentExamDetailComponent.maxTotalScore).to.equal(100);
+        expect(studentExamDetailComponent.achievedTotalPoints).to.equal(40);
+        expect(studentExamDetailComponent.maxTotalPoints).to.equal(100);
     });
 
     it('should not increase points when save working time is called more than once', () => {
@@ -230,8 +230,8 @@ describe('StudentExamDetailComponent', () => {
         expect(studentExamDetailComponent.isSavingWorkingTime).to.equal(false);
         expect(course.id).to.equal(1);
         expect(studentExamDetailComponent.workingTimeForm).to.not.be.null;
-        expect(studentExamDetailComponent.achievedTotalScore).to.equal(40);
-        expect(studentExamDetailComponent.maxTotalScore).to.equal(100);
+        expect(studentExamDetailComponent.achievedTotalPoints).to.equal(40);
+        expect(studentExamDetailComponent.maxTotalPoints).to.equal(100);
     });
 
     it('should get examIsOver', () => {

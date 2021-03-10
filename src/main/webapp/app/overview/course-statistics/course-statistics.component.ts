@@ -18,6 +18,7 @@ import {
     RELATIVE_SCORE,
 } from 'app/overview/course-score-calculation.service';
 import { InitializationState } from 'app/entities/participation/participation.model';
+import { round } from 'app/shared/util/utils';
 
 const QUIZ_EXERCISE_COLOR = '#17a2b8';
 const PROGRAMMING_EXERCISE_COLOR = '#fd7e14';
@@ -260,9 +261,10 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
                         if (participation.results && participation.results.length > 0) {
                             const participationResult = this.courseCalculationService.getResultForParticipation(participation, exercise.dueDate!);
                             if (participationResult && participationResult.rated) {
-                                const cappedParticipationScore = participationResult.score! >= 100 ? 100 : participationResult.score!;
+                                const roundedParticipationScore = round(participationResult.score!);
+                                const cappedParticipationScore = roundedParticipationScore >= 100 ? 100 : roundedParticipationScore;
                                 const missedScore = 100 - cappedParticipationScore;
-                                groupedExercises[index].scores.data.push(participationResult.score!);
+                                groupedExercises[index].scores.data.push(roundedParticipationScore);
                                 groupedExercises[index].scores.backgroundColor.push(scoreColor);
                                 groupedExercises[index].scores.hoverBackgroundColor.push(scoreColor);
                                 groupedExercises[index].missedScores.data.push(missedScore);
@@ -362,14 +364,15 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
 
         const missedPoints = parseFloat(split[2]) - parseFloat(split[0]) > 0 ? parseFloat(split[2]) - parseFloat(split[0]) : 0;
         // This score is used to cap bonus points, so that we not have negative values for the missedScores
-        const score = result.score! >= 100 ? 100 : result.score!;
+        const roundedScore = round(result.score!);
+        const score = roundedScore >= 100 ? 100 : roundedScore;
         // custom result strings
         if (!replaced.includes('passed') && !replaced.includes('points')) {
-            if (result.score! >= 50) {
-                groupedExercise.scores.tooltips.push(`${result.resultString} (${result.score}%)` + this.generateTooltipExtension(includedInOverallScore));
+            if (roundedScore! >= 50) {
+                groupedExercise.scores.tooltips.push(`${result.resultString} (${roundedScore}%)` + this.generateTooltipExtension(includedInOverallScore));
                 groupedExercise.missedScores.tooltips.push(`(${100 - score}%)`);
             } else {
-                groupedExercise.scores.tooltips.push(`(${result.score}%)` + this.generateTooltipExtension(includedInOverallScore));
+                groupedExercise.scores.tooltips.push(`(${roundedScore}%)` + this.generateTooltipExtension(includedInOverallScore));
                 groupedExercise.missedScores.tooltips.push(`${result.resultString} (${100 - score}%)`);
             }
 
@@ -382,7 +385,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
                 groupedExercise.scores.tooltips.push(
                     this.translateService.instant('artemisApp.courseOverview.statistics.exerciseAchievedScore', {
                         points: parseFloat(split[0]),
-                        percentage: result.score,
+                        percentage: roundedScore,
                     }) + this.generateTooltipExtension(includedInOverallScore),
                 );
                 groupedExercise.missedScores.tooltips.push(
@@ -397,7 +400,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
                 groupedExercise.scores.tooltips.push(
                     this.translateService.instant('artemisApp.courseOverview.statistics.exerciseAchievedScore', {
                         points: parseFloat(split[0]),
-                        percentage: result.score,
+                        percentage: roundedScore,
                     }) + this.generateTooltipExtension(includedInOverallScore),
                 );
                 groupedExercise.missedScores.tooltips.push(
@@ -413,12 +416,12 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
         // programming exercise result strings are mostly 'x passed' or 'x of y passed'
         if (replaced.includes('passed')) {
             if (split.length === 2) {
-                groupedExercise.scores.tooltips.push(parseFloat(split[0]) + ' tests passed (' + result.score + '%).' + this.generateTooltipExtension(includedInOverallScore));
+                groupedExercise.scores.tooltips.push(parseFloat(split[0]) + ' tests passed (' + roundedScore + '%).' + this.generateTooltipExtension(includedInOverallScore));
                 groupedExercise.missedScores.tooltips.push('(' + (100 - score) + '%)');
                 return;
             }
             if (split.length === 4) {
-                groupedExercise.scores.tooltips.push(parseFloat(split[0]) + ' tests passed (' + result.score + '%).' + this.generateTooltipExtension(includedInOverallScore));
+                groupedExercise.scores.tooltips.push(parseFloat(split[0]) + ' tests passed (' + roundedScore + '%).' + this.generateTooltipExtension(includedInOverallScore));
                 groupedExercise.missedScores.tooltips.push(missedPoints + ' tests failed (' + (100 - score) + '%).');
                 return;
             }

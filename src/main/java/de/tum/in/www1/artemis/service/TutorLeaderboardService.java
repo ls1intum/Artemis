@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.leaderboard.tutor.*;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.UserRepository;
@@ -62,6 +63,26 @@ public class TutorLeaderboardService {
 
         return aggregateTutorLeaderboardData(tutors, tutorLeaderboardAssessments, tutorLeaderboardComplaints, tutorLeaderboardMoreFeedbackRequests,
                 tutorLeaderboardComplaintResponses, tutorLeaderboardAnsweredMoreFeedbackRequests);
+    }
+
+    /**
+     * Returns tutor leaderboards for the specified course.
+     *
+     * @param course - course for which leaderboard is fetched
+     * @param exam   - the exam for which the leaderboard will be fetched TODO
+     * @return list of tutor leaderboard objects
+     */
+    public List<TutorLeaderboardDTO> getExamLeaderboard(Course course, Exam exam) {
+
+        List<User> tutors = userRepository.getTutors(course);
+        // TODO: get the exam leaderboard. We do not want to use the existing views. We do not yet support the exam leaderboard
+        // TODO: remove as soon as the above calls work
+        List<TutorLeaderboardAssessmentView> tutorLeaderboardAssessments = new ArrayList<>();
+        List<TutorLeaderboardComplaintsView> tutorLeaderboardComplaints = new ArrayList<>();
+        List<TutorLeaderboardComplaintResponsesView> tutorLeaderboardComplaintResponses = new ArrayList<>();
+
+        return aggregateTutorLeaderboardData(tutors, tutorLeaderboardAssessments, tutorLeaderboardComplaints, new ArrayList<>(), tutorLeaderboardComplaintResponses,
+                new ArrayList<>());
     }
 
     /**
