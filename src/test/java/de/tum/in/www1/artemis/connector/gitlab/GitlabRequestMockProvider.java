@@ -442,4 +442,28 @@ public class GitlabRequestMockProvider {
     public void mockDeleteProject(String projectKey) throws GitLabApiException {
         doNothing().when(groupApi).deleteGroup(projectKey);
     }
+
+    public void mockRepositoryUrlIsValid(VcsRepositoryUrl repositoryUrl, boolean isUrlValid) throws GitLabApiException {
+        if (repositoryUrl == null || repositoryUrl.getURL() == null) {
+            return;
+        }
+
+        final var repositoryId = getPathIDFromRepositoryURL(repositoryUrl);
+        if (isUrlValid) {
+            doReturn(new Project()).when(projectApi).getProject(repositoryId);
+        }
+        else {
+            when(projectApi.getProject(repositoryId)).thenAnswer(invocation -> {
+                throw new Exception("exception");
+            });
+        }
+    }
+
+    public void setRepositoryPermissionsToReadOnly(VcsRepositoryUrl repositoryUrl, String projectKey, Set<de.tum.in.www1.artemis.domain.User> users) throws GitLabApiException {
+        for (var user : users) {
+            mockGetUserId(user.getLogin(), true);
+            final var repositoryId = getPathIDFromRepositoryURL(repositoryUrl);
+            doReturn(new Member()).when(projectApi).updateMember(repositoryId, 1, GUEST);
+        }
+    }
 }

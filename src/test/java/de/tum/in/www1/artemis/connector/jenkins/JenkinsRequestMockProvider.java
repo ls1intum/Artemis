@@ -114,7 +114,7 @@ public class JenkinsRequestMockProvider {
         var job = jobFolder + "-" + planKey;
         mockCreateJobInFolder(jobFolder, job);
         mockGivePlanPermissions(jobFolder, job);
-        mockTriggerBuild(jobFolder, job, mock(JobWithDetails.class));
+        mockTriggerBuild(jobFolder, job);
     }
 
     public void mockCreateJobInFolder(String jobFolder, String job) throws IOException {
@@ -157,14 +157,11 @@ public class JenkinsRequestMockProvider {
         }
     }
 
-    public void mockTriggerBuild() throws IOException {
-        ExtractHeader location = new ExtractHeader();
-        location.setLocation("mockLocation");
-        doReturn(location).when(jenkinsClient).post(anyString(), any(), any(), eq(useCrumb));
-    }
-
     public void mockCheckIfProjectExists(ProgrammingExercise exercise, boolean exists) throws IOException {
-        var jobOrNull = exists ? new JobWithDetails() : null;
+        var jobOrNull = exists ? mock(JobWithDetails.class) : null;
+        if (jobOrNull != null) {
+            doReturn("http://some-job-url.com/").when(jobOrNull).getUrl();
+        }
         doReturn(jobOrNull).when(jenkinsServer).getJob(exercise.getProjectKey());
     }
 
@@ -193,23 +190,13 @@ public class JenkinsRequestMockProvider {
         final var uri = UriComponentsBuilder.fromUri(jenkinsServerUrl.toURI()).pathSegment("job", projectKey, "job", planName, "config.xml").build().toUri();
         mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.POST)).andRespond(withStatus(HttpStatus.OK));
 
-        final var job = mock(JobWithDetails.class);
-        mockTriggerBuild(projectKey, planName, job);
-        mockTriggerBuild(projectKey, planName, job);
+        mockTriggerBuild(projectKey, planName);
+        mockTriggerBuild(projectKey, planName);
     }
 
     private void mockGetJobXmlForBuildPlanWith(String projectKey, String xmlToReturn) throws IOException {
         mockGetFolderJob(projectKey, new FolderJob());
         doReturn(xmlToReturn).when(jenkinsServer).getJobXml(any(), any());
-    }
-
-    private void mockTriggerBuild(String projectKey, String planName, JobWithDetails jobToReturn) throws IOException {
-        jobToReturn.setClient(jenkinsClient);
-        mockGetJob(projectKey, planName, jobToReturn);
-
-        final var location = new ExtractHeader();
-        location.setLocation("mockLocation");
-        doReturn(new QueueReference(location.getLocation())).when(jobToReturn).build(useCrumb);
     }
 
     public void mockEnablePlan(String projectKey, String planKey) throws URISyntaxException, IOException {
@@ -425,4 +412,16 @@ public class JenkinsRequestMockProvider {
             shortTimeoutMockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.GET)).andRespond(withStatus(HttpStatus.INTERNAL_SERVER_ERROR));
         }
     }
+
+    public void mockCheckIfBuildPlanExists(String projectKey, String buildPlanId, boolean buildPlanExists) throws IOException {
+        var toReturn = buildPlanExists ? new JobWithDetails() : null;
+        mockGetJob(projectKey, buildPlanId, toReturn);
+    }
+
+    public void mockTriggerBuild(String projectKey, String buildPlanId) throws IOException {
+        var jobWithDetails = mock(JobWithDetails.class);
+        mockGetJob(projectKey, buildPlanId, jobWithDetails);
+        doReturn(new QueueReference("")).when(jobWithDetails).build();
+    }
+
 }

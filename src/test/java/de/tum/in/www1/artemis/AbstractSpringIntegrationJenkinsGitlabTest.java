@@ -11,7 +11,6 @@ import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Set;
@@ -28,16 +27,13 @@ import org.springframework.http.HttpStatus;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.offbytwo.jenkins.JenkinsServer;
 
 import de.tum.in.www1.artemis.connector.gitlab.GitlabRequestMockProvider;
 import de.tum.in.www1.artemis.connector.jenkins.JenkinsRequestMockProvider;
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.Team;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
+import de.tum.in.www1.artemis.domain.participation.AbstractBaseProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildResultDTO;
 import de.tum.in.www1.artemis.service.connectors.gitlab.GitLabService;
@@ -50,7 +46,7 @@ import de.tum.in.www1.artemis.util.AbstractArtemisIntegrationTest;
 @AutoConfigureTestDatabase
 // NOTE: we use a common set of active profiles to reduce the number of application launches during testing. This significantly saves time and memory!
 
-@ActiveProfiles({ SPRING_PROFILE_TEST, "artemis", "gitlab", "jenkins", "athene" })
+@ActiveProfiles({ SPRING_PROFILE_TEST, "artemis", "gitlab", "jenkins", "athene", "scheduling" })
 @TestPropertySource(properties = { "info.guided-tour.course-group-tutors=", "info.guided-tour.course-group-students=artemis-artemistutorial-students",
         "info.guided-tour.course-group-instructors=artemis-artemistutorial-instructors", "artemis.user-management.use-external=false" })
 
@@ -95,7 +91,8 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
         jenkinsRequestMockProvider.mockCreateProjectForExercise(exercise);
         jenkinsRequestMockProvider.mockCreateBuildPlan(projectKey, TEMPLATE.getName());
         jenkinsRequestMockProvider.mockCreateBuildPlan(projectKey, SOLUTION.getName());
-        jenkinsRequestMockProvider.mockTriggerBuild();
+        jenkinsRequestMockProvider.mockTriggerBuild(projectKey, TEMPLATE.getName());
+        jenkinsRequestMockProvider.mockTriggerBuild(projectKey, SOLUTION.getName());
 
         doNothing().when(gitService).pushSourceToTargetRepo(any(), any());
     }
@@ -145,7 +142,8 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
             jenkinsRequestMockProvider.mockCreateProjectForExercise(exerciseToBeImported);
             jenkinsRequestMockProvider.mockCreateBuildPlan(targetProjectKey, TEMPLATE.getName());
             jenkinsRequestMockProvider.mockCreateBuildPlan(targetProjectKey, SOLUTION.getName());
-            jenkinsRequestMockProvider.mockTriggerBuild();
+            jenkinsRequestMockProvider.mockTriggerBuild(targetProjectKey, TEMPLATE.getName());
+            jenkinsRequestMockProvider.mockTriggerBuild(targetProjectKey, SOLUTION.getName());
         }
     }
 
@@ -205,13 +203,12 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
     }
 
     @Override
-    public void mockRetrieveArtifacts(ProgrammingExerciseStudentParticipation participation) throws MalformedURLException, URISyntaxException, JsonProcessingException {
+    public void mockRetrieveArtifacts(ProgrammingExerciseStudentParticipation participation) {
         // Not necessary for the core functionality
     }
 
     @Override
-    public void mockGetBuildLogs(ProgrammingExerciseStudentParticipation participation, List<BambooBuildResultDTO.BambooBuildLogEntryDTO> logs)
-            throws URISyntaxException, JsonProcessingException {
+    public void mockGetBuildLogs(ProgrammingExerciseStudentParticipation participation, List<BambooBuildResultDTO.BambooBuildLogEntryDTO> logs) {
         // TODO: implement
     }
 
@@ -241,15 +238,16 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
 
         mockCopyBuildPlan(participation);
         mockConfigureBuildPlan(participation);
-        jenkinsRequestMockProvider.mockTriggerBuild();
+        jenkinsRequestMockProvider.mockTriggerBuild(projectKey, buildPlanId);
     }
 
     @Override
     public void mockNotifyPush(ProgrammingExerciseStudentParticipation participation) throws Exception {
         final String slug = "test201904bprogrammingexercise6-exercise-testuser";
         final String hash = "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d";
-        mockFetchCommitInfo(participation.getProgrammingExercise().getProjectKey(), slug, hash);
-        jenkinsRequestMockProvider.mockTriggerBuild();
+        final String projectKey = participation.getProgrammingExercise().getProjectKey();
+        mockFetchCommitInfo(projectKey, slug, hash);
+        jenkinsRequestMockProvider.mockTriggerBuild(projectKey, participation.getBuildPlanId());
     }
 
     @Override
@@ -257,7 +255,7 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
         doReturn(COMMIT_HASH_OBJECT_ID).when(gitService).getLastCommitHash(any());
         mockCopyBuildPlan(participation);
         mockConfigureBuildPlan(participation);
-        jenkinsRequestMockProvider.mockTriggerBuild();
+        jenkinsRequestMockProvider.mockTriggerBuild(participation.getProgrammingExercise().getProjectKey(), participation.getBuildPlanId());
     }
 
     @Override
@@ -265,7 +263,7 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
         doReturn(COMMIT_HASH_OBJECT_ID).when(gitService).getLastCommitHash(any());
         mockCopyBuildPlan(participation);
         mockConfigureBuildPlan(participation);
-        jenkinsRequestMockProvider.mockTriggerBuild();
+        jenkinsRequestMockProvider.mockTriggerBuild(participation.getProgrammingExercise().getProjectKey(), participation.getBuildPlanId());
     }
 
     @Override
@@ -293,12 +291,12 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
     }
 
     @Override
-    public void mockCreateGroupInUserManagement(String groupName) throws Exception {
+    public void mockCreateGroupInUserManagement(String groupName) {
         // Not needed here
     }
 
     @Override
-    public void mockDeleteGroupInUserManagement(String groupName) throws Exception {
+    public void mockDeleteGroupInUserManagement(String groupName) {
         // Not needed here
     }
 
@@ -343,6 +341,43 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
     @Override
     public void mockHealthInCiService(boolean isRunning, HttpStatus httpStatus) throws Exception {
         jenkinsRequestMockProvider.mockHealth(isRunning, httpStatus);
+    }
+
+    @Override
+    public void mockCheckIfProjectExistsInVcs(ProgrammingExercise exercise, boolean existsInVcs) throws Exception {
+        gitlabRequestMockProvider.mockCheckIfProjectExists(exercise, existsInVcs);
+    }
+
+    @Override
+    public void mockCheckIfProjectExistsInCi(ProgrammingExercise exercise, boolean existsInCi) throws Exception {
+        jenkinsRequestMockProvider.mockCheckIfProjectExists(exercise, existsInCi);
+    }
+
+    @Override
+    public void mockRepositoryUrlIsValid(VcsRepositoryUrl repositoryUrl, String projectKey, boolean isUrlValid) throws Exception {
+        gitlabRequestMockProvider.mockRepositoryUrlIsValid(repositoryUrl, isUrlValid);
+    }
+
+    @Override
+    public void mockCheckIfBuildPlanExists(String projectKey, String buildPlanId, boolean buildPlanExists) throws Exception {
+        jenkinsRequestMockProvider.mockCheckIfBuildPlanExists(projectKey, buildPlanId, buildPlanExists);
+    }
+
+    @Override
+    public void mockTriggerBuild(AbstractBaseProgrammingExerciseParticipation programmingExerciseParticipation) throws Exception {
+        var projectKey = programmingExerciseParticipation.getProgrammingExercise().getProjectKey();
+        var buildPlanId = programmingExerciseParticipation.getBuildPlanId();
+        jenkinsRequestMockProvider.mockTriggerBuild(projectKey, buildPlanId);
+    }
+
+    @Override
+    public void mockSetRepositoryPermissionsToReadOnly(VcsRepositoryUrl repositoryUrl, String projectKey, Set<User> users) throws Exception {
+        gitlabRequestMockProvider.setRepositoryPermissionsToReadOnly(repositoryUrl, projectKey, users);
+    }
+
+    @Override
+    public void mockConfigureRepository(ProgrammingExercise exercise, String participantIdentifier, Set<User> students, boolean ltiUserExists) throws Exception {
+        gitlabRequestMockProvider.mockConfigureRepository(exercise, participantIdentifier, students, ltiUserExists);
     }
 
     @Override

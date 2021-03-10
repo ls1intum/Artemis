@@ -33,12 +33,10 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import de.tum.in.www1.artemis.connector.bamboo.BambooRequestMockProvider;
 import de.tum.in.www1.artemis.connector.bitbucket.BitbucketRequestMockProvider;
 import de.tum.in.www1.artemis.connector.jira.JiraRequestMockProvider;
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.Team;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
+import de.tum.in.www1.artemis.domain.participation.AbstractBaseProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.service.connectors.BitbucketBambooUpdateService;
 import de.tum.in.www1.artemis.service.connectors.bamboo.BambooService;
@@ -348,12 +346,12 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
     }
 
     @Override
-    public void mockDeleteUserInUserManagement(User user, boolean userExistsInUserManagement) throws Exception {
+    public void mockDeleteUserInUserManagement(User user, boolean userExistsInUserManagement) {
         // Not needed here
     }
 
     @Override
-    public void mockUpdateCoursePermissions(Course updatedCourse, String oldInstructorGroup, String oldTeachingAssistantGroup) throws Exception {
+    public void mockUpdateCoursePermissions(Course updatedCourse, String oldInstructorGroup, String oldTeachingAssistantGroup) {
         // Not needed here.
     }
 
@@ -394,7 +392,7 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
     }
 
     @Override
-    public void mockRemoveUserFromGroup(User user, String group) throws Exception {
+    public void mockRemoveUserFromGroup(User user, String group) {
         jiraRequestMockProvider.mockRemoveUserFromGroup(Set.of(group), user.getLogin());
     }
 
@@ -408,6 +406,42 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
     public void mockHealthInCiService(boolean isRunning, HttpStatus httpStatus) throws Exception {
         var state = isRunning ? "RUNNING" : "PAUSED";
         bambooRequestMockProvider.mockHealth(state, httpStatus);
+    }
+
+    @Override
+    public void mockCheckIfProjectExistsInVcs(ProgrammingExercise exercise, boolean existsInVcs) throws Exception {
+        bitbucketRequestMockProvider.mockCheckIfProjectExists(exercise, true);
+    }
+
+    @Override
+    public void mockCheckIfProjectExistsInCi(ProgrammingExercise exercise, boolean existsInCi) throws Exception {
+        bambooRequestMockProvider.mockCheckIfProjectExists(exercise, existsInCi);
+    }
+
+    @Override
+    public void mockRepositoryUrlIsValid(VcsRepositoryUrl vcsTemplateRepositoryUrl, String projectKey, boolean b) throws Exception {
+        bitbucketRequestMockProvider.mockRepositoryUrlIsValid(vcsTemplateRepositoryUrl, projectKey, b);
+    }
+
+    @Override
+    public void mockCheckIfBuildPlanExists(String projectKey, String templateBuildPlanId, boolean buildPlanExists) throws Exception {
+        bambooRequestMockProvider.mockBuildPlanExists(templateBuildPlanId, buildPlanExists);
+    }
+
+    @Override
+    public void mockTriggerBuild(AbstractBaseProgrammingExerciseParticipation programmingExerciseParticipation) throws Exception {
+        bambooRequestMockProvider.mockTriggerBuild(programmingExerciseParticipation);
+    }
+
+    @Override
+    public void mockSetRepositoryPermissionsToReadOnly(VcsRepositoryUrl repositoryUrl, String projectKey, Set<User> users) throws Exception {
+        var repositorySlug = urlService.getRepositorySlugFromRepositoryUrl(repositoryUrl);
+        bitbucketRequestMockProvider.mockSetRepositoryPermissionsToReadOnly(repositorySlug, projectKey, users);
+    }
+
+    @Override
+    public void mockConfigureRepository(ProgrammingExercise exercise, String participantIdentifier, Set<User> students, boolean ltiUserExists) throws Exception {
+        bitbucketRequestMockProvider.mockConfigureRepository(exercise, participantIdentifier, students, ltiUserExists);
     }
 
     @Override
