@@ -110,7 +110,7 @@ public class TutorLeaderboardService {
         List<User> tutors = userRepository.getTutors(exercise.getCourseViaExerciseGroupOrCourseMember());
         String groupName = exercise.getCourseViaExerciseGroupOrCourseMember().getTeachingAssistantGroupName();
         long start = System.currentTimeMillis();
-        List<TutorLeaderboardAssessment> tutorLeaderboardAssessments = resultRepository.findTutorLeaderboardAssessmentByExerciseId(groupName, exercise.getId());
+        List<TutorLeaderboardAssessment> tutorLeaderboardAssessments = resultRepository.findTutorLeaderboardAssessmentByExerciseId(exercise.getId());
         long end = System.currentTimeMillis();
         log.info("Finished >>resultRepository.findTutorLeaderboardAssessmentByExerciseId<< call for exercise " + exercise.getId() + " in " + (end - start) + "ms");
         start = System.currentTimeMillis();
