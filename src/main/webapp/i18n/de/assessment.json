@@ -71,6 +71,7 @@
                     "title": "Gesperrte Bewertungen"
                 },
                 "title": "Von dir gesperrte Bewertungen",
+                "titleAll": "Alle gesperrten Bewertungen",
                 "exercise": "Aufgabe",
                 "type": "Aufgabentyp",
                 "empty": "Keine von dir gesperrten Bewertungen vorhanden!"
