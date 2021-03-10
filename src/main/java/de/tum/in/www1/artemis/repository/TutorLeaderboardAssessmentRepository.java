@@ -53,21 +53,47 @@ public interface TutorLeaderboardAssessmentRepository extends JpaRepository<Tuto
             """)
     List<TutorLeaderboardAssessment> findTutorLeaderboardAssessmentByExerciseId(@Param("groupName") String groupName, @Param("exerciseId") long exerciseId);
 
-    /*
-     * Alternative which might be faster, in particular for complaints
-     * @Query(""" SELECT new de.tum.in.www1.artemis.domain.leaderboard.tutor.TutorLeaderboardAssessment( null, result.assessor, count(*),
-     * sum(result.participation.exercise.max_points), result.participation.exercise.course.id ) FROM Result result WHERE
-     * result.participation.exercise.course.teachingAssistantGroupName member of result.assessor.groups and result.completionDate is not null and
-     * result.participation.exercise.course.id = :#{#courseId} and result.participation.exercise.discriminator in ('M', 'T', 'F', 'P') GROUP BY result.assessor.id,
-     * result.participation.exercise.course.id """) List<TutorLeaderboardAssessment> findTutorLeaderboardAssessmentByCourseId(@Param("courseId") long courseId);
-     */
+    // Alternative which might be faster, in particular for complaints in the other repositories
 
-    /*
-     * Alternative which might be faster, in particular for complaints
-     * @Query(""" SELECT new de.tum.in.www1.artemis.domain.leaderboard.tutor.TutorLeaderboardAssessment( result.participation.exercise.id, assessor, count(*),
-     * sum(result.participation.exercise.max_points), null ) FROM Result result WHERE :#{#groupName} member of result.assessor.groups and result.completionDate is not null and
-     * result.participation.exercise.id = :#{#exerciseId} and result.participation.exercise.discriminator in ('M', 'T', 'F', 'P') GROUP BY result.assessor.id,
-     * result.participation.exercise.id """) List<TutorLeaderboardAssessment> findTutorLeaderboardAssessmentByExerciseId(@Param("groupName") String groupName, @Param("exerciseId")
-     * long exerciseId);
-     */
+    @Query("""
+            SELECT
+            new de.tum.in.www1.artemis.domain.leaderboard.tutor.TutorLeaderboardAssessment(
+                null,
+                result.assessor,
+                count(*),
+                sum(result.participation.exercise.max_points),
+                result.participation.exercise.course.id
+                )
+            FROM
+                Result result
+            WHERE
+                result.participation.exercise.course.teachingAssistantGroupName member of result.assessor.groups
+                and result.completionDate is not null
+                and result.participation.exercise.course.id = :#{#courseId}
+                and result.participation.exercise.discriminator in ('M', 'T', 'F', 'P')
+            GROUP BY result.assessor.id, result.participation.exercise.course.id
+            """)
+    List<TutorLeaderboardAssessment> findTutorLeaderboardAssessmentByCourseIdAlternative(@Param("courseId") long courseId);
+
+    // Alternative which might be faster, in particular for complaints in the other repositories
+
+    @Query("""
+            SELECT
+            new de.tum.in.www1.artemis.domain.leaderboard.tutor.TutorLeaderboardAssessment(
+                result.participation.exercise.id,
+                assessor,
+                count(*),
+                sum(result.participation.exercise.max_points),
+                null
+                )
+            FROM
+                Result result
+            WHERE
+                :#{#groupName} member of result.assessor.groups
+                and result.completionDate is not null
+                and result.participation.exercise.id = :#{#exerciseId}
+                and result.participation.exercise.discriminator in ('M', 'T', 'F', 'P')
+            GROUP BY result.assessor.id, result.participation.exercise.id
+            """)
+    List<TutorLeaderboardAssessment> findTutorLeaderboardAssessmentByExerciseIdAlternative(@Param("groupName") String groupName, @Param("exerciseId") long exerciseId);
 }
