@@ -283,54 +283,24 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
         return new DueDateStat(countByAssessorIsNotNullAndParticipation_Exercise_CourseIdAndRatedAndCompletionDateIsNotNull(courseId, true), 0);
     }
 
+    /*
+     * @Query(""" SELECT new de.tum.in.www1.artemis.domain.leaderboard.tutor.TutorLeaderboardAssessment( -1L, result.assessor, count(result), sum(exercise.maxPoints), course.id )
+     * FROM Course course left join course.exercises exercise left join exercise.studentParticipations participation left join participation.results result WHERE
+     * course.teachingAssistantGroupName member of result.assessor.groups and result.completionDate is not null and course.id = :#{#courseId} and TYPE(exercise) in
+     * (ModelingExercise , TextExercise , FileUploadExercise , ProgrammingExercise) GROUP BY result.assessor.id, course.id """) List<TutorLeaderboardAssessment>
+     * findTutorLeaderboardAssessmentByCourseId(@Param("courseId") long courseId);
+     * @Query(""" SELECT new de.tum.in.www1.artemis.domain.leaderboard.tutor.TutorLeaderboardAssessment( exercise.id, result.assessor, count(result), sum(exercise.maxPoints),
+     * exercise.course.id ) FROM Exercise exercise left join exercise.studentParticipations participation left join participation.results result WHERE :#{#groupName} member of
+     * result.assessor.groups and result.completionDate is not null and exercise.id = :#{#exerciseId} and TYPE(exercise) in (ModelingExercise , TextExercise , FileUploadExercise ,
+     * ProgrammingExercise) GROUP BY result.assessor.id, exercise.id """) List<TutorLeaderboardAssessment> findTutorLeaderboardAssessmentByExerciseId(@Param("groupName") String
+     * groupName, @Param("exerciseId") long exerciseId); // Alternative which might be faster, in particular for complaints in the other repositories
+     */
     @Query("""
             SELECT
             new de.tum.in.www1.artemis.domain.leaderboard.tutor.TutorLeaderboardAssessment(
                 -1L,
                 result.assessor,
-                count(*),
-                sum(exercise.maxPoints),
-                course.id
-                )
-            FROM
-                Course course left join course.exercises exercise left join exercise.studentParticipations participation left join participation.results result
-            WHERE
-                course.teachingAssistantGroupName member of result.assessor.groups
-                and result.completionDate is not null
-                and course.id = :#{#courseId}
-                and TYPE(exercise) in (ModelingExercise , TextExercise , FileUploadExercise , ProgrammingExercise)
-            GROUP BY result.assessor.id, course.id
-            """)
-    List<TutorLeaderboardAssessment> findTutorLeaderboardAssessmentByCourseId(@Param("courseId") long courseId);
-
-    @Query("""
-            SELECT
-            new de.tum.in.www1.artemis.domain.leaderboard.tutor.TutorLeaderboardAssessment(
-                exercise.id,
-                result.assessor,
-                count(*),
-                sum(exercise.maxPoints),
-                -1L
-                )
-            FROM
-                Exercise exercise left join exercise.studentParticipations participation left join participation.results result
-            WHERE
-                :#{#groupName} member of result.assessor.groups
-                and result.completionDate is not null
-                and exercise.id = :#{#exerciseId}
-                and TYPE(exercise) in (ModelingExercise , TextExercise , FileUploadExercise , ProgrammingExercise)
-            GROUP BY result.assessor.id, exercise.id
-            """)
-    List<TutorLeaderboardAssessment> findTutorLeaderboardAssessmentByExerciseId(@Param("groupName") String groupName, @Param("exerciseId") long exerciseId);
-
-    // Alternative which might be faster, in particular for complaints in the other repositories
-
-    @Query("""
-            SELECT
-            new de.tum.in.www1.artemis.domain.leaderboard.tutor.TutorLeaderboardAssessment(
-                -1L,
-                result.assessor,
-                count(*),
+                count(result),
                 sum(result.participation.exercise.maxPoints),
                 result.participation.exercise.course.id
                 )
@@ -343,7 +313,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
                 and TYPE(result.participation.exercise) in (ModelingExercise , TextExercise , FileUploadExercise , ProgrammingExercise)
             GROUP BY result.assessor.id, result.participation.exercise.course.id
             """)
-    List<TutorLeaderboardAssessment> findTutorLeaderboardAssessmentByCourseIdAlternative(@Param("courseId") long courseId);
+    List<TutorLeaderboardAssessment> findTutorLeaderboardAssessmentByCourseId(@Param("courseId") long courseId);
 
     // Alternative which might be faster, in particular for complaints in the other repositories
 
@@ -352,9 +322,9 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
             new de.tum.in.www1.artemis.domain.leaderboard.tutor.TutorLeaderboardAssessment(
                 result.participation.exercise.id,
                 result.assessor,
-                count(*),
+                count(result),
                 sum(result.participation.exercise.maxPoints),
-                -1L
+                result.participation.exercise.course.id
                 )
             FROM
                 Result result
@@ -365,6 +335,6 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
                 and TYPE(result.participation.exercise) in (ModelingExercise , TextExercise , FileUploadExercise , ProgrammingExercise)
             GROUP BY result.assessor.id, result.participation.exercise.id
             """)
-    List<TutorLeaderboardAssessment> findTutorLeaderboardAssessmentByExerciseIdAlternative(@Param("groupName") String groupName, @Param("exerciseId") long exerciseId);
+    List<TutorLeaderboardAssessment> findTutorLeaderboardAssessmentByExerciseId(@Param("groupName") String groupName, @Param("exerciseId") long exerciseId);
 
 }
