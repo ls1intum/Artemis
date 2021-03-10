@@ -5,6 +5,8 @@ import java.util.List;
 
 import javax.validation.constraints.NotNull;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Course;
@@ -14,6 +16,7 @@ import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.leaderboard.tutor.*;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.web.rest.ProgrammingExerciseGradingResource;
 import de.tum.in.www1.artemis.web.rest.dto.TutorLeaderboardDTO;
 
 @Service
@@ -24,6 +27,8 @@ public class TutorLeaderboardService {
     private final ComplaintRepository complaintRepository;
 
     private final UserRepository userRepository;
+
+    private final Logger log = LoggerFactory.getLogger(ProgrammingExerciseGradingResource.class);
 
     public TutorLeaderboardService(ResultRepository resultRepository, ComplaintRepository complaintRepository, UserRepository userRepository) {
         this.resultRepository = resultRepository;
@@ -42,14 +47,33 @@ public class TutorLeaderboardService {
         List<User> tutors = userRepository.getTutors(course);
         String groupName = course.getTeachingAssistantGroupName();
 
+        long start = System.currentTimeMillis();
         List<TutorLeaderboardAssessment> tutorLeaderboardAssessments = resultRepository.findTutorLeaderboardAssessmentByCourseId(course.getId());
+        long end = System.currentTimeMillis();
+        log.debug("Finished >>resultRepository.findTutorLeaderboardAssessmentByCourseId<< call for course " + course.getId() + " in " + (end - start) + "ms");
+
+        start = System.currentTimeMillis();
         List<TutorLeaderboardComplaints> tutorLeaderboardComplaints = complaintRepository.findTutorLeaderboardComplaintsByCourseId(groupName, course.getId());
+        end = System.currentTimeMillis();
+        log.debug("Finished >>complaintRepository.findTutorLeaderboardComplaintsByCourseId<< call for course " + course.getId() + " in " + (end - start) + "ms");
+
+        start = System.currentTimeMillis();
         List<TutorLeaderboardMoreFeedbackRequests> tutorLeaderboardMoreFeedbackRequests = complaintRepository.findTutorLeaderboardMoreFeedbackRequestsByCourseId(groupName,
                 course.getId());
+        end = System.currentTimeMillis();
+        log.debug("Finished >>complaintRepository.findTutorLeaderboardMoreFeedbackRequestsByCourseId<< call for course " + course.getId() + " in " + (end - start) + "ms");
+
+        start = System.currentTimeMillis();
         List<TutorLeaderboardComplaintResponses> tutorLeaderboardComplaintResponses = complaintRepository.findTutorLeaderboardComplaintResponsesByCourseId(groupName,
                 course.getId());
+        end = System.currentTimeMillis();
+        log.debug("Finished >>complaintRepository.findTutorLeaderboardComplaintResponsesByCourseId<< call for course " + course.getId() + " in " + (end - start) + "ms");
+
+        start = System.currentTimeMillis();
         List<TutorLeaderboardAnsweredMoreFeedbackRequests> tutorLeaderboardAnsweredMoreFeedbackRequests = complaintRepository
                 .findTutorLeaderboardAnsweredMoreFeedbackRequestsByCourseId(groupName, course.getId());
+        end = System.currentTimeMillis();
+        log.debug("Finished >>complaintRepository.findTutorLeaderboardAnsweredMoreFeedbackRequestsByCourseId<< call for course " + course.getId() + " in " + (end - start) + "ms");
 
         return aggregateTutorLeaderboardData(tutors, tutorLeaderboardAssessments, tutorLeaderboardComplaints, tutorLeaderboardMoreFeedbackRequests,
                 tutorLeaderboardComplaintResponses, tutorLeaderboardAnsweredMoreFeedbackRequests);
@@ -85,15 +109,30 @@ public class TutorLeaderboardService {
 
         List<User> tutors = userRepository.getTutors(exercise.getCourseViaExerciseGroupOrCourseMember());
         String groupName = exercise.getCourseViaExerciseGroupOrCourseMember().getTeachingAssistantGroupName();
-
+        long start = System.currentTimeMillis();
         List<TutorLeaderboardAssessment> tutorLeaderboardAssessments = resultRepository.findTutorLeaderboardAssessmentByExerciseId(groupName, exercise.getId());
+        long end = System.currentTimeMillis();
+        log.debug("Finished >>resultRepository.findTutorLeaderboardAssessmentByExerciseId<< call for exercise " + exercise.getId() + " in " + (end - start) + "ms");
+        start = System.currentTimeMillis();
         List<TutorLeaderboardComplaints> tutorLeaderboardComplaints = complaintRepository.findTutorLeaderboardComplaintsByExerciseId(groupName, exercise.getId());
+        end = System.currentTimeMillis();
+        log.debug("Finished >>complaintRepository.findTutorLeaderboardComplaintsByExerciseId<< call for exercise " + exercise.getId() + " in " + (end - start) + "ms");
+        start = System.currentTimeMillis();
         List<TutorLeaderboardMoreFeedbackRequests> tutorLeaderboardMoreFeedbackRequests = complaintRepository.findTutorLeaderboardMoreFeedbackRequestsByExerciseId(groupName,
                 exercise.getId());
+        end = System.currentTimeMillis();
+        log.debug("Finished >>complaintRepository.findTutorLeaderboardMoreFeedbackRequestsByExerciseId<< call for exercise " + exercise.getId() + " in " + (end - start) + "ms");
+        start = System.currentTimeMillis();
         List<TutorLeaderboardComplaintResponses> tutorLeaderboardComplaintResponses = complaintRepository.findTutorLeaderboardComplaintResponsesByExerciseId(groupName,
                 exercise.getId());
+        end = System.currentTimeMillis();
+        log.debug("Finished >>complaintRepository.findTutorLeaderboardComplaintResponsesByExerciseId<< call for exercise " + exercise.getId() + " in " + (end - start) + "ms");
+        start = System.currentTimeMillis();
         List<TutorLeaderboardAnsweredMoreFeedbackRequests> tutorLeaderboardAnsweredMoreFeedbackRequests = complaintRepository
                 .findTutorLeaderboardAnsweredMoreFeedbackRequestsByExerciseId(groupName, exercise.getId());
+        end = System.currentTimeMillis();
+        log.debug("Finished >>complaintRepository.findTutorLeaderboardAnsweredMoreFeedbackRequestsByExerciseId<< call for exercise " + exercise.getId() + " in " + (end - start)
+                + "ms");
 
         return aggregateTutorLeaderboardData(tutors, tutorLeaderboardAssessments, tutorLeaderboardComplaints, tutorLeaderboardMoreFeedbackRequests,
                 tutorLeaderboardComplaintResponses, tutorLeaderboardAnsweredMoreFeedbackRequests);
