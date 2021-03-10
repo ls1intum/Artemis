@@ -699,7 +699,7 @@ public class ExamResource {
      *
      * @return empty ResponseEntity with status 200 (OK) or with status 404 (Not Found)
      */
-    @DeleteMapping(value = "/courses/{courseId}/exams/{examId}/allstudents")
+    @DeleteMapping(value = "/courses/{courseId}/exams/{examId}/students")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Void> removeAllStudentsFromExam(@PathVariable Long courseId, @PathVariable Long examId,
             @RequestParam(defaultValue = "false") boolean withParticipationsAndSubmission) {

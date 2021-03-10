@@ -201,7 +201,7 @@ export class ExamManagementService {
      */
     removeAllStudentsFromExam(courseId: number, examId: number, withParticipationsAndSubmission = false) {
         const options = createRequestOption({ withParticipationsAndSubmission });
-        return this.http.delete<any>(`${this.resourceUrl}/${courseId}/exams/${examId}/allstudents`, {
+        return this.http.delete<any>(`${this.resourceUrl}/${courseId}/exams/${examId}/students`, {
             params: options,
             observe: 'response',
         });
