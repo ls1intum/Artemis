@@ -159,10 +159,7 @@
                     </td>
                     <td>
                         <ng-container *ngIf="submission.participation.submissions">
-                            <a
-                                *ngIf="exercise.isAtLeastInstructor"
-                                [routerLink]="getParticipationsRouterLink(submission.participation.id)"
-                            >
+                            <a *ngIf="exercise.isAtLeastInstructor" [routerLink]="getParticipationsRouterLink(submission.participation.id)">
                                 {{ submission.participation.submissions.length }}
                             </a>
                         </ng-container>

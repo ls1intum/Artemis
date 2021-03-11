@@ -40,7 +40,21 @@
                     <fa-icon [icon]="'list-alt'"></fa-icon>
                     <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.participations">Participations</span>
                 </a>
-                <a *ngIf="exercise.exerciseGroup" [routerLink]="['/course-management', course.id, 'exams', exercise.exerciseGroup!.exam!.id!, 'exercise-groups', exercise.exerciseGroup!.id!, 'exercises', exercise.id, 'participations']" class="btn btn-primary btn-sm mr-1">
+                <a
+                    *ngIf="exercise.exerciseGroup"
+                    [routerLink]="[
+                        '/course-management',
+                        course.id,
+                        'exams',
+                        exercise.exerciseGroup!.exam!.id!,
+                        'exercise-groups',
+                        exercise.exerciseGroup!.id!,
+                        'exercises',
+                        exercise.id,
+                        'participations'
+                    ]"
+                    class="btn btn-primary btn-sm mr-1"
+                >
                     <fa-icon [icon]="'list-alt'"></fa-icon>
                     <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.participations">Participations</span>
                 </a>

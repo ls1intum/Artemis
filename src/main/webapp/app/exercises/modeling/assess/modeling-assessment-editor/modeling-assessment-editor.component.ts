@@ -126,14 +126,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
                 this.handleReceivedSubmission(submission);
             },
             (error: HttpErrorResponse) => {
-                if (error.error && error.error.errorKey === 'lockedSubmissionsLimitReached') {
-                    this.navigateBack();
-                } else if (error.status === 404) {
-                    // there is no submission waiting for assessment at the moment
-                    this.submission = undefined;
-                } else {
-                    this.onError();
-                }
+                this.handeErrorResponse(error);
             },
         );
     }
@@ -148,14 +141,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
                 this.location.go(newUrl);
             },
             (error: HttpErrorResponse) => {
-                if (error.status === 404) {
-                    // there is no submission waiting for assessment at the moment
-                    this.submission = undefined;
-                } else if (error.error && error.error.errorKey === 'lockedSubmissionsLimitReached') {
-                    this.navigateBack();
-                } else {
-                    this.onError();
-                }
+                this.handeErrorResponse(error);
             },
         );
     }
@@ -272,6 +258,21 @@ export class ModelingAssessmentEditorComponent implements OnInit {
 
     get readOnly(): boolean {
         return !this.isAtLeastInstructor && !!this.complaint && this.isAssessor;
+    }
+
+    private handeErrorResponse(error: HttpErrorResponse): void {
+        this.submission = undefined;
+
+        // there is no submission waiting for assessment at the moment
+        if (error.status === 404) {
+            return;
+        }
+
+        if (error.error && error.error.errorKey === 'lockedSubmissionsLimitReached') {
+            this.navigateBack();
+        } else {
+            this.onError();
+        }
     }
 
     onError(): void {
@@ -411,14 +412,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
             },
             (error: HttpErrorResponse) => {
                 this.nextSubmissionBusy = false;
-                if (error.status === 404) {
-                    // there is no submission waiting for assessment at the moment
-                    this.submission = undefined;
-                } else if (error.error && error.error.errorKey === 'lockedSubmissionsLimitReached') {
-                    this.navigateBack();
-                } else {
-                    this.onError();
-                }
+                this.handeErrorResponse(error);
             },
         );
     }
@@ -490,6 +484,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     private removeHighlightedFeedbackOfColor(highlightedElements: Map<string, string>, color: string) {
         return new Map<string, string>([...highlightedElements].filter(([, value]) => value !== color));
     }
+
     /**
      * Calculates the total score of the current assessment.
      * This function originally checked whether the total score is negative

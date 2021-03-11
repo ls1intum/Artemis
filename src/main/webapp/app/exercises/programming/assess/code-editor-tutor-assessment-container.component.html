@@ -54,8 +54,10 @@
     >
         <div editorTitle>
             <span>{{ exercise?.title }}</span>
-            <span>&nbsp;[{{ exercise?.maxPoints }} {{ 'artemisApp.examParticipation.points' | translate }}
-                <span *ngIf="exercise.bonusPoints">, {{ exercise.bonusPoints }} {{ 'artemisApp.examParticipation.bonus' | translate }}</span>]
+            <span
+                >&nbsp;[{{ exercise?.maxPoints }} {{ 'artemisApp.examParticipation.points' | translate }}
+                <span *ngIf="exercise.bonusPoints">, {{ exercise.bonusPoints }} {{ 'artemisApp.examParticipation.bonus' | translate }}</span
+                >]
                 <jhi-included-in-score-badge
                     *ngIf="exercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY"
                     [includedInOverallScore]="exercise.includedInOverallScore"
