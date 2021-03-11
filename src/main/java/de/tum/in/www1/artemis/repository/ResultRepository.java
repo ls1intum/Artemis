@@ -15,6 +15,7 @@ import org.springframework.stereotype.Repository;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
+import de.tum.in.www1.artemis.domain.leaderboard.tutor.TutorLeaderboardAssessment;
 import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
 
 /**
@@ -281,5 +282,43 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
     default DueDateStat countNumberOfAssessmentsOfExam(Long courseId) {
         return new DueDateStat(countByAssessorIsNotNullAndParticipation_Exercise_CourseIdAndRatedAndCompletionDateIsNotNull(courseId, true), 0);
     }
+
+    @Query("""
+            SELECT
+            new de.tum.in.www1.artemis.domain.leaderboard.tutor.TutorLeaderboardAssessment(
+                -1L,
+                r.assessor.id,
+                count(r),
+                sum(e.maxPoints),
+                c.id
+                )
+            FROM
+                Result r join r.participation p join p.exercise e join e.course c join r.assessor a
+            WHERE
+                r.completionDate is not null
+                and c.id = :#{#courseId}
+            GROUP BY a.id
+            """)
+    List<TutorLeaderboardAssessment> findTutorLeaderboardAssessmentByCourseId(@Param("courseId") long courseId);
+
+    // Alternative which might be faster, in particular for complaints in the other repositories
+
+    @Query("""
+            SELECT
+            new de.tum.in.www1.artemis.domain.leaderboard.tutor.TutorLeaderboardAssessment(
+                e.id,
+                a.id,
+                count(r),
+                sum(e.maxPoints),
+                -1L
+                )
+            FROM
+                Result r join r.participation p join p.exercise e join r.assessor a
+            WHERE
+                r.completionDate is not null
+                and e.id = :#{#exerciseId}
+            GROUP BY a.id
+            """)
+    List<TutorLeaderboardAssessment> findTutorLeaderboardAssessmentByExerciseId(@Param("exerciseId") long exerciseId);
 
 }
