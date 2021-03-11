@@ -15,6 +15,7 @@ import org.springframework.stereotype.Repository;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
+import de.tum.in.www1.artemis.domain.leaderboard.tutor.TutorLeaderboardAssessment;
 import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
 
 /**
@@ -169,6 +170,46 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
 
     long countByAssessor_IdAndParticipation_ExerciseIdAndRatedAndCompletionDateIsNotNull(Long tutorId, Long exerciseId, boolean rated);
 
+    @Query("""
+                    SELECT r
+                    FROM Exercise e JOIN e.studentParticipations p JOIN p.submissions s JOIN s.results r
+                    WHERE e.id = :exerciseId
+                    AND p.student.id = :studentId
+                    AND r.score IS NOT NULL AND r.completionDate IS NOT NULL
+                    ORDER BY p.id DESC, s.id DESC, r.id DESC
+            """)
+    List<Result> getResultsOrderedByParticipationIdSubmissionIdResultIdDescForStudent(@Param("exerciseId") Long exerciseId, @Param("studentId") Long studentId);
+
+    @Query("""
+                    SELECT r
+                    FROM Exercise e JOIN e.studentParticipations p JOIN p.submissions s JOIN s.results r
+                    WHERE e.id = :exerciseId
+                    AND p.team.id = :teamId
+                    AND r.score IS NOT NULL AND r.completionDate IS NOT NULL
+                    ORDER BY p.id DESC, s.id DESC, r.id DESC
+            """)
+    List<Result> getResultsOrderedByParticipationIdSubmissionIdResultIdDescForTeam(@Param("exerciseId") Long exerciseId, @Param("teamId") Long teamId);
+
+    @Query("""
+                    SELECT r
+                    FROM Exercise e JOIN e.studentParticipations p JOIN p.submissions s JOIN s.results r
+                    WHERE e.id = :exerciseId
+                    AND p.student.id = :studentId
+                    AND r.score IS NOT NULL AND r.completionDate IS NOT NULL AND r.rated = true
+                    ORDER BY p.id DESC, s.id DESC, r.id DESC
+            """)
+    List<Result> getRatedResultsOrderedByParticipationIdSubmissionIdResultIdDescForStudent(@Param("exerciseId") Long exerciseId, @Param("studentId") Long studentId);
+
+    @Query("""
+                    SELECT r
+                    FROM Exercise e JOIN e.studentParticipations p JOIN p.submissions s JOIN s.results r
+                    WHERE e.id = :exerciseId
+                    AND p.team.id = :teamId
+                    AND r.score IS NOT NULL AND r.completionDate IS NOT NULL AND r.rated = true
+                    ORDER BY p.id DESC, s.id DESC, r.id DESC
+            """)
+    List<Result> getRatedResultsOrderedByParticipationIdSubmissionIdResultIdDescForTeam(@Param("exerciseId") Long exerciseId, @Param("teamId") Long teamId);
+
     /**
      * Checks if a result for the given participation exists.
      *
@@ -179,6 +220,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
 
     /**
      * Returns true if there is at least one result for the given exercise.
+     *
      * @param exerciseId id of an Exercise.
      * @return true if there is a result, false if not.
      */
@@ -281,5 +323,43 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
     default DueDateStat countNumberOfAssessmentsOfExam(Long courseId) {
         return new DueDateStat(countByAssessorIsNotNullAndParticipation_Exercise_CourseIdAndRatedAndCompletionDateIsNotNull(courseId, true), 0);
     }
+
+    @Query("""
+            SELECT
+            new de.tum.in.www1.artemis.domain.leaderboard.tutor.TutorLeaderboardAssessment(
+                -1L,
+                r.assessor.id,
+                count(r),
+                sum(e.maxPoints),
+                c.id
+                )
+            FROM
+                Result r join r.participation p join p.exercise e join e.course c join r.assessor a
+            WHERE
+                r.completionDate is not null
+                and c.id = :#{#courseId}
+            GROUP BY a.id
+            """)
+    List<TutorLeaderboardAssessment> findTutorLeaderboardAssessmentByCourseId(@Param("courseId") long courseId);
+
+    // Alternative which might be faster, in particular for complaints in the other repositories
+
+    @Query("""
+            SELECT
+            new de.tum.in.www1.artemis.domain.leaderboard.tutor.TutorLeaderboardAssessment(
+                e.id,
+                a.id,
+                count(r),
+                sum(e.maxPoints),
+                -1L
+                )
+            FROM
+                Result r join r.participation p join p.exercise e join r.assessor a
+            WHERE
+                r.completionDate is not null
+                and e.id = :#{#exerciseId}
+            GROUP BY a.id
+            """)
+    List<TutorLeaderboardAssessment> findTutorLeaderboardAssessmentByExerciseId(@Param("exerciseId") long exerciseId);
 
 }
