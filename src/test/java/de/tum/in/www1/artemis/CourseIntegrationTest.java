@@ -1173,6 +1173,14 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
 
         var exerciseDetails = dto.getExerciseDetails();
         assertThat(exerciseDetails.size()).isEqualTo(5);
+
+        var quizExerciseOptional = exerciseDetails.stream().filter(e -> e.getExerciseType().equals("quiz")).findFirst();
+        assertThat(quizExerciseOptional.isPresent());
+
+        var quizDto = quizExerciseOptional.get();
+        assertThat(quizDto.getQuizStatus()).isEqualTo(QuizStatus.CLOSED);
+        assertThat(quizDto.getCategories().size()).isEqualTo(1);
+        assertThat(quizDto.getCategories().stream().findFirst().get()).isEqualTo("Category");
     }
 
     @Test
@@ -1195,5 +1203,24 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         var courseDtos = request.getList("/api/courses/stats-for-management-overview", HttpStatus.OK, CourseManagementOverviewStatisticsDTO.class);
 
         assertThat(courseDtos.size()).isEqualTo(1);
+
+        var dto = courseDtos.get(0);
+        assertThat(dto.getCourseId()).isEqualTo(instructorsCourse.getId());
+
+        var exerciseDTOS = dto.getExerciseDTOS();
+        assertThat(exerciseDTOS.size()).isEqualTo(5);
+
+        var statisticsOptional = exerciseDTOS.stream().findFirst();
+        assertThat(statisticsOptional.isPresent());
+
+        var statisticsDTO = statisticsOptional.get();
+        assertThat(statisticsDTO.getAverageScoreInPercent()).isEqualTo(11.0);
+        assertThat(statisticsDTO.getExerciseMaxPoints()).isEqualTo(5.0);
+        assertThat(statisticsDTO.getNoOfParticipatingStudentsOrTeams()).isEqualTo(1);
+        assertThat(statisticsDTO.getParticipationRateInPercent()).isEqualTo(25.0);
+        assertThat(statisticsDTO.getNoOfStudentsInCourse()).isEqualTo(4);
+        assertThat(statisticsDTO.getNoOfRatedAssessments()).isEqualTo(0);
+        assertThat(statisticsDTO.getNoOfAssessmentsDoneInPercent()).isEqualTo(0.0);
+        assertThat(statisticsDTO.getNoOfSubmissionsInTime()).isEqualTo(2L);
     }
 }
