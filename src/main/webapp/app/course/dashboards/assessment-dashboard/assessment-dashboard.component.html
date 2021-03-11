@@ -40,52 +40,28 @@
 </div>
 
 <div *ngIf="course">
-    <!-- TODO: also support this for the exam mode -->
-    <div *ngIf="!isExamMode" id="assessment-statistics" class="guided-tour-assessment-stats">
-        <div class="row mt-3 justify-content-around">
-            <div class="col-4 text-center">
-                <p class="font-weight-bold">{{ 'artemisApp.assessmentDashboard.yourAssessments' | translate }}:</p>
-                <p class="h3">{{ numberOfTutorAssessments }}</p>
-            </div>
-            <div class="col-4 text-center">
-                <p class="font-weight-bold">{{ 'artemisApp.assessmentDashboard.totalAssessments' | translate }}:</p>
-                <p class="h3">{{ totalNumberOfAssessments.total }} / {{ numberOfSubmissions.total }} ({{ totalAssessmentPercentage }}%)</p>
-            </div>
-        </div>
-
-        <div class="row justify-content-around">
-            <div class="col-4 text-center">
-                <a [routerLink]="['/course-management', courseId, 'complaints']" [queryParams]="{ tutorId: tutor.id }">
-                    <p class="font-weight-bold">{{ 'artemisApp.assessmentDashboard.complaintsAboutYourAssessments' | translate }}:</p>
-                    <p class="h3">{{ numberOfTutorComplaints }}</p>
-                </a>
-            </div>
-            <div class="col-4 text-center">
-                <p class="font-weight-bold">{{ 'artemisApp.assessmentDashboard.totalComplaints' | translate }}:</p>
-                <p class="h3">{{ numberOfComplaints }}</p>
-            </div>
-        </div>
-
-        <div class="row justify-content-around">
-            <div class="col-4 text-center">
-                <a [routerLink]="['/course-management', courseId, 'more-feedback-requests']" [queryParams]="{ tutorId: tutor.id }">
-                    <p class="font-weight-bold">{{ 'artemisApp.assessmentDashboard.moreFeedbackRequestsForYourAssessments' | translate }}:</p>
-                    <p class="h3">{{ numberOfTutorMoreFeedbackRequests }}</p>
-                </a>
-            </div>
-            <div class="col-4 text-center">
-                <p class="font-weight-bold">{{ 'artemisApp.assessmentDashboard.totalMoreFeedbackRequests' | translate }}:</p>
-                <p class="h3">{{ numberOfMoreFeedbackRequests }}</p>
-            </div>
-        </div>
-        <div class="row justify-content-around">
-            <div class="col-4 text-center">
-                <a [routerLink]="['/course-management', courseId, 'assessment-locks']" [queryParams]="{ tutorId: tutor.id }">
-                    <p class="font-weight-bold">{{ 'artemisApp.assessmentDashboard.yourAssessmentLocks' | translate }}:</p>
-                    <p class="h3">{{ numberOfAssessmentLocks }}</p>
-                </a>
-            </div>
-            <div class="col-4 text-center"></div>
+    <div id="assessment-statistics" class="guided-tour-assessment-stats">
+        <div class="container-fluid">
+            <jhi-assessment-dashboard-information
+                [isExamMode]="isExamMode"
+                [numberOfTutorAssessments]="numberOfTutorAssessments"
+                [courseId]="courseId"
+                [tutorId]="tutor.id"
+                [numberOfTutorComplaints]="numberOfTutorComplaints"
+                [numberOfTutorMoreFeedbackRequests]="numberOfTutorMoreFeedbackRequests"
+                [numberOfAssessmentLocks]="numberOfAssessmentLocks"
+                [examId]="examId"
+                [totalNumberOfAssessments]="totalNumberOfAssessments"
+                [numberOfSubmissions]="numberOfSubmissions"
+                [numberOfCorrectionRounds]="numberOfCorrectionRounds"
+                [totalAssessmentPercentage]="totalAssessmentPercentage"
+                [numberOfAssessmentsOfCorrectionRounds]="numberOfAssessmentsOfCorrectionRounds"
+                [isAtLeastInstructor]="isAtLeastInstructor"
+                [numberOfComplaints]="numberOfComplaints"
+                [numberOfMoreFeedbackRequests]="numberOfMoreFeedbackRequests"
+                [totalNumberOfAssessmentLocks]="totalNumberOfAssessmentLocks"
+            >
+            </jhi-assessment-dashboard-information>
         </div>
     </div>
 
@@ -170,7 +146,7 @@
                                     class="btn btn-info btn-sm mr-1"
                                     [class.guided-tour]="exercise === exerciseForGuidedTour"
                                 >
-                                    <span class="d-none d-md-inline" jhiTranslate="entity.action.exerciseDashboard">Exercise dashboard</span>
+                                    <span class="d-md-inline" jhiTranslate="entity.action.exerciseDashboard">Exercise dashboard</span>
                                 </a>
                             </ng-container>
                         </ng-container>
@@ -186,18 +162,19 @@
                             </a>
                         </ng-template>
 
-                        <span
-                            class="col-lg-3 col-md-6 col-sm-6 align-self-center"
-                            *ngIf="isAtLeastInstructor && isExamMode && !isTestRun && exam?.numberOfCorrectionRoundsInExam > 1"
-                        >
-                            <ng-container *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']">
+                        <ng-container *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']">
+                            <ng-container class="col-lg-3 col-md-6 col-sm-6" *ngIf="isAtLeastInstructor && isExamMode && !isTestRun && exam?.numberOfCorrectionRoundsInExam > 1">
                                 <jhi-second-correction-enable-button
+                                    class="mr-1"
                                     (ngModelChange)="toggleSecondCorrection(exercise.id)"
                                     [(secondCorrectionEnabled)]="exercise.secondCorrectionEnabled"
                                     [(toggelingSecondCorrectionButton)]="toggelingSecondCorrectionButton"
                                 ></jhi-second-correction-enable-button>
                             </ng-container>
-                        </span>
+                            <a class="btn btn-primary btn-sm" [routerLink]="['/course-management', courseId, exercise.type + '-exercises', exercise.id, 'assessment']">
+                                <span jhiTranslate="artemisApp.assessmentDashboard.submissions">Submissions</span>
+                            </a>
+                        </ng-container>
                     </td>
                 </tr>
             </tbody>

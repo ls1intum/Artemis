@@ -11,6 +11,11 @@
                     <span [innerHTML]="'artemisApp.learningGoal.learningGoalButton' | translate" class="d-none d-md-inline"></span>
                 </a>
 
+                <a *ngIf="course.isAtLeastInstructor" type="button" [routerLink]="['/course-management', course.id, 'participant-scores']" class="btn btn-primary mr-1 mb-1">
+                    <fa-icon [icon]="'table'"></fa-icon>
+                    <span class="d-none d-md-inline" [innerHTML]="'artemisApp.participantScores.pageTitle' | translate"></span>
+                </a>
+
                 <a
                     *ngIf="course?.studentQuestionsEnabled && course?.isAtLeastTutor"
                     [routerLink]="['/course-management', course?.id, 'questions']"

@@ -74,12 +74,12 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
      * @return <code>Object[]</code> where each index corresponds to the column from the db (0 refers to exerciseId and so on)
      */
     @Query("""
-            SELECT
-            e.id,
-            AVG(r.score),
-            Count(Distinct p.student.id),
-            (SELECT count(distinct u.id)
-            FROM User u
+                SELECT
+                e.id,
+                AVG(r.score),
+                Count(Distinct p.student.id),
+                (SELECT count(distinct u.id)
+                FROM User u
             WHERE
             e.course.studentGroupName member of u.groups
             AND e.course.teachingAssistantGroupName not member of u.groups
@@ -90,21 +90,52 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
             AND e.course.studentGroupName member of p.student.groups
             AND e.course.teachingAssistantGroupName not member of p.student.groups
             AND e.course.instructorGroupName not member of p.student.groups
-            AND r.score IS NOT NULL
+            AND r.score IS NOT NULL AND r.completionDate IS NOT NULL
             AND
             s.id = (
                 SELECT max(s2.id)
                 FROM Submission s2 JOIN s2.results r2
                 WHERE s2.participation.id = s.participation.id
-                AND r2.score IS NOT NULL
+                AND r2.score IS NOT NULL AND r2.completionDate IS NOT NULL
                 )
             GROUP BY e.id
             """)
     List<Object[]> calculateStatisticsForIndividualCourseExercises(@Param("exerciseIds") List<Long> exerciseIds);
 
     /**
+     * calculates the average score and the participation rate of students for each given individual course exercise
+     * by using the last result (rated or not). This query gets the last result from the participation scores table
+     *
+     * @param exerciseIds - exercise ids to count the statistics for
+     * @return <code>Object[]</code> where each index corresponds to the column from the db (0 refers to exerciseId and so on)
+     */
+    @Query("""
+            SELECT
+            e.id,
+            AVG(sc.lastScore),
+            Count(Distinct p.student.id),
+            (SELECT count(distinct u.id)
+            FROM User u
+            WHERE
+            e.course.studentGroupName member of u.groups
+            AND e.course.teachingAssistantGroupName not member of u.groups
+            AND e.course.instructorGroupName not member of u.groups
+            )
+
+            FROM Exercise e JOIN e.studentParticipations p, StudentScore sc
+            WHERE e.id IN :exerciseIds
+            AND sc.exercise = e AND sc.user = p.student
+            AND e.course.studentGroupName member of p.student.groups
+            AND e.course.teachingAssistantGroupName not member of p.student.groups
+            AND e.course.instructorGroupName not member of p.student.groups
+            GROUP BY e.id
+            """)
+    List<Object[]> calculateExerciseStatisticsForIndividualCourseUsingParticipationTable(@Param("exerciseIds") List<Long> exerciseIds);
+
+    /**
      * calculates the average score and the participation rate of students for each given team course exercise
      * by using the last result (rated or not)
+     *
      * @param exerciseIds - exercise ids to count the statistics for
      * @return <code>Object[]</code> where each index corresponds to the column from the db (0 refers to exerciseId and so on)
      */
@@ -112,10 +143,10 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
             SELECT
             e.id,
             AVG(r.score),
-            Count(Distinct p.team.id),
-            (SELECT count(distinct t.id)
-             FROM Team t JOIN t.students st2
-             WHERE st2.id IN (
+                Count(Distinct p.team.id),
+                (SELECT count(distinct t.id)
+                 FROM Team t JOIN t.students st2
+                 WHERE st2.id IN (
                  SELECT DISTINCT u.id
                 FROM User u
                 WHERE
@@ -126,7 +157,7 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
             )
             FROM Exercise e JOIN e.studentParticipations p JOIN p.submissions s JOIN s.results r JOIN p.team.students st
             WHERE e.id IN :exerciseIds
-            AND r.score IS NOT NULL
+            AND r.score IS NOT NULL AND r.completionDate IS NOT NULL
             AND
             st.id IN (
                  SELECT DISTINCT u.id
@@ -141,11 +172,50 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
                 SELECT max(s2.id)
                 FROM Submission s2 JOIN s2.results r2
                 WHERE s2.participation.id = s.participation.id
-                AND r2.score IS NOT NULL
+                AND r2.score IS NOT NULL AND r2.completionDate IS NOT NULL
                 )
             GROUP BY e.id
             """)
     List<Object[]> calculateStatisticsForTeamCourseExercises(@Param("exerciseIds") List<Long> exerciseIds);
+
+    /**
+     * calculates the average score and the participation rate of students for each given team course exercise
+     * by using the last result (rated or not). This query gets the last result from the participation scores table
+     *
+     * @param exerciseIds - exercise ids to count the statistics for
+     * @return <code>Object[]</code> where each index corresponds to the column from the db (0 refers to exerciseId and so on)
+     */
+    @Query("""
+            SELECT
+            e.id,
+            AVG(ts.lastScore),
+            Count(Distinct p.team.id),
+            (SELECT count(distinct t.id)
+             FROM Team t JOIN t.students st2
+             WHERE st2.id IN (
+                 SELECT DISTINCT u.id
+                FROM User u
+                WHERE
+                e.course.studentGroupName member of u.groups
+                AND e.course.teachingAssistantGroupName not member of u.groups
+                AND e.course.instructorGroupName not member of u.groups
+             )
+            )
+            FROM Exercise e JOIN e.studentParticipations p JOIN p.team.students st, TeamScore ts
+            WHERE e.id IN :exerciseIds
+            AND ts.exercise = e AND ts.team = p.team
+            AND
+            st.id IN (
+                 SELECT DISTINCT u.id
+                FROM User u
+                WHERE
+                e.course.studentGroupName member of u.groups
+                AND e.course.teachingAssistantGroupName not member of u.groups
+                AND e.course.instructorGroupName not member of u.groups
+             )
+            GROUP BY e.id
+            """)
+    List<Object[]> calculateExerciseStatisticsForTeamCourseExercisesUsingParticipationTable(@Param("exerciseIds") List<Long> exerciseIds);
 
     @EntityGraph(type = LOAD, attributePaths = { "studentParticipations", "studentParticipations.student", "studentParticipations.submissions" })
     Optional<Exercise> findWithEagerStudentParticipationsStudentAndSubmissionsById(Long exerciseId);
@@ -189,18 +259,23 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
 
     /**
      * Gets the {@link CourseExerciseStatisticsDTO} for each exercise proved in <code>exerciseIds</code>.
-     *
+     * <p>
      * calculates the average score and the participation rate of students for each given course exercise (team or individual)
      * by using the last result (rated or not)
      *
-     * @param exerciseIds - list of exercise ids (must be belong to the same course)
+     * @param exerciseIds              - list of exercise ids (must be belong to the same course)
+     * @param useParticipantScoreTable use the participant score table instead of going through participation -> submission -> result
      * @return the list of {@link CourseExerciseStatisticsDTO}
      * @throws IllegalArgumentException if exercise is not found in database, exercise is not a course exercise or not all exercises are from the same course
      */
-    default List<CourseExerciseStatisticsDTO> calculateExerciseStatistics(List<Long> exerciseIds) throws IllegalArgumentException {
+    default List<CourseExerciseStatisticsDTO> calculateExerciseStatistics(List<Long> exerciseIds, boolean useParticipantScoreTable) throws IllegalArgumentException {
         List<Exercise> exercisesFromDb = new ArrayList<>();
         for (Long exerciseId : exerciseIds) {
-            Exercise exerciseFromDb = findByIdElseThrow(exerciseId);
+            Optional<Exercise> exerciseFromDbOptional = this.findById(exerciseId);
+            if (exerciseFromDbOptional.isEmpty()) {
+                throw new IllegalArgumentException("Exercise not found in database");
+            }
+            Exercise exerciseFromDb = exerciseFromDbOptional.get();
 
             if (!exerciseFromDb.isCourseExercise()) {
                 throw new IllegalArgumentException("Exercise is not a course exercise");
@@ -216,12 +291,10 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
 
         List<CourseExerciseStatisticsDTO> courseExerciseStatisticsDTOs = new ArrayList<>();
 
-        Map<Long, Object[]> exerciseIdToRawStatisticQueryData = getRawStatisticQueryData(exercisesFromDb);
-
+        Map<Long, Object[]> exerciseIdToRawStatisticQueryData = this.getRawStatisticQueryData(exercisesFromDb, useParticipantScoreTable);
         exercisesFromDb.forEach((exercise) -> {
             CourseExerciseStatisticsDTO courseExerciseStatisticsDTO = convertRawStatisticQueryDataToDTO(exerciseIdToRawStatisticQueryData, exercise);
             courseExerciseStatisticsDTOs.add(courseExerciseStatisticsDTO);
-
         });
 
         return courseExerciseStatisticsDTOs;
@@ -266,17 +339,31 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
     /**
      * calculates the average score and the participation rate of students for each given course exercise (team or individual)
      * by using the last result (rated or not)
-     * @param exercisesFromDb exercises to calculate the statistics for
+     *
+     * @param exercisesFromDb          exercises to calculate the statistics for
+     * @param useParticipantScoreTable use the participant score table instead of going through participation -> submission -> result*
      * @return Map which maps from exercise id to statistic query row data
      */
-    private Map<Long, Object[]> getRawStatisticQueryData(List<Exercise> exercisesFromDb) {
-        var individualExercises = exercisesFromDb.stream().filter(exercise -> exercise.getMode().equals(ExerciseMode.INDIVIDUAL)).collect(Collectors.toList());
-        var teamExercises = exercisesFromDb.stream().filter(exercise -> exercise.getMode().equals(ExerciseMode.TEAM)).collect(Collectors.toList());
-        var statisticIndividualExercises = calculateStatisticsForIndividualCourseExercises(individualExercises.stream().map(Exercise::getId).collect(Collectors.toList()));
-        var statisticTeamExercises = calculateStatisticsForTeamCourseExercises(teamExercises.stream().map(Exercise::getId).collect(Collectors.toList()));
+    private Map<Long, Object[]> getRawStatisticQueryData(List<Exercise> exercisesFromDb, boolean useParticipantScoreTable) {
+        List<Exercise> individualExercises = exercisesFromDb.stream().filter(exercise -> exercise.getMode().equals(ExerciseMode.INDIVIDUAL)).collect(Collectors.toList());
+        List<Exercise> teamExercises = exercisesFromDb.stream().filter(exercise -> exercise.getMode().equals(ExerciseMode.TEAM)).collect(Collectors.toList());
+
+        List<Object[]> statisticForIndividualExercises;
+        List<Object[]> statisticTeamExercises;
+
+        if (useParticipantScoreTable) {
+            statisticForIndividualExercises = this
+                    .calculateExerciseStatisticsForIndividualCourseUsingParticipationTable(individualExercises.stream().map(Exercise::getId).collect(Collectors.toList()));
+            statisticTeamExercises = this
+                    .calculateExerciseStatisticsForTeamCourseExercisesUsingParticipationTable(teamExercises.stream().map(Exercise::getId).collect(Collectors.toList()));
+        }
+        else {
+            statisticForIndividualExercises = this.calculateStatisticsForIndividualCourseExercises(individualExercises.stream().map(Exercise::getId).collect(Collectors.toList()));
+            statisticTeamExercises = this.calculateStatisticsForTeamCourseExercises(teamExercises.stream().map(Exercise::getId).collect(Collectors.toList()));
+        }
 
         List<Object[]> combinedStatistics = new ArrayList<>();
-        combinedStatistics.addAll(statisticIndividualExercises);
+        combinedStatistics.addAll(statisticForIndividualExercises);
         combinedStatistics.addAll(statisticTeamExercises);
 
         Map<Long, Object[]> exerciseIdToStatistic = new HashMap<>();
