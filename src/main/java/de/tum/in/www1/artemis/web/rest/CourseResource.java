@@ -786,6 +786,7 @@ public class CourseResource {
 
         StatsForInstructorDashboardDTO stats = new StatsForInstructorDashboardDTO();
         long start2 = System.currentTimeMillis();
+        // this one is very slow
         DueDateStat totalNumberOfAssessments = resultRepository.countNumberOfAssessments(courseId);
         stats.setTotalNumberOfAssessments(totalNumberOfAssessments);
         long end2 = System.currentTimeMillis();
