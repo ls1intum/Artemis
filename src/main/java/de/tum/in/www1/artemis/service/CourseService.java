@@ -275,13 +275,13 @@ public class CourseService {
     }
 
     /**
-     * Fetches Course Management data from repository and returns a list of Course DTOs
+     * Fetches Course Management data from repository and returns a list of Courses
      *
-     * @param isOnlyActive Whether or not to include courses with a past endDate
-     * @return A list of Course DTOs for the course management overview
+     * @param onlyActive Whether or not to include courses with a past endDate
+     * @return A list of Courses for the course management overview
      */
-    public List<Course> getAllCoursesForOverview(Boolean isOnlyActive) {
-        var dateTimeNow = isOnlyActive ? ZonedDateTime.now() : null;
+    public List<Course> getAllCoursesForOverview(Boolean onlyActive) {
+        var dateTimeNow = onlyActive ? ZonedDateTime.now() : null;
         var user = userRepository.getUserWithGroupsAndAuthorities();
         var userGroups = new ArrayList<>(user.getGroups());
         return courseRepository.getAllCoursesForOverview(dateTimeNow, authCheckService.isAdmin(user), userGroups);
@@ -301,7 +301,7 @@ public class CourseService {
         ZonedDateTime startDate = localStartDate.atZone(zone).minusWeeks(3).withHour(0).withMinute(0).withSecond(0).withNano(0);
         ZonedDateTime endDate = localEndDate.atZone(zone).withHour(23).withMinute(59).withSecond(59);
         List<Map<String, Object>> outcome = courseRepository.getActiveStudents(courseId, startDate, endDate);
-        List<Map<String, Object>> distinctOutcome = removeDuplicatesFromMapList(outcome, startDate);
+        List<Map<String, Object>> distinctOutcome = removeDuplicateActiveUserRows(outcome, startDate);
         return createResultArray(distinctOutcome, endDate);
     }
 
@@ -309,13 +309,13 @@ public class CourseService {
      * the List of maps result contains duplicated entries. This method compares the values and returns a List<Map<String, Object>>
      * without duplicated entries
      *
-     * @param result the result given by the Repository call
+     * @param activeUserRows the result given by the Repository call
      * @param startDate the startDate of the period
      * @return A List<Map<String, Object>> containing date and amount of active users in this period
      */
-    private List<Map<String, Object>> removeDuplicatesFromMapList(List<Map<String, Object>> result, ZonedDateTime startDate) {
+    private List<Map<String, Object>> removeDuplicateActiveUserRows(List<Map<String, Object>> activeUserRows, ZonedDateTime startDate) {
         Map<Object, List<String>> users = new HashMap<>();
-        for (Map<String, Object> listElement : result) {
+        for (Map<String, Object> listElement : activeUserRows) {
             ZonedDateTime date = (ZonedDateTime) listElement.get("day");
             int index = getWeekOfDate(date);
             String username = listElement.get("username").toString();
@@ -346,7 +346,8 @@ public class CourseService {
     /**
      * Gets a list of maps, each map describing an entry in the database. The map has the two keys "day" and "amount",
      * which map to the date and the amount of the findings. This Map-List is taken and converted into a Integer array,
-     * containing the values for each bar of the graph
+     * containing the values for each point of the graph. In the course management overview, we want to display the last
+     * 4 weeks, each week represented by one point in the graph (Beginning with the current week)
      *
      * @param outcome A List<Map<String, Object>>, containing the content which should be refactored into an array
      * @param endDate the endDate

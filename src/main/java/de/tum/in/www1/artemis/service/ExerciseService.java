@@ -626,7 +626,7 @@ public class ExerciseService {
             dto.setNoOfParticipatingStudentsOrTeams(participations);
 
             if (listElement.get("mode") == ExerciseMode.TEAM) {
-                Integer teams = teamRepository.getAmountByExerciseId(exerciseId);
+                Integer teams = teamRepository.getNumberOfTeamsForExercise(exerciseId);
                 dto.setNoOfTeamsInCourse(teams);
 
                 dto.setParticipationRateInPercent(teams == null || teams == 0 ? 0.0 : Math.round(participations * 1000.0 / teams) / 10.0);
