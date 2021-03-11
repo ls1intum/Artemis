@@ -1,27 +1,22 @@
 package de.tum.in.www1.artemis.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.in;
 
 import java.time.ZonedDateTime;
 import java.util.HashSet;
 
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
-import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
-import de.tum.in.www1.artemis.repository.*;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.TextSubmission;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.util.ModelFactory;
-import org.springframework.http.HttpStatus;
-import org.springframework.security.test.context.support.WithMockUser;
 
 public class CourseServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -68,12 +63,19 @@ public class CourseServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
         participation2.setParticipant(student2);
         participation2.exercise(exercise);
         studentParticipationRepo.save(participation2);
+        var participation3 = new StudentParticipation();
+        participation3.setParticipant(student2);
+        participation3.exercise(exercise);
+        studentParticipationRepo.save(participation3);
+        var participation4 = new StudentParticipation();
+        participation4.setParticipant(student2);
+        participation4.exercise(exercise);
+        studentParticipationRepo.save(participation4);
 
         var submission1 = new TextSubmission();
         submission1.text("text of text submission1");
         submission1.setLanguage(Language.ENGLISH);
         submission1.setSubmitted(true);
-        submission1.setSubmissionDate(ZonedDateTime.now());
         submission1.setParticipation(participation1);
         submission1.setSubmissionDate(now);
 
@@ -81,15 +83,31 @@ public class CourseServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
         submission2.text("text of text submission2");
         submission2.setLanguage(Language.ENGLISH);
         submission2.setSubmitted(true);
-        submission2.setSubmissionDate(ZonedDateTime.now());
         submission2.setParticipation(participation2);
         submission2.setSubmissionDate(now);
+
+        var submission3 = new TextSubmission();
+        submission3.text("text of text submission3");
+        submission3.setLanguage(Language.ENGLISH);
+        submission3.setSubmitted(true);
+        submission3.setSubmissionDate(now.minusDays(14));
+        submission3.setParticipation(participation3);
+
+        var submission4 = new TextSubmission();
+        submission4.text("text of text submission4");
+        submission4.setLanguage(Language.ENGLISH);
+        submission4.setSubmitted(true);
+        submission4.setSubmissionDate(now.minusDays(7));
+        submission4.setParticipation(participation4);
+
         submissionRepository.save(submission1);
         submissionRepository.save(submission2);
+        submissionRepository.save(submission3);
+        submissionRepository.save(submission4);
 
         var activeStudents = courseService.getActiveStudents(course.getId());
         assertThat(activeStudents.length).isEqualTo(4);
-        assertThat(activeStudents).isEqualTo(new Integer[] { 0, 0, 0, 2 });
+        assertThat(activeStudents).isEqualTo(new Integer[] { 0, 1, 1, 2 });
     }
 
     @Test
