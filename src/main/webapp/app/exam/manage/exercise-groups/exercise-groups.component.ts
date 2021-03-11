@@ -22,12 +22,18 @@ import { Exam } from 'app/entities/exam.model';
 import { Moment } from 'moment';
 import { ProgrammingExerciseSimulationUtils } from 'app/exercises/programming/shared/utils/programming-exercise-simulation-utils';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
+import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+import { ParticipationType } from 'app/entities/participation/participation.model';
+import { ProgrammingExerciseParticipationType } from 'app/entities/programming-exercise-participation.model';
+import { IconProp } from '@fortawesome/fontawesome-svg-core';
 
 @Component({
     selector: 'jhi-exercise-groups',
     templateUrl: './exercise-groups.component.html',
 })
 export class ExerciseGroupsComponent implements OnInit {
+    participationType = ProgrammingExerciseParticipationType;
     courseId: number;
     course: Course;
     examId: number;
@@ -135,7 +141,7 @@ export class ExerciseGroupsComponent implements OnInit {
      * Get an icon for the type of the given exercise.
      * @param exercise {Exercise}
      */
-    exerciseIcon(exercise: Exercise): string {
+    exerciseIcon(exercise: Exercise): IconProp {
         switch (exercise.type) {
             case ExerciseType.QUIZ:
                 return 'check-double';
@@ -249,6 +255,43 @@ export class ExerciseGroupsComponent implements OnInit {
                 }
             }
         }
+    }
+
+    getFilePatternOfExercise(exercise: Exercise) {
+        if (exercise.type === this.exerciseType.FILE_UPLOAD) {
+            return (exercise as FileUploadExercise).filePattern ?? '';
+        } else {
+            return '';
+        }
+    }
+
+    getDiagramTypeOfExercise(exercise: Exercise) {
+        if (exercise.type === this.exerciseType.MODELING) {
+            return (exercise as ModelingExercise).diagramType ?? '';
+        } else {
+            return '';
+        }
+    }
+
+    getQuizQuestionAmountOfExercise(exercise: Exercise) {
+        if (exercise.type === this.exerciseType.QUIZ) {
+            return (exercise as QuizExercise).quizQuestions?.length ?? 0;
+        }
+        return 0;
+    }
+
+    toProgrammingExercise(exercise: Exercise) {
+        if (exercise.type === this.exerciseType.PROGRAMMING) {
+            return exercise as ProgrammingExercise;
+        }
+        return undefined;
+    }
+
+    getSolutionParticipation(exercise: Exercise) {
+        if (exercise.type === this.exerciseType.PROGRAMMING) {
+            return (exercise as ProgrammingExercise).solutionParticipation;
+        }
+        return undefined;
     }
 
     // ################## ONLY FOR LOCAL TESTING PURPOSE -- START ##################
