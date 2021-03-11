@@ -261,13 +261,11 @@ export class CourseManagementService {
 
     /**
      * returns the exercise details of the courses for the courses management dashboard
-     * @param courseIds - the ids of the courses
+     * @param onlyActive - if true, only active courses will be considered in the result
      */
-    getExercisesForManagementOverview(courseIds: number[]): Observable<HttpResponse<CourseManagementOverviewDto[]>> {
+    getExercisesForManagementOverview(onlyActive: boolean): Observable<HttpResponse<CourseManagementOverviewDto[]>> {
         let httpParams = new HttpParams();
-        courseIds.forEach((id) => {
-            httpParams = httpParams.append('courseIds[]', id.toString());
-        });
+        httpParams = httpParams.append('onlyActive', onlyActive.toString());
         return this.http
             .get<CourseManagementOverviewDto[]>(`${this.resourceUrl}/exercises-for-management-overview`, { params: httpParams, observe: 'response' })
             .pipe(
@@ -291,13 +289,11 @@ export class CourseManagementService {
 
     /**
      * returns the stats of the courses for the courses management dashboard
-     * @param courseIds - the ids of the courses
+     * @param onlyActive - if true, only active courses will be considered in the result
      */
-    getStatsForManagementOverview(courseIds: number[]): Observable<HttpResponse<CourseManagementOverviewStatisticsDto[]>> {
+    getStatsForManagementOverview(onlyActive: boolean): Observable<HttpResponse<CourseManagementOverviewStatisticsDto[]>> {
         let httpParams = new HttpParams();
-        courseIds.forEach((id) => {
-            httpParams = httpParams.append('courseIds[]', id.toString());
-        });
+        httpParams = httpParams.append('onlyActive', onlyActive.toString());
         return this.http.get<CourseManagementOverviewStatisticsDto[]>(`${this.resourceUrl}/stats-for-management-overview`, { params: httpParams, observe: 'response' });
     }
 

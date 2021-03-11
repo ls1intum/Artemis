@@ -881,25 +881,21 @@ public class CourseResource {
     }
 
     /**
-     * GET /courses/exercises-for-management-overview :
+     * GET /courses/exercises-for-management-overview
      *
-     * @param courseIds course Ids to get the exercise details for
+     * gets the exercise details for the courses of the user
+     *
+     * @param onlyActive if true, only active courses will be considered in the result
      * @return ResponseEntity with status
      */
     @GetMapping("/courses/exercises-for-management-overview")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<List<CourseManagementOverviewDTO>> getExercisesForCourseOverview(@RequestParam("courseIds[]") Long[] courseIds) {
-        final User user = userRepository.getUserWithGroupsAndAuthorities();
+    public ResponseEntity<List<CourseManagementOverviewDTO>> getExercisesForCourseOverview(@RequestParam(defaultValue = "false") boolean onlyActive) {
         final List<CourseManagementOverviewDTO> courseDTOS = new ArrayList<>();
-        for (final var courseId : courseIds) {
-            final Course course = courseRepository.findByIdElseThrow(courseId);
-            if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
-                continue;
-            }
-
+        for (final var course : courseService.getAllCoursesForOverview(onlyActive)) {
             final var courseDTO = new CourseManagementOverviewDTO();
-            courseDTO.setCourseId(courseId);
-            courseDTO.setExerciseDetails(exerciseService.getExercisesForCourseManagementOverview(courseId));
+            courseDTO.setCourseId(course.getId());
+            courseDTO.setExerciseDetails(exerciseService.getExercisesForCourseManagementOverview(course.getId()));
             courseDTOS.add(courseDTO);
         }
 
@@ -907,24 +903,22 @@ public class CourseResource {
     }
 
     /**
-     * GET /courses/stats-for-management-overview :
+     * GET /courses/stats-for-management-overview
      *
-     * @param courseIds course Ids to get the stats for
+     * gets the statistics for the courses of the user
+     *
+     * @param onlyActive if true, only active courses will be considered in the result
      * @return ResponseEntity with status
      */
     @GetMapping("/courses/stats-for-management-overview")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<List<CourseManagementOverviewStatisticsDTO>> getExerciseStatsForCourseOverview(@RequestParam("courseIds[]") Long[] courseIds) {
-        final User user = userRepository.getUserWithGroupsAndAuthorities();
+    public ResponseEntity<List<CourseManagementOverviewStatisticsDTO>> getExerciseStatsForCourseOverview(@RequestParam(defaultValue = "false") boolean onlyActive) {
         final List<CourseManagementOverviewStatisticsDTO> courseDTOS = new ArrayList<>();
-        for (final var courseId : courseIds) {
-            final Course course = courseRepository.findByIdElseThrow(courseId);
-            if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
-                continue;
-            }
-
+        for (final var course : courseService.getAllCoursesForOverview(onlyActive)) {
+            final var courseId = course.getId();
             final var courseDTO = new CourseManagementOverviewStatisticsDTO();
             courseDTO.setCourseId(courseId);
+
             var studentsGroup = courseRepository.findStudentGroupName(courseId);
             var amountOfStudentsInCourse = Math.toIntExact(userRepository.countUserInGroup(studentsGroup));
             courseDTO.setExerciseDTOS(exerciseService.getStatisticsForCourseManagementOverview(courseId, amountOfStudentsInCourse));
