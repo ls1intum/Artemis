@@ -38,7 +38,6 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     model?: UMLModel;
     modelingExercise?: ModelingExercise;
     result?: Result;
-    generalFeedback = new Feedback();
     referencedFeedback: Feedback[] = [];
     unreferencedFeedback: Feedback[] = [];
     highlightedElements: Map<string, string>; // map elementId -> highlight color
@@ -80,11 +79,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     }
 
     private get feedback(): Feedback[] {
-        if (Feedback.hasDetailText(this.generalFeedback)) {
-            return [this.generalFeedback, ...this.referencedFeedback, ...this.unreferencedFeedback];
-        } else {
-            return [...this.referencedFeedback, ...this.unreferencedFeedback];
-        }
+        return [...this.referencedFeedback, ...this.unreferencedFeedback];
     }
 
     ngOnInit() {
@@ -203,20 +198,14 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     }
 
     /**
-     * Checks the given feedback list for general feedback (i.e. feedback without a reference). If there is one, it is assigned to the generalFeedback variable and removed from
-     * the original feedback list. The remaining list is then assigned to the referencedFeedback variable containing only feedback elements with a reference and valid score.
-     * Additionally, it checks if the feedback list contains any automatic feedback elements and sets the hasAutomaticFeedback flag accordingly. Afterwards, it triggers the
-     * highlighting of feedback elements, if necessary.
+     * Checks the given feedback list for unreferenced feedback. The remaining list is then assigned to the
+     * referencedFeedback variable containing only feedback elements with a reference and valid score.
+     * Additionally, it checks if the feedback list contains any automatic feedback elements and sets the hasAutomaticFeedback flag accordingly.
+     * Afterwards, it triggers the highlighting of feedback elements, if necessary.
      */
     private handleFeedback(feedback?: Feedback[]): void {
         if (!feedback || feedback.length === 0) {
             return;
-        }
-
-        const generalFeedbackIndex = feedback.findIndex((feedbackElement) => !feedbackElement.reference && feedbackElement.type !== FeedbackType.MANUAL_UNREFERENCED);
-        if (generalFeedbackIndex >= 0) {
-            this.generalFeedback = feedback[generalFeedbackIndex] || new Feedback();
-            feedback.splice(generalFeedbackIndex, 1);
         }
 
         this.referencedFeedback = feedback.filter((feedbackElement) => feedbackElement.reference);
@@ -418,26 +407,15 @@ export class ModelingAssessmentEditorComponent implements OnInit {
 
     /**
      * Validates the feedback:
-     *   - There must be any form of feedback, either general feedback or feedback referencing a model element or both
+     *   - There must be any form of feedback, either unreferencing feedback or feedback referencing a model element or both
      *   - Each reference feedback must have a score that is a valid number
      */
     validateFeedback() {
         this.calculateTotalScore();
-        if (
-            (!this.referencedFeedback || this.referencedFeedback.length === 0) &&
-            (!this.unreferencedFeedback || this.unreferencedFeedback.length === 0) &&
-            (!this.generalFeedback || !this.generalFeedback.detailText || this.generalFeedback.detailText.length === 0)
-        ) {
-            this.assessmentsAreValid = false;
-            return;
-        }
-        for (const feedback of this.referencedFeedback) {
-            if (feedback.credits == undefined || isNaN(feedback.credits)) {
-                this.assessmentsAreValid = false;
-                return;
-            }
-        }
-        this.assessmentsAreValid = true;
+        const hasReferencedFeedback = Feedback.haveCredits(this.referencedFeedback);
+        const hasUnreferencedFeedback = Feedback.haveCreditsAndComments(this.unreferencedFeedback);
+        // When unreferenced feedback is set, it has to be valid (score + detailed text)
+        this.assessmentsAreValid = (hasReferencedFeedback && this.unreferencedFeedback.length === 0) || hasUnreferencedFeedback;
     }
 
     navigateBack() {

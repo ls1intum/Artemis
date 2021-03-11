@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.exam;
 
+import static de.tum.in.www1.artemis.service.util.RoundingUtil.round;
+
 import java.security.SecureRandom;
 import java.time.Duration;
 import java.util.*;
@@ -32,11 +34,11 @@ import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.ExerciseService;
+import de.tum.in.www1.artemis.service.SubmissionService;
+import de.tum.in.www1.artemis.service.TutorLeaderboardService;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
-import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
-import de.tum.in.www1.artemis.web.rest.dto.ExamChecklistDTO;
-import de.tum.in.www1.artemis.web.rest.dto.ExamScoresDTO;
+import de.tum.in.www1.artemis.web.rest.dto.*;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -76,11 +78,15 @@ public class ExamService {
 
     private final SubmissionRepository submissionRepository;
 
+    private final TutorLeaderboardService tutorLeaderboardService;
+
+    private final SubmissionService submissionService;
+
     public ExamService(ExamRepository examRepository, StudentExamRepository studentExamRepository, ExamQuizService examQuizService, ExerciseService exerciseService,
-            InstanceMessageSendService instanceMessageSendService, AuditEventRepository auditEventRepository, StudentParticipationRepository studentParticipationRepository,
-            ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository, UserRepository userRepository,
-            ProgrammingExerciseRepository programmingExerciseRepository, QuizExerciseRepository quizExerciseRepository, ResultRepository resultRepository,
-            SubmissionRepository submissionRepository) {
+            InstanceMessageSendService instanceMessageSendService, TutorLeaderboardService tutorLeaderboardService, AuditEventRepository auditEventRepository,
+            StudentParticipationRepository studentParticipationRepository, ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository,
+            UserRepository userRepository, ProgrammingExerciseRepository programmingExerciseRepository, QuizExerciseRepository quizExerciseRepository,
+            ResultRepository resultRepository, SubmissionRepository submissionRepository, SubmissionService submissionService) {
         this.examRepository = examRepository;
         this.studentExamRepository = studentExamRepository;
         this.userRepository = userRepository;
@@ -95,6 +101,8 @@ public class ExamService {
         this.quizExerciseRepository = quizExerciseRepository;
         this.resultRepository = resultRepository;
         this.submissionRepository = submissionRepository;
+        this.tutorLeaderboardService = tutorLeaderboardService;
+        this.submissionService = submissionService;
     }
 
     /**
@@ -228,11 +236,17 @@ public class ExamService {
                 // Relevant Result is already calculated
                 if (studentParticipation.getResults() != null && !studentParticipation.getResults().isEmpty()) {
                     Result relevantResult = studentParticipation.getResults().iterator().next();
-                    double achievedPoints = relevantResult.getScore() / 100.0 * exercise.getMaxPoints();
+                    // Note: It is important that we round on the individual exercise level first and then sum up.
+                    // This is necessary so that the student arrives at the same overall result when doing his own recalculation.
+                    // Let's assume that the student achieved 1.05 points in each of 5 exercises.
+                    // In the client, these are now displayed rounded as 1.1 points.
+                    // If the student adds up the displayed points, he gets a total of 5.5 points.
+                    // In order to get the same total result as the student, we have to round before summing.
+                    double achievedPoints = round(relevantResult.getScore() / 100.0 * exercise.getMaxPoints());
 
                     // points earned in NOT_INCLUDED exercises do not count towards the students result in the exam
                     if (!exercise.getIncludedInOverallScore().equals(IncludedInOverallScore.NOT_INCLUDED)) {
-                        studentResult.overallPointsAchieved += Math.round(achievedPoints * 10) / 10.0;
+                        studentResult.overallPointsAchieved += achievedPoints;
                     }
 
                     // Check whether the student attempted to solve the exercise
@@ -356,11 +370,6 @@ public class ExamService {
         List<ExerciseGroup> exerciseGroups = exam.getExerciseGroups();
         long numberOfExercises = exam.getNumberOfExercisesInExam() != null ? exam.getNumberOfExercisesInExam() : 0;
         long numberOfOptionalExercises = numberOfExercises - exerciseGroups.stream().filter(ExerciseGroup::getIsMandatory).count();
-
-        // Check that the start and end date of the exam is set
-        if (exam.getStartDate() == null || exam.getEndDate() == null) {
-            throw new BadRequestAlertException("The start and end date must be set for the exam", "Exam", "artemisApp.exam.validation.startAndEndMustBeSet");
-        }
 
         // Ensure that all exercise groups have at least one exercise
         for (ExerciseGroup exerciseGroup : exam.getExerciseGroups()) {
@@ -536,7 +545,7 @@ public class ExamService {
             log.debug("StatsTimeLog: number of complaints finished done in " + TimeLogUtil.formatDurationFrom(start) + " for exercise " + exercise.getId());
             // number of assessments done
             numberOfAssessmentsFinishedOfCorrectionRoundsByExercise
-                    .add(resultRepository.countNumberOfFinishedAssessmentsForExamExerciseForCorrectionRound(exercise, numberOfCorrectionRoundsInExam));
+                    .add(resultRepository.countNumberOfFinishedAssessmentsForExamExerciseForCorrectionRounds(exercise, numberOfCorrectionRoundsInExam));
 
             log.debug("StatsTimeLog: number of assessments done in " + TimeLogUtil.formatDurationFrom(start) + " for exercise " + exercise.getId());
             // get number of all generated participations
@@ -751,5 +760,55 @@ public class ExamService {
         }
 
         return exam.get().getExerciseGroups().stream().map(ExerciseGroup::getExercises).flatMap(Collection::stream).collect(Collectors.toSet());
+    }
+
+    /**
+     * Gets a collection of useful statistics for the tutor exam-assessment-dashboard, including: - number of submissions to the course - number of
+     * assessments - number of assessments assessed by the tutor - number of complaints
+     * @param course    - the couse of the exam
+     * @param examId    - the id of the exam to retrieve stats from
+     * @return data about a exam including all exercises, plus some data for the tutor as tutor status for assessment
+     */
+    public StatsForInstructorDashboardDTO getStatsForExamAssessmentDashboard(Course course, Long examId) {
+        Exam exam = examRepository.findById(examId).orElseThrow();
+        StatsForInstructorDashboardDTO stats = new StatsForInstructorDashboardDTO();
+
+        final long numberOfSubmissions = submissionRepository.countByExamIdSubmittedSubmissionsIgnoreTestRuns(examId)
+                + programmingExerciseRepository.countSubmissionsByExamIdSubmitted(examId);
+        stats.setNumberOfSubmissions(new DueDateStat(numberOfSubmissions, 0));
+
+        DueDateStat[] numberOfAssessmentsOfCorrectionRounds = resultRepository.countNumberOfFinishedAssessmentsForExamForCorrectionRounds(examId,
+                exam.getNumberOfCorrectionRoundsInExam());
+        stats.setNumberOfAssessmentsOfCorrectionRounds(numberOfAssessmentsOfCorrectionRounds);
+
+        final long numberOfComplaints = complaintRepository.countByResult_Participation_Exercise_ExerciseGroup_Exam_IdAndComplaintType(examId, ComplaintType.COMPLAINT);
+        stats.setNumberOfComplaints(numberOfComplaints);
+
+        final long numberOfAssessmentLocks = submissionRepository.countLockedSubmissionsByUserIdAndExamId(userRepository.getUserWithGroupsAndAuthorities().getId(), examId);
+        stats.setNumberOfAssessmentLocks(numberOfAssessmentLocks);
+
+        final long totalNumberOfAssessmentLocks = submissionRepository.countLockedSubmissionsByExamId(examId);
+        stats.setTotalNumberOfAssessmentLocks(totalNumberOfAssessmentLocks);
+
+        List<TutorLeaderboardDTO> leaderboardEntries = tutorLeaderboardService.getExamLeaderboard(course, exam);
+        stats.setTutorLeaderboardEntries(leaderboardEntries);
+        return stats;
+    }
+
+    /**
+     * Get all currently locked submissions for all users in the given exam.
+     * These are all submissions for which users started, but did not yet finish the assessment.
+     *
+     * @param examId  - the exam id
+     * @param user    - the user trying to access the locked submissions
+     * @return        - list of submissions that have locked results in the exam
+     */
+    public List<Submission> getLockedSubmissions(Long examId, User user) {
+        List<Submission> submissions = submissionRepository.getLockedSubmissionsAndResultsByExamId(examId);
+
+        for (Submission submission : submissions) {
+            submissionService.hideDetails(submission, user);
+        }
+        return submissions;
     }
 }

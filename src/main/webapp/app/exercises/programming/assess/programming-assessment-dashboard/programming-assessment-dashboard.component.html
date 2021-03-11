@@ -9,6 +9,10 @@
                     <th>
                         <a class="th-link">#</a>
                     </th>
+                    <th jhiSortBy="participation.participantName" *ngIf="exercise.isAtLeastInstructor">
+                        <a class="th-link" jhiTranslate="artemisApp.exercise.studentName">Student</a>
+                        <fa-icon [icon]="'sort'"></fa-icon>
+                    </th>
                     <th jhiSortBy="submissionDate">
                         <a class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.submissionDate">Submission date</a>
                         <fa-icon [icon]="'sort'"></fa-icon>
@@ -30,7 +34,8 @@
                         <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
                     <th *ngIf="newManualResultAllowed" jhiSortBy="latestResult.assessor.name">
-                        <a class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.assessor">Reviewer</a>
+                        <a *ngIf="numberOfCorrectionrounds == 1" class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.assessor">Reviewer</a>
+                        <a *ngIf="numberOfCorrectionrounds == 2" class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.assessors">Reviewers</a>
                         <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
                     <ng-container *ngIf="newManualResultAllowed">
@@ -50,13 +55,21 @@
             <tbody>
                 <tr *ngFor="let submission of filteredSubmissions; let i = index">
                     <td>{{ i + 1 }}</td>
+                    <td *ngIf="exercise.isAtLeastInstructor">
+                        {{ submission.participation.participantName }}
+                    </td>
                     <td>{{ submission.submissionDate | artemisDate }}</td>
                     <td>
                         <jhi-result [participation]="submission.participation"></jhi-result>
                     </td>
                     <td>
                         <ng-container *ngIf="submission.participation.submissions">
-                            {{ submission.participation.submissions.length }}
+                            <a
+                                *ngIf="exercise.isAtLeastInstructor"
+                                [routerLink]="['/course-management', courseId, 'exercises', exercise.id, 'participations', submission.participation.id, 'submissions']"
+                            >
+                                {{ submission.participation.submissions.length }}
+                            </a>
                         </ng-container>
                     </td>
                     <td>
@@ -65,7 +78,8 @@
                     </td>
                     <td>{{ assessmentTypeTranslationKey(submission.latestResult) | translate }}</td>
                     <td *ngIf="newManualResultAllowed">
-                        <span *ngIf="submission.latestResult && submission.latestResult!.assessor">{{ submission.latestResult!.assessor!.name }}</span>
+                        <div *ngIf="submission.results?.length > 1 && submission.results[0].assessor">{{ submission.results[0].assessor!.name }}</div>
+                        <div *ngIf="submission.latestResult && submission.latestResult!.assessor">{{ submission.latestResult!.assessor!.name }}</div>
                     </td>
                     <ng-container *ngIf="newManualResultAllowed">
                         <td *ngFor="let item of [].constructor(numberOfCorrectionrounds); let correctionRound = index">

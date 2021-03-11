@@ -105,7 +105,12 @@ public class GitLabService extends AbstractVersionControlService {
             gitlab.getProjectApi().addMember(repositoryId, userId, DEVELOPER);
         }
         catch (GitLabApiException e) {
-            if (e.getValidationErrors().containsKey("access_level")
+            // A resource conflict status code is returned if the member
+            // already exists in the repository
+            if (e.getHttpStatus() == 409) {
+                updateMemberPermissionInRepository(repositoryUrl, user.getLogin(), DEVELOPER);
+            }
+            else if (e.getValidationErrors().containsKey("access_level")
                     && e.getValidationErrors().get("access_level").stream().anyMatch(s -> s.contains("should be greater than or equal to"))) {
                 log.warn("Member already has the requested permissions! Permission stays the same");
             }
@@ -329,7 +334,7 @@ public class GitLabService extends AbstractVersionControlService {
         for (final var tutor : tutors) {
             try {
                 final var userId = gitLabUserManagementService.getUserId(tutor.getLogin());
-                gitLabUserManagementService.addUserToGroups(userId, List.of(programmingExercise), GUEST);
+                gitLabUserManagementService.addUserToGroups(userId, List.of(programmingExercise), REPORTER);
             }
             catch (GitLabException ignored) {
                 // ignore the exception and continue with the next user, one non existing user or issue here should not prevent the creation of the whole programming exercise
@@ -366,10 +371,16 @@ public class GitLabService extends AbstractVersionControlService {
 
     @Override
     public void setRepositoryPermissionsToReadOnly(VcsRepositoryUrl repositoryUrl, String projectKey, Set<User> users) {
-        users.forEach(user -> setRepositoryPermission(repositoryUrl, user.getLogin(), GUEST));
+        users.forEach(user -> updateMemberPermissionInRepository(repositoryUrl, user.getLogin(), REPORTER));
     }
 
-    private void setRepositoryPermission(VcsRepositoryUrl repositoryUrl, String username, AccessLevel accessLevel) {
+    /**
+     * Updates the acess level of the user if it's a member of the repository.
+     * @param repositoryUrl The url of the repository
+     * @param username the username of the gitlab user
+     * @param accessLevel the new access level for the user
+     */
+    private void updateMemberPermissionInRepository(VcsRepositoryUrl repositoryUrl, String username, AccessLevel accessLevel) {
         final var userId = gitLabUserManagementService.getUserId(username);
         final var repositoryId = getPathIDFromRepositoryURL(repositoryUrl);
         try {

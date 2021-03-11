@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.domain;
 
+import static de.tum.in.www1.artemis.service.util.RoundingUtil.round;
+
 import java.text.DecimalFormat;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -27,12 +29,14 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.domain.view.QuizView;
+import de.tum.in.www1.artemis.service.listeners.ResultListener;
 
 /**
  * A Result.
  */
 @Entity
 @Table(name = "result")
+@EntityListeners(ResultListener.class)
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class Result extends DomainObject {
@@ -50,11 +54,11 @@ public class Result extends DomainObject {
     private Boolean successful;
 
     /**
-     * Relative score in %
+     * Relative score in % (typically between 0 ... 100, can also be larger if bonus points are available)
      */
     @Column(name = "score")
     @JsonView(QuizView.After.class)
-    private Long score;
+    private Double score;
 
     /**
      * Describes whether a result counts against the total score of a student. It determines whether the result is shown in the course dashboard or not. For quiz exercises: -
@@ -73,7 +77,7 @@ public class Result extends DomainObject {
     // without querying the server/database again.
     // IMPORTANT: Please note, that this flag should only be used for Programming Exercises at the moment
     // all other exercise types should set this flag to false
-    @Column(name = "hasFeedback")
+    @Column(name = "has_feedback")
     private Boolean hasFeedback;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -93,7 +97,7 @@ public class Result extends DomainObject {
     private Participation participation;
 
     @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(unique = false)
+    @JoinColumn()
     private User assessor;
 
     @Enumerated(EnumType.STRING)
@@ -138,8 +142,9 @@ public class Result extends DomainObject {
      * @return String with result string in this format "2 of 13 points"
      */
     public String createResultString(Double totalPoints, Double maxPoints) {
-        DecimalFormat formatter = new DecimalFormat("#.##");
-        return formatter.format(totalPoints) + " of " + formatter.format(maxPoints) + " points";
+        Double pointsRounded = round(totalPoints);
+        DecimalFormat formatter = new DecimalFormat("#.#");
+        return formatter.format(pointsRounded) + " of " + formatter.format(maxPoints) + " points";
     }
 
     public ZonedDateTime getCompletionDate() {
@@ -168,11 +173,11 @@ public class Result extends DomainObject {
         this.successful = successful;
     }
 
-    public Long getScore() {
+    public Double getScore() {
         return score;
     }
 
-    public Result score(Long score) {
+    public Result score(Double score) {
         this.score = score;
         return this;
     }
@@ -217,10 +222,10 @@ public class Result extends DomainObject {
      *
      * @param score new score
      */
-    public void setScore(Long score) {
+    public void setScore(Double score) {
         if (score != null) {
             this.score = score;
-            this.successful = score >= 100L;
+            this.successful = score >= 100.0;
         }
     }
 
@@ -231,8 +236,7 @@ public class Result extends DomainObject {
      * @param maxPoints   maximum points reachable at corresponding exercise
      */
     public void setScore(Double totalPoints, Double maxPoints) {
-        Long score = Math.round(totalPoints / maxPoints * 100);
-        setScore(score);
+        setScore(totalPoints / maxPoints * 100);
     }
 
     public Boolean isRated() {
@@ -297,15 +301,13 @@ public class Result extends DomainObject {
         return this;
     }
 
-    public Result addFeedbacks(List<Feedback> feedbacks) {
+    public void addFeedbacks(List<Feedback> feedbacks) {
         feedbacks.forEach(this::addFeedback);
-        return this;
     }
 
-    public Result removeFeedback(Feedback feedback) {
+    public void removeFeedback(Feedback feedback) {
         this.feedbacks.remove(feedback);
         feedback.setResult(null);
-        return this;
     }
 
     public void setFeedbacks(List<Feedback> feedbacks) {
@@ -459,7 +461,7 @@ public class Result extends DomainObject {
             // update score
             setScore(quizExercise.getScoreForSubmission(quizSubmission));
             // update result string
-            setResultString(quizExercise.getScoreInPointsForSubmission(quizSubmission), quizExercise.getOverallQuizPoints().doubleValue());
+            setResultString(quizExercise.getScoreInPointsForSubmission(quizSubmission), quizExercise.getOverallQuizPoints());
         }
     }
 

@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.service;
 import static de.tum.in.www1.artemis.config.Constants.EXERCISE_TOPIC_ROOT;
 import static de.tum.in.www1.artemis.config.Constants.NEW_RESULT_TOPIC;
 
+import java.time.ZonedDateTime;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -11,6 +12,7 @@ import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 
@@ -50,8 +52,13 @@ public class WebsocketMessagingService {
 
         // TODO: Are there other cases that must be handled here?
         if (participation instanceof StudentParticipation) {
-            StudentParticipation studentParticipation = (StudentParticipation) participation;
-            studentParticipation.getStudents().forEach(user -> messagingTemplate.convertAndSendToUser(user.getLogin(), NEW_RESULT_TOPIC, result));
+            var exercise = participation.getExercise();
+            // If the assessment due date is not over yet, do not send manual feedback to students!
+            if (AssessmentType.AUTOMATIC.equals(result.getAssessmentType()) || exercise.getAssessmentDueDate() == null
+                    || ZonedDateTime.now().isAfter(exercise.getAssessmentDueDate())) {
+                StudentParticipation studentParticipation = (StudentParticipation) participation;
+                studentParticipation.getStudents().forEach(user -> messagingTemplate.convertAndSendToUser(user.getLogin(), NEW_RESULT_TOPIC, result));
+            }
         }
 
         // Send to tutors, instructors and admins

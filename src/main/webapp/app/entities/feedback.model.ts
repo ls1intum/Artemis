@@ -72,6 +72,14 @@ export class Feedback implements BaseEntity {
         return that.credits != undefined && Feedback.hasDetailText(that);
     }
 
+    public static haveCredits(that: Feedback[]): boolean {
+        return that.filter(Feedback.hasCredits).length > 0 && that.filter(Feedback.hasCredits).length === that.length;
+    }
+
+    public static hasCredits(that: Feedback): boolean {
+        return that.credits != undefined;
+    }
+
     public static haveCreditsAndComments(that: Feedback[]): boolean {
         return that.filter(Feedback.hasCreditsAndComment).length > 0 && that.filter(Feedback.hasCreditsAndComment).length === that.length;
     }

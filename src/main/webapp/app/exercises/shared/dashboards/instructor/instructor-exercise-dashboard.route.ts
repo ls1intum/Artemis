@@ -5,11 +5,10 @@ import { Authority } from 'app/shared/constants/authority.constants';
 
 export const instructorExerciseDashboardRoute: Routes = [
     {
-        path: ':courseId/exercises/:exerciseId/instructor-dashboard',
+        path: ':courseId/instructor-dashboard/:exerciseId',
         component: InstructorExerciseDashboardComponent,
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR],
-            usePathForBreadcrumbs: true,
             pageTitle: 'artemisApp.instructorExerciseDashboard.title',
         },
         canActivate: [UserRouteAccessService],

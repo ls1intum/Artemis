@@ -23,6 +23,8 @@ import { SubjectObservablePair } from 'app/utils/rxjs.utils';
 import { participationStatus } from 'app/exercises/shared/exercise/exercise-utils';
 import { CourseManagementOverviewDto } from './overview/course-management-overview-dto.model';
 import { CourseManagementOverviewStatisticsDto } from 'app/course/manage/overview/course-management-overview-statistics-dto.model';
+import { addUserIndependentRepositoryUrl } from 'app/overview/participation-utils';
+import { ParticipationType } from 'app/entities/participation/participation.model';
 
 export type EntityResponseType = HttpResponse<Course>;
 export type EntityArrayResponseType = HttpResponse<Course[]>;
@@ -157,7 +159,7 @@ export class CourseManagementService {
      * @param courseId - the id of the course
      */
     getCourseWithInterestingExercisesForTutors(courseId: number): Observable<EntityResponseType> {
-        const url = `${this.resourceUrl}/${courseId}/for-tutor-dashboard`;
+        const url = `${this.resourceUrl}/${courseId}/for-assessment-dashboard`;
         return this.http
             .get<Course>(url, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
@@ -168,7 +170,7 @@ export class CourseManagementService {
      * @param courseId - the id of the course
      */
     getStatsForTutors(courseId: number): Observable<HttpResponse<StatsForDashboard>> {
-        return this.http.get<StatsForDashboard>(`${this.resourceUrl}/${courseId}/stats-for-tutor-dashboard`, { observe: 'response' });
+        return this.http.get<StatsForDashboard>(`${this.resourceUrl}/${courseId}/stats-for-assessment-dashboard`, { observe: 'response' });
     }
 
     /**
@@ -547,6 +549,9 @@ export class CourseExerciseService {
      */
     startExercise(courseId: number, exerciseId: number): Observable<StudentParticipation> {
         return this.http.post<StudentParticipation>(`${this.resourceUrl}/${courseId}/exercises/${exerciseId}/participations`, {}).map((participation: StudentParticipation) => {
+            if (participation.type === ParticipationType.PROGRAMMING) {
+                addUserIndependentRepositoryUrl(participation);
+            }
             return this.handleParticipation(participation);
         });
     }
@@ -560,6 +565,9 @@ export class CourseExerciseService {
         return this.http
             .put<StudentParticipation>(`${this.resourceUrl}/${courseId}/exercises/${exerciseId}/resume-programming-participation`, {})
             .map((participation: StudentParticipation) => {
+                if (participation.type === ParticipationType.PROGRAMMING) {
+                    addUserIndependentRepositoryUrl(participation);
+                }
                 return this.handleParticipation(participation);
             });
     }
