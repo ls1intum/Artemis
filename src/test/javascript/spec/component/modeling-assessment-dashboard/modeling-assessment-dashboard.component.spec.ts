@@ -267,6 +267,8 @@ describe('ModelingAssessmentDashboardComponent', () => {
             // setup
             component.nextOptimalSubmissionIds = [];
             component.busy = true;
+            component.courseId = 1;
+            component.exerciseId = 2;
             const routerNavigateSpy = spyOn(router, 'navigate');
             const serviceResetOptSpy = spyOn(modelingAssessmentService, 'getOptimalSubmissions').and.returnValue(of([1]));
             const navigateToNextSpy = spyOn<any>(component, 'navigateToNextRandomOptimalSubmission').and.callThrough(); // <any> bc of private method
@@ -286,6 +288,8 @@ describe('ModelingAssessmentDashboardComponent', () => {
             // setup
             component.nextOptimalSubmissionIds = [1];
             component.busy = false;
+            component.courseId = 1;
+            component.exerciseId = 2;
             const routerNavigateSpy = spyOn(router, 'navigate');
             const navigateToNextSpy = spyOn<any>(component, 'navigateToNextRandomOptimalSubmission').and.callThrough(); // <any> bc of private method
 

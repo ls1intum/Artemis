@@ -448,27 +448,44 @@ describe('ExerciseAssessmentDashboardComponent', () => {
             comp.exercise.type = ExerciseType.MODELING;
             comp.courseId = 4;
             comp.exercise = exercise;
+            comp.exerciseId = exercise.id!;
             const submission = { id: 8 };
             comp.openAssessmentEditor(submission);
 
-            expect(navigateSpy).to.have.been.calledWith([`/course-management/${courseId}/${exercise.type}-exercises/${exercise.id}/submissions/${submission.id}/assessment`], {
-                queryParams: { 'correction-round': 0 },
-            });
+            const expectedUrl = [
+                '/course-management',
+                comp.courseId.toString(),
+                'modeling-exercises',
+                exercise.id!.toString(),
+                'submissions',
+                submission.id.toString(),
+                'assessment',
+            ];
+            expect(navigateSpy).to.have.been.calledWith(expectedUrl, { queryParams: { 'correction-round': 0 } });
         });
 
         it('should openExampleSubmission with programmingExercise', () => {
             comp.exercise = exercise;
             comp.exercise.type = ExerciseType.PROGRAMMING;
             comp.courseId = 4;
-            comp.exercise = exercise;
+            comp.exerciseId = exercise.id!;
             const participationId = 3;
             const submission = { id: 8, participation: { id: participationId } };
 
+            const expectedUrl = [
+                '/course-management',
+                comp.courseId.toString(),
+                'programming-exercises',
+                exercise.id!.toString(),
+                'code-editor',
+                participationId.toString(),
+                'assessment',
+            ];
             comp.openAssessmentEditor(submission);
-            expect(navigateSpy).to.have.been.calledWith([`/course-management/${courseId}/${exercise.type}-exercises/${exercise.id}/code-editor/${participationId}/assessment`]);
+            expect(navigateSpy).to.have.been.calledWith(expectedUrl);
             comp.isTestRun = true;
             comp.openAssessmentEditor(submission);
-            expect(navigateSpy).to.have.been.calledWith([`/course-management/${courseId}/${exercise.type}-exercises/${exercise.id}/code-editor/${participationId}/assessment`]);
+            expect(navigateSpy).to.have.been.calledWith(expectedUrl);
         });
     });
 });
