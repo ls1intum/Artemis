@@ -360,4 +360,20 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
             """)
     List<TutorLeaderboardAssessment> findTutorLeaderboardAssessmentByExerciseId(@Param("exerciseId") long exerciseId);
 
+    @Query("""
+            SELECT
+            new de.tum.in.www1.artemis.domain.leaderboard.tutor.TutorLeaderboardAssessment(
+                a.id,
+                count(r),
+                sum(e.maxPoints)
+            )
+            FROM
+                Result r join r.participation p join p.exercise e join e.exerciseGroup eg join eg.exam ex join r.assessor a
+            WHERE
+                r.completionDate is not null
+                and ex.id = :#{#examId}
+            GROUP BY a.id
+            """)
+    List<TutorLeaderboardAssessment> findTutorLeaderboardAssessmentByExamId(@Param("exerciseId") long examId);
+
 }

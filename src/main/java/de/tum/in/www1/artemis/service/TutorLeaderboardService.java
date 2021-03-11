@@ -89,11 +89,20 @@ public class TutorLeaderboardService {
     public List<TutorLeaderboardDTO> getExamLeaderboard(Course course, Exam exam) {
 
         List<User> tutors = userRepository.getTutors(course);
-        // TODO: get the exam leaderboard. We do not want to use the existing s. We do not yet support the exam leaderboard
-        // TODO: remove as soon as the above calls work
-        List<TutorLeaderboardAssessment> tutorLeaderboardAssessments = new ArrayList<>();
-        List<TutorLeaderboardComplaints> tutorLeaderboardComplaints = new ArrayList<>();
-        List<TutorLeaderboardComplaintResponses> tutorLeaderboardComplaintResponses = new ArrayList<>();
+        String groupName = course.getTeachingAssistantGroupName();
+
+        long start = System.currentTimeMillis();
+        List<TutorLeaderboardAssessment> tutorLeaderboardAssessments = resultRepository.findTutorLeaderboardAssessmentByExamId(exam.getId());
+        long end = System.currentTimeMillis();
+        log.info("Finished >>resultRepository.findTutorLeaderboardAssessmentByExamId<< call for exercise " + exam.getId() + " in " + (end - start) + "ms");
+        start = System.currentTimeMillis();
+        List<TutorLeaderboardComplaints> tutorLeaderboardComplaints = complaintRepository.findTutorLeaderboardComplaintsByExamId(groupName, exam.getId());
+        end = System.currentTimeMillis();
+        log.info("Finished >>complaintRepository.findTutorLeaderboardComplaintsByExamId<< call for exercise " + exam.getId() + " in " + (end - start) + "ms");
+        start = System.currentTimeMillis();
+        List<TutorLeaderboardComplaintResponses> tutorLeaderboardComplaintResponses = complaintRepository.findTutorLeaderboardComplaintResponsesByExamId(groupName, exam.getId());
+        end = System.currentTimeMillis();
+        log.info("Finished >>complaintRepository.findTutorLeaderboardComplaintResponsesByExamId<< call for exercise " + exam.getId() + " in " + (end - start) + "ms");
 
         return aggregateTutorLeaderboardData(tutors, tutorLeaderboardAssessments, tutorLeaderboardComplaints, new ArrayList<>(), tutorLeaderboardComplaintResponses,
                 new ArrayList<>());
