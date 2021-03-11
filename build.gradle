@@ -31,7 +31,7 @@ plugins {
 }
 
 group = "de.tum.in.www1.artemis"
-version = "4.10.6"
+version = "4.11.0"
 description = "Interactive Learning with Individual Feedback"
 
 sourceCompatibility=15
@@ -135,7 +135,7 @@ jacocoTestCoverageVerification {
                 counter = "INSTRUCTION"
                 value = "COVEREDRATIO"
                 // TODO: in the future the following value should become at least 0.90
-                minimum = 0.84
+                minimum = 0.83
             }
             limit {
                 counter = "CLASS"
@@ -338,7 +338,7 @@ node {
 
 // Command to execute the JavaDoc checkstyle verification ./gradlew checkstyleMain
 checkstyle {
-    toolVersion "8.39"
+    toolVersion "8.41"
     configFile file("${rootDir}/checkstyle.xml")
     checkstyleTest.enabled = false
     maxErrors = 0
