@@ -35,6 +35,7 @@ import { diff_match_patch } from 'diff-match-patch';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
 import { getPositiveAndCappedTotalScore } from 'app/exercises/shared/exercise/exercise-utils';
+import { round } from 'app/shared/util/utils';
 
 @Component({
     selector: 'jhi-code-editor-tutor-assessment',
@@ -53,7 +54,6 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     exercise: ProgrammingExercise;
     submission?: ProgrammingSubmission;
     manualResult?: Result;
-    automaticResult?: Result;
     userId: number;
     // for assessment-layout
     isTestRun = false;
@@ -71,7 +71,6 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     participationCouldNotBeFetched = false;
     showEditorInstructions = true;
     hasAssessmentDueDatePassed: boolean;
-    adjustedRepositoryURL: string;
     correctionRound: number;
 
     private get course(): Course | undefined {
@@ -170,7 +169,6 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
                             if (this.manualResult && this.manualResult.hasComplaint) {
                                 this.getComplaint();
                             }
-                            this.createAdjustedRepositoryUrl();
                         },
                         (error: HttpErrorResponse) => {
                             this.participationCouldNotBeFetched = true;
@@ -421,19 +419,6 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         return !this.isAtLeastInstructor && !!this.complaint && this.isAssessor;
     }
 
-    /**
-     * Removes the login from the repositoryURL
-     */
-    private createAdjustedRepositoryUrl() {
-        this.adjustedRepositoryURL = this.participation.repositoryUrl || '';
-        if (this.participation.student && this.participation.repositoryUrl) {
-            const userName = this.participation.student.login + '@';
-            if (this.participation.repositoryUrl.includes(userName)) {
-                this.adjustedRepositoryURL = this.participation.repositoryUrl.replace(userName, '');
-            }
-        }
-    }
-
     private handleSaveOrSubmitSuccessWithAlert(response: HttpResponse<Result>, translationKey: string): void {
         this.participation.results![0] = this.manualResult = response.body!;
         this.jhiAlertService.clear();
@@ -488,8 +473,8 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         this.manualResult!.feedbacks = [...this.referencedFeedback, ...this.unreferencedFeedback, ...this.automaticFeedback];
     }
 
-    private createResultString(totalScore: number, maxScore: number | undefined): string {
-        return `${totalScore} of ${maxScore} points`;
+    private static createResultString(totalScore: number, maxScore: number | undefined): string {
+        return `${round(totalScore, 1)} of ${round(maxScore, 1)} points`;
     }
 
     private setAttributesForManualResult(totalScore: number) {
@@ -499,11 +484,12 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         this.manualResult!.hasFeedback = true;
         // Append the automatic result string which the manual result holds with the score part, to create the manual result string
         // In the case no automatic result exists before the assessment, the resultString is undefined. In this case we just want to see the manual assessment.
+        const resultStringExtension = CodeEditorTutorAssessmentContainerComponent.createResultString(totalScore, this.exercise.maxPoints);
         if (this.isFirstAssessment) {
             if (this.manualResult!.resultString) {
-                this.manualResult!.resultString += ', ' + this.createResultString(totalScore, this.exercise.maxPoints);
+                this.manualResult!.resultString += ', ' + resultStringExtension;
             } else {
-                this.manualResult!.resultString = this.createResultString(totalScore, this.exercise.maxPoints);
+                this.manualResult!.resultString = resultStringExtension;
             }
             this.isFirstAssessment = false;
         } else {
@@ -511,11 +497,11 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
              * as the points the student has achieved have changed
              */
             const resultStringParts: string[] = this.manualResult!.resultString!.split(', ');
-            resultStringParts[resultStringParts.length - 1] = this.createResultString(totalScore, this.exercise.maxPoints);
+            resultStringParts[resultStringParts.length - 1] = resultStringExtension;
             this.manualResult!.resultString = resultStringParts.join(', ');
         }
 
-        this.manualResult!.score = Math.round((totalScore / this.exercise.maxPoints!) * 100);
+        this.manualResult!.score = (totalScore / this.exercise.maxPoints!) * 100;
         // This is done to update the result string in result.component.ts
         this.manualResult = cloneDeep(this.manualResult);
     }

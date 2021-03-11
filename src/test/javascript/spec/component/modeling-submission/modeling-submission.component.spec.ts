@@ -273,13 +273,12 @@ describe('Component Tests', () => {
         });
 
         it('should set correct properties on modeling exercise update when submitting', () => {
-            const modelSubmission = <ModelingSubmission>(<unknown>{
+            comp.submission = <ModelingSubmission>(<unknown>{
                 id: 1,
                 model: '{"elements": [{"id": 1}]}',
                 submitted: true,
                 participation,
             });
-            comp.submission = modelSubmission;
             const fake = sinon.replace(service, 'update', sinon.fake.returns(of({ body: submission })));
             comp.modelingExercise = new ModelingExercise(UMLDiagramType.DeploymentDiagram, undefined, undefined);
             comp.modelingExercise.id = 1;
@@ -310,28 +309,28 @@ describe('Component Tests', () => {
             expect(comp.selectedEntities).to.deep.equal(['ownerId1', 'ownerId2', 'elementId1', 'elementId2']);
         });
 
-        it('should isSelected return true if no selectedEntities and selectedRelationships', () => {
+        it('should shouldBeDisplayed return true if no selectedEntities and selectedRelationships', () => {
             const feedback = <Feedback>(<unknown>{ referenceType: 'Activity', referenceId: '5' });
             comp.selectedEntities = [];
             comp.selectedRelationships = [];
             fixture.detectChanges();
-            expect(comp.isSelected(feedback)).to.equal(true);
+            expect(comp.shouldBeDisplayed(feedback)).to.equal(true);
             comp.selectedEntities = ['3'];
             fixture.detectChanges();
-            expect(comp.isSelected(feedback)).to.equal(false);
+            expect(comp.shouldBeDisplayed(feedback)).to.equal(false);
         });
 
-        it('should isSelected return true if feedback reference is in selectedEntities or selectedRelationships', () => {
+        it('should shouldBeDisplayed return true if feedback reference is in selectedEntities or selectedRelationships', () => {
             const id = 'referenceId';
             const feedback = <Feedback>(<unknown>{ referenceType: 'Activity', referenceId: id });
             comp.selectedEntities = [id];
             comp.selectedRelationships = [];
             fixture.detectChanges();
-            expect(comp.isSelected(feedback)).to.equal(true);
+            expect(comp.shouldBeDisplayed(feedback)).to.equal(true);
             comp.selectedEntities = [];
             comp.selectedRelationships = [id];
             fixture.detectChanges();
-            expect(comp.isSelected(feedback)).to.equal(false);
+            expect(comp.shouldBeDisplayed(feedback)).to.equal(false);
         });
 
         it('should update submission with current values', () => {

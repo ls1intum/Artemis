@@ -5,6 +5,7 @@ import { createRequestOption } from 'app/shared/util/request-util';
 import { SERVER_API_URL } from 'app/app.constants';
 import { Result } from 'app/entities/result.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
+import { addUserIndependentRepositoryUrl } from 'app/overview/participation-utils';
 
 export interface IProgrammingExerciseParticipationService {
     getLatestResultWithFeedback: (participationId: number, withSubmission: boolean) => Observable<Result | undefined>;
@@ -28,9 +29,14 @@ export class ProgrammingExerciseParticipationService implements IProgrammingExer
     }
 
     getStudentParticipationWithResultOfCorrectionRound(participationId: number, correctionRound: number) {
-        return this.http.get<ProgrammingExerciseStudentParticipation>(
-            this.resourceUrl + participationId + '/student-participation-with-result-and-feedbacks-for/' + correctionRound + '/correction-round',
-        );
+        return this.http
+            .get<ProgrammingExerciseStudentParticipation>(
+                this.resourceUrl + participationId + '/student-participation-with-result-and-feedbacks-for/' + correctionRound + '/correction-round',
+            )
+            .map((participation: ProgrammingExerciseStudentParticipation) => {
+                addUserIndependentRepositoryUrl(participation);
+                return participation;
+            });
     }
 
     checkIfParticipationHasResult(participationId: number): Observable<boolean> {
