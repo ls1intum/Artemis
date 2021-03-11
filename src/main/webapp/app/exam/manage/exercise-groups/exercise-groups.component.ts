@@ -24,7 +24,6 @@ import { ProgrammingExerciseSimulationUtils } from 'app/exercises/programming/sh
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
-import { ParticipationType } from 'app/entities/participation/participation.model';
 import { ProgrammingExerciseParticipationType } from 'app/entities/programming-exercise-participation.model';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 
