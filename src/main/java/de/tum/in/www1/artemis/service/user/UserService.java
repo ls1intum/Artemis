@@ -1,10 +1,14 @@
 package de.tum.in.www1.artemis.service.user;
 
 import static de.tum.in.www1.artemis.domain.Authority.ADMIN_AUTHORITY;
-import static de.tum.in.www1.artemis.security.AuthoritiesConstants.*;
+import static de.tum.in.www1.artemis.security.AuthoritiesConstants.ADMIN;
+import static de.tum.in.www1.artemis.security.AuthoritiesConstants.USER;
 
 import java.time.Instant;
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -24,6 +28,7 @@ import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
 import de.tum.in.www1.artemis.exception.UsernameAlreadyUsedException;
 import de.tum.in.www1.artemis.repository.AuthorityRepository;
 import de.tum.in.www1.artemis.repository.GuidedTourSettingsRepository;
+import de.tum.in.www1.artemis.repository.StudentScoreRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
 import de.tum.in.www1.artemis.security.SecurityUtils;
@@ -71,6 +76,8 @@ public class UserService {
 
     private final ArtemisAuthenticationProvider artemisAuthenticationProvider;
 
+    private final StudentScoreRepository studentScoreRepository;
+
     private final CacheManager cacheManager;
 
     private final AuthorityRepository authorityRepository;
@@ -80,7 +87,7 @@ public class UserService {
     public UserService(UserCreationService userCreationService, UserRepository userRepository, AuthorityService authorityService, AuthorityRepository authorityRepository,
             CacheManager cacheManager, Optional<LdapUserService> ldapUserService, GuidedTourSettingsRepository guidedTourSettingsRepository, PasswordService passwordService,
             Optional<VcsUserManagementService> optionalVcsUserManagementService, Optional<CIUserManagementService> optionalCIUserManagementService,
-            ArtemisAuthenticationProvider artemisAuthenticationProvider) {
+            ArtemisAuthenticationProvider artemisAuthenticationProvider, StudentScoreRepository studentScoreRepository) {
         this.userCreationService = userCreationService;
         this.userRepository = userRepository;
         this.authorityService = authorityService;
@@ -92,6 +99,7 @@ public class UserService {
         this.optionalVcsUserManagementService = optionalVcsUserManagementService;
         this.optionalCIUserManagementService = optionalCIUserManagementService;
         this.artemisAuthenticationProvider = artemisAuthenticationProvider;
+        this.studentScoreRepository = studentScoreRepository;
     }
 
     /**
@@ -356,6 +364,9 @@ public class UserService {
         // 8) Remove the user from its teams
         // 9) Delete the submissionVersion / remove the user from the submissionVersion
         // 10) Delete the tutor participation
+
+        studentScoreRepository.deleteAllByUser(user);
+
         userRepository.delete(user);
         clearUserCaches(user);
         userRepository.flush();
