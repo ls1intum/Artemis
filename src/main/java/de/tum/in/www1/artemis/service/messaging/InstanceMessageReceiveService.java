@@ -46,6 +46,10 @@ public class InstanceMessageReceiveService {
             SecurityUtils.setAuthorizationObject();
             processScheduleProgrammingExercise((message.getMessageObject()));
         });
+        hazelcastInstance.<Long>getTopic("programming-exercise-schedule-cancel").addMessageListener(message -> {
+            SecurityUtils.setAuthorizationObject();
+            processScheduleProgrammingExerciseCancel((message.getMessageObject()));
+        });
         hazelcastInstance.<Long>getTopic("text-exercise-schedule").addMessageListener(message -> {
             SecurityUtils.setAuthorizationObject();
             processScheduleTextExercise((message.getMessageObject()));
@@ -72,6 +76,13 @@ public class InstanceMessageReceiveService {
         log.info("Received schedule update for programming exercise " + exerciseId);
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
         programmingExerciseScheduleService.updateScheduling(programmingExercise);
+    }
+
+    public void processScheduleProgrammingExerciseCancel(Long exerciseId) {
+        log.info("Received schedule cancel for programming exercise " + exerciseId);
+        // The exercise might already be deleted, so we can not get it from the database.
+        // Use the ID directly instead.
+        programmingExerciseScheduleService.cancelAllScheduledTasks(exerciseId);
     }
 
     public void processScheduleTextExercise(Long exerciseId) {

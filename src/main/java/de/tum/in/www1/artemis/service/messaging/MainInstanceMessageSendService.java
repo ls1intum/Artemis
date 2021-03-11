@@ -24,6 +24,12 @@ public class MainInstanceMessageSendService implements InstanceMessageSendServic
     }
 
     @Override
+    public void sendProgrammingExerciseScheduleCancel(Long exerciseId) {
+        // No need to go through the broker, pass it directly
+        instanceMessageReceiveService.processScheduleProgrammingExerciseCancel(exerciseId);
+    }
+
+    @Override
     public void sendTextExerciseSchedule(Long exerciseId) {
         // No need to go through the broker, pass it directly
         instanceMessageReceiveService.processScheduleTextExercise(exerciseId);
