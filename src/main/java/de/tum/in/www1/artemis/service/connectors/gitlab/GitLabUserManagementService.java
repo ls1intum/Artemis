@@ -1,7 +1,7 @@
 package de.tum.in.www1.artemis.service.connectors.gitlab;
 
-import static org.gitlab4j.api.models.AccessLevel.GUEST;
 import static org.gitlab4j.api.models.AccessLevel.MAINTAINER;
+import static org.gitlab4j.api.models.AccessLevel.REPORTER;
 
 import java.util.HashSet;
 import java.util.List;
@@ -57,7 +57,7 @@ public class GitLabUserManagementService implements VcsUserManagementService {
             final var teachingAssistantExercises = programmingExerciseRepository.findAllByCourse_TeachingAssistantGroupNameIn(user.getGroups()).stream()
                     .filter(programmingExercise -> !instructorExercises.contains(programmingExercise)).collect(Collectors.toList());
             addUserToGroups(userId, instructorExercises, MAINTAINER);
-            addUserToGroups(userId, teachingAssistantExercises, GUEST);
+            addUserToGroups(userId, teachingAssistantExercises, REPORTER);
         }
     }
 
@@ -91,7 +91,7 @@ public class GitLabUserManagementService implements VcsUserManagementService {
             if (addedGroups != null && !addedGroups.isEmpty()) {
                 final var exercisesWithAddedGroups = programmingExerciseRepository.findAllByInstructorOrTAGroupNameIn(addedGroups);
                 for (final var exercise : exercisesWithAddedGroups) {
-                    final var accessLevel = addedGroups.contains(exercise.getCourseViaExerciseGroupOrCourseMember().getInstructorGroupName()) ? MAINTAINER : GUEST;
+                    final var accessLevel = addedGroups.contains(exercise.getCourseViaExerciseGroupOrCourseMember().getInstructorGroupName()) ? MAINTAINER : REPORTER;
                     try {
                         gitlabApi.getGroupApi().addMember(exercise.getProjectKey(), gitlabUser.getId(), accessLevel);
                     }
@@ -116,7 +116,7 @@ public class GitLabUserManagementService implements VcsUserManagementService {
                         gitlabApi.getGroupApi().updateMember(exercise.getProjectKey(), gitlabUser.getId(), MAINTAINER);
                     }
                     else if (user.getGroups().contains(course.getTeachingAssistantGroupName())) {
-                        gitlabApi.getGroupApi().updateMember(exercise.getProjectKey(), gitlabUser.getId(), GUEST);
+                        gitlabApi.getGroupApi().updateMember(exercise.getProjectKey(), gitlabUser.getId(), REPORTER);
                     }
                     else {
                         // If the user is not a member of any relevant group any more, we can remove him from the exercise
@@ -152,7 +152,7 @@ public class GitLabUserManagementService implements VcsUserManagementService {
         // Update the old instructors of the course
         final var oldInstructors = userRepository.findAllInGroupWithAuthorities(oldInstructorGroup);
         // doUpgrade=false, because these users already are instructors.
-        updateOldGroupMembers(exercises, oldInstructors, updatedCourse.getInstructorGroupName(), updatedCourse.getTeachingAssistantGroupName(), GUEST, false);
+        updateOldGroupMembers(exercises, oldInstructors, updatedCourse.getInstructorGroupName(), updatedCourse.getTeachingAssistantGroupName(), REPORTER, false);
         final var processedUsers = new HashSet<>(oldInstructors);
 
         // Update the old teaching assistant of the group
@@ -174,7 +174,7 @@ public class GitLabUserManagementService implements VcsUserManagementService {
         final var remainingTeachingAssistants = userRepository.findAllUserInGroupAndNotIn(updatedCourse.getTeachingAssistantGroupName(), processedUsers);
         remainingTeachingAssistants.forEach(user -> {
             final var userId = getUserId(user.getLogin());
-            addUserToGroups(userId, exercises, GUEST);
+            addUserToGroups(userId, exercises, REPORTER);
         });
     }
 
@@ -195,7 +195,7 @@ public class GitLabUserManagementService implements VcsUserManagementService {
      * @param users                  All user in the old group
      * @param newGroupName           The name of the new group, e.g. "newInstructors"
      * @param alternativeGroupName   The name of the other group (instructor or TA), e.g. "newTeachingAssistant"
-     * @param alternativeAccessLevel The access level for the alternative group, e.g. GUEST for TAs
+     * @param alternativeAccessLevel The access level for the alternative group, e.g. REPORTER for TAs
      * @param doUpgrade              True, if the alternative group would be an upgrade. This is the case if the old group was TA, so the new instructor group would be better (if applicable)
      */
     private void updateOldGroupMembers(List<ProgrammingExercise> exercises, List<User> users, String newGroupName, String alternativeGroupName, AccessLevel alternativeAccessLevel,
@@ -206,7 +206,7 @@ public class GitLabUserManagementService implements VcsUserManagementService {
              * Contains the access level of the other group, to which the user currently does NOT belong, IF the user could be in that group E.g. user1(groups=[foo,bar]),
              * oldInstructorGroup=foo, oldTAGroup=bar; newInstructorGroup=instr newTAGroup=bar So, while the instructor group changed, the TA group stayed the same. user1 was part
              * of the old instructor group, but isn't any more. BUT he could be a TA according to the new groups, so the alternative access level would be the level of the TA
-             * group, i.e. GUEST
+             * group, i.e. REPORTER
              */
             final Optional<AccessLevel> newAccessLevel;
             if (user.getGroups().contains(alternativeGroupName)) {
