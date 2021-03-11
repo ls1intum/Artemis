@@ -14,6 +14,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import de.tum.in.www1.artemis.domain.enumeration.*;
+import de.tum.in.www1.artemis.web.rest.dto.CourseManagementOverviewDTO;
+import de.tum.in.www1.artemis.web.rest.dto.CourseManagementOverviewStatisticsDTO;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -26,11 +29,6 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.connector.jira.JiraRequestMockProvider;
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.Language;
-import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
-import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
-import de.tum.in.www1.artemis.domain.enumeration.TutorParticipationStatus;
-import de.tum.in.www1.artemis.domain.leaderboard.tutor.*;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.Participation;
@@ -42,6 +40,7 @@ import de.tum.in.www1.artemis.service.user.UserService;
 import de.tum.in.www1.artemis.util.FileUtils;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.dto.StatsForInstructorDashboardDTO;
+import org.springframework.util.LinkedMultiValueMap;
 
 public class CourseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -1146,5 +1145,55 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
 
             // TODO: Assert the other exercises after it's implemented
         });
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testGetExercisesForCourseOverview() throws Exception {
+        // Add two courses, containing one not belonging to the instructor
+        var courses = database.createCoursesWithExercisesAndLectures(true);
+        var instructorsCourse = courses.get(0);
+        instructorsCourse.setInstructorGroupName("test-instructors");
+        courseRepo.save(instructorsCourse);
+
+        var instructor = database.getUserByLogin("instructor1");
+        var groups = new HashSet<String>();
+        groups.add("test-instructors");
+        instructor.setGroups(groups);
+        userRepo.save(instructor);
+
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("onlyActive", "true");
+        var courseDtos = request.getList("/api/courses/exercises-for-management-overview", HttpStatus.OK, CourseManagementOverviewDTO.class);
+
+        assertThat(courseDtos.size()).isEqualTo(1);
+
+        var dto = courseDtos.get(0);
+        assertThat(dto.getCourseId()).isEqualTo(instructorsCourse.getId());
+
+        var exerciseDetails = dto.getExerciseDetails();
+        assertThat(exerciseDetails.size()).isEqualTo(5);
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testGetExerciseStatsForCourseOverview() throws Exception {
+        // Add two courses, containing one not belonging to the instructor
+        var courses = database.createCoursesWithExercisesAndLectures(true);
+        var instructorsCourse = courses.get(0);
+        instructorsCourse.setInstructorGroupName("test-instructors");
+        courseRepo.save(instructorsCourse);
+
+        var instructor = database.getUserByLogin("instructor1");
+        var groups = new HashSet<String>();
+        groups.add("test-instructors");
+        instructor.setGroups(groups);
+        userRepo.save(instructor);
+
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("onlyActive", "true");
+        var courseDtos = request.getList("/api/courses/stats-for-management-overview", HttpStatus.OK, CourseManagementOverviewStatisticsDTO.class);
+
+        assertThat(courseDtos.size()).isEqualTo(1);
     }
 }
