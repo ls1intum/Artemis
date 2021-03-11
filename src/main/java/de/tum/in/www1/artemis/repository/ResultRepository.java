@@ -374,6 +374,6 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
                 and ex.id = :#{#examId}
             GROUP BY a.id
             """)
-    List<TutorLeaderboardAssessment> findTutorLeaderboardAssessmentByExamId(@Param("exerciseId") long examId);
+    List<TutorLeaderboardAssessment> findTutorLeaderboardAssessmentByExamId(@Param("examId") long examId);
 
 }
