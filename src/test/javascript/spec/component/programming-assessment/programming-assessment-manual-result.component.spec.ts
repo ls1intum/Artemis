@@ -116,7 +116,6 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         gradingInstructions: 'Grading Instructions',
         course: <Course>{ instructorGroupName: 'instructorGroup' },
     } as unknown) as ProgrammingExercise;
-    // const automaticResult: Result = { feedbacks: [new Feedback()], assessmentType: AssessmentType.AUTOMATIC, id: 1, resultString: '1 of 13 passed' };
     const participation: ProgrammingExerciseStudentParticipation = new ProgrammingExerciseStudentParticipation();
     participation.results = [result];
     participation.exercise = exercise;
@@ -361,13 +360,6 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         tick(100);
         comp.nextSubmission();
         expect(getProgrammingSubmissionForExerciseWithoutAssessmentStub).to.be.calledOnce;
-    }));
-
-    it('should create the correct repository url', fakeAsync(() => {
-        comp.ngOnInit();
-        tick(100);
-        expect(comp.adjustedRepositoryURL).to.be.equal('http://bitbucket.ase.in.tum.de/scm/TEST/test-repo-student1.git');
-        flush();
     }));
 
     it('should highlight lines that were changed', fakeAsync(() => {

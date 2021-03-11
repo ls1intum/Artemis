@@ -1,0 +1,117 @@
+<jhi-data-table
+    [isLoading]="isLoading"
+    entityType="participationScoreAverageDTO"
+    [allEntities]="participantAverageScores"
+    entitiesPerPageTranslation="artemisApp.exercise.resultsPerPage"
+    showAllEntitiesTranslation="artemisApp.exercise.showAllResults"
+    [searchPlaceholderTranslation]="'artemisApp.participantScores.searchForStudentsOrTeam'"
+    [searchFields]="['userName', 'teamName']"
+    [searchTextFromEntity]="extractParticipantName"
+    [searchResultFormatter]="extractParticipantName"
+>
+    <ng-template let-settings="settings" let-controls="controls">
+        <ngx-datatable
+            class="bootstrap"
+            [limit]="settings.limit"
+            [sortType]="settings.sortType"
+            [columnMode]="settings.columnMode"
+            [headerHeight]="settings.headerHeight"
+            [footerHeight]="settings.footerHeight"
+            [rowHeight]="settings.rowHeight"
+            [rows]="settings.rows"
+            [rowClass]="settings.rowClass"
+            [scrollbarH]="settings.scrollbarH"
+        >
+            <ngx-datatable-column prop="userName" [minWidth]="250">
+                <ng-template ngx-datatable-header-template>
+                    <span class="datatable-header-cell-wrapper" (click)="controls.onSort('userName')">
+                        <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.participantScores.participantScoreAverageDTO.userName"> UserName </span>
+                        <fa-icon [icon]="controls.iconForSortPropField('userName')"></fa-icon>
+                    </span>
+                </ng-template>
+                <ng-template ngx-datatable-cell-template let-value="value">
+                    <span>
+                        {{ value }}
+                    </span>
+                </ng-template>
+            </ngx-datatable-column>
+            <ngx-datatable-column prop="teamName" [minWidth]="250">
+                <ng-template ngx-datatable-header-template>
+                    <span class="datatable-header-cell-wrapper" (click)="controls.onSort('teamName')">
+                        <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.participantScores.participantScoreAverageDTO.teamName"> TeamName </span>
+                        <fa-icon [icon]="controls.iconForSortPropField('teamName')"></fa-icon>
+                    </span>
+                </ng-template>
+                <ng-template ngx-datatable-cell-template let-value="value">
+                    <span>
+                        {{ value }}
+                    </span>
+                </ng-template>
+            </ngx-datatable-column>
+            <ngx-datatable-column prop="averageScore" [minWidth]="500">
+                <ng-template ngx-datatable-header-template>
+                    <ng-template #tipContent>{{ 'artemisApp.participantScores.notIncluded' | translate }}</ng-template>
+                    <span [ngbTooltip]="tipContent" container="body" class="datatable-header-cell-wrapper" (click)="controls.onSort('averageScore')">
+                        <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.participantScores.participantScoreAverageDTO.averageScore">
+                            AverageScore
+                        </span>
+                        <fa-icon [icon]="controls.iconForSortPropField('averageScore')"></fa-icon>
+                    </span>
+                </ng-template>
+                <ng-template ngx-datatable-cell-template let-value="value">
+                    <span>
+                        {{ round(value, 1) }}
+                    </span>
+                </ng-template>
+            </ngx-datatable-column>
+            <ngx-datatable-column prop="averagePoints" [minWidth]="500">
+                <ng-template ngx-datatable-header-template>
+                    <ng-template #tipContent>{{ 'artemisApp.participantScores.notIncluded' | translate }}</ng-template>
+                    <span [ngbTooltip]="tipContent" container="body" class="datatable-header-cell-wrapper" (click)="controls.onSort('averagePoints')">
+                        <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.participantScores.participantScoreAverageDTO.averagePoints">
+                            AveragePoints
+                        </span>
+                        <fa-icon [icon]="controls.iconForSortPropField('averagePoints')"></fa-icon>
+                    </span>
+                </ng-template>
+                <ng-template ngx-datatable-cell-template let-value="value">
+                    <span>
+                        {{ value }}
+                    </span>
+                </ng-template>
+            </ngx-datatable-column>
+            <ngx-datatable-column prop="averageRatedScore" [minWidth]="500">
+                <ng-template ngx-datatable-header-template>
+                    <ng-template #tipContent>{{ 'artemisApp.participantScores.notIncluded' | translate }}</ng-template>
+                    <span [ngbTooltip]="tipContent" container="body" class="datatable-header-cell-wrapper" (click)="controls.onSort('averageRatedScore')">
+                        <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.participantScores.participantScoreAverageDTO.averageRatedScore">
+                            AverageRatedScore
+                        </span>
+                        <fa-icon [icon]="controls.iconForSortPropField('averageRatedScore')"></fa-icon>
+                    </span>
+                </ng-template>
+                <ng-template ngx-datatable-cell-template let-value="value">
+                    <span>
+                        {{ round(value, 1) }}
+                    </span>
+                </ng-template>
+            </ngx-datatable-column>
+            <ngx-datatable-column prop="averageRatedPoints" [minWidth]="500">
+                <ng-template ngx-datatable-header-template>
+                    <ng-template #tipContent>{{ 'artemisApp.participantScores.notIncluded' | translate }}</ng-template>
+                    <span [ngbTooltip]="tipContent" container="body" class="datatable-header-cell-wrapper" (click)="controls.onSort('averageRatedPoints')">
+                        <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.participantScores.participantScoreAverageDTO.averageRatedPoints">
+                            AverageRatedPoints
+                        </span>
+                        <fa-icon [icon]="controls.iconForSortPropField('averageRatedPoints')"></fa-icon>
+                    </span>
+                </ng-template>
+                <ng-template ngx-datatable-cell-template let-value="value">
+                    <span>
+                        {{ value }}
+                    </span>
+                </ng-template>
+            </ngx-datatable-column>
+        </ngx-datatable>
+    </ng-template>
+</jhi-data-table>

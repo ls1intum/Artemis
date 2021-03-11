@@ -26,9 +26,9 @@ export class StudentExamDetailComponent implements OnInit {
     workingTimeForm: FormGroup;
     isSavingWorkingTime = false;
     isTestRun = false;
-    maxTotalScore = 0;
-    achievedTotalScore = 0;
-    bonusTotalScore = 0;
+    maxTotalPoints = 0;
+    achievedTotalPoints = 0;
+    bonusTotalPoints = 0;
     busy = false;
 
     constructor(
@@ -108,20 +108,19 @@ export class StudentExamDetailComponent implements OnInit {
     private setStudentExam(studentExam: StudentExam) {
         this.studentExam = studentExam;
         this.initWorkingTimeForm();
-        this.maxTotalScore = 0;
-        this.achievedTotalScore = 0;
-        this.bonusTotalScore = 0;
+        this.maxTotalPoints = 0;
+        this.achievedTotalPoints = 0;
+        this.bonusTotalPoints = 0;
         studentExam.exercises!.forEach((exercise) => {
-            this.maxTotalScore += exercise.maxPoints!;
-            this.bonusTotalScore += exercise.bonusPoints!;
+            this.maxTotalPoints += exercise.maxPoints!;
+            this.bonusTotalPoints += exercise.bonusPoints!;
             if (
                 exercise.studentParticipations?.length &&
                 exercise.studentParticipations.length > 0 &&
                 exercise.studentParticipations[0].results?.length &&
                 exercise.studentParticipations[0].results.length > 0
             ) {
-                this.achievedTotalScore += (exercise.studentParticipations[0].results[0].score! * exercise.maxPoints!) / 100;
-                this.achievedTotalScore = this.rounding(this.achievedTotalScore);
+                this.achievedTotalPoints += this.rounding((exercise.studentParticipations[0].results[0].score! * exercise.maxPoints!) / 100);
             }
         });
     }
@@ -168,6 +167,7 @@ export class StudentExamDetailComponent implements OnInit {
             ? 'You cannot change the individual working time after the exam has become visible.'
             : 'You can change the individual working time of the student here.';
     }
+
     rounding(number: number) {
         return round(number, 1);
     }

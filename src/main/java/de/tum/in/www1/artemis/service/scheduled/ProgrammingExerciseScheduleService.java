@@ -87,7 +87,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
                     .findAllByManualAssessmentAndDueDateAfterDate(ZonedDateTime.now());
             programmingExercisesWithFutureManualAssessment.forEach(this::scheduleExercise);
 
-            List<ProgrammingExercise> programmingExercisesWithExam = programmingExerciseRepository.findAllWithEagerExamAllByExamEndDateAfterDate(ZonedDateTime.now());
+            List<ProgrammingExercise> programmingExercisesWithExam = programmingExerciseRepository.findAllWithEagerExamByExamEndDateAfterDate(ZonedDateTime.now());
             programmingExercisesWithExam.forEach(this::scheduleExamExercise);
             log.info("Scheduled " + programmingExercisesWithBuildAfterDueDate.size() + " programming exercises with a buildAndTestAfterDueDate.");
             log.info("Scheduled " + programmingExercisesWithFutureManualAssessment.size() + " programming exercises with future manual assessment.");
@@ -115,7 +115,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
 
     private static boolean needsToBeScheduled(ProgrammingExercise exercise) {
         // Exam exercises need to be scheduled
-        if (isExamExercise(exercise)) {
+        if (exercise.isExamExercise()) {
             return true;
         }
         // Manual assessed programming exercises as well
@@ -135,7 +135,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
 
     private void scheduleExercise(ProgrammingExercise exercise) {
         try {
-            if (isExamExercise(exercise)) {
+            if (exercise.isExamExercise()) {
                 scheduleExamExercise(exercise);
             }
             else {
@@ -178,14 +178,20 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
             return;
         }
         var unlockDate = getExamProgrammingExerciseUnlockDate(exercise);
+
+        // BEFORE EXAM
         if (unlockDate.isAfter(ZonedDateTime.now())) {
             // Use the custom date from the exam rather than the of the exercise's lifecycle
             scheduleService.scheduleTask(exercise, ExerciseLifecycle.RELEASE, Set.of(new Tuple<>(unlockDate, unlockAllStudentRepositories(exercise))));
         }
-        else if (examDateService.getLatestIndividualExamEndDate(exam).isBefore(ZonedDateTime.now())) {
+        // DURING EXAM
+        else if (examDateService.getLatestIndividualExamEndDate(exam).isAfter(ZonedDateTime.now())) {
             // This is only a backup (e.g. a crash of this node and restart during the exam)
+            // TODO: Christian Femers: this can lead to a weired edge case after the normal exam end date and before the last individual exam end date (in case of working time
+            // extensions)
             scheduleService.scheduleTask(exercise, ExerciseLifecycle.RELEASE, Set.of(new Tuple<>(ZonedDateTime.now().plusSeconds(5), unlockAllStudentRepositories(exercise))));
         }
+        // NOTHING TO DO AFTER EXAM
 
         if (exercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null && exercise.getBuildAndTestStudentSubmissionsAfterDueDate().isAfter(ZonedDateTime.now())) {
             scheduleService.scheduleTask(exercise, ExerciseLifecycle.BUILD_AND_TEST_AFTER_DUE_DATE, buildAndTestRunnableForExercise(exercise));
@@ -356,10 +362,6 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
         }).collect(Collectors.toSet());
         // 3. Schedule all tasks
         scheduleService.scheduleTask(exercise, ExerciseLifecycle.DUE, tasks);
-    }
-
-    private static boolean isExamExercise(ProgrammingExercise exercise) {
-        return exercise.isExamExercise();
     }
 
     private static ZonedDateTime getExamProgrammingExerciseUnlockDate(ProgrammingExercise exercise) {

@@ -211,7 +211,7 @@ public class ComplaintResource {
     }
 
     /**
-     * Get /exercises/:exerciseId/complaints-for-tutor-dashboard
+     * Get /exercises/:exerciseId/complaints-for-assessment-dashboard
      * <p>
      * Get all the complaints associated to an exercise, but filter out the ones that are about the tutor who is doing the request, since tutors cannot act on their own complaint
      * Additionally, filter out the ones where the student is the same as the assessor as this indicated that this is a test run.
@@ -220,7 +220,7 @@ public class ComplaintResource {
      * @param principal that wants to get complaints
      * @return the ResponseEntity with status 200 (OK) and a list of complaints. The list can be empty
      */
-    @GetMapping("/exercises/{exerciseId}/complaints-for-tutor-dashboard")
+    @GetMapping("/exercises/{exerciseId}/complaints-for-assessment-dashboard")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<List<Complaint>> getComplaintsForAssessmentDashboard(@PathVariable Long exerciseId, Principal principal) {
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
@@ -255,14 +255,14 @@ public class ComplaintResource {
     }
 
     /**
-     * Get /exercises/:exerciseId/more-feedback-for-tutor-dashboard
+     * Get /exercises/:exerciseId/more-feedback-for-assessment-dashboard
      * <p>
      * Get all the more feedback requests associated to an exercise, that are about the tutor who is doing the request.
      * @param exerciseId the id of the exercise we are interested in
      * @param principal that wants to get more feedback requests
      * @return the ResponseEntity with status 200 (OK) and a list of more feedback requests. The list can be empty
      */
-    @GetMapping("/exercises/{exerciseId}/more-feedback-for-tutor-dashboard")
+    @GetMapping("/exercises/{exerciseId}/more-feedback-for-assessment-dashboard")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<List<Complaint>> getMoreFeedbackRequestsForAssessmentDashboard(@PathVariable Long exerciseId, Principal principal) {
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
@@ -382,6 +382,37 @@ public class ComplaintResource {
         }
 
         return ResponseEntity.ok(getComplaintsByComplaintType(complaints, complaintType));
+    }
+
+    /**
+     * Get /courses/:courseId/exams/:examId/complaints
+     * <p>
+     * Get all the complaints filtered by courseId, complaintType and optionally tutorId.
+     * @param examId the id of the tutor by which we want to filter
+     * @param courseId the id of the course we are interested in
+     * @return the ResponseEntity with status 200 (OK) and a list of complaints. The list can be empty
+     */
+    @GetMapping("/courses/{courseId}/exams/{examId}/complaints")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<List<Complaint>> getComplaintsByCourseIdAndExamId(@PathVariable Long courseId, @PathVariable Long examId) {
+        // Filtering by courseId
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        boolean isAtLeastTutor = authCheckService.isAtLeastTeachingAssistantInCourse(course, user);
+        boolean isAtLeastInstructor = authCheckService.isAtLeastInstructorInCourse(course, user);
+
+        if (!isAtLeastTutor) {
+            throw new AccessForbiddenException("Insufficient permission for these complaints");
+        }
+        if (!isAtLeastInstructor) {
+            // At the moment the complete list of all exam-complaints should only be visible for instructors
+            throw new AccessForbiddenException("Insufficient permission for these complaints");
+        }
+
+        List<Complaint> complaints = complaintService.getAllComplaintsByExamId(examId);
+        filterOutUselessDataFromComplaints(complaints, !isAtLeastInstructor);
+
+        return ResponseEntity.ok(getComplaintsByComplaintType(complaints, ComplaintType.COMPLAINT));
     }
 
     /**

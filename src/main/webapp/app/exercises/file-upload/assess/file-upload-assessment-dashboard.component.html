@@ -10,6 +10,10 @@
                     <th>
                         <a class="th-link">#</a>
                     </th>
+                    <th *ngIf="exercise.isAtLeastInstructor" jhiSortBy="participation.participantName">
+                        <a class="th-link" jhiTranslate="artemisApp.exercise.studentName">Student name</a>
+                        <fa-icon [icon]="'sort'"></fa-icon>
+                    </th>
                     <th jhiSortBy="submissionDate">
                         <a class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.submissionDate">Submission date</a>
                         <fa-icon [icon]="'sort'"></fa-icon>
@@ -24,10 +28,6 @@
                     </th>
                     <th jhiSortBy="durationInMinutes">
                         <a class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.duration">Duration</a>
-                        <fa-icon [icon]="'sort'"></fa-icon>
-                    </th>
-                    <th jhiSortBy="participation.participantName" *ngIf="exercise.isAtLeastInstructor">
-                        <a class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.student">Student</a>
                         <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
                     <th jhiSortBy="latestResult.assessor.name">
@@ -46,6 +46,9 @@
             <tbody>
                 <tr [ngStyle]="submission.optimal && { 'font-weight': 'bold' }" *ngFor="let submission of filteredSubmissions; let i = index">
                     <td>{{ i + 1 }}</td>
+                    <td *ngIf="exercise.isAtLeastInstructor">
+                        {{ submission.participation.participantName }}
+                    </td>
                     <td>{{ submission.submissionDate | artemisDate }}</td>
                     <td>
                         <jhi-result [participation]="submission.participation"></jhi-result>
@@ -63,9 +66,6 @@
                     <td>
                         {{ submission.durationInMinutes }}
                         {{ 'artemisApp.assessment.dashboard.minutes' | translate }}
-                    </td>
-                    <td *ngIf="exercise.isAtLeastInstructor">
-                        {{ submission.participation.participantName }}
                     </td>
                     <td>
                         <div *ngIf="submission.results?.length > 1 && submission.results[0].assessor">{{ submission.results[0].assessor!.name }}</div>

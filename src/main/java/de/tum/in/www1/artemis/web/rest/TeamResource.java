@@ -26,7 +26,10 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.TeamImportStrategyType;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.ParticipationService;
+import de.tum.in.www1.artemis.service.SubmissionService;
+import de.tum.in.www1.artemis.service.TeamService;
 import de.tum.in.www1.artemis.service.dto.TeamSearchUserDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -69,9 +72,12 @@ public class TeamResource {
 
     private final StudentParticipationRepository studentParticipationRepository;
 
+    private final TeamScoreRepository teamScoreRepository;
+
     public TeamResource(TeamRepository teamRepository, TeamService teamService, TeamWebsocketService teamWebsocketService, CourseRepository courseRepository,
             ExerciseRepository exerciseRepository, UserRepository userRepository, AuthorizationCheckService authCheckService, ParticipationService participationService,
-            SubmissionService submissionService, AuditEventRepository auditEventRepository, StudentParticipationRepository studentParticipationRepository) {
+            SubmissionService submissionService, AuditEventRepository auditEventRepository, StudentParticipationRepository studentParticipationRepository,
+            TeamScoreRepository teamScoreRepository) {
         this.teamRepository = teamRepository;
         this.teamService = teamService;
         this.teamWebsocketService = teamWebsocketService;
@@ -83,6 +89,7 @@ public class TeamResource {
         this.submissionService = submissionService;
         this.auditEventRepository = auditEventRepository;
         this.studentParticipationRepository = studentParticipationRepository;
+        this.teamScoreRepository = teamScoreRepository;
     }
 
     /**
@@ -280,6 +287,9 @@ public class TeamResource {
         auditEventRepository.add(auditEvent);
         // Delete all participations of the team first and then the team itself
         participationService.deleteAllByTeamId(id, false, false);
+        // delete all team scores associated with the team
+        teamScoreRepository.deleteAllByTeam(team);
+
         teamRepository.delete(team);
 
         teamWebsocketService.sendTeamAssignmentUpdate(exercise, team, null);

@@ -1,6 +1,7 @@
 import { Component, Input } from '@angular/core';
-import { MIN_POINTS_GREEN, MIN_POINTS_ORANGE } from 'app/app.constants';
+import { MIN_SCORE_GREEN, MIN_SCORE_ORANGE } from 'app/app.constants';
 import { Result } from 'app/entities/result.model';
+import { round } from 'app/shared/util/utils';
 
 // Modal -> Result details view
 @Component({
@@ -9,17 +10,19 @@ import { Result } from 'app/entities/result.model';
     styleUrls: ['./result-history.scss'],
 })
 export class ResultHistoryComponent {
+    readonly round = round;
+
     @Input() results: Result[];
     @Input() maxScore: number;
     @Input() showPreviousDivider = false;
 
     /**
-     * get string for icon if score bigger than 75
+     * get string for icon if score bigger than 80
      * @param {Result} result
      * @return {string} icon
      */
     resultIcon(result: Result): string {
-        if (result.score && result.score >= 75) {
+        if (result.score && result.score >= MIN_SCORE_GREEN) {
             return 'check';
         } else {
             return 'times';
@@ -32,9 +35,9 @@ export class ResultHistoryComponent {
      * @return {string}
      */
     resultClass(result: Result): string {
-        if (result.score && result.score >= MIN_POINTS_GREEN) {
+        if (result.score && result.score >= MIN_SCORE_GREEN) {
             return 'success';
-        } else if (result.score && result.score >= MIN_POINTS_ORANGE) {
+        } else if (result.score && result.score >= MIN_SCORE_ORANGE) {
             return 'warning';
         } else {
             return 'danger';

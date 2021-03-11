@@ -3,7 +3,8 @@
         "assessment": {
             "assessment": "Bewertung",
             "testRunAssessment": "Bewertungstestlauf",
-            "unreferencedFeedback": "Feedback für fehlende Elemente",
+            "additionalFeedback": "Zusätzliches Feedback",
+            "feedback": "Feedback",
             "automaticGenerated": "Automatisch erstelltes Feedback",
             "error": {
                 "assessmentDueDateOver": "Die Einreichungsfrist der Bewertung für diese Aufgabe ist vorbei."
@@ -70,6 +71,7 @@
                     "title": "Gesperrte Bewertungen"
                 },
                 "title": "Von dir gesperrte Bewertungen",
+                "titleAll": "Alle gesperrten Bewertungen",
                 "exercise": "Aufgabe",
                 "type": "Aufgabentyp",
                 "empty": "Keine von dir gesperrten Bewertungen vorhanden!"

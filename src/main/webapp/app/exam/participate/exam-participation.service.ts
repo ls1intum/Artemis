@@ -11,6 +11,9 @@ import { Exam } from 'app/entities/exam.model';
 import * as moment from 'moment';
 import { getLatestSubmissionResult } from 'app/entities/submission.model';
 import { cloneDeep } from 'lodash';
+import { ParticipationType } from 'app/entities/participation/participation.model';
+import { addUserIndependentRepositoryUrl } from 'app/overview/participation-utils';
+import { ExerciseType } from 'app/entities/exercise.model';
 
 @Injectable({ providedIn: 'root' })
 export class ExamParticipationService {
@@ -72,7 +75,6 @@ export class ExamParticipationService {
                 if (studentExam.examSessions && studentExam.examSessions.length > 0 && studentExam.examSessions[0].sessionToken) {
                     this.saveExamSessionTokenToSessionStorage(studentExam.examSessions[0].sessionToken);
                 }
-
                 return this.convertStudentExamFromServer(studentExam);
             }),
             catchError(() => {
@@ -91,6 +93,7 @@ export class ExamParticipationService {
         const url = this.getResourceURL(courseId, examId) + '/start';
         return this.httpClient.get<StudentExam>(url).map((studentExam: StudentExam) => {
             const convertedStudentExam = this.convertStudentExamDateFromServer(studentExam);
+            this.adjustRepositoryUrlsForProgrammingExercises(convertedStudentExam);
             this.currentlyLoadedStudentExam.next(convertedStudentExam);
             return convertedStudentExam;
         });
@@ -100,6 +103,7 @@ export class ExamParticipationService {
         const url = this.getResourceURL(courseId, examId) + '/test-run/' + testRunId + '/conduction';
         return this.httpClient.get<StudentExam>(url).map((studentExam: StudentExam) => {
             const convertedStudentExam = this.convertStudentExamDateFromServer(studentExam);
+            this.adjustRepositoryUrlsForProgrammingExercises(convertedStudentExam);
             this.currentlyLoadedStudentExam.next(convertedStudentExam);
             return convertedStudentExam;
         });
@@ -203,6 +207,7 @@ export class ExamParticipationService {
     private convertStudentExamFromServer(studentExam: StudentExam): StudentExam {
         studentExam.exercises = this.exerciseService.convertExercisesDateFromServer(studentExam.exercises);
         studentExam.exam = this.convertExamDateFromServer(studentExam.exam);
+        this.adjustRepositoryUrlsForProgrammingExercises(studentExam);
         return studentExam;
     }
 
@@ -221,5 +226,20 @@ export class ExamParticipationService {
     private convertStudentExamDateFromServer(studentExam: StudentExam): StudentExam {
         studentExam.exam = this.convertExamDateFromServer(studentExam.exam);
         return studentExam;
+    }
+
+    private adjustRepositoryUrlsForProgrammingExercises(studentExam: StudentExam) {
+        // add user indepentend repositoryUrl to all student participations
+        if (studentExam.exercises) {
+            studentExam.exercises!.forEach((ex) => {
+                if (ex.type === ExerciseType.PROGRAMMING && ex.studentParticipations) {
+                    ex.studentParticipations!.forEach((sp) => {
+                        if (sp.type === ParticipationType.PROGRAMMING) {
+                            addUserIndependentRepositoryUrl(sp);
+                        }
+                    });
+                }
+            });
+        }
     }
 }
