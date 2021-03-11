@@ -13,8 +13,10 @@ import { Result } from 'app/entities/result.model';
 import { AlertComponent } from 'app/shared/alert/alert.component';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { OrionFilterDirective } from 'app/shared/orion/orion-filter.directive';
+import { ParticipantScoresService, ScoresDTO } from 'app/shared/participant-scores/participant-scores.service';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe.ts';
+import { round } from 'app/shared/util/utils';
 import * as chai from 'chai';
 import * as moment from 'moment';
 import { JhiSortByDirective, JhiSortDirective, JhiTranslateDirective } from 'ng-jhipster';
@@ -22,6 +24,7 @@ import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { MomentModule } from 'ngx-moment';
 import { of } from 'rxjs';
 import * as sinon from 'sinon';
+import { SinonStub } from 'sinon';
 import * as sinonChai from 'sinon-chai';
 import { ArtemisTestModule } from '../../../test.module';
 
@@ -165,6 +168,17 @@ describe('CourseScoresComponent', () => {
         exercise: modelingIncludedWith10Points0BonusPoints,
         results: [{ score: 50 } as Result],
     } as StudentParticipation;
+    const courseScoreStudent1 = new ScoresDTO();
+    courseScoreStudent1.studentId = user1.id;
+    courseScoreStudent1.pointsAchieved = 40;
+    courseScoreStudent1.studentLogin = user1.login;
+    courseScoreStudent1.scoreAchieved = round((40 / 30) * 100, 1);
+    const courseScoreStudent2 = new ScoresDTO();
+    courseScoreStudent2.studentId = user2.id;
+    courseScoreStudent2.pointsAchieved = 15;
+    courseScoreStudent2.studentLogin = user2.login;
+    courseScoreStudent2.scoreAchieved = round((15 / 30) * 100, 1);
+    let findCourseScoresSpy: SinonStub;
     const participation9 = {
         id: 9,
         student: user1,
@@ -225,13 +239,22 @@ describe('CourseScoresComponent', () => {
                 MockDirective(JhiTranslateDirective),
                 MockTranslateValuesDirective,
             ],
-            providers: [{ provide: ActivatedRoute, useValue: { params: of({ courseId: 1 }) } }, MockProvider(TranslateService)],
+            providers: [
+                {
+                    provide: ActivatedRoute,
+                    useValue: { params: of({ courseId: 1 }) },
+                },
+                MockProvider(TranslateService),
+                MockProvider(ParticipantScoresService),
+            ],
         })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(CourseScoresComponent);
                 component = fixture.componentInstance;
                 courseService = fixture.debugElement.injector.get(CourseManagementService);
+                const participationScoreService = fixture.debugElement.injector.get(ParticipantScoresService);
+                findCourseScoresSpy = sinon.stub(participationScoreService, 'findCourseScores').returns(of(new HttpResponse({ body: [courseScoreStudent1, courseScoreStudent2] })));
             });
     });
 
@@ -246,6 +269,60 @@ describe('CourseScoresComponent', () => {
         expect(component).to.be.ok;
     });
 
+    it('should not log error on sentry when correct participant score calculation', () => {
+        spyOn(courseService, 'findWithExercises').and.returnValue(of(new HttpResponse({ body: course })));
+        spyOn(courseService, 'findAllParticipationsWithResults').and.returnValue(of(participations));
+        const errorSpy = sinon.spy(component, 'logErrorOnSentry');
+        fixture.detectChanges();
+        expect(errorSpy).to.not.have.been.called;
+    });
+
+    it('should log error on sentry when missing participant score calculation', () => {
+        spyOn(courseService, 'findWithExercises').and.returnValue(of(new HttpResponse({ body: course })));
+        spyOn(courseService, 'findAllParticipationsWithResults').and.returnValue(of(participations));
+        findCourseScoresSpy.returns(of(new HttpResponse({ body: [] })));
+        const errorSpy = sinon.spy(component, 'logErrorOnSentry');
+        fixture.detectChanges();
+        expect(errorSpy).to.have.been.calledTwice;
+    });
+
+    it('should log error on sentry when wrong points score calculation', () => {
+        spyOn(courseService, 'findWithExercises').and.returnValue(of(new HttpResponse({ body: course })));
+        spyOn(courseService, 'findAllParticipationsWithResults').and.returnValue(of(participations));
+        const cs1 = new ScoresDTO();
+        cs1.studentId = user1.id;
+        cs1.pointsAchieved = 99;
+        cs1.studentLogin = user1.login;
+        cs1.scoreAchieved = round((40 / 30) * 100, 1);
+        const cs2 = new ScoresDTO();
+        cs2.studentId = user2.id;
+        cs2.pointsAchieved = 99;
+        cs2.studentLogin = user2.login;
+        cs2.scoreAchieved = round((15 / 30) * 100, 1);
+        findCourseScoresSpy.returns(of(new HttpResponse({ body: [cs1, cs2] })));
+        const errorSpy = sinon.spy(component, 'logErrorOnSentry');
+        fixture.detectChanges();
+        expect(errorSpy).to.have.been.calledTwice;
+    });
+
+    it('should log error on sentry when wrong score calculation', () => {
+        spyOn(courseService, 'findWithExercises').and.returnValue(of(new HttpResponse({ body: course })));
+        spyOn(courseService, 'findAllParticipationsWithResults').and.returnValue(of(participations));
+        const cs1 = new ScoresDTO();
+        cs1.studentId = user1.id;
+        cs1.pointsAchieved = 40;
+        cs1.studentLogin = user1.login;
+        cs1.scoreAchieved = 99;
+        const cs2 = new ScoresDTO();
+        cs2.studentId = user2.id;
+        cs2.pointsAchieved = 15;
+        cs2.studentLogin = user2.login;
+        cs2.scoreAchieved = 99;
+        findCourseScoresSpy.returns(of(new HttpResponse({ body: [cs1, cs2] })));
+        const errorSpy = sinon.spy(component, 'logErrorOnSentry');
+        fixture.detectChanges();
+        expect(errorSpy).to.have.been.calledTwice;
+    });
     it('should filter and sort exercises', () => {
         spyOn(courseService, 'findWithExercises').and.returnValue(of(new HttpResponse({ body: course })));
         fixture.detectChanges();
