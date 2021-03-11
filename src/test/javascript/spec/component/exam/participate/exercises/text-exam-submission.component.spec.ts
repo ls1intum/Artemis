@@ -1,5 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
+import * as sinon from 'sinon';
+import * as sinonChai from 'sinon-chai';
 import { By } from '@angular/platform-browser';
 import { RouterTestingModule } from '@angular/router/testing';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
@@ -20,8 +22,6 @@ import { ArtemisSharedModule } from 'app/shared/shared.module';
 import * as chai from 'chai';
 import { JhiAlertService } from 'ng-jhipster';
 import { MockComponent, MockModule, MockPipe, MockProvider } from 'ng-mocks';
-import * as sinon from 'sinon';
-import * as sinonChai from 'sinon-chai';
 
 chai.use(sinonChai);
 const expect = chai.expect;

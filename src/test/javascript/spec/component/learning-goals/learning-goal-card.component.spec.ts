@@ -15,9 +15,6 @@ import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import * as sinon from 'sinon';
 import * as sinonChai from 'sinon-chai';
 
-chai.use(sinonChai);
-const expect = chai.expect;
-
 @Component({ selector: 'jhi-circular-progress-bar', template: '' })
 class CircularProgressBarStubComponent {
     @Input()
@@ -25,6 +22,9 @@ class CircularProgressBarStubComponent {
     @Input()
     progressText = 'Completed';
 }
+
+chai.use(sinonChai);
+const expect = chai.expect;
 
 describe('LearningGoalCardComponent', () => {
     let learningGoalCardComponentFixture: ComponentFixture<LearningGoalCardComponent>;
