@@ -1598,8 +1598,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
         exam = database.addExerciseGroupsAndExercisesToExam(exam, false);
 
-        var stats = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/stats-for-exam-assessment-dashboard", HttpStatus.OK,
-                StatsForInstructorDashboardDTO.class);
+        var stats = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/stats-for-exam-assessment-dashboard", HttpStatus.OK, StatsForDashboardDTO.class);
         assertThat(stats.getNumberOfSubmissions()).isInstanceOf(DueDateStat.class);
         assertThat(stats.getTutorLeaderboardEntries()).isInstanceOf(List.class);
         assertThat(stats.getNumberOfAssessmentsOfCorrectionRounds()).isInstanceOf(DueDateStat[].class);
@@ -1657,8 +1656,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         }
 
         // check the stats again - check the count of submitted submissions
-        stats = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/stats-for-exam-assessment-dashboard", HttpStatus.OK,
-                StatsForInstructorDashboardDTO.class);
+        stats = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/stats-for-exam-assessment-dashboard", HttpStatus.OK, StatsForDashboardDTO.class);
         assertThat(stats.getNumberOfAssessmentLocks()).isEqualTo(0L);
         // 75 = (15 users * 5 exercises); quiz submissions are not counted
         assertThat(stats.getNumberOfSubmissions().getInTime()).isEqualTo(75L);
@@ -1690,8 +1688,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
             }
         }
         // check the stats again
-        stats = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/stats-for-exam-assessment-dashboard", HttpStatus.OK,
-                StatsForInstructorDashboardDTO.class);
+        stats = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/stats-for-exam-assessment-dashboard", HttpStatus.OK, StatsForDashboardDTO.class);
         assertThat(stats.getNumberOfAssessmentLocks()).isEqualTo(75L);
         // 75 = (15 users * 5 exercises); quiz submissions are not counted
         assertThat(stats.getNumberOfSubmissions().getInTime()).isEqualTo(75L);
@@ -1716,8 +1713,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         }
 
         // check the stats again
-        stats = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/stats-for-exam-assessment-dashboard", HttpStatus.OK,
-                StatsForInstructorDashboardDTO.class);
+        stats = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/stats-for-exam-assessment-dashboard", HttpStatus.OK, StatsForDashboardDTO.class);
         assertThat(stats.getNumberOfAssessmentLocks()).isEqualTo(0L);
         // 75 = (15 users * 5 exercises); quiz submissions are not counted
         assertThat(stats.getNumberOfSubmissions().getInTime()).isEqualTo(75L);

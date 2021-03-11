@@ -769,9 +769,9 @@ public class ExamService {
      * @param examId    - the id of the exam to retrieve stats from
      * @return data about a exam including all exercises, plus some data for the tutor as tutor status for assessment
      */
-    public StatsForInstructorDashboardDTO getStatsForExamAssessmentDashboard(Course course, Long examId) {
+    public StatsForDashboardDTO getStatsForExamAssessmentDashboard(Course course, Long examId) {
         Exam exam = examRepository.findById(examId).orElseThrow();
-        StatsForInstructorDashboardDTO stats = new StatsForInstructorDashboardDTO();
+        StatsForDashboardDTO stats = new StatsForDashboardDTO();
 
         final long numberOfSubmissions = submissionRepository.countByExamIdSubmittedSubmissionsIgnoreTestRuns(examId)
                 + programmingExerciseRepository.countSubmissionsByExamIdSubmitted(examId);

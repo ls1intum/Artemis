@@ -2,7 +2,7 @@ package de.tum.in.www1.artemis.web.rest.dto;
 
 import java.util.List;
 
-public class StatsForInstructorDashboardDTO {
+public class StatsForDashboardDTO {
 
     private Long numberOfStudents;
 
@@ -28,7 +28,7 @@ public class StatsForInstructorDashboardDTO {
 
     private List<TutorLeaderboardDTO> tutorLeaderboardEntries;
 
-    public StatsForInstructorDashboardDTO() {
+    public StatsForDashboardDTO() {
     }
 
     public Long getNumberOfStudents() {
