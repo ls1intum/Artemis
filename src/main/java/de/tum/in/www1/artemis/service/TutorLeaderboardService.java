@@ -154,7 +154,7 @@ public class TutorLeaderboardService {
             long numberOfComplaintResponses = 0L;
             long numberOfAnsweredMoreFeedbackRequests = 0L;
             long numberOfTutorMoreFeedbackRequests = 0L;
-            long points = 0L;
+            double points = 0.0;
 
             for (var assessment : tutorLeaderboardAssessments) {
                 if (tutor.getId().equals(assessment.getUserId())) {
