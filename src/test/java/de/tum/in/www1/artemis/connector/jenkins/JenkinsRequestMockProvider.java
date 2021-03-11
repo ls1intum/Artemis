@@ -184,7 +184,7 @@ public class JenkinsRequestMockProvider {
 
     public void mockUpdatePlanRepository(String projectKey, String planName, boolean useLegacyXml) throws IOException, URISyntaxException {
         var jobConfigXmlFilename = useLegacyXml ? "legacy-job-config.xml" : "job-config.xml";
-        var mockXml = loadFileFromResources(jobConfigXmlFilename);
+        var mockXml = loadFileFromResources("test-data/jenkins-response/" + jobConfigXmlFilename);
 
         mockGetFolderJob(projectKey, new FolderJob());
         mockGetJobXmlForBuildPlanWith(projectKey, mockXml);
