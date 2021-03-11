@@ -46,14 +46,14 @@ public interface ParticipantScoreRepository extends JpaRepository<ParticipantSco
             FROM ParticipantScore p
                 WHERE p.exercise IN :exercises
                 """)
-    Long findAvgRatedScore(@Param("exercises") Set<Exercise> exercises);
+    Double findAvgRatedScore(@Param("exercises") Set<Exercise> exercises);
 
     @Query("""
             SELECT AVG(p.lastScore)
             FROM ParticipantScore p
             WHERE p.exercise IN :exercises
             """)
-    Long findAvgScore(@Param("exercises") Set<Exercise> exercises);
+    Double findAvgScore(@Param("exercises") Set<Exercise> exercises);
 
     @Query("""
                     SELECT new de.tum.in.www1.artemis.web.rest.dto.ExerciseScoresAggregatedInformation(p.exercise.id, AVG(p.lastRatedScore), MAX(p.lastRatedScore))

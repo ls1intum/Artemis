@@ -234,7 +234,7 @@ public class ResultListenerIntegrationTest extends AbstractSpringIntegrationBamb
         ParticipantScore originalParticipantScore = setupTestScenarioWithOneResultSaved(false, isTeamTest);
         Result originalResult = originalParticipantScore.getLastResult();
         // update the associated student score should trigger the entity listener and update the student score
-        originalResult.setScore(0L);
+        originalResult.setScore(0D);
         Result updatedResult = resultRepository.saveAndFlush(originalResult);
         verifyStructureOfParticipantScoreInDatabase(isTeamTest, updatedResult.getId(), updatedResult.getScore(), null, null);
     }
@@ -256,7 +256,7 @@ public class ResultListenerIntegrationTest extends AbstractSpringIntegrationBamb
         ParticipantScore originalParticipantScore = setupTestScenarioWithOneResultSaved(true, isTeamTest);
         Result originalResult = originalParticipantScore.getLastResult();
         // update the associated student score should trigger the entity listener and update the student score
-        originalResult.setScore(0L);
+        originalResult.setScore(0D);
         Result updatedResult = resultRepository.saveAndFlush(originalResult);
         verifyStructureOfParticipantScoreInDatabase(isTeamTest, updatedResult.getId(), updatedResult.getScore(), updatedResult.getId(), updatedResult.getScore());
     }
@@ -329,7 +329,7 @@ public class ResultListenerIntegrationTest extends AbstractSpringIntegrationBamb
     }
 
     private void assertParticipantScoreStructure(ParticipantScore participantScore, Long expectedExerciseId, Long expectedParticipantId, Long expectedLastResultId,
-            Long expectedLastScore, Long expectedLastRatedResultId, Long expectedLastRatedScore, Double expectedLastPoints, Double expectedLastRatedPoints) {
+            Double expectedLastScore, Long expectedLastRatedResultId, Double expectedLastRatedScore, Double expectedLastPoints, Double expectedLastRatedPoints) {
         assertThat(participantScore.getExercise().getId()).isEqualTo(expectedExerciseId);
 
         if (participantScore.getClass().equals(StudentScore.class)) {
@@ -411,8 +411,8 @@ public class ResultListenerIntegrationTest extends AbstractSpringIntegrationBamb
         return savedParticipantScore;
     }
 
-    private void verifyStructureOfParticipantScoreInDatabase(boolean isTeamTest, Long expectedLastResultId, Long expectedLastScore, Long expectedLastRatedResultId,
-            Long expectedLastRatedScore) {
+    private void verifyStructureOfParticipantScoreInDatabase(boolean isTeamTest, Long expectedLastResultId, Double expectedLastScore, Long expectedLastRatedResultId,
+            Double expectedLastRatedScore) {
         Long idOfExercise;
         Participant participant;
         if (isTeamTest) {

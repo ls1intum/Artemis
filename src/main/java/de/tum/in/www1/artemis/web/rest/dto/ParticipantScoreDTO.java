@@ -25,18 +25,18 @@ public class ParticipantScoreDTO {
 
     public Long lastResultId;
 
-    public Long lastResultScore;
+    public Double lastResultScore;
 
     public Double lastPoints;
 
     public Long lastRatedResultId;
 
-    public Long lastRatedResultScore;
+    public Double lastRatedResultScore;
 
     public Double lastRatedPoints;
 
-    public ParticipantScoreDTO(Long id, Long userId, String userName, Long teamId, String teamName, Long exerciseId, String exerciseTitle, Long lastResultId, Long lastResultScore,
-            Long lastRatedResultId, Long lastRatedResultScore, Double lastPoints, Double lastRatedPoints) {
+    public ParticipantScoreDTO(Long id, Long userId, String userName, Long teamId, String teamName, Long exerciseId, String exerciseTitle, Long lastResultId,
+            Double lastResultScore, Long lastRatedResultId, Double lastRatedResultScore, Double lastPoints, Double lastRatedPoints) {
         this.id = id;
         this.userId = userId;
         this.userName = userName;
@@ -86,9 +86,9 @@ public class ParticipantScoreDTO {
         String exerciseTitle = participantScore.getExercise() != null && participantScore.getExercise().getTitle() != null ? participantScore.getExercise().getTitle() : null;
         Long exerciseId = participantScore.getExercise() != null ? participantScore.getExercise().getId() : null;
         Long lastResultId = participantScore.getLastResult() != null ? participantScore.getLastResult().getId() : null;
-        Long lastResultScore = participantScore.getLastScore();
+        Double lastResultScore = participantScore.getLastScore();
         Long lastRatedResultId = participantScore.getLastRatedResult() != null ? participantScore.getLastRatedResult().getId() : null;
-        Long lastRatedResultScore = participantScore.getLastRatedScore();
+        Double lastRatedResultScore = participantScore.getLastRatedScore();
         Double lastPoints = participantScore.getLastPoints();
         Double lastRatedPoints = participantScore.getLastRatedPoints();
 

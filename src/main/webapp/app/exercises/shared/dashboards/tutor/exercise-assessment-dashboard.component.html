@@ -29,6 +29,9 @@
                     [(secondCorrectionEnabled)]="secondCorrectionEnabled"
                     [(toggelingSecondCorrectionButton)]="toggelingSecondCorrectionButton"
                 ></jhi-second-correction-enable-button>
+                <a class="btn btn-primary btn-sm ml-1" [routerLink]="['/course-management', courseId, exercise.type + '-exercises', exercise.id, 'assessment']">
+                    <span jhiTranslate="artemisApp.assessmentDashboard.submissions">Submissions</span>
+                </a>
             </ng-container>
         </div>
 
@@ -41,7 +44,6 @@
                         <span class="ml-1 result--late text-nowrap">| {{ 'artemisApp.exerciseAssessmentDashboard.stats.late' | translate }} </span>
                     </div>
                 </div>
-
                 <div class="row mb-1">
                     <div class="col-8">{{ 'artemisApp.exerciseAssessmentDashboard.numberOfSubmissions' | translate }}</div>
                     <div class="col-4">
@@ -282,7 +284,7 @@
                                     </td>
                                     <td>
                                         <span *ngIf="submission.results[correctionRound] != undefined && submission.results[correctionRound]!.score != undefined"
-                                            >{{ submission.results[correctionRound]!.score }} %</span
+                                            >{{ round(submission.results[correctionRound]!.score) }} %</span
                                         >
                                     </td>
                                     <td *ngIf="exercise.type === ExerciseType.TEXT">
@@ -314,7 +316,7 @@
                                         </ng-container>
                                     </td>
                                 </tr>
-                                <tr
+                                <ng-container
                                     *ngIf="
                                         unassessedSubmissionByCorrectionRound &&
                                         unassessedSubmissionByCorrectionRound.get(correctionRound)?.id > 0 &&
@@ -322,35 +324,55 @@
                                         !isTestRun
                                     "
                                 >
-                                    <td></td>
-                                    <td>{{ unassessedSubmissionByCorrectionRound.get(correctionRound)?.submissionDate | artemisDate }}</td>
+                                    <tr>
+                                        <td></td>
+                                        <td>{{ unassessedSubmissionByCorrectionRound.get(correctionRound)?.submissionDate | artemisDate }}</td>
 
-                                    <td></td>
-                                    <td>{{ 'artemisApp.exerciseAssessmentDashboard.new' | translate }}</td>
-                                    <td></td>
-                                    <td *ngIf="exercise.type === ExerciseType.TEXT">
-                                        {{
-                                            'artemisApp.exerciseAssessmentDashboard.languages.' + language(unassessedSubmissionByCorrectionRound.get(correctionRound)!) | translate
-                                        }}
-                                    </td>
-                                    <td>
-                                        <button
-                                            class="btn btn-success btn-sm"
-                                            (click)="openAssessmentEditor('new', correctionRound)"
-                                            [disabled]="exercise === exerciseForGuidedTour || openingAssessmentEditorForNewSubmission"
-                                            [class.guided-tour]="exercise === exerciseForGuidedTour"
-                                            [ngStyle]="exercise === exerciseForGuidedTour && { cursor: 'not-allowed' }"
-                                        >
-                                            <fa-icon *ngIf="openingAssessmentEditorForNewSubmission" [icon]="'spinner'" [spin]="true"></fa-icon>
-                                            <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>
-                                            {{ 'artemisApp.exerciseAssessmentDashboard.startAssessment' | translate }}
-                                        </button>
-                                    </td>
-                                </tr>
+                                        <td></td>
+                                        <td>{{ 'artemisApp.exerciseAssessmentDashboard.new' | translate }}</td>
+                                        <td></td>
+                                        <td *ngIf="exercise.type === ExerciseType.TEXT">
+                                            {{
+                                                'artemisApp.exerciseAssessmentDashboard.languages.' + language(unassessedSubmissionByCorrectionRound.get(correctionRound)!)
+                                                    | translate
+                                            }}
+                                        </td>
+                                        <td>
+                                            <button
+                                                class="btn btn-success btn-sm"
+                                                (click)="openAssessmentEditor('new', correctionRound)"
+                                                [disabled]="exercise === exerciseForGuidedTour || openingAssessmentEditorForNewSubmission"
+                                                [class.guided-tour]="exercise === exerciseForGuidedTour"
+                                                [ngStyle]="exercise === exerciseForGuidedTour && { cursor: 'not-allowed' }"
+                                            >
+                                                <fa-icon *ngIf="openingAssessmentEditorForNewSubmission" [icon]="'spinner'" [spin]="true"></fa-icon>
+                                                <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>
+                                                {{ 'artemisApp.exerciseAssessmentDashboard.startAssessment' | translate }}
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </ng-container>
                             </tbody>
                         </table>
+                        <ng-container
+                            *ngIf="
+                                !(
+                                    unassessedSubmissionByCorrectionRound &&
+                                    unassessedSubmissionByCorrectionRound.get(correctionRound)?.id > 0 &&
+                                    !exercise.teamMode &&
+                                    !isTestRun
+                                ) && numberOfSubmissions.inTime != roundState.inTime
+                            "
+                        >
+                            <div class="alert alert-info">
+                                {{ 'artemisApp.exerciseAssessmentDashboard.noSubmissionsBecauseOfOtherLockedSubmissions' | translate }}
+                            </div>
+                        </ng-container>
                     </div>
                 </ng-container>
+                <div class="alert alert-info" *ngIf="correctionRound == 1">
+                    {{ 'artemisApp.exerciseAssessmentDashboard.noSubmissionsBecauseFirstAssessedByYourself' | translate }}
+                </div>
                 <ng-template #noSubmissions>
                     <jhi-assessment-warning [exercise]="exercise"></jhi-assessment-warning>
                     <div class="alert alert-info" *ngIf="!exercise.teamMode; else teamAssessmentInfo">

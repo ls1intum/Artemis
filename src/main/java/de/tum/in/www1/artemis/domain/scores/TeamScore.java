@@ -28,9 +28,9 @@ public class TeamScore extends ParticipantScore {
         Long teamId = getTeam() != null ? getTeam().getId() : null;
         Long exerciseId = getExercise() != null ? getExercise().getId() : null;
         Long lastResultId = getLastResult() != null ? getLastResult().getId() : null;
-        Long lastResultScore = getLastScore();
+        Double lastResultScore = getLastScore();
         Long lastRatedResultId = getLastRatedResult() != null ? getLastRatedResult().getId() : null;
-        Long lastRatedScore = getLastRatedScore();
+        Double lastRatedScore = getLastRatedScore();
 
         return "TeamScore{" + "id=" + id + ", teamId=" + teamId + ", exerciseId=" + exerciseId + ", lastResultId=" + lastResultId + ", lastResultScore=" + lastResultScore
                 + ", lastRatedResultId=" + lastRatedResultId + ", lastRatedResultScore=" + lastRatedScore + '}';
