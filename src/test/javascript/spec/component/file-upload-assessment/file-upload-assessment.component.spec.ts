@@ -514,7 +514,7 @@ describe('FileUploadAssessmentComponent', () => {
                 comp.exerciseId.toString(),
                 'submissions',
                 returnedSubmission.id!.toString(),
-                'assessment'
+                'assessment',
             ];
             expect(navigateStub).to.have.been.calledWith(expectedUrl);
             expect(getFileUploadSubmissionForExerciseWithoutAssessmentStub).to.have.been.called;
