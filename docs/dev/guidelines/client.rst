@@ -360,12 +360,12 @@ To prevent errors for strict template rule in TypeScript, Artemis uses following
 
 Use ArtemisTranslatePipe instead of TranslatePipe
 **************************************************
-- placeholder="{{ 'global.form.newpassword.placeholder' | translate }}"
-+ placeholder="{{ 'global.form.newpassword.placeholder' | artemisTranslate }}"
+Do not use placeholder="{{ 'global.form.newpassword.placeholder' | translate }}"
+Use placeholder="{{ 'global.form.newpassword.placeholder' | artemisTranslate }}"
 
 Use ArtemisTimeAgoPipe instead of TimeAgoPipe
 *********************************************
-- <span [ngbTooltip]="submittedDate | artemisDate">{{ submittedDate | amTimeAgo }}</span>
-+ <span [ngbTooltip]="submittedDate | artemisDate">{{ submittedDate | artemisTimeAgo }}</span>
+Do not use <span [ngbTooltip]="submittedDate | artemisDate">{{ submittedDate | amTimeAgo }}</span>
+Use <span [ngbTooltip]="submittedDate | artemisDate">{{ submittedDate | artemisTimeAgo }}</span>
 
 Some parts of these guidelines are adapted from https://github.com/microsoft/TypeScript-wiki/blob/master/Coding-guidelines.md
