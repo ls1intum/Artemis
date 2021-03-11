@@ -82,6 +82,7 @@
             "complaintHint": "Shows complaints about assessments of other tutors. Note: complaints about your assessments are not shown here.",
             "moreFeedbackRequestHint": "Shows more feedback requests for your assessments.",
             "noSubmissionsBecauseOfOtherLockedSubmissions": "All submissions are locked by other tutors or you.",
+            "noSubmissionsInfo": "There are {{freeAssessments}} out of {{openAssessments}} open assessments that you can correct. ({{lockedSubmissionsByOtherTutor}} submissions are locked by other tutors, you have corrected {{submissionsCorrectedInFirstRound}} submissions in the first correction.",
             "noSubmissionsBecauseFirstAssessedByYourself": "You can only assess submissions in the second correction round, which you have not assessed in the first round."
         }
     }

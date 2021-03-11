@@ -82,6 +82,7 @@
             "complaintHint": "Zeigt Beschwerden über Bewertungen von anderen Tutoren. Beachte: Beschwerden über deine Bewertungen werden hier nicht angezeigt.",
             "moreFeedbackRequestHint": "Zeigt Anfragen für weiteres Feedback von deinen Bewertungen an.",
             "noSubmissionsBecauseOfOtherLockedSubmissions": "Alle Einreichungen sind von anderen Tutoren gesperrt.",
+            "noSubmissionsInfo": "There are {{freeAssessments}} out of {{openAssessments}} open assessments that you can correct. ({{lockedSubmissionsByOtherTutor}} submissions are locked by other tutors, you have corrected {{submissionsCorrectedInFirstRound}} submissions in the first correction.",
             "noSubmissionsBecauseFirstAssessedByYourself": "Nur Einreichungen die du nicht selbst in der ersten Korrekturrunde bearbeitet hast können korrigiert werden."
         }
     }

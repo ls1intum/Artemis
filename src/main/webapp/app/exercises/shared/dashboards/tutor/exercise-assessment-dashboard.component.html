@@ -365,7 +365,16 @@
                             "
                         >
                             <div class="alert alert-info">
-                                {{ 'artemisApp.exerciseAssessmentDashboard.noSubmissionsBecauseOfOtherLockedSubmissions' | translate }}
+                                <span
+                                    jhiTranslate="artemisApp.exerciseAssessmentDashboard.noSubmissionsInfo"
+                                    [translateValues]="{
+                                        freeAssessments: 1,
+                                        openAssessments: numberOfSubmissions.inTime - numberOfAssessmentsOfCorrectionRounds[1].inTime,
+                                        lockedSubmissionsByOtherTutor: 3,
+                                        submissionsCorrectedInFirstRound: 3
+                                    }"
+                                >
+                                </span>
                             </div>
                         </ng-container>
                     </div>
