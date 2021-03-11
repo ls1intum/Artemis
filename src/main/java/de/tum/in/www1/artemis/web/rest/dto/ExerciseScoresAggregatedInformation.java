@@ -6,9 +6,9 @@ public class ExerciseScoresAggregatedInformation {
 
     public Double averageScoreAchieved;
 
-    public Long maxScoreAchieved;
+    public Double maxScoreAchieved;
 
-    public ExerciseScoresAggregatedInformation(Long exerciseId, Double averageScoreAchieved, Long maxScoreAchieved) {
+    public ExerciseScoresAggregatedInformation(Long exerciseId, Double averageScoreAchieved, Double maxScoreAchieved) {
         this.exerciseId = exerciseId;
         this.averageScoreAchieved = averageScoreAchieved;
         this.maxScoreAchieved = maxScoreAchieved;
@@ -22,7 +22,7 @@ public class ExerciseScoresAggregatedInformation {
         return averageScoreAchieved;
     }
 
-    public Long getMaxScoreAchieved() {
+    public Double getMaxScoreAchieved() {
         return maxScoreAchieved;
     }
 }
