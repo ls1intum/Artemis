@@ -13,7 +13,7 @@
             <div class="container">
                 <div *ngFor="let feature of features" id="featureOverview{{ feature.id }}" class="box" (click)="navigateToFeature(feature.id)">
                     <div class="icon">
-                        <fa-icon class="fa" icon="{{ feature.icon }}" aria-hidden="true"></fa-icon>
+                        <fa-icon class="fa" [icon]="feature.icon" aria-hidden="true"></fa-icon>
                         <div class="title">
                             <h3>{{ feature.title | translate }}</h3>
                         </div>

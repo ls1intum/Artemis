@@ -38,14 +38,14 @@
                     <hr />
                     <ul class="list-unstyled">
                         <li class="list-group-item border-1">
-                            <span>
-                                <jhi-exam-checklist-check [checkAttribute]="exam.exerciseGroups?.length > 0"></jhi-exam-checklist-check>
+                            <span *ngIf="exam.exerciseGroups">
+                                <jhi-exam-checklist-check [checkAttribute]="exam.exerciseGroups.length > 0"></jhi-exam-checklist-check>
                                 <span>{{ 'artemisApp.examManagement.checklist.textitems.leastoneexercisegroup' | translate }}</span>
                             </span>
                         </li>
                         <li class="list-group-item border-1">
-                            <span>
-                                <jhi-exam-checklist-check [checkAttribute]="exam.exerciseGroups?.length == exam.numberOfExercisesInExam"></jhi-exam-checklist-check>
+                            <span *ngIf="exam.exerciseGroups && exam.numberOfExercisesInExam">
+                                <jhi-exam-checklist-check [checkAttribute]="exam.exerciseGroups.length == exam.numberOfExercisesInExam"></jhi-exam-checklist-check>
                                 <span>{{ 'artemisApp.examManagement.checklist.textitems.numberofexercisegroupsequal' | translate }}</span>
                             </span>
                         </li>
@@ -91,7 +91,7 @@
 
                     <hr />
                     <!-- Exercise Group table -->
-                    <jhi-exam-checklist-exercisegroup-table [exerciseGroups]="exam.exerciseGroups"></jhi-exam-checklist-exercisegroup-table>
+                    <jhi-exam-checklist-exercisegroup-table [exerciseGroups]="exam.exerciseGroups || []"></jhi-exam-checklist-exercisegroup-table>
                 </td>
                 <td class="d-none d-md-table-cell">
                     <a
@@ -139,7 +139,7 @@
                     <ul class="list-unstyled">
                         <li class="list-group-item border-1">
                             <span>
-                                <jhi-exam-checklist-check [checkAttribute]="exam.numberOfRegisteredUsers && exam.numberOfRegisteredUsers > 0"></jhi-exam-checklist-check>
+                                <jhi-exam-checklist-check [checkAttribute]="!!exam.numberOfRegisteredUsers && exam.numberOfRegisteredUsers! > 0"></jhi-exam-checklist-check>
                                 <span>{{ 'artemisApp.examManagement.checklist.textitems.leastonestudent' | translate }}</span>
                             </span>
                         </li>
@@ -191,7 +191,7 @@
                         <hr />
                         <ul class="list-unstyled">
                             <li *ngIf="examChecklist" class="list-group-item border-1">
-                                <jhi-exam-checklist-check [checkAttribute]="examChecklist.allExamExercisesAllStudentsPrepared"></jhi-exam-checklist-check>
+                                <jhi-exam-checklist-check [checkAttribute]="!!examChecklist.allExamExercisesAllStudentsPrepared"></jhi-exam-checklist-check>
                                 <span>{{ 'artemisApp.examManagement.checklist.textitems.allExercisesPrepared' | translate }}</span>
                             </li>
                         </ul>
@@ -239,7 +239,7 @@
                         <span>{{ 'artemisApp.examManagement.checklist.textitems.startedExam' | translate }}:</span>
                         <div style="padding-top: 5px">
                             <jhi-progress-bar
-                                [denominator]="examChecklist.numberOfGeneratedStudentExams"
+                                [denominator]="examChecklist.numberOfGeneratedStudentExams!"
                                 [numerator]="examChecklist.numberOfExamsStarted!"
                                 [percentage]="(100 * examChecklist.numberOfExamsStarted!) / examChecklist.numberOfGeneratedStudentExams!"
                             >

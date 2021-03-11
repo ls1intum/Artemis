@@ -78,7 +78,7 @@
                         <a [routerLink]="[testRun.id]">{{ testRun.id }}</a>
                     </td>
                     <td>
-                        <a> {{ testRun.user.name }}</a>
+                        <a> {{ testRun.user?.name || '--' }}</a>
                     </td>
                     <td>{{ testRun.workingTime | artemisDurationFromSeconds }}</td>
                     <td>{{ (testRun.started ? 'global.generic.yes' : 'global.generic.no') | translate }}</td>
@@ -87,7 +87,7 @@
                     <td [width]="350">
                         <div class="w-100 text-right">
                             <div class="btn-group" *ngIf="course?.isAtLeastInstructor">
-                                <ng-container *ngIf="testRun.user.id == instructor.id; else notOwnerOfTestRun">
+                                <ng-container *ngIf="testRun.user && testRun.user.id == instructor.id; else notOwnerOfTestRun">
                                     <ng-container *ngIf="!testRun.submitted; else submitted">
                                         <a class="btn btn-primary btn-sm mr-1 mb-1" [routerLink]="['../test-runs/' + testRun.id + '/conduction']">
                                             <span *ngIf="!testRun.started" jhiTranslate="artemisApp.course.startDate">Start</span>
@@ -113,6 +113,7 @@
                                     <span jhiTranslate="artemisApp.examManagement.testRun.manage">Manage Working Time</span>
                                 </a>
                                 <button
+                                    *ngIf="testRun.id"
                                     jhiDeleteButton
                                     [entityTitle]="'artemisApp.examManagement.testRun.testRun' | translate"
                                     deleteQuestion="artemisApp.examManagement.testRun.delete.question"

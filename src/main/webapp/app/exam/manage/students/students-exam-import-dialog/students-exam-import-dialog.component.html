@@ -26,7 +26,7 @@
                 <div *ngIf="validationError" class="mt-4 mb-2 text-danger" [innerHTML]="validationError"></div>
             </div>
         </div>
-        <div *ngIf="studentsToImport?.length > 0" class="form-group mt-4">
+        <div *ngIf="studentsToImport && studentsToImport.length > 0" class="form-group mt-4">
             <div>
                 <label class="label-narrow font-weight-bold" jhiTranslate="artemisApp.examManagement.examStudents.importStudents.studentsForImport.label">
                     Students for import
@@ -56,7 +56,7 @@
         </div>
     </div>
     <div class="modal-footer justify-content-between">
-        <div *ngIf="studentsToImport?.length > 0" class="flex-shrink-0 mr-2 d-flex">
+        <div *ngIf="studentsToImport && studentsToImport.length > 0" class="flex-shrink-0 mr-2 d-flex">
             <div *ngIf="!hasImported; else numbersAfterImport">
                 <strong>{{ 'artemisApp.examManagement.examStudents.importStudents.numberOfStudents' | translate }}</strong>
                 <span>&nbsp;{{ studentsToImport.length }}</span>
