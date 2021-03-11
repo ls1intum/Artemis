@@ -7,8 +7,9 @@ export class StateStorageService {
 
     /**
      * Get the previous state of the current session.
+     * @returns the previous state as string or null when there is no previous state
      */
-    getPreviousState(): string {
+    getPreviousState(): string | null {
         return this.sessionStorage.retrieve('previousState');
     }
 
