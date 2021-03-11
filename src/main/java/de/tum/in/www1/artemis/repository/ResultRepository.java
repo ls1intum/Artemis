@@ -329,11 +329,9 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
     @Query("""
             SELECT
             new de.tum.in.www1.artemis.domain.leaderboard.tutor.TutorLeaderboardAssessment(
-                -1L,
                 r.assessor.id,
                 count(r),
-                sum(e.maxPoints),
-                c.id
+                sum(e.maxPoints)
                 )
             FROM
                 Result r join r.participation p join p.exercise e join e.course c join r.assessor a
@@ -349,12 +347,10 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
     @Query("""
             SELECT
             new de.tum.in.www1.artemis.domain.leaderboard.tutor.TutorLeaderboardAssessment(
-                e.id,
                 a.id,
                 count(r),
-                sum(e.maxPoints),
-                -1L
-                )
+                sum(e.maxPoints)
+            )
             FROM
                 Result r join r.participation p join p.exercise e join r.assessor a
             WHERE
