@@ -214,7 +214,7 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
     @Override
     public void mockUpdatePlanRepository(ProgrammingExercise exercise, String planName, String repoNameInCI, String repoNameInVcs, List<String> triggeredBy)
             throws IOException, URISyntaxException {
-        jenkinsRequestMockProvider.mockUpdatePlanRepository(exercise.getProjectKey(), planName);
+        jenkinsRequestMockProvider.mockUpdatePlanRepository(exercise.getProjectKey(), planName, false);
     }
 
     @Override

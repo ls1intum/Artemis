@@ -178,12 +178,14 @@ public class JenkinsRequestMockProvider {
     public void mockConfigureBuildPlan(ProgrammingExercise exercise, String username) throws URISyntaxException, IOException {
         final var projectKey = exercise.getProjectKey();
         final var planKey = projectKey + "-" + username.toUpperCase();
-        mockUpdatePlanRepository(projectKey, planKey);
+        mockUpdatePlanRepository(projectKey, planKey, true);
         mockEnablePlan(projectKey, planKey, true, false);
     }
 
-    public void mockUpdatePlanRepository(String projectKey, String planName) throws IOException, URISyntaxException {
-        final var mockXml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><script><para>pipeline</para></script>";
+    public void mockUpdatePlanRepository(String projectKey, String planName, boolean useLegacyXml) throws IOException, URISyntaxException {
+        var jobConfigXmlFilename = useLegacyXml ? "legacy-job-config.xml" : "job-config.xml";
+        var mockXml = loadFileFromResources(jobConfigXmlFilename);
+
         mockGetFolderJob(projectKey, new FolderJob());
         mockGetJobXmlForBuildPlanWith(projectKey, mockXml);
 
