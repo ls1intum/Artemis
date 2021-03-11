@@ -1,9 +1,15 @@
 package de.tum.in.www1.artemis.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.in;
 
 import java.time.ZonedDateTime;
+import java.util.HashSet;
 
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
+import de.tum.in.www1.artemis.repository.*;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,16 +18,21 @@ import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.TextSubmission;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
-import de.tum.in.www1.artemis.repository.ExerciseRepository;
-import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
-import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.util.ModelFactory;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.test.context.support.WithMockUser;
 
 public class CourseServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     private CourseService courseService;
+
+    @Autowired
+    private CourseRepository courseRepository;
+
+    @Autowired
+    private UserRepository userRepository;
 
     @Autowired
     SubmissionRepository submissionRepository;
@@ -79,5 +90,81 @@ public class CourseServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
         var activeStudents = courseService.getActiveStudents(course.getId());
         assertThat(activeStudents.length).isEqualTo(4);
         assertThat(activeStudents).isEqualTo(new Integer[] { 0, 0, 0, 2 });
+    }
+
+    @Test
+    @WithMockUser(value = "admin", roles = "ADMIN")
+    public void testGetOverviewAsAdmin() {
+        // Minimal testcase: Admins always see all courses
+        // Add two courses, one not active
+        database.addEmptyCourse();
+        var inactiveCourse = database.createCourse();
+        inactiveCourse.setEndDate(ZonedDateTime.now().minusDays(7));
+        courseRepository.save(inactiveCourse);
+
+        // 'addUsers' adds the admin as well
+        database.addUsers(0, 0, 0);
+
+        var courses = courseService.getAllCoursesForOverview(false);
+        assertThat(courses.size()).isEqualTo(2);
+
+        courses = courseService.getAllCoursesForOverview(true);
+        assertThat(courses.size()).isEqualTo(1);
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testGetOverviewAsInstructor() {
+        // Testcase: Instructors see their courses
+        // Add three courses, containing one not active and one not belonging to the instructor
+        database.addEmptyCourse();
+        var inactiveCourse = database.createCourse();
+        inactiveCourse.setEndDate(ZonedDateTime.now().minusDays(7));
+        inactiveCourse.setInstructorGroupName("test-instructors");
+        courseRepository.save(inactiveCourse);
+        var instructorsCourse = database.createCourse();
+        instructorsCourse.setInstructorGroupName("test-instructors");
+        courseRepository.save(instructorsCourse);
+
+        var users = database.addUsers(0, 0, 1);
+        var instructor = users.get(0);
+        var groups = new HashSet<String>();
+        groups.add("test-instructors");
+        instructor.setGroups(groups);
+        userRepository.save(instructor);
+
+        var courses = courseService.getAllCoursesForOverview(false);
+        assertThat(courses.size()).isEqualTo(2);
+
+        courses = courseService.getAllCoursesForOverview(true);
+        assertThat(courses.size()).isEqualTo(1);
+    }
+
+    @Test
+    @WithMockUser(value = "student1", roles = "USER")
+    public void testGetOverviewAsStudent() {
+        // Testcase: Students should not see courses
+        // Add three courses, containing one not active and one not belonging to the student
+        database.addEmptyCourse();
+        var inactiveCourse = database.createCourse();
+        inactiveCourse.setEndDate(ZonedDateTime.now().minusDays(7));
+        inactiveCourse.setStudentGroupName("test-students");
+        courseRepository.save(inactiveCourse);
+        var instructorsCourse = database.createCourse();
+        instructorsCourse.setStudentGroupName("test-students");
+        courseRepository.save(instructorsCourse);
+
+        var users = database.addUsers(1, 0, 0);
+        var student = users.get(0);
+        var groups = new HashSet<String>();
+        groups.add("test-students");
+        student.setGroups(groups);
+        userRepository.save(student);
+
+        var courses = courseService.getAllCoursesForOverview(false);
+        assertThat(courses.size()).isEqualTo(0);
+
+        courses = courseService.getAllCoursesForOverview(true);
+        assertThat(courses.size()).isEqualTo(0);
     }
 }
