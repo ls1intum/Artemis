@@ -253,7 +253,7 @@ public class ExamRegistrationService {
         AuditEvent auditEvent = new AuditEvent(currentUser.getLogin(), Constants.REMOVE_ALL_USERS_FROM_EXAM, "exam=" + exam.getTitle());
         auditEventRepository.add(auditEvent);
         log.info("User " + currentUser.getLogin() + " has removed all users from the exam " + exam.getTitle() + " with id " + exam.getId()
-                + ". This also deleted a potentially existing student exams with all its participations and submissions.");
+                + ". This also deleted potentially existing student exams with all its participations and submissions.");
     }
 
     /**
