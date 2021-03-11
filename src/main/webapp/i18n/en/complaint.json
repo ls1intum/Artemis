@@ -7,7 +7,7 @@
             "title": "Complaint",
             "info": "The complaint limit refers to open and rejected complaints. If your complaint is accepted it will not count towards your total number of complaints.",
             "description": "You can submit up to {{ maxComplaintNumber }} complaints in total in this course.",
-            "descriptionExam": "You can submit a complaint for each manually assessed exercise in this exam.",
+            "descriptionExam": "You can submit one complaint for each manually assessed exercise in this exam.",
             "descriptionExtended": "Every student is allowed to submit up to {{ maxComplaintNumber }} complaints in total in this course. You still have <strong style=color:red;>{{ allowedComplaints }}</strong> complaints left.",
             "descriptionTeam": "You can submit up to {{ maxComplaintNumber }} complaints as a team for this whole course.",
             "descriptionTeamExtended": "Every team is allowed to submit up to {{ maxComplaintNumber }} complaints in total in this course. Your team still has <strong style=color:red;>{{ allowedComplaints }}</strong> complaints left.",
