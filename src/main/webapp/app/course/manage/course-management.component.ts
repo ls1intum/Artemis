@@ -99,7 +99,7 @@ export class CourseManagementComponent implements OnInit, OnDestroy, AfterViewIn
                 }
 
                 // First fetch important data like title for each course
-                this.courseManagementService.getExercisesForManagementOverview(this.courses.map((c) => c.id!)).subscribe(
+                this.courseManagementService.getExercisesForManagementOverview(this.showOnlyActive).subscribe(
                     (result: HttpResponse<CourseManagementOverviewDto[]>) => {
                         result.body!.forEach((dto) => {
                             this.details[dto.courseId] = dto;
@@ -111,7 +111,7 @@ export class CourseManagementComponent implements OnInit, OnDestroy, AfterViewIn
                     (result: HttpErrorResponse) => onError(this.jhiAlertService, result, false),
                 );
                 // Once the important part is loaded we can fetch the statistics
-                this.courseManagementService.getStatsForManagementOverview(this.courses.map((c) => c.id!)).subscribe(
+                this.courseManagementService.getStatsForManagementOverview(this.showOnlyActive).subscribe(
                     (result: HttpResponse<CourseManagementOverviewStatisticsDto[]>) => {
                         result.body!.forEach((dto) => (this.statistics[dto.courseId] = dto));
                     },
