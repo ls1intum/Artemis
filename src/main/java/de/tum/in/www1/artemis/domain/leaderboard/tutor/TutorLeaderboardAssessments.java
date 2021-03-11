@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 // Custom object for sql query
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class TutorLeaderboardAssessment {
+public class TutorLeaderboardAssessments {
 
     private final long userId;
 
@@ -24,9 +24,19 @@ public class TutorLeaderboardAssessment {
         return userId;
     }
 
-    public TutorLeaderboardAssessment(long userId, long assessments, double points) {
+    public TutorLeaderboardAssessments(long userId, long assessments, double points) {
         this.userId = userId;
         this.assessments = assessments;
         this.points = points;
+    }
+
+    public TutorLeaderboardAssessments() {
+        this.userId = 0L;
+        this.assessments = 0L;
+        this.points = 0.0;
+    }
+
+    public Long getKey() {
+        return userId;
     }
 }

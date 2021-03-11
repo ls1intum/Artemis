@@ -15,7 +15,7 @@ import org.springframework.stereotype.Repository;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
-import de.tum.in.www1.artemis.domain.leaderboard.tutor.TutorLeaderboardAssessment;
+import de.tum.in.www1.artemis.domain.leaderboard.tutor.TutorLeaderboardAssessments;
 import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
 
 /**
@@ -369,7 +369,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
 
     @Query("""
             SELECT
-            new de.tum.in.www1.artemis.domain.leaderboard.tutor.TutorLeaderboardAssessment(
+            new de.tum.in.www1.artemis.domain.leaderboard.tutor.TutorLeaderboardAssessments(
                 r.assessor.id,
                 count(r),
                 sum(e.maxPoints)
@@ -381,13 +381,13 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
                 and c.id = :#{#courseId}
             GROUP BY a.id
             """)
-    List<TutorLeaderboardAssessment> findTutorLeaderboardAssessmentByCourseId(@Param("courseId") long courseId);
+    List<TutorLeaderboardAssessments> findTutorLeaderboardAssessmentByCourseId(@Param("courseId") long courseId);
 
     // Alternative which might be faster, in particular for complaints in the other repositories
 
     @Query("""
             SELECT
-            new de.tum.in.www1.artemis.domain.leaderboard.tutor.TutorLeaderboardAssessment(
+            new de.tum.in.www1.artemis.domain.leaderboard.tutor.TutorLeaderboardAssessments(
                 a.id,
                 count(r),
                 sum(e.maxPoints)
@@ -399,11 +399,11 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
                 and e.id = :#{#exerciseId}
             GROUP BY a.id
             """)
-    List<TutorLeaderboardAssessment> findTutorLeaderboardAssessmentByExerciseId(@Param("exerciseId") long exerciseId);
+    List<TutorLeaderboardAssessments> findTutorLeaderboardAssessmentByExerciseId(@Param("exerciseId") long exerciseId);
 
     @Query("""
             SELECT
-            new de.tum.in.www1.artemis.domain.leaderboard.tutor.TutorLeaderboardAssessment(
+            new de.tum.in.www1.artemis.domain.leaderboard.tutor.TutorLeaderboardAssessments(
                 a.id,
                 count(r),
                 sum(e.maxPoints)
@@ -415,6 +415,6 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
                 and ex.id = :#{#examId}
             GROUP BY a.id
             """)
-    List<TutorLeaderboardAssessment> findTutorLeaderboardAssessmentByExamId(@Param("examId") long examId);
+    List<TutorLeaderboardAssessments> findTutorLeaderboardAssessmentByExamId(@Param("examId") long examId);
 
 }

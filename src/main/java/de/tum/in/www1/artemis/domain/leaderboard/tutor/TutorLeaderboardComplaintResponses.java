@@ -29,4 +29,14 @@ public class TutorLeaderboardComplaintResponses {
         this.complaintResponses = complaintResponses;
         this.points = points;
     }
+
+    public TutorLeaderboardComplaintResponses() {
+        this.userId = 0L;
+        this.complaintResponses = 0L;
+        this.points = 0.0;
+    }
+
+    public Long getKey() {
+        return userId;
+    }
 }

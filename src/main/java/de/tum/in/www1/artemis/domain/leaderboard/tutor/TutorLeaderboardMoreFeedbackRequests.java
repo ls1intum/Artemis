@@ -36,4 +36,15 @@ public class TutorLeaderboardMoreFeedbackRequests {
         this.notAnsweredRequests = notAnsweredRequests;
         this.points = points;
     }
+
+    public TutorLeaderboardMoreFeedbackRequests() {
+        this.userId = 0L;
+        this.allRequests = 0L;
+        this.notAnsweredRequests = 0L;
+        this.points = 0.0;
+    }
+
+    public Long getKey() {
+        return userId;
+    }
 }

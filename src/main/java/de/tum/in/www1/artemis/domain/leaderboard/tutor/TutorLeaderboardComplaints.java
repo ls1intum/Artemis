@@ -36,4 +36,15 @@ public class TutorLeaderboardComplaints {
         this.acceptedComplaints = acceptedComplaints;
         this.points = points;
     }
+
+    public TutorLeaderboardComplaints() {
+        this.userId = 0L;
+        this.allComplaints = 0L;
+        this.acceptedComplaints = 0L;
+        this.points = 0.0;
+    }
+
+    public Long getKey() {
+        return userId;
+    }
 }

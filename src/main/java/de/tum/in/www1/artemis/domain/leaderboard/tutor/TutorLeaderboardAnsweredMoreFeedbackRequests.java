@@ -29,4 +29,14 @@ public class TutorLeaderboardAnsweredMoreFeedbackRequests {
         this.answeredRequests = answeredRequests;
         this.points = points;
     }
+
+    public TutorLeaderboardAnsweredMoreFeedbackRequests() {
+        this.userId = 0L;
+        this.answeredRequests = 0L;
+        this.points = 0.0;
+    }
+
+    public Long getKey() {
+        return userId;
+    }
 }
