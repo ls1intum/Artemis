@@ -13,7 +13,7 @@
 
                 <a *ngIf="course.isAtLeastInstructor" type="button" [routerLink]="['/course-management', course.id, 'participant-scores']" class="btn btn-primary mr-1 mb-1">
                     <fa-icon [icon]="'table'"></fa-icon>
-                    <span class="d-none d-md-inline" [innerHTML]="'artemisApp.participantScores.pageTitle' | translate"></span>
+                    <span class="d-none d-md-inline" [innerHTML]="'artemisApp.participantScores.pageTitle' | artemisTranslate"></span>
                 </a>
 
                 <a
