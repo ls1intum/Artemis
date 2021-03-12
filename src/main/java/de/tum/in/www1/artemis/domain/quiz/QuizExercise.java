@@ -316,11 +316,11 @@ public class QuizExercise extends Exercise {
      * @param quizSubmission the submission that should be evaluated
      * @return the resulting score
      */
-    public Long getScoreForSubmission(QuizSubmission quizSubmission) {
+    public Double getScoreForSubmission(QuizSubmission quizSubmission) {
         double score = getScoreInPointsForSubmission(quizSubmission);
         double maxPoints = getOverallQuizPoints();
         // map the resulting score to the 0 to 100 scale
-        return Math.round(100.0 * score / maxPoints);
+        return 100.0 * score / maxPoints;
     }
 
     /**

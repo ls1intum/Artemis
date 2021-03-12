@@ -334,7 +334,7 @@ public class GitLabService extends AbstractVersionControlService {
         for (final var tutor : tutors) {
             try {
                 final var userId = gitLabUserManagementService.getUserId(tutor.getLogin());
-                gitLabUserManagementService.addUserToGroups(userId, List.of(programmingExercise), GUEST);
+                gitLabUserManagementService.addUserToGroups(userId, List.of(programmingExercise), REPORTER);
             }
             catch (GitLabException ignored) {
                 // ignore the exception and continue with the next user, one non existing user or issue here should not prevent the creation of the whole programming exercise
@@ -371,7 +371,7 @@ public class GitLabService extends AbstractVersionControlService {
 
     @Override
     public void setRepositoryPermissionsToReadOnly(VcsRepositoryUrl repositoryUrl, String projectKey, Set<User> users) {
-        users.forEach(user -> updateMemberPermissionInRepository(repositoryUrl, user.getLogin(), GUEST));
+        users.forEach(user -> updateMemberPermissionInRepository(repositoryUrl, user.getLogin(), REPORTER));
     }
 
     /**

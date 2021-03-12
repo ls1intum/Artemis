@@ -286,7 +286,7 @@ public class StudentExamService {
                     for (int correctionRound = 0; correctionRound < exam.getNumberOfCorrectionRoundsInExam(); correctionRound++) {
                         // required so that the submission is counted in the assessment dashboard
                         latestSubmission.get().submitted(true);
-                        submissionService.addResultWithFeedbackByCorrectionRound(studentParticipation, assessor, 0L, "You did not submit your exam", correctionRound);
+                        submissionService.addResultWithFeedbackByCorrectionRound(studentParticipation, assessor, 0D, "You did not submit your exam", correctionRound);
                     }
                 }
             }
@@ -321,7 +321,7 @@ public class StudentExamService {
                     for (int correctionRound = 0; correctionRound < exam.getNumberOfCorrectionRoundsInExam(); correctionRound++) {
                         // required so that the submission is counted in the assessment dashboard
                         latestSubmission.get().submitted(true);
-                        submissionService.addResultWithFeedbackByCorrectionRound(studentParticipation, assessor, 0L, "Empty submission", correctionRound);
+                        submissionService.addResultWithFeedbackByCorrectionRound(studentParticipation, assessor, 0D, "Empty submission", correctionRound);
                     }
                 }
             }

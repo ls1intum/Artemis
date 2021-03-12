@@ -404,7 +404,7 @@ public class StudentExamResource {
             return forbidden();
         }
 
-        if (!this.examDateService.isExamOver(exam)) {
+        if (!this.examDateService.isExamWithGracePeriodOver(exam)) {
             // you can only grade not submitted exams if the exam is over
             return badRequest();
         }

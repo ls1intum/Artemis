@@ -3,7 +3,8 @@
         "assessment": {
             "assessment": "Assessment",
             "testRunAssessment": "Test Run Assessment",
-            "unreferencedFeedback": "Feedback for Missing Elements",
+            "additionalFeedback": "Additional feedback",
+            "feedback": "Feedback",
             "automaticGenerated": "Automatically generated feedback",
             "error": {
                 "assessmentDueDateOver": "The assessment due date of this exercise is over."
@@ -70,6 +71,7 @@
                     "title": "Locked Assessments"
                 },
                 "title": "Assessments locked by you",
+                "titleAll": "All locked assessments",
                 "exercise": "Exercise",
                 "type": "Type",
                 "empty": "No assessments locked by you!"

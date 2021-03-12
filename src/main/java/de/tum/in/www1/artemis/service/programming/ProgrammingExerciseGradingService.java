@@ -124,6 +124,8 @@ public class ProgrammingExerciseGradingService {
                 // Note: in this case, we do not want to save the newResult, but we only want to update the latest semi-automatic one
                 Result updatedLatestSemiAutomaticResult = updateLatestSemiAutomaticResultWithNewAutomaticFeedback(programmingSubmission.getLatestResult().getId(), newResult,
                         programmingExercise);
+                // Adding back dropped submission
+                updatedLatestSemiAutomaticResult.setSubmission(programmingSubmission);
                 programmingSubmissionRepository.save(programmingSubmission);
                 return Optional.of(updatedLatestSemiAutomaticResult);
             }
@@ -414,12 +416,11 @@ public class ProgrammingExerciseGradingService {
                 return testPointsWithBonus;
             }).sum();
 
-            /**
-             * The points are capped by the maximum achievable points.
-             * The cap is applied before the static code analysis penalty is subtracted as otherwise the penalty won't have
-             * any effect in some cases. For example with maxPoints=20, successfulTestPoints=30 and penalty=10, a student would still
-             * receive the full 20 points, if the points are not capped before the penalty is subtracted. With the implemented order in place
-             * successfulTestPoints will be capped to 20 points first, then the penalty is subtracted resulting in 10 points.
+            /*
+             * The points are capped by the maximum achievable points. The cap is applied before the static code analysis penalty is subtracted as otherwise the penalty won't have
+             * any effect in some cases. For example with maxPoints=20, successfulTestPoints=30 and penalty=10, a student would still receive the full 20 points, if the points are
+             * not capped before the penalty is subtracted. With the implemented order in place successfulTestPoints will be capped to 20 points first, then the penalty is
+             * subtracted resulting in 10 points.
              */
             double maxPoints = programmingExercise.getMaxPoints() + Optional.ofNullable(programmingExercise.getBonusPoints()).orElse(0.0);
 
@@ -438,12 +439,12 @@ public class ProgrammingExerciseGradingService {
             }
 
             // The score is calculated as a percentage of the maximum points
-            long score = Math.round(successfulTestPoints / programmingExercise.getMaxPoints() * 100.0);
+            double score = successfulTestPoints / programmingExercise.getMaxPoints() * 100.0;
 
             result.setScore(score);
         }
         else {
-            result.setScore(0L);
+            result.setScore(0D);
         }
     }
 
@@ -546,7 +547,7 @@ public class ProgrammingExerciseGradingService {
     private void removeAllTestCaseFeedbackAndSetScoreToZero(Result result, List<Feedback> staticCodeAnalysisFeedback) {
         result.setFeedbacks(staticCodeAnalysisFeedback);
         result.hasFeedback(staticCodeAnalysisFeedback.size() > 0);
-        result.setScore(0L);
+        result.setScore(0D);
     }
 
     /**

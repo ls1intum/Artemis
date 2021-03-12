@@ -50,7 +50,11 @@
                             </a>
                         </td>
                         <td>
-                            {{ getLectureUnitProgress(lectureUnit.id) === undefined ? '-' : getLectureUnitProgress(lectureUnit.id).scoreAchievedByStudentInLectureUnit + ' %' }}
+                            {{
+                                getLectureUnitProgress(lectureUnit.id) === undefined
+                                    ? '-'
+                                    : round(getLectureUnitProgress(lectureUnit.id).scoreAchievedByStudentInLectureUnit) + ' %'
+                            }}
                         </td>
                         <td>
                             {{ getLectureUnitProgress(lectureUnit.id) === undefined ? '-' : getLectureUnitProgress(lectureUnit.id).totalPointsAchievableByStudentsInLectureUnit }}
