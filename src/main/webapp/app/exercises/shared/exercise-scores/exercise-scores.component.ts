@@ -30,6 +30,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { defaultLongDateTimeFormat } from 'app/shared/pipes/artemis-date.pipe';
 import { ParticipationType } from 'app/entities/participation/participation.model';
 import { addUserIndependentRepositoryUrl } from 'app/overview/participation-utils';
+import { round } from 'app/shared/util/utils';
 
 /**
  * Filter properties for a result
@@ -260,7 +261,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
             this.results.forEach((result, index) => {
                 const studentParticipation = result.participation! as StudentParticipation;
                 const { participantName, participantIdentifier } = studentParticipation;
-                const score = result.score;
+                const score = round(result.score);
 
                 if (index === 0) {
                     const nameAndUserNameColumnHeaders = studentParticipation.team ? 'Team Name,Team Short Name' : 'Name,Username';
