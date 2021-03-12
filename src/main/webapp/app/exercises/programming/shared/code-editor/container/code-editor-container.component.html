@@ -7,7 +7,7 @@
             <jhi-code-editor-actions
                 *ngIf="!isTutorAssessment || commitState === CommitState.CONFLICT"
                 [buildable]="buildable"
-                [disableActions]="isTutorAssessment && !editable ? commitState !== CommitState.CONFLICT : !editable"
+                [disableActions]="!editable && (!isTutorAssessment || commitState !== CommitState.CONFLICT)"
                 [unsavedFiles]="unsavedFiles"
                 [(editorState)]="editorState"
                 [(commitState)]="commitState"
