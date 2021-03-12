@@ -360,10 +360,15 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
     }
 
     @Override
-    public void mockCreateUserInUserManagement(User user) throws URISyntaxException {
+    public void mockCreateUserInUserManagement(User user, boolean userExistsInCi) throws URISyntaxException {
         var managedUserVM = new ManagedUserVM(user);
         jiraRequestMockProvider.mockIsGroupAvailableForMultiple(managedUserVM.getGroups());
         jiraRequestMockProvider.mockAddUserToGroupForMultipleGroups(managedUserVM.getGroups());
+    }
+
+    @Override
+    public void mockFailToCreateUserInExernalUserManagement(User user, boolean failInVcs, boolean failInCi) throws Exception {
+        // Not needed here
     }
 
     @Override

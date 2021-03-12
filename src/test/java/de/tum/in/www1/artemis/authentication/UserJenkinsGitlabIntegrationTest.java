@@ -62,6 +62,30 @@ public class UserJenkinsGitlabIntegrationTest extends AbstractSpringIntegrationJ
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
+    public void createUser_asAdmin_existsInCi_internalError() throws Exception {
+        userTestService.createUser_asAdmin_existsInCi_internalError();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    public void createUser_asAdmin_illegalLogin_internalError() throws Exception {
+        userTestService.createUser_asAdmin_illegalLogin_internalError();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    public void createUser_asAdmin_failInExternalUserManagement_internalError() throws Exception {
+        userTestService.createUser_asAdmin_failInExternalCiUserManagement_internalError();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    public void createUser_asAdmin_failInExternalVcsUserManagement_internalError() throws Exception {
+        userTestService.createUser_asAdmin_failInExternalVcsUserManagement_internalError();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
     public void createUser_withNullAsPassword_generatesRandomPassword() throws Exception {
         userTestService.createUser_withNullAsPassword_generatesRandomPassword();
     }

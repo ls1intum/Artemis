@@ -300,9 +300,15 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
     }
 
     @Override
-    public void mockCreateUserInUserManagement(User user) throws Exception {
-        gitlabRequestMockProvider.mockCreateVcsUser(user);
-        jenkinsRequestMockProvider.mockCreateUser(user);
+    public void mockCreateUserInUserManagement(User user, boolean userExistsInCi) throws Exception {
+        gitlabRequestMockProvider.mockCreateVcsUser(user, false);
+        jenkinsRequestMockProvider.mockCreateUser(user, userExistsInCi, false);
+    }
+
+    @Override
+    public void mockFailToCreateUserInExernalUserManagement(User user, boolean failInVcs, boolean failInCi) throws Exception {
+        gitlabRequestMockProvider.mockCreateVcsUser(user, failInVcs);
+        jenkinsRequestMockProvider.mockCreateUser(user, false, failInCi);
     }
 
     @Override

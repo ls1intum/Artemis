@@ -277,7 +277,7 @@ public class JenkinsRequestMockProvider {
         doReturn(user.getPassword()).when(passwordService).decryptPassword(user);
 
         mockDeleteUser(user, userExists);
-        mockCreateUser(user);
+        mockCreateUser(user, false, false);
     }
 
     private void mockUpdateUserLogin(String oldLogin, User user) throws IOException, URISyntaxException {
@@ -289,7 +289,7 @@ public class JenkinsRequestMockProvider {
         oldUser.setLogin(oldLogin);
         oldUser.setGroups(user.getGroups());
         mockDeleteUser(oldUser, true);
-        mockCreateUser(user);
+        mockCreateUser(user, false, false);
     }
 
     public void mockDeleteUser(User user, boolean userExistsInUserManagement) throws IOException, URISyntaxException {
@@ -332,14 +332,15 @@ public class JenkinsRequestMockProvider {
         doNothing().when(jenkinsServer).updateJob(eq(folderName), anyString(), eq(useCrumb));
     }
 
-    public void mockCreateUser(User user) throws URISyntaxException, IOException {
-        mockGetUser(user.getLogin(), false);
+    public void mockCreateUser(User user, boolean userExistsInCi, boolean shouldFail) throws URISyntaxException, IOException {
+        mockGetUser(user.getLogin(), userExistsInCi);
 
         doReturn(user.getPassword()).when(passwordService).decryptPassword(user);
         doReturn(user.getPassword()).when(passwordService).decryptPassword(user);
 
         final var uri = UriComponentsBuilder.fromUri(jenkinsServerUrl.toURI()).pathSegment("securityRealm", "createAccountByAdmin").build().toUri();
-        mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.POST)).andRespond(withStatus(HttpStatus.FOUND));
+        var status = shouldFail ? HttpStatus.INTERNAL_SERVER_ERROR : HttpStatus.FOUND;
+        mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.POST)).andRespond(withStatus(status));
 
         mockAddUsersToGroups(user.getLogin(), user.getGroups());
     }

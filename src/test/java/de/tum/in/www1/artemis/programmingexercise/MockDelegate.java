@@ -71,7 +71,9 @@ public interface MockDelegate {
 
     void mockUpdateCoursePermissions(Course updatedCourse, String oldInstructorGroup, String oldTeachingAssistantGroup) throws Exception;
 
-    void mockCreateUserInUserManagement(User user) throws Exception;
+    void mockCreateUserInUserManagement(User user, boolean userExistsInCi) throws Exception;
+
+    void mockFailToCreateUserInExernalUserManagement(User user, boolean failInVcs, boolean failInCi) throws Exception;
 
     void mockDeleteUserInUserManagement(User user, boolean userExistsInUserManagement) throws Exception;
 
