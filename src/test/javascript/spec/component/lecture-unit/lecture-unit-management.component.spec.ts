@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { LectureUnitManagementComponent } from 'app/lecture/lecture-unit/lecture-unit-management/lecture-unit-management.component';
 import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
-import { TranslatePipe } from '@ngx-translate/core';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe.ts';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import { ExerciseUnit } from 'app/entities/lecture-unit/exerciseUnit.model';
@@ -72,7 +72,7 @@ describe('LectureUnitManagementComponent', () => {
                 LectureUnitManagementComponent,
                 MockComponent(UnitCreationCardComponent),
                 LearningGoalsPopoverStubComponent,
-                MockPipe(TranslatePipe),
+                MockPipe(ArtemisTranslatePipe),
                 MockComponent(ExerciseUnitComponent),
                 MockComponent(AttachmentUnitComponent),
                 MockComponent(VideoUnitComponent),

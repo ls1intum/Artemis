@@ -1,18 +1,18 @@
 <ng-template #info let-c="close" let-d="dismiss">
     <div class="modal-header">
-        <h4 class="modal-title">{{ 'artemisApp.quizExercise.matchingInfoModalTitle' | translate }}</h4>
+        <h4 class="modal-title">{{ 'artemisApp.quizExercise.matchingInfoModalTitle' | artemisTranslate }}</h4>
         <button type="button" class="close" aria-label="Close" (click)="d()"><span aria-hidden="true">&times;</span></button>
     </div>
     <div class="modal-body">
         <table class="table">
             <tr>
-                <th>{{ 'artemisApp.quizExercise.matchLetterCase.title' | translate }}</th>
-                <td>{{ 'artemisApp.quizExercise.matchLetterCase.explanation' | translate }}</td>
+                <th>{{ 'artemisApp.quizExercise.matchLetterCase.title' | artemisTranslate }}</th>
+                <td>{{ 'artemisApp.quizExercise.matchLetterCase.explanation' | artemisTranslate }}</td>
             </tr>
 
             <tr>
-                <th>{{ 'artemisApp.quizExercise.matchPercentage.explanationTitle' | translate }}</th>
-                <td>{{ 'artemisApp.quizExercise.matchPercentage.explanation' | translate }}</td>
+                <th>{{ 'artemisApp.quizExercise.matchPercentage.explanationTitle' | artemisTranslate }}</th>
+                <td>{{ 'artemisApp.quizExercise.matchPercentage.explanation' | artemisTranslate }}</td>
             </tr>
         </table>
     </div>
