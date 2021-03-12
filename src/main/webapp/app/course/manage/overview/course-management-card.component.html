@@ -166,7 +166,12 @@
             <fa-icon [icon]="'file-pdf'"></fa-icon>
             <span class="d-none d-md-inline">{{ 'entity.action.lecture' | artemisTranslate }}</span>
         </a>
-        <a *ngIf="course.isAtLeastTutor" [routerLink]="['/course-management', course.id, 'exams']" class="btn btn-info mr-1 mb-1" [ngbTooltip]="'entity.action.exams' | artemisTranslate">
+        <a
+            *ngIf="course.isAtLeastTutor"
+            [routerLink]="['/course-management', course.id, 'exams']"
+            class="btn btn-info mr-1 mb-1"
+            [ngbTooltip]="'entity.action.exams' | artemisTranslate"
+        >
             <fa-icon [icon]="'graduation-cap'"></fa-icon>
             <span class="d-none d-md-inline">{{ 'entity.action.exams' | artemisTranslate }}</span>
         </a>
