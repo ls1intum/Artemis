@@ -77,6 +77,20 @@ export function getSubmissionResultByCorrectionRound(submission: Submission | un
 }
 
 /**
+ * Used to access a submissions result for a specific id
+ *
+ * @param submission
+ * @param resultId
+ * @returns the results or undefined if submission or the result for the requested id is undefined
+ */
+export function getSubmissionResultById(submission: Submission | undefined, resultId: number): Result | undefined {
+    if (submission && submission.results) {
+        return submission.results.find((result) => result.id === resultId);
+    }
+    return undefined;
+}
+
+/**
  * Used to set / override the latest result in the results list, and set / override the
  * var latestResult
  *
