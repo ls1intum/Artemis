@@ -5,7 +5,7 @@ import * as sinonChai from 'sinon-chai';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { RouterTestingModule } from '@angular/router/testing';
 import { MockModule, MockPipe, MockProvider } from 'ng-mocks';
-import { TranslatePipe } from '@ngx-translate/core';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe.ts';
 import { User } from 'app/core/user/user.model';
 import { Exam } from 'app/entities/exam.model';
 import { ExamPointsSummaryComponent } from 'app/exam/participate/summary/points-summary/exam-points-summary.component';
@@ -121,7 +121,7 @@ describe('ExamPointsSummaryComponent', function () {
     beforeEach(() => {
         return TestBed.configureTestingModule({
             imports: [RouterTestingModule.withRoutes([]), MockModule(NgbModule), HttpClientTestingModule],
-            declarations: [ExamPointsSummaryComponent, MockPipe(TranslatePipe)],
+            declarations: [ExamPointsSummaryComponent, MockPipe(ArtemisTranslatePipe)],
             providers: [MockProvider(ExerciseService)],
         })
             .compileComponents()

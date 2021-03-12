@@ -1,28 +1,29 @@
-import { ComponentFixture, fakeAsync, TestBed, tick, flush } from '@angular/core/testing';
 import { HttpClientModule, HttpErrorResponse } from '@angular/common/http';
-import { of, throwError } from 'rxjs';
-import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
-import * as sinon from 'sinon';
-import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
-import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
+import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, convertToParamMap, Router } from '@angular/router';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateService } from '@ngx-translate/core';
+import { EntityResponseType } from 'app/complaints/complaint.service';
 import { Course } from 'app/entities/course.model';
 import { Exam } from 'app/entities/exam.model';
+import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { ExerciseGroupUpdateComponent } from 'app/exam/manage/exercise-groups/exercise-group-update.component';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
-import { JhiAlertService } from 'ng-jhipster';
-import { ExerciseGroup } from 'app/entities/exercise-group.model';
-import { EntityResponseType } from 'app/complaints/complaint.service';
-import { MockRouter } from '../../../helpers/mocks/mock-router';
-import { SinonStub, stub } from 'sinon';
-import { MockComponent } from 'ng-mocks/dist/lib/mock-component/mock-component';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { MockPipe } from 'ng-mocks/dist/lib/mock-pipe/mock-pipe';
 import { AlertErrorComponent } from 'app/shared/alert/alert-error.component';
-import { FormsModule } from '@angular/forms';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe.ts';
+import * as chai from 'chai';
+import { JhiAlertService } from 'ng-jhipster';
+import { MockComponent } from 'ng-mocks/dist/lib/mock-component/mock-component';
+import { MockPipe } from 'ng-mocks/dist/lib/mock-pipe/mock-pipe';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { of, throwError } from 'rxjs';
+import * as sinon from 'sinon';
+import { SinonStub, stub } from 'sinon';
+import * as sinonChai from 'sinon-chai';
+import { MockRouter } from '../../../helpers/mocks/mock-router';
+import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -50,7 +51,7 @@ describe('ExerciseGroupUpdateComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [HttpClientModule, FormsModule],
-            declarations: [ExerciseGroupUpdateComponent, MockPipe(TranslatePipe), MockComponent(FaIconComponent), MockComponent(AlertErrorComponent)],
+            declarations: [ExerciseGroupUpdateComponent, MockPipe(ArtemisTranslatePipe), MockComponent(FaIconComponent), MockComponent(AlertErrorComponent)],
             providers: [
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: LocalStorageService, useClass: MockSyncStorage },

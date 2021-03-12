@@ -1,8 +1,9 @@
 import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
+import { filter, map, tap } from 'rxjs/operators';
+
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
 import * as moment from 'moment';
 import { SERVER_API_URL } from 'app/app.constants';
 import { Exam } from 'app/entities/exam.model';
@@ -13,6 +14,8 @@ import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { ExamScoreDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
 import { ExamInformationDTO } from 'app/entities/exam-information.model';
 import { ExamChecklist } from 'app/entities/exam-checklist.model';
+import { StatsForDashboard } from 'app/course/dashboards/instructor-course-dashboard/stats-for-dashboard.model';
+import { getLatestSubmissionResult, setLatestSubmissionResult, Submission } from 'app/entities/submission.model';
 
 type EntityResponseType = HttpResponse<Exam>;
 type EntityArrayResponseType = HttpResponse<Exam[]>;
@@ -77,6 +80,15 @@ export class ExamManagementService {
      */
     getExamStatistics(courseId: number, examId: number): Observable<HttpResponse<ExamChecklist>> {
         return this.http.get<ExamChecklist>(`${this.resourceUrl}/${courseId}/exams/${examId}/statistics`, { observe: 'response' });
+    }
+
+    /**
+     * returns the stats of the exam with the provided unique identifiers for the assessment dashboard
+     * @param courseId - the id of the course
+     * @param examId   - the id of the exam
+     */
+    getStatsForExamAssessmentDashboard(courseId: number, examId: number): Observable<HttpResponse<StatsForDashboard>> {
+        return this.http.get<StatsForDashboard>(`${this.resourceUrl}/${courseId}/exams/${examId}/stats-for-exam-assessment-dashboard`, { observe: 'response' });
     }
 
     /**
@@ -352,5 +364,25 @@ export class ExamManagementService {
             });
         }
         return res;
+    }
+
+    findAllLockedSubmissionsOfExam(courseId: number, examId: number) {
+        return this.http
+            .get<Submission[]>(`${this.resourceUrl}/${courseId}/exams/${examId}/lockedSubmissions`, { observe: 'response' })
+            .pipe(
+                filter((res) => !!res.body),
+                tap((res) =>
+                    res.body!.forEach((submission: Submission) => {
+                        // reconnect some associations
+                        const latestResult = getLatestSubmissionResult(submission);
+                        if (latestResult) {
+                            latestResult.submission = submission;
+                            latestResult.participation = submission.participation;
+                            submission.participation!.results = [latestResult!];
+                            setLatestSubmissionResult(submission, latestResult);
+                        }
+                    }),
+                ),
+            );
     }
 }
