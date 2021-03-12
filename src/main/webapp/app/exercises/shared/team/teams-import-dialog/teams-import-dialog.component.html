@@ -114,7 +114,7 @@
                         <div class="source-teams-legend d-flex justify-content-between">
                             <div>
                                 <div class="list-group-item--teams" [class.has-success]="true">
-                                    <div class="team-name">{{ 'artemisApp.team.sourceTeams.legend.teamShortName' | translate }}1</div>
+                                    <div class="team-name">{{ 'artemisApp.team.sourceTeams.legend.teamShortName' | artemisTranslate }}1</div>
                                     <jhi-team-students-list class="team-students" [students]="sampleTeamForLegend.students"> </jhi-team-students-list>
                                 </div>
                                 <div class="label-with-tooltip">
@@ -124,7 +124,7 @@
                             </div>
                             <div>
                                 <div class="list-group-item--teams" [class.has-error]="true">
-                                    <div class="team-name">{{ 'artemisApp.team.sourceTeams.legend.teamShortName' | translate }}2</div>
+                                    <div class="team-name">{{ 'artemisApp.team.sourceTeams.legend.teamShortName' | artemisTranslate }}2</div>
                                     <jhi-team-students-list class="team-students" [students]="sampleTeamForLegend.students"> </jhi-team-students-list>
                                 </div>
                                 <div class="label-with-tooltip">
@@ -134,7 +134,7 @@
                             </div>
                             <div>
                                 <div class="list-group-item--teams">
-                                    <div class="team-name">{{ 'artemisApp.team.sourceTeams.legend.teamShortName' | translate }}3</div>
+                                    <div class="team-name">{{ 'artemisApp.team.sourceTeams.legend.teamShortName' | artemisTranslate }}3</div>
                                     <jhi-team-students-list
                                         class="team-students"
                                         [students]="sampleTeamForLegend.students"
@@ -171,11 +171,11 @@
                         />
                         <div class="ml-2 radio-label-with-explanation">
                             <strong>
-                                {{ 'artemisApp.team.importStrategy.options.purgeExisting.label' | translate }}
-                                <span class="badge badge-danger ml-1">{{ 'artemisApp.team.importStrategy.options.purgeExisting.badge' | translate }}</span>
+                                {{ 'artemisApp.team.importStrategy.options.purgeExisting.label' | artemisTranslate }}
+                                <span class="badge badge-danger ml-1">{{ 'artemisApp.team.importStrategy.options.purgeExisting.badge' | artemisTranslate }}</span>
                             </strong>
                             <p [class.text-muted]="importStrategy !== ImportStrategy.PURGE_EXISTING" class="explanation mb-2">
-                                {{ 'artemisApp.team.importStrategy.options.purgeExisting.explanation' | translate }}
+                                {{ 'artemisApp.team.importStrategy.options.purgeExisting.explanation' | artemisTranslate }}
                             </p>
                         </div>
                     </label>
@@ -190,11 +190,11 @@
                         />
                         <div class="ml-2 radio-label-with-explanation">
                             <strong>
-                                {{ 'artemisApp.team.importStrategy.options.createOnly.label' | translate }}
-                                <span class="badge badge-success ml-1">{{ 'artemisApp.team.importStrategy.options.createOnly.badge' | translate }}</span>
+                                {{ 'artemisApp.team.importStrategy.options.createOnly.label' | artemisTranslate }}
+                                <span class="badge badge-success ml-1">{{ 'artemisApp.team.importStrategy.options.createOnly.badge' | artemisTranslate }}</span>
                             </strong>
                             <p [class.text-muted]="importStrategy !== ImportStrategy.CREATE_ONLY" class="explanation mb-0">
-                                {{ 'artemisApp.team.importStrategy.options.createOnly.explanation' | translate }}
+                                {{ 'artemisApp.team.importStrategy.options.createOnly.explanation' | artemisTranslate }}
                             </p>
                         </div>
                     </label>
@@ -205,19 +205,19 @@
     <div class="modal-footer">
         <div *ngIf="showImportPreviewNumbers && sourceTeams" class="flex-shrink-0 mr-2 d-flex">
             <div *ngIf="studentsAppearInMultipleTeams; else elseBlock">
-                <strong>{{ 'artemisApp.team.importPreview.studentsInMultipleTeams' | translate }}</strong>
+                <strong>{{ 'artemisApp.team.importPreview.studentsInMultipleTeams' | artemisTranslate }}</strong>
             </div>
             <ng-template #elseBlock>
                 <div *ngIf="numberOfTeamsToBeImported! === 0">
-                    <strong *ngIf="sourceTeams.length === 0">{{ 'artemisApp.team.importPreview.noTeamsToImport' | translate }}</strong>
-                    <strong *ngIf="sourceTeams.length > 0">{{ 'artemisApp.team.importPreview.noConflictFreeTeamsToImport' | translate }}</strong>
+                    <strong *ngIf="sourceTeams.length === 0">{{ 'artemisApp.team.importPreview.noTeamsToImport' | artemisTranslate }}</strong>
+                    <strong *ngIf="sourceTeams.length > 0">{{ 'artemisApp.team.importPreview.noConflictFreeTeamsToImport' | artemisTranslate }}</strong>
                 </div>
                 <ng-container *ngIf="numberOfTeamsToBeImported! > 0">
                     <div *ngIf="numberOfTeamsToBeDeleted! > 0" class="mr-3">
-                        <strong>{{ 'artemisApp.team.importPreview.teamsToBeDeleted' | translate }}</strong> {{ numberOfTeamsToBeDeleted! }}
+                        <strong>{{ 'artemisApp.team.importPreview.teamsToBeDeleted' | artemisTranslate }}</strong> {{ numberOfTeamsToBeDeleted! }}
                     </div>
                     <div *ngIf="numberOfTeamsToBeImported! !== numberOfTeamsAfterImport!" class="mr-3">
-                        <strong>{{ 'artemisApp.team.importPreview.teamsToBeImported' | translate }}</strong> {{ numberOfTeamsToBeImported! }}
+                        <strong>{{ 'artemisApp.team.importPreview.teamsToBeImported' | artemisTranslate }}</strong> {{ numberOfTeamsToBeImported! }}
                         <span
                             *ngIf="numberOfTeamsToBeImported! < sourceTeams.length"
                             jhiTranslate="artemisApp.team.importPreview.outOf"
@@ -227,7 +227,7 @@
                         </span>
                     </div>
                     <div>
-                        <strong>{{ 'artemisApp.team.importPreview.totalTeamsAfterImport' | translate }}</strong> {{ numberOfTeamsAfterImport! }}
+                        <strong>{{ 'artemisApp.team.importPreview.totalTeamsAfterImport' | artemisTranslate }}</strong> {{ numberOfTeamsAfterImport! }}
                     </div>
                 </ng-container>
             </ng-template>

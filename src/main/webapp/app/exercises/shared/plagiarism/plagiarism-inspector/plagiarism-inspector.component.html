@@ -4,12 +4,12 @@
             <div class="plagiarism-header-top-left">
                 <h4 class="plagiarism-page-title" (click)="showOptions = !showOptions" [class.active]="showOptions">
                     <fa-icon class="plagiarism-options-toggle" icon="chevron-right"></fa-icon>
-                    <span>{{ 'artemisApp.plagiarism.plagiarism-detection' | translate }}</span>
+                    <span>{{ 'artemisApp.plagiarism.plagiarism-detection' | artemisTranslate }}</span>
                 </h4>
 
                 <div class="plagiarism-warning">
                     <fa-icon [icon]="'exclamation-triangle'" id="plagiarismCaution"></fa-icon>
-                    <span>{{ 'artemisApp.plagiarism.caution' | translate }}</span>
+                    <span>{{ 'artemisApp.plagiarism.caution' | artemisTranslate }}</span>
                 </div>
             </div>
             <div class="plagiarism-header-top-right">
@@ -32,7 +32,12 @@
         <div class="plagiarism-header-options" [hidden]="!showOptions">
             <div class="plagiarism-option">
                 <div class="plagiarism-option-label" jhiTranslate="artemisApp.plagiarism.similarity-threshold">Similarity Threshold</div>
-                <fa-icon [icon]="'question-circle'" placement="bottom" [ngbTooltip]="'artemisApp.plagiarism.similarity-threshold-tooltip' | translate" container="body"></fa-icon>
+                <fa-icon
+                    [icon]="'question-circle'"
+                    placement="bottom"
+                    [ngbTooltip]="'artemisApp.plagiarism.similarity-threshold-tooltip' | artemisTranslate"
+                    container="body"
+                ></fa-icon>
                 <input
                     required
                     type="number"
@@ -51,7 +56,7 @@
                     <input type="checkbox" id="enableMinimumScore" class="plagiarism-option-checkbox" [(ngModel)]="enableMinimumScore" checked />
                     <div class="plagiarism-option-label" jhiTranslate="artemisApp.plagiarism.minimum-score">Minimum Score</div>
                 </label>
-                <fa-icon [icon]="'question-circle'" placement="bottom" [ngbTooltip]="'artemisApp.plagiarism.minimum-score-tooltip' | translate" container="body"></fa-icon>
+                <fa-icon [icon]="'question-circle'" placement="bottom" [ngbTooltip]="'artemisApp.plagiarism.minimum-score-tooltip' | artemisTranslate" container="body"></fa-icon>
                 <input required type="number" [disabled]="!enableMinimumScore" class="form-control" min="0" max="100" id="plagiarism-minimum-score" [(ngModel)]="minimumScore" />
             </div>
 
@@ -60,7 +65,7 @@
                     <input type="checkbox" id="enableMinimumSize" class="plagiarism-option-checkbox" [(ngModel)]="enableMinimumSize" checked />
                     <div class="plagiarism-option-label" jhiTranslate="artemisApp.plagiarism.minimum-size">Minimum Size</div>
                 </label>
-                <fa-icon [icon]="'question-circle'" placement="bottom" [ngbTooltip]="getMinimumSizeTooltip() | translate" container="body"></fa-icon>
+                <fa-icon [icon]="'question-circle'" placement="bottom" [ngbTooltip]="getMinimumSizeTooltip() | artemisTranslate" container="body"></fa-icon>
                 <input required type="number" [disabled]="!enableMinimumSize" class="form-control" min="0" max="100" id="plagiarism-minimum-size" [(ngModel)]="minimumSize" />
             </div>
 
@@ -90,7 +95,7 @@
         </div>
 
         <span class="plagiarism-empty-label" *ngIf="!detectionInProgress">
-            {{ 'artemisApp.plagiarism.empty' | translate }}
+            {{ 'artemisApp.plagiarism.empty' | artemisTranslate }}
         </span>
     </div>
 </div>
