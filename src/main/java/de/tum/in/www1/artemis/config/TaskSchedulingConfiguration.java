@@ -17,6 +17,8 @@ public class TaskSchedulingConfiguration {
     @Bean(name = "taskScheduler")
     public TaskScheduler taskScheduler() {
         log.debug("Creating Task Scheduler ");
-        return new ThreadPoolTaskScheduler();
+        var scheduler = new ThreadPoolTaskScheduler();
+        scheduler.setPoolSize(4);
+        return scheduler;
     }
 }
