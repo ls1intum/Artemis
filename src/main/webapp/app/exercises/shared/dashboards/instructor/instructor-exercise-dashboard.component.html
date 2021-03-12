@@ -1,5 +1,5 @@
 <jhi-header-exercise-page-with-details [exercise]="exercise" [onBackClick]="back.bind(this)">
-    <span pagetitle>{{ 'artemisApp.instructorExerciseDashboard.pageHeader' | translate }} {{ exercise?.title }}</span>
+    <span pagetitle>{{ 'artemisApp.instructorExerciseDashboard.pageHeader' | artemisTranslate }} {{ exercise?.title }}</span>
 </jhi-header-exercise-page-with-details>
 
 <jhi-alert></jhi-alert>
@@ -8,24 +8,24 @@
     <div class="container-fluid mt-3">
         <div class="row">
             <div class="col-md-8">
-                <jhi-side-panel [panelHeader]="'artemisApp.exerciseAssessmentDashboard.exerciseInformation' | translate">
+                <jhi-side-panel [panelHeader]="'artemisApp.exerciseAssessmentDashboard.exerciseInformation' | artemisTranslate">
                     <div class="row mb-1 small" *ngIf="stats.numberOfSubmissions.late > 0">
                         <div class="col-8"></div>
                         <div class="col-4">
-                            {{ 'artemisApp.exerciseAssessmentDashboard.stats.intime' | translate }}
-                            <span class="ml-1 result--late text-nowrap">| {{ 'artemisApp.exerciseAssessmentDashboard.stats.late' | translate }} </span>
+                            {{ 'artemisApp.exerciseAssessmentDashboard.stats.intime' | artemisTranslate }}
+                            <span class="ml-1 result--late text-nowrap">| {{ 'artemisApp.exerciseAssessmentDashboard.stats.late' | artemisTranslate }} </span>
                         </div>
                     </div>
 
                     <div class="row mb-1">
-                        <div class="col-8">{{ 'artemisApp.exerciseAssessmentDashboard.numberOfSubmissions' | translate }}</div>
+                        <div class="col-8">{{ 'artemisApp.exerciseAssessmentDashboard.numberOfSubmissions' | artemisTranslate }}</div>
                         <div class="col-4">
                             {{ stats.numberOfSubmissions.inTime }}
                             <span *ngIf="stats.numberOfSubmissions.late > 0" class="ml-1 result--late text-nowrap">| {{ stats.numberOfSubmissions.late }}</span>
                         </div>
                     </div>
                     <div class="row mb-1">
-                        <div class="col-8">{{ 'artemisApp.exerciseAssessmentDashboard.numberOfManualAssessedSubmissions' | translate }}</div>
+                        <div class="col-8">{{ 'artemisApp.exerciseAssessmentDashboard.numberOfManualAssessedSubmissions' | artemisTranslate }}</div>
                         <div class="col-4">
                             {{ stats.totalNumberOfAssessments.inTime - stats.numberOfAutomaticAssistedAssessments.inTime }} ({{ totalManualAssessmentPercentage.inTime }}%)
                             <span *ngIf="stats.numberOfSubmissions.late > 0" class="ml-2 result--late text-nowrap"
@@ -34,7 +34,7 @@
                         </div>
                     </div>
                     <div class="row mb-1">
-                        <div class="col-8">{{ 'artemisApp.exerciseAssessmentDashboard.numberOfAutomaticAssistedSubmissions' | translate }}</div>
+                        <div class="col-8">{{ 'artemisApp.exerciseAssessmentDashboard.numberOfAutomaticAssistedSubmissions' | artemisTranslate }}</div>
                         <div class="col-4">
                             {{ stats.numberOfAutomaticAssistedAssessments.inTime }} ({{ totalAutomaticAssessmentPercentage.inTime }}%)
                             <span *ngIf="stats.numberOfSubmissions.late > 0" class="ml-2 result--late text-nowrap"
@@ -43,7 +43,7 @@
                         </div>
                     </div>
                     <div class="row mb-1">
-                        <div class="col-8">{{ 'artemisApp.exerciseAssessmentDashboard.numberOfUnassessedSubmissions' | translate }}</div>
+                        <div class="col-8">{{ 'artemisApp.exerciseAssessmentDashboard.numberOfUnassessedSubmissions' | artemisTranslate }}</div>
                         <div class="col-4">
                             {{ stats.numberOfSubmissions.inTime - stats.totalNumberOfAssessments.inTime }} ({{
                                 100 - totalAutomaticAssessmentPercentage.inTime - totalManualAssessmentPercentage.inTime
@@ -56,13 +56,13 @@
                         </div>
                     </div>
                     <div class="row mb-1">
-                        <div class="col-8">{{ 'artemisApp.assessmentDashboard.totalComplaints' | translate }}</div>
+                        <div class="col-8">{{ 'artemisApp.assessmentDashboard.totalComplaints' | artemisTranslate }}</div>
                         <div class="col-4">
                             <a [routerLink]="['/course-management', courseId, 'exercises', exercise.id, 'complaints']">{{ stats.numberOfComplaints }}</a>
                         </div>
                     </div>
                     <div class="row mb-1">
-                        <div class="col-8">{{ 'artemisApp.assessmentDashboard.totalMoreFeedbackRequests' | translate }}</div>
+                        <div class="col-8">{{ 'artemisApp.assessmentDashboard.totalMoreFeedbackRequests' | artemisTranslate }}</div>
                         <div class="col-4">
                             <a [routerLink]="['/course-management', courseId, 'exercises', exercise.id, 'more-feedback-requests']">{{ stats.numberOfMoreFeedbackRequests }}</a>
                         </div>
@@ -76,7 +76,7 @@
             </div>
         </div>
 
-        <h2>{{ 'artemisApp.instructorExerciseDashboard.leaderboardTitle' | translate }}</h2>
+        <h2>{{ 'artemisApp.instructorExerciseDashboard.leaderboardTitle' | artemisTranslate }}</h2>
 
         <jhi-tutor-leaderboard [tutorsData]="stats.tutorLeaderboardEntries" [exercise]="exercise"></jhi-tutor-leaderboard>
     </div>

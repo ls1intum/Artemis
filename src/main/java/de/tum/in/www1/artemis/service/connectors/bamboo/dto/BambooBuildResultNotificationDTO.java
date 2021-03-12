@@ -76,9 +76,9 @@ public class BambooBuildResultNotificationDTO extends AbstractBuildResultNotific
     }
 
     @Override
-    public Long getBuildScore() {
+    public Double getBuildScore() {
         // the real score is calculated in the grading service
-        return 0L;
+        return 0D;
     }
 
     @Override

@@ -1,20 +1,20 @@
-import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
-import * as sinon from 'sinon';
 import { ComponentFixture, fakeAsync, TestBed } from '@angular/core/testing';
-import { TranslatePipe } from '@ngx-translate/core';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
-import { LearningGoalDetailModalComponent } from 'app/course/learning-goals/learning-goal-detail-modal/learning-goal-detail-modal.component';
-import { SortService } from 'app/shared/service/sort.service';
-import { JhiSortByDirective, JhiSortDirective, JhiTranslateDirective } from 'ng-jhipster';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { RouterTestingModule } from '@angular/router/testing';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
-import { LearningGoal } from 'app/entities/learningGoal.model';
+import { LearningGoalDetailModalComponent } from 'app/course/learning-goals/learning-goal-detail-modal/learning-goal-detail-modal.component';
 import { IndividualLearningGoalProgress, IndividualLectureUnitProgress } from 'app/course/learning-goals/learning-goal-individual-progress-dtos.model';
+import { LearningGoal } from 'app/entities/learningGoal.model';
+import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
 import { VideoUnit } from 'app/entities/lecture-unit/videoUnit.model';
+import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe.ts';
+import { SortService } from 'app/shared/service/sort.service';
+import * as chai from 'chai';
+import { JhiSortByDirective, JhiSortDirective, JhiTranslateDirective } from 'ng-jhipster';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import * as sinon from 'sinon';
+import * as sinonChai from 'sinon-chai';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -31,20 +31,20 @@ describe('LearningGoalDetailModalComponent', () => {
         TestBed.configureTestingModule({
             imports: [RouterTestingModule.withRoutes([])],
             declarations: [
-                LearningGoalDetailModalComponent,
-                MockPipe(TranslatePipe),
+                MockPipe(ArtemisTranslatePipe),
                 MockDirective(JhiTranslateDirective),
                 MockDirective(JhiSortDirective),
+                LearningGoalDetailModalComponent,
                 MockDirective(JhiSortByDirective),
                 MockComponent(FaIconComponent),
             ],
             providers: [
-                MockProvider(LectureUnitService),
                 MockProvider(SortService),
                 {
                     provide: NgbActiveModal,
                     useValue: activeModalStub,
                 },
+                MockProvider(LectureUnitService),
             ],
             schemas: [],
         })

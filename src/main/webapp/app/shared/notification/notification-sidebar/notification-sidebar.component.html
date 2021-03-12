@@ -16,17 +16,17 @@
                 <fa-icon [icon]="'times'"></fa-icon>
             </button>
             <h5 class="mb-3 text-center">
-                {{ 'artemisApp.notification.notifications' | translate }}
+                {{ 'artemisApp.notification.notifications' | artemisTranslate }}
             </h5>
             <div class="text-right">
                 <small class="text-muted">
-                    {{ 'artemisApp.notification.loadedNotificationCount' | translate: { loaded: sortedNotifications?.length || '0', total: totalNotifications } }}
+                    {{ 'artemisApp.notification.loadedNotificationCount' | artemisTranslate: { loaded: sortedNotifications?.length || '0', total: totalNotifications } }}
                 </small>
             </div>
         </div>
         <div id="notification-sidebar-container" (scroll)="onScroll()">
             <div class="alert alert-danger mx-3" role="alert" *ngIf="error">
-                {{ 'artemisApp.notification.unexpectedError' | translate }}
+                {{ 'artemisApp.notification.unexpectedError' | artemisTranslate }}
             </div>
             <div class="notification-item p-3" *ngFor="let notification of sortedNotifications" (click)="startNotification(notification)">
                 <div>
@@ -37,7 +37,7 @@
                     <div class="mb-1 text-break" [innerHTML]="notification.text"></div>
                     <div class="info text-muted text-right">
                         {{ notification.notificationDate | date: 'dd.MM.yy HH:mm' }}
-                        {{ 'artemisApp.notification.by' | translate }}
+                        {{ 'artemisApp.notification.by' | artemisTranslate }}
                         <span *ngIf="notification.author; else noAuthor">{{ notification.author.name }}</span>
                         <ng-template #noAuthor>
                             <span jhiTranslate="global.title"></span>
@@ -49,10 +49,10 @@
                 <fa-icon [icon]="'circle-notch'" spin="true"></fa-icon>
             </div>
             <small class="all-loaded text-center d-block mx-3 my-2" *ngIf="notifications.length > 0 && notifications.length >= totalNotifications">
-                {{ 'artemisApp.notification.allLoaded' | translate }}
+                {{ 'artemisApp.notification.allLoaded' | artemisTranslate }}
             </small>
             <span class="no-notifications" *ngIf="notifications && notifications.length === 0">
-                {{ 'artemisApp.notification.noNotifications' | translate }}
+                {{ 'artemisApp.notification.noNotifications' | artemisTranslate }}
             </span>
         </div>
     </div>

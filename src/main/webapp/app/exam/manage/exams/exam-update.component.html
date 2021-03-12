@@ -2,11 +2,11 @@
     <div class="col">
         <form name="editForm" role="form" #editForm="ngForm" (ngSubmit)="save()">
             <div *ngIf="!exam.id; else edit">
-                <h4>{{ 'artemisApp.examManagement.createExam' | translate }}</h4>
+                <h4>{{ 'artemisApp.examManagement.createExam' | artemisTranslate }}</h4>
             </div>
 
             <ng-template #edit>
-                <h4>{{ 'artemisApp.examManagement.editExam' | translate }}</h4>
+                <h4>{{ 'artemisApp.examManagement.editExam' | artemisTranslate }}</h4>
             </ng-template>
 
             <div>
@@ -43,7 +43,7 @@
             <div class="form-row mb-3">
                 <div class="col-sm-4">
                     <jhi-date-time-picker
-                        labelName="{{ 'artemisApp.examManagement.visibleDate' | translate }}"
+                        labelName="{{ 'artemisApp.examManagement.visibleDate' | artemisTranslate }}"
                         [(ngModel)]="exam.visibleDate"
                         [error]="!isValidVisibleDate"
                         name="visibleDate"
@@ -52,7 +52,7 @@
                 </div>
                 <div class="col-sm-4">
                     <jhi-date-time-picker
-                        labelName="{{ 'artemisApp.examManagement.startDate' | translate }}"
+                        labelName="{{ 'artemisApp.examManagement.startDate' | artemisTranslate }}"
                         [(ngModel)]="exam.startDate"
                         [error]="!isValidStartDate"
                         name="startDate"
@@ -61,7 +61,7 @@
                 </div>
                 <div class="col-sm-4">
                     <jhi-date-time-picker
-                        labelName="{{ 'artemisApp.examManagement.endDate' | translate }}"
+                        labelName="{{ 'artemisApp.examManagement.endDate' | artemisTranslate }}"
                         [(ngModel)]="exam.endDate"
                         [error]="!isValidEndDate"
                         name="endDate"
@@ -73,7 +73,7 @@
             <div class="form-row mb-3">
                 <div class="col-sm-4">
                     <jhi-date-time-picker
-                        labelName="{{ 'artemisApp.examManagement.publishResultsDate' | translate }}"
+                        labelName="{{ 'artemisApp.examManagement.publishResultsDate' | artemisTranslate }}"
                         [(ngModel)]="exam.publishResultsDate"
                         [error]="!isValidPublishResultsDate"
                         name="publishResultsDate"
@@ -82,7 +82,7 @@
                 </div>
                 <div class="col-sm-4">
                     <jhi-date-time-picker
-                        labelName="{{ 'artemisApp.examManagement.examStudentReviewStart' | translate }}"
+                        labelName="{{ 'artemisApp.examManagement.examStudentReviewStart' | artemisTranslate }}"
                         [(ngModel)]="exam.examStudentReviewStart"
                         [error]="!isValidExamStudentReviewStart"
                         name="examStudentReviewStart"
@@ -91,7 +91,7 @@
                 </div>
                 <div class="col-sm-4">
                     <jhi-date-time-picker
-                        labelName="{{ 'artemisApp.examManagement.examStudentReviewEnd' | translate }}"
+                        labelName="{{ 'artemisApp.examManagement.examStudentReviewEnd' | artemisTranslate }}"
                         [(ngModel)]="exam.examStudentReviewEnd"
                         [error]="!isValidExamStudentReviewEnd"
                         name="examStudentReviewEnd"

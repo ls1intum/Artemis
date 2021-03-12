@@ -218,7 +218,7 @@ export default function (data) {
                                     simulateSubmission(artemis, simulation, TestResult.BUILD_ERROR);
                                 }
                                 programmingSubmissionCounter++;
-                                sleep(20);
+                                sleep(40);
                                 break;
                         }
                         sleep(10);
