@@ -15,6 +15,7 @@ import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { ProgressBarComponent } from 'app/shared/dashboards/tutor-participation-graph/progress-bar/progress-bar.component';
 import { ExamChecklistExerciseGroupTableComponent } from 'app/exam/manage/exams/exam-checklist-component/exam-checklist-exercisegroup-table/exam-checklist-exercisegroup-table.component';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -77,7 +78,7 @@ describe('ExamChecklistExerciseGroupTableComponent', () => {
             ],
             declarations: [
                 DummyComponent,
-                MockPipe(TranslatePipe),
+                MockPipe(ArtemisTranslatePipe),
                 MockPipe(ArtemisDatePipe),
                 MockDirective(JhiTranslateDirective),
                 MockDirective(HasAnyAuthorityDirective),
@@ -102,6 +103,7 @@ describe('ExamChecklistExerciseGroupTableComponent', () => {
 
     describe('test onChanges', () => {
         it('should set properties false', () => {
+            examChecklistExerciseGroupTableComponent.ngOnChanges();
             examChecklistExerciseGroupTableComponent.exerciseGroups = getExerciseGroups(false);
             examChecklistExerciseGroupTableComponent.ngOnChanges();
             expect(examChecklistExerciseGroupTableComponent.exerciseGroupVariantColumns.length).to.equal(2);
