@@ -14,6 +14,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -1162,10 +1163,7 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         instructor.setGroups(groups);
         userRepo.save(instructor);
 
-        var params = new LinkedMultiValueMap<String, String>();
-        params.add("onlyActive", "true");
         var courseDtos = request.getList("/api/courses/exercises-for-management-overview", HttpStatus.OK, CourseManagementOverviewDTO.class);
-
         assertThat(courseDtos.size()).isEqualTo(1);
 
         var dto = courseDtos.get(0);
@@ -1174,13 +1172,22 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         var exerciseDetails = dto.getExerciseDetails();
         assertThat(exerciseDetails.size()).isEqualTo(5);
 
-        var quizExerciseOptional = exerciseDetails.stream().filter(e -> e.getExerciseType().equals("quiz")).findFirst();
-        assertThat(quizExerciseOptional.isPresent());
+        var quizDtoOptional = exerciseDetails.stream().filter(e -> e.getExerciseType().equals("quiz")).findFirst();
+        assertThat(quizDtoOptional.isPresent()).isTrue();
 
-        var quizDto = quizExerciseOptional.get();
+        var quizExerciseOptional = instructorsCourse.getExercises().stream().filter(e -> e instanceof QuizExercise).findFirst();
+        assertThat(quizExerciseOptional.isPresent()).isTrue();
+
+        var quizDto = quizDtoOptional.get();
+        var quizExercise = quizExerciseOptional.get();
         assertThat(quizDto.getQuizStatus()).isEqualTo(QuizStatus.CLOSED);
-        assertThat(quizDto.getCategories().size()).isEqualTo(1);
-        assertThat(quizDto.getCategories().stream().findFirst().get()).isEqualTo("Category");
+        assertThat(quizDto.getCategories().size()).isEqualTo(quizExercise.getCategories().size());
+
+        var dtoCategories = quizDto.getCategories().stream().findFirst();
+        var exerciseCategories = quizExercise.getCategories().stream().findFirst();
+        assertThat(dtoCategories.isPresent()).isTrue();
+        assertThat(exerciseCategories.isPresent()).isTrue();
+        assertThat(dtoCategories.get()).isEqualTo(exerciseCategories.get());
     }
 
     @Test
@@ -1198,10 +1205,7 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         instructor.setGroups(groups);
         userRepo.save(instructor);
 
-        var params = new LinkedMultiValueMap<String, String>();
-        params.add("onlyActive", "true");
         var courseDtos = request.getList("/api/courses/stats-for-management-overview", HttpStatus.OK, CourseManagementOverviewStatisticsDTO.class);
-
         assertThat(courseDtos.size()).isEqualTo(1);
 
         var dto = courseDtos.get(0);
@@ -1211,7 +1215,7 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         assertThat(exerciseDTOS.size()).isEqualTo(5);
 
         var statisticsOptional = exerciseDTOS.stream().findFirst();
-        assertThat(statisticsOptional.isPresent());
+        assertThat(statisticsOptional.isPresent()).isTrue();
 
         var statisticsDTO = statisticsOptional.get();
         assertThat(statisticsDTO.getAverageScoreInPercent()).isEqualTo(11.0);
