@@ -29,9 +29,9 @@
                 [actionType]="ActionType.Remove"
                 [entityTitle]="exam.title"
                 [renderButtonText]="false"
+                [buttonSize]="ButtonSize.MEDIUM"
                 jhiDeleteButton
-                class="btn btn-primary ml-1"
-                style="height: 40px"
+                class="btn btn-primary ml-auto"
                 deleteQuestion="artemisApp.studentExams.removeAllStudents.question"
                 (delete)="removeAllStudents($event)"
                 [dialogError]="dialogError$"
