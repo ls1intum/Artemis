@@ -18,9 +18,9 @@
         </div>
 
         <div class="d-flex mb-1">
-            <h6 *ngIf="examScoreDTO.maxPoints">{{ toLocaleString(examScoreDTO.maxPoints) }} {{ 'artemisApp.examScores.maxPoints' | translate }} ,</h6>
-            <h6 class="ml-2">{{ exerciseGroups.length }} {{ 'artemisApp.examScores.noExerciseGroups' | translate }} ,</h6>
-            <h6 class="ml-2">{{ aggregatedExamResults.noOfRegisteredUsers }} {{ 'artemisApp.examScores.registered' | translate }}</h6>
+            <h6 *ngIf="examScoreDTO.maxPoints">{{ toLocaleString(examScoreDTO.maxPoints) }} {{ 'artemisApp.examScores.maxPoints' | artemisTranslate }} ,</h6>
+            <h6 class="ml-2">{{ exerciseGroups.length }} {{ 'artemisApp.examScores.noExerciseGroups' | artemisTranslate }} ,</h6>
+            <h6 class="ml-2">{{ aggregatedExamResults.noOfRegisteredUsers }} {{ 'artemisApp.examScores.registered' | artemisTranslate }}</h6>
         </div>
 
         <div class="mb-2">
@@ -33,11 +33,11 @@
         <div class="d-flex align-items-center align-content-center mb-2">
             <label class="radio-inline mb-0 d-flex align-items-center">
                 <input type="checkbox" [checked]="filterForSubmittedExams" (change)="toggleFilterForSubmittedExam()" />
-                <span class="ml-1">{{ 'artemisApp.examScores.filterForSubmittedExams' | translate }}</span>
+                <span class="ml-1">{{ 'artemisApp.examScores.filterForSubmittedExams' | artemisTranslate }}</span>
             </label>
             <label class="radio-inline ml-2 mb-0 d-flex align-items-center">
                 <input type="checkbox" [checked]="filterForNonEmptySubmissions" (change)="toggleFilterForNonEmptySubmission()" />
-                <span class="ml-1">{{ 'artemisApp.examScores.filterForNonEmptySubmissions' | translate }}</span>
+                <span class="ml-1">{{ 'artemisApp.examScores.filterForNonEmptySubmissions' | artemisTranslate }}</span>
             </label>
         </div>
 
@@ -47,21 +47,21 @@
                 <tr>
                     <th></th>
                     <th>
-                        {{ 'artemisApp.examScores.submittedColumn' | translate }}
+                        {{ 'artemisApp.examScores.submittedColumn' | artemisTranslate }}
                     </th>
                     <th>
-                        {{ 'artemisApp.examScores.totalColumn' | translate }}
+                        {{ 'artemisApp.examScores.totalColumn' | artemisTranslate }}
                     </th>
                 </tr>
             </thead>
             <tbody>
                 <tr>
-                    <th scope="row">{{ 'artemisApp.examScores.noOfExams' | translate }}</th>
+                    <th scope="row">{{ 'artemisApp.examScores.noOfExams' | artemisTranslate }}</th>
                     <td>{{ aggregatedExamResults.noOfExamsFiltered }}</td>
                     <td>{{ aggregatedExamResults.noOfRegisteredUsers }}</td>
                 </tr>
                 <tr>
-                    <th scope="row">{{ 'artemisApp.examScores.averagePointsColumn' | translate }}</th>
+                    <th scope="row">{{ 'artemisApp.examScores.averagePointsColumn' | artemisTranslate }}</th>
                     <td>
                         {{ aggregatedExamResults.meanPoints !== null ? roundAndPerformLocalConversion(aggregatedExamResults.meanPoints, 2, 2) : '-' }}
                         ({{ aggregatedExamResults.meanPointsRelative !== null ? roundAndPerformLocalConversion(aggregatedExamResults.meanPointsRelative, 2, 2) : '-' }}
@@ -74,7 +74,7 @@
                     </td>
                 </tr>
                 <tr>
-                    <th scope="row">{{ 'artemisApp.examScores.medianColumn' | translate }}</th>
+                    <th scope="row">{{ 'artemisApp.examScores.medianColumn' | artemisTranslate }}</th>
                     <td>
                         {{ aggregatedExamResults.median !== null ? roundAndPerformLocalConversion(aggregatedExamResults.median, 2, 2) : '-' }}
                         ({{ aggregatedExamResults.medianRelative !== null ? roundAndPerformLocalConversion(aggregatedExamResults.medianRelative, 2, 2) : '-' }}
@@ -87,7 +87,7 @@
                     </td>
                 </tr>
                 <tr>
-                    <th scope="row">{{ 'artemisApp.examScores.standardDeviationColumn' | translate }}</th>
+                    <th scope="row">{{ 'artemisApp.examScores.standardDeviationColumn' | artemisTranslate }}</th>
                     <td>{{ aggregatedExamResults.standardDeviation !== null ? roundAndPerformLocalConversion(aggregatedExamResults.standardDeviation, 2, 2) : '-' }}</td>
                     <td>{{ aggregatedExamResults.standardDeviationTotal !== null ? roundAndPerformLocalConversion(aggregatedExamResults.standardDeviationTotal, 2, 2) : '-' }}</td>
                 </tr>
@@ -107,25 +107,25 @@
                     <tr>
                         <th>#</th>
                         <th>
-                            {{ 'artemisApp.examScores.titleExerciseGroupColumn' | translate }}
+                            {{ 'artemisApp.examScores.titleExerciseGroupColumn' | artemisTranslate }}
                         </th>
                         <th>
-                            {{ 'artemisApp.examScores.participantsColumn' | translate }}
+                            {{ 'artemisApp.examScores.participantsColumn' | artemisTranslate }}
                             <jhi-help-icon placement="right" text="artemisApp.examScores.participantsExerciseGroupTooltip"></jhi-help-icon>
                         </th>
                         <th>
-                            {{ 'artemisApp.examScores.averagePointsColumn' | translate }}
+                            {{ 'artemisApp.examScores.averagePointsColumn' | artemisTranslate }}
                             <jhi-help-icon placement="right" text="artemisApp.examScores.averageExerciseGroupTooltip"></jhi-help-icon>
                         </th>
                         <th>
-                            {{ 'artemisApp.examScores.titleExerciseColumn' | translate }}
+                            {{ 'artemisApp.examScores.titleExerciseColumn' | artemisTranslate }}
                         </th>
                         <th>
-                            {{ 'artemisApp.examScores.participantsColumn' | translate }}
+                            {{ 'artemisApp.examScores.participantsColumn' | artemisTranslate }}
                             <jhi-help-icon placement="right" text="artemisApp.examScores.participantsExerciseTooltip"></jhi-help-icon>
                         </th>
                         <th>
-                            {{ 'artemisApp.examScores.averagePointsColumn' | translate }}
+                            {{ 'artemisApp.examScores.averagePointsColumn' | artemisTranslate }}
                             <jhi-help-icon placement="right" text="artemisApp.examScores.averageExerciseTooltip"></jhi-help-icon>
                         </th>
                     </tr>

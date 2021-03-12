@@ -34,7 +34,7 @@
                     </span>
                 </ng-template>
                 <ng-template ngx-datatable-cell-template let-value="value" class="mr-5">
-                    {{ value ? (moment(value) | artemisDate: 'short-date') : ('artemisApp.exercise.dateNotSet' | translate) }}
+                    {{ value ? (moment(value) | artemisDate: 'short-date') : ('artemisApp.exercise.dateNotSet' | artemisTranslate) }}
                 </ng-template>
             </ngx-datatable-column>
 
@@ -46,7 +46,7 @@
                     </span>
                 </ng-template>
                 <ng-template ngx-datatable-cell-template let-value="value" class="mr-5">
-                    {{ value ? (moment(value) | artemisDate: 'short-date') : ('artemisApp.exercise.dateNotSet' | translate) }}
+                    {{ value ? (moment(value) | artemisDate: 'short-date') : ('artemisApp.exercise.dateNotSet' | artemisTranslate) }}
                 </ng-template>
             </ngx-datatable-column>
 
@@ -110,7 +110,7 @@
                         {{ value.participation.initializationDate | artemisDate }}
                     </ng-container>
                     <ng-template #initializationDateUnavailable>
-                        {{ 'artemisApp.exercise.dateNotSet' | translate }}
+                        {{ 'artemisApp.exercise.dateNotSet' | artemisTranslate }}
                     </ng-template>
                 </ng-template>
             </ngx-datatable-column>
@@ -149,10 +149,10 @@
                 </ng-template>
                 <ng-template ngx-datatable-cell-template let-value="row">
                     <ng-container *ngIf="value.participation; else initializationState">
-                        {{ 'artemisApp.InitializationState.' + value.participation.initializationState | translate }}
+                        {{ 'artemisApp.InitializationState.' + value.participation.initializationState | artemisTranslate }}
                     </ng-container>
                     <ng-template #initializationState>
-                        {{ 'artemisApp.InitializationState.UNINITIALIZED' | translate }}
+                        {{ 'artemisApp.InitializationState.UNINITIALIZED' | artemisTranslate }}
                     </ng-template>
                 </ng-template>
             </ngx-datatable-column>
@@ -179,7 +179,7 @@
                             class="mx-3"
                             *ngIf="value.submission?.result?.hasComplaint"
                             [icon]="'flag'"
-                            ngbTooltip="{{ 'artemisApp.team.detail.participationsTable.complaintOrMoreFeedbackRequest' | translate }}"
+                            ngbTooltip="{{ 'artemisApp.team.detail.participationsTable.complaintOrMoreFeedbackRequest' | artemisTranslate }}"
                         ></fa-icon>
                     </div>
                 </ng-template>
