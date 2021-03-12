@@ -22,6 +22,10 @@ public class TutorLeaderboardDTO {
 
     private Long points;
 
+    public TutorLeaderboardDTO() {
+        // to make Jackson happy
+    }
+
     public TutorLeaderboardDTO(long userId, String name, long numberOfAssessments, long numberOfAcceptedComplaints, long numberOfTutorComplaints,
             long numberOfNotAnsweredMoreFeedbackRequests, long numberOfComplaintResponses, long numberOfAnsweredMoreFeedbackRequests, long numberOfTutorMoreFeedbackRequests,
             Long points) {
