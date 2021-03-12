@@ -177,9 +177,13 @@ public class JenkinsRequestMockProvider {
 
     public void mockConfigureBuildPlan(ProgrammingExercise exercise, String username) throws URISyntaxException, IOException {
         final var projectKey = exercise.getProjectKey();
-        final var planKey = projectKey + "-" + username.toUpperCase();
+        final var planKey = projectKey + "-" + getCleanPlanName(username.toUpperCase());
         mockUpdatePlanRepository(projectKey, planKey, true);
         mockEnablePlan(projectKey, planKey, true, false);
+    }
+
+    private String getCleanPlanName(String planName) {
+        return planName.toUpperCase().replaceAll("[^A-Z0-9]", "");
     }
 
     public void mockUpdatePlanRepository(String projectKey, String planName, boolean useLegacyXml) throws IOException, URISyntaxException {

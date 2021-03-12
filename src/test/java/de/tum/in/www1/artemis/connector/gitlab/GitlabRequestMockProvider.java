@@ -37,6 +37,7 @@ import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.connectors.gitlab.GitLabUserDoesNotExistException;
+import de.tum.in.www1.artemis.service.connectors.gitlab.GitLabUserManagementService;
 import de.tum.in.www1.artemis.service.user.PasswordService;
 
 @Component
@@ -79,8 +80,11 @@ public class GitlabRequestMockProvider {
     @Mock
     private ProtectedBranchesApi protectedBranchesApi;
 
-    @InjectMocks
+    @SpyBean
     private PasswordService passwordService;
+
+    @SpyBean
+    private GitLabUserManagementService gitLabUserManagementService;
 
     @Autowired
     private ProgrammingExerciseRepository programmingExerciseRepository;
@@ -205,14 +209,10 @@ public class GitlabRequestMockProvider {
         for (de.tum.in.www1.artemis.domain.User user : users) {
             String loginName = user.getLogin();
             if ((userPrefixEdx.isPresent() && loginName.startsWith(userPrefixEdx.get())) || (userPrefixU4I.isPresent() && loginName.startsWith((userPrefixU4I.get())))) {
-                if (ltiUserExists) {
-                    mockUserExists(loginName, true);
+                mockUserExists(loginName, ltiUserExists);
+                if (!ltiUserExists) {
+                    mockImportUser(user);
                 }
-                else {
-                    mockUserExists(loginName, false);
-                    mockImportUser(new User());
-                }
-
             }
 
             mockAddMemberToRepository(repositoryUrl, user);
@@ -224,8 +224,11 @@ public class GitlabRequestMockProvider {
         doReturn(exists ? new User().withUsername(username) : null).when(userApi).getUser(username);
     }
 
-    private void mockImportUser(User userToReturn) throws GitLabApiException {
-        doReturn(userToReturn).when(userApi).createUser(any(), anyString(), anyBoolean());
+    private void mockImportUser(de.tum.in.www1.artemis.domain.User user) throws GitLabApiException {
+        final var gitlabUser = new org.gitlab4j.api.models.User().withEmail(user.getEmail()).withUsername(user.getLogin()).withName(user.getName()).withCanCreateGroup(false)
+                .withCanCreateProject(false).withSkipConfirmation(true);
+        doReturn(user.getPassword()).when(passwordService).decryptPassword(user);
+        doReturn(gitlabUser).when(userApi).createUser(eq(gitlabUser), anyString(), eq(false));
     }
 
     private void mockAddMemberToRepository(VcsRepositoryUrl repositoryUrl, de.tum.in.www1.artemis.domain.User user) throws GitLabApiException {
@@ -235,7 +238,7 @@ public class GitlabRequestMockProvider {
 
     public void mockAddMemberToRepository(String repositoryId, de.tum.in.www1.artemis.domain.User user) throws GitLabApiException {
         final var mockedUserId = 1;
-        mockGitlabUserManagementServiceGetUserId(user.getLogin(), mockedUserId);
+        doReturn(mockedUserId).when(gitLabUserManagementService).getUserId(user.getLogin());
         doReturn(new Member()).when(projectApi).addMember(repositoryId, mockedUserId, DEVELOPER);
     }
 
@@ -264,13 +267,8 @@ public class GitlabRequestMockProvider {
 
     public void mockRemoveMemberFromRepository(String repositoryId, de.tum.in.www1.artemis.domain.User user) throws GitLabApiException {
         final var mockedUserId = 1;
-        mockGitlabUserManagementServiceGetUserId(user.getLogin(), mockedUserId);
+        doReturn(mockedUserId).when(gitLabUserManagementService).getUserId(user.getLogin());
         doNothing().when(projectApi).removeMember(repositoryId, mockedUserId);
-    }
-
-    private void mockGitlabUserManagementServiceGetUserId(String username, int userIdToReturn) throws GitLabApiException {
-        var gitlabUser = new User().withId(userIdToReturn).withUsername(username);
-        doReturn(gitlabUser).when(userApi).getUser(username);
     }
 
     public void mockUpdateVcsUser(String login, de.tum.in.www1.artemis.domain.User user, Set<String> removedGroups, Set<String> addedGroups, boolean shouldSynchronizePassword)
@@ -345,7 +343,7 @@ public class GitlabRequestMockProvider {
         var userToReturn = new User().withId(1).withUsername(user.getLogin());
         doReturn(userToReturn).when(userApi).getUser(user.getLogin());
         if (!userExists) {
-            mockImportUser(userToReturn);
+            mockImportUser(user);
         }
         return userToReturn.getId();
     }

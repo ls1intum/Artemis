@@ -580,6 +580,23 @@ public class ProgrammingExerciseTestService {
         assertThat(participation.getInitializationState()).as("Participation should be initialized").isEqualTo(InitializationState.INITIALIZED);
     }
 
+    // TEST
+    public void startProgrammingExerciseAutomaticallyCreateEdxUser_correctInitializationState() throws Exception {
+        var user = userRepo.findOneByLogin(studentLogin).orElseThrow();
+        user.setLogin("edx_student1");
+        user = userRepo.save(user);
+
+        final Course course = setupCourseWithProgrammingExercise(ExerciseMode.INDIVIDUAL);
+        Participant participant = user;
+
+        mockDelegate.mockConnectorRequestsForStartParticipation(exercise, participant.getParticipantIdentifier(), participant.getParticipants(), false, HttpStatus.CREATED);
+
+        final var path = ParticipationResource.Endpoints.ROOT + ParticipationResource.Endpoints.START_PARTICIPATION.replace("{courseId}", String.valueOf(course.getId()))
+                .replace("{exerciseId}", String.valueOf(exercise.getId()));
+        final var participation = request.postWithResponseBody(path, null, ProgrammingExerciseStudentParticipation.class, HttpStatus.CREATED);
+        assertThat(participation.getInitializationState()).as("Participation should be initialized").isEqualTo(InitializationState.INITIALIZED);
+    }
+
     private Course setupCourseWithProgrammingExercise(ExerciseMode exerciseMode) {
         final var course = exercise.getCourseViaExerciseGroupOrCourseMember();
         exercise.setMode(exerciseMode);
