@@ -1,11 +1,11 @@
 <body>
     <div class="wrapper">
         <div class="header">
-            <h1>{{ 'featureOverview.title' | translate }}</h1>
+            <h1>{{ 'featureOverview.title' | artemisTranslate }}</h1>
         </div>
         <div class="content">
             <div class="features-overview">
-                <h2 style="padding-top: 1.5em">{{ 'featureOverview.' + targetAudience + '.featureOverview' | translate }}</h2>
+                <h2 style="padding-top: 1.5em">{{ 'featureOverview.' + targetAudience + '.featureOverview' | artemisTranslate }}</h2>
                 <div class="mb-4">
                     <hr class="hr-text" />
                 </div>
@@ -15,12 +15,12 @@
                     <div class="icon">
                         <fa-icon class="fa" [icon]="feature.icon" aria-hidden="true"></fa-icon>
                         <div class="title">
-                            <h3>{{ feature.title | translate }}</h3>
+                            <h3>{{ feature.title | artemisTranslate }}</h3>
                         </div>
                     </div>
 
                     <div class="feature-short-description">
-                        <p>{{ feature.shortDescription | translate }}</p>
+                        <p>{{ feature.shortDescription | artemisTranslate }}</p>
                     </div>
                 </div>
             </div>
@@ -30,9 +30,9 @@
                 </div>
             </div>
             <hr class="hr-gradient" />
-            <h2 style="padding-top: 1.5em">{{ 'featureOverview.featureDetails' | translate }}</h2>
+            <h2 style="padding-top: 1.5em">{{ 'featureOverview.featureDetails' | artemisTranslate }}</h2>
             <div *ngFor="let feature of features" id="feature{{ feature.id }}" class="feature-content">
-                <h3>{{ feature.title | translate }}</h3>
+                <h3>{{ feature.title | artemisTranslate }}</h3>
                 <div class="feature-full-description">
                     <ng-container *ngIf="feature.descriptionTextTwo; else noSecondText">
                         <ng-container *ngIf="!feature.firstImageLeft; else alignFirstImageLeftTwoImages">
@@ -43,9 +43,9 @@
                                 alt="feature-image-one"
                                 style="margin-top: 5px; max-width: 800px; width: 100%"
                             />
-                            <p>{{ feature.descriptionTextOne | translate }}</p>
+                            <p>{{ feature.descriptionTextOne | artemisTranslate }}</p>
                             <img *ngIf="feature.imageTwo" class="text-wrap-left" src=" {{ feature.imageTwo }}" alt="feature-image-two" style="max-width: 800px; width: 100%" />
-                            <p>{{ feature.descriptionTextTwo | translate }}</p>
+                            <p>{{ feature.descriptionTextTwo | artemisTranslate }}</p>
                         </ng-container>
                         <ng-template #alignFirstImageLeftTwoImages>
                             <img
@@ -55,9 +55,9 @@
                                 alt="feature-image-one"
                                 style="margin-top: 5px; max-width: 800px; width: 100%"
                             />
-                            <p>{{ feature.descriptionTextOne | translate }}</p>
+                            <p>{{ feature.descriptionTextOne | artemisTranslate }}</p>
                             <img *ngIf="feature.imageTwo" class="text-wrap-right" src=" {{ feature.imageTwo }}" alt="feature-image-two" style="max-width: 800px; width: 100%" />
-                            <p>{{ feature.descriptionTextTwo | translate }}</p>
+                            <p>{{ feature.descriptionTextTwo | artemisTranslate }}</p>
                         </ng-template>
                     </ng-container>
                     <ng-template #noSecondText>
@@ -70,7 +70,7 @@
                                     alt="feature-image-one"
                                     style="margin-top: 5px; max-width: 800px; width: 100%"
                                 />
-                                <p>{{ feature.descriptionTextOne | translate }}</p>
+                                <p>{{ feature.descriptionTextOne | artemisTranslate }}</p>
                                 <img *ngIf="feature.imageTwo" class="center" src=" {{ feature.imageTwo }}" alt="feature-image-two" style="max-width: 800px; width: 100%" />
                             </ng-container>
                             <ng-template #alignFirstImageLeft>
@@ -81,12 +81,12 @@
                                     alt="feature-image-one"
                                     style="margin-top: 5px; max-width: 800px; width: 100%"
                                 />
-                                <p>{{ feature.descriptionTextOne | translate }}</p>
+                                <p>{{ feature.descriptionTextOne | artemisTranslate }}</p>
                                 <img *ngIf="feature.imageTwo" class="center" src=" {{ feature.imageTwo }}" alt="feature-image-two" style="max-width: 800px; width: 100%" />
                             </ng-template>
                         </ng-container>
                         <ng-template #centerTextAndImage>
-                            <p style="text-align: center">{{ feature.descriptionTextOne | translate }}</p>
+                            <p style="text-align: center">{{ feature.descriptionTextOne | artemisTranslate }}</p>
                             <img
                                 *ngIf="feature.imageOne && !feature.expandedImage && !feature.shrunkImage"
                                 src="{{ feature.imageOne }}"

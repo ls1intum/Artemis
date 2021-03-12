@@ -58,16 +58,16 @@
     <div class="modal-footer justify-content-between">
         <div *ngIf="studentsToImport && studentsToImport.length > 0" class="flex-shrink-0 mr-2 d-flex">
             <div *ngIf="!hasImported; else numbersAfterImport">
-                <strong>{{ 'artemisApp.examManagement.examStudents.importStudents.numberOfStudents' | translate }}</strong>
+                <strong>{{ 'artemisApp.examManagement.examStudents.importStudents.numberOfStudents' | artemisTranslate }}</strong>
                 <span>&nbsp;{{ studentsToImport.length }}</span>
             </div>
             <ng-template #numbersAfterImport>
                 <div>
-                    <strong>{{ 'artemisApp.examManagement.examStudents.importStudents.numberOfStudentsImported' | translate }}</strong>
+                    <strong>{{ 'artemisApp.examManagement.examStudents.importStudents.numberOfStudentsImported' | artemisTranslate }}</strong>
                     <span>{{ numberOfStudentsImported }}</span>
                 </div>
                 <div class="ml-2">
-                    <strong>{{ 'artemisApp.examManagement.examStudents.importStudents.numberOfStudentsNotImported' | translate }}</strong>
+                    <strong>{{ 'artemisApp.examManagement.examStudents.importStudents.numberOfStudentsNotImported' | artemisTranslate }}</strong>
                     <span>{{ numberOfStudentsNotImported }}</span>
                 </div>
             </ng-template>

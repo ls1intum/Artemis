@@ -1,17 +1,17 @@
-import * as sinon from 'sinon';
-import * as chai from 'chai';
-import * as moment from 'moment';
-import * as sinonChai from 'sinon-chai';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ExamInformationComponent } from 'app/exam/participate/information/exam-information.component';
 import { RouterTestingModule } from '@angular/router/testing';
-import { MockPipe } from 'ng-mocks';
-import { TranslatePipe } from '@ngx-translate/core';
 import { User } from 'app/core/user/user.model';
 import { Exam } from 'app/entities/exam.model';
 import { StudentExam } from 'app/entities/student-exam.model';
+import { ExamInformationComponent } from 'app/exam/participate/information/exam-information.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe.ts';
+import * as chai from 'chai';
+import * as moment from 'moment';
+import { MockPipe } from 'ng-mocks';
+import * as sinon from 'sinon';
+import * as sinonChai from 'sinon-chai';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -37,7 +37,7 @@ describe('ExamInformationComponent', function () {
     beforeEach(() => {
         return TestBed.configureTestingModule({
             imports: [RouterTestingModule.withRoutes([])],
-            declarations: [ExamInformationComponent, MockPipe(TranslatePipe), MockPipe(ArtemisDatePipe), MockPipe(ArtemisDurationFromSecondsPipe)],
+            declarations: [ExamInformationComponent, MockPipe(ArtemisTranslatePipe), MockPipe(ArtemisDatePipe), MockPipe(ArtemisDurationFromSecondsPipe)],
             providers: [],
         })
             .compileComponents()
