@@ -7,7 +7,7 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { MomentModule, TimeAgoPipe } from 'ngx-moment';
+import { MomentModule } from 'ngx-moment';
 import { CourseManagementExerciseRowComponent } from 'app/course/manage/overview/course-management-exercise-row.component';
 import { ProgressBarComponent } from 'app/shared/dashboards/tutor-participation-graph/progress-bar/progress-bar.component';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
@@ -17,6 +17,7 @@ import { CourseManagementOverviewExerciseStatisticsDTO } from 'app/course/manage
 import { ExerciseType } from 'app/entities/exercise.model';
 import { Course } from 'app/entities/course.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -43,7 +44,7 @@ describe('CourseManagementExerciseRowComponent', () => {
                 MockComponent(ProgressBarComponent),
                 MockDirective(NgbTooltip),
                 MockRouterLinkDirective,
-                MockPipe(TimeAgoPipe),
+                MockPipe(ArtemisTimeAgoPipe),
             ],
             providers: [{ provide: LocalStorageService, useClass: MockSyncStorage }, { provide: SessionStorageService, useClass: MockSyncStorage }, MockProvider(TranslateService)],
         })
