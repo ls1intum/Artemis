@@ -12,7 +12,7 @@ import { JhiAlertService } from 'ng-jhipster';
 import { round } from 'app/shared/util/utils';
 import * as moment from 'moment';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { getLatestSubmissionResult, setLatestSubmissionResult } from 'app/entities/submission.model';
+import { getLatestSubmissionResult, setLatestSubmissionResult, Submission } from 'app/entities/submission.model';
 
 @Component({
     selector: 'jhi-student-exam-detail',
@@ -31,6 +31,7 @@ export class StudentExamDetailComponent implements OnInit {
     achievedTotalPoints = 0;
     bonusTotalPoints = 0;
     busy = false;
+    openingAssessmentEditorForNewSubmission = false;
 
     constructor(
         private route: ActivatedRoute,
@@ -122,8 +123,13 @@ export class StudentExamDetailComponent implements OnInit {
                 exercise.studentParticipations[0].results?.length &&
                 exercise.studentParticipations[0].results.length > 0
             ) {
-                exercise!.studentParticipations[0].submissions![0].results! = exercise.studentParticipations[0].results;
-                setLatestSubmissionResult(exercise!.studentParticipations[0].submissions![0], getLatestSubmissionResult(exercise!.studentParticipations[0].submissions![0]));
+                if (exercise!.studentParticipations[0].submissions && exercise!.studentParticipations[0].submissions!.length > 0) {
+                    exercise!.studentParticipations[0].submissions![0].results! = exercise.studentParticipations[0].results;
+                    setLatestSubmissionResult(exercise?.studentParticipations[0].submissions?.[0], getLatestSubmissionResult(exercise?.studentParticipations[0].submissions?.[0]));
+                    console.log('set stuff');
+                    // http://localhost:8080/course-management/1/exams/5/student-exams/6
+                }
+                console.log(exercise);
                 this.achievedTotalPoints += this.rounding((exercise.studentParticipations[0].results[0].score! * exercise.maxPoints!) / 100);
             }
         });
@@ -212,5 +218,30 @@ export class StudentExamDetailComponent implements OnInit {
             },
             () => {},
         );
+    }
+
+    /**
+     * get the link for the assessment of a specific submission of the current exercise
+     * @param exercise
+     * @param submission
+     */
+    getAssessmentLink(exercise: Exercise, submission: Submission) {
+        if (!exercise || !exercise.type || !submission) {
+            return;
+        }
+
+        this.openingAssessmentEditorForNewSubmission = true;
+        const submissionUrlParameter = submission.id;
+        let route;
+        if (exercise.type === ExerciseType.PROGRAMMING) {
+            // todo programming assessments navigates only to the submission page
+            // const participationURLParameter: number | 'new' = submission === 'new' ? 'new' : submission.participation?.id!;
+            // route = `/course-management/${this.courseId}/${this.exercise.type}-exercises/${this.exercise.id}/code-editor/${participationURLParameter}/assessment`;
+        } else {
+            route = `/course-management/${this.courseId}/${exercise.type}-exercises/${exercise.id}/submissions/${submissionUrlParameter}/assessment`;
+        }
+        console.log(exercise.id, submission.id);
+        this.openingAssessmentEditorForNewSubmission = false;
+        return route;
     }
 }

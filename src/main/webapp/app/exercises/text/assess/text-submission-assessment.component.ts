@@ -86,6 +86,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         translateService.get('artemisApp.textAssessment.confirmCancel').subscribe((text) => (this.cancelConfirmationText = text));
         this.correctionRound = 0;
         this.resetComponent();
+        console.log('clalled:', this.canOverride);
     }
 
     /**
@@ -349,7 +350,9 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
      * They cannot override a result anymore, if there is a complaint. Another tutor must handle the complaint.
      */
     get canOverride(): boolean {
+        console.log('called');
         if (this.exercise) {
+            console.log('inside');
             if (this.isAtLeastInstructor) {
                 // Instructors can override any assessment at any time.
                 return true;
