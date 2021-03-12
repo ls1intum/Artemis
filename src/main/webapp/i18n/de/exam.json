@@ -192,7 +192,7 @@
             "removeAllStudents": {
                 "title": "Entferne alle Studierenden",
                 "question": "Bist du sicher, dass du <strong class='text-danger'>alle Studierenden</strong> von der Klausur abmelden möchtest?",
-                "confirmationText": "Bitte gibt den Namen der Klausur ein, um das Entfernen aller Studierenden von der Klausur zu bestätigen!!"
+                "confirmationText": "Bitte gib den Namen der Klausur ein, um das Entfernen aller Studierenden von der Klausur zu bestätigen!!"
             },
             "confirmDialog": {
                 "titleToUnsubmitted": "Setze Studentenklausur auf nicht abgegeben",
