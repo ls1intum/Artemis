@@ -49,6 +49,11 @@ public class ProgrammingExerciseTestCase extends DomainObject {
         return testName;
     }
 
+    /**
+     * We need to compare testcases via lowercase, because the testcaseRepository is case-insensitive
+     *
+     * @return testName as lowercase
+     */
     public String getLowerCaseTestName() {
         return testName.toLowerCase();
     }
