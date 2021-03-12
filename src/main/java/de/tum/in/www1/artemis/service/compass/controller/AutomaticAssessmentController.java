@@ -92,6 +92,7 @@ public class AutomaticAssessmentController {
 
                 if (optionalAssessment.isPresent()) {
                     optionalAssessment.get().addFeedback(feedback);
+                    similarityIdAssessmentMapping.put(element.getSimilarityID(), optionalAssessment.get());
                 }
                 else {
                     SimilaritySetAssessment newAssessment = new SimilaritySetAssessment(feedback);
@@ -206,6 +207,7 @@ public class AutomaticAssessmentController {
     /**
      * Set the lastAssessmentCompassResult that represents the most recent automatic assessment calculated by Compass for this diagram.
      *
+     * @param submissionId submission that the result will be assigned to
      * @param compassResult the most recent Compass result for this diagram
      */
     public void setLastAssessmentCompassResult(Long submissionId, CompassResult compassResult) {
@@ -215,7 +217,9 @@ public class AutomaticAssessmentController {
     /**
      * Returns the lastAssessmentCompassResult that represents the most recent automatic assessment calculated by Compass for this diagram.
      * This method is deprecated because the UML Diagram should not store such information. This should rather be stored somewhere else!
-     * @return the most recent Compass result for this diagram
+     *
+     * @param submissionId submission whose result will be returned
+     * @return the most recent Compass result for the submission
      */
     public CompassResult getLastAssessmentCompassResult(Long submissionId) {
         return lastAssessmentResultMapping.get(submissionId);
@@ -224,15 +228,16 @@ public class AutomaticAssessmentController {
     /**
      * Indicates if this diagram already has an automatic assessment calculated by Compass or not.
      *
-     * @return true if Compass has not already calculated an automatic assessment for this diagram, false otherwise
+     * @param submissionId submission that will be check if assessed or not
+     * @return true if Compass has not already calculated an automatic assessment for the submission, false otherwise
      */
     public boolean isUnassessed(Long submissionId) {
         return getLastAssessmentCompassResult(submissionId) == null;
     }
 
     /**
-     * Get the confidence of the last compass result, i.e. the most recent automatic assessment calculated by Compass for this diagram.
-     *
+     * Get the confidence of the last compass result, i.e. the most recent automatic assessment calculated by Compass for the submission.
+     * @param submissionId id of the submission
      * @return The confidence of the last compass result, -1 if no compass result is available
      */
     public double getLastAssessmentConfidence(Long submissionId) {
@@ -244,8 +249,9 @@ public class AutomaticAssessmentController {
     }
 
     /**
-     * Get the coverage for the last assessed compass result, i.e. the most recent automatic assessment calculated by Compass for this diagram.
+     * Get the coverage for the last assessed compass result, i.e. the most recent automatic assessment calculated by Compass for the submission.
      *
+     * @param submissionId id of the submission
      * @return The coverage of the last compass result, -1 if no compass result is available
      */
     public double getLastAssessmentCoverage(Long submissionId) {

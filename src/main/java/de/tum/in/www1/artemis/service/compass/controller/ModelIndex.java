@@ -38,7 +38,7 @@ public class ModelIndex {
      * @param element a model element for which the corresponding similarity ID should be retrieved
      * @return the similarity ID for the given model element, i.e. the ID of the similarity set the element belongs to
      */
-    int setSimilarityId(UMLElement element) {
+    int retrieveSimilarityId(UMLElement element) {
         if (elementSimilarityMap.containsKey(element)) {
             return elementSimilarityMap.get(element);
         }

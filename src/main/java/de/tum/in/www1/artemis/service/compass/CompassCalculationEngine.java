@@ -236,7 +236,6 @@ public class CompassCalculationEngine {
         for (ModelingSubmission submission : submissions) {
             notifyNewModel(submission.getModel(), submission.getId());
         }
-
     }
 
     /**
