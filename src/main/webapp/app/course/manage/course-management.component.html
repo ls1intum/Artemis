@@ -28,13 +28,13 @@
             <div class="control-label" (click)="semesterCollapsed[semester] = !semesterCollapsed[semester]">
                 <fa-icon class="pr-3" [icon]="semesterCollapsed[semester] ? 'angle-down' : 'angle-up'"></fa-icon>
                 <span *ngIf="semester !== '' && semester !== 'test'">
-                    <strong>{{ 'artemisApp.course.semester' | translate }}: {{ semester }}</strong>
+                    <strong>{{ 'artemisApp.course.semester' | artemisTranslate }}: {{ semester }}</strong>
                 </span>
                 <span *ngIf="semester === ''">
-                    <strong>{{ 'artemisApp.course.semester' | translate }}: {{ 'global.generic.unset' | translate }}</strong>
+                    <strong>{{ 'artemisApp.course.semester' | artemisTranslate }}: {{ 'global.generic.unset' | artemisTranslate }}</strong>
                 </span>
                 <span *ngIf="semester === 'test'">
-                    <strong>{{ 'artemisApp.course.testCourse.plural' | translate }}</strong>
+                    <strong>{{ 'artemisApp.course.testCourse.plural' | artemisTranslate }}</strong>
                 </span>
             </div>
             <div *ngIf="!semesterCollapsed[semester]">

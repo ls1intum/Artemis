@@ -18,39 +18,39 @@
 
         <div *ngIf="course.isAtLeastInstructor" class="float-right card-groups">
             <a [routerLink]="['/course-management', course.id, 'groups', 'students']" *ngIf="course.numberOfStudents !== undefined && course.numberOfStudents === 1">
-                {{ course.numberOfStudents }} {{ 'artemisApp.course.student' | translate }}
+                {{ course.numberOfStudents }} {{ 'artemisApp.course.student' | artemisTranslate }}
             </a>
             <a [routerLink]="['/course-management', course.id, 'groups', 'students']" *ngIf="course.numberOfStudents !== undefined && course.numberOfStudents !== 1">
-                {{ course.numberOfStudents }} {{ 'artemisApp.course.students' | translate }}
+                {{ course.numberOfStudents }} {{ 'artemisApp.course.students' | artemisTranslate }}
             </a>
             <a [routerLink]="['/course-management', course.id, 'groups', 'students']" *ngIf="course.numberOfStudents === undefined">
-                {{ 'artemisApp.course.students' | translate }}
+                {{ 'artemisApp.course.students' | artemisTranslate }}
             </a>
 
             <a
                 [routerLink]="['/course-management', course.id, 'groups', 'tutors']"
                 *ngIf="course.numberOfTeachingAssistants !== undefined && course.numberOfTeachingAssistants === 1"
             >
-                {{ course.numberOfTeachingAssistants }} {{ 'artemisApp.course.tutor' | translate }}
+                {{ course.numberOfTeachingAssistants }} {{ 'artemisApp.course.tutor' | artemisTranslate }}
             </a>
             <a
                 [routerLink]="['/course-management', course.id, 'groups', 'tutors']"
                 *ngIf="course.numberOfTeachingAssistants !== undefined && course.numberOfTeachingAssistants !== 1"
             >
-                {{ course.numberOfTeachingAssistants }} {{ 'artemisApp.course.tutors' | translate }}
+                {{ course.numberOfTeachingAssistants }} {{ 'artemisApp.course.tutors' | artemisTranslate }}
             </a>
             <a [routerLink]="['/course-management', course.id, 'groups', 'tutors']" *ngIf="course.numberOfTeachingAssistants === undefined">
-                {{ 'artemisApp.course.tutors' | translate }}
+                {{ 'artemisApp.course.tutors' | artemisTranslate }}
             </a>
 
             <a [routerLink]="['/course-management', course.id, 'groups', 'instructors']" *ngIf="course.numberOfInstructors !== undefined && course.numberOfInstructors === 1">
-                {{ course.numberOfInstructors }} {{ 'artemisApp.course.instructor' | translate }}
+                {{ course.numberOfInstructors }} {{ 'artemisApp.course.instructor' | artemisTranslate }}
             </a>
             <a [routerLink]="['/course-management', course.id, 'groups', 'instructors']" *ngIf="course.numberOfInstructors !== undefined && course.numberOfInstructors !== 1">
-                {{ course.numberOfInstructors }} {{ 'artemisApp.course.instructors' | translate }}
+                {{ course.numberOfInstructors }} {{ 'artemisApp.course.instructors' | artemisTranslate }}
             </a>
             <a [routerLink]="['/course-management', course.id, 'groups', 'instructors']" *ngIf="course.numberOfInstructors === undefined">
-                {{ 'artemisApp.course.instructors' | translate }}
+                {{ 'artemisApp.course.instructors' | artemisTranslate }}
             </a>
         </div>
     </div>
@@ -62,7 +62,7 @@
                     <div *ngIf="futureExercises?.length > 0">
                         <div class="control-label" (click)="showFutureExercises = !showFutureExercises">
                             <fa-icon class="control-icon" [icon]="showFutureExercises ? 'angle-down' : 'angle-up'"></fa-icon>
-                            <strong>{{ 'artemisApp.course.releasedSoon' | translate }}</strong>
+                            <strong>{{ 'artemisApp.course.releasedSoon' | artemisTranslate }}</strong>
                         </div>
                         <div *ngIf="showFutureExercises">
                             <jhi-course-management-exercise-row
@@ -78,7 +78,7 @@
                     <div *ngIf="currentExercises?.length > 0">
                         <div class="control-label" (click)="showCurrentExercises = !showCurrentExercises">
                             <fa-icon class="control-icon" [icon]="showCurrentExercises ? 'angle-down' : 'angle-up'"></fa-icon>
-                            <strong>{{ 'artemisApp.course.currentWorking' | translate }}</strong>
+                            <strong>{{ 'artemisApp.course.currentWorking' | artemisTranslate }}</strong>
                         </div>
                         <div *ngIf="showCurrentExercises">
                             <jhi-course-management-exercise-row
@@ -94,7 +94,7 @@
                     <div *ngIf="exercisesInAssessment?.length > 0">
                         <div class="control-label" (click)="showExercisesInAssessment = !showExercisesInAssessment">
                             <fa-icon class="control-icon" [icon]="showExercisesInAssessment ? 'angle-down' : 'angle-up'"></fa-icon>
-                            <strong>{{ 'artemisApp.course.inAssessment' | translate }}</strong>
+                            <strong>{{ 'artemisApp.course.inAssessment' | artemisTranslate }}</strong>
                         </div>
                         <div *ngIf="showExercisesInAssessment">
                             <jhi-course-management-exercise-row
@@ -110,7 +110,7 @@
                     <div *ngIf="pastExercises?.length > 0">
                         <div class="control-label" (click)="showPastExercises = !showPastExercises">
                             <fa-icon class="control-icon" [icon]="showPastExercises ? 'angle-down' : 'angle-up'"></fa-icon>
-                            <strong>{{ 'artemisApp.course.pastExercises' | translate }}</strong>
+                            <strong>{{ 'artemisApp.course.pastExercises' | artemisTranslate }}</strong>
                         </div>
                         <div *ngIf="showPastExercises">
                             <jhi-course-management-exercise-row
@@ -124,7 +124,7 @@
                         <div *ngIf="!showPastExercises" class="collapsed"></div>
                     </div>
                     <div *ngIf="futureExercises?.length + currentExercises?.length + exercisesInAssessment?.length + pastExercises?.length == 0">
-                        <h4 class="text-center">{{ 'artemisApp.course.noExercises' | translate }}</h4>
+                        <h4 class="text-center">{{ 'artemisApp.course.noExercises' | artemisTranslate }}</h4>
                     </div>
                 </div>
             </div>
@@ -143,55 +143,55 @@
             [routerLink]="['/course-management', course.id, 'exercises']"
             [class.guided-tour]="isGuidedTour"
             class="btn btn-info mr-1 mb-1"
-            [ngbTooltip]="'entity.action.exercise' | translate"
+            [ngbTooltip]="'entity.action.exercise' | artemisTranslate"
         >
             <fa-icon [icon]="'list-alt'"></fa-icon>
-            <span class="d-none d-md-inline">{{ 'entity.action.exercise' | translate }}</span>
+            <span class="d-none d-md-inline">{{ 'entity.action.exercise' | artemisTranslate }}</span>
         </a>
         <a
             *ngIf="course.isAtLeastTutor"
             [routerLink]="['/course-management', course.id, 'scores']"
             class="btn btn-info mr-1 mb-1"
-            [ngbTooltip]="'entity.action.scores' | translate"
+            [ngbTooltip]="'entity.action.scores' | artemisTranslate"
         >
             <fa-icon [icon]="'table'"></fa-icon>
-            <span class="d-none d-md-inline">{{ 'entity.action.scores' | translate }}</span>
+            <span class="d-none d-md-inline">{{ 'entity.action.scores' | artemisTranslate }}</span>
         </a>
         <a
             *ngIf="course.isAtLeastTutor"
             [routerLink]="['/course-management', course.id, 'lectures']"
             class="btn btn-info mr-1 mb-1"
-            [ngbTooltip]="'entity.action.lecture' | translate"
+            [ngbTooltip]="'entity.action.lecture' | artemisTranslate"
         >
             <fa-icon [icon]="'file-pdf'"></fa-icon>
-            <span class="d-none d-md-inline">{{ 'entity.action.lecture' | translate }}</span>
+            <span class="d-none d-md-inline">{{ 'entity.action.lecture' | artemisTranslate }}</span>
         </a>
-        <a *ngIf="course.isAtLeastTutor" [routerLink]="['/course-management', course.id, 'exams']" class="btn btn-info mr-1 mb-1" [ngbTooltip]="'entity.action.exams' | translate">
+        <a *ngIf="course.isAtLeastTutor" [routerLink]="['/course-management', course.id, 'exams']" class="btn btn-info mr-1 mb-1" [ngbTooltip]="'entity.action.exams' | artemisTranslate">
             <fa-icon [icon]="'graduation-cap'"></fa-icon>
-            <span class="d-none d-md-inline">{{ 'entity.action.exams' | translate }}</span>
+            <span class="d-none d-md-inline">{{ 'entity.action.exams' | artemisTranslate }}</span>
         </a>
         <a
             *ngIf="course.isAtLeastTutor"
             [routerLink]="['/course-management', course.id, 'tutor-dashboard']"
             class="btn btn-info mr-1 mb-1"
-            [ngbTooltip]="'entity.action.assessmentDashboard' | translate"
+            [ngbTooltip]="'entity.action.assessmentDashboard' | artemisTranslate"
             [class.guided-tour]="isGuidedTour"
         >
             <fa-icon [icon]="'user-check'"></fa-icon>
-            <span class="d-none d-md-inline">{{ 'entity.action.assessmentDashboard' | translate }}</span>
+            <span class="d-none d-md-inline">{{ 'entity.action.assessmentDashboard' | artemisTranslate }}</span>
         </a>
         <a
             *ngIf="course.isAtLeastInstructor"
             [routerLink]="['/course-management', course.id, 'instructor-dashboard']"
             class="btn btn-info mr-1 mb-1"
-            [ngbTooltip]="'artemisApp.course.instructorDashboard' | translate"
+            [ngbTooltip]="'artemisApp.course.instructorDashboard' | artemisTranslate"
         >
             <fa-icon [icon]="'chess-king'"></fa-icon>
-            <span class="d-none d-md-inline">{{ 'artemisApp.course.instructorDashboard' | translate }}</span>
+            <span class="d-none d-md-inline">{{ 'artemisApp.course.instructorDashboard' | artemisTranslate }}</span>
         </a>
         <a *ngIf="course.isAtLeastInstructor" [routerLink]="['/course-management', course.id, 'goal-management']" class="btn btn-info mr-1 mb-1">
             <fa-icon [icon]="'flag'"></fa-icon>
-            <span [innerHTML]="'artemisApp.learningGoal.learningGoalButton' | translate" class="d-none d-md-inline"></span>
+            <span [innerHTML]="'artemisApp.learningGoal.learningGoalButton' | artemisTranslate" class="d-none d-md-inline"></span>
         </a>
     </div>
 </div>

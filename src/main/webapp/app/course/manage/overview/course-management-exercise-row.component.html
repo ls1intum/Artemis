@@ -8,18 +8,18 @@
                             [icon]="'exclamation-triangle'"
                             class="text-warning"
                             placement="right"
-                            [ngbTooltip]="getIconTooltip(details.exerciseType) | translate"
+                            [ngbTooltip]="getIconTooltip(details.exerciseType) | artemisTranslate"
                             container="body"
                         ></fa-icon>
                     </div>
                     <div class="ml-2" *ngIf="details.teamMode">
-                        <fa-icon [icon]="'users'" placement="right" [ngbTooltip]="'artemisApp.exercise.isTeamExercise' | translate" container="body"></fa-icon>
+                        <fa-icon [icon]="'users'" placement="right" [ngbTooltip]="'artemisApp.exercise.isTeamExercise' | artemisTranslate" container="body"></fa-icon>
                     </div>
                     <div class="ml-2">
                         <fa-icon
                             [icon]="getIcon(details.exerciseType)"
                             placement="right"
-                            [ngbTooltip]="getIconTooltip(details.exerciseType) | translate"
+                            [ngbTooltip]="getIconTooltip(details.exerciseType) | artemisTranslate"
                             container="body"
                         ></fa-icon>
                     </div>
@@ -35,7 +35,7 @@
                 <div class="col-4 row-flex hide-1400 exercise-date-container">
                     <div [ngClass]="!!details.releaseDate ? 'exercise-date' : 'exercise-date exercise-no-date'">
                         <div class="exercise-date-timeline"></div>
-                        <span class="small">{{ 'artemisApp.course.releaseDate' | translate }}</span>
+                        <span class="small">{{ 'artemisApp.course.releaseDate' | artemisTranslate }}</span>
                         <div *ngIf="!details.releaseDate">
                             <div class="calender-icon-container">
                                 <fa-icon class="calender-icon" [icon]="'times'"></fa-icon>
@@ -45,14 +45,14 @@
                             <div class="calender-icon-container">
                                 <fa-icon class="calender-icon" [icon]="'calendar-alt'"></fa-icon>
                             </div>
-                            <span class="small">{{ details.releaseDate! | amTimeAgo }}</span>
+                            <span class="small">{{ details.releaseDate! | artemisTimeAgo }}</span>
                         </div>
                         <div *ngIf="!details.releaseDate"><p></p></div>
                     </div>
 
                     <div [ngClass]="!!details.dueDate ? 'exercise-date' : 'exercise-date exercise-no-date'">
                         <div class="exercise-date-timeline"></div>
-                        <span class="small">{{ 'artemisApp.course.dueDate' | translate }}</span>
+                        <span class="small">{{ 'artemisApp.course.dueDate' | artemisTranslate }}</span>
                         <div *ngIf="!details.dueDate">
                             <div class="calender-icon-container">
                                 <fa-icon class="calender-icon" [icon]="'times'"></fa-icon>
@@ -62,14 +62,14 @@
                             <div class="calender-icon-container">
                                 <fa-icon class="calender-icon" [icon]="'calendar-alt'"></fa-icon>
                             </div>
-                            <span class="small">{{ details.dueDate! | amTimeAgo }}</span>
+                            <span class="small">{{ details.dueDate! | artemisTimeAgo }}</span>
                         </div>
                         <div *ngIf="!details.dueDate"><p></p></div>
                     </div>
 
                     <div [ngClass]="!!details.assessmentDueDate ? 'exercise-date' : 'exercise-date exercise-no-date'">
                         <div class="exercise-date-timeline"></div>
-                        <span class="small">{{ 'artemisApp.course.assessmentDueDate' | translate }}</span>
+                        <span class="small">{{ 'artemisApp.course.assessmentDueDate' | artemisTranslate }}</span>
                         <div *ngIf="!details.assessmentDueDate">
                             <div class="calender-icon-container">
                                 <fa-icon class="calender-icon" [icon]="'times'"></fa-icon>
@@ -79,7 +79,7 @@
                             <div class="calender-icon-container">
                                 <fa-icon class="calender-icon" [icon]="'calendar-alt'"></fa-icon>
                             </div>
-                            <span class="small">{{ details.assessmentDueDate! | amTimeAgo }}</span>
+                            <span class="small">{{ details.assessmentDueDate! | artemisTimeAgo }}</span>
                         </div>
                         <div *ngIf="!details.assessmentDueDate"><p></p></div>
                     </div>
@@ -87,9 +87,9 @@
 
                 <div class="col-2 row-flex hide-1680 exercise-score-container">
                     <div class="exercise-score" *ngIf="statistic && rowType == exerciseRowType.CURRENT">
-                        <span class="bold">{{ 'artemisApp.course.participations' | translate }}</span>
+                        <span class="bold">{{ 'artemisApp.course.participations' | artemisTranslate }}</span>
                         <jhi-progress-bar
-                            [tooltip]="'artemisApp.course.participations' | translate"
+                            [tooltip]="'artemisApp.course.participations' | artemisTranslate"
                             [percentage]="statistic.participationRateInPercent"
                             [numerator]="statistic.noOfParticipatingStudentsOrTeams"
                             [denominator]="details.teamMode ? statistic.noOfTeamsInCourse : statistic.noOfStudentsInCourse"
@@ -97,9 +97,9 @@
                         </jhi-progress-bar>
                     </div>
                     <div class="exercise-score" *ngIf="statistic && rowType == exerciseRowType.ASSESSING">
-                        <span class="bold">{{ 'artemisApp.course.assessmentProgress' | translate }}</span>
+                        <span class="bold">{{ 'artemisApp.course.assessmentProgress' | artemisTranslate }}</span>
                         <jhi-progress-bar
-                            [tooltip]="'artemisApp.course.assessmentProgress' | translate"
+                            [tooltip]="'artemisApp.course.assessmentProgress' | artemisTranslate"
                             [percentage]="statistic.noOfAssessmentsDoneInPercent"
                             [numerator]="statistic.noOfRatedAssessments"
                             [denominator]="statistic.noOfSubmissionsInTime"
@@ -107,9 +107,9 @@
                         </jhi-progress-bar>
                     </div>
                     <div class="exercise-score" *ngIf="statistic && rowType == exerciseRowType.PAST">
-                        <span class="bold">{{ 'artemisApp.course.averageScore' | translate }}</span>
+                        <span class="bold">{{ 'artemisApp.course.averageScore' | artemisTranslate }}</span>
                         <jhi-progress-bar
-                            [tooltip]="'artemisApp.course.averageScore' | translate"
+                            [tooltip]="'artemisApp.course.averageScore' | artemisTranslate"
                             [percentage]="statistic.averageScoreInPercent"
                             [numerator]="averageScoreNumerator"
                             [denominator]="statistic.exerciseMaxPoints"
@@ -127,7 +127,7 @@
                     "
                     [routerLink]="['/course-management', course.id, details.exerciseType + '-exercises', details.exerciseId, 'edit']"
                     class="btn btn-warning mr-1 mb-1"
-                    [ngbTooltip]="'entity.action.edit' | translate"
+                    [ngbTooltip]="'entity.action.edit' | artemisTranslate"
                 >
                     <fa-icon [icon]="'wrench'"></fa-icon>
                 </a>
@@ -139,7 +139,7 @@
                     "
                     [routerLink]="['/course-management', course.id, details.exerciseType + '-exercises', details.exerciseId, 're-evaluate']"
                     class="btn btn-warning mr-1 mb-1"
-                    [ngbTooltip]="'entity.action.re-evaluate' | translate"
+                    [ngbTooltip]="'entity.action.re-evaluate' | artemisTranslate"
                 >
                     <fa-icon [icon]="'pencil-alt'"></fa-icon>
                 </a>
@@ -147,7 +147,7 @@
                     *ngIf="course.isAtLeastTutor"
                     [routerLink]="['/course-management', course.id, 'exercises', details.exerciseId, 'scores']"
                     class="btn btn-info mr-1 mb-1"
-                    [ngbTooltip]="'entity.action.scores' | translate"
+                    [ngbTooltip]="'entity.action.scores' | artemisTranslate"
                 >
                     <fa-icon [icon]="'chart-bar'"></fa-icon>
                 </a>
@@ -155,7 +155,7 @@
                     *ngIf="course.isAtLeastInstructor && details.exerciseType !== exerciseType.PROGRAMMING && details.exerciseType !== exerciseType.QUIZ"
                     [routerLink]="['/course-management', course.id, details.exerciseType + '-exercises', details.exerciseId, 'assessment']"
                     class="btn btn-success mr-1 mb-1"
-                    [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.instructorActions.submissions' | translate"
+                    [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.instructorActions.submissions' | artemisTranslate"
                 >
                     <fa-icon [icon]="'file-contract'"></fa-icon>
                 </a>
@@ -163,7 +163,7 @@
                     *ngIf="course.isAtLeastInstructor && details.exerciseType === exerciseType.PROGRAMMING"
                     [routerLink]="['/course-management', course.id, 'programming-exercises', details.exerciseId, 'grading', 'test-cases']"
                     class="btn btn-success mr-1 mb-1"
-                    [ngbTooltip]="'artemisApp.programmingExercise.configureGrading.shortTitle' | translate"
+                    [ngbTooltip]="'artemisApp.programmingExercise.configureGrading.shortTitle' | artemisTranslate"
                 >
                     <fa-icon [icon]="'file-contract'"></fa-icon>
                 </a>
