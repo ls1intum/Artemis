@@ -44,6 +44,7 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.AuthoritiesConstants;
 import de.tum.in.www1.artemis.service.AssessmentService;
 import de.tum.in.www1.artemis.service.ModelingSubmissionService;
+import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 
 /** Service responsible for initializing the database with specific testdata for a testscenario */
@@ -122,6 +123,9 @@ public class DatabaseUtilService {
 
     @Autowired
     TextSubmissionRepository textSubmissionRepo;
+
+    @Autowired
+    ParticipationService participationService;
 
     @Autowired
     TextBlockRepository textBlockRepo;
@@ -346,6 +350,83 @@ public class DatabaseUtilService {
     public Course createCourse() {
         Course course = ModelFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "tumuser", "tutor", "instructor");
         return courseRepo.save(course);
+    }
+
+    public TextExercise createIndividualTextExercise(Course course, ZonedDateTime pastTimestamp, ZonedDateTime futureTimestamp, ZonedDateTime futureFutureTimestamp) {
+        TextExercise textExercise = ModelFactory.generateTextExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, course);
+        textExercise.setMaxPoints(10.0);
+        textExercise.setBonusPoints(0.0);
+        return exerciseRepo.save(textExercise);
+    }
+
+    public Team createTeam(Set<User> students, User owner, Exercise exercise) {
+        Team team = new Team();
+        for (User student : students) {
+            team.addStudents(student);
+        }
+        team.setOwner(owner);
+        team.setShortName("team1");
+        team.setName("team1");
+        team.setExercise(exercise);
+        return teamRepo.saveAndFlush(team);
+    }
+
+    public TextExercise createTeamTextExercise(Course course, ZonedDateTime pastTimestamp, ZonedDateTime futureTimestamp, ZonedDateTime futureFutureTimestamp) {
+        TextExercise teamTextExercise = ModelFactory.generateTextExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, course);
+        teamTextExercise.setMaxPoints(10.0);
+        teamTextExercise.setBonusPoints(0.0);
+        teamTextExercise.setMode(ExerciseMode.TEAM);
+        return exerciseRepo.save(teamTextExercise);
+    }
+
+    public Result createParticipationSubmissionAndResult(Long idOfExercise, Participant participant, Double pointsOfExercise, Double bonusPointsOfExercise, long scoreAwarded,
+            boolean rated) {
+        Exercise exercise = exerciseRepo.findById(idOfExercise).get();
+
+        if (!exercise.getMaxPoints().equals(pointsOfExercise)) {
+            exercise.setMaxPoints(pointsOfExercise);
+        }
+        if (!exercise.getBonusPoints().equals(bonusPointsOfExercise)) {
+            exercise.setBonusPoints(bonusPointsOfExercise);
+        }
+        exercise = exerciseRepo.saveAndFlush(exercise);
+
+        StudentParticipation studentParticipation = participationService.startExercise(exercise, participant, false);
+
+        return createSubmissionAndResult(studentParticipation, scoreAwarded, rated);
+    }
+
+    public Result createSubmissionAndResult(StudentParticipation studentParticipation, long scoreAwarded, boolean rated) {
+        Exercise exercise = studentParticipation.getExercise();
+        Submission submission;
+        if (exercise instanceof ProgrammingExercise) {
+            submission = new ProgrammingSubmission();
+        }
+        else if (exercise instanceof ModelingExercise) {
+            submission = new ModelingSubmission();
+        }
+        else if (exercise instanceof TextExercise) {
+            submission = new TextSubmission();
+        }
+        else if (exercise instanceof FileUploadExercise) {
+            submission = new FileUploadSubmission();
+        }
+        else if (exercise instanceof QuizExercise) {
+            submission = new QuizSubmission();
+        }
+        else {
+            throw new RuntimeException("Unsupported exercise type: " + exercise);
+        }
+
+        submission.setType(SubmissionType.MANUAL);
+        submission.setParticipation(studentParticipation);
+        submission = submissionRepository.saveAndFlush(submission);
+
+        Result result = ModelFactory.generateResult(rated, scoreAwarded);
+        result.setParticipation(studentParticipation);
+        result.setSubmission(submission);
+        result.completionDate(ZonedDateTime.now());
+        return resultRepo.saveAndFlush(result);
     }
 
     public Course createCourseWithExamAndExerciseGroupAndExercises(User user, ZonedDateTime visible, ZonedDateTime start, ZonedDateTime end) {
