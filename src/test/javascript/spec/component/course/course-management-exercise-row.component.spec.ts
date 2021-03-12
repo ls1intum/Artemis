@@ -5,9 +5,9 @@ import { ArtemisTestModule } from '../../test.module';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { TranslateService } from '@ngx-translate/core';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { MomentModule } from 'ngx-moment';
+import { MomentModule, TimeAgoPipe } from 'ngx-moment';
 import { CourseManagementExerciseRowComponent } from 'app/course/manage/overview/course-management-exercise-row.component';
 import { ProgressBarComponent } from 'app/shared/dashboards/tutor-participation-graph/progress-bar/progress-bar.component';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
@@ -16,6 +16,7 @@ import { CourseManagementOverviewExerciseDetailsDTO } from 'app/course/manage/ov
 import { CourseManagementOverviewExerciseStatisticsDTO } from 'app/course/manage/overview/course-management-overview-exercise-statistics-dto.model';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { Course } from 'app/entities/course.model';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -37,11 +38,12 @@ describe('CourseManagementExerciseRowComponent', () => {
             imports: [ArtemisTestModule, MomentModule],
             declarations: [
                 CourseManagementExerciseRowComponent,
-                MockPipe(TranslatePipe),
+                MockPipe(ArtemisTranslatePipe),
                 MockPipe(ArtemisDatePipe),
                 MockComponent(ProgressBarComponent),
                 MockDirective(NgbTooltip),
                 MockRouterLinkDirective,
+                MockPipe(TimeAgoPipe),
             ],
             providers: [{ provide: LocalStorageService, useClass: MockSyncStorage }, { provide: SessionStorageService, useClass: MockSyncStorage }, MockProvider(TranslateService)],
         })
