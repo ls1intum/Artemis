@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.web.rest;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 import static java.util.stream.Collectors.toSet;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -257,7 +258,11 @@ public class TextAssessmentResource extends AssessmentResource {
     @GetMapping("/submission/{submissionId}")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Participation> retrieveParticipationForSubmission(@PathVariable Long submissionId,
-            @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound) {
+            @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound, @RequestParam(value = "resultId", defaultValue = "0") long resultId) {
+
+        // todo das hier rüber lösen über einen param der nur für instructor
+        // geht? oder nicht oder auch für tutoren oder nur für instructors mit neuem Call-> tutors sollten eig keinen spezifischen result id zugriff haben oder ?
+
         log.debug("REST request to get data for tutors text assessment submission: {}", submissionId);
 
         final Optional<TextSubmission> optionalTextSubmission = textSubmissionRepository.findByIdWithEagerParticipationExerciseResultAssessor(submissionId);
@@ -270,7 +275,14 @@ public class TextAssessmentResource extends AssessmentResource {
         final TextSubmission textSubmission = optionalTextSubmission.get();
         final Participation participation = textSubmission.getParticipation();
         final TextExercise exercise = (TextExercise) participation.getExercise();
-        Result result = textSubmission.getResultForCorrectionRound(correctionRound);
+        Result result;
+        if (resultId != 0) {
+            result = textSubmission.getManualResults().stream().filter(result1 -> result1.getId().equals(resultId)).findFirst().get();
+            correctionRound = textSubmission.getManualResults().indexOf(result);
+        }
+        else {
+            result = textSubmission.getResultForCorrectionRound(correctionRound);
+        }
 
         final User user = userRepository.getUserWithGroupsAndAuthorities();
         checkAuthorization(exercise, user);
@@ -297,7 +309,9 @@ public class TextAssessmentResource extends AssessmentResource {
         // set result again as it was changed
         result = textSubmission.getResultForCorrectionRound(correctionRound);
 
-        // sets results for participation as legacy requires it, will change in follow up NR SE
+        if (resultId != 0) {
+            textSubmission.setResults(Collections.singletonList(result));
+        }
         participation.setResults(Set.copyOf(textSubmission.getResults()));
 
         final ResponseEntity.BodyBuilder bodyBuilder = ResponseEntity.ok();
