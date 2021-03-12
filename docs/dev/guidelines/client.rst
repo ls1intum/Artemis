@@ -353,6 +353,19 @@ When creating a completely new route you will have to register the new paths in 
 		}
 	}
 
+12. Strict Template Check
+===================================
 
+To prevent errors for strict template rule in TypeScript, Artemis uses following approaches.
+
+Use ArtemisTranslatePipe instead of TranslatePipe
+**************************************************
+Do not use placeholder="{{ 'global.form.newpassword.placeholder' | translate }}"
+Use placeholder="{{ 'global.form.newpassword.placeholder' | artemisTranslate }}"
+
+Use ArtemisTimeAgoPipe instead of TimeAgoPipe
+*********************************************
+Do not use <span [ngbTooltip]="submittedDate | artemisDate">{{ submittedDate | amTimeAgo }}</span>
+Use <span [ngbTooltip]="submittedDate | artemisDate">{{ submittedDate | artemisTimeAgo }}</span>
 
 Some parts of these guidelines are adapted from https://github.com/microsoft/TypeScript-wiki/blob/master/Coding-guidelines.md

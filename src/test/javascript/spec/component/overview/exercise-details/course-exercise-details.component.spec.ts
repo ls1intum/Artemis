@@ -6,7 +6,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { CourseExerciseDetailsComponent } from 'app/overview/exercise-details/course-exercise-details.component';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { TranslatePipe } from '@ngx-translate/core';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe.ts';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
@@ -97,7 +97,7 @@ describe('CourseExerciseDetailsComponent', () => {
             imports: [ArtemisSharedModule],
             declarations: [
                 CourseExerciseDetailsComponent,
-                MockPipe(TranslatePipe),
+                MockPipe(ArtemisTranslatePipe),
                 MockPipe(TimeAgoPipe),
                 MockPipe(HtmlForMarkdownPipe),
                 MockDirective(OrionFilterDirective),

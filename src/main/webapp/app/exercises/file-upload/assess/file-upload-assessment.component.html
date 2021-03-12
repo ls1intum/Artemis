@@ -28,7 +28,7 @@
         <div left-body>
             <div class="row">
                 <div *ngIf="submission.filePath" class="col-12 card-text">
-                    <a class="text-primary" (click)="downloadFile(submission.filePath)">{{ 'artemisApp.fileUploadAssessment.submissionFile' | translate }}</a>
+                    <a class="text-primary" (click)="downloadFile(submission.filePath)">{{ 'artemisApp.fileUploadAssessment.submissionFile' | artemisTranslate }}</a>
                     <span class="ml-2 badge badge-info">{{ attachmentExtension(submission.filePath!) | uppercase }}</span>
                 </div>
             </div>
@@ -43,7 +43,7 @@
     <!--Feedbacks-->
     <div class="row mt-3">
         <div class="col-md-6">
-            <div *ngIf="invalidError" class="col-8 alert alert-danger" role="alert">{{ invalidError | translate }}</div>
+            <div *ngIf="invalidError" class="col-8 alert alert-danger" role="alert">{{ invalidError | artemisTranslate }}</div>
             <jhi-unreferenced-feedback [(feedbacks)]="unreferencedFeedback" (feedbacksChange)="validateAssessment()" [readOnly]="readOnly"></jhi-unreferenced-feedback>
         </div>
     </div>

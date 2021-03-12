@@ -1,6 +1,6 @@
 <div *ngIf="exercise">
     <h4>
-        {{ 'modelingAssessment.dashboard.heading' | translate: { title: exercise.title } }}
+        {{ 'modelingAssessment.dashboard.heading' | artemisTranslate: { title: exercise.title } }}
     </h4>
     <jhi-assessment-filters (filterChange)="updateFilteredSubmissions($event)" [submissions]="submissions"></jhi-assessment-filters>
     <jhi-assessment-warning [exercise]="exercise"></jhi-assessment-warning>
@@ -185,7 +185,7 @@
                                     [routerLink]="getAssessmentLink(submission.id)"
                                     class="btn btn-success btn-sm mb-1"
                                 >
-                                    <fa-icon [fixedWidth]="true" [icon]="'folder-open'"></fa-icon>&nbsp;{{ 'artemisApp.assessment.dashboard.actions.assess' | translate }}
+                                    <fa-icon [fixedWidth]="true" [icon]="'folder-open'"></fa-icon>&nbsp;{{ 'artemisApp.assessment.dashboard.actions.assess' | artemisTranslate }}
                                 </a>
                                 <a
                                     *ngIf="submission.latestResult"
@@ -194,7 +194,7 @@
                                     [routerLink]="getAssessmentLink(submission.id)"
                                     class="btn btn-primary btn-sm mb-1"
                                 >
-                                    <fa-icon [fixedWidth]="true" [icon]="'folder-open'"></fa-icon>&nbsp;{{ 'artemisApp.assessment.dashboard.actions.open' | translate }}
+                                    <fa-icon [fixedWidth]="true" [icon]="'folder-open'"></fa-icon>&nbsp;{{ 'artemisApp.assessment.dashboard.actions.open' | artemisTranslate }}
                                 </a>
                             </span>
 
@@ -211,7 +211,7 @@
                                     >
                                         <fa-icon [fixedWidth]="true" [icon]="'folder-open'"></fa-icon>&nbsp;
                                         <span>
-                                            {{ 'artemisApp.assessment.dashboard.actions.open' | translate }}
+                                            {{ 'artemisApp.assessment.dashboard.actions.open' | artemisTranslate }}
                                         </span>
                                     </a>
                                     <!-- button for existing result with lock-->
@@ -225,7 +225,7 @@
                                             >
                                                 <fa-icon [fixedWidth]="true" [icon]="'edit'"></fa-icon>&nbsp;
                                                 <span>
-                                                    {{ 'artemisApp.assessment.dashboard.actions.continue' | translate }}
+                                                    {{ 'artemisApp.assessment.dashboard.actions.continue' | artemisTranslate }}
                                                 </span>
                                             </a>
                                             <!-- button to cancel result -->
@@ -235,7 +235,9 @@
                                                 [disabled]="busy"
                                                 class="btn btn-danger btn-sm mb-1"
                                             >
-                                                <fa-icon [fixedWidth]="true" [icon]="'ban'"></fa-icon>&nbsp;{{ 'artemisApp.assessment.dashboard.actions.cancel' | translate }}
+                                                <fa-icon [fixedWidth]="true" [icon]="'ban'"></fa-icon>&nbsp;{{
+                                                    'artemisApp.assessment.dashboard.actions.cancel' | artemisTranslate
+                                                }}
                                             </button>
                                         </div>
                                     </span>
@@ -252,7 +254,7 @@
                                     class="btn btn-success btn-sm mb-1"
                                 >
                                     <fa-icon [fixedWidth]="true" [icon]="'folder-open'"></fa-icon>
-                                    {{ 'artemisApp.assessment.dashboard.actions.assess' | translate }}
+                                    {{ 'artemisApp.assessment.dashboard.actions.assess' | artemisTranslate }}
                                 </a>
                             </span>
                         </span>
