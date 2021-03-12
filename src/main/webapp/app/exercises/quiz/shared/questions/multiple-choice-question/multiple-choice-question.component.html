@@ -7,7 +7,7 @@
     </h4>
     <p [innerHTML]="renderedQuestion.text"></p>
     <span style="color: red" *ngIf="question.invalid" jhiTranslate="artemisApp.quizQuestion.invalidText"></span>
-    <h6>{{ 'artemisApp.quizQuestion.allOptions' | translate }}</h6>
+    <h6>{{ 'artemisApp.quizQuestion.allOptions' | artemisTranslate }}</h6>
     <div class="hint" *ngIf="question.hint || (question.explanation && showResult)">
         <ng-template #renderedHint>
             <div [innerHTML]="renderedQuestion.hint"></div>
@@ -71,10 +71,10 @@
     </div>
     <table class="answer-options-result" *ngIf="showResult">
         <tr>
-            <th class="content">{{ 'artemisApp.multipleChoiceQuestion.answer' | translate }}</th>
-            <th class="solution">{{ 'artemisApp.multipleChoiceQuestion.solution' | translate }}</th>
+            <th class="content">{{ 'artemisApp.multipleChoiceQuestion.answer' | artemisTranslate }}</th>
+            <th class="solution">{{ 'artemisApp.multipleChoiceQuestion.solution' | artemisTranslate }}</th>
             <th class="result-symbol" *ngIf="!forceSampleSolution"></th>
-            <th class="selection" *ngIf="!forceSampleSolution">{{ 'artemisApp.multipleChoiceQuestion.you' | translate }}</th>
+            <th class="selection" *ngIf="!forceSampleSolution">{{ 'artemisApp.multipleChoiceQuestion.you' | artemisTranslate }}</th>
         </tr>
         <tr class="answer-option" *ngFor="let answerOption of question.answerOptions; let i = index" id="answer-option-{{ i }}">
             <td class="content">
@@ -104,14 +104,14 @@
             </td>
             <td class="solution">
                 <span id="answer-option-{{ i }}-correct" *ngIf="!answerOption.invalid && !question.invalid && answerOption.isCorrect" class="correct">{{
-                    'artemisApp.multipleChoiceQuestion.correct' | translate
+                    'artemisApp.multipleChoiceQuestion.correct' | artemisTranslate
                 }}</span>
                 <span id="answer-option-{{ i }}-wrong" *ngIf="!answerOption.invalid && !question.invalid && !answerOption.isCorrect" class="wrong">{{
-                    'artemisApp.multipleChoiceQuestion.wrong' | translate
+                    'artemisApp.multipleChoiceQuestion.wrong' | artemisTranslate
                 }}</span>
                 <span id="answer-option-{{ i }}-invalid" *ngIf="answerOption.invalid || question.invalid" class="wrong" jhiTranslate="artemisApp.quizQuestion.invalid"></span>
                 <fa-icon
-                    ngbTooltip="{{ 'artemisApp.multipleChoiceQuestion.invalid' | translate }}"
+                    ngbTooltip="{{ 'artemisApp.multipleChoiceQuestion.invalid' | artemisTranslate }}"
                     placement="top"
                     style="color: black"
                     [icon]="'question-circle'"

@@ -28,13 +28,13 @@
             <div class="control-label" (click)="semesterCollapsed[semester] = !semesterCollapsed[semester]">
                 <fa-icon class="pr-3" [icon]="semesterCollapsed[semester] ? 'angle-down' : 'angle-up'"></fa-icon>
                 <span *ngIf="semester !== '' && semester !== 'test'">
-                    <strong>{{ 'artemisApp.course.semester' | translate }}: {{ semester }}</strong>
+                    <strong>{{ 'artemisApp.course.semester' | artemisTranslate }}: {{ semester }}</strong>
                 </span>
                 <span *ngIf="semester === ''">
-                    <strong>{{ 'artemisApp.course.semester' | translate }}: {{ 'global.generic.unset' | translate }}</strong>
+                    <strong>{{ 'artemisApp.course.semester' | artemisTranslate }}: {{ 'global.generic.unset' | artemisTranslate }}</strong>
                 </span>
                 <span *ngIf="semester === 'test'">
-                    <strong>{{ 'artemisApp.course.testCourse.plural' | translate }}</strong>
+                    <strong>{{ 'artemisApp.course.testCourse.plural' | artemisTranslate }}</strong>
                 </span>
             </div>
             <table class="table table-striped course-table" *ngIf="!semesterCollapsed[semester]">
@@ -42,30 +42,30 @@
                     <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" [callback]="sortRows.bind(this)">
                         <th class="d-none d-md-table-cell"></th>
                         <th class="d-none d-md-table-cell" jhiSortBy="id">
-                            <span>{{ 'global.field.id' | translate }}</span>
+                            <span>{{ 'global.field.id' | artemisTranslate }}</span>
                             <fa-icon [icon]="'sort'"></fa-icon>
                         </th>
                         <th jhiSortBy="title">
-                            <span>{{ 'artemisApp.course.title' | translate }}</span>
+                            <span>{{ 'artemisApp.course.title' | artemisTranslate }}</span>
                             <fa-icon [icon]="'sort'"></fa-icon>
                         </th>
                         <th class="d-none d-md-table-cell">
-                            <span>{{ 'artemisApp.course.accessGroups' | translate }}</span>
+                            <span>{{ 'artemisApp.course.accessGroups' | artemisTranslate }}</span>
                         </th>
                         <th jhiSortBy="startDate">
-                            <span>{{ 'artemisApp.course.startDate' | translate }}</span>
+                            <span>{{ 'artemisApp.course.startDate' | artemisTranslate }}</span>
                             <fa-icon [icon]="'sort'"></fa-icon>
                         </th>
                         <th jhiSortBy="endDate">
-                            <span>{{ 'artemisApp.course.endDate' | translate }}</span>
+                            <span>{{ 'artemisApp.course.endDate' | artemisTranslate }}</span>
                             <fa-icon [icon]="'sort'"></fa-icon>
                         </th>
                         <th class="d-none d-md-table-cell" jhiSortBy="onlineCourse">
-                            <span>{{ 'artemisApp.course.onlineCourse.title' | translate }}</span>
+                            <span>{{ 'artemisApp.course.onlineCourse.title' | artemisTranslate }}</span>
                             <fa-icon [icon]="'sort'"></fa-icon>
                         </th>
                         <th class="d-none d-md-table-cell" jhiSortBy="presentationScore">
-                            <span>{{ 'artemisApp.course.presentationScoreEnabled.title' | translate }}</span>
+                            <span>{{ 'artemisApp.course.presentationScoreEnabled.title' | artemisTranslate }}</span>
                             <fa-icon [icon]="'sort'"></fa-icon>
                         </th>
                         <th></th>
@@ -89,44 +89,44 @@
                                 <a [routerLink]="['/course-management', course.id]" class="bold">{{ course.title }}</a
                                 ><br />
                                 <span *ngIf="course.shortName">
-                                    <span class="bold">{{ 'artemisApp.course.shortName' | translate }} :</span> {{ course.shortName }}
+                                    <span class="bold">{{ 'artemisApp.course.shortName' | artemisTranslate }} :</span> {{ course.shortName }}
                                 </span>
                             </td>
                             <td class="d-none d-md-table-cell">
                                 <div *ngIf="course.isAtLeastInstructor">
-                                    <span class="bold">{{ 'artemisApp.course.students' | translate }}:</span>
+                                    <span class="bold">{{ 'artemisApp.course.students' | artemisTranslate }}:</span>
                                     <a [routerLink]="['/course-management', course.id, 'groups', 'students']"> {{ course.studentGroupName }} ({{ course.numberOfStudents }}) </a>
                                     <br />
-                                    <span class="bold">{{ 'artemisApp.course.tutors' | translate }}:</span>
+                                    <span class="bold">{{ 'artemisApp.course.tutors' | artemisTranslate }}:</span>
                                     <a [routerLink]="['/course-management', course.id, 'groups', 'tutors']">
                                         {{ course.teachingAssistantGroupName }} ({{ course.numberOfTeachingAssistants }})
                                     </a>
                                     <br />
-                                    <span class="bold">{{ 'artemisApp.course.instructors' | translate }}:</span>
+                                    <span class="bold">{{ 'artemisApp.course.instructors' | artemisTranslate }}:</span>
                                     <a [routerLink]="['/course-management', course.id, 'groups', 'instructors']">
                                         {{ course.instructorGroupName }} ({{ course.numberOfInstructors }})
                                     </a>
                                 </div>
                                 <div *ngIf="!course.isAtLeastInstructor">
-                                    <span class="bold">{{ 'artemisApp.course.students' | translate }}:</span>
+                                    <span class="bold">{{ 'artemisApp.course.students' | artemisTranslate }}:</span>
                                     {{ course.studentGroupName }} ({{ course.numberOfStudents }})
                                     <br />
-                                    <span class="bold">{{ 'artemisApp.course.tutors' | translate }}:</span>
+                                    <span class="bold">{{ 'artemisApp.course.tutors' | artemisTranslate }}:</span>
                                     {{ course.teachingAssistantGroupName }} ({{ course.numberOfTeachingAssistants }})
                                     <br />
-                                    <span class="bold">{{ 'artemisApp.course.instructors' | translate }}:</span>
+                                    <span class="bold">{{ 'artemisApp.course.instructors' | artemisTranslate }}:</span>
                                     {{ course.instructorGroupName }} ({{ course.numberOfInstructors }})
                                 </div>
                             </td>
                             <td>{{ course.startDate | artemisDate }}</td>
                             <td>{{ course.endDate | artemisDate }}</td>
                             <td class="d-none d-md-table-cell">
-                                <span *ngIf="course.onlineCourse">{{ 'global.generic.yes' | translate }}</span>
-                                <span *ngIf="!course.onlineCourse">{{ 'global.generic.no' | translate }}</span>
+                                <span *ngIf="course.onlineCourse">{{ 'global.generic.yes' | artemisTranslate }}</span>
+                                <span *ngIf="!course.onlineCourse">{{ 'global.generic.no' | artemisTranslate }}</span>
                             </td>
                             <td class="d-none d-md-table-cell">
-                                <span *ngIf="course.presentationScore !== 0">{{ 'global.generic.yes' | translate }}</span>
-                                <span *ngIf="course.presentationScore === 0">{{ 'global.generic.no' | translate }}</span>
+                                <span *ngIf="course.presentationScore !== 0">{{ 'global.generic.yes' | artemisTranslate }}</span>
+                                <span *ngIf="course.presentationScore === 0">{{ 'global.generic.no' | artemisTranslate }}</span>
                             </td>
                             <td jhiOrionFilter [showInOrionWindow]="true">
                                 <a
@@ -136,7 +136,7 @@
                                     id="exercises-ide-button-{{ course.id }}"
                                 >
                                     <fa-icon [icon]="'list-alt'"></fa-icon>
-                                    <span>{{ 'entity.action.exercise' | translate }}</span>
+                                    <span>{{ 'entity.action.exercise' | artemisTranslate }}</span>
                                 </a>
                             </td>
                             <td jhiOrionFilter [showInOrionWindow]="false" class="text-right">
@@ -150,17 +150,17 @@
                                             id="exercises-button-{{ course.id }}"
                                         >
                                             <fa-icon [icon]="'list-alt'"></fa-icon>
-                                            <span class="d-none d-md-inline">{{ 'entity.action.exercise' | translate }}</span>
+                                            <span class="d-none d-md-inline">{{ 'entity.action.exercise' | artemisTranslate }}</span>
                                         </a>
                                         <a *ngIf="course.isAtLeastInstructor" [routerLink]="['/course-management', course.id, 'lectures']" class="btn btn-primary btn-sm mr-1 mb-1">
                                             <fa-icon [icon]="'list-alt'"></fa-icon>
-                                            <span class="d-none d-md-inline">{{ 'entity.action.lecture' | translate }}</span>
+                                            <span class="d-none d-md-inline">{{ 'entity.action.lecture' | artemisTranslate }}</span>
                                         </a>
                                     </div>
                                     <div class="btn-group-vertical mr-1 mb-1" *jhiHasAnyAuthority="['ROLE_TA', 'ROLE_ADMIN', 'ROLE_INSTRUCTOR']">
                                         <a *ngIf="course.isAtLeastInstructor" [routerLink]="['/course-management', course.id, 'scores']" class="btn btn-info btn-sm mr-1 mb-1">
                                             <fa-icon [icon]="'eye'"></fa-icon>
-                                            <span class="d-none d-md-inline">{{ 'entity.action.scores' | translate }}</span>
+                                            <span class="d-none d-md-inline">{{ 'entity.action.scores' | artemisTranslate }}</span>
                                         </a>
                                         <a
                                             *ngIf="showExamButton && course.isAtLeastTutor"
@@ -168,7 +168,7 @@
                                             class="btn btn-info btn-sm mr-1 mb-1"
                                         >
                                             <fa-icon [icon]="'list-alt'"></fa-icon>
-                                            <span class="d-none d-md-inline">{{ 'entity.action.exams' | translate }}</span>
+                                            <span class="d-none d-md-inline">{{ 'entity.action.exams' | artemisTranslate }}</span>
                                         </a>
                                     </div>
                                     <div class="btn-group-vertical mr-1 mb-1" *jhiHasAnyAuthority="['ROLE_TA', 'ROLE_ADMIN', 'ROLE_INSTRUCTOR']">
@@ -179,7 +179,7 @@
                                             [class.guided-tour]="course === courseForGuidedTour"
                                         >
                                             <fa-icon [icon]="'th-list'"></fa-icon>
-                                            <span class="d-none d-md-inline">{{ 'entity.action.assessmentDashboard' | translate }}</span>
+                                            <span class="d-none d-md-inline">{{ 'entity.action.assessmentDashboard' | artemisTranslate }}</span>
                                         </a>
                                         <a
                                             *ngIf="course.isAtLeastInstructor"
@@ -187,13 +187,13 @@
                                             class="btn btn-info btn-sm mr-1 mb-1 instructor-dashboard"
                                         >
                                             <fa-icon [icon]="'th-list'"></fa-icon>
-                                            <span class="d-none d-md-inline">{{ 'artemisApp.course.instructorDashboard' | translate }}</span>
+                                            <span class="d-none d-md-inline">{{ 'artemisApp.course.instructorDashboard' | artemisTranslate }}</span>
                                         </a>
                                     </div>
                                     <div class="d-flex flex-column mr-1 mb-1" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']">
                                         <a *ngIf="course.isAtLeastInstructor" [routerLink]="['/course-management', course.id, 'edit']" class="btn btn-primary btn-sm mr-1 mb-1">
                                             <fa-icon [icon]="'pencil-alt'"></fa-icon>
-                                            <span class="d-none d-md-inline">{{ 'entity.action.edit' | translate }}</span>
+                                            <span class="d-none d-md-inline">{{ 'entity.action.edit' | artemisTranslate }}</span>
                                         </a>
 
                                         <button

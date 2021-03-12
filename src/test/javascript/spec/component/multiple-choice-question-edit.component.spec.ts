@@ -1,27 +1,27 @@
-import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
-import * as sinon from 'sinon';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { QuizScoringInfoModalComponent } from 'app/exercises/quiz/manage/quiz-scoring-info-modal/quiz-scoring-info-modal.component';
-import { MarkdownEditorComponent } from 'app/shared/markdown-editor/markdown-editor.component';
-import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
-import { DragAndDropQuestionComponent } from 'app/exercises/quiz/shared/questions/drag-and-drop-question/drag-and-drop-question.component';
-import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
-import { TranslatePipe } from '@ngx-translate/core';
 import { FormsModule } from '@angular/forms';
+import { By } from '@angular/platform-browser';
 import { NgbCollapse, NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { DndModule } from 'ng2-dnd';
+import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
+import { MultipleChoiceQuestionEditComponent } from 'app/exercises/quiz/manage/multiple-choice-question/multiple-choice-question-edit.component';
+import { QuizScoringInfoModalComponent } from 'app/exercises/quiz/manage/quiz-scoring-info-modal/quiz-scoring-info-modal.component';
+import { DragAndDropQuestionComponent } from 'app/exercises/quiz/shared/questions/drag-and-drop-question/drag-and-drop-question.component';
+import { MultipleChoiceQuestionComponent } from 'app/exercises/quiz/shared/questions/multiple-choice-question/multiple-choice-question.component';
+import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
+import { CorrectOptionCommand } from 'app/shared/markdown-editor/domainCommands/correctOptionCommand';
 import { ExplanationCommand } from 'app/shared/markdown-editor/domainCommands/explanation.command';
 import { HintCommand } from 'app/shared/markdown-editor/domainCommands/hint.command';
-import { MultipleChoiceQuestionEditComponent } from 'app/exercises/quiz/manage/multiple-choice-question/multiple-choice-question-edit.component';
-import { ArtemisTestModule } from '../test.module';
-import { MockNgbModalService } from '../helpers/mocks/service/mock-ngb-modal.service';
-import { MultipleChoiceQuestionComponent } from 'app/exercises/quiz/shared/questions/multiple-choice-question/multiple-choice-question.component';
-import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
-import { By } from '@angular/platform-browser';
-import { TestCaseCommand } from 'app/shared/markdown-editor/domainCommands/programming-exercise/testCase.command';
-import { CorrectOptionCommand } from 'app/shared/markdown-editor/domainCommands/correctOptionCommand';
 import { IncorrectOptionCommand } from 'app/shared/markdown-editor/domainCommands/incorrectOptionCommand';
+import { TestCaseCommand } from 'app/shared/markdown-editor/domainCommands/programming-exercise/testCase.command';
+import { MarkdownEditorComponent } from 'app/shared/markdown-editor/markdown-editor.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe.ts';
+import * as chai from 'chai';
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
+import { DndModule } from 'ng2-dnd';
+import * as sinon from 'sinon';
+import * as sinonChai from 'sinon-chai';
+import { MockNgbModalService } from '../helpers/mocks/service/mock-ngb-modal.service';
+import { ArtemisTestModule } from '../test.module';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -43,7 +43,7 @@ describe('MultipleChoiceQuestionEditComponent', () => {
             imports: [ArtemisTestModule, FormsModule, DndModule.forRoot()],
             declarations: [
                 MultipleChoiceQuestionEditComponent,
-                MockPipe(TranslatePipe),
+                MockPipe(ArtemisTranslatePipe),
                 MockComponent(QuizScoringInfoModalComponent),
                 MockComponent(MarkdownEditorComponent),
                 MockComponent(SecuredImageComponent),
