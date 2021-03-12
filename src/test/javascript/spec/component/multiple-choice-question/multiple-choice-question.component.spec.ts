@@ -3,7 +3,7 @@ import * as sinonChai from 'sinon-chai';
 import * as sinon from 'sinon';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTestModule } from '../../test.module';
-import { TranslatePipe } from '@ngx-translate/core';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe.ts';
 import { MultipleChoiceQuestionComponent } from 'app/exercises/quiz/shared/questions/multiple-choice-question/multiple-choice-question.component';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
@@ -26,7 +26,7 @@ describe('MultipleChoiceQuestionComponent', () => {
             imports: [ArtemisTestModule],
             declarations: [
                 MultipleChoiceQuestionComponent,
-                MockPipe(TranslatePipe),
+                MockPipe(ArtemisTranslatePipe),
                 MockDirective(NgbPopover),
                 MockDirective(NgbTooltip),
                 MockComponent(QuizScoringInfoStudentModalComponent),
