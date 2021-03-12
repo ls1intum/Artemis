@@ -49,6 +49,10 @@ public class ProgrammingExerciseTestCase extends DomainObject {
         return testName;
     }
 
+    public String getLowerCaseTestName() {
+        return testName.toLowerCase();
+    }
+
     public ProgrammingExerciseTestCase testName(String testName) {
         this.testName = testName;
         return this;
@@ -159,7 +163,7 @@ public class ProgrammingExerciseTestCase extends DomainObject {
      * @return whether this and the other test case are the same based on name and exercise
      */
     public boolean isSameTestCase(ProgrammingExerciseTestCase testCase) {
-        return testCase.getTestName().equals(this.getTestName()) && this.getExercise().getId().equals(testCase.getExercise().getId());
+        return testCase.getLowerCaseTestName().equals(this.getLowerCaseTestName()) && this.getExercise().getId().equals(testCase.getExercise().getId());
     }
 
     @Override
