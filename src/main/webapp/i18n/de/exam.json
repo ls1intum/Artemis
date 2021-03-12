@@ -394,6 +394,7 @@
             "reviewer": "Reviewer",
             "openSubmission": "Einreichung öffnen",
             "openAssessment": " Bewertung öffnen",
+            "openLatestAssessment": "Aktuellste Bewertung öffnen",
             "cancelAssessment": " Bewertung abbrechen",
             "workingTimeCouldNotBeSaved": "Die Bearbeitungszeit konnte nicht gespeichert werden.",
             "saveWorkingTimeSuccessful": "Die Bearbeitungszeit wurde erfolgreich gespeichert.",
