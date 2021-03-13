@@ -21,6 +21,7 @@ import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { ModelingAssessmentService } from 'app/exercises/modeling/assess/modeling-assessment.service';
 import { SortService } from 'app/shared/service/sort.service';
+import { routes } from 'app/exercises/modeling/assess/modeling-assessment-editor/modeling-assessment-editor.route';
 
 const route = { params: of({ courseId: 3, exerciseId: 22 }) };
 const course = { id: 1 };
@@ -60,7 +61,7 @@ describe('ModelingAssessmentDashboardComponent', () => {
 
     beforeEach(async(() => {
         TestBed.configureTestingModule({
-            imports: [RouterTestingModule, TranslateModule.forRoot(), ArtemisTestModule],
+            imports: [RouterTestingModule.withRoutes([routes[1]]), TranslateModule.forRoot(), ArtemisTestModule],
             declarations: [ModelingAssessmentDashboardComponent],
             providers: [
                 JhiLanguageHelper,
