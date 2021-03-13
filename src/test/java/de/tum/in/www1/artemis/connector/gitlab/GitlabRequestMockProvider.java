@@ -319,9 +319,14 @@ public class GitlabRequestMockProvider {
         }
     }
 
-    public void mockDeleteVcsUser(String login) throws GitLabApiException {
+    public void mockDeleteVcsUser(String login, boolean shouldFailToDelete) throws GitLabApiException {
         mockGetUserId(login, true);
-        doNothing().when(userApi).deleteUser(anyInt(), eq(true));
+        if (shouldFailToDelete) {
+            doThrow(GitLabApiException.class).when(userApi).deleteUser(anyInt(), eq(true));
+        }
+        else {
+            doNothing().when(userApi).deleteUser(anyInt(), eq(true));
+        }
     }
 
     private void mockGetUserId(String username, boolean userExists) throws GitLabApiException {

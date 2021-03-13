@@ -103,6 +103,18 @@ public class UserJenkinsGitlabIntegrationTest extends AbstractSpringIntegrationJ
     }
 
     @Test
+    @WithMockUser(value = "admin", roles = "ADMIN")
+    public void deleteUser_FailsInExternalCiUserManagement_isNotSuccessful() throws Exception {
+        userTestService.deleteUser_FailsInExternalCiUserManagement_isNotSuccessful();
+    }
+
+    @Test
+    @WithMockUser(value = "admin", roles = "ADMIN")
+    public void deleteUser_FailsInExternalVcsUserManagement_isNotSuccessful() throws Exception {
+        userTestService.deleteUser_FailsInExternalVcsUserManagement_isNotSuccessful();
+    }
+
+    @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     public void getUsers_asAdmin_isSuccessful() throws Exception {
         userTestService.getUsers_asAdmin_isSuccessful();

@@ -75,7 +75,7 @@ public interface MockDelegate {
 
     void mockFailToCreateUserInExernalUserManagement(User user, boolean failInVcs, boolean failInCi) throws Exception;
 
-    void mockDeleteUserInUserManagement(User user, boolean userExistsInUserManagement) throws Exception;
+    void mockDeleteUserInUserManagement(User user, boolean userExistsInUserManagement, boolean failInVcs, boolean failInCi) throws Exception;
 
     void mockCreateGroupInUserManagement(String groupName) throws Exception;
 

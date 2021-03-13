@@ -82,7 +82,7 @@ public class UserTestService {
 
     // Test
     public void deleteUser_isSuccessful() throws Exception {
-        mockDelegate.mockDeleteUserInUserManagement(student, true);
+        mockDelegate.mockDeleteUserInUserManagement(student, true, false, false);
 
         request.delete("/api/users/" + student.getLogin(), HttpStatus.OK);
 
@@ -92,12 +92,32 @@ public class UserTestService {
 
     // Test
     public void deleteUser_doesntExistInUserManagement_isSuccessful() throws Exception {
-        mockDelegate.mockDeleteUserInUserManagement(student, false);
+        mockDelegate.mockDeleteUserInUserManagement(student, false, false, false);
 
         request.delete("/api/users/" + student.getLogin(), HttpStatus.OK);
 
         var deletedUser = userRepository.findById(student.getId());
         assertThat(deletedUser).isEmpty();
+    }
+
+    // Test
+    public void deleteUser_FailsInExternalCiUserManagement_isNotSuccessful() throws Exception {
+        mockDelegate.mockDeleteUserInUserManagement(student, true, false, true);
+
+        request.delete("/api/users/" + student.getLogin(), HttpStatus.INTERNAL_SERVER_ERROR);
+
+        var deletedUser = userRepository.findById(student.getId());
+        assertThat(deletedUser).isNotEmpty();
+    }
+
+    // Test
+    public void deleteUser_FailsInExternalVcsUserManagement_isNotSuccessful() throws Exception {
+        mockDelegate.mockDeleteUserInUserManagement(student, false, true, false);
+
+        request.delete("/api/users/" + student.getLogin(), HttpStatus.INTERNAL_SERVER_ERROR);
+
+        var deletedUser = userRepository.findById(student.getId());
+        assertThat(deletedUser).isNotEmpty();
     }
 
     // Test

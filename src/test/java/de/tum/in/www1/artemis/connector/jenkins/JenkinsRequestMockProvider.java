@@ -276,7 +276,7 @@ public class JenkinsRequestMockProvider {
         doReturn(user.getPassword()).when(passwordService).decryptPassword(user);
         doReturn(user.getPassword()).when(passwordService).decryptPassword(user);
 
-        mockDeleteUser(user, userExists);
+        mockDeleteUser(user, userExists, false);
         mockCreateUser(user, false, false);
     }
 
@@ -288,15 +288,16 @@ public class JenkinsRequestMockProvider {
         var oldUser = new User();
         oldUser.setLogin(oldLogin);
         oldUser.setGroups(user.getGroups());
-        mockDeleteUser(oldUser, true);
+        mockDeleteUser(oldUser, true, false);
         mockCreateUser(user, false, false);
     }
 
-    public void mockDeleteUser(User user, boolean userExistsInUserManagement) throws IOException, URISyntaxException {
+    public void mockDeleteUser(User user, boolean userExistsInUserManagement, boolean shouldFailToDelete) throws IOException, URISyntaxException {
         mockGetUser(user.getLogin(), userExistsInUserManagement);
 
         final var uri = UriComponentsBuilder.fromUri(jenkinsServerUrl.toURI()).pathSegment("user", user.getLogin(), "doDelete").build().toUri();
-        mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.POST)).andRespond(withStatus(HttpStatus.FOUND));
+        var status = shouldFailToDelete ? HttpStatus.NOT_FOUND : HttpStatus.FOUND;
+        mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.POST)).andRespond(withStatus(status));
 
         mockRemoveUserFromGroups(user.getGroups());
     }

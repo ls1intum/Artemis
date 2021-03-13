@@ -372,7 +372,7 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
     }
 
     @Override
-    public void mockDeleteUserInUserManagement(User user, boolean userExistsInUserManagement) {
+    public void mockDeleteUserInUserManagement(User user, boolean userExistsInUserManagement, boolean failInVcs, boolean failInCi) {
         // Not needed here
     }
 
