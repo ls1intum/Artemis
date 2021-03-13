@@ -29,8 +29,8 @@ public class PlagiarismComparison<E extends PlagiarismSubmissionElement> extends
     /**
      * The result this comparison belongs to.
      */
-    @ManyToOne(targetEntity = PlagiarismResult.class)
     @JsonIgnore
+    @ManyToOne(targetEntity = PlagiarismResult.class)
     private PlagiarismResult<E> plagiarismResult;
 
     /**

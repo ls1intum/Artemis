@@ -153,7 +153,7 @@ public class ModelingPlagiarismDetectionService {
         long durationInMillis = System.currentTimeMillis() - timeBeforeStartInMillis;
         int[] similarityDistribution = calculateSimilarityDistribution(comparisons);
 
-        result.setComparisons(comparisons);
+        result.setComparisons(new HashSet<>(comparisons));
         result.setDuration(durationInMillis);
         result.setSimilarityDistribution(similarityDistribution);
 

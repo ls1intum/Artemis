@@ -5,9 +5,13 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.JoinColumn;
+import javax.persistence.JoinTable;
+import javax.persistence.OneToMany;
 import javax.persistence.Table;
-import javax.persistence.Transient;
 
 import jplag.Submission;
 
@@ -39,7 +43,8 @@ public class PlagiarismSubmission<E extends PlagiarismSubmissionElement> extends
     /**
      * List of elements the related submission consists of.
      */
-    @Transient
+    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER, targetEntity = PlagiarismSubmissionElement.class)
+    @JoinTable(name = "plagiarism_submission_elements", joinColumns = @JoinColumn(name = "plagiarism_submission_id"), inverseJoinColumns = @JoinColumn(name = "plagiarism_submission_element_id"))
     private List<E> elements;
 
     /**

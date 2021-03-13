@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.domain.plagiarism.text;
 
-import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.stream.Collectors;
 
 import javax.persistence.Entity;
@@ -20,14 +20,14 @@ public class TextPlagiarismResult extends PlagiarismResult<TextSubmissionElement
      */
     public TextPlagiarismResult() {
         // Intentionally left empty.
-        this.comparisons = new ArrayList<>();
+        this.comparisons = new HashSet<>();
     }
 
     public TextPlagiarismResult(JPlagResult result) {
         this.comparisons = result.getComparisons().stream().map(PlagiarismComparison::fromJPlagComparison).map(comparison -> {
             comparison.setPlagiarismResult(this);
             return comparison;
-        }).collect(Collectors.toList());
+        }).collect(Collectors.toSet());
         this.duration = result.getDuration();
 
         this.setSimilarityDistribution(result.getSimilarityDistribution());
