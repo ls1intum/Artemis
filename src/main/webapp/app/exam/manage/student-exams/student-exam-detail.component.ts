@@ -170,10 +170,6 @@ export class StudentExamDetailComponent implements OnInit {
     }
 
     rounding(number: number) {
-        if (isNaN(number)) {
-            return 0;
-        }
-
         return round(number, 1);
     }
 
