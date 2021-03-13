@@ -59,7 +59,7 @@
                             {{
                                 getLectureUnitCourseProgress(lectureUnit.id) === undefined
                                     ? '-'
-                                    : getLectureUnitCourseProgress(lectureUnit.id).averageScoreAchievedByStudentInLectureUnit + ' %'
+                                    : round(getLectureUnitCourseProgress(lectureUnit.id).averageScoreAchievedByStudentInLectureUnit) + ' %'
                             }}
                         </td>
                         <td>
@@ -73,7 +73,7 @@
                             {{ getLectureUnitCourseProgress(lectureUnit.id) === undefined ? '-' : getLectureUnitCourseProgress(lectureUnit.id).noOfParticipants }}
                         </td>
                         <td>
-                            {{ getLectureUnitCourseProgress(lectureUnit.id) === undefined ? '-' : getLectureUnitCourseProgress(lectureUnit.id).participationRate + ' %' }}
+                            {{ getLectureUnitCourseProgress(lectureUnit.id) === undefined ? '-' : round(getLectureUnitCourseProgress(lectureUnit.id).participationRate) + ' %' }}
                         </td>
                     </tr>
                 </tbody>
