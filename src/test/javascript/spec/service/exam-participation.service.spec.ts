@@ -25,6 +25,8 @@ describe('Exam Participation Service', () => {
     let exam: Exam;
     let studentExam: StudentExam;
     let quizSubmission: QuizSubmission;
+    let localStorage: LocalStorageService;
+
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [HttpClientTestingModule, ArtemisTestModule],
@@ -37,6 +39,7 @@ describe('Exam Participation Service', () => {
         injector = getTestBed();
         service = injector.get(ExamParticipationService);
         httpMock = injector.get(HttpTestingController);
+        localStorage = injector.get(LocalStorageService);
 
         exam = new Exam();
         studentExam = new StudentExam();
@@ -153,8 +156,19 @@ describe('Exam Participation Service', () => {
         const sendToService = Object.assign({ exercises: [] }, studentExam);
         const expected = Object.assign({}, sendToService);
         service.saveStudentExamToLocalStorage(1, 1, sendToService);
-        spyOn(localStorage, 'setItem').and.callFake(() => {
+        spyOn(localStorage, 'store').and.callFake(() => {
             expect(localStorage['artemis_student_exam_1_1'].toBe(expected));
+        });
+    });
+    it('should load StudentExam from localStorage', async () => {
+        studentExam.exercises = [];
+        service.saveStudentExamToLocalStorage(1, 1, studentExam);
+
+        const stored = Object.assign({}, studentExam);
+        spyOn(localStorage, 'retrieve').and.returnValues(JSON.stringify(stored));
+
+        service.loadStudentExamWithExercisesForConductionFromLocalStorage(1, 1).subscribe((localExam: StudentExam) => {
+            expect(localExam).toEqual(studentExam);
         });
     });
 });

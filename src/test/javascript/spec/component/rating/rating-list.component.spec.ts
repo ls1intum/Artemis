@@ -14,6 +14,7 @@ import { Participation } from 'app/entities/participation/participation.model';
 import { Result } from 'app/entities/result.model';
 import { Rating } from 'app/entities/rating.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
 
 describe('RatingListComponent', () => {
     let component: RatingListComponent;
@@ -27,7 +28,7 @@ describe('RatingListComponent', () => {
     beforeEach(async () => {
         return TestBed.configureTestingModule({
             imports: [ArtemisSharedModule, TranslateModule.forRoot(), ArtemisTestModule, RouterTestingModule.withRoutes([]), StarRatingComponent],
-            declarations: [RatingListComponent],
+            declarations: [RatingListComponent, TranslatePipeMock],
             providers: [
                 {
                     provide: ActivatedRoute,

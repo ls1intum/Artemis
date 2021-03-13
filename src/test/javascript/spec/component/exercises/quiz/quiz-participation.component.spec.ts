@@ -1,39 +1,40 @@
-import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
-import * as sinon from 'sinon';
-import * as moment from 'moment';
-import { ComponentFixture, discardPeriodicTasks, fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
-import { AlertComponent } from 'app/shared/alert/alert.component';
-import { TranslatePipe, TranslateService } from '@ngx-translate/core';
-import { JhiAlertService, JhiTranslateDirective } from 'ng-jhipster';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { ArtemisTestModule } from '../../../test.module';
-import { ActivatedRoute } from '@angular/router';
-import { of } from 'rxjs';
-import { QuizParticipationComponent } from 'app/exercises/quiz/participate/quiz-participation.component';
-import { MultipleChoiceQuestionComponent } from 'app/exercises/quiz/shared/questions/multiple-choice-question/multiple-choice-question.component';
-import { DragAndDropQuestionComponent } from 'app/exercises/quiz/shared/questions/drag-and-drop-question/drag-and-drop-question.component';
-import { ShortAnswerQuestionComponent } from 'app/exercises/quiz/shared/questions/short-answer-question/short-answer-question.component';
-import { ButtonComponent } from 'app/shared/components/button.component';
-import { JhiConnectionStatusComponent } from 'app/shared/connection-status/connection-status.component';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { MockLocalStorageService } from '../../../helpers/mocks/service/mock-local-storage.service';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
-import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
+import { HttpResponse } from '@angular/common/http';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { ComponentFixture, discardPeriodicTasks, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { ActivatedRoute } from '@angular/router';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { TranslateService } from '@ngx-translate/core';
+import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { QuizQuestion, QuizQuestionType } from 'app/entities/quiz/quiz-question.model';
-import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
-import { HttpResponse } from '@angular/common/http';
-import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
-import { ArtemisQuizService } from 'app/shared/quiz/quiz.service';
 import { QuizSubmission } from 'app/entities/quiz/quiz-submission.model';
-import { Result } from 'app/entities/result.model';
 import { SubmittedAnswer } from 'app/entities/quiz/submitted-answer.model';
-import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { Result } from 'app/entities/result.model';
+import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
+import { QuizParticipationComponent } from 'app/exercises/quiz/participate/quiz-participation.component';
+import { DragAndDropQuestionComponent } from 'app/exercises/quiz/shared/questions/drag-and-drop-question/drag-and-drop-question.component';
+import { MultipleChoiceQuestionComponent } from 'app/exercises/quiz/shared/questions/multiple-choice-question/multiple-choice-question.component';
+import { ShortAnswerQuestionComponent } from 'app/exercises/quiz/shared/questions/short-answer-question/short-answer-question.component';
+import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
+import { AlertComponent } from 'app/shared/alert/alert.component';
+import { ButtonComponent } from 'app/shared/components/button.component';
+import { JhiConnectionStatusComponent } from 'app/shared/connection-status/connection-status.component';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe.ts';
+import { ArtemisQuizService } from 'app/shared/quiz/quiz.service';
+import * as chai from 'chai';
+import * as moment from 'moment';
+import { JhiAlertService, JhiTranslateDirective } from 'ng-jhipster';
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { of } from 'rxjs';
+import * as sinon from 'sinon';
+import * as sinonChai from 'sinon-chai';
+import { MockLocalStorageService } from '../../../helpers/mocks/service/mock-local-storage.service';
+import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
+import { ArtemisTestModule } from '../../../test.module';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -84,7 +85,7 @@ const quizExerciseUnreleased = (<any>{
 const testBedDeclarations = [
     QuizParticipationComponent,
     MockComponent(AlertComponent),
-    MockPipe(TranslatePipe),
+    MockPipe(ArtemisTranslatePipe),
     MockPipe(ArtemisDatePipe),
     MockDirective(JhiTranslateDirective),
     MockComponent(MultipleChoiceQuestionComponent),

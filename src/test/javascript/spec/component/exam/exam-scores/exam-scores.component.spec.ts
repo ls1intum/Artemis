@@ -1,25 +1,26 @@
-import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
-import * as sinon from 'sinon';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { AlertComponent } from 'app/shared/alert/alert.component';
-import { TranslatePipe, TranslateService } from '@ngx-translate/core';
-import { JhiAlertService, JhiSortByDirective, JhiSortDirective, JhiTranslateDirective } from 'ng-jhipster';
-import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
-import { ActivatedRoute } from '@angular/router';
-import { empty, of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ActivatedRoute } from '@angular/router';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateService } from '@ngx-translate/core';
+import * as sinon from 'sinon';
+import * as sinonChai from 'sinon-chai';
+import { JhiLanguageHelper } from 'app/core/language/language.helper';
+import { ExamScoreDTO, ExerciseGroup, ExerciseInfo, ExerciseResult, StudentResult } from 'app/exam/exam-scores/exam-score-dtos.model';
 import { ExamScoresComponent } from 'app/exam/exam-scores/exam-scores.component';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
-import { ExamScoreDTO, ExerciseGroup, ExerciseInfo, ExerciseResult, StudentResult } from 'app/exam/exam-scores/exam-score-dtos.model';
-import { ChartsModule } from 'ng2-charts';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { SortService } from 'app/shared/service/sort.service';
-import { JhiLanguageHelper } from 'app/core/language/language.helper';
+import { AlertComponent } from 'app/shared/alert/alert.component';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { ParticipantScoresService, ScoresDTO } from 'app/shared/participant-scores/participant-scores.service';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe.ts';
+import { SortService } from 'app/shared/service/sort.service';
+import * as chai from 'chai';
 import { cloneDeep } from 'lodash';
+import { JhiAlertService, JhiSortByDirective, JhiSortDirective, JhiTranslateDirective } from 'ng-jhipster';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { ChartsModule } from 'ng2-charts';
+import { empty, of } from 'rxjs';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -148,7 +149,7 @@ describe('ExamScoresComponent', () => {
             imports: [ChartsModule],
             declarations: [
                 ExamScoresComponent,
-                MockPipe(TranslatePipe),
+                MockPipe(ArtemisTranslatePipe),
                 MockComponent(AlertComponent),
                 MockComponent(FaIconComponent),
                 MockComponent(HelpIconComponent),

@@ -45,7 +45,7 @@
                     />
                     <div
                         *ngIf="shortAnswerQuestionUtil.getSpot(shortAnswerQuestionUtil.getSpotNr(element), question).invalid"
-                        [ngbTooltip]="'artemisApp.shortAnswerSpot.invalidSpot' | translate"
+                        [ngbTooltip]="'artemisApp.shortAnswerSpot.invalidSpot' | artemisTranslate"
                     >
                         <input
                             class="short-answer-question-container__input"
@@ -108,10 +108,10 @@
     <br />
     <div *ngIf="showResult && !forceSampleSolution">
         <div class="btn btn-outline-primary" *ngIf="!showingSampleSolution" (click)="showSampleSolution()">
-            {{ 'artemisApp.quizQuestion.showSampleSolution' | translate }}
+            {{ 'artemisApp.quizQuestion.showSampleSolution' | artemisTranslate }}
         </div>
         <div class="btn btn-outline-primary" *ngIf="showingSampleSolution" (click)="hideSampleSolution()">
-            {{ 'artemisApp.quizQuestion.hideSampleSolution' | translate }}
+            {{ 'artemisApp.quizQuestion.hideSampleSolution' | artemisTranslate }}
         </div>
     </div>
 </div>
