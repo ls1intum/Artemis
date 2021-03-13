@@ -149,7 +149,7 @@
                     <jhi-programming-exercise-lifecycle id="timeline" [exercise]="programmingExercise" [isExamMode]="isExamMode"></jhi-programming-exercise-lifecycle>
                 </div>
                 <div class="form-group">
-                    <label class="form-control-label">{{ 'artemisApp.exercise.includedInOverallScoreLabel' | translate }}</label>
+                    <label class="form-control-label">{{ 'artemisApp.exercise.includedInOverallScoreLabel' | artemisTranslate }}</label>
                     <div>
                         <jhi-included-in-overall-score-picker [(includedInOverallScore)]="programmingExercise.includedInOverallScore"></jhi-included-in-overall-score-picker>
                     </div>
@@ -170,7 +170,7 @@
                                 #maxScore="ngModel"
                             />
                             <div *ngIf="maxScore?.invalid && (maxScore?.dirty || maxScore?.touched) && maxScore?.errors" class="alert alert-danger">
-                                {{ 'artemisApp.exercise.pointsError' | translate }}
+                                {{ 'artemisApp.exercise.pointsError' | artemisTranslate }}
                             </div>
                         </div>
                     </div>
@@ -193,7 +193,7 @@
                                 class="alert alert-danger"
                                 [hidden]="programmingExercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY"
                             >
-                                {{ 'artemisApp.exercise.bonusPointsError' | translate }}
+                                {{ 'artemisApp.exercise.bonusPointsError' | artemisTranslate }}
                             </div>
                         </div>
                     </div>
@@ -220,7 +220,7 @@
                             icon="question-circle"
                             class="text-secondary"
                             placement="top"
-                            ngbTooltip="{{ 'artemisApp.programmingExercise.enableStaticCodeAnalysis.description' | translate }}"
+                            ngbTooltip="{{ 'artemisApp.programmingExercise.enableStaticCodeAnalysis.description' | artemisTranslate }}"
                         ></fa-icon>
                     </div>
                     <ng-container *ngIf="programmingExercise.staticCodeAnalysisEnabled">
@@ -231,7 +231,7 @@
                             icon="question-circle"
                             class="text-secondary"
                             placement="top"
-                            ngbTooltip="{{ 'artemisApp.programmingExercise.maxStaticCodeAnalysisPenalty.description' | translate }}"
+                            ngbTooltip="{{ 'artemisApp.programmingExercise.maxStaticCodeAnalysisPenalty.description' | artemisTranslate }}"
                         ></fa-icon>
                         <div class="input-group">
                             <div class="input-group-prepend">
@@ -261,8 +261,8 @@
                     <label class="form-control-label" for="field_problemStatement" jhiTranslate="artemisApp.programmingExercise.problemStatement.title"></label>
                     <ng-container *ngIf="isImport">
                         <ngb-alert [dismissible]="false">
-                            <span class="font-weight-bold">{{ 'artemisApp.exercise.import.attention' | translate }}</span
-                            ><span>{{ 'artemisApp.exercise.import.markdownWarning' | translate }}</span>
+                            <span class="font-weight-bold">{{ 'artemisApp.exercise.import.attention' | artemisTranslate }}</span
+                            ><span>{{ 'artemisApp.exercise.import.markdownWarning' | artemisTranslate }}</span>
                         </ngb-alert>
                         <jhi-programming-exercise-instructions
                             [exercise]="programmingExercise"
@@ -344,7 +344,7 @@
                                 [icon]="'question-circle'"
                                 class="text-danger"
                                 [placement]="'top'"
-                                ngbTooltip="{{ 'artemisApp.programmingExercise.allowOfflineIde.alert' | translate }}"
+                                ngbTooltip="{{ 'artemisApp.programmingExercise.allowOfflineIde.alert' | artemisTranslate }}"
                             ></fa-icon>
                         </label>
                     </div>
@@ -366,7 +366,7 @@
                                 [icon]="'question-circle'"
                                 class="text-danger"
                                 [placement]="'top'"
-                                ngbTooltip="{{ 'artemisApp.programmingExercise.allowOnlineEditor.alert' | translate }}"
+                                ngbTooltip="{{ 'artemisApp.programmingExercise.allowOnlineEditor.alert' | artemisTranslate }}"
                             ></fa-icon>
                         </label>
                     </div>
@@ -387,7 +387,7 @@
                                 icon="question-circle"
                                 class="text-secondary"
                                 placement="top"
-                                ngbTooltip="{{ 'artemisApp.programmingExercise.showTestNamesToStudentsTooltip' | translate }}"
+                                ngbTooltip="{{ 'artemisApp.programmingExercise.showTestNamesToStudentsTooltip' | artemisTranslate }}"
                             ></fa-icon>
                         </label>
                     </div>

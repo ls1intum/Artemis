@@ -1,6 +1,6 @@
 <jhi-header-participation-page class="d-block mb-4" [exercise]="fileUploadExercise" [participation]="participation">
     <span pagetitle>
-        {{ 'artemisApp.fileUploadSubmission.fileUpload' | translate }}: <span class="font-weight-normal">{{ fileUploadExercise?.title }}</span>
+        {{ 'artemisApp.fileUploadSubmission.fileUpload' | artemisTranslate }}: <span class="font-weight-normal">{{ fileUploadExercise?.title }}</span>
     </span>
     <jhi-button
         submitbutton
@@ -41,7 +41,8 @@
 
         <div *ngIf="submittedFileName && submission?.filePath" class="card-text">
             <h6>
-                {{ 'artemisApp.fileUploadSubmission.submittedFile' | translate: { filename: submittedFileName } }} <span> {{ submission!.submissionDate! | amTimeAgo }}</span>
+                {{ 'artemisApp.fileUploadSubmission.submittedFile' | artemisTranslate: { filename: submittedFileName } }}
+                <span> {{ submission!.submissionDate! | amTimeAgo }}</span>
             </h6>
             <a class="text-primary" (click)="downloadFile(submission!.filePath!)" jhiTranslate="artemisApp.fileUploadSubmission.download">Download file</a>
             <span class="ml-2 badge badge-info" *ngIf="submittedFileExtension">

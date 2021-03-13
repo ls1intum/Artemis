@@ -4,7 +4,7 @@ import * as sinon from 'sinon';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTestModule } from '../../test.module';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { TranslatePipe } from '@ngx-translate/core';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe.ts';
 import { FormsModule } from '@angular/forms';
 import { NgbCollapse, NgbModal, NgbPopoverModule } from '@ng-bootstrap/ng-bootstrap';
 import { ShortAnswerQuestion } from 'app/entities/quiz/short-answer-question.model';
@@ -60,7 +60,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
             imports: [ArtemisTestModule, FormsModule, AceEditorModule, DndModule, NgbPopoverModule],
             declarations: [
                 ShortAnswerQuestionEditComponent,
-                MockPipe(TranslatePipe),
+                MockPipe(ArtemisTranslatePipe),
                 MockComponent(QuizScoringInfoModalComponent),
                 MockComponent(MatchPercentageInfoModalComponent),
                 MockDirective(NgbCollapse),

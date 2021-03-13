@@ -1,6 +1,6 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { MockComponent } from 'ng-mocks';
+import { MockComponent, MockPipe } from 'ng-mocks';
 import { CookieService } from 'ngx-cookie-service';
 import { By } from '@angular/platform-browser';
 import { TranslateModule } from '@ngx-translate/core';
@@ -29,6 +29,7 @@ import { MockCodeEditorConflictStateService } from '../../helpers/mocks/service/
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockCookieService } from '../../helpers/mocks/service/mock-cookie.service';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe.ts';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -59,6 +60,7 @@ describe('CodeEditorFileBrowserComponent', () => {
                 CodeEditorFileBrowserFileComponent,
                 CodeEditorFileBrowserFolderComponent,
                 CodeEditorFileBrowserCreateNodeComponent,
+                MockPipe(ArtemisTranslatePipe),
             ],
             providers: [
                 CodeEditorFileService,
