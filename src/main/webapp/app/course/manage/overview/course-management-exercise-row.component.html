@@ -16,12 +16,7 @@
                         <fa-icon [icon]="'users'" placement="right" [ngbTooltip]="'artemisApp.exercise.isTeamExercise' | artemisTranslate" container="body"></fa-icon>
                     </div>
                     <div class="ml-2">
-                        <fa-icon
-                            [icon]="icon"
-                            placement="right"
-                            [ngbTooltip]="iconTooltip | artemisTranslate"
-                            container="body"
-                        ></fa-icon>
+                        <fa-icon [icon]="icon" placement="right" [ngbTooltip]="iconTooltip | artemisTranslate" container="body"></fa-icon>
                     </div>
                     <p class="item-title" [routerLink]="['/course-management', course.id, details.exerciseType + '-exercises', details.exerciseId]">{{ details.exerciseTitle }}</p>
                     <div class="item-category d-flex hide-categories" *ngIf="details.categories?.length > 0">
