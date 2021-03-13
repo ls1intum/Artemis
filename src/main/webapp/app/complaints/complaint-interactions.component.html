@@ -7,9 +7,9 @@
             (click)="toggleComplaintForm()"
             [disabled]="(!isExamMode && numberOfAllowedComplaints <= 0) || !isTimeOfComplaintValid"
             e
-            title="{{ (!isExamMode && numberOfAllowedComplaints <= 0) || !isTimeOfComplaintValid ? ('artemisApp.complaint.complaintNotAllowedTooltip' | translate) : '' }}"
+            title="{{ (!isExamMode && numberOfAllowedComplaints <= 0) || !isTimeOfComplaintValid ? ('artemisApp.complaint.complaintNotAllowedTooltip' | artemisTranslate) : '' }}"
         >
-            {{ 'artemisApp.complaint.moreInfo' | translate }}
+            {{ 'artemisApp.complaint.moreInfo' | artemisTranslate }}
         </button>
         <button
             *ngIf="!isExamMode && course?.requestMoreFeedbackEnabled"
@@ -17,9 +17,9 @@
             [class.not-allowed]="!isTimeOfFeedbackRequestValid"
             (click)="toggleRequestMoreFeedbackForm()"
             [disabled]="!isTimeOfFeedbackRequestValid"
-            title="{{ !isTimeOfFeedbackRequestValid ? ('artemisApp.moreFeedback.notAllowedTooltip' | translate) : '' }}"
+            title="{{ !isTimeOfFeedbackRequestValid ? ('artemisApp.moreFeedback.notAllowedTooltip' | artemisTranslate) : '' }}"
         >
-            {{ 'artemisApp.moreFeedback.button' | translate }}
+            {{ 'artemisApp.moreFeedback.button' | artemisTranslate }}
         </button>
     </div>
 

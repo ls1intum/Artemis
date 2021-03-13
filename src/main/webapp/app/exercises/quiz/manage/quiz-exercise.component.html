@@ -40,7 +40,7 @@
                     <th jhiSortBy="includedInOverallScore">
                         <span jhiTranslate="artemisApp.exercise.includedInOverallScore">Included in Overall Score</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon>
                     </th>
-                    <th>{{ 'artemisApp.quizExercise.quizLifecycle' | translate }}</th>
+                    <th>{{ 'artemisApp.quizExercise.quizLifecycle' | artemisTranslate }}</th>
                     <th></th>
                 </tr>
             </thead>
@@ -54,11 +54,11 @@
                     </td>
                     <td>{{ quizExercise.title }}</td>
                     <td>
-                        <span *ngIf="quizExercise.status === QuizStatus.CLOSED">{{ 'artemisApp.quizExercise.quizStatus.closed' | translate }}</span>
-                        <span *ngIf="quizExercise.status === QuizStatus.HIDDEN">{{ 'artemisApp.quizExercise.quizStatus.hidden' | translate }}</span>
-                        <span *ngIf="quizExercise.status === QuizStatus.VISIBLE">{{ 'artemisApp.quizExercise.quizStatus.visible' | translate }}</span>
-                        <span *ngIf="quizExercise.status === QuizStatus.ACTIVE">{{ 'artemisApp.quizExercise.quizStatus.active' | translate }}</span>
-                        <span *ngIf="quizExercise.status === QuizStatus.OPEN_FOR_PRACTICE">{{ 'artemisApp.quizExercise.quizStatus.openForPractice' | translate }}</span>
+                        <span *ngIf="quizExercise.status === QuizStatus.CLOSED">{{ 'artemisApp.quizExercise.quizStatus.closed' | artemisTranslate }}</span>
+                        <span *ngIf="quizExercise.status === QuizStatus.HIDDEN">{{ 'artemisApp.quizExercise.quizStatus.hidden' | artemisTranslate }}</span>
+                        <span *ngIf="quizExercise.status === QuizStatus.VISIBLE">{{ 'artemisApp.quizExercise.quizStatus.visible' | artemisTranslate }}</span>
+                        <span *ngIf="quizExercise.status === QuizStatus.ACTIVE">{{ 'artemisApp.quizExercise.quizStatus.active' | artemisTranslate }}</span>
+                        <span *ngIf="quizExercise.status === QuizStatus.OPEN_FOR_PRACTICE">{{ 'artemisApp.quizExercise.quizStatus.openForPractice' | artemisTranslate }}</span>
                     </td>
                     <td>{{ quizExercise.isPlannedToStart ? (quizExercise.releaseDate | artemisDate: 'long':true) : '-' }}</td>
                     <td>

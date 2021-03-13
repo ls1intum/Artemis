@@ -4,7 +4,7 @@
     type="text"
     class="form-control"
     [disabled]="inputDisabled"
-    [placeholder]="'artemisApp.team.selectOwnerForTeam' | translate"
+    [placeholder]="'artemisApp.team.selectOwnerForTeam' | artemisTranslate"
     [(ngModel)]="owner"
     (selectItem)="onAutocompleteSelect($event.item)"
     (focus)="focus$.next('')"

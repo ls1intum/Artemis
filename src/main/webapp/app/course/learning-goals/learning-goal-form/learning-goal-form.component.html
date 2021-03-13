@@ -2,49 +2,49 @@
     <div class="col-12">
         <form *ngIf="form" [formGroup]="form" (ngSubmit)="submitForm()">
             <div class="form-group">
-                <label for="title">{{ 'artemisApp.learningGoal.title' | translate }}*</label>
+                <label for="title">{{ 'artemisApp.learningGoal.title' | artemisTranslate }}*</label>
                 <input
                     type="text"
                     class="form-control"
                     id="title"
                     formControlName="title"
-                    [placeholder]="'artemisApp.learningGoal.createLearningGoal.titlePlaceholder' | translate"
+                    [placeholder]="'artemisApp.learningGoal.createLearningGoal.titlePlaceholder' | artemisTranslate"
                 />
                 <div *ngIf="titleControl?.invalid && (titleControl?.dirty || titleControl?.touched)" class="alert alert-danger">
                     <div *ngIf="titleControl?.errors?.required">
-                        {{ 'artemisApp.learningGoal.createLearningGoal.titleRequiredValidationError' | translate }}
+                        {{ 'artemisApp.learningGoal.createLearningGoal.titleRequiredValidationError' | artemisTranslate }}
                     </div>
                     <div *ngIf="titleControl?.errors?.maxlength">
-                        {{ 'artemisApp.learningGoal.createLearningGoal.titleMaxLengthValidationError' | translate }}
+                        {{ 'artemisApp.learningGoal.createLearningGoal.titleMaxLengthValidationError' | artemisTranslate }}
                     </div>
                     <div *ngIf="titleControl?.errors?.titleUnique">
-                        {{ 'artemisApp.learningGoal.createLearningGoal.titleUniqueValidationError' | translate }}
+                        {{ 'artemisApp.learningGoal.createLearningGoal.titleUniqueValidationError' | artemisTranslate }}
                     </div>
                 </div>
             </div>
             <div class="form-group">
-                <label for="description">{{ 'artemisApp.learningGoal.description' | translate }}</label>
+                <label for="description">{{ 'artemisApp.learningGoal.description' | artemisTranslate }}</label>
                 <textarea
                     class="form-control"
                     id="description"
                     rows="6"
                     formControlName="description"
-                    [placeholder]="'artemisApp.learningGoal.createLearningGoal.descriptionPlaceholder' | translate"
+                    [placeholder]="'artemisApp.learningGoal.createLearningGoal.descriptionPlaceholder' | artemisTranslate"
                 ></textarea>
                 <div *ngIf="descriptionControl?.invalid && (descriptionControl?.dirty || descriptionControl?.touched)" class="alert alert-danger">
                     <div *ngIf="descriptionControl?.errors?.maxlength">
-                        {{ 'artemisApp.learningGoal.createLearningGoal.descriptionMaxLengthValidationError' | translate }}
+                        {{ 'artemisApp.learningGoal.createLearningGoal.descriptionMaxLengthValidationError' | artemisTranslate }}
                     </div>
                 </div>
             </div>
             <div>
-                <label> {{ 'artemisApp.learningGoal.createLearningGoal.connectWithLectureUnits' | translate }}</label>
+                <label> {{ 'artemisApp.learningGoal.createLearningGoal.connectWithLectureUnits' | artemisTranslate }}</label>
                 <div *ngIf="lecturesOfCourseWithLectureUnits && lecturesOfCourseWithLectureUnits.length > 0; else noLectures" ngbDropdown class="mb-2">
                     <button class="btn btn-outline-primary" ngbDropdownToggle type="button">
                         {{
                             selectedLectureInDropdown
                                 ? getLectureTitleForDropdown(selectedLectureInDropdown)
-                                : ('artemisApp.learningGoal.createLearningGoal.selectLecture' | translate)
+                                : ('artemisApp.learningGoal.createLearningGoal.selectLecture' | artemisTranslate)
                         }}
                     </button>
                     <div ngbDropdownMenu>
@@ -55,7 +55,7 @@
                 </div>
                 <ng-template #noLectures>
                     <div class="alert alert-info">
-                        {{ 'artemisApp.learningGoal.createLearningGoal.noLectures' | translate }}
+                        {{ 'artemisApp.learningGoal.createLearningGoal.noLectures' | artemisTranslate }}
                     </div>
                 </ng-template>
                 <div class="table-responsive" *ngIf="selectedLectureInDropdown">
@@ -64,13 +64,13 @@
                             <tr>
                                 <th>id</th>
                                 <th>
-                                    {{ 'artemisApp.learningGoal.createLearningGoal.lectureUnitTable.type' | translate }}
+                                    {{ 'artemisApp.learningGoal.createLearningGoal.lectureUnitTable.type' | artemisTranslate }}
                                 </th>
                                 <th>
-                                    {{ 'artemisApp.learningGoal.createLearningGoal.lectureUnitTable.name' | translate }}
+                                    {{ 'artemisApp.learningGoal.createLearningGoal.lectureUnitTable.name' | artemisTranslate }}
                                 </th>
                                 <th>
-                                    {{ 'artemisApp.learningGoal.createLearningGoal.lectureUnitTable.releaseDate' | translate }}
+                                    {{ 'artemisApp.learningGoal.createLearningGoal.lectureUnitTable.releaseDate' | artemisTranslate }}
                                 </th>
                             </tr>
                         </thead>
@@ -98,7 +98,7 @@
             </div>
             <div>
                 <button id="submitButton" class="btn btn-primary" type="submit" [disabled]="!isSubmitPossible">
-                    <span>{{ 'entity.action.submit' | translate }}</span>
+                    <span>{{ 'entity.action.submit' | artemisTranslate }}</span>
                 </button>
             </div>
         </form>

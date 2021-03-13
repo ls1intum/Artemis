@@ -24,9 +24,9 @@
                     <span class="plagiarism-name"> #{{ getPagedIndex(idx) + 1 }} </span>
 
                     <span class="plagiarism-list-item-students">
-                        <span>{{ comparison.submissionA.studentLogin || ('artemisApp.plagiarism.unknown-student' | translate) }}, </span>
+                        <span>{{ comparison.submissionA.studentLogin || ('artemisApp.plagiarism.unknown-student' | artemisTranslate) }}, </span>
 
-                        <span>{{ comparison.submissionB.studentLogin || ('artemisApp.plagiarism.unknown-student' | translate) }}</span>
+                        <span>{{ comparison.submissionB.studentLogin || ('artemisApp.plagiarism.unknown-student' | artemisTranslate) }}</span>
                     </span>
                 </div>
             </div>
@@ -35,7 +35,7 @@
     </ul>
 
     <div class="plagiarism-empty" *ngIf="!comparisons || !comparisons.length">
-        {{ 'artemisApp.plagiarism.not-found' | translate }}
+        {{ 'artemisApp.plagiarism.not-found' | artemisTranslate }}
     </div>
 
     <div class="plagiarism-paging">

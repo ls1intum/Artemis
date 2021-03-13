@@ -35,6 +35,7 @@ import { Result } from 'app/entities/result.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe.ts';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -113,6 +114,7 @@ describe('StudentExamDetailComponent', () => {
                 MockPipe(ArtemisDurationFromSecondsPipe),
                 MockPipe(ArtemisDatePipe),
                 MockTranslateValuesDirective,
+                MockPipe(ArtemisTranslatePipe),
             ],
             providers: [
                 MockProvider(StudentExamService, {
@@ -190,7 +192,7 @@ describe('StudentExamDetailComponent', () => {
         expect(findCourseSpy).to.have.been.calledOnce;
         expect(course.id).to.equal(1);
         expect(studentExamDetailComponent.workingTimeForm).to.not.be.null;
-        expect(studentExamDetailComponent.achievedTotalScore).to.equal(40);
+        expect(studentExamDetailComponent.achievedTotalPoints).to.equal(40);
     });
 
     it('should return the right icon based on exercise type', () => {
@@ -216,8 +218,8 @@ describe('StudentExamDetailComponent', () => {
         expect(studentExamDetailComponent.isSavingWorkingTime).to.equal(false);
         expect(course.id).to.equal(1);
         expect(studentExamDetailComponent.workingTimeForm).to.not.be.null;
-        expect(studentExamDetailComponent.achievedTotalScore).to.equal(40);
-        expect(studentExamDetailComponent.maxTotalScore).to.equal(100);
+        expect(studentExamDetailComponent.achievedTotalPoints).to.equal(40);
+        expect(studentExamDetailComponent.maxTotalPoints).to.equal(100);
     });
 
     it('should not increase points when save working time is called more than once', () => {
@@ -230,8 +232,8 @@ describe('StudentExamDetailComponent', () => {
         expect(studentExamDetailComponent.isSavingWorkingTime).to.equal(false);
         expect(course.id).to.equal(1);
         expect(studentExamDetailComponent.workingTimeForm).to.not.be.null;
-        expect(studentExamDetailComponent.achievedTotalScore).to.equal(40);
-        expect(studentExamDetailComponent.maxTotalScore).to.equal(100);
+        expect(studentExamDetailComponent.achievedTotalPoints).to.equal(40);
+        expect(studentExamDetailComponent.maxTotalPoints).to.equal(100);
     });
 
     it('should get examIsOver', () => {

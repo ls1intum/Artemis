@@ -11,8 +11,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import javax.annotation.Nullable;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -144,7 +142,6 @@ public class ModelingExerciseResource {
      * @param modelingExercise The modeling exercise to be checked
      * @return Returns the http error, or null if successful
      */
-    @Nullable
     private ResponseEntity<ModelingExercise> checkModelingExercise(@RequestBody ModelingExercise modelingExercise) {
         if (modelingExercise.getCourseViaExerciseGroupOrCourseMember() != null) {
             // fetch course from database to make sure client didn't change groups
@@ -203,8 +200,10 @@ public class ModelingExerciseResource {
             return optionalScoreSettingsError.get();
         }
 
+        ModelingExercise modelingExerciseBeforeUpdate = modelingExerciseService.findOne(modelingExercise.getId());
         ModelingExercise updatedModelingExercise = modelingExerciseRepository.save(modelingExercise);
 
+        exerciseService.updatePointsInRelatedParticipantScores(modelingExerciseBeforeUpdate, updatedModelingExercise);
         // Avoid recursions
         if (updatedModelingExercise.getExampleSubmissions().size() != 0) {
             Set<ExampleSubmission> exampleSubmissionsWithResults = exampleSubmissionRepository.findAllWithEagerResultByExerciseId(updatedModelingExercise.getId());
