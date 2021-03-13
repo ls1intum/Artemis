@@ -26,7 +26,7 @@
                 <div *ngIf="validationError" class="mt-4 mb-2 text-danger" [innerHTML]="validationError"></div>
             </div>
         </div>
-        <div *ngIf="studentsToImport && studentsToImport.length > 0" class="form-group mt-4">
+        <div *ngIf="studentsToImport?.length > 0" class="form-group mt-4">
             <div>
                 <label class="label-narrow font-weight-bold" jhiTranslate="artemisApp.examManagement.examStudents.importStudents.studentsForImport.label">
                     Students for import
