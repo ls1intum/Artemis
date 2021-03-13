@@ -449,7 +449,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     logout() {
         this.participationWebsocketService.resetLocalCache();
         this.collapseNavbar();
-        this.loginService.logout();
+        this.loginService.logout(true);
     }
 
     toggleNavbar() {

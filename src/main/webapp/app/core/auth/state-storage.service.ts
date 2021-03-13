@@ -7,6 +7,7 @@ export class StateStorageService {
 
     /**
      * Get the previous state of the current session.
+     * @returns the previous state as string or null when there is no previous state
      */
     getPreviousState(): string | null {
         return this.sessionStorage.retrieve('previousState');
@@ -32,7 +33,7 @@ export class StateStorageService {
     /**
      * Get the destination state for the current session.
      */
-    getDestinationState(): string | null {
+    getDestinationState(): string {
         return this.sessionStorage.retrieve('destinationState');
     }
 
@@ -40,14 +41,14 @@ export class StateStorageService {
      * Store an url as previousURL in the current session.
      * @param url Url to be saved
      */
-    storeUrl(url: string | null) {
+    storeUrl(url: string) {
         this.sessionStorage.store('previousUrl', url);
     }
 
     /**
      * Get the previousURL of the current session.
      */
-    getUrl(): string | null {
+    getUrl(): string {
         return this.sessionStorage.retrieve('previousUrl');
     }
 
