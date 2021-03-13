@@ -1,25 +1,24 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
-import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
-import { Course } from 'app/entities/course.model';
-import * as sinon from 'sinon';
-import { Exam } from 'app/entities/exam.model';
-import { StudentsExamImportDialogComponent } from 'app/exam/manage/students/students-exam-import-dialog/students-exam-import-dialog.component';
-import { TranslatePipe } from '@ngx-translate/core';
-import { FormsModule } from '@angular/forms';
-import { JhiTranslateDirective } from 'ng-jhipster';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { ExamManagementService } from 'app/exam/manage/exam-management.service';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { JhiAlertService } from 'ng-jhipster';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { HelpIconComponent } from 'app/shared/components/help-icon.component';
-import { AlertComponent } from 'app/shared/alert/alert.component';
-import { AlertErrorComponent } from 'app/shared/alert/alert-error.component';
-import { StudentDTO } from 'app/entities/student-dto.model';
 import { HttpResponse } from '@angular/common/http';
-import { of } from 'rxjs';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { FormsModule } from '@angular/forms';
 import { By } from '@angular/platform-browser';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { Course } from 'app/entities/course.model';
+import { Exam } from 'app/entities/exam.model';
+import { StudentDTO } from 'app/entities/student-dto.model';
+import { ExamManagementService } from 'app/exam/manage/exam-management.service';
+import { StudentsExamImportDialogComponent } from 'app/exam/manage/students/students-exam-import-dialog/students-exam-import-dialog.component';
+import { AlertErrorComponent } from 'app/shared/alert/alert-error.component';
+import { AlertComponent } from 'app/shared/alert/alert.component';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe.ts';
+import * as chai from 'chai';
+import { JhiAlertService, JhiTranslateDirective } from 'ng-jhipster';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { of } from 'rxjs';
+import * as sinon from 'sinon';
+import * as sinonChai from 'sinon-chai';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -40,7 +39,7 @@ describe('StudentExamImportDialogComponent', () => {
             declarations: [
                 StudentsExamImportDialogComponent,
                 MockDirective(JhiTranslateDirective),
-                MockPipe(TranslatePipe),
+                MockPipe(ArtemisTranslatePipe),
                 MockComponent(FaIconComponent),
                 MockComponent(HelpIconComponent),
                 MockComponent(AlertComponent),

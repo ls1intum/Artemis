@@ -63,10 +63,10 @@ class FakeLoader implements TranslateLoader {
 }
 
 @Pipe({
-    name: 'translate',
+    name: 'artemisTranslate',
 })
 export class TranslatePipeMock implements PipeTransform {
-    public name = 'translate';
+    public name = 'artemisTranslate';
 
     public transform(query: string, ...args: any[]): any {
         return query;

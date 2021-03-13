@@ -33,7 +33,6 @@ import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
 import de.tum.in.www1.artemis.service.exam.ExamDateService;
 import de.tum.in.www1.artemis.service.exam.ExamRegistrationService;
@@ -135,7 +134,6 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
         List<User> studentsInCourseBefore = userRepo.findAllInGroupWithAuthorities(course1.getStudentGroupName());
         request.postWithoutLocation("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/students/student42", null, HttpStatus.OK, null);
-        SecurityUtils.setAuthorizationObject(); // TODO: Why do we need this
         List<User> studentsInCourseAfter = userRepo.findAllInGroupWithAuthorities(course1.getStudentGroupName());
         User student42 = database.getUserByLogin("student42");
         studentsInCourseBefore.add(student42);
@@ -767,7 +765,6 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         assertThat(studentExams).doesNotContain(studentExam2);
 
         // Ensure that the participations were not deleted
-        SecurityUtils.setAuthorizationObject(); // TODO why do we get an exception here without that?
         List<StudentParticipation> participationsStudent2 = studentParticipationRepository
                 .findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(student2.getId(), studentExam2.getExercises());
         assertThat(participationsStudent2).hasSize(studentExam2.getExercises().size());
@@ -832,7 +829,6 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         // Start the exam to create participations
         request.postWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/student-exams/start-exercises", Optional.empty(), Integer.class,
                 HttpStatus.OK);
-        SecurityUtils.setAuthorizationObject(); // TODO why do we get an exception here without that?
         List<StudentParticipation> participationsStudent1 = studentParticipationRepository
                 .findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(student1.getId(), studentExam1.getExercises());
         assertThat(participationsStudent1).hasSize(studentExam1.getExercises().size());
@@ -860,7 +856,6 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         assertThat(studentExams).doesNotContain(studentExam1);
 
         // Ensure that the participations of student1 were deleted
-        SecurityUtils.setAuthorizationObject(); // TODO why do we get an exception here without that?
         participationsStudent1 = studentParticipationRepository.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(student1.getId(),
                 studentExam1.getExercises());
         assertThat(participationsStudent1).isEmpty();
@@ -1255,7 +1250,6 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         // Fetch the created participations and assign them to the exercises
         int participationCounter = 0;
         List<Exercise> exercisesInExam = exam.getExerciseGroups().stream().map(ExerciseGroup::getExercises).flatMap(Collection::stream).collect(Collectors.toList());
-        SecurityUtils.setAuthorizationObject(); // TODO why do we get an exception here without that?
         for (var exercise : exercisesInExam) {
             List<StudentParticipation> participations = studentParticipationRepository.findByExerciseIdWithEagerSubmissionsResult(exercise.getId());
             exercise.setStudentParticipations(new HashSet<>(participations));
@@ -1643,7 +1637,6 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         // Fetch the created participations and assign them to the exercises
         int participationCounter = 0;
         List<Exercise> exercisesInExam = exam.getExerciseGroups().stream().map(ExerciseGroup::getExercises).flatMap(Collection::stream).collect(Collectors.toList());
-        SecurityUtils.setAuthorizationObject();
         for (var exercise : exercisesInExam) {
             List<StudentParticipation> participations = studentParticipationRepository.findByExerciseIdWithEagerSubmissionsResult(exercise.getId());
             exercise.setStudentParticipations(new HashSet<>(participations));

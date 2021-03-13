@@ -4,7 +4,7 @@ import * as chai from 'chai';
 
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
-import { TranslatePipe } from '@ngx-translate/core';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe.ts';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbCollapse, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { VideoUnit } from 'app/entities/lecture-unit/videoUnit.model';
@@ -36,7 +36,7 @@ describe('VideoUnitComponent', () => {
             declarations: [
                 VideoUnitComponent,
                 MockComponent(FaIconComponent),
-                MockPipe(TranslatePipe),
+                MockPipe(ArtemisTranslatePipe),
                 MockPipe(ArtemisDatePipe),
                 MockDirective(NgbCollapse),
                 MockDirective(NgbTooltip),
