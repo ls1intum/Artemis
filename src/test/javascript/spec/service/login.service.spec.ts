@@ -64,7 +64,7 @@ describe('LoginService', () => {
     it('should properly log out when every action is successful', () => {
         removeAuthTokenFromCachesStub.returns(of(undefined));
         navigateByUrlStub.returns(Promise.resolve(true));
-        loginService.logout();
+        loginService.logout(true);
 
         expect(removeAuthTokenFromCachesStub).to.have.been.calledOnceWithExactly();
         expect(authenticateStub).to.have.been.calledOnceWithExactly(undefined);
@@ -78,7 +78,7 @@ describe('LoginService', () => {
         const error = 'fatal error';
         removeAuthTokenFromCachesStub.returns(of(undefined));
         authenticateStub.throws(throwError(error));
-        loginService.logout();
+        loginService.logout(true);
 
         expect(removeAuthTokenFromCachesStub).to.have.been.calledOnceWithExactly();
         expect(authenticateStub).to.have.been.calledOnceWithExactly(undefined);
