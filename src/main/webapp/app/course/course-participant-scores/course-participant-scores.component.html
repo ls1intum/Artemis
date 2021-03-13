@@ -1,0 +1,18 @@
+<jhi-alert></jhi-alert>
+
+<div *ngIf="isLoading" class="d-flex justify-content-center">
+    <div class="spinner-border" role="status">
+        <span class="sr-only">{{ 'loading' | translate }}</span>
+    </div>
+</div>
+
+<div *ngIf="!isLoading && participantScores && participantScoresAverage">
+    <jhi-participant-scores-tables-container
+        [isLoading]="isLoading"
+        [participantScores]="participantScores"
+        [participantScoresAverage]="participantScoresAverage"
+        [avgScore]="avgScore"
+        [avgRatedScore]="avgRatedScore"
+        (reload)="loadData()"
+    ></jhi-participant-scores-tables-container>
+</div>

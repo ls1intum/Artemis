@@ -1,13 +1,13 @@
 import { ComponentFixture, discardPeriodicTasks, fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { ArtemisTestModule } from '../../test.module';
+import { By } from '@angular/platform-browser';
 import { ExamTimerComponent } from 'app/exam/participate/timer/exam-timer.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe.ts';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
 import * as moment from 'moment';
-import { TranslatePipe } from '@ngx-translate/core';
 import { MockPipe } from 'ng-mocks';
-import { By } from '@angular/platform-browser';
+import * as sinonChai from 'sinon-chai';
+import { ArtemisTestModule } from '../../test.module';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -23,7 +23,7 @@ describe('ExamTimerComponent', function () {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            declarations: [ExamTimerComponent, MockPipe(TranslatePipe)],
+            declarations: [ExamTimerComponent, MockPipe(ArtemisTranslatePipe)],
             providers: [],
         }).compileComponents();
 

@@ -3,7 +3,7 @@ import { Subscription } from 'rxjs/Subscription';
 import { ActivatedRoute } from '@angular/router';
 import { User } from 'app/core/user/user.model';
 import * as moment from 'moment';
-import { round, sum } from 'lodash';
+import { sum } from 'lodash';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ExportToCsv } from 'export-to-csv';
 import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
@@ -12,6 +12,10 @@ import { CourseManagementService } from '../manage/course-management.service';
 import { SortService } from 'app/shared/service/sort.service';
 import { LocaleConversionService } from 'app/shared/service/locale-conversion.service';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
+import { ParticipantScoresService, ScoresDTO } from 'app/shared/participant-scores/participant-scores.service';
+import { forkJoin } from 'rxjs';
+import { round } from 'app/shared/util/utils';
+import * as Sentry from '@sentry/browser';
 
 export const PRESENTATION_SCORE_KEY = 'Presentation Score';
 export const NAME_KEY = 'Name';
@@ -63,6 +67,10 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
     averageNumberOfPointsPerExerciseTypes = new Map<ExerciseType, number>();
     averageNumberOfOverallPoints = 0;
 
+    // note: these represent the course scores using the participation score table. We might switch to this new
+    // calculation method completely if it is confirmed that it produces correct results
+    studentIdToCourseScoreDTOs: Map<number, ScoresDTO> = new Map<number, ScoresDTO>();
+
     private languageChangeSubscription?: Subscription;
 
     constructor(
@@ -72,6 +80,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
         private changeDetector: ChangeDetectorRef,
         private languageHelper: JhiLanguageHelper,
         private localeConversionService: LocaleConversionService,
+        private participantScoresService: ParticipantScoresService,
     ) {
         this.reverse = false;
         this.predicate = 'id';
@@ -82,9 +91,8 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
      */
     ngOnInit() {
         this.paramSub = this.route.params.subscribe((params) => {
-            this.courseService.findWithExercises(params['courseId']).subscribe((res) => {
-                this.course = res.body!;
-
+            this.courseService.findWithExercises(params['courseId']).subscribe((findWithExercisesResult) => {
+                this.course = findWithExercisesResult.body!;
                 const titleMap = new Map<string, number>();
                 if (this.course.exercises) {
                     for (const exercise of this.course.exercises) {
@@ -142,12 +150,81 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
      * @param courseId Id of the course
      */
     calculateCourseStatistics(courseId: number) {
-        this.courseService.findAllParticipationsWithResults(courseId).subscribe((participationsOfCourse) => {
+        const findParticipationsObservable = this.courseService.findAllParticipationsWithResults(courseId);
+        // alternative course scores calculation using participant scores table
+        const courseScoresObservable = this.participantScoresService.findCourseScores(courseId);
+        forkJoin([findParticipationsObservable, courseScoresObservable]).subscribe(([participationsOfCourse, courseScoresResult]) => {
             this.allParticipationsOfCourse = participationsOfCourse;
             this.calculateExerciseLevelStatistics();
             this.calculateStudentLevelStatistics();
+
+            // comparing with calculation from course scores (using new participation score table)
+            const courseScoreDTOs = courseScoresResult.body!;
+            this.compareNewCourseScoresCalculationWithOldCalculation(courseScoreDTOs);
             this.changeDetector.detectChanges();
         });
+    }
+
+    /**
+     * This method compares the course scores computed on the client side with the ones on the server side
+     * using the participations score table. In the future we might switch to the server side method, so we use
+     * this method to detect discrepancys.
+     * @param courseScoreDTOs the course scores sent from the server (new calculation method)
+     */
+    private compareNewCourseScoresCalculationWithOldCalculation(courseScoreDTOs: ScoresDTO[]) {
+        if (!this.students || !courseScoreDTOs) {
+            return;
+        }
+        for (const courseScoreDTO of courseScoreDTOs) {
+            this.studentIdToCourseScoreDTOs.set(courseScoreDTO.studentId!, courseScoreDTO);
+        }
+        let noOfScoreDifferencesFound = 0;
+        let noOfPointDifferencesFound = 0;
+        let noOfComparisons = 0;
+        for (const student of this.students) {
+            const overAllPoints = round(student.overallPoints, 1);
+            const overallScore = round((student.overallPoints / this.maxNumberOfOverallPoints) * 100, 1);
+            const regularCalculation = {
+                scoreAchieved: overallScore,
+                pointsAchieved: overAllPoints,
+                userId: student.user.id,
+                userLogin: student.user.login,
+                regularPointsAchievable: this.maxNumberOfOverallPoints,
+            };
+            // checking if the same as in the course scores map
+            const courseScoreDTO = this.studentIdToCourseScoreDTOs.get(student.user.id!);
+            if (!courseScoreDTO) {
+                const errorMessage = `User scores not included in new calculation: ${JSON.stringify(regularCalculation)}`;
+                this.logErrorOnSentry(errorMessage);
+            } else {
+                noOfComparisons += 1;
+                courseScoreDTO.scoreAchieved = round(courseScoreDTO.scoreAchieved, 1);
+                courseScoreDTO.pointsAchieved = round(courseScoreDTO.pointsAchieved, 1);
+
+                if (Math.abs(courseScoreDTO.pointsAchieved - regularCalculation.pointsAchieved) > 0.1) {
+                    const errorMessage = `Different course points in new calculation. Regular Calculation: ${JSON.stringify(regularCalculation)}. New Calculation: ${JSON.stringify(
+                        courseScoreDTO,
+                    )}`;
+                    noOfPointDifferencesFound += 1;
+                    this.logErrorOnSentry(errorMessage);
+                }
+                if (Math.abs(courseScoreDTO.scoreAchieved - regularCalculation.scoreAchieved) > 0.1) {
+                    const errorMessage = `Different course score in new calculation. Regular Calculation: ${JSON.stringify(regularCalculation)}. New Calculation : ${JSON.stringify(
+                        courseScoreDTO,
+                    )}`;
+                    noOfScoreDifferencesFound += 1;
+                    this.logErrorOnSentry(errorMessage);
+                }
+            }
+        }
+        console.log(`Performed ${noOfComparisons} comparisons between old and new calculation method.`);
+        console.log(`Found ${noOfPointDifferencesFound} point differences between old and new calculation method.`);
+        console.log(`Found ${noOfScoreDifferencesFound} score differences between old and new calculation method.`);
+    }
+
+    logErrorOnSentry(errorMessage: string) {
+        console.log(errorMessage);
+        Sentry.captureException(new Error(errorMessage));
     }
 
     /**
