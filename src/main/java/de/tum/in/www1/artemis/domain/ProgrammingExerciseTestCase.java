@@ -49,15 +49,6 @@ public class ProgrammingExerciseTestCase extends DomainObject {
         return testName;
     }
 
-    /**
-     * We need to compare testcases via lowercase, because the testcaseRepository is case-insensitive
-     *
-     * @return testName as lowercase
-     */
-    public String getLowerCaseTestName() {
-        return testName.toLowerCase();
-    }
-
     public ProgrammingExerciseTestCase testName(String testName) {
         this.testName = testName;
         return this;
@@ -168,7 +159,7 @@ public class ProgrammingExerciseTestCase extends DomainObject {
      * @return whether this and the other test case are the same based on name and exercise
      */
     public boolean isSameTestCase(ProgrammingExerciseTestCase testCase) {
-        return testCase.getLowerCaseTestName().equals(this.getLowerCaseTestName()) && this.getExercise().getId().equals(testCase.getExercise().getId());
+        return testCase.getTestName().equalsIgnoreCase(this.getTestName()) && this.getExercise().getId().equals(testCase.getExercise().getId());
     }
 
     @Override

@@ -118,7 +118,7 @@ public class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringInt
         assertThat(imported.getExerciseHints()).allMatch(hint -> programmingExercise.getExerciseHints().stream().anyMatch(
                 oldHint -> oldHint.getContent().equals(hint.getContent()) && oldHint.getTitle().equals(hint.getTitle()) && hint.getExercise().getId().equals(imported.getId())));
         assertThat(imported.getTestCases()).allMatch(test -> programmingExercise.getTestCases().stream().anyMatch(oldTest -> test.getExercise().getId().equals(imported.getId())
-                && oldTest.getLowerCaseTestName().equals(test.getLowerCaseTestName()) && oldTest.getWeight().equals(test.getWeight())));
+                && oldTest.getTestName().equalsIgnoreCase(test.getTestName()) && oldTest.getWeight().equals(test.getWeight())));
     }
 
     @Test

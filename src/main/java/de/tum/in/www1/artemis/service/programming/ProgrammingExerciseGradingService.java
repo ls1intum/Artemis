@@ -383,7 +383,7 @@ public class ProgrammingExerciseGradingService {
         // Find feedback which is not associated with test cases for the current date. Does not remove static code analysis feedback
         List<Feedback> feedbacksToFilterForCurrentDate = result.getFeedbacks().stream()
                 .filter(feedback -> !feedback.isStaticCodeAnalysisFeedback() && feedback.getType() == FeedbackType.AUTOMATIC
-                        && testCasesForCurrentDate.stream().noneMatch(testCase -> testCase.getLowerCaseTestName().equals(feedback.getText().toLowerCase())))
+                        && testCasesForCurrentDate.stream().noneMatch(testCase -> testCase.getTestName().equalsIgnoreCase(feedback.getText())))
                 .collect(Collectors.toList());
         feedbacksToFilterForCurrentDate.forEach(result::removeFeedback);
         // If there are no feedbacks left after filtering those not valid for the current date, also setHasFeedback to false.
@@ -411,8 +411,9 @@ public class ProgrammingExerciseGradingService {
                 double testWeight = test.getWeight() * test.getBonusMultiplier();
                 double testPoints = testWeight / weightSum * programmingExercise.getMaxPoints();
                 double testPointsWithBonus = testPoints + test.getBonusPoints();
-                // update credits of related feedback
-                result.getFeedbacks().stream().filter(fb -> fb.getType() == FeedbackType.AUTOMATIC && fb.getText().toLowerCase().equals(test.getLowerCaseTestName())).findFirst()
+                // Update credits of related feedback
+                // We need to compare testcases via lowercase, because the testcaseRepository is case-insensitive
+                result.getFeedbacks().stream().filter(fb -> fb.getType() == FeedbackType.AUTOMATIC && fb.getText().equalsIgnoreCase(test.getTestName())).findFirst()
                         .ifPresent(feedback -> feedback.setCredits(testPointsWithBonus));
                 return testPointsWithBonus;
             }).sum();
@@ -557,8 +558,9 @@ public class ProgrammingExerciseGradingService {
      * @return true if there is a positive feedback for a given test.
      */
     private Predicate<ProgrammingExerciseTestCase> isSuccessful(Result result) {
-        return testCase -> result.getFeedbacks().stream().anyMatch(
-                feedback -> feedback.getText() != null && feedback.getText().toLowerCase().equals(testCase.getLowerCaseTestName()) && Boolean.TRUE.equals(feedback.isPositive()));
+        // We need to compare testcases via lowercase, because the testcaseRepository is case-insensitive
+        return testCase -> result.getFeedbacks().stream()
+                .anyMatch(feedback -> feedback.getText() != null && feedback.getText().equalsIgnoreCase(testCase.getTestName()) && Boolean.TRUE.equals(feedback.isPositive()));
     }
 
     /**
@@ -567,8 +569,9 @@ public class ProgrammingExerciseGradingService {
      * @return true if there is no feedback for a given test.
      */
     private Predicate<ProgrammingExerciseTestCase> wasNotExecuted(Result result) {
+        // We need to compare testcases via lowercase, because the testcaseRepository is case-insensitive
         return testCase -> result.getFeedbacks().stream()
-                .noneMatch(feedback -> feedback.getType() == FeedbackType.AUTOMATIC && feedback.getText().toLowerCase().equals(testCase.getLowerCaseTestName()));
+                .noneMatch(feedback -> feedback.getType() == FeedbackType.AUTOMATIC && feedback.getText().equalsIgnoreCase(testCase.getTestName()));
     }
 
     /**
