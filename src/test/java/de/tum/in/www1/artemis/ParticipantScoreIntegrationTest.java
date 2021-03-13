@@ -125,6 +125,13 @@ public class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationBa
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void deleteExercise_asInstructorOfCourse_shouldDeleteExercise() throws Exception {
+        request.delete("/api/text-exercises/" + idOfIndividualTextExercise, HttpStatus.OK);
+
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void getCourseScores_asInstructorOfCourse_shouldReturnCourseScores() throws Exception {
         List<ScoreDTO> courseScores = request.getList("/api/courses/" + idOfCourse + "/course-scores", HttpStatus.OK, ScoreDTO.class);
         assertThat(courseScores.size()).isEqualTo(25);

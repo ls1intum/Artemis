@@ -22,6 +22,7 @@ import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
+import de.tum.in.www1.artemis.domain.lecture.ExerciseUnit;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
@@ -81,12 +82,17 @@ public class ExerciseService {
 
     private final StudentParticipationRepository studentParticipationRepository;
 
+    private final LectureUnitService lectureUnitService;
+
+    private final ParticipantScoreService participantScoreService;
+
     public ExerciseService(ExerciseRepository exerciseRepository, ExerciseUnitRepository exerciseUnitRepository, ParticipationService participationService,
             AuthorizationCheckService authCheckService, ProgrammingExerciseService programmingExerciseService, QuizExerciseService quizExerciseService,
             QuizScheduleService quizScheduleService, TutorParticipationRepository tutorParticipationRepository, ExampleSubmissionService exampleSubmissionService,
             AuditEventRepository auditEventRepository, TeamRepository teamRepository, StudentExamRepository studentExamRepository, ExamRepository examRepository,
             ProgrammingExerciseRepository programmingExerciseRepository, QuizExerciseRepository quizExerciseRepository, LtiOutcomeUrlRepository ltiOutcomeUrlRepository,
-            StudentParticipationRepository studentParticipationRepository, ParticipantScoreRepository participantScoreRepository) {
+            StudentParticipationRepository studentParticipationRepository, ParticipantScoreRepository participantScoreRepository, LectureUnitService lectureUnitService,
+            ParticipantScoreService participantScoreService) {
         this.exerciseRepository = exerciseRepository;
         this.examRepository = examRepository;
         this.participationService = participationService;
@@ -105,6 +111,8 @@ public class ExerciseService {
         this.quizExerciseRepository = quizExerciseRepository;
         this.ltiOutcomeUrlRepository = ltiOutcomeUrlRepository;
         this.studentParticipationRepository = studentParticipationRepository;
+        this.lectureUnitService = lectureUnitService;
+        this.participantScoreService = participantScoreService;
     }
 
     /**
@@ -314,9 +322,12 @@ public class ExerciseService {
     public void delete(long exerciseId, boolean deleteStudentReposBuildPlans, boolean deleteBaseReposBuildPlans) {
         // Delete has a transactional mechanism. Therefore, all lazy objects that are deleted below, should be fetched when needed.
         final var exercise = exerciseRepository.findByIdElseThrow(exerciseId);
-
+        participantScoreService.deleteAllByExerciseid(exerciseId);
         // delete all exercise units linking to the exercise
-        this.exerciseUnitRepository.removeAllByExerciseId(exerciseId);
+        List<ExerciseUnit> exerciseUnits = this.exerciseUnitRepository.findByIdWithLearningGoalsBidirectional(exerciseId);
+        for (ExerciseUnit exerciseUnit : exerciseUnits) {
+            this.lectureUnitService.removeLectureUnit(exerciseUnit);
+        }
 
         // delete all participations belonging to this quiz
         participationService.deleteAllByExerciseId(exercise.getId(), deleteStudentReposBuildPlans, deleteStudentReposBuildPlans);
@@ -342,8 +353,6 @@ public class ExerciseService {
             }
         }
 
-        // make sure student scores are deleted before the exercise is deleted
-        participantScoreRepository.removeAllByExercise(exercise);
         // Programming exercises have some special stuff that needs to be cleaned up (solution/template participation, build plans, etc.).
         if (exercise instanceof ProgrammingExercise) {
             // TODO: delete all schedules related to this programming exercise
