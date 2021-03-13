@@ -53,12 +53,17 @@ export class CourseManagementCardComponent implements OnChanges {
 
         const exercises = this.courseDetails.exerciseDetails;
         this.futureExercises = exercises
-            .filter((e) => e.releaseDate && e.releaseDate > moment() && !(e.releaseDate > moment().add(7, 'days').endOf('day')))
+            .filter((e) => !e.releaseDate || (e.releaseDate && e.releaseDate > moment() && !(e.releaseDate > moment().add(7, 'days').endOf('day'))))
             .sort((a, b) => {
-                return a.releaseDate!.valueOf() - b.releaseDate!.valueOf();
+                if (a.releaseDate && b.releaseDate) {
+                    return a.releaseDate!.valueOf() - b.releaseDate!.valueOf();
+                } else if (!a.releaseDate) {
+                    return 1;
+                }
+                return -1;
             })
             .slice(0, 5);
-        this.currentExercises = exercises.filter((e) => (!e.releaseDate || e.releaseDate <= moment()) && (!e.dueDate || e.dueDate > moment()));
+        this.currentExercises = exercises.filter((e) => e.releaseDate && e.releaseDate <= moment() && (!e.dueDate || e.dueDate > moment()));
         this.exercisesInAssessment = exercises.filter((e) => e.dueDate && e.dueDate <= moment() && e.assessmentDueDate && e.assessmentDueDate > moment());
         this.pastExercises = exercises.filter(
             (e) =>
