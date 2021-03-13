@@ -271,13 +271,13 @@ public class JenkinsRequestMockProvider {
     }
 
     private void mockUpdateUser(User user, boolean userExists) throws URISyntaxException, IOException {
-        mockGetUser(user.getLogin(), userExists);
+        mockGetUser(user.getLogin(), userExists, false);
 
         doReturn(user.getPassword()).when(passwordService).decryptPassword(user);
         doReturn(user.getPassword()).when(passwordService).decryptPassword(user);
 
         mockDeleteUser(user, userExists, false);
-        mockCreateUser(user, false, false);
+        mockCreateUser(user, false, false, false);
     }
 
     private void mockUpdateUserLogin(String oldLogin, User user) throws IOException, URISyntaxException {
@@ -289,11 +289,11 @@ public class JenkinsRequestMockProvider {
         oldUser.setLogin(oldLogin);
         oldUser.setGroups(user.getGroups());
         mockDeleteUser(oldUser, true, false);
-        mockCreateUser(user, false, false);
+        mockCreateUser(user, false, false, false);
     }
 
     public void mockDeleteUser(User user, boolean userExistsInUserManagement, boolean shouldFailToDelete) throws IOException, URISyntaxException {
-        mockGetUser(user.getLogin(), userExistsInUserManagement);
+        mockGetUser(user.getLogin(), userExistsInUserManagement, false);
 
         final var uri = UriComponentsBuilder.fromUri(jenkinsServerUrl.toURI()).pathSegment("user", user.getLogin(), "doDelete").build().toUri();
         var status = shouldFailToDelete ? HttpStatus.NOT_FOUND : HttpStatus.FOUND;
@@ -302,7 +302,7 @@ public class JenkinsRequestMockProvider {
         mockRemoveUserFromGroups(user.getGroups());
     }
 
-    private void mockGetUser(String userLogin, boolean userExists) throws URISyntaxException, JsonProcessingException {
+    private void mockGetUser(String userLogin, boolean userExists, boolean shouldFailToGetUser) throws URISyntaxException, JsonProcessingException {
         var jenkinsUser = new JenkinsUserDTO();
         jenkinsUser.id = userLogin;
 
@@ -310,6 +310,9 @@ public class JenkinsRequestMockProvider {
         if (userExists) {
             mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.GET))
                     .andRespond(withStatus(HttpStatus.FOUND).body(mapper.writeValueAsString(jenkinsUser)).contentType(MediaType.APPLICATION_JSON));
+        }
+        else if (shouldFailToGetUser) {
+            mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.GET)).andRespond(withStatus(HttpStatus.FORBIDDEN));
         }
         else {
             mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.GET)).andRespond(withStatus(HttpStatus.NOT_FOUND));
@@ -333,8 +336,8 @@ public class JenkinsRequestMockProvider {
         doNothing().when(jenkinsServer).updateJob(eq(folderName), anyString(), eq(useCrumb));
     }
 
-    public void mockCreateUser(User user, boolean userExistsInCi, boolean shouldFail) throws URISyntaxException, IOException {
-        mockGetUser(user.getLogin(), userExistsInCi);
+    public void mockCreateUser(User user, boolean userExistsInCi, boolean shouldFail, boolean shouldFailToGetUser) throws URISyntaxException, IOException {
+        mockGetUser(user.getLogin(), userExistsInCi, shouldFailToGetUser);
 
         doReturn(user.getPassword()).when(passwordService).decryptPassword(user);
         doReturn(user.getPassword()).when(passwordService).decryptPassword(user);

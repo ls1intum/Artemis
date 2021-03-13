@@ -184,7 +184,7 @@ public class InternalAuthenticationIntegrationTest extends AbstractSpringIntegra
         student.setAuthorities(authorities);
 
         var exercises = programmingExerciseRepository.findAllByInstructorOrTAGroupNameIn(student.getGroups());
-        jenkinsRequestMockProvider.mockCreateUser(student, false, false);
+        jenkinsRequestMockProvider.mockCreateUser(student, false, false, false);
 
         final var response = request.postWithResponseBody("/api/users", new ManagedUserVM(student), User.class, HttpStatus.CREATED);
         assertThat(response).isNotNull();
@@ -213,7 +213,7 @@ public class InternalAuthenticationIntegrationTest extends AbstractSpringIntegra
         student.setAuthorities(authorities);
 
         var exercises = programmingExerciseRepository.findAllByInstructorOrTAGroupNameIn(student.getGroups());
-        jenkinsRequestMockProvider.mockCreateUser(student, false, false);
+        jenkinsRequestMockProvider.mockCreateUser(student, false, false, false);
 
         final var response = request.postWithResponseBody("/api/users", new ManagedUserVM(student), User.class, HttpStatus.CREATED);
         assertThat(response).isNotNull();
@@ -242,7 +242,7 @@ public class InternalAuthenticationIntegrationTest extends AbstractSpringIntegra
         student.setAuthorities(authorities);
 
         var exercises = programmingExerciseRepository.findAllByInstructorOrTAGroupNameIn(student.getGroups());
-        jenkinsRequestMockProvider.mockCreateUser(student, false, false);
+        jenkinsRequestMockProvider.mockCreateUser(student, false, false, false);
 
         final var response = request.postWithResponseBody("/api/users", new ManagedUserVM(student), User.class, HttpStatus.CREATED);
         assertThat(response).isNotNull();

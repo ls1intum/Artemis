@@ -270,7 +270,20 @@ public class UserTestService {
         student.setPassword("foobar");
         student.setEmail("batman@secret.invalid");
 
-        mockDelegate.mockFailToCreateUserInExernalUserManagement(student, false, true);
+        mockDelegate.mockFailToCreateUserInExernalUserManagement(student, false, true, false);
+
+        final var response = request.postWithResponseBody("/api/users", new ManagedUserVM(student), User.class, HttpStatus.INTERNAL_SERVER_ERROR);
+        assertThat(response).isNull();
+    }
+
+    // Test
+    public void createUser_asAdmin_failInExternalCiUserManagement_cannotGetCiUser_internalError() throws Exception {
+        student.setId(null);
+        student.setLogin("batman");
+        student.setPassword("foobar");
+        student.setEmail("batman@secret.invalid");
+
+        mockDelegate.mockFailToCreateUserInExernalUserManagement(student, false, false, true);
 
         final var response = request.postWithResponseBody("/api/users", new ManagedUserVM(student), User.class, HttpStatus.INTERNAL_SERVER_ERROR);
         assertThat(response).isNull();
@@ -283,7 +296,7 @@ public class UserTestService {
         student.setPassword("foobar");
         student.setEmail("batman@secret.invalid");
 
-        mockDelegate.mockFailToCreateUserInExernalUserManagement(student, true, false);
+        mockDelegate.mockFailToCreateUserInExernalUserManagement(student, true, false, false);
 
         final var response = request.postWithResponseBody("/api/users", new ManagedUserVM(student), User.class, HttpStatus.INTERNAL_SERVER_ERROR);
         assertThat(response).isNull();
