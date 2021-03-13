@@ -40,17 +40,22 @@ export class CourseManagementCardComponent implements OnChanges {
     exerciseType = ExerciseType;
     exerciseRowType = ExerciseRowType;
 
+    private statisticsSorted = false;
+    private exercisesSorted = false;
+
     ngOnChanges() {
-        // Only display once loaded
-        if (this.courseStatistics && this.courseStatistics.exerciseDTOS?.length > 0) {
+        // Only sort one time once loaded
+        if (!this.statisticsSorted && this.courseStatistics && this.courseStatistics.exerciseDTOS?.length > 0) {
+            this.statisticsSorted = true;
             this.courseStatistics.exerciseDTOS.forEach((dto) => (this.statisticsPerExercise[dto.exerciseId!] = dto));
         }
 
-        // Only display once loaded
-        if (!this.courseDetails || !this.courseDetails.exerciseDetails) {
+        // Only sort one time once loaded
+        if (this.exercisesSorted || !this.courseDetails || !this.courseDetails.exerciseDetails) {
             return;
         }
 
+        this.exercisesSorted = true;
         const exercises = this.courseDetails.exerciseDetails;
         this.futureExercises = exercises
             .filter((e) => !e.releaseDate || (e.releaseDate && e.releaseDate > moment() && !(e.releaseDate > moment().add(7, 'days').endOf('day'))))

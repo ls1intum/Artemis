@@ -39,6 +39,8 @@ export class CourseManagementExerciseRowComponent implements OnChanges {
     hasLeftoverAssessments = false;
     displayTitle: string;
     averageScoreNumerator: number;
+    icon: IconProp;
+    iconTooltip: string;
 
     getIcon(type: ExerciseType | undefined): IconProp {
         switch (type) {
@@ -72,17 +74,24 @@ export class CourseManagementExerciseRowComponent implements OnChanges {
         }
     }
 
+    private detailsLoaded = false;
+    private statisticsLoaded = false;
+
     constructor() {}
 
     ngOnChanges() {
-        if (this.details) {
+        if (this.details && !this.detailsLoaded) {
+            this.detailsLoaded = true;
             this.displayTitle = this.details.exerciseTitle ?? '';
+            this.icon = this.getIcon(this.details.exerciseType);
+            this.iconTooltip = this.getIconTooltip(this.details.exerciseType);
         }
 
-        if (!this.statistic) {
+        if (!this.statistic || this.statisticsLoaded) {
             return;
         }
 
+        this.statisticsLoaded = true;
         this.averageScoreNumerator = Math.round((this.statistic.averageScoreInPercent! * this.statistic.exerciseMaxPoints!) / 100);
     }
 }
