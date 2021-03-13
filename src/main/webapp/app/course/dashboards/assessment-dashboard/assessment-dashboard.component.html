@@ -133,12 +133,12 @@
                     </td>
                     <td *ngIf="!isExamMode">
                         <span placement="right" [hidden]="!exercise.dueDate" ngbTooltip="{{ exercise.dueDate | artemisDate }}">
-                            {{ exercise.dueDate | amTimeAgo }}
+                            {{ exercise.dueDate | artemisTimeAgo }}
                         </span>
                     </td>
                     <td *ngIf="!isExamMode">
                         <span placement="right" [hidden]="!exercise.assessmentDueDate" ngbTooltip="{{ exercise.assessmentDueDate | artemisDate }}">
-                            {{ exercise.assessmentDueDate | amTimeAgo }}
+                            {{ exercise.assessmentDueDate | artemisTimeAgo }}
                         </span>
                     </td>
 
