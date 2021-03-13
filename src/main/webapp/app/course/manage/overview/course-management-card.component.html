@@ -177,7 +177,7 @@
         </a>
         <a
             *ngIf="course.isAtLeastTutor"
-            [routerLink]="['/course-management', course.id, 'tutor-dashboard']"
+            [routerLink]="['/course-management', course.id, 'assessment-dashboard']"
             class="btn btn-info mr-1 mb-1"
             [ngbTooltip]="'entity.action.assessmentDashboard' | artemisTranslate"
             [class.guided-tour]="isGuidedTour"
