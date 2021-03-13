@@ -6,6 +6,7 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -13,7 +14,6 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
-import org.mockito.Spy;
 
 import com.hazelcast.config.Config;
 import com.hazelcast.config.NetworkConfig;
@@ -66,9 +66,6 @@ class AutomaticAssessmentControllerTest {
     @Mock(serializable = true)
     SimilaritySetAssessment similaritySetAssessment;
 
-    @Spy
-    CompassResult compassResult;
-
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
@@ -113,8 +110,9 @@ class AutomaticAssessmentControllerTest {
         automaticAssessmentController.addSimilaritySetAssessment(1, similaritySetAssessment);
         automaticAssessmentController.addFeedbacksToSimilaritySet(feedbacks, classDiagram);
         Optional<SimilaritySetAssessment> ssA = automaticAssessmentController.getAssessmentForSimilaritySet(1);
-        assertThat(ssA.get().getFeedbackList().get(0).getId()).isEqualTo(feedback3.getId());
-        assertThat(ssA.get().getFeedbackList().get(1).getId()).isEqualTo(feedback1.getId());
+        List<Long> ids = ssA.get().getFeedbackList().stream().map(Feedback::getId).collect(Collectors.toList());
+        assertThat(ids).contains(feedback3.getId());
+        assertThat(ids).contains(feedback1.getId());
         Optional<SimilaritySetAssessment> ssA2 = automaticAssessmentController.getAssessmentForSimilaritySet(2);
         assertThat(ssA2.get().getFeedbackList().get(0).getId()).isEqualTo(feedback2.getId());
     }
@@ -133,8 +131,9 @@ class AutomaticAssessmentControllerTest {
         automaticAssessmentController.addFeedbacksToSimilaritySet(feedbacks, activityDiagram);
 
         Optional<SimilaritySetAssessment> ssA = automaticAssessmentController.getAssessmentForSimilaritySet(1);
-        assertThat(ssA.get().getFeedbackList().get(0).getId()).isEqualTo(feedback3.getId());
-        assertThat(ssA.get().getFeedbackList().get(1).getId()).isEqualTo(feedback1.getId());
+        List<Long> ids = ssA.get().getFeedbackList().stream().map(Feedback::getId).collect(Collectors.toList());
+        assertThat(ids).contains(feedback3.getId());
+        assertThat(ids).contains(feedback1.getId());
         Optional<SimilaritySetAssessment> ssA2 = automaticAssessmentController.getAssessmentForSimilaritySet(2);
         assertThat(ssA2.get().getFeedbackList().get(0).getId()).isEqualTo(feedback2.getId());
     }
@@ -247,8 +246,9 @@ class AutomaticAssessmentControllerTest {
 
     @Test
     void getLastAssessmentCoverage() {
-        doReturn(compassResult).when(automaticAssessmentController).getLastAssessmentCompassResult(classDiagram.getModelSubmissionId());
+        CompassResult compassResult = mock(CompassResult.class, withSettings().serializable());
         doReturn(0.789).when(compassResult).getCoverage();
+        automaticAssessmentController.setLastAssessmentCompassResult(classDiagram.getModelSubmissionId(), compassResult);
         double confidence = automaticAssessmentController.getLastAssessmentCoverage(classDiagram.getModelSubmissionId());
         assertThat(confidence).isEqualTo(0.789);
     }
