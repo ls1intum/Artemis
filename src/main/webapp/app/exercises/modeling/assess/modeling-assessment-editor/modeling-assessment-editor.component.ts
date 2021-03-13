@@ -103,10 +103,9 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         this.route.paramMap.subscribe((params) => {
             this.courseId = Number(params.get('courseId'));
             this.exerciseId = Number(params.get('exerciseId'));
-            const examId = params['examId'];
-            if (examId) {
-                this.examId = Number(examId);
-                this.exerciseGroupId = Number(params['exerciseGroupId']);
+            if (params.has('examId')) {
+                this.examId = Number(params.get('examId'));
+                this.exerciseGroupId = Number(params.get('exerciseGroupId'));
             }
 
             this.exerciseDashboardLink = getExerciseDashboardLink(this.courseId, this.exerciseId, this.examId);
