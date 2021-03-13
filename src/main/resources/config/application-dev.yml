@@ -18,6 +18,7 @@ logging:
         ROOT: DEBUG
         de.tum.in.www1.artemis: DEBUG
         io.github.jhipster: DEBUG
+        liquibase: ERROR
 
 spring:
     devtools:
