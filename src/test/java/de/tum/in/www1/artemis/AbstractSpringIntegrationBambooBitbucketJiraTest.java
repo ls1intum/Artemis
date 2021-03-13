@@ -382,6 +382,12 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
     }
 
     @Override
+    public void mockFailUpdateCoursePermissionsInCi(Course updatedCourse, String oldInstructorGroup, String oldTeachingAssistantGroup, boolean failToAddUsers,
+            boolean failToRemoveUsers) throws Exception {
+        // Not needed here
+    }
+
+    @Override
     public void mockCreateGroupInUserManagement(String groupName) throws Exception {
         jiraRequestMockProvider.mockCreateGroup(groupName);
     }

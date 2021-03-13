@@ -134,6 +134,18 @@ public class CourseGitlabJenkinsIntegrationTest extends AbstractSpringIntegratio
     }
 
     @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    public void testUpdateCourseGroups_InExternalCiUserManagement_failToRemoveUser() throws Exception {
+        courseTestService.testUpdateCourseGroups_InExternalCiUserManagement_failToRemoveUser();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    public void testUpdateCourseGroups_InExternalCiUserManagement_failToAddUser() throws Exception {
+        courseTestService.testUpdateCourseGroups_InExternalCiUserManagement_failToAddUser();
+    }
+
+    @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void testGetCourseWithoutPermission() throws Exception {
         courseTestService.testGetCourseWithoutPermission();

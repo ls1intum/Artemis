@@ -405,6 +405,36 @@ public class CourseTestService {
     }
 
     // Test
+    public void testUpdateCourseGroups_InExternalCiUserManagement_failToRemoveUser() throws Exception {
+        Course course = database.addCourseWithOneProgrammingExercise();
+        var oldInstructorGroup = course.getInstructorGroupName();
+        var oldTeachingAssistantGroup = course.getTeachingAssistantGroupName();
+
+        course.setInstructorGroupName("new-instructor-group");
+        course.setTeachingAssistantGroupName("new-ta-group");
+
+        mockDelegate.mockFailUpdateCoursePermissionsInCi(course, oldInstructorGroup, oldTeachingAssistantGroup, false, true);
+        Course updatedCourse = request.putWithResponseBody("/api/courses", course, Course.class, HttpStatus.INTERNAL_SERVER_ERROR);
+
+        assertThat(updatedCourse).isNull();
+    }
+
+    // Test
+    public void testUpdateCourseGroups_InExternalCiUserManagement_failToAddUser() throws Exception {
+        Course course = database.addCourseWithOneProgrammingExercise();
+        var oldInstructorGroup = course.getInstructorGroupName();
+        var oldTeachingAssistantGroup = course.getTeachingAssistantGroupName();
+
+        course.setInstructorGroupName("new-instructor-group");
+        course.setTeachingAssistantGroupName("new-ta-group");
+
+        mockDelegate.mockFailUpdateCoursePermissionsInCi(course, oldInstructorGroup, oldTeachingAssistantGroup, true, false);
+        Course updatedCourse = request.putWithResponseBody("/api/courses", course, Course.class, HttpStatus.INTERNAL_SERVER_ERROR);
+
+        assertThat(updatedCourse).isNull();
+    }
+
+    // Test
     public void testGetCourseWithoutPermission() throws Exception {
         request.getList("/api/courses", HttpStatus.FORBIDDEN, Course.class);
     }

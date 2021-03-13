@@ -43,6 +43,7 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.service.connectors.jenkins.dto.JenkinsUserDTO;
+import de.tum.in.www1.artemis.service.connectors.jenkins.jobs.JenkinsJobPermissionsService;
 import de.tum.in.www1.artemis.service.user.PasswordService;
 
 @Component
@@ -66,6 +67,10 @@ public class JenkinsRequestMockProvider {
     @SpyBean
     @InjectMocks
     private JenkinsServer jenkinsServer;
+
+    @SpyBean
+    @InjectMocks
+    private JenkinsJobPermissionsService jenkinsJobPermissionsService;
 
     @Mock
     private JenkinsHttpClient jenkinsClient;
@@ -205,7 +210,7 @@ public class JenkinsRequestMockProvider {
         doReturn(xmlToReturn).when(jenkinsServer).getJobXml(any(), any());
     }
 
-    public void mockEnablePlan(String projectKey, String planKey, boolean planExistsInCi, boolean shouldFail) throws URISyntaxException, IOException {
+    public void mockEnablePlan(String projectKey, String planKey, boolean planExistsInCi, boolean shouldFail) throws URISyntaxException {
         final var uri = UriComponentsBuilder.fromUri(jenkinsServerUrl.toURI()).pathSegment("job", projectKey, "job", planKey, "enable").build().toUri();
         if (shouldFail) {
             mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.POST)).andRespond(withStatus(HttpStatus.BAD_REQUEST));
@@ -363,7 +368,8 @@ public class JenkinsRequestMockProvider {
         }
     }
 
-    public void mockUpdateCoursePermissions(Course updatedCourse, String oldInstructorGroup, String oldTeachingAssistantGroup) throws IOException {
+    public void mockUpdateCoursePermissions(Course updatedCourse, String oldInstructorGroup, String oldTeachingAssistantGroup, boolean failToAddUsers, boolean failToRemoveUsers)
+            throws IOException {
         var newInstructorGroup = updatedCourse.getInstructorGroupName();
         var newTeachingAssistangGroup = updatedCourse.getTeachingAssistantGroupName();
 
@@ -372,28 +378,38 @@ public class JenkinsRequestMockProvider {
             return;
         }
 
-        mockRemovePermissionsFromInstructorsAndTAsForCourse(updatedCourse);
-        mockAssignPermissionsToInstructorAndTAsForCourse(updatedCourse);
+        mockRemovePermissionsFromInstructorsAndTAsForCourse(updatedCourse, failToRemoveUsers);
+        mockAssignPermissionsToInstructorAndTAsForCourse(updatedCourse, failToAddUsers);
     }
 
-    private void mockRemovePermissionsFromInstructorsAndTAsForCourse(Course course) throws IOException {
+    private void mockRemovePermissionsFromInstructorsAndTAsForCourse(Course course, boolean shouldFailToRemove) throws IOException {
         var exercises = programmingExerciseRepository.findAllByCourse(course);
         for (var exercise : exercises) {
-            mockRemovePermissionsFromUserOfFolder(exercise.getProjectKey());
+            if (shouldFailToRemove) {
+                doThrow(IOException.class).when(jenkinsJobPermissionsService).removePermissionsFromUsersForFolder(any(), eq(exercise.getProjectKey()), any());
+            }
+            else {
+                doNothing().when(jenkinsJobPermissionsService).removePermissionsFromUsersForFolder(any(), eq(exercise.getProjectKey()), any());
+            }
         }
     }
 
-    private void mockAssignPermissionsToInstructorAndTAsForCourse(Course course) throws IOException {
+    private void mockAssignPermissionsToInstructorAndTAsForCourse(Course course, boolean shouldFailToAdd) throws IOException {
         var exercises = programmingExerciseRepository.findAllByCourse(course);
         for (var exercise : exercises) {
             var job = exercise.getProjectKey();
-            mockAddInstructorAndTAPermissionsToUsersForFolder(job);
+            mockAddInstructorAndTAPermissionsToUsersForFolder(job, shouldFailToAdd);
         }
     }
 
-    private void mockAddInstructorAndTAPermissionsToUsersForFolder(String folderName) throws IOException {
+    private void mockAddInstructorAndTAPermissionsToUsersForFolder(String folderName, boolean shouldFailToAdd) throws IOException {
         mockGetFolderConfig(folderName);
-        doNothing().when(jenkinsServer).updateJob(eq(folderName), anyString(), eq(useCrumb));
+        if (shouldFailToAdd) {
+            doThrow(IOException.class).when(jenkinsServer).updateJob(eq(folderName), anyString(), eq(useCrumb));
+        }
+        else {
+            doNothing().when(jenkinsServer).updateJob(eq(folderName), anyString(), eq(useCrumb));
+        }
     }
 
     public void mockDeleteBuildPlan(String projectKey, String planName) throws IOException {
