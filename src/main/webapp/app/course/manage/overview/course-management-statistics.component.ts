@@ -43,8 +43,12 @@ export class CourseManagementStatisticsComponent implements OnInit {
             this.barChartLabels[i] = this.translateService.instant(`overview.${3 - i}_weeks_ago`);
         }
 
-        for (const value of this.initialStats) {
-            this.dataForSpanType.push((value * 100) / this.amountOfStudentsInCourse);
+        if (this.amountOfStudentsInCourse > 0) {
+            for (const value of this.initialStats) {
+                this.dataForSpanType.push((value * 100) / this.amountOfStudentsInCourse);
+            }
+        } else {
+            this.dataForSpanType = new Array(this.initialStats.length).fill(100);
         }
 
         this.chartData = [
