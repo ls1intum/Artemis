@@ -123,6 +123,16 @@
     }
 }
 
+@media screen and (max-width: 1200px) {
+    .card {
+        .card-heading {
+            .card-description {
+                max-width: 80ch;
+            }
+        }
+    }
+}
+
 @media screen and (max-width: 950px) {
     .card {
         .statistics-card {
@@ -131,6 +141,29 @@
 
         .section-card {
             min-width: 100%;
+        }
+
+        .card-heading {
+            flex-direction: column;
+
+            .card-date {
+                justify-content: center;
+            }
+
+            jhi-secured-image {
+                margin: auto;
+                display: flex;
+            }
+        }
+    }
+}
+
+@media screen and (max-width: 700px) {
+    .card {
+        .card-heading {
+            .card-description {
+                max-width: 40ch !important;
+            }
         }
     }
 }
