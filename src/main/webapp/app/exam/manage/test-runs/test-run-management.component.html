@@ -80,7 +80,7 @@
                     <td>
                         <a> {{ testRun.user?.name || '--' }}</a>
                     </td>
-                    <td>{{ testRun.workingTime | artemisDurationFromSeconds }}</td>
+                    <td>{{ testRun.workingTime || 0 | artemisDurationFromSeconds }}</td>
                     <td>{{ (testRun.started ? 'global.generic.yes' : 'global.generic.no') | artemisTranslate }}</td>
                     <td>{{ (testRun.submitted ? 'global.generic.yes' : 'global.generic.no') | artemisTranslate }}</td>
                     <td>{{ testRun.submissionDate | artemisDate }}</td>

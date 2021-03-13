@@ -6,11 +6,7 @@ export class ArtemisDurationFromSecondsPipe implements PipeTransform {
      * Convert seconds to a human-readable duration format (mm:ss).
      * @param seconds {number}
      */
-    transform(seconds: number | undefined): string {
-        if (seconds == undefined) {
-            return '00:00';
-        }
-
+    transform(seconds: number): string {
         const minutes = Math.floor(seconds / 60);
         seconds = seconds - minutes * 60;
 
