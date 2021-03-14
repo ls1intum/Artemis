@@ -375,7 +375,7 @@ Jenkins Server Setup
    This might take a while because Docker will download Java, but this
    is only required once.
 
-3. **If you run your own NGINX or if you install Jenkins on a local development computer, then skip the next steps (4-6)**
+3. **If you run your own NGINX or if you install Jenkins on a local development computer, then skip the next steps (4-7)**
 
 4. Create a file increasing the maximum file size for the nginx proxy.
    The nginx-proxy uses a default file limit that is too small for the
@@ -385,8 +385,47 @@ Jenkins Server Setup
    ::
 
        echo "client_max_body_size 16m;" > client_max_body_size.conf
+5. The NGINX default timeout is pretty low. For plagarism check and unlocking student repos for the exam a higher timeout is advisable. Therefore we write our own nginx.conf and load it in the container.
+   ::
 
-5. Run the NGINX proxy docker container, this will automatically setup
+       echo "
+        user  nginx;
+        worker_processes  auto;
+
+        error_log  /var/log/nginx/error.log warn;
+        pid        /var/run/nginx.pid;
+
+
+        events {
+            worker_connections  1024;
+        }
+
+
+        http {
+            include       /etc/nginx/mime.types;
+            default_type  application/octet-stream;
+
+            log_format  main  '$remote_addr - $remote_user [$time_local] "$request" '
+                              '$status $body_bytes_sent "$http_referer" '
+                              '"$http_user_agent" "$http_x_forwarded_for"';
+
+            access_log  /var/log/nginx/access.log  main;
+
+            fastcgi_read_timeout 300;
+            proxy_read_timeout 300;
+
+            sendfile        on;
+            #tcp_nopush     on;
+
+            keepalive_timeout  65;
+
+            #gzip  on;
+
+            include /etc/nginx/conf.d/*.conf;
+        }
+        daemon off;" > nginx.conf
+
+6. Run the NGINX proxy docker container, this will automatically setup
    all reverse proxies and force https on all connections. (This image
    would also setup proxies for all other running containers that have
    the VIRTUAL_HOST and VIRTUAL_PORT environment variables). **Skip this
@@ -402,9 +441,10 @@ Jenkins Server Setup
            -v /etc/nginx/vhost.d \
            -v /usr/share/nginx/html \
            -v $(pwd)/client_max_body_size.conf:/etc/nginx/conf.d/client_max_body_size.conf:ro \
+           -v $(pwd)/nginx.conf:/etc/nginx/nginx.conf:ro \
            jwilder/nginx-proxy
 
-6. The nginx proxy needs another docker-container to generate
+7. The nginx proxy needs another docker-container to generate
    letsencrypt certificates. Run the following command to start it (make
    sure to change the email-address). **Skip this step if you have your
    own NGINX instance.**
@@ -421,7 +461,7 @@ Jenkins Server Setup
 Start Jenkins
 ^^^^^^^^^^^^^
 
-7.  Run Jenkins by executing the following command (change the hostname
+8.  Run Jenkins by executing the following command (change the hostname
     and choose which port alternative you need)
 
     ::
@@ -440,7 +480,7 @@ Start Jenkins
     If you still need the old setup with python & maven installed locally, use `jenkins-artemis` instead of `jenkins/jenkins:lts`.
     Also note that you can omit the ``-u root``, ``-v /var/run/docker.sock:/var/run/docker.sock`` and ``-v /usr/bin/docker:/usr/bin/docker:ro`` parameters, if you do not want to run Docker builds on the Jenkins master (but e.g. use remote agents).
 
-8. Open Jenkins in your browser (e.g. ``localhost:8082``) and setup the
+9. Open Jenkins in your browser (e.g. ``localhost:8082``) and setup the
     admin user account (install all suggested plugins). You can get the
     initial admin password using the following command.
 
@@ -451,7 +491,7 @@ Start Jenkins
        or alternatively
        docker exec jenkins cat /var/jenkins_home/secrets/initialAdminPassword
 
-9. Set the chosen credentials in the Artemis configuration
+10. Set the chosen credentials in the Artemis configuration
     *application-artemis.yml*
 
     .. code:: yaml
