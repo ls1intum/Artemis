@@ -356,7 +356,7 @@ public class ProgrammingExerciseGradingService {
 
             // Recalculate the achieved score by including the test cases individual weight.
             // The score is always calculated from ALL test cases, regardless of the current date!
-            updateScore(result, successfulTestCases, testCases, staticCodeAnalysisFeedback, exercise);
+            updateScore(result, successfulTestCases, testCases, staticCodeAnalysisFeedback, exercise, hasDuplicateTestCases);
 
             // Create a new result string that reflects passed, failed & not executed test cases.
             updateResultString(result, successfulTestCases, testCasesForCurrentDate, staticCodeAnalysisFeedback, exercise, hasDuplicateTestCases);
@@ -431,14 +431,19 @@ public class ProgrammingExerciseGradingService {
      * Update the score given the positive tests score divided by all tests's score.
      * Takes weight, bonus multiplier and absolute bonus points into account
      *
-     * @param result of the build run.
-     * @param successfulTestCases test cases with positive feedback.
-     * @param allTests of a given programming exercise.
+     * @param result                     of the build run.
+     * @param successfulTestCases        test cases with positive feedback.
+     * @param allTests                   of a given programming exercise.
+     * @param staticCodeAnalysisFeedback of a given programming exercise.
+     * @param programmingExercise        the given programming exercise.
+     * @param hasDuplicateTestCases      indicates duplicate test cases.
      */
     private void updateScore(Result result, Set<ProgrammingExerciseTestCase> successfulTestCases, Set<ProgrammingExerciseTestCase> allTests,
-            List<Feedback> staticCodeAnalysisFeedback, ProgrammingExercise programmingExercise) {
-        if (successfulTestCases.size() > 0) {
-
+            List<Feedback> staticCodeAnalysisFeedback, ProgrammingExercise programmingExercise, boolean hasDuplicateTestCases) {
+        if (hasDuplicateTestCases || successfulTestCases.size() <= 0) {
+            result.setScore(0D);
+        }
+        else {
             double weightSum = allTests.stream().mapToDouble(ProgrammingExerciseTestCase::getWeight).sum();
 
             // calculate the achieved points from the passed test cases
@@ -479,9 +484,6 @@ public class ProgrammingExerciseGradingService {
             double score = successfulTestPoints / programmingExercise.getMaxPoints() * 100.0;
 
             result.setScore(score);
-        }
-        else {
-            result.setScore(0D);
         }
     }
 
@@ -549,8 +551,10 @@ public class ProgrammingExerciseGradingService {
      */
     private void updateResultString(Result result, Set<ProgrammingExerciseTestCase> successfulTestCases, Set<ProgrammingExerciseTestCase> allTests, List<Feedback> scaFeedback,
             ProgrammingExercise exercise, boolean hasDuplicateTestCases) {
-        // Create a new result string that reflects passed, failed & not executed test cases.
         if (hasDuplicateTestCases) {
+            result.setResultString("Error: Found duplicated tests!");
+        }
+        else {
             // Create a new result string that reflects passed, failed & not executed test cases.
             String newResultString = successfulTestCases.size() + " of " + allTests.size() + " passed";
 
@@ -563,9 +567,6 @@ public class ProgrammingExerciseGradingService {
                 newResultString = updateManualResultString(newResultString, result, exercise);
             }
             result.setResultString(newResultString);
-        }
-        else {
-            result.setResultString("Error: Found duplicated tests!");
         }
     }
 
