@@ -78,6 +78,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     exerciseId: number;
     exerciseGroupId: number;
     exerciseDashboardLink: string[];
+    loadingInitialSubmission = true;
 
     private get course(): Course | undefined {
         return this.exercise?.course || this.exercise?.exerciseGroup?.exam?.course;
@@ -167,6 +168,8 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
                 .pipe(
                     tap(
                         (participationWithResult: ProgrammingExerciseStudentParticipation) => {
+                            this.loadingInitialSubmission = false;
+
                             // Set domain to make file editor work properly
                             this.domainService.setDomain([DomainType.PARTICIPATION, participationWithResult]);
                             this.participation = participationWithResult;
@@ -186,6 +189,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
                             }
                         },
                         (error: HttpErrorResponse) => {
+                            this.loadingInitialSubmission = false;
                             this.participationCouldNotBeFetched = true;
                             if (error.error && error.error.errorKey === 'lockedSubmissionsLimitReached') {
                                 this.lockLimitReached = true;

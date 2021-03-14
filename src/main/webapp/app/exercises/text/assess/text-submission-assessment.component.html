@@ -60,11 +60,13 @@
 </ng-template>
 
 <ng-template #noSubmission>
-    <div *ngIf="noNewSubmissions" class="alert alert-warning text-center mt-4" role="alert">
-        <p jhiTranslate="artemisApp.textAssessment.notFound">We haven't found any new text submission without an assessment, please go back.</p>
-        <a [routerLink]="exerciseDashboardLink" class="btn btn-info btn-sm mr-1 mb-1 assessment-dashboard">
-            <span class="d-none d-md-inline" jhiTranslate="entity.action.exerciseDashboard">Exercise dashboard</span>
-        </a>
+    <div *ngIf="">
+        <div *ngIf="noNewSubmissions" class="alert alert-warning text-center mt-4" role="alert">
+            <p jhiTranslate="artemisApp.textAssessment.notFound">We haven't found any new text submission without an assessment, please go back.</p>
+            <a [routerLink]="exerciseDashboardLink" class="btn btn-info btn-sm mr-1 mb-1 assessment-dashboard">
+                <span class="d-none d-md-inline" jhiTranslate="entity.action.exerciseDashboard">Exercise dashboard</span>
+            </a>
+        </div>
+        <p *ngIf="!noNewSubmissions">No Submission for specified ID</p>
     </div>
-    <p *ngIf="!noNewSubmissions">No Submission for specified ID</p>
 </ng-template>

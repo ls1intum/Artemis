@@ -63,6 +63,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     hasAutomaticFeedback = false;
     hasAssessmentDueDatePassed: boolean;
     correctionRound = 0;
+    loadingInitialSubmission = true;
 
     private cancelConfirmationText: string;
 
@@ -146,6 +147,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     }
 
     private handleReceivedSubmission(submission: ModelingSubmission): void {
+        this.loadingInitialSubmission = false;
         this.submission = submission;
         const studentParticipation = this.submission.participation as StudentParticipation;
         this.modelingExercise = studentParticipation.exercise as ModelingExercise;
@@ -260,6 +262,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     }
 
     private handeErrorResponse(error: HttpErrorResponse): void {
+        this.loadingInitialSubmission = false;
         this.submission = undefined;
 
         // there is no submission waiting for assessment at the moment
