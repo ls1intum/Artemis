@@ -17,7 +17,7 @@ export class TutorLeaderboardComponent implements OnInit {
     @Input() public exam?: Exam;
 
     isAtLeastInstructor = false;
-
+    isExerciseDashboard = false;
     isExamMode = false;
     sortPredicate = 'points';
     reverseOrder = false;
@@ -32,6 +32,8 @@ export class TutorLeaderboardComponent implements OnInit {
             this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.course);
         }
         if (this.exercise && this.exercise.course) {
+            this.course = this.exercise.course;
+            this.isExerciseDashboard = true;
             this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.exercise.course);
         }
         if (this.exam) {
