@@ -30,17 +30,17 @@ describe('Plagiarism Header Component', () => {
     });
 
     it('should confirm a plagiarism', () => {
-        comp.comparison = { status: PlagiarismStatus.NONE } as PlagiarismComparison<ModelingSubmissionElement>;
+        spyOn(comp, 'updatePlagiarismStatus');
         comp.confirmPlagiarism();
 
-        expect(comp.comparison.status).toEqual(PlagiarismStatus.CONFIRMED);
+        expect(comp.updatePlagiarismStatus).toHaveBeenCalledWith(PlagiarismStatus.CONFIRMED);
     });
 
     it('should deny a plagiarism', () => {
-        comp.comparison = { status: PlagiarismStatus.NONE } as PlagiarismComparison<ModelingSubmissionElement>;
+        spyOn(comp, 'updatePlagiarismStatus');
         comp.denyPlagiarism();
 
-        expect(comp.comparison.status).toEqual(PlagiarismStatus.DENIED);
+        expect(comp.updatePlagiarismStatus).toHaveBeenCalledWith(PlagiarismStatus.DENIED);
     });
 
     it('should emit when expanding left split view pane', () => {
