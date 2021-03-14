@@ -69,6 +69,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
     numberOfSubmissions = new DueDateStat();
     totalNumberOfAssessments = new DueDateStat();
     numberOfAssessmentsOfCorrectionRounds = [new DueDateStat()];
+    lockedSubmissionsByOtherTutorOfCorrectionRounds = [new DueDateStat()];
     numberOfComplaints = 0;
     numberOfOpenComplaints = 0;
     numberOfTutorComplaints = 0;
@@ -248,6 +249,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
                     this.numberOfSubmissions = this.statsForDashboard.numberOfSubmissions;
                     this.totalNumberOfAssessments = this.statsForDashboard.totalNumberOfAssessments;
                     this.numberOfAssessmentsOfCorrectionRounds = this.statsForDashboard.numberOfAssessmentsOfCorrectionRounds;
+                    this.lockedSubmissionsByOtherTutorOfCorrectionRounds = this.statsForDashboard.lockedSubmissionsByOtherTutorOfCorrectionRounds;
                     this.numberOfComplaints = this.statsForDashboard.numberOfComplaints;
                     this.numberOfOpenComplaints = this.statsForDashboard.numberOfOpenComplaints;
                     this.numberOfMoreFeedbackRequests = this.statsForDashboard.numberOfMoreFeedbackRequests;

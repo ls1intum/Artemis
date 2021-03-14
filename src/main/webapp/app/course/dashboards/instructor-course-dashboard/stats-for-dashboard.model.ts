@@ -13,6 +13,7 @@ export class StatsForDashboard {
     public numberOfAssessmentLocks = 0;
     public totalNumberOfAssessmentLocks = 0;
     public numberOfAssessmentsOfCorrectionRounds = [new DueDateStat()]; // Array with number of assessments for each correction round
+    public lockedSubmissionsByOtherTutorOfCorrectionRounds = [new DueDateStat()]; // Array with number of locked assessments for each correction round
 
     public tutorLeaderboardEntries: TutorLeaderboardElement[] = [];
 

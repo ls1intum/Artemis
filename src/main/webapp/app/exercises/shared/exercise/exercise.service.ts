@@ -300,7 +300,7 @@ export class ExerciseService {
 
     /**
      * Retrieve a collection of useful statistics for the tutor exercise dashboard of the exercise with the given exerciseId
-     * @param { number } exerciseId - Id of exercise to retreive the stats for
+     * @param { number } exerciseId - Id of exercise to retrieve the stats for
      */
     getStatsForTutors(exerciseId: number): Observable<HttpResponse<StatsForDashboard>> {
         return this.http.get<StatsForDashboard>(`${this.resourceUrl}/${exerciseId}/stats-for-assessment-dashboard`, { observe: 'response' });
