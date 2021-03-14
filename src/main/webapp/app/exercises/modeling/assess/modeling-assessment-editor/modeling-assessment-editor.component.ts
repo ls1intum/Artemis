@@ -108,7 +108,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
                 this.exerciseGroupId = Number(params.get('exerciseGroupId'));
             }
 
-            this.exerciseDashboardLink = getExerciseDashboardLink(this.courseId, this.exerciseId, this.examId);
+            this.exerciseDashboardLink = getExerciseDashboardLink(this.courseId, this.exerciseId, this.examId, this.isTestRun);
 
             const submissionId = params.get('submissionId');
             if (submissionId === 'new') {

@@ -138,7 +138,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
                 this.exerciseGroupId = Number(params['exerciseGroupId']);
             }
 
-            this.exerciseDashboardLink = getExerciseDashboardLink(this.courseId, this.exerciseId, this.examId);
+            this.exerciseDashboardLink = getExerciseDashboardLink(this.courseId, this.exerciseId, this.examId, this.isTestRun);
 
             let participationId;
             if (!params['participationId']) {

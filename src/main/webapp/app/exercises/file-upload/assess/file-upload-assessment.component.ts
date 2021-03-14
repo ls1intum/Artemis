@@ -116,7 +116,7 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
                 this.exerciseGroupId = Number(params['exerciseGroupId']);
             }
 
-            this.exerciseDashboardLink = getExerciseDashboardLink(this.courseId, this.exerciseId, this.examId);
+            this.exerciseDashboardLink = getExerciseDashboardLink(this.courseId, this.exerciseId, this.examId, this.isTestRun);
 
             const submissionValue = params['submissionId'];
             const submissionId = Number(submissionValue);

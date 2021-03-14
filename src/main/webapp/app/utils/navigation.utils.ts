@@ -58,7 +58,11 @@ export const getLinkToSubmissionAssessment = (
     }
 };
 
-export const getExerciseDashboardLink = (courseId: number, exerciseId: number, examId = 0): string[] => {
+export const getExerciseDashboardLink = (courseId: number, exerciseId: number, examId = 0, isTestRun = false): string[] => {
+    if (isTestRun) {
+        return ['/course-management', courseId.toString(), 'exams', examId.toString(), 'test-runs', 'assess'];
+    }
+
     return examId > 0
         ? ['/course-management', courseId.toString(), 'exams', examId.toString(), 'assessment-dashboard', exerciseId.toString()]
         : ['/course-management', courseId.toString(), 'assessment-dashboard', exerciseId.toString()];

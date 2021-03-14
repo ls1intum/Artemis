@@ -140,7 +140,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
                 this.exerciseGroupId = Number(paramMap.get('exerciseGroupId'));
                 this.isExamMode = true;
             }
-            this.exerciseDashboardLink = getExerciseDashboardLink(this.courseId, this.exerciseId, this.examId);
+            this.exerciseDashboardLink = getExerciseDashboardLink(this.courseId, this.exerciseId, this.examId, this.isTestRun);
         });
         this.activatedRoute.data.subscribe(({ studentParticipation }) => this.setPropertiesFromServerResponse(studentParticipation));
     }
