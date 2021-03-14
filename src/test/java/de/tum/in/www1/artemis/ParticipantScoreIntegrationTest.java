@@ -15,6 +15,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.exam.Exam;
+import de.tum.in.www1.artemis.domain.lecture.ExerciseUnit;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.util.ModelFactory;
@@ -37,6 +38,8 @@ public class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationBa
     Long getIdOfIndividualTextExerciseOfExam;
 
     Long idOfTeamTextExercise;
+
+    Long idOfExerciseUnit;
 
     @Autowired
     SubmissionRepository submissionRepository;
@@ -62,6 +65,15 @@ public class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationBa
     @Autowired
     ExamRepository examRepository;
 
+    @Autowired
+    LectureRepository lectureRepository;
+
+    @Autowired
+    LearningGoalRepository learningGoalRepository;
+
+    @Autowired
+    LectureUnitRepository lectureUnitRepository;
+
     @AfterEach
     public void resetDatabase() {
         database.resetDatabase();
@@ -74,8 +86,23 @@ public class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationBa
         this.database.addUsers(5, 10, 10);
         // creating course
         Course course = this.database.createCourse();
+        Lecture lecture = new Lecture();
+        lecture.setTitle("ExampleLecture");
+        lecture.setCourse(course);
+        lecture = lectureRepository.saveAndFlush(lecture);
         idOfCourse = course.getId();
         TextExercise textExercise = database.createIndividualTextExercise(course, pastTimestamp, pastTimestamp, pastTimestamp);
+        ExerciseUnit exerciseUnit = new ExerciseUnit();
+        exerciseUnit.setExercise(textExercise);
+        database.addLectureUnitsToLecture(lecture, Set.of(exerciseUnit));
+        lecture = lectureRepository.findByIdWithStudentQuestionsAndLectureUnitsAndLearningGoals(lecture.getId()).get();
+        exerciseUnit = (ExerciseUnit) lecture.getLectureUnits().get(0);
+        idOfExerciseUnit = exerciseUnit.getId();
+        LearningGoal learningGoal = new LearningGoal();
+        learningGoal.setTitle("ExampleLearningGoal");
+        learningGoal.setCourse(course);
+        learningGoal.addLectureUnit(exerciseUnit);
+        learningGoal = learningGoalRepository.saveAndFlush(learningGoal);
         idOfIndividualTextExercise = textExercise.getId();
         Exercise teamExercise = database.createTeamTextExercise(course, pastTimestamp, pastTimestamp, pastTimestamp);
         idOfTeamTextExercise = teamExercise.getId();
@@ -127,7 +154,15 @@ public class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationBa
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void deleteExercise_asInstructorOfCourse_shouldDeleteExercise() throws Exception {
         request.delete("/api/text-exercises/" + idOfIndividualTextExercise, HttpStatus.OK);
+        assertThat(exerciseRepository.existsById(idOfIndividualTextExercise)).isFalse();
+        assertThat(lectureUnitRepository.existsById(idOfExerciseUnit)).isFalse();
+    }
 
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    public void deleteCourse_asInstructorOfCourse_shouldDeleteExercise() throws Exception {
+        request.delete("/api/courses/" + idOfCourse, HttpStatus.OK);
+        assertThat(courseRepository.existsById(idOfCourse)).isFalse();
     }
 
     @Test
