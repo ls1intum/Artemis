@@ -135,7 +135,7 @@
                     </ng-template>
                     <ng-template ngx-datatable-cell-template let-value="value">
                         <span *ngIf="exercise.isAtLeastInstructor">
-                            <a [routerLink]="['..', 'participations', value.id, 'submissions']">
+                            <a [routerLink]="getExerciseParticipationsLink(value.id)">
                                 {{ value.student?.name || value.team?.name }}
                             </a>
                         </span>
@@ -213,7 +213,7 @@
                     </ng-template>
                     <ng-template ngx-datatable-cell-template let-value="value">
                         <div class="w-100 text-center">
-                            <a *ngIf="exercise.isAtLeastInstructor; else displayTextOnly" [routerLink]="['..', 'participations', value.id, 'submissions']">
+                            <a *ngIf="exercise.isAtLeastInstructor; else displayTextOnly" [routerLink]="getExerciseParticipationsLink(value.id)">
                                 {{ value.submissionCount }}
                             </a>
                             <ng-template #displayTextOnly>
@@ -270,7 +270,11 @@
                             *ngIf="exercise.exerciseGroup && newManualResultAllowed && exercise.exerciseGroup.exam?.numberOfCorrectionRoundsInExam < 2"
                             [routerLink]="[
                                 '/course-management',
-                                exercise.exerciseGroup?.exam.course.id,
+                                exercise.exerciseGroup!.exam!.course!.id,
+                                'exams',
+                                exercise.exerciseGroup!.exam!.id,
+                                'exercise-groups',
+                                exercise.exerciseGroup!.id,
                                 'programming-exercises',
                                 exercise.id,
                                 'code-editor',
@@ -305,7 +309,11 @@
                             *ngIf="exercise.exerciseGroup && exercise.exerciseGroup.exam?.numberOfCorrectionRoundsInExam < 2"
                             [routerLink]="[
                                 '/course-management',
-                                exercise.exerciseGroup?.exam.course.id,
+                                exercise.exerciseGroup!.exam!.course!.id,
+                                'exams',
+                                exercise.exerciseGroup!.exam!.id,
+                                'exercise-groups',
+                                exercise.exerciseGroup!.id,
                                 'file-upload-exercises',
                                 exercise.id,
                                 'submissions',
@@ -335,7 +343,11 @@
                             *ngIf="exercise.exerciseGroup && exercise.exerciseGroup.exam?.numberOfCorrectionRoundsInExam < 2"
                             [routerLink]="[
                                 '/course-management',
-                                exercise.exerciseGroup?.exam.course.id,
+                                exercise.exerciseGroup!.exam!.course!.id,
+                                'exams',
+                                exercise.exerciseGroup!.exam!.id,
+                                'exercise-groups',
+                                exercise.exerciseGroup!.id,
                                 'modeling-exercises',
                                 exercise.id,
                                 'submissions',
@@ -365,7 +377,11 @@
                             *ngIf="exercise.exerciseGroup && exercise.exerciseGroup.exam?.numberOfCorrectionRoundsInExam < 2"
                             [routerLink]="[
                                 '/course-management',
-                                exercise.exerciseGroup?.exam.course.id,
+                                exercise.exerciseGroup!.exam!.course!.id,
+                                'exams',
+                                exercise.exerciseGroup!.exam!.id,
+                                'exercise-groups',
+                                exercise.exerciseGroup!.id,
                                 'text-exercises',
                                 exercise.id,
                                 'submissions',
