@@ -488,13 +488,18 @@ public class ModelingExerciseResource {
     public ResponseEntity<ModelingPlagiarismResult> checkPlagiarism(@PathVariable long exerciseId, @RequestParam float similarityThreshold, @RequestParam int minimumScore,
             @RequestParam int minimumSize) {
         ModelingExercise modelingExercise = modelingExerciseRepository.findByIdWithStudentParticipationsSubmissionsResultsElseThrow(exerciseId);
+
         if (!authCheckService.isAtLeastInstructorForExercise(modelingExercise)) {
             return forbidden();
         }
 
+        Optional<PlagiarismResult> optionalPreviousResult = plagiarismService.getPlagiarismResult(modelingExercise);
+
         ModelingPlagiarismResult result = modelingPlagiarismDetectionService.compareSubmissions(modelingExercise, similarityThreshold / 100, minimumSize, minimumScore);
 
         plagiarismService.savePlagiarismResult(result);
+
+        optionalPreviousResult.ifPresent(plagiarismService::deletePlagiarismResult);
 
         return ResponseEntity.ok(result);
     }

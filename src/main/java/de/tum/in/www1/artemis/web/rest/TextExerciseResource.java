@@ -604,9 +604,13 @@ public class TextExerciseResource {
             return forbidden();
         }
 
+        Optional<PlagiarismResult> optionalPreviousResult = plagiarismService.getPlagiarismResult(textExercise);
+
         TextPlagiarismResult result = textPlagiarismDetectionService.checkPlagiarism(textExercise, similarityThreshold, minimumScore, minimumSize);
 
         plagiarismService.savePlagiarismResult(result);
+
+        optionalPreviousResult.ifPresent(plagiarismService::deletePlagiarismResult);
 
         return ResponseEntity.ok(result);
     }

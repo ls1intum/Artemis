@@ -37,6 +37,14 @@ public class PlagiarismService {
     }
 
     /**
+     * Delete the given plagiarism result.
+     * @param result the result to delete.
+     */
+    public void deletePlagiarismResult(PlagiarismResult result) {
+        plagiarismResultRepository.delete(result);
+    }
+
+    /**
      * Return the plagiarism comparison with the given ID or empty otherwise.
      * @param comparisonId ID of the plagiarism comparison to fetch.
      * @return the plagiarism comparison with the given ID.
