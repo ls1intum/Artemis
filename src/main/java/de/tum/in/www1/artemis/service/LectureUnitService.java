@@ -26,6 +26,11 @@ public class LectureUnitService {
         this.learningGoalRepository = learningGoalRepository;
     }
 
+    /**
+     * Deletes a lecture unit correctly in the databse
+     *
+     * @param lectureUnit lecture unit to delete
+     */
     @Transactional
     public void removeLectureUnit(LectureUnit lectureUnit) {
 
