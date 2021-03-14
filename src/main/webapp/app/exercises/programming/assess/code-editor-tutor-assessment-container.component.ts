@@ -313,6 +313,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
      */
     nextSubmission() {
         this.loadingParticipation = true;
+        this.submission = undefined;
         this.programmingSubmissionService.getProgrammingSubmissionForExerciseForCorrectionRoundWithoutAssessment(this.exercise.id!, true, this.correctionRound).subscribe(
             (response: ProgrammingSubmission) => {
                 this.loadingParticipation = false;
