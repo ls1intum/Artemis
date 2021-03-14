@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.programming;
 
+import static de.tum.in.www1.artemis.config.Constants.TEST_CASES_DUPLICATE_NOTIFICATION;
+
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.function.Predicate;
@@ -28,6 +30,7 @@ import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
+import de.tum.in.www1.artemis.service.GroupNotificationService;
 import de.tum.in.www1.artemis.service.ResultService;
 import de.tum.in.www1.artemis.service.StaticCodeAnalysisService;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
@@ -61,10 +64,13 @@ public class ProgrammingExerciseGradingService {
 
     private final AuditEventRepository auditEventRepository;
 
+    private final GroupNotificationService groupNotificationService;
+
     public ProgrammingExerciseGradingService(ProgrammingExerciseTestCaseService testCaseService, ProgrammingSubmissionService programmingSubmissionService,
             StudentParticipationRepository studentParticipationRepository, ResultRepository resultRepository, Optional<ContinuousIntegrationService> continuousIntegrationService,
             SimpMessageSendingOperations messagingTemplate, StaticCodeAnalysisService staticCodeAnalysisService, ProgrammingAssessmentService programmingAssessmentService,
-            ResultService resultService, ProgrammingSubmissionRepository programmingSubmissionRepository, AuditEventRepository auditEventRepository) {
+            ResultService resultService, ProgrammingSubmissionRepository programmingSubmissionRepository, AuditEventRepository auditEventRepository,
+            GroupNotificationService groupNotificationService) {
         this.testCaseService = testCaseService;
         this.programmingSubmissionService = programmingSubmissionService;
         this.studentParticipationRepository = studentParticipationRepository;
@@ -76,6 +82,7 @@ public class ProgrammingExerciseGradingService {
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.resultService = resultService;
         this.auditEventRepository = auditEventRepository;
+        this.groupNotificationService = groupNotificationService;
     }
 
     /**
@@ -344,19 +351,25 @@ public class ProgrammingExerciseGradingService {
             // Add feedbacks for tests that were not executed ("test was not executed").
             createFeedbackForNotExecutedTests(result, testCasesForCurrentDate);
 
+            // Add feedbacks for all duplicate test cases
+            boolean hasDuplicateTestCases = createFeedbackForDuplicateTests(result, exercise);
+
             // Recalculate the achieved score by including the test cases individual weight.
             // The score is always calculated from ALL test cases, regardless of the current date!
             updateScore(result, successfulTestCases, testCases, staticCodeAnalysisFeedback, exercise);
 
             // Create a new result string that reflects passed, failed & not executed test cases.
-            updateResultString(result, successfulTestCases, testCasesForCurrentDate, staticCodeAnalysisFeedback, exercise);
+            updateResultString(result, successfulTestCases, testCasesForCurrentDate, staticCodeAnalysisFeedback, exercise, hasDuplicateTestCases);
         }
         // Case 2: There are no test cases that are executed before the due date has passed. We need to do this to differentiate this case from a build error.
         else if (testCases.size() > 0 && result.getFeedbacks().size() > 0 && testCaseFeedback.size() > 0) {
             removeAllTestCaseFeedbackAndSetScoreToZero(result, staticCodeAnalysisFeedback);
 
+            // Add feedbacks for all duplicate test cases
+            boolean hasDuplicateTestCases = createFeedbackForDuplicateTests(result, exercise);
+
             // In this case, test cases won't be displayed but static code analysis feedback must be shown in the result string.
-            updateResultString(result, Set.of(), Set.of(), staticCodeAnalysisFeedback, exercise);
+            updateResultString(result, Set.of(), Set.of(), staticCodeAnalysisFeedback, exercise, hasDuplicateTestCases);
         }
         // Case 3: If there is no test case feedback, the build has failed or it has previously fallen under case 2. In this case we just return the original result without
         // changing it.
@@ -365,7 +378,8 @@ public class ProgrammingExerciseGradingService {
 
     /**
      * Check which tests were not executed and add a new Feedback for them to the exercise.
-     * @param result of the build run.
+     *
+     * @param result   of the build run.
      * @param allTests of the given programming exercise.
      */
     private void createFeedbackForNotExecutedTests(Result result, Set<ProgrammingExerciseTestCase> allTests) {
@@ -374,9 +388,30 @@ public class ProgrammingExerciseGradingService {
         result.addFeedbacks(feedbacksForNotExecutedTestCases);
     }
 
+    private boolean createFeedbackForDuplicateTests(Result result, ProgrammingExercise programmingExercise) {
+        Set<String> uniqueFeedbackNames = new HashSet<>();
+        Set<String> duplicateFeedbackNames = result.getFeedbacks().stream().map(Feedback::getText).filter(fbName -> !uniqueFeedbackNames.add(fbName)) // Set.add() returns false if
+                                                                                                                                                      // the element was already in
+                                                                                                                                                      // the set.
+                .collect(Collectors.toSet());
+
+        if (duplicateFeedbackNames.size() > 0) {
+            List<Feedback> feedbacksForDuplicateTestCases = duplicateFeedbackNames.stream()
+                    .map(feedbackName -> new Feedback().type(FeedbackType.AUTOMATIC).text(feedbackName + " - Duplicate Test Case!")
+                            .detailText("This is a duplicate test case. Please review all your test cases and verify that you only use unique test cases!").positive(false))
+                    .collect(Collectors.toList());
+            result.addFeedbacks(feedbacksForDuplicateTestCases);
+            String notificationText = TEST_CASES_DUPLICATE_NOTIFICATION + String.join(",", duplicateFeedbackNames);
+            groupNotificationService.notifyInstructorGroupAboutDuplicateTestCasesForExercise(programmingExercise, notificationText);
+            return true;
+        }
+        return false;
+    }
+
     /**
      * Check which tests were executed but which result should not be made public to the student yet.
-     * @param result of the build run.
+     *
+     * @param result                  of the build run.
      * @param testCasesForCurrentDate of the given programming exercise.
      */
     private void removeFeedbacksForAfterDueDateTests(Result result, Set<ProgrammingExerciseTestCase> testCasesForCurrentDate) {
@@ -504,26 +539,34 @@ public class ProgrammingExerciseGradingService {
 
     /**
      * Update the result's result string given the successful tests vs. all tests (x of y passed).
-     * @param result of the build run.
-     * @param successfulTestCases test cases with positive feedback.
-     * @param allTests of the given programming exercise.
-     * @param scaFeedback for the result
-     * @param exercise to which this result and the test cases belong
+     *
+     * @param result                of the build run.
+     * @param successfulTestCases   test cases with positive feedback.
+     * @param allTests              of the given programming exercise.
+     * @param scaFeedback           for the result
+     * @param exercise              to which this result and the test cases belong
+     * @param hasDuplicateTestCases indicates duplicate test cases
      */
     private void updateResultString(Result result, Set<ProgrammingExerciseTestCase> successfulTestCases, Set<ProgrammingExerciseTestCase> allTests, List<Feedback> scaFeedback,
-            ProgrammingExercise exercise) {
+            ProgrammingExercise exercise, boolean hasDuplicateTestCases) {
         // Create a new result string that reflects passed, failed & not executed test cases.
-        String newResultString = successfulTestCases.size() + " of " + allTests.size() + " passed";
+        if (hasDuplicateTestCases) {
+            // Create a new result string that reflects passed, failed & not executed test cases.
+            String newResultString = successfulTestCases.size() + " of " + allTests.size() + " passed";
 
-        // Show number of found quality issues if static code analysis is enabled
-        if (Boolean.TRUE.equals(exercise.isStaticCodeAnalysisEnabled())) {
-            String issueTerm = scaFeedback.size() == 1 ? ", 1 issue" : ", " + scaFeedback.size() + " issues";
-            newResultString += issueTerm;
+            // Show number of found quality issues if static code analysis is enabled
+            if (Boolean.TRUE.equals(exercise.isStaticCodeAnalysisEnabled())) {
+                String issueTerm = scaFeedback.size() == 1 ? ", 1 issue" : ", " + scaFeedback.size() + " issues";
+                newResultString += issueTerm;
+            }
+            if (result.isManual()) {
+                newResultString = updateManualResultString(newResultString, result, exercise);
+            }
+            result.setResultString(newResultString);
         }
-        if (result.isManual()) {
-            newResultString = updateManualResultString(newResultString, result, exercise);
+        else {
+            result.setResultString("Error: Found duplicated tests!");
         }
-        result.setResultString(newResultString);
     }
 
     /**
