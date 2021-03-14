@@ -275,18 +275,18 @@ public class TextAssessmentResource extends AssessmentResource {
         final TextSubmission textSubmission = optionalTextSubmission.get();
         final Participation participation = textSubmission.getParticipation();
         final TextExercise exercise = (TextExercise) participation.getExercise();
+        final User user = userRepository.getUserWithGroupsAndAuthorities();
+        checkAuthorization(exercise, user);
+        final boolean isAtLeastInstructorForExercise = authCheckService.isAtLeastInstructorForExercise(exercise, user);
+
         Result result;
-        if (resultId != 0) {
+        if (resultId != 0 && isAtLeastInstructorForExercise) {
             result = textSubmission.getManualResults().stream().filter(result1 -> result1.getId().equals(resultId)).findFirst().get();
             correctionRound = textSubmission.getManualResults().indexOf(result);
         }
         else {
             result = textSubmission.getResultForCorrectionRound(correctionRound);
         }
-
-        final User user = userRepository.getUserWithGroupsAndAuthorities();
-        checkAuthorization(exercise, user);
-        final boolean isAtLeastInstructorForExercise = authCheckService.isAtLeastInstructorForExercise(exercise, user);
 
         if (result != null && !isAtLeastInstructorForExercise && result.getAssessor() != null && !result.getAssessor().getLogin().equals(user.getLogin())
                 && result.getCompletionDate() == null) {

@@ -182,10 +182,10 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
     @GetMapping("/modeling-submissions/{submissionId}")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<ModelingSubmission> getModelingSubmission(@PathVariable Long submissionId,
-            @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound) {
+            @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound, @RequestParam(value = "resultId", defaultValue = "0") long resultId) {
         log.debug("REST request to get ModelingSubmission with id: {}", submissionId);
         // TODO CZ: include exerciseId in path to get exercise for auth check more easily?
-        var modelingSubmission = modelingSubmissionService.findOne(submissionId);
+        var modelingSubmission = modelingSubmissionService.findOneWithEagerResultAndFeedback(submissionId);
         var studentParticipation = (StudentParticipation) modelingSubmission.getParticipation();
         var modelingExercise = (ModelingExercise) studentParticipation.getExercise();
         var gradingCriteria = gradingCriterionService.findByExerciseIdWithEagerGradingCriteria(modelingExercise.getId());
@@ -194,6 +194,12 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(modelingExercise, user)) {
             return forbidden();
         }
+
+        if (resultId != 0 && authCheckService.isAtLeastInstructorForExercise(modelingExercise, user)) {
+            Result result = modelingSubmission.getManualResults().stream().filter(result1 -> result1.getId().equals(resultId)).findFirst().get();
+            correctionRound = modelingSubmission.getManualResults().indexOf(result);
+        }
+
         modelingSubmission = modelingSubmissionService.lockAndGetModelingSubmission(submissionId, modelingExercise, correctionRound);
         // Make sure the exercise is connected to the participation in the json response
         studentParticipation.setExercise(modelingExercise);
