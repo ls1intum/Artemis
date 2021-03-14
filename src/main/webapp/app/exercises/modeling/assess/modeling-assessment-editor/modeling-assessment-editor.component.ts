@@ -267,6 +267,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
             return;
         }
 
+        this.isLoading = false;
         if (error.error && error.error.errorKey === 'lockedSubmissionsLimitReached') {
             this.navigateBack();
         } else {
@@ -397,10 +398,12 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     }
 
     assessNext() {
+        this.isLoading = true;
         this.nextSubmissionBusy = true;
         this.modelingSubmissionService.getModelingSubmissionForExerciseForCorrectionRoundWithoutAssessment(this.modelingExercise!.id!, true, this.correctionRound).subscribe(
             (unassessedSubmission: ModelingSubmission) => {
                 this.nextSubmissionBusy = false;
+                this.isLoading = false;
 
                 // navigate to the new assessment page to trigger re-initialization of the components
                 this.router.onSameUrlNavigation = 'reload';

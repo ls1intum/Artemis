@@ -312,8 +312,11 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
      * Go to next submission
      */
     nextSubmission() {
+        this.loadingParticipation = true;
         this.programmingSubmissionService.getProgrammingSubmissionForExerciseForCorrectionRoundWithoutAssessment(this.exercise.id!, true, this.correctionRound).subscribe(
             (response: ProgrammingSubmission) => {
+                this.loadingParticipation = false;
+
                 // navigate to the new assessment page to trigger re-initialization of the components
                 this.router.onSameUrlNavigation = 'reload';
 
@@ -321,9 +324,13 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
                 this.router.navigate(url, { queryParams: { 'correction-round': this.correctionRound } });
             },
             (error: HttpErrorResponse) => {
+                // there are no unassessed submission, nothing we have to worry about
                 if (error.status === 404) {
-                    // there are no unassessed submission, nothing we have to worry about
-                } else if (error.error && error.error.errorKey === 'lockedSubmissionsLimitReached') {
+                    return;
+                }
+
+                this.loadingParticipation = false;
+                if (error.error && error.error.errorKey === 'lockedSubmissionsLimitReached') {
                     // the lock limit is reached
                     this.onError('artemisApp.submission.lockedSubmissionsLimitReached');
                 } else {

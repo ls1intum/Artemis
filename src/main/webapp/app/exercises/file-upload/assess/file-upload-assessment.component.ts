@@ -225,9 +225,11 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
      * For the new submission to appear on the same page, the url has to be reloaded.
      */
     assessNext() {
+        this.isLoading = true;
         this.unreferencedFeedback = [];
         this.fileUploadSubmissionService.getFileUploadSubmissionForExerciseForCorrectionRoundWithoutAssessment(this.exercise!.id!, false, this.correctionRound).subscribe(
             (response: FileUploadSubmission) => {
+                this.isLoading = false;
                 this.unassessedSubmission = response;
 
                 // navigate to the new assessment page to trigger re-initialization of the components
@@ -246,9 +248,9 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
             (error: HttpErrorResponse) => {
                 if (error.status === 404) {
                     // there are no unassessed submission, nothing we have to worry about
-                    this.isLoading = false;
                     this.hasNewSubmissions = false;
                 } else {
+                    this.isLoading = false;
                     this.onError(error.message);
                 }
             },
