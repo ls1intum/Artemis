@@ -368,10 +368,10 @@
                                 <span
                                     jhiTranslate="artemisApp.exerciseAssessmentDashboard.noSubmissionsInfo"
                                     [translateValues]="{
-                                        freeAssessments: 1,
-                                        openAssessments: numberOfSubmissions.inTime - numberOfAssessmentsOfCorrectionRounds[1].inTime,
-                                        lockedSubmissionsByOtherTutor: 3,
-                                        submissionsCorrectedInFirstRound: 3
+                                        freeAssessments: numberOfSubmissions.inTime - numberOfAssessmentsOfCorrectionRounds[correctionRound].inTime - 3,
+                                        openAssessments: numberOfSubmissions.inTime - numberOfAssessmentsOfCorrectionRounds[correctionRound].inTime,
+                                        lockedSubmissionsByOtherTutor: lockedSubmissionsByOtherTutorOfCorrectionRounds[correctionRound]?.inTime,
+                                        submissionsCorrectedInFirstRound: submissionsByCorrectionRound.get(correctionRound)?.length
                                     }"
                                 >
                                 </span>

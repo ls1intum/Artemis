@@ -80,7 +80,7 @@ public class ExerciseResource {
 
     public ExerciseResource(ExerciseService exerciseService, ParticipationService participationService, UserRepository userRepository, ExamDateService examDateService,
             AuthorizationCheckService authCheckService, TutorParticipationService tutorParticipationService, ExampleSubmissionRepository exampleSubmissionRepository,
-            ComplaintRepository complaintRepository, SubmissionRepository submissionRepository, ResultService resultService, TutorLeaderboardService tutorLeaderboardService,
+            ComplaintRepository complaintRepository, SubmissionRepository submissionRepository, TutorLeaderboardService tutorLeaderboardService,
             ComplaintResponseRepository complaintResponseRepository, ProgrammingExerciseRepository programmingExerciseRepository, GradingCriterionService gradingCriterionService,
             ExerciseRepository exerciseRepository, ResultRepository resultRepository) {
         this.exerciseService = exerciseService;
@@ -253,9 +253,10 @@ public class ExerciseResource {
         stats.setTotalNumberOfAssessments(totalNumberOfAssessments);
 
         final DueDateStat[] numberOfAssessmentsOfCorrectionRounds;
+        int numberOfCorrectionRounds = 0;
         if (examMode) {
             // set number of corrections specific to each correction round
-            int numberOfCorrectionRounds = exercise.getExerciseGroup().getExam().getNumberOfCorrectionRoundsInExam();
+            numberOfCorrectionRounds = exercise.getExerciseGroup().getExam().getNumberOfCorrectionRoundsInExam();
             numberOfAssessmentsOfCorrectionRounds = resultRepository.countNumberOfFinishedAssessmentsForExamExerciseForCorrectionRounds(exercise, numberOfCorrectionRounds);
         }
         else {
@@ -264,6 +265,11 @@ public class ExerciseResource {
         }
 
         stats.setNumberOfAssessmentsOfCorrectionRounds(numberOfAssessmentsOfCorrectionRounds);
+
+        final DueDateStat[] numberOfLockedAssessmentByOtherTutorsOfCorrectionRound;
+        numberOfLockedAssessmentByOtherTutorsOfCorrectionRound = resultRepository.countNumberOfLockedAssessmentsByOtherTutorsForExamExerciseForCorrectionRounds(exercise,
+                numberOfCorrectionRounds, userRepository.getUserWithGroupsAndAuthorities());
+        stats.setNumberOfLockedAssessmentByOtherTutorsOfCorrectionRound(numberOfLockedAssessmentByOtherTutorsOfCorrectionRound);
 
         final DueDateStat numberOfAutomaticAssistedAssessments = resultRepository.countNumberOfAutomaticAssistedAssessmentsForExercise(exerciseId);
         stats.setNumberOfAutomaticAssistedAssessments(numberOfAutomaticAssistedAssessments);

@@ -14,6 +14,8 @@ public class StatsForDashboardDTO {
 
     private DueDateStat[] numberOfAssessmentsOfCorrectionRounds;
 
+    private DueDateStat[] numberOfLockedAssessmentByOtherTutorsOfCorrectionRound;
+
     private DueDateStat numberOfAutomaticAssistedAssessments;
 
     private Long numberOfComplaints;
@@ -125,5 +127,13 @@ public class StatsForDashboardDTO {
 
     public void setTutorLeaderboardEntries(List<TutorLeaderboardDTO> tutorLeaderboardEntries) {
         this.tutorLeaderboardEntries = tutorLeaderboardEntries;
+    }
+
+    public DueDateStat[] getNumberOfLockedAssessmentByOtherTutorsOfCorrectionRound() {
+        return numberOfLockedAssessmentByOtherTutorsOfCorrectionRound;
+    }
+
+    public void setNumberOfLockedAssessmentByOtherTutorsOfCorrectionRound(DueDateStat[] numberOfLockedAssessmentByOtherTutorsOfCorrectionRound) {
+        this.numberOfLockedAssessmentByOtherTutorsOfCorrectionRound = numberOfLockedAssessmentByOtherTutorsOfCorrectionRound;
     }
 }
