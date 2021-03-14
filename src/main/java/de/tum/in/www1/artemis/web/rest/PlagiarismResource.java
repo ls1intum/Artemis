@@ -39,6 +39,7 @@ public class PlagiarismResource {
      * Update the status of the plagiarism comparison with the given ID.
      *
      * @param comparisonId ID of the plagiarism comparison to update the status of
+     * @param statusDTO new status for the given comparison
      * @return The ResponseEntity with status 200 (Ok) or with status 400 (Bad Request) if the
      * parameters are invalid
      */

@@ -30,7 +30,7 @@ import de.tum.in.www1.artemis.domain.Exercise;
 @Entity
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @DiscriminatorColumn(name = "discriminator", discriminatorType = DiscriminatorType.STRING)
-@DiscriminatorValue(value = "PR")
+@DiscriminatorValue("PR")
 @DiscriminatorOptions(force = true)
 @Table(name = "plagiarism_result")
 public abstract class PlagiarismResult<E extends PlagiarismSubmissionElement> extends AbstractAuditingEntity {

@@ -2,8 +2,6 @@ package de.tum.in.www1.artemis.service.plagiarism;
 
 import java.util.Optional;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Exercise;
@@ -17,8 +15,6 @@ import de.tum.in.www1.artemis.repository.PlagiarismResultRepository;
 
 @Service
 public class PlagiarismService {
-
-    private final Logger logger = LoggerFactory.getLogger(PlagiarismService.class);
 
     private final PlagiarismComparisonRepository plagiarismComparisonRepository;
 
@@ -34,6 +30,7 @@ public class PlagiarismService {
      * plagiarism was detected yet.
      *
      * @param exercise Exercise to get the latest plagiarism result for.
+     * @return the latest plagiarism result for the given exercise.
      */
     public Optional<PlagiarismResult> getPlagiarismResult(Exercise exercise) {
         return plagiarismResultRepository.findFirstByExerciseIdOrderByLastModifiedDateDesc(exercise.getId());
@@ -42,7 +39,7 @@ public class PlagiarismService {
     /**
      * Return the plagiarism comparison with the given ID or empty otherwise.
      * @param comparisonId ID of the plagiarism comparison to fetch.
-     * @return
+     * @return the plagiarism comparison with the given ID.
      */
     public Optional<PlagiarismComparison> getPlagiarismComparison(long comparisonId) {
         return plagiarismComparisonRepository.findById(comparisonId);
