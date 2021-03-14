@@ -25,7 +25,7 @@ import { ModelingAssessmentService } from 'app/exercises/modeling/assess/modelin
 import { assessmentNavigateBack } from 'app/exercises/shared/navigate-back.util';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
-import { getSubmissionResultByCorrectionRound } from 'app/entities/submission.model';
+import { getSubmissionResultByCorrectionRound, getSubmissionResultById } from 'app/entities/submission.model';
 
 @Component({
     selector: 'jhi-modeling-assessment-editor',
@@ -57,6 +57,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     hasAutomaticFeedback = false;
     hasAssessmentDueDatePassed: boolean;
     correctionRound = 0;
+    resultId = 0;
 
     private cancelConfirmationText: string;
 
@@ -93,6 +94,8 @@ export class ModelingAssessmentEditorComponent implements OnInit {
             this.hideBackButton = queryParams.get('hideBackButton') === 'true';
             this.isTestRun = queryParams.get('testRun') === 'true';
             this.correctionRound = Number(queryParams.get('correction-round'));
+            this.resultId = Number(queryParams.get('resultId'));
+            console.log('modeling resultId is set', this.resultId);
         });
         this.route.paramMap.subscribe((params) => {
             this.courseId = Number(params.get('courseId'));
@@ -107,7 +110,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     }
 
     private loadSubmission(submissionId: number): void {
-        this.modelingSubmissionService.getSubmission(submissionId, this.correctionRound).subscribe(
+        this.modelingSubmissionService.getSubmission(submissionId, this.correctionRound, this.resultId).subscribe(
             (submission: ModelingSubmission) => {
                 this.handleReceivedSubmission(submission);
             },
@@ -148,7 +151,13 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         this.submission = submission;
         const studentParticipation = this.submission.participation as StudentParticipation;
         this.modelingExercise = studentParticipation.exercise as ModelingExercise;
-        this.result = getSubmissionResultByCorrectionRound(this.submission, this.correctionRound);
+        if (this.resultId) {
+            this.result = getSubmissionResultById(submission, this.resultId);
+            this.correctionRound = submission.results?.findIndex((result) => result.id === this.resultId)!;
+            console.log('result and correctionRound:', this.result, this.correctionRound);
+        } else {
+            this.result = getSubmissionResultByCorrectionRound(this.submission, this.correctionRound);
+        }
         this.hasAssessmentDueDatePassed = !!this.modelingExercise!.assessmentDueDate && moment(this.modelingExercise!.assessmentDueDate).isBefore(now());
         if (this.result?.hasComplaint) {
             this.getComplaint(this.result.id);
