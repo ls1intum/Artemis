@@ -668,7 +668,7 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
 
         StatsForInstructorDashboardDTO stats = request.get("/api/courses/" + testCourse.getId() + "/stats-for-assessment-dashboard", HttpStatus.OK,
                 StatsForInstructorDashboardDTO.class);
-        // TODO: rewrite the assert statements after inserting actual test date (see TODO above)
+
         var currentTutorLeaderboard = stats.getTutorLeaderboardEntries().get(0);
         assertThat(currentTutorLeaderboard.getNumberOfTutorComplaints()).isEqualTo(0);
         assertThat(currentTutorLeaderboard.getNumberOfAcceptedComplaints()).isEqualTo(0);
