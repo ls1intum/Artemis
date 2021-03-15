@@ -520,8 +520,8 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
         }
         catch (Exception emAll) {
             log.warn(emAll.getMessage());
-            // in case of an error message, we assume the project does not exist
-            return null;
+            // in case of an error message, we assume the project exist (like in Bamboo service)
+            return "The project already exists on the Continuous Integration Server. Please choose a different title and short name!";
         }
     }
 

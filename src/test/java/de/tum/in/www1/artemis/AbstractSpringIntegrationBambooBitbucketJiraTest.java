@@ -173,7 +173,7 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
         final var exerciseRepoName = exercise.generateRepositoryName(RepositoryType.TEMPLATE);
         final var solutionRepoName = exercise.generateRepositoryName(RepositoryType.SOLUTION);
         final var testRepoName = exercise.generateRepositoryName(RepositoryType.TESTS);
-        bambooRequestMockProvider.mockCheckIfProjectExists(exercise, false);
+        bambooRequestMockProvider.mockCheckIfProjectExists(exercise, false, false);
         bitbucketRequestMockProvider.mockCheckIfProjectExists(exercise, false);
         bitbucketRequestMockProvider.mockCreateProjectForExercise(exercise);
         bitbucketRequestMockProvider.mockCreateRepository(exercise, exerciseRepoName);
@@ -198,7 +198,7 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
         mockImportRepositories(sourceExercise, exerciseToBeImported);
         doNothing().when(gitService).pushSourceToTargetRepo(any(), any());
 
-        bambooRequestMockProvider.mockCheckIfProjectExists(exerciseToBeImported, false);
+        bambooRequestMockProvider.mockCheckIfProjectExists(exerciseToBeImported, false, false);
         if (!recreateBuildPlans) {
             mockCloneAndEnableAllBuildPlans(sourceExercise, exerciseToBeImported, true, false);
         }
@@ -213,7 +213,7 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
             boolean shouldPlanEnableFail) throws Exception {
         mockImportRepositories(sourceExercise, exerciseToBeImported);
         doNothing().when(gitService).pushSourceToTargetRepo(any(), any());
-        bambooRequestMockProvider.mockCheckIfProjectExists(exerciseToBeImported, false);
+        bambooRequestMockProvider.mockCheckIfProjectExists(exerciseToBeImported, false, false);
         mockCloneAndEnableAllBuildPlans(sourceExercise, exerciseToBeImported, planExistsInCi, shouldPlanEnableFail);
     }
 
@@ -443,12 +443,12 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
 
     @Override
     public void mockCheckIfProjectExistsInVcs(ProgrammingExercise exercise, boolean existsInVcs) throws Exception {
-        bitbucketRequestMockProvider.mockCheckIfProjectExists(exercise, true);
+        bitbucketRequestMockProvider.mockCheckIfProjectExists(exercise, existsInVcs);
     }
 
     @Override
-    public void mockCheckIfProjectExistsInCi(ProgrammingExercise exercise, boolean existsInCi) throws Exception {
-        bambooRequestMockProvider.mockCheckIfProjectExists(exercise, existsInCi);
+    public void mockCheckIfProjectExistsInCi(ProgrammingExercise exercise, boolean existsInCi, boolean shouldFail) throws Exception {
+        bambooRequestMockProvider.mockCheckIfProjectExists(exercise, existsInCi, shouldFail);
     }
 
     @Override
@@ -457,8 +457,8 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
     }
 
     @Override
-    public void mockCheckIfBuildPlanExists(String projectKey, String templateBuildPlanId, boolean buildPlanExists) throws Exception {
-        bambooRequestMockProvider.mockBuildPlanExists(templateBuildPlanId, buildPlanExists);
+    public void mockCheckIfBuildPlanExists(String projectKey, String templateBuildPlanId, boolean buildPlanExists, boolean shouldFail) throws Exception {
+        bambooRequestMockProvider.mockBuildPlanExists(templateBuildPlanId, buildPlanExists, shouldFail);
     }
 
     @Override

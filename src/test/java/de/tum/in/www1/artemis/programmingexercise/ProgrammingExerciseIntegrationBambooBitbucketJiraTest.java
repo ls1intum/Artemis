@@ -213,6 +213,12 @@ class ProgrammingExerciseIntegrationBambooBitbucketJiraTest extends AbstractSpri
     }
 
     @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void updateProgrammingExercise_checkIfBuildPlanExistsFails_badRequest() throws Exception {
+        programmingExerciseIntegrationServiceTest.updateProgrammingExercise_checkIfBuildPlanExistsFails_badRequest();
+    }
+
+    @Test
     @WithMockUser(username = "instructoralt1", roles = "INSTRUCTOR")
     public void updateTimeline_intructorNotInCourse_forbidden() throws Exception {
         programmingExerciseIntegrationServiceTest.updateTimeline_intructorNotInCourse_forbidden();
@@ -396,6 +402,12 @@ class ProgrammingExerciseIntegrationBambooBitbucketJiraTest extends AbstractSpri
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void createProgrammingExercise_bambooProjectWithSameTitleAlreadyExists_badRequest() throws Exception {
         programmingExerciseIntegrationServiceTest.createProgrammingExercise_bambooProjectWithSameTitleAlreadyExists_badRequest();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void createProgrammingExercise_failToCheckIfProjectExistsInCi() throws Exception {
+        programmingExerciseIntegrationServiceTest.createProgrammingExercise_failToCheckIfProjectExistsInCi();
     }
 
     @Test

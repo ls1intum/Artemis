@@ -105,7 +105,7 @@ public class BambooRequestMockProvider {
      * @throws IOException        an IO exception when reading test files
      * @throws URISyntaxException exceptions related to URI handling in test REST calls
      */
-    public void mockCheckIfProjectExists(ProgrammingExercise exercise, final boolean exists) throws IOException, URISyntaxException {
+    public void mockCheckIfProjectExists(ProgrammingExercise exercise, final boolean exists, boolean shouldFail) throws IOException, URISyntaxException {
         final var projectKey = exercise.getProjectKey();
         final var projectName = exercise.getProjectName();
         final var bambooSearchDTO = new BambooProjectsSearchDTO();
@@ -116,10 +116,20 @@ public class BambooRequestMockProvider {
         bambooSearchDTO.setSize(1);
         bambooSearchDTO.setSearchResults(List.of(searchResult));
 
-        mockServer.expect(requestTo(bambooServerUrl + "/rest/api/latest/project/" + projectKey)).andExpect(method(HttpMethod.GET)).andRespond(withStatus(HttpStatus.NOT_FOUND));
-        final var projectSearchPath = UriComponentsBuilder.fromUri(bambooServerUrl.toURI()).path("/rest/api/latest/search/projects").queryParam("searchTerm", projectName);
-        mockServer.expect(requestTo(projectSearchPath.build().toUri())).andExpect(method(HttpMethod.GET))
-                .andRespond(withStatus(HttpStatus.OK).body(mapper.writeValueAsString(bambooSearchDTO)).contentType(MediaType.APPLICATION_JSON));
+        HttpStatus latestProjectStatus = HttpStatus.OK;
+        if (!exists) {
+            latestProjectStatus = HttpStatus.NOT_FOUND;
+        }
+        else if (shouldFail) {
+            latestProjectStatus = HttpStatus.BAD_REQUEST;
+        }
+        mockServer.expect(requestTo(bambooServerUrl + "/rest/api/latest/project/" + projectKey)).andExpect(method(HttpMethod.GET)).andRespond(withStatus(latestProjectStatus));
+
+        if (!exists && !shouldFail) {
+            final var projectSearchPath = UriComponentsBuilder.fromUri(bambooServerUrl.toURI()).path("/rest/api/latest/search/projects").queryParam("searchTerm", projectName);
+            mockServer.expect(requestTo(projectSearchPath.build().toUri())).andExpect(method(HttpMethod.GET))
+                    .andRespond(withStatus(HttpStatus.OK).body(mapper.writeValueAsString(bambooSearchDTO)).contentType(MediaType.APPLICATION_JSON));
+        }
     }
 
     public void mockRemoveAllDefaultProjectPermissions(ProgrammingExercise exercise) {
@@ -160,8 +170,11 @@ public class BambooRequestMockProvider {
         mockCopyBuildPlan(projectKey, BuildPlanType.TEMPLATE.getName(), projectKey, targetPlanName, true);
     }
 
-    public void mockBuildPlanExists(final String buildPlanId, final boolean exists) throws URISyntaxException, JsonProcessingException {
-        if (exists) {
+    public void mockBuildPlanExists(final String buildPlanId, final boolean exists, boolean shouldFail) throws URISyntaxException, JsonProcessingException {
+        if (shouldFail) {
+            mockGetBuildPlan(buildPlanId, null, true);
+        }
+        else if (exists) {
             mockGetBuildPlan(buildPlanId, new BambooBuildPlanDTO(buildPlanId), false);
         }
         else {

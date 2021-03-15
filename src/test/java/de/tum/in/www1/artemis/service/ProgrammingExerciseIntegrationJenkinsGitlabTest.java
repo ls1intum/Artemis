@@ -218,6 +218,12 @@ public class ProgrammingExerciseIntegrationJenkinsGitlabTest extends AbstractSpr
     }
 
     @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void updateProgrammingExercise_checkIfBuildPlanExistsFails_badRequest() throws Exception {
+        programmingExerciseIntegrationServiceTest.updateProgrammingExercise_checkIfBuildPlanExistsFails_badRequest();
+    }
+
+    @Test
     @WithMockUser(username = "instructoralt1", roles = "INSTRUCTOR")
     public void updateTimeline_intructorNotInCourse_forbidden() throws Exception {
         programmingExerciseIntegrationServiceTest.updateTimeline_intructorNotInCourse_forbidden();
@@ -245,6 +251,12 @@ public class ProgrammingExerciseIntegrationJenkinsGitlabTest extends AbstractSpr
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void updateProblemStatement_invalidId_notFound() throws Exception {
         programmingExerciseIntegrationServiceTest.updateProblemStatement_invalidId_notFound();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void createProgrammingExercise_failToCheckIfProjectExistsInCi() throws Exception {
+        programmingExerciseIntegrationServiceTest.createProgrammingExercise_failToCheckIfProjectExistsInCi();
     }
 
     @Test

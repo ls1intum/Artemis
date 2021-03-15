@@ -102,9 +102,9 @@ public interface MockDelegate {
 
     void mockCheckIfProjectExistsInVcs(ProgrammingExercise exercise, boolean existsInVcs) throws Exception;
 
-    void mockCheckIfProjectExistsInCi(ProgrammingExercise exercise, boolean existsInCi) throws Exception;
+    void mockCheckIfProjectExistsInCi(ProgrammingExercise exercise, boolean existsInCi, boolean shouldFail) throws Exception;
 
-    void mockCheckIfBuildPlanExists(String projectKey, String templateBuildPlanId, boolean buildPlanExists) throws Exception;
+    void mockCheckIfBuildPlanExists(String projectKey, String templateBuildPlanId, boolean buildPlanExists, boolean shouldFail) throws Exception;
 
     void mockRepositoryUrlIsValid(VcsRepositoryUrl vcsTemplateRepositoryUrl, String projectKey, boolean b) throws Exception;
 

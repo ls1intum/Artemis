@@ -161,12 +161,18 @@ public class JenkinsRequestMockProvider {
         }
     }
 
-    public void mockCheckIfProjectExists(ProgrammingExercise exercise, boolean exists) throws IOException {
+    public void mockCheckIfProjectExists(ProgrammingExercise exercise, boolean exists, boolean shouldFail) throws IOException {
         var jobOrNull = exists ? mock(JobWithDetails.class) : null;
         if (jobOrNull != null) {
             doReturn("http://some-job-url.com/").when(jobOrNull).getUrl();
         }
-        doReturn(jobOrNull).when(jenkinsServer).getJob(exercise.getProjectKey());
+
+        if (shouldFail) {
+            doThrow(IOException.class).when(jenkinsServer).getJob(exercise.getProjectKey());
+        }
+        else {
+            doReturn(jobOrNull).when(jenkinsServer).getJob(exercise.getProjectKey());
+        }
     }
 
     public void mockCopyBuildPlan(String sourceProjectKey, String targetProjectKey) throws IOException {
@@ -465,9 +471,9 @@ public class JenkinsRequestMockProvider {
         }
     }
 
-    public void mockCheckIfBuildPlanExists(String projectKey, String buildPlanId, boolean buildPlanExists) throws IOException {
+    public void mockCheckIfBuildPlanExists(String projectKey, String buildPlanId, boolean buildPlanExists, boolean shouldfail) throws IOException {
         var toReturn = buildPlanExists ? new JobWithDetails() : null;
-        mockGetJob(projectKey, buildPlanId, toReturn, false);
+        mockGetJob(projectKey, buildPlanId, toReturn, shouldfail);
     }
 
     public void mockTriggerBuild(String projectKey, String buildPlanId, boolean triggerBuildFails) throws IOException {

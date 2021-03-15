@@ -410,7 +410,7 @@ public class ProgrammingExerciseIntegrationServiceTest {
 
     public void updateProgrammingExercise_invalidTemplateBuildPlan_badRequest() throws Exception {
         database.addTemplateParticipationForProgrammingExercise(programmingExercise);
-        mockDelegate.mockCheckIfBuildPlanExists(programmingExercise.getProjectKey(), programmingExercise.getTemplateBuildPlanId(), false);
+        mockDelegate.mockCheckIfBuildPlanExists(programmingExercise.getProjectKey(), programmingExercise.getTemplateBuildPlanId(), false, false);
         request.putAndExpectError(ROOT + PROGRAMMING_EXERCISES, programmingExercise, HttpStatus.BAD_REQUEST, INVALID_TEMPLATE_BUILD_PLAN_ID);
     }
 
@@ -430,8 +430,8 @@ public class ProgrammingExerciseIntegrationServiceTest {
     }
 
     private void mockBuildPlanAndRepositoryCheck(ProgrammingExercise programmingExercise) throws Exception {
-        mockDelegate.mockCheckIfBuildPlanExists(programmingExercise.getProjectKey(), programmingExercise.getTemplateBuildPlanId(), true);
-        mockDelegate.mockCheckIfBuildPlanExists(programmingExercise.getProjectKey(), programmingExercise.getSolutionBuildPlanId(), true);
+        mockDelegate.mockCheckIfBuildPlanExists(programmingExercise.getProjectKey(), programmingExercise.getTemplateBuildPlanId(), true, false);
+        mockDelegate.mockCheckIfBuildPlanExists(programmingExercise.getProjectKey(), programmingExercise.getSolutionBuildPlanId(), true, false);
         mockDelegate.mockRepositoryUrlIsValid(programmingExercise.getVcsTemplateRepositoryUrl(), programmingExercise.getProjectKey(), true);
         mockDelegate.mockRepositoryUrlIsValid(programmingExercise.getVcsSolutionRepositoryUrl(), programmingExercise.getProjectKey(), true);
     }
@@ -457,7 +457,7 @@ public class ProgrammingExerciseIntegrationServiceTest {
 
     public void updateProgrammingExercise_invalidTemplateVcs_badRequest() throws Exception {
         database.addTemplateParticipationForProgrammingExercise(programmingExercise);
-        mockDelegate.mockCheckIfBuildPlanExists(programmingExercise.getProjectKey(), programmingExercise.getTemplateBuildPlanId(), true);
+        mockDelegate.mockCheckIfBuildPlanExists(programmingExercise.getProjectKey(), programmingExercise.getTemplateBuildPlanId(), true, false);
         mockDelegate.mockRepositoryUrlIsValid(programmingExercise.getVcsTemplateRepositoryUrl(), programmingExercise.getProjectKey(), false);
 
         request.putAndExpectError(ROOT + PROGRAMMING_EXERCISES, programmingExercise, HttpStatus.BAD_REQUEST, INVALID_TEMPLATE_REPOSITORY_URL);
@@ -466,9 +466,9 @@ public class ProgrammingExerciseIntegrationServiceTest {
     public void updateProgrammingExercise_invalidSolutionBuildPlan_badRequest() throws Exception {
         database.addTemplateParticipationForProgrammingExercise(programmingExercise);
         database.addSolutionParticipationForProgrammingExercise(programmingExercise);
-        mockDelegate.mockCheckIfBuildPlanExists(programmingExercise.getProjectKey(), programmingExercise.getTemplateBuildPlanId(), true);
+        mockDelegate.mockCheckIfBuildPlanExists(programmingExercise.getProjectKey(), programmingExercise.getTemplateBuildPlanId(), true, false);
         mockDelegate.mockRepositoryUrlIsValid(programmingExercise.getVcsTemplateRepositoryUrl(), programmingExercise.getProjectKey(), true);
-        mockDelegate.mockCheckIfBuildPlanExists(programmingExercise.getProjectKey(), programmingExercise.getSolutionBuildPlanId(), false);
+        mockDelegate.mockCheckIfBuildPlanExists(programmingExercise.getProjectKey(), programmingExercise.getSolutionBuildPlanId(), false, false);
 
         request.putAndExpectError(ROOT + PROGRAMMING_EXERCISES, programmingExercise, HttpStatus.BAD_REQUEST, INVALID_SOLUTION_BUILD_PLAN_ID);
     }
@@ -476,12 +476,19 @@ public class ProgrammingExerciseIntegrationServiceTest {
     public void updateProgrammingExercise_invalidSolutionRepository_badRequest() throws Exception {
         database.addTemplateParticipationForProgrammingExercise(programmingExercise);
         database.addSolutionParticipationForProgrammingExercise(programmingExercise);
-        mockDelegate.mockCheckIfBuildPlanExists(programmingExercise.getProjectKey(), programmingExercise.getTemplateBuildPlanId(), true);
-        mockDelegate.mockCheckIfBuildPlanExists(programmingExercise.getProjectKey(), programmingExercise.getSolutionBuildPlanId(), true);
+        mockDelegate.mockCheckIfBuildPlanExists(programmingExercise.getProjectKey(), programmingExercise.getTemplateBuildPlanId(), true, false);
+        mockDelegate.mockCheckIfBuildPlanExists(programmingExercise.getProjectKey(), programmingExercise.getSolutionBuildPlanId(), true, false);
         mockDelegate.mockRepositoryUrlIsValid(programmingExercise.getVcsTemplateRepositoryUrl(), programmingExercise.getProjectKey(), true);
         mockDelegate.mockRepositoryUrlIsValid(programmingExercise.getVcsSolutionRepositoryUrl(), programmingExercise.getProjectKey(), false);
 
         request.putAndExpectError(ROOT + PROGRAMMING_EXERCISES, programmingExercise, HttpStatus.BAD_REQUEST, INVALID_SOLUTION_REPOSITORY_URL);
+    }
+
+    public void updateProgrammingExercise_checkIfBuildPlanExistsFails_badRequest() throws Exception {
+        database.addTemplateParticipationForProgrammingExercise(programmingExercise);
+        mockDelegate.mockCheckIfBuildPlanExists(programmingExercise.getProjectKey(), programmingExercise.getTemplateBuildPlanId(), true, true);
+        mockDelegate.mockRepositoryUrlIsValid(programmingExercise.getVcsTemplateRepositoryUrl(), programmingExercise.getProjectKey(), true);
+        request.putAndExpectError(ROOT + PROGRAMMING_EXERCISES, programmingExercise, HttpStatus.BAD_REQUEST, INVALID_TEMPLATE_BUILD_PLAN_ID);
     }
 
     public void updateTimeline_intructorNotInCourse_forbidden() throws Exception {
@@ -693,7 +700,7 @@ public class ProgrammingExerciseIntegrationServiceTest {
         programmingExercise.setTitle("testTitle");
         programmingExercise.setShortName("testShortName");
         mockDelegate.mockCheckIfProjectExistsInVcs(programmingExercise, false);
-        mockDelegate.mockCheckIfProjectExistsInCi(programmingExercise, true);
+        mockDelegate.mockCheckIfProjectExistsInCi(programmingExercise, true, false);
         request.post(ROOT + SETUP, programmingExercise, HttpStatus.BAD_REQUEST);
     }
 
@@ -710,7 +717,16 @@ public class ProgrammingExerciseIntegrationServiceTest {
         programmingExercise.setTitle("testTitle");
         programmingExercise.setShortName("testShortName");
         mockDelegate.mockCheckIfProjectExistsInVcs(programmingExercise, false);
-        mockDelegate.mockCheckIfProjectExistsInCi(programmingExercise, true);
+        mockDelegate.mockCheckIfProjectExistsInCi(programmingExercise, true, false);
+        request.post(ROOT + SETUP, programmingExercise, HttpStatus.BAD_REQUEST);
+    }
+
+    public void createProgrammingExercise_failToCheckIfProjectExistsInCi() throws Exception {
+        programmingExercise.setId(null);
+        programmingExercise.setTitle("unique-title");
+        programmingExercise.setShortName("testuniqueshortname");
+        mockDelegate.mockCheckIfProjectExistsInVcs(programmingExercise, false);
+        mockDelegate.mockCheckIfProjectExistsInCi(programmingExercise, true, true);
         request.post(ROOT + SETUP, programmingExercise, HttpStatus.BAD_REQUEST);
     }
 
@@ -869,7 +885,7 @@ public class ProgrammingExerciseIntegrationServiceTest {
         programmingExercise.setId(null);
         programmingExercise.setShortName("testShortName");
         mockDelegate.mockCheckIfProjectExistsInVcs(programmingExercise, false);
-        mockDelegate.mockCheckIfProjectExistsInCi(programmingExercise, true);
+        mockDelegate.mockCheckIfProjectExistsInCi(programmingExercise, true, false);
         request.post(ROOT + IMPORT.replace("{sourceExerciseId}", "1337"), programmingExercise, HttpStatus.BAD_REQUEST);
     }
 
@@ -884,7 +900,7 @@ public class ProgrammingExerciseIntegrationServiceTest {
         programmingExercise.setId(null);
         programmingExercise.setShortName("testShortName");
         mockDelegate.mockCheckIfProjectExistsInVcs(programmingExercise, false);
-        mockDelegate.mockCheckIfProjectExistsInCi(programmingExercise, true);
+        mockDelegate.mockCheckIfProjectExistsInCi(programmingExercise, true, false);
         request.post(ROOT + IMPORT.replace("{sourceExerciseId}", "1337"), programmingExercise, HttpStatus.BAD_REQUEST);
     }
 
