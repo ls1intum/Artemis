@@ -5,6 +5,7 @@
     [isTeamMode]="modelingExercise?.teamMode"
     [isAssessor]="isAssessor"
     [isTestRun]="isTestRun"
+    [exerciseDashboardLink]="exerciseDashboardLink"
     [isAtLeastInstructor]="isAtLeastInstructor"
     [canOverride]="canOverride"
     [result]="result"
@@ -19,6 +20,10 @@
     (nextSubmission)="assessNext()"
     (updateAssessmentAfterComplaint)="onUpdateAssessmentAfterComplaint($event)"
 >
+    <ng-container *ngIf="submission; then assessment; else noSubmission"></ng-container>
+</jhi-assessment-layout>
+
+<ng-template #assessment>
     <div class="alert alert-info" *ngIf="hasAutomaticFeedback && isAssessor && !result?.completionDate" jhiTranslate="modelingAssessmentEditor.automaticAssessmentAvailable">
         Congratulations! Parts of this model could already be assessed automatically. Please review the automatic assessment and complete the assessment afterwards. By submitting
         the assessment you also confirm the automatic assessment. Please be aware that you are responsible for the whole assessment.
@@ -62,4 +67,13 @@
             </div>
         </div>
     </div>
-</jhi-assessment-layout>
+</ng-template>
+
+<ng-template #noSubmission>
+    <div *ngIf="!loadingInitialSubmission" class="alert alert-warning text-center mt-4" role="alert">
+        <p jhiTranslate="modelingAssessment.notFound">We haven't found any new submission without an assessment, please go back.</p>
+        <a [routerLink]="exerciseDashboardLink" class="btn btn-info btn-sm mr-1 mb-1 assessment-dashboard">
+            <span class="d-none d-md-inline" jhiTranslate="entity.action.exerciseDashboard">Exercise dashboard</span>
+        </a>
+    </div>
+</ng-template>

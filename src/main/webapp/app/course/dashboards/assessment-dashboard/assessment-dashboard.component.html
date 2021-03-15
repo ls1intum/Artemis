@@ -175,7 +175,7 @@
                                     [(toggelingSecondCorrectionButton)]="toggelingSecondCorrectionButton"
                                 ></jhi-second-correction-enable-button>
                             </ng-container>
-                            <a class="btn btn-primary btn-sm" [routerLink]="['/course-management', courseId, exercise.type + '-exercises', exercise.id, 'assessment']">
+                            <a class="btn btn-primary btn-sm" [routerLink]="getSubmissionsLinkForExercise(exercise)">
                                 <span jhiTranslate="artemisApp.assessmentDashboard.submissions">Submissions</span>
                             </a>
                         </ng-container>
