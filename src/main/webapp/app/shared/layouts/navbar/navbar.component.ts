@@ -236,11 +236,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
                     this.addBreadcrumbForUrlSegment(currentPath, segment);
                 }
 
-                // Special case: Don't add invalid breadcrumbs for the exercise group segments
-                if ('exercise-groups' === segment) {
-                    return;
-                }
-
                 this.lastRouteUrlSegment = segment;
             }
         } catch (e) {}

@@ -63,7 +63,6 @@ const routes: Routes = [
         },
         data: {
             authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
-            usePathForBreadcrumbs: true,
             pageTitle: 'artemisApp.fileUploadExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -76,7 +75,6 @@ const routes: Routes = [
         },
         data: {
             authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
-            usePathForBreadcrumbs: true,
             pageTitle: 'artemisApp.fileUploadExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -86,7 +84,6 @@ const routes: Routes = [
         component: FileUploadExerciseDetailComponent,
         data: {
             authorities: [Authority.TA, Authority.INSTRUCTOR, Authority.ADMIN],
-            usePathForBreadcrumbs: true,
             pageTitle: 'artemisApp.fileUploadExercise.home.title',
         },
         canActivate: [UserRouteAccessService],

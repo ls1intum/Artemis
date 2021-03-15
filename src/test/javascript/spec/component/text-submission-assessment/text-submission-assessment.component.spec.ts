@@ -23,7 +23,7 @@ import { TextSubmission } from 'app/entities/text-submission.model';
 import { Result } from 'app/entities/result.model';
 import * as moment from 'moment';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { ActivatedRoute, convertToParamMap, RouterModule } from '@angular/router';
+import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { ArtemisConfirmIconModule } from 'app/shared/confirm-icon/confirm-icon.module';
 import { Course } from 'app/entities/course.model';
 import { ManualTextblockSelectionComponent } from 'app/exercises/text/assess/manual-textblock-selection/manual-textblock-selection.component';
@@ -33,6 +33,7 @@ import { TextBlock } from 'app/entities/text-block.model';
 import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { ComplaintResponse } from 'app/entities/complaint-response.model';
 import { JhiAlertService } from 'ng-jhipster';
+import { RouterTestingModule } from '@angular/router/testing';
 
 describe('TextSubmissionAssessmentComponent', () => {
     let component: TextSubmissionAssessmentComponent;
@@ -123,8 +124,8 @@ describe('TextSubmissionAssessmentComponent', () => {
                 AssessmentInstructionsModule,
                 TranslateModule.forRoot(),
                 ArtemisConfirmIconModule,
-                RouterModule,
                 TextSharedModule,
+                RouterTestingModule,
             ],
             declarations: [
                 TextSubmissionAssessmentComponent,
