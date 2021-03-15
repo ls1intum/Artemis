@@ -24,7 +24,7 @@ import * as sinonChai from 'sinon-chai';
 import * as chai from 'chai';
 import { ReactiveFormsModule } from '@angular/forms';
 import { MockTranslateValuesDirective } from '../../../course/course-scores/course-scores.component.spec';
-import { Exercise } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { ModelingExercise, UMLDiagramType } from 'app/entities/modeling-exercise.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { Exam } from 'app/entities/exam.model';
@@ -257,5 +257,38 @@ describe('StudentExamDetailComponent', () => {
         expect(toggleSubmittedStateSpy).to.have.been.calledOnce;
         expect(studentExamDetailComponent.studentExam.submitted).to.equal(true);
         expect(studentExamDetailComponent.studentExam.submissionDate).to.not.equal(undefined);
+    });
+
+    it('should route to programming submission dashboard', () => {
+        const getAssessmentLinkSpy = sinon.spy(studentExamDetailComponent, 'getAssessmentLink');
+        studentExamDetailComponentFixture.detectChanges();
+        studentExamDetailComponent.courseId = 23;
+        const programmingExercise = {
+            numberOfAssessmentsOfCorrectionRounds: [],
+            secondCorrectionEnabled: false,
+            studentAssignedTeamIdComputed: false,
+            id: 12,
+            type: ExerciseType.PROGRAMMING,
+        };
+        const route = studentExamDetailComponent.getAssessmentLink(programmingExercise);
+        expect(getAssessmentLinkSpy).to.have.been.calledOnce;
+        expect(route).to.equal('/course-management/23/programming-exercises/12/assessment');
+    });
+
+    it('should route to modeling submission', () => {
+        const getAssessmentLinkSpy = sinon.spy(studentExamService, 'getAssessmentLink');
+        studentExamDetailComponentFixture.detectChanges();
+        studentExamDetailComponent.courseId = 23;
+        const modelingExercise = {
+            numberOfAssessmentsOfCorrectionRounds: [],
+            secondCorrectionEnabled: false,
+            studentAssignedTeamIdComputed: false,
+            id: 12,
+            type: ExerciseType.MODELING,
+        };
+        const submission = { id: 14 };
+        const route = studentExamDetailComponent.getAssessmentLink(modelingExercise, submission);
+        expect(getAssessmentLinkSpy).to.have.been.calledOnce;
+        expect(route).to.equal('/course-management/23/modeling-exercises/12/submissions/14/assessment');
     });
 });

@@ -234,13 +234,10 @@ export class StudentExamDetailComponent implements OnInit {
 
         if (exercise.type === ExerciseType.PROGRAMMING) {
             route = `/course-management/${this.courseId}/${exercise.type}-exercises/${exercise.id}/assessment`;
-            console.log('programming route:', route);
-            return ''; // todo get rid of
         } else {
             this.openingAssessmentEditorForNewSubmission = true;
             const submissionUrlParameter = submission.id;
             route = `/course-management/${this.courseId}/${exercise.type}-exercises/${exercise.id}/submissions/${submissionUrlParameter}/assessment`;
-            console.log(exercise.id, submission.id);
             this.openingAssessmentEditorForNewSubmission = false;
         }
         return route;
