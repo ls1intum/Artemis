@@ -377,9 +377,11 @@
                     "correctionRound": "Correction Round",
                     "startedExam": "Started Exam",
                     "submittedExam": "Submitted Exam",
-                    "exerciseTable": "Exercise",
+                    "exerciseTablePlural": "Exercises",
+                    "exerciseTableSingular": "Exercise",
                     "points": "Points",
-                    "numberParticipants": "Number of participants"
+                    "numberParticipants": "Participants",
+                    "variants": "Variants"
                 }
             }
         },
