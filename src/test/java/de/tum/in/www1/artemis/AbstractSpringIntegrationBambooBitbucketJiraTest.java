@@ -355,7 +355,7 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
     public void mockUpdateUserInUserManagement(String oldLogin, User user, Set<String> oldGroups) throws URISyntaxException {
         var managedUserVM = new ManagedUserVM(user);
         jiraRequestMockProvider.mockIsGroupAvailableForMultiple(managedUserVM.getGroups());
-        jiraRequestMockProvider.mockRemoveUserFromGroup(oldGroups, managedUserVM.getLogin());
+        jiraRequestMockProvider.mockRemoveUserFromGroup(oldGroups, managedUserVM.getLogin(), false);
         jiraRequestMockProvider.mockAddUserToGroupForMultipleGroups(managedUserVM.getGroups());
     }
 
@@ -419,13 +419,13 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
     }
 
     @Override
-    public void mockAddUserToGroupInUserManagement(User user, String group) throws Exception {
-        jiraRequestMockProvider.mockAddUserToGroup(group);
+    public void mockAddUserToGroupInUserManagement(User user, String group, boolean failInCi) throws Exception {
+        jiraRequestMockProvider.mockAddUserToGroup(group, failInCi);
     }
 
     @Override
-    public void mockRemoveUserFromGroup(User user, String group) {
-        jiraRequestMockProvider.mockRemoveUserFromGroup(Set.of(group), user.getLogin());
+    public void mockRemoveUserFromGroup(User user, String group, boolean failInCi) {
+        jiraRequestMockProvider.mockRemoveUserFromGroup(Set.of(group), user.getLogin(), failInCi);
     }
 
     @Override

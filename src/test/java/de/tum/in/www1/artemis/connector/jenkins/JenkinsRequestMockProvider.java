@@ -271,8 +271,8 @@ public class JenkinsRequestMockProvider {
         else {
             mockUpdateUser(user, userExistsInJenkins);
         }
-        mockRemoveUserFromGroups(groupsToRemove);
-        mockAddUsersToGroups(user.getLogin(), groupsToAdd);
+        mockRemoveUserFromGroups(groupsToRemove, false);
+        mockAddUsersToGroups(user.getLogin(), groupsToAdd, false);
     }
 
     private void mockUpdateUser(User user, boolean userExists) throws URISyntaxException, IOException {
@@ -304,7 +304,7 @@ public class JenkinsRequestMockProvider {
         var status = shouldFailToDelete ? HttpStatus.NOT_FOUND : HttpStatus.FOUND;
         mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.POST)).andRespond(withStatus(status));
 
-        mockRemoveUserFromGroups(user.getGroups());
+        mockRemoveUserFromGroups(user.getGroups(), false);
     }
 
     private void mockGetUser(String userLogin, boolean userExists, boolean shouldFailToGetUser) throws URISyntaxException, JsonProcessingException {
@@ -324,7 +324,7 @@ public class JenkinsRequestMockProvider {
         }
     }
 
-    public void mockRemoveUserFromGroups(Set<String> groupsToRemove) throws IOException {
+    public void mockRemoveUserFromGroups(Set<String> groupsToRemove, boolean shouldFail) throws IOException {
         if (groupsToRemove.isEmpty()) {
             return;
         }
@@ -332,13 +332,17 @@ public class JenkinsRequestMockProvider {
         var exercises = programmingExerciseRepository.findAllByInstructorOrTAGroupNameIn(groupsToRemove);
         for (ProgrammingExercise exercise : exercises) {
             var folderName = exercise.getProjectKey();
-            mockRemovePermissionsFromUserOfFolder(folderName);
+            mockRemovePermissionsFromUserOfFolder(folderName, shouldFail);
         }
     }
 
-    private void mockRemovePermissionsFromUserOfFolder(String folderName) throws IOException {
-        mockGetFolderConfig(folderName);
-        doNothing().when(jenkinsServer).updateJob(eq(folderName), anyString(), eq(useCrumb));
+    private void mockRemovePermissionsFromUserOfFolder(String folderName, boolean shouldFail) throws IOException {
+        if (shouldFail) {
+            doThrow(IOException.class).when(jenkinsJobPermissionsService).removePermissionsFromUserOfFolder(anyString(), eq(folderName), any());
+        }
+        else {
+            doNothing().when(jenkinsJobPermissionsService).removePermissionsFromUserOfFolder(anyString(), eq(folderName), any());
+        }
     }
 
     public void mockCreateUser(User user, boolean userExistsInCi, boolean shouldFail, boolean shouldFailToGetUser) throws URISyntaxException, IOException {
@@ -351,10 +355,10 @@ public class JenkinsRequestMockProvider {
         var status = shouldFail ? HttpStatus.INTERNAL_SERVER_ERROR : HttpStatus.FOUND;
         mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.POST)).andRespond(withStatus(status));
 
-        mockAddUsersToGroups(user.getLogin(), user.getGroups());
+        mockAddUsersToGroups(user.getLogin(), user.getGroups(), false);
     }
 
-    public void mockAddUsersToGroups(String login, Set<String> groups) throws IOException {
+    public void mockAddUsersToGroups(String login, Set<String> groups, boolean shouldfail) throws IOException {
         var exercises = programmingExerciseRepository.findAllByInstructorOrTAGroupNameIn(groups);
         for (ProgrammingExercise exercise : exercises) {
             var jobName = exercise.getProjectKey();
@@ -363,7 +367,12 @@ public class JenkinsRequestMockProvider {
             if (groups.contains(course.getInstructorGroupName()) || groups.contains(course.getTeachingAssistantGroupName())) {
                 // jenkinsJobPermissionsService.addPermissionsForUserToFolder
                 mockGetFolderConfig(jobName);
-                doNothing().when(jenkinsServer).updateJob(eq(jobName), anyString(), eq(useCrumb));
+                if (shouldfail) {
+                    doThrow(IOException.class).when(jenkinsServer).updateJob(eq(jobName), anyString(), eq(useCrumb));
+                }
+                else {
+                    doNothing().when(jenkinsServer).updateJob(eq(jobName), anyString(), eq(useCrumb));
+                }
             }
         }
     }

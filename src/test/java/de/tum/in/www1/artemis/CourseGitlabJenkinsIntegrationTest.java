@@ -272,6 +272,18 @@ public class CourseGitlabJenkinsIntegrationTest extends AbstractSpringIntegratio
     }
 
     @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testAddTutorAndInstructorToCourse_failsToAddUserToGroup() throws Exception {
+        courseTestService.testAddTutorAndInstructorToCourse_failsToAddUserToGroup(HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testRemoveTutorFromCourse_failsToRemoveUserFromGroup() throws Exception {
+        courseTestService.testRemoveTutorFromCourse_failsToRemoveUserFromGroup();
+    }
+
+    @Test
     @WithMockUser(username = "ab12cde")
     public void testRegisterForCourse_notMeetsDate() throws Exception {
         courseTestService.testRegisterForCourse_notMeetsDate();

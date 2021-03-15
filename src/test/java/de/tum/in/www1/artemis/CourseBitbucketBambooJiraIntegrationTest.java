@@ -268,6 +268,18 @@ public class CourseBitbucketBambooJiraIntegrationTest extends AbstractSpringInte
     }
 
     @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testAddTutorAndInstructorToCourse_failsToAddUserToGroup() throws Exception {
+        courseTestService.testAddTutorAndInstructorToCourse_failsToAddUserToGroup(HttpStatus.OK);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testRemoveTutorFromCourse_failsToRemoveUserFromGroup() throws Exception {
+        courseTestService.testRemoveTutorFromCourse_failsToRemoveUserFromGroup();
+    }
+
+    @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     public void testUpdateCourse_withExternalUserManagement_vcsUserManagementHasNotBeenCalled() throws Exception {
         var course = ModelFactory.generateCourse(1L, null, null, new HashSet<>(), "tumuser", "tutor", "instructor");

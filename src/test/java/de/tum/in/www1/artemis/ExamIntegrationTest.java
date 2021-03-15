@@ -131,7 +131,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testRegisterUserInExam_addedToCourseStudentsGroup() throws Exception {
         jiraRequestMockProvider.enableMockingOfRequests();
-        jiraRequestMockProvider.mockAddUserToGroup(course1.getStudentGroupName());
+        jiraRequestMockProvider.mockAddUserToGroup(course1.getStudentGroupName(), false);
 
         List<User> studentsInCourseBefore = userRepo.findAllInGroupWithAuthorities(course1.getStudentGroupName());
         request.postWithoutLocation("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/students/student42", null, HttpStatus.OK, null);
@@ -196,14 +196,14 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         doReturn(Optional.of(ldapUser100Dto)).when(ldapUserService).findByRegistrationNumber(registrationNumber100);
 
         // first and second mocked calls are expected to add student 5 and 99 to the course students
-        jiraRequestMockProvider.mockAddUserToGroup(course1.getStudentGroupName());
-        jiraRequestMockProvider.mockAddUserToGroup(course1.getStudentGroupName());
+        jiraRequestMockProvider.mockAddUserToGroup(course1.getStudentGroupName(), false);
+        jiraRequestMockProvider.mockAddUserToGroup(course1.getStudentGroupName(), false);
         // third mocked call expected to create student 100
         jiraRequestMockProvider.mockCreateUserInExternalUserManagement(ldapUser100Dto.getUsername(), ldapUser100Dto.getFirstName() + " " + ldapUser100Dto.getLastName(),
                 ldapUser100Dto.getEmail());
         // the last two mocked calls are expected to add students 100, 6, 7, 8, and 9 to the course student group
         for (int i = 0; i < 5; i++) {
-            jiraRequestMockProvider.mockAddUserToGroup(course1.getStudentGroupName());
+            jiraRequestMockProvider.mockAddUserToGroup(course1.getStudentGroupName(), false);
         }
 
         var student99 = ModelFactory.generateActivatedUser("student99");     // not registered for the course

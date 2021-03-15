@@ -84,9 +84,9 @@ public interface MockDelegate {
 
     void mockDeleteGroupInUserManagement(String groupName) throws Exception;
 
-    void mockAddUserToGroupInUserManagement(User user, String group) throws Exception;
+    void mockAddUserToGroupInUserManagement(User user, String group, boolean failInCi) throws Exception;
 
-    void mockRemoveUserFromGroup(User user, String group) throws Exception;
+    void mockRemoveUserFromGroup(User user, String group, boolean failInCi) throws Exception;
 
     void mockDeleteRepository(String projectKey, String repostoryName) throws Exception;
 

@@ -361,16 +361,16 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
     }
 
     @Override
-    public void mockAddUserToGroupInUserManagement(User user, String group) throws Exception {
+    public void mockAddUserToGroupInUserManagement(User user, String group, boolean failInCi) throws Exception {
         gitlabRequestMockProvider.mockUpdateVcsUser(user.getLogin(), user, Set.of(), Set.of(group), false);
-        jenkinsRequestMockProvider.mockAddUsersToGroups(user.getLogin(), Set.of(group));
+        jenkinsRequestMockProvider.mockAddUsersToGroups(user.getLogin(), Set.of(group), failInCi);
     }
 
     @Override
-    public void mockRemoveUserFromGroup(User user, String group) throws Exception {
+    public void mockRemoveUserFromGroup(User user, String group, boolean failInCi) throws Exception {
         gitlabRequestMockProvider.mockUpdateVcsUser(user.getLogin(), user, Set.of(group), Set.of(), false);
-        jenkinsRequestMockProvider.mockRemoveUserFromGroups(Set.of(group));
-        jenkinsRequestMockProvider.mockAddUsersToGroups(user.getLogin(), Set.of(group));
+        jenkinsRequestMockProvider.mockRemoveUserFromGroups(Set.of(group), failInCi);
+        jenkinsRequestMockProvider.mockAddUsersToGroups(user.getLogin(), Set.of(group), false);
     }
 
     @Override
