@@ -49,7 +49,6 @@ export class StudentExamDetailComponent implements OnInit {
     ngOnInit(): void {
         this.isTestRun = this.route.snapshot.url[1]?.toString() === 'test-runs';
         this.loadStudentExam();
-        console.log(this.studentExam);
     }
 
     /**
@@ -127,10 +126,8 @@ export class StudentExamDetailComponent implements OnInit {
                 if (exercise!.studentParticipations[0].submissions && exercise!.studentParticipations[0].submissions!.length > 0) {
                     exercise!.studentParticipations[0].submissions![0].results! = exercise.studentParticipations[0].results;
                     setLatestSubmissionResult(exercise?.studentParticipations[0].submissions?.[0], getLatestSubmissionResult(exercise?.studentParticipations[0].submissions?.[0]));
-                    console.log('set stuff');
-                    // http://localhost:8080/course-management/1/exams/5/student-exams/6
                 }
-                console.log(exercise);
+
                 this.achievedTotalPoints += this.rounding((exercise.studentParticipations[0].results[0].score! * exercise.maxPoints!) / 100);
             }
         });
@@ -227,14 +224,14 @@ export class StudentExamDetailComponent implements OnInit {
      * @param submission
      */
     getAssessmentLink(exercise: Exercise, submission?: Submission) {
-        let route;
-        if (!exercise || !exercise.type || !submission) {
+        let route = '';
+        if (!exercise || !exercise.type) {
             return;
         }
 
         if (exercise.type === ExerciseType.PROGRAMMING) {
             route = `/course-management/${this.courseId}/${exercise.type}-exercises/${exercise.id}/assessment`;
-        } else {
+        } else if (submission) {
             this.openingAssessmentEditorForNewSubmission = true;
             const submissionUrlParameter = submission.id;
             route = `/course-management/${this.courseId}/${exercise.type}-exercises/${exercise.id}/submissions/${submissionUrlParameter}/assessment`;

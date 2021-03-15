@@ -95,7 +95,6 @@ export class ModelingAssessmentEditorComponent implements OnInit {
             this.isTestRun = queryParams.get('testRun') === 'true';
             this.correctionRound = Number(queryParams.get('correction-round'));
             this.resultId = Number(queryParams.get('resultId'));
-            console.log('modeling resultId is set', this.resultId);
         });
         this.route.paramMap.subscribe((params) => {
             this.courseId = Number(params.get('courseId'));
@@ -154,7 +153,6 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         if (this.resultId) {
             this.result = getSubmissionResultById(submission, this.resultId);
             this.correctionRound = submission.results?.findIndex((result) => result.id === this.resultId)!;
-            console.log('result and correctionRound:', this.result, this.correctionRound);
         } else {
             this.result = getSubmissionResultByCorrectionRound(this.submission, this.correctionRound);
         }

@@ -276,7 +276,7 @@ describe('StudentExamDetailComponent', () => {
     });
 
     it('should route to modeling submission', () => {
-        const getAssessmentLinkSpy = sinon.spy(studentExamService, 'getAssessmentLink');
+        const getAssessmentLinkSpy = sinon.spy(studentExamDetailComponent, 'getAssessmentLink');
         studentExamDetailComponentFixture.detectChanges();
         studentExamDetailComponent.courseId = 23;
         const modelingExercise = {
