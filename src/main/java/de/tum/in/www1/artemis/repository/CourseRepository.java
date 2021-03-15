@@ -76,7 +76,7 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     List<Course> findAllCurrentlyActiveNotOnlineAndRegistrationEnabledWithOrganizations(@Param("now") ZonedDateTime now);
 
     @Query("select course from Course course left join fetch course.organizations co where course.id = :#{#courseId}")
-    Course findWithEagerOrganizations(@Param("courseId") long courseId);
+    Optional<Course> findWithEagerOrganizations(@Param("courseId") long courseId);
 
     List<Course> findAllByShortName(String shortName);
 
@@ -104,6 +104,11 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     default Course findByIdWithEagerExercisesElseThrow(Long courseId) throws EntityNotFoundException {
         return Optional.ofNullable(findWithEagerExercisesById(courseId)).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
     }
+
+     @NotNull
+     default Course findWithEagerOrganizationsElseThrow(Long courseId) throws EntityNotFoundException {
+        return findWithEagerOrganizations(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
+     }
 
     /**
      * filters the passed exercises for the relevant ones that need to be manually assessed. This excludes quizzes and automatic programming exercises
@@ -161,7 +166,7 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
      */
     @NotNull
     default void addOrganizationToCourse(Long courseId, Organization organization) {
-        Course course = findWithEagerOrganizations(courseId);
+        Course course = findWithEagerOrganizationsElseThrow(courseId);
         if (!course.getOrganizations().contains(organization)) {
             course.getOrganizations().add(organization);
             save(course);
@@ -175,7 +180,7 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
      */
     @NotNull
     default void removeOrganizationFromCourse(Long courseId, Organization organization) {
-        Course course = findWithEagerOrganizations(courseId);
+        Course course = findWithEagerOrganizationsElseThrow(courseId);
         if (course.getOrganizations().contains(organization)) {
             course.getOrganizations().remove(organization);
             save(course);

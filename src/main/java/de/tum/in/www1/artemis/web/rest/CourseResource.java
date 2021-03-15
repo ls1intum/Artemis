@@ -371,7 +371,7 @@ public class CourseResource {
     @PostMapping("/courses/{courseId}/register")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<User> registerForCourse(@PathVariable Long courseId) {
-        Course course = courseRepository.findWithEagerOrganizations(courseId);
+        Course course = courseRepository.findWithEagerOrganizationsElseThrow(courseId);
         User user = userRepository.getUserWithGroupsAndAuthoritiesAndOrganizations();
         log.debug("REST request to register {} for Course {}", user.getName(), course.getTitle());
         if (allowedCourseRegistrationUsernamePattern.isPresent() && !allowedCourseRegistrationUsernamePattern.get().matcher(user.getLogin()).matches()) {
@@ -764,7 +764,7 @@ public class CourseResource {
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Course> getCourseWithOrganizations(@PathVariable Long courseId) throws AccessForbiddenException {
         log.debug("REST request to get a course with its organizations : {}", courseId);
-        Course course = courseRepository.findWithEagerOrganizations(courseId);
+        Course course = courseRepository.findWithEagerOrganizationsElseThrow(courseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
             return forbidden();
@@ -1251,7 +1251,7 @@ public class CourseResource {
      */
     private boolean checkIfUserIsMemberOfCourseOrganizations(User user, Course course) {
         boolean isMember = false;
-        for (Organization organization : courseRepository.findWithEagerOrganizations(course.getId()).getOrganizations()) {
+        for (Organization organization : courseRepository.findWithEagerOrganizationsElseThrow(course.getId()).getOrganizations()) {
             if (user.getOrganizations().contains(organization)) {
                 isMember = true;
                 break;
