@@ -22,7 +22,7 @@
         <div class="row">
             <div class="col-auto mb-2" *ngIf="lecture?.startDate; else noDate" [ngClass]="getUrgentClass(lecture.startDate)">
                 <span class="d-none d-sm-inline"> {{ lecture.startDate | artemisDate: 'long-date' }} </span>
-                ({{ lecture.startDate | amTimeAgo }})
+                ({{ lecture.startDate | artemisTimeAgo }})
             </div>
             <ng-template #noDate>
                 <div class="col-auto mb-2">{{ 'artemisApp.courseOverview.exerciseList.noDueDate' | artemisTranslate }}</div>

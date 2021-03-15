@@ -30,7 +30,7 @@ const expect = chai.expect;
 
 describe('ExamStudentsComponent', () => {
     const course = { id: 1 } as Course;
-    const user1 = { id: 1 } as User;
+    const user1 = { id: 1, name: 'name', login: 'login' } as User;
     const user2 = { id: 2, login: 'user2' } as User;
     const examWithCourse: Exam = { course, id: 2, registeredUsers: [user1, user2] } as Exam;
 
@@ -164,5 +164,44 @@ describe('ExamStudentsComponent', () => {
         expect(examServiceStub).to.have.been.calledOnceWith(course.id, examWithCourse.id, true);
         expect(examServiceStubAddAll).to.have.been.calledOnceWith(course.id, examWithCourse.id);
         expect(component.allRegisteredUsers).to.deep.equal([user2]);
+    });
+
+    it('should remove all users from the exam', () => {
+        const examServiceStub = sinon.stub(examManagementService, 'removeAllStudentsFromExam').returns(of(new HttpResponse()));
+        fixture.detectChanges();
+        component.allRegisteredUsers = [user1, user2];
+
+        component.removeAllStudents({ deleteParticipationsAndSubmission: false });
+        fixture.detectChanges();
+
+        expect(examServiceStub).to.have.been.calledOnceWith(course.id, examWithCourse.id, false);
+        expect(component.allRegisteredUsers).to.deep.equal([]);
+    });
+
+    it('should remove all users from the exam with participaations', () => {
+        const examServiceStub = sinon.stub(examManagementService, 'removeAllStudentsFromExam').returns(of(new HttpResponse()));
+        fixture.detectChanges();
+        component.allRegisteredUsers = [user1, user2];
+
+        component.removeAllStudents({ deleteParticipationsAndSubmission: true });
+        fixture.detectChanges();
+
+        expect(examServiceStub).to.have.been.calledOnceWith(course.id, examWithCourse.id, true);
+        expect(component.allRegisteredUsers).to.deep.equal([]);
+    });
+
+    it('should format search result', () => {
+        const resultString = component.searchResultFormatter(user1);
+        expect(resultString).to.equal('name (login)');
+    });
+
+    it('should format search text from user', () => {
+        const resultString = component.searchTextFromUser(user1);
+        expect(resultString).to.equal('login');
+    });
+
+    it('should test on error', () => {
+        component.onError('ErrorString');
+        expect(component.isTransitioning).to.equal(false);
     });
 });
