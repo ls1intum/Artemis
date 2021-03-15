@@ -321,143 +321,51 @@ or
 11. Defining Routes and Breadcrumbs
 ===================================
 
-Ideally routes are defined as nested children instead of absolute paths. To illustrate:
+The ideal schema for routes is that every variable in a path is preceeded by a unique path segment: ``\entityA\:entityIDA\entityB\:entityIDB``  
+
+For example, ``\courses\:courseId\:exerciseId`` is not a good path and should be written as ``\courses\:courseId\exercises\:exerciseId``.
+Doubling textual segments like ``\lectures\statistics\:lectureId`` should be avoided and instead formulated as ``\lectures\:lectureId\statistics``.
+
+When creating a completely new route you will have to register the new paths in ``navbar.ts``. A static/textual url segment gets a translation string assigned in the ``mapping`` table. Due to our code-style guidelines any ``-`` in the segment has to be replaced by a ``_``. If your path includes a variable, you will have to add the preceeding path segment to the ``switch`` statement inside the ``addBreadcrumbForNumberSegment`` method.
 
 .. code-block:: ts
 
-   {
-       // this is an absolute path which won't work with breadcrumbs
-       path: 'absolute/path/to/component',
-       component: someComponent,
-       data: { ... },
-   },
-   {
-       // those are relative paths using children
-       path: 'relative',
-       component: someParentComponent,
-       data: { ... },
-       children: [
-          {
-              path: 'childA',
-              component: componentA,
-              data: { ... },
-          },
-          {
-              path: 'childB',
-              component: componentB,
-              data: { ... },
-          },
-       ],
-   }
+	const mapping = {
+		courses: 'artemisApp.course.home.title',
+		lectures: 'artemisApp.lecture.home.title',
+		// put your new directly translated url segments here
+		// the index is the path segment in which '-' have to be replaced by '_'
+		// the value is the translation string
+		your_case: 'artemisApp.cases.title',
+	};
 
-The labels used to display the breadcrumbs are taken from the `data` of a route. By default, the `pageTitle` is used as breadcrumb label. When dealing with a 'custom object' (e.g. a course which has a title but is only present as id in the path) the `breadcrumbLabelVariable` override has to be used.
+	addBreadcrumbForNumberSegment(currentPath: string, segment: string): void {
+		switch (this.lastRouteUrlSegment) {
+			case 'course-management':
+				// handles :courseId
+				break;
+			case 'lectures':
+				// handles :lectureId
+				break;
+			case 'your-case':
+				// add a case here for your :variable which is preceeded in the path by 'your-case'
+				break;
+		}
+	}
 
-.. code-block:: ts
+12. Strict Template Check
+===================================
 
-   {
-       path: 'new',
-       component: CourseUpdateComponent,
-       data: {
-           // The pageTitle will be translated and used as breadcrumb
-           pageTitle: 'global.generic.create'
-       },
-   },
-   {
-       path: ':courseId',
-       resolver: {
-           // The name of the resolver is 'course' in this case
-           course: CourseResolve,
-       }
-       component: CourseDetailComponent,
-       data: {
-           // Index the resolver (named 'course') to get the title property
-           breadcrumbLabelVariable: 'course.title',
-       },
-   }
+To prevent errors for strict template rule in TypeScript, Artemis uses following approaches.
 
-Sometimes you will want to access route params or data. This can be done as usual for parent routes too:
+Use ArtemisTranslatePipe instead of TranslatePipe
+**************************************************
+Do not use placeholder="{{ 'global.form.newpassword.placeholder' | translate }}"
+Use placeholder="{{ 'global.form.newpassword.placeholder' | artemisTranslate }}"
 
-.. code-block:: ts
-
-   ngOnInit() {
-        // When you nested routes, the parent is guaranteed to exist
-        // Access it's params or data (resolvers) as you would usually, but on 'parent!' instead of the route itself
-        this.route.parent!.params.subscribe(({ parentParams }) => {
-            // Example: Get the courseId when we are a child of the ':courseId' path
-            this.courseId = Number(parentParams['courseId']);
-        });
-   }
-
-There are a few caveats to this:
-
-a. Be careful when querying parent resolver data (a cached value), since it might be outdated when accessing from the child
-
-b. If a parent route defines a component, it will be rendered first before the child component ('overriding' the child)
-
-
-The easiest way to avoid those problems is defining one route for the component, and one route the children will use:
-
-.. code-block:: ts
-
-   {
-      // This path is listed first and has a component
-      // Thus it will be used when navigating directly to this route
-      path: ':courseId',
-      resolver: {
-         course: CourseResolve,
-      }
-      component: CourseDetailComponent,
-      data: {
-         breadcrumbLabelVariable: 'course.title',
-      },
-   },
-   {
-      // This is basically a duplicate, but without the 'component' property and route access rights
-      // This route will be loaded when accessing one of the children
-      // Which means the resolver will be loaded again, too
-      path: ':courseId',
-      resolver: {
-          course: CourseResolve,
-      }
-      data: {
-          breadcrumbLabelVariable: 'course.title',
-      },
-      children: [
-         {
-             path: 'edit',
-             component: CourseUpdateComponent,
-             data: {
-                 pageTitle: 'artemisApp.course.home.editLabel',
-                 // (Unfortunately) Children inherit data from the parent, so manually un-set the label override
-                 breadcrumbLabelVariable: '',
-             },
-         },
-      ],
-   }
-
-If you can't avoid using an absolute path, use the `breadcrumbLabels` override in the route data to still display breadcrumbs:
-
-.. code-block:: ts
-
-   {
-      path: 'courses/:courseId/absolute-path',
-      resolver: {
-         course: CourseResolve,
-      }
-      component: CourseAbsoluteComponent,
-      data: {
-         breadcrumbs: [
-            // 'label' specifies a string to translate, while path is the literal part of the path
-            { label: 'artemisApp.course.home.title', path: 'courses' },
-            // 'variable' specifies the resolver to use (similar to 'breadcrumbLabelVariable')
-            // 'path' in this case is an id which has to be taken from the resolver as well
-            { variable: 'course.title', path: 'course.id' },
-            // Same as the first manually defined crumb: string to translate and literal path
-            { label: 'artemisApp.course.absolute.title', path: 'absolute-path' },
-         ],
-      },
-   },
-
-
+Use ArtemisTimeAgoPipe instead of TimeAgoPipe
+*********************************************
+Do not use <span [ngbTooltip]="submittedDate | artemisDate">{{ submittedDate | amTimeAgo }}</span>
+Use <span [ngbTooltip]="submittedDate | artemisDate">{{ submittedDate | artemisTimeAgo }}</span>
 
 Some parts of these guidelines are adapted from https://github.com/microsoft/TypeScript-wiki/blob/master/Coding-guidelines.md

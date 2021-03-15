@@ -19,7 +19,7 @@ import { JhiAlertService, JhiSortByDirective, JhiSortDirective } from 'ng-jhipst
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { MomentModule } from 'ngx-moment';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
-import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { TranslateService } from '@ngx-translate/core';
 import { CourseExerciseRowComponent } from 'app/overview/course-exercises/course-exercise-row.component';
 import { CourseExercisesComponent } from 'app/overview/course-exercises/course-exercises.component';
 import { CourseRegistrationSelectorComponent } from 'app/overview/course-registration-selector/course-registration-selector.component';
@@ -39,6 +39,7 @@ import { MockActivatedRouteWithSubjects } from '../../helpers/mocks/activated-ro
 import { TeamService } from 'app/exercises/shared/team/team.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe.ts';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -89,7 +90,7 @@ describe('CourseOverviewComponent', () => {
                 CourseOverviewComponent,
                 MockDirective(MockHasAnyAuthorityDirective),
                 MockDirective(OrionFilterDirective),
-                MockPipe(TranslatePipe),
+                MockPipe(ArtemisTranslatePipe),
                 MockDirective(JhiSortDirective),
                 MockDirective(JhiSortByDirective),
                 MockPipe(ArtemisDatePipe),

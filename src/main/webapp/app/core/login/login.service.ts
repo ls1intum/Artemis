@@ -11,6 +11,8 @@ import { NotificationService } from 'app/shared/notification/notification.servic
 
 @Injectable({ providedIn: 'root' })
 export class LoginService {
+    logoutWasForceful = false;
+
     constructor(
         private accountService: AccountService,
         private websocketService: JhiWebsocketService,
@@ -37,7 +39,7 @@ export class LoginService {
                     return cb();
                 },
                 (err) => {
-                    this.logout();
+                    this.logout(false);
                     reject(err);
                     return cb(err);
                 },
@@ -61,7 +63,7 @@ export class LoginService {
                     return cb();
                 },
                 (err) => {
-                    this.logout();
+                    this.logout(false);
                     reject(err);
                     return cb(err);
                 },
@@ -83,14 +85,19 @@ export class LoginService {
      * Tokens, Alerts, User object in memory.
      * Will redirect to home when done.
      */
-    logout() {
+    logout(wasInitiatedByUser: boolean) {
+        this.logoutWasForceful = !wasInitiatedByUser;
+
         this.authServerProvider
             // 1: Clear the auth tokens from the browser's caches.
             .removeAuthTokenFromCaches()
             .pipe(
                 // 2: Clear all other caches (this is important so if a new user logs in, no old values are available
                 tap(() => {
-                    return this.authServerProvider.clearCaches();
+                    if (wasInitiatedByUser) {
+                        // only clear caches on an intended logout. Do not clear the caches, when the user was logged out automatically
+                        return this.authServerProvider.clearCaches();
+                    }
                 }),
                 // 3: Set the user's auth object to null as components might have to act on the user being logged out.
                 tap(() => {
@@ -115,5 +122,9 @@ export class LoginService {
                 }),
             )
             .subscribe();
+    }
+
+    lastLogoutWasForceful(): boolean {
+        return this.logoutWasForceful;
     }
 }

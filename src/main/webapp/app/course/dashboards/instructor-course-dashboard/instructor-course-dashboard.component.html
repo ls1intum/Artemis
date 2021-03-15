@@ -2,8 +2,8 @@
     <jhi-alert></jhi-alert>
 
     <div class="course-info-bar">
-        <h3>{{ 'artemisApp.instructorCourseDashboard.pageHeader' | translate }} {{ course.title }}</h3>
-        <h4>{{ course.description || ('artemisApp.instructorCourseDashboard.noDescription' | translate) }}</h4>
+        <h3>{{ 'artemisApp.instructorCourseDashboard.pageHeader' | artemisTranslate }} {{ course.title }}</h3>
+        <h4>{{ course.description || ('artemisApp.instructorCourseDashboard.noDescription' | artemisTranslate) }}</h4>
     </div>
 
     <div class="container-fluid">
@@ -11,50 +11,50 @@
             <div class="col-md-8">
                 <div class="card">
                     <div class="card-header bg-primary text-white">
-                        <h4 class="card-title">{{ 'artemisApp.instructorCourseDashboard.informationAboutCourse' | translate }}</h4>
+                        <h4 class="card-title">{{ 'artemisApp.instructorCourseDashboard.informationAboutCourse' | artemisTranslate }}</h4>
                     </div>
                     <div class="card-body">
                         <ul>
                             <li>
-                                <b>{{ 'artemisApp.instructorCourseDashboard.students' | translate }}:</b> {{ stats.numberOfStudents }}
+                                <b>{{ 'artemisApp.instructorCourseDashboard.students' | artemisTranslate }}:</b> {{ stats.numberOfStudents }}
                             </li>
                             <li>
-                                <b>{{ 'artemisApp.instructorCourseDashboard.submissions' | translate }}:</b> {{ stats.numberOfSubmissions.total }}
+                                <b>{{ 'artemisApp.instructorCourseDashboard.submissions' | artemisTranslate }}:</b> {{ stats.numberOfSubmissions.total }}
                             </li>
                             <li>
-                                <b>{{ 'artemisApp.instructorCourseDashboard.tutors' | translate }}:</b> {{ stats.tutorLeaderboardEntries.length }}
+                                <b>{{ 'artemisApp.instructorCourseDashboard.tutors' | artemisTranslate }}:</b> {{ stats.tutorLeaderboardEntries.length }}
                             </li>
                             <li>
-                                <b>{{ 'artemisApp.instructorCourseDashboard.assessments' | translate }}:</b> {{ stats.totalNumberOfAssessments.total }} ({{
+                                <b>{{ 'artemisApp.instructorCourseDashboard.assessments' | artemisTranslate }}:</b> {{ stats.totalNumberOfAssessments.total }} ({{
                                     stats.numberOfSubmissions.total - stats.totalNumberOfAssessments.total
                                 }}
-                                {{ 'artemisApp.instructorCourseDashboard.open' | translate }})
+                                {{ 'artemisApp.instructorCourseDashboard.open' | artemisTranslate }})
                             </li>
                             <li>
                                 <a [routerLink]="['/course-management', course.id, 'complaints']">
-                                    <b>{{ 'artemisApp.instructorCourseDashboard.complaints' | translate }}:</b> {{ stats.numberOfComplaints }}
+                                    <b>{{ 'artemisApp.instructorCourseDashboard.complaints' | artemisTranslate }}:</b> {{ stats.numberOfComplaints }}
                                 </a>
-                                ({{ stats.numberOfOpenComplaints }} {{ 'artemisApp.instructorCourseDashboard.openComplaint' | translate }})
+                                ({{ stats.numberOfOpenComplaints }} {{ 'artemisApp.instructorCourseDashboard.openComplaint' | artemisTranslate }})
                             </li>
                             <li>
                                 <a [routerLink]="['/course-management', course.id, 'more-feedback-requests']">
-                                    <b>{{ 'artemisApp.instructorCourseDashboard.moreFeedbackRequests' | translate }}:</b> {{ stats.numberOfMoreFeedbackRequests }}
+                                    <b>{{ 'artemisApp.instructorCourseDashboard.moreFeedbackRequests' | artemisTranslate }}:</b> {{ stats.numberOfMoreFeedbackRequests }}
                                 </a>
-                                ({{ stats.numberOfOpenMoreFeedbackRequests }} {{ 'artemisApp.instructorCourseDashboard.openRequest' | translate }})
+                                ({{ stats.numberOfOpenMoreFeedbackRequests }} {{ 'artemisApp.instructorCourseDashboard.openRequest' | artemisTranslate }})
                             </li>
                             <li>
                                 <a [routerLink]="['/course-management', course.id, 'assessment-locks']" [queryParams]="{ tutorId: instructor.id }">
-                                    <b>{{ 'artemisApp.instructorCourseDashboard.yourAssessmentLocks' | translate }}:</b> {{ stats.numberOfAssessmentLocks }}
+                                    <b>{{ 'artemisApp.instructorCourseDashboard.yourAssessmentLocks' | artemisTranslate }}:</b> {{ stats.numberOfAssessmentLocks }}
                                 </a>
                             </li>
                             <li>
                                 <a [routerLink]="['/course-management', course.id, 'ratings']">
-                                    <b>{{ 'artemisApp.instructorCourseDashboard.rating' | translate }}</b>
+                                    <b>{{ 'artemisApp.instructorCourseDashboard.rating' | artemisTranslate }}</b>
                                 </a>
                             </li>
                             <li>
                                 <a *ngIf="course.studentQuestionsEnabled" [routerLink]="['/course-management', course.id, 'questions']">
-                                    <b>{{ 'artemisApp.instructorCourseDashboard.questionsAndAnswers' | translate }}</b>
+                                    <b>{{ 'artemisApp.instructorCourseDashboard.questionsAndAnswers' | artemisTranslate }}</b>
                                 </a>
                             </li>
                         </ul>
@@ -69,7 +69,7 @@
 
         <div class="row table-responsive mt-3">
             <div *ngIf="course.exercises && course.exercises.length === 0">
-                {{ 'artemisApp.instructorCourseDashboard.noExercise' | translate }}
+                {{ 'artemisApp.instructorCourseDashboard.noExercise' | artemisTranslate }}
             </div>
 
             <table class="table" *ngIf="course.exercises && course.exercises.length >= 0">
@@ -80,38 +80,38 @@
                             <fa-icon [icon]="'sort'"></fa-icon>
                         </th>
                         <th jhiSortBy="title">
-                            <a class="th-link">{{ 'artemisApp.instructorCourseDashboard.exercise' | translate }}</a>
+                            <a class="th-link">{{ 'artemisApp.instructorCourseDashboard.exercise' | artemisTranslate }}</a>
                             <fa-icon [icon]="'sort'"></fa-icon>
                         </th>
                         <th jhiSortBy="dueDate">
-                            <a class="th-link">{{ 'artemisApp.instructorCourseDashboard.dueDate' | translate }}</a>
+                            <a class="th-link">{{ 'artemisApp.instructorCourseDashboard.dueDate' | artemisTranslate }}</a>
                             <fa-icon [icon]="'sort'"></fa-icon>
                         </th>
                         <th jhiSortBy="assessmentDueDate">
-                            <a class="th-link">{{ 'artemisApp.instructorCourseDashboard.assessmentDueDate' | translate }}</a>
+                            <a class="th-link">{{ 'artemisApp.instructorCourseDashboard.assessmentDueDate' | artemisTranslate }}</a>
                             <fa-icon [icon]="'sort'"></fa-icon>
                         </th>
                         <th jhiSortBy="numberOfParticipations">
-                            <a class="th-link">{{ 'artemisApp.instructorCourseDashboard.submissions' | translate }}</a>
+                            <a class="th-link">{{ 'artemisApp.instructorCourseDashboard.submissions' | artemisTranslate }}</a>
                             <fa-icon [icon]="'sort'"></fa-icon>
                         </th>
                         <th jhiSortBy="numberOfComplaints">
-                            <a class="th-link">{{ 'artemisApp.instructorCourseDashboard.complaints' | translate }}</a>
+                            <a class="th-link">{{ 'artemisApp.instructorCourseDashboard.complaints' | artemisTranslate }}</a>
                             <fa-icon [icon]="'sort'"></fa-icon>
                         </th>
                         <th jhiSortBy="numberOfMoreFeedbackRequests">
-                            <a class="th-link">{{ 'artemisApp.instructorCourseDashboard.moreFeedbackRequests' | translate }}</a>
+                            <a class="th-link">{{ 'artemisApp.instructorCourseDashboard.moreFeedbackRequests' | artemisTranslate }}</a>
                             <fa-icon [icon]="'sort'"></fa-icon>
                         </th>
-                        <th>{{ 'artemisApp.instructorCourseDashboard.completedAssessments' | translate }}</th>
-                        <th>{{ 'artemisApp.instructorCourseDashboard.action' | translate }}</th>
+                        <th>{{ 'artemisApp.instructorCourseDashboard.completedAssessments' | artemisTranslate }}</th>
+                        <th>{{ 'artemisApp.instructorCourseDashboard.action' | artemisTranslate }}</th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr *ngFor="let exercise of course.exercises">
                         <td>
                             {{ exercise.id }}
-                            <fa-icon [icon]="getIcon(exercise.type)" placement="right" [ngbTooltip]="getIconTooltip(exercise.type) | translate" container="body"></fa-icon>
+                            <fa-icon [icon]="getIcon(exercise.type)" placement="right" [ngbTooltip]="getIconTooltip(exercise.type) | artemisTranslate" container="body"></fa-icon>
                         </td>
                         <td>{{ exercise.title }}</td>
                         <td>{{ exercise.dueDate | artemisDate }}</td>
@@ -158,8 +158,8 @@
                         </td>
                         <td>
                             <div class="btn-group">
-                                <a class="btn btn-primary btn-sm mr-1" routerLink="/course-management/{{ course.id }}/exercises/{{ exercise.id }}/instructor-dashboard">
-                                    {{ 'artemisApp.instructorCourseDashboard.exerciseDashboard' | translate }}
+                                <a class="btn btn-primary btn-sm mr-1" routerLink="/course-management/{{ course.id }}/instructor-dashboard/{{ exercise.id }}">
+                                    {{ 'artemisApp.instructorCourseDashboard.exerciseDashboard' | artemisTranslate }}
                                 </a>
                                 <a
                                     *ngIf="exercise.type === ExerciseType.FILE_UPLOAD || exercise.type === ExerciseType.MODELING || exercise.type === ExerciseType.TEXT"
@@ -175,7 +175,7 @@
             </table>
         </div>
 
-        <h2>{{ 'artemisApp.instructorCourseDashboard.tutorLeaderboard.courseTitle' | translate }}</h2>
+        <h2>{{ 'artemisApp.instructorCourseDashboard.tutorLeaderboard.courseTitle' | artemisTranslate }}</h2>
 
         <jhi-tutor-leaderboard [tutorsData]="stats.tutorLeaderboardEntries" [course]="course"></jhi-tutor-leaderboard>
     </div>

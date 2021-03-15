@@ -50,21 +50,54 @@
 
     <div class="mb-3">
         <h5><span jhiTranslate="artemisApp.studentExams.participationStatus">Participation state</span></h5>
-        <ol style="list-style-type: none">
-            <li>
-                <strong>{{ 'artemisApp.studentExams.started' | translate }}:</strong>
-                {{ (studentExam.started ? 'global.generic.yes' : 'global.generic.no') | translate }}
-            </li>
-            <li>
-                <strong>{{ 'artemisApp.studentExams.submitted' | translate }}:</strong>
-                {{ (studentExam.submitted ? 'global.generic.yes' : 'global.generic.no') | translate }}
-            </li>
-            <li>
-                <strong>{{ 'artemisApp.studentExams.submissionDate' | translate }}:</strong>
-                {{ studentExam.submissionDate | artemisDate: 'long':true }}
-            </li>
-        </ol>
+        <div class="mr-2">
+            <ol style="list-style-type: none">
+                <li>
+                    <strong>{{ 'artemisApp.studentExams.started' | artemisTranslate }}:</strong>
+                    {{ (studentExam.started ? 'global.generic.yes' : 'global.generic.no') | artemisTranslate }}
+                </li>
+                <li>
+                    <strong>{{ 'artemisApp.studentExams.submitted' | artemisTranslate }}:</strong>
+                    {{ (studentExam.submitted ? 'global.generic.yes' : 'global.generic.no') | artemisTranslate }}
+                </li>
+                <li>
+                    <strong>{{ 'artemisApp.studentExams.submissionDate' | artemisTranslate }}:</strong>
+                    {{ studentExam.submissionDate | artemisDate: 'long':true }}
+                </li>
+            </ol>
+        </div>
     </div>
+    <ng-template #toggleSubmitPopUp let-modal>
+        <div class="modal-header">
+            <h4 class="modal-title">
+                <span *ngIf="studentExam.submitted" jhiTranslate="artemisApp.studentExams.confirmDialog.titleToUnsubmitted">Change Student Exam to Unsubmitted</span>
+                <span *ngIf="!studentExam.submitted" jhiTranslate="artemisApp.studentExams.confirmDialog.titleToSubmitted">Change Student Exam to Submitted</span>
+            </h4>
+            <button type="button" class="close" aria-label="Close" (click)="modal.dismiss()">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+        <div class="modal-body">
+            <p jhiTranslate="artemisApp.studentExams.confirmDialog.question">Are you sure you want to change the submission state?</p>
+            <p *ngIf="!studentExam.submitted" jhiTranslate="artemisApp.studentExams.confirmDialog.submitText">
+                This will set the submission date of the exam to this moment, and set the submitted status to 'Yes'. Un-submitting the student exam later is possible.
+            </p>
+            <p *ngIf="studentExam.submitted" jhiTranslate="artemisApp.studentExams.confirmDialog.unSubmitText">
+                This will remove the submission date and set the submitted status to 'No'.
+            </p>
+            <p *ngIf="studentExam.submitted" jhiTranslate="artemisApp.studentExams.confirmDialog.warningRemove">Recovering those after the deletion is not possible!</p>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-danger" (click)="modal.close('confirm')">
+                <span *ngIf="!studentExam.submitted" jhiTranslate="artemisApp.studentExams.confirmDialog.submit"></span>
+                <span *ngIf="studentExam.submitted" jhiTranslate="artemisApp.studentExams.confirmDialog.unsubmit"></span>
+            </button>
+        </div>
+    </ng-template>
+    <button class="btn btn-danger mb-3" *ngIf="course?.isAtLeastInstructor && examIsOver()" type="button" (click)="openConfirmationModal(toggleSubmitPopUp)" [disabled]="busy">
+        <span *ngIf="!studentExam.submitted" jhiTranslate="entity.action.toggleToSubmitted"></span>
+        <span *ngIf="studentExam.submitted" jhiTranslate="entity.action.toggleToUnsubmitted"></span>
+    </button>
 
     <div class="mb-3">
         <h5><span jhiTranslate="artemisApp.studentExams.summary">Student Summary</span></h5>
@@ -143,16 +176,16 @@
                         <td></td>
                         <td></td>
                         <td class="align-middle">
-                            <span style="text-decoration: underline" jhiTranslate="artemisApp.examScores.overallPointsColumn">Overall Score</span>
+                            <span style="text-decoration: underline" jhiTranslate="artemisApp.examScores.overallPointsColumn">Overall Points</span>
                         </td>
                         <td class="align-middle">
-                            <u> {{ achievedTotalScore }} </u>
+                            <u> {{ achievedTotalPoints }} </u>
                         </td>
                         <td class="align-middle">
-                            <u> {{ maxTotalScore }} </u>
+                            <u> {{ maxTotalPoints }} </u>
                         </td>
                         <td class="align-middle">
-                            <u> {{ bonusTotalScore }} </u>
+                            <u> {{ bonusTotalPoints }} </u>
                         </td>
                         <td></td>
                     </tr>

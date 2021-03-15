@@ -148,7 +148,7 @@ public class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends 
         var result = results.get(0);
         assertThat(result.getHasFeedback()).isFalse();
         assertThat(result.isSuccessful()).isFalse();
-        assertThat(result.getScore()).isEqualTo(0);
+        assertThat(result.getScore()).isEqualTo(0D);
         assertThat(result.getResultString()).isEqualTo("No tests found");
 
         // Assert that the submission linked to the participation

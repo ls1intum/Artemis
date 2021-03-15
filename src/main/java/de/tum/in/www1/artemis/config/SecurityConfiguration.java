@@ -81,7 +81,7 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
     }
 
     @Value("${artemis.encryption-password}")
-    private String ENCRYPTION_PASSWORD;
+    private String encryptionPassword;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -92,7 +92,7 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
     public StandardPBEStringEncryptor encryptor() {
         StandardPBEStringEncryptor encryptor = new StandardPBEStringEncryptor();
         encryptor.setAlgorithm("PBEWithMD5AndDES");
-        encryptor.setPassword(ENCRYPTION_PASSWORD);
+        encryptor.setPassword(encryptionPassword);
         return encryptor;
     }
 

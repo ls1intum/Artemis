@@ -3,11 +3,10 @@
         "assessment": {
             "assessment": "Assessment",
             "testRunAssessment": "Test Run Assessment",
-            "generalFeedback": "General Feedback",
-            "unreferencedFeedback": "Feedback for Missing Elements",
+            "additionalFeedback": "Additional feedback",
+            "feedback": "Feedback",
             "automaticGenerated": "Automatically generated feedback",
             "error": {
-                "moreThanOneGeneralFeedback": "There cannot be more than one general Feedback per Assessment.",
                 "assessmentDueDateOver": "The assessment due date of this exercise is over."
             },
             "assessmentLocked": "Assessment locked by: {{otherUser}}",
@@ -49,6 +48,7 @@
                     "assessmentType": "Assessment Type",
                     "student": "Student",
                     "assessor": "Reviewer",
+                    "assessors": "Reviewers",
                     "action": "Assessment Actions",
                     "assessmentFirst": "Correction Round 1",
                     "assessmentSecond": "Correction Round 2"
@@ -71,6 +71,7 @@
                     "title": "Locked Assessments"
                 },
                 "title": "Assessments locked by you",
+                "titleAll": "All locked assessments",
                 "exercise": "Exercise",
                 "type": "Type",
                 "empty": "No assessments locked by you!"

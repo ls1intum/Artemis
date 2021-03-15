@@ -5,7 +5,7 @@
                 [icon]="'chalkboard-teacher'"
                 size="2x"
                 placement="right"
-                [ngbTooltip]="'artemisApp.courseOverview.lectureList.isLecture' | translate"
+                [ngbTooltip]="'artemisApp.courseOverview.lectureList.isLecture' | artemisTranslate"
                 container="body"
             ></fa-icon>
         </div>
@@ -20,15 +20,12 @@
             </div>
         </div>
         <div class="row">
-            <div class="col">
-                <span *ngIf="lecture?.attachments">{{ lecture?.attachments?.length }} {{ 'artemisApp.courseOverview.lectureDetails.attachments' | translate }}</span>
-            </div>
             <div class="col-auto mb-2" *ngIf="lecture?.startDate; else noDate" [ngClass]="getUrgentClass(lecture.startDate)">
                 <span class="d-none d-sm-inline"> {{ lecture.startDate | artemisDate: 'long-date' }} </span>
                 ({{ lecture.startDate | amTimeAgo }})
             </div>
             <ng-template #noDate>
-                <div class="col-auto mb-2">{{ 'artemisApp.courseOverview.exerciseList.noDueDate' | translate }}</div>
+                <div class="col-auto mb-2">{{ 'artemisApp.courseOverview.exerciseList.noDueDate' | artemisTranslate }}</div>
             </ng-template>
         </div>
     </div>

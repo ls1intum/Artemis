@@ -53,7 +53,7 @@
                 routerLinkActive="active"
                 [routerLinkActiveOptions]="{ exact: true }"
             >
-                <a *ngIf="!examModeActive()" class="guided-tour-admin nav-link dropdown-toggle" ngbDropdownToggle href="javascript:void(0);" id="admin-menu">
+                <a *ngIf="!examModeActive()" class="guided-tour-admin nav-link dropdown-toggle" ngbDropdownToggle id="admin-menu">
                     <span>
                         <fa-icon [icon]="'user-plus'"></fa-icon>
                         <span jhiTranslate="global.menu.admin.main">Server Administration</span>
@@ -131,7 +131,7 @@
             </li>
 
             <li ngbDropdown class="nav-item dropdown pointer" display="dynamic" *ngIf="!currAccount && languages && languages.length > 1">
-                <a class="nav-link dropdown-toggle" ngbDropdownToggle href="javascript:void(0);" id="languagesnavBarDropdown">
+                <a class="nav-link dropdown-toggle" ngbDropdownToggle id="languagesnavBarDropdown">
                     <span>
                         <fa-icon [icon]="'flag'"></fa-icon>
                         <span jhiTranslate="global.menu.language">Language</span>
@@ -139,9 +139,7 @@
                 </a>
                 <ul class="dropdown-menu" ngbDropdownMenu>
                     <li *ngFor="let language of languages">
-                        <a class="dropdown-item" [jhiActiveMenu]="language" href="javascript:void(0);" (click)="changeLanguage(language); collapseNavbar()">{{
-                            language | findLanguageFromKey
-                        }}</a>
+                        <a class="dropdown-item" [jhiActiveMenu]="language" (click)="changeLanguage(language); collapseNavbar()">{{ language | findLanguageFromKey }}</a>
                     </li>
                 </ul>
             </li>
@@ -158,7 +156,7 @@
                 [routerLinkActiveOptions]="{ exact: true }"
                 [autoClose]="true"
             >
-                <a class="guided-tour-account nav-link dropdown-toggle" ngbDropdownToggle href="javascript:void(0);" id="account-menu">
+                <a class="guided-tour-account nav-link dropdown-toggle" ngbDropdownToggle id="account-menu">
                     <span *ngIf="!getImageUrl()">
                         <fa-icon [icon]="'user'"></fa-icon>
                         <span jhiTranslate="global.menu.account.main" *ngIf="!currAccount">Account</span>
@@ -172,11 +170,11 @@
                     <li>
                         <h6 class="dropdown-header" jhiTranslate="global.menu.language">Language</h6>
                     </li>
-                    <li *ngFor="let language of languages">
-                        <a class="dropdown-item" [jhiActiveMenu]="language" href="javascript:void(0);" (click)="changeLanguage(language); collapseNavbar()">{{
-                            language | findLanguageFromKey
-                        }}</a>
-                    </li>
+                    <div *ngIf="languages && languages.length > 1">
+                        <li *ngFor="let language of languages">
+                            <a class="dropdown-item" [jhiActiveMenu]="language" (click)="changeLanguage(language); collapseNavbar()">{{ language | findLanguageFromKey }}</a>
+                        </li>
+                    </div>
                     <ng-template [ngIf]="isTourAvailable">
                         <div class="dropdown-divider"></div>
                         <li>
@@ -215,7 +213,7 @@
         <ol class="breadcrumb" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_TA', 'ROLE_INSTRUCTOR']">
             <li *ngFor="let breadcrumb of breadcrumbs" class="breadcrumb-item">
                 <a class="breadcrumb-link" [routerLink]="breadcrumb.uri" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" *ngIf="breadcrumb.translate">{{
-                    breadcrumb.label | translate
+                    breadcrumb.label | artemisTranslate
                 }}</a>
                 <a class="breadcrumb-link" [routerLink]="breadcrumb.uri" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" *ngIf="!breadcrumb.translate">{{
                     breadcrumb.label

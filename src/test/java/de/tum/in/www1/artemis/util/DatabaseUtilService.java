@@ -35,6 +35,7 @@ import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
+import de.tum.in.www1.artemis.domain.lecture.*;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.*;
@@ -43,6 +44,7 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.AuthoritiesConstants;
 import de.tum.in.www1.artemis.service.AssessmentService;
 import de.tum.in.www1.artemis.service.ModelingSubmissionService;
+import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 
 /** Service responsible for initializing the database with specific testdata for a testscenario */
@@ -123,6 +125,9 @@ public class DatabaseUtilService {
     TextSubmissionRepository textSubmissionRepo;
 
     @Autowired
+    ParticipationService participationService;
+
+    @Autowired
     TextBlockRepository textBlockRepo;
 
     @Autowired
@@ -181,6 +186,24 @@ public class DatabaseUtilService {
 
     @Autowired
     private ExamRepository examRepository;
+
+    @Autowired
+    private TextExerciseRepository textExerciseRepository;
+
+    @Autowired
+    AttachmentUnitRepository attachmentUnitRepository;
+
+    @Autowired
+    AttachmentRepository attachmentRepository;
+
+    @Autowired
+    ExerciseUnitRepository exerciseUnitRepository;
+
+    @Autowired
+    TextUnitRepository textUnitRepository;
+
+    @Autowired
+    VideoUnitRepository videoUnitRepository;
 
     @Autowired
     private DatabaseCleanupService databaseCleanupService;
@@ -329,6 +352,83 @@ public class DatabaseUtilService {
         return courseRepo.save(course);
     }
 
+    public TextExercise createIndividualTextExercise(Course course, ZonedDateTime pastTimestamp, ZonedDateTime futureTimestamp, ZonedDateTime futureFutureTimestamp) {
+        TextExercise textExercise = ModelFactory.generateTextExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, course);
+        textExercise.setMaxPoints(10.0);
+        textExercise.setBonusPoints(0.0);
+        return exerciseRepo.save(textExercise);
+    }
+
+    public Team createTeam(Set<User> students, User owner, Exercise exercise) {
+        Team team = new Team();
+        for (User student : students) {
+            team.addStudents(student);
+        }
+        team.setOwner(owner);
+        team.setShortName("team1");
+        team.setName("team1");
+        team.setExercise(exercise);
+        return teamRepo.saveAndFlush(team);
+    }
+
+    public TextExercise createTeamTextExercise(Course course, ZonedDateTime pastTimestamp, ZonedDateTime futureTimestamp, ZonedDateTime futureFutureTimestamp) {
+        TextExercise teamTextExercise = ModelFactory.generateTextExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, course);
+        teamTextExercise.setMaxPoints(10.0);
+        teamTextExercise.setBonusPoints(0.0);
+        teamTextExercise.setMode(ExerciseMode.TEAM);
+        return exerciseRepo.save(teamTextExercise);
+    }
+
+    public Result createParticipationSubmissionAndResult(Long idOfExercise, Participant participant, Double pointsOfExercise, Double bonusPointsOfExercise, long scoreAwarded,
+            boolean rated) {
+        Exercise exercise = exerciseRepo.findById(idOfExercise).get();
+
+        if (!exercise.getMaxPoints().equals(pointsOfExercise)) {
+            exercise.setMaxPoints(pointsOfExercise);
+        }
+        if (!exercise.getBonusPoints().equals(bonusPointsOfExercise)) {
+            exercise.setBonusPoints(bonusPointsOfExercise);
+        }
+        exercise = exerciseRepo.saveAndFlush(exercise);
+
+        StudentParticipation studentParticipation = participationService.startExercise(exercise, participant, false);
+
+        return createSubmissionAndResult(studentParticipation, scoreAwarded, rated);
+    }
+
+    public Result createSubmissionAndResult(StudentParticipation studentParticipation, long scoreAwarded, boolean rated) {
+        Exercise exercise = studentParticipation.getExercise();
+        Submission submission;
+        if (exercise instanceof ProgrammingExercise) {
+            submission = new ProgrammingSubmission();
+        }
+        else if (exercise instanceof ModelingExercise) {
+            submission = new ModelingSubmission();
+        }
+        else if (exercise instanceof TextExercise) {
+            submission = new TextSubmission();
+        }
+        else if (exercise instanceof FileUploadExercise) {
+            submission = new FileUploadSubmission();
+        }
+        else if (exercise instanceof QuizExercise) {
+            submission = new QuizSubmission();
+        }
+        else {
+            throw new RuntimeException("Unsupported exercise type: " + exercise);
+        }
+
+        submission.setType(SubmissionType.MANUAL);
+        submission.setParticipation(studentParticipation);
+        submission = submissionRepository.saveAndFlush(submission);
+
+        Result result = ModelFactory.generateResult(rated, scoreAwarded);
+        result.setParticipation(studentParticipation);
+        result.setSubmission(submission);
+        result.completionDate(ZonedDateTime.now());
+        return resultRepo.saveAndFlush(result);
+    }
+
     public Course createCourseWithExamAndExerciseGroupAndExercises(User user, ZonedDateTime visible, ZonedDateTime start, ZonedDateTime end) {
         Course course = createCourse();
         Exam exam = addExam(course, user, visible, start, end);
@@ -343,6 +443,57 @@ public class DatabaseUtilService {
         course.addExam(exam);
         addExerciseGroupsAndExercisesToExam(exam, false);
         return courseRepo.save(course);
+    }
+
+    public List<Course> createCoursesWithExercisesAndLecturesAndLectureUnits(boolean withParticiptions) throws Exception {
+        List<Course> courses = this.createCoursesWithExercisesAndLectures(withParticiptions);
+        Course course1 = this.courseRepo.findWithEagerExercisesAndLecturesById(courses.get(0).getId());
+        Lecture lecture1 = course1.getLectures().stream().findFirst().get();
+        TextExercise textExercise = textExerciseRepository.findByCourseId(course1.getId()).stream().findFirst().get();
+        VideoUnit videoUnit = createVideoUnit();
+        TextUnit textUnit = createTextUnit();
+        AttachmentUnit attachmentUnit = createAttachmentUnit();
+        ExerciseUnit exerciseUnit = createExerciseUnit(textExercise);
+        addLectureUnitsToLecture(lecture1, Set.of(videoUnit, textUnit, attachmentUnit, exerciseUnit));
+        return courses;
+    }
+
+    public Lecture addLectureUnitsToLecture(Lecture lecture, Set<LectureUnit> lectureUnits) {
+        Lecture l = lectureRepo.findByIdWithStudentQuestionsAndLectureUnitsAndLearningGoals(lecture.getId()).get();
+        for (LectureUnit lectureUnit : lectureUnits) {
+            l.addLectureUnit(lectureUnit);
+        }
+        return lectureRepo.save(l);
+    }
+
+    public ExerciseUnit createExerciseUnit(Exercise exercise) {
+        ExerciseUnit exerciseUnit = new ExerciseUnit();
+        exerciseUnit.setExercise(exercise);
+        return exerciseUnitRepository.save(exerciseUnit);
+    }
+
+    public AttachmentUnit createAttachmentUnit() {
+        Attachment attachmentOfAttachmentUnit = new Attachment().attachmentType(AttachmentType.FILE).link("files/temp/example.txt").name("example");
+        AttachmentUnit attachmentUnit = new AttachmentUnit();
+        attachmentUnit.setDescription("Lorem Ipsum");
+        attachmentUnit = attachmentUnitRepository.save(attachmentUnit);
+        attachmentOfAttachmentUnit.setAttachmentUnit(attachmentUnit);
+        attachmentOfAttachmentUnit = attachmentRepository.save(attachmentOfAttachmentUnit);
+        attachmentUnit.setAttachment(attachmentOfAttachmentUnit);
+        return attachmentUnitRepository.save(attachmentUnit);
+    }
+
+    public TextUnit createTextUnit() {
+        TextUnit textUnit = new TextUnit();
+        textUnit.setContent("Lorem Ipsum");
+        return textUnitRepository.save(textUnit);
+    }
+
+    public VideoUnit createVideoUnit() {
+        VideoUnit videoUnit = new VideoUnit();
+        videoUnit.setDescription("Lorem Ipsum");
+        videoUnit.setSource("Some URL");
+        return videoUnitRepository.save(videoUnit);
     }
 
     public List<Course> createCoursesWithExercisesAndLectures(boolean withParticipations) throws Exception {
@@ -436,9 +587,9 @@ public class DatabaseUtilService {
             Submission modelingSubmission2 = ModelFactory.generateModelingSubmission("model2", true);
             Submission textSubmission = ModelFactory.generateTextSubmission("text", Language.ENGLISH, true);
 
-            Result result1 = ModelFactory.generateResult(true, 10);
-            Result result2 = ModelFactory.generateResult(true, 12);
-            Result result3 = ModelFactory.generateResult(false, 0);
+            Result result1 = ModelFactory.generateResult(true, 10D);
+            Result result2 = ModelFactory.generateResult(true, 12D);
+            Result result3 = ModelFactory.generateResult(false, 0D);
 
             participation1 = studentParticipationRepo.save(participation1);
             participation2 = studentParticipationRepo.save(participation2);
@@ -625,23 +776,23 @@ public class DatabaseUtilService {
         participationProgramming = studentParticipationRepo.save(participationProgramming);
 
         // Setup results
-        Result resultModeling = ModelFactory.generateResult(true, 10);
+        Result resultModeling = ModelFactory.generateResult(true, 10D);
         resultModeling.setAssessmentType(AssessmentType.MANUAL);
         resultModeling.setCompletionDate(ZonedDateTime.now());
 
-        Result resultText = ModelFactory.generateResult(true, 12);
+        Result resultText = ModelFactory.generateResult(true, 12D);
         resultText.setAssessmentType(AssessmentType.MANUAL);
         resultText.setCompletionDate(ZonedDateTime.now());
 
-        Result resultFileUpload = ModelFactory.generateResult(true, 0);
+        Result resultFileUpload = ModelFactory.generateResult(true, 0D);
         resultFileUpload.setAssessmentType(AssessmentType.MANUAL);
         resultFileUpload.setCompletionDate(ZonedDateTime.now());
 
-        Result resultQuiz = ModelFactory.generateResult(true, 0);
+        Result resultQuiz = ModelFactory.generateResult(true, 0D);
         resultQuiz.setAssessmentType(AssessmentType.AUTOMATIC);
         resultQuiz.setCompletionDate(ZonedDateTime.now());
 
-        Result resultProgramming = ModelFactory.generateResult(true, 20);
+        Result resultProgramming = ModelFactory.generateResult(true, 20D);
         resultProgramming.setAssessmentType(AssessmentType.AUTOMATIC);
         resultProgramming.setCompletionDate(ZonedDateTime.now());
 
@@ -960,7 +1111,7 @@ public class DatabaseUtilService {
         return exam;
     }
 
-    public Exam addTextModelingProgrammingExercisesToExam(Exam initialExam, boolean withProgrammingExercise) {
+    public Exam addTextModelingProgrammingExercisesToExam(Exam initialExam, boolean withProgrammingExercise, boolean withQuizExercise) {
         ModelFactory.generateExerciseGroup(true, initialExam); // text
         ModelFactory.generateExerciseGroup(true, initialExam); // modeling
         initialExam.setNumberOfExercisesInExam(2);
@@ -992,6 +1143,17 @@ public class DatabaseUtilService {
             addTemplateParticipationForProgrammingExercise(programmingExercise1);
             addSolutionParticipationForProgrammingExercise(programmingExercise1);
             exerciseGroup2.setExercises(Set.of(programmingExercise1));
+        }
+
+        if (withQuizExercise) {
+            ModelFactory.generateExerciseGroup(true, exam); // modeling
+            exam.setNumberOfExercisesInExam(3 + (withProgrammingExercise ? 1 : 0));
+            exam = examRepository.save(exam);
+            var exerciseGroup3 = exam.getExerciseGroups().get(2 + (withProgrammingExercise ? 1 : 0));
+            // Programming exercises need a proper setup for 'prepare exam start' to work
+            QuizExercise quizExercise = createQuizForExam(exerciseGroup3);
+            exerciseRepo.save(quizExercise);
+            exerciseGroup3.setExercises(Set.of(quizExercise));
         }
         return exam;
     }
@@ -1129,7 +1291,7 @@ public class DatabaseUtilService {
     }
 
     public Result addResultToParticipation(AssessmentType assessmentType, ZonedDateTime completionDate, Participation participation) {
-        Result result = new Result().participation(participation).resultString("x of y passed").successful(false).rated(true).score(100L).assessmentType(assessmentType)
+        Result result = new Result().participation(participation).resultString("x of y passed").successful(false).rated(true).score(100D).assessmentType(assessmentType)
                 .completionDate(completionDate);
         return resultRepo.save(result);
     }
@@ -1142,7 +1304,7 @@ public class DatabaseUtilService {
     }
 
     public Result addResultToParticipation(Participation participation, Submission submission) {
-        Result result = new Result().participation(participation).resultString("x of y passed").successful(false).score(100L);
+        Result result = new Result().participation(participation).resultString("x of y passed").successful(false).score(100D);
         result = resultRepo.save(result);
         result.setSubmission(submission);
         submission.addResult(result);
@@ -1183,7 +1345,7 @@ public class DatabaseUtilService {
         return resultRepo.save(result);
     }
 
-    public Submission addResultToSubmission(final Submission submission, AssessmentType assessmentType, User user, String resultString, Long score, boolean rated,
+    public Submission addResultToSubmission(final Submission submission, AssessmentType assessmentType, User user, String resultString, Double score, boolean rated,
             ZonedDateTime completionDate) {
         Result result = new Result().participation(submission.getParticipation()).assessmentType(assessmentType).resultString(resultString).score(score).rated(rated)
                 .completionDate(completionDate);
@@ -1196,14 +1358,14 @@ public class DatabaseUtilService {
     }
 
     public Submission addResultToSubmission(Submission submission, AssessmentType assessmentType) {
-        return addResultToSubmission(submission, assessmentType, null, "x of y passed", 100L, true, null);
+        return addResultToSubmission(submission, assessmentType, null, "x of y passed", 100D, true, null);
     }
 
     public Submission addResultToSubmission(Submission submission, AssessmentType assessmentType, User user) {
-        return addResultToSubmission(submission, assessmentType, user, "x of y passed", 100L, true, ZonedDateTime.now());
+        return addResultToSubmission(submission, assessmentType, user, "x of y passed", 100D, true, ZonedDateTime.now());
     }
 
-    public Submission addResultToSubmission(Submission submission, AssessmentType assessmentType, User user, Long score, boolean rated) {
+    public Submission addResultToSubmission(Submission submission, AssessmentType assessmentType, User user, Double score, boolean rated) {
         return addResultToSubmission(submission, assessmentType, user, "x of y passed", score, rated, ZonedDateTime.now());
     }
 
@@ -1516,10 +1678,6 @@ public class DatabaseUtilService {
         assertThat(programmingExercise.getPresentationScoreEnabled()).as("presentation score is enabled").isTrue();
 
         return courseRepo.findWithEagerExercisesAndLecturesById(course.getId());
-    }
-
-    private void populateProgrammingExercise(ProgrammingExercise programmingExercise, String shortName) {
-        populateProgrammingExercise(programmingExercise, shortName, "Programming", false);
     }
 
     private void populateProgrammingExercise(ProgrammingExercise programmingExercise, String shortName, String title, boolean enableStaticCodeAnalysis) {
@@ -1853,7 +2011,7 @@ public class DatabaseUtilService {
         Result result = new Result();
         result.setAssessor(getUserByLogin(assessorLogin));
         result.setAssessmentType(assessmentType);
-        result.setScore(50L);
+        result.setScore(50D);
         if (hasCompletionDate) {
             result.setCompletionDate(ZonedDateTime.now());
         }
@@ -1964,7 +2122,7 @@ public class DatabaseUtilService {
         participation.addSubmission(fileUploadSubmission);
         Result result = new Result();
         result.setAssessor(getUserByLogin(assessorLogin));
-        result.setScore(100L);
+        result.setScore(100D);
         if (exercise.getReleaseDate() != null) {
             result.setCompletionDate(exercise.getReleaseDate());
         }
@@ -2004,7 +2162,7 @@ public class DatabaseUtilService {
         participation.addSubmission(submission);
         Result result = new Result();
         result.setAssessor(getUserByLogin(assessorLogin));
-        result.setScore(100L);
+        result.setScore(100D);
         if (exercise.getReleaseDate() != null) {
             result.setCompletionDate(exercise.getReleaseDate());
         }
@@ -2654,4 +2812,5 @@ public class DatabaseUtilService {
         params.forEach(paramMap::add);
         return paramMap;
     }
+
 }

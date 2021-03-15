@@ -36,6 +36,7 @@ export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
     predicate: string;
     reverse: boolean;
     nextOptimalSubmissionIds: number[] = [];
+    courseId: number;
     numberOfCorrectionrounds = 1;
 
     private cancelConfirmationText: string;
@@ -90,6 +91,7 @@ export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
             this.exerciseService.find(params['exerciseId']).subscribe((res: HttpResponse<Exercise>) => {
                 if (res.body!.type === ExerciseType.MODELING) {
                     this.exercise = res.body as ModelingExercise;
+                    this.courseId = this.exercise.course ? this.exercise.course.id! : this.exercise.exerciseGroup!.exam!.course!.id!;
                     this.getSubmissions(true);
                     this.numberOfCorrectionrounds = this.exercise.exerciseGroup ? this.exercise!.exerciseGroup.exam!.numberOfCorrectionRoundsInExam! : 1;
                     this.setPermissions();
@@ -216,7 +218,7 @@ export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
                     this.busy = false;
                     if (optimal.length === 0) {
                         this.jhiAlertService.clear();
-                        this.jhiAlertService.info('assessmentDashboard.noSubmissionFound');
+                        this.jhiAlertService.info('artemisApp.assessmentDashboard.noSubmissionFound');
                     } else {
                         this.nextOptimalSubmissionIds = optimal;
                         this.navigateToNextRandomOptimalSubmission();
@@ -225,7 +227,7 @@ export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
                 () => {
                     this.busy = false;
                     this.jhiAlertService.clear();
-                    this.jhiAlertService.info('assessmentDashboard.noSubmissionFound');
+                    this.jhiAlertService.info('artemisApp.assessmentDashboard.noSubmissionFound');
                 },
             );
         } else {

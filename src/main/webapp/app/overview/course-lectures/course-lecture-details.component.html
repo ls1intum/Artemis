@@ -1,15 +1,23 @@
+<jhi-alert></jhi-alert>
+
+<div *ngIf="isLoading" class="d-flex justify-content-center">
+    <div class="spinner-border" role="status">
+        <span class="sr-only">{{ 'loading' | artemisTranslate }}</span>
+    </div>
+</div>
+
 <div *ngIf="lecture">
     <!-- HEADER INFORMATION START -->
     <div class="course-info-bar">
         <div class="row">
             <div class="col general-info">
                 <h3>
-                    <fa-icon [icon]="'arrow-left'" (click)="backToCourse()" class="back-button mr-2"></fa-icon>
                     <span>{{ lecture!.title }}</span>
                 </h3>
                 <h4>
                     <span class="mr-2" *ngIf="lecture!.startDate && lecture!.endDate">
-                        {{ 'artemisApp.courseOverview.lectureDetails.date' | translate }} {{ lecture!.startDate | artemisDate }} - {{ lecture!.endDate | artemisDate: 'time' }}
+                        {{ 'artemisApp.courseOverview.lectureDetails.date' | artemisTranslate }} {{ lecture!.startDate | artemisDate }} -
+                        {{ lecture!.endDate | artemisDate: 'time' }}
                     </span>
                 </h4>
             </div>
@@ -21,7 +29,7 @@
         <div class="col pr-0 flex-grow-1">
             <div class="row mb-2 mt-2 align-items-baseline" *ngIf="lecture!.description">
                 <div class="col-auto">
-                    <h3>{{ 'artemisApp.courseOverview.lectureDetails.description' | translate }}</h3>
+                    <h3>{{ 'artemisApp.courseOverview.lectureDetails.description' | artemisTranslate }}</h3>
                 </div>
             </div>
             <div class="row mb-2 markdown-preview" *ngIf="lecture!.description">
@@ -30,7 +38,7 @@
             <!-- LECTURE UNITS START-->
             <div class="row mb-2 mt-2 align-items-baseline" *ngIf="lecture!.lectureUnits">
                 <div class="col-auto">
-                    <h3>{{ 'artemisApp.courseOverview.lectureDetails.lectureUnits' | translate }}</h3>
+                    <h3>{{ 'artemisApp.courseOverview.lectureDetails.lectureUnits' | artemisTranslate }}</h3>
                 </div>
             </div>
             <div class="row mb-4" *ngFor="let lectureUnit of lectureUnits">
@@ -52,7 +60,7 @@
             <!-- LECTURE UNITS END-->
             <div class="row mb-2 mt-2 align-items-baseline" *ngIf="lecture!.attachments">
                 <div class="col-auto">
-                    <h3>{{ 'artemisApp.courseOverview.lectureDetails.attachments' | translate }}</h3>
+                    <h3>{{ 'artemisApp.courseOverview.lectureDetails.attachments' | artemisTranslate }}</h3>
                 </div>
             </div>
             <div class="row mb-2" *ngIf="lecture!.attachments">
@@ -63,18 +71,18 @@
                                 {{ attachment.name }}
                             </a>
                             <a class="text-primary" *ngIf="isDownloadingLink === attachment.link">
-                                <fa-icon [icon]="'spinner'" [spin]="true"></fa-icon> {{ 'artemisApp.courseOverview.lectureDetails.isDownloading' | translate }}
+                                <fa-icon [icon]="'spinner'" [spin]="true"></fa-icon> {{ 'artemisApp.courseOverview.lectureDetails.isDownloading' | artemisTranslate }}
                             </a>
                             <span class="ml-1 badge badge-info">
                                 {{ attachmentExtension(attachment) | uppercase }}
                             </span>
                             <span class="ml-1 badge badge-warning" *ngIf="attachmentNotReleased(attachment)">
-                                {{ 'artemisApp.courseOverview.lectureDetails.notReleased' | translate }}
+                                {{ 'artemisApp.courseOverview.lectureDetails.notReleased' | artemisTranslate }}
                             </span>
                         </h5>
                         <h6 class="text-black-50 mb-0 lecture-attachment-details">
-                            ({{ 'artemisApp.courseOverview.lectureDetails.version' | translate }}: {{ attachment.version }} -
-                            {{ 'artemisApp.courseOverview.lectureDetails.date' | translate }}: {{ attachment.uploadDate | artemisDate }})
+                            ({{ 'artemisApp.courseOverview.lectureDetails.version' | artemisTranslate }}: {{ attachment.version }} -
+                            {{ 'artemisApp.courseOverview.lectureDetails.date' | artemisTranslate }}: {{ attachment.uploadDate | artemisDate }})
                         </h6>
                     </li>
                 </ul>

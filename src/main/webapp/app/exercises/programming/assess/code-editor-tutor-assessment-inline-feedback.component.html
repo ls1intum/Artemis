@@ -25,12 +25,7 @@
             <button type="button" class="btn btn-secondary btn-sm" (click)="cancelFeedback()">
                 <fa-icon [icon]="'ban'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
             </button>
-            <button
-                type="submit"
-                [disabled]="feedback.credits == null || (feedback.detailText ? feedback.detailText.trim().length === 0 : true)"
-                class="btn btn-primary btn-sm"
-                (click)="updateFeedback()"
-            >
+            <button type="submit" [disabled]="feedback.credits == null" class="btn btn-primary btn-sm" (click)="updateFeedback()">
                 <fa-icon [icon]="'save'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.save">Save</span>
             </button>
         </div>
@@ -42,7 +37,7 @@
             <div class="col pl-0">
                 <h5 class="d-inline">
                     <span class="badge" [class.badge-success]="feedback.credits! > 0" [class.badge-danger]="feedback.credits! < 0" [class.badge-warning]="feedback.credits === 0">{{
-                        feedback.credits + 'P'
+                        round(feedback.credits, 1) + 'P'
                     }}</span>
                 </h5>
                 <h6 class="d-inline" jhiTranslate="artemisApp.assessment.detail.tutorComment">Tutor Comment:</h6>

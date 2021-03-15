@@ -38,10 +38,10 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
-import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.SecurityUtils;
+import de.tum.in.www1.artemis.service.exam.ExamQuizService;
 import de.tum.in.www1.artemis.service.exam.StudentExamService;
 import de.tum.in.www1.artemis.util.LocalRepository;
 import de.tum.in.www1.artemis.util.ProgrammingExerciseTestService;
@@ -83,6 +83,15 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
     SubmissionVersionRepository submissionVersionRepository;
 
     @Autowired
+    QuizExerciseRepository quizExerciseRepository;
+
+    @Autowired
+    ExamQuizService examQuizService;
+
+    @Autowired
+    QuizSubmissionRepository quizSubmissionRepository;
+
+    @Autowired
     ObjectMapper objectMapper;
 
     private List<User> users;
@@ -94,6 +103,8 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
     private Exam exam1;
 
     private Exam exam2;
+
+    private Exam testRunExam;
 
     private StudentExam studentExam1;
 
@@ -131,9 +142,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testFindOne() {
-        assertThrows(EntityNotFoundException.class, () -> {
-            studentExamRepository.findByIdElseThrow(Long.MAX_VALUE);
-        });
+        assertThrows(EntityNotFoundException.class, () -> studentExamRepository.findByIdElseThrow(Long.MAX_VALUE));
         assertThat(studentExamRepository.findByIdElseThrow(studentExam1.getId())).isEqualTo(studentExam1);
     }
 
@@ -157,9 +166,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testFindMaxWorkingTimeById() {
-        assertThrows(EntityNotFoundException.class, () -> {
-            studentExamService.findMaxWorkingTimeByExamId(Long.MAX_VALUE);
-        });
+        assertThrows(EntityNotFoundException.class, () -> studentExamService.findMaxWorkingTimeByExamId(Long.MAX_VALUE));
         assertThat(studentExamService.findMaxWorkingTimeByExamId(exam1.getId())).isEqualTo(studentExam1.getWorkingTime());
     }
 
@@ -346,7 +353,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
 
         course2 = database.addEmptyCourse();
         exam2 = database.addExam(course2, examVisibleDate, examStartDate, examEndDate);
-        var exam = database.addTextModelingProgrammingExercisesToExam(exam2, true);
+        var exam = database.addTextModelingProgrammingExercisesToExam(exam2, true, false);
         final var testRun = database.setupTestRunForExamWithExerciseGroupsForInstructor(exam, instructor, exam.getExerciseGroups());
         assertThat(testRun.isTestRun()).isTrue();
 
@@ -372,7 +379,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
 
         course2 = database.addEmptyCourse();
         exam2 = database.addExam(course2, examVisibleDate, examStartDate, examEndDate);
-        var exam = database.addTextModelingProgrammingExercisesToExam(exam2, true);
+        var exam = database.addTextModelingProgrammingExercisesToExam(exam2, true, false);
         database.setupTestRunForExamWithExerciseGroupsForInstructor(exam, instructor, exam.getExerciseGroups());
         database.setupTestRunForExamWithExerciseGroupsForInstructor(exam, instructor2, exam.getExerciseGroups());
 
@@ -389,11 +396,11 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         var examStartDate = ZonedDateTime.now().plusMinutes(4);
         var examEndDate = ZonedDateTime.now().plusMinutes(3);
         exam2 = database.addExam(course2, examVisibleDate, examStartDate, examEndDate);
-        var exam = database.addTextModelingProgrammingExercisesToExam(exam2, false);
+        var exam = database.addTextModelingProgrammingExercisesToExam(exam2, false, false);
         var testRun = database.setupTestRunForExamWithExerciseGroupsForInstructor(exam, instructor, exam.getExerciseGroups());
         List<Submission> response = request.getList("/api/exercises/" + testRun.getExercises().get(0).getId() + "/test-run-submissions", HttpStatus.OK, Submission.class);
         assertThat(response).isNotEmpty();
-        assertThat(((StudentParticipation) response.get(0).getParticipation()).isTestRun()).isTrue();
+        assertThat((response.get(0).getParticipation()).isTestRun()).isTrue();
     }
 
     @Test
@@ -413,7 +420,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         var examStartDate = ZonedDateTime.now().plusMinutes(4);
         var examEndDate = ZonedDateTime.now().plusMinutes(3);
         exam2 = database.addExam(course2, examVisibleDate, examStartDate, examEndDate);
-        var exam = database.addTextModelingProgrammingExercisesToExam(exam2, false);
+        var exam = database.addTextModelingProgrammingExercisesToExam(exam2, false, false);
         var testRun = database.setupTestRunForExamWithExerciseGroupsForInstructor(exam, instructor, exam.getExerciseGroups());
         database.changeUser("student2");
         request.getList("/api/exercises/" + testRun.getExercises().get(0).getId() + "/test-run-submissions", HttpStatus.FORBIDDEN, Submission.class);
@@ -427,7 +434,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         var examStartDate = ZonedDateTime.now().plusMinutes(4);
         var examEndDate = ZonedDateTime.now().plusMinutes(3);
         exam2 = database.addExam(course2, examVisibleDate, examStartDate, examEndDate);
-        var exam = database.addTextModelingProgrammingExercisesToExam(exam2, false);
+        var exam = database.addTextModelingProgrammingExercisesToExam(exam2, false, false);
         final var latestSubmissions = request.getList("/api/exercises/" + exam.getExerciseGroups().get(0).getExercises().iterator().next().getId() + "/test-run-submissions",
                 HttpStatus.OK, Submission.class);
         assertThat(latestSubmissions).isEmpty();
@@ -493,7 +500,6 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
             studentExamRepository.save(studentExam);
         }
 
-        SecurityUtils.setAuthorizationObject(); // TODO why do we get an exception here without that?
         assertThat(studentExamRepository.findMaxWorkingTimeByExamId(exam.getId())).contains(maxWorkingTime);
         assertThat(studentExamRepository.findAllDistinctWorkingTimesByExamId(exam.getId())).containsExactlyInAnyOrderElementsOf(expectedWorkingTimes);
     }
@@ -919,73 +925,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
                     assertVersionedSubmission(textSubmission);
                 }
                 else if (exercise instanceof QuizExercise) {
-                    // check that the submission was saved and that a submitted version was created
-                    var quizSubmission = (QuizSubmission) submission;
-                    int dragAndDropDragItemIndex = 1;
-                    int dragAndDropLocationIndex = 2;
-                    String shortAnswerText = "New Short Answer Text";
-                    int shortAnswerSpotIndex = 1;
-                    int multipleChoiceSelectedOptionIndex = 0;
-                    ((QuizExercise) exercise).getQuizQuestions().forEach(quizQuestion -> {
-                        if (quizQuestion instanceof DragAndDropQuestion) {
-                            DragAndDropSubmittedAnswer dndSubmittedAnswer = new DragAndDropSubmittedAnswer();
-                            DragAndDropMapping dndMapping = new DragAndDropMapping();
-                            dndMapping.setDragItemIndex(dragAndDropDragItemIndex);
-                            dndMapping.setDropLocationIndex(dragAndDropLocationIndex);
-                            dndSubmittedAnswer.getMappings().add(dndMapping);
-                            quizSubmission.getSubmittedAnswers().add(dndSubmittedAnswer);
-                        }
-                        else if (quizQuestion instanceof ShortAnswerQuestion) {
-                            ShortAnswerSubmittedAnswer shortAnswerSubmittedAnswer = new ShortAnswerSubmittedAnswer();
-                            ShortAnswerSubmittedText shortAnswerSubmittedText = new ShortAnswerSubmittedText();
-                            shortAnswerSubmittedText.setText(shortAnswerText);
-                            shortAnswerSubmittedText.setSpot(((ShortAnswerQuestion) quizQuestion).getSpots().get(shortAnswerSpotIndex));
-                            shortAnswerSubmittedAnswer.getSubmittedTexts().add(shortAnswerSubmittedText);
-                            quizSubmission.getSubmittedAnswers().add(shortAnswerSubmittedAnswer);
-                        }
-                        else if (quizQuestion instanceof MultipleChoiceQuestion) {
-                            var answerOptions = ((MultipleChoiceQuestion) quizQuestion).getAnswerOptions();
-                            MultipleChoiceSubmittedAnswer multipleChoiceSubmittedAnswer = new MultipleChoiceSubmittedAnswer();
-                            multipleChoiceSubmittedAnswer.addSelectedOptions(answerOptions.get(multipleChoiceSelectedOptionIndex));
-                            quizSubmission.getSubmittedAnswers().add(multipleChoiceSubmittedAnswer);
-                        }
-                    });
-                    QuizSubmission savedQuizSubmission = request.putWithResponseBody("/api/exercises/" + exercise.getId() + "/submissions/exam", quizSubmission,
-                            QuizSubmission.class, HttpStatus.OK);
-                    // check the submission
-                    assertThat(savedQuizSubmission.getSubmittedAnswers()).isNotNull();
-                    assertThat(savedQuizSubmission.getSubmittedAnswers().size()).isGreaterThan(0);
-                    ((QuizExercise) exercise).getQuizQuestions().forEach(quizQuestion -> {
-                        SubmittedAnswer submittedAnswer = savedQuizSubmission.getSubmittedAnswerForQuestion(quizQuestion);
-                        if (submittedAnswer instanceof MultipleChoiceSubmittedAnswer) {
-                            var multipleChoiceSubmittedAnswer = (MultipleChoiceSubmittedAnswer) submittedAnswer;
-                            assertThat(multipleChoiceSubmittedAnswer.getSelectedOptions()).isNotNull();
-                            assertThat(multipleChoiceSubmittedAnswer.getSelectedOptions().size()).isGreaterThan(0);
-                            assertThat(multipleChoiceSubmittedAnswer.getSelectedOptions().iterator().next()).isNotNull();
-                            assertThat(multipleChoiceSubmittedAnswer.getSelectedOptions().iterator().next())
-                                    .isEqualTo(((MultipleChoiceQuestion) quizQuestion).getAnswerOptions().get(multipleChoiceSelectedOptionIndex));
-                        }
-                        else if (submittedAnswer instanceof ShortAnswerSubmittedAnswer) {
-                            var shortAnswerSubmittedAnswer = (ShortAnswerSubmittedAnswer) submittedAnswer;
-                            assertThat(shortAnswerSubmittedAnswer.getSubmittedTexts()).isNotNull();
-                            assertThat(shortAnswerSubmittedAnswer.getSubmittedTexts().size()).isGreaterThan(0);
-                            assertThat(shortAnswerSubmittedAnswer.getSubmittedTexts().iterator().next()).isNotNull();
-                            assertThat(shortAnswerSubmittedAnswer.getSubmittedTexts().iterator().next().getText()).isEqualTo(shortAnswerText);
-                            assertThat(shortAnswerSubmittedAnswer.getSubmittedTexts().iterator().next().getSpot())
-                                    .isEqualTo(((ShortAnswerQuestion) quizQuestion).getSpots().get(shortAnswerSpotIndex));
-                        }
-                        else if (submittedAnswer instanceof DragAndDropSubmittedAnswer) {
-                            var dragAndDropSubmittedAnswer = (DragAndDropSubmittedAnswer) submittedAnswer;
-                            assertThat(dragAndDropSubmittedAnswer.getMappings()).isNotNull();
-                            assertThat(dragAndDropSubmittedAnswer.getMappings().size()).isGreaterThan(0);
-                            assertThat(dragAndDropSubmittedAnswer.getMappings().iterator().next()).isNotNull();
-                            assertThat(dragAndDropSubmittedAnswer.getMappings().iterator().next().getDragItem())
-                                    .isEqualTo(((DragAndDropQuestion) quizQuestion).getDragItems().get(dragAndDropDragItemIndex));
-                            assertThat(dragAndDropSubmittedAnswer.getMappings().iterator().next().getDropLocation())
-                                    .isEqualTo(((DragAndDropQuestion) quizQuestion).getDropLocations().get(dragAndDropLocationIndex));
-                        }
-                    });
-                    assertVersionedSubmission(quizSubmission);
+                    submitQuizInExam((QuizExercise) exercise, (QuizSubmission) submission);
                 }
             }
 
@@ -1076,6 +1016,76 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         assertThat(studentExamsAfterFinish).hasSize(studentExamsAfterStart.size());
 
         deleteExam1WithInstructor();
+    }
+
+    private void submitQuizInExam(QuizExercise quizExercise, QuizSubmission quizSubmission) throws Exception {
+        // check that the submission was saved and that a submitted version was created
+        int dndDragItemIndex = 1;
+        int dndLocationIndex = 2;
+        String shortAnswerText = "New Short Answer Text";
+        int saSpotIndex = 1;
+        int mcSelectedOptionIndex = 0;
+        quizExercise.getQuizQuestions().forEach(quizQuestion -> {
+            if (quizQuestion instanceof DragAndDropQuestion) {
+                var submittedAnswer = new DragAndDropSubmittedAnswer();
+                DragAndDropMapping dndMapping = new DragAndDropMapping();
+                dndMapping.setDragItemIndex(dndDragItemIndex);
+                dndMapping.setDragItem(((DragAndDropQuestion) quizQuestion).getDragItems().get(dndDragItemIndex));
+                dndMapping.setDropLocationIndex(dndLocationIndex);
+                dndMapping.setDropLocation(((DragAndDropQuestion) quizQuestion).getDropLocations().get(dndLocationIndex));
+                submittedAnswer.getMappings().add(dndMapping);
+                submittedAnswer.setQuizQuestion(quizQuestion);
+                quizSubmission.getSubmittedAnswers().add(submittedAnswer);
+            }
+            else if (quizQuestion instanceof ShortAnswerQuestion) {
+                var submittedAnswer = new ShortAnswerSubmittedAnswer();
+                ShortAnswerSubmittedText shortAnswerSubmittedText = new ShortAnswerSubmittedText();
+                shortAnswerSubmittedText.setText(shortAnswerText);
+                shortAnswerSubmittedText.setSpot(((ShortAnswerQuestion) quizQuestion).getSpots().get(saSpotIndex));
+                submittedAnswer.getSubmittedTexts().add(shortAnswerSubmittedText);
+                submittedAnswer.setQuizQuestion(quizQuestion);
+                quizSubmission.getSubmittedAnswers().add(submittedAnswer);
+            }
+            else if (quizQuestion instanceof MultipleChoiceQuestion) {
+                var answerOptions = ((MultipleChoiceQuestion) quizQuestion).getAnswerOptions();
+                var submittedAnswer = new MultipleChoiceSubmittedAnswer();
+                submittedAnswer.addSelectedOptions(answerOptions.get(mcSelectedOptionIndex));
+                submittedAnswer.setQuizQuestion(quizQuestion);
+                quizSubmission.getSubmittedAnswers().add(submittedAnswer);
+            }
+        });
+        QuizSubmission savedQuizSubmission = request.putWithResponseBody("/api/exercises/" + quizExercise.getId() + "/submissions/exam", quizSubmission, QuizSubmission.class,
+                HttpStatus.OK);
+        // check the submission
+        assertThat(savedQuizSubmission.getSubmittedAnswers()).isNotNull();
+        assertThat(savedQuizSubmission.getSubmittedAnswers().size()).isGreaterThan(0);
+        quizExercise.getQuizQuestions().forEach(quizQuestion -> {
+            SubmittedAnswer submittedAnswer = savedQuizSubmission.getSubmittedAnswerForQuestion(quizQuestion);
+            if (submittedAnswer instanceof MultipleChoiceSubmittedAnswer) {
+                var answer = (MultipleChoiceSubmittedAnswer) submittedAnswer;
+                assertThat(answer.getSelectedOptions()).isNotNull();
+                assertThat(answer.getSelectedOptions().size()).isGreaterThan(0);
+                assertThat(answer.getSelectedOptions().iterator().next()).isNotNull();
+                assertThat(answer.getSelectedOptions().iterator().next()).isEqualTo(((MultipleChoiceQuestion) quizQuestion).getAnswerOptions().get(mcSelectedOptionIndex));
+            }
+            else if (submittedAnswer instanceof ShortAnswerSubmittedAnswer) {
+                var answer = (ShortAnswerSubmittedAnswer) submittedAnswer;
+                assertThat(answer.getSubmittedTexts()).isNotNull();
+                assertThat(answer.getSubmittedTexts().size()).isGreaterThan(0);
+                assertThat(answer.getSubmittedTexts().iterator().next()).isNotNull();
+                assertThat(answer.getSubmittedTexts().iterator().next().getText()).isEqualTo(shortAnswerText);
+                assertThat(answer.getSubmittedTexts().iterator().next().getSpot()).isEqualTo(((ShortAnswerQuestion) quizQuestion).getSpots().get(saSpotIndex));
+            }
+            else if (submittedAnswer instanceof DragAndDropSubmittedAnswer) {
+                var answer = (DragAndDropSubmittedAnswer) submittedAnswer;
+                assertThat(answer.getMappings()).isNotNull();
+                assertThat(answer.getMappings().size()).isGreaterThan(0);
+                assertThat(answer.getMappings().iterator().next()).isNotNull();
+                assertThat(answer.getMappings().iterator().next().getDragItem()).isEqualTo(((DragAndDropQuestion) quizQuestion).getDragItems().get(dndDragItemIndex));
+                assertThat(answer.getMappings().iterator().next().getDropLocation()).isEqualTo(((DragAndDropQuestion) quizQuestion).getDropLocations().get(dndLocationIndex));
+            }
+        });
+        assertVersionedSubmission(quizSubmission);
     }
 
     private void assertVersionedSubmission(Submission submission) {
@@ -1302,44 +1312,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
                 request.put("/api/exercises/" + exercise.getId() + "/text-submissions", textSubmission, HttpStatus.OK);
             }
             else if (exercise instanceof QuizExercise) {
-                // check that the submission was saved and that a submitted version was created
-                var quizSubmission = (QuizSubmission) submission;
-                int dragAndDropDragItemIndex = 1;
-                int dragAndDropLocationIndex = 2;
-                String shortAnswerText = "New Short Answer Text";
-                int shortAnswerSpotIndex = 1;
-                int multipleChoiceSelectedOptionIndex = 0;
-                ((QuizExercise) exercise).getQuizQuestions().forEach(quizQuestion -> {
-                    if (quizQuestion instanceof DragAndDropQuestion) {
-                        DragAndDropSubmittedAnswer dndSubmittedAnswer = new DragAndDropSubmittedAnswer();
-                        DragAndDropMapping dndMapping = new DragAndDropMapping();
-                        dndMapping.setDragItemIndex(dragAndDropDragItemIndex);
-                        dndMapping.setDropLocationIndex(dragAndDropLocationIndex);
-                        dndMapping.setDropLocation(((DragAndDropQuestion) quizQuestion).getDropLocations().get(dragAndDropLocationIndex - 1));
-                        dndSubmittedAnswer.getMappings().add(dndMapping);
-                        dndSubmittedAnswer.setQuizQuestion(quizQuestion);
-                        quizSubmission.getSubmittedAnswers().add(dndSubmittedAnswer);
-                    }
-                    else if (quizQuestion instanceof ShortAnswerQuestion) {
-                        ShortAnswerSubmittedAnswer shortAnswerSubmittedAnswer = new ShortAnswerSubmittedAnswer();
-                        ShortAnswerSubmittedText shortAnswerSubmittedText = new ShortAnswerSubmittedText();
-                        shortAnswerSubmittedText.setText(shortAnswerText);
-                        shortAnswerSubmittedText.setSpot(((ShortAnswerQuestion) quizQuestion).getSpots().get(shortAnswerSpotIndex));
-                        shortAnswerSubmittedAnswer.getSubmittedTexts().add(shortAnswerSubmittedText);
-                        shortAnswerSubmittedAnswer.setQuizQuestion(quizQuestion);
-                        quizSubmission.getSubmittedAnswers().add(shortAnswerSubmittedAnswer);
-                    }
-                    else if (quizQuestion instanceof MultipleChoiceQuestion) {
-                        var answerOptions = ((MultipleChoiceQuestion) quizQuestion).getAnswerOptions();
-                        MultipleChoiceSubmittedAnswer multipleChoiceSubmittedAnswer = new MultipleChoiceSubmittedAnswer();
-                        multipleChoiceSubmittedAnswer.addSelectedOptions(answerOptions.get(multipleChoiceSelectedOptionIndex));
-                        multipleChoiceSubmittedAnswer.setQuizQuestion(quizQuestion);
-                        multipleChoiceSubmittedAnswer.setQuizQuestion(quizQuestion);
-                        quizSubmission.getSubmittedAnswers().add(multipleChoiceSubmittedAnswer);
-                    }
-
-                });
-                request.putWithResponseBody("/api/exercises/" + exercise.getId() + "/submissions/exam", quizSubmission, QuizSubmission.class, HttpStatus.OK);
+                submitQuizInExam((QuizExercise) exercise, (QuizSubmission) submission);
             }
         }
         return studentExam;
@@ -1425,7 +1398,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
     public void testDeleteTestRun() throws Exception {
         var instructor = database.getUserByLogin("instructor1");
         var exam = database.addExam(course1);
-        exam = database.addTextModelingProgrammingExercisesToExam(exam, false);
+        exam = database.addTextModelingProgrammingExercisesToExam(exam, false, false);
         var testRun = database.setupTestRunForExamWithExerciseGroupsForInstructor(exam, instructor, exam.getExerciseGroups());
         request.delete("/api/courses/" + exam.getCourse().getId() + "/exams/" + exam.getId() + "/test-run/" + testRun.getId(), HttpStatus.OK);
     }
@@ -1435,7 +1408,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
     public void testDeleteTestRunWithReferencedParticipationsDeleteOneParticipation() throws Exception {
         var instructor = database.getUserByLogin("instructor1");
         var exam = database.addExam(course1);
-        exam = database.addTextModelingProgrammingExercisesToExam(exam, false);
+        exam = database.addTextModelingProgrammingExercisesToExam(exam, false, false);
         var testRun1 = database.setupTestRunForExamWithExerciseGroupsForInstructor(exam, instructor, exam.getExerciseGroups());
         var testRun2 = new StudentExam();
         testRun2.setTestRun(true);
@@ -1445,7 +1418,6 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         testRun2.setWorkingTime(testRun1.getWorkingTime());
         studentExamRepository.save(testRun2);
         request.delete("/api/courses/" + exam.getCourse().getId() + "/exams/" + exam.getId() + "/test-run/" + testRun1.getId(), HttpStatus.OK);
-        SecurityUtils.setAuthorizationObject();
         var testRunList = studentExamRepository.findAllTestRunsWithExercisesParticipationsSubmissionsResultsByExamId(exam.getId());
         assertThat(testRunList.size()).isEqualTo(1);
         testRunList.get(0).getExercises().forEach(exercise -> assertThat(exercise.getStudentParticipations()).isNotEmpty());
@@ -1456,7 +1428,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
     public void testDeleteTestRunWithReferencedParticipationsDeleteNoParticipation() throws Exception {
         var instructor = database.getUserByLogin("instructor1");
         var exam = database.addExam(course1);
-        exam = database.addTextModelingProgrammingExercisesToExam(exam, false);
+        exam = database.addTextModelingProgrammingExercisesToExam(exam, false, false);
         var testRun1 = database.setupTestRunForExamWithExerciseGroupsForInstructor(exam, instructor, exam.getExerciseGroups());
         var testRun2 = new StudentExam();
         testRun2.setTestRun(true);
@@ -1466,7 +1438,6 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         testRun2.setWorkingTime(testRun1.getWorkingTime());
         studentExamRepository.save(testRun2);
         request.delete("/api/courses/" + exam.getCourse().getId() + "/exams/" + exam.getId() + "/test-run/" + testRun2.getId(), HttpStatus.OK);
-        SecurityUtils.setAuthorizationObject();
         var testRunList = studentExamRepository.findAllTestRunsWithExercisesParticipationsSubmissionsResultsByExamId(exam.getId());
         assertThat(testRunList.size()).isEqualTo(1);
         testRunList.get(0).getExercises().forEach(exercise -> assertThat(exercise.getStudentParticipations()).isNotEmpty());
@@ -1483,23 +1454,136 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testCreateTestRun() throws Exception {
-        var instructor = database.getUserByLogin("instructor1");
-        StudentExam testRunConfiguration = new StudentExam();
-        testRunConfiguration.setExercises(new ArrayList<>());
-        var exam = database.addExam(course1);
-        exam = database.addTextModelingProgrammingExercisesToExam(exam, false);
-        exam.getExerciseGroups().forEach(exerciseGroup -> testRunConfiguration.getExercises().add(exerciseGroup.getExercises().iterator().next()));
-        testRunConfiguration.setExam(exam);
-        testRunConfiguration.setWorkingTime(6000);
-        testRunConfiguration.setUser(instructor);
+        createTestRun();
+    }
 
-        request.postWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/test-run", testRunConfiguration, StudentExam.class, HttpStatus.OK);
+    /**
+     * the server invokes SecurityUtils.setAuthorizationObject() so after invoking this method you need to "login" the user again
+     * @return the created test run
+     * @throws Exception if errors occur
+     */
+    private StudentExam createTestRun() throws Exception {
+        var instructor = database.getUserByLogin("instructor1");
+        StudentExam testRun = new StudentExam();
+        testRun.setExercises(new ArrayList<>());
+        testRunExam = database.addExam(course1);
+        testRunExam = database.addTextModelingProgrammingExercisesToExam(testRunExam, false, true);
+        testRunExam.getExerciseGroups().forEach(exerciseGroup -> testRun.getExercises().add(exerciseGroup.getExercises().iterator().next()));
+        testRun.setExam(testRunExam);
+        testRun.setWorkingTime(6000);
+        testRun.setUser(instructor);
+
+        request.postWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + testRunExam.getId() + "/test-run", testRun, StudentExam.class, HttpStatus.OK);
+        var testRunsInDb = studentExamRepository.findAllByExamId_AndTestRunIsTrue(testRunExam.getId());
+        assertThat(testRunsInDb.size()).isEqualTo(1);
+        var testRunInDb = testRunsInDb.get(0);
+        assertThat(testRunInDb.isTestRun()).isEqualTo(true);
+        assertThat(testRunInDb.getWorkingTime()).isEqualTo(6000);
+        assertThat(testRunInDb.getUser()).isEqualTo(instructor);
+        return testRunInDb;
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testSubmitTestRun() throws Exception {
+        var testRun = createTestRun();
+        database.changeUser("instructor1");
+        var testRunResponse = request.get("/api/courses/" + course1.getId() + "/exams/" + testRunExam.getId() + "/test-run/" + testRun.getId() + "/conduction", HttpStatus.OK,
+                StudentExam.class);
+
+        QuizExercise quizExercise = null;
+        QuizSubmission quizSubmission = null;
+
+        for (var exercise : testRunResponse.getExercises()) {
+            var participation = exercise.getStudentParticipations().iterator().next();
+            var submission = participation.getSubmissions().iterator().next();
+            if (exercise instanceof QuizExercise) {
+                quizExercise = (QuizExercise) exercise;
+                quizSubmission = (QuizSubmission) submission;
+                submitQuizInExam(quizExercise, quizSubmission);
+            }
+        }
+
+        assertThat(quizExercise).isNotNull();
+        testRunResponse = request.postWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + testRunExam.getId() + "/student-exams/submit", testRunResponse,
+                StudentExam.class, HttpStatus.OK, null);
+        checkQuizSubmission(quizExercise.getId(), quizSubmission.getId());
+
+        // reconnect references so that the following method works
+        testRunResponse.getExercises().forEach(exercise -> exercise.getStudentParticipations().forEach(studentParticipation -> studentParticipation.setExercise(exercise)));
+        // invoke a second time to test the else case in this method
         SecurityUtils.setAuthorizationObject();
-        var testRuns = studentExamRepository.findAllTestRunsWithExercisesParticipationsSubmissionsResultsByExamId(exam.getId());
-        assertThat(testRuns.size()).isEqualTo(1);
-        var testRun = testRuns.get(0);
-        assertThat(testRun.isTestRun()).isEqualTo(true);
-        assertThat(testRun.getWorkingTime()).isEqualTo(6000);
-        assertThat(testRun.getUser()).isEqualTo(instructor);
+        examQuizService.evaluateQuizParticipationsForTestRun(testRunResponse);
+        // make sure that no second result is created
+        checkQuizSubmission(quizExercise.getId(), quizSubmission.getId());
+    }
+
+    private void checkQuizSubmission(long quizExerciseId, long quizSubmissionId) {
+
+        assertThat(quizSubmissionRepository.count()).isEqualTo(1);
+
+        List<Result> results = resultRepository.findByParticipationExerciseIdOrderByCompletionDateAsc(quizExerciseId);
+        assertThat(results.size()).isEqualTo(1);
+        var result = results.get(0);
+        assertThat(result.getSubmission().getId()).isEqualTo(quizSubmissionId);
+
+        assertThat(result.getResultString()).isEqualTo("4 of 9 points");
+        var resultQuizSubmission = (QuizSubmission) result.getSubmission();
+        assertThat(resultQuizSubmission.getScoreInPoints()).isEqualTo(4D);
+        var submittedAnswers = resultQuizSubmission.getSubmittedAnswers();
+        for (SubmittedAnswer submittedAnswer : submittedAnswers) {
+            // MC submitted answers 0 points as one correct and one false -> ALL_OR_NOTHING
+            if (submittedAnswer instanceof MultipleChoiceSubmittedAnswer) {
+                assertThat(submittedAnswer.getScoreInPoints()).isEqualTo(4D);
+            } // DND submitted answers 0 points as one correct and two false -> PROPORTIONAL_WITH_PENALTY
+            else if (submittedAnswer instanceof DragAndDropSubmittedAnswer) {
+                assertThat(submittedAnswer.getScoreInPoints()).isEqualTo(0D);
+            } // SA submitted answers 0 points as one correct and one false -> PROPORTIONAL_WITHOUT_PENALTY
+            else if (submittedAnswer instanceof ShortAnswerSubmittedAnswer) {
+                assertThat(submittedAnswer.getScoreInPoints()).isEqualTo(0D);
+            }
+        }
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testSubmitAndUnSubmitStudentExamAfterExamIsOver() throws Exception {
+        final var studentExams = prepareStudentExamsForConduction();
+        var studentExam = studentExams.get(0);
+
+        // now we change to the point of time when the student exam needs to be submitted
+        // IMPORTANT NOTE: this needs to be configured in a way that the individual student exam ended, but we are still in the grace period time
+        exam2.setStartDate(ZonedDateTime.now().minusMinutes(10));
+        studentExam.setStarted(true);
+        studentExam.setStartedDate(ZonedDateTime.now().minusMinutes(8));
+        exam2.setEndDate(ZonedDateTime.now().minusMinutes(5));
+        exam2 = examRepository.save(exam2);
+        studentExam = studentExamRepository.save(studentExam);
+        assertThat(studentExam.isSubmitted()).isFalse();
+        assertThat(studentExam.getSubmissionDate()).isNull();
+
+        // submitting the exam, although the endDate is over
+        database.changeUser("student1");
+        request.put("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExam.getId() + "/toggle-to-submitted", null, HttpStatus.FORBIDDEN);
+        database.changeUser("tutor1");
+        request.put("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExam.getId() + "/toggle-to-submitted", null, HttpStatus.FORBIDDEN);
+        database.changeUser("instructor1");
+        request.put("/api/courses/" + course1.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExam.getId() + "/toggle-to-submitted", null, HttpStatus.CONFLICT);
+        request.put("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExam.getId() + "/toggle-to-submitted", null, HttpStatus.OK);
+        studentExam = studentExamRepository.findById(studentExam.getId()).orElseThrow();
+        assertThat(studentExam.isSubmitted()).isTrue();
+        assertThat(studentExam.getSubmissionDate()).isNotNull();
+
+        // setting the exam to unsubmitted again
+        database.changeUser("student1");
+        request.put("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExam.getId() + "/toggle-to-unsubmitted", null, HttpStatus.FORBIDDEN);
+        database.changeUser("tutor1");
+        request.put("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExam.getId() + "/toggle-to-unsubmitted", null, HttpStatus.FORBIDDEN);
+        database.changeUser("instructor1");
+        request.put("/api/courses/" + course1.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExam.getId() + "/toggle-to-unsubmitted", null, HttpStatus.CONFLICT);
+        request.put("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExam.getId() + "/toggle-to-unsubmitted", null, HttpStatus.OK);
+        studentExam = studentExamRepository.findById(studentExam.getId()).orElseThrow();
+        assertThat(studentExam.isSubmitted()).isFalse();
+        assertThat(studentExam.getSubmissionDate()).isNull();
     }
 }

@@ -1,13 +1,14 @@
-import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
-import * as sinon from 'sinon';
-import * as moment from 'moment';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { TranslatePipe, TranslateService } from '@ngx-translate/core';
-import { MockComponent, MockPipe, MockProviders } from 'ng-mocks';
-import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
+import { TranslateService } from '@ngx-translate/core';
 import { AttachmentUnitFormComponent, AttachmentUnitFormData } from 'app/lecture/lecture-unit/lecture-unit-management/attachment-unit-form/attachment-unit-form.component';
+import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe.ts';
+import * as chai from 'chai';
+import * as moment from 'moment';
+import { MockComponent, MockPipe, MockProviders } from 'ng-mocks';
+import * as sinon from 'sinon';
+import * as sinonChai from 'sinon-chai';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -19,7 +20,7 @@ describe('AttachmentUnitFormComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ReactiveFormsModule, FormsModule],
-            declarations: [AttachmentUnitFormComponent, MockPipe(TranslatePipe), MockComponent(FormDateTimePickerComponent)],
+            declarations: [AttachmentUnitFormComponent, MockPipe(ArtemisTranslatePipe), MockComponent(FormDateTimePickerComponent)],
             providers: [MockProviders(TranslateService)],
             schemas: [],
         })

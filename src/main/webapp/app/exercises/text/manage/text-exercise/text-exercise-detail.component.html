@@ -12,7 +12,7 @@
                 <jhi-exercise-details [exercise]="textExercise"></jhi-exercise-details>
                 <dt><span jhiTranslate="artemisApp.textExercise.automaticAssessmentEnabled">Automatic Assessment Enabled</span></dt>
                 <dd>
-                    <span>{{ (textExercise.assessmentType === AssessmentType.SEMI_AUTOMATIC ? 'global.generic.yes' : 'global.generic.no') | translate }}</span>
+                    <span>{{ (textExercise.assessmentType === AssessmentType.SEMI_AUTOMATIC ? 'global.generic.yes' : 'global.generic.no') | artemisTranslate }}</span>
                 </dd>
                 <dt><span jhiTranslate="artemisApp.exercise.sampleSolution">Sample Solution</span></dt>
                 <dd class="editor-outline-background" [innerHTML]="formattedSampleSolution"></dd>

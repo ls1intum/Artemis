@@ -2,7 +2,7 @@ import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import * as sinon from 'sinon';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { TranslatePipe } from '@ngx-translate/core';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe.ts';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -32,7 +32,7 @@ describe('CourseLectureRow', () => {
             imports: [],
             declarations: [
                 CourseLectureRowComponent,
-                MockPipe(TranslatePipe),
+                MockPipe(ArtemisTranslatePipe),
                 MockPipe(ArtemisDatePipe),
                 MockComponent(FaIconComponent),
                 MockDirective(NgbTooltip),

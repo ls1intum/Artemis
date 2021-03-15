@@ -20,6 +20,7 @@ import { ProgrammingExerciseSimulationService } from 'app/exercises/programming/
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { ProgrammingLanguageFeatureService } from 'app/exercises/programming/shared/service/programming-language-feature/programming-language-feature.service';
 import { navigateBackFromExerciseUpdate } from 'app/utils/navigation.utils';
+import { shortNamePattern } from 'app/shared/constants/input.constants';
 
 @Component({
     selector: 'jhi-programming-exercise-update',
@@ -64,7 +65,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         '^(?!(?:associatedtype|class|deinit|enum|extension|fileprivate|func|import|init|inout|internal|let|open|operator|private|protocol|public|rethrows|static|struct|subscript|typealias|var|break|case|continue|default|defer|do|else|fallthrough|for|guard|if|in|repeat|return|switch|where|while|as|Any|catch|false|is|nil|super|self|Self|throw|throws|true|try|_)$)[A-Za-z][0-9A-Za-z]*$';
     packageNamePattern = '';
 
-    shortNamePattern = '^[a-zA-Z][a-zA-Z0-9]*'; // must start with a letter and cannot contain special characters
+    readonly shortNamePattern = shortNamePattern; // must start with a letter and cannot contain special characters
     titleNamePattern = '^[a-zA-Z0-9-_ ]+'; // must only contain alphanumeric characters, or whitespaces, or '_' or '-'
     exerciseCategories: ExerciseCategory[];
     existingCategories: ExerciseCategory[];

@@ -215,6 +215,7 @@
             "saveAttachment": "Anhang speichern",
             "addAttachment": "Anhang hinzufügen",
             "assessmentDashboard": "Bewertungs-Dashboard",
+            "instructorDashboard": "Dozenten-Dashboard",
             "exerciseDashboard": "Aufgaben-Dashboard",
             "newResult": "Neues Ergebnis",
             "updateResult": "Ergebnis bearbeiten",
@@ -226,7 +227,9 @@
             "exams": "Klausuren",
             "manageHints": "Verwalte Hinweise",
             "addExternalSubmission": "Externe Einreichung anlegen",
-            "questionsAndAnswers": "Q&A"
+            "questionsAndAnswers": "Q&A",
+            "toggleToUnsubmitted": "Setze Studentenklauszur auf nicht abgegeben",
+            "toggleToSubmitted": "Setze Studentenklauszur auf abgegeben"
         },
         "detail": {
             "field": "Feld",

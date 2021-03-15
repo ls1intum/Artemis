@@ -15,6 +15,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.domain.Course;
@@ -138,6 +140,8 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
                 assertThat(dropLocations.get(0).getPosY()).as("Pos Y for drop location is correct").isEqualTo(10);
                 assertThat(dropLocations.get(0).getWidth()).as("Width for drop location is correct").isEqualTo(10);
                 assertThat(dropLocations.get(0).getHeight()).as("Height for drop location is correct").isEqualTo(10);
+                dropLocations.get(0).getQuestion();
+                dropLocations.get(0).getMappings();
                 assertThat(dropLocations.get(1).getPosX()).as("Pos X for drop location is correct").isEqualTo(20);
                 assertThat(dropLocations.get(1).getPosY()).as("Pos Y for drop location is correct").isEqualTo(20);
                 assertThat(dropLocations.get(1).getWidth()).as("Width for drop location is correct").isEqualTo(10);
@@ -196,6 +200,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
                 assertThat(answerOptions.get(1).getHint()).as("Hint for answer option is correct").isEqualTo("H2");
                 assertThat(answerOptions.get(1).getExplanation()).as("Explanation for answer option is correct").isEqualTo("E2");
                 assertThat(answerOptions.get(1).isIsCorrect()).as("Is correct for answer option is correct").isFalse();
+                answerOptions.get(1).getQuestion();
             }
             if (question instanceof DragAndDropQuestion) {
                 DragAndDropQuestion dragAndDropQuestion = (DragAndDropQuestion) question;
@@ -570,7 +575,10 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         final var username = "student1";
         final Principal principal = () -> username;
         QuizSubmission quizSubmission = database.generateSubmissionForThreeQuestions(quizExercise, 1, true, null);
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         quizSubmissionWebsocketService.saveSubmission(quizExercise.getId(), quizSubmission, principal);
+        SecurityContextHolder.getContext().setAuthentication(authentication);
 
         // Quiz submissions are not yet in database
         assertThat(quizSubmissionRepository.findAll().size()).isEqualTo(0);

@@ -16,24 +16,31 @@
         <div *ngIf="!loadingFailed && filteredFeedbackList && filteredFeedbackList.length; else buildLogsContainer" class="result-detail-container">
             <div *ngIf="showScoreChart && result.participation?.exercise" class="result-score-chart">
                 <span class="result-score-chart-title"
-                    ><span jhiTranslate="artemisApp.result.score">Score</span>: {{ result.score }}%
+                    ><span jhiTranslate="artemisApp.result.score">Score</span>: {{ round(result.score) }}%
                     <span
                         *ngIf="resultIsPreliminary()"
                         class="badge badge-warning"
                         [ngbTooltip]="
                             result.participation!.exercise!.assessmentType !== AssessmentType.AUTOMATIC
-                                ? ('artemisApp.result.preliminaryTooltipSemiAutomatic' | translate)
-                                : ('artemisApp.result.preliminaryTooltip' | translate)
+                                ? ('artemisApp.result.preliminaryTooltipSemiAutomatic' | artemisTranslate)
+                                : ('artemisApp.result.preliminaryTooltip' | artemisTranslate)
                         "
-                        >{{ 'artemisApp.result.preliminary' | translate | uppercase }}</span
+                        >{{ 'artemisApp.result.preliminary' | artemisTranslate | uppercase }}</span
                     >
                 </span>
                 <div style="height: 100px"><jhi-chart [preset]="scoreChartPreset"> </jhi-chart></div>
                 <div *ngIf="showScoreChartTooltip" class="d-flex justify-content-center position-relative" style="margin-top: -10px">
-                    <div style="width: 250px; height: 20px; top: -15px; position: absolute" [ngbTooltip]="'artemisApp.result.chart.tooltip' | translate" placement="bottom"></div>
+                    <div
+                        style="width: 250px; height: 20px; top: -15px; position: absolute"
+                        [ngbTooltip]="'artemisApp.result.chart.tooltip' | artemisTranslate"
+                        placement="bottom"
+                    ></div>
                 </div>
                 <hr />
             </div>
+            <!-- Always show failed build logs first -->
+            <ng-container *ngTemplateOutlet="buildLogs?.length ? buildLogsContainer : undefined"></ng-container>
+            <hr *ngIf="buildLogs?.length" />
             <div class="feedback-list">
                 <div *ngFor="let feedback of filteredFeedbackList; last as isLast" [ngClass]="['feedback-item', getClassNameForFeedbackItem(feedback)]">
                     <span>{{ feedback.category }}</span>
@@ -49,7 +56,8 @@
     Build logs container
 -->
     <ng-template #buildLogsContainer>
-        <ng-container *ngIf="buildLogs && buildLogs.length; else noFeedbacksContainer">
+        <ng-container *ngIf="buildLogs?.length; else noFeedbacksContainer">
+            <h4 jhiTranslate="artemisApp.result.buildError">Build Error:</h4>
             <dl class="buildoutput dl-horizontal">
                 <ng-container *ngFor="let logEntry of buildLogs; let i = index">
                     <!--Don't show the timestamp again if it is the same as the last entry's.-->

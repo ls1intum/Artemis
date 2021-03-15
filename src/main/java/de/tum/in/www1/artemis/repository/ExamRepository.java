@@ -32,6 +32,13 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
 
     List<Exam> findByCourseId(Long courseId);
 
+    @Query("""
+            SELECT ex
+            FROM Exam ex LEFT JOIN FETCH ex.exerciseGroups eg LEFT JOIN FETCH eg.exercises
+            WHERE ex.course.id = :courseId
+            """)
+    List<Exam> findByCourseIdWithExerciseGroupsAndExercises(@Param("courseId") Long courseId);
+
     @Query("select exam from Exam exam where exam.course.testCourse = false and exam.endDate >= :#{#date} order by exam.startDate asc")
     List<Exam> findAllByEndDateGreaterThanEqual(@Param("date") ZonedDateTime date);
 
@@ -166,5 +173,9 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
         // drop all test runs and set the remaining student exams to the exam
         exam.setStudentExams(exam.getStudentExams().stream().dropWhile(StudentExam::isTestRun).collect(Collectors.toSet()));
         return exam;
+    }
+
+    default Exam findWithExerciseGroupsAndExercisesByIdOrElseThrow(Long examId) throws EntityNotFoundException {
+        return findWithExerciseGroupsAndExercisesById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
     }
 }

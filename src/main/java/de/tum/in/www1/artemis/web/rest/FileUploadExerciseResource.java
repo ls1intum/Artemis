@@ -198,6 +198,8 @@ public class FileUploadExerciseResource {
 
         FileUploadExercise result = fileUploadExerciseRepository.save(fileUploadExercise);
 
+        exerciseService.updatePointsInRelatedParticipantScores(fileUploadExerciseBeforeUpdate, result);
+
         // Only notify students about changes if a regular exercise was updated
         if (notificationText != null && fileUploadExercise.isCourseExercise()) {
             groupNotificationService.notifyStudentGroupAboutExerciseUpdate(fileUploadExercise, notificationText);

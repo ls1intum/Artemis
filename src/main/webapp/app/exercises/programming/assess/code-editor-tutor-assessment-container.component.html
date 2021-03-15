@@ -50,8 +50,8 @@
         <div editorTitle>
             <span>{{ exercise?.title }}</span>
             <span
-                >&nbsp;[{{ exercise?.maxPoints }} {{ 'artemisApp.examParticipation.points' | translate
-                }}<span *ngIf="exercise.bonusPoints">, {{ exercise.bonusPoints }} {{ 'artemisApp.examParticipation.bonus' | translate }}</span
+                >&nbsp;[{{ exercise?.maxPoints }} {{ 'artemisApp.examParticipation.points' | artemisTranslate
+                }}<span *ngIf="exercise.bonusPoints">, {{ exercise.bonusPoints }} {{ 'artemisApp.examParticipation.bonus' | artemisTranslate }}</span
                 >]
                 <jhi-included-in-score-badge
                     *ngIf="exercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY"
@@ -67,7 +67,7 @@
             ></jhi-programming-assessment-repo-export>
             <a
                 class="ml-2 mr-5"
-                href="{{ adjustedRepositoryURL }}"
+                href="{{ participation?.userIndependentRepositoryUrl }}"
                 target="_blank"
                 rel="noopener noreferrer"
                 jhiTranslate="artemisApp.exerciseAssessmentDashboard.programmingExercise.goToRepo"
@@ -96,7 +96,6 @@
             <div class="row mt-3">
                 <div class="col-md-6">
                     <jhi-unreferenced-feedback [(feedbacks)]="unreferencedFeedback" (feedbacksChange)="validateFeedback()" [readOnly]="readOnly()"></jhi-unreferenced-feedback>
-                    <jhi-assessment-general-feedback [(feedback)]="generalFeedback" (feedbackChange)="validateFeedback()" [readOnly]="readOnly()"></jhi-assessment-general-feedback>
                 </div>
             </div>
         </div>

@@ -54,13 +54,19 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
             + "and (spr.id = (select max(id) from sp.results) or spr.id = null)")
     Optional<ProgrammingExercise> findWithTemplateAndSolutionParticipationLatestResultById(@Param("exerciseId") Long exerciseId);
 
-    @Query("select distinct pe from ProgrammingExercise as pe left join fetch pe.studentParticipations")
+    @Query("select distinct pe from ProgrammingExercise pe left join fetch pe.studentParticipations")
     List<ProgrammingExercise> findAllWithEagerParticipations();
 
-    @Query("select distinct pe from ProgrammingExercise as pe left join fetch pe.studentParticipations pep left join fetch pep.submissions")
+    @Query("select distinct pe from ProgrammingExercise pe where pe.course.endDate between :#{#endDate1} and :#{#endDate2}")
+    List<ProgrammingExercise> findAllByRecentCourseEndDate(@Param("endDate1") ZonedDateTime endDate1, @Param("endDate2") ZonedDateTime endDate2);
+
+    @Query("select distinct pe from ProgrammingExercise pe left join fetch pe.studentParticipations where pe.dueDate between :#{#endDate1} and :#{#endDate2} or pe.exerciseGroup.exam.endDate between :#{#endDate1} and :#{#endDate2}")
+    List<ProgrammingExercise> findAllWithStudentParticipationByRecentEndDate(@Param("endDate1") ZonedDateTime endDate1, @Param("endDate2") ZonedDateTime endDate2);
+
+    @Query("select distinct pe from ProgrammingExercise pe left join fetch pe.studentParticipations pep left join fetch pep.submissions")
     List<ProgrammingExercise> findAllWithEagerParticipationsAndSubmissions();
 
-    @Query("select distinct pe from ProgrammingExercise as pe left join fetch pe.templateParticipation left join fetch pe.solutionParticipation")
+    @Query("select distinct pe from ProgrammingExercise pe left join fetch pe.templateParticipation left join fetch pe.solutionParticipation")
     List<ProgrammingExercise> findAllWithEagerTemplateAndSolutionParticipations();
 
     @EntityGraph(type = LOAD, attributePaths = "studentParticipations")
@@ -123,7 +129,7 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
      * @return List<ProgrammingExercise> (can be empty)
      */
     @Query("select pe from ProgrammingExercise pe left join fetch pe.exerciseGroup eg left join fetch eg.exam e where e.endDate > :#{#dateTime}")
-    List<ProgrammingExercise> findAllWithEagerExamAllByExamEndDateAfterDate(@Param("dateTime") ZonedDateTime dateTime);
+    List<ProgrammingExercise> findAllWithEagerExamByExamEndDateAfterDate(@Param("dateTime") ZonedDateTime dateTime);
 
     /**
      * In distinction to other exercise types, students can have multiple submissions in a programming exercise.
@@ -197,11 +203,34 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
      * In distinction to other exercise types, students can have multiple submissions in a programming exercise.
      * We therefore have to check here if any submission of the student was submitted before the deadline.
      *
+     * @param examId the exam id we are interested in
+     * @return the number of latest submissions belonging to a participation belonging to the exam id, which have the submitted flag set to true and the submission date before the exercise due date, or no exercise
+     *         due date at all (only exercises with manual or semi automatic correction are considered)
+     */
+    @Query("""
+            SELECT COUNT (DISTINCT p) FROM ProgrammingExerciseStudentParticipation p
+                WHERE p.exercise.assessmentType <> 'AUTOMATIC'
+                AND p.exercise.exerciseGroup.exam.id = :#{#examId}
+                AND p.submissions IS NOT EMPTY
+            """)
+    long countSubmissionsByExamIdSubmitted(@Param("examId") Long examId);
+
+    /**
+     * In distinction to other exercise types, students can have multiple submissions in a programming exercise.
+     * We therefore have to check here if any submission of the student was submitted before the deadline.
+     *
      * @param courseId the course id we are interested in
      * @return the number of submissions belonging to the course id, which have the submitted flag set to true and the submission date before the exercise due date, or no exercise
      *         due date at all (only exercises with manual or semi automatic correction are considered)
      */
-    @Query("SELECT COUNT (DISTINCT p) FROM ProgrammingExerciseStudentParticipation p WHERE p.exercise.assessmentType <> 'AUTOMATIC' AND p.exercise.course.id = :#{#courseId} AND EXISTS (SELECT s FROM ProgrammingSubmission s WHERE s.participation.id = p.id AND s.submitted = TRUE)")
+    @Query("""
+            SELECT COUNT (DISTINCT p) FROM ProgrammingExerciseStudentParticipation p
+                WHERE p.exercise.assessmentType <> 'AUTOMATIC'
+                AND p.exercise.course.id = :#{#courseId}
+                AND EXISTS (SELECT s FROM ProgrammingSubmission s
+                    WHERE s.participation.id = p.id
+                    AND s.submitted = TRUE)
+            """)
     long countSubmissionsByCourseIdSubmitted(@Param("courseId") Long courseId);
 
     List<ProgrammingExercise> findAllByCourse_InstructorGroupNameIn(Set<String> groupNames);
