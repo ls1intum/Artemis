@@ -116,6 +116,7 @@ public class SAML2Configuration extends WebSecurityConfigurerAdapter {
     }
 
     private RSAPrivateKey readPrivateKey(File file) throws IOException {
+        // Read PKCS#8 File!
         try (FileReader keyReader = new FileReader(file)) {
             PEMParser pemParser = new PEMParser(keyReader);
             JcaPEMKeyConverter converter = new JcaPEMKeyConverter();

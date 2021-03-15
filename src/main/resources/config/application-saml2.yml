@@ -29,7 +29,7 @@ saml2:
           registration-id: IdPName
           entity-id: artemis
           cert-file: # path-to-cert (optional) Set this path to the Certificate for encryption/signing or leave it blank
-          key-file: # path-to-key (optional) Set this path to the Key for encryption/ssigning or leave it blank
+          key-file: # path-to-key (optional) Set this path to the Key for encryption/signing or leave it blank (must be a PKCS#8 file!)
         # Multiple IdPs can be configured
         # - metadata: <URL>
         #   registrationid: <id>
