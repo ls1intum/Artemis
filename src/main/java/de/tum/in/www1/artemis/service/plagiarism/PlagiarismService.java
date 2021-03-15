@@ -2,6 +2,8 @@ package de.tum.in.www1.artemis.service.plagiarism;
 
 import java.util.Optional;
 
+import javax.transaction.Transactional;
+
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Exercise;
@@ -59,9 +61,9 @@ public class PlagiarismService {
      * @param comparison Plagiarism comparison to update.
      * @param status The new status of the plagiarism comparison.
      */
+    @Transactional
     public void updateStatusOfComparison(PlagiarismComparison comparison, PlagiarismStatus status) {
-        comparison.setStatus(status);
-        plagiarismComparisonRepository.save(comparison);
+        plagiarismComparisonRepository.updatePlagiarismComparisonStatus(comparison.getId(), status);
     }
 
     /**
