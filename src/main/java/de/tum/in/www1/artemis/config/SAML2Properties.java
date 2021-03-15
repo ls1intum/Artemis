@@ -108,7 +108,7 @@ public class SAML2Properties {
     /**
      * Sets the registration number pattern.
      *
-     * @param registrationNumberPattern  The registration number pattern
+     * @param registrationNumberPattern The registration number pattern
      */
     public void setRegistrationNumberPattern(String registrationNumberPattern) {
         this.registrationNumberPattern = registrationNumberPattern;
@@ -126,7 +126,7 @@ public class SAML2Properties {
     /**
      * Sets the identity providers.
      *
-     * @param identityProviders  The identity providers
+     * @param identityProviders The identity providers
      */
     public void setIdentityProviders(List<RelyingPartyProperties> identityProviders) {
         this.identityProviders = identityProviders;
@@ -142,6 +142,10 @@ public class SAML2Properties {
         private String registrationId;
 
         private String entityId;
+
+        private String certFile;
+
+        private String keyFile;
 
         /**
          * Gets the url or path to a metadata XML config.
@@ -171,9 +175,27 @@ public class SAML2Properties {
         }
 
         /**
+         * Returns the Certificate File for signatures from this relying party.
+         *
+         * @return the certificate file or blank/null if no certificate will be used
+         */
+        public String getCertFile() {
+            return certFile;
+        }
+
+        /**
+         * Returns the Key File for signatures/encryption from this relying party.
+         *
+         * @return the key file or blank/null if no certificate will be used
+         */
+        public String getKeyFile() {
+            return keyFile;
+        }
+
+        /**
          * Sets the url or path to a metadata XML config.
          *
-         * @param metadata  the url or path to a metadata XML config.
+         * @param metadata the url or path to a metadata XML config.
          */
         public void setMetadata(String metadata) {
             this.metadata = metadata;
@@ -182,7 +204,7 @@ public class SAML2Properties {
         /**
          * Sets the registration identifier.
          *
-         * @param      registrationId  The registration identifier
+         * @param registrationId The registration identifier
          */
         public void setRegistrationId(String registrationId) {
             this.registrationId = registrationId;
@@ -191,10 +213,28 @@ public class SAML2Properties {
         /**
          * Sets the entity identifier.
          *
-         * @param      entityId  The entity identifier
+         * @param entityId The entity identifier
          */
         public void setEntityId(String entityId) {
             this.entityId = entityId;
+        }
+
+        /**
+         * Sets the certificate file for this relying party.
+         *
+         * @param certFile the certificate file
+         */
+        public void setCertFile(String certFile) {
+            this.certFile = certFile;
+        }
+
+        /**
+         * Sets the key file for this relying party.
+         *
+         * @param keyFile the key file
+         */
+        public void setKeyFile(String keyFile) {
+            this.keyFile = keyFile;
         }
     }
 }
