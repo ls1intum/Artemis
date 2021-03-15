@@ -1,14 +1,14 @@
-package de.tum.in.www1.artemis.service.connectors;
-
-import static de.tum.in.www1.artemis.service.connectors.RemoteArtemisServiceConnector.authenticationHeaderForSecret;
+package de.tum.in.www1.artemis.service.connectors.athene;
 
 import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 
 import de.tum.in.www1.artemis.exception.NetworkingError;
 import de.tum.in.www1.artemis.service.dto.FeedbackConflictResponseDTO;
@@ -23,10 +23,11 @@ public class TextAssessmentConflictService {
     @Value("${artemis.athene.feedback-consistency-url}")
     private String API_ENDPOINT;
 
-    @Value("${artemis.athene.base64-secret}")
-    private String API_SECRET;
+    private final AtheneConnector<Request, Response> connector;
 
-    private final RemoteArtemisServiceConnector<Request, Response> connector = new RemoteArtemisServiceConnector<>(log, Response.class);
+    public TextAssessmentConflictService(@Qualifier("atheneRestTemplate") RestTemplate atheneRestTemplate) {
+        connector = new AtheneConnector<>(log, atheneRestTemplate, Response.class);
+    }
 
     // region Request/Response DTOs
     private static class Request {
@@ -60,7 +61,7 @@ public class TextAssessmentConflictService {
             throws NetworkingError {
         log.info("Calling Remote Service to check feedback consistencies.");
         final Request request = new Request(textFeedbackConflictRequestDTOS, exerciseId);
-        final Response response = connector.invokeWithRetry(API_ENDPOINT, request, authenticationHeaderForSecret(API_SECRET), maxRetries);
+        final Response response = connector.invokeWithRetry(API_ENDPOINT, request, maxRetries);
 
         return response.feedbackInconsistencies;
     }

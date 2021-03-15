@@ -29,6 +29,7 @@ import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.TextAssessmentQueueService;
 import de.tum.in.www1.artemis.service.TextSubmissionService;
+import de.tum.in.www1.artemis.service.connectors.athene.AtheneService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.dto.AtheneDTO;
 
@@ -64,11 +65,9 @@ public class AtheneServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
     @BeforeEach
     public void init() {
         // Create atheneService and inject @Value fields
-        atheneService = new AtheneService(textSubmissionService, textBlockRepository, textClusterRepository, textExerciseRepository, textAssessmentQueueService);
+        atheneService = new AtheneService(textSubmissionService, textBlockRepository, textClusterRepository, textExerciseRepository, textAssessmentQueueService, restTemplate);
         ReflectionTestUtils.setField(atheneService, "artemisServerUrl", artemisServerUrl);
         ReflectionTestUtils.setField(atheneService, "submitApiEndpoint", SUBMIT_API_ENDPOINT);
-        String apiSecret = "YWVuaXF1YWRpNWNlaXJpNmFlbTZkb283dXphaVF1b29oM3J1MWNoYWlyNHRoZWUzb2huZ2FpM211bGVlM0VpcAo=";
-        ReflectionTestUtils.setField(atheneService, "apiSecret", apiSecret);
 
         // Create example exercise
         ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
@@ -111,11 +110,6 @@ public class AtheneServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
 
         when(textSubmissionService.getTextSubmissionsWithTextBlocksByExerciseIdAndLanguage(exercise1.getId(), Language.ENGLISH))
                 .thenReturn(ModelFactory.generateTextSubmissions(10));
-
-        // Inject restTemplate to connector of atheneService
-        RemoteArtemisServiceConnector conn = (RemoteArtemisServiceConnector) ReflectionTestUtils.getField(atheneService, "connector");
-        assertThat(conn).isNotNull();
-        ReflectionTestUtils.setField(conn, "restTemplate", restTemplate);
 
         // Create mock server
         MockRestServiceServer mockServer = MockRestServiceServer.bindTo(restTemplate).build();

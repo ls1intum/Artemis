@@ -1,7 +1,6 @@
-package de.tum.in.www1.artemis.service.connectors;
+package de.tum.in.www1.artemis.service.connectors.athene;
 
 import static de.tum.in.www1.artemis.config.Constants.ATHENE_RESULT_API_PATH;
-import static de.tum.in.www1.artemis.service.connectors.RemoteArtemisServiceConnector.authorizationHeaderForSymmetricSecret;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 
@@ -12,9 +11,11 @@ import javax.validation.constraints.NotNull;
 import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
@@ -38,9 +39,6 @@ public class AtheneService {
     @Value("${artemis.athene.submit-url}")
     private String submitApiEndpoint;
 
-    @Value("${artemis.athene.base64-secret}")
-    private String apiSecret;
-
     private final TextAssessmentQueueService textAssessmentQueueService;
 
     private final TextBlockRepository textBlockRepository;
@@ -51,18 +49,20 @@ public class AtheneService {
 
     private final TextSubmissionService textSubmissionService;
 
-    private final RemoteArtemisServiceConnector<RequestDTO, ResponseDTO> connector = new RemoteArtemisServiceConnector<>(log, ResponseDTO.class);
+    private final AtheneConnector<RequestDTO, ResponseDTO> connector;
 
     // Contains tasks submitted to Athene and currently processing
     private final List<Long> runningAtheneTasks = new ArrayList<>();
 
     public AtheneService(TextSubmissionService textSubmissionService, TextBlockRepository textBlockRepository, TextClusterRepository textClusterRepository,
-            TextExerciseRepository textExerciseRepository, TextAssessmentQueueService textAssessmentQueueService) {
+            TextExerciseRepository textExerciseRepository, TextAssessmentQueueService textAssessmentQueueService,
+            @Qualifier("atheneRestTemplate") RestTemplate atheneRestTemplate) {
         this.textSubmissionService = textSubmissionService;
         this.textBlockRepository = textBlockRepository;
         this.textClusterRepository = textClusterRepository;
         this.textExerciseRepository = textExerciseRepository;
         this.textAssessmentQueueService = textAssessmentQueueService;
+        connector = new AtheneConnector<>(log, atheneRestTemplate, ResponseDTO.class);
     }
 
     // region Request/Response DTOs
@@ -157,7 +157,7 @@ public class AtheneService {
 
         try {
             final RequestDTO request = new RequestDTO(exercise.getId(), textSubmissions, artemisServerUrl + ATHENE_RESULT_API_PATH + exercise.getId());
-            ResponseDTO response = connector.invokeWithRetry(submitApiEndpoint, request, authorizationHeaderForSymmetricSecret(apiSecret), maxRetries);
+            ResponseDTO response = connector.invokeWithRetry(submitApiEndpoint, request, maxRetries);
             log.info("Remote Service to calculate automatic feedback responded: " + response.detail);
 
             // Register task for exercise as running, AtheneResource calls finishTask on result receive
