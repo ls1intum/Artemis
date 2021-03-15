@@ -191,7 +191,8 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
         var gradingCriteria = gradingCriterionService.findByExerciseIdWithEagerGradingCriteria(modelingExercise.getId());
         modelingExercise.setGradingCriteria(gradingCriteria);
         final User user = userRepository.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isAtLeastTeachingAssistantForExercise(modelingExercise, user)) {
+        if (!authCheckService.isAtLeastTeachingAssistantForExercise(modelingExercise, user)
+                || (resultId > 0 && !authCheckService.isAtLeastInstructorForExercise(modelingExercise, user))) {
             return forbidden();
         }
 

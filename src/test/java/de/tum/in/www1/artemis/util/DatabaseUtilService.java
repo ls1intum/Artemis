@@ -1,8 +1,7 @@
 package de.tum.in.www1.artemis.util;
 
 import static com.google.gson.JsonParser.parseString;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.fail;
+import static org.assertj.core.api.Assertions.*;
 
 import java.net.URL;
 import java.time.Duration;
@@ -2088,6 +2087,19 @@ public class DatabaseUtilService {
 
     public ModelingSubmission addModelingSubmissionWithFinishedResultAndAssessor(ModelingExercise exercise, ModelingSubmission submission, String login, String assessorLogin) {
         StudentParticipation participation = createAndSaveParticipationForExercise(exercise, login);
+        return addModelingSubmissionWithFinishedResultsWithAssessor(participation, exercise, submission, login, assessorLogin);
+    }
+
+    public ModelingSubmission addModelingSubmissionWithTwoFinishedResultsWithAssessor(ModelingExercise exercise, ModelingSubmission submission, String login,
+            String assessorLogin) {
+        StudentParticipation participation = createAndSaveParticipationForExercise(exercise, login);
+        submission = addModelingSubmissionWithFinishedResultsWithAssessor(participation, exercise, submission, login, assessorLogin);
+        submission = addModelingSubmissionWithFinishedResultsWithAssessor(participation, exercise, submission, login, assessorLogin);
+        return submission;
+    }
+
+    public ModelingSubmission addModelingSubmissionWithFinishedResultsWithAssessor(StudentParticipation participation, ModelingExercise exercise, ModelingSubmission submission,
+            String login, String assessorLogin) {
         participation.addSubmission(submission);
         submission = modelingSubmissionRepo.save(submission);
         Result result = new Result();
