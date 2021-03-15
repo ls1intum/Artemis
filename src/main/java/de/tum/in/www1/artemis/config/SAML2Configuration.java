@@ -1,8 +1,6 @@
 package de.tum.in.www1.artemis.config;
 
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -104,9 +102,10 @@ public class SAML2Configuration extends WebSecurityConfigurerAdapter {
     }
 
     private static X509Certificate readPublicCert(File file) throws IOException, CertificateException {
-        String certFile = Files.readString(file.toPath(), Charset.defaultCharset());
-        CertificateFactory certFactory = CertificateFactory.getInstance("X.509");
-        return (X509Certificate) certFactory.generateCertificate(new ByteArrayInputStream(certFile.getBytes(StandardCharsets.UTF_8)));
+        try (InputStream inStream = new FileInputStream(file)) {
+            CertificateFactory cf = CertificateFactory.getInstance("X.509");
+            return (X509Certificate) cf.generateCertificate(inStream);
+        }
     }
 
     public RSAPrivateKey readPrivateKey(File file) throws IOException, NoSuchAlgorithmException, InvalidKeySpecException {
