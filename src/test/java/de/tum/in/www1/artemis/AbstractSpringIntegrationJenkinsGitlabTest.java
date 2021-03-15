@@ -261,7 +261,7 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
 
         var projectKey = participation.getProgrammingExercise().getProjectKey();
         var buildPlanId = participation.getBuildPlanId();
-        jenkinsRequestMockProvider.mockGetBuildStatus(projectKey, buildPlanId, true, false, false);
+        jenkinsRequestMockProvider.mockGetBuildStatus(projectKey, buildPlanId, true, false, false, false);
 
         mockCopyBuildPlan(participation);
         mockConfigureBuildPlan(participation);
@@ -374,8 +374,9 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
     }
 
     @Override
-    public void mockGetBuildPlan(String projectKey, String planName, boolean planExistsInCi, boolean planIsActive, boolean planIsBuilding) throws Exception {
-        jenkinsRequestMockProvider.mockGetBuildStatus(projectKey, planName, planExistsInCi, planIsActive, planIsBuilding);
+    public void mockGetBuildPlan(String projectKey, String planName, boolean planExistsInCi, boolean planIsActive, boolean planIsBuilding, boolean failToGetBuild)
+            throws Exception {
+        jenkinsRequestMockProvider.mockGetBuildStatus(projectKey, planName, planExistsInCi, planIsActive, planIsBuilding, failToGetBuild);
     }
 
     @Override

@@ -5,7 +5,6 @@ import static org.mockito.Mockito.*;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withStatus;
-import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -435,7 +434,7 @@ public class JenkinsRequestMockProvider {
         doNothing().when(jenkinsServer).deleteJob(projectKey, useCrumb);
     }
 
-    public void mockGetBuildStatus(String projectKey, String planName, boolean planExistsInCi, boolean planIsActive, boolean planIsBuilding)
+    public void mockGetBuildStatus(String projectKey, String planName, boolean planExistsInCi, boolean planIsActive, boolean planIsBuilding, boolean failToGetLastBuild)
             throws IOException, URISyntaxException {
         if (!planExistsInCi) {
             mockGetJob(projectKey, planName, null, false);
@@ -452,7 +451,8 @@ public class JenkinsRequestMockProvider {
 
         final var uri = UriComponentsBuilder.fromUri(jenkinsServerUrl.toURI()).pathSegment("job", projectKey, "job", planName, "lastBuild", "api", "json").build().toUri();
         final var body = new ObjectMapper().writeValueAsString(Map.of("building", planIsBuilding && planIsActive));
-        mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.GET)).andRespond(withSuccess().body(body).contentType(MediaType.APPLICATION_JSON));
+        final var status = failToGetLastBuild ? HttpStatus.NOT_FOUND : HttpStatus.OK;
+        mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.GET)).andRespond(withStatus(status).body(body).contentType(MediaType.APPLICATION_JSON));
     }
 
     public void mockHealth(boolean isRunning, HttpStatus httpStatus) throws URISyntaxException {

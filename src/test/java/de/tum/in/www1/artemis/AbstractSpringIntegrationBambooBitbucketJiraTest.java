@@ -321,7 +321,7 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
     public void mockTriggerFailedBuild(ProgrammingExerciseStudentParticipation participation) throws Exception {
         doReturn(COMMIT_HASH_OBJECT_ID).when(gitService).getLastCommitHash(any());
         String buildPlanId = participation.getBuildPlanId();
-        bambooRequestMockProvider.mockGetBuildPlan(buildPlanId, buildPlanId != null ? new BambooBuildPlanDTO() : null);
+        bambooRequestMockProvider.mockGetBuildPlan(buildPlanId, buildPlanId != null ? new BambooBuildPlanDTO() : null, false);
         mockCopyBuildPlan(participation);
         mockConfigureBuildPlan(participation);
         bambooRequestMockProvider.mockTriggerBuild(participation);
@@ -429,9 +429,10 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
     }
 
     @Override
-    public void mockGetBuildPlan(String porjectKey, String planName, boolean planExistsInCi, boolean planIsActive, boolean planIsBuilding) throws Exception {
-        var buildPlanToReturn = planExistsInCi ? new BambooBuildPlanDTO(planIsActive, planIsBuilding) : null;
-        bambooRequestMockProvider.mockGetBuildPlan(planName, buildPlanToReturn);
+    public void mockGetBuildPlan(String porjectKey, String planName, boolean planExistsInCi, boolean planIsActive, boolean planIsBuilding, boolean failToGetBuild)
+            throws Exception {
+        var buildPlanToReturn = planExistsInCi || failToGetBuild ? new BambooBuildPlanDTO(planIsActive, planIsBuilding) : null;
+        bambooRequestMockProvider.mockGetBuildPlan(planName, buildPlanToReturn, failToGetBuild);
     }
 
     @Override

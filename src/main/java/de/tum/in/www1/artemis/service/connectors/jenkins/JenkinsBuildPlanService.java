@@ -175,19 +175,12 @@ public class JenkinsBuildPlanService {
         try {
             var uri = UriComponentsBuilder.fromHttpUrl(serverUrl.toString()).pathSegment("job", projectKey, "job", planKey, "lastBuild", "api", "json").build().toUri();
             var response = restTemplate.getForObject(uri, JsonNode.class);
-            if (response != null) {
-                var isJobBuilding = response.get("building").asBoolean();
-                return isJobBuilding ? ContinuousIntegrationService.BuildStatus.BUILDING : ContinuousIntegrationService.BuildStatus.INACTIVE;
-            }
-            else {
-                // TODO: Throw exception or fail silently?
-                // Couldn't fetch build status
-                return null;
-            }
+            var isJobBuilding = response.get("building").asBoolean();
+            return isJobBuilding ? ContinuousIntegrationService.BuildStatus.BUILDING : ContinuousIntegrationService.BuildStatus.INACTIVE;
         }
-        catch (HttpClientErrorException e) {
-            log.error(e.getMessage(), e);
-            throw new JenkinsException("Error while trying to fetch build status from Jenkins for " + planKey, e);
+        catch (NullPointerException | HttpClientErrorException e) {
+            log.error("Error while trying to fetch build status from Jenkins for " + planKey + ":" + e.getMessage());
+            return ContinuousIntegrationService.BuildStatus.INACTIVE;
         }
     }
 

@@ -162,17 +162,20 @@ public class BambooRequestMockProvider {
 
     public void mockBuildPlanExists(final String buildPlanId, final boolean exists) throws URISyntaxException, JsonProcessingException {
         if (exists) {
-            mockGetBuildPlan(buildPlanId, new BambooBuildPlanDTO(buildPlanId));
+            mockGetBuildPlan(buildPlanId, new BambooBuildPlanDTO(buildPlanId), false);
         }
         else {
-            mockGetBuildPlan(buildPlanId, null);
+            mockGetBuildPlan(buildPlanId, null, false);
         }
     }
 
-    public void mockGetBuildPlan(String buildPlanId, BambooBuildPlanDTO buildPlanToBeReturned) throws JsonProcessingException {
+    public void mockGetBuildPlan(String buildPlanId, BambooBuildPlanDTO buildPlanToBeReturned, boolean failToGetBuild) throws JsonProcessingException {
         String requestUrl = bambooServerUrl + "/rest/api/latest/plan/" + buildPlanId;
         URI uri = UriComponentsBuilder.fromUriString(requestUrl).build().toUri();
-        if (buildPlanToBeReturned != null) {
+        if (failToGetBuild) {
+            mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.GET)).andRespond(withStatus(HttpStatus.INTERNAL_SERVER_ERROR));
+        }
+        else if (buildPlanToBeReturned != null) {
             mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.GET))
                     .andRespond(withStatus(HttpStatus.OK).contentType(MediaType.APPLICATION_JSON).body(mapper.writeValueAsString(buildPlanToBeReturned)));
         }
@@ -417,7 +420,7 @@ public class BambooRequestMockProvider {
     public void mockCopyBuildPlan(String sourceProjectKey, String sourcePlanName, String targetProjectKey, String targetPlanName, boolean targetProjectExists)
             throws URISyntaxException, JsonProcessingException {
 
-        mockGetBuildPlan(targetProjectKey + "-" + targetPlanName, null);
+        mockGetBuildPlan(targetProjectKey + "-" + targetPlanName, null, false);
 
         final var sourcePlanKey = sourceProjectKey + "-" + sourcePlanName;
         MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
@@ -474,7 +477,7 @@ public class BambooRequestMockProvider {
 
     public void mockDeleteBambooBuildPlan(String planKey, boolean buildPlanExists) throws URISyntaxException, JsonProcessingException {
 
-        mockGetBuildPlan(planKey, null);
+        mockGetBuildPlan(planKey, null, false);
 
         if (!buildPlanExists) {
             return;

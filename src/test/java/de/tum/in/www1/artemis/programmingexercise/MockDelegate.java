@@ -96,7 +96,7 @@ public interface MockDelegate {
 
     void mockDeleteBuildPlanProject(String projectKey) throws Exception;
 
-    void mockGetBuildPlan(String projectKey, String planName, boolean planExistsInCi, boolean planIsActive, boolean planIsBuilding) throws Exception;
+    void mockGetBuildPlan(String projectKey, String planName, boolean planExistsInCi, boolean planIsActive, boolean planIsBuilding, boolean failToGetBuild) throws Exception;
 
     void mockHealthInCiService(boolean isRunning, HttpStatus httpStatus) throws Exception;
 
