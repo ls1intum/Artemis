@@ -48,7 +48,7 @@ public class InstanceMessageReceiveService {
         });
         hazelcastInstance.<Long>getTopic("programming-exercise-schedule-cancel").addMessageListener(message -> {
             SecurityUtils.setAuthorizationObject();
-            processScheduleProgrammingExerciseCancel((message.getMessageObject()));
+            processScheduleProgrammingExerciseCancel(message.getMessageObject());
         });
         hazelcastInstance.<Long>getTopic("text-exercise-schedule").addMessageListener(message -> {
             SecurityUtils.setAuthorizationObject();
