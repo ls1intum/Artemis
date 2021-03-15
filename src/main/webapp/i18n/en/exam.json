@@ -191,6 +191,11 @@
             "unlockAllRepositoriesFailure": "There was an error during the unlocking of the programming exercises:\n {{message}}",
             "lockAllRepositoriesSuccess": "Repositories of {{number}} programming exercises were locked.",
             "lockAllRepositoriesFailure": "There was an error during the locking of the programming exercises:\n {{message}}",
+            "removeAllStudents": {
+                "title": "Remove all students",
+                "question": "Are you sure you want to remove <strong class='text-danger'>all students</strong> from the exam?",
+                "confirmationText": "Please enter the name of the exam to confirm removing all students from the exam!"
+            },
             "confirmDialog": {
                 "titleToUnsubmitted": "Change Student Exam to Unsubmitted",
                 "titleToSubmitted": "Change Student Exam to Submitted",
