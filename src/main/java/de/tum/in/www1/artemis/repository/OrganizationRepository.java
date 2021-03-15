@@ -86,62 +86,6 @@ public interface OrganizationRepository extends JpaRepository<Organization, Long
     }
 
     /**
-     * Add user to an organization, if not contained already
-     * @param user the user to add to the organization
-     * @param organizationId the id of the organization where the user should be added
-     */
-    @NotNull
-    default void addUserToOrganization(User user, Long organizationId) {
-        Organization organization = findByIdWithUsersElseThrow(organizationId);
-        if (!organization.getUsers().contains(user)) {
-            organization.getUsers().add(user);
-            save(organization);
-        }
-    }
-
-    /**
-     * Remove user from an organization, if currently contained
-     * @param user the user to remove from the organization
-     * @param organizationId the id of the organization from which the user should be removed
-     */
-    @NotNull
-    default void removeUserFromOrganization(User user, Long organizationId) {
-        Organization organization = findByIdWithUsersElseThrow(organizationId);
-        if (organization.getUsers().contains(user)) {
-            organization.getUsers().remove(user);
-            save(organization);
-        }
-    }
-
-    /**
-     * Add course to an organization, if not contained already
-     * @param course the course to add to the organization
-     * @param organizationId the id of the organization where the course should be added
-     */
-    @NotNull
-    default void addCourseToOrganization(Course course, Long organizationId) {
-        Organization organization = findByIdWithCoursesElseThrow(organizationId);
-        if (!organization.getCourses().contains(course)) {
-            organization.getCourses().add(course);
-            save(organization);
-        }
-    }
-
-    /**
-     * Remove course from an organization, if currently contained
-     * @param course the course to remove from the organization
-     * @param organizationId the id of the organization from which the course should be removed
-     */
-    @NotNull
-    default void removeCourseFromOrganization(Course course, Long organizationId) {
-        Organization organization = findByIdWithCoursesElseThrow(organizationId);
-        if (organization.getCourses().contains(course)) {
-            organization.getCourses().remove(course);
-            save(organization);
-        }
-    }
-
-    /**
      * Retrieve a set containing all organizations with an emailPattern matching the
      * provided user's email.
      * @param userEmail the email of the user to match

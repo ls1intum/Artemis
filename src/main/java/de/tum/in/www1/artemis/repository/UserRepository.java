@@ -7,6 +7,7 @@ import java.util.*;
 
 import javax.validation.constraints.NotNull;
 
+import de.tum.in.www1.artemis.domain.Organization;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -366,4 +367,32 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     @Query(value = "SELECT * from jhi_user u where u.email regexp ?1", nativeQuery = true)
     List<User> findAllMatchingEmailPattern(@Param("emailPattern") String emailPattern);
+
+    /**
+     * Add organization to user, if not contained already
+     * @param userId the id of the user to add to the organization
+     * @param organization the organization to add to the user
+     */
+    @NotNull
+    default void addOrganizationToUser(Long userId, Organization organization) {
+        User user = findByIdWithGroupsAndAuthoritiesAndOrganizationsElseThrow(userId);
+        if (!user.getOrganizations().contains(organization)) {
+            user.getOrganizations().add(organization);
+            save(user);
+        }
+    }
+
+    /**
+     * Remove organization from user, if currently contained
+     * @param userId the id of the user to remove from the organization
+     * @param organization the organization to remove from the user
+     */
+    @NotNull
+    default void removeOrganizationFromUser(Long userId, Organization organization) {
+        User user = findByIdWithGroupsAndAuthoritiesAndOrganizationsElseThrow(userId);
+        if(user.getOrganizations().contains(organization)) {
+            user.getOrganizations().remove(organization);
+            save(user);
+        }
+    }
 }

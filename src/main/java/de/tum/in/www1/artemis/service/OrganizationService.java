@@ -42,7 +42,7 @@ public class OrganizationService {
         organizationRepository.removeAllUsersFromOrganization(organization.getId());
         usersToAssign.forEach(user -> {
             log.debug("User {} matches {} email pattern. Adding", user.getLogin(), organization.getName());
-            organizationRepository.addUserToOrganization(user, organization.getId());
+            userRepository.addOrganizationToUser(user.getId(), organization);
         });
     }
 

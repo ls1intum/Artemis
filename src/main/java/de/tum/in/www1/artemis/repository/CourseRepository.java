@@ -153,4 +153,32 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     default Course findByIdWithLecturesAndExamsElseThrow(Long courseId) {
         return findWithEagerLecturesAndExamsById(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
     }
+
+    /**
+     * Add organization to course, if not contained already
+     * @param courseId the id of the course to add to the organization
+     * @param organization the organization to add to the course
+     */
+    @NotNull
+    default void addOrganizationToCourse(Long courseId, Organization organization) {
+        Course course = findWithEagerOrganizations(courseId);
+        if (!course.getOrganizations().contains(organization)) {
+            course.getOrganizations().add(organization);
+            save(course);
+        }
+    }
+
+    /**
+     * Remove organizaiton from course, if currently contained
+     * @param courseId the id of the course to remove from the organization
+     * @param organization the organization to remove from the course
+     */
+    @NotNull
+    default void removeOrganizationFromCourse(Long courseId, Organization organization) {
+        Course course = findWithEagerOrganizations(courseId);
+        if (course.getOrganizations().contains(organization)) {
+            course.getOrganizations().remove(organization);
+            save(course);
+        }
+    }
 }

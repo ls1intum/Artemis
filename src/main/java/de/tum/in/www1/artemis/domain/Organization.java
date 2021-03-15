@@ -42,16 +42,12 @@ public class Organization extends DomainObject {
     @Column(name = "emailPattern")
     private String emailPattern;
 
-    @ManyToMany
-    @JoinTable(name = "user_organization", joinColumns = { @JoinColumn(name = "organization_id", referencedColumnName = "id") }, inverseJoinColumns = {
-            @JoinColumn(name = "user_id", referencedColumnName = "id") })
+    @ManyToMany(mappedBy = "organizations")
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonIgnoreProperties("organization")
     private Set<User> users = new HashSet<>();
 
-    @ManyToMany
-    @JoinTable(name = "course_organization", joinColumns = { @JoinColumn(name = "organization_id", referencedColumnName = "id") }, inverseJoinColumns = {
-            @JoinColumn(name = "course_id", referencedColumnName = "id") })
+    @ManyToMany(mappedBy = "organizations")
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonIgnoreProperties("organization")
     private Set<Course> courses = new HashSet<>();
