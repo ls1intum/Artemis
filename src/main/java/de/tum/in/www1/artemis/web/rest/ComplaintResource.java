@@ -24,6 +24,7 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.Participant;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.repository.ComplaintRepository;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
@@ -58,16 +59,19 @@ public class ComplaintResource {
 
     private final ComplaintService complaintService;
 
+    private final ComplaintRepository complaintRepository;
+
     private final CourseRepository courseRepository;
 
     public ComplaintResource(AuthorizationCheckService authCheckService, ExerciseRepository exerciseRepository, UserRepository userRepository, TeamService teamService,
-            ComplaintService complaintService, CourseRepository courseRepository) {
+            ComplaintService complaintService, ComplaintRepository complaintRepository, CourseRepository courseRepository) {
         this.authCheckService = authCheckService;
         this.exerciseRepository = exerciseRepository;
         this.userRepository = userRepository;
         this.teamService = teamService;
         this.complaintService = complaintService;
         this.courseRepository = courseRepository;
+        this.complaintRepository = complaintRepository;
     }
 
     /**
@@ -228,7 +232,7 @@ public class ComplaintResource {
             return forbidden();
         }
 
-        List<Complaint> responseComplaints = complaintService.getAllComplaintsByExerciseIdButMine(exerciseId);
+        List<Complaint> responseComplaints = complaintRepository.getAllComplaintsByExerciseIdAndComplaintType(exerciseId, ComplaintType.COMPLAINT);
         responseComplaints = buildComplaintsListForAssessor(responseComplaints, principal, false, false);
         return ResponseEntity.ok(responseComplaints);
     }
@@ -249,7 +253,7 @@ public class ComplaintResource {
         if (!authCheckService.isAtLeastInstructorForExercise(exercise)) {
             return forbidden();
         }
-        List<Complaint> responseComplaints = complaintService.getAllComplaintsByExerciseIdButMine(exerciseId);
+        List<Complaint> responseComplaints = complaintRepository.getAllComplaintsByExerciseIdAndComplaintType(exerciseId, ComplaintType.COMPLAINT);
         responseComplaints = buildComplaintsListForAssessor(responseComplaints, principal, true, true);
         return ResponseEntity.ok(responseComplaints);
     }
