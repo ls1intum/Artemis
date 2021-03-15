@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input, OnChanges } from '@angular/core';
 import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
 import { ExerciseType } from 'app/entities/exercise.model';
 import * as moment from 'moment';
@@ -14,6 +14,7 @@ import { CachingStrategy } from 'app/shared/image/secured-image.component';
     selector: 'jhi-course-management-card',
     templateUrl: './course-management-card.component.html',
     styleUrls: ['course-management-card.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CourseManagementCardComponent implements OnChanges {
     readonly ARTEMIS_DEFAULT_COLOR = ARTEMIS_DEFAULT_COLOR;

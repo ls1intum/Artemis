@@ -3,10 +3,12 @@ import { Graphs } from 'app/entities/statistics.model';
 import { ChartDataSets, ChartType } from 'chart.js';
 import { Label } from 'ng2-charts';
 import { TranslateService } from '@ngx-translate/core';
+import { ChangeDetectionStrategy } from '@angular/core';
 
 @Component({
     selector: 'jhi-course-management-statistics',
     templateUrl: './course-management-statistics.component.html',
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CourseManagementStatisticsComponent implements OnInit {
     @Input()

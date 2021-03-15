@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input, OnChanges } from '@angular/core';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { CourseManagementOverviewExerciseStatisticsDTO } from 'app/course/manage/overview/course-management-overview-exercise-statistics-dto.model';
@@ -16,6 +16,7 @@ export enum ExerciseRowType {
     selector: 'jhi-course-management-exercise-row',
     templateUrl: './course-management-exercise-row.component.html',
     styleUrls: ['course-management-exercise-row.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CourseManagementExerciseRowComponent implements OnChanges {
     @Input() course: Course;
