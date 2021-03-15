@@ -128,7 +128,7 @@ public final class Constants {
 
     public static final String REMOVE_USER_FROM_EXAM = "REMOVE_USER_FROM_EXAM";
 
-    public static final String REMOVE_ALL_USERS_FROM_EXAM = "REMOVE_ALL_USERs_FROM_EXAM";
+    public static final String REMOVE_ALL_USERS_FROM_EXAM = "REMOVE_ALL_USERS_FROM_EXAM";
 
     public static final String TOGGLE_STUDENT_EXAM_SUBMITTED = "TOGGLE_STUDENT_EXAM_SUBMITTED";
 
