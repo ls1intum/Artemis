@@ -552,7 +552,8 @@ public class ExerciseService {
      */
     public List<CourseManagementOverviewExerciseDetailsDTO> getExercisesForCourseManagementOverview(Long courseId) {
         List<CourseManagementOverviewExerciseDetailsDTO> detailsDTOS = new ArrayList<>();
-        for (var listElement : exerciseRepository.getExercisesForCourseManagementOverview(courseId)) {
+        var sevenDaysAgo = ZonedDateTime.now().minusDays(7);
+        for (var listElement : exerciseRepository.getExercisesForCourseManagementOverview(courseId, sevenDaysAgo)) {
             var exerciseId = (Long) listElement.get("id");
             var exerciseType = listElement.get("type");
             if (exerciseId == null || exerciseId == 0 || exerciseType == null) {
@@ -604,8 +605,9 @@ public class ExerciseService {
      */
     public List<CourseManagementOverviewExerciseStatisticsDTO> getStatisticsForCourseManagementOverview(Long courseId, Integer amountOfStudentsInCourse) {
         List<CourseManagementOverviewExerciseStatisticsDTO> statisticsDTOS = new ArrayList<>();
+        var sevenDaysAgo = ZonedDateTime.now().minusDays(7);
         var noStudentsInCourse = amountOfStudentsInCourse == null || amountOfStudentsInCourse == 0;
-        for (var listElement : exerciseRepository.getStatisticsForCourseManagementOverview(courseId)) {
+        for (var listElement : exerciseRepository.getStatisticsForCourseManagementOverview(courseId, sevenDaysAgo)) {
             var exerciseId = (Long) listElement.get("id");
             if (exerciseId == null || exerciseId == 0) {
                 continue;

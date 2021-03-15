@@ -227,6 +227,7 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
      * Fetches the details of the exercises for a course
      *
      * @param courseId - course to get the statistics for
+     * @param sevenDaysAgo - a ZoneDateTime seen days in the past, exercises with an assessment due date (or due date if without assessment) older than that are filtered
      * @return <code>Object[]</code> where each index corresponds to the column from the db (0 refers to the exercise and so on)
      */
     @Query("""
@@ -240,13 +241,16 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
             e.mode as mode
             FROM Exercise e
             WHERE e.course.id = :courseId
+                AND (e.assessmentDueDate IS NULL or e.assessmentDueDate >= :sevenDaysAgo)
+                AND (e.assessmentDueDate IS NOT NULL or e.dueDate IS NULL or e.dueDate >= :sevenDaysAgo)
             """)
-    List<Map<String, Object>> getExercisesForCourseManagementOverview(@Param("courseId") Long courseId);
+    List<Map<String, Object>> getExercisesForCourseManagementOverview(@Param("courseId") Long courseId, @Param("sevenDaysAgo") ZonedDateTime sevenDaysAgo);
 
     /**
      * Fetches the statistics of the exercises for a course
      *
      * @param courseId - course to get the statistics for
+     * @param sevenDaysAgo - a ZoneDateTime seen days in the past, exercises with an assessment due date (or due date if without assessment) older than that are filtered
      * @return <code>Object[]</code> where each index corresponds to the column from the db (0 refers to the exercise and so on)
      */
     @Query("""
@@ -272,8 +276,10 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
             ) as participations
             FROM Exercise e
             WHERE e.course.id = :courseId
+                AND (e.assessmentDueDate IS NULL or e.assessmentDueDate >= :sevenDaysAgo)
+                AND (e.assessmentDueDate IS NOT NULL or e.dueDate IS NULL or e.dueDate >= :sevenDaysAgo)
             """)
-    List<Map<String, Object>> getStatisticsForCourseManagementOverview(@Param("courseId") Long courseId);
+    List<Map<String, Object>> getStatisticsForCourseManagementOverview(@Param("courseId") Long courseId, @Param("sevenDaysAgo") ZonedDateTime sevenDaysAgo);
 
     @NotNull
     default Exercise findByIdElseThrow(Long exerciseId) throws EntityNotFoundException {
