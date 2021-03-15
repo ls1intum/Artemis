@@ -1,11 +1,11 @@
 import { Injectable } from '@angular/core';
 import { Result } from 'app/entities/result.model';
 import { Course } from 'app/entities/course.model';
-import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
+import { Exercise, IncludedInOverallScore } from 'app/entities/exercise.model';
 import * as moment from 'moment';
 import { Moment } from 'moment';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { InitializationState, Participation } from 'app/entities/participation/participation.model';
+import { Participation } from 'app/entities/participation/participation.model';
 import { round } from 'app/shared/util/utils';
 
 export const ABSOLUTE_SCORE = 'absoluteScore';
@@ -30,11 +30,17 @@ export class CourseScoreCalculationService {
         let presentationScore = 0;
         for (const exercise of courseExercises) {
             const isExerciseFinished = !exercise.dueDate || exercise.dueDate.isBefore(moment());
+            const isAssessmentOver = !exercise.assessmentDueDate || exercise.assessmentDueDate.isBefore(moment());
             const isExerciseIncluded = exercise.includedInOverallScore !== IncludedInOverallScore.NOT_INCLUDED;
+
             if (isExerciseFinished && isExerciseIncluded) {
                 const maxPointsReachableInExercise = exercise.maxPoints!;
                 if (exercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_COMPLETELY) {
                     maxPointsInCourse += maxPointsReachableInExercise;
+                    // points are reachable if the exercise is released and the assessment is over --> It was possible for the student to get points
+                    if (isAssessmentOver) {
+                        reachableMaxPointsInCourse += maxPointsReachableInExercise;
+                    }
                 }
                 const participation = this.getParticipationForExercise(exercise);
                 if (participation) {
@@ -45,23 +51,15 @@ export class CourseScoreCalculationService {
                         if (score == undefined) {
                             score = 0;
                         }
-                        pointsAchievedByStudentInCourse += score * this.SCORE_NORMALIZATION_VALUE * maxPointsReachableInExercise;
-                        if (exercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_COMPLETELY) {
-                            reachableMaxPointsInCourse += maxPointsReachableInExercise;
-                        }
+                        // Note: It is important that we round on the individual exercise level first and then sum up.
+                        // This is necessary so that the student arrives at the same overall result when doing his own recalculation.
+                        // Let's assume that the student achieved 1.05 points in each of 5 exercises.
+                        // In the client, these are now displayed rounded as 1.1 points.
+                        // If the student adds up the displayed points, he gets a total of 5.5 points.
+                        // In order to get the same total result as the student, we have to round before summing.
+                        pointsAchievedByStudentInCourse += round(score * this.SCORE_NORMALIZATION_VALUE * maxPointsReachableInExercise, 1);
                     }
                     presentationScore += participation.presentationScore ? participation.presentationScore : 0;
-
-                    // programming exercises can be excluded here because their state is INITIALIZED even after the exercise is over
-                    if (participation.initializationState === InitializationState.INITIALIZED && exercise.type !== ExerciseType.PROGRAMMING) {
-                        if (exercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_COMPLETELY) {
-                            reachableMaxPointsInCourse += maxPointsReachableInExercise;
-                        }
-                    }
-                } else {
-                    if (exercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_COMPLETELY) {
-                        reachableMaxPointsInCourse += maxPointsReachableInExercise;
-                    }
                 }
             }
         }

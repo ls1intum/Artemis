@@ -5,22 +5,7 @@ import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 
 @Injectable({ providedIn: 'root' })
 export class SentryErrorHandler extends ErrorHandler {
-    private static get environment(): string {
-        switch (window.location.host) {
-            case 'artemis.ase.in.tum.de':
-                return 'prod';
-            case 'artemis.university4industry.com':
-                return 'prod';
-            case 'artemistest.ase.in.tum.de':
-                return 'test';
-            case 'artemistest2.ase.in.tum.de':
-                return 'test';
-            case 'vmbruegge60.in.tum.de':
-                return 'apitests';
-            default:
-                return 'local';
-        }
-    }
+    private environment: string;
 
     /**
      * Initialize Sentry with profile information.
@@ -31,10 +16,20 @@ export class SentryErrorHandler extends ErrorHandler {
             return;
         }
 
+        if (profileInfo.testServer != undefined) {
+            if (profileInfo.testServer) {
+                this.environment = 'test';
+            } else {
+                this.environment = 'prod';
+            }
+        } else {
+            this.environment = 'local';
+        }
+
         init({
             dsn: profileInfo.sentry.dsn,
             release: VERSION,
-            environment: SentryErrorHandler.environment,
+            environment: this.environment,
         });
     }
 
@@ -51,7 +46,7 @@ export class SentryErrorHandler extends ErrorHandler {
             super.handleError(error);
             return;
         }
-        if (SentryErrorHandler.environment !== 'local') {
+        if (this.environment !== 'local') {
             captureException(error.originalError || error);
         }
         super.handleError(error);

@@ -12,11 +12,9 @@ import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.http.server.ServerHttpRequest;
 import org.springframework.http.server.ServerHttpResponse;
@@ -48,11 +46,11 @@ import com.google.common.collect.Iterables;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.AuthoritiesConstants;
-import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.ExerciseService;
-import de.tum.in.www1.artemis.service.ParticipationService;
-import de.tum.in.www1.artemis.service.UserService;
+import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.validation.InetSocketAddressValidator;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -68,13 +66,13 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
 
     private final TaskScheduler messageBrokerTaskScheduler;
 
-    private ParticipationService participationService;
+    private final StudentParticipationRepository studentParticipationRepository;
 
     private final AuthorizationCheckService authorizationCheckService;
 
-    private final UserService userService;
+    private final UserRepository userRepository;
 
-    private final ExerciseService exerciseService;
+    private final ExerciseRepository exerciseRepository;
 
     // Split the addresses by comma
     @Value("#{'${spring.websocket.broker.addresses}'.split(',')}")
@@ -87,18 +85,14 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
     private String brokerPassword;
 
     public WebsocketConfiguration(MappingJackson2HttpMessageConverter springMvcJacksonConverter, TaskScheduler messageBrokerTaskScheduler,
-            AuthorizationCheckService authorizationCheckService, @Lazy ExerciseService exerciseService, UserService userService) {
+            StudentParticipationRepository studentParticipationRepository, AuthorizationCheckService authorizationCheckService, ExerciseRepository exerciseRepository,
+            UserRepository userRepository) {
         this.objectMapper = springMvcJacksonConverter.getObjectMapper();
         this.messageBrokerTaskScheduler = messageBrokerTaskScheduler;
+        this.studentParticipationRepository = studentParticipationRepository;
         this.authorizationCheckService = authorizationCheckService;
-        this.exerciseService = exerciseService;
-        this.userService = userService;
-    }
-
-    // Break the cycle
-    @Autowired
-    public void setParticipationService(ParticipationService participationService) {
-        this.participationService = participationService;
+        this.exerciseRepository = exerciseRepository;
+        this.userRepository = userRepository;
     }
 
     @Override
@@ -265,7 +259,7 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
                 Long exerciseId = getExerciseIdFromResultDestination(destination);
 
                 // TODO: Is it right that TAs are not allowed to subscribe to exam exercises?
-                Exercise exercise = exerciseService.findOne(exerciseId);
+                Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
                 if (exercise.isExamExercise()) {
                     return isUserInstructorOrHigherForExercise(principal, exercise);
                 }
@@ -287,17 +281,17 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
     }
 
     private boolean isParticipationOwnedByUser(Principal principal, Long participationId) {
-        StudentParticipation participation = participationService.findOneStudentParticipation(participationId);
+        StudentParticipation participation = studentParticipationRepository.findByIdElseThrow(participationId);
         return participation.isOwnedBy(principal.getName());
     }
 
     private boolean isUserInstructorOrHigherForExercise(Principal principal, Exercise exercise) {
-        User user = userService.getUserWithGroupsAndAuthorities(principal.getName());
+        User user = userRepository.getUserWithGroupsAndAuthorities(principal.getName());
         return authorizationCheckService.isAtLeastInstructorInCourse(exercise.getCourseViaExerciseGroupOrCourseMember(), user);
     }
 
     private boolean isUserTAOrHigherForExercise(Principal principal, Exercise exercise) {
-        User user = userService.getUserWithGroupsAndAuthorities(principal.getName());
+        User user = userRepository.getUserWithGroupsAndAuthorities(principal.getName());
         return authorizationCheckService.isAtLeastTeachingAssistantForExercise(exercise, user);
     }
 }

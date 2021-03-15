@@ -12,6 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
@@ -26,13 +27,14 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.exception.BitbucketException;
 import de.tum.in.www1.artemis.exception.VersionControlException;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.UrlService;
-import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.service.connectors.AbstractVersionControlService;
 import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlRepositoryPermission;
 import de.tum.in.www1.artemis.service.connectors.bitbucket.dto.*;
+import de.tum.in.www1.artemis.service.user.PasswordService;
 
 @Service
 @Profile("bitbucket")
@@ -51,16 +53,20 @@ public class BitbucketService extends AbstractVersionControlService {
     @Value("${artemis.git.name}")
     private String artemisGitName;
 
-    private final UserService userService;
+    private final PasswordService passwordService;
+
+    private final UserRepository userRepository;
 
     private final RestTemplate restTemplate;
 
     private final RestTemplate shortTimeoutRestTemplate;
 
-    public BitbucketService(UserService userService, @Qualifier("bitbucketRestTemplate") RestTemplate restTemplate,
-            @Qualifier("shortTimeoutBitbucketRestTemplate") RestTemplate shortTimeoutRestTemplate, UrlService urlService, GitService gitService) {
-        super(urlService, gitService);
-        this.userService = userService;
+    public BitbucketService(PasswordService passwordService, @Qualifier("bitbucketRestTemplate") RestTemplate restTemplate, UserRepository userRepository,
+            @Qualifier("shortTimeoutBitbucketRestTemplate") RestTemplate shortTimeoutRestTemplate, UrlService urlService, GitService gitService,
+            ApplicationContext applicationContext) {
+        super(applicationContext, urlService, gitService);
+        this.passwordService = passwordService;
+        this.userRepository = userRepository;
         this.restTemplate = restTemplate;
         this.shortTimeoutRestTemplate = shortTimeoutRestTemplate;
     }
@@ -78,11 +84,11 @@ public class BitbucketService extends AbstractVersionControlService {
                 if (!userExists(username)) {
                     log.debug("Bitbucket user {} does not exist yet", username);
                     String displayName = (user.getFirstName() + " " + user.getLastName()).trim();
-                    createUser(username, userService.decryptPasswordByLogin(username).get(), user.getEmail(), displayName);
+                    createUser(username, passwordService.decryptPasswordByLogin(username).get(), user.getEmail(), displayName);
 
                     try {
                         // NOTE: we need to refetch the user here to make sure that the groups are not lazy loaded.
-                        user = userService.getUserWithGroupsAndAuthorities(user.getLogin());
+                        user = userRepository.getUserWithGroupsAndAuthorities(user.getLogin());
                         addUserToGroups(username, user.getGroups());
                     }
                     catch (BitbucketException e) {
@@ -293,7 +299,7 @@ public class BitbucketService extends AbstractVersionControlService {
 
                     if (e.getResponseBodyAsString().contains("No such user")) {
                         if (user == null) {
-                            user = userService.getUser();
+                            user = userRepository.getUser();
                         }
                         if (user.getCreatedDate().plusSeconds(90).isAfter(Instant.now())) {
                             log.warn("Could not give write permissions to user " + username + ", because the user does not yet exist in Bitbucket. Trying again in 5s");

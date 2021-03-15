@@ -1,9 +1,9 @@
 <div class="row justify-content-between align-items-start exam-navigation pt-2">
     <div class="col d-none d-lg-block h3 m-0 text-overflow" *ngIf="exercises && exercises.length > 0">
-        {{ 'artemisApp.examParticipation.progress' | translate: { current: exerciseIndex + 1, all: exercises.length } }}
+        {{ 'artemisApp.examParticipation.progress' | artemisTranslate: { current: exerciseIndex + 1, all: exercises.length } }}
     </div>
     <div class="col d-block d-lg-none h3 m-0 text-overflow" style="flex: 0.2" *ngIf="exercises && exercises.length > 0">
-        {{ 'artemisApp.examParticipation.progressSmall' | translate: { current: exerciseIndex + 1, all: exercises.length } }}
+        {{ 'artemisApp.examParticipation.progressSmall' | artemisTranslate: { current: exerciseIndex + 1, all: exercises.length } }}
     </div>
     <div class="col">
         <div class="d-flex justify-content-center">
@@ -27,7 +27,7 @@
                     <button
                         class="btn w-100"
                         [ngClass]="setExerciseButtonStatus(i)"
-                        [ngbTooltip]="'artemisApp.examParticipation.' + getExerciseButtonTooltip(i) | translate"
+                        [ngbTooltip]="'artemisApp.examParticipation.' + getExerciseButtonTooltip(i) | artemisTranslate"
                         (click)="changeExercise(i, false)"
                     >
                         <fa-icon [icon]="icon"></fa-icon>
@@ -46,11 +46,11 @@
     <div class="col">
         <div class="row justify-content-end align-items-start pr-2">
             <div class="d-flex mb-2">
-                <button [class.invisible]="isProgrammingExercise()" class="btn btn-primary" (click)="saveExercise()">
-                    {{ 'artemisApp.examParticipation.' + (exerciseIndex >= exercises.length - 1 ? 'submitLastExercise' : 'submitOtherExercise') | translate }}
+                <button [class.invisible]="isProgrammingExercise() || isFileUploadExercise()" class="btn btn-primary" (click)="saveExercise()">
+                    {{ 'artemisApp.examParticipation.' + (exerciseIndex >= exercises.length - 1 ? 'submitLastExercise' : 'submitOtherExercise') | artemisTranslate }}
                 </button>
                 <button class="btn btn-danger ml-2" (click)="handInEarly()">
-                    {{ 'artemisApp.examParticipation.handInEarly' | translate }}
+                    {{ 'artemisApp.examParticipation.handInEarly' | artemisTranslate }}
                 </button>
             </div>
             <div class="ml-3 mb-2">

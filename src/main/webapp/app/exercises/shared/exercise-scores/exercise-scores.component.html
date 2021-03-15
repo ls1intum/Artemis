@@ -10,36 +10,55 @@
             <div class="d-flex align-items-center">
                 <label class="radio-inline mb-0 d-flex align-items-center">
                     <input type="radio" [ngModel]="resultCriteria.filterProp" (click)="updateResultFilter(FilterProp.ALL)" [value]="FilterProp.ALL" />
-                    <span class="ml-1">{{ 'artemisApp.exercise.showAll' | translate }}</span>
+                    <span class="ml-1">{{ 'artemisApp.exercise.showAll' | artemisTranslate }}</span>
                 </label>
                 <label class="radio-inline ml-2 mb-0 d-flex align-items-center" *ngIf="exercise.type === ExerciseType.PROGRAMMING">
                     <input type="radio" [ngModel]="resultCriteria.filterProp" (click)="updateResultFilter(FilterProp.BUILD_FAILED)" [value]="FilterProp.BUILD_FAILED" />
-                    <span class="ml-1">{{ 'artemisApp.exercise.showBuildFailed' | translate }}</span>
+                    <span class="ml-1">{{ 'artemisApp.exercise.showBuildFailed' | artemisTranslate }}</span>
                 </label>
                 <label class="radio-inline ml-2 mb-0 d-flex align-items-center">
                     <input type="radio" [ngModel]="resultCriteria.filterProp" (click)="updateResultFilter(FilterProp.UNSUCCESSFUL)" [value]="FilterProp.UNSUCCESSFUL" />
-                    <span class="ml-1">{{ 'artemisApp.exercise.showUnsuccessful' | translate }}</span>
+                    <span class="ml-1">{{ 'artemisApp.exercise.showUnsuccessful' | artemisTranslate }}</span>
                 </label>
                 <label class="radio-inline ml-2 mb-0 d-flex align-items-center">
                     <input type="radio" [ngModel]="resultCriteria.filterProp" (click)="updateResultFilter(FilterProp.SUCCESSFUL)" [value]="FilterProp.SUCCESSFUL" />
-                    <span class="ml-1">{{ 'artemisApp.exercise.showSuccessful' | translate }}</span>
+                    <span class="ml-1">{{ 'artemisApp.exercise.showSuccessful' | artemisTranslate }}</span>
                 </label>
                 <label class="radio-inline ml-2 mb-0 d-flex align-items-center" *ngIf="newManualResultAllowed">
                     <input type="radio" [ngModel]="resultCriteria.filterProp" (click)="updateResultFilter(FilterProp.MANUAL)" [value]="FilterProp.MANUAL" />
-                    <span class="ml-1">{{ 'artemisApp.exercise.showManual' | translate }}</span>
+                    <span class="ml-1">{{ 'artemisApp.exercise.showManual' | artemisTranslate }}</span>
                 </label>
                 <label class="radio-inline ml-2 mb-0 d-flex align-items-center" *ngIf="newManualResultAllowed">
                     <input type="radio" [ngModel]="resultCriteria.filterProp" (click)="updateResultFilter(FilterProp.AUTOMATIC)" [value]="FilterProp.AUTOMATIC" />
-                    <span class="ml-1">{{ 'artemisApp.exercise.showAutomatic' | translate }}</span>
+                    <span class="ml-1">{{ 'artemisApp.exercise.showAutomatic' | artemisTranslate }}</span>
                 </label>
             </div>
         </div>
         <div class="d-flex justify-content-end">
             <div class="button-toolbar">
-                <a routerLink="/course-management/{{ course.id }}/exercises/{{ exercise.id }}/participations" class="btn btn-primary btn-sm mr-1">
+                <a *ngIf="!exercise.exerciseGroup" [routerLink]="['/course-management', course.id, 'exercises', exercise.id, 'participations']" class="btn btn-primary btn-sm mr-1">
                     <fa-icon [icon]="'list-alt'"></fa-icon>
                     <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.participations">Participations</span>
                 </a>
+                <a
+                    *ngIf="exercise.exerciseGroup"
+                    [routerLink]="[
+                        '/course-management',
+                        course.id,
+                        'exams',
+                        exercise.exerciseGroup!.exam!.id!,
+                        'exercise-groups',
+                        exercise.exerciseGroup!.id!,
+                        'exercises',
+                        exercise.id,
+                        'participations'
+                    ]"
+                    class="btn btn-primary btn-sm mr-1"
+                >
+                    <fa-icon [icon]="'list-alt'"></fa-icon>
+                    <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.participations">Participations</span>
+                </a>
+
                 <button class="btn btn-info btn-sm mr-1" (click)="exportNames()">
                     <fa-icon [icon]="'download'"></fa-icon>
                     <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.exportNames">Export Names</span>
@@ -106,17 +125,17 @@
                 <ngx-datatable-column prop="participation" [resizeable]="false" [sortable]="true" [minWidth]="100" [width]="180">
                     <ng-template ngx-datatable-header-template>
                         <span *ngIf="exercise.teamMode" class="datatable-header-cell-wrapper" (click)="controls.onSort('participation.team.name')">
-                            <span class="datatable-header-cell-label bold sortable">{{ 'artemisApp.exercise.teamName' | translate }}</span>
+                            <span class="datatable-header-cell-label bold sortable">{{ 'artemisApp.exercise.teamName' | artemisTranslate }}</span>
                             <fa-icon [icon]="controls.iconForSortPropField('participation.team.name')"></fa-icon>
                         </span>
                         <span *ngIf="!exercise.teamMode" class="datatable-header-cell-wrapper" (click)="controls.onSort('participation.student.name')">
-                            <span class="datatable-header-cell-label bold sortable">{{ 'artemisApp.exercise.studentName' | translate }}</span>
+                            <span class="datatable-header-cell-label bold sortable">{{ 'artemisApp.exercise.studentName' | artemisTranslate }}</span>
                             <fa-icon [icon]="controls.iconForSortPropField('participation.student.name')"></fa-icon>
                         </span>
                     </ng-template>
                     <ng-template ngx-datatable-cell-template let-value="value">
                         <span *ngIf="exercise.isAtLeastInstructor">
-                            <a routerLink="../participations/{{ value.id }}/submissions">
+                            <a [routerLink]="getExerciseParticipationsLink(value.id)">
                                 {{ value.student?.name || value.team?.name }}
                             </a>
                         </span>
@@ -129,11 +148,11 @@
                 <ngx-datatable-column prop="participation" [resizeable]="false" [sortable]="true" [minWidth]="100" [width]="110">
                     <ng-template ngx-datatable-header-template>
                         <span *ngIf="exercise.teamMode" class="datatable-header-cell-wrapper" (click)="controls.onSort('participation.team.shortName')">
-                            <span class="datatable-header-cell-label bold sortable">{{ 'artemisApp.exercise.teamShortName' | translate }}</span>
+                            <span class="datatable-header-cell-label bold sortable">{{ 'artemisApp.exercise.teamShortName' | artemisTranslate }}</span>
                             <fa-icon [icon]="controls.iconForSortPropField('participation.team.shortName')"></fa-icon>
                         </span>
                         <span *ngIf="!exercise.teamMode" class="datatable-header-cell-wrapper" (click)="controls.onSort('participation.student.login')">
-                            <span class="datatable-header-cell-label bold sortable">{{ 'artemisApp.exercise.studentId' | translate }}</span>
+                            <span class="datatable-header-cell-label bold sortable">{{ 'artemisApp.exercise.studentId' | artemisTranslate }}</span>
                             <fa-icon [icon]="controls.iconForSortPropField('participation.student.login')"></fa-icon>
                         </span>
                     </ng-template>
@@ -152,12 +171,11 @@
                 <ngx-datatable-column prop="completionDate" [resizeable]="false" [sortable]="true" [minWidth]="130" [width]="150">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" (click)="controls.onSort('completionDate')">
-                            <span class="datatable-header-cell-label bold sortable">{{ 'artemisApp.exercise.completionDate' | translate }}</span>
+                            <span class="datatable-header-cell-label bold sortable">{{ 'artemisApp.exercise.completionDate' | artemisTranslate }}</span>
                             <fa-icon [icon]="controls.iconForSortPropField('completionDate')"></fa-icon>
                         </span>
                     </ng-template>
                     <ng-template ngx-datatable-cell-template let-value="value">
-                        <!-- TODO: Had to Remove Date Pipe as UI did not update when sorting. Investigate the reason -->
                         {{ formatDate(value) }}
                     </ng-template>
                 </ngx-datatable-column>
@@ -165,7 +183,7 @@
                 <ngx-datatable-column prop="" [resizeable]="false" [sortable]="true" [minWidth]="200" [width]="300">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" (click)="controls.onSort('score')">
-                            <span class="datatable-header-cell-label bold">{{ 'artemisApp.exercise.lastResult' | translate }}</span>
+                            <span class="datatable-header-cell-label bold">{{ 'artemisApp.exercise.lastResult' | artemisTranslate }}</span>
                             <fa-icon [icon]="controls.iconForSortPropField('score')"></fa-icon>
                         </span>
                     </ng-template>
@@ -177,7 +195,7 @@
                 <ngx-datatable-column prop="assessmentType" *ngIf="newManualResultAllowed" [resizeable]="false" [sortable]="true" [minWidth]="100" [width]="125">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" (click)="controls.onSort('type')">
-                            <span class="datatable-header-cell-label bold">{{ 'artemisApp.exercise.type' | translate }}</span>
+                            <span class="datatable-header-cell-label bold">{{ 'artemisApp.exercise.type' | artemisTranslate }}</span>
                             <fa-icon [icon]="controls.iconForSortPropField('type')"></fa-icon>
                         </span>
                     </ng-template>
@@ -189,13 +207,13 @@
                 <ngx-datatable-column prop="participation" [resizeable]="false" [sortable]="true" [minWidth]="110" [width]="120">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper d-inline-block w-100 text-center" (click)="controls.onSort('participation.submissionCount')">
-                            <span class="datatable-header-cell-label bold">{{ 'artemisApp.exercise.submissionCount' | translate }}</span>
+                            <span class="datatable-header-cell-label bold">{{ 'artemisApp.exercise.submissionCount' | artemisTranslate }}</span>
                             <fa-icon [icon]="controls.iconForSortPropField('participation.submissionCount')"></fa-icon>
                         </span>
                     </ng-template>
                     <ng-template ngx-datatable-cell-template let-value="value">
                         <div class="w-100 text-center">
-                            <a *ngIf="exercise.isAtLeastInstructor; else displayTextOnly" routerLink="../participations/{{ value.id }}/submissions">
+                            <a *ngIf="exercise.isAtLeastInstructor; else displayTextOnly" [routerLink]="getExerciseParticipationsLink(value.id)">
                                 {{ value.submissionCount }}
                             </a>
                             <ng-template #displayTextOnly>
@@ -208,7 +226,7 @@
                 <ngx-datatable-column prop="durationInMinutes" [resizeable]="false" [sortable]="true" [minWidth]="100" [width]="100">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" (click)="controls.onSort('durationInMinutes')">
-                            <span class="datatable-header-cell-label bold">{{ 'artemisApp.exercise.duration' | translate }}</span>
+                            <span class="datatable-header-cell-label bold">{{ 'artemisApp.exercise.duration' | artemisTranslate }}</span>
                             <fa-icon [icon]="controls.iconForSortPropField('durationInMinutes')"></fa-icon>
                         </span>
                     </ng-template>
@@ -231,28 +249,32 @@
                             <fa-icon class="mr-1" [icon]="['far', 'file-code']"></fa-icon>
                             Build plan
                         </button>
-                        <button
-                            routerLink="/courses/{{ course.id }}/programming-exercises/{{ exercise.id }}/code-editor/{{ value.participation.id }}"
+                        <a
+                            [routerLink]="['/courses', course.id, 'programming-exercises', exercise.id, 'code-editor', value.participation.id]"
                             class="btn btn-info btn-sm mr-1"
                             *ngIf="value.participation.exercise.allowOnlineEditor"
-                            [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
+                            [jhiFeatureToggleLink]="FeatureToggle.PROGRAMMING_EXERCISES"
                         >
                             <fa-icon class="mr-1" [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>
                             Online editor
-                        </button>
+                        </a>
                         <a
                             *ngIf="exercise.course && newManualResultAllowed"
                             [routerLink]="['/course-management', exercise.course?.id, 'programming-exercises', exercise.id, 'code-editor', value.participation.id, 'assessment']"
                             class="btn btn-primary btn-sm mr-1"
                         >
                             <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>
-                            {{ 'artemisApp.programmingSubmission.view' | translate }}
+                            {{ 'artemisApp.programmingSubmission.view' | artemisTranslate }}
                         </a>
                         <a
                             *ngIf="exercise.exerciseGroup && newManualResultAllowed && exercise.exerciseGroup.exam?.numberOfCorrectionRoundsInExam < 2"
                             [routerLink]="[
                                 '/course-management',
-                                exercise.exerciseGroup?.exam.course.id,
+                                exercise.exerciseGroup!.exam!.course!.id,
+                                'exams',
+                                exercise.exerciseGroup!.exam!.id,
+                                'exercise-groups',
+                                exercise.exerciseGroup!.id,
                                 'programming-exercises',
                                 exercise.id,
                                 'code-editor',
@@ -262,7 +284,7 @@
                             class="btn btn-primary btn-sm mr-1"
                         >
                             <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>
-                            {{ 'artemisApp.programmingSubmission.view' | translate }}
+                            {{ 'artemisApp.programmingSubmission.view' | artemisTranslate }}
                         </a>
                     </ng-template>
                 </ngx-datatable-column>
@@ -281,13 +303,17 @@
                             class="btn btn-primary btn-sm mr-1"
                         >
                             <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>
-                            {{ 'artemisApp.fileUploadSubmission.view' | translate }}
+                            {{ 'artemisApp.fileUploadSubmission.view' | artemisTranslate }}
                         </a>
                         <a
                             *ngIf="exercise.exerciseGroup && exercise.exerciseGroup.exam?.numberOfCorrectionRoundsInExam < 2"
                             [routerLink]="[
                                 '/course-management',
-                                exercise.exerciseGroup?.exam.course.id,
+                                exercise.exerciseGroup!.exam!.course!.id,
+                                'exams',
+                                exercise.exerciseGroup!.exam!.id,
+                                'exercise-groups',
+                                exercise.exerciseGroup!.id,
                                 'file-upload-exercises',
                                 exercise.id,
                                 'submissions',
@@ -297,7 +323,7 @@
                             class="btn btn-primary btn-sm mr-1"
                         >
                             <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>
-                            {{ 'artemisApp.fileUploadSubmission.view' | translate }}
+                            {{ 'artemisApp.fileUploadSubmission.view' | artemisTranslate }}
                         </a>
                     </ng-template>
                 </ngx-datatable-column>
@@ -311,13 +337,17 @@
                             class="btn btn-primary btn-sm mr-1"
                         >
                             <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>
-                            {{ 'artemisApp.modelingSubmission.view' | translate }}
+                            {{ 'artemisApp.modelingSubmission.view' | artemisTranslate }}
                         </a>
                         <a
                             *ngIf="exercise.exerciseGroup && exercise.exerciseGroup.exam?.numberOfCorrectionRoundsInExam < 2"
                             [routerLink]="[
                                 '/course-management',
-                                exercise.exerciseGroup?.exam.course.id,
+                                exercise.exerciseGroup!.exam!.course!.id,
+                                'exams',
+                                exercise.exerciseGroup!.exam!.id,
+                                'exercise-groups',
+                                exercise.exerciseGroup!.id,
                                 'modeling-exercises',
                                 exercise.id,
                                 'submissions',
@@ -328,26 +358,30 @@
                             class="btn btn-primary btn-sm mr-1"
                         >
                             <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>
-                            {{ 'artemisApp.modelingSubmission.view' | translate }}
+                            {{ 'artemisApp.modelingSubmission.view' | artemisTranslate }}
                         </a>
                     </ng-template>
                 </ngx-datatable-column>
 
                 <ngx-datatable-column prop="" *ngIf="exercise.type === ExerciseType.TEXT && exercise.isAtLeastInstructor" [resizeable]="false" [minWidth]="180" [width]="180">
                     <ng-template ngx-datatable-cell-template let-value="value">
-                        <button
+                        <a
                             *ngIf="exercise.course"
                             [routerLink]="['/course-management', exercise.course?.id, 'text-exercises', exercise.id, 'submissions', value.submission.id, 'assessment']"
                             class="btn btn-primary btn-sm mr-1"
                         >
                             <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>
-                            {{ 'artemisApp.textSubmission.view' | translate }}
-                        </button>
-                        <button
+                            {{ 'artemisApp.textSubmission.view' | artemisTranslate }}
+                        </a>
+                        <a
                             *ngIf="exercise.exerciseGroup && exercise.exerciseGroup.exam?.numberOfCorrectionRoundsInExam < 2"
                             [routerLink]="[
                                 '/course-management',
-                                exercise.exerciseGroup?.exam.course.id,
+                                exercise.exerciseGroup!.exam!.course!.id,
+                                'exams',
+                                exercise.exerciseGroup!.exam!.id,
+                                'exercise-groups',
+                                exercise.exerciseGroup!.id,
                                 'text-exercises',
                                 exercise.id,
                                 'submissions',
@@ -357,8 +391,8 @@
                             class="btn btn-primary btn-sm mr-1"
                         >
                             <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>
-                            {{ 'artemisApp.textSubmission.view' | translate }}
-                        </button>
+                            {{ 'artemisApp.textSubmission.view' | artemisTranslate }}
+                        </a>
                     </ng-template>
                 </ngx-datatable-column>
             </ngx-datatable>

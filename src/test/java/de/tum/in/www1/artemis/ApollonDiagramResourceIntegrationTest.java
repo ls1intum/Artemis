@@ -20,7 +20,7 @@ import de.tum.in.www1.artemis.repository.ApollonDiagramRepository;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.CourseService;
-import de.tum.in.www1.artemis.service.UserService;
+import de.tum.in.www1.artemis.service.user.UserService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
 public class ApollonDiagramResourceIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {

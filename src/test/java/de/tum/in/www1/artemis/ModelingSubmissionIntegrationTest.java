@@ -287,7 +287,7 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
         database.createAndSaveParticipationForExercise(classExercise, "student1");
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(validModel, false);
         Result result = new Result();
-        result.setScore(100L);
+        result.setScore(100D);
         result.setRated(true);
         result.setAssessor(user);
         submission.addResult(result);
@@ -670,7 +670,7 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
     @WithMockUser(value = "student3", roles = "USER")
     public void submitExercise_afterDueDate_forbidden() throws Exception {
         afterDueDateParticipation.setInitializationDate(ZonedDateTime.now().minusDays(2));
-        participationService.save(afterDueDateParticipation);
+        studentParticipationRepository.saveAndFlush(afterDueDateParticipation);
         request.post("/api/exercises/" + finishedExercise.getId() + "/modeling-submissions", submittedSubmission, HttpStatus.FORBIDDEN);
     }
 
@@ -696,7 +696,7 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
     @WithMockUser(value = "student3", roles = "USER")
     public void submitExercise_afterDueDateWithParticipationStartAfterDueDate_allowed() throws Exception {
         afterDueDateParticipation.setInitializationDate(ZonedDateTime.now());
-        participationService.save(afterDueDateParticipation);
+        studentParticipationRepository.saveAndFlush(afterDueDateParticipation);
 
         request.postWithoutLocation("/api/exercises/" + classExercise.getId() + "/modeling-submissions", submittedSubmission, HttpStatus.OK, null);
     }

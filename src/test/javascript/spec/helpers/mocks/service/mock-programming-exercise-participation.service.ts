@@ -4,7 +4,7 @@ import { ProgrammingExerciseStudentParticipation } from 'app/entities/participat
 import { Result } from 'app/entities/result.model';
 
 export class MockProgrammingExerciseParticipationService implements IProgrammingExerciseParticipationService {
-    getLatestResultWithFeedback = (participationId: number) => of({} as Result);
+    getLatestResultWithFeedback = (participationId: number, withSubmission: boolean) => of({} as Result);
     getStudentParticipationWithLatestResult = (participationId: number) => of({} as ProgrammingExerciseStudentParticipation);
     checkIfParticipationHasResult = (participationId: number) => of(true);
 }

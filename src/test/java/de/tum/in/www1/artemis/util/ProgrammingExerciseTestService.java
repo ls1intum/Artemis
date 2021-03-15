@@ -40,20 +40,17 @@ import de.tum.in.www1.artemis.domain.participation.Participant;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.programmingexercise.MockDelegate;
-import de.tum.in.www1.artemis.repository.CourseRepository;
-import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
-import de.tum.in.www1.artemis.repository.StaticCodeAnalysisCategoryRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.AuthoritiesConstants;
-import de.tum.in.www1.artemis.security.SecurityUtils;
+import de.tum.in.www1.artemis.service.CourseService;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.TeamService;
-import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildResultDTO;
 import de.tum.in.www1.artemis.service.programming.ProgrammingLanguageFeature;
+import de.tum.in.www1.artemis.service.user.PasswordService;
 import de.tum.in.www1.artemis.util.GitUtilService.MockFileRepositoryUrl;
 import de.tum.in.www1.artemis.web.rest.ParticipationResource;
 
@@ -93,14 +90,23 @@ public class ProgrammingExerciseTestService {
     private ParticipationService participationService;
 
     @Autowired
+    private ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
+
+    @Autowired
+    private ParticipationRepository participationRepository;
+
+    @Autowired
     @Qualifier("staticCodeAnalysisConfiguration")
     private Map<ProgrammingLanguage, List<StaticCodeAnalysisDefaultCategory>> staticCodeAnalysisDefaultConfigurations;
 
     @Autowired
-    private UserService userService;
+    private PasswordService passwordService;
 
     @Value("${artemis.lti.user-prefix-edx:#{null}}")
     private Optional<String> userPrefixEdx;
+
+    @Autowired
+    private CourseService courseService;
 
     public Course course;
 
@@ -334,7 +340,6 @@ public class ProgrammingExerciseTestService {
         // Import the exercise and load all referenced entities
         var importedExercise = request.postWithResponseBody(ROOT + IMPORT.replace("{sourceExerciseId}", sourceExercise.getId().toString()), exerciseToBeImported,
                 ProgrammingExercise.class, params, HttpStatus.OK);
-        SecurityUtils.setAuthorizationObject();
         importedExercise = database.loadProgrammingExerciseWithEagerReferences(importedExercise);
 
         if (staticCodeAnalysisEnabled) {
@@ -389,8 +394,6 @@ public class ProgrammingExerciseTestService {
 
         exerciseToBeImported = request.postWithResponseBody(ROOT + IMPORT.replace("{sourceExerciseId}", sourceExercise.getId().toString()), exerciseToBeImported,
                 ProgrammingExercise.class, HttpStatus.OK);
-
-        SecurityUtils.setAuthorizationObject();
         assertEquals(TEAM, exerciseToBeImported.getMode());
         assertEquals(teamAssignmentConfig.getMinTeamSize(), exerciseToBeImported.getTeamAssignmentConfig().getMinTeamSize());
         assertEquals(teamAssignmentConfig.getMaxTeamSize(), exerciseToBeImported.getTeamAssignmentConfig().getMaxTeamSize());
@@ -432,7 +435,6 @@ public class ProgrammingExerciseTestService {
         exerciseToBeImported = request.postWithResponseBody(ROOT + IMPORT.replace("{sourceExerciseId}", sourceExercise.getId().toString()), exerciseToBeImported,
                 ProgrammingExercise.class, HttpStatus.OK);
 
-        SecurityUtils.setAuthorizationObject();
         assertEquals(ExerciseMode.INDIVIDUAL, exerciseToBeImported.getMode());
         assertNull(exerciseToBeImported.getTeamAssignmentConfig());
         assertEquals(0, teamService.findAllByExerciseIdWithEagerStudents(exerciseToBeImported, null).size());
@@ -490,7 +492,6 @@ public class ProgrammingExerciseTestService {
                 ProgrammingExercise.class, params, HttpStatus.OK);
 
         // Assertions
-        SecurityUtils.setAuthorizationObject();
         var staticCodeAnalysisCategories = staticCodeAnalysisCategoryRepository.findByExerciseId(exerciseToBeImported.getId());
         assertThat(exerciseToBeImported.isStaticCodeAnalysisEnabled());
         assertThat(staticCodeAnalysisCategories).usingRecursiveFieldByFieldElementComparator().usingElementComparatorOnFields("name", "state", "penalty", "maxPenalty")
@@ -550,7 +551,7 @@ public class ProgrammingExerciseTestService {
         // These will be updated when the participation is resumed.
         participation.setInitializationState(InitializationState.INACTIVE);
         participation.setBuildPlanId(null);
-        participationService.save(participation);
+        programmingExerciseStudentParticipationRepository.saveAndFlush(participation);
 
         var participant = participation.getParticipant();
         mockDelegate.mockConnectorRequestsForResumeParticipation(exercise, participant.getParticipantIdentifier(), participant.getParticipants(), true);
@@ -574,13 +575,13 @@ public class ProgrammingExerciseTestService {
         // These will be updated when pushing a commit
         participation.setInitializationState(InitializationState.INACTIVE);
         participation.setBuildPlanId(null);
-        participationService.save(participation);
+        programmingExerciseStudentParticipationRepository.saveAndFlush(participation);
 
         // Mock REST Call from the VCS for a new programming submission (happens as part of the webhook after pushing code to git)
         request.postWithoutLocation(PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + participation.getId(), body, HttpStatus.OK, new HttpHeaders());
 
         // Fetch updated participation and assert
-        ProgrammingExerciseStudentParticipation updatedParticipation = (ProgrammingExerciseStudentParticipation) participationService.findOne(participation.getId());
+        ProgrammingExerciseStudentParticipation updatedParticipation = (ProgrammingExerciseStudentParticipation) participationRepository.findByIdElseThrow(participation.getId());
         assertThat(updatedParticipation.getInitializationState()).as("Participation should be initialized").isEqualTo(InitializationState.INITIALIZED);
         assertThat(updatedParticipation.getBuildPlanId()).as("Build Plan Id should be set")
                 .isEqualTo(exercise.getProjectKey().toUpperCase() + "-" + participant.getParticipantIdentifier().toUpperCase());
@@ -598,7 +599,7 @@ public class ProgrammingExerciseTestService {
         // These will be updated when triggering a build
         participation.setInitializationState(InitializationState.INACTIVE);
         participation.setBuildPlanId(null);
-        participationService.save(participation);
+        programmingExerciseStudentParticipationRepository.saveAndFlush(participation);
 
         // Construct trigger-build url and execute request
         submissionType = submissionType == null ? SubmissionType.MANUAL : submissionType;
@@ -606,7 +607,7 @@ public class ProgrammingExerciseTestService {
         request.postWithoutLocation(url, null, HttpStatus.OK, new HttpHeaders());
 
         // Fetch updated participation and assert
-        ProgrammingExerciseStudentParticipation updatedParticipation = (ProgrammingExerciseStudentParticipation) participationService.findOne(participation.getId());
+        ProgrammingExerciseStudentParticipation updatedParticipation = (ProgrammingExerciseStudentParticipation) participationRepository.findByIdElseThrow(participation.getId());
         assertThat(updatedParticipation.getInitializationState()).as("Participation should be initialized").isEqualTo(InitializationState.INITIALIZED);
         assertThat(updatedParticipation.getBuildPlanId()).as("Build Plan Id should be set")
                 .isEqualTo(exercise.getProjectKey().toUpperCase() + "-" + participant.getParticipantIdentifier().toUpperCase());
@@ -629,7 +630,7 @@ public class ProgrammingExerciseTestService {
         // These will be updated triggering a failed build
         participation.setInitializationState(InitializationState.INACTIVE);
         participation.setBuildPlanId(!buildPlanExists ? null : participation.getBuildPlanId());
-        participationService.save(participation);
+        programmingExerciseStudentParticipationRepository.saveAndFlush(participation);
 
         if (!buildPlanExists) {
             mockDelegate.mockConnectorRequestsForResumeParticipation(exercise, participant.getParticipantIdentifier(), participant.getParticipants(), true);
@@ -642,7 +643,7 @@ public class ProgrammingExerciseTestService {
         request.postWithoutLocation(url, null, HttpStatus.OK, new HttpHeaders());
 
         // Fetch updated participation and assert
-        ProgrammingExerciseStudentParticipation updatedParticipation = (ProgrammingExerciseStudentParticipation) participationService.findOne(participation.getId());
+        ProgrammingExerciseStudentParticipation updatedParticipation = (ProgrammingExerciseStudentParticipation) participationRepository.findByIdElseThrow(participation.getId());
         assertThat(updatedParticipation.getInitializationState()).as("Participation should be initialized").isEqualTo(InitializationState.INITIALIZED);
         assertThat(updatedParticipation.getBuildPlanId()).as("Build Plan Id should be set")
                 .isEqualTo(exercise.getProjectKey().toUpperCase() + "-" + participant.getParticipantIdentifier().toUpperCase());
@@ -665,14 +666,14 @@ public class ProgrammingExerciseTestService {
         // These will be updated triggering a failed build
         participation.setInitializationState(InitializationState.INACTIVE);
         participation.setBuildPlanId(null);
-        participationService.save(participation);
+        programmingExerciseStudentParticipationRepository.saveAndFlush(participation);
 
         var url = "/api/programming-exercises/" + exercise.getId() + "/trigger-instructor-build-all";
         request.postWithoutLocation(url, null, HttpStatus.OK, new HttpHeaders());
         await().until(() -> programmingExerciseRepository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(exercise.getId()).isPresent());
 
         // Fetch updated participation and assert
-        ProgrammingExerciseStudentParticipation updatedParticipation = (ProgrammingExerciseStudentParticipation) participationService.findOne(participation.getId());
+        ProgrammingExerciseStudentParticipation updatedParticipation = (ProgrammingExerciseStudentParticipation) participationRepository.findByIdElseThrow(participation.getId());
         assertThat(updatedParticipation.getInitializationState()).as("Participation should be initialized").isEqualTo(InitializationState.INITIALIZED);
         assertThat(updatedParticipation.getBuildPlanId()).as("Build Plan Id should be set")
                 .isEqualTo(exercise.getProjectKey().toUpperCase() + "-" + participant.getParticipantIdentifier().toUpperCase());
@@ -705,6 +706,9 @@ public class ProgrammingExerciseTestService {
 
     private String exportInstructorRepository(String repositoryType, Path localPathToRepository, HttpStatus expectedStatus) throws Exception {
         exercise = programmingExerciseRepository.save(exercise);
+        exercise = database.addTemplateParticipationForProgrammingExercise(exercise);
+        exercise = database.addSolutionParticipationForProgrammingExercise(exercise);
+        exercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationById(exercise.getId()).get();
 
         var vcsUrl = exercise.getRepositoryURL(RepositoryType.valueOf(repositoryType));
         var repository = gitService.getExistingCheckedOutRepositoryByLocalPath(localPathToRepository, null);
@@ -713,6 +717,44 @@ public class ProgrammingExerciseTestService {
         var url = "/api/programming-exercises/" + exercise.getId() + "/export-instructor-repository/" + repositoryType;
         // return request.postWithResponseBodyFile(url, null, expectedStatus);
         return request.get(url, expectedStatus, String.class);
+    }
+
+    // Test
+    public void testArchiveCourseWithProgrammingExercise() throws Exception {
+        course.setEndDate(ZonedDateTime.now().minusMinutes(4));
+        course.setCourseArchivePath(null);
+        course.setExercises(Set.of(exercise));
+        courseRepository.save(course);
+
+        exercise = programmingExerciseRepository.save(exercise);
+        exercise = database.addTemplateParticipationForProgrammingExercise(exercise);
+        exercise = database.addSolutionParticipationForProgrammingExercise(exercise);
+        database.addTestCasesToProgrammingExercise(exercise);
+
+        exercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationById(exercise.getId()).get();
+        var participation = database.addStudentParticipationForProgrammingExercise(exercise, studentLogin);
+
+        // Mock student repo
+        var studentRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(studentRepo.localRepoFile.toPath(), null);
+        doReturn(studentRepository).when(gitService).getOrCheckoutRepository(eq(participation.getVcsRepositoryUrl()), anyString(), anyBoolean());
+
+        // Mock template repo
+        var templateRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(sourceExerciseRepo.localRepoFile.toPath(), null);
+        doReturn(templateRepository).when(gitService).getOrCheckoutRepository(eq(exercise.getRepositoryURL(RepositoryType.TEMPLATE)), anyString(), anyBoolean());
+
+        // Mock solution repo
+        var solutionRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(sourceSolutionRepo.localRepoFile.toPath(), null);
+        doReturn(solutionRepository).when(gitService).getOrCheckoutRepository(eq(exercise.getRepositoryURL(RepositoryType.SOLUTION)), anyString(), anyBoolean());
+
+        // Mock tests repo
+        var testsRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(sourceTestRepo.localRepoFile.toPath(), null);
+        doReturn(testsRepository).when(gitService).getOrCheckoutRepository(eq(exercise.getRepositoryURL(RepositoryType.TESTS)), anyString(), anyBoolean());
+
+        request.put("/api/courses/" + course.getId() + "/archive", null, HttpStatus.OK);
+        await().until(() -> courseRepository.findById(course.getId()).get().getCourseArchivePath() != null);
+
+        var updatedCourse = courseRepository.findByIdElseThrow(course.getId());
+        assertThat(updatedCourse.getCourseArchivePath()).isNotEmpty();
     }
 
     private ProgrammingExerciseStudentParticipation createStudentParticipationWithSubmission(ExerciseMode exerciseMode) throws Exception {
@@ -880,7 +922,7 @@ public class ProgrammingExerciseTestService {
         // create a team for the user (necessary condition before starting an exercise)
         final String edxUsername = userPrefixEdx.get() + "student";
         User edxStudent = ModelFactory.generateActivatedUsers(edxUsername, new String[] { "tumuser", "testgroup" }, Set.of(new Authority(AuthoritiesConstants.USER)), 1).get(0);
-        edxStudent.setPassword(userService.encryptor().encrypt(edxStudent.getPassword()));
+        edxStudent.setPassword(passwordService.encryptPassword(edxStudent.getPassword()));
         edxStudent = userRepo.save(edxStudent);
         Team team = setupTeam(edxStudent);
 

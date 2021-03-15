@@ -15,9 +15,10 @@ import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.service.dto.PasswordChangeDTO;
 import de.tum.in.www1.artemis.service.dto.UserDTO;
+import de.tum.in.www1.artemis.service.user.PasswordService;
+import de.tum.in.www1.artemis.service.user.UserCreationService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.vm.KeyAndPasswordVM;
 import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
@@ -28,7 +29,10 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
     UserRepository userRepo;
 
     @Autowired
-    UserService userService;
+    UserCreationService userCreationService;
+
+    @Autowired
+    private PasswordService passwordService;
 
     @AfterEach
     public void resetDatabase() {
@@ -111,7 +115,7 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
     public void getPassword() throws Exception {
         // create user in repo
         User user = ModelFactory.generateActivatedUser("authenticateduser");
-        userService.createUser(new ManagedUserVM(user));
+        userCreationService.createUser(new ManagedUserVM(user));
 
         // make request
         Map response = request.get("/api/account/password", HttpStatus.OK, Map.class);
@@ -124,13 +128,13 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
     public void saveAccount() throws Exception {
         // create user in repo
         User user = ModelFactory.generateActivatedUser("authenticateduser");
-        User createdUser = userService.createUser(new ManagedUserVM(user));
+        User createdUser = userCreationService.createUser(new ManagedUserVM(user));
         // update FirstName
         String updatedFirstName = "UpdatedFirstName";
         createdUser.setFirstName(updatedFirstName);
 
         // make request
-        request.postWithoutLocation("/api/account", new UserDTO(createdUser), HttpStatus.OK, null);
+        request.put("/api/account", new UserDTO(createdUser), HttpStatus.OK);
 
         // check if update successful
         User updatedUser = userRepo.findOneByLogin("authenticateduser").get();
@@ -142,27 +146,27 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
     public void changePassword() throws Exception {
         // create user in repo
         User user = ModelFactory.generateActivatedUser("authenticateduser");
-        User createdUser = userService.createUser(new ManagedUserVM(user));
+        User createdUser = userCreationService.createUser(new ManagedUserVM(user));
         // Password Data
         String updatedPassword = "12345678password-reset-init.component.spec.ts";
 
-        PasswordChangeDTO pwChange = new PasswordChangeDTO(userService.encryptor().decrypt(createdUser.getPassword()), updatedPassword);
+        PasswordChangeDTO pwChange = new PasswordChangeDTO(passwordService.decryptPassword(createdUser.getPassword()), updatedPassword);
         // make request
         request.postWithoutLocation("/api/account/change-password", pwChange, HttpStatus.OK, null);
 
         // check if update successful
         User updatedUser = userRepo.findOneByLogin("authenticateduser").get();
-        assertThat(userService.encryptor().decrypt(updatedUser.getPassword())).isEqualTo(updatedPassword);
+        assertThat(passwordService.decryptPassword(updatedUser.getPassword())).isEqualTo(updatedPassword);
     }
 
     @Test
     @WithMockUser(username = "authenticateduser")
     public void invalidPassword() throws Exception {
         User user = ModelFactory.generateActivatedUser("authenticateduser");
-        User createdUser = userService.createUser(new ManagedUserVM(user));
+        User createdUser = userCreationService.createUser(new ManagedUserVM(user));
         String updatedPassword = "123";
 
-        PasswordChangeDTO pwChange = new PasswordChangeDTO(userService.encryptor().decrypt(createdUser.getPassword()), updatedPassword);
+        PasswordChangeDTO pwChange = new PasswordChangeDTO(passwordService.decryptPassword(createdUser.getPassword()), updatedPassword);
         // make request
         request.postWithoutLocation("/api/account/change-password", pwChange, HttpStatus.BAD_REQUEST, null);
 
@@ -173,7 +177,7 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
     public void passwordReset() throws Exception {
         // create user in repo
         User user = ModelFactory.generateActivatedUser("authenticateduser");
-        User createdUser = userService.createUser(new ManagedUserVM(user));
+        User createdUser = userCreationService.createUser(new ManagedUserVM(user));
         // init password reset
         request.postWithoutLocation("/api/account/reset-password/init", createdUser.getEmail(), HttpStatus.OK, null);
 
@@ -192,7 +196,7 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
 
         // get updated user
         User userPasswordResetFinished = userRepo.findOneByLogin("authenticateduser").get();
-        assertThat(userService.encryptor().decrypt(userPasswordResetFinished.getPassword())).isEqualTo(newPassword);
+        assertThat(passwordService.decryptPassword(userPasswordResetFinished.getPassword())).isEqualTo(newPassword);
     }
 
 }

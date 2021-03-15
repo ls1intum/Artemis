@@ -26,6 +26,8 @@ import { assessmentNavigateBack } from 'app/exercises/shared/navigate-back.util'
 import { Authority } from 'app/shared/constants/authority.constants';
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
 import { getSubmissionResultByCorrectionRound } from 'app/entities/submission.model';
+import { getExerciseDashboardLink, getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
+import { ExerciseType } from 'app/entities/exercise.model';
 
 @Component({
     selector: 'jhi-modeling-assessment-editor',
@@ -38,7 +40,6 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     model?: UMLModel;
     modelingExercise?: ModelingExercise;
     result?: Result;
-    generalFeedback = new Feedback();
     referencedFeedback: Feedback[] = [];
     unreferencedFeedback: Feedback[] = [];
     highlightedElements: Map<string, string>; // map elementId -> highlight color
@@ -47,6 +48,10 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     assessmentsAreValid = false;
     nextSubmissionBusy: boolean;
     courseId: number;
+    examId = 0;
+    exerciseId: number;
+    exerciseGroupId: number;
+    exerciseDashboardLink: string[];
     userId: number;
     isAssessor = false;
     isAtLeastInstructor = false;
@@ -58,6 +63,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     hasAutomaticFeedback = false;
     hasAssessmentDueDatePassed: boolean;
     correctionRound = 0;
+    loadingInitialSubmission = true;
 
     private cancelConfirmationText: string;
 
@@ -80,11 +86,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     }
 
     private get feedback(): Feedback[] {
-        if (Feedback.hasDetailText(this.generalFeedback)) {
-            return [this.generalFeedback, ...this.referencedFeedback, ...this.unreferencedFeedback];
-        } else {
-            return [...this.referencedFeedback, ...this.unreferencedFeedback];
-        }
+        return [...this.referencedFeedback, ...this.unreferencedFeedback];
     }
 
     ngOnInit() {
@@ -101,10 +103,17 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         });
         this.route.paramMap.subscribe((params) => {
             this.courseId = Number(params.get('courseId'));
-            const exerciseId = Number(params.get('exerciseId'));
+            this.exerciseId = Number(params.get('exerciseId'));
+            if (params.has('examId')) {
+                this.examId = Number(params.get('examId'));
+                this.exerciseGroupId = Number(params.get('exerciseGroupId'));
+            }
+
+            this.exerciseDashboardLink = getExerciseDashboardLink(this.courseId, this.exerciseId, this.examId, this.isTestRun);
+
             const submissionId = params.get('submissionId');
             if (submissionId === 'new') {
-                this.loadRandomSubmission(exerciseId);
+                this.loadRandomSubmission(this.exerciseId);
             } else {
                 this.loadSubmission(Number(submissionId));
             }
@@ -117,11 +126,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
                 this.handleReceivedSubmission(submission);
             },
             (error: HttpErrorResponse) => {
-                if (error.error && error.error.errorKey === 'lockedSubmissionsLimitReached') {
-                    this.navigateBack();
-                } else {
-                    this.onError();
-                }
+                this.handeErrorResponse(error);
             },
         );
     }
@@ -136,20 +141,13 @@ export class ModelingAssessmentEditorComponent implements OnInit {
                 this.location.go(newUrl);
             },
             (error: HttpErrorResponse) => {
-                if (error.status === 404) {
-                    // there is no submission waiting for assessment at the moment
-                    this.navigateBack();
-                    this.jhiAlertService.info('artemisApp.exerciseAssessmentDashboard.noSubmissions');
-                } else if (error.error && error.error.errorKey === 'lockedSubmissionsLimitReached') {
-                    this.navigateBack();
-                } else {
-                    this.onError();
-                }
+                this.handeErrorResponse(error);
             },
         );
     }
 
     private handleReceivedSubmission(submission: ModelingSubmission): void {
+        this.loadingInitialSubmission = false;
         this.submission = submission;
         const studentParticipation = this.submission.participation as StudentParticipation;
         this.modelingExercise = studentParticipation.exercise as ModelingExercise;
@@ -203,20 +201,14 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     }
 
     /**
-     * Checks the given feedback list for general feedback (i.e. feedback without a reference). If there is one, it is assigned to the generalFeedback variable and removed from
-     * the original feedback list. The remaining list is then assigned to the referencedFeedback variable containing only feedback elements with a reference and valid score.
-     * Additionally, it checks if the feedback list contains any automatic feedback elements and sets the hasAutomaticFeedback flag accordingly. Afterwards, it triggers the
-     * highlighting of feedback elements, if necessary.
+     * Checks the given feedback list for unreferenced feedback. The remaining list is then assigned to the
+     * referencedFeedback variable containing only feedback elements with a reference and valid score.
+     * Additionally, it checks if the feedback list contains any automatic feedback elements and sets the hasAutomaticFeedback flag accordingly.
+     * Afterwards, it triggers the highlighting of feedback elements, if necessary.
      */
     private handleFeedback(feedback?: Feedback[]): void {
         if (!feedback || feedback.length === 0) {
             return;
-        }
-
-        const generalFeedbackIndex = feedback.findIndex((feedbackElement) => !feedbackElement.reference && feedbackElement.type !== FeedbackType.MANUAL_UNREFERENCED);
-        if (generalFeedbackIndex >= 0) {
-            this.generalFeedback = feedback[generalFeedbackIndex] || new Feedback();
-            feedback.splice(generalFeedbackIndex, 1);
         }
 
         this.referencedFeedback = feedback.filter((feedbackElement) => feedbackElement.reference);
@@ -267,6 +259,23 @@ export class ModelingAssessmentEditorComponent implements OnInit {
 
     get readOnly(): boolean {
         return !this.isAtLeastInstructor && !!this.complaint && this.isAssessor;
+    }
+
+    private handeErrorResponse(error: HttpErrorResponse): void {
+        this.loadingInitialSubmission = false;
+        this.submission = undefined;
+
+        // there is no submission waiting for assessment at the moment
+        if (error.status === 404) {
+            return;
+        }
+
+        this.isLoading = false;
+        if (error.error && error.error.errorKey === 'lockedSubmissionsLimitReached') {
+            this.navigateBack();
+        } else {
+            this.onError();
+        }
     }
 
     onError(): void {
@@ -392,52 +401,38 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     }
 
     assessNext() {
+        this.isLoading = true;
         this.nextSubmissionBusy = true;
         this.modelingSubmissionService.getModelingSubmissionForExerciseForCorrectionRoundWithoutAssessment(this.modelingExercise!.id!, true, this.correctionRound).subscribe(
             (unassessedSubmission: ModelingSubmission) => {
                 this.nextSubmissionBusy = false;
+                this.isLoading = false;
+
+                // navigate to the new assessment page to trigger re-initialization of the components
                 this.router.onSameUrlNavigation = 'reload';
+
                 // navigate to root and then to new assessment page to trigger re-initialization of the components
-                let url = `/course-management/${this.courseId}/modeling-exercises/${this.modelingExercise!.id}/submissions/${unassessedSubmission.id}/assessment`;
-                url += `?correction-round=${this.correctionRound}`;
-                this.router.navigateByUrl('/', { skipLocationChange: true }).then(() => this.router.navigateByUrl(url));
+                const url = getLinkToSubmissionAssessment(ExerciseType.MODELING, this.courseId, this.exerciseId, unassessedSubmission.id!, this.examId, this.exerciseGroupId);
+                this.router.navigateByUrl('/', { skipLocationChange: true }).then(() => this.router.navigate(url, { queryParams: { 'correction-round': this.correctionRound } }));
             },
             (error: HttpErrorResponse) => {
                 this.nextSubmissionBusy = false;
-                if (error.status === 404) {
-                    // there is no submission waiting for assessment at the moment
-                    this.jhiAlertService.info('artemisApp.exerciseAssessmentDashboard.noSubmissions');
-                } else if (error.error && error.error.errorKey === 'lockedSubmissionsLimitReached') {
-                    this.navigateBack();
-                } else {
-                    this.onError();
-                }
+                this.handeErrorResponse(error);
             },
         );
     }
 
     /**
      * Validates the feedback:
-     *   - There must be any form of feedback, either general feedback or feedback referencing a model element or both
+     *   - There must be any form of feedback, either unreferencing feedback or feedback referencing a model element or both
      *   - Each reference feedback must have a score that is a valid number
      */
     validateFeedback() {
         this.calculateTotalScore();
-        if (
-            (!this.referencedFeedback || this.referencedFeedback.length === 0) &&
-            (!this.unreferencedFeedback || this.unreferencedFeedback.length === 0) &&
-            (!this.generalFeedback || !this.generalFeedback.detailText || this.generalFeedback.detailText.length === 0)
-        ) {
-            this.assessmentsAreValid = false;
-            return;
-        }
-        for (const feedback of this.referencedFeedback) {
-            if (feedback.credits == undefined || isNaN(feedback.credits)) {
-                this.assessmentsAreValid = false;
-                return;
-            }
-        }
-        this.assessmentsAreValid = true;
+        const hasReferencedFeedback = Feedback.haveCredits(this.referencedFeedback);
+        const hasUnreferencedFeedback = Feedback.haveCreditsAndComments(this.unreferencedFeedback);
+        // When unreferenced feedback is set, it has to be valid (score + detailed text)
+        this.assessmentsAreValid = (hasReferencedFeedback && this.unreferencedFeedback.length === 0) || hasUnreferencedFeedback;
     }
 
     navigateBack() {
@@ -494,6 +489,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     private removeHighlightedFeedbackOfColor(highlightedElements: Map<string, string>, color: string) {
         return new Map<string, string>([...highlightedElements].filter(([, value]) => value !== color));
     }
+
     /**
      * Calculates the total score of the current assessment.
      * This function originally checked whether the total score is negative

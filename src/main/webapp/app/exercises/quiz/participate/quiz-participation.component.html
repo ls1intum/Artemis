@@ -11,7 +11,7 @@
     <p
         *ngIf="!waitingForQuizStart && showingResult && mode !== 'solution'"
         jhiTranslate="artemisApp.quizExercise.quizInstructions.result"
-        [translateValues]="{ userScore: userScore, maxScore: totalScore, percentage: result.score }"
+        [translateValues]="{ userScore: userScore, maxScore: totalScore, percentage: round(result.score) }"
     ></p>
 </div>
 <div class="quiz-content container" *ngIf="quizExercise">
@@ -68,21 +68,21 @@
             <div class="quiz-icons">
                 <div class="stepwizardquiz">
                     <div *ngFor="let question of quizExercise.quizQuestions; let i = index" class="stepwizardquiz__step">
-                        <div
+                        <span
                             *ngIf="question.type === DRAG_AND_DROP"
                             class="btn btn-light btn-circle stepbutton stepwizardquiz-circle draganddropcolor-question"
                             (click)="navigateToQuestion(i)"
                             [ngbTooltip]="mode !== 'solution' ? (dragAndDropMappings[question.id]?.length ? tooltipExplanationTranslate : tooltipNotExplanationTranslate) : ''"
-                            [ngClass]="{ 'changed-question': dragAndDropMappings[question.id]?.length }"
+                            [ngClass]="!!dragAndDropMappings.get(question.id)?.length ? 'changed-question' : ''"
                         >
                             <b class="fa">DD</b>
-                        </div>
+                        </span>
                         <span
                             *ngIf="question.type === MULTIPLE_CHOICE"
                             class="btn btn-light btn-circle stepbutton stepwizardquiz-circle multiplechoicecolor-question"
                             (click)="navigateToQuestion(i)"
                             [ngbTooltip]="mode !== 'solution' ? (selectedAnswerOptions[question.id]?.length ? tooltipExplanationTranslate : tooltipNotExplanationTranslate) : ''"
-                            [ngClass]="{ 'changed-question': selectedAnswerOptions[question.id]?.length }"
+                            [ngClass]="!!selectedAnswerOptions.get(question.id)?.length ? 'changed-question' : ''"
                         >
                             <b class="fa">MC</b>
                         </span>
@@ -93,12 +93,12 @@
                             [ngbTooltip]="
                                 mode !== 'solution' ? (shortAnswerSubmittedTexts[question.id]?.length ? tooltipExplanationTranslate : tooltipNotExplanationTranslate) : ''
                             "
-                            [ngClass]="{ 'changed-question': shortAnswerSubmittedTexts[question.id]?.length }"
+                            [ngClass]="!!shortAnswerSubmittedTexts.get(question.id)?.length ? 'changed-question' : ''"
                         >
                             <b class="fa">SA</b>
                         </span>
-                        <ng-template #tooltipExplanationTranslate>{{ 'artemisApp.quizExercise.explanationAnswered' | translate }}</ng-template>
-                        <ng-template #tooltipNotExplanationTranslate>{{ 'artemisApp.quizExercise.explanationNotAnswered' | translate }}</ng-template>
+                        <ng-template #tooltipExplanationTranslate>{{ 'artemisApp.quizExercise.explanationAnswered' | artemisTranslate }}</ng-template>
+                        <ng-template #tooltipNotExplanationTranslate>{{ 'artemisApp.quizExercise.explanationNotAnswered' | artemisTranslate }}</ng-template>
                     </div>
                 </div>
                 <div *ngIf="quizExercise.quizQuestions && !this.isMobile()" class="align-text hide-mobile">
@@ -152,7 +152,7 @@
             <div *ngIf="showingResult && mode !== 'solution'" class="text-center">
                 <div id="quiz-score" [ngClass]="{ incorrect: userScore < totalScore }">
                     <span class="colon-suffix" jhiTranslate="artemisApp.quizExercise.totalScore"></span>
-                    <span id="quiz-score-result">{{ userScore }}/{{ totalScore }} ({{ result.score }} %)</span>
+                    <span id="quiz-score-result">{{ userScore }}/{{ totalScore }} ({{ round(result.score) }} %)</span>
                 </div>
                 <div *ngIf="mode === 'practice'">
                     <span jhiTranslate="artemisApp.quizExercise.practiceMode"></span>

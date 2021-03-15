@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.service;
 
-import static java.util.Arrays.asList;
-
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -14,12 +12,15 @@ import org.springframework.transaction.annotation.Transactional;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Feedback;
+import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
-import de.tum.in.www1.artemis.domain.participation.*;
+import de.tum.in.www1.artemis.domain.participation.Participation;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.connectors.LtiService;
-import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Service
@@ -27,7 +28,7 @@ public class ResultService {
 
     private final Logger log = LoggerFactory.getLogger(ResultService.class);
 
-    private final UserService userService;
+    private final UserRepository userRepository;
 
     private final ResultRepository resultRepository;
 
@@ -47,10 +48,10 @@ public class ResultService {
 
     private final ComplaintRepository complaintRepository;
 
-    public ResultService(UserService userService, ResultRepository resultRepository, LtiService ltiService, ObjectMapper objectMapper, FeedbackRepository feedbackRepository,
+    public ResultService(UserRepository userRepository, ResultRepository resultRepository, LtiService ltiService, ObjectMapper objectMapper, FeedbackRepository feedbackRepository,
             WebsocketMessagingService websocketMessagingService, ComplaintResponseRepository complaintResponseRepository, SubmissionRepository submissionRepository,
             ComplaintRepository complaintRepository, RatingRepository ratingRepository) {
-        this.userService = userService;
+        this.userRepository = userRepository;
         this.resultRepository = resultRepository;
         this.ltiService = ltiService;
         this.objectMapper = objectMapper;
@@ -89,10 +90,16 @@ public class ResultService {
      * Get the latest result from the database by participation id together with the list of feedback items.
      *
      * @param participationId the id of the participation to load from the database
+     * @param withSubmission determines whether the submission should also be fetched
      * @return an optional result (might exist or not).
      */
-    public Optional<Result> findLatestResultWithFeedbacksForParticipation(Long participationId) {
-        return resultRepository.findFirstWithFeedbacksByParticipationIdOrderByCompletionDateDesc(participationId);
+    public Optional<Result> findLatestResultWithFeedbacksForParticipation(Long participationId, boolean withSubmission) {
+        if (withSubmission) {
+            return resultRepository.findFirstWithSubmissionAndFeedbacksByParticipationIdOrderByCompletionDateDesc(participationId);
+        }
+        else {
+            return resultRepository.findFirstWithFeedbacksByParticipationIdOrderByCompletionDateDesc(participationId);
+        }
     }
 
     /**
@@ -122,7 +129,7 @@ public class ResultService {
      * @param result Result for which current user is set as an assessor
      */
     public void setAssessor(Result result) {
-        User currentUser = userService.getUser();
+        User currentUser = userRepository.getUser();
         result.setAssessor(currentUser);
     }
 
@@ -163,7 +170,7 @@ public class ResultService {
             result.setHasFeedback(isProgrammingExerciseWithFeedback);
         }
 
-        User user = userService.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithGroupsAndAuthorities();
 
         result.setAssessmentType(AssessmentType.MANUAL);
         result.setAssessor(user);
@@ -218,82 +225,6 @@ public class ResultService {
      */
     public List<Result> findByCourseId(Long courseId) {
         return resultRepository.findAllByParticipation_Exercise_CourseId(courseId);
-    }
-
-    /**
-     * Given a courseId, return the number of assessments for that course that have been completed (e.g. no draft!)
-     *
-     * @param courseId - the course we are interested in
-     * @return a number of assessments for the course
-     */
-    public DueDateStat countNumberOfAssessments(Long courseId) {
-        return new DueDateStat(resultRepository.countByAssessorIsNotNullAndParticipation_Exercise_CourseIdAndRatedAndCompletionDateIsNotNull(courseId, true),
-                resultRepository.countByAssessorIsNotNullAndParticipation_Exercise_CourseIdAndRatedAndCompletionDateIsNotNull(courseId, false));
-    }
-
-    /**
-     * Given a courseId and a tutorId, return the number of assessments for that course written by that tutor that have been completed (e.g. no draft!)
-     *
-     * @param courseId - the course we are interested in
-     * @param tutorId  - the tutor we are interested in
-     * @return a number of assessments for the course
-     */
-    public long countNumberOfAssessmentsForTutor(Long courseId, Long tutorId) {
-        return resultRepository.countByAssessor_IdAndParticipation_Exercise_CourseIdAndRatedAndCompletionDateIsNotNull(tutorId, courseId, true);
-    }
-
-    /**
-     * Given an exerciseId, return the number of assessments for that exerciseId that have been completed (e.g. no draft!)
-     *
-     * @param exerciseId - the exercise we are interested in
-     * @param examMode should be used for exam exercises to ignore test run submissions
-     * @return a number of assessments for the exercise
-     */
-    public DueDateStat countNumberOfFinishedAssessmentsForExercise(Long exerciseId, boolean examMode) {
-        if (examMode) {
-            return new DueDateStat(resultRepository.countNumberOfFinishedAssessmentsForExerciseIgnoreTestRuns(exerciseId), 0L);
-        }
-        return new DueDateStat(resultRepository.countNumberOfFinishedAssessmentsForExercise(exerciseId), 0L);
-    }
-
-    /**
-     * Given an exerciseId and a correctionRound, return the number of assessments for that exerciseId and correctionRound that have been finished
-     *
-     * @param exercise  - the exercise we are interested in
-     * @param correctionRounds - the correction round we want finished assessments for
-     * @return an array of the number of assessments for the exercise for a given correction round
-     */
-    public DueDateStat[] countNumberOfFinishedAssessmentsForExerciseByCorrectionRound(Exercise exercise, int correctionRounds) {
-        DueDateStat[] correctionRoundsDataStats = new DueDateStat[correctionRounds];
-
-        for (int i = 0; i < correctionRounds; i++) {
-            correctionRoundsDataStats[i] = new DueDateStat(resultRepository.countNumberOfFinishedAssessmentsByCorrectionRoundsAndExerciseIdIgnoreTestRuns(exercise.getId(), i), 0L);
-
-        }
-
-        return correctionRoundsDataStats;
-    }
-
-    /**
-     * Given a exerciseId and a tutorId, return the number of assessments for that exercise written by that tutor that have been completed (e.g. no draft!)
-     *
-     * @param exerciseId - the exercise we are interested in
-     * @param tutorId    - the tutor we are interested in
-     * @return a number of assessments for the exercise
-     */
-    public long countNumberOfAssessmentsForTutorInExercise(Long exerciseId, Long tutorId) {
-        return resultRepository.countByAssessor_IdAndParticipation_ExerciseIdAndRatedAndCompletionDateIsNotNull(tutorId, exerciseId, true);
-    }
-
-    /**
-     * Calculate the number of assessments which are either AUTOMATIC or SEMI_AUTOMATIC for a given exercise
-     *
-     * @param exerciseId the exercise we are interested in
-     * @return number of assessments for the exercise
-     */
-    public DueDateStat countNumberOfAutomaticAssistedAssessmentsForExercise(Long exerciseId) {
-        return new DueDateStat(resultRepository.countNumberOfAssessmentsByTypeForExerciseBeforeDueDate(exerciseId, asList(AssessmentType.AUTOMATIC, AssessmentType.SEMI_AUTOMATIC)),
-                resultRepository.countNumberOfAssessmentsByTypeForExerciseAfterDueDate(exerciseId, asList(AssessmentType.AUTOMATIC, AssessmentType.SEMI_AUTOMATIC)));
     }
 
     /**

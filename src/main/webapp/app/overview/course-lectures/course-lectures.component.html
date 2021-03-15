@@ -4,16 +4,16 @@
             <div class="exercise-controls d-none d-sm-block" *ngIf="course?.lectures && course?.lectures.length > 0">
                 <div ngbDropdown placement="bottom-right" class="d-inline-block">
                     <button class="btn btn-outline-primary" id="dropdownBasic1" ngbDropdownToggle>
-                        {{ 'artemisApp.courseOverview.lectureList.sortLectures' | translate }}
+                        {{ 'artemisApp.courseOverview.lectureList.sortLectures' | artemisTranslate }}
                     </button>
                     <div ngbDropdownMenu aria-labelledby="dropdownBasic1">
                         <button class="dropdown-item" (click)="groupLectures(DUE_DATE_DESC)">
                             <fa-icon [icon]="'sort-amount-up'"></fa-icon>
-                            {{ 'artemisApp.courseOverview.exerciseList.newFirst' | translate }}
+                            {{ 'artemisApp.courseOverview.exerciseList.newFirst' | artemisTranslate }}
                         </button>
                         <button class="dropdown-item" (click)="groupLectures(DUE_DATE_ASC)">
                             <fa-icon [icon]="'sort-amount-down'"></fa-icon>
-                            {{ 'artemisApp.courseOverview.exerciseList.oldFirst' | translate }}
+                            {{ 'artemisApp.courseOverview.exerciseList.oldFirst' | artemisTranslate }}
                         </button>
                     </div>
                 </div>
@@ -30,7 +30,7 @@
                         <strong>{{ weeklyLecturesGrouped[weekKey].end | artemisDate: 'long-date' }}</strong>
                     </span>
                     <span *ngIf="!weeklyLecturesGrouped[weekKey].start || !weeklyLecturesGrouped[weekKey].end">
-                        {{ 'artemisApp.courseOverview.exerciseList.noDateAssociated' | translate }}
+                        {{ 'artemisApp.courseOverview.exerciseList.noDateAssociated' | artemisTranslate }}
                     </span>
                     <span
                         class="ml-2"
@@ -53,28 +53,24 @@
             <div *ngIf="!course?.lectures">
                 <div class="row">
                     <div class="col">
-                        {{ 'artemisApp.courseOverview.lectureList.noLectures' | translate }}
+                        {{ 'artemisApp.courseOverview.lectureList.noLectures' | artemisTranslate }}
                     </div>
                 </div>
             </div>
         </div>
     </div>
     <div class="col-12 col-md-4 course-information">
-        <jhi-side-panel [panelHeader]="'artemisApp.courseOverview.exerciseList.details.courseInformation' | translate">
+        <jhi-side-panel [panelHeader]="'artemisApp.courseOverview.exerciseList.details.courseInformation' | artemisTranslate">
             <div class="row mb-1">
-                <div class="col-8">{{ 'artemisApp.courseOverview.lectureList.totalLectures' | translate }}</div>
+                <div class="col-8">{{ 'artemisApp.courseOverview.lectureList.totalLectures' | artemisTranslate }}</div>
                 <div class="col-4">{{ course?.lectures ? course?.lectures.length : 0 }}</div>
             </div>
-            <div class="row mb-1">
-                <div class="col-8">{{ 'artemisApp.courseOverview.lectureList.totalAttachments' | translate }}</div>
-                <div class="col-4">{{ totalAttachmentCount }}</div>
-            </div>
             <div class="row mb-1" *ngIf="course?.startDate">
-                <div class="col-8">{{ 'artemisApp.courseOverview.exerciseList.details.startDate' | translate }}</div>
+                <div class="col-8">{{ 'artemisApp.courseOverview.exerciseList.details.startDate' | artemisTranslate }}</div>
                 <div class="col-4">{{ course?.startDate | artemisDate }}</div>
             </div>
             <div class="row" *ngIf="course?.endDate">
-                <div class="col-8">{{ 'artemisApp.courseOverview.exerciseList.details.endDate' | translate }}</div>
+                <div class="col-8">{{ 'artemisApp.courseOverview.exerciseList.details.endDate' | artemisTranslate }}</div>
                 <div class="col-4">{{ course?.endDate | artemisDate }}</div>
             </div>
         </jhi-side-panel>

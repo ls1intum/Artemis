@@ -48,7 +48,14 @@ Setup
 
 The following sections describe the supported features and the process of creating a new programming exercise.
 
-.. include:: programming-exercise-setup.rst
+.. include:: programming-exercise-setup.inc
+
+Static Code Analysis Default Configuration
+------------------------------------------
+
+The following sections list the rules that are active for the default static code analysis configuration.
+
+.. include:: programming-sca-default-configuration.inc
 
 Online Editor
 -------------
@@ -90,4 +97,4 @@ Its main features are
   or pointing to a possible location that caused an Exception
 * utilities to test exercises using System.out and System.in comfortably
 
-**For more information see https://github.com/ls1intum/artemis-java-test-sandbox**
+**For more information see** `AJTS GitHub <https://github.com/ls1intum/artemis-java-test-sandbox>`__

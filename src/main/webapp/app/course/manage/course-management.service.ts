@@ -3,7 +3,6 @@ import { HttpClient, HttpResponse } from '@angular/common/http';
 import { BehaviorSubject, Observable } from 'rxjs';
 import * as moment from 'moment';
 import { filter, map, tap } from 'rxjs/operators';
-
 import { SERVER_API_URL } from 'app/app.constants';
 import { Course, CourseGroup } from 'app/entities/course.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
@@ -22,6 +21,8 @@ import { createRequestOption } from 'app/shared/util/request-util';
 import { getLatestSubmissionResult, setLatestSubmissionResult, Submission } from 'app/entities/submission.model';
 import { SubjectObservablePair } from 'app/utils/rxjs.utils';
 import { participationStatus } from 'app/exercises/shared/exercise/exercise-utils';
+import { addUserIndependentRepositoryUrl } from 'app/overview/participation-utils';
+import { ParticipationType } from 'app/entities/participation/participation.model';
 
 export type EntityResponseType = HttpResponse<Course>;
 export type EntityArrayResponseType = HttpResponse<Course[]>;
@@ -156,7 +157,7 @@ export class CourseManagementService {
      * @param courseId - the id of the course
      */
     getCourseWithInterestingExercisesForTutors(courseId: number): Observable<EntityResponseType> {
-        const url = `${this.resourceUrl}/${courseId}/for-tutor-dashboard`;
+        const url = `${this.resourceUrl}/${courseId}/for-assessment-dashboard`;
         return this.http
             .get<Course>(url, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
@@ -167,7 +168,7 @@ export class CourseManagementService {
      * @param courseId - the id of the course
      */
     getStatsForTutors(courseId: number): Observable<HttpResponse<StatsForDashboard>> {
-        return this.http.get<StatsForDashboard>(`${this.resourceUrl}/${courseId}/stats-for-tutor-dashboard`, { observe: 'response' });
+        return this.http.get<StatsForDashboard>(`${this.resourceUrl}/${courseId}/stats-for-assessment-dashboard`, { observe: 'response' });
     }
 
     /**
@@ -197,6 +198,18 @@ export class CourseManagementService {
         this.fetchingCoursesForNotifications = true;
         return this.http
             .get<Course[]>(this.resourceUrl, { params: options, observe: 'response' })
+            .pipe(map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res)))
+            .pipe(map((res: EntityArrayResponseType) => this.checkAccessRights(res)))
+            .pipe(map((res: EntityArrayResponseType) => this.setCoursesForNotifications(res)));
+    }
+
+    /**
+     * finds all courses with quiz exercises using a GET request
+     */
+    getAllCoursesWithQuizExercises(): Observable<EntityArrayResponseType> {
+        this.fetchingCoursesForNotifications = true;
+        return this.http
+            .get<Course[]>(this.resourceUrl + '/courses-with-quiz', { observe: 'response' })
             .pipe(map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res)))
             .pipe(map((res: EntityArrayResponseType) => this.checkAccessRights(res)))
             .pipe(map((res: EntityArrayResponseType) => this.setCoursesForNotifications(res)));
@@ -247,6 +260,30 @@ export class CourseManagementService {
      */
     getAllUsersInCourseGroup(courseId: number, courseGroup: CourseGroup): Observable<HttpResponse<User[]>> {
         return this.http.get<User[]>(`${this.resourceUrl}/${courseId}/${courseGroup}`, { observe: 'response' });
+    }
+
+    /**
+     * Downloads the course archive of the specified courseId. Returns an error
+     * if the archive does not exist.
+     * @param courseId The id of the course
+     */
+    downloadCourseArchive(courseId: number): Observable<HttpResponse<Blob>> {
+        return this.http.get(`${this.resourceUrl}/${courseId}/download-archive`, {
+            observe: 'response',
+            responseType: 'blob',
+        });
+    }
+
+    /**
+     * Archives the course of the specified courseId.
+     * @param courseId The id of the course to archive
+     */
+    archiveCourse(courseId: number): Observable<HttpResponse<any>> {
+        return this.http.put(`${this.resourceUrl}/${courseId}/archive`, {}, { observe: 'response' });
+    }
+
+    cleanupCourse(courseId: number): Observable<HttpResponse<void>> {
+        return this.http.delete<void>(`${this.resourceUrl}/${courseId}/cleanup`, { observe: 'response' });
     }
 
     /**
@@ -456,6 +493,9 @@ export class CourseExerciseService {
      */
     startExercise(courseId: number, exerciseId: number): Observable<StudentParticipation> {
         return this.http.post<StudentParticipation>(`${this.resourceUrl}/${courseId}/exercises/${exerciseId}/participations`, {}).map((participation: StudentParticipation) => {
+            if (participation.type === ParticipationType.PROGRAMMING) {
+                addUserIndependentRepositoryUrl(participation);
+            }
             return this.handleParticipation(participation);
         });
     }
@@ -469,6 +509,9 @@ export class CourseExerciseService {
         return this.http
             .put<StudentParticipation>(`${this.resourceUrl}/${courseId}/exercises/${exerciseId}/resume-programming-participation`, {})
             .map((participation: StudentParticipation) => {
+                if (participation.type === ParticipationType.PROGRAMMING) {
+                    addUserIndependentRepositoryUrl(participation);
+                }
                 return this.handleParticipation(participation);
             });
     }

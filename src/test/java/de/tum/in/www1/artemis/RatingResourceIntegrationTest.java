@@ -16,7 +16,7 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.RatingService;
-import de.tum.in.www1.artemis.service.UserService;
+import de.tum.in.www1.artemis.service.user.UserService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
 public class RatingResourceIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -70,7 +70,7 @@ public class RatingResourceIntegrationTest extends AbstractSpringIntegrationBamb
 
         submission = ModelFactory.generateTextSubmission("example text", Language.ENGLISH, true);
         submission = database.saveTextSubmission(exercise, submission, student1.getLogin());
-        submission = (TextSubmission) database.addResultToSubmission(submission, null, null, 0L, true);
+        submission = (TextSubmission) database.addResultToSubmission(submission, null, null, 0D, true);
         result = submission.getLatestResult();
         rating = new Rating();
         rating.setResult(submission.getLatestResult());

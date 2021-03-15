@@ -4,7 +4,7 @@
         <span>
             {{
                 'artemisApp.examParticipation.finish'
-                    | translate
+                    | artemisTranslate
                         : {
                               title: exam.title
                           }
@@ -25,7 +25,7 @@
         <span>
             {{
                 'artemisApp.examParticipation.greeting'
-                    | translate
+                    | artemisTranslate
                         : {
                               title: exam.title
                           }
@@ -36,7 +36,7 @@
     <jhi-exam-information *ngIf="startView" [exam]="exam" [studentExam]="studentExam"></jhi-exam-information>
     <div><span style="display: table; margin-left: auto; margin-right: auto" [innerHTML]="formattedGeneralInformation"></span></div>
     <div *ngIf="studentFailedToSubmit" class="mb-2 font-weight-bold text-danger">
-        {{ 'studentExam.submissionNotInTime' | translate }}
+        {{ 'studentExam.submissionNotInTime' | artemisTranslate }}
     </div>
     <ng-container *ngIf="!studentFailedToSubmit">
         <div class="d-flex justify-content-center">
@@ -71,7 +71,7 @@
                             class="form-control"
                             name="fullname"
                             id="fullname"
-                            [placeholder]="'artemisApp.examParticipation.namePlaceholder' | translate"
+                            [placeholder]="'artemisApp.examParticipation.namePlaceholder' | artemisTranslate"
                             [(ngModel)]="enteredName"
                             [ngModelOptions]="{ updateOn: 'change' }"
                             [disabled]="startView ? waitingForExamStart : false"
@@ -80,16 +80,16 @@
                 </div>
                 <div class="row justify-content-center">
                     <div class="col-md-6" style="font-weight: lighter">
-                        <span> ({{ 'artemisApp.examParticipation.nameDisplay' | translate: { fullName: accountName } }}) </span>
+                        <span> ({{ 'artemisApp.examParticipation.nameDisplay' | artemisTranslate: { fullName: accountName } }}) </span>
                     </div>
                 </div>
                 <div class="row justify-content-center">
                     <div class="form-group">
                         <div class="alert alert-danger mt-1" *ngIf="!!!confirmed && inserted">
-                            <span [innerHTML]="'artemisApp.exam.notConfirmed' | translate"></span>
+                            <span [innerHTML]="'artemisApp.exam.notConfirmed' | artemisTranslate"></span>
                         </div>
                         <div class="alert alert-danger mt-1" *ngIf="!nameIsCorrect && inserted">
-                            <span [innerHTML]="'artemisApp.exam.falseName' | translate"></span>
+                            <span [innerHTML]="'artemisApp.exam.falseName' | artemisTranslate"></span>
                         </div>
                     </div>
                 </div>
@@ -106,21 +106,22 @@
                     <span jhiTranslate="artemisApp.examParticipation.handInEarlyNoticeSecondSentence"></span>
                 </div>
                 <button [disabled]="!endButtonEnabled" type="submit" (click)="submitExam()" class="btn btn-primary">
+                    <fa-icon *ngIf="submitInProgress" [icon]="'spinner'" [spin]="true">&nbsp;</fa-icon>
                     <span jhiTranslate="artemisApp.exam.endExam">Finish</span>
                 </button>
             </ng-template>
             <div *ngIf="handInEarly" class="mt-5">
                 <div class="mb-2 font-weight-bold">
-                    {{ 'artemisApp.examParticipation.continueAfterHandInEarlyDescription' | translate }}
+                    {{ 'artemisApp.examParticipation.continueAfterHandInEarlyDescription' | artemisTranslate }}
                 </div>
-                <button class="btn btn-secondary mt-2" (click)="continueAfterHandInEarly()">
+                <button [disabled]="submitInProgress" class="btn btn-secondary mt-2" (click)="continueAfterHandInEarly()">
                     <fa-icon [icon]="'arrow-left'"></fa-icon>
-                    {{ 'artemisApp.examParticipation.continueAfterHandInEarly' | translate }}
+                    {{ 'artemisApp.examParticipation.continueAfterHandInEarly' | artemisTranslate }}
                 </button>
             </div>
         </div>
         <div class="exam-waiting-for-start-overlay alert alert-info" *ngIf="waitingForExamStart">
-            <span>{{ 'artemisApp.examParticipation.waitForStart' | translate: { title: exam.title } }}</span>
+            <span>{{ 'artemisApp.examParticipation.waitForStart' | artemisTranslate: { title: exam.title } }}</span>
             <div *ngIf="exam.startDate">
                 <hr />
                 <span jhiTranslate="artemisApp.examParticipation.timeUntilPlannedStart"></span>

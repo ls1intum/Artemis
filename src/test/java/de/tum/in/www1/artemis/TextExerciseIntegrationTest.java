@@ -26,7 +26,6 @@ import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
 import de.tum.in.www1.artemis.repository.TextClusterRepository;
 import de.tum.in.www1.artemis.repository.TextExerciseRepository;
 import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
-import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.ExerciseService;
 import de.tum.in.www1.artemis.service.TeamService;
 import de.tum.in.www1.artemis.util.ModelFactory;
@@ -206,7 +205,7 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     public void updateTextExercise() throws Exception {
         final Course course = database.addCourseWithOneReleasedTextExercise();
         TextExercise textExercise = textExerciseRepository.findByCourseId(course.getId()).get(0);
-        textExercise = textExerciseRepository.findByIdWithEagerExampleSubmissionsAndResults(textExercise.getId()).get();
+        textExercise = textExerciseRepository.findByIdWithExampleSubmissionsAndResultsElseThrow(textExercise.getId());
 
         // update certain attributes of text exercise
         String title = "Updated Text Exercise";
@@ -513,7 +512,6 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
 
         exerciseToBeImported = request.postWithResponseBody("/api/text-exercises/import/" + sourceExercise.getId(), exerciseToBeImported, TextExercise.class, HttpStatus.CREATED);
 
-        SecurityUtils.setAuthorizationObject();
         assertEquals(course2.getId(), exerciseToBeImported.getCourseViaExerciseGroupOrCourseMember().getId(), course2.getId());
         assertEquals(ExerciseMode.TEAM, exerciseToBeImported.getMode());
         assertEquals(teamAssignmentConfig.getMinTeamSize(), exerciseToBeImported.getTeamAssignmentConfig().getMinTeamSize());
@@ -551,7 +549,6 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
 
         exerciseToBeImported = request.postWithResponseBody("/api/text-exercises/import/" + sourceExercise.getId(), exerciseToBeImported, TextExercise.class, HttpStatus.CREATED);
 
-        SecurityUtils.setAuthorizationObject();
         assertEquals(course2.getId(), exerciseToBeImported.getCourseViaExerciseGroupOrCourseMember().getId(), course2.getId());
         assertEquals(ExerciseMode.INDIVIDUAL, exerciseToBeImported.getMode());
         assertNull(exerciseToBeImported.getTeamAssignmentConfig());

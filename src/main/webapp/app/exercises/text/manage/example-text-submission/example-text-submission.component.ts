@@ -4,7 +4,7 @@ import { Location } from '@angular/common';
 import { JhiAlertService } from 'ng-jhipster';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ExampleSubmissionService } from 'app/exercises/shared/example-submission/example-submission.service';
-import { TextAssessmentsService } from 'app/exercises/text/assess/text-assessments.service';
+import { TextAssessmentService } from 'app/exercises/text/assess/text-assessment.service';
 import { TutorParticipationService } from 'app/exercises/shared/dashboards/tutor/tutor-participation.service';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { AccountService } from 'app/core/auth/account.service';
@@ -50,7 +50,7 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
     constructor(
         jhiAlertService: JhiAlertService,
         accountService: AccountService,
-        assessmentsService: TextAssessmentsService,
+        assessmentsService: TextAssessmentService,
         structuredGradingCriterionService: StructuredGradingCriterionService,
         private exerciseService: ExerciseService,
         private textSubmissionService: TextSubmissionService,
@@ -229,13 +229,13 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
             const examId = this.exercise.exerciseGroup.exam?.id;
             const exerciseGroupId = this.exercise.exerciseGroup.id;
             if (this.readOnly || this.toComplete) {
-                await this.router.navigate([`/course-management/${courseId}/exercises/${this.exerciseId}/tutor-dashboard`]);
+                await this.router.navigate(['/course-management', courseId, 'assessment-dashboard', this.exerciseId]);
             } else {
                 await this.router.navigate(['/course-management', courseId, 'exams', examId, 'exercise-groups', exerciseGroupId, 'text-exercises', this.exerciseId, 'edit']);
             }
         } else {
             if (this.readOnly || this.toComplete) {
-                this.router.navigate([`/course-management/${courseId}/exercises/${this.exerciseId}/tutor-dashboard`]);
+                this.router.navigate(['/course-management', courseId, 'assessment-dashboard', this.exerciseId]);
             } else {
                 await this.router.navigate(['/course-management', courseId, 'text-exercises']);
                 this.router.navigate(['/course-management', courseId, 'text-exercises', this.exerciseId, 'edit']);
@@ -307,7 +307,7 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
     }
 
     private prepareTextBlocksAndFeedbacks() {
-        const matchBlocksWithFeedbacks = TextAssessmentsService.matchBlocksWithFeedbacks(this.submission?.blocks || [], this.result?.feedbacks || []);
+        const matchBlocksWithFeedbacks = TextAssessmentService.matchBlocksWithFeedbacks(this.submission?.blocks || [], this.result?.feedbacks || []);
         this.sortAndSetTextBlockRefs(matchBlocksWithFeedbacks, this.textBlockRefs, this.unusedTextBlockRefs, this.submission);
     }
 

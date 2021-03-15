@@ -32,7 +32,7 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.ArtemisInternalAuthenticationProvider;
 import de.tum.in.www1.artemis.security.AuthoritiesConstants;
 import de.tum.in.www1.artemis.security.jwt.TokenProvider;
-import de.tum.in.www1.artemis.service.UserService;
+import de.tum.in.www1.artemis.service.user.PasswordService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.UserJWTController;
 import de.tum.in.www1.artemis.web.rest.dto.LtiLaunchRequestDTO;
@@ -42,7 +42,7 @@ import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
 public class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 
     @Autowired
-    private UserService userService;
+    private PasswordService passwordService;
 
     @Autowired
     private ArtemisInternalAuthenticationProvider artemisInternalAuthenticationProvider;
@@ -92,6 +92,8 @@ public class InternalAuthenticationIntegrationTest extends AbstractSpringIntegra
 
     @BeforeEach
     public void setUp() {
+        jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsServer);
+
         database.addUsers(1, 0, 0);
         course = database.addCourseWithOneProgrammingExercise();
         programmingExercise = programmingExerciseRepository.findAllWithEagerParticipations().get(0);
@@ -105,7 +107,7 @@ public class InternalAuthenticationIntegrationTest extends AbstractSpringIntegra
         authorityRepository.saveAll(List.of(userAuthority, instructorAuthority, adminAuthority, taAuthority));
 
         student = userRepository.findOneWithGroupsAndAuthoritiesByLogin(USERNAME).get();
-        final var encodedPassword = userService.passwordEncoder().encode(USER_PASSWORD);
+        final var encodedPassword = passwordService.encodePassword(USER_PASSWORD);
         student.setPassword(encodedPassword);
         userRepository.save(student);
         ltiLaunchRequest.setLis_person_contact_email_primary(student.getEmail());
@@ -160,6 +162,7 @@ public class InternalAuthenticationIntegrationTest extends AbstractSpringIntegra
         course1.setRegistrationEnabled(true);
         course1 = courseRepository.save(course1);
 
+        jenkinsRequestMockProvider.mockUpdateUserAndGroups(student.getLogin(), student, student.getGroups(), Set.of(), false);
         final var updatedStudent = request.postWithResponseBody("/api/courses/" + course1.getId() + "/register", null, User.class, HttpStatus.OK);
         assertThat(updatedStudent.getGroups()).as("User is registered for course").contains(course1.getStudentGroupName());
     }
@@ -179,6 +182,9 @@ public class InternalAuthenticationIntegrationTest extends AbstractSpringIntegra
         authorities.add(new Authority(AuthoritiesConstants.USER));
 
         student.setAuthorities(authorities);
+
+        var exercises = programmingExerciseRepository.findAllByInstructorOrTAGroupNameIn(student.getGroups());
+        jenkinsRequestMockProvider.mockCreateUser(student);
 
         final var response = request.postWithResponseBody("/api/users", new ManagedUserVM(student), User.class, HttpStatus.CREATED);
         assertThat(response).isNotNull();
@@ -206,6 +212,9 @@ public class InternalAuthenticationIntegrationTest extends AbstractSpringIntegra
 
         student.setAuthorities(authorities);
 
+        var exercises = programmingExerciseRepository.findAllByInstructorOrTAGroupNameIn(student.getGroups());
+        jenkinsRequestMockProvider.mockCreateUser(student);
+
         final var response = request.postWithResponseBody("/api/users", new ManagedUserVM(student), User.class, HttpStatus.CREATED);
         assertThat(response).isNotNull();
 
@@ -231,6 +240,9 @@ public class InternalAuthenticationIntegrationTest extends AbstractSpringIntegra
         authorities.add(new Authority(AuthoritiesConstants.INSTRUCTOR));
 
         student.setAuthorities(authorities);
+
+        var exercises = programmingExerciseRepository.findAllByInstructorOrTAGroupNameIn(student.getGroups());
+        jenkinsRequestMockProvider.mockCreateUser(student);
 
         final var response = request.postWithResponseBody("/api/users", new ManagedUserVM(student), User.class, HttpStatus.CREATED);
         assertThat(response).isNotNull();
@@ -263,13 +275,16 @@ public class InternalAuthenticationIntegrationTest extends AbstractSpringIntegra
         gitlabRequestMockProvider.enableMockingOfRequests();
         gitlabRequestMockProvider.mockUpdateUser();
 
+        final var oldGroups = student.getGroups();
         final var newGroups = Set.of("foo", "bar");
         student.setGroups(newGroups);
         final var managedUserVM = new ManagedUserVM(student);
 
+        jenkinsRequestMockProvider.mockUpdateUserAndGroups(student.getLogin(), student, newGroups, oldGroups, false);
+
         final var response = request.putWithResponseBody("/api/users", managedUserVM, User.class, HttpStatus.OK);
         final var updatedUserIndDB = userRepository.findOneWithGroupsAndAuthoritiesByLogin(student.getLogin()).get();
-        updatedUserIndDB.setPassword(userService.decryptPasswordByLogin(updatedUserIndDB.getLogin()).get());
+        updatedUserIndDB.setPassword(passwordService.decryptPasswordByLogin(updatedUserIndDB.getLogin()).get());
 
         assertThat(response).isNotNull();
         assertThat(student).as("Returned user is equal to sent update").isEqualTo(response);

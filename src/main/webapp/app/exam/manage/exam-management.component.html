@@ -16,42 +16,42 @@
             <thead>
                 <tr jhiSort [(predicate)]="predicate" [(ascending)]="ascending" [callback]="sortRows.bind(this)">
                     <th class="d-none d-md-table-cell" jhiSortBy="id">
-                        <span>{{ 'global.field.id' | translate }}</span>
+                        <span>{{ 'global.field.id' | artemisTranslate }}</span>
                         <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
                     <th jhiSortBy="title">
-                        <span>{{ 'artemisApp.exam.title' | translate }}</span>
+                        <span>{{ 'artemisApp.exam.title' | artemisTranslate }}</span>
                         <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
                     <th class="d-none d-md-table-cell" jhiSortBy="visibleDate">
-                        <span>{{ 'artemisApp.exam.visible' | translate }}</span>
+                        <span>{{ 'artemisApp.exam.visible' | artemisTranslate }}</span>
                         <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
                     <th jhiSortBy="startDate">
-                        <span>{{ 'artemisApp.exam.startDate' | translate }}</span>
+                        <span>{{ 'artemisApp.exam.startDate' | artemisTranslate }}</span>
                         <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
                     <th jhiSortBy="endDate">
-                        <span>{{ 'artemisApp.exam.endDate' | translate }}</span>
+                        <span>{{ 'artemisApp.exam.endDate' | artemisTranslate }}</span>
                         <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
                     <th jhiSortBy="publishResultsDate">
-                        <span>{{ 'artemisApp.exam.publishResultsDate' | translate }}</span>
+                        <span>{{ 'artemisApp.exam.publishResultsDate' | artemisTranslate }}</span>
                         <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
                     <th jhiSortBy="examStudentReviewStart">
-                        <span>{{ 'artemisApp.exam.examStudentReviewStart' | translate }}</span>
+                        <span>{{ 'artemisApp.exam.examStudentReviewStart' | artemisTranslate }}</span>
                         <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
                     <th jhiSortBy="examStudentReviewEnd">
-                        <span>{{ 'artemisApp.exam.examStudentReviewEnd' | translate }}</span>
+                        <span>{{ 'artemisApp.exam.examStudentReviewEnd' | artemisTranslate }}</span>
                         <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
                     <th>
-                        <span>{{ 'artemisApp.exam.duration' | translate }}</span>
+                        <span>{{ 'artemisApp.exam.duration' | artemisTranslate }}</span>
                     </th>
                     <th jhiSortBy="numberOfRegisteredUsers">
-                        <span>{{ 'artemisApp.exam.nrOfStudents' | translate }}</span>
+                        <span>{{ 'artemisApp.exam.nrOfStudents' | artemisTranslate }}</span>
                         <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
                     <th></th>
@@ -60,11 +60,19 @@
             <tbody>
                 <tr *ngFor="let exam of exams; trackBy: trackId">
                     <td class="d-none d-md-table-cell">
-                        <a [routerLink]="[exam.id]">{{ exam.id }}</a>
+                        <span *ngIf="isAtLeastInstructor">
+                            <a [routerLink]="[exam.id]">{{ exam.id }}</a>
+                        </span>
+                        <span *ngIf="!isAtLeastInstructor">
+                            {{ exam.id }}
+                        </span>
                     </td>
                     <td class="d-none d-md-table-cell">
-                        <span class="bold">
+                        <span class="bold" *ngIf="isAtLeastInstructor">
                             <a [routerLink]="[exam.id]">{{ exam.title }}</a>
+                        </span>
+                        <span *ngIf="!isAtLeastInstructor">
+                            {{ exam.title }}
                         </span>
                     </td>
                     <td>{{ exam.visibleDate | artemisDate }}</td>
@@ -87,29 +95,29 @@
 
                     <td class="text-right">
                         <div class="btn-group-vertical mr-1 mb-1" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']">
-                            <button *ngIf="isAtLeastInstructor" type="submit" [routerLink]="[exam.id]" class="btn btn-info btn-sm mr-1 mb-1" id="checklist-button-{{ exam.id }}">
+                            <a *ngIf="isAtLeastInstructor" [routerLink]="[exam.id]" class="btn btn-info btn-sm mr-1 mb-1" id="checklist-button-{{ exam.id }}">
                                 <fa-icon [icon]="'th-list'"></fa-icon>
-                                <span class="d-none d-md-inline">{{ 'artemisApp.examManagement.examChecklist' | translate }}</span>
-                            </button>
+                                <span class="d-none d-md-inline">{{ 'artemisApp.examManagement.examChecklist' | artemisTranslate }}</span>
+                            </a>
                         </div>
 
                         <div class="btn-group-vertical mr-1 mb-1" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA']">
                             <a
                                 *ngIf="(isAtLeastTutor && examHasFinished(exam.id)) || isAtLeastInstructor"
-                                [routerLink]="[exam.id, 'tutor-exam-dashboard']"
+                                [routerLink]="[exam.id, 'assessment-dashboard']"
                                 class="btn btn-primary btn-sm mr-1 mb-1 exercise-button"
                                 id="exercises-button-{{ exam.id }}"
                             >
                                 <fa-icon [icon]="'th-list'"></fa-icon>
-                                <span class="d-none d-md-inline">{{ 'artemisApp.examManagement.assessmentDashboard' | translate }}</span>
+                                <span class="d-none d-md-inline">{{ 'artemisApp.examManagement.assessmentDashboard' | artemisTranslate }}</span>
                             </a>
                         </div>
 
                         <div class="btn-group flex-btn-group-container">
                             <div class="btn-group-vertical mr-1 mb-1" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA']">
-                                <a *ngIf="isAtLeastTutor" [routerLink]="['/course-management', course.id, 'exams', exam.id, 'scores']" class="btn btn-info btn-sm mr-1 mb-1">
+                                <a *ngIf="isAtLeastInstructor" [routerLink]="['/course-management', course.id, 'exams', exam.id, 'scores']" class="btn btn-info btn-sm mr-1 mb-1">
                                     <fa-icon [icon]="'eye'"></fa-icon>
-                                    <span class="d-none d-md-inline">{{ 'entity.action.scores' | translate }}</span>
+                                    <span class="d-none d-md-inline">{{ 'entity.action.scores' | artemisTranslate }}</span>
                                 </a>
                             </div>
 
@@ -121,7 +129,7 @@
                                     id="exercises-button-{{ exam.id }}-groups"
                                 >
                                     <fa-icon [icon]="'list-alt'"></fa-icon>
-                                    <span class="d-none d-md-inline">{{ 'artemisApp.examManagement.exerciseGroups' | translate }}</span>
+                                    <span class="d-none d-md-inline">{{ 'artemisApp.examManagement.exerciseGroups' | artemisTranslate }}</span>
                                 </a>
                             </div>
 
@@ -129,36 +137,37 @@
                             <div class="btn-group-vertical mr-1 mb-1" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']">
                                 <a *ngIf="isAtLeastInstructor" [routerLink]="[exam.id, 'assessmentDashboard']" class="btn btn-primary btn-sm mr-1 mb-1">
                                     <fa-icon [icon]="'th-list'"></fa-icon>
-                                    <span class="d-none d-md-inline">{{ 'artemisApp.examManagement.assessmentDashboard' | translate }}</span>
+                                    <span class="d-none d-md-inline">{{ 'artemisApp.examManagement.assessmentDashboard' | artemisTranslate }}</span>
                                 </a>
                             </div>
                             -->
                             <div class="btn-group-vertical mr-1 mb-1" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']">
-                                <a *ngIf="isAtLeastInstructor" [routerLink]="[exam.id, 'test-runs']" class="btn btn-info btn-sm mr-1 mb-1 tutor-dashboard">
+                                <a *ngIf="isAtLeastInstructor" [routerLink]="[exam.id, 'test-runs']" class="btn btn-info btn-sm mr-1 mb-1 assessment-dashboard">
                                     <fa-icon [icon]="'user'"></fa-icon>
-                                    <span class="d-none d-md-inline">{{ 'artemisApp.examManagement.testRun.testRun' | translate }}</span>
+                                    <span class="d-none d-md-inline">{{ 'artemisApp.examManagement.testRun.testRun' | artemisTranslate }}</span>
                                 </a>
                             </div>
                             <div class="btn-group-vertical mr-1 mb-1" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']">
                                 <a *ngIf="isAtLeastInstructor" [routerLink]="[exam.id, 'student-exams']" class="btn btn-primary btn-sm mr-1 mb-1">
                                     <fa-icon [icon]="'eye'"></fa-icon>
-                                    <span class="d-none d-md-inline">{{ 'artemisApp.examManagement.studentExams' | translate }}</span>
+                                    <span class="d-none d-md-inline">{{ 'artemisApp.examManagement.studentExams' | artemisTranslate }}</span>
                                 </a>
                             </div>
                             <div class="btn-group-vertical mr-1 mb-1" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']">
-                                <a *ngIf="isAtLeastInstructor" [routerLink]="[exam.id, 'students']" class="btn btn-info btn-sm mr-1 mb-1 tutor-dashboard">
+                                <a *ngIf="isAtLeastInstructor" [routerLink]="[exam.id, 'students']" class="btn btn-info btn-sm mr-1 mb-1 assessment-dashboard">
                                     <fa-icon [icon]="'user'"></fa-icon>
-                                    <span class="d-none d-md-inline">{{ 'artemisApp.examManagement.students' | translate }}</span>
+                                    <span class="d-none d-md-inline">{{ 'artemisApp.examManagement.students' | artemisTranslate }}</span>
                                 </a>
                             </div>
                             <div class="btn-group-vertical mr-1 mb-1" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']">
                                 <a *ngIf="isAtLeastInstructor" [routerLink]="[exam.id, 'edit']" class="btn btn-primary btn-sm mr-1 mb-1">
                                     <fa-icon [icon]="'pencil-alt'"></fa-icon>
-                                    <span class="d-none d-md-inline">{{ 'entity.action.edit' | translate }}</span>
+                                    <span class="d-none d-md-inline">{{ 'entity.action.edit' | artemisTranslate }}</span>
                                 </a>
                             </div>
                             <div class="d-flex flex-column mr-1 mb-1" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']">
                                 <button
+                                    *ngIf="isAtLeastInstructor"
                                     jhiDeleteButton
                                     [entityTitle]="exam.title"
                                     deleteQuestion="artemisApp.examManagement.delete.question"

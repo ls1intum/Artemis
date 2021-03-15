@@ -1,44 +1,50 @@
 <div *ngIf="isLoading" class="d-flex justify-content-center">
     <div class="spinner-border" role="status">
-        <span class="sr-only">{{ 'loading' | translate }}</span>
+        <span class="sr-only">{{ 'loading' | artemisTranslate }}</span>
     </div>
 </div>
 
 <h3 *ngIf="!isLoading && complaint">
-    {{ complaint.complaintType === ComplaintType.MORE_FEEDBACK ? ('artemisApp.moreFeedback.review' | translate) : ('artemisApp.complaint.review' | translate) }}
+    {{ complaint.complaintType === ComplaintType.MORE_FEEDBACK ? ('artemisApp.moreFeedback.review' | artemisTranslate) : ('artemisApp.complaint.review' | artemisTranslate) }}
 </h3>
 
 <div class="col-12 mt-2" [class.px-0]="zeroIndent" *ngIf="!isLoading && complaint">
     <div class="alert alert-info" *ngIf="handled">
         {{
             complaint.complaintType === ComplaintType.MORE_FEEDBACK
-                ? ('artemisApp.moreFeedback.alreadyHandled' | translate)
-                : ('artemisApp.complaint.complaintAlreadyHandled' | translate)
+                ? ('artemisApp.moreFeedback.alreadyHandled' | artemisTranslate)
+                : ('artemisApp.complaint.complaintAlreadyHandled' | artemisTranslate)
         }}
     </div>
     <div class="mt-3 mb-3">
         <div id="lockDuration" class="alert alert-info" *ngIf="showLockDuration">
-            {{ 'artemisApp.locks.lockInformation' | translate: { user: this.complaintResponse?.reviewer?.login, endDate: this.complaintResponse.lockEndDate | artemisDate } }}
+            {{
+                'artemisApp.locks.lockInformation' | artemisTranslate: { user: this.complaintResponse?.reviewer?.login, endDate: this.complaintResponse.lockEndDate | artemisDate }
+            }}
         </div>
         <button id="lockButton" class="btn btn-secondary" *ngIf="showRemoveLockButton" (click)="removeLock()">
-            {{ 'artemisApp.locks.removeButton' | translate }}
+            {{ 'artemisApp.locks.removeButton' | artemisTranslate }}
         </button>
     </div>
     <div class="row">
         <div class="col-12 col-md-6">
             <h4>
                 <span
-                    >{{ complaint.complaintType === ComplaintType.MORE_FEEDBACK ? ('artemisApp.moreFeedback.title' | translate) : ('artemisApp.complaint.title' | translate) }}
+                    >{{
+                        complaint.complaintType === ComplaintType.MORE_FEEDBACK
+                            ? ('artemisApp.moreFeedback.title' | artemisTranslate)
+                            : ('artemisApp.complaint.title' | artemisTranslate)
+                    }}
                 </span>
                 <small *ngIf="handled">
                     <span *ngIf="complaint?.accepted" class="text-light bg-success small">
                         &nbsp;{{
                             complaint.complaintType === ComplaintType.MORE_FEEDBACK
-                                ? ('artemisApp.moreFeedback.accepted' | translate)
-                                : ('artemisApp.complaint.accepted' | translate)
+                                ? ('artemisApp.moreFeedback.accepted' | artemisTranslate)
+                                : ('artemisApp.complaint.accepted' | artemisTranslate)
                         }}&nbsp;
                     </span>
-                    <span *ngIf="!complaint?.accepted" class="text-light bg-danger small"> &nbsp;{{ 'artemisApp.complaint.rejected' | translate }}&nbsp; </span>
+                    <span *ngIf="!complaint?.accepted" class="text-light bg-danger small"> &nbsp;{{ 'artemisApp.complaint.rejected' | artemisTranslate }}&nbsp; </span>
                 </small>
             </h4>
             <textarea id="complaintTextArea" class="col-12 px-1" rows="4" [(ngModel)]="complaintText" [readonly]="true" [disabled]="true"></textarea>
@@ -48,8 +54,8 @@
             <h3>
                 {{
                     complaint.complaintType === ComplaintType.MORE_FEEDBACK
-                        ? ('artemisApp.moreFeedbackResponse.title' | translate)
-                        : ('artemisApp.complaintResponse.title' | translate)
+                        ? ('artemisApp.moreFeedbackResponse.title' | artemisTranslate)
+                        : ('artemisApp.complaintResponse.title' | artemisTranslate)
                 }}
             </h3>
             <textarea
@@ -61,7 +67,7 @@
                 [readonly]="handled"
                 [disabled]="handled || isLockedForLoggedInUser"
             ></textarea>
-            <div *ngIf="!handled && complaint.complaintType === ComplaintType.COMPLAINT" class="row justify-content-end">
+            <div *ngIf="!handled && complaint.complaintType === ComplaintType.COMPLAINT" class="row justify-content-end mt-3">
                 <div class="col-12 col-lg-6">
                     <button
                         id="acceptComplaintButton"
@@ -69,9 +75,9 @@
                         class="btn btn-success btn-block"
                         (click)="respondToComplaint(true)"
                         [disabled]="isLockedForLoggedInUser"
-                        title="{{ 'artemisApp.complaintResponse.updateAssessmentTooltip' | translate }}"
+                        title="{{ 'artemisApp.complaintResponse.updateAssessmentTooltip' | artemisTranslate }}"
                     >
-                        {{ 'artemisApp.complaintResponse.updateAssessment' | translate }}
+                        {{ 'artemisApp.complaintResponse.updateAssessment' | artemisTranslate }}
                     </button>
                 </div>
                 <div class="col-12 col-lg-6">
@@ -81,9 +87,9 @@
                         class="btn btn-danger btn-block"
                         (click)="respondToComplaint(false)"
                         [disabled]="isLockedForLoggedInUser"
-                        title="{{ 'artemisApp.complaintResponse.rejectComplaintTooltip' | translate }}"
+                        title="{{ 'artemisApp.complaintResponse.rejectComplaintTooltip' | artemisTranslate }}"
                     >
-                        {{ 'artemisApp.complaintResponse.rejectComplaint' | translate }}
+                        {{ 'artemisApp.complaintResponse.rejectComplaint' | artemisTranslate }}
                     </button>
                 </div>
             </div>
@@ -96,9 +102,9 @@
                         class="btn btn-success btn-block"
                         [disabled]="isLockedForLoggedInUser"
                         (click)="respondToComplaint(true)"
-                        title="{{ 'artemisApp.moreFeedbackResponse.sendResponseTooltip' | translate }}"
+                        title="{{ 'artemisApp.moreFeedbackResponse.sendResponseTooltip' | artemisTranslate }}"
                     >
-                        {{ 'artemisApp.moreFeedbackResponse.provideFeedback' | translate }}
+                        {{ 'artemisApp.moreFeedbackResponse.provideFeedback' | artemisTranslate }}
                     </button>
                 </div>
             </div>

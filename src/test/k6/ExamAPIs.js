@@ -1,6 +1,6 @@
 import { login } from './requests/requests.js';
 import { group, sleep } from 'k6';
-import { newCourse, deleteCourse } from './requests/course.js';
+import { newCourse, deleteCourse, addUserToInstructorsInCourse } from './requests/course.js';
 import { createUsersIfNeeded } from './requests/user.js';
 import { createQuizExercise, submitRandomAnswerRESTExam } from './requests/quiz.js';
 import {
@@ -63,6 +63,8 @@ export function setup() {
 
         const instructorUsername = baseUsername.replace('USERID', '1');
         const instructorPassword = basePassword.replace('USERID', '1');
+
+        addUserToInstructorsInCourse(artemisAdmin, instructorUsername, course.id);
 
         // Login to Artemis
         const artemis = login(instructorUsername, instructorPassword);
@@ -201,17 +203,22 @@ export default function (data) {
                             case 'programming':
                                 console.log('Programming submission counter is ' + programmingSubmissionCounter);
                                 if (programmingSubmissionCounter === 0) {
-                                    let simulation = new ParticipationSimulation(websocketConnectionTime, exercise.id, studentParticipations[0].id, someSuccessfulErrorContentJava);
+                                    let simulation = new ParticipationSimulation(
+                                        websocketConnectionTime,
+                                        exercise.id,
+                                        studentParticipations[0].id,
+                                        someSuccessfulErrorContentJava(false),
+                                    );
                                     simulateSubmission(artemis, simulation, TestResult.FAIL, '2 of 13 passed');
                                 } else if (programmingSubmissionCounter === 1) {
                                     let simulation = new ParticipationSimulation(websocketConnectionTime, exercise.id, studentParticipations[0].id, allSuccessfulContentJava);
                                     simulateSubmission(artemis, simulation, TestResult.SUCCESS);
-                                } else if (programmingSubmissionCounter === 2) {
+                                } else if (programmingSubmissionCounter >= 2) {
                                     let simulation = new ParticipationSimulation(websocketConnectionTime, exercise.id, studentParticipations[0].id, buildErrorContentJava);
                                     simulateSubmission(artemis, simulation, TestResult.BUILD_ERROR);
                                 }
                                 programmingSubmissionCounter++;
-
+                                sleep(40);
                                 break;
                         }
                         sleep(10);

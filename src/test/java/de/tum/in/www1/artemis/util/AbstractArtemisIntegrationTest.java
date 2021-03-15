@@ -3,8 +3,6 @@ package de.tum.in.www1.artemis.util;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
 
-import java.net.URL;
-
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -16,7 +14,10 @@ import de.tum.in.www1.artemis.programmingexercise.MockDelegate;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.LtiService;
+import de.tum.in.www1.artemis.service.exam.ExamAccessService;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
+import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
+import de.tum.in.www1.artemis.service.programming.ProgrammingSubmissionService;
 import de.tum.in.www1.artemis.service.scheduled.ProgrammingExerciseScheduleService;
 
 /**
@@ -82,19 +83,9 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
     }
 
     @Override
-    public void mockGetRepositorySlugFromUrl(String repositorySlug, URL url) {
-        doReturn(repositorySlug).when(urlService).getRepositorySlugFromUrl(url);
-    }
-
-    @Override
     public void mockGetProjectKeyFromRepositoryUrl(String projectKey, VcsRepositoryUrl repositoryUrl) {
         // we convert this to URL to make sure the mock is properly hit, as there could be problems with objects such as VcsRepositoryUrl and its subclasses
         doReturn(projectKey).when(urlService).getProjectKeyFromUrl(repositoryUrl.getURL());
-    }
-
-    @Override
-    public void mockGetProjectKeyFromUrl(String projectKey, URL url) {
-        doReturn(projectKey).when(urlService).getProjectKeyFromUrl(url);
     }
 
     @Override

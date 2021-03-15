@@ -163,15 +163,6 @@ public interface ContinuousIntegrationService {
     String checkIfProjectExists(String projectKey, String projectName);
 
     /**
-     * Checks if a given build plan is deactivated, or enabled
-     *
-     * @param planId The ID of the build plan
-     * @param projectKey The key of the project for which to check the build plan
-     * @return True, if the plan is enabled, false otherwise
-     */
-    boolean isBuildPlanEnabled(final String projectKey, final String planId);
-
-    /**
      * Enables the given build plan.
      *
      * @param projectKey The key of the project for which to enable the plan
@@ -296,7 +287,7 @@ public interface ContinuousIntegrationService {
      * @param language The programming language for which the docker image name is requested
      * @return The name of the image (published on hub.docker.com)
      */
-    default String getDockerImageName(ProgrammingLanguage language) {
+    static String getDockerImageName(ProgrammingLanguage language) {
         return switch (language) {
             case JAVA, KOTLIN -> "ls1tum/artemis-maven-template:java15-5";
             case PYTHON -> "ls1tum/artemis-python-docker:latest";

@@ -27,6 +27,10 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { SubmissionExerciseType } from 'app/entities/submission.model';
 import { formatTeamAsSearchResult } from 'app/exercises/shared/team/team.utils';
 import { AccountService } from 'app/core/auth/account.service';
+import { defaultLongDateTimeFormat } from 'app/shared/pipes/artemis-date.pipe';
+import { ParticipationType } from 'app/entities/participation/participation.model';
+import { addUserIndependentRepositoryUrl } from 'app/overview/participation-utils';
+import { round } from 'app/shared/util/utils';
 
 /**
  * Filter properties for a result
@@ -108,6 +112,23 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
         });
     }
 
+    getExerciseParticipationsLink(participationId: number): string[] {
+        return !!this.exercise.exerciseGroup
+            ? [
+                  '/course-management',
+                  this.course.id!.toString(),
+                  'exams',
+                  this.exercise.exerciseGroup!.exam!.id!.toString(),
+                  'exercise-groups',
+                  this.exercise.exerciseGroup!.id!.toString(),
+                  'exercises',
+                  this.exercise.id!.toString(),
+                  'participations',
+                  participationId.toString(),
+              ]
+            : ['/course-management', this.course.id!.toString(), 'exercises', this.exercise.id!.toString(), 'participations', participationId.toString(), 'submissions'];
+    }
+
     /**
      * We need to preload the pending submissions here, otherwise every updating-result would trigger a single REST call.
      * Will return immediately if the exercise is not of type PROGRAMMING.
@@ -131,6 +152,9 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
                     this.results = res.body!.map((result) => {
                         result.participation!.results = [result];
                         (result.participation! as StudentParticipation).exercise = this.exercise;
+                        if (result.participation!.type === ParticipationType.PROGRAMMING) {
+                            addUserIndependentRepositoryUrl(result.participation!);
+                        }
                         result.durationInMinutes = this.durationInMinutes(
                             result.completionDate!,
                             result.participation!.initializationDate ? result.participation!.initializationDate : this.exercise.releaseDate!,
@@ -213,7 +237,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
      * @param result Result for which to get the link for
      */
     getRepositoryLink(result: Result) {
-        return (result.participation! as ProgrammingExerciseStudentParticipation).repositoryUrl;
+        return (result.participation! as ProgrammingExerciseStudentParticipation).userIndependentRepositoryUrl;
     }
 
     /**
@@ -254,7 +278,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
             this.results.forEach((result, index) => {
                 const studentParticipation = result.participation! as StudentParticipation;
                 const { participantName, participantIdentifier } = studentParticipation;
-                const score = result.score;
+                const score = round(result.score);
 
                 if (index === 0) {
                     const nameAndUserNameColumnHeaders = studentParticipation.team ? 'Team Name,Team Short Name' : 'Name,Username';
@@ -326,6 +350,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
     }
 
     formatDate(date: Moment | Date | undefined) {
-        return date ? moment(date).format('MMM DD YYYY, HH:mm:ss') : '';
+        // TODO: we should try to use the artemis date pipe here
+        return date ? moment(date).format(defaultLongDateTimeFormat) : '';
     }
 }

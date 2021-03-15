@@ -7,11 +7,11 @@
             <div *ngIf="exercise?.type === ExerciseType.PROGRAMMING" class="d-flex align-items-center mt-2">
                 <label class="radio-inline mb-0 d-flex align-items-center">
                     <input type="radio" [ngModel]="participationCriteria.filterProp" (click)="updateParticipationFilter(FilterProp.ALL)" [value]="FilterProp.ALL" />
-                    <span class="ml-1">{{ 'artemisApp.exercise.showAll' | translate }}</span>
+                    <span class="ml-1">{{ 'artemisApp.exercise.showAll' | artemisTranslate }}</span>
                 </label>
                 <label class="radio-inline ml-2 mb-0 d-flex align-items-center">
                     <input type="radio" [ngModel]="participationCriteria.filterProp" (click)="updateParticipationFilter(FilterProp.FAILED)" [value]="FilterProp.FAILED" />
-                    <span class="ml-1">{{ 'artemisApp.exercise.showFailed' | translate }}</span>
+                    <span class="ml-1">{{ 'artemisApp.exercise.showFailed' | artemisTranslate }}</span>
                 </label>
                 <label class="radio-inline ml-2 mb-0 d-flex align-items-center">
                     <input
@@ -20,7 +20,7 @@
                         (click)="updateParticipationFilter(FilterProp.NO_SUBMISSIONS)"
                         [value]="FilterProp.NO_SUBMISSIONS"
                     />
-                    <span class="ml-1">{{ 'artemisApp.exercise.showNoSubmissions' | translate }}</span>
+                    <span class="ml-1">{{ 'artemisApp.exercise.showNoSubmissions' | artemisTranslate }}</span>
                 </label>
             </div>
         </div>
@@ -82,9 +82,9 @@
                             <fa-icon [icon]="controls.iconForSortPropField('repositoryUrl')"></fa-icon>
                         </span>
                     </ng-template>
-                    <ng-template ngx-datatable-cell-template let-value="value">
+                    <ng-template ngx-datatable-cell-template let-value="value" let-row="row">
                         <span *ngIf="value !== null">
-                            <a href="{{ value }}" target="_blank">Repository Link</a>
+                            <a href="{{ getRepositoryLink(row, value) }}" target="_blank" rel="noreferrer noopener">Repository Link</a>
                         </span>
                     </ng-template>
                 </ngx-datatable-column>
@@ -113,7 +113,7 @@
                         </span>
                     </ng-template>
                     <ng-template ngx-datatable-cell-template let-value="value">
-                        {{ 'artemisApp.InitializationState.' + value | translate }}
+                        {{ 'artemisApp.InitializationState.' + value | artemisTranslate }}
                     </ng-template>
                 </ngx-datatable-column>
 
@@ -125,7 +125,6 @@
                         </span>
                     </ng-template>
                     <ng-template ngx-datatable-cell-template let-value="value">
-                        <!-- TODO: Had to Remove Date Pipe as UI did not update when sorting. Investigate the reason -->
                         {{ formatDate(value) }}
                     </ng-template>
                 </ngx-datatable-column>

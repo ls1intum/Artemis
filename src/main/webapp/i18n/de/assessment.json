@@ -2,12 +2,11 @@
     "artemisApp": {
         "assessment": {
             "assessment": "Bewertung",
-            "testRunAssessment": "Testlauf Bewertung",
-            "generalFeedback": "Allgemeines Feedback",
-            "unreferencedFeedback": "Feedback für fehlende Elemente",
+            "testRunAssessment": "Bewertungstestlauf",
+            "additionalFeedback": "Zusätzliches Feedback",
+            "feedback": "Feedback",
             "automaticGenerated": "Automatisch erstelltes Feedback",
             "error": {
-                "moreThanOneGeneralFeedback": "Es kann nicht mehr als ein allgemeines Feedback pro Bewertung geben.",
                 "assessmentDueDateOver": "Die Einreichungsfrist der Bewertung für diese Aufgabe ist vorbei."
             },
             "assessmentLocked": "Bewertung gesperrt von: {{otherUser}}",
@@ -25,7 +24,7 @@
             "detail": {
                 "feedback": "Feedback",
                 "scoreFor": "Bewertung für",
-                "tutorComment": "Tutor Kommentar:"
+                "tutorComment": "Tutorkommentar:"
             },
             "messages": {
                 "confirmCancel": "Bist du sicher, dass du die Bewertung abbrechen möchtest? Dein aktueller Bewertungsfortschritt wird gelöscht und die Abgabe steht anderen Tutoren wieder zur Verfügung.",
@@ -37,19 +36,20 @@
                 "updateAfterComplaintFailed": "Das Aktualisieren der Bewertung ist fehlgeschlagen."
             },
             "dashboard": {
-                "warning": "Achtung: der Abgabetermin ist noch nicht abgelaufen und Studenten dürfen noch ihre Einreichungen abgeben. Bitte noch nicht mit der Korrektur anfangen",
+                "warning": "Achtung: die Einreichungsfrist ist noch nicht abgelaufen und Studenten dürfen noch ihre Einreichungen abgeben. Bitte noch nicht mit der Korrektur anfangen",
                 "empty": "Keine Abgabe für diese Aufgabe!",
                 "loading": "Laden..",
                 "columns": {
                     "submissionDate": "Einreichungsdatum",
-                    "result": "Ergebnis",
+                    "result": "Letztes Ergebnis",
                     "submissionCount": "Anzahl der Einreichungen",
                     "score": "Punkte",
                     "duration": "Dauer",
                     "assessmentType": "Bewertungsart",
                     "student": "Student",
                     "assessor": "Prüfer/in",
-                    "action": "Bewertung",
+                    "assessors": "Prüfer/innen",
+                    "action": "Bewertungsaktionen",
                     "assessmentFirst": "Korrekturrunde 1",
                     "assessmentSecond": "Korrekturrunde 2"
                 },
@@ -71,6 +71,7 @@
                     "title": "Gesperrte Bewertungen"
                 },
                 "title": "Von dir gesperrte Bewertungen",
+                "titleAll": "Alle gesperrten Bewertungen",
                 "exercise": "Aufgabe",
                 "type": "Aufgabentyp",
                 "empty": "Keine von dir gesperrten Bewertungen vorhanden!"

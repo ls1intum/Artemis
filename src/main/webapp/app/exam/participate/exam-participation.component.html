@@ -1,4 +1,4 @@
-<jhi-test-run-ribbon *ngIf="!!testRunId"></jhi-test-run-ribbon>
+<jhi-test-run-ribbon id="testRunRibbon" *ngIf="!!testRunId"></jhi-test-run-ribbon>
 <ng-container *ngIf="exam">
     <jhi-exam-participation-cover
         *ngIf="isVisible() && !isGracePeriodOver() && !this.studentExam?.submitted && !examStartConfirmed"
@@ -37,6 +37,11 @@
                                     [exercise]="exercise"
                                     [studentSubmission]="exercise.studentParticipations[0].submissions![0]"
                                 ></jhi-quiz-submission-exam>
+                                <jhi-file-upload-submission-exam
+                                    *ngSwitchCase="FILEUPLOAD"
+                                    [exercise]="exercise"
+                                    [studentSubmission]="exercise.studentParticipations[0].submissions![0]"
+                                ></jhi-file-upload-submission-exam>
                                 <jhi-text-editor-exam
                                     *ngSwitchCase="TEXT"
                                     [exercise]="exercise"
@@ -70,7 +75,7 @@
                 <div class="d-flex justify-content-center align-items-center">
                     <p class="mb-0" jhiTranslate="artemisApp.examParticipation.generateParticipationFailed"></p>
                     <button class="btn btn-sm btn-primary px-3 ml-2" (click)="createParticipationForExercise(this.activeExercise).subscribe()">
-                        {{ 'artemisApp.examParticipation.generateParticipationRetry' | translate }}
+                        {{ 'artemisApp.examParticipation.generateParticipationRetry' | artemisTranslate }}
                     </button>
                 </div>
             </ng-container>
@@ -118,6 +123,7 @@
             [studentExam]="studentExam"
             [handInEarly]="handInEarly"
             [handInPossible]="handInPossible"
+            [submitInProgress]="submitInProgress"
             (onExamEnded)="onExamEndConfirmed()"
             (onExamContinueAfterHandInEarly)="toggleHandInEarly()"
         ></jhi-exam-participation-cover>

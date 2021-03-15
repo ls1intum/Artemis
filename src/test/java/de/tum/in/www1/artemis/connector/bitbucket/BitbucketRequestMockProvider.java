@@ -36,8 +36,8 @@ import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.exception.BitbucketException;
 import de.tum.in.www1.artemis.service.UrlService;
-import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.service.connectors.bitbucket.dto.*;
+import de.tum.in.www1.artemis.service.user.PasswordService;
 
 @Component
 @Profile("bitbucket")
@@ -68,11 +68,11 @@ public class BitbucketRequestMockProvider {
 
     private MockRestServiceServer mockServerShortTimeout;
 
-    private final UserService userService;
+    private final PasswordService passwordService;
 
-    public BitbucketRequestMockProvider(UserService userService, @Qualifier("bitbucketRestTemplate") RestTemplate restTemplate,
+    public BitbucketRequestMockProvider(PasswordService passwordService, @Qualifier("bitbucketRestTemplate") RestTemplate restTemplate,
             @Qualifier("shortTimeoutBitbucketRestTemplate") RestTemplate shortTimeoutRestTemplate) {
-        this.userService = userService;
+        this.passwordService = passwordService;
         this.restTemplate = restTemplate;
         this.shortTimeoutRestTemplate = shortTimeoutRestTemplate;
     }
@@ -169,7 +169,7 @@ public class BitbucketRequestMockProvider {
                     else {
                         mockUserDoesNotExist(loginName);
                         String displayName = (user.getFirstName() + " " + user.getLastName()).trim();
-                        mockCreateUser(loginName, userService.encryptor().decrypt(user.getPassword()), user.getEmail(), displayName);
+                        mockCreateUser(loginName, passwordService.decryptPassword(user.getPassword()), user.getEmail(), displayName);
                         mockAddUserToGroups();
                     }
                 }

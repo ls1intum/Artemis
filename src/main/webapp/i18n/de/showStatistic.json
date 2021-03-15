@@ -29,8 +29,8 @@
             "yAxes": "Richtige Lösungen"
         },
         "questionStatistic": {
-            "titleRated": "Antwortenverteilung (bewertet)",
-            "titleUnrated": "Antwortenverteilung (unbewertet)",
+            "titleRated": "Antwortverteilung (bewertet)",
+            "titleUnrated": "Antwortverteilung (unbewertet)",
             "xAxes": "Antworten",
             "yAxes": "Häufigkeit",
             "correct": "richtig",
@@ -39,8 +39,8 @@
         "dragAndDropQuestionStatistic": {
             "xAxes": "DropLocation",
             "yAxes": "Häufigkeit",
-            "showSampleSolution": "Zeige Beispiel Lösung",
-            "hideSampleSolution": "Verberge Beispiel Lösung"
+            "showSampleSolution": "Zeige Beispiellösung",
+            "hideSampleSolution": "Verberge Beispiellösung"
         },
         "invalid": "(ungültig)",
         "quizhasEnded": "Quiz ist zu Ende!",

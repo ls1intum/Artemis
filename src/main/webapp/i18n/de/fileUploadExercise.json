@@ -2,27 +2,27 @@
     "artemisApp": {
         "fileUploadExercise": {
             "home": {
-                "title": "Datei Upload Aufgaben",
-                "createLabel": "Datei Upload Aufgabe erstellen",
-                "editLabel": "Datei Upload Aufgabe bearbeiten"
+                "title": "Datei-Upload-Aufgaben",
+                "createLabel": "Datei-Upload-Aufgabe erstellen",
+                "editLabel": "Datei-Upload-Aufgabe bearbeiten"
             },
-            "created": "Datei Upload Aufgabe erstellt mit ID {{ param }}",
-            "updated": "Datei Upload Aufgabe aktualisiert mit ID {{ param }}",
-            "deleted": "Datei Upload Aufgabe gelöscht mit ID {{ param }}",
+            "created": "Datei-Upload-Aufgabe erstellt mit ID {{ param }}",
+            "updated": "Datei-Upload-Aufgabe aktualisiert mit ID {{ param }}",
+            "deleted": "Datei-Upload-Aufgabe gelöscht mit ID {{ param }}",
             "delete": {
-                "question": "Soll die Datei Upload Aufgabe {{ title }} wirklich dauerhaft gelöscht werden?",
+                "question": "Soll die Datei-Upload-Aufgabe {{ title }} wirklich dauerhaft gelöscht werden?",
                 "typeNameToConfirm": "Bitte gebe den Namen der Übung zur Bestätigung ein."
             },
             "detail": {
-                "title": "Datei Upload Aufgabe"
+                "title": "Datei-Upload-Aufgabe"
             },
             "filePattern": "Dateimuster",
             "filePatternInfo": "Hier kannst du eine kommagetrennte Liste der erlaubten Dateierweiterungen ohne Punkte angeben (z.B. 'png, pdf').",
             "submitSuccessful": "Deine Antwort wurde erfolgreich abgesendet! Du kannst es ändern oder auf dein Feedback warten.",
             "submitDeadlineMissed": "Deine Antwort wurde erfolgreich abgesendet! Du kannst es ändern oder auf dein Feedback warten. Da du die Deadline verpasst hast wird deine Bewertung nicht gezählt.",
             "error": "Ein Fehler ist aufgetreten. Bitte versuche es später noch einmal.",
-            "assessedSubmission": "Deine bewertete Abgabe",
-            "supportedFileExtensions": "Unterstützte Dateierweiterungen: "
+            "assessedSubmission": "Deine Bewertung",
+            "supportedFileExtensions": "Unterstützte Dateiendung: "
         }
     }
 }

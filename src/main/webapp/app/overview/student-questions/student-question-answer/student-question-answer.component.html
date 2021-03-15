@@ -9,12 +9,12 @@
                             <fa-icon [icon]="'comment'"></fa-icon>
                         </div>
                         <div class="col">
-                            <span class="form-control-label question-subtitle">{{ 'artemisApp.courseOverview.exerciseDetails.faq.editAnswer' | translate }}</span>
+                            <span class="form-control-label question-subtitle">{{ 'artemisApp.courseOverview.exerciseDetails.faq.editAnswer' | artemisTranslate }}</span>
                         </div>
                         <div class="col-auto px-0" *ngIf="isAtLeastTutorInCourse || isAuthorOfAnswer(studentQuestionAnswer)">
                             <fa-icon
                                 class="mr-1 clickable"
-                                [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.editAnswer' | translate"
+                                [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.editAnswer' | artemisTranslate"
                                 container="body"
                                 [icon]="'pencil-alt'"
                                 (click)="toggleEditMode()"
@@ -23,8 +23,8 @@
                                 class="mr-1 clickable"
                                 (confirmEvent)="deleteAnswer()"
                                 [ngClass]="'mr-1 clickable'"
-                                [initialTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.deleteAnswer' | translate"
-                                [confirmTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.confirmDeleteAnswer' | translate"
+                                [initialTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.deleteAnswer' | artemisTranslate"
+                                [confirmTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.confirmDeleteAnswer' | artemisTranslate"
                             ></jhi-confirm-icon>
                             <fa-icon
                                 class="mr-1 clickable"
@@ -33,7 +33,7 @@
                                     (studentQuestionAnswer.tutorApproved
                                         ? 'artemisApp.courseOverview.exerciseDetails.faq.unapproveAnswer'
                                         : 'artemisApp.courseOverview.exerciseDetails.faq.approveAnswer'
-                                    ) | translate
+                                    ) | artemisTranslate
                                 "
                                 container="body"
                                 [icon]="'check'"
@@ -54,10 +54,10 @@
                 </div>
                 <div class="col-12 mt-1 d-flex justify-content-around">
                     <button class="btn btn-sm btn-outline-secondary" (click)="toggleEditMode()">
-                        {{ 'artemisApp.courseOverview.exerciseDetails.faq.cancel' | translate }}
+                        {{ 'artemisApp.courseOverview.exerciseDetails.faq.cancel' | artemisTranslate }}
                     </button>
                     <button class="btn btn-sm btn-outline-secondary" (click)="saveAnswer()">
-                        {{ 'artemisApp.courseOverview.exerciseDetails.faq.saveAnswer' | translate }}
+                        {{ 'artemisApp.courseOverview.exerciseDetails.faq.saveAnswer' | artemisTranslate }}
                     </button>
                 </div>
             </div>
@@ -69,12 +69,12 @@
                     <fa-icon [icon]="'comment'"></fa-icon>
                 </div>
                 <div class="col">
-                    <span class="question-subtitle">{{ 'artemisApp.courseOverview.exerciseDetails.faq.answerLabel' | translate }}</span>
+                    <span class="question-subtitle">{{ 'artemisApp.courseOverview.exerciseDetails.faq.answerLabel' | artemisTranslate }}</span>
                 </div>
                 <div class="col-auto px-0" *ngIf="isAtLeastTutorInCourse || isAuthorOfAnswer(studentQuestionAnswer)">
                     <fa-icon
                         class="mr-1 clickable"
-                        [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.editAnswer' | translate"
+                        [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.editAnswer' | artemisTranslate"
                         container="body"
                         [icon]="'pencil-alt'"
                         (click)="toggleEditMode()"
@@ -83,8 +83,8 @@
                         class="mr-1 clickable"
                         (confirmEvent)="deleteAnswer()"
                         [ngClass]="'mr-1 clickable'"
-                        [initialTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.deleteAnswer' | translate"
-                        [confirmTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.confirmDeleteAnswer' | translate"
+                        [initialTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.deleteAnswer' | artemisTranslate"
+                        [confirmTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.confirmDeleteAnswer' | artemisTranslate"
                     ></jhi-confirm-icon>
                     <fa-icon
                         class="mr-1 clickable"
@@ -93,7 +93,7 @@
                             (studentQuestionAnswer.tutorApproved
                                 ? 'artemisApp.courseOverview.exerciseDetails.faq.unapproveAnswer'
                                 : 'artemisApp.courseOverview.exerciseDetails.faq.approveAnswer'
-                            ) | translate
+                            ) | artemisTranslate
                         "
                         container="body"
                         [icon]="'check'"
@@ -105,7 +105,7 @@
                 <div
                     class="col mt-1 answer-text markdown-preview"
                     [innerHTML]="studentQuestionAnswer.answerText ? (studentQuestionAnswer.answerText | htmlForMarkdown: []:allowedHtmlTags:allowedHtmlAttributes) : ''"
-                    [ngbTooltip]="studentQuestionAnswer.tutorApproved ? ('artemisApp.courseOverview.exerciseDetails.faq.approvedLabel' | translate) : ''"
+                    [ngbTooltip]="studentQuestionAnswer.tutorApproved ? ('artemisApp.courseOverview.exerciseDetails.faq.approvedLabel' | artemisTranslate) : ''"
                 ></div>
             </div>
             <div class="row mb-2 mt-1">

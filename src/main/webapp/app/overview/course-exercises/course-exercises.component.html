@@ -15,7 +15,7 @@
                         <button id="flip" (click)="flipOrder()" class="btn btn-primary">
                             <fa-icon [icon]="sortingOrder === ASC ? 'sort-numeric-up' : 'sort-numeric-down'"></fa-icon>
                             <span class="d-none d-md-inline ml-1">{{
-                                'artemisApp.courseOverview.exerciseList.' + (sortingOrder === ASC ? 'oldFirst' : 'newFirst') | translate
+                                'artemisApp.courseOverview.exerciseList.' + (sortingOrder === ASC ? 'oldFirst' : 'newFirst') | artemisTranslate
                             }}</span>
                         </button>
                         <div aria-label="Button group with nested dropdown" class="btn-group" ngbDropdown role="group">
@@ -42,10 +42,10 @@
             <div class="exercise-row-container mb-3" *ngIf="nextRelevantExercise">
                 <h3 class="text-primary">
                     <span *ngIf="nextRelevantExercise.dueDate; else noDueDate">
-                        {{ 'artemisApp.courseOverview.exerciseList.currentExerciseGroupHeader' | translate: { date: nextRelevantExercise.dueDate | artemisDate } }}
+                        {{ 'artemisApp.courseOverview.exerciseList.currentExerciseGroupHeader' | artemisTranslate: { date: nextRelevantExercise.dueDate | artemisDate } }}
                     </span>
                     <ng-template #noDueDate>
-                        {{ 'artemisApp.courseOverview.exerciseList.currentExerciseGroupHeaderWithoutDueDate' | translate }}
+                        {{ 'artemisApp.courseOverview.exerciseList.currentExerciseGroupHeaderWithoutDueDate' | artemisTranslate }}
                     </ng-template>
                 </h3>
                 <jhi-course-exercise-row
@@ -68,7 +68,7 @@
                         <strong>{{ weeklyExercisesGrouped[weekKey].end | artemisDate: 'long-date' }}</strong>
                     </span>
                     <span *ngIf="!weeklyExercisesGrouped[weekKey].start || !weeklyExercisesGrouped[weekKey].end">
-                        {{ 'artemisApp.courseOverview.exerciseList.noDateAssociated' | translate }}
+                        {{ 'artemisApp.courseOverview.exerciseList.noDateAssociated' | artemisTranslate }}
                     </span>
                     <span
                         class="ml-2"
@@ -92,33 +92,33 @@
             <div *ngIf="course?.exercises.length === 0">
                 <div class="row">
                     <div class="col">
-                        {{ 'artemisApp.courseOverview.exerciseList.noExercises' | translate }}
+                        {{ 'artemisApp.courseOverview.exerciseList.noExercises' | artemisTranslate }}
                     </div>
                 </div>
             </div>
         </div>
     </div>
     <div class="col-12 col-md-4 guided-tour course-information">
-        <jhi-side-panel [panelHeader]="'artemisApp.courseOverview.exerciseList.details.courseInformation' | translate">
+        <jhi-side-panel [panelHeader]="'artemisApp.courseOverview.exerciseList.details.courseInformation' | artemisTranslate">
             <div class="row mb-1">
-                <div class="col-8">{{ 'artemisApp.courseOverview.exerciseList.details.totalExercises' | translate }}</div>
+                <div class="col-8">{{ 'artemisApp.courseOverview.exerciseList.details.totalExercises' | artemisTranslate }}</div>
                 <div class="col-4">{{ numberOfExercises }}</div>
             </div>
             <div class="row mb-1" *ngFor="let exerciseCount of exerciseCountMap | keyvalue">
-                <div class="col-8">{{ 'artemisApp.courseOverview.exerciseList.details.' + exerciseCount.key + 'Total' | translate }}</div>
+                <div class="col-8">{{ 'artemisApp.courseOverview.exerciseList.details.' + exerciseCount.key + 'Total' | artemisTranslate }}</div>
                 <div class="col-4">{{ exerciseCount.value }}</div>
             </div>
             <div class="row mb-1" *ngIf="course?.startDate">
-                <div class="col-8">{{ 'artemisApp.courseOverview.exerciseList.details.startDate' | translate }}</div>
+                <div class="col-8">{{ 'artemisApp.courseOverview.exerciseList.details.startDate' | artemisTranslate }}</div>
                 <div class="col-4">{{ course?.startDate | artemisDate }}</div>
             </div>
             <div class="row" *ngIf="course?.endDate">
-                <div class="col-8">{{ 'artemisApp.courseOverview.exerciseList.details.endDate' | translate }}</div>
+                <div class="col-8">{{ 'artemisApp.courseOverview.exerciseList.details.endDate' | artemisTranslate }}</div>
                 <div class="col-4">{{ course?.endDate | artemisDate }}</div>
             </div>
         </jhi-side-panel>
         <div class="guided-tour exercise-panel mt-3">
-            <jhi-side-panel [panelHeader]="'artemisApp.courseOverview.exerciseList.details.upcomingDeadlines' | translate">
+            <jhi-side-panel [panelHeader]="'artemisApp.courseOverview.exerciseList.details.upcomingDeadlines' | artemisTranslate">
                 <div class="row mb-1 has-exercises align-items-center" *ngFor="let exercise of upcomingExercises" [routerLink]="[exercise.id]">
                     <div class="col-5">{{ exercise.dueDate | artemisDate }}</div>
                     <div class="col-5">{{ exercise.title }}</div>
@@ -127,7 +127,7 @@
                     </div>
                 </div>
                 <div class="row mb-1 align-items-center" *ngIf="upcomingExercises.length === 0">
-                    <div class="col">{{ 'artemisApp.courseOverview.exerciseList.details.noUpcomingExercises' | translate }}</div>
+                    <div class="col">{{ 'artemisApp.courseOverview.exerciseList.details.noUpcomingExercises' | artemisTranslate }}</div>
                 </div>
             </jhi-side-panel>
         </div>

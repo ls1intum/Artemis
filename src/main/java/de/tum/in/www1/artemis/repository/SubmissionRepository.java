@@ -11,8 +11,16 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.Submission;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
+import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
+import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
+import de.tum.in.www1.artemis.domain.participation.Participation;
+import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
+import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
+import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
 
 /**
  * Spring Data repository for the Submission entity.
@@ -54,8 +62,44 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
      * @param courseId the id of the course
      * @return the number of currently locked submissions for a specific user in the given course
      */
-    @Query("SELECT COUNT (DISTINCT submission) FROM Submission submission WHERE EXISTS (select r1.assessor.id from submission.results r1 where r1.assessor.id = :#{#userId}) AND NOT EXISTS (select r2.completionDate from submission.results r2 where r2.completionDate is not null and r2.assessor is not null) AND submission.participation.exercise.course.id = :#{#courseId}")
+    @Query("""
+            SELECT COUNT (DISTINCT s) FROM Submission s left join s.results r
+                WHERE r.assessor.id = :userId
+                AND r.completionDate IS NULL
+                AND s.participation.exercise.course.id = :courseId
+            """)
     long countLockedSubmissionsByUserIdAndCourseId(@Param("userId") Long userId, @Param("courseId") Long courseId);
+
+    /**
+     * Get the number of currently locked submissions for a specific user in the given exam. These are all submissions for which the user started, but has not yet finished the
+     * assessment.
+     *
+     * @param userId   the id of the user
+     * @param examId the id of the exam
+     * @return the number of currently locked submissions for a specific user in the given course
+     */
+    @Query("""
+            SELECT COUNT (DISTINCT s) FROM Submission s left join s.results r
+                WHERE r.assessor.id = :userId
+                AND r.completionDate IS NULL
+                AND s.participation.exercise.exerciseGroup.exam.id= :examId
+            """)
+    long countLockedSubmissionsByUserIdAndExamId(@Param("userId") Long userId, @Param("examId") Long examId);
+
+    /**
+     * Get the number of currently locked submissions for a given exam. These are all submissions for which users started, but have not yet finished the
+     * assessments.
+     *
+     * @param examId the id of the exam
+     * @return the number of currently locked submissions for a specific user in the given course
+     */
+    @Query("""
+            SELECT COUNT (DISTINCT s) FROM Submission s left join s.results r
+                WHERE r.assessor.id IS NOT NULL
+                AND r.completionDate IS NULL
+                AND s.participation.exercise.exerciseGroup.exam.id= :examId
+            """)
+    long countLockedSubmissionsByExamId(@Param("examId") Long examId);
 
     /**
      * Get currently locked submissions for a specific user in the given course.
@@ -65,8 +109,32 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
      * @param courseId the id of the course
      * @return currently locked submissions for a specific user in the given course
      */
-    @Query("SELECT DISTINCT submission FROM Submission submission LEFT JOIN FETCH submission.results WHERE EXISTS (select r1.assessor.id from submission.results r1 where r1.assessor.id = :#{#userId}) AND NOT EXISTS (select r2.completionDate from submission.results r2 where r2.completionDate is not null AND r2.assessor is not null) AND submission.participation.exercise.course.id = :#{#courseId}")
+    @Query("""
+            SELECT DISTINCT submission FROM Submission submission LEFT JOIN FETCH submission.results
+                WHERE EXISTS (select r1.assessor.id from submission.results r1
+                    where r1.assessor.id = :#{#userId})
+                AND NOT EXISTS (select r2.completionDate from submission.results r2
+                    where r2.completionDate is not null
+                    AND r2.assessor is not null)
+                AND submission.participation.exercise.course.id = :#{#courseId}
+                """)
     List<Submission> getLockedSubmissionsAndResultsByUserIdAndCourseId(@Param("userId") Long userId, @Param("courseId") Long courseId);
+
+    /**
+     * Get all currently locked submissions for all users in the given exam.
+     * These are all submissions for which users started, but did not yet finish the assessment.
+     *
+     * @param examId the id of the course
+     * @return currently locked submissions for the given exam
+     */
+    @Query("""
+            SELECT DISTINCT s FROM Submission s LEFT JOIN FETCH s.results r
+                WHERE r.assessor.id IS NOT NULL
+                AND r.assessmentType <> 'AUTOMATIC'
+                AND r.completionDate IS NULL
+                AND s.participation.exercise.exerciseGroup.exam.id = :examId
+            """)
+    List<Submission> getLockedSubmissionsAndResultsByExamId(@Param("examId") Long examId);
 
     /**
      * Checks if a submission for the given participation exists.
@@ -77,18 +145,52 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
     boolean existsByParticipationId(long participationId);
 
     /**
+     * Count number of in-time submissions for course. Only submissions for Text, Modeling and File Upload exercises are included.
+     *
      * @param courseId the course id we are interested in
      * @return the number of submissions belonging to the course id, which have the submitted flag set to true and the submission date before the exercise due date, or no exercise
      *         due date at all
      */
-    @Query("SELECT COUNT (DISTINCT submission) FROM Submission submission WHERE TYPE(submission) IN (ModelingSubmission, TextSubmission, FileUploadSubmission) AND submission.participation.exercise.course.id = :#{#courseId} AND submission.submitted = TRUE AND (submission.submissionDate <= submission.participation.exercise.dueDate OR submission.participation.exercise.dueDate IS NULL)")
+    @Query("""
+            SELECT COUNT (DISTINCT submission) FROM Submission submission
+                WHERE TYPE(submission) IN (ModelingSubmission, TextSubmission, FileUploadSubmission)
+                AND submission.participation.exercise.course.id = :#{#courseId}
+                AND submission.submitted = TRUE
+                AND (submission.submissionDate <= submission.participation.exercise.dueDate
+                    OR submission.participation.exercise.dueDate IS NULL)
+            """)
     long countByCourseIdSubmittedBeforeDueDate(@Param("courseId") long courseId);
 
     /**
+     * Count the number of in-time submissions for an exam. Only submissions for Text, Modeling and File Upload exercises are included.
+     *
+     * @param examId -  the exam id we are interested in
+     * @return the number of submissions belonging to the exam id, which have the submitted flag set to true and the submission date before the exercise due date, or no exercise
+     *         due date at all
+     */
+    @Query("""
+            SELECT COUNT (DISTINCT submission) FROM Submission submission
+                WHERE TYPE(submission) IN (ModelingSubmission, TextSubmission, FileUploadSubmission)
+                AND submission.participation.exercise.exerciseGroup.exam.id = :#{#examId}
+                AND submission.submitted = TRUE
+                AND submission.participation.testRun = FALSE
+            """)
+    long countByExamIdSubmittedSubmissionsIgnoreTestRuns(@Param("examId") long examId);
+
+    /**
+     * Count number of late submissions for course. Only submissions for Text, Modeling and File Upload exercises are included.
+     *
      * @param courseId the course id we are interested in
      * @return the number of submissions belonging to the course id, which have the submitted flag set to true and the submission date after the exercise due date
      */
-    @Query("SELECT COUNT (DISTINCT submission) FROM Submission submission WHERE TYPE(submission) IN (ModelingSubmission, TextSubmission, FileUploadSubmission) AND submission.participation.exercise.course.id = :#{#courseId} AND submission.submitted = TRUE AND submission.participation.exercise.dueDate IS NOT NULL AND submission.submissionDate > submission.participation.exercise.dueDate")
+    @Query("""
+            SELECT COUNT (DISTINCT submission) FROM Submission submission
+                WHERE TYPE(submission) IN (ModelingSubmission, TextSubmission, FileUploadSubmission)
+                AND submission.participation.exercise.course.id = :#{#courseId}
+                AND submission.submitted = TRUE
+                AND submission.participation.exercise.dueDate IS NOT NULL
+                AND submission.submissionDate > submission.participation.exercise.dueDate
+            """)
     long countByCourseIdSubmittedAfterDueDate(@Param("courseId") long courseId);
 
     /**
@@ -96,7 +198,15 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
      * @return the number of submissions belonging to the exercise id, which have the submitted flag set to true and the submission date before the exercise due date, or no
      *         exercise due date at all
      */
-    @Query("SELECT COUNT (DISTINCT p) FROM StudentParticipation p WHERE p.exercise.id = :#{#exerciseId} AND EXISTS (SELECT s FROM Submission s WHERE s.participation.id = p.id AND s.submitted = TRUE AND (p.exercise.dueDate IS NULL OR s.submissionDate <= p.exercise.dueDate))")
+    @Query("""
+            SELECT COUNT (DISTINCT p) FROM StudentParticipation p
+                WHERE p.exercise.id = :#{#exerciseId}
+                AND EXISTS (SELECT s FROM Submission s
+                    WHERE s.participation.id = p.id
+                    AND s.submitted = TRUE
+                    AND (p.exercise.dueDate IS NULL
+                        OR s.submissionDate <= p.exercise.dueDate))
+            """)
     long countByExerciseIdSubmittedBeforeDueDate(@Param("exerciseId") long exerciseId);
 
     /**
@@ -106,15 +216,12 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
      *         exercise due date at all
      */
     @Query("""
-            SELECT COUNT (DISTINCT p) FROM StudentParticipation p
+            SELECT COUNT (DISTINCT p) FROM StudentParticipation p join  p.submissions s
             WHERE p.exercise.id = :#{#exerciseId}
             AND p.testRun = FALSE
-            AND EXISTS (SELECT s
-                FROM Submission s
-                WHERE s.participation.id = p.id
-                AND s.submitted = TRUE
-                AND (p.exercise.dueDate IS NULL
-                    OR s.submissionDate <= p.exercise.dueDate))
+            AND s.participation.id = p.id
+            AND s.submitted = TRUE
+            AND (p.exercise.dueDate IS NULL OR s.submissionDate <= p.exercise.dueDate)
             """)
     long countByExerciseIdSubmittedBeforeDueDateIgnoreTestRuns(@Param("exerciseId") long exerciseId);
 
@@ -123,7 +230,15 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
      * @param exerciseId the exercise id we are interested in
      * @return the number of submissions belonging to the exercise id, which have the submitted flag set to true and the submission date after the exercise due date
      */
-    @Query("SELECT COUNT (DISTINCT p) FROM StudentParticipation p WHERE p.exercise.id = :#{#exerciseId} AND EXISTS (SELECT s FROM Submission s WHERE s.participation.id = p.id AND s.submitted = TRUE AND (p.exercise.dueDate IS NOT NULL AND s.submissionDate > p.exercise.dueDate))")
+    @Query("""
+            SELECT COUNT (DISTINCT p) FROM StudentParticipation p
+                WHERE p.exercise.id = :#{#exerciseId}
+                AND EXISTS (SELECT s FROM Submission s
+                    WHERE s.participation.id = p.id
+                    AND s.submitted = TRUE
+                    AND (p.exercise.dueDate IS NOT NULL
+                    AND s.submissionDate > p.exercise.dueDate))
+            """)
     long countByExerciseIdSubmittedAfterDueDate(@Param("exerciseId") long exerciseId);
 
     /**
@@ -136,13 +251,70 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
      * @param <T> the type of the submission
      * @return the submissions belonging to the exercise id, which have been assessed by the given assessor
      */
-    @Query("SELECT DISTINCT submission FROM Submission submission left join fetch submission.results r left join fetch r.assessor a WHERE submission.participation.exercise.id = :#{#exerciseId} AND :#{#assessor} = a")
+    @Query("""
+            SELECT DISTINCT submission FROM Submission submission LEFT JOIN FETCH submission.results r LEFT JOIN FETCH r.assessor a
+            WHERE submission.participation.exercise.id = :#{#exerciseId} AND :#{#assessor} = a
+            """)
     <T extends Submission> List<T> findAllByParticipationExerciseIdAndResultAssessor(@Param("exerciseId") Long exerciseId, @Param("assessor") User assessor);
 
     /**
      * @param submissionId the submission id we are interested in
      * @return the submission with its feedback and assessor
      */
-    @Query("select distinct submission from Submission submission left join fetch submission.results r left join fetch r.feedbacks left join fetch r.assessor where submission.id = :#{#submissionId}")
-    Optional<Submission> findWithEagerResultAndFeedbackById(long submissionId);
+    @Query("""
+            SELECT DISTINCT submission FROM Submission submission LEFT JOIN FETCH submission.results r LEFT JOIN FETCH r.feedbacks LEFT JOIN FETCH r.assessor
+            WHERE submission.id = :#{#submissionId}
+            """)
+    Optional<Submission> findWithEagerResultAndFeedbackById(@Param("submissionId") long submissionId);
+
+    /**
+     * Initializes a new text, modeling or file upload submission (depending on the type of the given exercise), connects it with the given participation and stores it in the
+     * database.
+     *
+     * @param participation   the participation for which the submission should be initialized
+     * @param exercise        the corresponding exercise, should be either a text, modeling or file upload exercise, otherwise it will instantly return and not do anything
+     * @param submissionType  type for the submission to be initialized
+     * @return a new submission for the given type connected to the given participation
+     */
+    default Submission initializeSubmission(Participation participation, Exercise exercise, SubmissionType submissionType) {
+
+        Submission submission;
+        if (exercise instanceof ProgrammingExercise) {
+            submission = new ProgrammingSubmission();
+        }
+        else if (exercise instanceof ModelingExercise) {
+            submission = new ModelingSubmission();
+        }
+        else if (exercise instanceof TextExercise) {
+            submission = new TextSubmission();
+        }
+        else if (exercise instanceof FileUploadExercise) {
+            submission = new FileUploadSubmission();
+        }
+        else if (exercise instanceof QuizExercise) {
+            submission = new QuizSubmission();
+        }
+        else {
+            throw new RuntimeException("Unsupported exercise type: " + exercise);
+        }
+
+        submission.setType(submissionType);
+        submission.setParticipation(participation);
+        save(submission);
+        participation.addSubmission(submission);
+        return submission;
+    }
+
+    /**
+     * Count number of submissions for exercise.
+     * @param exerciseId the exercise id we are interested in
+     * @param examMode should be set to ignore the test run submissions
+     * @return the number of submissions belonging to the exercise id, which have the submitted flag set to true, separated into before and after the due date
+     */
+    default DueDateStat countSubmissionsForExercise(long exerciseId, boolean examMode) {
+        if (examMode) {
+            return new DueDateStat(countByExerciseIdSubmittedBeforeDueDateIgnoreTestRuns(exerciseId), 0L);
+        }
+        return new DueDateStat(countByExerciseIdSubmittedBeforeDueDate(exerciseId), countByExerciseIdSubmittedAfterDueDate(exerciseId));
+    }
 }

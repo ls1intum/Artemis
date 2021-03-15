@@ -6,7 +6,7 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { ComplaintType } from 'app/entities/complaint.model';
-import { Feedback, FeedbackType } from 'app/entities/feedback.model';
+import { Feedback } from 'app/entities/feedback.model';
 import { ModelingExercise, UMLDiagramType } from 'app/entities/modeling-exercise.model';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
@@ -25,19 +25,20 @@ import { ParticipationWebsocketService } from 'app/overview/participation-websoc
 import { ButtonType } from 'app/shared/components/button.component';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { stringifyIgnoringFields } from 'app/shared/util/utils';
-import { cloneDeep, omit } from 'lodash';
+import { omit } from 'lodash';
 import * as moment from 'moment';
 import { JhiAlertService } from 'ng-jhipster';
 import { Subject } from 'rxjs';
 import { Subscription } from 'rxjs/Subscription';
+import { addParticipationToResult, getUnreferencedFeedback } from 'app/exercises/shared/result/result-utils';
 
 @Component({
     selector: 'jhi-modeling-submission',
     templateUrl: './modeling-submission.component.html',
     styleUrls: ['./modeling-submission.component.scss'],
 })
-// TODO CZ: move assessment functionality to separate assessment result view?
 export class ModelingSubmissionComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
+    readonly addParticipationToResult = addParticipationToResult;
     @ViewChild(ModelingEditorComponent, { static: false })
     modelingEditor: ModelingEditorComponent;
     ButtonType = ButtonType;
@@ -57,7 +58,6 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     assessmentResult?: Result;
     assessmentsNames: Map<string, Map<string, string>>;
     totalScore: number;
-    generalFeedbackText?: String;
 
     umlModel: UMLModel; // input model for Apollon
     hasElements = false; // indicates if the current model has at least one element
@@ -401,6 +401,20 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     }
 
     /**
+     * Check whether or not a assessmentResult exists and if, returns the unreferenced feedback of it
+     */
+    get unreferencedFeedback(): Feedback[] | undefined {
+        return this.assessmentResult ? getUnreferencedFeedback(this.assessmentResult.feedbacks) : undefined;
+    }
+
+    /**
+     * Find "Referenced Feedback" item for Result, if it exists.
+     */
+    get referencedFeedback(): Feedback[] | undefined {
+        return this.assessmentResult?.feedbacks?.filter((feedbackElement) => feedbackElement.reference != undefined);
+    }
+
+    /**
      * Updates the model of the submission with the current Apollon model state
      * and the explanation text of submission with current explanation if explanation is defined
      */
@@ -424,24 +438,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
      * Prepare assessment data for displaying the assessment information to the student.
      */
     private prepareAssessmentData(): void {
-        this.filterGeneralFeedback();
         this.initializeAssessmentInfo();
-    }
-
-    /**
-     * Gets the text of the general feedback, if there is one, and removes it from the original feedback list that is displayed in the assessment list.
-     */
-    private filterGeneralFeedback(): void {
-        if (this.assessmentResult && this.assessmentResult.feedbacks && this.submission && this.submission.model) {
-            const feedback = this.assessmentResult.feedbacks;
-            const generalFeedbackIndex = feedback.findIndex(
-                (feedbackElement) => feedbackElement.reference == undefined && feedbackElement.type !== FeedbackType.MANUAL_UNREFERENCED,
-            );
-            if (generalFeedbackIndex >= 0) {
-                this.generalFeedbackText = feedback[generalFeedbackIndex].detailText!;
-                feedback.splice(generalFeedbackIndex, 1);
-            }
-        }
     }
 
     /**
@@ -485,7 +482,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     /**
      * Checks whether a model element in the modeling editor is selected.
      */
-    isSelected(feedback: Feedback): boolean {
+    shouldBeDisplayed(feedback: Feedback): boolean {
         if ((!this.selectedEntities || this.selectedEntities.length === 0) && (!this.selectedRelationships || this.selectedRelationships.length === 0)) {
             return true;
         }
@@ -502,7 +499,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
             return true;
         }
         const model: UMLModel = this.modelingEditor.getCurrentModel();
-        const explanationIsUpToDate = this.explanation === this.submission.explanationText;
+        const explanationIsUpToDate = this.explanation === (this.submission.explanationText ?? '');
         return !this.modelHasUnsavedChanges(model) && explanationIsUpToDate;
     }
 
@@ -560,20 +557,5 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         }
 
         return 'entity.action.submitDeadlineMissedTooltip';
-    }
-
-    /**
-     * Prepare a result that contains a participation which is needed in the rating component
-     */
-    get resultForRating() {
-        const ratingResult = cloneDeep(this.result);
-        if (ratingResult) {
-            // remove circular dependency
-            const ratingParticipation = cloneDeep(this.participation);
-            ratingParticipation.exercise!.studentParticipations = [];
-
-            ratingResult.participation = ratingParticipation;
-        }
-        return ratingResult;
     }
 }

@@ -1,11 +1,10 @@
-<jhi-test-run-ribbon id="testRunRibbon" *ngIf="isTestRun"></jhi-test-run-ribbon>
 <div>
     <h2>
         <ng-container *ngIf="!instructorView">
-            {{ 'artemisApp.exam.examSummary.yourSubmissionTo' | translate: { examTitle: studentExam.exam!.title!, studentName: studentExam.user!.name! } }}
+            {{ 'artemisApp.exam.examSummary.yourSubmissionTo' | artemisTranslate: { examTitle: studentExam.exam!.title!, studentName: studentExam.user!.name! } }}
         </ng-container>
         <ng-container *ngIf="instructorView">
-            {{ 'artemisApp.exam.examSummary.studentSubmissionTo' | translate: { examTitle: studentExam.exam!.title!, studentName: studentExam.user!.name! } }}
+            {{ 'artemisApp.exam.examSummary.studentSubmissionTo' | artemisTranslate: { examTitle: studentExam.exam!.title!, studentName: studentExam.user!.name! } }}
         </ng-container>
         <button id="exportToPDFButton" class="btn btn-primary float-right" (click)="printPDF()">
             <fa-icon [icon]="'print'"></fa-icon>
@@ -14,10 +13,15 @@
     </h2>
 </div>
 <jhi-exam-information [exam]="studentExam.exam" [studentExam]="studentExam"></jhi-exam-information>
+<div class="mb-4 text-center" *ngIf="studentExam && studentExam.exam && isBeforeStudentReviewEnd() && isAfterStudentReviewStart()">
+    <a class="btn btn-success" style="cursor: default; pointer-events: none">
+        {{ 'artemisApp.exam.studentReviewEnabled' | artemisTranslate }}
+    </a>
+</div>
 <div class="mb-4" *ngIf="studentExam && studentExam.exercises && studentExam.exam">
     <jhi-exam-points-summary [exercises]="studentExam.exercises" [exam]="studentExam.exam"></jhi-exam-points-summary>
 </div>
-<h4 class="mb-0">{{ 'artemisApp.exam.exercises' | translate }}</h4>
+<h4 class="mb-0">{{ 'artemisApp.exam.exercises' | artemisTranslate }}</h4>
 <div *ngFor="let exercise of studentExam.exercises; let i = index">
     <div class="question card">
         <div class="question-options card-header question-card-header">
@@ -40,19 +44,15 @@
         </div>
         <div class="card-body question-card-body" [ngbCollapse]="isCollapsed(exercise.id)">
             <div *ngIf="exercise.type !== QUIZ && exercise.type !== PROGRAMMING && resultsPublished">
-                <button
-                    *ngIf="exercise.studentParticipations && exercise.studentParticipations.length > 0"
-                    class="btn btn-primary float-right"
-                    [routerLink]="generateLink(exercise)"
-                >
+                <a *ngIf="exercise.studentParticipations && exercise.studentParticipations.length > 0" class="btn btn-primary float-right" [routerLink]="generateLink(exercise)">
                     <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>
                     <span jhiTranslate="artemisApp.exam.examSummary.viewResult">&nbsp;View Result</span>
-                </button>
+                </a>
             </div>
             <!-- prettier-ignore -->
-            <h5>{{ exercise.title }} [{{ exercise.maxPoints }} {{ 'artemisApp.examParticipation.points' | translate }}
+            <h5>{{ exercise.title }} [{{ exercise.maxPoints }} {{ 'artemisApp.examParticipation.points' | artemisTranslate }}
                 <span
-                    *ngIf="exercise.bonusPoints">, {{ exercise.bonusPoints }} {{ 'artemisApp.examParticipation.bonus' | translate }}</span>]
+                    *ngIf="exercise.bonusPoints">, {{ exercise.bonusPoints }} {{ 'artemisApp.examParticipation.bonus' | artemisTranslate }}</span>]
                 <jhi-included-in-score-badge
                     *ngIf="exercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY"
                     [includedInOverallScore]="exercise.includedInOverallScore"></jhi-included-in-score-badge>
@@ -123,7 +123,7 @@
                 </jhi-complaint-interactions>
             </ng-container>
             <ng-template #noSubmission>
-                {{ 'artemisApp.exam.examSummary.noSubmissionFound' | translate }}
+                {{ 'artemisApp.exam.examSummary.noSubmissionFound' | artemisTranslate }}
             </ng-template>
         </div>
     </div>

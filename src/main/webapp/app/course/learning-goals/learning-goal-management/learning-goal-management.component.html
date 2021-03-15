@@ -2,7 +2,7 @@
 
 <div *ngIf="isLoading" class="d-flex justify-content-center">
     <div class="spinner-border" role="status">
-        <span class="sr-only">{{ 'loading' | translate }}</span>
+        <span class="sr-only">{{ 'loading' | artemisTranslate }}</span>
     </div>
 </div>
 
@@ -10,12 +10,12 @@
     <div class="container">
         <div class="row">
             <div class="col-6 offset-3 my-auto">
-                <h3 class="text-center">{{ 'artemisApp.learningGoal.manageLearningGoals.title' | translate }}</h3>
+                <h3 class="text-center">{{ 'artemisApp.learningGoal.manageLearningGoals.title' | artemisTranslate }}</h3>
             </div>
             <div class="col-3 align-self-start">
-                <button class="btn btn-primary btn-circle grow" [routerLink]="['/course-management', courseId, 'goal-management', 'create']">
+                <a class="btn btn-primary btn-circle grow center-link" [routerLink]="['/course-management', courseId, 'goal-management', 'create']">
                     <fa-icon [icon]="'plus'"></fa-icon>
-                </button>
+                </a>
             </div>
         </div>
     </div>
@@ -38,14 +38,14 @@
             >
                 <fa-icon [icon]="'times'"></fa-icon>
             </button>
-            <button
+            <a
                 *jhiHasAnyAuthority="['ROLE_INSTRUCTOR', 'ROLE_ADMIN']"
                 class="btn btn-sm btn-primary"
                 [routerLink]="['/course-management', courseId, 'goal-management', learningGoal.id, 'edit']"
             >
                 <fa-icon [icon]="'pencil-alt'"></fa-icon>
-                <span class="d-none d-md-inline">{{ 'entity.action.edit' | translate }}</span>
-            </button>
+                <span class="d-none d-md-inline">{{ 'entity.action.edit' | artemisTranslate }}</span>
+            </a>
         </jhi-learning-goal-card>
     </div>
 </div>

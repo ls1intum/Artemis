@@ -1,0 +1,74 @@
+<table class="table table-striped table-bordered" style="background-color: white">
+    <thead>
+        <tr style="background-color: white">
+            <th style="max-width: 30px">
+                <span>#</span>
+            </th>
+            <th style="max-width: 100px">
+                <span>
+                    {{ 'artemisApp.examManagement.checklist.textitems.exerciseStart' | artemisTranslate }}
+                </span>
+            </th>
+            <th style="max-width: 30px">
+                <span>#</span>
+            </th>
+            <th>
+                <span>
+                    {{ 'artemisApp.examManagement.checklist.textitems.exerciseTableSingular' | artemisTranslate }}
+                </span>
+            </th>
+            <th>
+                <span>
+                    {{ 'artemisApp.examManagement.checklist.textitems.points' | artemisTranslate }}
+                </span>
+            </th>
+            <th>
+                <span>
+                    {{ 'artemisApp.examManagement.checklist.textitems.numberParticipants' | artemisTranslate }}
+                </span>
+            </th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr *ngFor="let column of exerciseGroupVariantColumns; let i = index">
+            <td style="max-width: 30px">
+                <div *ngIf="column.indexExerciseGroup">{{ column.indexExerciseGroup }}</div>
+            </td>
+            <td style="max-width: 100px; font-weight: bold">
+                <div *ngIf="column.exerciseGroupTitle">
+                    {{ column.exerciseGroupTitle }}
+                    <fa-icon
+                        *ngIf="!column.noExercises && !column.exerciseGroupPointsEqual"
+                        ngbTooltip="Exercises within this group do not have the same number of maximum points!"
+                        [icon]="'exclamation-triangle'"
+                        style="color: rgba(255, 193, 7, 0.6)"
+                        class="warning"
+                    ></fa-icon>
+                    <fa-icon
+                        *ngIf="column.noExercises"
+                        ngbTooltip="This exercise group does not contain any exercises!"
+                        [icon]="'exclamation-triangle'"
+                        style="color: rgba(255, 193, 7, 0.6)"
+                        class="warning"
+                    ></fa-icon>
+                </div>
+            </td>
+            <td style="max-width: 30px">
+                <span *ngIf="!column.noExercises">{{ column.indexExercise }}</span>
+                <span *ngIf="column.noExercises">-</span>
+            </td>
+            <td>
+                <span *ngIf="column.exerciseTitle">{{ column.exerciseTitle }}</span>
+                <span *ngIf="!column.exerciseTitle">-</span>
+            </td>
+            <td>
+                <span *ngIf="column.exerciseMaxPoints">{{ column.exerciseMaxPoints }}</span>
+                <span *ngIf="!column.exerciseMaxPoints">-</span>
+            </td>
+            <td>
+                <span *ngIf="column.exerciseNumberOfParticipations">{{ column.exerciseNumberOfParticipations }}</span>
+                <span *ngIf="!column.exerciseNumberOfParticipations">-</span>
+            </td>
+        </tr>
+    </tbody>
+</table>

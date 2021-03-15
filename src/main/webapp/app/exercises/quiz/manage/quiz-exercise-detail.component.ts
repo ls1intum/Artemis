@@ -35,6 +35,8 @@ import { DragAndDropMapping } from 'app/entities/quiz/drag-and-drop-mapping.mode
 import { QuizConfirmImportInvalidQuestionsModalComponent } from 'app/exercises/quiz/manage/quiz-confirm-import-invalid-questions-modal.component';
 import * as Sentry from '@sentry/browser';
 import { cloneDeep } from 'lodash';
+import { Exam } from 'app/entities/exam.model';
+import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 
 // False-positives:
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -92,6 +94,12 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
     /** Constants for 'Add existing questions' and 'Import file' features **/
     showExistingQuestions = false;
     showExistingQuestionsFromCourse = true;
+    showExistingQuestionsFromExam = false;
+    showExistingQuestionsFromFile = false;
+
+    exams: Exam[] = [];
+    selectedExamId?: number;
+
     courses: Course[] = [];
     selectedCourseId?: number;
     quizExercises: QuizExercise[];
@@ -131,6 +139,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
     constructor(
         private route: ActivatedRoute,
         private courseService: CourseManagementService,
+        private examRepository: ExamManagementService,
         private quizExerciseService: QuizExerciseService,
         private dragAndDropQuestionUtil: DragAndDropQuestionUtil,
         private shortAnswerQuestionUtil: ShortAnswerQuestionUtil,
@@ -151,8 +160,6 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
     ngOnInit(): void {
         /** Initialize local constants **/
         this.showExistingQuestions = false;
-        this.showExistingQuestionsFromCourse = true;
-        this.courses = [];
         this.quizExercises = [];
         this.allExistingQuestions = [];
         this.existingQuestions = [];
@@ -377,7 +384,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
             '[-option 1] is\n' +
             '[-option 2] input\n' +
             '[-option 1,2] correctInBothFields';
-        shortAnswerQuestion.scoringType = ScoringType.ALL_OR_NOTHING; // explicit default value for short answer questions
+        shortAnswerQuestion.scoringType = ScoringType.PROPORTIONAL_WITHOUT_PENALTY; // explicit default value for short answer questions
         shortAnswerQuestion.randomizeOrder = true;
         shortAnswerQuestion.points = 1;
         shortAnswerQuestion.spots = [];
@@ -404,14 +411,20 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
             this.quizExercise = this.entity;
         }
 
-        // If courses are not populated, then populate list of courses,
+        // If courses are not populated, then populate list of courses
         if (this.courses.length === 0) {
-            this.courseRepository.getAll().subscribe((res: HttpResponse<Course[]>) => {
+            this.courseRepository.getAllCoursesWithQuizExercises().subscribe((res: HttpResponse<Course[]>) => {
                 this.courses = res.body!;
             });
         }
+        // If exams are not populated, then populate list of exams
+        if (this.exams.length === 0) {
+            this.examRepository.findAllExamsAccessibleToUser(this.courseId!).subscribe((res: HttpResponse<Exam[]>) => {
+                this.exams = res.body!;
+            });
+        }
         this.showExistingQuestions = !this.showExistingQuestions;
-        this.setExistingQuestionSourceToCourse(true);
+        this.setExistingQuestionSourceToCourse();
     }
 
     /**
@@ -432,23 +445,46 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
         this.quizExerciseService.findForCourse(selectedCourse.id!).subscribe(
             (quizExercisesResponse: HttpResponse<QuizExercise[]>) => {
                 if (quizExercisesResponse.body) {
-                    const quizExercises = quizExercisesResponse.body!;
-                    for (const quizExercise of quizExercises) {
-                        this.quizExerciseService.find(quizExercise.id!).subscribe((response: HttpResponse<QuizExercise>) => {
-                            const quizExerciseResponse = response.body!;
-                            if (quizExerciseResponse.quizQuestions && quizExerciseResponse.quizQuestions.length > 0) {
-                                for (const question of quizExerciseResponse.quizQuestions) {
-                                    question.exercise = quizExercise;
-                                    this.allExistingQuestions.push(question);
-                                }
-                            }
-                            this.applyFilter();
-                        });
-                    }
+                    this.applyQuestionsAndFilter(quizExercisesResponse.body!);
                 }
             },
             (res: HttpErrorResponse) => this.onError(res),
         );
+    }
+
+    onExamSelect(): void {
+        this.allExistingQuestions = this.existingQuestions = [];
+        if (!this.selectedExamId) {
+            return;
+        }
+
+        /** Search the selected exam by id in all available exams **/
+        const selectedExam = this.exams.find((exam) => exam.id === Number(this.selectedExamId))!;
+
+        // For the given exam, get list of all quiz exercises. And for all quiz exercises, get list of all questions in a quiz exercise
+        this.quizExerciseService.findForExam(selectedExam.id!).subscribe(
+            (quizExercisesResponse: HttpResponse<QuizExercise[]>) => {
+                if (quizExercisesResponse.body) {
+                    this.applyQuestionsAndFilter(quizExercisesResponse.body!);
+                }
+            },
+            (res: HttpErrorResponse) => this.onError(res),
+        );
+    }
+
+    private applyQuestionsAndFilter(quizExercises: QuizExercise[]) {
+        for (const quizExercise of quizExercises) {
+            this.quizExerciseService.find(quizExercise.id!).subscribe((response: HttpResponse<QuizExercise>) => {
+                const quizExerciseResponse = response.body!;
+                if (quizExerciseResponse.quizQuestions && quizExerciseResponse.quizQuestions.length > 0) {
+                    for (const question of quizExerciseResponse.quizQuestions) {
+                        question.exercise = quizExercise;
+                        this.allExistingQuestions.push(question);
+                    }
+                }
+                this.applyFilter();
+            });
+        }
     }
 
     private onError(error: HttpErrorResponse) {
@@ -507,7 +543,10 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
         this.verifyAndImportQuestions(questions);
         this.showExistingQuestions = !this.showExistingQuestions;
         this.showExistingQuestionsFromCourse = true;
+        this.showExistingQuestionsFromExam = false;
+        this.showExistingQuestionsFromFile = false;
         this.selectedCourseId = undefined;
+        this.selectedExamId = undefined;
         this.allExistingQuestions = this.existingQuestions = [];
         this.cacheValidation();
     }
@@ -627,10 +666,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
             this.quizExercise.quizQuestions != undefined &&
             !!this.quizExercise.quizQuestions.length;
         const areAllQuestionsValid = this.quizExercise.quizQuestions?.every(function (question) {
-            if (question.points == undefined) {
-                return false;
-            }
-            if (question.points && question.points < 0) {
+            if (question.points == undefined || question.points < 1) {
                 return false;
             }
             if (question.type === QuizQuestionType.MULTIPLE_CHOICE) {
@@ -656,7 +692,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
                     question.title !== '' &&
                     shortAnswerQuestion.correctMappings &&
                     shortAnswerQuestion.correctMappings.length > 0 &&
-                    this.shortAnswerQuestionUtil.validateNoMisleadingCorrectShortAnswerMapping(shortAnswerQuestion) &&
+                    this.shortAnswerQuestionUtil.validateNoMisleadingShortAnswerMapping(shortAnswerQuestion) &&
                     this.shortAnswerQuestionUtil.everySpotHasASolution(shortAnswerQuestion.correctMappings, shortAnswerQuestion.spots) &&
                     this.shortAnswerQuestionUtil.everyMappedSolutionHasASpot(shortAnswerQuestion.correctMappings) &&
                     shortAnswerQuestion.solutions?.filter((solution) => solution.text!.trim() === '').length === 0 &&
@@ -811,14 +847,6 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
                 translateValues: {},
             });
         }
-        const maxPointsReachableInQuiz = this.quizExercise.quizQuestions?.map((quizQuestion) => quizQuestion.points ?? 0).reduce((a, b) => a + b, 0);
-
-        if (!maxPointsReachableInQuiz) {
-            invalidReasons.push({
-                translateKey: 'artemisApp.quizExercise.invalidReasons.quizZeroPoints',
-                translateValues: {},
-            });
-        }
 
         /** We only verify the releaseDate if the checkbox is activated **/
         if (this.quizExercise.isPlannedToStart) {
@@ -845,7 +873,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
                     translateValues: { index: index + 1 },
                 });
             }
-            if (question.points == undefined || question.points < 0) {
+            if (question.points == undefined || question.points < 1) {
                 invalidReasons.push({
                     translateKey: 'artemisApp.quizExercise.invalidReasons.questionScore',
                     translateValues: { index: index + 1 },
@@ -901,7 +929,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
                         translateValues: { index: index + 1 },
                     });
                 }
-                if (!this.shortAnswerQuestionUtil.validateNoMisleadingCorrectShortAnswerMapping(shortAnswerQuestion)) {
+                if (!this.shortAnswerQuestionUtil.validateNoMisleadingShortAnswerMapping(shortAnswerQuestion)) {
                     invalidReasons.push({
                         translateKey: 'artemisApp.quizExercise.invalidReasons.misleadingCorrectMapping',
                         translateValues: { index: index + 1 },
@@ -1259,11 +1287,38 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
     }
 
     /**
-     * Update adding existing questions from a file or course
+     * Update adding existing questions from a file or course or exam
      */
-    setExistingQuestionSourceToCourse(setToCourse: boolean): void {
-        this.showExistingQuestionsFromCourse = setToCourse;
+    setExistingQuestionSourceToCourse(): void {
+        this.showExistingQuestionsFromCourse = true;
+        this.showExistingQuestionsFromExam = false;
+        this.showExistingQuestionsFromFile = false;
+        this.updateSelectionAndView();
+    }
+
+    /**
+     * Update adding existing questions from an exam
+     */
+    setExistingQuestionSourceToExam(): void {
+        this.showExistingQuestionsFromCourse = false;
+        this.showExistingQuestionsFromExam = true;
+        this.showExistingQuestionsFromFile = false;
+        this.updateSelectionAndView();
+    }
+
+    /**
+     * Update adding existing questions from a file
+     */
+    setExistingQuestionSourceToFile(): void {
+        this.showExistingQuestionsFromCourse = false;
+        this.showExistingQuestionsFromExam = false;
+        this.showExistingQuestionsFromFile = true;
+        this.updateSelectionAndView();
+    }
+
+    private updateSelectionAndView() {
         this.selectedCourseId = undefined;
+        this.selectedExamId = undefined;
         this.allExistingQuestions = this.existingQuestions = [];
         this.importFile = undefined;
         this.importFileName = '';

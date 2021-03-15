@@ -21,6 +21,7 @@ import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { ModelingAssessmentService } from 'app/exercises/modeling/assess/modeling-assessment.service';
 import { SortService } from 'app/shared/service/sort.service';
+import { routes } from 'app/exercises/modeling/assess/modeling-assessment-editor/modeling-assessment-editor.route';
 
 const route = { params: of({ courseId: 3, exerciseId: 22 }) };
 const course = { id: 1 };
@@ -60,7 +61,7 @@ describe('ModelingAssessmentDashboardComponent', () => {
 
     beforeEach(async(() => {
         TestBed.configureTestingModule({
-            imports: [RouterTestingModule, TranslateModule.forRoot(), ArtemisTestModule],
+            imports: [RouterTestingModule.withRoutes([routes[1]]), TranslateModule.forRoot(), ArtemisTestModule],
             declarations: [ModelingAssessmentDashboardComponent],
             providers: [
                 JhiLanguageHelper,
@@ -116,7 +117,7 @@ describe('ModelingAssessmentDashboardComponent', () => {
         expect(courseFindSpy).toHaveBeenCalled();
         expect(exerciseFindSpy).toHaveBeenCalled();
         expect(component.course).toEqual(course);
-        expect(component.modelingExercise).toEqual(modelingExercise as ModelingExercise);
+        expect(component.exercise).toEqual(modelingExercise as ModelingExercise);
     });
 
     it('should get Submissions', () => {
@@ -164,7 +165,7 @@ describe('ModelingAssessmentDashboardComponent', () => {
             // setup
             const applyFilter = spyOn(component, 'applyFilter');
             const getOptimalSubmissionsSpy = spyOn(modelingAssessmentService, 'getOptimalSubmissions').and.returnValue(of([1]));
-            component.modelingExercise = modelingExercise;
+            component.exercise = modelingExercise;
             component.nextOptimalSubmissionIds = [];
 
             // call
@@ -181,8 +182,8 @@ describe('ModelingAssessmentDashboardComponent', () => {
             const applyFilter = spyOn(component, 'applyFilter');
             const getOptimalSubmissionsSpy = spyOn(modelingAssessmentService, 'getOptimalSubmissions').and.returnValue(of([1]));
 
-            component.modelingExercise = modelingExercise;
-            component.modelingExercise.assessmentType = AssessmentType.AUTOMATIC;
+            component.exercise = modelingExercise;
+            component.exercise.assessmentType = AssessmentType.AUTOMATIC;
             component.nextOptimalSubmissionIds = [];
 
             // call
@@ -213,8 +214,8 @@ describe('ModelingAssessmentDashboardComponent', () => {
     });
     describe('reset optimality', () => {
         it('should reset optimality', fakeAsync(() => {
-            component.modelingExercise.assessmentType = AssessmentType.SEMI_AUTOMATIC;
-            component.modelingExercise = modelingExercise;
+            component.exercise.assessmentType = AssessmentType.SEMI_AUTOMATIC;
+            component.exercise = modelingExercise;
             const serviceResetOptSpy = spyOn(modelingAssessmentService, 'resetOptimality').and.returnValue(of(1));
             const filterSubmissionsSpy = spyOn(component, 'filterSubmissions');
 
@@ -229,7 +230,7 @@ describe('ModelingAssessmentDashboardComponent', () => {
 
         it('should not reset optimality', () => {
             // setup
-            component.modelingExercise.assessmentType = AssessmentType.AUTOMATIC;
+            component.exercise.assessmentType = AssessmentType.AUTOMATIC;
             const filterSubmissionsSpy = spyOn(component, 'filterSubmissions');
 
             // call
@@ -267,10 +268,12 @@ describe('ModelingAssessmentDashboardComponent', () => {
             // setup
             component.nextOptimalSubmissionIds = [];
             component.busy = true;
+            component.courseId = 1;
+            component.exerciseId = 2;
             const routerNavigateSpy = spyOn(router, 'navigate');
             const serviceResetOptSpy = spyOn(modelingAssessmentService, 'getOptimalSubmissions').and.returnValue(of([1]));
             const navigateToNextSpy = spyOn<any>(component, 'navigateToNextRandomOptimalSubmission').and.callThrough(); // <any> bc of private method
-            component.modelingExercise = modelingExercise;
+            component.exercise = modelingExercise;
 
             // call
             component.assessNextOptimal();
@@ -286,6 +289,8 @@ describe('ModelingAssessmentDashboardComponent', () => {
             // setup
             component.nextOptimalSubmissionIds = [1];
             component.busy = false;
+            component.courseId = 1;
+            component.exerciseId = 2;
             const routerNavigateSpy = spyOn(router, 'navigate');
             const navigateToNextSpy = spyOn<any>(component, 'navigateToNextRandomOptimalSubmission').and.callThrough(); // <any> bc of private method
 
@@ -343,28 +348,38 @@ describe('ModelingAssessmentDashboardComponent', () => {
     describe('shouldGetAssessmentLink', () => {
         it('should get assessment link for exam exercise', () => {
             const submissionId = 7;
-            component.modelingExercise = modelingExercise;
+            component.exercise = modelingExercise;
+            component.exerciseId = modelingExercise.id!;
+            component.courseId = modelingExercise.course!.id!;
             expect(component.getAssessmentLink(submissionId)).toEqual([
                 '/course-management',
-                component.modelingExercise.course?.id,
+                component.exercise.course!.id!.toString(),
                 'modeling-exercises',
-                component.modelingExercise.id,
+                component.exercise.id!.toString(),
                 'submissions',
-                submissionId,
+                submissionId.toString(),
                 'assessment',
             ]);
         });
 
         it('should get assessment link for normal exercise', () => {
             const submissionId = 8;
-            component.modelingExercise = modelingExerciseOfExam;
+            component.exercise = modelingExerciseOfExam;
+            component.exerciseId = modelingExerciseOfExam.id!;
+            component.courseId = modelingExerciseOfExam.exerciseGroup!.exam!.course!.id!;
+            component.examId = modelingExerciseOfExam.exerciseGroup!.exam!.id!;
+            component.exerciseGroupId = modelingExerciseOfExam.exerciseGroup!.id!;
             expect(component.getAssessmentLink(submissionId)).toEqual([
                 '/course-management',
-                component.modelingExercise.exerciseGroup?.exam?.course?.id,
+                component.exercise.exerciseGroup!.exam!.course!.id!.toString(),
+                'exams',
+                component.exercise.exerciseGroup!.exam!.id!.toString(),
+                'exercise-groups',
+                component.exercise.exerciseGroup!.id!.toString(),
                 'modeling-exercises',
-                component.modelingExercise.id,
+                component.exercise.id!.toString(),
                 'submissions',
-                submissionId,
+                submissionId.toString(),
                 'assessment',
             ]);
         });

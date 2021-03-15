@@ -7,7 +7,7 @@
             "title": "Beschwerde",
             "info": "Die Limitierung der Beschwerdenanzahl bezieht sich auf offene und abgelehnte Beschwerden. Wenn deine Beschwerde angenommen wird, wird sie nicht auf deine Gesamtzahl der Beschwerden angerechnet.",
             "description": "Du kannst insgesamt bis zu {{ maxComplaintNumber }} Beschwerden in diesem Kurs einreichen.",
-            "descriptionExam": "Du kannst beliebig viele Beschwerden für die Klausur einreichen.",
+            "descriptionExam": "Du kannst zu jeder manuell korrigierten Aufgabe der Klausur eine Beschwerde einreichen.",
             "descriptionExtended": "Jeder Student darf insgesamt bis zu {{ maxComplaintNumber }} Beschwerden in diesem Kurs einreichen. Du hast noch <strong style=color:red;>{{ allowedComplaints }}</strong> Beschwerden übrig.",
             "descriptionTeam": "Ihr könnt insgesamt bis zu {{ maxComplaintNumber }} Beschwerden als Team in diesem Kurs einreichen.",
             "descriptionTeamExtended": "Jedes Team darf insgesamt bis zu {{ maxComplaintNumber }} Beschwerden in diesem Kurs einreichen. Ihr habt noch <strong style=color:red;>{{ allowedComplaints }}</strong> Beschwerden übrig.",
@@ -29,9 +29,9 @@
             "complaintAlreadyHandled": "Die Beschwerde wurde bereits bearbeitet",
             "listOfComplaints": {
                 "exercise": "Übung",
-                "submissionId": "Einreichung ID",
-                "reviewerLogin": "Reviewer Login",
-                "reviewerName": "Rewviewer Name",
+                "submissionId": "Einreichungs-ID",
+                "reviewerLogin": "Reviewerlogin",
+                "reviewerName": "Reviewername",
                 "studentLogin": "Login",
                 "studentName": "Name",
                 "actions": "Aktionen",
@@ -41,7 +41,7 @@
                 "accepted": "Angenommen",
                 "rejected": "Abgelehnt",
                 "showAddressedComplaints": "Adressierte Beschwerden anzeigen",
-                "noComplaintsToShow": "Es gibt im Moment keine Beschwerden zu zeigen."
+                "noComplaintsToShow": "Es gibt im Moment keine anzeigbaren Beschwerden."
             },
             "review": "Beschwerde überprüfen"
         },

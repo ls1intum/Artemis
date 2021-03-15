@@ -6,6 +6,7 @@ import java.util.*;
 
 import javax.annotation.Nullable;
 import javax.persistence.*;
+import javax.validation.constraints.NotNull;
 
 import org.hibernate.Hibernate;
 import org.hibernate.annotations.Cache;
@@ -247,30 +248,9 @@ public class QuizExercise extends Exercise {
         return quizQuestions;
     }
 
-    /**
-     * 1. add the new QuizQuestion object to the QuizQuestion-List
-     * 2. add backward relation in the quizQuestion-object
-     *
-     * @param quizQuestion the new QuizQuestion object which will be added
-     * @return this QuizExercise-object
-     */
-    public QuizExercise addQuestions(QuizQuestion quizQuestion) {
+    public void addQuestions(QuizQuestion quizQuestion) {
         this.quizQuestions.add(quizQuestion);
         quizQuestion.setExercise(this);
-        return this;
-    }
-
-    /**
-     * 1. remove the given QuizQuestion object in the QuizQuestion-List
-     * 2. remove backward relation in the quizQuestion-object
-     *
-     * @param quizQuestion the QuizQuestion object which should be removed
-     * @return this QuizExercise-object
-     */
-    public QuizExercise removeQuestions(QuizQuestion quizQuestion) {
-        this.quizQuestions.remove(quizQuestion);
-        quizQuestion.setExercise(null);
-        return this;
     }
 
     public void setQuizQuestions(List<QuizQuestion> quizQuestions) {
@@ -336,11 +316,11 @@ public class QuizExercise extends Exercise {
      * @param quizSubmission the submission that should be evaluated
      * @return the resulting score
      */
-    public Long getScoreForSubmission(QuizSubmission quizSubmission) {
+    public Double getScoreForSubmission(QuizSubmission quizSubmission) {
         double score = getScoreInPointsForSubmission(quizSubmission);
         double maxPoints = getOverallQuizPoints();
         // map the resulting score to the 0 to 100 scale
-        return Math.round(100.0 * score / maxPoints);
+        return 100.0 * score / maxPoints;
     }
 
     /**
@@ -675,6 +655,25 @@ public class QuizExercise extends Exercise {
             if (pointCounter.getId() != null) {
                 pointCounter.setQuizPointStatistic(getQuizPointStatistic());
             }
+        }
+    }
+
+    /**
+     * get the view for students in the given quiz
+     *
+     * @return the view depending on the current state of the quiz
+     */
+    @JsonIgnore
+    @NotNull
+    public Class<?> viewForStudentsInQuizExercise() {
+        if (!isStarted()) {
+            return QuizView.Before.class;
+        }
+        else if (isSubmissionAllowed()) {
+            return QuizView.During.class;
+        }
+        else {
+            return QuizView.After.class;
         }
     }
 

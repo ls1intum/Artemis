@@ -20,9 +20,11 @@ import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
+import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.service.exam.ExamService;
 
 public class SubmissionServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -31,6 +33,9 @@ public class SubmissionServiceTest extends AbstractSpringIntegrationBambooBitbuc
 
     @Autowired
     ExamService examService;
+
+    @Autowired
+    ExamRepository examRepository;
 
     @Autowired
     ResultRepository resultRepository;
@@ -94,7 +99,7 @@ public class SubmissionServiceTest extends AbstractSpringIntegrationBambooBitbuc
         exam = database.addExam(course);
 
         exam.setNumberOfCorrectionRoundsInExam(2);
-        exam = examService.save(exam);
+        exam = examRepository.save(exam);
 
         exam = database.addExerciseGroupsAndExercisesToExam(exam, true);
 
@@ -141,7 +146,7 @@ public class SubmissionServiceTest extends AbstractSpringIntegrationBambooBitbuc
 
         exam.setNumberOfCorrectionRoundsInExam(2);
 
-        examService.save(exam);
+        examRepository.save(exam);
 
         submission1.submitted(true);
         submission2.submitted(true);
@@ -232,7 +237,7 @@ public class SubmissionServiceTest extends AbstractSpringIntegrationBambooBitbuc
         // setup
         queryTestingBasics(examTextExercise);
 
-        database.addResultToSubmission(submission1, AssessmentType.MANUAL, tutor1, 10L, true);
+        database.addResultToSubmission(submission1, AssessmentType.MANUAL, tutor1, 10D, true);
 
         // checks
         getQueryResults(examTextExercise);
@@ -302,8 +307,8 @@ public class SubmissionServiceTest extends AbstractSpringIntegrationBambooBitbuc
         // setup
         queryTestingBasics(this.examTextExercise);
 
-        database.addResultToSubmission(submission1, AssessmentType.MANUAL, tutor1, 10L, true);
-        database.addResultToSubmission(submission1, AssessmentType.MANUAL, tutor2, 20L, true);
+        database.addResultToSubmission(submission1, AssessmentType.MANUAL, tutor1, 10D, true);
+        database.addResultToSubmission(submission1, AssessmentType.MANUAL, tutor2, 20D, true);
 
         // checks
         getQueryResults(examTextExercise);
@@ -333,7 +338,7 @@ public class SubmissionServiceTest extends AbstractSpringIntegrationBambooBitbuc
         // setup
         queryTestingBasics(this.examTextExercise);
 
-        database.addResultToSubmission(submission1, AssessmentType.MANUAL, tutor1, 10L, true);
+        database.addResultToSubmission(submission1, AssessmentType.MANUAL, tutor1, 10D, true);
 
         Result resultForSecondCorrectionWithLock;
 
@@ -392,7 +397,7 @@ public class SubmissionServiceTest extends AbstractSpringIntegrationBambooBitbuc
         // setup
         queryTestingBasics(this.examModelingExercise);
 
-        database.addResultToSubmission(submission1, AssessmentType.MANUAL, tutor1, 10L, true);
+        database.addResultToSubmission(submission1, AssessmentType.MANUAL, tutor1, 10D, true);
 
         // checks
         getQueryResults(examModelingExercise);
@@ -462,8 +467,8 @@ public class SubmissionServiceTest extends AbstractSpringIntegrationBambooBitbuc
         // setup
         queryTestingBasics(this.examModelingExercise);
 
-        database.addResultToSubmission(submission1, AssessmentType.MANUAL, tutor1, 10L, true);
-        database.addResultToSubmission(submission1, AssessmentType.MANUAL, tutor2, 20L, true);
+        database.addResultToSubmission(submission1, AssessmentType.MANUAL, tutor1, 10D, true);
+        database.addResultToSubmission(submission1, AssessmentType.MANUAL, tutor2, 20D, true);
 
         // checks
         getQueryResults(examModelingExercise);
@@ -493,7 +498,7 @@ public class SubmissionServiceTest extends AbstractSpringIntegrationBambooBitbuc
         // setup
         queryTestingBasics(this.examModelingExercise);
 
-        database.addResultToSubmission(submission1, AssessmentType.MANUAL, tutor1, 10L, true);
+        database.addResultToSubmission(submission1, AssessmentType.MANUAL, tutor1, 10D, true);
 
         Result resultForSecondCorrectionWithLock = submissionService.saveNewEmptyResult(submission1);
         resultForSecondCorrectionWithLock.setAssessor(tutor2);

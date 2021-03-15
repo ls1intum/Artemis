@@ -33,6 +33,7 @@ import { MultipleChoiceSubmittedAnswer } from 'app/entities/quiz/multiple-choice
 import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.model';
 import { ArtemisQuizService } from 'app/shared/quiz/quiz.service';
 import * as Sentry from '@sentry/browser';
+import { round } from 'app/shared/util/utils';
 
 @Component({
     selector: 'jhi-quiz',
@@ -47,6 +48,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
     readonly SHORT_ANSWER = QuizQuestionType.SHORT_ANSWER;
     readonly ButtonSize = ButtonSize;
     readonly ButtonType = ButtonType;
+    readonly round = round;
 
     @ViewChildren(MultipleChoiceQuestionComponent)
     mcQuestionComponents: QueryList<MultipleChoiceQuestionComponent>;
@@ -823,7 +825,11 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
      * @return {boolean} true when student interacted with every question, false when not with every questions has an interaction
      */
     areAllQuestionsAnswered(): boolean {
-        this.quizExercise.quizQuestions!.forEach((question) => {
+        if (!this.quizExercise.quizQuestions) {
+            return true;
+        }
+
+        for (const question of this.quizExercise.quizQuestions) {
             if (question.type === QuizQuestionType.MULTIPLE_CHOICE) {
                 const options = this.selectedAnswerOptions.get(question.id!);
                 if (options && options.length === 0) {
@@ -840,7 +846,8 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
                     return false;
                 }
             }
-        });
+        }
+
         return true;
     }
 

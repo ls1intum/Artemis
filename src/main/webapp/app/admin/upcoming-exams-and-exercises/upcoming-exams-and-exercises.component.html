@@ -8,24 +8,26 @@
         <table class="table table-striped">
             <thead>
                 <tr>
-                    <th class="d-none d-md-table-cell">
-                        <span>{{ 'artemisApp.upcomingExamsAndExercises.exercise' | translate }}</span>
+                    <th class="d-md-table-cell" style="width: 300px">
+                        <span>{{ 'artemisApp.upcomingExamsAndExercises.exercise' | artemisTranslate }}</span>
                     </th>
-                    <th class="d-none d-md-table-cell">
-                        <span>{{ 'artemisApp.upcomingExamsAndExercises.course' | translate }}</span>
+                    <th class="d-md-table-cell" style="width: 300px">
+                        <span>{{ 'artemisApp.upcomingExamsAndExercises.course' | artemisTranslate }}</span>
                     </th>
-                    <th class="d-none d-md-table-cell">
-                        <span>{{ 'artemisApp.upcomingExamsAndExercises.releaseDate' | translate }}</span>
+                    <th class="d-md-table-cell" style="width: 180px">
+                        <span>{{ 'artemisApp.upcomingExamsAndExercises.releaseDate' | artemisTranslate }}</span>
                     </th>
-                    <th class="d-none d-md-table-cell">
-                        <span>{{ 'artemisApp.upcomingExamsAndExercises.dueDate' | translate }}</span>
+                    <th class="d-md-table-cell" style="width: 180px">
+                        <span>{{ 'artemisApp.upcomingExamsAndExercises.dueDate' | artemisTranslate }}</span>
                     </th>
                 </tr>
             </thead>
             <tbody>
                 <tr *ngFor="let exercise of upcomingExercises; trackBy: trackByExercise">
                     <td>
-                        <span class="bold">{{ exercise.title }}</span>
+                        <span class="bold">
+                            <a [routerLink]="['/course-management', exercise.course?.id, 'exercises', exercise.id]">{{ exercise.title }}</a>
+                        </span>
                     </td>
                     <td *ngIf="exercise.course as course; else noExerciseCourse">
                         <span class="bold">
@@ -52,24 +54,29 @@
             <table class="table table-striped">
                 <thead>
                     <tr>
-                        <th class="d-none d-md-table-cell">
-                            <span>{{ 'artemisApp.upcomingExamsAndExercises.exam' | translate }}</span>
+                        <th class="d-md-table-cell" style="width: 300px">
+                            <span>{{ 'artemisApp.upcomingExamsAndExercises.exam' | artemisTranslate }}</span>
                         </th>
-                        <th class="d-none d-md-table-cell">
-                            <span>{{ 'artemisApp.upcomingExamsAndExercises.course' | translate }}</span>
+                        <th class="d-md-table-cell" style="width: 300px">
+                            <span>{{ 'artemisApp.upcomingExamsAndExercises.course' | artemisTranslate }}</span>
                         </th>
-                        <th class="d-none d-md-table-cell">
-                            <span>{{ 'artemisApp.upcomingExamsAndExercises.startDate' | translate }}</span>
+                        <th class="d-md-table-cell" style="width: 180px">
+                            <span>{{ 'artemisApp.examManagement.visibleDate' | artemisTranslate }}</span>
                         </th>
-                        <th class="d-none d-md-table-cell">
-                            <span>{{ 'artemisApp.upcomingExamsAndExercises.endDate' | translate }}</span>
+                        <th class="d-md-table-cell" style="width: 180px">
+                            <span>{{ 'artemisApp.examManagement.startDate' | artemisTranslate }}</span>
+                        </th>
+                        <th class="d-md-table-cell" style="width: 180px">
+                            <span>{{ 'artemisApp.examManagement.endDate' | artemisTranslate }}</span>
                         </th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr *ngFor="let exam of upcomingExams; trackBy: trackByExam">
                         <td>
-                            <span class="bold">{{ exam.title }}</span>
+                            <span class="bold">
+                                <a [routerLink]="['/course-management', exam.course?.id, 'exams', exam.id]">{{ exam.title }}</a>
+                            </span>
                         </td>
                         <td *ngIf="exam.course as course; else noExamCourse">
                             <span class="bold">
@@ -77,6 +84,8 @@
                             </span>
                         </td>
                         <ng-template #noExamCourse><td>-</td></ng-template>
+                        <td *ngIf="exam.visibleDate as examVisibleDate; else noExamVisibleDate">{{ examVisibleDate.format(DATE_FORMAT) }}</td>
+                        <ng-template #noExamVisibleDate><td>-</td></ng-template>
                         <td *ngIf="exam.startDate as examStartDate; else noExamStartDate">{{ examStartDate.format(DATE_FORMAT) }}</td>
                         <ng-template #noExamStartDate><td>-</td></ng-template>
                         <td *ngIf="exam.endDate as examEndDate; else noExamEndDate">{{ examEndDate.format(DATE_FORMAT) }}</td>
