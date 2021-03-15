@@ -32,6 +32,7 @@ export class StudentExamDetailComponent implements OnInit {
     bonusTotalPoints = 0;
     busy = false;
     openingAssessmentEditorForNewSubmission = false;
+    readonly ExerciseType = ExerciseType;
 
     constructor(
         private route: ActivatedRoute,
@@ -225,23 +226,23 @@ export class StudentExamDetailComponent implements OnInit {
      * @param exercise
      * @param submission
      */
-    getAssessmentLink(exercise: Exercise, submission: Submission) {
+    getAssessmentLink(exercise: Exercise, submission?: Submission) {
+        let route;
         if (!exercise || !exercise.type || !submission) {
             return;
         }
 
-        this.openingAssessmentEditorForNewSubmission = true;
-        const submissionUrlParameter = submission.id;
-        let route;
         if (exercise.type === ExerciseType.PROGRAMMING) {
-            // todo programming assessments navigates only to the submission page
-            // const participationURLParameter: number | 'new' = submission === 'new' ? 'new' : submission.participation?.id!;
-            // route = `/course-management/${this.courseId}/${this.exercise.type}-exercises/${this.exercise.id}/code-editor/${participationURLParameter}/assessment`;
+            route = `/course-management/${this.courseId}/${exercise.type}-exercises/${exercise.id}/assessment`;
+            console.log('programming route:', route);
+            return ''; // todo get rid of
         } else {
+            this.openingAssessmentEditorForNewSubmission = true;
+            const submissionUrlParameter = submission.id;
             route = `/course-management/${this.courseId}/${exercise.type}-exercises/${exercise.id}/submissions/${submissionUrlParameter}/assessment`;
+            console.log(exercise.id, submission.id);
+            this.openingAssessmentEditorForNewSubmission = false;
         }
-        console.log(exercise.id, submission.id);
-        this.openingAssessmentEditorForNewSubmission = false;
         return route;
     }
 }

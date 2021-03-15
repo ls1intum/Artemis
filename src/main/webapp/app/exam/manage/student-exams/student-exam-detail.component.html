@@ -190,37 +190,45 @@
                             >
                         </td>
                         <td>
-                            <div *ngIf="course?.isAtLeastInstructor && exercise?.studentParticipations && (exercise?.studentParticipations)![0].results?.length > 0">
-                                <!-- in case of existing result-->
-                                <a
-                                    *ngIf="exercise?.studentParticipations && exercise?.studentParticipations.length > 0"
-                                    [class.disabled]="busy"
-                                    [queryParams]="{ testRun: this.isTestRun, resultId: (exercise?.studentParticipations)![0].results[0].id }"
-                                    [routerLink]="getAssessmentLink(exercise, (exercise?.studentParticipations)![0].submissions[0])"
-                                    class="btn btn-primary btn-sm mb-1"
-                                >
-                                    <fa-icon [fixedWidth]="true" [icon]="'folder-open'"></fa-icon>
-                                    <span jhiTranslate="artemisApp.studentExamDetail.openLatestAssessment"></span>
-                                </a>
-                            </div>
-
                             <div
                                 *ngIf="
                                     course?.isAtLeastInstructor &&
-                                    (exercise?.studentParticipations)![0].submissions?.length > 0 &&
-                                    !((exercise?.studentParticipations)![0].results?.length > 0)
+                                    exercise?.studentParticipations &&
+                                    exercise.type != ExerciseType.QUIZ &&
+                                    exercise.type != ExerciseType.PROGRAMMING
                                 "
                             >
-                                <!-- in case of new result-->
-                                <a
-                                    [class.disabled]="busy"
-                                    [queryParams]="{ testRun: this.isTestRun, resultId: undefined }"
-                                    [routerLink]="getAssessmentLink(exercise, (exercise?.studentParticipations)![0]?.submissions[0])"
-                                    class="btn btn-primary btn-sm mb-1"
-                                >
-                                    <fa-icon [fixedWidth]="true" [icon]="'folder-open'"></fa-icon>
-                                    {{ 'artemisApp.assessment.dashboard.actions.assess' | translate }}
-                                </a>
+                                <div *ngIf="(exercise?.studentParticipations)![0].results?.length > 0">
+                                    <!-- in case of existing result-->
+                                    <a
+                                        [class.disabled]="busy"
+                                        [queryParams]="{ testRun: this.isTestRun, resultId: (exercise?.studentParticipations)![0].results[0].id }"
+                                        [routerLink]="getAssessmentLink(exercise, (exercise?.studentParticipations)![0].submissions[0])"
+                                        class="btn btn-primary btn-sm mb-1"
+                                    >
+                                        <fa-icon [fixedWidth]="true" [icon]="'folder-open'"></fa-icon>
+                                        <span jhiTranslate="artemisApp.studentExamDetail.openLatestAssessment"></span>
+                                    </a>
+                                </div>
+
+                                <div *ngIf="(exercise?.studentParticipations)![0].submissions?.length > 0 && !((exercise?.studentParticipations)![0].results?.length > 0)">
+                                    <!-- in case of new result-->
+                                    <a
+                                        [class.disabled]="busy"
+                                        [queryParams]="{ testRun: this.isTestRun, resultId: undefined }"
+                                        [routerLink]="getAssessmentLink(exercise, (exercise?.studentParticipations)![0]?.submissions[0])"
+                                        class="btn btn-primary btn-sm mb-1"
+                                    >
+                                        <fa-icon [fixedWidth]="true" [icon]="'folder-open'"></fa-icon>
+                                        {{ 'artemisApp.assessment.dashboard.actions.assess' | translate }}
+                                    </a>
+                                </div>
+                                <div *ngIf="exercise.type === ExerciseType.PROGRAMMING">
+                                    <a [class.disabled]="busy" [routerLink]="getAssessmentLink(exercise)" class="btn btn-primary btn-sm mb-1">
+                                        <fa-icon [fixedWidth]="true" [icon]="'folder-open'"></fa-icon>
+                                        {{ 'artemisApp.assessment.dashboard.actions.assess' | translate }}
+                                    </a>
+                                </div>
                             </div>
                         </td>
                     </tr>
