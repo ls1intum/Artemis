@@ -57,7 +57,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     hasAutomaticFeedback = false;
     hasAssessmentDueDatePassed: boolean;
     correctionRound = 0;
-    resultId = 0;
+    resultId?: number;
 
     private cancelConfirmationText: string;
 
@@ -88,18 +88,19 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         this.accountService.identity().then((user) => {
             this.userId = user!.id!;
         });
+        this.resultId = undefined;
         this.isAtLeastInstructor = this.accountService.hasAnyAuthorityDirect([Authority.ADMIN, Authority.INSTRUCTOR]);
 
         this.route.queryParamMap.subscribe((queryParams) => {
             this.hideBackButton = queryParams.get('hideBackButton') === 'true';
             this.isTestRun = queryParams.get('testRun') === 'true';
             this.correctionRound = Number(queryParams.get('correction-round'));
-            this.resultId = Number(queryParams.get('resultId'));
         });
         this.route.paramMap.subscribe((params) => {
             this.courseId = Number(params.get('courseId'));
             const exerciseId = Number(params.get('exerciseId'));
             const submissionId = params.get('submissionId');
+            this.resultId = Number(params.get('resultId'));
             if (submissionId === 'new') {
                 this.loadRandomSubmission(exerciseId);
             } else {
@@ -150,7 +151,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         this.submission = submission;
         const studentParticipation = this.submission.participation as StudentParticipation;
         this.modelingExercise = studentParticipation.exercise as ModelingExercise;
-        if (this.resultId) {
+        if (this.resultId && this.resultId !== 0) {
             this.result = getSubmissionResultById(submission, this.resultId);
             this.correctionRound = submission.results?.findIndex((result) => result.id === this.resultId)!;
         } else {

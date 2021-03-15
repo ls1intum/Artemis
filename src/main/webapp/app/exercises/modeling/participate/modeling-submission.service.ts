@@ -90,8 +90,8 @@ export class ModelingSubmissionService {
     /**
      * Get a submission with given Id
      * @param {number} submissionId - Id of the submission
-     * @param {correctionRound}
-
+     * @param correctionRound
+     * @param resultId
      */
     getSubmission(submissionId: number, correctionRound = 0, resultId?: number): Observable<ModelingSubmission> {
         const url = `api/modeling-submissions/${submissionId}`;

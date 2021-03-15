@@ -223,7 +223,7 @@ export class StudentExamDetailComponent implements OnInit {
      * @param exercise
      * @param submission
      */
-    getAssessmentLink(exercise: Exercise, submission?: Submission) {
+    getAssessmentLink(exercise: Exercise, submission?: Submission, resultId?: number) {
         let route = '';
         if (!exercise || !exercise.type) {
             return;
@@ -233,8 +233,11 @@ export class StudentExamDetailComponent implements OnInit {
             route = `/course-management/${this.courseId}/${exercise.type}-exercises/${exercise.id}/assessment`;
         } else if (submission) {
             this.openingAssessmentEditorForNewSubmission = true;
-            const submissionUrlParameter = submission.id;
-            route = `/course-management/${this.courseId}/${exercise.type}-exercises/${exercise.id}/submissions/${submissionUrlParameter}/assessment`;
+            if (resultId) {
+                route = `/course-management/${this.courseId}/${exercise.type}-exercises/${exercise.id}/submissions/${submission.id}/assessments/${resultId}`;
+            } else {
+                route = `/course-management/${this.courseId}/${exercise.type}-exercises/${exercise.id}/submissions/${submission.id}/assessment`;
+            }
             this.openingAssessmentEditorForNewSubmission = false;
         }
         return route;

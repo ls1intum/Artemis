@@ -207,8 +207,10 @@
                                     <!-- in case of existing result-->
                                     <a
                                         [class.disabled]="busy"
-                                        [queryParams]="{ testRun: this.isTestRun, resultId: (exercise?.studentParticipations)![0].results[0].id }"
-                                        [routerLink]="getAssessmentLink(exercise, (exercise?.studentParticipations)![0].submissions[0])"
+                                        [queryParams]="{ testRun: this.isTestRun }"
+                                        [routerLink]="
+                                            getAssessmentLink(exercise, (exercise?.studentParticipations)![0].submissions[0], (exercise?.studentParticipations)![0].results[0].id)
+                                        "
                                         class="btn btn-primary btn-sm mb-1"
                                     >
                                         <fa-icon [fixedWidth]="true" [icon]="'folder-open'"></fa-icon>
@@ -220,7 +222,7 @@
                                     <!-- in case of new result-->
                                     <a
                                         [class.disabled]="busy"
-                                        [queryParams]="{ testRun: this.isTestRun, resultId: undefined }"
+                                        [queryParams]="{ testRun: this.isTestRun }"
                                         [routerLink]="getAssessmentLink(exercise, (exercise?.studentParticipations)![0]?.submissions[0])"
                                         class="btn btn-primary btn-sm mb-1"
                                     >
