@@ -158,13 +158,14 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
         var studentParticipation = (StudentParticipation) fileUploadSubmission.getParticipation();
         var fileUploadExercise = (FileUploadExercise) studentParticipation.getExercise();
         var gradingCriteria = gradingCriterionService.findByExerciseIdWithEagerGradingCriteria(fileUploadExercise.getId());
-        fileUploadExercise.setGradingCriteria(gradingCriteria);
-        User user = userRepository.getUserWithGroupsAndAuthorities();
 
+        User user = userRepository.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(fileUploadExercise, user)
                 || (resultId > 0 && !authCheckService.isAtLeastInstructorForExercise(fileUploadExercise, user))) {
             return forbidden();
         }
+
+        fileUploadExercise.setGradingCriteria(gradingCriteria);
 
         if (resultId != 0 && authCheckService.isAtLeastInstructorForExercise(fileUploadExercise, user)) {
             Result result = fileUploadSubmission.getManualResults().stream().filter(result1 -> result1.getId().equals(resultId)).findFirst().get();

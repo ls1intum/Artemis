@@ -59,7 +59,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
     noNewSubmissions: boolean;
     hasAssessmentDueDatePassed: boolean;
     correctionRound: number;
-    resultId: number;
+    resultId?: number;
 
     /*
      * Non-resetted properties:
@@ -109,7 +109,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         this.unusedTextBlockRefs = [];
         this.complaint = undefined;
         this.totalScore = 0;
-        this.resultId = 0;
+        this.resultId = undefined;
 
         this.isLoading = true;
         this.saveBusy = false;
@@ -130,10 +130,12 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         this.route.queryParamMap.subscribe((queryParams) => {
             this.isTestRun = queryParams.get('testRun') === 'true';
             this.correctionRound = Number(queryParams.get('correction-round'));
-            this.resultId = Number(queryParams.get('resultId'));
         });
 
-        this.activatedRoute.paramMap.subscribe((paramMap) => (this.exerciseId = Number(paramMap.get('exerciseId'))));
+        this.activatedRoute.paramMap.subscribe((paramMap) => {
+            this.exerciseId = Number(paramMap.get('exerciseId'));
+            this.resultId = Number(paramMap.get('resultId'));
+        });
         this.activatedRoute.data.subscribe(({ studentParticipation }) => this.setPropertiesFromServerResponse(studentParticipation));
     }
 
