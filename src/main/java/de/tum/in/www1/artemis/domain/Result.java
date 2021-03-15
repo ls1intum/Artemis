@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.domain;
 
 import static de.tum.in.www1.artemis.service.util.RoundingUtil.round;
+import static de.tum.in.www1.artemis.service.util.RoundingUtil.roundToFourDecimalPlaces;
 
 import java.text.DecimalFormat;
 import java.time.ZonedDateTime;
@@ -218,14 +219,15 @@ public class Result extends DomainObject {
     }
 
     /**
-     * 1. set score 2. set successful = true, if score >= 100 or false if not
+     * 1. set score and round it to 4 decimal places
+     * 2. set successful = true, if score >= 100 or false if not
      *
      * @param score new score
      */
     public void setScore(Double score) {
         if (score != null) {
-            this.score = score;
-            this.successful = score >= 100.0;
+            this.score = roundToFourDecimalPlaces(score);
+            this.successful = this.score >= 100.0;
         }
     }
 

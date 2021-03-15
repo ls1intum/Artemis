@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.service.programming;
 
 import static de.tum.in.www1.artemis.config.Constants.TEST_CASES_DUPLICATE_NOTIFICATION;
-import static de.tum.in.www1.artemis.service.util.RoundingUtil.round;
 
 import java.time.ZonedDateTime;
 import java.util.*;
@@ -482,7 +481,7 @@ public class ProgrammingExerciseGradingService {
             }
 
             // The score is calculated as a percentage of the maximum points
-            double score = round(successfulTestPoints / programmingExercise.getMaxPoints() * 100.0);
+            double score = successfulTestPoints / programmingExercise.getMaxPoints() * 100.0;
 
             result.setScore(score);
         }
