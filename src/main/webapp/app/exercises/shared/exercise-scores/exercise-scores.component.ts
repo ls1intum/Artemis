@@ -112,6 +112,23 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
         });
     }
 
+    getExerciseParticipationsLink(participationId: number): string[] {
+        return !!this.exercise.exerciseGroup
+            ? [
+                  '/course-management',
+                  this.course.id!.toString(),
+                  'exams',
+                  this.exercise.exerciseGroup!.exam!.id!.toString(),
+                  'exercise-groups',
+                  this.exercise.exerciseGroup!.id!.toString(),
+                  'exercises',
+                  this.exercise.id!.toString(),
+                  'participations',
+                  participationId.toString(),
+              ]
+            : ['/course-management', this.course.id!.toString(), 'exercises', this.exercise.id!.toString(), 'participations', participationId.toString(), 'submissions'];
+    }
+
     /**
      * We need to preload the pending submissions here, otherwise every updating-result would trigger a single REST call.
      * Will return immediately if the exercise is not of type PROGRAMMING.
