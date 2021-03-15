@@ -1,12 +1,13 @@
 package de.tum.in.www1.artemis.domain.plagiarism;
 
-import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import javax.persistence.CascadeType;
 import javax.persistence.CollectionTable;
 import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
@@ -50,8 +51,8 @@ public class PlagiarismComparison<E extends PlagiarismSubmissionElement> extends
      * List of matches between both submissions involved in this comparison.
      */
     @CollectionTable(name = "plagiarism_comparison_matches", joinColumns = @JoinColumn(name = "plagiarism_comparison_id"))
-    @ElementCollection
-    protected List<PlagiarismMatch> matches;
+    @ElementCollection(fetch = FetchType.EAGER)
+    protected Set<PlagiarismMatch> matches;
 
     /**
      * Similarity of the compared submissions (between 0 and 1).
@@ -74,7 +75,7 @@ public class PlagiarismComparison<E extends PlagiarismSubmissionElement> extends
 
         comparison.setSubmissionA(PlagiarismSubmission.fromJPlagSubmission(jplagComparison.subA));
         comparison.setSubmissionB(PlagiarismSubmission.fromJPlagSubmission(jplagComparison.subB));
-        comparison.setMatches(jplagComparison.matches.stream().map(PlagiarismMatch::fromJPlagMatch).collect(Collectors.toList()));
+        comparison.setMatches(jplagComparison.matches.stream().map(PlagiarismMatch::fromJPlagMatch).collect(Collectors.toSet()));
         comparison.setSimilarity(jplagComparison.percent());
         comparison.setStatus(PlagiarismStatus.NONE);
 
@@ -105,11 +106,11 @@ public class PlagiarismComparison<E extends PlagiarismSubmissionElement> extends
         this.plagiarismResult = plagiarismResult;
     }
 
-    public List<PlagiarismMatch> getMatches() {
+    public Set<PlagiarismMatch> getMatches() {
         return matches;
     }
 
-    public void setMatches(List<PlagiarismMatch> matches) {
+    public void setMatches(Set<PlagiarismMatch> matches) {
         this.matches = matches;
     }
 
