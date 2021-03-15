@@ -160,6 +160,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         final String slug = "test201904bprogrammingexercise6-exercise-testuser";
         final String hash = "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d";
         bitbucketRequestMockProvider.mockFetchCommitInfo(projectKey, slug, hash);
+        bitbucketRequestMockProvider.mockGetDefaultBranch("master", exercise.getProjectKey());
         ProgrammingSubmission submission = postSubmission(participationId, HttpStatus.OK, requestAsArtemisUser);
 
         assertThat(submission.getParticipation().getId()).isEqualTo(participationId);
@@ -187,6 +188,8 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
     void shouldHandleNewBuildResultCreatedByCommitWithSpecificTests() throws Exception {
         database.addCourseWithOneProgrammingExerciseAndSpecificTestCases();
         ProgrammingExercise exercise = programmingExerciseRepository.findAllWithEagerParticipationsAndSubmissions().get(1);
+        bitbucketRequestMockProvider.mockGetDefaultBranch("master", exercise.getProjectKey());
+
         var participation = database.addStudentParticipationForProgrammingExercise(exercise, "student3");
         ProgrammingSubmission submission = postSubmission(participation.getId(), HttpStatus.OK);
         final long submissionId = submission.getId();
@@ -226,6 +229,8 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
     @ParameterizedTest
     @MethodSource("participationTypeAndAdditionalCommitProvider")
     void shouldHandleNewBuildResultCreatedByCommit(IntegrationTestParticipationType participationType, boolean additionalCommit) throws Exception {
+        bitbucketRequestMockProvider.mockGetDefaultBranch("master", exercise.getProjectKey());
+
         Long participationId = getParticipationIdByType(participationType, 0);
         ProgrammingSubmission submission = postSubmission(participationId, HttpStatus.OK);
         final long submissionId = submission.getId();
@@ -265,6 +270,8 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
     @ParameterizedTest
     @EnumSource(IntegrationTestParticipationType.class)
     void shouldNotLinkTwoResultsToTheSameSubmission(IntegrationTestParticipationType participationType) throws Exception {
+        bitbucketRequestMockProvider.mockGetDefaultBranch("master", exercise.getProjectKey());
+
         Long participationId = getParticipationIdByType(participationType, 0);
         // Create 1 submission.
         var submission = postSubmission(participationId, HttpStatus.OK);
@@ -303,6 +310,8 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
     @ParameterizedTest
     @EnumSource(IntegrationTestParticipationType.class)
     void shouldNotCreateTwoSubmissionsForTwoIdenticalCommits(IntegrationTestParticipationType participationType) throws Exception {
+        bitbucketRequestMockProvider.mockGetDefaultBranch("master", exercise.getProjectKey());
+
         Long participationId = getParticipationIdByType(participationType, 0);
         // Post the same submission twice.
         ProgrammingSubmission submission = postSubmission(participationId, HttpStatus.OK);

@@ -34,6 +34,7 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
+import de.tum.in.www1.artemis.exception.BitbucketException;
 import de.tum.in.www1.artemis.service.UrlService;
 import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.service.connectors.bitbucket.dto.*;
@@ -300,6 +301,15 @@ public class BitbucketRequestMockProvider {
                 .build().toUri();
 
         mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.DELETE)).andRespond(withStatus(HttpStatus.OK));
+    }
+
+    public void mockGetDefaultBranch(String defaultBranch, String projectKey) throws BitbucketException, IOException {
+        var mockResponse = new BitbucketDefaultBranchDTO("refs/heads/" + defaultBranch);
+        mockResponse.setDisplayId(defaultBranch);
+        var getDefaultBranchPattern = bitbucketServerUrl + "/rest/api/latest/projects/" + projectKey + "/repos/.*/branches/default";
+
+        mockServer.expect(ExpectedCount.manyTimes(), requestTo(matchesPattern(getDefaultBranchPattern))).andExpect(method(HttpMethod.GET))
+                .andRespond(withStatus(HttpStatus.OK).body(mapper.writeValueAsString(mockResponse)).contentType(MediaType.APPLICATION_JSON));
     }
 
     public void mockSetRepositoryPermissionsToReadOnly(String repositorySlug, String projectKey, Set<User> users) throws URISyntaxException {
