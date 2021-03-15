@@ -260,9 +260,6 @@ public class TextAssessmentResource extends AssessmentResource {
     public ResponseEntity<Participation> retrieveParticipationForSubmission(@PathVariable Long submissionId,
             @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound, @RequestParam(value = "resultId", defaultValue = "0") long resultId) {
 
-        // todo das hier rüber lösen über einen param der nur für instructor
-        // geht? oder nicht oder auch für tutoren oder nur für instructors mit neuem Call-> tutors sollten eig keinen spezifischen result id zugriff haben oder ?
-
         log.debug("REST request to get data for tutors text assessment submission: {}", submissionId);
 
         final Optional<TextSubmission> optionalTextSubmission = textSubmissionRepository.findByIdWithEagerParticipationExerciseResultAssessor(submissionId);
@@ -278,6 +275,10 @@ public class TextAssessmentResource extends AssessmentResource {
         final User user = userRepository.getUserWithGroupsAndAuthorities();
         checkAuthorization(exercise, user);
         final boolean isAtLeastInstructorForExercise = authCheckService.isAtLeastInstructorForExercise(exercise, user);
+
+        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user) || (resultId > 0 && !authCheckService.isAtLeastInstructorForExercise(exercise, user))) {
+            return forbidden();
+        }
 
         Result result;
         if (resultId != 0 && isAtLeastInstructorForExercise) {

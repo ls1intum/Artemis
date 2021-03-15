@@ -420,7 +420,7 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
     public void getModelingSubmissionWithResultId() throws Exception {
         User user = database.getUserByLogin("tutor1");
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(validModel, true);
-        submission = database.addModelingSubmissionWithTwoFinishedResultsWithAssessor(classExercise, submission, "student1", "tutor1");
+        submission = (ModelingSubmission) database.addSubmissionWithTwoFinishedResultsWithAssessor(classExercise, submission, "student1", "tutor1");
         Result storedResult = submission.getResultForCorrectionRound(1);
         var params = new LinkedMultiValueMap<String, String>();
         params.add("resultId", String.valueOf(storedResult.getId()));
@@ -436,7 +436,7 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
     public void getModelingSubmissionWithResultIdAsTutor_badRequest() throws Exception {
         User user = database.getUserByLogin("tutor1");
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(validModel, true);
-        submission = database.addModelingSubmissionWithFinishedResultAndAssessor(classExercise, submission, "student1", "tutor1");
+        submission = (ModelingSubmission) database.addModelingSubmissionWithFinishedResultAndAssessor(classExercise, submission, "student1", "tutor1");
         Result storedResult = submission.getResultForCorrectionRound(0);
         var params = new LinkedMultiValueMap<String, String>();
         params.add("resultId", String.valueOf(storedResult.getId()));
@@ -568,7 +568,7 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
     @WithMockUser(value = "student1")
     public void getModelSubmissionForModelingEditor() throws Exception {
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(validModel, true);
-        submission = database.addModelingSubmissionWithFinishedResultAndAssessor(classExercise, submission, "student1", "tutor1");
+        submission = (ModelingSubmission) database.addModelingSubmissionWithFinishedResultAndAssessor(classExercise, submission, "student1", "tutor1");
 
         ModelingSubmission receivedSubmission = request.get("/api/participations/" + submission.getParticipation().getId() + "/latest-modeling-submission", HttpStatus.OK,
                 ModelingSubmission.class);

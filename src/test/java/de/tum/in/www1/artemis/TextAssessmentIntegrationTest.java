@@ -139,6 +139,33 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
     }
 
     @Test
+    @WithMockUser(value = "instructor1", roles = "TA")
+    public void getTextSubmissionWithResultId() throws Exception {
+        User user = database.getUserByLogin("tutor1");
+        TextSubmission submission = ModelFactory.generateTextSubmission("asdf", null, true);
+        submission = (TextSubmission) database.addSubmissionWithTwoFinishedResultsWithAssessor(textExercise, submission, "student1", "tutor1");
+        Result storedResult = submission.getResultForCorrectionRound(1);
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("resultId", String.valueOf(storedResult.getId()));
+        StudentParticipation participation = request.get("/api/text-assessments/submission/" + submission.getId(), HttpStatus.OK, StudentParticipation.class, params);
+
+        assertThat(participation.getResults()).isNotNull();
+        assertThat(participation.getResults().contains(storedResult)).isEqualTo(true);
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void getTextSubmissionWithResultIdAsTutor_badRequest() throws Exception {
+        User user = database.getUserByLogin("tutor1");
+        TextSubmission submission = ModelFactory.generateTextSubmission("asdf", null, true);
+        submission = (TextSubmission) database.addSubmissionWithTwoFinishedResultsWithAssessor(textExercise, submission, "student1", "tutor1");
+        Result storedResult = submission.getResultForCorrectionRound(0);
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("resultId", String.valueOf(storedResult.getId()));
+        request.get("/api/text-assessments/submission/" + submission.getId(), HttpStatus.FORBIDDEN, TextSubmission.class, params);
+    }
+
+    @Test
     @WithMockUser(value = "tutor2", roles = "TA")
     public void updateTextAssessmentAfterComplaint_studentHidden() throws Exception {
         TextSubmission textSubmission = ModelFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
