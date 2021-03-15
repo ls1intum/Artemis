@@ -231,9 +231,10 @@ public class ComplaintResource {
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
             return forbidden();
         }
+        var isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(exercise);
 
         List<Complaint> responseComplaints = complaintRepository.getAllComplaintsByExerciseIdAndComplaintType(exerciseId, ComplaintType.COMPLAINT);
-        responseComplaints = buildComplaintsListForAssessor(responseComplaints, principal, false, false);
+        responseComplaints = buildComplaintsListForAssessor(responseComplaints, principal, false, false, isAtLeastInstructor);
         return ResponseEntity.ok(responseComplaints);
     }
 
@@ -254,7 +255,7 @@ public class ComplaintResource {
             return forbidden();
         }
         List<Complaint> responseComplaints = complaintRepository.getAllComplaintsByExerciseIdAndComplaintType(exerciseId, ComplaintType.COMPLAINT);
-        responseComplaints = buildComplaintsListForAssessor(responseComplaints, principal, true, true);
+        responseComplaints = buildComplaintsListForAssessor(responseComplaints, principal, true, true, true);
         return ResponseEntity.ok(responseComplaints);
     }
 
@@ -275,7 +276,7 @@ public class ComplaintResource {
         }
 
         List<Complaint> responseComplaints = complaintService.getMyMoreFeedbackRequests(exerciseId);
-        responseComplaints = buildComplaintsListForAssessor(responseComplaints, principal, true, false);
+        responseComplaints = buildComplaintsListForAssessor(responseComplaints, principal, true, false, false);
         return ResponseEntity.ok(responseComplaints);
     }
 
@@ -499,7 +500,8 @@ public class ComplaintResource {
         complaints.forEach(this::filterOutUselessDataFromComplaint);
     }
 
-    private List<Complaint> buildComplaintsListForAssessor(List<Complaint> complaints, Principal principal, boolean assessorSameAsCaller, boolean isTestRun) {
+    private List<Complaint> buildComplaintsListForAssessor(List<Complaint> complaints, Principal principal, boolean assessorSameAsCaller, boolean isTestRun,
+            boolean isAtLeastInstructor) {
         List<Complaint> responseComplaints = new ArrayList<>();
 
         if (complaints.isEmpty()) {
@@ -511,7 +513,7 @@ public class ComplaintResource {
             User assessor = complaint.getResult().getAssessor();
             User student = complaint.getStudent();
 
-            if (assessor != null && assessor.getLogin().equals(submissorName) == assessorSameAsCaller
+            if (assessor != null && (assessor.getLogin().equals(submissorName) == assessorSameAsCaller || isAtLeastInstructor)
                     && (student != null && assessor.getLogin().equals(student.getLogin())) == isTestRun) {
                 // Remove data about the student
                 StudentParticipation studentParticipation = (StudentParticipation) complaint.getResult().getParticipation();
