@@ -108,7 +108,7 @@ public class SAML2Configuration extends WebSecurityConfigurerAdapter {
         }
     }
 
-    public RSAPrivateKey readPrivateKey(File file) throws IOException, NoSuchAlgorithmException, InvalidKeySpecException {
+    private RSAPrivateKey readPrivateKey(File file) throws IOException, NoSuchAlgorithmException, InvalidKeySpecException {
         String key = Files.readString(file.toPath(), Charset.defaultCharset());
 
         String privateKeyPEM = key
