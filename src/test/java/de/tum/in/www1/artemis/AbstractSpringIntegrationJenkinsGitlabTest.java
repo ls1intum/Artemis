@@ -351,8 +351,8 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
     }
 
     @Override
-    public void mockDeleteBuildPlan(String projectKey, String planName) throws Exception {
-        jenkinsRequestMockProvider.mockDeleteBuildPlan(projectKey, planName);
+    public void mockDeleteBuildPlan(String projectKey, String planName, boolean shouldFail) throws Exception {
+        jenkinsRequestMockProvider.mockDeleteBuildPlan(projectKey, planName, shouldFail);
     }
 
     @Override

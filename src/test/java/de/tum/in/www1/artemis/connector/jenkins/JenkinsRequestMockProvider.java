@@ -421,9 +421,14 @@ public class JenkinsRequestMockProvider {
         }
     }
 
-    public void mockDeleteBuildPlan(String projectKey, String planName) throws IOException {
+    public void mockDeleteBuildPlan(String projectKey, String planName, boolean shouldFail) throws IOException {
         mockGetFolderJob(projectKey, new FolderJob());
-        doNothing().when(jenkinsServer).deleteJob(any(FolderJob.class), eq(planName), eq(useCrumb));
+        if (shouldFail) {
+            doThrow(IOException.class).when(jenkinsServer).deleteJob(any(FolderJob.class), eq(planName), eq(useCrumb));
+        }
+        else {
+            doNothing().when(jenkinsServer).deleteJob(any(FolderJob.class), eq(planName), eq(useCrumb));
+        }
     }
 
     public void mockDeleteBuildPlanProject(String projectKey) throws IOException {

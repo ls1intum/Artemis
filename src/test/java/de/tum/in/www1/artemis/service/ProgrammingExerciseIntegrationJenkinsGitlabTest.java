@@ -87,6 +87,12 @@ public class ProgrammingExerciseIntegrationJenkinsGitlabTest extends AbstractSpr
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    void testProgrammingExerciseDelete_failToDeleteBuildPlan() throws Exception {
+        programmingExerciseIntegrationServiceTest.testProgrammingExerciseDelete_failToDeleteBuildPlan();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void testProgrammingExerciseDelete_invalidId_notFound() throws Exception {
         programmingExerciseIntegrationServiceTest.testProgrammingExerciseDelete_invalidId_notFound();
     }

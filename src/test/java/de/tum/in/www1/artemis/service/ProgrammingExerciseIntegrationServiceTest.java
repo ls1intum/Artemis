@@ -281,7 +281,7 @@ public class ProgrammingExerciseIntegrationServiceTest {
         params.add("deleteBaseReposBuildPlans", "true");
 
         for (final var planName : List.of("student1", "student2", TEMPLATE.getName(), SOLUTION.getName())) {
-            mockDelegate.mockDeleteBuildPlan(projectKey, projectKey + "-" + planName.toUpperCase());
+            mockDelegate.mockDeleteBuildPlan(projectKey, projectKey + "-" + planName.toUpperCase(), false);
         }
         mockDelegate.mockDeleteBuildPlanProject(projectKey);
 
@@ -291,6 +291,26 @@ public class ProgrammingExerciseIntegrationServiceTest {
         mockDelegate.mockDeleteProjectInVcs(projectKey);
 
         request.delete(path, HttpStatus.OK, params);
+    }
+
+    public void testProgrammingExerciseDelete_failToDeleteBuildPlan() throws Exception {
+        final var projectKey = programmingExercise.getProjectKey();
+        final var path = ROOT + PROGRAMMING_EXERCISE.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("deleteStudentReposBuildPlans", "true");
+        params.add("deleteBaseReposBuildPlans", "true");
+
+        for (final var planName : List.of("student1", "student2", TEMPLATE.getName(), SOLUTION.getName())) {
+            mockDelegate.mockDeleteBuildPlan(projectKey, projectKey + "-" + planName.toUpperCase(), true);
+        }
+        mockDelegate.mockDeleteBuildPlanProject(projectKey);
+
+        for (final var repoName : List.of("student1", "student2", RepositoryType.TEMPLATE.getName(), RepositoryType.SOLUTION.getName(), RepositoryType.TESTS.getName())) {
+            mockDelegate.mockDeleteRepository(projectKey, (projectKey + "-" + repoName).toLowerCase());
+        }
+        mockDelegate.mockDeleteProjectInVcs(projectKey);
+
+        request.delete(path, HttpStatus.INTERNAL_SERVER_ERROR, params);
     }
 
     public void testProgrammingExerciseDelete_invalidId_notFound() throws Exception {

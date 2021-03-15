@@ -92,7 +92,7 @@ public interface MockDelegate {
 
     void mockDeleteProjectInVcs(String projectKey) throws Exception;
 
-    void mockDeleteBuildPlan(String projectKey, String planName) throws Exception;
+    void mockDeleteBuildPlan(String projectKey, String planName, boolean shouldFail) throws Exception;
 
     void mockDeleteBuildPlanProject(String projectKey) throws Exception;
 

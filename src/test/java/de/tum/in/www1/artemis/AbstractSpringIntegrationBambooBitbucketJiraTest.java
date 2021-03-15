@@ -408,7 +408,7 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
     }
 
     @Override
-    public void mockDeleteBuildPlan(String projectKey, String planName) throws Exception {
+    public void mockDeleteBuildPlan(String projectKey, String planName, boolean shouldFail) throws Exception {
         // var planKey = (projectKey + "-" + planName).toUpperCase();
         bambooRequestMockProvider.mockDeleteBambooBuildPlan(planName, false);
     }

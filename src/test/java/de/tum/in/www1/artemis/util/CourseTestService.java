@@ -303,8 +303,8 @@ public class CourseTestService {
                     final var testsRepoName = programmingExercise.generateRepositoryName(RepositoryType.TESTS);
                     database.addSolutionParticipationForProgrammingExercise(programmingExercise);
                     database.addTemplateParticipationForProgrammingExercise(programmingExercise);
-                    mockDelegate.mockDeleteBuildPlan(projectKey, programmingExercise.getTemplateBuildPlanId());
-                    mockDelegate.mockDeleteBuildPlan(projectKey, programmingExercise.getSolutionBuildPlanId());
+                    mockDelegate.mockDeleteBuildPlan(projectKey, programmingExercise.getTemplateBuildPlanId(), false);
+                    mockDelegate.mockDeleteBuildPlan(projectKey, programmingExercise.getSolutionBuildPlanId(), false);
                     mockDelegate.mockDeleteBuildPlanProject(projectKey);
                     mockDelegate.mockDeleteRepository(projectKey, templateRepoName);
                     mockDelegate.mockDeleteRepository(projectKey, solutionRepoName);
@@ -1152,7 +1152,7 @@ public class CourseTestService {
 
         mockDelegate.mockDeleteRepository(programmingExercise.getProjectKey(), (programmingExercise.getProjectKey()).toLowerCase() + "-student1");
         var buildPlanId = (programmingExercise.getProjectKey() + "-student1").toUpperCase();
-        mockDelegate.mockDeleteBuildPlan(programmingExercise.getProjectKey(), buildPlanId);
+        mockDelegate.mockDeleteBuildPlan(programmingExercise.getProjectKey(), buildPlanId, false);
         request.delete("/api/courses/" + course.getId() + "/cleanup", HttpStatus.OK);
 
         course.getExercises().forEach(exercise -> {
