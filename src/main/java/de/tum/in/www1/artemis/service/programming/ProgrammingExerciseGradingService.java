@@ -323,7 +323,6 @@ public class ProgrammingExerciseGradingService {
      */
     private Result calculateScoreForResult(Set<ProgrammingExerciseTestCase> testCases, Set<ProgrammingExerciseTestCase> testCasesForCurrentDate, @NotNull Result result,
             ProgrammingExercise exercise) {
-
         // Distinguish between static code analysis feedback, test case feedback and manual feedback
         List<Feedback> testCaseFeedback = new ArrayList<>();
         List<Feedback> staticCodeAnalysisFeedback = new ArrayList<>();
@@ -391,10 +390,11 @@ public class ProgrammingExerciseGradingService {
 
     private boolean createFeedbackForDuplicateTests(Result result, ProgrammingExercise programmingExercise) {
         Set<String> uniqueFeedbackNames = new HashSet<>();
-        Set<String> duplicateFeedbackNames = result.getFeedbacks().stream().map(Feedback::getText).filter(fbName -> !uniqueFeedbackNames.add(fbName)) // Set.add() returns false if
-                                                                                                                                                      // the element was already in
-                                                                                                                                                      // the set.
-                .collect(Collectors.toSet());
+        // Find duplicate test cases from feedback which is automatic feedback
+        // Set.add() returns false if the element was already in the set, this is how we find all duplicates
+        Set<String> duplicateFeedbackNames = result.getFeedbacks().stream()
+                .filter(feedback -> !feedback.isStaticCodeAnalysisFeedback() && FeedbackType.AUTOMATIC.equals(feedback.getType())).map(Feedback::getText)
+                .filter(fbName -> !uniqueFeedbackNames.add(fbName)).collect(Collectors.toSet());
 
         if (duplicateFeedbackNames.size() > 0) {
             List<Feedback> feedbacksForDuplicateTestCases = duplicateFeedbackNames.stream()
@@ -402,7 +402,7 @@ public class ProgrammingExerciseGradingService {
                             .detailText("This is a duplicate test case. Please review all your test cases and verify that you only use unique test cases!").positive(false))
                     .collect(Collectors.toList());
             result.addFeedbacks(feedbacksForDuplicateTestCases);
-            String notificationText = TEST_CASES_DUPLICATE_NOTIFICATION + String.join(",", duplicateFeedbackNames);
+            String notificationText = TEST_CASES_DUPLICATE_NOTIFICATION + String.join(", ", duplicateFeedbackNames);
             groupNotificationService.notifyInstructorGroupAboutDuplicateTestCasesForExercise(programmingExercise, notificationText);
             return true;
         }
@@ -495,7 +495,6 @@ public class ProgrammingExerciseGradingService {
      * @return The sum of all penalties, capped at the maximum allowed penalty
      */
     private double calculateStaticCodeAnalysisPenalty(List<Feedback> staticCodeAnalysisFeedback, ProgrammingExercise programmingExercise) {
-
         double codeAnalysisPenaltyPoints = 0;
 
         var feedbackByCategory = staticCodeAnalysisFeedback.stream().collect(Collectors.groupingBy(Feedback::getStaticCodeAnalysisCategory));
@@ -625,7 +624,6 @@ public class ProgrammingExerciseGradingService {
      * @return The statistics object
      */
     public ProgrammingExerciseGradingStatisticsDTO generateGradingStatistics(Long exerciseId) {
-
         var statistics = new ProgrammingExerciseGradingStatisticsDTO();
 
         var results = resultService.findLatestAutomaticResultsWithFeedbacksForExercise(exerciseId);
@@ -677,7 +675,6 @@ public class ProgrammingExerciseGradingService {
      * @param categoryIssuesMap The issues map for one students
      */
     private void mergeCategoryIssuesMaps(Map<String, Map<Integer, Integer>> categoryIssuesStudentsMap, Map<String, Integer> categoryIssuesMap) {
-
         for (var entry : categoryIssuesMap.entrySet()) {
             // key: category, value: number of issues
 
@@ -708,10 +705,8 @@ public class ProgrammingExerciseGradingService {
      */
     private void addFeedbackToStatistics(Feedback feedback, Map<String, Integer> categoryIssuesMap,
             Map<String, ProgrammingExerciseGradingStatisticsDTO.TestCaseStats> testCaseStatsMap) {
-
-        if (feedback.getType().equals(FeedbackType.AUTOMATIC) && feedback.isStaticCodeAnalysisFeedback()) {
+        if (feedback.isStaticCodeAnalysisFeedback()) {
             // sca feedback
-
             var categoryName = feedback.getText().substring(Feedback.STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER.length());
             if ("".equals(categoryName)) {
                 return; // this feedback belongs to no category
@@ -728,7 +723,6 @@ public class ProgrammingExerciseGradingService {
         }
         else if (feedback.getType().equals(FeedbackType.AUTOMATIC)) {
             // test case feedback
-
             var testName = feedback.getText();
 
             // add 1 to the passed or failed amount for this test case
@@ -744,8 +738,6 @@ public class ProgrammingExerciseGradingService {
             else {
                 testCaseStatsMap.put(testName, new ProgrammingExerciseGradingStatisticsDTO.TestCaseStats(feedback.isPositive() ? 1 : 0, feedback.isPositive() ? 0 : 1));
             }
-
         }
     }
-
 }
