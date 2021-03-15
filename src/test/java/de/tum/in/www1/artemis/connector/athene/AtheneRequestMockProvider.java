@@ -79,6 +79,22 @@ public class AtheneRequestMockProvider {
                 .andRespond(withSuccess().body(json).contentType(MediaType.APPLICATION_JSON));
     }
 
+    /**
+     * Mocks /submit api from Athene used to submit new exercises for clustering.
+     */
+    public void mockSubmitSubmissions() {
+        final ObjectNode node = mapper.createObjectNode();
+        node.set("detail", mapper.valueToTree("Submission successful"));
+        final String json = node.toString();
+
+        mockServer.expect(ExpectedCount.once(), requestTo(atheneUrl + "/submit")).andExpect(method(HttpMethod.POST)).andRespond(withSuccess(json, MediaType.APPLICATION_JSON));
+    }
+
+    /**
+     * Mocks /queueStatus api from Athene used to retrieve meta data on processed jobs. Currently used as a health check endpoint.
+     *
+     * @param success Successful response or timeout.
+     */
     public void mockQueueStatus(boolean success) {
         final ResponseActions responseActions = mockServerShortTimeout.expect(ExpectedCount.once(), requestTo(atheneUrl + "/queueStatus")).andExpect(method(HttpMethod.GET));
 
