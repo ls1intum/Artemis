@@ -77,7 +77,7 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
     }
 
     @Override
-    public void mockConnectorRequestsForSetup(ProgrammingExercise exercise) throws Exception {
+    public void mockConnectorRequestsForSetup(ProgrammingExercise exercise, boolean failToCreateCiProject) throws Exception {
         final var projectKey = exercise.getProjectKey();
         final var exerciseRepoName = exercise.generateRepositoryName(RepositoryType.TEMPLATE);
         final var solutionRepoName = exercise.generateRepositoryName(RepositoryType.SOLUTION);
@@ -88,7 +88,7 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
         gitlabRequestMockProvider.mockCreateRepository(exercise, testRepoName);
         gitlabRequestMockProvider.mockCreateRepository(exercise, solutionRepoName);
         gitlabRequestMockProvider.mockAddAuthenticatedWebHook();
-        jenkinsRequestMockProvider.mockCreateProjectForExercise(exercise);
+        jenkinsRequestMockProvider.mockCreateProjectForExercise(exercise, failToCreateCiProject);
         jenkinsRequestMockProvider.mockCreateBuildPlan(projectKey, TEMPLATE.getName());
         jenkinsRequestMockProvider.mockCreateBuildPlan(projectKey, SOLUTION.getName());
         jenkinsRequestMockProvider.mockTriggerBuild(projectKey, TEMPLATE.getName(), false);
@@ -142,7 +142,7 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
         String templateBuildPlanId = targetProjectKey + "-" + TEMPLATE.getName();
         String solutionBuildPlanId = targetProjectKey + "-" + SOLUTION.getName();
 
-        jenkinsRequestMockProvider.mockCreateProjectForExercise(exerciseToBeImported);
+        jenkinsRequestMockProvider.mockCreateProjectForExercise(exerciseToBeImported, false);
         jenkinsRequestMockProvider.mockCopyBuildPlan(sourceExercise.getProjectKey(), targetProjectKey);
         jenkinsRequestMockProvider.mockCopyBuildPlan(sourceExercise.getProjectKey(), targetProjectKey);
         jenkinsRequestMockProvider.mockGivePlanPermissions(targetProjectKey, templateBuildPlanId);
@@ -167,7 +167,7 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
 
     private void mockSetupBuildPlansForNewExercise(ProgrammingExercise exerciseToBeImported) throws Exception {
         final var targetProjectKey = exerciseToBeImported.getProjectKey();
-        jenkinsRequestMockProvider.mockCreateProjectForExercise(exerciseToBeImported);
+        jenkinsRequestMockProvider.mockCreateProjectForExercise(exerciseToBeImported, false);
         jenkinsRequestMockProvider.mockCreateBuildPlan(targetProjectKey, TEMPLATE.getName());
         jenkinsRequestMockProvider.mockCreateBuildPlan(targetProjectKey, SOLUTION.getName());
         jenkinsRequestMockProvider.mockTriggerBuild(targetProjectKey, TEMPLATE.getName(), false);

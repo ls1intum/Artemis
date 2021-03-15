@@ -108,9 +108,14 @@ public class JenkinsRequestMockProvider {
         shortTimeoutMockServer.reset();
     }
 
-    public void mockCreateProjectForExercise(ProgrammingExercise exercise) throws IOException {
+    public void mockCreateProjectForExercise(ProgrammingExercise exercise, boolean shouldFail) throws IOException {
         // TODO: we need to mockRetrieveArtifacts folder(...)
-        doNothing().when(jenkinsServer).createFolder(null, exercise.getProjectKey(), useCrumb);
+        if (shouldFail) {
+            doThrow(IOException.class).when(jenkinsServer).createFolder(null, exercise.getProjectKey(), useCrumb);
+        }
+        else {
+            doNothing().when(jenkinsServer).createFolder(null, exercise.getProjectKey(), useCrumb);
+        }
     }
 
     public void mockCreateBuildPlan(String projectKey, String planKey) throws IOException {

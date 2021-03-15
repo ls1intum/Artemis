@@ -18,7 +18,7 @@ import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildResultDTO
 
 public interface MockDelegate {
 
-    void mockConnectorRequestsForSetup(ProgrammingExercise exercise) throws Exception;
+    void mockConnectorRequestsForSetup(ProgrammingExercise exercise, boolean failToCreateCiProject) throws Exception;
 
     void mockConnectorRequestsForImport(ProgrammingExercise sourceExercise, ProgrammingExercise exerciseToBeImported, boolean recreateBuildPlans) throws Exception;
 

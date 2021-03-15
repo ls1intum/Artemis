@@ -31,6 +31,7 @@ import com.offbytwo.jenkins.JenkinsServer;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.exception.JenkinsException;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
@@ -555,7 +556,7 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
     }
 
     @Override
-    public void createProjectForExercise(ProgrammingExercise programmingExercise) {
+    public void createProjectForExercise(ProgrammingExercise programmingExercise) throws ContinuousIntegrationException {
         try {
             jenkinsServer.createFolder(programmingExercise.getProjectKey(), useCrumb);
         }

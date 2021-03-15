@@ -221,7 +221,7 @@ public interface ContinuousIntegrationService {
      *
      * @param programmingExercise for which a project should be created
      */
-    void createProjectForExercise(ProgrammingExercise programmingExercise);
+    void createProjectForExercise(ProgrammingExercise programmingExercise) throws ContinuousIntegrationException;
 
     /**
      * Get the webhook URL to call if one wants to trigger the build plan or notify the plan about an event that should

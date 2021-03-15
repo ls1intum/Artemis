@@ -6,8 +6,7 @@ import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.TEMPLATE;
 import static de.tum.in.www1.artemis.util.TestConstants.COMMIT_HASH_OBJECT_ID;
 import static io.github.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.*;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -26,6 +25,7 @@ import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.context.ActiveProfiles;
 
+import com.atlassian.bamboo.specs.api.exceptions.BambooSpecsPublishingException;
 import com.atlassian.bamboo.specs.util.BambooServer;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
@@ -169,7 +169,7 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
     }
 
     @Override
-    public void mockConnectorRequestsForSetup(ProgrammingExercise exercise) throws Exception {
+    public void mockConnectorRequestsForSetup(ProgrammingExercise exercise, boolean failToCreateCiProject) throws Exception {
         final var exerciseRepoName = exercise.generateRepositoryName(RepositoryType.TEMPLATE);
         final var solutionRepoName = exercise.generateRepositoryName(RepositoryType.SOLUTION);
         final var testRepoName = exercise.generateRepositoryName(RepositoryType.TESTS);
@@ -180,16 +180,21 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
         bitbucketRequestMockProvider.mockCreateRepository(exercise, testRepoName);
         bitbucketRequestMockProvider.mockCreateRepository(exercise, solutionRepoName);
         bitbucketRequestMockProvider.mockAddWebHooks(exercise);
-        mockBambooBuildPlanCreation(exercise);
+        mockBambooBuildPlanCreation(exercise, failToCreateCiProject);
 
         doNothing().when(gitService).pushSourceToTargetRepo(any(), any());
     }
 
-    private void mockBambooBuildPlanCreation(ProgrammingExercise exercise) throws IOException, URISyntaxException {
-        // TODO: check the actual plan and plan permissions that get passed here
-        doReturn(null).when(bambooServer).publish(any());
-        bambooRequestMockProvider.mockRemoveAllDefaultProjectPermissions(exercise);
-        bambooRequestMockProvider.mockGiveProjectPermissions(exercise);
+    private void mockBambooBuildPlanCreation(ProgrammingExercise exercise, boolean failToCreateCiProject) throws IOException, URISyntaxException {
+        if (!failToCreateCiProject) {
+            // TODO: check the actual plan and plan permissions that get passed here
+            doReturn(null).when(bambooServer).publish(any());
+            bambooRequestMockProvider.mockRemoveAllDefaultProjectPermissions(exercise);
+            bambooRequestMockProvider.mockGiveProjectPermissions(exercise);
+        }
+        else {
+            doThrow(BambooSpecsPublishingException.class).when(bambooServer).publish(any());
+        }
     }
 
     @Override
@@ -204,7 +209,7 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
         }
         else {
             // Mocks for recreating the build plans
-            mockBambooBuildPlanCreation(exerciseToBeImported);
+            mockBambooBuildPlanCreation(exerciseToBeImported, false);
         }
     }
 

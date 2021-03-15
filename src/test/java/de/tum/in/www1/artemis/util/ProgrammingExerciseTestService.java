@@ -249,14 +249,14 @@ public class ProgrammingExerciseTestService {
     // TEST
     public void createProgrammingExercise_sequential_validExercise_created() throws Exception {
         exercise.setSequentialTestRuns(true);
-        mockDelegate.mockConnectorRequestsForSetup(exercise);
+        mockDelegate.mockConnectorRequestsForSetup(exercise, false);
         validateProgrammingExercise(request.postWithResponseBody(ROOT + SETUP, exercise, ProgrammingExercise.class, HttpStatus.CREATED));
     }
 
     // TEST
     public void createProgrammingExercise_mode_validExercise_created(ExerciseMode mode) throws Exception {
         exercise.setMode(mode);
-        mockDelegate.mockConnectorRequestsForSetup(exercise);
+        mockDelegate.mockConnectorRequestsForSetup(exercise, false);
         validateProgrammingExercise(request.postWithResponseBody(ROOT + SETUP, exercise, ProgrammingExercise.class, HttpStatus.CREATED));
     }
 
@@ -268,14 +268,14 @@ public class ProgrammingExerciseTestService {
             exercise.setPackageName("swiftTest");
         }
         exercise.setProjectType(programmingLanguageFeature.getProjectTypes().size() > 0 ? programmingLanguageFeature.getProjectTypes().get(0) : null);
-        mockDelegate.mockConnectorRequestsForSetup(exercise);
+        mockDelegate.mockConnectorRequestsForSetup(exercise, false);
         validateProgrammingExercise(request.postWithResponseBody(ROOT + SETUP, exercise, ProgrammingExercise.class, HttpStatus.CREATED));
     }
 
     // TEST
     public void createProgrammingExercise_validExercise_bonusPointsIsNull() throws Exception {
         exercise.setBonusPoints(null);
-        mockDelegate.mockConnectorRequestsForSetup(exercise);
+        mockDelegate.mockConnectorRequestsForSetup(exercise, false);
         var generatedExercise = request.postWithResponseBody(ROOT + SETUP, exercise, ProgrammingExercise.class);
         var savedExercise = programmingExerciseRepository.findById(generatedExercise.getId()).get();
         assertThat(generatedExercise.getBonusPoints()).isEqualTo(0D);
@@ -291,7 +291,7 @@ public class ProgrammingExerciseTestService {
             exercise.setPackageName("swiftTest");
         }
         exercise.setProjectType(programmingLanguageFeature.getProjectTypes().size() > 0 ? programmingLanguageFeature.getProjectTypes().get(0) : null);
-        mockDelegate.mockConnectorRequestsForSetup(exercise);
+        mockDelegate.mockConnectorRequestsForSetup(exercise, false);
         var generatedExercise = request.postWithResponseBody(ROOT + SETUP, exercise, ProgrammingExercise.class);
 
         exercise.setId(generatedExercise.getId());
@@ -306,10 +306,18 @@ public class ProgrammingExerciseTestService {
     }
 
     // TEST
+    public void createProgrammingExercise_failToCreateProjectInCi() throws Exception {
+        exercise.setMode(ExerciseMode.INDIVIDUAL);
+        mockDelegate.mockConnectorRequestsForSetup(exercise, true);
+        var programmingExercise = request.postWithResponseBody(ROOT + SETUP, exercise, ProgrammingExercise.class, HttpStatus.INTERNAL_SERVER_ERROR);
+        assertThat(programmingExercise).isNull();
+    }
+
+    // TEST
     public void createProgrammingExerciseForExam_validExercise_created() throws Exception {
         setupRepositoryMocks(examExercise, exerciseRepo, solutionRepo, testRepo);
 
-        mockDelegate.mockConnectorRequestsForSetup(examExercise);
+        mockDelegate.mockConnectorRequestsForSetup(examExercise, false);
         final var generatedExercise = request.postWithResponseBody(ROOT + SETUP, examExercise, ProgrammingExercise.class, HttpStatus.CREATED);
 
         examExercise.setId(generatedExercise.getId());
@@ -560,7 +568,7 @@ public class ProgrammingExerciseTestService {
     public void createProgrammingExercise_noTutors_created() throws Exception {
         course.setTeachingAssistantGroupName(null);
         courseRepository.save(course);
-        mockDelegate.mockConnectorRequestsForSetup(exercise);
+        mockDelegate.mockConnectorRequestsForSetup(exercise, false);
         final var generatedExercise = request.postWithResponseBody(ROOT + SETUP, exercise, ProgrammingExercise.class, HttpStatus.CREATED);
         validateProgrammingExercise(generatedExercise);
     }
@@ -1092,7 +1100,7 @@ public class ProgrammingExerciseTestService {
     }
 
     private void structureOracle(ProgrammingExercise programmingExercise) throws Exception {
-        mockDelegate.mockConnectorRequestsForSetup(programmingExercise);
+        mockDelegate.mockConnectorRequestsForSetup(programmingExercise, false);
         final var generatedExercise = request.postWithResponseBody(ROOT + SETUP, programmingExercise, ProgrammingExercise.class, HttpStatus.CREATED);
         String response = request.putWithResponseBody(ROOT + GENERATE_TESTS.replace("{exerciseId}", String.valueOf(generatedExercise.getId())), generatedExercise, String.class,
                 HttpStatus.OK);
