@@ -28,8 +28,8 @@ saml2:
         - metadata: https://idp_host/.../metadata
           registration-id: IdPName
           entity-id: artemis
-          cert-file: path-to-cert or empty # Set this path to the Certificate for encryption/signing or leave it blank
-          key-file: path-to-key or empty # Set this path to the Key for encryption/ssigning or leave it blank
+          cert-file: # path-to-cert (optional) Set this path to the Certificate for encryption/signing or leave it blank
+          key-file: # path-to-key (optional) Set this path to the Key for encryption/ssigning or leave it blank
         # Multiple IdPs can be configured
         # - metadata: <URL>
         #   registrationid: <id>
