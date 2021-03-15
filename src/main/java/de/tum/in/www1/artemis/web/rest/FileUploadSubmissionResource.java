@@ -152,17 +152,25 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
     @GetMapping("/file-upload-submissions/{submissionId}")
     @PreAuthorize("hasAnyRole('TA','INSTRUCTOR','ADMIN')")
     public ResponseEntity<FileUploadSubmission> getFileUploadSubmission(@PathVariable Long submissionId,
-            @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound) {
+            @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound, @RequestParam(value = "resultId", defaultValue = "0") long resultId) {
         log.debug("REST request to get FileUploadSubmission with id: {}", submissionId);
-        var fileUploadSubmission = fileUploadSubmissionService.findOne(submissionId);
+        var fileUploadSubmission = fileUploadSubmissionService.findOneWithEagerResultAndFeedback(submissionId);
         var studentParticipation = (StudentParticipation) fileUploadSubmission.getParticipation();
         var fileUploadExercise = (FileUploadExercise) studentParticipation.getExercise();
         var gradingCriteria = gradingCriterionService.findByExerciseIdWithEagerGradingCriteria(fileUploadExercise.getId());
         fileUploadExercise.setGradingCriteria(gradingCriteria);
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isAtLeastTeachingAssistantForExercise(fileUploadExercise, user)) {
+
+        if (!authCheckService.isAtLeastTeachingAssistantForExercise(fileUploadExercise, user)
+                || (resultId > 0 && !authCheckService.isAtLeastInstructorForExercise(fileUploadExercise, user))) {
             return forbidden();
         }
+
+        if (resultId != 0 && authCheckService.isAtLeastInstructorForExercise(fileUploadExercise, user)) {
+            Result result = fileUploadSubmission.getManualResults().stream().filter(result1 -> result1.getId().equals(resultId)).findFirst().get();
+            correctionRound = fileUploadSubmission.getManualResults().indexOf(result);
+        }
+
         fileUploadSubmission = fileUploadSubmissionService.lockAndGetFileUploadSubmission(submissionId, fileUploadExercise, correctionRound);
         // Make sure the exercise is connected to the participation in the json response
         studentParticipation.setExercise(fileUploadExercise);
