@@ -20,8 +20,8 @@ public class TextAssessmentConflictService {
 
     private final Logger log = LoggerFactory.getLogger(TextAssessmentConflictService.class);
 
-    @Value("${artemis.athene.feedback-consistency-url}")
-    private String API_ENDPOINT;
+    @Value("${artemis.athene.url}")
+    private String atheneUrl;
 
     private final AtheneConnector<Request, Response> connector;
 
@@ -61,7 +61,7 @@ public class TextAssessmentConflictService {
             throws NetworkingError {
         log.info("Calling Remote Service to check feedback consistencies.");
         final Request request = new Request(textFeedbackConflictRequestDTOS, exerciseId);
-        final Response response = connector.invokeWithRetry(API_ENDPOINT, request, maxRetries);
+        final Response response = connector.invokeWithRetry(atheneUrl + "/feedback_consistency", request, maxRetries);
 
         return response.feedbackInconsistencies;
     }

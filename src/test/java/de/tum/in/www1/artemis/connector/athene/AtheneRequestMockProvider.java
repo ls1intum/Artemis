@@ -2,11 +2,15 @@ package de.tum.in.www1.artemis.connector.athene;
 
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
+import static org.springframework.test.web.client.response.MockRestResponseCreators.withException;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
+import java.net.SocketTimeoutException;
 import java.util.List;
 
+import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpMethod;
@@ -14,40 +18,50 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.test.web.client.ExpectedCount;
 import org.springframework.test.web.client.MockRestServiceServer;
+import org.springframework.test.web.client.ResponseActions;
 import org.springframework.web.client.RestTemplate;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import de.tum.in.www1.artemis.service.dto.FeedbackConflictResponseDTO;
 
 @Component
 @Profile("athene")
 public class AtheneRequestMockProvider {
 
-    @Autowired
-    public RestTemplate restTemplate;
+    private final RestTemplate restTemplate;
 
-    @Value("${artemis.athene.feedback-consistency-url}")
-    private String feedbackConsistencyApiEndpoint;
+    private MockRestServiceServer mockServer;
+
+    private final RestTemplate shortTimeoutRestTemplate;
+
+    private MockRestServiceServer mockServerShortTimeout;
+
+    @Value("${artemis.athene.url}")
+    private String atheneUrl;
 
     @Autowired
     private ObjectMapper mapper;
 
-    private MockRestServiceServer mockServer;
-
-    public void enableMockingOfRequests() {
-        enableMockingOfRequests(false);
+    public AtheneRequestMockProvider(@Qualifier("atheneRestTemplate") RestTemplate restTemplate,
+            @Qualifier("shortTimeoutAtheneRestTemplate") RestTemplate shortTimeoutRestTemplate) {
+        this.restTemplate = restTemplate;
+        this.shortTimeoutRestTemplate = shortTimeoutRestTemplate;
     }
 
-    public void enableMockingOfRequests(boolean ignoreExpectOrder) {
-        MockRestServiceServer.MockRestServiceServerBuilder builder = MockRestServiceServer.bindTo(restTemplate);
-        builder.ignoreExpectOrder(ignoreExpectOrder);
-        mockServer = builder.build();
+    public void enableMockingOfRequests() {
+        mockServer = MockRestServiceServer.createServer(restTemplate);
+        mockServerShortTimeout = MockRestServiceServer.createServer(shortTimeoutRestTemplate);
+        MockitoAnnotations.openMocks(this);
     }
 
     public void reset() {
         if (mockServer != null) {
             mockServer.reset();
+        }
+
+        if (mockServerShortTimeout != null) {
+            mockServerShortTimeout.reset();
         }
     }
 
@@ -55,11 +69,27 @@ public class AtheneRequestMockProvider {
      * This method mocks feedback consistency response coming from Athene
      *
      * @param feedbackConflictResponseDTOs List of response DTOs, ideally an array of feedback conflicts
-     * @throws JsonProcessingException exception related to mapping the values to json
      */
-    public void mockFeedbackConsistency(List<FeedbackConflictResponseDTO> feedbackConflictResponseDTOs) throws JsonProcessingException {
-        String jsonArray = "{ \"feedbackInconsistencies\": " + mapper.writeValueAsString(feedbackConflictResponseDTOs) + "}";
-        mockServer.expect(ExpectedCount.once(), requestTo(feedbackConsistencyApiEndpoint)).andExpect(method(HttpMethod.POST))
-                .andRespond(withSuccess().body(jsonArray).contentType(MediaType.APPLICATION_JSON));
+    public void mockFeedbackConsistency(List<FeedbackConflictResponseDTO> feedbackConflictResponseDTOs) {
+        final ObjectNode node = mapper.createObjectNode();
+        node.set("feedbackInconsistencies", mapper.valueToTree(feedbackConflictResponseDTOs));
+        final String json = node.toString();
+
+        mockServer.expect(ExpectedCount.once(), requestTo(atheneUrl + "/feedback_consistency")).andExpect(method(HttpMethod.POST))
+                .andRespond(withSuccess().body(json).contentType(MediaType.APPLICATION_JSON));
+    }
+
+    public void mockQueueStatus(boolean success) {
+        final ResponseActions responseActions = mockServerShortTimeout.expect(ExpectedCount.once(), requestTo(atheneUrl + "/queueStatus")).andExpect(method(HttpMethod.GET));
+
+        if (success) {
+            final ObjectNode node = mapper.createObjectNode();
+            node.set("total", mapper.valueToTree(42));
+            final String json = node.toString();
+            responseActions.andRespond(withSuccess().body(json).contentType(MediaType.APPLICATION_JSON));
+        }
+        else {
+            responseActions.andRespond(withException(new SocketTimeoutException()));
+        }
     }
 }

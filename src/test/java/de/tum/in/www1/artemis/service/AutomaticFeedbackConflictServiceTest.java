@@ -10,9 +10,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.util.ReflectionTestUtils;
-
-import com.fasterxml.jackson.core.JsonProcessingException;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.connector.athene.AtheneRequestMockProvider;
@@ -60,8 +57,6 @@ public class AutomaticFeedbackConflictServiceTest extends AbstractSpringIntegrat
         textExercise = (TextExercise) database.addCourseWithOneFinishedTextExercise().getExercises().iterator().next();
 
         atheneRequestMockProvider.enableMockingOfRequests();
-        ReflectionTestUtils.setField(Objects.requireNonNull(ReflectionTestUtils.getField(textAssessmentConflictService, "connector")), "restTemplate",
-                atheneRequestMockProvider.restTemplate);
     }
 
     @AfterEach
@@ -74,11 +69,10 @@ public class AutomaticFeedbackConflictServiceTest extends AbstractSpringIntegrat
      * Creates two text submissions with text blocks and feedback, adds text blocks to a cluster.
      * Mocks TextAssessmentConflictService class to not to connect to remote Athene service
      * Then checks if the text assessment conflicts are created and stored correctly.
-     * @throws JsonProcessingException - exception related to mapping the values to json
      */
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void createFeedbackConflicts() throws JsonProcessingException {
+    public void createFeedbackConflicts() {
         TextSubmission textSubmission1 = ModelFactory.generateTextSubmission("first text submission", Language.ENGLISH, true);
         TextSubmission textSubmission2 = ModelFactory.generateTextSubmission("second text submission", Language.ENGLISH, true);
         database.saveTextSubmission(textExercise, textSubmission1, "student1");
@@ -123,11 +117,10 @@ public class AutomaticFeedbackConflictServiceTest extends AbstractSpringIntegrat
      * Creates and stores a Text Assessment Conflict in the database.
      * Then sends a conflict with same feedback ids and different conflict type.
      * Checks if the conflict type in the database has changed.
-     * @throws JsonProcessingException - exception related to mapping the values to json
      */
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void changedFeedbackConflictsType() throws JsonProcessingException {
+    public void changedFeedbackConflictsType() {
         TextSubmission textSubmission = ModelFactory.generateTextSubmission("text submission", Language.ENGLISH, true);
         database.saveTextSubmission(textExercise, textSubmission, "student1");
 
@@ -166,11 +159,10 @@ public class AutomaticFeedbackConflictServiceTest extends AbstractSpringIntegrat
      * Then a same feedback is sent to the conflict checking class.
      * Empty list is returned from the mock object. (meaning: no conflicts have found)
      * Checks if the conflict set as solved in the database.
-     * @throws JsonProcessingException - exception related to mapping the values to json
      */
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void solveFeedbackConflicts() throws JsonProcessingException {
+    public void solveFeedbackConflicts() {
         TextSubmission textSubmission = ModelFactory.generateTextSubmission("text submission", Language.ENGLISH, true);
         database.saveTextSubmission(textExercise, textSubmission, "student1");
 

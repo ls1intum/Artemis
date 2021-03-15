@@ -36,8 +36,8 @@ public class AtheneService {
     @Value("${server.url}")
     private String artemisServerUrl;
 
-    @Value("${artemis.athene.submit-url}")
-    private String submitApiEndpoint;
+    @Value("${artemis.athene.url}")
+    private String atheneUrl;
 
     private final TextAssessmentQueueService textAssessmentQueueService;
 
@@ -157,7 +157,7 @@ public class AtheneService {
 
         try {
             final RequestDTO request = new RequestDTO(exercise.getId(), textSubmissions, artemisServerUrl + ATHENE_RESULT_API_PATH + exercise.getId());
-            ResponseDTO response = connector.invokeWithRetry(submitApiEndpoint, request, maxRetries);
+            ResponseDTO response = connector.invokeWithRetry(atheneUrl + "/submit", request, maxRetries);
             log.info("Remote Service to calculate automatic feedback responded: " + response.detail);
 
             // Register task for exercise as running, AtheneResource calls finishTask on result receive
