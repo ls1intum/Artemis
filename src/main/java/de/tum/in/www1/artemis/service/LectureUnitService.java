@@ -31,7 +31,7 @@ public class LectureUnitService {
      *
      * @param lectureUnit lecture unit to delete
      */
-    @Transactional
+    @Transactional // ok because of delete
     public void removeLectureUnit(LectureUnit lectureUnit) {
 
         // we have to get the lecture from the db so that that the lecture units are included

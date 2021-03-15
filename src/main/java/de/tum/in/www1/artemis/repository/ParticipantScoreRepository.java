@@ -56,7 +56,7 @@ public interface ParticipantScoreRepository extends JpaRepository<ParticipantSco
             """)
     Double findAvgScore(@Param("exercises") Set<Exercise> exercises);
 
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @Transactional(propagation = Propagation.REQUIRES_NEW) // ok because of delete
     default void deleteAllByExerciseIdTransactional(Long exerciseId) {
         this.removeAllByExerciseId(exerciseId);
     }
