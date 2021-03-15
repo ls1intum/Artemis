@@ -142,17 +142,28 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
     List<Long> countNumberOfFinishedAssessmentsByExerciseIdIgnoreTestRuns(@Param("exerciseId") Long exerciseId);
 
     @Query("""
-            SELECT COUNT(r.id)
+            SELECT r
                 FROM StudentParticipation p join p.submissions s join s.results r
                 WHERE p.exercise.id = :exerciseId
                     AND p.testRun = FALSE
                     AND s.submitted = TRUE
                     AND r.completionDate IS NULL
-                    AND (r.rated = FALSE OR r.rated IS NULL)
                     AND r.assessor.id <> :tutorId
-                    GROUP BY p.id
-                """)
-    List<Long> countNumberOfLockedAssessmentsByOtherTutorsForExamExerciseForCorrectionRoundsIgnoreTestRuns(@Param("exerciseId") Long exerciseId, @Param("tutorId") Long tutorId);
+                    AND (SELECT COUNT(r2) FROM s.results r2 WHERE r2.assessmentType IN ('SEMI_AUTOMATIC','MANUAL')) = :numberOfCorrections
+            """)
+    List<Result> countNumberOfLockedAssessmentsByOtherTutorsForExamExerciseForCorrectionRoundsIgnoreTestRuns(@Param("exerciseId") Long exerciseId, @Param("tutorId") Long tutorId,
+            @Param("numberOfCorrections") Long numberOfCorrections);
+
+    @Query("""
+            SELECT r
+                FROM StudentParticipation p join p.submissions s join s.results r
+                WHERE p.exercise.id = :exerciseId
+                    AND p.testRun = FALSE
+                    AND s.submitted = TRUE
+                    AND r.completionDate IS NULL
+                    AND r.assessor.id <> :tutorId
+            """)
+    List<Result> countNumberOfLockedAssessmentsByOtherTutorsForExamExerciseForCorrectionRoundsIgnoreTestRuns2(@Param("exerciseId") Long exerciseId, @Param("tutorId") Long tutorId);
 
     /**
      * count the number of finsished assessments of an exam with given examId
@@ -266,10 +277,17 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
      * @return an array of the number of assessments for the exercise for a given correction round
      */
     default DueDateStat[] countNumberOfLockedAssessmentsByOtherTutorsForExamExerciseForCorrectionRounds(Exercise exercise, int numberOfCorrectionRounds, User tutor) {
-
-        List<Long> countlist = countNumberOfLockedAssessmentsByOtherTutorsForExamExerciseForCorrectionRoundsIgnoreTestRuns(exercise.getId(), tutor.getId());
+        DueDateStat[] correctionRoundsDataStats = new DueDateStat[numberOfCorrectionRounds];
+        var res = countNumberOfLockedAssessmentsByOtherTutorsForExamExerciseForCorrectionRoundsIgnoreTestRuns2(exercise.getId(), tutor.getId());
         // todo NR SE transform to DueDateStat[] and return it
-        return null;
+
+        correctionRoundsDataStats[0] = new DueDateStat(res.stream().filter(x -> x.isRated() == null).count(), 0L);
+        // so far the number of correctionRounds is limited to 2
+        if (numberOfCorrectionRounds == 2) {
+            correctionRoundsDataStats[1] = new DueDateStat(res.stream().filter(x -> x.isRated() != null).count(), 0L);
+        }
+
+        return correctionRoundsDataStats;
     }
 
     /**
