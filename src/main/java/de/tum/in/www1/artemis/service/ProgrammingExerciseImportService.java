@@ -152,8 +152,10 @@ public class ProgrammingExerciseImportService {
 
         reposToCopy.forEach(repo -> versionControlService.get().copyRepository(sourceProjectKey, repo.getSecond(), targetProjectKey, repo.getFirst().getName()));
 
-        // Unprotect the master branch of the template exercise repo.
-        versionControlService.get().unprotectBranch(newExercise.getVcsTemplateRepositoryUrl(), "master");
+        // Unprotect the default branch of the template exercise repo.
+        var templateVcsRepositoryUrl = newExercise.getVcsTemplateRepositoryUrl();
+        var templateVcsRepositoryDefaultBranch = versionControlService.get().getDefaultBranch(templateVcsRepositoryUrl);
+        versionControlService.get().unprotectBranch(templateVcsRepositoryUrl, templateVcsRepositoryDefaultBranch);
 
         // Add the necessary hooks notifying Artemis about changes after commits have been pushed
         versionControlService.get().addWebHooksForExercise(newExercise);
