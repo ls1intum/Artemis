@@ -395,7 +395,7 @@ public class ProgrammingExerciseGradingService {
                 .filter(feedback -> !feedback.isStaticCodeAnalysisFeedback() && FeedbackType.AUTOMATIC.equals(feedback.getType())).map(Feedback::getText)
                 .filter(fbName -> !uniqueFeedbackNames.add(fbName)).collect(Collectors.toSet());
 
-        if (duplicateFeedbackNames.size() > 0) {
+        if (!duplicateFeedbackNames.isEmpty()) {
             List<Feedback> feedbacksForDuplicateTestCases = duplicateFeedbackNames.stream()
                     .map(feedbackName -> new Feedback().type(FeedbackType.AUTOMATIC).text(feedbackName + " - Duplicate Test Case!")
                             .detailText("This is a duplicate test case. Please review all your test cases and verify that you only use unique test cases!").positive(false))
@@ -440,7 +440,7 @@ public class ProgrammingExerciseGradingService {
      */
     private void updateScore(Result result, Set<ProgrammingExerciseTestCase> successfulTestCases, Set<ProgrammingExerciseTestCase> allTests,
             List<Feedback> staticCodeAnalysisFeedback, ProgrammingExercise programmingExercise, boolean hasDuplicateTestCases) {
-        if (hasDuplicateTestCases || successfulTestCases.size() <= 0) {
+        if (hasDuplicateTestCases || successfulTestCases.isEmpty()) {
             result.setScore(0D);
         }
         else {
