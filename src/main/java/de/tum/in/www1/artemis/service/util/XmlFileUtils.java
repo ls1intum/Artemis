@@ -26,16 +26,6 @@ public class XmlFileUtils {
     }
 
     /**
-     * Reads an XMl file from the resources for a given relative path
-     *
-     * @param resource The XML file resource with the data properly formatted
-     * @return The parsed XML document
-     */
-    public static Document readXmlFile(Resource resource) {
-        return readXmlFile(resource, null);
-    }
-
-    /**
      * Reads an XMl file from the resources for a given relative path. Also replaces all Strings in the given file
      * based on the map parameter. Meaning key in the map -> replaced by mapped value
      *

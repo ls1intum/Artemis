@@ -3,7 +3,7 @@
     id="exercise-search-input"
     type="text"
     class="form-control"
-    [placeholder]="'artemisApp.team.selectExerciseForImport' | translate"
+    [placeholder]="'artemisApp.team.selectExerciseForImport' | artemisTranslate"
     [(ngModel)]="exercise"
     (selectItem)="onAutocompleteSelect($event.item)"
     (focus)="focus$.next('')"

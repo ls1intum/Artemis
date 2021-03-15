@@ -209,29 +209,39 @@ describe('FileUploadAssessmentDashboardComponent', () => {
 
     describe('shouldGetAssessmentLink', () => {
         it('should get assessment link for exam exercise', () => {
-            const submission = { id: 6, participation: { id: 8 } };
+            const participationId = 8;
             component.exercise = programmingExercise1;
-            expect(component.getAssessmentLink(submission)).toEqual([
+            component.exerciseId = programmingExercise1.id!;
+            component.courseId = programmingExercise1.course!.id!;
+            expect(component.getAssessmentLink(participationId)).toEqual([
                 '/course-management',
-                component.exercise.course?.id,
+                component.exercise.course!.id!.toString(),
                 'programming-exercises',
-                component.exercise.id,
+                component.exercise.id!.toString(),
                 'code-editor',
-                submission.participation.id,
+                participationId.toString(),
                 'assessment',
             ]);
         });
 
         it('should get assessment link for normal exercise', () => {
-            const submission = { id: 7, participation: { id: 9 } };
+            const participationId = 9;
             component.exercise = programmingExercise2;
-            expect(component.getAssessmentLink(submission)).toEqual([
+            component.exerciseId = programmingExercise2.id!;
+            component.courseId = programmingExercise2.exerciseGroup!.exam!.course!.id!;
+            component.examId = programmingExercise2.exerciseGroup!.exam!.id!;
+            component.exerciseGroupId = programmingExercise2.exerciseGroup!.id!;
+            expect(component.getAssessmentLink(participationId)).toEqual([
                 '/course-management',
-                component.exercise.exerciseGroup?.exam?.course?.id,
+                component.exercise.exerciseGroup!.exam!.course!.id!.toString(),
+                'exams',
+                component.exercise.exerciseGroup!.exam!.id!.toString(),
+                'exercise-groups',
+                component.exercise.exerciseGroup!.id!.toString(),
                 'programming-exercises',
-                component.exercise.id,
+                component.exercise.id!.toString(),
                 'code-editor',
-                submission.participation.id,
+                participationId.toString(),
                 'assessment',
             ]);
         });

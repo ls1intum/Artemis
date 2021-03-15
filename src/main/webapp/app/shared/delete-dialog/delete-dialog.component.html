@@ -16,7 +16,7 @@
             <div *ngFor="let checkKey of objectKeys(additionalChecks)">
                 <div class="checkbox" *ngIf="additionalChecks[checkKey]">
                     <label class="control-label text-danger">
-                        <input type="checkbox" name="checkbox" [(ngModel)]="additionalChecksValues[checkKey]" />&nbsp;{{ additionalChecks[checkKey] | translate }}
+                        <input type="checkbox" name="checkbox" [(ngModel)]="additionalChecksValues[checkKey]" />&nbsp;{{ additionalChecks[checkKey] | artemisTranslate }}
                     </label>
                 </div>
             </div>

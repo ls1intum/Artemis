@@ -77,7 +77,7 @@
                         class="form-control"
                         name="password"
                         id="password"
-                        placeholder="{{ 'global.menu.account.password' | translate }}"
+                        placeholder="{{ 'global.menu.account.password' | artemisTranslate }}"
                         minlength="8"
                         maxlength="100"
                         #password="ngModel"
@@ -96,8 +96,8 @@
                         [(ngModel)]="user.groups"
                         [theme]="'bootstrap'"
                         [modelAsStrings]="true"
-                        [placeholder]="'userManagement.addGroup' | translate"
-                        [secondaryPlaceholder]="'userManagement.enterGroup' | translate"
+                        [placeholder]="'userManagement.addGroup' | artemisTranslate"
+                        [secondaryPlaceholder]="'userManagement.enterGroup' | artemisTranslate"
                     >
                     </tag-input>
                 </div>

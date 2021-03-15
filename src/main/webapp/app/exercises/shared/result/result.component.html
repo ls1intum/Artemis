@@ -21,7 +21,7 @@
                 <span *ngIf="!hasFeedback" [ngbTooltip]="resultTooltip" container="body">
                     {{ result.resultString }}
                 </span>
-                <span *ngIf="!short"> ({{ result.completionDate! | amTimeAgo }}) </span>
+                <span *ngIf="!short"> ({{ result.completionDate! | artemisTimeAgo }}) </span>
                 <!-- TODO in the future we should make sure that result.submission.submissionDate is used here, because submissionDate and completionDate can be different for certain exercise types -->
             </span>
             <span *ngIf="hasBuildArtifact() && participation.type === ParticipationType.PROGRAMMING">
@@ -31,7 +31,7 @@
                 </a>
             </span>
             <span *ngIf="showGradedBadge" class="badge" [ngClass]="{ 'badge-info': !result.rated, 'badge-success': result.rated }">
-                {{ (result.rated ? 'artemisApp.result.graded' : 'artemisApp.result.notGraded') | translate | uppercase }}
+                {{ (result.rated ? 'artemisApp.result.graded' : 'artemisApp.result.notGraded') | artemisTranslate | uppercase }}
             </span>
         </ng-container>
     </ng-container>
@@ -39,17 +39,17 @@
         <span [ngClass]="textColorClass">
             <fa-icon [icon]="resultIconClass" size="lg"></fa-icon>
             <span class="score"> &nbsp;<span *ngIf="!short" jhiTranslate="artemisApp.result.score">Score:</span> {{ round(result!.score) }} %, </span>
-            <span class="text-muted">{{ 'artemisApp.courseOverview.exerciseList.exerciseLateFeedback' | translate }}</span>
+            <span class="text-muted">{{ 'artemisApp.courseOverview.exerciseList.exerciseLateFeedback' | artemisTranslate }}</span>
         </span>
     </ng-container>
     <ng-container *ngSwitchCase="ResultTemplateStatus.SUBMITTED">
-        <span class="text-muted">{{ 'artemisApp.courseOverview.exerciseList.exerciseSubmitted' | translate }}</span>
+        <span class="text-muted">{{ 'artemisApp.courseOverview.exerciseList.exerciseSubmitted' | artemisTranslate }}</span>
     </ng-container>
     <ng-container *ngSwitchCase="ResultTemplateStatus.SUBMITTED_WAITING_FOR_GRADING">
-        <span class="text-muted">{{ 'artemisApp.courseOverview.exerciseList.exerciseSubmittedWaitingForGrading' | translate }}</span>
+        <span class="text-muted">{{ 'artemisApp.courseOverview.exerciseList.exerciseSubmittedWaitingForGrading' | artemisTranslate }}</span>
     </ng-container>
     <ng-container *ngSwitchCase="ResultTemplateStatus.LATE_NO_FEEDBACK">
-        <span class="text-muted">{{ 'artemisApp.courseOverview.exerciseList.exerciseLateSubmission' | translate }}</span>
+        <span class="text-muted">{{ 'artemisApp.courseOverview.exerciseList.exerciseLateSubmission' | artemisTranslate }}</span>
     </ng-container>
     <ng-container *ngSwitchDefault>
         <span class="text-muted">
