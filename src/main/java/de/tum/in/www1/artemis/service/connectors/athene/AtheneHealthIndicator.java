@@ -26,6 +26,9 @@ public class AtheneHealthIndicator implements HealthIndicator {
         this.shortTimeoutRestTemplate = shortTimeoutRestTemplate;
     }
 
+    /**
+     * Ping Athene at /queueStatus and check if the service is available.
+     */
     @Override
     public Health health() {
         ConnectorHealth health;
