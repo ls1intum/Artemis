@@ -19,7 +19,10 @@ import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 
+import org.bouncycastle.asn1.pkcs.PrivateKeyInfo;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.bouncycastle.openssl.PEMParser;
+import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
@@ -97,7 +100,7 @@ public class SAML2Configuration extends WebSecurityConfigurerAdapter {
             PrivateKey privateKey = readPrivateKey(keyFile);
             X509Certificate certificate = readPublicCert(certFile);
             relyingPartySigningCredential = new Saml2X509Credential(privateKey, certificate, Saml2X509Credential.Saml2X509CredentialType.SIGNING, Saml2X509Credential.Saml2X509CredentialType.DECRYPTION);
-        } catch (IOException | CertificateException | NoSuchAlgorithmException | InvalidKeySpecException e) {
+        } catch (IOException | CertificateException e) {
             log.error(e.getMessage(), e);
         }
 
@@ -112,19 +115,13 @@ public class SAML2Configuration extends WebSecurityConfigurerAdapter {
         }
     }
 
-    private RSAPrivateKey readPrivateKey(File file) throws IOException, NoSuchAlgorithmException, InvalidKeySpecException {
-        String key = Files.readString(file.toPath(), Charset.defaultCharset());
-
-        String privateKeyPEM = key
-            .replace("-----BEGIN PRIVATE KEY-----", "")
-            .replaceAll(System.lineSeparator(), "")
-            .replace("-----END PRIVATE KEY-----", "");
-
-        byte[] encoded = Base64.getDecoder().decode(privateKeyPEM);
-
-        KeyFactory keyFactory = KeyFactory.getInstance("RSA");
-        PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(encoded);
-        return (RSAPrivateKey) keyFactory.generatePrivate(keySpec);
+    private RSAPrivateKey readPrivateKey(File file) throws IOException {
+        try (FileReader keyReader = new FileReader(file)) {
+            PEMParser pemParser = new PEMParser(keyReader);
+            JcaPEMKeyConverter converter = new JcaPEMKeyConverter();
+            PrivateKeyInfo privateKeyInfo = PrivateKeyInfo.getInstance(pemParser.readObject());
+            return (RSAPrivateKey) converter.getPrivateKey(privateKeyInfo);
+        }
     }
 
     @Override
