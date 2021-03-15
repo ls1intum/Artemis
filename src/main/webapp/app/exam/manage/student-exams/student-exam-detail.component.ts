@@ -222,6 +222,7 @@ export class StudentExamDetailComponent implements OnInit {
      * get the link for the assessment of a specific submission of the current exercise
      * @param exercise
      * @param submission
+     * @param resultId
      */
     getAssessmentLink(exercise: Exercise, submission?: Submission, resultId?: number) {
         let route = '';

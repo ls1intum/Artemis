@@ -172,7 +172,6 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
         this.participation = this.submission.participation as StudentParticipation;
         this.exercise = this.participation.exercise as FileUploadExercise;
         this.hasAssessmentDueDatePassed = !!this.exercise.assessmentDueDate && moment(this.exercise.assessmentDueDate).isBefore(now());
-        console.log('cr, reId', this.correctionRound, this.resultId, this.submission);
         if (this.resultId && this.resultId !== 0) {
             this.correctionRound = this.submission.results?.findIndex((result) => result.id === this.resultId)!;
             this.result = getSubmissionResultById(this.submission, this.resultId);
