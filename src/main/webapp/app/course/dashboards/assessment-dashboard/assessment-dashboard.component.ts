@@ -17,6 +17,7 @@ import { SortService } from 'app/shared/service/sort.service';
 import { Exam } from 'app/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { getExerciseSubmissionsLink } from 'app/utils/navigation.utils';
 
 @Component({
     selector: 'jhi-courses',
@@ -30,6 +31,7 @@ export class AssessmentDashboardComponent implements OnInit, AfterViewInit {
     exam: Exam;
     courseId: number;
     examId: number;
+    exerciseGroupId: number;
     unfinishedExercises: Exercise[] = [];
     finishedExercises: Exercise[] = [];
     exercises: Exercise[] = [];
@@ -87,6 +89,7 @@ export class AssessmentDashboardComponent implements OnInit, AfterViewInit {
         if (this.isExamMode) {
             this.isTestRun = this.route.snapshot.url[1]?.toString() === 'test-runs';
             this.showFinishedExercises = this.isTestRun;
+            this.exerciseGroupId = Number(this.route.snapshot.paramMap.get('exerciseGroupId'));
         }
         this.loadAll();
         this.accountService.identity().then((user) => (this.tutor = user!));
@@ -299,5 +302,9 @@ export class AssessmentDashboardComponent implements OnInit, AfterViewInit {
             this.isTestRun ? 'test-assessment-dashboard' : 'assessment-dashboard',
             exercise.id!.toString(),
         ];
+    }
+
+    getSubmissionsLinkForExercise(exercise: Exercise): string[] {
+        return getExerciseSubmissionsLink(exercise.type!, this.courseId, exercise.id!, this.examId, this.exerciseGroupId);
     }
 }
