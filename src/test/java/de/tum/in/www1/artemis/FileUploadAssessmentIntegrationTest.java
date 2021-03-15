@@ -59,6 +59,8 @@ public class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrati
 
     private Course course;
 
+    private Double offsetByTenThousandth = 0.0001;
+
     @BeforeEach
     public void initTestCase() {
         database.addUsers(2, 2, 1);
@@ -228,7 +230,7 @@ public class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrati
         // Check that result is capped to maximum of maxScore + bonus points -> 110
         feedbacks.add(new Feedback().credits(25.00).type(FeedbackType.MANUAL_UNREFERENCED).detailText("nice submission 3"));
         response = request.putWithResponseBodyAndParams(API_FILE_UPLOAD_SUBMISSIONS + fileUploadSubmission.getId() + "/feedback", feedbacks, Result.class, HttpStatus.OK, params);
-        assertThat(response.getScore()).isEqualTo(110, Offset.offset(0.00001));
+        assertThat(response.getScore()).isEqualTo(110, Offset.offset(offsetByTenThousandth));
     }
 
     @Test
