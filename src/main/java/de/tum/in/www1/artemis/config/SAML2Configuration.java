@@ -7,6 +7,7 @@ import java.nio.file.Files;
 import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
+import java.security.Security;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
@@ -18,6 +19,7 @@ import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
@@ -52,6 +54,8 @@ public class SAML2Configuration extends WebSecurityConfigurerAdapter {
      */
     public SAML2Configuration(final SAML2Properties properties) {
         this.properties = properties;
+
+        Security.addProvider(new BouncyCastleProvider());
     }
 
     /**
