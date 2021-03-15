@@ -7,6 +7,7 @@ import java.util.stream.Collectors;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.JoinColumn;
 import javax.persistence.JoinTable;
 import javax.persistence.OneToMany;
@@ -42,7 +43,7 @@ public class PlagiarismSubmission<E extends PlagiarismSubmissionElement> extends
     /**
      * List of elements the related submission consists of.
      */
-    @OneToMany(cascade = CascadeType.ALL, targetEntity = PlagiarismSubmissionElement.class)
+    @OneToMany(cascade = CascadeType.ALL, targetEntity = PlagiarismSubmissionElement.class, fetch = FetchType.EAGER)
     @JoinTable(name = "plagiarism_submission_elements", joinColumns = @JoinColumn(name = "plagiarism_submission_id"), inverseJoinColumns = @JoinColumn(name = "plagiarism_submission_element_id"))
     private List<E> elements;
 

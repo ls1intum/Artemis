@@ -1,8 +1,12 @@
 package de.tum.in.www1.artemis.domain.plagiarism;
 
-import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import javax.persistence.CascadeType;
 import javax.persistence.CollectionTable;
@@ -17,6 +21,7 @@ import javax.persistence.Inheritance;
 import javax.persistence.InheritanceType;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
+import javax.persistence.MapKeyColumn;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
@@ -62,9 +67,10 @@ public abstract class PlagiarismResult<E extends PlagiarismSubmissionElement> ex
      * Intervals: 0: [0% - 10%), 1: [10% - 20%), 2: [20% - 30%), ..., 9: [90% - 100%]
      */
     @CollectionTable(name = "plagiarism_result_similarity_distribution", joinColumns = @JoinColumn(name = "plagiarism_result_id"))
+    @MapKeyColumn(name = "idx")
     @Column(name = "value")
     @ElementCollection(fetch = FetchType.EAGER)
-    protected List<Integer> similarityDistribution;
+    protected Map<Integer, Integer> similarityDistribution;
 
     public Set<PlagiarismComparison<E>> getComparisons() {
         return comparisons;
@@ -91,7 +97,7 @@ public abstract class PlagiarismResult<E extends PlagiarismSubmissionElement> ex
     }
 
     public List<Integer> getSimilarityDistribution() {
-        return similarityDistribution;
+        return this.similarityDistribution.entrySet().stream().sorted(Comparator.comparingInt(Entry::getKey)).map(Entry::getValue).collect(Collectors.toList());
     }
 
     /**
@@ -101,9 +107,10 @@ public abstract class PlagiarismResult<E extends PlagiarismSubmissionElement> ex
      * @param similarityDistribution 10-element integer array
      */
     public void setSimilarityDistribution(int[] similarityDistribution) {
-        this.similarityDistribution = new ArrayList<>();
-        for (int value : similarityDistribution) {
-            this.similarityDistribution.add(value);
+        this.similarityDistribution = new HashMap<>();
+
+        for (int i = 0; i < similarityDistribution.length; i++) {
+            this.similarityDistribution.put(i, similarityDistribution[i]);
         }
     }
 }
