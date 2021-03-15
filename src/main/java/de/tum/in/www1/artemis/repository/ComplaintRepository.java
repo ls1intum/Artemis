@@ -329,7 +329,7 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
              FROM
                 Complaint c join c.result r join r.participation p join p.exercise e join e.course co join r.assessor a
              WHERE
-                 c.complaintType = 'FEEDBACK_REQUEST'
+                 c.complaintType = 'MORE_FEEDBACK'
                  and :#{#groupName} member of a.groups
                  and co.id = :courseId
                  and r.completionDate IS NOT NULL
@@ -348,7 +348,7 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
             FROM
                 Complaint c join c.result r join r.participation p join p.exercise e join r.assessor a
             WHERE
-                c.complaintType = 'FEEDBACK_REQUEST'
+                c.complaintType = 'MORE_FEEDBACK'
                 and :#{#groupName} member of a.groups
                 and e.id = :exerciseId
                 and r.completionDate IS NOT NULL
@@ -374,7 +374,7 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
             FROM
                 Complaint c join c.complaintResponse cr join c.result r join r.participation p join p.exercise e join e.course co join r.assessor a
             WHERE
-                c.complaintType = 'FEEDBACK_REQUEST'
+                c.complaintType = 'MORE_FEEDBACK'
                 and :#{#groupName} member of a.groups
                 and co.id = :courseId
                 and r.completionDate IS NOT NULL
@@ -394,7 +394,7 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
             FROM
                 Complaint c join c.complaintResponse cr join c.result r join r.participation p join p.exercise e join r.assessor a
             WHERE
-                c.complaintType = 'FEEDBACK_REQUEST'
+                c.complaintType = 'MORE_FEEDBACK'
                 and :#{#groupName} member of a.groups
                 and e.id = :exerciseId
                 and r.completionDate IS NOT NULL

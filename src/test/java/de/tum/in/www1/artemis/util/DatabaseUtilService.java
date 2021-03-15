@@ -1933,6 +1933,140 @@ public class DatabaseUtilService {
         return courseRepoContent.get(0);
     }
 
+    public Course addCourseWithExercisesAndSubmissions(int numberOfExercises, int numberOfSubmissionPerExercise, int numberOfAssessments, int numberOfComplaints,
+            boolean typeComplaint, int numberComplaintResponses, String validModel) {
+        Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "instructor");
+        var tutors = userRepo.getTutors(course);
+        for (int i = 0; i < numberOfExercises; i++) {
+            var currentUser = tutors.get(i % 4);
+
+            if ((i % 3 + 0) == 0) {
+                ModelingExercise modelingExercise = ModelFactory.generateModelingExercise(pastTimestamp, pastTimestamp, futureTimestamp, DiagramType.ClassDiagram, course);
+                modelingExercise.setTitle("Modeling" + i);
+                course.addExercises(modelingExercise);
+                course = courseRepo.save(course);
+                exerciseRepo.save(modelingExercise);
+                for (int j = 1; j <= numberOfSubmissionPerExercise; j++) {
+                    StudentParticipation participation = createAndSaveParticipationForExercise(modelingExercise, "student" + j);
+                    ModelingSubmission submission = ModelFactory.generateModelingSubmission(validModel, true);
+                    modelSubmissionService.save(submission, modelingExercise, "student" + j);
+                    studentParticipationRepo.save(participation);
+                    if (numberOfAssessments >= j) {
+                        Result result = new Result();
+                        result = resultRepo.save(result);
+                        result.setSubmission(submission);
+                        result.completionDate(pastTimestamp);
+                        result.resultString("1 of 10 points");
+                        result.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+                        result.setAssessor(currentUser);
+                        submission.addResult(result);
+                        participation.addResult(result);
+                        studentParticipationRepo.save(participation);
+                        modelingSubmissionRepo.save(submission);
+                        resultRepo.save(result);
+                        if (numberOfComplaints >= j) {
+                            Complaint complaint = typeComplaint ? new Complaint().complaintType(ComplaintType.COMPLAINT)
+                                    : new Complaint().complaintType(ComplaintType.MORE_FEEDBACK);
+                            complaint.setResult(result);
+                            complaint = complaintRepo.save(complaint);
+                            if (numberComplaintResponses >= j) {
+                                ComplaintResponse complaintResponse = createInitialEmptyResponse(typeComplaint ? "tutor5" : currentUser.getLogin(), complaint);
+                                complaintResponse.getComplaint().setAccepted(true);
+                                complaintResponse.setResponseText(typeComplaint ? "Accepted" : "SomeMoreFeedback");
+                                complaintResponseRepo.save(complaintResponse);
+                                complaint.setComplaintResponse(complaintResponse);
+                                complaintRepo.save(complaint);
+                            }
+                        }
+                    }
+                }
+
+            }
+            else if ((i % 3) == 1) {
+                TextExercise textExercise = ModelFactory.generateTextExercise(pastTimestamp, pastTimestamp, futureTimestamp, course);
+                textExercise.setTitle("Text" + i);
+                course.addExercises(textExercise);
+                course = courseRepo.save(course);
+                exerciseRepo.save(textExercise);
+                for (int j = 1; j <= numberOfSubmissionPerExercise; j++) {
+                    TextSubmission submission = ModelFactory.generateTextSubmission("submissionText", Language.ENGLISH, true);
+                    submission = saveTextSubmission(textExercise, submission, "student" + j);
+                    if (numberOfAssessments >= j) {
+                        Result result = new Result();
+                        result = resultRepo.save(result);
+                        result.setSubmission(submission);
+                        result.completionDate(pastTimestamp);
+                        result.resultString("3 of 10 points");
+                        result.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+                        result.setAssessor(currentUser);
+                        submission.addResult(result);
+                        StudentParticipation participation = (StudentParticipation) submission.getParticipation();
+                        participation.addResult(result);
+                        studentParticipationRepo.save(participation);
+                        textSubmissionRepo.save(submission);
+                        resultRepo.save(result);
+                        if (numberOfComplaints >= j) {
+                            Complaint complaint = typeComplaint ? new Complaint().complaintType(ComplaintType.COMPLAINT)
+                                    : new Complaint().complaintType(ComplaintType.MORE_FEEDBACK);
+                            complaint.setResult(result);
+                            complaint = complaintRepo.save(complaint);
+                            if (numberComplaintResponses >= j) {
+                                ComplaintResponse complaintResponse = createInitialEmptyResponse(typeComplaint ? "tutor5" : currentUser.getLogin(), complaint);
+                                complaintResponse.getComplaint().setAccepted(true);
+                                complaintResponse.setResponseText(typeComplaint ? "Accepted" : "SomeMoreFeedback");
+                                complaintResponseRepo.save(complaintResponse);
+                                complaint.setComplaintResponse(complaintResponse);
+                                complaintRepo.save(complaint);
+                            }
+                        }
+                    }
+                }
+            }
+            else if ((i % 3) == 2) {
+                FileUploadExercise fileUploadExercise = ModelFactory.generateFileUploadExercise(pastTimestamp, pastTimestamp, futureTimestamp, "png,pdf", course);
+                fileUploadExercise.setTitle("FileUpload" + i);
+                course.addExercises(fileUploadExercise);
+                course = courseRepo.save(course);
+                exerciseRepo.save(fileUploadExercise);
+                for (int j = 1; j <= numberOfSubmissionPerExercise; j++) {
+                    FileUploadSubmission submission = ModelFactory.generateFileUploadSubmissionWithFile(true, "path/to/file.pdf");
+                    saveFileUploadSubmission(fileUploadExercise, submission, "student" + j);
+                    if (numberOfAssessments >= j) {
+                        Result result = new Result();
+                        result = resultRepo.save(result);
+                        result.setSubmission(submission);
+                        result.completionDate(pastTimestamp);
+                        result.resultString("2 of 10 points");
+                        result.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+                        result.setAssessor(currentUser);
+                        submission.addResult(result);
+                        StudentParticipation participation = (StudentParticipation) submission.getParticipation();
+                        participation.addResult(result);
+                        studentParticipationRepo.save(participation);
+                        fileUploadSubmissionRepo.save(submission);
+                        resultRepo.save(result);
+                        if (numberOfComplaints >= j) {
+                            Complaint complaint = typeComplaint ? new Complaint().complaintType(ComplaintType.COMPLAINT)
+                                    : new Complaint().complaintType(ComplaintType.MORE_FEEDBACK);
+                            complaint.setResult(result);
+                            complaint = complaintRepo.save(complaint);
+                            if (numberComplaintResponses >= j) {
+                                ComplaintResponse complaintResponse = createInitialEmptyResponse(typeComplaint ? "tutor5" : currentUser.getLogin(), complaint);
+                                complaintResponse.getComplaint().setAccepted(true);
+                                complaintResponse.setResponseText(typeComplaint ? "Accepted" : "SomeMoreFeedback");
+                                complaintResponseRepo.save(complaintResponse);
+                                complaint.setComplaintResponse(complaintResponse);
+                                complaintRepo.save(complaint);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        course = courseRepo.save(course);
+        return course;
+    }
+
     /**
      * Stores for the given model a submission of the user and initiates the corresponding Result
      *
@@ -2143,6 +2277,14 @@ public class DatabaseUtilService {
     public FileUploadSubmission saveFileUploadSubmissionWithResultAndAssessor(FileUploadExercise fileUploadExercise, FileUploadSubmission fileUploadSubmission, String login,
             String assessorLogin) {
         return saveFileUploadSubmissionWithResultAndAssessorFeedback(fileUploadExercise, fileUploadSubmission, login, assessorLogin, new ArrayList<>());
+    }
+
+    public FileUploadSubmission saveFileUploadSubmission(FileUploadExercise exercise, FileUploadSubmission submission, String login) {
+        StudentParticipation participation = createAndSaveParticipationForExercise(exercise, login);
+        participation.addSubmission(submission);
+        submission.setParticipation(participation);
+        submission = fileUploadSubmissionRepo.save(submission);
+        return submission;
     }
 
     public TextSubmission saveTextSubmission(TextExercise exercise, TextSubmission submission, String login) {

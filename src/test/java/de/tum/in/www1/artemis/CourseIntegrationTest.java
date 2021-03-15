@@ -87,7 +87,7 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     @Autowired
     ProgrammingExerciseRepository programmingExerciseRepository;
 
-    private final int numberOfStudents = 4;
+    private final int numberOfStudents = 8;
 
     private final int numberOfTutors = 5;
 
@@ -661,45 +661,185 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testGetAssessmentDashboardStats_withComplaints() throws Exception {
-        getAssessmentDashboardsStatsWithComplaints(true);
-    }
-
-    @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
-    public void testGetAssessmentDashboardStats_withComplaints_withoutPoints() throws Exception {
-        getAssessmentDashboardsStatsWithComplaints(false);
-    }
-
-    private void getAssessmentDashboardsStatsWithComplaints(boolean withPoints) throws Exception {
-        Course testCourse = database.addCourseWithOneReleasedTextExercise();
-        var points = withPoints ? 15L : null;
-        var userId = database.getUserByLogin("tutor1").getId();
-        var exerciseId = testCourse.getExercises().iterator().next().getId();
-        // TODO: save does not really make sense here, we simply need to insert assessments, complaints and complaint responses into the database
-        // tutorLeaderboardComplaintsRepository.save(new TutorLeaderboardComplaints(userId, exerciseId, 3L, 1L, points, testCourse.getId()));
-        // tutorLeaderboardComplaintResponsesRepository.save(new TutorLeaderboardComplaintResponses(userId, exerciseId, 1L, points, testCourse.getId()));
-        // tutorLeaderboardAnsweredMoreFeedbackRequestsRepository.save(new TutorLeaderboardAnsweredMoreFeedbackRequests(userId, exerciseId, 1L, points, testCourse.getId()));
-        // tutorLeaderboardMoreFeedbackRequestsRepository.save(new TutorLeaderboardMoreFeedbackRequests(userId, exerciseId, 3L, 1L, points, testCourse.getId()));
-        // tutorLeaderboardAssessmentRepository.save(new TutorLeaderboardAssessment(userId, exerciseId, 2L, points, testCourse.getId()));
+    public void testGetAssessmentDashboardStats_withoutAssessments() throws Exception {
+        String validModel = FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
+        // create 6 * 4 = 24 submissions
+        Course testCourse = database.addCourseWithExercisesAndSubmissions(6, 4, 0, 0, true, 0, validModel);
 
         StatsForInstructorDashboardDTO stats = request.get("/api/courses/" + testCourse.getId() + "/stats-for-assessment-dashboard", HttpStatus.OK,
                 StatsForInstructorDashboardDTO.class);
         // TODO: rewrite the assert statements after inserting actual test date (see TODO above)
-        // var currentTutorLeaderboard = stats.getTutorLeaderboardEntries().get(0);
-        // assertThat(currentTutorLeaderboard.getNumberOfTutorComplaints()).isEqualTo(3);
-        // assertThat(currentTutorLeaderboard.getNumberOfAcceptedComplaints()).isEqualTo(1);
-        // assertThat(currentTutorLeaderboard.getNumberOfComplaintResponses()).isEqualTo(1);
-        // assertThat(currentTutorLeaderboard.getNumberOfAnsweredMoreFeedbackRequests()).isEqualTo(1);
-        // assertThat(currentTutorLeaderboard.getNumberOfNotAnsweredMoreFeedbackRequests()).isEqualTo(1);
-        // assertThat(currentTutorLeaderboard.getNumberOfTutorMoreFeedbackRequests()).isEqualTo(3);
-        // assertThat(currentTutorLeaderboard.getNumberOfAssessments()).isEqualTo(2);
-        // if (withPoints) {
-        // assertThat(currentTutorLeaderboard.getPoints()).isEqualTo(0);
-        // }
-        // else {
-        // assertThat(currentTutorLeaderboard.getPoints()).isEqualTo(1);
-        // }
+        var currentTutorLeaderboard = stats.getTutorLeaderboardEntries().get(0);
+        assertThat(currentTutorLeaderboard.getNumberOfTutorComplaints()).isEqualTo(0);
+        assertThat(currentTutorLeaderboard.getNumberOfAcceptedComplaints()).isEqualTo(0);
+        assertThat(currentTutorLeaderboard.getNumberOfComplaintResponses()).isEqualTo(0);
+        assertThat(currentTutorLeaderboard.getNumberOfAnsweredMoreFeedbackRequests()).isEqualTo(0);
+        assertThat(currentTutorLeaderboard.getNumberOfNotAnsweredMoreFeedbackRequests()).isEqualTo(0);
+        assertThat(currentTutorLeaderboard.getNumberOfTutorMoreFeedbackRequests()).isEqualTo(0);
+        assertThat(currentTutorLeaderboard.getNumberOfAssessments()).isEqualTo(0);
+        assertThat(currentTutorLeaderboard.getPoints()).isEqualTo(0);
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testGetAssessmentDashboardStats_withAssessments() throws Exception {
+        String validModel = FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
+        Course testCourse = database.addCourseWithExercisesAndSubmissions(6, 4, 2, 0, true, 0, validModel);
+        StatsForInstructorDashboardDTO stats = request.get("/api/courses/" + testCourse.getId() + "/stats-for-assessment-dashboard", HttpStatus.OK,
+                StatsForInstructorDashboardDTO.class);
+        // the first two tutors did assess 2 submissions in 2 exercises. The second two only 2 in one exercise.
+        assertThat(stats.getTutorLeaderboardEntries().get(0).getNumberOfAssessments()).isEqualTo(4);
+        assertThat(stats.getTutorLeaderboardEntries().get(1).getNumberOfAssessments()).isEqualTo(4);
+        assertThat(stats.getTutorLeaderboardEntries().get(2).getNumberOfAssessments()).isEqualTo(2);
+        assertThat(stats.getTutorLeaderboardEntries().get(3).getNumberOfAssessments()).isEqualTo(2);
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testGetAssessmentDashboardStats_withAssessmentsAndComplaints() throws Exception {
+        String validModel = FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
+        Course testCourse = database.addCourseWithExercisesAndSubmissions(6, 4, 4, 2, true, 0, validModel);
+        StatsForInstructorDashboardDTO stats = request.get("/api/courses/" + testCourse.getId() + "/stats-for-assessment-dashboard", HttpStatus.OK,
+                StatsForInstructorDashboardDTO.class);
+        // the first two tutors did assess 2 submissions in 2 exercises. The second two only 2 in one exercise.
+        assertThat(stats.getTutorLeaderboardEntries().get(0).getNumberOfAssessments()).isEqualTo(8);
+        assertThat(stats.getTutorLeaderboardEntries().get(1).getNumberOfAssessments()).isEqualTo(8);
+        assertThat(stats.getTutorLeaderboardEntries().get(2).getNumberOfAssessments()).isEqualTo(4);
+        assertThat(stats.getTutorLeaderboardEntries().get(3).getNumberOfAssessments()).isEqualTo(4);
+
+        assertThat(stats.getTutorLeaderboardEntries().get(0).getNumberOfTutorComplaints()).isEqualTo(4);
+        assertThat(stats.getTutorLeaderboardEntries().get(1).getNumberOfTutorComplaints()).isEqualTo(4);
+        assertThat(stats.getTutorLeaderboardEntries().get(2).getNumberOfTutorComplaints()).isEqualTo(2);
+        assertThat(stats.getTutorLeaderboardEntries().get(3).getNumberOfTutorComplaints()).isEqualTo(2);
+
+        assertThat(stats.getTutorLeaderboardEntries().get(0).getNumberOfNotAnsweredMoreFeedbackRequests()).isEqualTo(0);
+        assertThat(stats.getTutorLeaderboardEntries().get(1).getNumberOfNotAnsweredMoreFeedbackRequests()).isEqualTo(0);
+        assertThat(stats.getTutorLeaderboardEntries().get(2).getNumberOfNotAnsweredMoreFeedbackRequests()).isEqualTo(0);
+        assertThat(stats.getTutorLeaderboardEntries().get(3).getNumberOfNotAnsweredMoreFeedbackRequests()).isEqualTo(0);
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testGetAssessmentDashboardStats_withAssessmentsAndFeedbackRequests() throws Exception {
+        String validModel = FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
+        Course testCourse = database.addCourseWithExercisesAndSubmissions(6, 4, 4, 2, false, 0, validModel);
+        StatsForInstructorDashboardDTO stats = request.get("/api/courses/" + testCourse.getId() + "/stats-for-assessment-dashboard", HttpStatus.OK,
+                StatsForInstructorDashboardDTO.class);
+        // the first two tutors did assess 2 submissions in 2 exercises. The second two only 2 in one exercise.
+        assertThat(stats.getTutorLeaderboardEntries().get(0).getNumberOfAssessments()).isEqualTo(8);
+        assertThat(stats.getTutorLeaderboardEntries().get(1).getNumberOfAssessments()).isEqualTo(8);
+        assertThat(stats.getTutorLeaderboardEntries().get(2).getNumberOfAssessments()).isEqualTo(4);
+        assertThat(stats.getTutorLeaderboardEntries().get(3).getNumberOfAssessments()).isEqualTo(4);
+
+        assertThat(stats.getTutorLeaderboardEntries().get(0).getNumberOfTutorComplaints()).isEqualTo(0);
+        assertThat(stats.getTutorLeaderboardEntries().get(1).getNumberOfTutorComplaints()).isEqualTo(0);
+        assertThat(stats.getTutorLeaderboardEntries().get(2).getNumberOfTutorComplaints()).isEqualTo(0);
+        assertThat(stats.getTutorLeaderboardEntries().get(3).getNumberOfTutorComplaints()).isEqualTo(0);
+
+        assertThat(stats.getTutorLeaderboardEntries().get(0).getNumberOfNotAnsweredMoreFeedbackRequests()).isEqualTo(4);
+        assertThat(stats.getTutorLeaderboardEntries().get(1).getNumberOfNotAnsweredMoreFeedbackRequests()).isEqualTo(4);
+        assertThat(stats.getTutorLeaderboardEntries().get(2).getNumberOfNotAnsweredMoreFeedbackRequests()).isEqualTo(2);
+        assertThat(stats.getTutorLeaderboardEntries().get(3).getNumberOfNotAnsweredMoreFeedbackRequests()).isEqualTo(2);
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testGetAssessmentDashboardStats_withAssessmentsAndComplaintsAndResponses() throws Exception {
+        String validModel = FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
+        Course testCourse = database.addCourseWithExercisesAndSubmissions(6, 4, 4, 2, true, 1, validModel);
+        StatsForInstructorDashboardDTO stats = request.get("/api/courses/" + testCourse.getId() + "/stats-for-assessment-dashboard", HttpStatus.OK,
+                StatsForInstructorDashboardDTO.class);
+        // the first two tutors did assess 2 submissions in 2 exercises. The second two only 2 in one exercise.
+        assertThat(stats.getTutorLeaderboardEntries().get(0).getNumberOfAssessments()).isEqualTo(8);
+        assertThat(stats.getTutorLeaderboardEntries().get(1).getNumberOfAssessments()).isEqualTo(8);
+        assertThat(stats.getTutorLeaderboardEntries().get(2).getNumberOfAssessments()).isEqualTo(4);
+        assertThat(stats.getTutorLeaderboardEntries().get(3).getNumberOfAssessments()).isEqualTo(4);
+        assertThat(stats.getTutorLeaderboardEntries().get(4).getNumberOfAssessments()).isEqualTo(0);
+
+        assertThat(stats.getTutorLeaderboardEntries().get(0).getNumberOfTutorComplaints()).isEqualTo(4);
+        assertThat(stats.getTutorLeaderboardEntries().get(1).getNumberOfTutorComplaints()).isEqualTo(4);
+        assertThat(stats.getTutorLeaderboardEntries().get(2).getNumberOfTutorComplaints()).isEqualTo(2);
+        assertThat(stats.getTutorLeaderboardEntries().get(3).getNumberOfTutorComplaints()).isEqualTo(2);
+        assertThat(stats.getTutorLeaderboardEntries().get(4).getNumberOfTutorComplaints()).isEqualTo(0);
+
+        assertThat(stats.getTutorLeaderboardEntries().get(0).getNumberOfAcceptedComplaints()).isEqualTo(2);
+        assertThat(stats.getTutorLeaderboardEntries().get(1).getNumberOfAcceptedComplaints()).isEqualTo(2);
+        assertThat(stats.getTutorLeaderboardEntries().get(2).getNumberOfAcceptedComplaints()).isEqualTo(1);
+        assertThat(stats.getTutorLeaderboardEntries().get(3).getNumberOfAcceptedComplaints()).isEqualTo(1);
+        assertThat(stats.getTutorLeaderboardEntries().get(4).getNumberOfAcceptedComplaints()).isEqualTo(0);
+
+        assertThat(stats.getTutorLeaderboardEntries().get(0).getNumberOfComplaintResponses()).isEqualTo(0);
+        assertThat(stats.getTutorLeaderboardEntries().get(1).getNumberOfComplaintResponses()).isEqualTo(0);
+        assertThat(stats.getTutorLeaderboardEntries().get(2).getNumberOfComplaintResponses()).isEqualTo(0);
+        assertThat(stats.getTutorLeaderboardEntries().get(3).getNumberOfComplaintResponses()).isEqualTo(0);
+        assertThat(stats.getTutorLeaderboardEntries().get(4).getNumberOfComplaintResponses()).isEqualTo(6);
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testGetAssessmentDashboardStats_withAssessmentsAndFeedBackRequestsAndResponses() throws Exception {
+        String validModel = FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
+        Course testCourse = database.addCourseWithExercisesAndSubmissions(6, 4, 4, 2, false, 1, validModel);
+        StatsForInstructorDashboardDTO stats = request.get("/api/courses/" + testCourse.getId() + "/stats-for-assessment-dashboard", HttpStatus.OK,
+                StatsForInstructorDashboardDTO.class);
+        // the first two tutors did assess 2 submissions in 2 exercises. The second two only 2 in one exercise.
+        assertThat(stats.getTutorLeaderboardEntries().get(0).getNumberOfAssessments()).isEqualTo(8);
+        assertThat(stats.getTutorLeaderboardEntries().get(1).getNumberOfAssessments()).isEqualTo(8);
+        assertThat(stats.getTutorLeaderboardEntries().get(2).getNumberOfAssessments()).isEqualTo(4);
+        assertThat(stats.getTutorLeaderboardEntries().get(3).getNumberOfAssessments()).isEqualTo(4);
+        assertThat(stats.getTutorLeaderboardEntries().get(4).getNumberOfAssessments()).isEqualTo(0);
+
+        assertThat(stats.getTutorLeaderboardEntries().get(0).getNumberOfTutorMoreFeedbackRequests()).isEqualTo(4);
+        assertThat(stats.getTutorLeaderboardEntries().get(1).getNumberOfTutorMoreFeedbackRequests()).isEqualTo(4);
+        assertThat(stats.getTutorLeaderboardEntries().get(2).getNumberOfTutorMoreFeedbackRequests()).isEqualTo(2);
+        assertThat(stats.getTutorLeaderboardEntries().get(3).getNumberOfTutorMoreFeedbackRequests()).isEqualTo(2);
+        assertThat(stats.getTutorLeaderboardEntries().get(4).getNumberOfTutorMoreFeedbackRequests()).isEqualTo(0);
+
+        assertThat(stats.getTutorLeaderboardEntries().get(0).getNumberOfNotAnsweredMoreFeedbackRequests()).isEqualTo(2);
+        assertThat(stats.getTutorLeaderboardEntries().get(1).getNumberOfNotAnsweredMoreFeedbackRequests()).isEqualTo(2);
+        assertThat(stats.getTutorLeaderboardEntries().get(2).getNumberOfNotAnsweredMoreFeedbackRequests()).isEqualTo(1);
+        assertThat(stats.getTutorLeaderboardEntries().get(3).getNumberOfNotAnsweredMoreFeedbackRequests()).isEqualTo(1);
+        assertThat(stats.getTutorLeaderboardEntries().get(4).getNumberOfNotAnsweredMoreFeedbackRequests()).isEqualTo(0);
+
+        assertThat(stats.getTutorLeaderboardEntries().get(0).getNumberOfAnsweredMoreFeedbackRequests()).isEqualTo(2);
+        assertThat(stats.getTutorLeaderboardEntries().get(1).getNumberOfAnsweredMoreFeedbackRequests()).isEqualTo(2);
+        assertThat(stats.getTutorLeaderboardEntries().get(2).getNumberOfAnsweredMoreFeedbackRequests()).isEqualTo(1);
+        assertThat(stats.getTutorLeaderboardEntries().get(3).getNumberOfAnsweredMoreFeedbackRequests()).isEqualTo(1);
+        assertThat(stats.getTutorLeaderboardEntries().get(4).getNumberOfAnsweredMoreFeedbackRequests()).isEqualTo(0);
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testGetAssessmentDashboardStats_withAssessmentsAndComplaintsAndResponses_Large() throws Exception {
+        String validModel = FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
+        Course testCourse = database.addCourseWithExercisesAndSubmissions(9, 8, 8, 5, true, 5, validModel);
+        StatsForInstructorDashboardDTO stats = request.get("/api/courses/" + testCourse.getId() + "/stats-for-assessment-dashboard", HttpStatus.OK,
+                StatsForInstructorDashboardDTO.class);
+        // the first two tutors did assess 8 submissions of 3 exercises. The rest two only 8 of two exercises.
+        assertThat(stats.getTutorLeaderboardEntries().get(0).getNumberOfAssessments()).isEqualTo(3 * 8);
+        assertThat(stats.getTutorLeaderboardEntries().get(1).getNumberOfAssessments()).isEqualTo(2 * 8);
+        assertThat(stats.getTutorLeaderboardEntries().get(2).getNumberOfAssessments()).isEqualTo(2 * 8);
+        assertThat(stats.getTutorLeaderboardEntries().get(3).getNumberOfAssessments()).isEqualTo(2 * 8);
+        assertThat(stats.getTutorLeaderboardEntries().get(4).getNumberOfAssessments()).isEqualTo(0);
+
+        assertThat(stats.getTutorLeaderboardEntries().get(0).getNumberOfTutorComplaints()).isEqualTo(3 * 5);
+        assertThat(stats.getTutorLeaderboardEntries().get(1).getNumberOfTutorComplaints()).isEqualTo(2 * 5);
+        assertThat(stats.getTutorLeaderboardEntries().get(2).getNumberOfTutorComplaints()).isEqualTo(2 * 5);
+        assertThat(stats.getTutorLeaderboardEntries().get(3).getNumberOfTutorComplaints()).isEqualTo(2 * 5);
+        assertThat(stats.getTutorLeaderboardEntries().get(4).getNumberOfTutorComplaints()).isEqualTo(0);
+
+        assertThat(stats.getTutorLeaderboardEntries().get(0).getNumberOfAcceptedComplaints()).isEqualTo(3 * 5);
+        assertThat(stats.getTutorLeaderboardEntries().get(1).getNumberOfAcceptedComplaints()).isEqualTo(2 * 5);
+        assertThat(stats.getTutorLeaderboardEntries().get(2).getNumberOfAcceptedComplaints()).isEqualTo(2 * 5);
+        assertThat(stats.getTutorLeaderboardEntries().get(3).getNumberOfAcceptedComplaints()).isEqualTo(2 * 5);
+        assertThat(stats.getTutorLeaderboardEntries().get(4).getNumberOfAcceptedComplaints()).isEqualTo(0);
+
+        assertThat(stats.getTutorLeaderboardEntries().get(0).getNumberOfComplaintResponses()).isEqualTo(0);
+        assertThat(stats.getTutorLeaderboardEntries().get(1).getNumberOfComplaintResponses()).isEqualTo(0);
+        assertThat(stats.getTutorLeaderboardEntries().get(2).getNumberOfComplaintResponses()).isEqualTo(0);
+        assertThat(stats.getTutorLeaderboardEntries().get(3).getNumberOfComplaintResponses()).isEqualTo(0);
+        // 9 exercises, for each one there are 5 complaintResponese
+        assertThat(stats.getTutorLeaderboardEntries().get(4).getNumberOfComplaintResponses()).isEqualTo(9 * 5);
     }
 
     @Test
@@ -720,7 +860,7 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
             assertThat(courseOnly.getMaxComplaints()).as("Max complaints is correct").isEqualTo(3);
             assertThat(courseOnly.getPresentationScore()).as("Presentation score is correct").isEqualTo(2);
             assertThat(courseOnly.getExercises().size()).as("Course without exercises contains no exercises").isZero();
-            assertThat(courseOnly.getNumberOfStudents()).as("Amount of students is correct").isEqualTo(4);
+            assertThat(courseOnly.getNumberOfStudents()).as("Amount of students is correct").isEqualTo(8);
             assertThat(courseOnly.getNumberOfTeachingAssistants()).as("Amount of teaching assistants is correct").isEqualTo(5);
             assertThat(courseOnly.getNumberOfInstructors()).as("Amount of instructors is correct").isEqualTo(1);
 
