@@ -113,6 +113,7 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
         gitlabRequestMockProvider.mockCreateRepository(exerciseToBeImported, targetTemplateRepoName);
         gitlabRequestMockProvider.mockCreateRepository(exerciseToBeImported, targetSolutionRepoName);
         gitlabRequestMockProvider.mockCreateRepository(exerciseToBeImported, targetTestsRepoName);
+        gitlabRequestMockProvider.mockGetDefaultBranch("master", exerciseToBeImported.getVcsTemplateRepositoryUrl());
         gitlabRequestMockProvider.mockAddAuthenticatedWebHook();
         gitlabRequestMockProvider.mockAddAuthenticatedWebHook();
         gitlabRequestMockProvider.mockAddAuthenticatedWebHook();
