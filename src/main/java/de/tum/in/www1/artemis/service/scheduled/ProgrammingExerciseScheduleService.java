@@ -9,6 +9,9 @@ import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
 import javax.validation.constraints.NotNull;
 
+import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
+import de.tum.in.www1.artemis.service.connectors.GitService;
+import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
@@ -54,9 +57,11 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
 
     private final ExamDateService examDateService;
 
+    private final GitService gitService;
+
     public ProgrammingExerciseScheduleService(ScheduleService scheduleService, ProgrammingExerciseRepository programmingExerciseRepository, Environment env,
             ProgrammingSubmissionService programmingSubmissionService, GroupNotificationService groupNotificationService, ExamDateService examDateService,
-            ProgrammingExerciseParticipationService programmingExerciseParticipationService, StudentExamRepository studentExamRepository) {
+            ProgrammingExerciseParticipationService programmingExerciseParticipationService, StudentExamRepository studentExamRepository, GitService gitService) {
         this.scheduleService = scheduleService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingSubmissionService = programmingSubmissionService;
@@ -65,6 +70,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
         this.examDateService = examDateService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.env = env;
+        this.gitService = gitService;
     }
 
     @PostConstruct
@@ -79,18 +85,13 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
             }
             SecurityUtils.setAuthorizationObject();
 
-            List<ProgrammingExercise> programmingExercisesWithBuildAfterDueDate = programmingExerciseRepository
-                    .findAllByBuildAndTestStudentSubmissionsAfterDueDateAfterDate(ZonedDateTime.now());
-            programmingExercisesWithBuildAfterDueDate.forEach(this::scheduleExercise);
-
-            List<ProgrammingExercise> programmingExercisesWithFutureManualAssessment = programmingExerciseRepository
-                    .findAllByManualAssessmentAndDueDateAfterDate(ZonedDateTime.now());
-            programmingExercisesWithFutureManualAssessment.forEach(this::scheduleExercise);
+            List<ProgrammingExercise> exercisesToBeScheduled = programmingExerciseRepository.findAllToBeScheduled(ZonedDateTime.now());
+            exercisesToBeScheduled.forEach(this::scheduleExercise);
 
             List<ProgrammingExercise> programmingExercisesWithExam = programmingExerciseRepository.findAllWithEagerExamByExamEndDateAfterDate(ZonedDateTime.now());
             programmingExercisesWithExam.forEach(this::scheduleExamExercise);
-            log.info("Scheduled " + programmingExercisesWithBuildAfterDueDate.size() + " programming exercises with a buildAndTestAfterDueDate.");
-            log.info("Scheduled " + programmingExercisesWithFutureManualAssessment.size() + " programming exercises with future manual assessment.");
+
+            log.info("Scheduled " + exercisesToBeScheduled.size() + " programming exercises.");
             log.info("Scheduled " + programmingExercisesWithExam.size() + " exam programming exercises.");
         }
         catch (Exception e) {
@@ -148,6 +149,22 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
     }
 
     private void scheduleCourseExercise(ProgrammingExercise exercise) {
+
+        // For any course exercise with a valid release date
+        if (exercise.getReleaseDate() != null && ZonedDateTime.now().isBefore(exercise.getReleaseDate())) {
+            scheduleService.scheduleTask(exercise, ExerciseLifecycle.RELEASE, () -> {
+                try {
+                    gitService.combineAllCommitsOfRepositoryIntoOne(exercise.getRepositoryURL(RepositoryType.TEMPLATE));
+                } catch (InterruptedException e) {
+                    log.error("Failed to schedule combining of template commits of exercise " + exercise.getId(), e);
+                } catch (GitAPIException e) {
+                    log.error("Failed to communicate with GitAPI for combining template commits of exercise " + exercise.getId(), e);
+                }
+            });
+            log.debug("Scheduled combining template commits before release date for Programming Exercise \"" + exercise.getTitle() + "\" (#" + exercise.getId() + ") for "
+                + exercise.getReleaseDate() + ".");
+        }
+
         // For any course exercise that needsToBeScheduled (buildAndTestAfterDueDate and/or manual assessment)
         if (exercise.getDueDate() != null && ZonedDateTime.now().isBefore(exercise.getDueDate())) {
             scheduleService.scheduleTask(exercise, ExerciseLifecycle.DUE, lockAllStudentRepositories(exercise));
@@ -157,6 +174,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
         else {
             scheduleService.cancelScheduledTaskForLifecycle(exercise, ExerciseLifecycle.DUE);
         }
+
         // For exercises with buildAndTestAfterDueDate
         if (exercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null && ZonedDateTime.now().isBefore(exercise.getBuildAndTestStudentSubmissionsAfterDueDate())) {
             scheduleService.scheduleTask(exercise, ExerciseLifecycle.BUILD_AND_TEST_AFTER_DUE_DATE, buildAndTestRunnableForExercise(exercise));

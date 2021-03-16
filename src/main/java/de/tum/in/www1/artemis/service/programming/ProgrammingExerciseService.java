@@ -579,18 +579,6 @@ public class ProgrammingExerciseService {
     }
 
     /**
-     * Combine all commits of the given repository into one.
-     *
-     * @param repoUrl of the repository to combine.
-     * @throws InterruptedException If the checkout fails
-     * @throws GitAPIException      If the checkout fails
-     */
-    public void combineAllCommitsOfRepositoryIntoOne(VcsRepositoryUrl repoUrl) throws InterruptedException, GitAPIException {
-        Repository exerciseRepository = gitService.getOrCheckoutRepository(repoUrl, true);
-        gitService.combineAllCommitsIntoInitialCommit(exerciseRepository);
-    }
-
-    /**
      * Updates the timeline attributes of the given programming exercise
      * @param updatedProgrammingExercise containing the changes that have to be saved
      * @param notificationText optional text for a notification to all students about the update
