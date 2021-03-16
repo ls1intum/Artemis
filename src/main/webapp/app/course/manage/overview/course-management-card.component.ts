@@ -23,6 +23,7 @@ export class CourseManagementCardComponent implements OnChanges {
     @Input() course: Course;
     @Input() courseDetails: CourseManagementOverviewDto;
     @Input() courseStatistics: CourseManagementOverviewStatisticsDto;
+    @Input() courseWithUsers: Course;
     @Input() isGuidedTour: boolean;
 
     statisticsPerExercise = new Map<number, CourseManagementOverviewExerciseStatisticsDTO>();

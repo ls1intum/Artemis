@@ -28,6 +28,7 @@ export class CourseManagementComponent implements OnInit, OnDestroy, AfterViewIn
     courses: Course[];
     details = new Map<number, CourseManagementOverviewDto>();
     statistics = new Map<number, CourseManagementOverviewStatisticsDto>();
+    coursesWithUsers = new Map<number, Course>();
     courseSemesters: string[];
     semesterCollapsed: { [key: string]: boolean };
     coursesBySemester: { [key: string]: Course[] };
@@ -101,12 +102,7 @@ export class CourseManagementComponent implements OnInit, OnDestroy, AfterViewIn
                 // First fetch important data like title for each course
                 this.courseManagementService.getExercisesForManagementOverview(this.showOnlyActive).subscribe(
                     (result: HttpResponse<CourseManagementOverviewDto[]>) => {
-                        result.body!.forEach((dto) => {
-                            this.details[dto.courseId] = dto;
-                            if (!this.statistics[dto.courseId]) {
-                                this.statistics[dto.courseId] = new CourseManagementOverviewStatisticsDto();
-                            }
-                        });
+                        result.body!.forEach((dto) => (this.details[dto.courseId] = dto));
                     },
                     (result: HttpErrorResponse) => onError(this.jhiAlertService, result, false),
                 );
@@ -121,14 +117,8 @@ export class CourseManagementComponent implements OnInit, OnDestroy, AfterViewIn
                 this.courseManagementService.getWithUserStats({ onlyActive: this.showOnlyActive }).subscribe(
                     (result: HttpResponse<Course[]>) => {
                         this.courseForGuidedTour = this.guidedTourService.enableTourForCourseOverview(result.body!, tutorAssessmentTour, true);
-                        for (const course of this.courses) {
-                            const courseWithUsers = result.body!.find((c) => c.id === course.id);
-                            if (courseWithUsers) {
-                                course.numberOfStudents = courseWithUsers.numberOfStudents;
-                                course.numberOfTeachingAssistants = courseWithUsers.numberOfTeachingAssistants;
-                                course.numberOfInstructors = courseWithUsers.numberOfInstructors;
-                            }
-                        }
+                        // We use this extra map of courses to improve performance by allowing us to use OnPush change detection
+                        result.body!.forEach((c) => (this.coursesWithUsers[c.id!] = c));
                     },
                     (result: HttpErrorResponse) => onError(this.jhiAlertService, result, false),
                 );
