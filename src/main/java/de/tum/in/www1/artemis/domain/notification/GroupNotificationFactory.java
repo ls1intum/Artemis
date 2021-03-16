@@ -81,7 +81,7 @@ public class GroupNotificationFactory {
             }
             case DUPLICATE_TEST_CASE -> {
                 title = "Duplicate test case was found.";
-                text = "Exercise \"" + exercise.getTitle() + "\" has duplicated test cases.";
+                text = "Exercise \"" + exercise.getTitle() + "\" has multiple test cases with the same name.";
             }
 
             default -> throw new UnsupportedOperationException("Unsupported NotificationType: " + notificationType);

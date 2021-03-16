@@ -390,15 +390,15 @@ public class ProgrammingExerciseGradingService {
     private boolean createFeedbackForDuplicateTests(Result result, ProgrammingExercise programmingExercise) {
         Set<String> uniqueFeedbackNames = new HashSet<>();
         // Find duplicate test cases from feedback which is automatic feedback
-        // Set.add() returns false if the element was already in the set, this is how we find all duplicates
         Set<String> duplicateFeedbackNames = result.getFeedbacks().stream()
                 .filter(feedback -> !feedback.isStaticCodeAnalysisFeedback() && FeedbackType.AUTOMATIC.equals(feedback.getType())).map(Feedback::getText)
+                // Set.add() returns false if the element was already in the set, this is how we find all duplicates
                 .filter(fbName -> !uniqueFeedbackNames.add(fbName)).collect(Collectors.toSet());
 
         if (!duplicateFeedbackNames.isEmpty()) {
+            String duplicateDetailText = "This is a duplicate test case. Please review all your test cases and verify that your test cases have unique names!";
             List<Feedback> feedbacksForDuplicateTestCases = duplicateFeedbackNames.stream()
-                    .map(feedbackName -> new Feedback().type(FeedbackType.AUTOMATIC).text(feedbackName + " - Duplicate Test Case!")
-                            .detailText("This is a duplicate test case. Please review all your test cases and verify that you only use unique test cases!").positive(false))
+                    .map(feedbackName -> new Feedback().type(FeedbackType.AUTOMATIC).text(feedbackName + " - Duplicate Test Case!").detailText(duplicateDetailText).positive(false))
                     .collect(Collectors.toList());
             result.addFeedbacks(feedbacksForDuplicateTestCases);
             String notificationText = TEST_CASES_DUPLICATE_NOTIFICATION + String.join(", ", duplicateFeedbackNames);

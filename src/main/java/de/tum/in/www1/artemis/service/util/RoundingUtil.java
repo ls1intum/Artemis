@@ -20,18 +20,6 @@ public class RoundingUtil {
     }
 
     /**
-     * Rounds a double to four decimal places after the comma
-     * <p>
-     * 99.99999 -> 100.0000
-     *
-     * @param number number to round to four decimal places
-     * @return number rounded to four decimal places
-     */
-    public static double roundToFourDecimalPlaces(double number) {
-        return roundToNDecimalPlaces(number, 4);
-    }
-
-    /**
      * Rounds a float to one decimal place after the comma
      * <p>
      * 1.26 -> 1.3
@@ -45,7 +33,7 @@ public class RoundingUtil {
         return (float) roundToNDecimalPlaces(number, 1);
     }
 
-    private static double roundToNDecimalPlaces(double number, int numberOfDecimalPlaces) {
+    public static double roundToNDecimalPlaces(double number, int numberOfDecimalPlaces) {
         return new BigDecimal(String.valueOf(number)).setScale(numberOfDecimalPlaces, RoundingMode.HALF_UP).doubleValue();
     }
 
