@@ -238,7 +238,11 @@ public class User extends AbstractAuditingEntity implements Participant {
     }
 
     public String getVisibleRegistrationNumber() {
-        return visibleRegistrationNumberTransient;
+        if (visibleRegistrationNumberTransient != null) {
+            return visibleRegistrationNumberTransient;
+        } else {
+            return this.getRegistrationNumber();
+        }
     }
 
     public void setVisibleRegistrationNumber(String visibleRegistrationNumber) {
