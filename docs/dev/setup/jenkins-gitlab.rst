@@ -900,7 +900,7 @@ Prerequisites:
 
 
 Jenkins User Management
------------------------
+~~~~~~~~~~~~~~~~~~~~~~~
 
 Artemis supports user management in Jenkins as of version 4.11.0. Creating an account in Artemis will also create an
 account on Jenkins using the same password. This enables users to login and access Jenkins. Updating and/or deleting
@@ -916,7 +916,7 @@ Unfortunately, Jenkins does not provide a Rest API for user management which pre
 
 
 Jenkins Build Plan Access Control Configuration
------------------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Artemis takes advantage of the Project-based Matrix Authorization Strategy plugin to support build plan access control in Jenkins.
 This enables specific Artemis users to access build plans and execute actions such as triggering a build.
