@@ -176,6 +176,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
      *
      * @param submissionId the id of the modelingSubmission to retrieve
      * @param correctionRound correction round for which we prepare the submission
+     * @param resultId the resultId for which we want do get the submission
      * @return the ResponseEntity with status 200 (OK) and with body the modelingSubmission for the given id, or with status 404 (Not Found) if the modelingSubmission could not be
      *         found
      */

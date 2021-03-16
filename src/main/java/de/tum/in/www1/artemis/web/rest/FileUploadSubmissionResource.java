@@ -147,6 +147,7 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
      *
      * @param submissionId the id of the fileUploadSubmission to retrieve
      * @param correctionRound the correctionRound of the result we want to receive
+     * @param resultId the resultId for which we want do get the submission
      * @return the ResponseEntity with status 200 (OK) and with body the fileUploadSubmission, or with status 404 (Not Found)
      */
     @GetMapping("/file-upload-submissions/{submissionId}")
