@@ -154,7 +154,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
         if (exercise.getReleaseDate() != null && ZonedDateTime.now().isBefore(exercise.getReleaseDate())) {
             scheduleService.scheduleTask(exercise, ExerciseLifecycle.RELEASE, () -> {
                 try {
-                    gitService.combineAllCommitsOfRepositoryIntoOne(exercise.getRepositoryURL(RepositoryType.TEMPLATE));
+                    gitService.combineAllCommitsOfRepositoryIntoOne(exercise.getVcsTemplateRepositoryUrl());
                 } catch (InterruptedException e) {
                     log.error("Failed to schedule combining of template commits of exercise " + exercise.getId(), e);
                 } catch (GitAPIException e) {
