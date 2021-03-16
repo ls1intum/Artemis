@@ -18,9 +18,12 @@ import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildResultDTO
 
 public interface MockDelegate {
 
-    void mockConnectorRequestsForSetup(ProgrammingExercise exercise) throws Exception;
+    void mockConnectorRequestsForSetup(ProgrammingExercise exercise, boolean failToCreateCiProject) throws Exception;
 
     void mockConnectorRequestsForImport(ProgrammingExercise sourceExercise, ProgrammingExercise exerciseToBeImported, boolean recreateBuildPlans) throws Exception;
+
+    void mockImportProgrammingExerciseWithFailingEnablePlan(ProgrammingExercise sourceExercise, ProgrammingExercise exerciseToBeImported, boolean planExistsInCi,
+            boolean shouldPlanEnableFail) throws Exception;
 
     void mockConnectorRequestsForStartParticipation(ProgrammingExercise exercise, String username, Set<User> users, boolean ltiUserExists, HttpStatus status) throws Exception;
 
@@ -68,39 +71,46 @@ public interface MockDelegate {
 
     void mockUpdateCoursePermissions(Course updatedCourse, String oldInstructorGroup, String oldTeachingAssistantGroup) throws Exception;
 
-    void mockCreateUserInUserManagement(User user) throws Exception;
+    void mockFailUpdateCoursePermissionsInCi(Course updatedCourse, String oldInstructorGroup, String oldTeachingAssistantGroup, boolean failToAddUsers, boolean failToRemoveUsers)
+            throws Exception;
 
-    void mockDeleteUserInUserManagement(User user, boolean userExistsInUserManagement) throws Exception;
+    void mockCreateUserInUserManagement(User user, boolean userExistsInCi) throws Exception;
+
+    void mockFailToCreateUserInExernalUserManagement(User user, boolean failInVcs, boolean failInCi, boolean failToGetCiUser) throws Exception;
+
+    void mockDeleteUserInUserManagement(User user, boolean userExistsInUserManagement, boolean failInVcs, boolean failInCi) throws Exception;
 
     void mockCreateGroupInUserManagement(String groupName) throws Exception;
 
     void mockDeleteGroupInUserManagement(String groupName) throws Exception;
 
-    void mockAddUserToGroupInUserManagement(User user, String group) throws Exception;
+    void mockAddUserToGroupInUserManagement(User user, String group, boolean failInCi) throws Exception;
 
-    void mockRemoveUserFromGroup(User user, String group) throws Exception;
+    void mockRemoveUserFromGroup(User user, String group, boolean failInCi) throws Exception;
 
     void mockDeleteRepository(String projectKey, String repostoryName) throws Exception;
 
     void mockDeleteProjectInVcs(String projectKey) throws Exception;
 
-    void mockDeleteBuildPlan(String projectKey, String planName) throws Exception;
+    void mockDeleteBuildPlan(String projectKey, String planName, boolean shouldFail) throws Exception;
 
     void mockDeleteBuildPlanProject(String projectKey) throws Exception;
 
-    void mockGetBuildPlan(String projectKey, String planName, boolean planExistsInCi, boolean planIsActive, boolean planIsBuilding) throws Exception;
+    void mockGetBuildPlan(String projectKey, String planName, boolean planExistsInCi, boolean planIsActive, boolean planIsBuilding, boolean failToGetBuild) throws Exception;
 
     void mockHealthInCiService(boolean isRunning, HttpStatus httpStatus) throws Exception;
 
     void mockCheckIfProjectExistsInVcs(ProgrammingExercise exercise, boolean existsInVcs) throws Exception;
 
-    void mockCheckIfProjectExistsInCi(ProgrammingExercise exercise, boolean existsInCi) throws Exception;
+    void mockCheckIfProjectExistsInCi(ProgrammingExercise exercise, boolean existsInCi, boolean shouldFail) throws Exception;
 
-    void mockCheckIfBuildPlanExists(String projectKey, String templateBuildPlanId, boolean buildPlanExists) throws Exception;
+    void mockCheckIfBuildPlanExists(String projectKey, String templateBuildPlanId, boolean buildPlanExists, boolean shouldFail) throws Exception;
 
     void mockRepositoryUrlIsValid(VcsRepositoryUrl vcsTemplateRepositoryUrl, String projectKey, boolean b) throws Exception;
 
     void mockTriggerBuild(AbstractBaseProgrammingExerciseParticipation solutionParticipation) throws Exception;
+
+    void mockTriggerBuildFailed(AbstractBaseProgrammingExerciseParticipation solutionParticipation) throws Exception;
 
     void mockSetRepositoryPermissionsToReadOnly(VcsRepositoryUrl repositoryUrl, String projectKey, Set<User> users) throws Exception;
 
