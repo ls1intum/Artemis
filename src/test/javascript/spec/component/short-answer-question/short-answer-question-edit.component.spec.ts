@@ -85,7 +85,14 @@ describe('ShortAnswerQuestionEditComponent', () => {
     });
 
     it('should initialize', () => {
-        expect(component).to.be.ok;
+        component.question.text = 'This is a[-spot 12]regarding this question.\nAnother [-spot 8] is in the line above';
+        component.ngOnInit();
+
+        const textParts = [
+            ['This', 'is', 'a', '[-spot 12]', 'regarding', 'this', 'question.'],
+            ['Another', '[-spot 8]', 'is', 'in', 'the', 'line', 'above'],
+        ];
+        expect(component.textParts).to.deep.equal(textParts);
     });
 
     it('should invoke ngOnChanges', () => {
