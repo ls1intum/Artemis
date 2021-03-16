@@ -84,10 +84,7 @@ export function getSubmissionResultByCorrectionRound(submission: Submission | un
  * @returns the results or undefined if submission or the result for the requested id is undefined
  */
 export function getSubmissionResultById(submission: Submission | undefined, resultId: number): Result | undefined {
-    if (submission && submission.results) {
-        return submission.results.find((result) => result.id === resultId);
-    }
-    return undefined;
+    return submission?.results?.find((result) => result.id === resultId);
 }
 
 /**
