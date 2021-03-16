@@ -480,6 +480,8 @@ recommended ones that got installed during the setup process):
 
 4. `Pipeline Maven <https://plugins.jenkins.io/pipeline-maven/>`__ to use maven within the pipelines.
 
+5. `Matrix Authorization Strategy Plugin <https://plugins.jenkins.io/matrix-auth/>`__ for configuring permissions for users on a project and build plan level (Matrix Authorization Strategy might already be installed).
+
 
 The plugins above (and the pipeline-setup associated with it) got introduced in Artemis 4.7.3.
 If you are using exercises that were created before 4.7.3, you also have to install these plugins:
