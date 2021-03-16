@@ -75,6 +75,7 @@ public class SAML2Configuration extends WebSecurityConfigurerAdapter {
                 .fromMetadataLocation(config.getMetadata())
                 .registrationId(config.getRegistrationId())
                 .entityId(config.getEntityId())
+                .decryptionX509Credentials(c -> this.addDecryptionInformation(c, config))
                 .signingX509Credentials(c -> this.addSigningInformation(c, config))
                 .build());
         }
@@ -82,10 +83,35 @@ public class SAML2Configuration extends WebSecurityConfigurerAdapter {
         return new InMemoryRelyingPartyRegistrationRepository(relyingPartyRegistrations);
     }
 
+    private void addDecryptionInformation(Collection<Saml2X509Credential> c, SAML2Properties.RelyingPartyProperties config) {
+        if (!this.checkFiles(config))
+            return;
+
+        try {
+            Saml2X509Credential credentials = Saml2X509Credential.decryption(readPrivateKey(config.getKeyFile()), readPublicCert(config.getCertFile()));
+            c.add(credentials);
+        } catch (IOException | CertificateException e) {
+            log.error(e.getMessage(), e);
+        }
+    }
+
+
     private void addSigningInformation(Collection<Saml2X509Credential> c, SAML2Properties.RelyingPartyProperties config) {
+        if (!this.checkFiles(config))
+            return;
+
+        try {
+            Saml2X509Credential credentials = Saml2X509Credential.signing(readPrivateKey(config.getKeyFile()), readPublicCert(config.getCertFile()));
+            c.add(credentials);
+        } catch (IOException | CertificateException e) {
+            log.error(e.getMessage(), e);
+        }
+    }
+
+    private boolean checkFiles(SAML2Properties.RelyingPartyProperties config) {
         if (config.getCertFile() == null || config.getKeyFile() == null || config.getCertFile().isBlank() || config.getKeyFile().isBlank()) {
             log.debug("No Config for SAML2");
-            return;
+            return false;
         }
 
         File keyFile = new File(config.getKeyFile());
@@ -93,31 +119,20 @@ public class SAML2Configuration extends WebSecurityConfigurerAdapter {
 
         if (!keyFile.exists() || !certFile.exists()) {
             log.error("Keyfile or Certfile for SAML[" + config.getRegistrationId() + "] does not exist.");
-            return;
-        }
-        log.info("Registering Credentials for SAML2");
-        Saml2X509Credential relyingPartySigningCredential = null;
-        try {
-            PrivateKey privateKey = readPrivateKey(keyFile);
-            X509Certificate certificate = readPublicCert(certFile);
-            relyingPartySigningCredential = new Saml2X509Credential(privateKey, certificate, Saml2X509Credential.Saml2X509CredentialType.SIGNING, Saml2X509Credential.Saml2X509CredentialType.DECRYPTION);
-            log.debug("Adding {} PK: {} SK: {}", relyingPartySigningCredential, certificate, privateKey);
-        } catch (IOException | CertificateException e) {
-            log.error(e.getMessage(), e);
+            return false;
         }
 
-        if (relyingPartySigningCredential != null)
-            c.add(relyingPartySigningCredential);
+        return true;
     }
 
-    private static X509Certificate readPublicCert(File file) throws IOException, CertificateException {
+    private static X509Certificate readPublicCert(String file) throws IOException, CertificateException {
         try (InputStream inStream = new FileInputStream(file)) {
             CertificateFactory cf = CertificateFactory.getInstance("X.509");
             return (X509Certificate) cf.generateCertificate(inStream);
         }
     }
 
-    private RSAPrivateKey readPrivateKey(File file) throws IOException {
+    private RSAPrivateKey readPrivateKey(String file) throws IOException {
         // Read PKCS#8 File!
         try (FileReader keyReader = new FileReader(file)) {
             PEMParser pemParser = new PEMParser(keyReader);
