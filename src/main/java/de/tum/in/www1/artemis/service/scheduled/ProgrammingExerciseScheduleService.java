@@ -152,15 +152,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
 
         // For any course exercise with a valid release date
         if (exercise.getReleaseDate() != null && ZonedDateTime.now().isBefore(exercise.getReleaseDate())) {
-            scheduleService.scheduleTask(exercise, ExerciseLifecycle.RELEASE, () -> {
-                try {
-                    gitService.combineAllCommitsOfRepositoryIntoOne(exercise.getVcsTemplateRepositoryUrl());
-                } catch (InterruptedException e) {
-                    log.error("Failed to schedule combining of template commits of exercise " + exercise.getId(), e);
-                } catch (GitAPIException e) {
-                    log.error("Failed to communicate with GitAPI for combining template commits of exercise " + exercise.getId(), e);
-                }
-            });
+            scheduleService.scheduleTask(exercise, ExerciseLifecycle.RELEASE, combineTemplateCommitsForExercise(exercise));
             log.debug("Scheduled combining template commits before release date for Programming Exercise \"" + exercise.getTitle() + "\" (#" + exercise.getId() + ") for "
                 + exercise.getReleaseDate() + ".");
         }
@@ -218,6 +210,21 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
             scheduleService.cancelScheduledTaskForLifecycle(exercise, ExerciseLifecycle.BUILD_AND_TEST_AFTER_DUE_DATE);
         }
         log.debug("Scheduled Exam Programming Exercise \"" + exercise.getTitle() + "\" (#" + exercise.getId() + ").");
+    }
+
+    @NotNull
+    private Runnable combineTemplateCommitsForExercise(ProgrammingExercise exercise) {
+        return () -> {
+            SecurityUtils.setAuthorizationObject();
+            try {
+                gitService.combineAllCommitsOfRepositoryIntoOne(exercise.getVcsTemplateRepositoryUrl());
+                groupNotificationService.notifyInstructorGroupAboutExerciseUpdate(exercise, Constants.PROGRAMMING_EXERCISE_SUCCESSFUL_COMBINE_OF_TEMPLATE_COMMITS);
+            } catch (InterruptedException e) {
+                log.error("Failed to schedule combining of template commits of exercise " + exercise.getId(), e);
+            } catch (GitAPIException e) {
+                log.error("Failed to communicate with GitAPI for combining template commits of exercise " + exercise.getId(), e);
+            }
+        };
     }
 
     @NotNull
