@@ -25,6 +25,7 @@ export const routes: Routes = [
         },
         canActivate: [UserRouteAccessService],
     },
+
     {
         path: ':courseId/modeling-exercises/:exerciseId/assessment',
         component: ModelingAssessmentDashboardComponent,
