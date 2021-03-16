@@ -82,9 +82,6 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
      * 2. The left boundary of a spot if it is not immediately followed by a whitespace character
      * 3. The right boundary of a spot if it is not immediately preceded by a whitespace character
      */
-    // TODO: Dominik Fuchs: this regex seems to be invalid
-    // wordParserRegex = /(?<!\[-spot\s*)\s+|(?<=\[-spot\s*\d+\])(?=\S)|(?<=\S)(?=\[-spot\s*\d+\])/g;
-    wordParserRegex = /\s+(?![^[]?[\d]]*])/g;
 
     backupQuestion: ShortAnswerQuestion;
 
