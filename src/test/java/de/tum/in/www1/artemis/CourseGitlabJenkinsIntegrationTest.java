@@ -134,6 +134,18 @@ public class CourseGitlabJenkinsIntegrationTest extends AbstractSpringIntegratio
     }
 
     @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    public void testUpdateCourseGroups_InExternalCiUserManagement_failToRemoveUser() throws Exception {
+        courseTestService.testUpdateCourseGroups_InExternalCiUserManagement_failToRemoveUser();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    public void testUpdateCourseGroups_InExternalCiUserManagement_failToAddUser() throws Exception {
+        courseTestService.testUpdateCourseGroups_InExternalCiUserManagement_failToAddUser();
+    }
+
+    @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void testGetCourseWithoutPermission() throws Exception {
         courseTestService.testGetCourseWithoutPermission();
@@ -287,6 +299,18 @@ public class CourseGitlabJenkinsIntegrationTest extends AbstractSpringIntegratio
     @WithMockUser(username = "ab12cde")
     public void testRegisterForCourse() throws Exception {
         courseTestService.testRegisterForCourse();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testAddTutorAndInstructorToCourse_failsToAddUserToGroup() throws Exception {
+        courseTestService.testAddTutorAndInstructorToCourse_failsToAddUserToGroup(HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testRemoveTutorFromCourse_failsToRemoveUserFromGroup() throws Exception {
+        courseTestService.testRemoveTutorFromCourse_failsToRemoveUserFromGroup();
     }
 
     @Test

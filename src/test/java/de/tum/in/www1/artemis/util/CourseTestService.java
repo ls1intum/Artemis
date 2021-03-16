@@ -287,8 +287,8 @@ public class CourseTestService {
                     final var testsRepoName = programmingExercise.generateRepositoryName(RepositoryType.TESTS);
                     database.addSolutionParticipationForProgrammingExercise(programmingExercise);
                     database.addTemplateParticipationForProgrammingExercise(programmingExercise);
-                    mockDelegate.mockDeleteBuildPlan(projectKey, programmingExercise.getTemplateBuildPlanId());
-                    mockDelegate.mockDeleteBuildPlan(projectKey, programmingExercise.getSolutionBuildPlanId());
+                    mockDelegate.mockDeleteBuildPlan(projectKey, programmingExercise.getTemplateBuildPlanId(), false);
+                    mockDelegate.mockDeleteBuildPlan(projectKey, programmingExercise.getSolutionBuildPlanId(), false);
                     mockDelegate.mockDeleteBuildPlanProject(projectKey);
                     mockDelegate.mockDeleteRepository(projectKey, templateRepoName);
                     mockDelegate.mockDeleteRepository(projectKey, solutionRepoName);
@@ -386,6 +386,36 @@ public class CourseTestService {
 
         assertThat(updatedCourse.getInstructorGroupName()).isEqualTo("new-instructor-group");
         assertThat(updatedCourse.getTeachingAssistantGroupName()).isEqualTo("new-ta-group");
+    }
+
+    // Test
+    public void testUpdateCourseGroups_InExternalCiUserManagement_failToRemoveUser() throws Exception {
+        Course course = database.addCourseWithOneProgrammingExercise();
+        var oldInstructorGroup = course.getInstructorGroupName();
+        var oldTeachingAssistantGroup = course.getTeachingAssistantGroupName();
+
+        course.setInstructorGroupName("new-instructor-group");
+        course.setTeachingAssistantGroupName("new-ta-group");
+
+        mockDelegate.mockFailUpdateCoursePermissionsInCi(course, oldInstructorGroup, oldTeachingAssistantGroup, false, true);
+        Course updatedCourse = request.putWithResponseBody("/api/courses", course, Course.class, HttpStatus.INTERNAL_SERVER_ERROR);
+
+        assertThat(updatedCourse).isNull();
+    }
+
+    // Test
+    public void testUpdateCourseGroups_InExternalCiUserManagement_failToAddUser() throws Exception {
+        Course course = database.addCourseWithOneProgrammingExercise();
+        var oldInstructorGroup = course.getInstructorGroupName();
+        var oldTeachingAssistantGroup = course.getTeachingAssistantGroupName();
+
+        course.setInstructorGroupName("new-instructor-group");
+        course.setTeachingAssistantGroupName("new-ta-group");
+
+        mockDelegate.mockFailUpdateCoursePermissionsInCi(course, oldInstructorGroup, oldTeachingAssistantGroup, true, false);
+        Course updatedCourse = request.putWithResponseBody("/api/courses", course, Course.class, HttpStatus.INTERNAL_SERVER_ERROR);
+
+        assertThat(updatedCourse).isNull();
     }
 
     // Test
@@ -896,8 +926,8 @@ public class CourseTestService {
         course1 = courseRepo.save(course1);
         course2 = courseRepo.save(course2);
 
-        mockDelegate.mockAddUserToGroupInUserManagement(student, course1.getStudentGroupName());
-        mockDelegate.mockAddUserToGroupInUserManagement(student, course2.getStudentGroupName());
+        mockDelegate.mockAddUserToGroupInUserManagement(student, course1.getStudentGroupName(), false);
+        mockDelegate.mockAddUserToGroupInUserManagement(student, course2.getStudentGroupName(), false);
 
         User updatedStudent = request.postWithResponseBody("/api/courses/" + course1.getId() + "/register", null, User.class, HttpStatus.OK);
         assertThat(updatedStudent.getGroups()).as("User is registered for course").contains(course1.getStudentGroupName());
@@ -924,8 +954,8 @@ public class CourseTestService {
         notYetStartedCourse = courseRepo.save(notYetStartedCourse);
         finishedCourse = courseRepo.save(finishedCourse);
 
-        mockDelegate.mockAddUserToGroupInUserManagement(student, notYetStartedCourse.getStudentGroupName());
-        mockDelegate.mockAddUserToGroupInUserManagement(student, finishedCourse.getStudentGroupName());
+        mockDelegate.mockAddUserToGroupInUserManagement(student, notYetStartedCourse.getStudentGroupName(), false);
+        mockDelegate.mockAddUserToGroupInUserManagement(student, finishedCourse.getStudentGroupName(), false);
 
         request.post("/api/courses/" + notYetStartedCourse.getId() + "/register", User.class, HttpStatus.BAD_REQUEST);
         request.post("/api/courses/" + finishedCourse.getId() + "/register", User.class, HttpStatus.BAD_REQUEST);
@@ -1015,13 +1045,42 @@ public class CourseTestService {
         var tutor1 = userRepo.findOneWithGroupsAndAuthoritiesByLogin("tutor1").get();
         var instructor1 = userRepo.findOneWithGroupsAndAuthoritiesByLogin("instructor1").get();
 
-        mockDelegate.mockAddUserToGroupInUserManagement(student, course.getStudentGroupName());
-        mockDelegate.mockAddUserToGroupInUserManagement(tutor1, course.getTeachingAssistantGroupName());
-        mockDelegate.mockAddUserToGroupInUserManagement(instructor1, course.getInstructorGroupName());
+        mockDelegate.mockAddUserToGroupInUserManagement(student, course.getStudentGroupName(), false);
+        mockDelegate.mockAddUserToGroupInUserManagement(tutor1, course.getTeachingAssistantGroupName(), false);
+        mockDelegate.mockAddUserToGroupInUserManagement(instructor1, course.getInstructorGroupName(), false);
 
         request.postWithoutLocation("/api/courses/" + course.getId() + "/students/student1", null, httpStatus, null);
         request.postWithoutLocation("/api/courses/" + course.getId() + "/tutors/tutor1", null, httpStatus, null);
         request.postWithoutLocation("/api/courses/" + course.getId() + "/instructors/instructor1", null, httpStatus, null);
+    }
+
+    // Test
+    public void testAddTutorAndInstructorToCourse_failsToAddUserToGroup(HttpStatus expectedFailureCode) throws Exception {
+        Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>(), "tumuser", "tutor", "instructor");
+        course = courseRepo.save(course);
+        database.addProgrammingExerciseToCourse(course, false);
+        course = courseRepo.save(course);
+
+        var tutor1 = userRepo.findOneWithGroupsAndAuthoritiesByLogin("tutor1").get();
+        var instructor1 = userRepo.findOneWithGroupsAndAuthoritiesByLogin("instructor1").get();
+
+        mockDelegate.mockAddUserToGroupInUserManagement(tutor1, course.getTeachingAssistantGroupName(), true);
+        mockDelegate.mockAddUserToGroupInUserManagement(instructor1, course.getInstructorGroupName(), true);
+
+        request.postWithoutLocation("/api/courses/" + course.getId() + "/tutors/tutor1", null, expectedFailureCode, null);
+        request.postWithoutLocation("/api/courses/" + course.getId() + "/instructors/instructor1", null, expectedFailureCode, null);
+    }
+
+    // Test
+    public void testRemoveTutorFromCourse_failsToRemoveUserFromGroup() throws Exception {
+        Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>(), "tumuser", "tutor", "instructor");
+        course = courseRepo.save(course);
+        database.addProgrammingExerciseToCourse(course, false);
+        course = courseRepo.save(course);
+
+        User tutor = userRepo.findOneWithGroupsByLogin("tutor1").get();
+        mockDelegate.mockRemoveUserFromGroup(tutor, course.getTeachingAssistantGroupName(), true);
+        request.delete("/api/courses/" + course.getId() + "/tutors/" + tutor.getLogin(), HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     // Test
@@ -1062,9 +1121,9 @@ public class CourseTestService {
         User instructor = userRepo.findOneWithGroupsByLogin("instructor1").get();
 
         // Mock remove requests
-        mockDelegate.mockRemoveUserFromGroup(student, course.getStudentGroupName());
-        mockDelegate.mockRemoveUserFromGroup(tutor, course.getTeachingAssistantGroupName());
-        mockDelegate.mockRemoveUserFromGroup(instructor, course.getInstructorGroupName());
+        mockDelegate.mockRemoveUserFromGroup(student, course.getStudentGroupName(), false);
+        mockDelegate.mockRemoveUserFromGroup(tutor, course.getTeachingAssistantGroupName(), false);
+        mockDelegate.mockRemoveUserFromGroup(instructor, course.getInstructorGroupName(), false);
 
         // Remove users from their group
         request.delete("/api/courses/" + course.getId() + "/students/" + student.getLogin(), httpStatus);
@@ -1215,7 +1274,7 @@ public class CourseTestService {
 
         mockDelegate.mockDeleteRepository(programmingExercise.getProjectKey(), (programmingExercise.getProjectKey()).toLowerCase() + "-student1");
         var buildPlanId = (programmingExercise.getProjectKey() + "-student1").toUpperCase();
-        mockDelegate.mockDeleteBuildPlan(programmingExercise.getProjectKey(), buildPlanId);
+        mockDelegate.mockDeleteBuildPlan(programmingExercise.getProjectKey(), buildPlanId, false);
         request.delete("/api/courses/" + course.getId() + "/cleanup", HttpStatus.OK);
 
         course.getExercises().forEach(exercise -> {
