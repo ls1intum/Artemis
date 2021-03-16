@@ -3,16 +3,10 @@ package de.tum.in.www1.artemis.service.connectors.jenkins;
 import static de.tum.in.www1.artemis.config.Constants.*;
 
 import java.io.IOException;
-import java.io.StringWriter;
 import java.net.URI;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-
-import javax.xml.transform.TransformerException;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Element;
@@ -31,15 +25,13 @@ import org.springframework.web.util.UriComponentsBuilder;
 import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.offbytwo.jenkins.JenkinsServer;
-import com.offbytwo.jenkins.model.FolderJob;
-import com.offbytwo.jenkins.model.JobWithDetails;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.exception.JenkinsException;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
 import de.tum.in.www1.artemis.service.BuildLogEntryService;
@@ -48,9 +40,9 @@ import de.tum.in.www1.artemis.service.connectors.AbstractContinuousIntegrationSe
 import de.tum.in.www1.artemis.service.connectors.CIPermission;
 import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
 import de.tum.in.www1.artemis.service.connectors.jenkins.dto.TestResultsDTO;
+import de.tum.in.www1.artemis.service.connectors.jenkins.jobs.JenkinsJobService;
 import de.tum.in.www1.artemis.service.dto.AbstractBuildResultNotificationDTO;
 import de.tum.in.www1.artemis.service.util.UrlUtils;
-import de.tum.in.www1.artemis.service.util.XmlFileUtils;
 
 @Profile("jenkins")
 @Service
@@ -63,56 +55,32 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
     @Value("${jenkins.use-crumb:#{true}}")
     private boolean useCrumb;
 
-    private final JenkinsBuildPlanCreator jenkinsBuildPlanCreator;
-
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
+    private final JenkinsBuildPlanService jenkinsBuildPlanService;
+
     private final JenkinsServer jenkinsServer;
+
+    private final JenkinsJobService jenkinsJobService;
 
     // Pattern of the DateTime that is included in the logs received from Jenkins
     private final DateTimeFormatter logDateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssX");
 
-    public JenkinsService(JenkinsBuildPlanCreator jenkinsBuildPlanCreator, @Qualifier("jenkinsRestTemplate") RestTemplate restTemplate, JenkinsServer jenkinsServer,
-            ProgrammingSubmissionRepository programmingSubmissionRepository, ProgrammingExerciseRepository programmingExerciseRepository, FeedbackService feedbackService,
-            @Qualifier("shortTimeoutJenkinsRestTemplate") RestTemplate shortTimeoutRestTemplate, BuildLogEntryService buildLogService) {
+    public JenkinsService(@Qualifier("jenkinsRestTemplate") RestTemplate restTemplate, JenkinsServer jenkinsServer, ProgrammingSubmissionRepository programmingSubmissionRepository,
+            ProgrammingExerciseRepository programmingExerciseRepository, FeedbackService feedbackService,
+            @Qualifier("shortTimeoutJenkinsRestTemplate") RestTemplate shortTimeoutRestTemplate, BuildLogEntryService buildLogService,
+            JenkinsBuildPlanService jenkinsBuildPlanService, JenkinsJobService jenkinsJobService) {
         super(programmingSubmissionRepository, feedbackService, buildLogService, restTemplate, shortTimeoutRestTemplate);
-        this.jenkinsBuildPlanCreator = jenkinsBuildPlanCreator;
-        this.jenkinsServer = jenkinsServer;
         this.programmingExerciseRepository = programmingExerciseRepository;
+        this.jenkinsServer = jenkinsServer;
+        this.jenkinsBuildPlanService = jenkinsBuildPlanService;
+        this.jenkinsJobService = jenkinsJobService;
     }
 
     @Override
     public void createBuildPlanForExercise(ProgrammingExercise exercise, String planKey, VcsRepositoryUrl repositoryURL, VcsRepositoryUrl testRepositoryURL,
             VcsRepositoryUrl solutionRepositoryURL) {
-        try {
-            // TODO support sequential test runs
-            final var configBuilder = builderFor(exercise.getProgrammingLanguage());
-            Document jobConfig = configBuilder.buildBasicConfig(exercise.getProgrammingLanguage(), testRepositoryURL, repositoryURL,
-                    Boolean.TRUE.equals(exercise.isStaticCodeAnalysisEnabled()));
-            planKey = exercise.getProjectKey() + "-" + planKey;
-
-            jenkinsServer.createJob(getFolderJob(exercise.getProjectKey()), planKey, writeXmlToString(jobConfig), useCrumb);
-            getJob(exercise.getProjectKey(), planKey).build(useCrumb);
-        }
-        catch (IOException e) {
-            log.error(e.getMessage(), e);
-            throw new JenkinsException("Unable to create new build plan :" + planKey, e);
-        }
-    }
-
-    /**
-     * Gives a Jenkins plan builder, that is able to build plan configurations for the specified programming language
-     *
-     * @param programmingLanguage The programming language for which a build plan should get created
-     * @return The configuration builder for the specified language
-     * @see JenkinsBuildPlanCreator
-     */
-    private JenkinsXmlConfigBuilder builderFor(ProgrammingLanguage programmingLanguage) {
-        return switch (programmingLanguage) {
-            case JAVA, KOTLIN, PYTHON, C, HASKELL, SWIFT -> jenkinsBuildPlanCreator;
-            case VHDL -> throw new UnsupportedOperationException("VHDL templates are not available for Jenkins.");
-            case ASSEMBLER -> throw new UnsupportedOperationException("Assembler templates are not available for Jenkins.");
-        };
+        jenkinsBuildPlanService.createBuildPlanForExercise(exercise, planKey, repositoryURL, testRepositoryURL);
     }
 
     @Override
@@ -123,18 +91,12 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
     @Override
     public String copyBuildPlan(String sourceProjectKey, String sourcePlanName, String targetProjectKey, String targetProjectName, String targetPlanName,
             boolean targetProjectExists) {
-        final var cleanTargetName = getCleanPlanName(targetPlanName);
-        final var sourcePlanKey = sourceProjectKey + "-" + sourcePlanName;
-        final var targetPlanKey = targetProjectKey + "-" + cleanTargetName;
-        final var jobXml = getJobXmlForBuildPlanWith(sourceProjectKey, sourcePlanKey);
-        saveJobXml(jobXml, targetProjectKey, targetPlanKey);
-
-        return targetPlanKey;
+        return jenkinsBuildPlanService.copyBuildPlan(sourceProjectKey, sourcePlanName, targetProjectKey, targetProjectName, targetPlanName, targetProjectExists);
     }
 
     @Override
     public void givePlanPermissions(ProgrammingExercise programmingExercise, String planName) {
-        // TODO after decision on how to handle users on Jenkins has been made if needed for Jenkins
+        jenkinsBuildPlanService.givePlanPermissions(programmingExercise, planName);
     }
 
     @Override
@@ -155,7 +117,7 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
 
         // remove potential username from repo URL. Jenkins uses the Artemis Admin user and will fail if other usernames are in the URL
         final var repoUrl = newRepoUrl.replaceAll("(https?://)(.*@)(.*)", "$1$3");
-        final var jobXmlDocument = getJobXmlForBuildPlanWith(buildProjectKey, buildPlanKey);
+        final var jobXmlDocument = jenkinsJobService.getJobConfigForJobInFolder(buildProjectKey, buildPlanKey);
 
         try {
             replaceScriptParameters(jobXmlDocument, ciRepoName, repoUrl, existingRepoUrl);
@@ -167,7 +129,7 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
 
         final var headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_XML);
-        final var entity = new HttpEntity<>(writeXmlToString(jobXmlDocument), headers);
+        final var entity = new HttpEntity<>(jenkinsJobService.writeXmlToString(jobXmlDocument), headers);
 
         URI uri = Endpoint.PLAN_CONFIG.buildEndpoint(serverUrl.toString(), buildProjectKey, buildPlanKey).build(true).toUri();
 
@@ -279,14 +241,7 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
     public void triggerBuild(ProgrammingExerciseParticipation participation) {
         final var projectKey = participation.getProgrammingExercise().getProjectKey();
         final var planKey = participation.getBuildPlanId();
-
-        try {
-            getJob(projectKey, planKey).build(useCrumb);
-        }
-        catch (IOException e) {
-            log.error(e.getMessage(), e);
-            throw new JenkinsException("Error triggering build: " + planKey, e);
-        }
+        jenkinsBuildPlanService.triggerBuild(projectKey, planKey);
     }
 
     @Override
@@ -301,14 +256,8 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
     }
 
     @Override
-    public void deleteBuildPlan(String projectKey, String buildPlanId) {
-        try {
-            jenkinsServer.deleteJob(getFolderJob(projectKey), buildPlanId, useCrumb);
-        }
-        catch (IOException e) {
-            log.error(e.getMessage(), e);
-            throw new JenkinsException("Error while trying to delete job in Jenkins: " + buildPlanId, e);
-        }
+    public void deleteBuildPlan(String projectKey, String planKey) {
+        jenkinsBuildPlanService.deleteBuildPlan(projectKey, planKey);
     }
 
     @Override
@@ -353,32 +302,15 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
             // The build plan does not exist, the build status cannot be retrieved
             return null;
         }
-        final var isQueued = getJob(participation.getProgrammingExercise().getProjectKey(), participation.getBuildPlanId()).isInQueue();
-        if (isQueued) {
-            return BuildStatus.QUEUED;
-        }
+
         final var projectKey = participation.getProgrammingExercise().getProjectKey();
         final var planKey = participation.getBuildPlanId();
-        final var url = Endpoint.LAST_BUILD.buildEndpoint(serverUrl.toString(), projectKey, planKey).build(true).toString();
-        try {
-            final var jobStatus = restTemplate.getForObject(url, JsonNode.class);
-            return jobStatus.get("building").asBoolean() ? BuildStatus.BUILDING : BuildStatus.INACTIVE;
-        }
-        catch (HttpClientErrorException e) {
-            log.error(e.getMessage(), e);
-            throw new JenkinsException("Error while trying to fetch build status from Jenkins for " + planKey, e);
-        }
+        return jenkinsBuildPlanService.getBuildStatusOfPlan(projectKey, planKey);
     }
 
     @Override
     public boolean checkIfBuildPlanExists(String projectKey, String buildPlanId) {
-        try {
-            getJobXmlForBuildPlanWith(projectKey, buildPlanId);
-            return true;
-        }
-        catch (Exception emAll) {
-            return false;
-        }
+        return jenkinsBuildPlanService.buildPlanExists(projectKey, buildPlanId);
     }
 
     @Override
@@ -428,7 +360,7 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
         ProgrammingLanguage programmingLanguage = programmingExerciseParticipation.getProgrammingExercise().getProgrammingLanguage();
 
         try {
-            final var build = getJob(projectKey, buildPlanId).getLastBuild();
+            final var build = jenkinsJobService.getJobInFolder(projectKey, buildPlanId).getLastBuild();
             final var logHtml = Jsoup.parse(build.details().getConsoleOutputHtml()).body();
 
             List<BuildLogEntry> buildLog;
@@ -594,13 +526,8 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
     }
 
     @Override
-    public boolean isBuildPlanEnabled(String projectKey, String planId) {
-        return getJob(projectKey, planId).isBuildable();
-    }
-
-    @Override
     public void enablePlan(String projectKey, String planKey) {
-        post(Endpoint.ENABLE, HttpStatus.FOUND, "Unable to enable plan " + planKey, String.class, projectKey, planKey);
+        jenkinsBuildPlanService.enablePlan(projectKey, planKey);
     }
 
     @Override
@@ -621,7 +548,9 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
             return new ConnectorHealth(true, Map.of("url", serverUrl));
         }
         catch (Exception emAll) {
-            return new ConnectorHealth(new JenkinsException("Jenkins Server is down!"));
+            var health = new ConnectorHealth(false, Map.of("url", serverUrl));
+            health.setException(new JenkinsException("Jenkins Server is down!"));
+            return health;
         }
     }
 
@@ -633,92 +562,6 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
         catch (IOException e) {
             log.error(e.getMessage(), e);
             throw new JenkinsException("Error creating folder for exercise " + programmingExercise, e);
-        }
-    }
-
-    private FolderJob getFolderJob(String folderName) {
-        try {
-            final var job = jenkinsServer.getJob(folderName);
-            if (job == null) {
-                throw new JenkinsException("The job " + folderName + " does not exist!");
-            }
-            final var folderJob = jenkinsServer.getFolderJob(job);
-            if (!folderJob.isPresent()) {
-                throw new JenkinsException("Folder " + folderName + " does not exist!");
-            }
-            return folderJob.get();
-        }
-        catch (IOException e) {
-            log.error(e.getMessage(), e);
-            throw new JenkinsException(e.getMessage(), e);
-        }
-    }
-
-    private JobWithDetails getJob(String projectKey, String jobName) {
-        if (projectKey == null || jobName == null) {
-            log.warn("Cannot get the job, because projectKey " + projectKey + " or jobName " + jobName + " is null");
-            return null;
-        }
-        final var folder = getFolderJob(projectKey);
-        try {
-            return jenkinsServer.getJob(folder, jobName);
-        }
-        catch (IOException e) {
-            log.error(e.getMessage(), e);
-            throw new JenkinsException(e.getMessage(), e);
-        }
-    }
-
-    private Document getJobXmlForBuildPlanWith(String projectKey, String jobName) {
-        try {
-            final var xmlString = jenkinsServer.getJobXml(getFolderJob(projectKey), jobName);
-            return XmlFileUtils.readFromString(xmlString);
-        }
-        catch (IOException e) {
-            log.error(e.getMessage(), e);
-            throw new JenkinsException(e.getMessage(), e);
-        }
-    }
-
-    private void saveJobXml(Document jobXml, String projectKey, String planName) {
-        final var folder = getFolderJob(projectKey);
-        try {
-            jenkinsServer.createJob(folder, planName, writeXmlToString(jobXml), useCrumb);
-        }
-        catch (IOException e) {
-            log.error(e.getMessage(), e);
-            throw new JenkinsException(e.getMessage(), e);
-        }
-    }
-
-    private <T> T post(Endpoint endpoint, HttpStatus allowedStatus, String messageInCaseOfError, Class<T> responseType, Object... args) {
-        final var builder = endpoint.buildEndpoint(serverUrl.toString(), args);
-        try {
-            final var response = restTemplate.postForEntity(builder.build(true).toString(), null, responseType);
-            if (response.getStatusCode() != allowedStatus) {
-                throw new JenkinsException(
-                        messageInCaseOfError + "; statusCode=" + response.getStatusCode() + "; headers=" + response.getHeaders() + "; body=" + response.getBody());
-            }
-            return response.getBody();
-        }
-        catch (HttpClientErrorException e) {
-            log.error(messageInCaseOfError, e);
-            throw new JenkinsException(messageInCaseOfError, e);
-        }
-    }
-
-    private String writeXmlToString(Document doc) {
-        try {
-            final var tf = TransformerFactory.newInstance();
-            final var transformer = tf.newTransformer();
-            final var writer = new StringWriter();
-            transformer.transform(new DOMSource(doc), new StreamResult(writer));
-            return writer.getBuffer().toString();
-        }
-        catch (TransformerException e) {
-            final var errorMessage = "Unable to parse XML document to String! " + doc;
-            log.error(errorMessage, e);
-            throw new JenkinsException(errorMessage, e);
         }
     }
 
@@ -739,9 +582,5 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
         public UriComponentsBuilder buildEndpoint(String baseUrl, Object... args) {
             return UrlUtils.buildEndpoint(baseUrl, pathSegments, args);
         }
-    }
-
-    private String getCleanPlanName(String name) {
-        return name.toUpperCase().replaceAll("[^A-Z0-9]", "");
     }
 }
