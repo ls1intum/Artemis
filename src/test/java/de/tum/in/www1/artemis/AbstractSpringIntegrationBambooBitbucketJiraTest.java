@@ -115,6 +115,7 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
     @Override
     public void mockConnectorRequestsForResumeParticipation(ProgrammingExercise exercise, String username, Set<User> users, boolean ltiUserExists)
             throws IOException, URISyntaxException {
+        bitbucketRequestMockProvider.mockGetDefaultBranch("master", exercise.getProjectKey());
         // Step 2a)
         bambooRequestMockProvider.mockCopyBuildPlanForParticipation(exercise, username);
         // Step 2b)
