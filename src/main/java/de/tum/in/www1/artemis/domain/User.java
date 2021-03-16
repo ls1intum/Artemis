@@ -237,6 +237,12 @@ public class User extends AbstractAuditingEntity implements Participant {
         this.registrationNumber = registrationNumber;
     }
 
+    /**
+     * Gets the visible registration number.
+     * Falls back to the persistent registration number, if any.
+     *
+     * @return the visible registration number.
+     */
     public String getVisibleRegistrationNumber() {
         if (visibleRegistrationNumberTransient != null) {
             return visibleRegistrationNumberTransient;
