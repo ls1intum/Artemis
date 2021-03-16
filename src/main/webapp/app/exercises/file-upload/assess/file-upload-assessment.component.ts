@@ -26,7 +26,7 @@ import { StructuredGradingCriterionService } from 'app/exercises/shared/structur
 import { assessmentNavigateBack } from 'app/exercises/shared/navigate-back.util';
 import { ExerciseType, getCourseFromExercise } from 'app/entities/exercise.model';
 import { Authority } from 'app/shared/constants/authority.constants';
-import { getSubmissionResultByCorrectionRound, getSubmissionResultById, getLatestSubmissionResult } from 'app/entities/submission.model';
+import { getSubmissionResultByCorrectionRound, getSubmissionResultById } from 'app/entities/submission.model';
 import { getExerciseDashboardLink, getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
 
 @Component({
@@ -62,7 +62,6 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
     correctionRound = 0;
     hasNewSubmissions = true;
     resultId?: number;
-  
     examId = 0;
     exerciseGroupId: number;
     exerciseDashboardLink: string[];
