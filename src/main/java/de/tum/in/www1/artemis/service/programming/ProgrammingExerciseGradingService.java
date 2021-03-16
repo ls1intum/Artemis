@@ -387,13 +387,21 @@ public class ProgrammingExerciseGradingService {
         result.addFeedbacks(feedbacksForNotExecutedTestCases);
     }
 
+    /**
+     * Check which feedback entries have the same name and therefore indicate multiple testcases with the same name.
+     * These duplicate testcases are added as a feedback element to the result.
+     * The instructor and tutors are notified via a group notification.
+     *
+     * @param result              of the build run.
+     * @param programmingExercise the current programming exercise.
+     */
     private boolean createFeedbackForDuplicateTests(Result result, ProgrammingExercise programmingExercise) {
         Set<String> uniqueFeedbackNames = new HashSet<>();
         // Find duplicate test cases from feedback which is automatic feedback
         Set<String> duplicateFeedbackNames = result.getFeedbacks().stream()
                 .filter(feedback -> !feedback.isStaticCodeAnalysisFeedback() && FeedbackType.AUTOMATIC.equals(feedback.getType())).map(Feedback::getText)
                 // Set.add() returns false if the element was already in the set, this is how we find all duplicates
-                .filter(fbName -> !uniqueFeedbackNames.add(fbName)).collect(Collectors.toSet());
+                .filter(feedbackName -> !uniqueFeedbackNames.add(feedbackName)).collect(Collectors.toSet());
 
         if (!duplicateFeedbackNames.isEmpty()) {
             String duplicateDetailText = "This is a duplicate test case. Please review all your test cases and verify that your test cases have unique names!";

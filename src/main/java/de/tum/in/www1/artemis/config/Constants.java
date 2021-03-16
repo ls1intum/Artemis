@@ -82,7 +82,7 @@ public final class Constants {
 
     public static final String TEST_CASES_CHANGED_NOTIFICATION = "The test cases of this programming exercise were updated. The student submissions should be build and tested so that results with the updated settings can be created.";
 
-    public static final String TEST_CASES_DUPLICATE_NOTIFICATION = "There are duplicated test cases in this programming exercise. All test cases should be unique and not have the same name. The following test cases are duplicated: ";
+    public static final String TEST_CASES_DUPLICATE_NOTIFICATION = "There are duplicated test cases in this programming exercise. All test cases have to be unique and cannot have the same name. The following test cases are duplicated: ";
 
     public static final String TEST_CASES_CHANGED_RUN_COMPLETED_NOTIFICATION = "Build and Test run complete. New results were created for the programming exercise's student submissions with the updated test case settings.";
 
