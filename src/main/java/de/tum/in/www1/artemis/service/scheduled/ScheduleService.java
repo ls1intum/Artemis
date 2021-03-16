@@ -34,7 +34,11 @@ public class ScheduleService {
     }
 
     private void removeScheduledTask(Exercise exercise, ExerciseLifecycle lifecycle) {
-        Tuple<Long, ExerciseLifecycle> taskId = new Tuple<>(exercise.getId(), lifecycle);
+        removeScheduledTask(exercise.getId(), lifecycle);
+    }
+
+    private void removeScheduledTask(Long exerciseId, ExerciseLifecycle lifecycle) {
+        Tuple<Long, ExerciseLifecycle> taskId = new Tuple<>(exerciseId, lifecycle);
         scheduledTasks.remove(taskId);
     }
 
@@ -48,7 +52,7 @@ public class ScheduleService {
     void scheduleTask(Exercise exercise, ExerciseLifecycle lifecycle, Runnable task) {
         // check if already scheduled for exercise. if so, cancel.
         // no exercise should be scheduled more than once.
-        cancelScheduledTaskForLifecycle(exercise, lifecycle);
+        cancelScheduledTaskForLifecycle(exercise.getId(), lifecycle);
         ScheduledFuture<?> scheduledTask = exerciseLifecycleService.scheduleTask(exercise, lifecycle, task);
         addScheduledTask(exercise, lifecycle, Set.of(scheduledTask));
     }
@@ -63,22 +67,22 @@ public class ScheduleService {
     void scheduleTask(Exercise exercise, ExerciseLifecycle lifecycle, Set<Tuple<ZonedDateTime, Runnable>> tasks) {
         // check if already scheduled for exercise. if so, cancel.
         // no exercise should be scheduled more than once.
-        cancelScheduledTaskForLifecycle(exercise, lifecycle);
+        cancelScheduledTaskForLifecycle(exercise.getId(), lifecycle);
         Set<ScheduledFuture<?>> scheduledTasks = exerciseLifecycleService.scheduleMultipleTasks(exercise, lifecycle, tasks);
         addScheduledTask(exercise, lifecycle, scheduledTasks);
     }
 
     /**
      * Cancel possible schedules tasks for a provided exercise.
-     * @param exercise exercise for which a potential clustering task is canceled
+     * @param exerciseId if of the exercise for which a potential scheduled task is canceled
      */
-    void cancelScheduledTaskForLifecycle(Exercise exercise, ExerciseLifecycle lifecycle) {
-        Tuple<Long, ExerciseLifecycle> taskId = new Tuple<>(exercise.getId(), lifecycle);
+    void cancelScheduledTaskForLifecycle(Long exerciseId, ExerciseLifecycle lifecycle) {
+        Tuple<Long, ExerciseLifecycle> taskId = new Tuple<>(exerciseId, lifecycle);
         Set<ScheduledFuture<?>> futures = scheduledTasks.get(taskId);
         if (futures != null) {
-            log.debug("Cancelling scheduled task " + lifecycle + " for Exercise \"" + exercise.getTitle() + "\" (#" + exercise.getId() + ").");
+            log.debug("Cancelling scheduled task " + lifecycle + " for Exercise (#" + exerciseId + ").");
             futures.forEach(future -> future.cancel(false));
-            removeScheduledTask(exercise, lifecycle);
+            removeScheduledTask(exerciseId, lifecycle);
         }
     }
 }
