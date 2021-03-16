@@ -34,10 +34,10 @@ following dependencies/tools on your machine:
    server application. Alternatively, you can run the MySQL Database
    Server inside a Docker container using
    e.g. ``docker-compose -f src/main/docker/mysql.yml up``
-3. `Node.js <https://nodejs.org>`__: We use Node (>=14.11.0) to compile
+3. `Node.js <https://nodejs.org>`__: We use Node (>=15.8.0) to compile
    and run the client Angular application. Depending on your system, you
    can install Node either from source or as a pre-packaged bundle.
-4. `Yarn <https://classic.yarnpkg.com>`__: We use Yarn 1.x (>=1.22.5) to
+4. `Yarn <https://classic.yarnpkg.com>`__: We use Yarn 1.x (>=1.22.10) to
    manage client side Node dependencies. Depending on your system, you
    can install Yarn either from source or as a pre-packaged bundle. To
    do so, please follow the instructions on the `Yarn installation

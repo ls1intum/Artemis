@@ -36,6 +36,7 @@ import { ProgrammingExerciseService } from 'app/exercises/programming/manage/ser
 import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
 import { getPositiveAndCappedTotalScore } from 'app/exercises/shared/exercise/exercise-utils';
 import { round } from 'app/shared/util/utils';
+import { getExerciseDashboardLink, getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
 
 @Component({
     selector: 'jhi-code-editor-tutor-assessment',
@@ -72,6 +73,12 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     showEditorInstructions = true;
     hasAssessmentDueDatePassed: boolean;
     correctionRound: number;
+    courseId: number;
+    examId = 0;
+    exerciseId: number;
+    exerciseGroupId: number;
+    exerciseDashboardLink: string[];
+    loadingInitialSubmission = true;
 
     private get course(): Course | undefined {
         return this.exercise?.course || this.exercise?.exerciseGroup?.exam?.course;
@@ -124,6 +131,16 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
             this.loadingParticipation = true;
             this.participationCouldNotBeFetched = false;
 
+            this.courseId = Number(params['courseId']);
+            this.exerciseId = Number(params['exerciseId']);
+            const examId = params['examId'];
+            if (examId) {
+                this.examId = Number(examId);
+                this.exerciseGroupId = Number(params['exerciseGroupId']);
+            }
+
+            this.exerciseDashboardLink = getExerciseDashboardLink(this.courseId, this.exerciseId, this.examId, this.isTestRun);
+
             let participationId;
             if (!params['participationId']) {
                 // Check if error is thrown and show info about error
@@ -133,7 +150,6 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
                     return;
                 } else if (response?.error?.status === 404) {
                     // there are no unassessed submission, nothing we have to worry about
-                    this.onError('artemisApp.exerciseAssessmentDashboard.noSubmissions');
                     return;
                 } else if (response?.error) {
                     this.onError(response?.error?.detail || 'Not Found');
@@ -152,6 +168,8 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
                 .pipe(
                     tap(
                         (participationWithResult: ProgrammingExerciseStudentParticipation) => {
+                            this.loadingInitialSubmission = false;
+
                             // Set domain to make file editor work properly
                             this.domainService.setDomain([DomainType.PARTICIPATION, participationWithResult]);
                             this.participation = participationWithResult;
@@ -171,6 +189,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
                             }
                         },
                         (error: HttpErrorResponse) => {
+                            this.loadingInitialSubmission = false;
                             this.participationCouldNotBeFetched = true;
                             if (error.error && error.error.errorKey === 'lockedSubmissionsLimitReached') {
                                 this.lockLimitReached = true;
@@ -297,20 +316,26 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
      * Go to next submission
      */
     nextSubmission() {
+        this.loadingParticipation = true;
+        this.submission = undefined;
         this.programmingSubmissionService.getProgrammingSubmissionForExerciseForCorrectionRoundWithoutAssessment(this.exercise.id!, true, this.correctionRound).subscribe(
             (response: ProgrammingSubmission) => {
-                const unassessedSubmission = response;
-                this.router.onSameUrlNavigation = 'reload';
+                this.loadingParticipation = false;
+
                 // navigate to the new assessment page to trigger re-initialization of the components
-                let url = `/course-management/${this.course!.id}/programming-exercises/${this.exercise.id}/code-editor/${unassessedSubmission.participation?.id}/assessment`;
-                url += `?correction-round=${this.correctionRound}`;
-                this.router.navigateByUrl(url, {});
+                this.router.onSameUrlNavigation = 'reload';
+
+                const url = getLinkToSubmissionAssessment(ExerciseType.PROGRAMMING, this.courseId, this.exerciseId, response.participation!.id!, this.examId, this.exerciseGroupId);
+                this.router.navigate(url, { queryParams: { 'correction-round': this.correctionRound } });
             },
             (error: HttpErrorResponse) => {
+                // there are no unassessed submission, nothing we have to worry about
                 if (error.status === 404) {
-                    // there are no unassessed submission, nothing we have to worry about
-                    this.onError('artemisApp.exerciseAssessmentDashboard.noSubmissions');
-                } else if (error.error && error.error.errorKey === 'lockedSubmissionsLimitReached') {
+                    return;
+                }
+
+                this.loadingParticipation = false;
+                if (error.error && error.error.errorKey === 'lockedSubmissionsLimitReached') {
                     // the lock limit is reached
                     this.onError('artemisApp.submission.lockedSubmissionsLimitReached');
                 } else {

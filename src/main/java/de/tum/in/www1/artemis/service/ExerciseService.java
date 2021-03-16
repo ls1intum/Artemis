@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
+import static de.tum.in.www1.artemis.service.util.RoundingUtil.round;
+
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -20,10 +22,12 @@ import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
+import de.tum.in.www1.artemis.domain.lecture.ExerciseUnit;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
+import de.tum.in.www1.artemis.domain.scores.ParticipantScore;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseService;
 import de.tum.in.www1.artemis.service.scheduled.quiz.QuizScheduleService;
@@ -70,18 +74,22 @@ public class ExerciseService {
 
     private final TutorParticipationRepository tutorParticipationRepository;
 
+    private final ParticipantScoreRepository participantScoreRepository;
+
     private final QuizExerciseRepository quizExerciseRepository;
 
     private final LtiOutcomeUrlRepository ltiOutcomeUrlRepository;
 
     private final StudentParticipationRepository studentParticipationRepository;
 
+    private final LectureUnitService lectureUnitService;
+
     public ExerciseService(ExerciseRepository exerciseRepository, ExerciseUnitRepository exerciseUnitRepository, ParticipationService participationService,
             AuthorizationCheckService authCheckService, ProgrammingExerciseService programmingExerciseService, QuizExerciseService quizExerciseService,
             QuizScheduleService quizScheduleService, TutorParticipationRepository tutorParticipationRepository, ExampleSubmissionService exampleSubmissionService,
             AuditEventRepository auditEventRepository, TeamRepository teamRepository, StudentExamRepository studentExamRepository, ExamRepository examRepository,
             ProgrammingExerciseRepository programmingExerciseRepository, QuizExerciseRepository quizExerciseRepository, LtiOutcomeUrlRepository ltiOutcomeUrlRepository,
-            StudentParticipationRepository studentParticipationRepository) {
+            StudentParticipationRepository studentParticipationRepository, ParticipantScoreRepository participantScoreRepository, LectureUnitService lectureUnitService) {
         this.exerciseRepository = exerciseRepository;
         this.examRepository = examRepository;
         this.participationService = participationService;
@@ -96,9 +104,11 @@ public class ExerciseService {
         this.studentExamRepository = studentExamRepository;
         this.exerciseUnitRepository = exerciseUnitRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
+        this.participantScoreRepository = participantScoreRepository;
         this.quizExerciseRepository = quizExerciseRepository;
         this.ltiOutcomeUrlRepository = ltiOutcomeUrlRepository;
         this.studentParticipationRepository = studentParticipationRepository;
+        this.lectureUnitService = lectureUnitService;
     }
 
     /**
@@ -308,9 +318,12 @@ public class ExerciseService {
     public void delete(long exerciseId, boolean deleteStudentReposBuildPlans, boolean deleteBaseReposBuildPlans) {
         // Delete has a transactional mechanism. Therefore, all lazy objects that are deleted below, should be fetched when needed.
         final var exercise = exerciseRepository.findByIdElseThrow(exerciseId);
-
+        participantScoreRepository.deleteAllByExerciseIdTransactional(exerciseId);
         // delete all exercise units linking to the exercise
-        this.exerciseUnitRepository.removeAllByExerciseId(exerciseId);
+        List<ExerciseUnit> exerciseUnits = this.exerciseUnitRepository.findByIdWithLearningGoalsBidirectional(exerciseId);
+        for (ExerciseUnit exerciseUnit : exerciseUnits) {
+            this.lectureUnitService.removeLectureUnit(exerciseUnit);
+        }
 
         // delete all participations belonging to this quiz
         participationService.deleteAllByExerciseId(exercise.getId(), deleteStudentReposBuildPlans, deleteStudentReposBuildPlans);
@@ -344,6 +357,33 @@ public class ExerciseService {
         else {
             exerciseRepository.delete(exercise);
         }
+    }
+
+    /**
+     * Updates the points of related exercises if the points of exercises have changed
+     *
+     * @param originalExercise the original exercise
+     * @param updatedExercise  the updatedExercise
+     */
+    public void updatePointsInRelatedParticipantScores(Exercise originalExercise, Exercise updatedExercise) {
+        if (originalExercise.getMaxPoints().equals(updatedExercise.getMaxPoints()) && originalExercise.getBonusPoints().equals(updatedExercise.getBonusPoints())) {
+            return; // nothing to do since points are still correct
+        }
+
+        List<ParticipantScore> participantScoreList = participantScoreRepository.findAllByExercise(updatedExercise);
+        for (ParticipantScore participantScore : participantScoreList) {
+            Double lastPoints = null;
+            Double lastRatedPoints = null;
+            if (participantScore.getLastScore() != null) {
+                lastPoints = round(participantScore.getLastScore() * 0.01 * updatedExercise.getMaxPoints());
+            }
+            if (participantScore.getLastRatedScore() != null) {
+                lastRatedPoints = round(participantScore.getLastRatedScore() * 0.01 * updatedExercise.getMaxPoints());
+            }
+            participantScore.setLastPoints(lastPoints);
+            participantScore.setLastRatedPoints(lastRatedPoints);
+        }
+        participantScoreRepository.saveAll(participantScoreList);
     }
 
     /**
