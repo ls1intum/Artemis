@@ -138,6 +138,10 @@ public class ProgrammingExerciseService {
         connectBaseParticipationsToExerciseAndSave(programmingExercise);
 
         setupExerciseTemplate(programmingExercise, user);
+
+        // Save programmning exercise to prevent transiant exception
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+
         setupBuildPlansForNewExercise(programmingExercise);
 
         // save to get the id required for the webhook
