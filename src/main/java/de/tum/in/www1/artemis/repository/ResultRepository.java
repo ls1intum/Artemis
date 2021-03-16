@@ -348,7 +348,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
     /**
      * Given a courseId, return the number of assessments for that course that have been completed (e.g. no draft!)
      *
-     * !! this is very slow - 3787 ms
+     * !! this is very slow - 3787 ms TODO improve
      *
      * @param courseId - the course we are interested in
      * @return a number of assessments for the course
