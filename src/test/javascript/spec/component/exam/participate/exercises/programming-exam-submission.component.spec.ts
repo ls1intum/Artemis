@@ -1,26 +1,26 @@
-import * as chai from 'chai';
-import { MockComponent, MockModule, MockPipe, MockProvider } from 'ng-mocks';
-import * as sinon from 'sinon';
-import * as sinonChai from 'sinon-chai';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { Course } from 'app/entities/course.model';
+import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
-import { ModelingEditorComponent } from 'app/exercises/modeling/shared/modeling-editor.component';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ProgrammingExamSubmissionComponent } from 'app/exam/participate/exercises/programming/programming-exam-submission.component';
-import { DomainService } from 'app/exercises/programming/shared/code-editor/service/code-editor-domain.service';
-import { CodeEditorContainerComponent } from 'app/exercises/programming/shared/code-editor/container/code-editor-container.component';
+import { ModelingEditorComponent } from 'app/exercises/modeling/shared/modeling-editor.component';
 import { ArtemisProgrammingExerciseActionsModule } from 'app/exercises/programming/shared/actions/programming-exercise-actions.module';
-import { OrionModule } from 'app/shared/orion/orion.module';
-import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
-import { ArtemisProgrammingExerciseInstructionsRenderModule } from 'app/exercises/programming/shared/instructions-render/programming-exercise-instructions-render.module';
-import { TranslatePipe } from '@ngx-translate/core';
-import { ExerciseGroup } from 'app/entities/exercise-group.model';
-import { Course } from 'app/entities/course.model';
-import * as moment from 'moment';
+import { CodeEditorContainerComponent } from 'app/exercises/programming/shared/code-editor/container/code-editor-container.component';
 import { CommitState } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
-import { ArtemisExerciseButtonsModule } from 'app/overview/exercise-details/exercise-buttons.module';
+import { DomainService } from 'app/exercises/programming/shared/code-editor/service/code-editor-domain.service';
+import { ArtemisProgrammingExerciseInstructionsRenderModule } from 'app/exercises/programming/shared/instructions-render/programming-exercise-instructions-render.module';
 import { IncludedInScoreBadgeComponent } from 'app/exercises/shared/exercise-headers/included-in-score-badge.component';
+import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
+import { ArtemisExerciseButtonsModule } from 'app/overview/exercise-details/exercise-buttons.module';
+import { OrionModule } from 'app/shared/orion/orion.module';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe.ts';
+import * as chai from 'chai';
+import * as moment from 'moment';
+import { MockComponent, MockModule, MockPipe, MockProvider } from 'ng-mocks';
+import * as sinon from 'sinon';
+import * as sinonChai from 'sinon-chai';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -52,7 +52,7 @@ describe('ProgrammingExamSubmissionComponent', () => {
                 ProgrammingExamSubmissionComponent,
                 MockComponent(ModelingEditorComponent),
                 MockComponent(CodeEditorContainerComponent),
-                MockPipe(TranslatePipe),
+                MockPipe(ArtemisTranslatePipe),
                 MockComponent(IncludedInScoreBadgeComponent),
             ],
             providers: [MockProvider(DomainService)],

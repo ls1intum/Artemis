@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Optional;
 
@@ -292,7 +293,7 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
 
         final var params = new LinkedMultiValueMap<String, String>();
         params.add("complaintType", ComplaintType.COMPLAINT.name());
-        final var complaints = request.getList("/api/exercises/" + modelingExercise.getId() + "/complaints-for-tutor-dashboard", HttpStatus.OK, Complaint.class, params);
+        final var complaints = request.getList("/api/exercises/" + modelingExercise.getId() + "/complaints-for-assessment-dashboard", HttpStatus.OK, Complaint.class, params);
 
         complaints.forEach(compl -> {
             final var participation = (StudentParticipation) compl.getResult().getParticipation();
@@ -531,7 +532,7 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
 
         final var params = new LinkedMultiValueMap<String, String>();
         params.add("complaintType", ComplaintType.MORE_FEEDBACK.name());
-        final var complaints = request.getList("/api/exercises/" + modelingExercise.getId() + "/more-feedback-for-tutor-dashboard", HttpStatus.OK, Complaint.class, params);
+        final var complaints = request.getList("/api/exercises/" + modelingExercise.getId() + "/more-feedback-for-assessment-dashboard", HttpStatus.OK, Complaint.class, params);
 
         complaints.forEach(compl -> {
             final var participation = (StudentParticipation) compl.getResult().getParticipation();
@@ -577,5 +578,27 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
         final String url = "/api/complaints/exam/{examId}".replace("{examId}", String.valueOf(examId));
         request.post(url, examExerciseComplaint, HttpStatus.BAD_REQUEST);
 
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testGetComplaintsByCourseIdAndExamId() throws Exception {
+        final TextExercise examExercise = database.addCourseExamWithReviewDatesExerciseGroupWithOneTextExercise();
+        final long examId = examExercise.getExerciseGroup().getExam().getId();
+        final long couseId = examExercise.getExerciseGroup().getExam().getCourse().getId();
+        final TextSubmission textSubmission = ModelFactory.generateTextSubmission("This is my submission", Language.ENGLISH, true);
+        database.saveTextSubmissionWithResultAndAssessor(examExercise, textSubmission, "student1", "tutor1");
+        final var examExerciseComplaint = new Complaint().result(textSubmission.getLatestResult()).complaintText("This is not fair").complaintType(ComplaintType.COMPLAINT);
+        final String url = "/api/complaints/exam/{examId}".replace("{examId}", String.valueOf(examId));
+        request.post(url, examExerciseComplaint, HttpStatus.CREATED);
+
+        Optional<Complaint> storedComplaint = complaintRepo.findByResult_Id(textSubmission.getLatestResult().getId());
+        request.get("/api/courses/" + couseId + "/exams/" + examId + "/complaints", HttpStatus.FORBIDDEN, List.class);
+        database.changeUser("tutor1");
+        request.get("/api/courses/" + couseId + "/exams/" + examId + "/complaints", HttpStatus.FORBIDDEN, List.class);
+        database.changeUser("instructor1");
+        var fetchedComplaints = request.get("/api/courses/" + couseId + "/exams/" + examId + "/complaints", HttpStatus.OK, List.class);
+        assertThat(((LinkedHashMap) fetchedComplaints.get(0)).get("id")).isEqualTo(storedComplaint.get().getId().intValue());
+        assertThat(((LinkedHashMap) fetchedComplaints.get(0)).get("complaintText")).isEqualTo(storedComplaint.get().getComplaintText());
     }
 }

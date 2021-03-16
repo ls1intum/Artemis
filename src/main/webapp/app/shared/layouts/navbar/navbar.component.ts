@@ -155,7 +155,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         complaints: 'artemisApp.complaint.listOfComplaints.title',
         more_feedback_requests: 'artemisApp.moreFeedback.list.title',
         instructor_dashboard: 'entity.action.instructorDashboard',
-        tutor_dashboard: 'artemisApp.assessmentDashboard.home.title',
+        assessment_dashboard: 'artemisApp.assessmentDashboard.home.title',
         test_run_exercise_assessment_dashboard: 'artemisApp.exerciseAssessmentDashboard.home.title',
         lti_configuration: 'artemisApp.programmingExercise.home.title',
         teams: 'artemisApp.team.home.title',
@@ -194,7 +194,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         summary: 'artemisApp.exam.summary',
         conduction: 'artemisApp.exam.title',
         student_exams: 'artemisApp.studentExams.title',
-        tutor_exam_dashboard: 'artemisApp.examManagement.assessmentDashboard',
+        test_assessment_dashboard: 'artemisApp.examManagement.assessmentDashboard',
     };
 
     /**
@@ -234,11 +234,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
                     this.addBreadcrumbForNumberSegment(currentPath, segment);
                 } else {
                     this.addBreadcrumbForUrlSegment(currentPath, segment);
-                }
-
-                // Special case: Don't add invalid breadcrumbs for the exercise group segments
-                if ('exercise-groups' === segment) {
-                    return;
                 }
 
                 this.lastRouteUrlSegment = segment;
@@ -454,7 +449,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     logout() {
         this.participationWebsocketService.resetLocalCache();
         this.collapseNavbar();
-        this.loginService.logout();
+        this.loginService.logout(true);
     }
 
     toggleNavbar() {

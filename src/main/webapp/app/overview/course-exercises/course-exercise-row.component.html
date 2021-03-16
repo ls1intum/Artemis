@@ -1,7 +1,7 @@
 <div class="course-exercise-row row align-items-center mb-2 mt-2" (click)="showDetails($event)" [class.guided-tour]="hasGuidedTour">
     <div class="col-auto d-none d-sm-block">
         <div class="exercise-row-icon">
-            <fa-icon [icon]="getIcon(exercise.type)" size="2x" placement="right" [ngbTooltip]="getIconTooltip(exercise.type) | translate" container="body"></fa-icon>
+            <fa-icon [icon]="getIcon(exercise.type)" size="2x" placement="right" [ngbTooltip]="getIconTooltip(exercise.type) | artemisTranslate" container="body"></fa-icon>
         </div>
     </div>
     <div class="col">
@@ -14,7 +14,7 @@
             <div class="col-sm col">
                 <h4>{{ exercise.title }}</h4>
             </div>
-            <jhi-submission-result-status *ngIf="!isPresentationMode" [exercise]="exercise" [short]="true"></jhi-submission-result-status>
+            <jhi-submission-result-status *ngIf="!isPresentationMode" [exercise]="exercise" [short]="true" [triggerLastGraded]="false"></jhi-submission-result-status>
         </div>
         <div class="row">
             <jhi-exercise-details-student-actions
@@ -37,11 +37,13 @@
                         placement="right"
                         ngbTooltip="Only visible to teaching assistants and instructors. Release date: {{ exercise.releaseDate | artemisDate }}"
                     >
-                        {{ 'artemisApp.courseOverview.exerciseList.notReleased' | translate }}</span
+                        {{ 'artemisApp.courseOverview.exerciseList.notReleased' | artemisTranslate }}</span
                     >
                 </h4>
                 <h4 *ngIf="!isPresentationMode">
-                    <span class="badge badge-success mr-1" [hidden]="!asQuizExercise(exercise).isActiveQuiz">{{ 'artemisApp.courseOverview.exerciseList.live' | translate }}</span>
+                    <span class="badge badge-success mr-1" [hidden]="!asQuizExercise(exercise).isActiveQuiz">{{
+                        'artemisApp.courseOverview.exerciseList.live' | artemisTranslate
+                    }}</span>
                 </h4>
                 <h4 *ngFor="let category of exerciseCategories">
                     <span class="badge text-white mr-1" [ngStyle]="{ backgroundColor: category.color }">{{ category.category }}</span>
@@ -54,11 +56,11 @@
                 </h4>
             </div>
             <div class="col-sm-auto mb-2" *ngIf="exercise.dueDate; else noDate" [ngClass]="getUrgentClass(exercise.dueDate ? exercise.dueDate : exercise.releaseDate)">
-                <span class="d-none d-sm-inline"> {{ 'artemisApp.exercise.dueDate' | translate }}: </span>
-                {{ (exercise.dueDate ? exercise.dueDate : exercise.releaseDate!) | amTimeAgo }}
+                <span class="d-none d-sm-inline"> {{ 'artemisApp.exercise.dueDate' | artemisTranslate }}: </span>
+                {{ (exercise.dueDate ? exercise.dueDate : exercise.releaseDate!) | artemisTimeAgo }}
             </div>
             <ng-template #noDate>
-                <div class="col-auto mb-2">{{ 'artemisApp.courseOverview.exerciseList.noDueDate' | translate }}</div>
+                <div class="col-auto mb-2">{{ 'artemisApp.courseOverview.exerciseList.noDueDate' | artemisTranslate }}</div>
             </ng-template>
         </div>
     </div>

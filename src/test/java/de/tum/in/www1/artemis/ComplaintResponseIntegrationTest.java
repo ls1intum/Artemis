@@ -81,7 +81,7 @@ public class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationB
         submission = submissionRepository.saveAndFlush(submission);
         // creating assessment by tutor1
         User tutor1 = userRepository.findOneByLogin("tutor1").get();
-        Result result = ModelFactory.generateResult(true, 50);
+        Result result = ModelFactory.generateResult(true, 50D);
         result.setAssessor(tutor1);
         result.setHasComplaint(true);
         result.setHasFeedback(false);

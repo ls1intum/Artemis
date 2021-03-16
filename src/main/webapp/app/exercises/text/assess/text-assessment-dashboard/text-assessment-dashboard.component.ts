@@ -12,6 +12,7 @@ import { ExerciseType } from 'app/entities/exercise.model';
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { SortService } from 'app/shared/service/sort.service';
 import { AccountService } from 'app/core/auth/account.service';
+import { getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
 
 @Component({
     templateUrl: './text-assessment-dashboard.component.html',
@@ -25,6 +26,10 @@ export class TextAssessmentDashboardComponent implements OnInit {
     predicate = 'id';
     reverse = false;
     numberOfCorrectionrounds = 1;
+    courseId: number;
+    exerciseId: number;
+    examId: number;
+    exerciseGroupId: number;
 
     private cancelConfirmationText: string;
 
@@ -45,9 +50,15 @@ export class TextAssessmentDashboardComponent implements OnInit {
      */
     async ngOnInit() {
         this.busy = true;
-        const exerciseId = Number(this.route.snapshot.paramMap.get('exerciseId'));
+        this.exerciseId = Number(this.route.snapshot.paramMap.get('exerciseId'));
+        this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
+        if (this.route.snapshot.paramMap.has('examId')) {
+            this.examId = Number(this.route.snapshot.paramMap.get('examId'));
+            this.exerciseGroupId = Number(this.route.snapshot.paramMap.get('exerciseGroupId'));
+        }
+
         this.exerciseService
-            .find(exerciseId)
+            .find(this.exerciseId)
             .map((exerciseResponse) => {
                 if (exerciseResponse.body!.type !== ExerciseType.TEXT) {
                     throw new Error('Cannot use Text Assessment Dashboard with non-text Exercise type.');
@@ -127,15 +138,11 @@ export class TextAssessmentDashboardComponent implements OnInit {
             });
         }
     }
+
     /**
      * get the link for the assessment of a specific submission of the current exercise
-     * @param submissionId
      */
     getAssessmentLink(submissionId: number) {
-        if (this.exercise.exerciseGroup) {
-            return ['/course-management', this.exercise.exerciseGroup.exam?.course?.id, 'text-exercises', this.exercise.id, 'submissions', submissionId, 'assessment'];
-        } else {
-            return ['/course-management', this.exercise.course?.id, 'text-exercises', this.exercise.id, 'submissions', submissionId, 'assessment'];
-        }
+        return getLinkToSubmissionAssessment(this.exercise.type!, this.courseId, this.exerciseId, submissionId, this.examId, this.exerciseGroupId);
     }
 }

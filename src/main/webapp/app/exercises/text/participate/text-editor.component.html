@@ -1,6 +1,6 @@
 <jhi-header-participation-page class="d-block mb-4" [exercise]="textExercise" [participation]="participation">
     <span pagetitle>
-        {{ 'artemisApp.textSubmission.textEditor' | translate }}: <span class="font-weight-normal">{{ textExercise?.title }}</span>
+        {{ 'artemisApp.textSubmission.textEditor' | artemisTranslate }}: <span class="font-weight-normal">{{ textExercise?.title }}</span>
     </span>
     <jhi-button
         *ngIf="isOwnerOfParticipation"
@@ -32,10 +32,10 @@
         <div class="grid-area-main">
             <div>
                 <span class="badge badge-primary mb-2">
-                    {{ 'artemisApp.textExercise.wordCount' | translate: { count: wordCount } }}
+                    {{ 'artemisApp.textExercise.wordCount' | artemisTranslate: { count: wordCount } }}
                 </span>
                 <span class="badge badge-primary mb-2">
-                    {{ 'artemisApp.textExercise.characterCount' | translate: { count: characterCount } }}
+                    {{ 'artemisApp.textExercise.characterCount' | artemisTranslate: { count: characterCount } }}
                 </span>
             </div>
 
@@ -64,35 +64,21 @@
                         <b>
                             {{
                                 isOwnerOfParticipation
-                                    ? ('artemisApp.textExercise.assessedSubmission' | translate)
-                                    : ('artemisApp.textExercise.assessedSubmissionInstructor' | translate)
+                                    ? ('artemisApp.textExercise.assessedSubmission' | artemisTranslate)
+                                    : ('artemisApp.textExercise.assessedSubmissionInstructor' | artemisTranslate)
                             }}:
                         </b>
                         <hr />
                         <jhi-text-result [result]="result"></jhi-text-result>
                         <hr />
                     </div>
-                    <div *ngIf="unreferencedFeedback && unreferencedFeedback.length != 0" class="col-xl-8 alert unreferencedFeedback">
-                        <b>
-                            <fa-icon [icon]="['far', 'comment-dots']"></fa-icon>&nbsp;<span jhiTranslate="artemisApp.assessment.unreferencedFeedback">
-                                Feedback for Missing Elements</span
-                            >:</b
-                        >
-                        <br />
-                        <br />
-                        <div
-                            class="alert"
-                            *ngFor="let feedback of unreferencedFeedback"
-                            [class.positive-feedback]="feedback?.credits > 0"
-                            [class.negative-feedback]="feedback?.credits < 0"
-                            [class.neutral-feedback]="feedback?.credits === 0"
-                        >
-                            <strong>
-                                <span> {{ feedback.credits + ' Points: ' }} </span>
-                            </strong>
-                            <span> {{ feedback.detailText }} </span>
-                        </div>
-                    </div>
+                    <jhi-additional-feedback
+                        *ngIf="unreferencedFeedback?.length > 0"
+                        class="col-xl-8 alert unreferencedFeedback"
+                        [feedback]="unreferencedFeedback"
+                        [additional]="true"
+                    >
+                    </jhi-additional-feedback>
                     <jhi-rating *ngIf="isOwnerOfParticipation" class="col-md-12 col-lg-10 col-xl-8 mt-2 alert alert-info" [result]="result"></jhi-rating>
                 </div>
             </ng-template>

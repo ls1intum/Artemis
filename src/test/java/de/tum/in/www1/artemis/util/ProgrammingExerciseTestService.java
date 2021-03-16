@@ -42,7 +42,6 @@ import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.programmingexercise.MockDelegate;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.AuthoritiesConstants;
-import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.CourseService;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.TeamService;
@@ -349,7 +348,6 @@ public class ProgrammingExerciseTestService {
         // Import the exercise and load all referenced entities
         var importedExercise = request.postWithResponseBody(ROOT + IMPORT.replace("{sourceExerciseId}", sourceExercise.getId().toString()), exerciseToBeImported,
                 ProgrammingExercise.class, params, HttpStatus.OK);
-        SecurityUtils.setAuthorizationObject();
         importedExercise = database.loadProgrammingExerciseWithEagerReferences(importedExercise);
 
         if (staticCodeAnalysisEnabled) {
@@ -450,8 +448,6 @@ public class ProgrammingExerciseTestService {
 
         exerciseToBeImported = request.postWithResponseBody(ROOT + IMPORT.replace("{sourceExerciseId}", sourceExercise.getId().toString()), exerciseToBeImported,
                 ProgrammingExercise.class, HttpStatus.OK);
-
-        SecurityUtils.setAuthorizationObject();
         assertEquals(TEAM, exerciseToBeImported.getMode());
         assertEquals(teamAssignmentConfig.getMinTeamSize(), exerciseToBeImported.getTeamAssignmentConfig().getMinTeamSize());
         assertEquals(teamAssignmentConfig.getMaxTeamSize(), exerciseToBeImported.getTeamAssignmentConfig().getMaxTeamSize());
@@ -493,7 +489,6 @@ public class ProgrammingExerciseTestService {
         exerciseToBeImported = request.postWithResponseBody(ROOT + IMPORT.replace("{sourceExerciseId}", sourceExercise.getId().toString()), exerciseToBeImported,
                 ProgrammingExercise.class, HttpStatus.OK);
 
-        SecurityUtils.setAuthorizationObject();
         assertEquals(ExerciseMode.INDIVIDUAL, exerciseToBeImported.getMode());
         assertNull(exerciseToBeImported.getTeamAssignmentConfig());
         assertEquals(0, teamService.findAllByExerciseIdWithEagerStudents(exerciseToBeImported, null).size());
@@ -551,7 +546,6 @@ public class ProgrammingExerciseTestService {
                 ProgrammingExercise.class, params, HttpStatus.OK);
 
         // Assertions
-        SecurityUtils.setAuthorizationObject();
         var staticCodeAnalysisCategories = staticCodeAnalysisCategoryRepository.findByExerciseId(exerciseToBeImported.getId());
         assertThat(exerciseToBeImported.isStaticCodeAnalysisEnabled());
         assertThat(staticCodeAnalysisCategories).usingRecursiveFieldByFieldElementComparator().usingElementComparatorOnFields("name", "state", "penalty", "maxPenalty")

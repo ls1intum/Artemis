@@ -496,6 +496,10 @@ public class BambooRequestMockProvider {
             return;
         }
 
+        if (!buildPlanExists) {
+            return;
+        }
+
         MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
         parameters.add("selectedBuilds", planKey);
         parameters.add("confirm", "true");

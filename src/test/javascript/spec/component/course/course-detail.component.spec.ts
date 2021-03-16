@@ -3,7 +3,8 @@ import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
 import { ArtemisTestModule } from '../../test.module';
 import { CourseDetailComponent } from 'app/course/manage/course-detail.component';
-import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { TranslateService } from '@ngx-translate/core';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe.ts';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
@@ -34,7 +35,7 @@ describe('Course Management Detail Component', () => {
                 CourseDetailComponent,
                 MockComponent(SecuredImageComponent),
                 MockRouterLinkDirective,
-                MockPipe(TranslatePipe),
+                MockPipe(ArtemisTranslatePipe),
                 MockDirective(DeleteButtonDirective),
                 MockComponent(AlertErrorComponent),
                 MockDirective(AlertComponent),

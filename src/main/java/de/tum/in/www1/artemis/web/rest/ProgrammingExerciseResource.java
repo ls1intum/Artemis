@@ -33,7 +33,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.GradingCriterion;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
@@ -686,6 +689,9 @@ public class ProgrammingExerciseResource {
 
         // Only save after checking for errors
         ProgrammingExercise savedProgrammingExercise = programmingExerciseService.updateProgrammingExercise(updatedProgrammingExercise, notificationText);
+
+        exerciseService.updatePointsInRelatedParticipantScores(existingProgrammingExercise.get(), updatedProgrammingExercise);
+
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, updatedProgrammingExercise.getTitle()))
                 .body(savedProgrammingExercise);
     }
@@ -908,6 +914,7 @@ public class ProgrammingExerciseResource {
         if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
             return forbidden();
         }
+
         exerciseService.logDeletion(programmingExercise, course, user);
         exerciseService.delete(exerciseId, deleteStudentReposBuildPlans, deleteBaseReposBuildPlans);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, programmingExercise.getTitle())).build();

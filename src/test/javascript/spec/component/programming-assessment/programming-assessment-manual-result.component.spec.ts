@@ -47,13 +47,14 @@ import { Course } from 'app/entities/course.model';
 import { delay } from 'rxjs/operators';
 import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
 import { ComplaintResponse } from 'app/entities/complaint-response.model';
-import { ActivatedRoute, convertToParamMap } from '@angular/router';
+import { ActivatedRoute, convertToParamMap, Router } from '@angular/router';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { CodeEditorRepositoryFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
 import { CodeEditorAceComponent } from 'app/exercises/programming/shared/code-editor/ace/code-editor-ace.component';
 import { CodeEditorFileBrowserComponent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser.component';
 import { TreeviewItem } from 'ngx-treeview';
 import { FileType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
+import { RouterTestingModule } from '@angular/router/testing';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -116,7 +117,6 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         gradingInstructions: 'Grading Instructions',
         course: <Course>{ instructorGroupName: 'instructorGroup' },
     } as unknown) as ProgrammingExercise;
-    // const automaticResult: Result = { feedbacks: [new Feedback()], assessmentType: AssessmentType.AUTOMATIC, id: 1, resultString: '1 of 13 passed' };
     const participation: ProgrammingExerciseStudentParticipation = new ProgrammingExerciseStudentParticipation();
     participation.results = [result];
     participation.exercise = exercise;
@@ -139,7 +139,16 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), ArtemisTestModule, ArtemisSharedModule, NgbModule, FormDateTimePickerModule, FormsModule, ArtemisProgrammingAssessmentModule],
+            imports: [
+                TranslateModule.forRoot(),
+                ArtemisTestModule,
+                ArtemisSharedModule,
+                NgbModule,
+                FormDateTimePickerModule,
+                FormsModule,
+                ArtemisProgrammingAssessmentModule,
+                RouterTestingModule,
+            ],
             declarations: [MockComponent(ProgrammingAssessmentRepoExportButtonComponent)],
             providers: [
                 ProgrammingAssessmentManualResultService,
@@ -357,17 +366,19 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
     }));
 
     it('should go to next submission', fakeAsync(() => {
+        const routerStub = stub(TestBed.inject(Router), 'navigate');
+
         comp.ngOnInit();
+        const courseId = 123;
+        comp.courseId = courseId;
+        comp.exerciseId = exercise.id!;
         tick(100);
         comp.nextSubmission();
-        expect(getProgrammingSubmissionForExerciseWithoutAssessmentStub).to.be.calledOnce;
-    }));
 
-    it('should create the correct repository url', fakeAsync(() => {
-        comp.ngOnInit();
-        tick(100);
-        expect(comp.adjustedRepositoryURL).to.be.equal('http://bitbucket.ase.in.tum.de/scm/TEST/test-repo-student1.git');
-        flush();
+        const url = ['/course-management', courseId.toString(), 'programming-exercises', exercise.id!.toString(), 'code-editor', participation2.id!.toString(), 'assessment'];
+        const queryParams = { queryParams: { 'correction-round': 0 } };
+        expect(getProgrammingSubmissionForExerciseWithoutAssessmentStub).to.be.calledOnce;
+        expect(routerStub).to.have.been.calledWith(url, queryParams);
     }));
 
     it('should highlight lines that were changed', fakeAsync(() => {

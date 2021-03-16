@@ -130,10 +130,7 @@ public class ExerciseUnitIntegrationTest extends AbstractSpringIntegrationBamboo
         }
 
         List<ExerciseUnit> exerciseUnitsOfLecture = request.getList("/api/lectures/" + lecture1.getId() + "/exercise-units", HttpStatus.OK, ExerciseUnit.class);
-        persistedExerciseUnits.forEach(exerciseUnit -> {
-            assertThat(exerciseUnitsOfLecture.contains(persistedExerciseUnits));
-        });
-
+        assertThat(exerciseUnitsOfLecture).containsAll(persistedExerciseUnits);
     }
 
     @Test

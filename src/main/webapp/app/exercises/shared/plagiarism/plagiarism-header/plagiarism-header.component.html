@@ -1,23 +1,23 @@
 <div class="plagiarism-header">
     <div class="plagiarism-header-left">
         <h5>
-            {{ comparison.submissionA.studentLogin || ('artemisApp.plagiarism.unknown-student' | translate) }},
-            {{ comparison.submissionB.studentLogin || ('artemisApp.plagiarism.unknown-student' | translate) }}
+            {{ comparison.submissionA.studentLogin || ('artemisApp.plagiarism.unknown-student' | artemisTranslate) }},
+            {{ comparison.submissionB.studentLogin || ('artemisApp.plagiarism.unknown-student' | artemisTranslate) }}
         </h5>
     </div>
 
     <div class="plagiarism-header-right">
         <div class="plagiarism-warning">
             <fa-icon [icon]="'exclamation-triangle'"></fa-icon>
-            <span>{{ 'artemisApp.plagiarism.warning' | translate }}</span>
+            <span>{{ 'artemisApp.plagiarism.warning' | artemisTranslate }}</span>
         </div>
 
         <button class="btn btn-success btn-sm" (click)="confirmPlagiarism()" data-qa="confirm-plagiarism-button">
-            {{ 'artemisApp.plagiarism.confirm' | translate }}
+            {{ 'artemisApp.plagiarism.confirm' | artemisTranslate }}
         </button>
 
         <button class="btn btn-danger btn-sm" (click)="denyPlagiarism()" data-qa="deny-plagiarism-button">
-            {{ 'artemisApp.plagiarism.deny' | translate }}
+            {{ 'artemisApp.plagiarism.deny' | artemisTranslate }}
         </button>
 
         <div class="vertical-divider"></div>

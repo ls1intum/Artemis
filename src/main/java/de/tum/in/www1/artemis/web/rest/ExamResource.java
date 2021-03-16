@@ -25,7 +25,9 @@ import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.service.AssessmentDashboardService;
+import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.TutorParticipationService;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
 import de.tum.in.www1.artemis.service.exam.ExamAccessService;
 import de.tum.in.www1.artemis.service.exam.ExamDateService;
@@ -35,6 +37,8 @@ import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.web.rest.dto.ExamChecklistDTO;
 import de.tum.in.www1.artemis.web.rest.dto.ExamInformationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.ExamScoresDTO;
+import de.tum.in.www1.artemis.web.rest.dto.StatsForInstructorDashboardDTO;
+import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
@@ -343,6 +347,27 @@ public class ExamResource {
     }
 
     /**
+     * GET /courses/:courseId/exams/:examId/stats-for-exam-assessment-dashboard A collection of useful statistics for the tutor course dashboard,
+     * including: - number of submissions to the course - number of assessments - number of assessments assessed by the tutor - number of complaints
+     *
+     * @param courseId - the id of the course
+     * @param examId   - the id of the exam to retrieve stats from
+     * @return data about a course including all exercises, plus some data for the tutor as tutor status for assessment
+     */
+    @GetMapping("/courses/{courseId}/exams/{examId}/stats-for-exam-assessment-dashboard")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<StatsForInstructorDashboardDTO> getStatsForExamAssessmentDashboard(@PathVariable Long courseId, @PathVariable Long examId) {
+        log.debug("REST request /courses/{courseId}/stats-for-exam-assessment-dashboard");
+
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
+            return forbidden();
+        }
+        return ResponseEntity.ok(examService.getStatsForExamAssessmentDashboard(course, examId));
+    }
+
+    /**
      * GET /courses/{courseId}/exams : Find all exams for the given course.
      *
      * @param courseId the course to which the exam belongs
@@ -469,7 +494,6 @@ public class ExamResource {
     public ResponseEntity<List<StudentExam>> generateStudentExams(@PathVariable Long courseId, @PathVariable Long examId) {
         long start = System.nanoTime();
         log.info("REST request to generate student exams for exam {}", examId);
-
         final var exam = examRepository.findByIdWithRegisteredUsersExerciseGroupsAndExercisesElseThrow(examId);
 
         Optional<ResponseEntity<List<StudentExam>>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccessForInstructor(courseId, exam);
@@ -684,6 +708,32 @@ public class ExamResource {
     }
 
     /**
+     * DELETE /courses/{courseId}/exams/{examId}/allstudents :
+     * Remove all students of the exam so that they cannot access the exam any more.
+     * Optionally, also deletes participations and submissions of all students in their student exams.
+     *
+     * @param courseId     the id of the course
+     * @param examId       the id of the exam
+     * @param withParticipationsAndSubmission request param deciding whether participations and submissions should also be deleted
+     *
+     * @return empty ResponseEntity with status 200 (OK) or with status 404 (Not Found)
+     */
+    @DeleteMapping(value = "/courses/{courseId}/exams/{examId}/students")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Void> removeAllStudentsFromExam(@PathVariable Long courseId, @PathVariable Long examId,
+            @RequestParam(defaultValue = "false") boolean withParticipationsAndSubmission) {
+        log.debug("REST request to remove all students from exam {} with courseId {}", examId, courseId);
+
+        Optional<ResponseEntity<Void>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccessForInstructor(courseId, examId);
+        if (courseAndExamAccessFailure.isPresent()) {
+            return courseAndExamAccessFailure.get();
+        }
+
+        examRegistrationService.unregisterAllStudentFromExam(examId, withParticipationsAndSubmission);
+        return ResponseEntity.ok().body(null);
+    }
+
+    /**
      * GET /courses/{courseId}/exams/{examId}/start : Get an exam for the exam start.
      *
      * @param courseId  the id of the course
@@ -752,23 +802,34 @@ public class ExamResource {
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<ExamInformationDTO> getLatestIndividualEndDateOfExam(@PathVariable Long courseId, @PathVariable Long examId) {
         log.debug("REST request to get latest individual end date of exam : {}", examId);
-
         Optional<ResponseEntity<ExamInformationDTO>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccessForTeachingAssistant(courseId, examId);
+        return courseAndExamAccessFailure.orElseGet(() -> ResponseEntity.ok().body(new ExamInformationDTO(examDateService.getLatestIndividualExamEndDate(examId))));
+    }
 
-        if (courseAndExamAccessFailure.isPresent()) {
-            return courseAndExamAccessFailure.get();
+    /**
+     * GET /courses/:courseId/exams/:examId/lockedSubmissions Get locked submissions for exam for user
+     *
+     * @param courseId  - the id of the course
+     * @param examId    - the id of the exam
+     * @return the ResponseEntity with status 200 (OK) and with body the course, or with status 404 (Not Found)
+     * @throws AccessForbiddenException if the current user doesn't have the permission to access the course
+     */
+    @GetMapping("/courses/{courseId}/exams/{examId}/lockedSubmissions")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<List<Submission>> getLockedSubmissionsForExam(@PathVariable Long courseId, @PathVariable Long examId) throws AccessForbiddenException {
+        log.debug("REST request to get all locked submissions for course : {}", courseId);
+        long start = System.currentTimeMillis();
+        Course course = courseRepository.findWithEagerExercisesById(courseId);
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
+            throw new AccessForbiddenException("You are not allowed to access this resource");
         }
 
-        ZonedDateTime latestIndividualEndDateOfExam = examDateService.getLatestIndividualExamEndDate(examId);
+        List<Submission> submissions = examService.getLockedSubmissions(examId, user);
 
-        if (latestIndividualEndDateOfExam == null) {
-            return ResponseEntity.notFound().build();
-        }
-        else {
-            ExamInformationDTO examInformationDTO = new ExamInformationDTO();
-            examInformationDTO.latestIndividualEndDate = latestIndividualEndDateOfExam;
-            return ResponseEntity.ok().body(examInformationDTO);
-        }
+        long end = System.currentTimeMillis();
+        log.debug("Finished /courses/" + courseId + "/submissions call in " + (end - start) + "ms");
+        return ResponseEntity.ok(submissions);
     }
 
 }

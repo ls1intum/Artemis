@@ -14,7 +14,7 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
 import { debounceTime, distinctUntilChanged, map } from 'rxjs/operators';
 import { TextSubmissionService } from 'app/exercises/text/participate/text-submission.service';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
-import { Feedback, FeedbackType } from 'app/entities/feedback.model';
+import { Feedback } from 'app/entities/feedback.model';
 import { ResultService } from 'app/exercises/shared/result/result.service';
 import { TextExerciseService } from 'app/exercises/text/manage/text-exercise/text-exercise.service';
 import { participationStatus } from 'app/exercises/shared/exercise/exercise-utils';
@@ -25,6 +25,7 @@ import { TextSubmission } from 'app/entities/text-submission.model';
 import { StringCountService } from 'app/exercises/text/participate/string-count.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { getLatestSubmissionResult, setLatestSubmissionResult } from 'app/entities/submission.model';
+import { getUnreferencedFeedback } from 'app/exercises/shared/result/result-utils';
 
 @Component({
     templateUrl: './text-editor.component.html',
@@ -168,17 +169,10 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     }
 
     /**
-     * Find "Unreferenced Feedback" item for Result, if it exists.
+     * Check whether or not a result exists and if, returns the unreferenced feedback of it
      */
-    get unreferencedFeedback(): Feedback[] | null {
-        if (this.result && this.result.feedbacks && Array.isArray(this.result.feedbacks)) {
-            const feedbackWithoutReference = this.result.feedbacks.filter(
-                (feedbackElement) => feedbackElement.reference == undefined && feedbackElement.type === FeedbackType.MANUAL_UNREFERENCED,
-            );
-            return feedbackWithoutReference;
-        }
-
-        return null;
+    get unreferencedFeedback(): Feedback[] | undefined {
+        return this.result ? getUnreferencedFeedback(this.result.feedbacks) : undefined;
     }
 
     get wordCount(): number {
