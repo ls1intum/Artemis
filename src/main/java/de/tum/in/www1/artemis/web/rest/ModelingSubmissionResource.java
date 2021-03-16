@@ -186,18 +186,19 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
             @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound, @RequestParam(value = "resultId", defaultValue = "0") long resultId) {
         log.debug("REST request to get ModelingSubmission with id: {}", submissionId);
         // TODO CZ: include exerciseId in path to get exercise for auth check more easily?
-        var modelingSubmission = modelingSubmissionService.findOneWithEagerResultAndFeedback(submissionId);
+        var modelingSubmission = modelingSubmissionService.findOne(submissionId);
         var studentParticipation = (StudentParticipation) modelingSubmission.getParticipation();
         var modelingExercise = (ModelingExercise) studentParticipation.getExercise();
         var gradingCriteria = gradingCriterionService.findByExerciseIdWithEagerGradingCriteria(modelingExercise.getId());
         modelingExercise.setGradingCriteria(gradingCriteria);
         final User user = userRepository.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(modelingExercise, user)
-                || (resultId > 0 && !authCheckService.isAtLeastInstructorForExercise(modelingExercise, user))) {
+                || resultId > 0 && !authCheckService.isAtLeastInstructorForExercise(modelingExercise, user)) {
             return forbidden();
         }
 
         if (resultId != 0 && authCheckService.isAtLeastInstructorForExercise(modelingExercise, user)) {
+            modelingSubmission = modelingSubmissionService.findOneWithEagerResultAndFeedback(submissionId);
             Result result = modelingSubmission.getManualResults().stream().filter(result1 -> result1.getId().equals(resultId)).findFirst().get();
             correctionRound = modelingSubmission.getManualResults().indexOf(result);
         }

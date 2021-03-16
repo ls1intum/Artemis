@@ -121,7 +121,7 @@ export class StudentExamDetailComponent implements OnInit {
                 exercise.studentParticipations?.length &&
                 exercise.studentParticipations.length > 0 &&
                 exercise.studentParticipations[0].results?.length &&
-                exercise.studentParticipations[0].results.length > 0
+                exercise.studentParticipations[0].results!.length > 0
             ) {
                 if (exercise!.studentParticipations[0].submissions && exercise!.studentParticipations[0].submissions!.length > 0) {
                     exercise!.studentParticipations[0].submissions![0].results! = exercise.studentParticipations[0].results;

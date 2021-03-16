@@ -277,7 +277,7 @@ public class TextAssessmentResource extends AssessmentResource {
         checkAuthorization(exercise, user);
         final boolean isAtLeastInstructorForExercise = authCheckService.isAtLeastInstructorForExercise(exercise, user);
 
-        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user) || (resultId > 0 && !authCheckService.isAtLeastInstructorForExercise(exercise, user))) {
+        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user) || resultId > 0 && !authCheckService.isAtLeastInstructorForExercise(exercise, user)) {
             return forbidden();
         }
 

@@ -155,20 +155,21 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
     public ResponseEntity<FileUploadSubmission> getFileUploadSubmission(@PathVariable Long submissionId,
             @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound, @RequestParam(value = "resultId", defaultValue = "0") long resultId) {
         log.debug("REST request to get FileUploadSubmission with id: {}", submissionId);
-        var fileUploadSubmission = fileUploadSubmissionService.findOneWithEagerResultAndFeedback(submissionId);
+        var fileUploadSubmission = fileUploadSubmissionService.findOne(submissionId);
         var studentParticipation = (StudentParticipation) fileUploadSubmission.getParticipation();
         var fileUploadExercise = (FileUploadExercise) studentParticipation.getExercise();
         var gradingCriteria = gradingCriterionService.findByExerciseIdWithEagerGradingCriteria(fileUploadExercise.getId());
 
         User user = userRepository.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(fileUploadExercise, user)
-                || (resultId > 0 && !authCheckService.isAtLeastInstructorForExercise(fileUploadExercise, user))) {
+                || resultId > 0 && !authCheckService.isAtLeastInstructorForExercise(fileUploadExercise, user)) {
             return forbidden();
         }
 
         fileUploadExercise.setGradingCriteria(gradingCriteria);
 
         if (resultId != 0 && authCheckService.isAtLeastInstructorForExercise(fileUploadExercise, user)) {
+            fileUploadSubmission = fileUploadSubmissionService.findOneWithEagerResultAndFeedback(submissionId);
             Result result = fileUploadSubmission.getManualResults().stream().filter(result1 -> result1.getId().equals(resultId)).findFirst().get();
             correctionRound = fileUploadSubmission.getManualResults().indexOf(result);
         }

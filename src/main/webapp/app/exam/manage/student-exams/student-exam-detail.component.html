@@ -153,14 +153,8 @@
                             {{ exercise?.title }}
                         </td>
                         <td class="align-middle">
-                            <ng-container
-                                *ngIf="
-                                    exercise?.studentParticipations?.length > 0 &&
-                                    exercise.studentParticipations![0].submissions?.length > 0 &&
-                                    exercise.studentParticipations![0].submissions[0].results
-                                "
-                            >
-                                {{ rounding(((exercise?.studentParticipations)![0].submissions[0].latestResult.score * exercise?.maxPoints) / 100) }}
+                            <ng-container *ngIf="exercise?.studentParticipations?.length > 0 && exercise.studentParticipations![0].results?.length > 0">
+                                {{ rounding(((exercise?.studentParticipations)![0].results[0].score * exercise?.maxPoints) / 100) }}
                             </ng-container>
                         </td>
                         <td class="align-middle">
@@ -174,21 +168,32 @@
                                 *ngIf="
                                     exercise?.studentParticipations &&
                                         exercise?.studentParticipations.length > 0 &&
-                                        (exercise?.studentParticipations)![0].submissions &&
-                                        (exercise?.studentParticipations)![0].submissions[0].results &&
-                                        (exercise?.studentParticipations)![0].submissions[0].latestResult.assessor;
+                                        (exercise?.studentParticipations)![0].results?.length > 0 &&
+                                        (exercise?.studentParticipations)![0].results[0].assessor;
                                     else noAssessor
                                 "
                             >
-                                {{ (exercise?.studentParticipations)![0].submissions[0].latestResult.assessor.name }}
+                                {{ (exercise?.studentParticipations)![0].results[0].assessor?.name }}
                             </ng-container>
                             <ng-template #noAssessor></ng-template>
                         </td>
                         <td class="align-middle">
-                            <span *ngIf="exercise?.studentParticipations?.submissions?.length > 0 && exercise?.studentParticipations?.submissions[0].latestResult.hasComplaint"
+                            <span
+                                *ngIf="
+                                    exercise?.studentParticipations?.length > 0 &&
+                                    (exercise?.studentParticipations)![0].results?.length > 0 &&
+                                    (exercise?.studentParticipations)![0].results[0].hasComplaint
+                                "
                                 >Yes</span
                             >
-                            <span *ngIf="!(exercise?.studentParticipations?.submissions?.length > 0 && exercise?.studentParticipations?.submissions[0].latestResult.hasComplaint)"
+                            <span
+                                *ngIf="
+                                    !(
+                                        exercise?.studentParticipations?.length > 0 &&
+                                        (exercise?.studentParticipations)![0].results?.length > 0 &&
+                                        (exercise?.studentParticipations)![0].results[0].hasComplaint
+                                    )
+                                "
                                 >No</span
                             >
                         </td>
@@ -201,7 +206,7 @@
                                     exercise.type != ExerciseType.PROGRAMMING
                                 "
                             >
-                                <div *ngIf="exercise?.studentParticipations![0].results?.length > 0">
+                                <div *ngIf="(exercise?.studentParticipations)![0].results?.length > 0">
                                     <!-- in case of existing result-->
                                     <a
                                         [class.disabled]="busy"
