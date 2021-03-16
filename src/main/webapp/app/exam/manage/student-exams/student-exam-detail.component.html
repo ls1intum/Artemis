@@ -155,11 +155,9 @@
                         <td class="align-middle">
                             <ng-container
                                 *ngIf="
-                                    exercise?.studentParticipations &&
-                                    exercise?.studentParticipations.length > 0 &&
                                     exercise?.studentParticipations?.length > 0 &&
-                                    (exercise?.studentParticipations)![0].submissions?.length > 0 &&
-                                    (exercise?.studentParticipations)![0].submissions[0].results
+                                    exercise.studentParticipations![0].submissions?.length > 0 &&
+                                    exercise.studentParticipations![0].submissions[0].results
                                 "
                             >
                                 {{ rounding(((exercise?.studentParticipations)![0].submissions[0].latestResult.score * exercise?.maxPoints) / 100) }}
