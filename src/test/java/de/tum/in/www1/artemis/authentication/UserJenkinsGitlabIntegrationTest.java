@@ -62,6 +62,36 @@ public class UserJenkinsGitlabIntegrationTest extends AbstractSpringIntegrationJ
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
+    public void createUser_asAdmin_existsInCi_internalError() throws Exception {
+        userTestService.createUser_asAdmin_existsInCi_internalError();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    public void createUser_asAdmin_illegalLogin_internalError() throws Exception {
+        userTestService.createUser_asAdmin_illegalLogin_internalError();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    public void createUser_asAdmin_failInExternalUserManagement_internalError() throws Exception {
+        userTestService.createUser_asAdmin_failInExternalCiUserManagement_internalError();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    public void createUser_asAdmin_failInExternalCiUserManagement_cannotGetCiUser_internalError() throws Exception {
+        userTestService.createUser_asAdmin_failInExternalCiUserManagement_cannotGetCiUser_internalError();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    public void createUser_asAdmin_failInExternalVcsUserManagement_internalError() throws Exception {
+        userTestService.createUser_asAdmin_failInExternalVcsUserManagement_internalError();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
     public void createUser_withNullAsPassword_generatesRandomPassword() throws Exception {
         userTestService.createUser_withNullAsPassword_generatesRandomPassword();
     }
@@ -76,6 +106,18 @@ public class UserJenkinsGitlabIntegrationTest extends AbstractSpringIntegrationJ
     @WithMockUser(value = "admin", roles = "ADMIN")
     public void deleteUser_doesntExistInUserManagement_isSuccessful() throws Exception {
         userTestService.deleteUser_doesntExistInUserManagement_isSuccessful();
+    }
+
+    @Test
+    @WithMockUser(value = "admin", roles = "ADMIN")
+    public void deleteUser_FailsInExternalCiUserManagement_isNotSuccessful() throws Exception {
+        userTestService.deleteUser_FailsInExternalCiUserManagement_isNotSuccessful();
+    }
+
+    @Test
+    @WithMockUser(value = "admin", roles = "ADMIN")
+    public void deleteUser_FailsInExternalVcsUserManagement_isNotSuccessful() throws Exception {
+        userTestService.deleteUser_FailsInExternalVcsUserManagement_isNotSuccessful();
     }
 
     @Test

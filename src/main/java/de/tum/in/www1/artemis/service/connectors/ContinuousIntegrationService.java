@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.regex.Pattern;
 
-import org.apache.http.HttpException;
 import org.springframework.http.ResponseEntity;
 
 import de.tum.in.www1.artemis.config.Constants;
@@ -78,9 +77,9 @@ public interface ContinuousIntegrationService {
      * triggers a build for the build plan in the given participation
      *
      * @param participation the participation with the id of the build plan that should be triggered
-     * @throws HttpException if the request to the CI failed.
+     * @throws ContinuousIntegrationException if the request to the CI failed.
      */
-    void triggerBuild(ProgrammingExerciseParticipation participation) throws HttpException;
+    void triggerBuild(ProgrammingExerciseParticipation participation) throws ContinuousIntegrationException;
 
     /**
      * Delete project with given identifier from CI system.
@@ -221,7 +220,7 @@ public interface ContinuousIntegrationService {
      *
      * @param programmingExercise for which a project should be created
      */
-    void createProjectForExercise(ProgrammingExercise programmingExercise);
+    void createProjectForExercise(ProgrammingExercise programmingExercise) throws ContinuousIntegrationException;
 
     /**
      * Get the webhook URL to call if one wants to trigger the build plan or notify the plan about an event that should

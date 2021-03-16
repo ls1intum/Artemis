@@ -65,6 +65,12 @@ public class JenkinsServiceTest extends AbstractSpringIntegrationJenkinsGitlabTe
 
     @Test
     @WithMockUser(username = "student1")
+    public void testGetBuildStatusFails() throws Exception {
+        continuousIntegrationTestService.testGetBuildStatusFails();
+    }
+
+    @Test
+    @WithMockUser(username = "student1")
     public void testHealthRunning() throws Exception {
         continuousIntegrationTestService.testHealthRunning();
     }
