@@ -227,13 +227,13 @@
                                         class="btn btn-primary btn-sm mb-1"
                                     >
                                         <fa-icon [fixedWidth]="true" [icon]="'folder-open'"></fa-icon>
-                                        {{ 'artemisApp.assessment.dashboard.actions.assess' | translate }}
+                                        {{ 'artemisApp.assessment.dashboard.actions.assess' | artemisTranslate }}
                                     </a>
                                 </div>
                                 <div *ngIf="exercise.type === ExerciseType.PROGRAMMING">
                                     <a [class.disabled]="busy" [routerLink]="getAssessmentLink(exercise)" class="btn btn-primary btn-sm mb-1">
                                         <fa-icon [fixedWidth]="true" [icon]="'folder-open'"></fa-icon>
-                                        {{ 'artemisApp.assessment.dashboard.actions.assess' | translate }}
+                                        {{ 'artemisApp.examManagement.assessmentDashboard' | artemisTranslate }}
                                     </a>
                                 </div>
                             </div>
