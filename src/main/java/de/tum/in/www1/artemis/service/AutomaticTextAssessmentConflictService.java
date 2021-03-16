@@ -22,7 +22,7 @@ import de.tum.in.www1.artemis.exception.NetworkingError;
 import de.tum.in.www1.artemis.repository.FeedbackConflictRepository;
 import de.tum.in.www1.artemis.repository.FeedbackRepository;
 import de.tum.in.www1.artemis.repository.TextBlockRepository;
-import de.tum.in.www1.artemis.service.connectors.TextAssessmentConflictService;
+import de.tum.in.www1.artemis.service.connectors.athene.TextAssessmentConflictService;
 import de.tum.in.www1.artemis.service.dto.FeedbackConflictResponseDTO;
 import de.tum.in.www1.artemis.service.dto.TextFeedbackConflictRequestDTO;
 

@@ -50,7 +50,7 @@ Find here [a guide](docs/dev/setup.rst) on how to setup your local development e
 - Always use **kebab-case** (e.g. "/exampleAssessment" → "/example-assessment")
 - The routes should follow the general structure entity > entityId > sub-entity ... (e.g. "/exercises/{exerciseId}/participations")
 - Use **plural for server route's** entities and **singular for client route's** entities
-- Specifiy the key entity at the end of the route (e.g. "text-editor/participations/{participationId}" should be changed to "participations/{participationId}/text-editor")
+- Specify the key entity at the end of the route (e.g. "text-editor/participations/{participationId}" should be changed to "participations/{participationId}/text-editor")
 - Never specify an id that is used only for consistency and not used in the code (e.g. GET "/courses/{courseId}/exercises{exerciseId}/participations/{participationId}/submissions/{submissionId}" can be simplified to GET "/submissions/{submissionId}" because all other entities than the submission are either not needed or can be loaded without the need to specify the id)
 
 ## CSS Guidelines
