@@ -84,6 +84,7 @@ public class SAML2Configuration extends WebSecurityConfigurerAdapter {
 
     private void addSigningInformation(Collection<Saml2X509Credential> c, SAML2Properties.RelyingPartyProperties config) {
         if (config.getCertFile() == null || config.getKeyFile() == null || config.getCertFile().isBlank() || config.getKeyFile().isBlank()) {
+            log.debug("No Config for SAML2");
             return;
         }
 
@@ -94,7 +95,7 @@ public class SAML2Configuration extends WebSecurityConfigurerAdapter {
             log.error("Keyfile or Certfile for SAML[" + config.getRegistrationId() + "] does not exist.");
             return;
         }
-
+        log.info("Registering Credentials for SAML2");
         Saml2X509Credential relyingPartySigningCredential = null;
         try {
             PrivateKey privateKey = readPrivateKey(keyFile);
