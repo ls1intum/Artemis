@@ -189,8 +189,9 @@ export class ExamManagementService {
     addAllStudentsOfCourseToExam(courseId: number, examId: number): Observable<HttpResponse<StudentDTO[]>> {
         return this.http.post<any>(`${this.resourceUrl}/${courseId}/exams/${examId}/register-course-students`, { observe: 'response' });
     }
+
     /**
-     * Remove a student to the registered users for an exam
+     * Remove a student from the registered users for an exam
      * @param courseId The course id
      * @param examId The id of the exam from which to remove the student
      * @param studentLogin Login of the student
@@ -199,6 +200,20 @@ export class ExamManagementService {
     removeStudentFromExam(courseId: number, examId: number, studentLogin: string, withParticipationsAndSubmission = false): Observable<HttpResponse<any>> {
         const options = createRequestOption({ withParticipationsAndSubmission });
         return this.http.delete<any>(`${this.resourceUrl}/${courseId}/exams/${examId}/students/${studentLogin}`, {
+            params: options,
+            observe: 'response',
+        });
+    }
+
+    /**
+     * Remove all students from an exam
+     * @param courseId The course id
+     * @param examId The id of the exam from which to remove the student
+     * @param withParticipationsAndSubmission if participations and Submissions should also be removed
+     */
+    removeAllStudentsFromExam(courseId: number, examId: number, withParticipationsAndSubmission = false) {
+        const options = createRequestOption({ withParticipationsAndSubmission });
+        return this.http.delete<any>(`${this.resourceUrl}/${courseId}/exams/${examId}/students`, {
             params: options,
             observe: 'response',
         });

@@ -48,9 +48,9 @@
                             </a>
                             <button
                                 jhiDeleteButton
-                                [entityTitle]="notification.title"
+                                [entityTitle]="!!notification.title ? notification.title : ''"
                                 deleteQuestion="artemisApp.systemNotification.delete.question"
-                                (delete)="deleteNotification(notification.id)"
+                                (delete)="deleteNotification(notification.id!)"
                                 [dialogError]="dialogError$"
                             >
                                 <fa-icon [icon]="'times'"></fa-icon>
