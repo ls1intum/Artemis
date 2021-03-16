@@ -465,9 +465,13 @@ public class BambooRequestMockProvider {
         mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.POST)).andRespond(withStatus(HttpStatus.OK));
     }
 
-    public void mockDeleteBambooBuildPlan(String planKey) throws URISyntaxException, JsonProcessingException {
+    public void mockDeleteBambooBuildPlan(String planKey, boolean buildPlanExists) throws URISyntaxException, JsonProcessingException {
 
         mockGetBuildPlan(planKey, null);
+
+        if (!buildPlanExists) {
+            return;
+        }
 
         MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
         parameters.add("selectedBuilds", planKey);

@@ -12,6 +12,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { FileUploadAssessmentsService } from 'app/exercises/file-upload/assess/file-upload-assessment.service';
 import { getLatestSubmissionResult, Submission } from 'app/entities/submission.model';
 import { SortService } from 'app/shared/service/sort.service';
+import { getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
 
 @Component({
     templateUrl: './file-upload-assessment-dashboard.component.html',
@@ -26,6 +27,9 @@ export class FileUploadAssessmentDashboardComponent implements OnInit {
     reverse = false;
     numberOfCorrectionrounds = 1;
     courseId: number;
+    exerciseId: number;
+    examId: number;
+    exerciseGroupId: number;
     private cancelConfirmationText: string;
 
     constructor(
@@ -46,10 +50,15 @@ export class FileUploadAssessmentDashboardComponent implements OnInit {
      */
     public async ngOnInit(): Promise<void> {
         this.busy = true;
-        const exerciseId = Number(this.route.snapshot.paramMap.get('exerciseId'));
+        this.exerciseId = Number(this.route.snapshot.paramMap.get('exerciseId'));
+        this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
+        if (this.route.snapshot.paramMap.has('examId')) {
+            this.examId = Number(this.route.snapshot.paramMap.get('examId'));
+            this.exerciseGroupId = Number(this.route.snapshot.paramMap.get('exerciseGroupId'));
+        }
 
         this.exerciseService
-            .find(exerciseId)
+            .find(this.exerciseId)
             .map((exerciseResponse) => {
                 if (exerciseResponse.body!.type !== ExerciseType.FILE_UPLOAD) {
                     throw new Error('Cannot use File-Upload Assessment Dashboard with non-file-upload Exercise type.');
@@ -58,7 +67,6 @@ export class FileUploadAssessmentDashboardComponent implements OnInit {
             })
             .subscribe((exercise) => {
                 this.exercise = exercise;
-                this.courseId = exercise.course ? exercise.course.id! : exercise.exerciseGroup!.exam!.course!.id!;
                 this.getSubmissions();
                 this.numberOfCorrectionrounds = this.exercise.exerciseGroup ? this.exercise!.exerciseGroup.exam!.numberOfCorrectionRoundsInExam! : 1;
                 this.setPermissions();
@@ -129,15 +137,12 @@ export class FileUploadAssessmentDashboardComponent implements OnInit {
     public sortRows() {
         this.sortService.sortByProperty(this.submissions, this.predicate, this.reverse);
     }
+
     /**
      * get the link for the assessment of a specific submission of the current exercise
      * @param submissionId
      */
     getAssessmentLink(submissionId: number) {
-        if (this.exercise.exerciseGroup) {
-            return ['/course-management', this.exercise.exerciseGroup.exam?.course?.id, 'file-upload-exercises', this.exercise.id, 'submissions', submissionId, 'assessment'];
-        } else {
-            return ['/course-management', this.exercise.course?.id, 'file-upload-exercises', this.exercise.id, 'submissions', submissionId, 'assessment'];
-        }
+        return getLinkToSubmissionAssessment(this.exercise.type!, this.courseId, this.exerciseId, submissionId, this.examId, this.exerciseGroupId);
     }
 }
