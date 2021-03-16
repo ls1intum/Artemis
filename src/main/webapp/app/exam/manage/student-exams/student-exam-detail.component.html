@@ -203,7 +203,7 @@
                                     exercise.type != ExerciseType.PROGRAMMING
                                 "
                             >
-                                <div *ngIf="(exercise?.studentParticipations)![0].results?.length > 0">
+                                <div *ngIf="exercise?.studentParticipations![0].results?.length > 0">
                                     <!-- in case of existing result-->
                                     <a
                                         [class.disabled]="busy"
