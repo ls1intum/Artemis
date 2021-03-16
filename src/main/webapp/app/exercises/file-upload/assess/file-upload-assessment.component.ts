@@ -24,9 +24,10 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
 import { Result } from 'app/entities/result.model';
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
 import { assessmentNavigateBack } from 'app/exercises/shared/navigate-back.util';
-import { getCourseFromExercise } from 'app/entities/exercise.model';
+import { ExerciseType, getCourseFromExercise } from 'app/entities/exercise.model';
 import { Authority } from 'app/shared/constants/authority.constants';
-import { getSubmissionResultByCorrectionRound, getSubmissionResultById } from 'app/entities/submission.model';
+import { getSubmissionResultByCorrectionRound, getSubmissionResultById, getLatestSubmissionResult } from 'app/entities/submission.model';
+import { getExerciseDashboardLink, getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
 
 @Component({
     providers: [FileUploadAssessmentsService],
@@ -61,6 +62,11 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
     correctionRound = 0;
     hasNewSubmissions = true;
     resultId?: number;
+  
+    examId = 0;
+    exerciseGroupId: number;
+    exerciseDashboardLink: string[];
+    loadingInitialSubmission = true;
 
     private cancelConfirmationText: string;
 
@@ -109,10 +115,19 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
             const exerciseId = Number(params['exerciseId']);
             this.resultId = Number(params['resultId']);
             this.exerciseId = exerciseId;
+
+            const examId = params['examId'];
+            if (examId) {
+                this.examId = Number(examId);
+                this.exerciseGroupId = Number(params['exerciseGroupId']);
+            }
+
+            this.exerciseDashboardLink = getExerciseDashboardLink(this.courseId, this.exerciseId, this.examId, this.isTestRun);
+
             const submissionValue = params['submissionId'];
             const submissionId = Number(submissionValue);
             if (submissionValue === 'new') {
-                this.loadOptimalSubmission(exerciseId);
+                this.loadOptimalSubmission(this.exerciseId);
             } else {
                 this.loadSubmission(submissionId);
             }
@@ -136,6 +151,7 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
                 this.location.go(newUrl);
             },
             (error: HttpErrorResponse) => {
+                this.loadingInitialSubmission = false;
                 if (error.status === 404) {
                     // there is no submission waiting for assessment at the moment
                     this.navigateBack();
@@ -158,6 +174,7 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
                     this.initializePropertiesFromSubmission(res.body!);
                 },
                 (error: HttpErrorResponse) => {
+                    this.loadingInitialSubmission = false;
                     if (error.error && error.error.errorKey === 'lockedSubmissionsLimitReached') {
                         this.navigateBack();
                     } else {
@@ -168,6 +185,7 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
     }
 
     private initializePropertiesFromSubmission(submission: FileUploadSubmission): void {
+        this.loadingInitialSubmission = false;
         this.submission = submission;
         this.participation = this.submission.participation as StudentParticipation;
         this.exercise = this.participation.exercise as FileUploadExercise;
@@ -223,24 +241,32 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
      * For the new submission to appear on the same page, the url has to be reloaded.
      */
     assessNext() {
+        this.isLoading = true;
         this.unreferencedFeedback = [];
         this.fileUploadSubmissionService.getFileUploadSubmissionForExerciseForCorrectionRoundWithoutAssessment(this.exercise!.id!, false, this.correctionRound).subscribe(
             (response: FileUploadSubmission) => {
+                this.isLoading = false;
                 this.unassessedSubmission = response;
-                this.router.onSameUrlNavigation = 'reload';
+
                 // navigate to the new assessment page to trigger re-initialization of the components
-                this.router.navigateByUrl(
-                    `/course-management/${this.courseId}/file-upload-exercises/${this.exercise!.id!}/submissions/${this.unassessedSubmission.id}/assessment`,
-                    {},
+                this.router.onSameUrlNavigation = 'reload';
+
+                const url = getLinkToSubmissionAssessment(
+                    ExerciseType.FILE_UPLOAD,
+                    this.courseId,
+                    this.exerciseId,
+                    this.unassessedSubmission.id!,
+                    this.examId,
+                    this.exerciseGroupId,
                 );
+                this.router.navigate(url);
             },
             (error: HttpErrorResponse) => {
                 if (error.status === 404) {
                     // there are no unassessed submission, nothing we have to worry about
-                    this.jhiAlertService.error('artemisApp.exerciseAssessmentDashboard.noSubmissions');
-                    this.isLoading = true;
                     this.hasNewSubmissions = false;
                 } else {
+                    this.isLoading = false;
                     this.onError(error.message);
                 }
             },

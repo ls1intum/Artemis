@@ -425,7 +425,10 @@ public class DatabaseUtilService {
         result.setParticipation(studentParticipation);
         result.setSubmission(submission);
         result.completionDate(ZonedDateTime.now());
-        return resultRepo.saveAndFlush(result);
+        submission.addResult(result);
+        submission = submissionRepository.saveAndFlush(submission);
+        submission.getResults().get(0);
+        return submission.getResults().get(0);
     }
 
     public Course createCourseWithExamAndExerciseGroupAndExercises(User user, ZonedDateTime visible, ZonedDateTime start, ZonedDateTime end) {

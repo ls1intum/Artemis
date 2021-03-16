@@ -6,6 +6,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { User } from 'app/core/user/user.model';
 import { SystemNotificationService } from 'app/shared/notification/system-notification/system-notification.service';
+import { IconProp } from '@fortawesome/fontawesome-svg-core';
 
 @Component({
     selector: 'jhi-system-notification',
@@ -17,7 +18,7 @@ export class SystemNotificationComponent implements OnInit {
     readonly WARNING = SystemNotificationType.WARNING;
     notification: SystemNotification | undefined;
     alertClass: string;
-    alertIcon: string;
+    alertIcon: IconProp;
     websocketChannel: string;
 
     constructor(

@@ -1,4 +1,4 @@
-<span class="badge badge-primary" title="{{ 'artemisApp.assessment.automaticGenerated' | translate }}" *ngIf="feedback.type === FeedbackType.AUTOMATIC">
+<span class="badge badge-primary" title="{{ 'artemisApp.assessment.automaticGenerated' | artemisTranslate }}" *ngIf="feedback.type === FeedbackType.AUTOMATIC">
     <fa-icon [icon]="'robot'"></fa-icon>
     <span [jhiTranslate]="'artemisApp.AssessmentType.' + feedback.type"></span>
 </span>
@@ -19,7 +19,7 @@
         <textarea
             class="form-control"
             rows="1"
-            [placeholder]="'artemisApp.textAssessment.feedbackEditor.feedbackCommentPlaceholder' | translate"
+            [placeholder]="'artemisApp.textAssessment.feedbackEditor.feedbackCommentPlaceholder' | artemisTranslate"
             id="detailText-{{ textBlock.id }}"
             [(ngModel)]="feedback.detailText"
             #detailText
@@ -50,14 +50,14 @@
 <div class="close" *ngIf="!readOnly">
     <ng-container *ngIf="canDismiss; then closeButton; else trashButton"></ng-container>
     <ng-template #closeButton>
-        <fa-icon icon="times" [ngbTooltip]="'artemisApp.textAssessment.feedbackEditor.dismissFeedback' | translate" (click)="dismiss()"> </fa-icon>
+        <fa-icon icon="times" [ngbTooltip]="'artemisApp.textAssessment.feedbackEditor.dismissFeedback' | artemisTranslate" (click)="dismiss()"> </fa-icon>
     </ng-template>
     <ng-template #trashButton>
         <jhi-confirm-icon
             initialIcon="times"
             confirmIcon="trash"
-            [initialTooltip]="'artemisApp.textAssessment.feedbackEditor.dismissFeedback' | translate"
-            [confirmTooltip]="'artemisApp.textAssessment.feedbackEditor.dismissFeedbackConfirmation' | translate"
+            [initialTooltip]="'artemisApp.textAssessment.feedbackEditor.dismissFeedback' | artemisTranslate"
+            [confirmTooltip]="'artemisApp.textAssessment.feedbackEditor.dismissFeedbackConfirmation' | artemisTranslate"
             (confirmEvent)="dismiss()"
         ></jhi-confirm-icon>
     </ng-template>

@@ -14,6 +14,7 @@ import { ProgrammingAssessmentManualResultService } from '../manual-result/progr
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { areManualResultsAllowed } from 'app/exercises/shared/exercise/exercise-utils';
+import { getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
 
 @Component({
     templateUrl: './programming-assessment-dashboard.component.html',
@@ -27,6 +28,9 @@ export class ProgrammingAssessmentDashboardComponent implements OnInit {
     predicate = 'id';
     reverse = false;
     courseId: number;
+    exerciseId: number;
+    examId: number;
+    exerciseGroupId: number;
     numberOfCorrectionrounds = 1;
     newManualResultAllowed: boolean;
     automaticType = AssessmentType.AUTOMATIC;
@@ -49,9 +53,15 @@ export class ProgrammingAssessmentDashboardComponent implements OnInit {
      */
     async ngOnInit() {
         this.busy = true;
-        const exerciseId = Number(this.route.snapshot.paramMap.get('exerciseId'));
+        this.exerciseId = Number(this.route.snapshot.paramMap.get('exerciseId'));
+        this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
+        if (this.route.snapshot.paramMap.has('examId')) {
+            this.examId = Number(this.route.snapshot.paramMap.get('examId'));
+            this.exerciseGroupId = Number(this.route.snapshot.paramMap.get('exerciseGroupId'));
+        }
+
         this.exerciseService
-            .find(exerciseId)
+            .find(this.exerciseId)
             .map((exerciseResponse) => {
                 if (exerciseResponse.body!.type !== ExerciseType.PROGRAMMING) {
                     throw new Error('Cannot use Programming Assessment Dashboard with non-programming Exercise type.');
@@ -60,7 +70,6 @@ export class ProgrammingAssessmentDashboardComponent implements OnInit {
             })
             .subscribe((exercise) => {
                 this.exercise = exercise;
-                this.courseId = exercise.course ? exercise.course.id! : exercise.exerciseGroup!.exam!.course!.id!;
                 this.getSubmissions();
                 this.numberOfCorrectionrounds = this.exercise.exerciseGroup ? this.exercise!.exerciseGroup.exam!.numberOfCorrectionRoundsInExam! : 1;
                 this.setPermissions();
@@ -138,16 +147,11 @@ export class ProgrammingAssessmentDashboardComponent implements OnInit {
             });
         }
     }
+
     /**
      * get the link for the assessment of a specific submission of the current exercise
-     * @param submissionId
      */
-    getAssessmentLink(submission: Submission) {
-        const participationId = submission.participation?.id;
-        if (this.exercise.exerciseGroup) {
-            return ['/course-management', this.exercise.exerciseGroup.exam?.course?.id, 'programming-exercises', this.exercise.id, 'code-editor', participationId, 'assessment'];
-        } else {
-            return ['/course-management', this.exercise.course?.id, 'programming-exercises', this.exercise.id, 'code-editor', participationId, 'assessment'];
-        }
+    getAssessmentLink(participationId: number) {
+        return getLinkToSubmissionAssessment(this.exercise.type!, this.courseId, this.exerciseId, participationId, this.examId, this.exerciseGroupId);
     }
 }

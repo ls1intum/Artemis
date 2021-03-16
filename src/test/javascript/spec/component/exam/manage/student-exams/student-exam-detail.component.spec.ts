@@ -35,6 +35,7 @@ import { Result } from 'app/entities/result.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe.ts';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -113,6 +114,7 @@ describe('StudentExamDetailComponent', () => {
                 MockPipe(ArtemisDurationFromSecondsPipe),
                 MockPipe(ArtemisDatePipe),
                 MockTranslateValuesDirective,
+                MockPipe(ArtemisTranslatePipe),
             ],
             providers: [
                 MockProvider(StudentExamService, {

@@ -13,6 +13,7 @@ import org.springframework.http.HttpStatus;
 import de.tum.in.www1.artemis.connector.gitlab.GitlabRequestMockProvider;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.user.UserService;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
@@ -39,6 +40,7 @@ public class AccountResourceWithGitLabIntegrationTest extends AbstractSpringInte
     @BeforeEach
     public void setUp() {
         gitlabRequestMockProvider.enableMockingOfRequests();
+        jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsServer);
     }
 
     @AfterEach
@@ -71,6 +73,10 @@ public class AccountResourceWithGitLabIntegrationTest extends AbstractSpringInte
         gitlabRequestMockProvider.mockFailOnGetUserById(user.getLogin());
         // Simulate creation of GitLab user
         gitlabRequestMockProvider.mockCreationOfUser(user.getLogin());
+
+        SecurityUtils.setAuthorizationObject();
+        jenkinsRequestMockProvider.mockDeleteUser(user, true);
+        jenkinsRequestMockProvider.mockCreateUser(user);
 
         // make request and assert Status Created
         request.postWithoutLocation("/api/register", userVM, HttpStatus.CREATED, null);

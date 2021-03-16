@@ -26,6 +26,8 @@ import { assessmentNavigateBack } from 'app/exercises/shared/navigate-back.util'
 import { Authority } from 'app/shared/constants/authority.constants';
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
 import { getSubmissionResultByCorrectionRound, getSubmissionResultById } from 'app/entities/submission.model';
+import { getExerciseDashboardLink, getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
+import { ExerciseType } from 'app/entities/exercise.model';
 
 @Component({
     selector: 'jhi-modeling-assessment-editor',
@@ -46,6 +48,10 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     assessmentsAreValid = false;
     nextSubmissionBusy: boolean;
     courseId: number;
+    examId = 0;
+    exerciseId: number;
+    exerciseGroupId: number;
+    exerciseDashboardLink: string[];
     userId: number;
     isAssessor = false;
     isAtLeastInstructor = false;
@@ -58,6 +64,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     hasAssessmentDueDatePassed: boolean;
     correctionRound = 0;
     resultId?: number;
+    loadingInitialSubmission = true;
 
     private cancelConfirmationText: string;
 
@@ -98,11 +105,18 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         });
         this.route.paramMap.subscribe((params) => {
             this.courseId = Number(params.get('courseId'));
-            const exerciseId = Number(params.get('exerciseId'));
+            this.exerciseId = Number(params.get('exerciseId'));
+            if (params.has('examId')) {
+                this.examId = Number(params.get('examId'));
+                this.exerciseGroupId = Number(params.get('exerciseGroupId'));
+            }
+
+            this.exerciseDashboardLink = getExerciseDashboardLink(this.courseId, this.exerciseId, this.examId, this.isTestRun);
+
             const submissionId = params.get('submissionId');
             this.resultId = Number(params.get('resultId'));
             if (submissionId === 'new') {
-                this.loadRandomSubmission(exerciseId);
+                this.loadRandomSubmission(this.exerciseId);
             } else {
                 this.loadSubmission(Number(submissionId));
             }
@@ -115,11 +129,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
                 this.handleReceivedSubmission(submission);
             },
             (error: HttpErrorResponse) => {
-                if (error.error && error.error.errorKey === 'lockedSubmissionsLimitReached') {
-                    this.navigateBack();
-                } else {
-                    this.onError();
-                }
+                this.handeErrorResponse(error);
             },
         );
     }
@@ -134,20 +144,13 @@ export class ModelingAssessmentEditorComponent implements OnInit {
                 this.location.go(newUrl);
             },
             (error: HttpErrorResponse) => {
-                if (error.status === 404) {
-                    // there is no submission waiting for assessment at the moment
-                    this.navigateBack();
-                    this.jhiAlertService.info('artemisApp.exerciseAssessmentDashboard.noSubmissions');
-                } else if (error.error && error.error.errorKey === 'lockedSubmissionsLimitReached') {
-                    this.navigateBack();
-                } else {
-                    this.onError();
-                }
+                this.handeErrorResponse(error);
             },
         );
     }
 
     private handleReceivedSubmission(submission: ModelingSubmission): void {
+        this.loadingInitialSubmission = false;
         this.submission = submission;
         const studentParticipation = this.submission.participation as StudentParticipation;
         this.modelingExercise = studentParticipation.exercise as ModelingExercise;
@@ -264,6 +267,23 @@ export class ModelingAssessmentEditorComponent implements OnInit {
 
     get readOnly(): boolean {
         return !this.isAtLeastInstructor && !!this.complaint && this.isAssessor;
+    }
+
+    private handeErrorResponse(error: HttpErrorResponse): void {
+        this.loadingInitialSubmission = false;
+        this.submission = undefined;
+
+        // there is no submission waiting for assessment at the moment
+        if (error.status === 404) {
+            return;
+        }
+
+        this.isLoading = false;
+        if (error.error && error.error.errorKey === 'lockedSubmissionsLimitReached') {
+            this.navigateBack();
+        } else {
+            this.onError();
+        }
     }
 
     onError(): void {
@@ -389,26 +409,23 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     }
 
     assessNext() {
+        this.isLoading = true;
         this.nextSubmissionBusy = true;
         this.modelingSubmissionService.getModelingSubmissionForExerciseForCorrectionRoundWithoutAssessment(this.modelingExercise!.id!, true, this.correctionRound).subscribe(
             (unassessedSubmission: ModelingSubmission) => {
                 this.nextSubmissionBusy = false;
+                this.isLoading = false;
+
+                // navigate to the new assessment page to trigger re-initialization of the components
                 this.router.onSameUrlNavigation = 'reload';
+
                 // navigate to root and then to new assessment page to trigger re-initialization of the components
-                let url = `/course-management/${this.courseId}/modeling-exercises/${this.modelingExercise!.id}/submissions/${unassessedSubmission.id}/assessment`;
-                url += `?correction-round=${this.correctionRound}`;
-                this.router.navigateByUrl('/', { skipLocationChange: true }).then(() => this.router.navigateByUrl(url));
+                const url = getLinkToSubmissionAssessment(ExerciseType.MODELING, this.courseId, this.exerciseId, unassessedSubmission.id!, this.examId, this.exerciseGroupId);
+                this.router.navigateByUrl('/', { skipLocationChange: true }).then(() => this.router.navigate(url, { queryParams: { 'correction-round': this.correctionRound } }));
             },
             (error: HttpErrorResponse) => {
                 this.nextSubmissionBusy = false;
-                if (error.status === 404) {
-                    // there is no submission waiting for assessment at the moment
-                    this.jhiAlertService.info('artemisApp.exerciseAssessmentDashboard.noSubmissions');
-                } else if (error.error && error.error.errorKey === 'lockedSubmissionsLimitReached') {
-                    this.navigateBack();
-                } else {
-                    this.onError();
-                }
+                this.handeErrorResponse(error);
             },
         );
     }
@@ -480,6 +497,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     private removeHighlightedFeedbackOfColor(highlightedElements: Map<string, string>, color: string) {
         return new Map<string, string>([...highlightedElements].filter(([, value]) => value !== color));
     }
+
     /**
      * Calculates the total score of the current assessment.
      * This function originally checked whether the total score is negative

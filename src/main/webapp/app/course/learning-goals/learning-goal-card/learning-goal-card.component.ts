@@ -17,7 +17,7 @@ export class LearningGoalCardComponent implements OnInit, OnDestroy {
     @Input()
     learningGoal: LearningGoal;
     @Input()
-    learningGoalProgress: IndividualLearningGoalProgress | CourseLearningGoalProgress;
+    learningGoalProgress: IndividualLearningGoalProgress | CourseLearningGoalProgress | undefined;
 
     public predicate = 'id';
     public reverse = false;
