@@ -1,7 +1,9 @@
 package de.tum.in.www1.artemis.programmingexercise;
 
+import static de.tum.in.www1.artemis.config.Constants.TEST_CASES_DUPLICATE_NOTIFICATION;
 import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource.Endpoints.ROOT;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.verify;
 
 import java.time.ZonedDateTime;
 import java.util.*;
@@ -142,6 +144,9 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
         assertThat(duplicateFeedbackEntries.size()).isEqualTo(2);
         int countOfNewFeedbacks = originalFeedbackSize + duplicateFeedbackEntries.size();
         assertThat(result.getFeedbacks().size()).isEqualTo(countOfNewFeedbacks);
+        assertThat(result.getResultString()).isEqualTo("Error: Found duplicated tests!");
+        String notificationText = TEST_CASES_DUPLICATE_NOTIFICATION + "test1, test3";
+        verify(groupNotificationService).notifyInstructorGroupAboutDuplicateTestCasesForExercise(programmingExercise, notificationText);
     }
 
     @Test
