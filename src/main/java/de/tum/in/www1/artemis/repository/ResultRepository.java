@@ -154,7 +154,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
      */
     @Query("""
             SELECT COUNT(r.id)
-            FROM StudentParticipation p join p.submissions s join s.results r
+            FROM StudentParticipation p JOIN p.submissions s JOIN s.results r
             WHERE p.exercise.id = :exerciseId
                 AND p.testRun = FALSE
                 AND s.submitted = TRUE
@@ -173,7 +173,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
      */
     @Query("""
             SELECT COUNT(r.id)
-            FROM StudentParticipation p join p.submissions s join s.results r
+            FROM StudentParticipation p JOIN p.submissions s JOIN s.results r
             WHERE p.exercise.exerciseGroup.exam.id = :examId
                 AND p.testRun = FALSE
                 AND s.submitted = TRUE
@@ -188,7 +188,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
     List<Result> findAllWithEagerFeedbackByAssessorIsNotNullAndParticipation_ExerciseIdAndCompletionDateIsNotNull(Long exerciseId);
 
     @Query("""
-            SELECT COUNT(DISTINCT p) FROM Participation p left join p.results r
+            SELECT COUNT(DISTINCT p) FROM Participation p JOIN p.results r
             WHERE p.exercise.id = :exerciseId
                 AND r.assessor IS NOT NULL
                 AND r.assessmentType IN :types
@@ -199,7 +199,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
     long countNumberOfAssessmentsByTypeForExerciseBeforeDueDate(@Param("exerciseId") Long exerciseId, @Param("types") List<AssessmentType> types);
 
     @Query("""
-            SELECT COUNT(DISTINCT p) FROM Participation p left join p.results r
+            SELECT COUNT(DISTINCT p) FROM Participation p JOIN p.results r
             WHERE p.exercise.id = :exerciseId
                 AND r.assessor IS NOT NULL
                 AND r.assessmentType IN :types
