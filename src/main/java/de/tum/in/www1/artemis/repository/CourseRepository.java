@@ -105,10 +105,10 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
         return Optional.ofNullable(findWithEagerExercisesById(courseId)).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
     }
 
-     @NotNull
-     default Course findWithEagerOrganizationsElseThrow(Long courseId) throws EntityNotFoundException {
+    @NotNull
+    default Course findWithEagerOrganizationsElseThrow(Long courseId) throws EntityNotFoundException {
         return findWithEagerOrganizations(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
-     }
+    }
 
     /**
      * filters the passed exercises for the relevant ones that need to be manually assessed. This excludes quizzes and automatic programming exercises

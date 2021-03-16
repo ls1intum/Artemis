@@ -65,7 +65,8 @@ public class UserCreationService {
     private final CacheManager cacheManager;
 
     public UserCreationService(UserRepository userRepository, PasswordService passwordService, AuthorityRepository authorityRepository, CourseRepository courseRepository,
-            Optional<VcsUserManagementService> optionalVcsUserManagementService, Optional<CIUserManagementService> optionalCIUserManagementService, CacheManager cacheManager, OrganizationRepository organizationRepository) {
+            Optional<VcsUserManagementService> optionalVcsUserManagementService, Optional<CIUserManagementService> optionalCIUserManagementService, CacheManager cacheManager,
+            OrganizationRepository organizationRepository) {
         this.userRepository = userRepository;
         this.passwordService = passwordService;
         this.authorityRepository = authorityRepository;

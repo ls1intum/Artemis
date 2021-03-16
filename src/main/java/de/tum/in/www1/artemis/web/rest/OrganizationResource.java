@@ -10,7 +10,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Organization;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.CourseRepository;

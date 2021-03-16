@@ -14,9 +14,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Organization;
-import de.tum.in.www1.artemis.domain.User;
 
 /**
  * Spring JPA repository for Organization entities

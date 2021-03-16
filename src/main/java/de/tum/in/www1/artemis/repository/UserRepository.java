@@ -7,7 +7,6 @@ import java.util.*;
 
 import javax.validation.constraints.NotNull;
 
-import de.tum.in.www1.artemis.domain.Organization;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -22,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Organization;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.SortingOrder;
 import de.tum.in.www1.artemis.security.SecurityUtils;
@@ -390,7 +390,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @NotNull
     default void removeOrganizationFromUser(Long userId, Organization organization) {
         User user = findByIdWithGroupsAndAuthoritiesAndOrganizationsElseThrow(userId);
-        if(user.getOrganizations().contains(organization)) {
+        if (user.getOrganizations().contains(organization)) {
             user.getOrganizations().remove(organization);
             save(user);
         }
