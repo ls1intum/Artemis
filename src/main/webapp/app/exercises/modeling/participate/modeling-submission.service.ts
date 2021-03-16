@@ -99,7 +99,7 @@ export class ModelingSubmissionService {
         if (correctionRound !== 0) {
             params = params.set('correction-round', correctionRound.toString());
         }
-        if (resultId) {
+        if (resultId && resultId > 0) {
             params = params.set('resultId', resultId.toString());
         }
         return this.http.get<ModelingSubmission>(url, { params });

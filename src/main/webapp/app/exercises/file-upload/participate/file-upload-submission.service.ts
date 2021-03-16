@@ -42,7 +42,7 @@ export class FileUploadSubmissionService {
     get(fileUploadSubmissionId: number, correctionRound = 0, resultId?: number): Observable<HttpResponse<FileUploadSubmission>> {
         const url = `api/file-upload-submissions/${fileUploadSubmissionId}`;
         let params = new HttpParams();
-        if (resultId) {
+        if (resultId && resultId > 0) {
             // in case resultId is set, we do not need the correction round
             params = params.set('resultId', resultId!.toString());
         } else {

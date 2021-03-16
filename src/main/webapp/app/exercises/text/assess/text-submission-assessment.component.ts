@@ -60,7 +60,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
     noNewSubmissions: boolean;
     hasAssessmentDueDatePassed: boolean;
     correctionRound: number;
-    resultId?: number;
+    resultId: number;
     loadingInitialSubmission = true;
 
     /*
@@ -117,7 +117,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         this.unusedTextBlockRefs = [];
         this.complaint = undefined;
         this.totalScore = 0;
-        this.resultId = undefined;
+        this.resultId = 0;
 
         this.isLoading = true;
         this.saveBusy = false;
@@ -142,9 +142,8 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
 
         this.activatedRoute.paramMap.subscribe((paramMap) => {
             this.exerciseId = Number(paramMap.get('exerciseId'));
-            this.resultId = Number(paramMap.get('resultId'));
+            this.resultId = Number(paramMap.get('resultId')) ?? 0;
             this.courseId = Number(paramMap.get('courseId'));
-
             if (paramMap.has('examId')) {
                 this.examId = Number(paramMap.get('examId'));
                 this.exerciseGroupId = Number(paramMap.get('exerciseGroupId'));
@@ -170,7 +169,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         this.exercise = this.participation?.exercise as TextExercise;
         setLatestSubmissionResult(this.submission, getLatestSubmissionResult(this.submission));
 
-        if (this.resultId && this.resultId !== 0) {
+        if (this.resultId > 0) {
             this.result = getSubmissionResultById(this.submission, this.resultId);
             this.correctionRound = this.submission.results?.findIndex((result) => result.id === this.resultId)!;
         } else {

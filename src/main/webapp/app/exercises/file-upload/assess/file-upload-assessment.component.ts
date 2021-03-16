@@ -26,7 +26,7 @@ import { StructuredGradingCriterionService } from 'app/exercises/shared/structur
 import { assessmentNavigateBack } from 'app/exercises/shared/navigate-back.util';
 import { ExerciseType, getCourseFromExercise } from 'app/entities/exercise.model';
 import { Authority } from 'app/shared/constants/authority.constants';
-import { getLatestSubmissionResult, getSubmissionResultByCorrectionRound, getSubmissionResultById } from 'app/entities/submission.model';
+import { getLatestSubmissionResult, getSubmissionResultById } from 'app/entities/submission.model';
 import { getExerciseDashboardLink, getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
 
 @Component({
@@ -61,7 +61,7 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
     hasAssessmentDueDatePassed: boolean;
     correctionRound = 0;
     hasNewSubmissions = true;
-    resultId?: number;
+    resultId: number;
     examId = 0;
     exerciseGroupId: number;
     exerciseDashboardLink: string[];
@@ -112,7 +112,7 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
         this.route.params.subscribe((params) => {
             this.courseId = Number(params['courseId']);
             const exerciseId = Number(params['exerciseId']);
-            this.resultId = Number(params['resultId']);
+            this.resultId = Number(params['resultId']) ?? 0;
             this.exerciseId = exerciseId;
 
             const examId = params['examId'];
@@ -189,7 +189,7 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
         this.participation = this.submission.participation as StudentParticipation;
         this.exercise = this.participation.exercise as FileUploadExercise;
         this.hasAssessmentDueDatePassed = !!this.exercise.assessmentDueDate && moment(this.exercise.assessmentDueDate).isBefore(now());
-        if (this.resultId && this.resultId !== 0) {
+        if (this.resultId > 0) {
             this.correctionRound = this.submission.results?.findIndex((result) => result.id === this.resultId)!;
             this.result = getSubmissionResultById(this.submission, this.resultId);
         } else {

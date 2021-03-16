@@ -277,12 +277,12 @@ public class TextAssessmentResource extends AssessmentResource {
         checkAuthorization(exercise, user);
         final boolean isAtLeastInstructorForExercise = authCheckService.isAtLeastInstructorForExercise(exercise, user);
 
-        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user) || resultId > 0 && !authCheckService.isAtLeastInstructorForExercise(exercise, user)) {
+        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user) || (resultId > 0 && !isAtLeastInstructorForExercise)) {
             return forbidden();
         }
 
         Result result;
-        if (resultId != 0 && isAtLeastInstructorForExercise) {
+        if (resultId > 0) {
             result = textSubmission.getManualResults().stream().filter(result1 -> result1.getId().equals(resultId)).findFirst().get();
             correctionRound = textSubmission.getManualResults().indexOf(result);
         }

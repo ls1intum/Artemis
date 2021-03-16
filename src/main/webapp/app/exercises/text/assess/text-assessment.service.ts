@@ -104,7 +104,7 @@ export class TextAssessmentService {
      */
     public getFeedbackDataForExerciseSubmission(submissionId: number, correctionRound = 0, resultId?: number): Observable<StudentParticipation> {
         let params = new HttpParams();
-        if (resultId) {
+        if (resultId && resultId > 0) {
             // in case resultId is set, we do not need the correction round
             params = params.set('resultId', resultId!.toString());
         } else {
