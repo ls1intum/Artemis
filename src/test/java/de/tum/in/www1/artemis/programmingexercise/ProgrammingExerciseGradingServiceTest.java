@@ -113,6 +113,38 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
     }
 
     @Test
+    public void shouldAddFeedbackForDuplicateTestCases() {
+        // Adjust existing test cases to our need
+        var testCases = testCaseService.findByExerciseId(programmingExercise.getId()).stream()
+                .collect(Collectors.toMap(ProgrammingExerciseTestCase::getTestName, Function.identity()));
+        testCases.get("test1").active(true).afterDueDate(false);
+        testCases.get("test2").active(true).afterDueDate(false);
+        testCases.get("test3").active(true).afterDueDate(false);
+        testCaseRepository.saveAll(testCases.values());
+
+        // Create feedback with duplicate content for test1 and test3
+        // This mimics that two new testcases are going to be found as testcases but those are duplicate
+        List<Feedback> feedbacks = new ArrayList<>();
+        feedbacks.add(new Feedback().text("test1").positive(true).type(FeedbackType.AUTOMATIC));
+        feedbacks.add(new Feedback().text("test1").positive(true).type(FeedbackType.AUTOMATIC));
+        feedbacks.add(new Feedback().text("test2").positive(false).type(FeedbackType.AUTOMATIC));
+        feedbacks.add(new Feedback().text("test3").positive(false).type(FeedbackType.AUTOMATIC));
+        feedbacks.add(new Feedback().text("test3").positive(false).type(FeedbackType.AUTOMATIC));
+        result.feedbacks(feedbacks);
+        result.rated(true).hasFeedback(true).successful(false).completionDate(ZonedDateTime.now()).assessmentType(AssessmentType.AUTOMATIC);
+        int originalFeedbackSize = result.getFeedbacks().size();
+
+        gradingService.calculateScoreForResult(result, programmingExercise, true);
+
+        var duplicateFeedbackEntries = result.getFeedbacks().stream()
+                .filter(feedback -> feedback.getDetailText() != null && feedback.getDetailText().contains("This is a duplicate test case.")).collect(Collectors.toList());
+        assertThat(result.getScore()).isEqualTo(0D);
+        assertThat(duplicateFeedbackEntries.size()).isEqualTo(2);
+        int countOfNewFeedbacks = originalFeedbackSize + duplicateFeedbackEntries.size();
+        assertThat(result.getFeedbacks().size()).isEqualTo(countOfNewFeedbacks);
+    }
+
+    @Test
     public void shouldRecalculateScoreBasedOnTestCasesWeightAutomatic() {
         List<Feedback> feedbacks = new ArrayList<>();
         feedbacks.add(new Feedback().text("test1").positive(true).type(FeedbackType.AUTOMATIC));
