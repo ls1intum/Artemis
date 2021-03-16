@@ -44,6 +44,7 @@ export class HomeComponent implements OnInit, AfterViewChecked {
     externalUserManagementName: string;
 
     saml2Enabled = false;
+    saml2PasswordEnabled = false;
     saml2ButtonLabel: string;
 
     isSubmittingLogin = false;
@@ -84,6 +85,7 @@ export class HomeComponent implements OnInit, AfterViewChecked {
                 if (profileInfo.activeProfiles.includes('saml2')) {
                     this.saml2Enabled = true;
                     this.saml2ButtonLabel = profileInfo.saml2?.['button-label'] || 'SAML2 Login';
+                    this.saml2PasswordEnabled = profileInfo.saml2?.['password-enabled'] || false;
                 }
             }
         });

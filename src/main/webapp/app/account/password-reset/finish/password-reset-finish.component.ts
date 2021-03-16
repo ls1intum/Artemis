@@ -24,14 +24,15 @@ export class PasswordResetFinishComponent implements OnInit, AfterViewInit {
         confirmPassword: ['', [Validators.required, Validators.minLength(8), Validators.maxLength(100)]],
     });
 
-    isRegistrationEnabled = false;
+    passwortResetEnabled = false;
 
     constructor(private passwordResetFinishService: PasswordResetFinishService, private route: ActivatedRoute, private profileService: ProfileService, private fb: FormBuilder) {}
 
     ngOnInit() {
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
             if (profileInfo) {
-                this.isRegistrationEnabled = profileInfo.registrationEnabled || false;
+                this.passwortResetEnabled = profileInfo.registrationEnabled || false;
+                this.passwortResetEnabled ||= profileInfo.saml2?.['password-enabled'] || false;
             }
         });
 

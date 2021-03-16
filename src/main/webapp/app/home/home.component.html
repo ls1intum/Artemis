@@ -92,11 +92,13 @@
             </div>
         </div>
     </div>
-    <div *ngIf="isRegistrationEnabled">
+    <div *ngIf="isRegistrationEnabled || saml2PasswordEnabled">
         <br /><br />
-        <div class="d-flex justify-content-center">
-            <span jhiTranslate="global.messages.info.register.noaccount">You don't have an account yet?</span>&nbsp;
-            <a class="alert-link" routerLink="account/register" jhiTranslate="global.messages.info.register.link">Register a new account</a>
+        <div *ngIf="isRegistrationEnabled">
+            <div class="d-flex justify-content-center">
+                <span jhiTranslate="global.messages.info.register.noaccount">You don't have an account yet?</span>&nbsp;
+                <a class="alert-link" routerLink="account/register" jhiTranslate="global.messages.info.register.link">Register a new account</a>
+            </div>
         </div>
         <div class="d-flex justify-content-center">
             <a class="alert-link" routerLink="account/reset/request" jhiTranslate="login.password.forgot">Did you forget your password?</a>

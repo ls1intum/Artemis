@@ -13,11 +13,14 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.env.Environment;
+import org.springframework.core.env.Profiles;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import de.tum.in.www1.artemis.config.SAML2Properties;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
@@ -63,13 +66,19 @@ public class AccountResource {
 
     private final MailService mailService;
 
+    private final SAML2Properties saml2Properties;
+
+    private final Environment environment;
+
     public AccountResource(UserRepository userRepository, UserService userService, UserCreationService userCreationService, MailService mailService,
-            PasswordService passwordService) {
+            PasswordService passwordService, SAML2Properties saml2Properties, Environment environment) {
         this.userRepository = userRepository;
         this.userService = userService;
         this.userCreationService = userCreationService;
         this.mailService = mailService;
         this.passwordService = passwordService;
+        this.saml2Properties = saml2Properties;
+        this.environment = environment;
     }
 
     /**
@@ -79,6 +88,15 @@ public class AccountResource {
      */
     private boolean isRegistrationDisabled() {
         return registrationEnabled.isEmpty() || Boolean.FALSE.equals(registrationEnabled.get());
+    }
+
+    /**
+     * Returns true if saml2 app passwort is disabled, false otherwis.
+     *
+     * @return true if saml2 app passwort is disabled, false otherwise
+     */
+    private boolean isSAML2Disabled() {
+        return !(environment.acceptsProfiles(Profiles.of("saml2")) && saml2Properties.getEnablePassword());
     }
 
     /**
@@ -200,7 +218,7 @@ public class AccountResource {
      */
     @PostMapping(path = "/account/change-password")
     public void changePassword(@RequestBody PasswordChangeDTO passwordChangeDto) {
-        if (isRegistrationDisabled()) {
+        if (isRegistrationDisabled() && isSAML2Disabled()) {
             throw new AccessForbiddenException("User Registration is disabled");
         }
         if (isPasswordLengthInvalid(passwordChangeDto.getNewPassword())) {
@@ -216,7 +234,7 @@ public class AccountResource {
      */
     @PostMapping(path = "/account/reset-password/init")
     public void requestPasswordReset(@RequestBody String mail) {
-        if (isRegistrationDisabled()) {
+        if (isRegistrationDisabled() && isSAML2Disabled()) {
             throw new AccessForbiddenException("User Registration is disabled");
         }
         Optional<User> user = userService.requestPasswordReset(mail);
@@ -239,7 +257,7 @@ public class AccountResource {
      */
     @PostMapping(path = "/account/reset-password/finish")
     public void finishPasswordReset(@RequestBody KeyAndPasswordVM keyAndPassword) {
-        if (isRegistrationDisabled()) {
+        if (isRegistrationDisabled() && isSAML2Disabled()) {
             throw new AccessForbiddenException("User Registration is disabled");
         }
         if (isPasswordLengthInvalid(keyAndPassword.getNewPassword())) {

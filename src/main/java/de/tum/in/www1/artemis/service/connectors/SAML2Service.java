@@ -23,7 +23,9 @@ import de.tum.in.www1.artemis.domain.Authority;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.AuthoritiesConstants;
+import de.tum.in.www1.artemis.service.MailService;
 import de.tum.in.www1.artemis.service.user.UserCreationService;
+import de.tum.in.www1.artemis.service.user.UserService;
 import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
 
 /**
@@ -40,7 +42,11 @@ public class SAML2Service {
 
     private final UserRepository userRepository;
 
+    private final UserService userService;
+
     private final SAML2Properties properties;
+
+    private final MailService mailService;
 
     /**
      * Constructs a new instance.
@@ -49,10 +55,13 @@ public class SAML2Service {
      * @param      properties      The properties
      * @param      userCreationService The user creation service
      */
-    public SAML2Service(final UserRepository userRepository, final SAML2Properties properties, final UserCreationService userCreationService) {
+    public SAML2Service(final UserRepository userRepository, final SAML2Properties properties, final UserCreationService userCreationService, MailService mailService,
+            UserService userService) {
         this.userRepository = userRepository;
         this.properties = properties;
         this.userCreationService = userCreationService;
+        this.mailService = mailService;
+        this.userService = userService;
     }
 
     /**
@@ -73,6 +82,11 @@ public class SAML2Service {
         if (user.isEmpty()) {
             // create User
             user = Optional.of(createUser(username, principal));
+
+            if (properties.getEnablePassword()) {
+                userService.requestPasswordReset(user.get().getEmail());
+                mailService.sendSAML2SetPasswordMail(user.get());
+            }
         }
 
         auth = new UsernamePasswordAuthenticationToken(user.get().getLogin(), user.get().getPassword(), toGrantedAuthorities(user.get().getAuthorities()));
