@@ -37,13 +37,13 @@ class SortingExampleBehaviorTest: XCTestCase {
         let bubbleSort = BubbleSort()
         let sortedInput = bubbleSort.performSort(unorderedDates)
 
-        XCTAssertEqual(sortedInput, orderedDates, "BubbleSort does not sort correctly.")
+        XCTAssertEqual(sortedInput, orderedDates!, "BubbleSort does not sort correctly.")
     }
 
     func testMergeSort() {
         let mergeSort = MergeSort()
         let sortedInput = mergeSort.performSort(unorderedDates)
 
-        XCTAssertEqual(sortedInput, orderedDates, "MergeSort does not sort correctly.")
+        XCTAssertEqual(sortedInput, orderedDates!, "MergeSort does not sort correctly.")
     }
 }
