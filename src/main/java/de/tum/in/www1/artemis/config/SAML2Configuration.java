@@ -100,6 +100,7 @@ public class SAML2Configuration extends WebSecurityConfigurerAdapter {
             PrivateKey privateKey = readPrivateKey(keyFile);
             X509Certificate certificate = readPublicCert(certFile);
             relyingPartySigningCredential = new Saml2X509Credential(privateKey, certificate, Saml2X509Credential.Saml2X509CredentialType.SIGNING, Saml2X509Credential.Saml2X509CredentialType.DECRYPTION);
+            log.debug("Adding {} PK: {} SK: {}", relyingPartySigningCredential, certificate, privateKey);
         } catch (IOException | CertificateException e) {
             log.error(e.getMessage(), e);
         }
