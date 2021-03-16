@@ -32,7 +32,7 @@ export class PasswordResetFinishComponent implements OnInit, AfterViewInit {
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
             if (profileInfo) {
                 this.passwortResetEnabled = profileInfo.registrationEnabled || false;
-                this.passwortResetEnabled ||= profileInfo.saml2?.['password-enabled'] || false;
+                this.passwortResetEnabled ||= profileInfo.saml2?.['enable-password'] || false;
             }
         });
 

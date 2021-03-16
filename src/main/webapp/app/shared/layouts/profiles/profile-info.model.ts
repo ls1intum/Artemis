@@ -28,5 +28,5 @@ export class ProfileInfo {
     public accountName?: string;
     public versionControlUrl?: string;
     public programmingLanguageFeatures: ProgrammingLanguageFeature[];
-    public saml2?: { ['button-label']: string; ['password-enabled']: boolean };
+    public saml2?: { ['button-label']: string; ['enable-password']: boolean };
 }
