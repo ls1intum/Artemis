@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -35,6 +36,9 @@ import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
 @Service
 @Profile("saml2")
 public class SAML2Service {
+
+    @Value("${info.saml2.enable-password:#{null}}")
+    private Optional<Boolean> saml2EnablePassword;
 
     private final Logger log = LoggerFactory.getLogger(SAML2Service.class);
 
@@ -76,6 +80,7 @@ public class SAML2Service {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 
         log.debug("SAML2 User '{}' logged in, attributes {}", auth.getName(), principal.getAttributes());
+        log.debug("SAML2 password-enabled: {}", saml2EnablePassword);
 
         final String username = substituteAttributes(properties.getUsernamePattern(), principal);
         Optional<User> user = userRepository.findOneWithGroupsAndAuthoritiesByLogin(username);
@@ -83,7 +88,7 @@ public class SAML2Service {
             // create User
             user = Optional.of(createUser(username, principal));
 
-            if (properties.getEnablePassword()) {
+            if (saml2EnablePassword.isPresent() && Boolean.TRUE.equals(saml2EnablePassword.get())) {
                 userService.requestPasswordReset(user.get().getEmail());
                 mailService.sendSAML2SetPasswordMail(user.get());
             }

@@ -47,6 +47,9 @@ public class AccountResource {
     @Value("${artemis.user-management.registration.allowed-email-pattern:#{null}}")
     private Optional<Pattern> allowedEmailPattern;
 
+    @Value("${info.saml2.enable-password:#{null}}")
+    private Optional<Boolean> saml2EnablePassword;
+
     private static class AccountResourceException extends RuntimeException {
 
         private AccountResourceException(String message) {
@@ -66,19 +69,13 @@ public class AccountResource {
 
     private final MailService mailService;
 
-    private final SAML2Properties saml2Properties;
-
-    private final Environment environment;
-
     public AccountResource(UserRepository userRepository, UserService userService, UserCreationService userCreationService, MailService mailService,
-            PasswordService passwordService, SAML2Properties saml2Properties, Environment environment) {
+            PasswordService passwordService) {
         this.userRepository = userRepository;
         this.userService = userService;
         this.userCreationService = userCreationService;
         this.mailService = mailService;
         this.passwordService = passwordService;
-        this.saml2Properties = saml2Properties;
-        this.environment = environment;
     }
 
     /**
@@ -96,7 +93,7 @@ public class AccountResource {
      * @return true if saml2 app passwort is disabled, false otherwise
      */
     private boolean isSAML2Disabled() {
-        return !(environment.acceptsProfiles(Profiles.of("saml2")) && saml2Properties.getEnablePassword());
+        return !(saml2EnablePassword.isPresent() && Boolean.TRUE.equals(saml2EnablePassword.get()));
     }
 
     /**

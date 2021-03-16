@@ -22,8 +22,6 @@ public class SAML2Properties {
 
     private String registrationNumberPattern;
 
-    private boolean enablePassword;
-
     private List<RelyingPartyProperties> identityProviders;
 
     /**
@@ -114,24 +112,6 @@ public class SAML2Properties {
      */
     public void setRegistrationNumberPattern(String registrationNumberPattern) {
         this.registrationNumberPattern = registrationNumberPattern;
-    }
-
-    /**
-     * Returns true if an app passwort can be set.
-     *
-     * @return true if an app passwort can be set.
-     */
-    public boolean getEnablePassword() {
-        return enablePassword;
-    }
-
-    /**
-     * Sets if an app passwort can be set.
-     *
-     * @param enablePassword true, true if an app passwort can be set
-     */
-    public void setEnablePassword(boolean enablePassword) {
-        this.enablePassword = enablePassword;
     }
 
     /**
