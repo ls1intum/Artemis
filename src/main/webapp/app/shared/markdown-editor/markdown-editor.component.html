@@ -2,7 +2,7 @@
     <nav ngbNav #nav="ngbNav" class="nav-tabs" [destroyOnHide]="false" (navChange)="togglePreview($event)">
         <!-- editor -->
         <ng-container ngbNavItem="editor_edit">
-            <a ngbNavLink class="btn-sm text-dark" *ngIf="showEditButton">{{ 'entity.action.edit' | translate }}</a>
+            <a ngbNavLink class="btn-sm text-dark" *ngIf="showEditButton">{{ 'entity.action.edit' | artemisTranslate }}</a>
             <ng-template ngbNavContent>
                 <div class="height-100 border-0 markdown-editor d-flex flex-column">
                     <ace-editor
@@ -22,9 +22,9 @@
                         <input id="file-upload" class="markdown-editor__file-input" type="file" accept="image/*" [multiple]="true" (change)="onFileUpload($event)" />
                         <label for="file-upload" class="markdown-editor__file-label d-inline">
                             <div class="row mx-0 align-items-baseline">
-                                <span class="col upload-subtitle">{{ 'artemisApp.markdownEditor.fileUpload' | translate }}</span>
+                                <span class="col upload-subtitle">{{ 'artemisApp.markdownEditor.fileUpload' | artemisTranslate }}</span>
                                 <a class="col-auto" href="http://demo.showdownjs.com">
-                                    <fa-icon [icon]="'question-circle'" [ngbTooltip]="'artemisApp.markdownEditor.guide' | translate"></fa-icon>
+                                    <fa-icon [icon]="'question-circle'" [ngbTooltip]="'artemisApp.markdownEditor.guide' | artemisTranslate"></fa-icon>
                                 </a>
                             </div>
                         </label>
@@ -37,7 +37,7 @@
         </ng-container>
         <!-- preview -->
         <ng-container ngbNavItem="editor_preview">
-            <a ngbNavLink class="btn-sm text-dark" *ngIf="showPreviewButton">{{ 'entity.action.preview' | translate }}</a>
+            <a ngbNavLink class="btn-sm text-dark" *ngIf="showPreviewButton">{{ 'entity.action.preview' | artemisTranslate }}</a>
             <ng-template ngbNavContent>
                 <ng-content></ng-content>
                 <div class="pt-1 background-editor-high markdown-preview" *ngIf="showDefaultPreview" [innerHTML]="previewTextAsHtml">Preview</div>
@@ -53,37 +53,39 @@
                         type="button"
                         class="btn btn-sm"
                         (click)="command.execute()"
-                        [ngbTooltip]="command.buttonTranslationString | translate"
+                        [ngbTooltip]="command.buttonTranslationString | artemisTranslate"
                     >
                         <fa-icon [icon]="command.buttonIcon"></fa-icon>
                     </button>
                     <!--style command -->
                     <div *ngIf="headerCommands.length > 0" class="btn-group" ngbDropdown role="group" aria-label="Button group with nested dropdown">
                         <button class="btn btn-sm" type="button" id="dropdownBasic1" ngbDropdownToggle>
-                            {{ 'artemisApp.multipleChoiceQuestion.editor.style' | translate }}
+                            {{ 'artemisApp.multipleChoiceQuestion.editor.style' | artemisTranslate }}
                         </button>
                         <div class="dropdown-menu" ngbDropdownMenu>
                             <ng-container *ngFor="let command of headerCommands"
-                                ><button class="dropdown-item" (click)="command.execute()" type="button">{{ command.buttonTranslationString | translate }}</button></ng-container
+                                ><button class="dropdown-item" (click)="command.execute()" type="button">
+                                    {{ command.buttonTranslationString | artemisTranslate }}
+                                </button></ng-container
                             >
                         </div>
                     </div>
                     <!--color picker command -->
                     <div class="btn-group col-xs-6" *ngIf="colorCommands.length > 0">
-                        <div class="color-preview btn btn-sm" (click)="openColorSelector($event)">{{ 'artemisApp.markdownEditor.color' | translate }}</div>
+                        <div class="color-preview btn btn-sm" (click)="openColorSelector($event)">{{ 'artemisApp.markdownEditor.color' | artemisTranslate }}</div>
                         <jhi-color-selector [tagColors]="markdownColors" (selectedColor)="onSelectedColor($event)"></jhi-color-selector>
                     </div>
                     <!-- domain commands -->
                     <div class="markdown-editor__commands-domain" *ngIf="domainCommands && domainCommands.length != 0">
                         <ng-container *ngFor="let command of domainCommands | typeCheck: DomainTagCommand">
                             <div *ngIf="command.displayCommandButton" class="btn btn-sm" (click)="command.execute()">
-                                {{ command.buttonTranslationString | translate }}
+                                {{ command.buttonTranslationString | artemisTranslate }}
                             </div>
                         </ng-container>
                         <ng-container *ngFor="let command of domainCommands | typeCheck: DomainMultiOptionCommand">
                             <div ngbDropdown class="d-inline-block">
                                 <button class="btn btn-sm" type="button" ngbDropdownToggle>
-                                    {{ command.buttonTranslationString | translate }}
+                                    {{ command.buttonTranslationString | artemisTranslate }}
                                 </button>
                                 <div ngbDropdownMenu>
                                     <button *ngFor="let item of command.getValues()" class="btn-sm" type="button" (click)="command.execute(item.id)" ngbDropdownItem>
@@ -103,7 +105,7 @@
                             type="button"
                             class="btn btn-sm"
                             (click)="command.execute()"
-                            [ngbTooltip]="command.buttonTranslationString | translate"
+                            [ngbTooltip]="command.buttonTranslationString | artemisTranslate"
                         >
                             <fa-icon [icon]="command.buttonIcon"></fa-icon>
                         </button>

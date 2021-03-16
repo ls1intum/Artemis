@@ -11,7 +11,7 @@
     <p
         *ngIf="!waitingForQuizStart && showingResult && mode !== 'solution'"
         jhiTranslate="artemisApp.quizExercise.quizInstructions.result"
-        [translateValues]="{ userScore: userScore, maxScore: totalScore, percentage: result.score }"
+        [translateValues]="{ userScore: userScore, maxScore: totalScore, percentage: round(result.score) }"
     ></p>
 </div>
 <div class="quiz-content container" *ngIf="quizExercise">
@@ -97,8 +97,8 @@
                         >
                             <b class="fa">SA</b>
                         </span>
-                        <ng-template #tooltipExplanationTranslate>{{ 'artemisApp.quizExercise.explanationAnswered' | translate }}</ng-template>
-                        <ng-template #tooltipNotExplanationTranslate>{{ 'artemisApp.quizExercise.explanationNotAnswered' | translate }}</ng-template>
+                        <ng-template #tooltipExplanationTranslate>{{ 'artemisApp.quizExercise.explanationAnswered' | artemisTranslate }}</ng-template>
+                        <ng-template #tooltipNotExplanationTranslate>{{ 'artemisApp.quizExercise.explanationNotAnswered' | artemisTranslate }}</ng-template>
                     </div>
                 </div>
                 <div *ngIf="quizExercise.quizQuestions && !this.isMobile()" class="align-text hide-mobile">
@@ -152,7 +152,7 @@
             <div *ngIf="showingResult && mode !== 'solution'" class="text-center">
                 <div id="quiz-score" [ngClass]="{ incorrect: userScore < totalScore }">
                     <span class="colon-suffix" jhiTranslate="artemisApp.quizExercise.totalScore"></span>
-                    <span id="quiz-score-result">{{ userScore }}/{{ totalScore }} ({{ result.score }} %)</span>
+                    <span id="quiz-score-result">{{ userScore }}/{{ totalScore }} ({{ round(result.score) }} %)</span>
                 </div>
                 <div *ngIf="mode === 'practice'">
                     <span jhiTranslate="artemisApp.quizExercise.practiceMode"></span>

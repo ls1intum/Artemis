@@ -20,6 +20,8 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
 import { SolutionProgrammingExerciseParticipation } from 'app/entities/participation/solution-programming-exercise-participation.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe.ts';
+import { MockPipe } from 'ng-mocks';
 
 const expect = chai.expect;
 
@@ -33,7 +35,7 @@ describe('ProgrammingExerciseInstructorStatusComponent', () => {
     beforeEach(async(() => {
         TestBed.configureTestingModule({
             imports: [TranslateModule.forRoot(), ArtemisTestModule, AceEditorModule, NgbModule],
-            declarations: [ProgrammingExerciseInstructorStatusComponent],
+            declarations: [ProgrammingExerciseInstructorStatusComponent, MockPipe(ArtemisTranslatePipe)],
             providers: [
                 { provide: CookieService, useClass: MockCookieService },
                 { provide: LocalStorageService, useClass: MockSyncStorage },

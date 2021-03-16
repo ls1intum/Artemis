@@ -31,7 +31,7 @@ plugins {
 }
 
 group = "de.tum.in.www1.artemis"
-version = "4.10.5"
+version = "4.11.0"
 description = "Interactive Learning with Individual Feedback"
 
 sourceCompatibility=15
@@ -225,7 +225,7 @@ dependencies {
     implementation "org.springframework.cloud:spring-cloud-starter-config:3.0.2"
     implementation "org.springframework.boot:spring-boot-starter-cloud-connectors:2.2.13.RELEASE"
 
-    implementation "io.netty:netty-all:4.1.59.Final"
+    implementation "io.netty:netty-all:4.1.60.Final"
     implementation "io.projectreactor.netty:reactor-netty:1.0.4"
     implementation "org.springframework:spring-messaging:5.3.4"
 
@@ -276,7 +276,7 @@ dependencies {
     testImplementation "org.apache.maven.surefire:surefire-report-parser:2.22.2"
 
     // Java's lightweight JSON library needed for the internals of the MockRestServiceServer
-    testImplementation "org.json:json:20201115"
+    testImplementation "org.json:json:20210307"
 }
 
 task cleanResources(type: Delete) {
@@ -338,7 +338,7 @@ node {
 
 // Command to execute the JavaDoc checkstyle verification ./gradlew checkstyleMain
 checkstyle {
-    toolVersion "8.39"
+    toolVersion "8.41"
     configFile file("${rootDir}/checkstyle.xml")
     checkstyleTest.enabled = false
     maxErrors = 0

@@ -17,7 +17,7 @@
                 <tr *ngFor="let componentHealth of health.components | keyvalue">
                     <td>
                         <span>
-                            {{ 'health.indicator.' + componentHealth.key | translate }}
+                            {{ 'health.indicator.' + componentHealth.key | artemisTranslate }}
                             <a *ngIf="componentHealth.value.details?.url" class="badge badge-info" [href]="componentHealth.value.details.url">
                                 {{ componentHealth.value.details.url }}
                             </a>

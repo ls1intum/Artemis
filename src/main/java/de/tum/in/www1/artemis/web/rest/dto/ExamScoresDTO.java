@@ -122,7 +122,7 @@ public class ExamScoresDTO {
 
         public Double maxScore;
 
-        public Long achievedScore;
+        public Double achievedScore;
 
         public Double achievedPoints;
 
@@ -133,7 +133,7 @@ public class ExamScoresDTO {
             // default constructor for our beloved Jackson :-*
         }
 
-        public ExerciseResult(Long exerciseId, String title, Double maxScore, Long achievedScore, Double achievedPoints, Boolean hasNonEmptySubmission) {
+        public ExerciseResult(Long exerciseId, String title, Double maxScore, Double achievedScore, Double achievedPoints, Boolean hasNonEmptySubmission) {
             this.exerciseId = exerciseId;
             this.title = title;
             this.maxScore = maxScore;

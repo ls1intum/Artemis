@@ -12,6 +12,10 @@ import { CourseManagementService } from '../manage/course-management.service';
 import { SortService } from 'app/shared/service/sort.service';
 import { LocaleConversionService } from 'app/shared/service/locale-conversion.service';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
+import { ParticipantScoresService, ScoresDTO } from 'app/shared/participant-scores/participant-scores.service';
+import { forkJoin } from 'rxjs';
+import { round } from 'app/shared/util/utils';
+import * as Sentry from '@sentry/browser';
 
 export const PRESENTATION_SCORE_KEY = 'Presentation Score';
 export const NAME_KEY = 'Name';
@@ -32,6 +36,9 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
     // supported exercise type
 
     readonly exerciseTypes = [ExerciseType.QUIZ, ExerciseType.PROGRAMMING, ExerciseType.MODELING, ExerciseType.TEXT, ExerciseType.FILE_UPLOAD];
+
+    // Expose the function to the template
+    readonly round = round;
 
     course: Course;
     allParticipationsOfCourse: StudentParticipation[] = [];
@@ -60,6 +67,10 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
     averageNumberOfPointsPerExerciseTypes = new Map<ExerciseType, number>();
     averageNumberOfOverallPoints = 0;
 
+    // note: these represent the course scores using the participation score table. We might switch to this new
+    // calculation method completely if it is confirmed that it produces correct results
+    studentIdToCourseScoreDTOs: Map<number, ScoresDTO> = new Map<number, ScoresDTO>();
+
     private languageChangeSubscription?: Subscription;
 
     constructor(
@@ -69,6 +80,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
         private changeDetector: ChangeDetectorRef,
         private languageHelper: JhiLanguageHelper,
         private localeConversionService: LocaleConversionService,
+        private participantScoresService: ParticipantScoresService,
     ) {
         this.reverse = false;
         this.predicate = 'id';
@@ -79,9 +91,8 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
      */
     ngOnInit() {
         this.paramSub = this.route.params.subscribe((params) => {
-            this.courseService.findWithExercises(params['courseId']).subscribe((res) => {
-                this.course = res.body!;
-
+            this.courseService.findWithExercises(params['courseId']).subscribe((findWithExercisesResult) => {
+                this.course = findWithExercisesResult.body!;
                 const titleMap = new Map<string, number>();
                 if (this.course.exercises) {
                     for (const exercise of this.course.exercises) {
@@ -139,12 +150,81 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
      * @param courseId Id of the course
      */
     calculateCourseStatistics(courseId: number) {
-        this.courseService.findAllParticipationsWithResults(courseId).subscribe((participationsOfCourse) => {
+        const findParticipationsObservable = this.courseService.findAllParticipationsWithResults(courseId);
+        // alternative course scores calculation using participant scores table
+        const courseScoresObservable = this.participantScoresService.findCourseScores(courseId);
+        forkJoin([findParticipationsObservable, courseScoresObservable]).subscribe(([participationsOfCourse, courseScoresResult]) => {
             this.allParticipationsOfCourse = participationsOfCourse;
             this.calculateExerciseLevelStatistics();
             this.calculateStudentLevelStatistics();
+
+            // comparing with calculation from course scores (using new participation score table)
+            const courseScoreDTOs = courseScoresResult.body!;
+            this.compareNewCourseScoresCalculationWithOldCalculation(courseScoreDTOs);
             this.changeDetector.detectChanges();
         });
+    }
+
+    /**
+     * This method compares the course scores computed on the client side with the ones on the server side
+     * using the participations score table. In the future we might switch to the server side method, so we use
+     * this method to detect discrepancys.
+     * @param courseScoreDTOs the course scores sent from the server (new calculation method)
+     */
+    private compareNewCourseScoresCalculationWithOldCalculation(courseScoreDTOs: ScoresDTO[]) {
+        if (!this.students || !courseScoreDTOs) {
+            return;
+        }
+        for (const courseScoreDTO of courseScoreDTOs) {
+            this.studentIdToCourseScoreDTOs.set(courseScoreDTO.studentId!, courseScoreDTO);
+        }
+        let noOfScoreDifferencesFound = 0;
+        let noOfPointDifferencesFound = 0;
+        let noOfComparisons = 0;
+        for (const student of this.students) {
+            const overAllPoints = round(student.overallPoints, 1);
+            const overallScore = round((student.overallPoints / this.maxNumberOfOverallPoints) * 100, 1);
+            const regularCalculation = {
+                scoreAchieved: overallScore,
+                pointsAchieved: overAllPoints,
+                userId: student.user.id,
+                userLogin: student.user.login,
+                regularPointsAchievable: this.maxNumberOfOverallPoints,
+            };
+            // checking if the same as in the course scores map
+            const courseScoreDTO = this.studentIdToCourseScoreDTOs.get(student.user.id!);
+            if (!courseScoreDTO) {
+                const errorMessage = `User scores not included in new calculation: ${JSON.stringify(regularCalculation)}`;
+                this.logErrorOnSentry(errorMessage);
+            } else {
+                noOfComparisons += 1;
+                courseScoreDTO.scoreAchieved = round(courseScoreDTO.scoreAchieved, 1);
+                courseScoreDTO.pointsAchieved = round(courseScoreDTO.pointsAchieved, 1);
+
+                if (Math.abs(courseScoreDTO.pointsAchieved - regularCalculation.pointsAchieved) > 0.1) {
+                    const errorMessage = `Different course points in new calculation. Regular Calculation: ${JSON.stringify(regularCalculation)}. New Calculation: ${JSON.stringify(
+                        courseScoreDTO,
+                    )}`;
+                    noOfPointDifferencesFound += 1;
+                    this.logErrorOnSentry(errorMessage);
+                }
+                if (Math.abs(courseScoreDTO.scoreAchieved - regularCalculation.scoreAchieved) > 0.1) {
+                    const errorMessage = `Different course score in new calculation. Regular Calculation: ${JSON.stringify(regularCalculation)}. New Calculation : ${JSON.stringify(
+                        courseScoreDTO,
+                    )}`;
+                    noOfScoreDifferencesFound += 1;
+                    this.logErrorOnSentry(errorMessage);
+                }
+            }
+        }
+        console.log(`Performed ${noOfComparisons} comparisons between old and new calculation method.`);
+        console.log(`Found ${noOfPointDifferencesFound} point differences between old and new calculation method.`);
+        console.log(`Found ${noOfScoreDifferencesFound} score differences between old and new calculation method.`);
+    }
+
+    logErrorOnSentry(errorMessage: string) {
+        console.log(errorMessage);
+        Sentry.captureException(new Error(errorMessage));
     }
 
     /**
@@ -224,7 +304,13 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
                         console.warn('found more than one result for student ' + student.user.login + ' and exercise ' + exercise.title);
                     }
 
-                    const pointsAchievedByStudentInExercise = (result.score! * relevantMaxPoints) / 100;
+                    // Note: It is important that we round on the individual exercise level first and then sum up.
+                    // This is necessary so that the student arrives at the same overall result when doing his own recalculation.
+                    // Let's assume that the student achieved 1.05 points in each of 5 exercises.
+                    // In the client, these are now displayed rounded as 1.1 points.
+                    // If the student adds up the displayed points, he gets a total of 5.5 points.
+                    // In order to get the same total result as the student, we have to round before summing.
+                    const pointsAchievedByStudentInExercise = round((result.score! * relevantMaxPoints) / 100, 1);
                     student.overallPoints += pointsAchievedByStudentInExercise;
                     student.pointsPerExercise.set(exercise.id!, pointsAchievedByStudentInExercise);
                     student.sumPointsPerExerciseType.set(exercise.type!, student.sumPointsPerExerciseType.get(exercise.type!)! + pointsAchievedByStudentInExercise);
@@ -316,19 +402,19 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
                         const exercisePointsPerType = student.sumPointsPerExerciseType.get(exerciseType)!;
                         let exerciseScoresPerType = 0;
                         if (this.maxNumberOfPointsPerExerciseType.get(exerciseType)! > 0) {
-                            exerciseScoresPerType = (student.sumPointsPerExerciseType.get(exerciseType)! / this.maxNumberOfPointsPerExerciseType.get(exerciseType)!) * 100;
+                            exerciseScoresPerType = round((student.sumPointsPerExerciseType.get(exerciseType)! / this.maxNumberOfPointsPerExerciseType.get(exerciseType)!) * 100);
                         }
                         const exerciseTitleKeys = this.exerciseTitlesPerType.get(exerciseType)!;
                         const exercisePointValues = student.pointsPerExerciseType.get(exerciseType)!;
                         exerciseTitleKeys.forEach((title, index) => {
-                            rowData[title] = this.localeConversionService.toLocaleString(exercisePointValues[index]);
+                            rowData[title] = this.localeConversionService.toLocaleString(round(exercisePointValues[index], 1));
                         });
                         rowData[exerciseTypeName + ' ' + POINTS_KEY] = this.localeConversionService.toLocaleString(exercisePointsPerType);
                         rowData[exerciseTypeName + ' ' + SCORE_KEY] = this.localeConversionService.toLocalePercentageString(exerciseScoresPerType);
                     }
                 }
 
-                const overallScore = (student.overallPoints / this.maxNumberOfOverallPoints) * 100;
+                const overallScore = round((student.overallPoints / this.maxNumberOfOverallPoints) * 100, 1);
                 rowData[OVERALL_COURSE_POINTS_KEY] = this.localeConversionService.toLocaleString(student.overallPoints);
                 rowData[OVERALL_COURSE_SCORE_KEY] = this.localeConversionService.toLocalePercentageString(overallScore);
                 if (this.course.presentationScore) {
@@ -370,10 +456,10 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
                     const exerciseTitleKeys = this.exerciseTitlesPerType.get(exerciseType)!;
                     const exerciseAveragePoints = this.exerciseAveragePointsPerType.get(exerciseType)!;
                     exerciseTitleKeys.forEach((title, index) => {
-                        rowDataAverage[title] = this.localeConversionService.toLocaleString(exerciseAveragePoints[index]);
+                        rowDataAverage[title] = this.localeConversionService.toLocaleString(round(exerciseAveragePoints[index], 1));
                     });
 
-                    const averageScore = (this.averageNumberOfPointsPerExerciseTypes.get(exerciseType)! / this.maxNumberOfPointsPerExerciseType.get(exerciseType)!) * 100;
+                    const averageScore = round((this.averageNumberOfPointsPerExerciseTypes.get(exerciseType)! / this.maxNumberOfPointsPerExerciseType.get(exerciseType)!) * 100);
 
                     rowDataAverage[exerciseTypeName + ' ' + POINTS_KEY] = this.localeConversionService.toLocaleString(
                         this.averageNumberOfPointsPerExerciseTypes.get(exerciseType)!,
@@ -382,7 +468,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
                 }
             }
 
-            const averageOverallScore = (this.averageNumberOfOverallPoints / this.maxNumberOfOverallPoints) * 100;
+            const averageOverallScore = round((this.averageNumberOfOverallPoints / this.maxNumberOfOverallPoints) * 100, 1);
             rowDataAverage[OVERALL_COURSE_POINTS_KEY] = this.localeConversionService.toLocaleString(this.averageNumberOfOverallPoints);
             rowDataAverage[OVERALL_COURSE_SCORE_KEY] = this.localeConversionService.toLocalePercentageString(averageOverallScore);
             if (this.course.presentationScore) {
