@@ -89,8 +89,13 @@ public class SAML2Service {
             user = Optional.of(createUser(username, principal));
 
             if (saml2EnablePassword.isPresent() && Boolean.TRUE.equals(saml2EnablePassword.get())) {
-                userService.requestPasswordReset(user.get().getEmail());
-                mailService.sendSAML2SetPasswordMail(user.get());
+                log.debug("Sending SAML2 creation mail");
+                Optional<User> mailUser = userService.requestPasswordReset(user.get().getEmail());
+                if (mailUser.isPresent()) {
+                    mailService.sendSAML2SetPasswordMail(mailUser.get());
+                } else {
+                    log.error("User {} was created but could not be found in the database!");
+                }
             }
         }
 
