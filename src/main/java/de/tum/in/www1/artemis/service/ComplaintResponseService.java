@@ -55,7 +55,7 @@ public class ComplaintResponseService {
         }
         ComplaintResponse complaintResponseRepresentingLock = getComplaintResponseRepresentingALock(complaint);
 
-        User user = this.userRepository.getUser();
+        User user = this.userRepository.getUserWithGroupsAndAuthorities();
         if (!isUserAuthorizedToRespondToComplaint(complaint, user)) {
             throw new AccessForbiddenException("Insufficient permission for removing the lock on the complaint");
         }
@@ -101,7 +101,7 @@ public class ComplaintResponseService {
         }
         ComplaintResponse complaintResponseRepresentingLock = getComplaintResponseRepresentingALock(complaint);
 
-        User user = this.userRepository.getUser();
+        User user = this.userRepository.getUserWithGroupsAndAuthorities();
         if (!isUserAuthorizedToRespondToComplaint(complaint, user)) {
             throw new AccessForbiddenException("Insufficient permission for refreshing the lock on the complaint");
         }
@@ -141,7 +141,7 @@ public class ComplaintResponseService {
         if (complaint.getComplaintResponse() != null) {
             throw new IllegalArgumentException("Complaint response already exists for given complaint");
         }
-        User user = this.userRepository.getUser();
+        User user = this.userRepository.getUserWithGroupsAndAuthorities();
         if (!isUserAuthorizedToRespondToComplaint(complaint, user)) {
             throw new AccessForbiddenException("Insufficient permission for creating the empty complaint response");
         }
@@ -187,7 +187,7 @@ public class ComplaintResponseService {
             throw new IllegalArgumentException("You need to either accept or reject a complaint");
         }
 
-        User user = this.userRepository.getUser();
+        User user = this.userRepository.getUserWithGroupsAndAuthorities();
         if (!isUserAuthorizedToRespondToComplaint(originalComplaint, user)) {
             throw new AccessForbiddenException("Insufficient permission for resolving the complaint");
         }
