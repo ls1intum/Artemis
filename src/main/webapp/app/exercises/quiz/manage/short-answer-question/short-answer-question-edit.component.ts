@@ -74,15 +74,6 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
     /** For visual mode **/
     textParts: (string | undefined)[][];
 
-    /**
-     * This is the regex used for splitting the text into words and spots.
-     * The regex splits the text the same was as {@link ShortAnswerQuestionUtil#divideQuestionTextIntoTextParts} does.
-     * The regex matches following cases:
-     * 1. All whitespace characters outside of spots
-     * 2. The left boundary of a spot if it is not immediately followed by a whitespace character
-     * 3. The right boundary of a spot if it is not immediately preceded by a whitespace character
-     */
-
     backupQuestion: ShortAnswerQuestion;
 
     constructor(
