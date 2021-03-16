@@ -160,12 +160,6 @@ public class BambooService extends AbstractContinuousIntegrationService {
     }
 
     @Override
-    public boolean isBuildPlanEnabled(final String projectKey, final String planId) {
-        final var buildPlan = getBuildPlan(planId, false, true);
-        return buildPlan != null && buildPlan.isEnabled();
-    }
-
-    @Override
     public void deleteBuildPlan(String projectKey, String buildPlanId) {
 
         var buildPlan = getBuildPlan(buildPlanId, false, false);
