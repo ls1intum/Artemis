@@ -190,7 +190,7 @@ public class ComplaintResponseResource {
             throw new IllegalArgumentException("Complaint was not found in database");
         }
         Complaint complaint = complaintFromDatabaseOptional.get();
-        User user = this.userRepository.getUser();
+        User user = this.userRepository.getUserWithGroupsAndAuthorities();
         if (!complaintResponseService.isUserAuthorizedToRespondToComplaint(complaint, user)) {
             throw new AccessForbiddenException("Insufficient permission for modifying the lock on the complaint");
         }
