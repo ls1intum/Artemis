@@ -208,12 +208,12 @@ public class QuizScheduleService {
     public void startSchedule(long delayInMillis) {
         if (scheduledProcessQuizSubmissions.isNull()) {
             try {
-                var scheduledFuture = threadPoolTaskScheduler.scheduleAtFixedRate(new QuizProcessCacheTask(this), 0, delayInMillis, TimeUnit.MILLISECONDS);
+                var scheduledFuture = threadPoolTaskScheduler.scheduleAtFixedRate(new QuizProcessCacheTask(), 0, delayInMillis, TimeUnit.MILLISECONDS);
                 scheduledProcessQuizSubmissions.set(scheduledFuture.getHandler());
                 log.info("QuizScheduleService was started to run repeatedly with {} second delay.", delayInMillis / 1000.0);
             }
             catch (@SuppressWarnings("unused") DuplicateTaskException e) {
-                log.debug("Quiz process cache task already redistered");
+                log.warn("Quiz process cache task already registered");
                 // this is expected if we run on multiple nodes
             }
 
@@ -229,7 +229,7 @@ public class QuizScheduleService {
             }
         }
         else {
-            log.debug("Cannot start quiz exercise schedule service, it is already RUNNING");
+            log.info("Cannot start quiz exercise schedule service, it is already RUNNING");
         }
     }
 
@@ -277,7 +277,7 @@ public class QuizScheduleService {
             // schedule sending out filtered quiz over websocket
             try {
                 long delay = Duration.between(ZonedDateTime.now(), quizExercise.getReleaseDate()).toMillis();
-                var scheduledFuture = threadPoolTaskScheduler.schedule(new QuizStartTask(quizExerciseId, this), delay, TimeUnit.MILLISECONDS);
+                var scheduledFuture = threadPoolTaskScheduler.schedule(new QuizStartTask(quizExerciseId), delay, TimeUnit.MILLISECONDS);
                 // save scheduled future in HashMap
                 quizCache.performCacheWrite(quizExercise.getId(), quizExerciseCache -> {
                     quizExerciseCache.setQuizStart(List.of(scheduledFuture.getHandler()));
@@ -372,7 +372,7 @@ public class QuizScheduleService {
      * 4. Send out new Statistics to instructors (WEBSOCKET SEND)
      */
     public void processCachedQuizSubmissions() {
-        log.debug("Process cached quiz submissions");
+        log.info("Process cached quiz submissions");
         // global try-catch for error logging
         try {
             for (QuizExerciseCache cachedQuiz : quizCache.getAllQuizExerciseCaches()) {
