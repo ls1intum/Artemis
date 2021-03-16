@@ -32,11 +32,11 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 
 import de.tum.in.www1.artemis.connector.bamboo.BambooRequestMockProvider;
 import de.tum.in.www1.artemis.connector.bitbucket.BitbucketRequestMockProvider;
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.Team;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.connector.jira.JiraRequestMockProvider;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
+import de.tum.in.www1.artemis.domain.participation.AbstractBaseProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.service.connectors.BitbucketBambooUpdateService;
 import de.tum.in.www1.artemis.service.connectors.bamboo.BambooService;
@@ -48,6 +48,7 @@ import de.tum.in.www1.artemis.service.connectors.bitbucket.BitbucketService;
 import de.tum.in.www1.artemis.service.connectors.bitbucket.dto.BitbucketRepositoryDTO;
 import de.tum.in.www1.artemis.service.ldap.LdapUserService;
 import de.tum.in.www1.artemis.util.AbstractArtemisIntegrationTest;
+import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
 
 @SpringBootTest(properties = { "artemis.athene.token-validity-in-seconds=10800",
         "artemis.athene.base64-secret=YWVuaXF1YWRpNWNlaXJpNmFlbTZkb283dXphaVF1b29oM3J1MWNoYWlyNHRoZWUzb2huZ2FpM211bGVlM0VpcAo=" })
@@ -80,6 +81,9 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
 
     @Autowired
     protected BitbucketRequestMockProvider bitbucketRequestMockProvider;
+
+    @Autowired
+    protected JiraRequestMockProvider jiraRequestMockProvider;
 
     @AfterEach
     public void resetSpyBeans() {
@@ -324,6 +328,120 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
         mockCopyBuildPlan(participation);
         mockConfigureBuildPlan(participation);
         bambooRequestMockProvider.mockTriggerBuild(participation);
+    }
+
+    @Override
+    public void mockUpdateUserInUserManagement(String oldLogin, User user, Set<String> oldGroups) throws URISyntaxException {
+        var managedUserVM = new ManagedUserVM(user);
+        jiraRequestMockProvider.mockIsGroupAvailableForMultiple(managedUserVM.getGroups());
+        jiraRequestMockProvider.mockRemoveUserFromGroup(oldGroups, managedUserVM.getLogin());
+        jiraRequestMockProvider.mockAddUserToGroupForMultipleGroups(managedUserVM.getGroups());
+    }
+
+    @Override
+    public void mockCreateUserInUserManagement(User user) throws URISyntaxException {
+        var managedUserVM = new ManagedUserVM(user);
+        jiraRequestMockProvider.mockIsGroupAvailableForMultiple(managedUserVM.getGroups());
+        jiraRequestMockProvider.mockAddUserToGroupForMultipleGroups(managedUserVM.getGroups());
+    }
+
+    @Override
+    public void mockDeleteUserInUserManagement(User user, boolean userExistsInUserManagement) {
+        // Not needed here
+    }
+
+    @Override
+    public void mockUpdateCoursePermissions(Course updatedCourse, String oldInstructorGroup, String oldTeachingAssistantGroup) {
+        // Not needed here.
+    }
+
+    @Override
+    public void mockCreateGroupInUserManagement(String groupName) throws Exception {
+        jiraRequestMockProvider.mockCreateGroup(groupName);
+    }
+
+    @Override
+    public void mockDeleteGroupInUserManagement(String groupName) throws Exception {
+        jiraRequestMockProvider.mockDeleteGroup(groupName);
+    }
+
+    @Override
+    public void mockDeleteRepository(String projectKey, String repostoryName) throws Exception {
+        bitbucketRequestMockProvider.mockDeleteRepository(projectKey, repostoryName);
+    }
+
+    @Override
+    public void mockDeleteProjectInVcs(String projectKey) throws Exception {
+        bitbucketRequestMockProvider.mockDeleteProject(projectKey);
+    }
+
+    @Override
+    public void mockDeleteBuildPlan(String projectKey, String planName) throws Exception {
+        // var planKey = (projectKey + "-" + planName).toUpperCase();
+        bambooRequestMockProvider.mockDeleteBambooBuildPlan(planName, false);
+    }
+
+    @Override
+    public void mockDeleteBuildPlanProject(String projectKey) throws Exception {
+        bambooRequestMockProvider.mockDeleteBambooBuildProject(projectKey);
+    }
+
+    @Override
+    public void mockAddUserToGroupInUserManagement(User user, String group) throws Exception {
+        jiraRequestMockProvider.mockAddUserToGroup(group);
+    }
+
+    @Override
+    public void mockRemoveUserFromGroup(User user, String group) {
+        jiraRequestMockProvider.mockRemoveUserFromGroup(Set.of(group), user.getLogin());
+    }
+
+    @Override
+    public void mockGetBuildPlan(String porjectKey, String planName, boolean planExistsInCi, boolean planIsActive, boolean planIsBuilding) throws Exception {
+        var buildPlanToReturn = planExistsInCi ? new BambooBuildPlanDTO(planIsActive, planIsBuilding) : null;
+        bambooRequestMockProvider.mockGetBuildPlan(planName, buildPlanToReturn);
+    }
+
+    @Override
+    public void mockHealthInCiService(boolean isRunning, HttpStatus httpStatus) throws Exception {
+        var state = isRunning ? "RUNNING" : "PAUSED";
+        bambooRequestMockProvider.mockHealth(state, httpStatus);
+    }
+
+    @Override
+    public void mockCheckIfProjectExistsInVcs(ProgrammingExercise exercise, boolean existsInVcs) throws Exception {
+        bitbucketRequestMockProvider.mockCheckIfProjectExists(exercise, true);
+    }
+
+    @Override
+    public void mockCheckIfProjectExistsInCi(ProgrammingExercise exercise, boolean existsInCi) throws Exception {
+        bambooRequestMockProvider.mockCheckIfProjectExists(exercise, existsInCi);
+    }
+
+    @Override
+    public void mockRepositoryUrlIsValid(VcsRepositoryUrl vcsTemplateRepositoryUrl, String projectKey, boolean b) throws Exception {
+        bitbucketRequestMockProvider.mockRepositoryUrlIsValid(vcsTemplateRepositoryUrl, projectKey, b);
+    }
+
+    @Override
+    public void mockCheckIfBuildPlanExists(String projectKey, String templateBuildPlanId, boolean buildPlanExists) throws Exception {
+        bambooRequestMockProvider.mockBuildPlanExists(templateBuildPlanId, buildPlanExists);
+    }
+
+    @Override
+    public void mockTriggerBuild(AbstractBaseProgrammingExerciseParticipation programmingExerciseParticipation) throws Exception {
+        bambooRequestMockProvider.mockTriggerBuild(programmingExerciseParticipation);
+    }
+
+    @Override
+    public void mockSetRepositoryPermissionsToReadOnly(VcsRepositoryUrl repositoryUrl, String projectKey, Set<User> users) throws Exception {
+        var repositorySlug = urlService.getRepositorySlugFromRepositoryUrl(repositoryUrl);
+        bitbucketRequestMockProvider.mockSetRepositoryPermissionsToReadOnly(repositorySlug, projectKey, users);
+    }
+
+    @Override
+    public void mockConfigureRepository(ProgrammingExercise exercise, String participantIdentifier, Set<User> students, boolean ltiUserExists) throws Exception {
+        bitbucketRequestMockProvider.mockConfigureRepository(exercise, participantIdentifier, students, ltiUserExists);
     }
 
     @Override

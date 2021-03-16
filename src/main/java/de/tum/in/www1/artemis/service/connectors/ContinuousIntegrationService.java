@@ -163,15 +163,6 @@ public interface ContinuousIntegrationService {
     String checkIfProjectExists(String projectKey, String projectName);
 
     /**
-     * Checks if a given build plan is deactivated, or enabled
-     *
-     * @param planId The ID of the build plan
-     * @param projectKey The key of the project for which to check the build plan
-     * @return True, if the plan is enabled, false otherwise
-     */
-    boolean isBuildPlanEnabled(final String projectKey, final String planId);
-
-    /**
      * Enables the given build plan.
      *
      * @param projectKey The key of the project for which to enable the plan
