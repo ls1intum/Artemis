@@ -1933,6 +1933,19 @@ public class DatabaseUtilService {
         return courseRepoContent.get(0);
     }
 
+    /** With this method we can generate a course. We can specify the number of exercises. To not only test one type, this method generates modeling, file-upload and text exercises in a cyclic manner.
+     *
+     * @param numberOfExercises             - number of generated exercises. E.g. if you set it to 4, 2 modeling exercises, one text and one file-upload exercise will be generated. (thats why there is the %3 check)
+     * @param numberOfSubmissionPerExercise - for each exercise this number of submissions will be generated. E.g. if you have 2 exercises, and set this to 4, in total 8 submissions will be created.
+     * @param numberOfAssessments           - generates the assessments for a submission of an exercise. Example from abobe, 2 exrecises, 4 submissions each. If you set numberOfAssessments to 2, for each exercise 2 assessmetns will be created.
+     *                                          In total there will be 4 assessments then. (by two different tutors, as each exercise is assesssed by an individual tutor. There are 4 tutors that create assessments)
+     * @param numberOfComplaints            - generates the complaints for assessments, in the same way as results are created.
+     * @param typeComplaint                 - true: complaintType==COMPLAINT | false: complaintType==MORE_FEEDBACK
+     * @param numberComplaintResponses      - generates responses for the complaint/feedback request (as above)
+     * @param validModel                    - model for the modeling submission
+     *
+     * @return                              - the generated course
+     */
     public Course addCourseWithExercisesAndSubmissions(int numberOfExercises, int numberOfSubmissionPerExercise, int numberOfAssessments, int numberOfComplaints,
             boolean typeComplaint, int numberComplaintResponses, String validModel) {
         Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "instructor");
@@ -1940,7 +1953,7 @@ public class DatabaseUtilService {
         for (int i = 0; i < numberOfExercises; i++) {
             var currentUser = tutors.get(i % 4);
 
-            if ((i % 3 + 0) == 0) {
+            if ((i % 3) == 0) {
                 ModelingExercise modelingExercise = ModelFactory.generateModelingExercise(pastTimestamp, pastTimestamp, futureTimestamp, DiagramType.ClassDiagram, course);
                 modelingExercise.setTitle("Modeling" + i);
                 course.addExercises(modelingExercise);
@@ -1952,32 +1965,12 @@ public class DatabaseUtilService {
                     modelSubmissionService.save(submission, modelingExercise, "student" + j);
                     studentParticipationRepo.save(participation);
                     if (numberOfAssessments >= j) {
-                        Result result = new Result();
-                        result = resultRepo.save(result);
-                        result.setSubmission(submission);
-                        result.completionDate(pastTimestamp);
-                        result.resultString("1 of 10 points");
-                        result.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
-                        result.setAssessor(currentUser);
+                        Result result = generateResult(submission, currentUser);
                         submission.addResult(result);
                         participation.addResult(result);
                         studentParticipationRepo.save(participation);
                         modelingSubmissionRepo.save(submission);
-                        resultRepo.save(result);
-                        if (numberOfComplaints >= j) {
-                            Complaint complaint = typeComplaint ? new Complaint().complaintType(ComplaintType.COMPLAINT)
-                                    : new Complaint().complaintType(ComplaintType.MORE_FEEDBACK);
-                            complaint.setResult(result);
-                            complaint = complaintRepo.save(complaint);
-                            if (numberComplaintResponses >= j) {
-                                ComplaintResponse complaintResponse = createInitialEmptyResponse(typeComplaint ? "tutor5" : currentUser.getLogin(), complaint);
-                                complaintResponse.getComplaint().setAccepted(true);
-                                complaintResponse.setResponseText(typeComplaint ? "Accepted" : "SomeMoreFeedback");
-                                complaintResponseRepo.save(complaintResponse);
-                                complaint.setComplaintResponse(complaintResponse);
-                                complaintRepo.save(complaint);
-                            }
-                        }
+                        generateComplaintAndResponses(j, numberOfComplaints, numberComplaintResponses, typeComplaint, result, currentUser);
                     }
                 }
 
@@ -1992,33 +1985,11 @@ public class DatabaseUtilService {
                     TextSubmission submission = ModelFactory.generateTextSubmission("submissionText", Language.ENGLISH, true);
                     submission = saveTextSubmission(textExercise, submission, "student" + j);
                     if (numberOfAssessments >= j) {
-                        Result result = new Result();
-                        result = resultRepo.save(result);
-                        result.setSubmission(submission);
-                        result.completionDate(pastTimestamp);
-                        result.resultString("3 of 10 points");
-                        result.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
-                        result.setAssessor(currentUser);
+                        Result result = generateResult(submission, currentUser);
                         submission.addResult(result);
-                        StudentParticipation participation = (StudentParticipation) submission.getParticipation();
-                        participation.addResult(result);
-                        studentParticipationRepo.save(participation);
+                        submission = (TextSubmission) saveResultInParticipation(submission, result);
                         textSubmissionRepo.save(submission);
-                        resultRepo.save(result);
-                        if (numberOfComplaints >= j) {
-                            Complaint complaint = typeComplaint ? new Complaint().complaintType(ComplaintType.COMPLAINT)
-                                    : new Complaint().complaintType(ComplaintType.MORE_FEEDBACK);
-                            complaint.setResult(result);
-                            complaint = complaintRepo.save(complaint);
-                            if (numberComplaintResponses >= j) {
-                                ComplaintResponse complaintResponse = createInitialEmptyResponse(typeComplaint ? "tutor5" : currentUser.getLogin(), complaint);
-                                complaintResponse.getComplaint().setAccepted(true);
-                                complaintResponse.setResponseText(typeComplaint ? "Accepted" : "SomeMoreFeedback");
-                                complaintResponseRepo.save(complaintResponse);
-                                complaint.setComplaintResponse(complaintResponse);
-                                complaintRepo.save(complaint);
-                            }
-                        }
+                        generateComplaintAndResponses(j, numberOfComplaints, numberComplaintResponses, typeComplaint, result, currentUser);
                     }
                 }
             }
@@ -2032,39 +2003,52 @@ public class DatabaseUtilService {
                     FileUploadSubmission submission = ModelFactory.generateFileUploadSubmissionWithFile(true, "path/to/file.pdf");
                     saveFileUploadSubmission(fileUploadExercise, submission, "student" + j);
                     if (numberOfAssessments >= j) {
-                        Result result = new Result();
-                        result = resultRepo.save(result);
-                        result.setSubmission(submission);
-                        result.completionDate(pastTimestamp);
-                        result.resultString("2 of 10 points");
-                        result.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
-                        result.setAssessor(currentUser);
-                        submission.addResult(result);
-                        StudentParticipation participation = (StudentParticipation) submission.getParticipation();
-                        participation.addResult(result);
-                        studentParticipationRepo.save(participation);
+                        Result result = generateResult(submission, currentUser);
+                        submission = (FileUploadSubmission) saveResultInParticipation(submission, result);
                         fileUploadSubmissionRepo.save(submission);
-                        resultRepo.save(result);
-                        if (numberOfComplaints >= j) {
-                            Complaint complaint = typeComplaint ? new Complaint().complaintType(ComplaintType.COMPLAINT)
-                                    : new Complaint().complaintType(ComplaintType.MORE_FEEDBACK);
-                            complaint.setResult(result);
-                            complaint = complaintRepo.save(complaint);
-                            if (numberComplaintResponses >= j) {
-                                ComplaintResponse complaintResponse = createInitialEmptyResponse(typeComplaint ? "tutor5" : currentUser.getLogin(), complaint);
-                                complaintResponse.getComplaint().setAccepted(true);
-                                complaintResponse.setResponseText(typeComplaint ? "Accepted" : "SomeMoreFeedback");
-                                complaintResponseRepo.save(complaintResponse);
-                                complaint.setComplaintResponse(complaintResponse);
-                                complaintRepo.save(complaint);
-                            }
-                        }
+                        generateComplaintAndResponses(j, numberOfComplaints, numberComplaintResponses, typeComplaint, result, currentUser);
                     }
                 }
             }
         }
         course = courseRepo.save(course);
         return course;
+    }
+
+    private Submission saveResultInParticipation(Submission submission, Result result) {
+        submission.addResult(result);
+        StudentParticipation participation = (StudentParticipation) submission.getParticipation();
+        participation.addResult(result);
+        studentParticipationRepo.save(participation);
+        return submission;
+    }
+
+    private Result generateResult(Submission submission, User currentUser) {
+        Result result = new Result();
+        result = resultRepo.save(result);
+        result.setSubmission(submission);
+        result.completionDate(pastTimestamp);
+        result.resultString("3 of 10 points");
+        result.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+        result.setAssessor(currentUser);
+        return result;
+    }
+
+    private void generateComplaintAndResponses(int j, int numberOfComplaints, int numberComplaintResponses, boolean typeComplaint, Result result, User currentUser) {
+        result = resultRepo.save(result);
+        if (numberOfComplaints >= j) {
+            Complaint complaint = typeComplaint ? new Complaint().complaintType(ComplaintType.COMPLAINT) : new Complaint().complaintType(ComplaintType.MORE_FEEDBACK);
+            complaint.setResult(result);
+            complaint = complaintRepo.save(complaint);
+            if (numberComplaintResponses >= j) {
+                ComplaintResponse complaintResponse = createInitialEmptyResponse(typeComplaint ? "tutor5" : currentUser.getLogin(), complaint);
+                complaintResponse.getComplaint().setAccepted(true);
+                complaintResponse.setResponseText(typeComplaint ? "Accepted" : "SomeMoreFeedback");
+                complaintResponseRepo.save(complaintResponse);
+                complaint.setComplaintResponse(complaintResponse);
+                complaintRepo.save(complaint);
+            }
+        }
     }
 
     /**
