@@ -400,8 +400,8 @@ public class ProgrammingExerciseGradingService {
         // Find duplicate test cases from feedback which is automatic feedback
         Set<String> duplicateFeedbackNames = result.getFeedbacks().stream()
                 .filter(feedback -> !feedback.isStaticCodeAnalysisFeedback() && FeedbackType.AUTOMATIC.equals(feedback.getType())).map(Feedback::getText)
-                // Set.add() returns false if the element was already in the set, this is how we find all duplicates
-                .filter(feedbackName -> !uniqueFeedbackNames.add(feedbackName)).collect(Collectors.toSet());
+                // Set.add() returns false if the lowerCase element was already in the set, this is how we find all duplicates
+                .filter(feedbackName -> !uniqueFeedbackNames.add(feedbackName.toLowerCase())).collect(Collectors.toSet());
 
         if (!duplicateFeedbackNames.isEmpty()) {
             String duplicateDetailText = "This is a duplicate test case. Please review all your test cases and verify that your test cases have unique names!";
@@ -409,6 +409,8 @@ public class ProgrammingExerciseGradingService {
                     .map(feedbackName -> new Feedback().type(FeedbackType.AUTOMATIC).text(feedbackName + " - Duplicate Test Case!").detailText(duplicateDetailText).positive(false))
                     .collect(Collectors.toList());
             result.addFeedbacks(feedbacksForDuplicateTestCases);
+            // Enables to view the result details in case all test cases are positive
+            result.setHasFeedback(true);
             String notificationText = TEST_CASES_DUPLICATE_NOTIFICATION + String.join(", ", duplicateFeedbackNames);
             groupNotificationService.notifyInstructorGroupAboutDuplicateTestCasesForExercise(programmingExercise, notificationText);
             return true;
