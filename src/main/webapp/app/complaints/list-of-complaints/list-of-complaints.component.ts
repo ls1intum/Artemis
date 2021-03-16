@@ -108,7 +108,6 @@ export class ListOfComplaintsComponent implements OnInit {
         const studentParticipation = complaint.result.participation as StudentParticipation;
         const exercise = studentParticipation.exercise;
         const submissionId = complaint.result.submission.id;
-        console.log(exercise);
         if (!exercise || !exercise.type || !submissionId) {
             return;
         }
