@@ -240,7 +240,8 @@ public class User extends AbstractAuditingEntity implements Participant {
     public String getVisibleRegistrationNumber() {
         if (visibleRegistrationNumberTransient != null) {
             return visibleRegistrationNumberTransient;
-        } else {
+        }
+        else {
             return this.getRegistrationNumber();
         }
     }

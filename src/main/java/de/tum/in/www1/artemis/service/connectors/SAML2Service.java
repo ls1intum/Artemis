@@ -93,7 +93,8 @@ public class SAML2Service {
                 Optional<User> mailUser = userService.requestPasswordReset(user.get().getEmail());
                 if (mailUser.isPresent()) {
                     mailService.sendSAML2SetPasswordMail(mailUser.get());
-                } else {
+                }
+                else {
                     log.error("User {} was created but could not be found in the database!");
                 }
             }
