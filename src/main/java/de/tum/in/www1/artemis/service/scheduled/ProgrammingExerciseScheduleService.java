@@ -9,8 +9,6 @@ import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
 import javax.validation.constraints.NotNull;
 
-import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
-import de.tum.in.www1.artemis.service.connectors.GitService;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,6 +26,7 @@ import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.exam.ExamDateService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingSubmissionService;
@@ -152,9 +151,12 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
 
         // For any course exercise with a valid release date
         if (exercise.getReleaseDate() != null && ZonedDateTime.now().isBefore(exercise.getReleaseDate())) {
-            scheduleService.scheduleTask(exercise, ExerciseLifecycle.RELEASE, combineTemplateCommitsForExercise(exercise));
+
             log.debug("Scheduled combining template commits before release date for Programming Exercise \"" + exercise.getTitle() + "\" (#" + exercise.getId() + ") for "
-                + exercise.getReleaseDate() + ".");
+                    + exercise.getReleaseDate() + ".");
+        }
+        else {
+            scheduleService.cancelScheduledTaskForLifecycle(exercise, ExerciseLifecycle.RELEASE);
         }
 
         // For any course exercise that needsToBeScheduled (buildAndTestAfterDueDate and/or manual assessment)
@@ -169,6 +171,8 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
 
         // For exercises with buildAndTestAfterDueDate
         if (exercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null && ZonedDateTime.now().isBefore(exercise.getBuildAndTestStudentSubmissionsAfterDueDate())) {
+            scheduleService.scheduleTask(exercise, ExerciseLifecycle.BUILD_AND_TEST_AFTER_DUE_DATE, combineTemplateCommitsForExercise(exercise));
+
             scheduleService.scheduleTask(exercise, ExerciseLifecycle.BUILD_AND_TEST_AFTER_DUE_DATE, buildAndTestRunnableForExercise(exercise));
             log.debug("Scheduled build and test for student submissions after due date for Programming Exercise \"" + exercise.getTitle() + "\" (#" + exercise.getId() + ") for "
                     + exercise.getBuildAndTestStudentSubmissionsAfterDueDate() + ".");
@@ -219,9 +223,11 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
             try {
                 gitService.combineAllCommitsOfRepositoryIntoOne(exercise.getVcsTemplateRepositoryUrl());
                 groupNotificationService.notifyInstructorGroupAboutExerciseUpdate(exercise, Constants.PROGRAMMING_EXERCISE_SUCCESSFUL_COMBINE_OF_TEMPLATE_COMMITS);
-            } catch (InterruptedException e) {
+            }
+            catch (InterruptedException e) {
                 log.error("Failed to schedule combining of template commits of exercise " + exercise.getId(), e);
-            } catch (GitAPIException e) {
+            }
+            catch (GitAPIException e) {
                 log.error("Failed to communicate with GitAPI for combining template commits of exercise " + exercise.getId(), e);
             }
         };
