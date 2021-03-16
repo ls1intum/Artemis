@@ -388,7 +388,7 @@ export class ShortAnswerQuestionUtil {
      * @desc Returns the whitespace in front of the text.
      * @param text {string} the text for which we get the indentation
      */
-    getIndentation(text: string): string {
+    public getIndentation(text: string): string {
         if (!text) {
             return '';
         }

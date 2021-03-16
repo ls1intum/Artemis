@@ -132,12 +132,17 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
         }
     }
 
-    private parseQuestionTextIntoTextBlocks(text: string) {
-        const returnValue: (string | undefined)[][] = [];
-        const spotParse = this.shortAnswerQuestionUtil.divideQuestionTextIntoTextParts(text);
-        spotParse.forEach((line) => {
+    /**
+     * Parses the text taken as parameter into text blocks
+     * @param text the text which should be parsed
+     */
+    private parseQuestionTextIntoTextBlocks(text: string): string[][] {
+        const returnValue: string[][] = [];
+        const lineText = text.split(/\n+/g);
+        lineText.forEach((line) => {
+            const textParts = this.shortAnswerQuestionUtil.divideQuestionTextIntoTextParts(line)[0];
             let parsedLine: string[] = [];
-            line.forEach((block) => {
+            textParts.forEach((block) => {
                 if (block.includes('[-spot ', 0)) {
                     parsedLine.push(block);
                 } else {
@@ -148,6 +153,11 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
                     }
                 }
             });
+            // add indentation
+            if (parsedLine.length > 0) {
+                const indentation = this.shortAnswerQuestionUtil.getIndentation(line);
+                parsedLine[0] = indentation.concat(parsedLine[0]);
+            }
             returnValue.push(parsedLine);
         });
         return returnValue;
