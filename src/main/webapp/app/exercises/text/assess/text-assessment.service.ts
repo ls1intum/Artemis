@@ -275,6 +275,8 @@ export class TextAssessmentService {
     }
 
     /**
+     * Connects the participation with the submission and result
+     *
      *  @param participation
      *  @param submission
      *  @param result
