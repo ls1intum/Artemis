@@ -121,15 +121,4 @@ public interface OrganizationRepository extends JpaRepository<Organization, Long
     default Organization findOneWithEagerUsersAndCoursesOrElseThrow(long organizationId) {
         return findByIdWithEagerUsersAndCourses(organizationId).orElseThrow(() -> new EntityNotFoundException("Organization with id: \"" + organizationId + "\" does not exist"));
     }
-
-    /**
-     * Remove all users of organization
-     * @param organizationId id of the organization where the users should be removed
-     */
-    @NotNull
-    default void removeAllUsersFromOrganization(long organizationId) {
-        Organization organization = findByIdWithUsersElseThrow(organizationId);
-        organization.setUsers(new HashSet<>());
-        save(organization);
-    }
 }

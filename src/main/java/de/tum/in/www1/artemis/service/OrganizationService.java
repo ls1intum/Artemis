@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.service;
 
-import java.util.List;
 import java.util.Optional;
 
 import org.slf4j.Logger;
@@ -8,7 +7,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Organization;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.OrganizationRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -25,9 +24,12 @@ public class OrganizationService {
 
     private final UserRepository userRepository;
 
-    public OrganizationService(OrganizationRepository organizationRepository, UserRepository userRepository) {
+    private final CourseRepository courseRepository;
+
+    public OrganizationService(OrganizationRepository organizationRepository, UserRepository userRepository, CourseRepository courseRepository) {
         this.organizationRepository = organizationRepository;
         this.userRepository = userRepository;
+        this.courseRepository = courseRepository;
     }
 
     /**
@@ -36,11 +38,12 @@ public class OrganizationService {
      * Users not matching the pattern will be removed from the organization (if contained).
      * @param organization the organization used to perform the indexing
      */
-    public void indexing(Organization organization) {
+    public void indexing(final Organization organization) {
         log.debug("Start indexing for organization: {}", organization.getName());
-        List<User> usersToAssign = userRepository.findAllMatchingEmailPattern(organization.getEmailPattern());
-        organizationRepository.removeAllUsersFromOrganization(organization.getId());
-        usersToAssign.forEach(user -> {
+        organization.getUsers().forEach(user -> {
+            userRepository.removeOrganizationFromUser(user.getId(), organization);
+        });
+        userRepository.findAllMatchingEmailPattern(organization.getEmailPattern()).forEach(user -> {
             log.debug("User {} matches {} email pattern. Adding", user.getLogin(), organization.getName());
             userRepository.addOrganizationToUser(user.getId(), organization);
         });
@@ -59,11 +62,12 @@ public class OrganizationService {
 
     /**
      * Add a new organization and execute indexing based on its emailPattern
-     * @param organization the organization zo add
+     * @param organization the organization to add
      * @return the persisted organization entity
      */
     public Organization add(Organization organization) {
         Organization addedOrganization = save(organization);
+        addedOrganization = organizationRepository.findOneWithEagerUsersAndCoursesOrElseThrow(addedOrganization.getId());
         indexing(addedOrganization);
         return addedOrganization;
     }
@@ -90,14 +94,31 @@ public class OrganizationService {
             oldOrganization.setDescription(organization.getDescription());
             oldOrganization.setLogoUrl(organization.getLogoUrl());
             oldOrganization.setEmailPattern(organization.getEmailPattern());
-            Organization savedOrganization = organizationRepository.save(oldOrganization);
             if (indexingRequired) {
-                indexing(savedOrganization);
+                indexing(oldOrganization);
             }
-            return savedOrganization;
+            return organizationRepository.save(oldOrganization);
         }
         else {
             throw new EntityNotFoundException("Organization with id: \"" + organization.getId() + "\" does not exist");
         }
+    }
+
+    /**
+     * Delete an organization
+     * @param organizationId the id of the organization to delete
+     */
+    public void deleteOrganization(Long organizationId) {
+        final Organization organization = organizationRepository.findOneWithEagerUsersAndCoursesOrElseThrow(organizationId);
+
+        // we make sure to delete all relations before deleting the organization
+        organization.getUsers().forEach(user -> {
+            userRepository.removeOrganizationFromUser(user.getId(), organization);
+        });
+        organization.getCourses().forEach(course -> {
+            courseRepository.removeOrganizationFromCourse(course.getId(), organization);
+        });
+
+        organizationRepository.delete(organization);
     }
 }
