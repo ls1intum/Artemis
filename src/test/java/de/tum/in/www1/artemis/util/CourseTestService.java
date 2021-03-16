@@ -650,8 +650,7 @@ public class CourseTestService {
         request.get("/api/courses/" + testCourses.get(0).getId() + "/stats-for-assessment-dashboard", HttpStatus.FORBIDDEN, StatsForInstructorDashboardDTO.class);
     }
 
-    @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    // Test
     public void testGetAssessmentDashboardStats_withoutAssessments() throws Exception {
         String validModel = FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
         // create 6 * 4 = 24 submissions
@@ -671,8 +670,7 @@ public class CourseTestService {
         assertThat(currentTutorLeaderboard.getPoints()).isEqualTo(0);
     }
 
-    @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    // Test
     public void testGetAssessmentDashboardStats_withAssessments() throws Exception {
         String validModel = FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
         Course testCourse = database.addCourseWithExercisesAndSubmissions(6, 4, 2, 0, true, 0, validModel);
@@ -685,8 +683,7 @@ public class CourseTestService {
         assertThat(stats.getTutorLeaderboardEntries().get(3).getNumberOfAssessments()).isEqualTo(2);
     }
 
-    @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    // Test
     public void testGetAssessmentDashboardStats_withAssessmentsAndComplaints() throws Exception {
         String validModel = FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
         Course testCourse = database.addCourseWithExercisesAndSubmissions(6, 4, 4, 2, true, 0, validModel);
@@ -709,8 +706,7 @@ public class CourseTestService {
         assertThat(stats.getTutorLeaderboardEntries().get(3).getNumberOfNotAnsweredMoreFeedbackRequests()).isEqualTo(0);
     }
 
-    @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    // Test
     public void testGetAssessmentDashboardStats_withAssessmentsAndFeedbackRequests() throws Exception {
         String validModel = FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
         Course testCourse = database.addCourseWithExercisesAndSubmissions(6, 4, 4, 2, false, 0, validModel);
@@ -733,8 +729,7 @@ public class CourseTestService {
         assertThat(stats.getTutorLeaderboardEntries().get(3).getNumberOfNotAnsweredMoreFeedbackRequests()).isEqualTo(2);
     }
 
-    @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    // Test
     public void testGetAssessmentDashboardStats_withAssessmentsAndComplaintsAndResponses() throws Exception {
         String validModel = FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
         Course testCourse = database.addCourseWithExercisesAndSubmissions(6, 4, 4, 2, true, 1, validModel);
@@ -766,8 +761,7 @@ public class CourseTestService {
         assertThat(stats.getTutorLeaderboardEntries().get(4).getNumberOfComplaintResponses()).isEqualTo(6);
     }
 
-    @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    // Test
     public void testGetAssessmentDashboardStats_withAssessmentsAndFeedBackRequestsAndResponses() throws Exception {
         String validModel = FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
         Course testCourse = database.addCourseWithExercisesAndSubmissions(6, 4, 4, 2, false, 1, validModel);
@@ -799,8 +793,7 @@ public class CourseTestService {
         assertThat(stats.getTutorLeaderboardEntries().get(4).getNumberOfAnsweredMoreFeedbackRequests()).isEqualTo(0);
     }
 
-    @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    // Test
     public void testGetAssessmentDashboardStats_withAssessmentsAndComplaintsAndResponses_Large() throws Exception {
         String validModel = FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
         Course testCourse = database.addCourseWithExercisesAndSubmissions(9, 8, 8, 5, true, 5, validModel);
@@ -850,7 +843,7 @@ public class CourseTestService {
             assertThat(courseOnly.getMaxComplaints()).as("Max complaints is correct").isEqualTo(3);
             assertThat(courseOnly.getPresentationScore()).as("Presentation score is correct").isEqualTo(2);
             assertThat(courseOnly.getExercises().size()).as("Course without exercises contains no exercises").isZero();
-            assertThat(courseOnly.getNumberOfStudents()).as("Amount of students is correct").isEqualTo(4);
+            assertThat(courseOnly.getNumberOfStudents()).as("Amount of students is correct").isEqualTo(8);
             assertThat(courseOnly.getNumberOfTeachingAssistants()).as("Amount of teaching assistants is correct").isEqualTo(5);
             assertThat(courseOnly.getNumberOfInstructors()).as("Amount of instructors is correct").isEqualTo(1);
 
