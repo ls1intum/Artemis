@@ -9,7 +9,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
@@ -134,7 +133,7 @@ public class JenkinsBuildPlanService {
         try {
             jenkinsJobService.getJobInFolder(projectKey, planKey).build(useCrumb);
         }
-        catch (IOException e) {
+        catch (JenkinsException | IOException e) {
             log.error(e.getMessage(), e);
             throw new JenkinsException("Error triggering build: " + planKey, e);
         }
@@ -176,19 +175,12 @@ public class JenkinsBuildPlanService {
         try {
             var uri = UriComponentsBuilder.fromHttpUrl(serverUrl.toString()).pathSegment("job", projectKey, "job", planKey, "lastBuild", "api", "json").build().toUri();
             var response = restTemplate.getForObject(uri, JsonNode.class);
-            if (response != null) {
-                var isJobBuilding = response.get("building").asBoolean();
-                return isJobBuilding ? ContinuousIntegrationService.BuildStatus.BUILDING : ContinuousIntegrationService.BuildStatus.INACTIVE;
-            }
-            else {
-                // TODO: Throw exception or fail silently?
-                // Couldn't fetch build status
-                return null;
-            }
+            var isJobBuilding = response.get("building").asBoolean();
+            return isJobBuilding ? ContinuousIntegrationService.BuildStatus.BUILDING : ContinuousIntegrationService.BuildStatus.INACTIVE;
         }
-        catch (HttpClientErrorException e) {
-            log.error(e.getMessage(), e);
-            throw new JenkinsException("Error while trying to fetch build status from Jenkins for " + planKey, e);
+        catch (NullPointerException | HttpClientErrorException e) {
+            log.error("Error while trying to fetch build status from Jenkins for " + planKey + ":" + e.getMessage());
+            return ContinuousIntegrationService.BuildStatus.INACTIVE;
         }
     }
 
@@ -241,14 +233,10 @@ public class JenkinsBuildPlanService {
     public void enablePlan(String projectKey, String planKey) {
         try {
             var uri = UriComponentsBuilder.fromHttpUrl(serverUrl.toString()).pathSegment("job", projectKey, "job", planKey, "enable").build(true).toUri();
-            var response = restTemplate.postForEntity(uri, null, String.class);
-            if (response.getStatusCode() != HttpStatus.FOUND) {
-                throw new JenkinsException(
-                        "Unable to enable plan " + planKey + "; statusCode=" + response.getStatusCode() + "; headers=" + response.getHeaders() + "; body=" + response.getBody());
-            }
+            restTemplate.postForEntity(uri, null, String.class);
         }
         catch (HttpClientErrorException e) {
-            throw new JenkinsException("Unable to enable plan " + planKey, e);
+            throw new JenkinsException("Unable to enable plan " + planKey + "; statusCode=" + e.getStatusCode() + "; body=" + e.getResponseBodyAsString());
         }
     }
 }

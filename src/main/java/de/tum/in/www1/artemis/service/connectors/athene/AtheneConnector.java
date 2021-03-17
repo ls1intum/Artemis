@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.service.connectors;
+package de.tum.in.www1.artemis.service.connectors.athene;
 
 import javax.validation.constraints.NotNull;
 
@@ -18,16 +18,17 @@ import de.tum.in.www1.artemis.exception.NetworkingError;
  * @param <RequestType> DTO class, describing the body of the network request.
  * @param <ResponseType> DTO class, describing the body of the network response.
  */
-class RemoteArtemisServiceConnector<RequestType, ResponseType> {
+class AtheneConnector<RequestType, ResponseType> {
 
     private final Logger log;
 
-    private final RestTemplate restTemplate = new RestTemplate();
+    private final RestTemplate restTemplate;
 
     private final Class<ResponseType> genericResponseType;
 
-    RemoteArtemisServiceConnector(Logger log, Class<ResponseType> genericResponseType) {
+    AtheneConnector(Logger log, RestTemplate restTemplate, Class<ResponseType> genericResponseType) {
         this.log = log;
+        this.restTemplate = restTemplate;
         this.genericResponseType = genericResponseType;
     }
 
@@ -39,26 +40,11 @@ class RemoteArtemisServiceConnector<RequestType, ResponseType> {
      * @return response body from remote service
      * @throws NetworkingError exception in case of unsuccessful responses or responses without a body.
      */
-    ResponseType invoke(@NotNull String url, @NotNull RequestType requestObject) throws NetworkingError {
-        return invoke(url, requestObject, null);
-    }
-
-    /**
-     * Invoke the remote service with a network call.
-     *
-     * @param url remote service api endpoint
-     * @param requestObject request body as POJO
-     * @param headers HTTP headers to use with network call, e.g. for authentication.
-     * @return response body from remote service
-     * @throws NetworkingError exception in case of unsuccessful responses or responses without a body.
-     */
-    ResponseType invoke(@NotNull String url, @NotNull RequestType requestObject, HttpHeaders headers) throws NetworkingError {
+    private ResponseType invoke(@NotNull String url, @NotNull RequestType requestObject) throws NetworkingError {
         long start = System.currentTimeMillis();
         log.debug("Calling Remote Artemis Service.");
 
-        if (headers == null) {
-            headers = new HttpHeaders();
-        }
+        var headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
 
         final HttpEntity<RequestType> httpRequestEntity = new HttpEntity<>(requestObject, headers);
@@ -86,23 +72,9 @@ class RemoteArtemisServiceConnector<RequestType, ResponseType> {
      * @throws NetworkingError exception in case of unsuccessful responses or responses without a body.
      */
     ResponseType invokeWithRetry(@NotNull String url, @NotNull RequestType requestObject, int maxRetries) throws NetworkingError {
-        return invokeWithRetry(url, requestObject, null, maxRetries);
-    }
-
-    /**
-     * Invoke the remote service with a network call, but retry the request n times in case of an unsuccessful request.
-     *
-     * @param url remote service api endpoint
-     * @param requestObject request body as POJO
-     * @param headers HTTP headers to use with network call, e.g. for authentication.
-     * @param maxRetries how many times to retry in case of an unsuccessful request.
-     * @return response body from remote service
-     * @throws NetworkingError exception in case of unsuccessful responses or responses without a body.
-     */
-    ResponseType invokeWithRetry(@NotNull String url, @NotNull RequestType requestObject, HttpHeaders headers, int maxRetries) throws NetworkingError {
         for (int retries = 0;; retries++) {
             try {
-                return invoke(url, requestObject, headers);
+                return invoke(url, requestObject);
             }
             catch (NetworkingError error) {
                 if (retries >= maxRetries) {
@@ -110,29 +82,5 @@ class RemoteArtemisServiceConnector<RequestType, ResponseType> {
                 }
             }
         }
-    }
-
-    /**
-     * Helper to generate HttpHeaders for a Bearer Token.
-     *
-     * @param secret Authentication Token
-     * @return HttpHeaders
-     */
-    static HttpHeaders authenticationHeaderForSecret(String secret) {
-        HttpHeaders headers = new HttpHeaders();
-        headers.setBearerAuth(secret);
-        return headers;
-    }
-
-    /**
-     * Helper to generate HttpHeaders for a symmetric secret.
-     *
-     * @param secret Authorization secret
-     * @return HttpHeaders
-     */
-    static HttpHeaders authorizationHeaderForSymmetricSecret(String secret) {
-        HttpHeaders headers = new HttpHeaders();
-        headers.set("Authorization", secret);
-        return headers;
     }
 }
