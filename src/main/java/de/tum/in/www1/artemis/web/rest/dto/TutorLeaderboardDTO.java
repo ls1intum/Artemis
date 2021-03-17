@@ -20,7 +20,7 @@ public class TutorLeaderboardDTO {
 
     private long numberOfTutorMoreFeedbackRequests;
 
-    private Long points;
+    private double points;
 
     public TutorLeaderboardDTO() {
         // to make Jackson happy
@@ -28,7 +28,7 @@ public class TutorLeaderboardDTO {
 
     public TutorLeaderboardDTO(long userId, String name, long numberOfAssessments, long numberOfAcceptedComplaints, long numberOfTutorComplaints,
             long numberOfNotAnsweredMoreFeedbackRequests, long numberOfComplaintResponses, long numberOfAnsweredMoreFeedbackRequests, long numberOfTutorMoreFeedbackRequests,
-            Long points) {
+            double points) {
         this.userId = userId;
         this.name = name;
         this.numberOfAssessments = numberOfAssessments;
@@ -113,11 +113,11 @@ public class TutorLeaderboardDTO {
         this.numberOfTutorMoreFeedbackRequests = numberOfTutorMoreFeedbackRequests;
     }
 
-    public Long getPoints() {
+    public double getPoints() {
         return points;
     }
 
-    public void setPoints(Long points) {
+    public void setPoints(double points) {
         this.points = points;
     }
 }

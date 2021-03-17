@@ -32,6 +32,7 @@ export class AssessmentLayoutComponent {
     @Input() isAtLeastInstructor: boolean;
     @Input() canOverride: boolean;
     @Input() isTestRun = false;
+    @Input() exerciseDashboardLink: string[];
 
     @Input() result?: Result;
     @Input() assessmentsAreValid: boolean;

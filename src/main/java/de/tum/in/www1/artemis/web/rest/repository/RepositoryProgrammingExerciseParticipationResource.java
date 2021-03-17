@@ -77,13 +77,37 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
         if (repositoryAction == RepositoryActionType.WRITE && programmingParticipation.isLocked()) {
             throw new IllegalAccessException();
         }
-        // Error case 4: The user is not (any longer) allowed to submit to the exam/exercise. This check is only relevant for students.
+
         User user = userRepository.getUserWithGroupsAndAuthorities();
         var programmingExercise = programmingParticipation.getProgrammingExercise();
+        boolean isStudent = !authCheckService.isAtLeastTeachingAssistantForExercise(programmingExercise);
+        // Error case 4: The student can reset the repository only before and a tutor/instructor only after the due date has passed
+        if (repositoryAction == RepositoryActionType.RESET) {
+            boolean isOwner = true; // true for Solution- and TemplateProgrammingExerciseParticipation
+            if (participation instanceof StudentParticipation) {
+                isOwner = authCheckService.isOwnerOfParticipation((StudentParticipation) participation);
+            }
+            if (isStudent && programmingParticipation.isLocked()) {
+                throw new IllegalAccessException();
+            }
+            // A tutor/instructor who is owner of the exercise should always be able to reset the repository
+            else if (!isStudent && !isOwner) {
+                // Check if a tutor is allowed to reset during the assessment
+                // Check for a regular course exercise
+                if (!programmingExercise.isExamExercise() && !programmingParticipation.isLocked()) {
+                    throw new IllegalAccessException();
+                }
+                // Check for an exam exercise, as it might not be locked but a student might still be allowed to submit
+                var optStudent = ((StudentParticipation) participation).getStudent();
+                if (optStudent.isPresent() && programmingExercise.isExamExercise() && examSubmissionService.isAllowedToSubmitDuringExam(programmingExercise, optStudent.get())) {
+                    throw new IllegalAccessException();
+                }
+            }
+        }
+        // Error case 5: The user is not (any longer) allowed to submit to the exam/exercise. This check is only relevant for students.
         // This must be a student participation as hasPermissions would have been false and an error already thrown
-        var isStudentParticipation = participation instanceof ProgrammingExerciseStudentParticipation;
-        if (isStudentParticipation && !authCheckService.isAtLeastTeachingAssistantForExercise(programmingExercise)
-                && !examSubmissionService.isAllowedToSubmitDuringExam(programmingExercise, user)) {
+        boolean isStudentParticipation = participation instanceof ProgrammingExerciseStudentParticipation;
+        if (isStudentParticipation && isStudent && !examSubmissionService.isAllowedToSubmitDuringExam(programmingExercise, user)) {
             throw new IllegalAccessException();
         }
         var repositoryUrl = programmingParticipation.getVcsRepositoryUrl();

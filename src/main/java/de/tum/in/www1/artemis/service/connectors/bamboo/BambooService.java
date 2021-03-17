@@ -17,7 +17,6 @@ import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 import org.apache.commons.lang.StringEscapeUtils;
-import org.apache.http.HttpException;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -148,21 +147,15 @@ public class BambooService extends AbstractContinuousIntegrationService {
      * @param participation the participation with the id of the build plan that should be triggered.
      */
     @Override
-    public void triggerBuild(ProgrammingExerciseParticipation participation) throws HttpException {
+    public void triggerBuild(ProgrammingExerciseParticipation participation) throws BambooException {
         var buildPlan = participation.getBuildPlanId();
         try {
             restTemplate.exchange(serverUrl + "/rest/api/latest/queue/" + buildPlan, HttpMethod.POST, null, Void.class);
         }
         catch (RestClientException e) {
             log.error("HttpError while triggering build plan " + buildPlan + " with error: " + e.getMessage());
-            throw new HttpException("Communication failed when trying to trigger the Bamboo build plan " + buildPlan + " with the error: " + e.getMessage());
+            throw new BambooException("Communication failed when trying to trigger the Bamboo build plan " + buildPlan + " with the error: " + e.getMessage());
         }
-    }
-
-    @Override
-    public boolean isBuildPlanEnabled(final String projectKey, final String planId) {
-        final var buildPlan = getBuildPlan(planId, false, true);
-        return buildPlan != null && buildPlan.isEnabled();
     }
 
     @Override
