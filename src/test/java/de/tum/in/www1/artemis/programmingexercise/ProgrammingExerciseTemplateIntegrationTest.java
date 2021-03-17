@@ -163,7 +163,7 @@ public class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIn
     private void runTests(ProgrammingLanguage language, ProjectType projectType, LocalRepository repository, TestResult testResult) throws Exception {
         exercise.setProgrammingLanguage(language);
         exercise.setProjectType(projectType);
-        mockConnectorRequestsForSetup(exercise);
+        mockConnectorRequestsForSetup(exercise, false);
         request.postWithResponseBody(ROOT + SETUP, exercise, ProgrammingExercise.class, HttpStatus.CREATED);
 
         moveAssignmentSourcesOf(repository);
