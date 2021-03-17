@@ -406,16 +406,6 @@ export class CourseUpdateComponent implements OnInit {
      */
     removeOrganizationFromCourse(organization: Organization) {
         this.courseOrganizations = this.courseOrganizations.filter((o) => o.id !== organization.id);
-        /*
-        if (this.course.id !== undefined) {
-            this.organizationService.removeCourseFromOrganization(organization.id!, this.course.id).subscribe(
-                () => {
-                    this.course.organizations = this.course.organizations!.filter((o) => o.id !== organization.id);
-                },
-                (error: HttpErrorResponse) => this.jhiAlertService.error(error.message),
-            );
-        }
-         */
     }
 }
 

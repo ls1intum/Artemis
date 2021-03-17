@@ -14,13 +14,13 @@ export class OrganizationManagementService {
     /**
      * Send GET request to retrieve all organizations
      */
-    getOrganizations(): Observable<any> {
-        return this.http.get(this.resourceUrl + '/all');
+    getOrganizations(): Observable<Organization[]> {
+        return this.http.get<Organization[]>(this.resourceUrl + '/all');
     }
 
     /**
-     * Send GET request to retrieve all organizations with their number of
-     * users and courses
+     * Send GET request to retrieve the number of users and courses of
+     * all organizations
      */
     getNumberOfUsersAndCoursesOfOrganizations(): Observable<any> {
         return this.http.get(this.resourceUrl + '/allCount');
@@ -30,7 +30,7 @@ export class OrganizationManagementService {
      * Send GET request to retrieve an organization by its Id
      * @param organizationId
      */
-    getOrganizationById(organizationId: number): Observable<any> {
+    getOrganizationById(organizationId: number): Observable<Organization> {
         return this.http.get(`${this.resourceUrl}/${organizationId}`);
     }
 
@@ -39,7 +39,7 @@ export class OrganizationManagementService {
      * its list of users and courses
      * @param organizationId
      */
-    getOrganizationByIdWithUsersAndCourses(organizationId: number): Observable<any> {
+    getOrganizationByIdWithUsersAndCourses(organizationId: number): Observable<Organization> {
         return this.http.get(`${this.resourceUrl}/${organizationId}/full`);
     }
 
@@ -47,16 +47,16 @@ export class OrganizationManagementService {
      * Send GET request to retrieve all organizations of a given course
      * @param courseId the id of the course to retrieve the organizations from
      */
-    getOrganizationsByCourse(courseId: number): Observable<any> {
-        return this.http.get(`${this.resourceUrl}/course/${courseId}`);
+    getOrganizationsByCourse(courseId: number): Observable<Organization[]> {
+        return this.http.get<Organization[]>(`${this.resourceUrl}/course/${courseId}`);
     }
 
     /**
      * Send GET request to retrieve all organizations of a given user
      * @param userId the id of the user to retrieve the organizations from
      */
-    getOrganizationsByUser(userId: number): Observable<any> {
-        return this.http.get(`${this.resourceUrl}/user/${userId}`);
+    getOrganizationsByUser(userId: number): Observable<Organization[]> {
+        return this.http.get<Organization[]>(`${this.resourceUrl}/user/${userId}`);
     }
 
     /**
