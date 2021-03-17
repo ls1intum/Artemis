@@ -13,7 +13,7 @@ import { round } from 'app/shared/util/utils';
 import * as moment from 'moment';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { getLatestSubmissionResult, setLatestSubmissionResult, Submission } from 'app/entities/submission.model';
-import { getLinkToSubmissionAssessment, getExerciseSubmissionsLink } from 'app/utils/navigation.utils';
+import { getExerciseSubmissionsLink, getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
 
 @Component({
     selector: 'jhi-student-exam-detail',
@@ -235,19 +235,11 @@ export class StudentExamDetailComponent implements OnInit {
 
         if (exercise.type === ExerciseType.PROGRAMMING) {
             route = getExerciseSubmissionsLink(exercise.type, this.courseId, exercise.id!, this.examId, exercise.exerciseGroup?.id!);
-            // route = `/course-management/${this.courseId}/${exercise.type}-exercises/${exercise.id}/assessment`;
         } else if (submission) {
             this.openingAssessmentEditorForNewSubmission = true;
             route = getLinkToSubmissionAssessment(exercise.type, this.courseId, exercise.id!, submission.id!, this.examId, exercise.exerciseGroup?.id!, resultId);
-            /*if (resultId) {
-                route = `/course-management/${this.courseId}/${exercise.type}-exercises/${exercise.id}/submissions/${submission.id}/assessments/${resultId}`;
-            } else {
-                route = `/course-management/${this.courseId}/${exercise.type}-exercises/${exercise.id}/submissions/${submission.id}/assessment`;
-            }*/
-
             this.openingAssessmentEditorForNewSubmission = false;
         }
-        console.log('route: ', route);
         return route;
     }
 }
