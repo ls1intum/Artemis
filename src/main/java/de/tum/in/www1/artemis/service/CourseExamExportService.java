@@ -19,26 +19,23 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
-import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseExportService;
 import de.tum.in.www1.artemis.web.rest.dto.SubmissionExportOptionsDTO;
 
 /**
- * Service Implementation for exporting courses.
+ * Service Implementation for exporting courses and exams.
  */
 @Service
-public class CourseExportService {
+public class CourseExamExportService {
 
-    private final Logger log = LoggerFactory.getLogger(CourseExportService.class);
+    private final Logger log = LoggerFactory.getLogger(CourseExamExportService.class);
 
     private final ProgrammingExerciseExportService programmingExerciseExportService;
 
     private final ZipFileService zipFileService;
 
     private final FileService fileService;
-
-    private final CourseRepository courseRepository;
 
     private final FileUploadSubmissionExportService fileUploadSubmissionExportService;
 
@@ -50,13 +47,12 @@ public class CourseExportService {
 
     private final WebsocketMessagingService websocketMessagingService;
 
-    public CourseExportService(ProgrammingExerciseExportService programmingExerciseExportService, ZipFileService zipFileService, FileService fileService,
-            CourseRepository courseRepository, FileUploadSubmissionExportService fileUploadSubmissionExportService, TextSubmissionExportService textSubmissionExportService,
+    public CourseExamExportService(ProgrammingExerciseExportService programmingExerciseExportService, ZipFileService zipFileService, FileService fileService,
+            FileUploadSubmissionExportService fileUploadSubmissionExportService, TextSubmissionExportService textSubmissionExportService,
             ModelingSubmissionExportService modelingSubmissionExportService, WebsocketMessagingService websocketMessagingService, ExamRepository examRepository) {
         this.programmingExerciseExportService = programmingExerciseExportService;
         this.zipFileService = zipFileService;
         this.fileService = fileService;
-        this.courseRepository = courseRepository;
         this.fileUploadSubmissionExportService = fileUploadSubmissionExportService;
         this.textSubmissionExportService = textSubmissionExportService;
         this.modelingSubmissionExportService = modelingSubmissionExportService;
@@ -74,6 +70,9 @@ public class CourseExportService {
      * @return Path to the zip file
      */
     public Optional<Path> exportCourse(Course course, String outputDir, List<String> exportErrors) {
+        // Used for sending export progress notifications to instructors
+        var notificationTopic = "/topic/courses/" + course.getId() + "/export-course";
+
         var timestamp = ZonedDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-Hmss"));
         var courseDirName = course.getShortName() + "-" + course.getTitle() + "-" + timestamp;
 
@@ -89,8 +88,8 @@ public class CourseExportService {
 
         try {
             // Export course exercises and exams
-            exportCourseExercises(course, courseDirPath.toString(), exportErrors);
-            exportCourseExams(course, courseDirPath.toString(), exportErrors);
+            exportCourseExercises(notificationTopic, course, courseDirPath.toString(), exportErrors);
+            exportCourseExams(notificationTopic, course, courseDirPath.toString(), exportErrors);
 
             // Zip them together
             var exportedCoursePath = createCourseZipFile(courseDirPath.getParent(), Path.of(outputDir), exportErrors);
@@ -103,7 +102,50 @@ public class CourseExportService {
             return Optional.empty();
         }
         finally {
-            notifyUserAboutCourseExportState(course.getId(), CourseExportState.COMPLETED, "");
+            notifyUserAboutExerciseExportState(notificationTopic, CourseExamExportState.COMPLETED, "");
+        }
+    }
+
+    /**
+     * Exports an exam into a single zip file that is saved in the directory specified
+     * by outputDir.
+     *
+     * @param exam       The exam to export
+     * @param outputDir    The directory where the exported exam is saved
+     * @param exportErrors List of failures that occurred during the export
+     * @return Path to the zip file
+     */
+    public Optional<Path> exportExam(Exam exam, String outputDir, List<String> exportErrors) {
+        // Used for sending export progress notifications to instructors
+        var notificationTopic = "/topic/exams/" + exam.getId() + "/export";
+
+        var timestamp = ZonedDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-Hmss"));
+        var examDirName = exam.getId() + "-" + exam.getTitle() + "-" + timestamp;
+
+        // Create a temporary directory that will contain the files that will be zipped
+        var examDirPath = Path.of("./exports", examDirName, examDirName);
+        try {
+            Files.createDirectories(examDirPath);
+        }
+        catch (IOException e) {
+            logMessageAndAppendToList("Failed to export exam " + exam.getId() + " because the temporary directory: " + examDirPath + " cannot be created.", exportErrors);
+            return Optional.empty();
+        }
+
+        try {
+            exportExam(notificationTopic, exam.getId(), examDirPath.toString(), exportErrors);
+
+            var exportedExamPath = createCourseZipFile(examDirPath.getParent(), Path.of(outputDir), exportErrors);
+
+            log.info("Successfully exported exam {}. The zip file is located at: {}", exam.getId(), exportedExamPath);
+            return exportedExamPath;
+        }
+        catch (Exception e) {
+            logMessageAndAppendToList("Failed to export the exam " + exam.getTitle() + ": " + e.getMessage(), exportErrors);
+            return Optional.empty();
+        }
+        finally {
+            notifyUserAboutExerciseExportState(notificationTopic, CourseExamExportState.COMPLETED, "");
         }
     }
 
@@ -115,11 +157,11 @@ public class CourseExportService {
      * @param outputDir    The directory that will be used to store the exercises subdirectory
      * @param exportErrors List of failures that occurred during the export
      */
-    private void exportCourseExercises(Course course, String outputDir, List<String> exportErrors) {
+    private void exportCourseExercises(String notificationTopic, Course course, String outputDir, List<String> exportErrors) {
         Path exercisesDir = Path.of(outputDir, "course-exercises");
         try {
             Files.createDirectory(exercisesDir);
-            exportExercises(course.getId(), course.getExercises(), exercisesDir.toString(), exportErrors);
+            exportExercises(notificationTopic, course.getExercises(), exercisesDir.toString(), exportErrors);
         }
         catch (IOException e) {
             logMessageAndAppendToList("Failed to create course exercise directory" + exercisesDir + ".", exportErrors);
@@ -134,12 +176,12 @@ public class CourseExportService {
      * @param outputDir    The directory that will be used to store the exams
      * @param exportErrors List of failures that occurred during the export
      */
-    private void exportCourseExams(Course course, String outputDir, List<String> exportErrors) {
+    private void exportCourseExams(String notificationTopic, Course course, String outputDir, List<String> exportErrors) {
         Path examsDir = Path.of(outputDir, "exams");
         try {
             Files.createDirectory(examsDir);
             List<Exam> exams = examRepository.findByCourseId(course.getId());
-            exams.forEach(exam -> exportExam(exam.getId(), examsDir.toString(), exportErrors));
+            exams.forEach(exam -> exportExam(notificationTopic, exam.getId(), examsDir.toString(), exportErrors));
 
         }
         catch (IOException e) {
@@ -154,14 +196,14 @@ public class CourseExportService {
      * @param outputDir    The directory that will be used to store the exam
      * @param exportErrors List of failures that occurred during the export
      */
-    private void exportExam(long examId, String outputDir, List<String> exportErrors) {
+    private void exportExam(String notificationTopic, long examId, String outputDir, List<String> exportErrors) {
         var exam = examRepository.findByIdElseThrow(examId);
         Path examDir = Path.of(outputDir, exam.getId() + "-" + exam.getTitle());
         try {
             Files.createDirectory(examDir);
             // We retrieve every exercise from each exercise group and flatten the list.
             var exercises = examRepository.findAllExercisesByExamId(examId);
-            exportExercises(exam.getCourse().getId(), exercises, examDir.toString(), exportErrors);
+            exportExercises(notificationTopic, exercises, examDir.toString(), exportErrors);
         }
         catch (IOException e) {
             logMessageAndAppendToList("Failed to create exam directory " + examDir + ".", exportErrors);
@@ -177,12 +219,12 @@ public class CourseExportService {
      * @param outputDir    The path to a directory that will be used to store the zipped files.
      * @param exportErrors List of failures that occurred during the export
      */
-    private void exportExercises(long courseId, Set<Exercise> exercises, String outputDir, List<String> exportErrors) {
+    private void exportExercises(String notificationTopic, Set<Exercise> exercises, String outputDir, List<String> exportErrors) {
         AtomicInteger exportedExercises = new AtomicInteger(0);
         exercises.forEach(exercise -> {
             // Notify the user after the progress
             exportedExercises.addAndGet(1);
-            notifyUserAboutCourseExportState(courseId, CourseExportState.RUNNING, exportedExercises + "/" + exercises.size() + " done");
+            notifyUserAboutExerciseExportState(notificationTopic, CourseExamExportState.RUNNING, exportedExercises + "/" + exercises.size() + " done");
 
             if (exercise instanceof ProgrammingExercise) {
                 programmingExerciseExportService.exportProgrammingExercise((ProgrammingExercise) exercise, outputDir, exportErrors);
@@ -272,14 +314,13 @@ public class CourseExportService {
     }
 
     /***
-     * Sends a message notifying the user about the current state of the course export
+     * Sends a message notifying the user about the current state of the exercise export
      *
-     * @param courseId The id of the course that is being exported
-     * @param exportState The archive state
+     * @param topic The topic to send the notification to
+     * @param exportState The export state
+     * @param progress progress message
      */
-    private void notifyUserAboutCourseExportState(long courseId, CourseExportState exportState, String progress) {
-        var topic = "/topic/courses/" + courseId + "/export-course";
-
+    private void notifyUserAboutExerciseExportState(String topic, CourseExamExportState exportState, String progress) {
         Map<String, String> message = new HashMap<>();
         message.put("exportState", exportState.toString());
         message.put("progress", progress);
@@ -289,7 +330,7 @@ public class CourseExportService {
             websocketMessagingService.sendMessage(topic, mapper.writeValueAsString(message));
         }
         catch (IOException e) {
-            log.info("Couldn't notify the user about the archive state of course {}: {}", courseId, e.getMessage());
+            log.info("Couldn't notify the user about the exercise export state for topic {}: {}", topic, e.getMessage());
         }
     }
 }

@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.web.rest;
 
 import static de.tum.in.www1.artemis.service.util.TimeLogUtil.formatDurationFrom;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
+import static java.time.ZonedDateTime.now;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -832,4 +833,37 @@ public class ExamResource {
         return ResponseEntity.ok(submissions);
     }
 
+    /**
+     * PUT /courses/{courseId}/exams/{examId}/archive : archive an existing exam asynchronously.
+     *
+     * This method starts the process of archiving all exam exercises and submissions.
+     * It immediately returns and runs this task asynchronously. When the task is done, the exam is marked as archived, which means the zip file can be downloaded.
+     *
+     * @param courseId the id of the course
+     * @param examId the id of the exam to archive
+     * @return empty
+     */
+    @PutMapping("/courses/{courseId}/exams/{examId}/archive")
+    @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR')")
+    public ResponseEntity<Void> archiveExam(@PathVariable Long courseId, @PathVariable Long examId) {
+        log.info("REST request to archive exam : {}", examId);
+
+        final Exam exam = examRepository.findOneWithEagerExercisesGroupsAndStudentExams(examId);
+        if (exam == null) {
+            return notFound();
+        }
+
+        Optional<ResponseEntity<Exam>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccessForInstructor(courseId, examId);
+        if (courseAndExamAccessFailure.isPresent()) {
+            return forbidden();
+        }
+
+        // Archiving an exam is only possible after the exam is over
+        if (now().isBefore(exam.getEndDate())) {
+            throw new BadRequestAlertException("You cannot archive an exam that is not over.", ENTITY_NAME, "examNotOver", true);
+        }
+
+        examService.archiveExam(exam);
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, examId.toString())).build();
+    }
 }

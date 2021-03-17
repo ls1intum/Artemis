@@ -2,8 +2,12 @@ package de.tum.in.www1.artemis.service.exam;
 
 import static de.tum.in.www1.artemis.service.util.RoundingUtil.round;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.security.SecureRandom;
 import java.time.Duration;
+import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -12,18 +16,17 @@ import javax.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.boot.actuate.audit.AuditEventRepository;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
-import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
-import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
-import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
+import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
@@ -33,9 +36,8 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.service.ExerciseService;
-import de.tum.in.www1.artemis.service.SubmissionService;
-import de.tum.in.www1.artemis.service.TutorLeaderboardService;
+import de.tum.in.www1.artemis.security.SecurityUtils;
+import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 import de.tum.in.www1.artemis.web.rest.dto.*;
@@ -47,6 +49,9 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
  */
 @Service
 public class ExamService {
+
+    @Value("${artemis.exam-archives-path}")
+    private String examArchivesDirPath;
 
     private final Logger log = LoggerFactory.getLogger(ExamService.class);
 
@@ -82,11 +87,16 @@ public class ExamService {
 
     private final SubmissionService submissionService;
 
+    private final CourseExamExportService courseExamExportService;
+
+    private final GroupNotificationService groupNotificationService;
+
     public ExamService(ExamRepository examRepository, StudentExamRepository studentExamRepository, ExamQuizService examQuizService, ExerciseService exerciseService,
             InstanceMessageSendService instanceMessageSendService, TutorLeaderboardService tutorLeaderboardService, AuditEventRepository auditEventRepository,
             StudentParticipationRepository studentParticipationRepository, ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository,
             UserRepository userRepository, ProgrammingExerciseRepository programmingExerciseRepository, QuizExerciseRepository quizExerciseRepository,
-            ResultRepository resultRepository, SubmissionRepository submissionRepository, SubmissionService submissionService) {
+            ResultRepository resultRepository, SubmissionRepository submissionRepository, SubmissionService submissionService, CourseExamExportService courseExamExportService,
+            GroupNotificationService groupNotificationService) {
         this.examRepository = examRepository;
         this.studentExamRepository = studentExamRepository;
         this.userRepository = userRepository;
@@ -103,6 +113,8 @@ public class ExamService {
         this.submissionRepository = submissionRepository;
         this.tutorLeaderboardService = tutorLeaderboardService;
         this.submissionService = submissionService;
+        this.courseExamExportService = courseExamExportService;
+        this.groupNotificationService = groupNotificationService;
     }
 
     /**
@@ -810,5 +822,52 @@ public class ExamService {
             submissionService.hideDetails(submission, user);
         }
         return submissions;
+    }
+
+    /**
+     * Archives the exam by creating a zip file with student submissions for
+     * exercises of the exam.
+     *
+     * @param exam the exam to archive
+     */
+    @Async
+    public void archiveExam(Exam exam) {
+        SecurityUtils.setAuthorizationObject();
+
+        // Archiving a course is only possible after the exam is over
+        if (ZonedDateTime.now().isBefore(exam.getEndDate())) {
+            return;
+        }
+
+        // This contains possible errors encountered during the archive process
+        ArrayList<String> exportErrors = new ArrayList<>();
+
+        groupNotificationService.notifyInstructorGroupAboutExamArchiveState(exam, NotificationType.EXAM_ARCHIVE_STARTED, exportErrors);
+
+        try {
+            // Create exam archives directory if it doesn't exist
+            Files.createDirectories(Path.of(examArchivesDirPath));
+            log.info("Created the exam archives directory at {} because it didn't exist.", examArchivesDirPath);
+
+            // Export the exam to the archives directory.
+            var archivedExamPath = courseExamExportService.exportExam(exam, examArchivesDirPath, exportErrors);
+
+            // Attach the path to the archive to the exam and save it in the database
+            if (archivedExamPath.isPresent()) {
+                exam.setExamArchivePath(archivedExamPath.get().toString());
+                examRepository.save(exam);
+            }
+            else {
+                groupNotificationService.notifyInstructorGroupAboutExamArchiveState(exam, NotificationType.EXAM_ARCHIVE_FAILED, exportErrors);
+                return;
+            }
+        }
+        catch (IOException e) {
+            var error = "Failed to create exam archives directory " + examArchivesDirPath + ": " + e.getMessage();
+            exportErrors.add(error);
+            log.info(error);
+        }
+
+        groupNotificationService.notifyInstructorGroupAboutExamArchiveState(exam, NotificationType.EXAM_ARCHIVE_FINISHED, exportErrors);
     }
 }

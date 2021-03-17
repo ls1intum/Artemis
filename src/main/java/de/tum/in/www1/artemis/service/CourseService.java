@@ -54,7 +54,7 @@ public class CourseService {
 
     private final ExerciseGroupService exerciseGroupService;
 
-    private final CourseExportService courseExportService;
+    private final CourseExamExportService courseExamExportService;
 
     private final ExamService examService;
 
@@ -73,7 +73,7 @@ public class CourseService {
     public CourseService(CourseRepository courseRepository, ExerciseService exerciseService, AuthorizationCheckService authCheckService, UserRepository userRepository,
             LectureService lectureService, NotificationService notificationService, ExerciseGroupService exerciseGroupService, AuditEventRepository auditEventRepository,
             UserService userService, LearningGoalRepository learningGoalRepository, GroupNotificationService groupNotificationService, ExamService examService,
-            ExamRepository examRepository, CourseExportService courseExportService) {
+            ExamRepository examRepository, CourseExamExportService courseExamExportService) {
         this.courseRepository = courseRepository;
         this.exerciseService = exerciseService;
         this.authCheckService = authCheckService;
@@ -87,7 +87,7 @@ public class CourseService {
         this.groupNotificationService = groupNotificationService;
         this.examService = examService;
         this.examRepository = examRepository;
-        this.courseExportService = courseExportService;
+        this.courseExamExportService = courseExamExportService;
     }
 
     /**
@@ -297,7 +297,7 @@ public class CourseService {
             log.info("Created the course archives directory at {} because it didn't exist.", courseArchivesDirPath);
 
             // Export the course to the archives directory.
-            var archivedCoursePath = courseExportService.exportCourse(course, courseArchivesDirPath, exportErrors);
+            var archivedCoursePath = courseExamExportService.exportCourse(course, courseArchivesDirPath, exportErrors);
 
             // Attach the path to the archive to the course and save it in the database
             if (archivedCoursePath.isPresent()) {
