@@ -16,6 +16,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.lecture.ExerciseUnit;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.util.ModelFactory;
@@ -73,6 +74,9 @@ public class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationBa
 
     @Autowired
     LectureUnitRepository lectureUnitRepository;
+
+    @Autowired
+    StudentParticipationRepository studentParticipationRepository;
 
     @AfterEach
     public void resetDatabase() {
@@ -147,6 +151,18 @@ public class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationBa
     @WithMockUser(username = "student1", roles = "USER")
     public void testAll_asStudent() throws Exception {
         this.testAllPreAuthorize();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void deleteParticipation_asInstructorOfCourse_shouldDeleteParticipation() throws Exception {
+        List<StudentParticipation> participations = studentParticipationRepository.findByExerciseIdAndStudentId(idOfIndividualTextExercise, idOfStudent1);
+        assertThat(participations).isNotEmpty();
+        for (StudentParticipation studentParticipation : participations) {
+            request.delete("/api/participations/" + studentParticipation.getId(), HttpStatus.OK);
+        }
+        participations = studentParticipationRepository.findByExerciseIdAndStudentId(idOfIndividualTextExercise, idOfStudent1);
+        assertThat(participations).isEmpty();
     }
 
     @Test
