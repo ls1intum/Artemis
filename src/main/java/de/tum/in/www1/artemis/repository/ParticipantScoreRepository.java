@@ -24,18 +24,9 @@ public interface ParticipantScoreRepository extends JpaRepository<ParticipantSco
 
     List<ParticipantScore> removeAllByExerciseId(Long exerciseId);
 
-    @Query("""
-                    SELECT ps
-                    FROM ParticipantScore ps
-                    WHERE
-                    ps.exercise.id = :exerciseId
-                    AND
-                    (
-                    ps.lastResult.participation.id = :participationId
-                    OR ps.lastRatedResult.participation.id = :participationId
-                    )
-            """)
-    List<ParticipantScore> findAllByParticipationIdAndExerciseId(@Param("exerciseId") Long exerciseId, @Param("participationId") Long participationId);
+    List<ParticipantScore> removeAllByLastResultId(Long lastResultId);
+
+    List<ParticipantScore> removeAllByLastRatedResultId(Long lastResultId);
 
     @EntityGraph(type = LOAD, attributePaths = { "exercise", "lastResult", "lastRatedResult" })
     Optional<ParticipantScore> findParticipantScoreByLastRatedResult(Result result);
@@ -75,8 +66,8 @@ public interface ParticipantScoreRepository extends JpaRepository<ParticipantSco
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW) // ok because of delete
-    default void deleteAllByParticipationIdTransactional(Long participationId, Long exerciseId) {
-        List<ParticipantScore> toDelete = findAllByParticipationIdAndExerciseId(participationId, exerciseId);
-        this.deleteInBatch(toDelete);
+    default void deleteAllByResultIdTransactional(Long resultId) {
+        this.removeAllByLastResultId(resultId);
+        this.removeAllByLastRatedResultId(resultId);
     }
 }

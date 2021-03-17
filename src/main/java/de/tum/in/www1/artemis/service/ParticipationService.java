@@ -614,7 +614,6 @@ public class ParticipationService {
     public Participation deleteResultsAndSubmissionsOfParticipation(Long participationId) {
         log.info("Request to delete all results and submissions of participation with id : {}", participationId);
         Participation participation = participationRepository.getOneWithEagerSubmissionsAndResults(participationId);
-        participantScoreRepository.deleteAllByParticipationIdTransactional(participationId, participation.getExercise().getId());
         Set<Submission> submissions = participation.getSubmissions();
         List<Result> resultsToBeDeleted = new ArrayList<>();
 
@@ -623,7 +622,7 @@ public class ParticipationService {
             resultsToBeDeleted.addAll(Objects.requireNonNull(submission.getResults()));
             submissionRepository.deleteById(submission.getId());
         });
-
+        resultsToBeDeleted.forEach(result -> participantScoreRepository.deleteAllByResultIdTransactional(result.getId()));
         // The results that are only connected to a participation are also deleted
         resultsToBeDeleted.forEach(participation::removeResult);
         participation.getResults().forEach(result -> resultRepository.deleteById(result.getId()));

@@ -159,6 +159,11 @@ public class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationBa
         List<StudentParticipation> participations = studentParticipationRepository.findByExerciseIdAndStudentId(idOfIndividualTextExercise, idOfStudent1);
         assertThat(participations).isNotEmpty();
         for (StudentParticipation studentParticipation : participations) {
+            database.createSubmissionAndResult(studentParticipation, 30, false);
+        }
+        participations = studentParticipationRepository.findByExerciseIdAndStudentId(idOfIndividualTextExercise, idOfStudent1);
+        assertThat(participations).isNotEmpty();
+        for (StudentParticipation studentParticipation : participations) {
             request.delete("/api/participations/" + studentParticipation.getId(), HttpStatus.OK);
         }
         participations = studentParticipationRepository.findByExerciseIdAndStudentId(idOfIndividualTextExercise, idOfStudent1);
