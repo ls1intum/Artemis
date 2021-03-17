@@ -251,13 +251,16 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
         try {
             jenkinsServer.deleteJob(projectKey, useCrumb);
         }
-        catch (IOException e) {
-            // We don't throw an exception if the build doesn't exist in Jenkins (404 status)
-            boolean buildDoesntExist = e instanceof HttpResponseException && ((HttpResponseException) e).getStatusCode() == org.apache.http.HttpStatus.SC_NOT_FOUND;
-            if (!buildDoesntExist) {
+        catch (HttpResponseException e) {
+            // We don't throw an exception if the project doesn't exist in Jenkins (404 status)
+            if (e.getStatusCode() != org.apache.http.HttpStatus.SC_NOT_FOUND) {
                 log.error(e.getMessage(), e);
                 throw new JenkinsException("Error while trying to delete folder in Jenkins for " + projectKey, e);
             }
+        }
+        catch (IOException e) {
+            log.error(e.getMessage(), e);
+            throw new JenkinsException("Error while trying to delete folder in Jenkins for " + projectKey, e);
         }
     }
 

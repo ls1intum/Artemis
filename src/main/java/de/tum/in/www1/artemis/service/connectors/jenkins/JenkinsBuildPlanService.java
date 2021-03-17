@@ -153,13 +153,15 @@ public class JenkinsBuildPlanService {
                 jenkinsServer.deleteJob(folderJob, planKey, useCrumb);
             }
         }
-        catch (IOException e) {
+        catch (HttpResponseException e) {
             // We don't throw an exception if the build doesn't exist in Jenkins (404 status)
-            boolean buildDoesntExist = e instanceof HttpResponseException && ((HttpResponseException) e).getStatusCode() == HttpStatus.SC_NOT_FOUND;
-            if (!buildDoesntExist) {
+            if (e.getStatusCode() != HttpStatus.SC_NOT_FOUND) {
                 log.error(e.getMessage(), e);
                 throw new JenkinsException("Error while trying to delete job in Jenkins: " + planKey, e);
             }
+        }
+        catch (IOException e) {
+            throw new JenkinsException("Error while trying to delete job in Jenkins: " + planKey, e);
         }
     }
 

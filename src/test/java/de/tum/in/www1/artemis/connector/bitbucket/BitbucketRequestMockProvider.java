@@ -289,17 +289,17 @@ public class BitbucketRequestMockProvider {
                 .andExpect(content().json(mapper.writeValueAsString(body))).andRespond(withStatus(HttpStatus.OK));
     }
 
-    public void mockDeleteProject(String projectKey) throws URISyntaxException {
+    public void mockDeleteProject(String projectKey, boolean shouldFail) throws URISyntaxException {
         final var uri = UriComponentsBuilder.fromUri(bitbucketServerUrl.toURI()).path("/rest/api/latest/projects").pathSegment(projectKey).build().toUri();
-
-        mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.DELETE)).andRespond(withStatus(HttpStatus.OK));
+        var status = shouldFail ? HttpStatus.BAD_REQUEST : HttpStatus.OK;
+        mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.DELETE)).andRespond(withStatus(status));
     }
 
-    public void mockDeleteRepository(String projectKey, String repositoryName) throws URISyntaxException {
+    public void mockDeleteRepository(String projectKey, String repositoryName, boolean shouldFail) throws URISyntaxException {
         final var uri = UriComponentsBuilder.fromUri(bitbucketServerUrl.toURI()).path("/rest/api/latest/projects").pathSegment(projectKey).path("repos").pathSegment(repositoryName)
                 .build().toUri();
-
-        mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.DELETE)).andRespond(withStatus(HttpStatus.OK));
+        var status = shouldFail ? HttpStatus.BAD_REQUEST : HttpStatus.OK;
+        mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.DELETE)).andRespond(withStatus(status));
     }
 
     public void mockSetRepositoryPermissionsToReadOnly(String repositorySlug, String projectKey, Set<User> users) throws URISyntaxException {
