@@ -161,6 +161,7 @@ public class JenkinsBuildPlanService {
             }
         }
         catch (IOException e) {
+            log.error(e.getMessage(), e);
             throw new JenkinsException("Error while trying to delete job in Jenkins: " + planKey, e);
         }
     }
