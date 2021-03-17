@@ -265,32 +265,37 @@ describe('StudentExamDetailComponent', () => {
         const getAssessmentLinkSpy = sinon.spy(studentExamDetailComponent, 'getAssessmentLink');
         studentExamDetailComponentFixture.detectChanges();
         studentExamDetailComponent.courseId = 23;
+        studentExamDetailComponent.examId = exam.id!;
+
         const programmingExercise = {
             numberOfAssessmentsOfCorrectionRounds: [],
             secondCorrectionEnabled: false,
             studentAssignedTeamIdComputed: false,
             id: 12,
+            exerciseGroup: { id: 13 },
             type: ExerciseType.PROGRAMMING,
         };
         const route = studentExamDetailComponent.getAssessmentLink(programmingExercise);
         expect(getAssessmentLinkSpy).to.have.been.calledOnce;
-        expect(route).to.equal('/course-management/23/programming-exercises/12/assessment');
+        expect(route).to.deep.equal(['/course-management', '23', 'exams', '1', 'exercise-groups', '13', 'programming-exercises', '12', 'assessment']);
     });
 
     it('should route to modeling submission', () => {
         const getAssessmentLinkSpy = sinon.spy(studentExamDetailComponent, 'getAssessmentLink');
         studentExamDetailComponentFixture.detectChanges();
         studentExamDetailComponent.courseId = 23;
+        studentExamDetailComponent.examId = exam.id!;
         const modelingExercise = {
             numberOfAssessmentsOfCorrectionRounds: [],
             secondCorrectionEnabled: false,
             studentAssignedTeamIdComputed: false,
             id: 12,
             type: ExerciseType.MODELING,
+            exerciseGroup: { id: 12 },
         };
         const submission = { id: 14 };
         const route = studentExamDetailComponent.getAssessmentLink(modelingExercise, submission);
         expect(getAssessmentLinkSpy).to.have.been.calledOnce;
-        expect(route).to.equal('/course-management/23/modeling-exercises/12/submissions/14/assessment');
+        expect(route).to.deep.equal(['/course-management', '23', 'exams', '1', 'exercise-groups', '12', 'modeling-exercises', '12', 'submissions', '14', 'assessment']);
     });
 });
