@@ -72,7 +72,7 @@ export class OrionBuildAndTestService {
                     this.latestResult = result;
                     // If there was a compile error or we don't have an submission, we have to fetch the error output, otherwise we can forward the test results
                     if (!result.submission || (result.submission as ProgrammingSubmission).buildFailed) {
-                        this.forwardBuildLogs(participationId, exercise.programmingLanguage!);
+                        this.forwardBuildLogs(participationId, exercise.programmingLanguage);
                     } else {
                         // TODO: Deal with static code analysis feedback in Orion
                         const testCaseFeedback = result.feedbacks!.filter((feedback) => !Feedback.isStaticCodeAnalysisFeedback(feedback));
@@ -88,7 +88,7 @@ export class OrionBuildAndTestService {
         return this.buildFinished;
     }
 
-    private forwardBuildLogs(participationId: number, programmingLanguage: ProgrammingLanguage) {
+    private forwardBuildLogs(participationId: number, programmingLanguage: ProgrammingLanguage | undefined) {
         this.buildLogSubscription = this.buildLogService
             .getBuildLogs(participationId)
             .pipe(

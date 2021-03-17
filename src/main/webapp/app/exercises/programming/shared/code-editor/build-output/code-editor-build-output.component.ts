@@ -111,7 +111,7 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnInit, On
      * and emits them to the parent component
      */
     private extractAnnotations() {
-        const programmingLanguage = (this.participation!.exercise as ProgrammingExercise).programmingLanguage!;
+        const programmingLanguage = (this.participation!.exercise as ProgrammingExercise)?.programmingLanguage;
         const buildLogErrors = this.rawBuildLogs.extractErrors(programmingLanguage);
         const codeAnalysisIssues = (this.result!.feedbacks || [])
             .filter(Feedback.isStaticCodeAnalysisFeedback)

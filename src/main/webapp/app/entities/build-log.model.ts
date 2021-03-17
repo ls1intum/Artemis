@@ -53,7 +53,7 @@ export class BuildLogEntryArray extends Array<BuildLogEntry> {
      * Safely unescapes messages within the build log to avoid vulnerability to injection.
      *
      */
-    extractErrors(programmingLanguage: ProgrammingLanguage): Array<Annotation> {
+    extractErrors(programmingLanguage: ProgrammingLanguage | undefined): Array<Annotation> {
         let errorLogRegex: RegExp;
         // TODO: implement build error regex for other programming languages
         if (programmingLanguage === ProgrammingLanguage.SWIFT) {
