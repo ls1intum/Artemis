@@ -248,7 +248,10 @@ public class GitLabService extends AbstractVersionControlService {
             gitlab.getGroupApi().deleteGroup(projectKey);
         }
         catch (GitLabApiException e) {
-            throw new GitLabException("Unable to delete group in GitLab: " + projectKey, e);
+            // Do not throw an exception if we try to delete a non-existant repository.
+            if (e.getHttpStatus() != 404) {
+                throw new GitLabException("Unable to delete group in GitLab: " + projectKey, e);
+            }
         }
     }
 
@@ -260,7 +263,10 @@ public class GitLabService extends AbstractVersionControlService {
             gitlab.getProjectApi().deleteProject(repositoryId);
         }
         catch (GitLabApiException e) {
-            throw new GitLabException("Error trying to delete repository on GitLab: " + repositoryName, e);
+            // Do not throw an exception if we try to delete a non-existant repository.
+            if (e.getHttpStatus() != 404) {
+                throw new GitLabException("Error trying to delete repository on GitLab: " + repositoryName, e);
+            }
         }
     }
 
