@@ -5,6 +5,7 @@
     [isAssessor]="isAssessor"
     [isAtLeastInstructor]="isAtLeastInstructor"
     [isTestRun]="isTestRun"
+    [exerciseDashboardLink]="exerciseDashboardLink"
     [canOverride]="canOverride"
     [result]="result"
     [assessmentsAreValid]="assessmentsAreValid"
@@ -17,7 +18,6 @@
     (cancel)="onCancelAssessment()"
     (nextSubmission)="assessNext()"
     (updateAssessmentAfterComplaint)="onUpdateAssessmentAfterComplaint($event)"
-    [hidden]="!hasNewSubmissions"
 >
     <ng-container *ngIf="hasNewSubmissions; then assessment; else noSubmission"></ng-container>
 </jhi-assessment-layout>
@@ -29,7 +29,7 @@
         <div left-body>
             <div class="row">
                 <div *ngIf="submission.filePath" class="col-12 card-text">
-                    <a class="text-primary" (click)="downloadFile(submission.filePath)">{{ 'artemisApp.fileUploadAssessment.submissionFile' | translate }}</a>
+                    <a class="text-primary" (click)="downloadFile(submission.filePath)">{{ 'artemisApp.fileUploadAssessment.submissionFile' | artemisTranslate }}</a>
                     <span class="ml-2 badge badge-info">{{ attachmentExtension(submission.filePath!) | uppercase }}</span>
                 </div>
             </div>
@@ -44,17 +44,17 @@
     <!--Feedbacks-->
     <div class="row mt-3">
         <div class="col-md-6">
-            <div *ngIf="invalidError" class="col-8 alert alert-danger" role="alert">{{ invalidError | translate }}</div>
+            <div *ngIf="invalidError" class="col-8 alert alert-danger" role="alert">{{ invalidError | artemisTranslate }}</div>
             <jhi-unreferenced-feedback [(feedbacks)]="unreferencedFeedback" (feedbacksChange)="validateAssessment()" [readOnly]="readOnly"></jhi-unreferenced-feedback>
         </div>
     </div>
 </ng-template>
 
 <ng-template #noSubmission>
-    <div class="alert alert-warning text-center mt-4" role="alert">
-        <p jhiTranslate="artemisApp.fileUploadAssessment.notFound">We haven't found any new text submission without an assessment, please go back.</p>
-        <button type="submit" [routerLink]="['../../../../../exercises', exerciseId, 'assessment-dashboard']" class="btn btn-info btn-sm mr-1 mb-1 assessment-dashboard">
+    <div *ngIf="!loadingInitialSubmission" class="alert alert-warning text-center mt-4" role="alert">
+        <p jhiTranslate="artemisApp.fileUploadAssessment.notFound">We haven't found any new submission without an assessment, please go back.</p>
+        <a [routerLink]="exerciseDashboardLink" class="btn btn-info btn-sm mr-1 mb-1 assessment-dashboard">
             <span class="d-none d-md-inline" jhiTranslate="entity.action.exerciseDashboard">Exercise dashboard</span>
-        </button>
+        </a>
     </div>
 </ng-template>

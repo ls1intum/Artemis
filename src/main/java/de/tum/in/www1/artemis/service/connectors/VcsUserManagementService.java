@@ -4,6 +4,7 @@ import java.util.Set;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.exception.VersionControlException;
 
 public interface VcsUserManagementService {
 
@@ -36,7 +37,7 @@ public interface VcsUserManagementService {
      *
      * @param login The login of the user that should get deleted
      */
-    void deleteVcsUser(String login);
+    void deleteVcsUser(String login) throws VersionControlException;
 
     /**
      * Updates all exercises in a course based on the new instructors and teaching assistant groups. This entails removing

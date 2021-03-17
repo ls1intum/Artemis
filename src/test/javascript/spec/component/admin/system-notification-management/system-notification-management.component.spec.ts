@@ -1,23 +1,23 @@
-import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
-import * as sinon from 'sinon';
-import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { SystemNotificationManagementComponent } from 'app/admin/system-notification-management/system-notification-management.component';
-import { MockDirective, MockPipe } from 'ng-mocks';
-import { ActivatedRoute, Router, RouterEvent, RouterOutlet } from '@angular/router';
-import { ArtemisTestModule } from '../../../test.module';
-import { TranslatePipe } from '@ngx-translate/core';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { of } from 'rxjs';
-import { MockRouter } from '../../../helpers/mocks/service/mock-route.service';
-import { NgbPagination } from '@ng-bootstrap/ng-bootstrap';
-import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
-import { JhiItemCountComponent, JhiSortDirective } from 'ng-jhipster';
-import { AlertComponent } from 'app/shared/alert/alert.component';
-import { SystemNotification } from 'app/entities/system-notification.model';
-import * as moment from 'moment';
-import { stub } from 'sinon';
 import { Directive, HostListener, Input } from '@angular/core';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { ActivatedRoute, Router, RouterEvent, RouterOutlet } from '@angular/router';
+import { NgbPagination } from '@ng-bootstrap/ng-bootstrap';
+import { SystemNotificationManagementComponent } from 'app/admin/system-notification-management/system-notification-management.component';
+import { SystemNotification } from 'app/entities/system-notification.model';
+import { AlertComponent } from 'app/shared/alert/alert.component';
+import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe.ts';
+import * as chai from 'chai';
+import * as moment from 'moment';
+import { JhiItemCountComponent, JhiSortDirective } from 'ng-jhipster';
+import { MockDirective, MockPipe } from 'ng-mocks';
+import { of } from 'rxjs';
+import * as sinon from 'sinon';
+import { stub } from 'sinon';
+import * as sinonChai from 'sinon-chai';
+import { MockRouter } from '../../../helpers/mocks/service/mock-route.service';
+import { ArtemisTestModule } from '../../../test.module';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -58,7 +58,7 @@ describe('SystemNotificationManagementComponent', () => {
             declarations: [
                 SystemNotificationManagementComponent,
                 MockPipe(ArtemisDatePipe),
-                MockPipe(TranslatePipe),
+                MockPipe(ArtemisTranslatePipe),
                 RouterLinkSpy,
                 MockDirective(RouterOutlet),
                 MockDirective(AlertComponent),

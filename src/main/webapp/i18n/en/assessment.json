@@ -71,6 +71,7 @@
                     "title": "Locked Assessments"
                 },
                 "title": "Assessments locked by you",
+                "titleAll": "All locked assessments",
                 "exercise": "Exercise",
                 "type": "Type",
                 "empty": "No assessments locked by you!"

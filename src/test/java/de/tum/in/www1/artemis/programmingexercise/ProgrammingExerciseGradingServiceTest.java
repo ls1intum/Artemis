@@ -1,7 +1,9 @@
 package de.tum.in.www1.artemis.programmingexercise;
 
+import static de.tum.in.www1.artemis.config.Constants.TEST_CASES_DUPLICATE_NOTIFICATION;
 import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource.Endpoints.ROOT;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.verify;
 
 import java.time.ZonedDateTime;
 import java.util.*;
@@ -81,6 +83,8 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
 
     private Result result;
 
+    private Double offsetByTenThousandth = 0.0001;
+
     @BeforeEach
     public void setUp() {
         database.addUsers(5, 1, 1);
@@ -111,6 +115,41 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
         gradingService.calculateScoreForResult(result, programmingExercise, true);
 
         assertThat(result.getScore()).isEqualTo(scoreBeforeUpdate);
+    }
+
+    @Test
+    public void shouldAddFeedbackForDuplicateTestCases() {
+        // Adjust existing test cases to our need
+        var testCases = testCaseService.findByExerciseId(programmingExercise.getId()).stream()
+                .collect(Collectors.toMap(ProgrammingExerciseTestCase::getTestName, Function.identity()));
+        testCases.get("test1").active(true).visibility(Visibility.ALWAYS);
+        testCases.get("test2").active(true).visibility(Visibility.ALWAYS);
+        testCases.get("test3").active(true).visibility(Visibility.ALWAYS);
+        testCaseRepository.saveAll(testCases.values());
+
+        // Create feedback with duplicate content for test1 and test3
+        // This mimics that two new testcases are going to be found as testcases but those are duplicate
+        List<Feedback> feedbacks = new ArrayList<>();
+        feedbacks.add(new Feedback().text("test1").positive(true).type(FeedbackType.AUTOMATIC));
+        feedbacks.add(new Feedback().text("test1").positive(true).type(FeedbackType.AUTOMATIC));
+        feedbacks.add(new Feedback().text("test2").positive(false).type(FeedbackType.AUTOMATIC));
+        feedbacks.add(new Feedback().text("test3").positive(false).type(FeedbackType.AUTOMATIC));
+        feedbacks.add(new Feedback().text("test3").positive(false).type(FeedbackType.AUTOMATIC));
+        result.feedbacks(feedbacks);
+        result.rated(true).hasFeedback(true).successful(false).completionDate(ZonedDateTime.now()).assessmentType(AssessmentType.AUTOMATIC);
+        int originalFeedbackSize = result.getFeedbacks().size();
+
+        gradingService.calculateScoreForResult(result, programmingExercise, true);
+
+        var duplicateFeedbackEntries = result.getFeedbacks().stream()
+                .filter(feedback -> feedback.getDetailText() != null && feedback.getDetailText().contains("This is a duplicate test case.")).collect(Collectors.toList());
+        assertThat(result.getScore()).isEqualTo(0D);
+        assertThat(duplicateFeedbackEntries.size()).isEqualTo(2);
+        int countOfNewFeedbacks = originalFeedbackSize + duplicateFeedbackEntries.size();
+        assertThat(result.getFeedbacks().size()).isEqualTo(countOfNewFeedbacks);
+        assertThat(result.getResultString()).isEqualTo("Error: Found duplicated tests!");
+        String notificationText = TEST_CASES_DUPLICATE_NOTIFICATION + "test3, test1";
+        verify(groupNotificationService).notifyInstructorGroupAboutDuplicateTestCasesForExercise(programmingExercise, notificationText);
     }
 
     @Test
@@ -202,14 +241,14 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
         gradingService.calculateScoreForResult(resultMF, programmingExercise, true);
 
         // Assertions result1 - calculated
-        assertThat(result1.getScore()).isEqualTo(55D, Offset.offset(0.000001));
+        assertThat(result1.getScore()).isEqualTo(55D, Offset.offset(offsetByTenThousandth));
         assertThat(result1.getResultString()).isEqualTo("1 of 3 passed");
         assertThat(result1.getHasFeedback()).isTrue();
         assertThat(result1.isSuccessful()).isFalse();
         assertThat(result1.getFeedbacks()).hasSize(3);
 
         // Assertions result2 - calculated
-        assertThat(result2.getScore()).isEqualTo(66.66666666666666);
+        assertThat(result2.getScore()).isEqualTo(66.6667);
         assertThat(result2.getResultString()).isEqualTo("1 of 3 passed");
         assertThat(result2.getHasFeedback()).isTrue();
         assertThat(result2.isSuccessful()).isFalse();
@@ -223,7 +262,7 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
         assertThat(result3.getFeedbacks()).hasSize(3);
 
         // Assertions result4 - calculated
-        assertThat(result4.getScore()).isEqualTo(95D, Offset.offset(0.000001));
+        assertThat(result4.getScore()).isEqualTo(95D, Offset.offset(offsetByTenThousandth));
         assertThat(result4.getResultString()).isEqualTo("2 of 3 passed");
         assertThat(result4.getHasFeedback()).isTrue();
         assertThat(result4.isSuccessful()).isFalse();
@@ -251,7 +290,7 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
         assertThat(resultBF.getFeedbacks()).hasSize(0);
 
         // Assertions resultMF - missing feedback will be created but is negative
-        assertThat(resultMF.getScore()).isEqualTo(55D, Offset.offset(0.000001));
+        assertThat(resultMF.getScore()).isEqualTo(55D, Offset.offset(offsetByTenThousandth));
         assertThat(resultMF.getResultString()).isEqualTo("1 of 3 passed");
         assertThat(resultMF.getHasFeedback()).isFalse(); // Generated missing feedback is omitted
         assertThat(resultMF.isSuccessful()).isFalse();
@@ -285,21 +324,21 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
         result4 = updateAndSaveAutomaticResult(result4, false, true, true);
 
         // Assertions result1 - calculated
-        assertThat(result1.getScore()).isEqualTo(93.33333333333333);
+        assertThat(result1.getScore()).isEqualTo(93.3333);
         assertThat(result1.getResultString()).isEqualTo("1 of 3 passed");
         assertThat(result1.getHasFeedback()).isTrue();
         assertThat(result1.isSuccessful()).isFalse();
         assertThat(result1.getFeedbacks()).hasSize(3);
 
         // Assertions result2 - calculated
-        assertThat(result2.getScore()).isEqualTo(133.33333333333331);
+        assertThat(result2.getScore()).isEqualTo(133.3333);
         assertThat(result2.getResultString()).isEqualTo("2 of 3 passed");
         assertThat(result2.getHasFeedback()).isTrue();
         assertThat(result2.isSuccessful()).isTrue();
         assertThat(result2.getFeedbacks()).hasSize(3);
 
         // Assertions result3 - calculated
-        assertThat(result3.getScore()).isEqualTo(180D, Offset.offset(0.000001));
+        assertThat(result3.getScore()).isEqualTo(180D, Offset.offset(offsetByTenThousandth));
         assertThat(result3.getResultString()).isEqualTo("2 of 3 passed");
         assertThat(result3.getHasFeedback()).isTrue();
         assertThat(result3.isSuccessful()).isTrue();
@@ -1006,7 +1045,7 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
     }
 
     private void testParticipationResult(Result result, Double score, String resultString, boolean hasFeedback, int feedbackSize, AssessmentType assessmentType) {
-        assertThat(result.getScore()).isEqualTo(score, Offset.offset(0.00001));
+        assertThat(result.getScore()).isEqualTo(score, Offset.offset(offsetByTenThousandth));
         assertThat(result.getResultString()).isEqualTo(resultString);
         assertThat(result.getHasFeedback()).isEqualTo(hasFeedback);
         assertThat(result.getFeedbacks()).hasSize(feedbackSize);

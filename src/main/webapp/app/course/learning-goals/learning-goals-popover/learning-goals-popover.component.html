@@ -1,17 +1,17 @@
 <ng-template #popTitle>
-    <span class="font-weight-bold">{{ 'artemisApp.learningGoal.learningGoalPopover.connectedLearningGoals' | translate }}</span></ng-template
+    <span class="font-weight-bold">{{ 'artemisApp.learningGoal.learningGoalPopover.connectedLearningGoals' | artemisTranslate }}</span></ng-template
 >
 <ng-template #popContent>
     <div *ngIf="learningGoals && learningGoals.length > 0; else elseBlock">
         <small>
-            {{ 'artemisApp.learningGoal.learningGoalPopover.explanation' | translate }}
+            {{ 'artemisApp.learningGoal.learningGoalPopover.explanation' | artemisTranslate }}
         </small>
         <ul class="list-group">
             <a *ngFor="let learningGoal of learningGoals" class="list-group-item" [routerLink]="navigationArray">{{ learningGoal.title }}</a>
         </ul>
     </div>
     <ng-template #elseBlock>
-        <a [routerLink]="navigationArray">{{ 'artemisApp.learningGoal.learningGoalPopover.noLearningGoals' | translate }}</a>
+        <a [routerLink]="navigationArray">{{ 'artemisApp.learningGoal.learningGoalPopover.noLearningGoals' | artemisTranslate }}</a>
     </ng-template>
 </ng-template>
 <button type="button" class="btn btn-primary learning-goal-button" [ngbPopover]="popContent" [popoverTitle]="popTitle" container="body" popoverClass="learning-goal-popover">

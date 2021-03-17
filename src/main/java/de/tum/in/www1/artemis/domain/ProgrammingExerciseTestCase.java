@@ -166,7 +166,7 @@ public class ProgrammingExerciseTestCase extends DomainObject {
      * @return whether this and the other test case are the same based on name and exercise
      */
     public boolean isSameTestCase(ProgrammingExerciseTestCase testCase) {
-        return testCase.getTestName().equals(this.getTestName()) && this.getExercise().getId().equals(testCase.getExercise().getId());
+        return testCase.getTestName().equalsIgnoreCase(this.getTestName()) && this.getExercise().getId().equals(testCase.getExercise().getId());
     }
 
     @Override

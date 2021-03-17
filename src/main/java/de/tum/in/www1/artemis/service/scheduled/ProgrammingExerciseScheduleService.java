@@ -143,10 +143,22 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
     }
 
     private void cancelAllScheduledTasks(ProgrammingExercise exercise) {
-        scheduleService.cancelScheduledTaskForLifecycle(exercise, ExerciseLifecycle.RELEASE);
-        scheduleService.cancelScheduledTaskForLifecycle(exercise, ExerciseLifecycle.DUE);
-        scheduleService.cancelScheduledTaskForLifecycle(exercise, ExerciseLifecycle.BUILD_AND_TEST_AFTER_DUE_DATE);
-        scheduleService.cancelScheduledTaskForLifecycle(exercise, ExerciseLifecycle.ASSESSMENT_DUE);
+        cancelAllScheduledTasks(exercise.getId());
+    }
+
+    /**
+     * Cancel all scheduled tasks for a programming exercise.
+     * - Release
+     * - Due
+     * - Build & Test after due date
+     * - Assessment due date
+     * @param exerciseId the id of the exercise for which the tasks should be cancelled
+     */
+    public void cancelAllScheduledTasks(Long exerciseId) {
+        scheduleService.cancelScheduledTaskForLifecycle(exerciseId, ExerciseLifecycle.RELEASE);
+        scheduleService.cancelScheduledTaskForLifecycle(exerciseId, ExerciseLifecycle.DUE);
+        scheduleService.cancelScheduledTaskForLifecycle(exerciseId, ExerciseLifecycle.BUILD_AND_TEST_AFTER_DUE_DATE);
+        scheduleService.cancelScheduledTaskForLifecycle(exerciseId, ExerciseLifecycle.ASSESSMENT_DUE);
     }
 
     private void scheduleExercise(ProgrammingExercise exercise) {
@@ -174,7 +186,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
                     + ") for " + exercise.getDueDate() + ".");
         }
         else {
-            scheduleService.cancelScheduledTaskForLifecycle(exercise, ExerciseLifecycle.DUE);
+            scheduleService.cancelScheduledTaskForLifecycle(exercise.getId(), ExerciseLifecycle.DUE);
         }
         // For exercises with buildAndTestAfterDueDate
         if (exercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null && ZonedDateTime.now().isBefore(exercise.getBuildAndTestStudentSubmissionsAfterDueDate())) {
@@ -183,7 +195,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
                     + exercise.getBuildAndTestStudentSubmissionsAfterDueDate() + ".");
         }
         else {
-            scheduleService.cancelScheduledTaskForLifecycle(exercise, ExerciseLifecycle.BUILD_AND_TEST_AFTER_DUE_DATE);
+            scheduleService.cancelScheduledTaskForLifecycle(exercise.getId(), ExerciseLifecycle.BUILD_AND_TEST_AFTER_DUE_DATE);
         }
     }
 
@@ -216,7 +228,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
             scheduleService.scheduleTask(exercise, ExerciseLifecycle.BUILD_AND_TEST_AFTER_DUE_DATE, buildAndTestRunnableForExercise(exercise));
         }
         else {
-            scheduleService.cancelScheduledTaskForLifecycle(exercise, ExerciseLifecycle.BUILD_AND_TEST_AFTER_DUE_DATE);
+            scheduleService.cancelScheduledTaskForLifecycle(exercise.getId(), ExerciseLifecycle.BUILD_AND_TEST_AFTER_DUE_DATE);
         }
         log.debug("Scheduled Exam Programming Exercise \"" + exercise.getTitle() + "\" (#" + exercise.getId() + ").");
     }

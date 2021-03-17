@@ -213,7 +213,7 @@
         <ol class="breadcrumb" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_TA', 'ROLE_INSTRUCTOR']">
             <li *ngFor="let breadcrumb of breadcrumbs" class="breadcrumb-item">
                 <a class="breadcrumb-link" [routerLink]="breadcrumb.uri" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" *ngIf="breadcrumb.translate">{{
-                    breadcrumb.label | translate
+                    breadcrumb.label | artemisTranslate
                 }}</a>
                 <a class="breadcrumb-link" [routerLink]="breadcrumb.uri" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" *ngIf="!breadcrumb.translate">{{
                     breadcrumb.label

@@ -138,6 +138,10 @@ public class ProgrammingExerciseService {
         connectBaseParticipationsToExerciseAndSave(programmingExercise);
 
         setupExerciseTemplate(programmingExercise, user);
+
+        // Save programmning exercise to prevent transiant exception
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+
         setupBuildPlansForNewExercise(programmingExercise);
 
         // save to get the id required for the webhook
@@ -159,6 +163,10 @@ public class ProgrammingExerciseService {
 
     public void scheduleOperations(Long programmingExerciseId) {
         instanceMessageSendService.sendProgrammingExerciseSchedule(programmingExerciseId);
+    }
+
+    public void cancelScheduledOperations(Long programmingExerciseId) {
+        instanceMessageSendService.sendProgrammingExerciseScheduleCancel(programmingExerciseId);
     }
 
     /**
@@ -725,6 +733,11 @@ public class ProgrammingExerciseService {
         final var templateRepositoryUrlAsUrl = programmingExercise.getVcsTemplateRepositoryUrl();
         final var solutionRepositoryUrlAsUrl = programmingExercise.getVcsSolutionRepositoryUrl();
         final var testRepositoryUrlAsUrl = programmingExercise.getVcsTestRepositoryUrl();
+
+        // This cancels scheduled tasks (like locking/unlocking repositories)
+        // As the programming exercise might already be deleted once the scheduling node receives the message, only the
+        // id is used to cancel the scheduling. No interaction with the database is required.
+        cancelScheduledOperations(programmingExercise.getId());
 
         if (deleteBaseReposBuildPlans) {
             final var templateBuildPlanId = programmingExercise.getTemplateBuildPlanId();

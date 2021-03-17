@@ -10,6 +10,8 @@ public class StatsForInstructorDashboardDTO {
 
     private DueDateStat totalNumberOfAssessments;
 
+    private Long totalNumberOfAssessmentLocks;
+
     private DueDateStat[] numberOfAssessmentsOfCorrectionRounds;
 
     private DueDateStat numberOfAutomaticAssistedAssessments;
@@ -107,6 +109,14 @@ public class StatsForInstructorDashboardDTO {
 
     public void setNumberOfAssessmentLocks(long numberOfAssessmentLocks) {
         this.numberOfAssessmentLocks = numberOfAssessmentLocks;
+    }
+
+    public Long getTotalNumberOfAssessmentLocks() {
+        return totalNumberOfAssessmentLocks;
+    }
+
+    public void setTotalNumberOfAssessmentLocks(long totalNumberOfAssessmentLocks) {
+        this.totalNumberOfAssessmentLocks = totalNumberOfAssessmentLocks;
     }
 
     public List<TutorLeaderboardDTO> getTutorLeaderboardEntries() {

@@ -3,6 +3,8 @@ package de.tum.in.www1.artemis.service.scheduled.quiz;
 import java.io.Serial;
 import java.io.Serializable;
 
+import org.springframework.beans.factory.annotation.Autowired;
+
 import com.hazelcast.scheduledexecutor.NamedTask;
 import com.hazelcast.spring.context.SpringAware;
 import de.tum.in.www1.artemis.config.Constants;
@@ -20,11 +22,11 @@ final class QuizStartTask implements Runnable, Serializable, NamedTask {
 
     final Long quizExerciseId;
 
-    private final transient QuizScheduleService quizScheduleService;
+    @Autowired // ok
+    transient QuizScheduleService quizScheduleService;
 
-    QuizStartTask(Long quizExerciseId, QuizScheduleService quizScheduleService) {
+    QuizStartTask(Long quizExerciseId) {
         this.quizExerciseId = quizExerciseId;
-        this.quizScheduleService = quizScheduleService;
     }
 
     @Override
