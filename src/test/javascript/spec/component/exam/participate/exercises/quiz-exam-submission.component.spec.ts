@@ -1,31 +1,31 @@
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { RouterTestingModule } from '@angular/router/testing';
+import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
+import { Course } from 'app/entities/course.model';
+import { ExerciseGroup } from 'app/entities/exercise-group.model';
+import { AnswerOption } from 'app/entities/quiz/answer-option.model';
+import { DragAndDropMapping } from 'app/entities/quiz/drag-and-drop-mapping.model';
+import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.model';
+import { DragAndDropSubmittedAnswer } from 'app/entities/quiz/drag-and-drop-submitted-answer.model';
+import { DragItem } from 'app/entities/quiz/drag-item.model';
+import { DropLocation } from 'app/entities/quiz/drop-location.model';
+import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
+import { MultipleChoiceSubmittedAnswer } from 'app/entities/quiz/multiple-choice-submitted-answer.model';
+import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+import { QuizSubmission } from 'app/entities/quiz/quiz-submission.model';
+import { ShortAnswerQuestion } from 'app/entities/quiz/short-answer-question.model';
+import { ShortAnswerSubmittedAnswer } from 'app/entities/quiz/short-answer-submitted-answer.model';
+import { ShortAnswerSubmittedText } from 'app/entities/quiz/short-answer-submitted-text.model';
+import { QuizExamSubmissionComponent } from 'app/exam/participate/exercises/quiz/quiz-exam-submission.component';
+import { ArtemisQuizQuestionTypesModule } from 'app/exercises/quiz/shared/questions/artemis-quiz-question-types.module';
+import { IncludedInScoreBadgeComponent } from 'app/exercises/shared/exercise-headers/included-in-score-badge.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe.ts';
+import { ArtemisQuizService } from 'app/shared/quiz/quiz.service';
 import * as chai from 'chai';
 import { MockComponent, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import * as sinon from 'sinon';
 import { stub } from 'sinon';
 import * as sinonChai from 'sinon-chai';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { RouterTestingModule } from '@angular/router/testing';
-import { TranslatePipe } from '@ngx-translate/core';
-import { ExerciseGroup } from 'app/entities/exercise-group.model';
-import { Course } from 'app/entities/course.model';
-import { QuizExamSubmissionComponent } from 'app/exam/participate/exercises/quiz/quiz-exam-submission.component';
-import { QuizSubmission } from 'app/entities/quiz/quiz-submission.model';
-import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
-import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
-import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
-import { ArtemisQuizQuestionTypesModule } from 'app/exercises/quiz/shared/questions/artemis-quiz-question-types.module';
-import { ArtemisQuizService } from 'app/shared/quiz/quiz.service';
-import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.model';
-import { MultipleChoiceSubmittedAnswer } from 'app/entities/quiz/multiple-choice-submitted-answer.model';
-import { DragAndDropSubmittedAnswer } from 'app/entities/quiz/drag-and-drop-submitted-answer.model';
-import { AnswerOption } from 'app/entities/quiz/answer-option.model';
-import { DragAndDropMapping } from 'app/entities/quiz/drag-and-drop-mapping.model';
-import { DragItem } from 'app/entities/quiz/drag-item.model';
-import { DropLocation } from 'app/entities/quiz/drop-location.model';
-import { ShortAnswerQuestion } from 'app/entities/quiz/short-answer-question.model';
-import { ShortAnswerSubmittedText } from 'app/entities/quiz/short-answer-submitted-text.model';
-import { ShortAnswerSubmittedAnswer } from 'app/entities/quiz/short-answer-submitted-answer.model';
-import { IncludedInScoreBadgeComponent } from 'app/exercises/shared/exercise-headers/included-in-score-badge.component';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -54,7 +54,7 @@ describe('QuizExamSubmissionComponent', () => {
 
         return TestBed.configureTestingModule({
             imports: [RouterTestingModule.withRoutes([]), MockModule(ArtemisQuizQuestionTypesModule), MockModule(NgbModule)],
-            declarations: [QuizExamSubmissionComponent, MockPipe(TranslatePipe), MockComponent(IncludedInScoreBadgeComponent)],
+            declarations: [QuizExamSubmissionComponent, MockPipe(ArtemisTranslatePipe), MockComponent(IncludedInScoreBadgeComponent)],
             providers: [MockProvider(ArtemisQuizService)],
         })
             .compileComponents()

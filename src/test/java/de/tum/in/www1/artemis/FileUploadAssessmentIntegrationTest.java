@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.assertj.core.data.Offset;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -57,6 +58,8 @@ public class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrati
     private FileUploadExercise afterReleaseFileUploadExercise;
 
     private Course course;
+
+    private Double offsetByTenThousandth = 0.0001;
 
     @BeforeEach
     public void initTestCase() {
@@ -227,7 +230,7 @@ public class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrati
         // Check that result is capped to maximum of maxScore + bonus points -> 110
         feedbacks.add(new Feedback().credits(25.00).type(FeedbackType.MANUAL_UNREFERENCED).detailText("nice submission 3"));
         response = request.putWithResponseBodyAndParams(API_FILE_UPLOAD_SUBMISSIONS + fileUploadSubmission.getId() + "/feedback", feedbacks, Result.class, HttpStatus.OK, params);
-        assertThat(response.getScore()).isEqualTo(110);
+        assertThat(response.getScore()).isEqualTo(110, Offset.offset(offsetByTenThousandth));
     }
 
     @Test

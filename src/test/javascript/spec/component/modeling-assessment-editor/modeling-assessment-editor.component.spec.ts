@@ -1,46 +1,46 @@
-import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
-import * as sinon from 'sinon';
-import { SinonStub, stub } from 'sinon';
-
-import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { TranslateService } from '@ngx-translate/core';
-import { ArtemisTestModule } from '../../test.module';
-import { By } from '@angular/platform-browser';
-import { mockedActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route-query-param-map';
-import { Router } from '@angular/router';
-import { of, throwError } from 'rxjs';
-import { JhiLanguageHelper } from 'app/core/language/language.helper';
-import { AccountService } from 'app/core/auth/account.service';
-import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
-import { AssessmentLayoutComponent } from 'app/assessment/assessment-layout/assessment-layout.component';
-import { AssessmentHeaderComponent } from 'app/assessment/assessment-header/assessment-header.component';
-import { Course } from 'app/entities/course.model';
-import { ModelingExercise, UMLDiagramType } from 'app/entities/modeling-exercise.model';
-import { ModelingAssessmentEditorComponent } from 'app/exercises/modeling/assess/modeling-assessment-editor/modeling-assessment-editor.component';
-import { ArtemisModelingAssessmentEditorModule } from 'app/exercises/modeling/assess/modeling-assessment-editor/modeling-assessment-editor.module';
-import { Complaint } from 'app/entities/complaint.model';
-import { Feedback, FeedbackType } from 'app/entities/feedback.model';
-import { Result } from 'app/entities/result.model';
-import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { ModelingAssessmentService } from 'app/exercises/modeling/assess/modeling-assessment.service';
-import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
-import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { ComplaintResponse } from 'app/entities/complaint-response.model';
-import { Participation, ParticipationType } from 'app/entities/participation/participation.model';
-import { ModelingSubmissionService } from 'app/exercises/modeling/participate/modeling-submission.service';
-import { Exercise } from 'app/entities/exercise.model';
-import { ExerciseGroup } from 'app/entities/exercise-group.model';
-import { Exam } from 'app/entities/exam.model';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
+import { Router } from '@angular/router';
+import { RouterTestingModule } from '@angular/router/testing';
+import { TranslateService } from '@ngx-translate/core';
+import { AssessmentHeaderComponent } from 'app/assessment/assessment-header/assessment-header.component';
+import { AssessmentLayoutComponent } from 'app/assessment/assessment-layout/assessment-layout.component';
 import { ComplaintService } from 'app/complaints/complaint.service';
+import { AccountService } from 'app/core/auth/account.service';
+import { JhiLanguageHelper } from 'app/core/language/language.helper';
+import { User } from 'app/core/user/user.model';
+import { AssessmentType } from 'app/entities/assessment-type.model';
+import { ComplaintResponse } from 'app/entities/complaint-response.model';
+import { Complaint } from 'app/entities/complaint.model';
+import { Course } from 'app/entities/course.model';
+import { Exam } from 'app/entities/exam.model';
+import { ExerciseGroup } from 'app/entities/exercise-group.model';
+import { Exercise } from 'app/entities/exercise.model';
+import { Feedback, FeedbackType } from 'app/entities/feedback.model';
+import { ModelingExercise, UMLDiagramType } from 'app/entities/modeling-exercise.model';
+import { ModelingSubmission } from 'app/entities/modeling-submission.model';
+import { Participation, ParticipationType } from 'app/entities/participation/participation.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
-import { AssessmentType } from 'app/entities/assessment-type.model';
-import { User } from 'app/core/user/user.model';
+import { Result } from 'app/entities/result.model';
 import { getLatestSubmissionResult } from 'app/entities/submission.model';
+import { ModelingAssessmentEditorComponent } from 'app/exercises/modeling/assess/modeling-assessment-editor/modeling-assessment-editor.component';
+import { ArtemisModelingAssessmentEditorModule } from 'app/exercises/modeling/assess/modeling-assessment-editor/modeling-assessment-editor.module';
+import { ModelingAssessmentService } from 'app/exercises/modeling/assess/modeling-assessment.service';
+import { ModelingSubmissionService } from 'app/exercises/modeling/participate/modeling-submission.service';
+import * as chai from 'chai';
 import * as moment from 'moment';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { of, throwError } from 'rxjs';
+import * as sinon from 'sinon';
+import { SinonStub, stub } from 'sinon';
+import * as sinonChai from 'sinon-chai';
+import { mockedActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route-query-param-map';
+import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
+import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { ArtemisTestModule } from '../../test.module';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -58,7 +58,7 @@ describe('ModelingAssessmentEditorComponent', () => {
 
     beforeEach(fakeAsync(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, ArtemisModelingAssessmentEditorModule],
+            imports: [ArtemisTestModule, ArtemisModelingAssessmentEditorModule, RouterTestingModule],
             declarations: [],
             providers: [
                 JhiLanguageHelper,
@@ -414,27 +414,30 @@ describe('ModelingAssessmentEditorComponent', () => {
             const course = new Course();
             component.modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined);
             component.modelingExercise.id = 1;
-            // spyOn(router, 'navigateByUrl').and.returnValue(Promise.resolve(true));
-            const routerSpy = stub(router, 'navigateByUrl').returns(Promise.resolve(true));
+
+            const routerStub = stub(router, 'navigate');
             const modelingSubmission: ModelingSubmission = { id: 1 };
             const fake = sinon.fake.returns(of(modelingSubmission));
             sinon.replace(modelingSubmissionService, 'getModelingSubmissionForExerciseForCorrectionRoundWithoutAssessment', fake);
+
             component.ngOnInit();
+
             const correctionRound = 1;
             const courseId = 1;
             const exerciseId = 1;
             component.correctionRound = correctionRound;
             component.courseId = courseId;
             component.modelingExercise = { id: exerciseId } as Exercise;
-            let url = `/course-management/${courseId}/modeling-exercises/${exerciseId}/submissions/${modelingSubmission.id}/assessment`;
-            url += `?correction-round=${correctionRound}`;
+            component.exerciseId = exerciseId;
+            const url = ['/course-management', courseId.toString(), 'modeling-exercises', exerciseId.toString(), 'submissions', modelingSubmission.id!.toString(), 'assessment'];
+            const queryParams = { queryParams: { 'correction-round': correctionRound } };
+
             tick(500);
             component.assessNext();
             tick(500);
+
             expect(fake).to.have.been.calledOnce;
-            sinon.assert.calledWith(routerSpy.getCall(0), '/', { skipLocationChange: true });
-            expect(routerSpy).to.have.been.calledTwice;
-            sinon.assert.calledWith(routerSpy.getCall(1), url);
+            expect(routerStub).to.have.been.calledWith(url, queryParams);
         }));
 
         it('throw error while assessNext', fakeAsync(() => {

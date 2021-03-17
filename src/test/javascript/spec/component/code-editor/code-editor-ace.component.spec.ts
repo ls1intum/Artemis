@@ -18,6 +18,8 @@ import { MockCodeEditorRepositoryFileService } from '../../helpers/mocks/service
 import { LocalStorageService } from 'ngx-webstorage';
 import { MockLocalStorageService } from '../../helpers/mocks/service/mock-local-storage.service';
 import { ArtemisProgrammingManualAssessmentModule } from 'app/exercises/programming/assess/programming-manual-assessment.module';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe.ts';
+import { MockPipe } from 'ng-mocks';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -32,7 +34,7 @@ describe('CodeEditorAceComponent', () => {
     beforeEach(async () => {
         return TestBed.configureTestingModule({
             imports: [TranslateModule.forRoot(), ArtemisTestModule, AceEditorModule, TreeviewModule.forRoot(), ArtemisProgrammingManualAssessmentModule],
-            declarations: [CodeEditorAceComponent],
+            declarations: [CodeEditorAceComponent, MockPipe(ArtemisTranslatePipe)],
             providers: [
                 CodeEditorFileService,
                 { provide: CodeEditorRepositoryFileService, useClass: MockCodeEditorRepositoryFileService },

@@ -7,32 +7,32 @@
 <div class="modal-body">
     <p *ngIf="learningGoal?.description">{{ learningGoal?.description }}</p>
     <!-- Table for connected lecture units -->
-    <ng-template #elseBlock>{{ 'artemisApp.learningGoal.learningGoalCard.noUnitsConnected' | translate }}</ng-template>
+    <ng-template #elseBlock>{{ 'artemisApp.learningGoal.learningGoalCard.noUnitsConnected' | artemisTranslate }}</ng-template>
     <div *ngIf="learningGoal?.lectureUnits && learningGoal?.lectureUnits.length > 0; else elseBlock">
-        <h5>{{ 'artemisApp.learningGoal.learningGoalCard.connectedLectureUnits' | translate }}</h5>
+        <h5>{{ 'artemisApp.learningGoal.learningGoalCard.connectedLectureUnits' | artemisTranslate }}</h5>
         <p>
-            {{ 'artemisApp.learningGoal.learningGoalCard.connectedLectureUnitsExplanation' | translate }}
+            {{ 'artemisApp.learningGoal.learningGoalCard.connectedLectureUnitsExplanation' | artemisTranslate }}
         </p>
         <div class="table-responsive">
             <table class="table table-bordered">
                 <thead class="thead-dark">
                     <tr jhiSort [(predicate)]="connectedLectureUnitsPredicate" [(ascending)]="connectedLectureUnitsReverse" [callback]="sortConnectedLectureUnits.bind(this)">
                         <th id="connectedLectureUnitLectureUnitNameHeader" class="bg-primary">
-                            {{ 'artemisApp.learningGoal.createLearningGoal.lectureUnitTable.name' | translate }}
+                            {{ 'artemisApp.learningGoal.createLearningGoal.lectureUnitTable.name' | artemisTranslate }}
                         </th>
                         <th jhiSortBy="type" id="connectedLectureUnitTypeHeader">
-                            {{ 'artemisApp.learningGoal.createLearningGoal.lectureUnitTable.type' | translate }}
+                            {{ 'artemisApp.learningGoal.createLearningGoal.lectureUnitTable.type' | artemisTranslate }}
                             <fa-icon [icon]="'sort'"></fa-icon>
                         </th>
                         <th jhiSortBy="lecture.title" id="connectedLectureUnitLectureTitleHeader">
-                            {{ 'artemisApp.learningGoal.createLearningGoal.lectureUnitTable.lecture' | translate }}
+                            {{ 'artemisApp.learningGoal.createLearningGoal.lectureUnitTable.lecture' | artemisTranslate }}
                             <fa-icon [icon]="'sort'"></fa-icon>
                         </th>
                         <th id="connectedLectureUnitScoreAchievedHeader">
-                            {{ 'artemisApp.learningGoal.createLearningGoal.lectureUnitTable.scoreAchievedByStudent' | translate }}
+                            {{ 'artemisApp.learningGoal.createLearningGoal.lectureUnitTable.scoreAchievedByStudent' | artemisTranslate }}
                         </th>
                         <th id="connectedLectureUnitPointsAchievableHeader">
-                            {{ 'artemisApp.learningGoal.createLearningGoal.lectureUnitTable.totalPointsAchievable' | translate }}
+                            {{ 'artemisApp.learningGoal.createLearningGoal.lectureUnitTable.totalPointsAchievable' | artemisTranslate }}
                         </th>
                     </tr>
                 </thead>
@@ -50,7 +50,11 @@
                             </a>
                         </td>
                         <td>
-                            {{ getLectureUnitProgress(lectureUnit.id) === undefined ? '-' : getLectureUnitProgress(lectureUnit.id).scoreAchievedByStudentInLectureUnit + ' %' }}
+                            {{
+                                getLectureUnitProgress(lectureUnit.id) === undefined
+                                    ? '-'
+                                    : round(getLectureUnitProgress(lectureUnit.id).scoreAchievedByStudentInLectureUnit) + ' %'
+                            }}
                         </td>
                         <td>
                             {{ getLectureUnitProgress(lectureUnit.id) === undefined ? '-' : getLectureUnitProgress(lectureUnit.id).totalPointsAchievableByStudentsInLectureUnit }}
@@ -63,7 +67,7 @@
     <div *ngIf="isProgressAvailable">
         <p class="text-muted">
             <span class="badge badge-info">Info</span>
-            {{ 'artemisApp.learningGoal.learningGoalCard.exerciseNote' | translate }}
+            {{ 'artemisApp.learningGoal.learningGoalCard.exerciseNote' | artemisTranslate }}
         </p>
         <div>
             <h5

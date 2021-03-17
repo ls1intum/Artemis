@@ -24,11 +24,11 @@ public class SubmissionIntegrationTest extends AbstractSpringIntegrationBambooBi
         Submission submission = new TextSubmission();
         submission = submissionRepository.save(submission);
 
-        Result result1 = new Result().assessmentType(assessmentType).resultString("x points of y").score(100L).rated(true);
+        Result result1 = new Result().assessmentType(assessmentType).resultString("x points of y").score(100D).rated(true);
         result1 = resultRepository.save(result1);
         result1.setSubmission(submission);
 
-        Result result2 = new Result().assessmentType(assessmentType).resultString("x points of y 2").score(200L).rated(true);
+        Result result2 = new Result().assessmentType(assessmentType).resultString("x points of y 2").score(200D).rated(true);
         result2 = resultRepository.save(result2);
         result2.setSubmission(submission);
 
@@ -53,14 +53,14 @@ public class SubmissionIntegrationTest extends AbstractSpringIntegrationBambooBi
         Submission submission = new TextSubmission();
         submission = submissionRepository.save(submission);
 
-        Result result1 = new Result().assessmentType(assessmentType).resultString("x points of y").score(100L).rated(true);
+        Result result1 = new Result().assessmentType(assessmentType).resultString("x points of y").score(100D).rated(true);
         result1 = resultRepository.save(result1);
         result1.setSubmission(submission);
 
         submission.addResult(result1);
         submission = submissionRepository.save(submission);
 
-        Result result2 = new Result().assessmentType(assessmentType).resultString("x points of y 2").score(200L).rated(true);
+        Result result2 = new Result().assessmentType(assessmentType).resultString("x points of y 2").score(200D).rated(true);
         result2 = resultRepository.save(result2);
         result2.setSubmission(submission);
 
@@ -84,14 +84,14 @@ public class SubmissionIntegrationTest extends AbstractSpringIntegrationBambooBi
         Submission submission = new TextSubmission();
         submission = submissionRepository.save(submission);
 
-        Result result1 = new Result().assessmentType(assessmentType).resultString("Points 1").score(100L).rated(true);
+        Result result1 = new Result().assessmentType(assessmentType).resultString("Points 1").score(100D).rated(true);
         result1 = resultRepository.save(result1);
         result1.setSubmission(submission);
 
         submission.addResult(result1);
         submission = submissionRepository.save(submission);
 
-        Result result2 = new Result().assessmentType(assessmentType).resultString("Points 2").score(200L).rated(true);
+        Result result2 = new Result().assessmentType(assessmentType).resultString("Points 2").score(200D).rated(true);
         result2 = resultRepository.save(result2);
         result2.setSubmission(submission);
 

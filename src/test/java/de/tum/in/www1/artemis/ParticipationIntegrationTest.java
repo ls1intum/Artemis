@@ -317,7 +317,7 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationBambo
         database.createAndSaveParticipationForExercise(textExercise, "student1");
         var participation = database.createAndSaveParticipationForExercise(textExercise, "student2");
         database.addResultToParticipation(null, null, participation);
-        var result = ModelFactory.generateResult(true, 70).participation(participation);
+        var result = ModelFactory.generateResult(true, 70D).participation(participation);
         resultRepository.save(result);
         final var params = new LinkedMultiValueMap<String, String>();
         params.add("withLatestResult", "true");
@@ -436,7 +436,7 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationBambo
     public void getParticipationWithLatestResult() throws Exception {
         var participation = database.createAndSaveParticipationForExercise(textExercise, "student1");
         database.addResultToParticipation(null, null, participation);
-        var result = ModelFactory.generateResult(true, 70);
+        var result = ModelFactory.generateResult(true, 70D);
         result.participation(participation).setCompletionDate(ZonedDateTime.now().minusHours(2));
         resultRepository.save(result);
         var actualParticipation = request.get("/api/participations/" + participation.getId() + "/withLatestResult", HttpStatus.OK, StudentParticipation.class);
@@ -470,7 +470,7 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationBambo
     public void cleanupBuildPlan() throws Exception {
         var participation = database.addStudentParticipationForProgrammingExercise(programmingExercise, "student1");
         bambooRequestMockProvider.enableMockingOfRequests();
-        bambooRequestMockProvider.mockDeleteBambooBuildPlan(participation.getBuildPlanId());
+        bambooRequestMockProvider.mockDeleteBambooBuildPlan(participation.getBuildPlanId(), false);
         var actualParticipation = request.putWithResponseBody("/api/participations/" + participation.getId() + "/cleanupBuildPlan", null, Participation.class, HttpStatus.OK);
         assertThat(actualParticipation).isEqualTo(participation);
     }

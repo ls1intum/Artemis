@@ -191,23 +191,13 @@ public class ComplaintService {
     }
 
     /**
-     * Given an exercise id, retrieve all the complaints apart the ones related to whoever is calling the method. Useful for creating a list of complaints a tutor can review.
-     *
-     * @param exerciseId - the id of the exercise we are interested in
-     * @return a list of complaints
-     */
-    public List<Complaint> getAllComplaintsByExerciseIdButMine(long exerciseId) {
-        return complaintRepository.findByResult_Participation_Exercise_Id_ComplaintTypeWithEagerSubmissionAndEagerAssessor(exerciseId, ComplaintType.COMPLAINT);
-    }
-
-    /**
      * Given an exercise id, retrieve more feedback requests related to whoever is calling the method. Useful for creating a list of more feedback requests a tutor can review.
      *
      * @param exerciseId - the id of the exercise we are interested in
      * @return a list of complaints
      */
     public List<Complaint> getMyMoreFeedbackRequests(long exerciseId) {
-        return complaintRepository.findByResult_Participation_Exercise_Id_ComplaintTypeWithEagerSubmissionAndEagerAssessor(exerciseId, ComplaintType.MORE_FEEDBACK);
+        return complaintRepository.getAllComplaintsByExerciseIdAndComplaintType(exerciseId, ComplaintType.MORE_FEEDBACK);
     }
 
     public List<Complaint> getAllComplaintsByTutorId(Long tutorId) {
@@ -216,6 +206,10 @@ public class ComplaintService {
 
     public List<Complaint> getAllComplaintsByCourseId(Long courseId) {
         return complaintRepository.getAllByResult_Participation_Exercise_Course_Id(courseId);
+    }
+
+    public List<Complaint> getAllComplaintsByExamId(Long examId) {
+        return complaintRepository.getAllByResult_Participation_Exercise_ExerciseGroup_Exam_Id(examId);
     }
 
     public List<Complaint> getAllComplaintsByCourseIdAndTutorId(Long courseId, Long tutorId) {

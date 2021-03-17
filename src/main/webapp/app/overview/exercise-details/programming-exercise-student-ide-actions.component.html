@@ -6,7 +6,7 @@
         jhi-exercise-action-button
         buttonIcon="play-circle"
         [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
-        [buttonLabel]="'artemisApp.exerciseActions.resumeExercise' | translate"
+        [buttonLabel]="'artemisApp.exerciseActions.resumeExercise' | artemisTranslate"
         [buttonLoading]="exercise.loading"
         [smallButton]="smallButtons"
         [hideLabelMobile]="false"
@@ -17,7 +17,7 @@
         jhi-exercise-action-button
         buttonIcon="play-circle"
         [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
-        [buttonLabel]="'artemisApp.exerciseActions.startExercise' | translate"
+        [buttonLabel]="'artemisApp.exerciseActions.startExercise' | artemisTranslate"
         [buttonLoading]="exercise.loading"
         [smallButton]="smallButtons"
         [hideLabelMobile]="false"
@@ -27,7 +27,7 @@
     <jhi-ide-button
         [featureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
         (click)="importIntoIDE()"
-        [buttonLabel]="'artemisApp.exerciseActions.importIntoIntelliJ' | translate"
+        [buttonLabel]="'artemisApp.exerciseActions.importIntoIntelliJ' | artemisTranslate"
         [buttonLoading]="exercise.loading || ideState.cloning"
         [smallButton]="smallButtons"
         *ngIf="canImport && exercise.allowOfflineIde"
