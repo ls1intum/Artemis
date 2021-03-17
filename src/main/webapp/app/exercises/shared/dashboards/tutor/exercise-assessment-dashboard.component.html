@@ -366,6 +366,7 @@
                         >
                             <div class="alert alert-info">
                                 <span
+                                    *ngIf="correctionRound === 0"
                                     jhiTranslate="artemisApp.exerciseAssessmentDashboard.noSubmissionsInfo"
                                     [translateValues]="{
                                         freeAssessments:
@@ -373,11 +374,23 @@
                                             numberOfAssessmentsOfCorrectionRounds[correctionRound].inTime -
                                             numberOfLockedAssessmentByOtherTutorsOfCorrectionRound[correctionRound]?.inTime,
                                         openAssessments: numberOfSubmissions.inTime - numberOfAssessmentsOfCorrectionRounds[correctionRound].inTime,
-                                        lockedSubmissionsByOtherTutor: numberOfLockedAssessmentByOtherTutorsOfCorrectionRound[correctionRound]?.inTime,
-                                        submissionsCorrectedInFirstRound: submissionsByCorrectionRound.get(correctionRound)?.length
+                                        lockedSubmissionsByOtherTutor: numberOfLockedAssessmentByOtherTutorsOfCorrectionRound[correctionRound]?.inTime
                                     }"
                                 >
                                 </span>
+                                <!--span-- *ngIf="correctionRound > 0"
+                                      jhiTranslate="artemisApp.exerciseAssessmentDashboard.noSubmissionsInfo"
+                                      [translateValues]="{
+                                        freeAssessments:
+                                            (numberOfSubmissions.inTime -
+                                            numberOfAssessmentsOfCorrectionRounds[correctionRound].inTime) -
+                                            numberOfLockedAssessmentByOtherTutorsOfCorrectionRound[correctionRound]?.inTime - (numberOfSubmissions.inTime -
+                                            numberOfAssessmentsOfCorrectionRounds[0].inTime),
+                                        openAssessments: numberOfSubmissions.inTime - numberOfAssessmentsOfCorrectionRounds[correctionRound].inTime,
+                                        lockedSubmissionsByOtherTutor: numberOfLockedAssessmentByOtherTutorsOfCorrectionRound[correctionRound]?.inTime
+                                    }"
+                                >
+                                </span-->
                             </div>
                         </ng-container>
                     </div>
