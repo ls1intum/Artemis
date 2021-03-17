@@ -620,25 +620,6 @@ export const examManagementRoute: Routes = [
         },
         canActivate: [UserRouteAccessService],
     },
-    {
-        path: ':examId/exercise-groups/:exerciseGroupId/file-upload-exercises/:exerciseId/submissions/:submissionId/assessments/:resultId',
-        component: FileUploadAssessmentComponent,
-        data: {
-            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.TA],
-            pageTitle: 'artemisApp.fileUploadExercise.home.title',
-        },
-        canActivate: [UserRouteAccessService],
-    },
-    {
-        path: ':examId/exercise-groups/:exerciseGroupId/modeling-exercises/:exerciseId/submissions/:submissionId/assessments/:resultId',
-        component: ModelingAssessmentEditorComponent,
-        data: {
-            authorities: [Authority.ADMIN, Authority.INSTRUCTOR],
-            usePathForBreadcrumbs: true,
-            pageTitle: 'artemisApp.apollonDiagram.detail.title',
-        },
-        canActivate: [UserRouteAccessService],
-    },
 ];
 
 const EXAM_MANAGEMENT_ROUTES = [...examManagementRoute];

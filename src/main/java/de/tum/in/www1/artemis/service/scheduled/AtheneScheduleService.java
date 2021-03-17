@@ -23,7 +23,7 @@ import de.tum.in.www1.artemis.domain.enumeration.ExerciseLifecycle;
 import de.tum.in.www1.artemis.repository.TextExerciseRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.ExerciseLifecycleService;
-import de.tum.in.www1.artemis.service.connectors.AtheneService;
+import de.tum.in.www1.artemis.service.connectors.athene.AtheneService;
 import io.github.jhipster.config.JHipsterConstants;
 
 @Service

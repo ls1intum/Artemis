@@ -13,7 +13,6 @@ import { round } from 'app/shared/util/utils';
 import * as moment from 'moment';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { getLatestSubmissionResult, setLatestSubmissionResult, Submission } from 'app/entities/submission.model';
-import { getLinkToSubmissionAssessment, getExerciseSubmissionsLink } from 'app/utils/navigation.utils';
 
 @Component({
     selector: 'jhi-student-exam-detail',
@@ -34,7 +33,6 @@ export class StudentExamDetailComponent implements OnInit {
     busy = false;
     openingAssessmentEditorForNewSubmission = false;
     readonly ExerciseType = ExerciseType;
-    examId: number;
 
     constructor(
         private route: ActivatedRoute,
@@ -58,7 +56,6 @@ export class StudentExamDetailComponent implements OnInit {
      */
     loadStudentExam() {
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
-        this.examId = Number(this.route.snapshot.paramMap.get('examId'));
         this.route.data.subscribe(({ studentExam }) => this.setStudentExam(studentExam));
 
         this.courseService.find(this.courseId).subscribe((courseResponse) => {
@@ -229,26 +226,22 @@ export class StudentExamDetailComponent implements OnInit {
      * @param resultId
      */
     getAssessmentLink(exercise: Exercise, submission?: Submission, resultId?: number) {
-        let route;
+        let route = '';
         if (!exercise || !exercise.type) {
             return;
         }
 
         if (exercise.type === ExerciseType.PROGRAMMING) {
-            route = getExerciseSubmissionsLink(exercise.type, this.courseId, exercise.id!, this.examId, exercise.exerciseGroup?.id!);
-            // route = `/course-management/${this.courseId}/${exercise.type}-exercises/${exercise.id}/assessment`;
+            route = `/course-management/${this.courseId}/${exercise.type}-exercises/${exercise.id}/assessment`;
         } else if (submission) {
             this.openingAssessmentEditorForNewSubmission = true;
-            route = getLinkToSubmissionAssessment(exercise.type, this.courseId, exercise.id!, submission.id!, this.examId, exercise.exerciseGroup?.id!, resultId);
-            /*if (resultId) {
+            if (resultId) {
                 route = `/course-management/${this.courseId}/${exercise.type}-exercises/${exercise.id}/submissions/${submission.id}/assessments/${resultId}`;
             } else {
                 route = `/course-management/${this.courseId}/${exercise.type}-exercises/${exercise.id}/submissions/${submission.id}/assessment`;
-            }*/
-
+            }
             this.openingAssessmentEditorForNewSubmission = false;
         }
-        console.log('route: ', route);
         return route;
     }
 }

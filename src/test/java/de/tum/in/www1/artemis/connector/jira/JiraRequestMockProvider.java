@@ -65,10 +65,11 @@ public class JiraRequestMockProvider {
                 .andRespond(withStatus(HttpStatus.OK));
     }
 
-    public void mockAddUserToGroup(String group) throws URISyntaxException {
+    public void mockAddUserToGroup(String group, boolean shouldFail) throws URISyntaxException {
         mockIsGroupAvailable(group);
         final var uriPattern = Pattern.compile(JIRA_URL + "/rest/api/2/group/user\\?groupname=" + group);
-        mockServer.expect(requestTo(MatchesPattern.matchesPattern(uriPattern))).andExpect(method(HttpMethod.POST)).andRespond(withStatus(HttpStatus.OK));
+        var status = shouldFail ? HttpStatus.NOT_FOUND : HttpStatus.OK;
+        mockServer.expect(requestTo(MatchesPattern.matchesPattern(uriPattern))).andExpect(method(HttpMethod.POST)).andRespond(withStatus(status));
     }
 
     public void mockAddUserToGroupForMultipleGroups(Set<String> groups) throws URISyntaxException {
@@ -79,10 +80,11 @@ public class JiraRequestMockProvider {
                 .andRespond(withStatus(HttpStatus.OK));
     }
 
-    public void mockRemoveUserFromGroup(Set<String> groups, String username) {
+    public void mockRemoveUserFromGroup(Set<String> groups, String username, boolean shouldFail) {
         final var regexGroups = String.join("|", groups);
         final var uriPattern = Pattern.compile(JIRA_URL + "/rest/api/2/group/user\\?groupname=(" + regexGroups + ")&username=" + username);
-        mockServer.expect(ExpectedCount.twice(), requestTo(MatchesPattern.matchesPattern(uriPattern))).andExpect(method(HttpMethod.DELETE)).andRespond(withStatus(HttpStatus.OK));
+        var status = shouldFail ? HttpStatus.NOT_FOUND : HttpStatus.OK;
+        mockServer.expect(ExpectedCount.twice(), requestTo(MatchesPattern.matchesPattern(uriPattern))).andExpect(method(HttpMethod.DELETE)).andRespond(withStatus(status));
     }
 
     public void mockGetUsernameForEmail(String email, String usernameToBeReturned) throws IOException, URISyntaxException {

@@ -5,39 +5,41 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.mockito.Mockito.*;
-import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
-import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
-import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
 import java.time.ZonedDateTime;
 import java.util.*;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.*;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.MediaType;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.test.util.ReflectionTestUtils;
-import org.springframework.test.web.client.ExpectedCount;
-import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestTemplate;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.connector.athene.AtheneRequestMockProvider;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.TextAssessmentQueueService;
 import de.tum.in.www1.artemis.service.TextSubmissionService;
+import de.tum.in.www1.artemis.service.connectors.athene.AtheneService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.dto.AtheneDTO;
 
 public class AtheneServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
-    RestTemplate restTemplate;
+    private AtheneRequestMockProvider atheneRequestMockProvider;
 
     @Autowired
+    @Qualifier("atheneRestTemplate")
+    RestTemplate restTemplate;
+
+    @Mock
     TextAssessmentQueueService textAssessmentQueueService;
 
     @Mock
@@ -52,7 +54,8 @@ public class AtheneServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
     @Mock
     TextClusterRepository textClusterRepository;
 
-    private static final String SUBMIT_API_ENDPOINT = "http://localhost/submit";
+    @Value("${artemis.athene.url}")
+    private String atheneUrl;
 
     AtheneService atheneService;
 
@@ -64,11 +67,9 @@ public class AtheneServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
     @BeforeEach
     public void init() {
         // Create atheneService and inject @Value fields
-        atheneService = new AtheneService(textSubmissionService, textBlockRepository, textClusterRepository, textExerciseRepository, textAssessmentQueueService);
+        atheneService = new AtheneService(textSubmissionService, textBlockRepository, textClusterRepository, textExerciseRepository, textAssessmentQueueService, restTemplate);
         ReflectionTestUtils.setField(atheneService, "artemisServerUrl", artemisServerUrl);
-        ReflectionTestUtils.setField(atheneService, "submitApiEndpoint", SUBMIT_API_ENDPOINT);
-        String apiSecret = "YWVuaXF1YWRpNWNlaXJpNmFlbTZkb283dXphaVF1b29oM3J1MWNoYWlyNHRoZWUzb2huZ2FpM211bGVlM0VpcAo=";
-        ReflectionTestUtils.setField(atheneService, "apiSecret", apiSecret);
+        ReflectionTestUtils.setField(atheneService, "atheneUrl", atheneUrl);
 
         // Create example exercise
         ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
@@ -79,6 +80,14 @@ public class AtheneServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
         exercise1.setId(1L);
 
         when(textExerciseRepository.findById(exercise1.getId())).thenReturn(Optional.ofNullable(exercise1));
+
+        atheneRequestMockProvider.enableMockingOfRequests();
+    }
+
+    @AfterEach
+    public void tearDown() {
+        atheneRequestMockProvider.reset();
+        atheneService.finishTask(exercise1.getId());
     }
 
     /**
@@ -112,21 +121,11 @@ public class AtheneServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
         when(textSubmissionService.getTextSubmissionsWithTextBlocksByExerciseIdAndLanguage(exercise1.getId(), Language.ENGLISH))
                 .thenReturn(ModelFactory.generateTextSubmissions(10));
 
-        // Inject restTemplate to connector of atheneService
-        RemoteArtemisServiceConnector conn = (RemoteArtemisServiceConnector) ReflectionTestUtils.getField(atheneService, "connector");
-        assertThat(conn).isNotNull();
-        ReflectionTestUtils.setField(conn, "restTemplate", restTemplate);
-
         // Create mock server
-        MockRestServiceServer mockServer = MockRestServiceServer.bindTo(restTemplate).build();
-        mockServer.expect(ExpectedCount.once(), requestTo(SUBMIT_API_ENDPOINT)).andExpect(method(HttpMethod.POST))
-                .andRespond(withSuccess("{ \"detail\": \"Submission successful\" }", MediaType.APPLICATION_JSON));
+        atheneRequestMockProvider.mockSubmitSubmissions();
 
         atheneService.submitJob(exercise1);
         assertThat(atheneService.isTaskRunning(exercise1.getId()));
-
-        // Check if mock server received specified requests
-        mockServer.verify();
     }
 
     /**
