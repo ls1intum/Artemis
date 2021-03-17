@@ -8,6 +8,7 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 
+import org.apache.http.client.HttpResponseException;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Element;
 import org.jsoup.nodes.Node;
@@ -251,8 +252,12 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
             jenkinsServer.deleteJob(projectKey, useCrumb);
         }
         catch (IOException e) {
-            log.error(e.getMessage(), e);
-            throw new JenkinsException("Error while trying to delete folder in Jenkins for " + projectKey, e);
+            // We don't throw an exception if the build doesn't exist in Jenkins (404 status)
+            boolean buildDoesntExist = e instanceof HttpResponseException && ((HttpResponseException) e).getStatusCode() == org.apache.http.HttpStatus.SC_NOT_FOUND;
+            if (!buildDoesntExist) {
+                log.error(e.getMessage(), e);
+                throw new JenkinsException("Error while trying to delete folder in Jenkins for " + projectKey, e);
+            }
         }
     }
 
