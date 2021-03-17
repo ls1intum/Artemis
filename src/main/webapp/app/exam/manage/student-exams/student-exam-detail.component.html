@@ -198,14 +198,7 @@
                             >
                         </td>
                         <td>
-                            <div
-                                *ngIf="
-                                    course?.isAtLeastInstructor &&
-                                    exercise?.studentParticipations &&
-                                    exercise.type != ExerciseType.QUIZ &&
-                                    exercise.type != ExerciseType.PROGRAMMING
-                                "
-                            >
+                            <div *ngIf="course?.isAtLeastInstructor && exercise?.studentParticipations && exercise.type != ExerciseType.QUIZ">
                                 <div *ngIf="(exercise?.studentParticipations)![0].results?.length > 0">
                                     <!-- in case of existing result-->
                                     <a
