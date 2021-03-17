@@ -371,9 +371,9 @@
                                         freeAssessments:
                                             numberOfSubmissions.inTime -
                                             numberOfAssessmentsOfCorrectionRounds[correctionRound].inTime -
-                                            lockedSubmissionsByOtherTutorOfCorrectionRounds[correctionRound]?.inTime,
+                                            numberOfLockedAssessmentByOtherTutorsOfCorrectionRound[correctionRound]?.inTime,
                                         openAssessments: numberOfSubmissions.inTime - numberOfAssessmentsOfCorrectionRounds[correctionRound].inTime,
-                                        lockedSubmissionsByOtherTutor: lockedSubmissionsByOtherTutorOfCorrectionRounds[correctionRound]?.inTime,
+                                        lockedSubmissionsByOtherTutor: numberOfLockedAssessmentByOtherTutorsOfCorrectionRound[correctionRound]?.inTime,
                                         submissionsCorrectedInFirstRound: submissionsByCorrectionRound.get(correctionRound)?.length
                                     }"
                                 >

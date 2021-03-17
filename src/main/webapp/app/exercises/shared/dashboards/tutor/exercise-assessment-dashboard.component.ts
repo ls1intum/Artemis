@@ -69,7 +69,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
     numberOfSubmissions = new DueDateStat();
     totalNumberOfAssessments = new DueDateStat();
     numberOfAssessmentsOfCorrectionRounds = [new DueDateStat()];
-    lockedSubmissionsByOtherTutorOfCorrectionRounds = [new DueDateStat()];
+    numberOfLockedAssessmentByOtherTutorsOfCorrectionRound = [new DueDateStat()];
     numberOfComplaints = 0;
     numberOfOpenComplaints = 0;
     numberOfTutorComplaints = 0;
@@ -242,14 +242,15 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
                 (res: HttpResponse<Complaint[]>) => (this.moreFeedbackRequests = res.body as Complaint[]),
                 (error: HttpErrorResponse) => this.onError(error.message),
             );
-
+            console.log('what');
             this.exerciseService.getStatsForTutors(this.exerciseId).subscribe(
                 (res: HttpResponse<StatsForDashboard>) => {
                     this.statsForDashboard = StatsForDashboard.from(res.body!);
                     this.numberOfSubmissions = this.statsForDashboard.numberOfSubmissions;
                     this.totalNumberOfAssessments = this.statsForDashboard.totalNumberOfAssessments;
                     this.numberOfAssessmentsOfCorrectionRounds = this.statsForDashboard.numberOfAssessmentsOfCorrectionRounds;
-                    this.lockedSubmissionsByOtherTutorOfCorrectionRounds = this.statsForDashboard.lockedSubmissionsByOtherTutorOfCorrectionRounds;
+                    this.numberOfLockedAssessmentByOtherTutorsOfCorrectionRound = this.statsForDashboard.numberOfLockedAssessmentByOtherTutorsOfCorrectionRound;
+                    console.log('looked up stuff', this.numberOfLockedAssessmentByOtherTutorsOfCorrectionRound);
                     this.numberOfComplaints = this.statsForDashboard.numberOfComplaints;
                     this.numberOfOpenComplaints = this.statsForDashboard.numberOfOpenComplaints;
                     this.numberOfMoreFeedbackRequests = this.statsForDashboard.numberOfMoreFeedbackRequests;
