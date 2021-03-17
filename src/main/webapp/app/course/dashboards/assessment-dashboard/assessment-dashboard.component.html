@@ -133,12 +133,12 @@
                     </td>
                     <td *ngIf="!isExamMode">
                         <span placement="right" [hidden]="!exercise.dueDate" ngbTooltip="{{ exercise.dueDate | artemisDate }}">
-                            {{ exercise.dueDate | amTimeAgo }}
+                            {{ exercise.dueDate | artemisTimeAgo }}
                         </span>
                     </td>
                     <td *ngIf="!isExamMode">
                         <span placement="right" [hidden]="!exercise.assessmentDueDate" ngbTooltip="{{ exercise.assessmentDueDate | artemisDate }}">
-                            {{ exercise.assessmentDueDate | amTimeAgo }}
+                            {{ exercise.assessmentDueDate | artemisTimeAgo }}
                         </span>
                     </td>
 
@@ -175,7 +175,7 @@
                                     [(toggelingSecondCorrectionButton)]="toggelingSecondCorrectionButton"
                                 ></jhi-second-correction-enable-button>
                             </ng-container>
-                            <a class="btn btn-primary btn-sm" [routerLink]="['/course-management', courseId, exercise.type + '-exercises', exercise.id, 'assessment']">
+                            <a class="btn btn-primary btn-sm" [routerLink]="getSubmissionsLinkForExercise(exercise)">
                                 <span jhiTranslate="artemisApp.assessmentDashboard.submissions">Submissions</span>
                             </a>
                         </ng-container>
@@ -187,5 +187,5 @@
 
     <h2 *ngIf="!isExamMode">{{ 'artemisApp.instructorCourseDashboard.tutorLeaderboard.courseTitle' | artemisTranslate }}</h2>
 
-    <jhi-tutor-leaderboard *ngIf="!isExamMode" [tutorsData]="stats.tutorLeaderboardEntries" [course]="course"></jhi-tutor-leaderboard>
+    <jhi-tutor-leaderboard [exam]="exam" [tutorsData]="stats.tutorLeaderboardEntries" [course]="course"></jhi-tutor-leaderboard>
 </div>

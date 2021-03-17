@@ -23,7 +23,7 @@ import { ActiveMenuDirective } from 'app/shared/layouts/navbar/active-menu.direc
 import { NavbarComponent } from 'app/shared/layouts/navbar/navbar.component';
 import { LoadingNotificationComponent } from 'app/shared/notification/loading-notification/loading-notification.component';
 import { NotificationSidebarComponent } from 'app/shared/notification/notification-sidebar/notification-sidebar.component';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe.ts';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import * as chai from 'chai';
 import { JhiTranslateDirective } from 'ng-jhipster';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
@@ -481,8 +481,18 @@ describe('NavbarComponent', () => {
                 translate: true,
                 uri: '/course-management/1/exams/2/exercise-groups/',
             };
+            const exercisesCrumb = {
+                label: 'artemisApp.course.exercises',
+                translate: true,
+                uri: '/course-management/1/exams/2/exercise-groups/3/quiz-exercises/',
+            };
+            const createCrumb = {
+                label: 'global.generic.create',
+                translate: true,
+                uri: '/course-management/1/exams/2/exercise-groups/3/quiz-exercises/new/',
+            };
 
-            expect(component.breadcrumbs.length).to.equal(5);
+            expect(component.breadcrumbs.length).to.equal(7);
 
             // Use matching here to ignore non-semantic differences between objects
             sinon.assert.match(component.breadcrumbs[0], courseManagementCrumb);
@@ -490,6 +500,8 @@ describe('NavbarComponent', () => {
             sinon.assert.match(component.breadcrumbs[2], { label: 'artemisApp.examManagement.title', translate: true, uri: '/course-management/1/exams/' } as MockBreadcrumb);
             sinon.assert.match(component.breadcrumbs[3], { label: 'Test Exam', translate: false, uri: '/course-management/1/exams/2/' } as MockBreadcrumb);
             sinon.assert.match(component.breadcrumbs[4], exerciseGroupsCrumb);
+            sinon.assert.match(component.breadcrumbs[5], exercisesCrumb);
+            sinon.assert.match(component.breadcrumbs[6], createCrumb);
         });
     });
 });

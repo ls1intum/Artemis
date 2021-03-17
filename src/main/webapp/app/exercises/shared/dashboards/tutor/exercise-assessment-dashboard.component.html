@@ -1,4 +1,4 @@
-<jhi-header-exercise-page-with-details [exercise]="exercise" [exam]="exam" [isTestRun]="isTestRun" [onBackClick]="back.bind(this)">
+<jhi-header-exercise-page-with-details [exercise]="exercise" [exam]="exam" [isTestRun]="isTestRun" [displayBackButton]="false">
     <span *ngIf="!isTestRun" pagetitle>{{ 'artemisApp.exerciseAssessmentDashboard.pageHeader' | artemisTranslate }} {{ exercise?.title }}</span>
     <span *ngIf="isTestRun" pagetitle>{{ 'artemisApp.exerciseAssessmentDashboard.testRunPageHeader' | artemisTranslate }} {{ exercise?.title }}</span>
 </jhi-header-exercise-page-with-details>
@@ -29,7 +29,7 @@
                     [(secondCorrectionEnabled)]="secondCorrectionEnabled"
                     [(toggelingSecondCorrectionButton)]="toggelingSecondCorrectionButton"
                 ></jhi-second-correction-enable-button>
-                <a class="btn btn-primary btn-sm ml-1" [routerLink]="['/course-management', courseId, exercise.type + '-exercises', exercise.id, 'assessment']">
+                <a class="btn btn-primary btn-sm ml-1" [routerLink]="getSubmissionsLinkForExercise(exercise)">
                     <span jhiTranslate="artemisApp.assessmentDashboard.submissions">Submissions</span>
                 </a>
             </ng-container>
@@ -512,5 +512,5 @@
 
     <h2 *ngIf="!isExamMode">{{ 'artemisApp.instructorExerciseDashboard.leaderboardTitle' | artemisTranslate }}</h2>
 
-    <jhi-tutor-leaderboard *ngIf="!isExamMode" [tutorsData]="statsForDashboard.tutorLeaderboardEntries" [exercise]="exercise"></jhi-tutor-leaderboard>
+    <jhi-tutor-leaderboard [exam]="exam" [tutorsData]="statsForDashboard.tutorLeaderboardEntries" [exercise]="exercise"></jhi-tutor-leaderboard>
 </div>

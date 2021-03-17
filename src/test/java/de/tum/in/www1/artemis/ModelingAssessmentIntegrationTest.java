@@ -96,6 +96,8 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
 
     private Course course;
 
+    private Double offsetByTenThousandth = 0.0001;
+
     @BeforeEach
     public void initTestCase() throws Exception {
         database.addUsers(6, 2, 1);
@@ -390,7 +392,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
         createAssessment(submission, feedbacks, "/assessment?submit=true", HttpStatus.OK);
         ModelingSubmission storedSubmission = modelingSubmissionRepo.findWithEagerResultById(submission.getId()).get();
         Result storedResult = resultRepo.findByIdWithEagerFeedbacksAndAssessor(storedSubmission.getLatestResult().getId()).get();
-        assertThat(storedResult.getScore()).isEqualTo(expectedScore, Offset.offset(0.000001));
+        assertThat(storedResult.getScore()).isEqualTo(expectedScore, Offset.offset(offsetByTenThousandth));
     }
 
     @Test
@@ -419,7 +421,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
         storedSubmission = modelingSubmissionRepo.findWithEagerResultById(submission.getId()).get();
         storedResult = resultRepo.findByIdWithEagerFeedbacksAndAssessor(storedSubmission.getLatestResult().getId()).get();
 
-        assertThat(storedResult.getScore()).isEqualTo(110, Offset.offset(0.00001));
+        assertThat(storedResult.getScore()).isEqualTo(110, Offset.offset(offsetByTenThousandth));
     }
 
     // region Automatic Assessment Tests
