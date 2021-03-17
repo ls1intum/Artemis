@@ -561,9 +561,14 @@ public class ProgrammingExercise extends Exercise {
         super.filterSensitiveInformation();
     }
 
+    /**
+     * Get all results of a student participation which are rated or unrated
+     * @param participation The current participation
+     * @return all results which are completed and are either automatic or manually assessed
+     */
     @Override
     public Set<Result> findResultsFilteredForStudents(Participation participation) {
-        return participation.getResults().stream().filter(result -> checkForRatedAndAssessedResult(result)).collect(Collectors.toSet());
+        return participation.getResults().stream().filter(result -> checkForAssessedResult(result)).collect(Collectors.toSet());
     }
 
     /**
