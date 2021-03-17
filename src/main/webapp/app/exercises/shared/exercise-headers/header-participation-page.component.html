@@ -7,7 +7,7 @@
             <div class="d-flex align-items-center">
                 <h6 class="mr-2 mb-0">{{ 'artemisApp.courseOverview.exerciseDetails.dueDate' | artemisTranslate }}</h6>
                 <span>{{ (exercise.dueDate | artemisDate) || 'N/A' }}</span>
-                <span *ngIf="exercise.dueDate" [ngClass]="exerciseStatusBadge" class="badge ml-2">{{ exercise.dueDate | amTimeAgo }}</span>
+                <span *ngIf="exercise.dueDate" [ngClass]="exerciseStatusBadge" class="badge ml-2">{{ exercise.dueDate | artemisTimeAgo }}</span>
             </div>
             <div *ngIf="exercise.categories" class="d-sm-flex">
                 <h6 class="mr-1">{{ 'artemisApp.courseOverview.exerciseDetails.categories' | artemisTranslate }}</h6>
@@ -41,7 +41,7 @@
                     </td>
                     <td>
                         <span>{{ (exercise.assessmentDueDate | artemisDate) || 'N/A' }}</span>
-                        <span [ngClass]="exerciseStatusBadge" class="badge ml-1">{{ exercise.assessmentDueDate | amTimeAgo }}</span>
+                        <span [ngClass]="exerciseStatusBadge" class="badge ml-1">{{ exercise.assessmentDueDate | artemisTimeAgo }}</span>
                     </td>
                 </tr>
             </table>

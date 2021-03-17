@@ -11,10 +11,11 @@ import { Exam } from 'app/entities/exam.model';
 export class HeaderExercisePageWithDetailsComponent implements OnInit, OnChanges {
     readonly IncludedInOverallScore = IncludedInOverallScore;
     @Input() public exercise: Exercise;
-    @Input() public onBackClick: () => void;
+    @Input() public onBackClick: () => void; // TODO: This can be removed once we are happy with the breadcrumb navigation
     @Input() public title: string;
     @Input() public exam: Exam | null;
     @Input() public isTestRun = false;
+    @Input() public displayBackButton = true; // TODO: This can be removed once we are happy with the breadcrumb navigation
     public exerciseStatusBadge = 'badge-success';
     public exerciseCategories: ExerciseCategory[];
     public isExamMode = false;

@@ -109,6 +109,17 @@ public class GroupNotificationService {
     }
 
     /**
+     * Notify instructor groups about duplicate test cases.
+     *
+     * @param exercise         that has been updated
+     * @param notificationText that should be displayed
+     */
+    public void notifyInstructorGroupAboutDuplicateTestCasesForExercise(Exercise exercise, String notificationText) {
+        saveAndSend(createNotification(exercise, null, GroupNotificationType.TA, NotificationType.DUPLICATE_TEST_CASE, notificationText));
+        saveAndSend(createNotification(exercise, null, GroupNotificationType.INSTRUCTOR, NotificationType.DUPLICATE_TEST_CASE, notificationText));
+    }
+
+    /**
      * Notify tutor and instructor groups about a new question in a lecture.
      *
      * @param studentQuestion that has been posted

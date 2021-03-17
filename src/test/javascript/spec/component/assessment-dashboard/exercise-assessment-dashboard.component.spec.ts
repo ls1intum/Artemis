@@ -413,33 +413,6 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         expect(castedExercise).to.be.equal(exercise as ProgrammingExercise);
     });
 
-    describe('test navigate back', () => {
-        const courseId = 4;
-
-        it('should navigate back when not in exammode', () => {
-            comp.courseId = 4;
-            comp.back();
-            expect(navigateSpy).to.have.been.calledWith([`/course-management/${courseId}/assessment-dashboard`]);
-        });
-
-        it('should navigate back in exammode and not testRun', () => {
-            comp.courseId = 4;
-            comp.isExamMode = true;
-            comp.isTestRun = true;
-            comp.exercise = exercise;
-            comp.back();
-            expect(navigateSpy).to.have.been.calledWith([`/course-management/${courseId}/exams/${exercise!.exerciseGroup!.exam!.id}/test-runs/assess`]);
-        });
-
-        it('should navigate back in exammode and testRun', () => {
-            comp.courseId = 4;
-            comp.isExamMode = true;
-            comp.exercise = exercise;
-            comp.back();
-            expect(navigateSpy).to.have.been.calledWith([`/course-management/${courseId}/exams/${exercise!.exerciseGroup!.exam!.id}/assessment-dashboard`]);
-        });
-    });
-
     describe('openExampleSubmission', () => {
         const courseId = 4;
 
@@ -462,7 +435,6 @@ describe('ExerciseAssessmentDashboardComponent', () => {
     });
 
     describe('openAssessmentEditor', () => {
-        const courseId = 4;
         it('should not openExampleSubmission', () => {
             navigateSpy.resetHistory();
             const submission = { id: 8 };
@@ -475,27 +447,44 @@ describe('ExerciseAssessmentDashboardComponent', () => {
             comp.exercise.type = ExerciseType.MODELING;
             comp.courseId = 4;
             comp.exercise = exercise;
+            comp.exerciseId = exercise.id!;
             const submission = { id: 8 };
             comp.openAssessmentEditor(submission);
 
-            expect(navigateSpy).to.have.been.calledWith([`/course-management/${courseId}/${exercise.type}-exercises/${exercise.id}/submissions/${submission.id}/assessment`], {
-                queryParams: { 'correction-round': 0 },
-            });
+            const expectedUrl = [
+                '/course-management',
+                comp.courseId.toString(),
+                'modeling-exercises',
+                exercise.id!.toString(),
+                'submissions',
+                submission.id.toString(),
+                'assessment',
+            ];
+            expect(navigateSpy).to.have.been.calledWith(expectedUrl, { queryParams: { 'correction-round': 0 } });
         });
 
         it('should openExampleSubmission with programmingExercise', () => {
             comp.exercise = exercise;
             comp.exercise.type = ExerciseType.PROGRAMMING;
             comp.courseId = 4;
-            comp.exercise = exercise;
+            comp.exerciseId = exercise.id!;
             const participationId = 3;
             const submission = { id: 8, participation: { id: participationId } };
 
+            const expectedUrl = [
+                '/course-management',
+                comp.courseId.toString(),
+                'programming-exercises',
+                exercise.id!.toString(),
+                'code-editor',
+                participationId.toString(),
+                'assessment',
+            ];
             comp.openAssessmentEditor(submission);
-            expect(navigateSpy).to.have.been.calledWith([`/course-management/${courseId}/${exercise.type}-exercises/${exercise.id}/code-editor/${participationId}/assessment`]);
+            expect(navigateSpy).to.have.been.calledWith(expectedUrl);
             comp.isTestRun = true;
             comp.openAssessmentEditor(submission);
-            expect(navigateSpy).to.have.been.calledWith([`/course-management/${courseId}/${exercise.type}-exercises/${exercise.id}/code-editor/${participationId}/assessment`]);
+            expect(navigateSpy).to.have.been.calledWith(expectedUrl);
         });
     });
 });

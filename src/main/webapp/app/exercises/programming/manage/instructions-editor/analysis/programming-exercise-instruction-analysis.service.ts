@@ -23,7 +23,7 @@ export class ProgrammingExerciseInstructionAnalysisService {
 
     /**
      * Given a programming exercise's problem statement, analyze the test cases and hints contained (or not contained!) in it.
-     * Will give out a mixed object that contains singular anlysis for test cases / hints and a accumulated analysis object.
+     * Will give out a mixed object that contains singular analysis for test cases / hints and a accumulated analysis object.
      *
      * @param problemStatement  multiline string.
      * @param taskRegex         identifies tasks in a problem statement.
@@ -58,11 +58,17 @@ export class ProgrammingExerciseInstructionAnalysisService {
         const invalidTestCaseAnalysis = testCasesInMarkdown
             .map(
                 ([lineNumber, testCases]) =>
-                    [lineNumber, testCases.filter((testCase) => !exerciseTestCases.includes(testCase)), ProblemStatementIssue.INVALID_TEST_CASES] as AnalysisItem,
+                    [
+                        lineNumber,
+                        testCases.filter((testCase) => !exerciseTestCases.map((exTestcase) => exTestcase.toLowerCase()).includes(testCase.toLowerCase())),
+                        ProblemStatementIssue.INVALID_TEST_CASES,
+                    ] as AnalysisItem,
             )
             .filter(([, testCases]) => testCases.length);
         // Look for test cases that are part of the test repository but not in the problem statement. Probably forgotten to insert.
-        const missingTestCases = exerciseTestCases.filter((testCase) => !testCasesInMarkdown.some(([, foundTestCases]) => foundTestCases.includes(testCase)));
+        const missingTestCases = exerciseTestCases.filter(
+            (testCase) => !testCasesInMarkdown.some(([, foundTestCases]) => foundTestCases.map((foundTestCase) => foundTestCase.toLowerCase()).includes(testCase.toLowerCase())),
+        );
 
         const invalidTestCases = compose(
             flatten,
