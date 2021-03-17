@@ -538,7 +538,10 @@ public class StudentExamResource {
     private void filterParticipation(StudentExam studentExam, Exercise exercise, List<StudentParticipation> participations, boolean isAtLeastInstructor) {
         // remove the unnecessary inner course attribute
         exercise.setCourse(null);
-        exercise.setExerciseGroup(null);
+
+        if (!isAtLeastInstructor) {
+            exercise.setExerciseGroup(null);
+        }
 
         if (exercise instanceof ProgrammingExercise) {
             ((ProgrammingExercise) exercise).setTestRepositoryUrl(null);

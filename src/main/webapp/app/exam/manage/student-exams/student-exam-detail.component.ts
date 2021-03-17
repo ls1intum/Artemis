@@ -134,6 +134,7 @@ export class StudentExamDetailComponent implements OnInit {
                 this.achievedTotalPoints += this.rounding((exercise.studentParticipations[0].results[0].score! * exercise.maxPoints!) / 100);
             }
         });
+        console.log(this.studentExam);
     }
 
     private initWorkingTimeForm() {
