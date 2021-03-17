@@ -4,6 +4,9 @@ import static de.tum.in.www1.artemis.service.util.TimeLogUtil.formatDurationFrom
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 import static java.time.ZonedDateTime.now;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
@@ -13,6 +16,9 @@ import java.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.InputStreamResource;
+import org.springframework.core.io.Resource;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -866,4 +872,37 @@ public class ExamResource {
         examService.archiveExam(exam);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, examId.toString())).build();
     }
+
+    /**
+     * Downloads the zip file of the archived exam if it exists. Throws a 404 if the exam doesn't exist.
+     *
+     * @param courseId The course id of the course
+     * @param examId The id of the archived exam
+     * @return ResponseEntity with status
+     */
+    @GetMapping("/courses/{courseId}/exams/{examId}/download-archive")
+    @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR')")
+    public ResponseEntity<Resource> downloadExamArchive(@PathVariable Long courseId, @PathVariable Long examId) throws FileNotFoundException {
+        log.info("REST request to download archive of exam : {}", examId);
+
+        final Exam exam = examRepository.findByIdElseThrow(examId);
+        if (exam == null) {
+            return notFound();
+        }
+
+        Optional<ResponseEntity<Exam>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccessForInstructor(courseId, examId);
+        if (courseAndExamAccessFailure.isPresent()) {
+            return forbidden();
+        }
+
+        if (!exam.hasExamArchive()) {
+            return notFound();
+        }
+
+        // The path is stored in the course table
+        File zipFile = new File(exam.getExamArchivePath());
+        InputStreamResource resource = new InputStreamResource(new FileInputStream(zipFile));
+        return ResponseEntity.ok().contentLength(zipFile.length()).contentType(MediaType.APPLICATION_OCTET_STREAM).header("filename", zipFile.getName()).body(resource);
+    }
+
 }
