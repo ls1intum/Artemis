@@ -22,6 +22,8 @@ public class SAML2Properties {
 
     private String registrationNumberPattern;
 
+    private String langKeyPattern;
+
     private List<RelyingPartyProperties> identityProviders;
 
     /**
@@ -112,6 +114,24 @@ public class SAML2Properties {
      */
     public void setRegistrationNumberPattern(String registrationNumberPattern) {
         this.registrationNumberPattern = registrationNumberPattern;
+    }
+
+    /**
+     * Gets the language key pattern.
+     *
+     * @return The language key pattern.
+     */
+    public String getLangKeyPattern() {
+        return langKeyPattern;
+    }
+
+    /**
+     * Sets the language key pattern.
+     *
+     * @param langKeyPattern  The language key pattern
+     */
+    public void setLangKeyPattern(String langKeyPattern) {
+        this.langKeyPattern = langKeyPattern;
     }
 
     /**

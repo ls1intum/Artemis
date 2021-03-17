@@ -111,6 +111,7 @@ public class SAML2Service {
         newUser.setLastName(substituteAttributes(properties.getLastNamePattern(), principal));
         newUser.setEmail(substituteAttributes(properties.getEmailPattern(), principal));
         newUser.setVisibleRegistrationNumber(substituteAttributes(properties.getRegistrationNumberPattern(), principal));
+        newUser.setLangKey(substituteAttributes(properties.getLangKeyPattern(), principal));
         newUser.setAuthorities(new HashSet<>(Set.of(AuthoritiesConstants.USER)));
         newUser.setGroups(new HashSet<>());
 

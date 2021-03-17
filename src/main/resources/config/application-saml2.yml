@@ -22,6 +22,7 @@ saml2:
     last-name-pattern: '{last_name}'
     email-pattern: '{email}'
     registration-number-pattern: '{uid}'
+    lang-key-pattern: 'en' # can be a pattern or fixed to en/de
     # A list of identity provides (IdP). Metadata location can be a local path (or classpath) or url.
     # If your IdP does not publish its metadata you can generate it here: https://www.samltool.com/idp_metadata.php
     identity-providers:
