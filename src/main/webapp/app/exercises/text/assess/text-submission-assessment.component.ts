@@ -117,7 +117,6 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         this.unusedTextBlockRefs = [];
         this.complaint = undefined;
         this.totalScore = 0;
-        this.resultId = 0;
 
         this.isLoading = true;
         this.saveBusy = false;
