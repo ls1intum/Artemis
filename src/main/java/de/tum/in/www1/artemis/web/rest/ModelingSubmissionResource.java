@@ -199,11 +199,16 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
 
         if (resultId > 0) {
             modelingSubmission = modelingSubmissionService.findOneWithEagerResultAndFeedback(submissionId);
-            Result result = modelingSubmission.getManualResults().stream().filter(result1 -> result1.getId().equals(resultId)).findFirst().get();
-            correctionRound = modelingSubmission.getManualResults().indexOf(result);
+            // check if result exists
+            Result result = modelingSubmission.getManualResultsById(resultId);
+            if (result == null) {
+                return ResponseEntity.badRequest()
+                        .headers(HeaderUtil.createFailureAlert(applicationName, true, "ModelingSubmission", "ResultNotFound", "No Result was found for the given ID.")).body(null);
+            }
         }
-
-        modelingSubmission = modelingSubmissionService.lockAndGetModelingSubmission(submissionId, modelingExercise, correctionRound);
+        else {
+            modelingSubmission = modelingSubmissionService.lockAndGetModelingSubmission(submissionId, modelingExercise, correctionRound);
+        }
         // Make sure the exercise is connected to the participation in the json response
         studentParticipation.setExercise(modelingExercise);
         modelingSubmission.getParticipation().getExercise().setGradingCriteria(gradingCriteria);

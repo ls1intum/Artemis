@@ -253,7 +253,7 @@ public class TextAssessmentResource extends AssessmentResource {
      *
      * @param submissionId the id of the submission we want
      * @param correctionRound correction round for which we want the submission
-     * @param resultId the resultId for which we want do get the submission
+     * @param resultId if result already exists, we want to get the submission for this specific result
      * @return a Participation of the tutor in the submission
      */
     @GetMapping("/submission/{submissionId}")
@@ -283,21 +283,29 @@ public class TextAssessmentResource extends AssessmentResource {
 
         Result result;
         if (resultId > 0) {
-            result = textSubmission.getManualResults().stream().filter(result1 -> result1.getId().equals(resultId)).findFirst().get();
-            correctionRound = textSubmission.getManualResults().indexOf(result);
+            // in case resultId is set we get result by id
+            result = textSubmission.getManualResultsById(resultId);
+
+            if (result == null) {
+                return ResponseEntity.badRequest()
+                        .headers(HeaderUtil.createFailureAlert(applicationName, true, "TextSubmission", "ResultNotFound", "No Result was found for the given ID.")).body(null);
+            }
         }
         else {
+            // in case no resultId is set we get result by correctionRound
             result = textSubmission.getResultForCorrectionRound(correctionRound);
+
+            if (result != null && !isAtLeastInstructorForExercise && result.getAssessor() != null && !result.getAssessor().getLogin().equals(user.getLogin())
+                    && result.getCompletionDate() == null) {
+                // If we already have a result, we need to check if it is locked.
+                throw new BadRequestAlertException("This submission is being assessed by another tutor", ENTITY_NAME, "alreadyAssessed");
+            }
+
+            textSubmissionService.lockTextSubmissionToBeAssessed(textSubmission, correctionRound);
         }
 
-        if (result != null && !isAtLeastInstructorForExercise && result.getAssessor() != null && !result.getAssessor().getLogin().equals(user.getLogin())
-                && result.getCompletionDate() == null) {
-            // If we already have a result, we need to check if it is locked.
-            throw new BadRequestAlertException("This submission is being assessed by another tutor", ENTITY_NAME, "alreadyAssessed");
-        }
-
-        textSubmissionService.lockTextSubmissionToBeAssessed(textSubmission, correctionRound);
-        textAssessmentService.prepareSubmissionForAssessment(textSubmission, correctionRound);
+        // prepare and load in all feedbacks
+        textAssessmentService.prepareSubmissionForAssessment(textSubmission, result);
 
         List<GradingCriterion> gradingCriteria = gradingCriterionService.findByExerciseIdWithEagerGradingCriteria(exercise.getId());
         exercise.setGradingCriteria(gradingCriteria);
@@ -309,11 +317,14 @@ public class TextAssessmentResource extends AssessmentResource {
         textSubmission.getResults().forEach(r -> r.setSubmission(null));
 
         // set result again as it was changed
-        result = textSubmission.getResultForCorrectionRound(correctionRound);
-
-        if (resultId != 0) {
+        if (resultId > 0) {
+            result = textSubmission.getManualResultsById(resultId);
             textSubmission.setResults(Collections.singletonList(result));
         }
+        else {
+            result = textSubmission.getResultForCorrectionRound(correctionRound);
+        }
+
         participation.setResults(Set.copyOf(textSubmission.getResults()));
 
         final ResponseEntity.BodyBuilder bodyBuilder = ResponseEntity.ok();

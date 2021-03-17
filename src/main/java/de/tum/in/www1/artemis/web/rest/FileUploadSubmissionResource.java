@@ -169,18 +169,24 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
         fileUploadExercise.setGradingCriteria(gradingCriteria);
 
         if (resultId > 0) {
-            fileUploadSubmission = fileUploadSubmissionService.findOneWithEagerResultAndFeedback(submissionId);
-            Result result = fileUploadSubmission.getManualResults().stream().filter(result1 -> result1.getId().equals(resultId)).findFirst().get();
-            correctionRound = fileUploadSubmission.getManualResults().indexOf(result);
+            fileUploadSubmission = fileUploadSubmissionService.findOneWithEagerResultAndAssessorAndFeedback(submissionId);
+            Result result = fileUploadSubmission.getManualResultsById(resultId);
+            if (result == null) {
+                return ResponseEntity.badRequest()
+                        .headers(HeaderUtil.createFailureAlert(applicationName, true, "FileUploadSubmission", "ResultNotFound", "No Result was found for the given ID."))
+                        .body(null);
+            }
+        }
+        else {
+            fileUploadSubmission = fileUploadSubmissionService.lockAndGetFileUploadSubmission(submissionId, fileUploadExercise, correctionRound);
         }
 
-        fileUploadSubmission = fileUploadSubmissionService.lockAndGetFileUploadSubmission(submissionId, fileUploadExercise, correctionRound);
         // Make sure the exercise is connected to the participation in the json response
         studentParticipation.setExercise(fileUploadExercise);
         fileUploadSubmission.getParticipation().getExercise().setGradingCriteria(gradingCriteria);
         this.fileUploadSubmissionService.hideDetails(fileUploadSubmission, user);
 
-        if (correctionRound == 0 && fileUploadSubmission.getResults().size() == 2) {
+        if (correctionRound == 0 && resultId == 0 && fileUploadSubmission.getResults().size() == 2) {
             var resultList = new ArrayList<Result>();
             resultList.add(fileUploadSubmission.getFirstResult());
             fileUploadSubmission.setResults(resultList);
