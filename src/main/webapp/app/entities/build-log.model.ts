@@ -66,7 +66,10 @@ export class BuildLogEntryArray extends Array<BuildLogEntry> {
                 // Parse build logs
                 .map(({ log, time }) => ({ log: log.match(errorLogRegex), time }))
                 // Remove entries that could not be parsed, are too short or not errors
-                .filter(({ log }: { log: ParsedLogEntry | null; time: string }) => log && log.length === 6 && (log[1] === 'ERROR' || log[4] === 'error:'))
+                .filter(({ log }: { log: ParsedLogEntry | null; time: string }) => {
+                    // Java logs do not always contain "ERROR"
+                    return log && log.length === 6 && (log[0]?.includes(':[') || log[1] === 'ERROR' || log[4] === 'error:');
+                })
                 // Sort entries to fit a standard format
                 .map(({ log, time }) => {
                     const sortedLog = [...log!];
