@@ -493,13 +493,9 @@ public class ModelingExerciseResource {
             return forbidden();
         }
 
-        Optional<PlagiarismResult> optionalPreviousResult = plagiarismService.getPlagiarismResult(modelingExercise);
-
         ModelingPlagiarismResult result = modelingPlagiarismDetectionService.compareSubmissions(modelingExercise, similarityThreshold / 100, minimumSize, minimumScore);
 
-        plagiarismService.savePlagiarismResult(result);
-
-        optionalPreviousResult.ifPresent(plagiarismService::deletePlagiarismResult);
+        plagiarismService.savePlagiarismResultAndRemovePrevious(result);
 
         return ResponseEntity.ok(result);
     }

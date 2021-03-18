@@ -71,8 +71,12 @@ public class PlagiarismService {
      *
      * @param result TextPlagiarismResult to store in the database.
      */
-    public void savePlagiarismResult(TextPlagiarismResult result) {
+    public void savePlagiarismResultAndRemovePrevious(TextPlagiarismResult result) {
+        Optional<PlagiarismResult> optionalPreviousResult = this.getPlagiarismResult(result.getExercise());
+
         plagiarismResultRepository.save(result);
+
+        optionalPreviousResult.ifPresent(this::deletePlagiarismResult);
     }
 
     /**
@@ -80,8 +84,12 @@ public class PlagiarismService {
      *
      * @param result ModelingPlagiarismResult to store in the database.
      */
-    public void savePlagiarismResult(ModelingPlagiarismResult result) {
+    public void savePlagiarismResultAndRemovePrevious(ModelingPlagiarismResult result) {
+        Optional<PlagiarismResult> optionalPreviousResult = this.getPlagiarismResult(result.getExercise());
+
         plagiarismResultRepository.save(result);
+
+        optionalPreviousResult.ifPresent(this::deletePlagiarismResult);
     }
 
 }

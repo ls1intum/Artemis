@@ -1285,13 +1285,9 @@ public class ProgrammingExerciseResource {
                     "Artemis does not support plagiarism checks for the programming language " + language)).body(null);
         }
 
-        Optional<PlagiarismResult> optionalPreviousResult = plagiarismService.getPlagiarismResult(programmingExercise);
-
         TextPlagiarismResult result = programmingExerciseExportService.checkPlagiarism(exerciseId, similarityThreshold, minimumScore);
 
-        plagiarismService.savePlagiarismResult(result);
-
-        optionalPreviousResult.ifPresent(plagiarismService::deletePlagiarismResult);
+        plagiarismService.savePlagiarismResultAndRemovePrevious(result);
 
         return ResponseEntity.ok(result);
     }
