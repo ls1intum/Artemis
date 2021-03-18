@@ -703,6 +703,8 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     public void testOverrideAutomaticAssessment() throws Exception {
+        classExercise.setDueDate((ZonedDateTime.now().minusHours(1)));
+        exerciseRepo.save(classExercise);
         modelingSubmission = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.partial.json", "student1");
         modelingAssessment = database.addModelingAssessmentForSubmission(classExercise, modelingSubmission, "test-data/model-assessment/assessment.54727.partial.json", "tutor1",
                 true);
@@ -711,7 +713,17 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json"), true);
         ModelingSubmission storedSubmission = request.postWithResponseBody("/api/exercises/" + classExercise.getId() + "/modeling-submissions", submission,
                 ModelingSubmission.class, HttpStatus.OK);
-        Result resultWithFeedback = compassService.getResultWithFeedbackSuggestionsForSubmission(storedSubmission.getId());
+
+        LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("lock", "true");
+        params.add("correction-round", "0");
+        ModelingSubmission submissionWithAutomaticAssessment = request.get("/api/exercises/" + classExercise.getId() + "/modeling-submission-without-assessment", HttpStatus.OK,
+                ModelingSubmission.class, params);
+
+        assertThat(submissionWithAutomaticAssessment.getId()).isEqualTo(storedSubmission.getId());
+        assertThat(compassService.getResultWithFeedbackSuggestionsForSubmission(storedSubmission.getId())).isNull();
+
+        Result resultWithFeedback = submissionWithAutomaticAssessment.getLatestResult();
         List<Feedback> existingFeedback = resultWithFeedback.getFeedbacks();
         Feedback feedback = existingFeedback.get(0);
         existingFeedback.set(0, feedback.credits(feedback.getCredits() + 0.5));
