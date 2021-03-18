@@ -254,7 +254,7 @@ public class ExerciseResource {
         stats.setTotalNumberOfAssessments(totalNumberOfAssessments);
 
         final DueDateStat[] numberOfAssessmentsOfCorrectionRounds;
-        int numberOfCorrectionRounds = 0;
+        int numberOfCorrectionRounds = 1;
         if (examMode) {
             // set number of corrections specific to each correction round
             numberOfCorrectionRounds = exercise.getExerciseGroup().getExam().getNumberOfCorrectionRoundsInExam();
