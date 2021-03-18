@@ -127,12 +127,10 @@ class AutomaticAssessmentControllerTest {
         automaticAssessmentController.addSimilaritySetAssessment(1, similaritySetAssessment);
         automaticAssessmentController.addFeedbacksToSimilaritySet(feedbacks, activityDiagram);
 
-        Optional<SimilaritySetAssessment> ssA = automaticAssessmentController.getAssessmentForSimilaritySet(1);
-        List<Long> ids = ssA.get().getFeedbackList().stream().map(Feedback::getId).collect(Collectors.toList());
+        List<Long> ids = automaticAssessmentController.getAssessmentForSimilaritySet(1).get().getFeedbackList().stream().map(Feedback::getId).collect(Collectors.toList());
         assertThat(ids).contains(feedback3.getId());
         assertThat(ids).contains(feedback1.getId());
-        Optional<SimilaritySetAssessment> ssA2 = automaticAssessmentController.getAssessmentForSimilaritySet(2);
-        assertThat(ssA2.get().getFeedbackList().get(0).getId()).isEqualTo(feedback2.getId());
+        assertThat(automaticAssessmentController.getAssessmentForSimilaritySet(2).get().getFeedbackList().get(0).getId()).isEqualTo(feedback2.getId());
     }
 
     @Test
@@ -227,7 +225,7 @@ class AutomaticAssessmentControllerTest {
     }
 
     @Test
-    void getLastAssessmentConfidence() {
+    void testGetLastAssessmentConfidence() {
         CompassResult compassResult = mock(CompassResult.class, withSettings().serializable());
         doReturn(0.456).when(compassResult).getConfidence();
         automaticAssessmentController.setLastAssessmentCompassResult(classDiagram.getModelSubmissionId(), compassResult);
@@ -236,13 +234,13 @@ class AutomaticAssessmentControllerTest {
     }
 
     @Test
-    void getLastAssessmentConfidenceNoCompassResult() {
+    void testGetLastAssessmentConfidenceNoCompassResult() {
         double confidence = automaticAssessmentController.getLastAssessmentConfidence(classDiagram.getModelSubmissionId());
         assertThat(confidence).isEqualTo(-1);
     }
 
     @Test
-    void getLastAssessmentCoverage() {
+    void testGetLastAssessmentCoverage() {
         CompassResult compassResult = mock(CompassResult.class, withSettings().serializable());
         doReturn(0.789).when(compassResult).getCoverage();
         automaticAssessmentController.setLastAssessmentCompassResult(classDiagram.getModelSubmissionId(), compassResult);
@@ -251,7 +249,7 @@ class AutomaticAssessmentControllerTest {
     }
 
     @Test
-    void getLastAssessmentCoverageNoCompassResult() {
+    void testGetLastAssessmentCoverageNoCompassResult() {
         double confidence = automaticAssessmentController.getLastAssessmentCoverage(classDiagram.getModelSubmissionId());
         assertThat(confidence).isEqualTo(-1);
     }
