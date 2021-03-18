@@ -88,9 +88,9 @@ under ``localhost:7990``.
    - Jira:
     - On startup select ``I'll set it up myself``
     - Select Build In Database Connection
-    - Create a sample project.
+    - Create a sample project
 
-   - Bitbucket: Do not connect Bitbucket with Jira yet.
+   - Bitbucket: Do not connect Bitbucket with Jira yet
 
 
 3. Execute the shell script ``atlassian-setup.sh`` in the
