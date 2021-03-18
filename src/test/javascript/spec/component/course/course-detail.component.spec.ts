@@ -20,6 +20,7 @@ import { AlertComponent } from 'app/shared/alert/alert.component';
 import { AlertErrorComponent } from 'app/shared/alert/alert-error.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { CourseExamArchiveButtonComponent } from 'app/shared/components/course-exam-archive-button/course-exam-archive-button.component';
 
 describe('Course Management Detail Component', () => {
     let comp: CourseDetailComponent;
@@ -38,6 +39,7 @@ describe('Course Management Detail Component', () => {
                 MockDirective(AlertComponent),
                 MockPipe(ArtemisDatePipe),
                 MockDirective(JhiTranslateDirective),
+                MockComponent(CourseExamArchiveButtonComponent),
             ],
             providers: [
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute() },

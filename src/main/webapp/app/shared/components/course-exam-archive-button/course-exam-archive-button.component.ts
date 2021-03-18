@@ -15,7 +15,7 @@ import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { Subject } from 'rxjs';
 import { AccountService } from 'app/core/auth/account.service';
 
-type CourseExamArchiveState = {
+export type CourseExamArchiveState = {
     exportState: 'COMPLETED' | 'RUNNING';
     progress: string;
 };
@@ -79,7 +79,7 @@ export class CourseExamArchiveButtonComponent implements OnInit, OnDestroy {
         this.dialogErrorSource.unsubscribe();
     }
 
-    private registerArchiveWebsocket() {
+    registerArchiveWebsocket() {
         const topic = this.getArchiveStateTopic();
         this.websocketService.subscribe(topic);
         this.websocketService
@@ -88,7 +88,7 @@ export class CourseExamArchiveButtonComponent implements OnInit, OnDestroy {
             .subscribe();
     }
 
-    private handleArchiveStateChanges(courseArchiveState: CourseExamArchiveState) {
+    handleArchiveStateChanges(courseArchiveState: CourseExamArchiveState) {
         const { exportState, progress } = courseArchiveState;
         this.isBeingArchived = exportState === 'RUNNING';
         this.archiveButtonText = exportState === 'RUNNING' ? progress : this.getArchiveButtonText();
@@ -99,7 +99,7 @@ export class CourseExamArchiveButtonComponent implements OnInit, OnDestroy {
         }
     }
 
-    private reloadCourseOrExam() {
+    reloadCourseOrExam() {
         if (this.archiveMode === 'Exam' && this.exam) {
             this.examService.find(this.course.id!, this.exam.id!).subscribe((res) => {
                 this.exam = res.body!;
@@ -111,7 +111,7 @@ export class CourseExamArchiveButtonComponent implements OnInit, OnDestroy {
         }
     }
 
-    private getArchiveSuccessText() {
+    getArchiveSuccessText() {
         if (this.archiveMode === 'Course') {
             return this.translateService.instant('artemisApp.courseExamArchive.archiveCourseSuccess');
         } else {
@@ -119,7 +119,7 @@ export class CourseExamArchiveButtonComponent implements OnInit, OnDestroy {
         }
     }
 
-    private getArchiveButtonText() {
+    getArchiveButtonText() {
         if (this.archiveMode === 'Course') {
             return this.translateService.instant('artemisApp.courseExamArchive.archiveCourse');
         } else {
@@ -127,7 +127,7 @@ export class CourseExamArchiveButtonComponent implements OnInit, OnDestroy {
         }
     }
 
-    private getArchiveStateTopic() {
+    getArchiveStateTopic() {
         if (this.archiveMode === 'Exam' && this.exam) {
             return '/topic/exams/' + this.exam.id + '/export';
         } else {
@@ -196,7 +196,7 @@ export class CourseExamArchiveButtonComponent implements OnInit, OnDestroy {
 
     canCleanupCourse() {
         if (this.archiveMode !== 'Course') {
-            return;
+            return false;
         }
 
         // A course can only be cleaned up if the course has been archived.
