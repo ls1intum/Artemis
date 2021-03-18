@@ -181,8 +181,6 @@ describe('CoursesComponent', () => {
         const navigateSpy = sinon.spy(router, 'navigate');
         component.nextRelevantCourseForExam = course1;
         component.nextRelevantExams = exams;
-        const findAllForDashboardStub = stub(courseService, 'findAllForDashboard');
-        findAllForDashboardStub.returns(of(new HttpResponse({ body: courses, headers: new HttpHeaders() })));
 
         component.openExam();
 
