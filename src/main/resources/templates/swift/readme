@@ -24,7 +24,7 @@ Use the strategy pattern to select the right sorting algorithm at runtime.
 1. [task][SortStrategy Protocol](testClassSortStrategy,testMethodsSortStrategy)
 Create a `SortStrategy` protocol and adjust the sorting algorithms so that they implement this protocol.
 
-2. [task][Context Class](testAttributesContext,testMethodsContext)
+2. [task][Context Class](testClassContext,testAttributesContext,testMethodsContext)
 Create and implement a `Context` class following the below class diagram
 
 3. [task][Context Policy](testClassPolicy,testAttributesPolicy,testMethodsPolicy)
