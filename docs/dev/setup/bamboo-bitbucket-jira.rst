@@ -74,20 +74,34 @@ Bamboo instance under ``localhost:8085`` and the Bitbucket instance
 under ``localhost:7990``.
 
 **Get evaluation licenses for Atlassian products:** `Atlassian Licenses <https://my.atlassian.com/license/evaluation>`__
+1. Click on new Trial License and choose either Bamboo, Bitbucket and Jira Service Management.
 
-1. Create an admin user with the same credentials in all 3 applications.
-   Create a sample project in Jira. Also, you can select the
-   evaluation/internal/test/dev setups if you are asked. Select a
-   ``Bitbucket (Server)`` license if asked. Do not connect Bitbucket
-   with Jira yet.
+   - Bamboo: Select Bamboo (Server) and ``not installed yet``
+   - Bitbucket: Select Bitbucket (Data Center) and ``not installed yet``
+   - Jira: Select Jira Service Management (formerly Service Desk) (Data Center) and ``not installed yet``
 
-2. | Execute the shell script ``atlassian-setup.sh`` in the
-     ``src/main/docker`` directory (e.g. with
-     ``src/main/docker/./atlassian-setup.sh``). This script creates
-     groups, users ([STRIKEOUT:and adds them to the created groups] NOT
-     YET) and disabled application links between the 3 applications
+2. Provide the just created license key during the setup and create an admin user with the same credentials in all 3 applications.
+   Also, you can select the evaluation/internal/test/dev setups if you are asked.
+   Follow the additional steps for Jira and Bitbucket.
 
-3. Enable the created `application
+   Jira:
+
+   - On startup select ``I'll set it up myself``
+   - Select Build In Database Connection
+   - Create a sample project.
+
+   Bitbucket:
+
+   - Do not connect Bitbucket with Jira yet.
+
+
+3. Execute the shell script ``atlassian-setup.sh`` in the
+   ``src/main/docker`` directory (e.g. with
+   ``src/main/docker/./atlassian-setup.sh``). This script creates
+   groups, users ([STRIKEOUT:and adds them to the created groups] NOT
+   YET) and disabled application links between the 3 applications
+
+4. Enable the created `application
    links <https://confluence.atlassian.com/doc/linking-to-another-application-360677690.html>`__
    between all 3 application (OAuth Impersonate). The links should open automatically after the shell script
    has finished. If not open them manually:
@@ -137,7 +151,7 @@ under ``localhost:7990``.
 
        Jira → Bitbucket
 
-4. The script has already created users and groups but you need to
+5. The script has already created users and groups but you need to
    manually assign the users into their respective group in Jira. In our
    test setup, users 1-5 are students, 6-10 are tutors and 11-15 are
    instructors. The usernames are artemis_test_user_{1-15} and the
@@ -145,7 +159,7 @@ under ``localhost:7990``.
    you have to manually choose the created groups(students, tutors,
    instructors).
 
-5. Use the `user directories in
+6. Use the `user directories in
    Jira <https://confluence.atlassian.com/adminjiraserver/allowing-connections-to-jira-for-user-management-938847045.html>`__
    to synchronize the users in bitbucket and bamboo:
 
@@ -167,27 +181,27 @@ under ``localhost:7990``.
        .. figure:: bamboo-bitbucket-jira/user_directories.png
           :align: center
 
-6. In Bamboo create a global variable named
+7. In Bamboo create a global variable named
    SERVER_PLUGIN_SECRET_PASSWORD, the value of this variable will be used
    as the secret. The value of this variable should be then stored in
    ``src/main/resources/config/application-artemis.yml`` as the value of
    ``artemis-authentication-token-value``.
 
-7. Download the
+8. Download the
    `bamboo-server-notifaction-plugin <https://github.com/ls1intum/bamboo-server-notification-plugin/releases>`__
    and add it to bamboo. Go to Bamboo → Manage apps → Upload app → select
    the downloaded .jar file → Upload
 
-8. Add Maven and JDK:
+9. Add Maven and JDK:
 
    -  Go to Bamboo → Server capabilities → Add capabilities menu →
       Capability type ``Executable`` → select type ``Maven 3.x`` → insert
       ``Maven 3`` as executable label → insert ``/artemis`` as path.
 
-   -  Add capabilities menu → Capability type ``JDK`` → insert ``JDK``
+   -  Add capabilities menu → Capability type ``JDK`` → insert ``JDK15``
       as JDK label → insert ``/usr/lib/jvm/java-15-oracle`` as Java home.
 
-9. Generate a personal access token
+10. Generate a personal access token
 
    While username and password can still be used as a fallback, this option is already marked as deprecated and will
    be removed in the future.
@@ -226,7 +240,7 @@ under ``localhost:7990``.
                   password: <password>
                   token: #insert the token here
 
-10. Disable XSRF checking
+11. Disable XSRF checking
     Although XSRF checking is highly recommended, we currently have to disable it as Artemis does not yet support
     sending the required headers.
 
@@ -237,7 +251,7 @@ under ``localhost:7990``.
         .. figure:: bamboo-bitbucket-jira/bamboo_xsrf_disable.png
            :align: center
 
-11. Add a SSH key for the admin user
+12. Add a SSH key for the admin user
 
     Artemis can clone/push the repositories during setup and for the online code editor using SSH.
     If the SSH key is not present, the username + token will be used as fallback (and all git operations will use HTTP(S) instead of SSH).
