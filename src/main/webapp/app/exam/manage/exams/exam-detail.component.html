@@ -43,6 +43,8 @@
                 <span>{{ 'artemisApp.examManagement.students' | artemisTranslate }}</span>
             </a>
 
+            <jhi-course-exam-archive-button [archiveMode]="'Exam'" [exam]="exam" [course]="exam.course"></jhi-course-exam-archive-button>
+
             <hr />
             <!-- Exam Checklist -->
             <div *ngIf="isAtLeastInstructor">

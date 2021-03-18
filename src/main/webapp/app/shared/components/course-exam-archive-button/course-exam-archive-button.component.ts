@@ -13,6 +13,7 @@ import { downloadZipFileFromResponse } from 'app/shared/util/download.util';
 import { ButtonSize } from '../button.component';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { Subject } from 'rxjs';
+import { AccountService } from 'app/core/auth/account.service';
 
 type CourseExamArchiveState = {
     exportState: 'COMPLETED' | 'RUNNING';
@@ -38,7 +39,7 @@ export class CourseExamArchiveButtonComponent implements OnInit, OnDestroy {
     exam?: Exam;
 
     isBeingArchived = false;
-    archiveButtonText = this.getArchiveButtonText();
+    archiveButtonText = '';
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
@@ -50,6 +51,7 @@ export class CourseExamArchiveButtonComponent implements OnInit, OnDestroy {
         private websocketService: JhiWebsocketService,
         private translateService: TranslateService,
         private modalService: NgbModal,
+        private accountService: AccountService,
     ) {}
 
     ngOnInit() {
@@ -59,6 +61,7 @@ export class CourseExamArchiveButtonComponent implements OnInit, OnDestroy {
         }
 
         this.registerArchiveWebsocket();
+        this.archiveButtonText = this.getArchiveButtonText();
 
         // update the span title on each language change
         this.translateService.onLangChange.subscribe(() => {
@@ -139,7 +142,7 @@ export class CourseExamArchiveButtonComponent implements OnInit, OnDestroy {
         } else {
             isOver = !!this.course.endDate?.isBefore(moment());
         }
-        return !!this.course.isAtLeastInstructor && isOver;
+        return this.accountService.isAtLeastInstructorInCourse(this.course) && isOver;
     }
 
     /**
@@ -174,7 +177,7 @@ export class CourseExamArchiveButtonComponent implements OnInit, OnDestroy {
         }
 
         // You can only download one if the path to the archive is present
-        return !!this.course.isAtLeastInstructor && hasArchive;
+        return this.accountService.isAtLeastInstructorInCourse(this.course) && hasArchive;
     }
 
     downloadArchive() {
@@ -198,7 +201,7 @@ export class CourseExamArchiveButtonComponent implements OnInit, OnDestroy {
 
         // A course can only be cleaned up if the course has been archived.
         const canCleanup = !!this.course.courseArchivePath && this.course.courseArchivePath.length > 0;
-        return !!this.course.isAtLeastInstructor && canCleanup;
+        return this.accountService.isAtLeastInstructorInCourse(this.course) && canCleanup;
     }
 
     cleanupCourse() {
