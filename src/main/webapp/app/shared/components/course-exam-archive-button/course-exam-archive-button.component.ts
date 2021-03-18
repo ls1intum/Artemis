@@ -1,4 +1,4 @@
-import { Component, Input, OnDestroy, OnInit, TemplateRef } from '@angular/core';
+import { ChangeDetectorRef, Component, Input, OnDestroy, OnInit, TemplateRef } from '@angular/core';
 import { JhiAlertService } from 'ng-jhipster';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
@@ -52,6 +52,7 @@ export class CourseExamArchiveButtonComponent implements OnInit, OnDestroy {
         private translateService: TranslateService,
         private modalService: NgbModal,
         private accountService: AccountService,
+        private changedetectionReF: ChangeDetectorRef,
     ) {}
 
     ngOnInit() {
@@ -103,10 +104,12 @@ export class CourseExamArchiveButtonComponent implements OnInit, OnDestroy {
         if (this.archiveMode === 'Exam' && this.exam) {
             this.examService.find(this.course.id!, this.exam.id!).subscribe((res) => {
                 this.exam = res.body!;
+                this.changedetectionReF.detectChanges();
             });
         } else {
             this.courseService.find(this.course.id!).subscribe((res) => {
                 this.course = res.body!;
+                this.changedetectionReF.detectChanges();
             });
         }
     }
