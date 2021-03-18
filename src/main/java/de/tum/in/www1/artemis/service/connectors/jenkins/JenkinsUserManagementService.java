@@ -41,6 +41,9 @@ public class JenkinsUserManagementService implements CIUserManagementService {
     @Value("${artemis.continuous-integration.url}")
     private URL jenkinsServerUrl;
 
+    @Value("${artemis.continuous-integration.user}")
+    private String jenkinsAdminUsername;
+
     private final RestTemplate restTemplate;
 
     private final JenkinsJobPermissionsService jenkinsJobPermissionsService;
@@ -68,6 +71,10 @@ public class JenkinsUserManagementService implements CIUserManagementService {
      */
     @Override
     public void createUser(User user) throws ContinuousIntegrationException {
+        if (user.getLogin().equals(jenkinsAdminUsername)) {
+            log.debug("Jenkins createUser: Skipping jenkinsAdminUser: {}.", jenkinsAdminUsername);
+            return;
+        }
         // Only create a user if it doesn't already exist.
         if (getUser(user.getLogin()) != null) {
             throw new JenkinsException("Cannot create user: " + user.getLogin() + " because the login already exists");
@@ -114,6 +121,11 @@ public class JenkinsUserManagementService implements CIUserManagementService {
     @Override
     public void deleteUser(User user) throws ContinuousIntegrationException {
         var userLogin = user.getLogin();
+        if (userLogin.equals(jenkinsAdminUsername)) {
+            log.debug("Jenkins deleteUser: Skipping jenkinsAdminUser: {}.", jenkinsAdminUsername);
+            return;
+        }
+
         // Only delete a user if it exists.
         var jenkinsUser = getUser(userLogin);
         if (jenkinsUser == null) {
@@ -140,6 +152,11 @@ public class JenkinsUserManagementService implements CIUserManagementService {
      */
     @Override
     public void updateUser(User user) throws ContinuousIntegrationException {
+        if (user.getLogin().equals(jenkinsAdminUsername)) {
+            log.debug("Jenkins updateUser: Skipping jenkinsAdminUser: {}.", jenkinsAdminUsername);
+            return;
+        }
+
         // Only update a user if it exists.
         var jenkinsUser = getUser(user.getLogin());
         if (jenkinsUser == null) {
