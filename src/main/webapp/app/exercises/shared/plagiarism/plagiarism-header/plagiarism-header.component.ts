@@ -43,17 +43,9 @@ export class PlagiarismHeaderComponent {
      * @param status the new status of the comparison
      */
     updatePlagiarismStatus(status: PlagiarismStatus) {
-        return this.http
-            .put<void>(
-                `${this.resourceUrl}/${this.comparison.id}/status`,
-                { status },
-                {
-                    observe: 'response',
-                },
-            )
-            .subscribe(() => {
-                this.comparison.status = status;
-            });
+        return this.http.put<void>(`${this.resourceUrl}/${this.comparison.id}/status`, { status }, { observe: 'response' }).subscribe(() => {
+            this.comparison.status = status;
+        });
     }
 
     expandSplitPane(pane: 'left' | 'right') {

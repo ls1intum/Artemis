@@ -105,7 +105,6 @@ export class PlagiarismInspectorComponent implements OnInit {
 
         switch (this.exercise.type) {
             case ExerciseType.MODELING: {
-                console.log('modeling plagiarism result');
                 this.modelingExerciseService.getLatestPlagiarismResult(this.exercise.id!).subscribe(
                     (result) => this.handlePlagiarismResult(result),
                     () => (this.detectionInProgress = false),
@@ -113,7 +112,6 @@ export class PlagiarismInspectorComponent implements OnInit {
                 return;
             }
             case ExerciseType.PROGRAMMING: {
-                console.log('programming plagiarism result');
                 this.programmingExerciseService.getLatestPlagiarismResult(this.exercise.id!).subscribe(
                     (result) => this.handlePlagiarismResult(result),
                     () => (this.detectionInProgress = false),
@@ -121,7 +119,6 @@ export class PlagiarismInspectorComponent implements OnInit {
                 return;
             }
             case ExerciseType.TEXT: {
-                console.log('text plagiarism result');
                 this.textExerciseService.getLatestPlagiarismResult(this.exercise.id!).subscribe(
                     (result) => this.handlePlagiarismResult(result),
                     () => (this.detectionInProgress = false),
