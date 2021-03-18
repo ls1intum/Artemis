@@ -96,6 +96,7 @@ public class Result extends DomainObject {
     @JsonView(QuizView.Before.class)
     private Participation participation;
 
+    // TODO: this should actually be ManyToOne (however there is not mappedBy annotation used here, so this is unidirectional)
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn()
     private User assessor;
