@@ -199,7 +199,7 @@
                         </td>
                         <td>
                             <div *ngIf="course?.isAtLeastInstructor && exercise?.studentParticipations && exercise.type != ExerciseType.QUIZ">
-                                <div *ngIf="(exercise?.studentParticipations)![0].results?.length > 0">
+                                <div *ngIf="(exercise?.studentParticipations)![0].results?.length > 0 && exercise.type != ExerciseType.PROGRAMMING">
                                     <!-- in case of existing result-->
                                     <a
                                         [class.disabled]="busy"
@@ -214,7 +214,13 @@
                                     </a>
                                 </div>
 
-                                <div *ngIf="(exercise?.studentParticipations)![0].submissions?.length > 0 && !((exercise?.studentParticipations)![0].results?.length > 0)">
+                                <div
+                                    *ngIf="
+                                        (exercise?.studentParticipations)![0].submissions?.length > 0 &&
+                                        !((exercise?.studentParticipations)![0].results?.length > 0) &&
+                                        exercise.type != ExerciseType.PROGRAMMING
+                                    "
+                                >
                                     <!-- in case of new result-->
                                     <a
                                         [class.disabled]="busy"
