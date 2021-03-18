@@ -133,7 +133,9 @@ public class CourseExamExportService {
         }
 
         try {
-            exportExam(notificationTopic, exam.getId(), examDirPath.toString(), exportErrors);
+            // Export exam exercises
+            var exercises = examRepository.findAllExercisesByExamId(exam.getId());
+            exportExercises(notificationTopic, exercises, examDirPath.toString(), exportErrors);
 
             var exportedExamPath = createCourseZipFile(examDirPath.getParent(), Path.of(outputDir), exportErrors);
 
