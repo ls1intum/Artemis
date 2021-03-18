@@ -74,6 +74,7 @@ Bamboo instance under ``localhost:8085`` and the Bitbucket instance
 under ``localhost:7990``.
 
 **Get evaluation licenses for Atlassian products:** `Atlassian Licenses <https://my.atlassian.com/license/evaluation>`__
+
 1. Click on new Trial License and choose either Bamboo, Bitbucket and Jira Service Management.
 
    - Bamboo: Select Bamboo (Server) and ``not installed yet``
