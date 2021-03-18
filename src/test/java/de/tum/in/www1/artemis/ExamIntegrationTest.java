@@ -101,7 +101,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     private Exam exam2;
 
-    private int numberOfStudents = 10;
+    private final int numberOfStudents = 10;
 
     private User instructor;
 
@@ -130,7 +130,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testRegisterUserInExam_addedToCourseStudentsGroup() throws Exception {
         jiraRequestMockProvider.enableMockingOfRequests();
-        jiraRequestMockProvider.mockAddUserToGroup(course1.getStudentGroupName());
+        jiraRequestMockProvider.mockAddUserToGroup(course1.getStudentGroupName(), false);
 
         List<User> studentsInCourseBefore = userRepo.findAllInGroupWithAuthorities(course1.getStudentGroupName());
         request.postWithoutLocation("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/students/student42", null, HttpStatus.OK, null);
@@ -194,14 +194,14 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         doReturn(Optional.of(ldapUser100Dto)).when(ldapUserService).findByRegistrationNumber(registrationNumber100);
 
         // first and second mocked calls are expected to add student 5 and 99 to the course students
-        jiraRequestMockProvider.mockAddUserToGroup(course1.getStudentGroupName());
-        jiraRequestMockProvider.mockAddUserToGroup(course1.getStudentGroupName());
+        jiraRequestMockProvider.mockAddUserToGroup(course1.getStudentGroupName(), false);
+        jiraRequestMockProvider.mockAddUserToGroup(course1.getStudentGroupName(), false);
         // third mocked call expected to create student 100
         jiraRequestMockProvider.mockCreateUserInExternalUserManagement(ldapUser100Dto.getUsername(), ldapUser100Dto.getFirstName() + " " + ldapUser100Dto.getLastName(),
                 ldapUser100Dto.getEmail());
         // the last two mocked calls are expected to add students 100, 6, 7, 8, and 9 to the course student group
         for (int i = 0; i < 5; i++) {
-            jiraRequestMockProvider.mockAddUserToGroup(course1.getStudentGroupName());
+            jiraRequestMockProvider.mockAddUserToGroup(course1.getStudentGroupName(), false);
         }
 
         var student99 = ModelFactory.generateActivatedUser("student99");     // not registered for the course
@@ -489,6 +489,107 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
         // Make sure delete also works if so many objects have been created before
         request.delete("/api/courses/" + course1.getId() + "/exams/" + exam.getId(), HttpStatus.OK);
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    public void testRemovingAllStudents() throws Exception {
+        Exam exam = database.setupExamWithExerciseGroupsExercisesRegisteredStudents(course1);
+
+        // Generate student exams
+        List<StudentExam> studentExams = request.postListWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/generate-student-exams",
+                Optional.empty(), StudentExam.class, HttpStatus.OK);
+        assertThat(studentExams).hasSize(4);
+        assertThat(exam.getRegisteredUsers().size()).isEqualTo(4);
+
+        // /courses/{courseId}/exams/{examId}/student-exams/start-exercises
+        Integer numberOfGeneratedParticipations = request.postWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/student-exams/start-exercises",
+                Optional.empty(), Integer.class, HttpStatus.OK);
+
+        assertThat(numberOfGeneratedParticipations).isEqualTo(16);
+        // Fetch student exams
+        List<StudentExam> studentExamsDB = request.getList("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/student-exams", HttpStatus.OK, StudentExam.class);
+        assertThat(studentExamsDB).hasSize(4);
+        List<StudentParticipation> participationList = new ArrayList<>();
+        Exercise[] exercises = examRepository.findAllExercisesByExamId(exam.getId()).toArray(new Exercise[0]);
+        for (Exercise value : exercises) {
+            participationList.addAll(studentParticipationRepository.findByExerciseId(value.getId()));
+        }
+        assertThat(participationList).hasSize(16);
+
+        // todo es sollte welche gebe particpation aber keinen submissions leider
+        // remove all students
+        request.delete("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/students", HttpStatus.OK);
+
+        // Get the exam with all registered users
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("withStudents", "true");
+        Exam storedExam = request.get("/api/courses/" + course1.getId() + "/exams/" + exam.getId(), HttpStatus.OK, Exam.class, params);
+        assertThat(storedExam.getRegisteredUsers().size()).isEqualTo(0);
+
+        // Fetch student exams
+        studentExamsDB = request.getList("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/student-exams", HttpStatus.OK, StudentExam.class);
+        assertThat(studentExamsDB).hasSize(0);
+
+        // Fetch participations
+        exercises = examRepository.findAllExercisesByExamId(exam.getId()).toArray(new Exercise[0]);
+        participationList = new ArrayList<>();
+        for (Exercise exercise : exercises) {
+            participationList.addAll(studentParticipationRepository.findByExerciseId(exercise.getId()));
+        }
+        assertThat(participationList).hasSize(16);
+
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    public void testRemovingAllStudentsAndParticipations() throws Exception {
+        Exam exam = database.setupExamWithExerciseGroupsExercisesRegisteredStudents(course1);
+
+        // Generate student exams
+        List<StudentExam> studentExams = request.postListWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/generate-student-exams",
+                Optional.empty(), StudentExam.class, HttpStatus.OK);
+        assertThat(studentExams).hasSize(4);
+        assertThat(exam.getRegisteredUsers().size()).isEqualTo(4);
+
+        // /courses/{courseId}/exams/{examId}/student-exams/start-exercises
+        Integer numberOfGeneratedParticipations = request.postWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/student-exams/start-exercises",
+                Optional.empty(), Integer.class, HttpStatus.OK);
+
+        assertThat(numberOfGeneratedParticipations).isEqualTo(16);
+        // Fetch student exams
+        List<StudentExam> studentExamsDB = request.getList("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/student-exams", HttpStatus.OK, StudentExam.class);
+        assertThat(studentExamsDB).hasSize(4);
+        List<StudentParticipation> participationList = new ArrayList<>();
+        Exercise[] exercises = examRepository.findAllExercisesByExamId(exam.getId()).toArray(new Exercise[0]);
+        for (Exercise value : exercises) {
+            participationList.addAll(studentParticipationRepository.findByExerciseId(value.getId()));
+        }
+        assertThat(participationList).hasSize(16);
+
+        // todo es sollte welche gebe particpation aber keinen submissions leider
+        // remove all students
+        var paramsParticipations = new LinkedMultiValueMap<String, String>();
+        paramsParticipations.add("withParticipationsAndSubmission", "true");
+        request.delete("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/students", HttpStatus.OK, paramsParticipations);
+
+        // Get the exam with all registered users
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("withStudents", "true");
+        Exam storedExam = request.get("/api/courses/" + course1.getId() + "/exams/" + exam.getId(), HttpStatus.OK, Exam.class, params);
+        assertThat(storedExam.getRegisteredUsers().size()).isEqualTo(0);
+
+        // Fetch student exams
+        studentExamsDB = request.getList("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/student-exams", HttpStatus.OK, StudentExam.class);
+        assertThat(studentExamsDB).hasSize(0);
+
+        // Fetch participations
+        exercises = examRepository.findAllExercisesByExamId(exam.getId()).toArray(new Exercise[0]);
+        participationList = new ArrayList<>();
+        for (Exercise exercise : exercises) {
+            participationList.addAll(studentParticipationRepository.findByExerciseId(exercise.getId()));
+        }
+        assertThat(participationList).hasSize(0);
     }
 
     @Test

@@ -9,7 +9,7 @@ import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { AlertComponent } from 'app/shared/alert/alert.component';
 import { RouterTestingModule } from '@angular/router/testing';
 import { MockHasAnyAuthorityDirective } from '../../helpers/mocks/directive/mock-has-any-authority.directive';
-import { TranslatePipe } from '@ngx-translate/core';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe.ts';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { MomentModule } from 'ngx-moment';
 import { StatisticsComponent } from 'app/admin/statistics/statistics.component';
@@ -31,7 +31,7 @@ describe('StatisticsComponent', () => {
                 MockComponent(AlertComponent),
                 MockComponent(StatisticsGraphComponent),
                 MockDirective(MockHasAnyAuthorityDirective),
-                MockPipe(TranslatePipe),
+                MockPipe(ArtemisTranslatePipe),
                 MockPipe(ArtemisDatePipe),
             ],
             providers: [

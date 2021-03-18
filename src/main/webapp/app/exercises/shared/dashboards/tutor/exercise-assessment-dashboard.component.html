@@ -1,6 +1,6 @@
-<jhi-header-exercise-page-with-details [exercise]="exercise" [exam]="exam" [isTestRun]="isTestRun" [onBackClick]="back.bind(this)">
-    <span *ngIf="!isTestRun" pagetitle>{{ 'artemisApp.exerciseAssessmentDashboard.pageHeader' | translate }} {{ exercise?.title }}</span>
-    <span *ngIf="isTestRun" pagetitle>{{ 'artemisApp.exerciseAssessmentDashboard.testRunPageHeader' | translate }} {{ exercise?.title }}</span>
+<jhi-header-exercise-page-with-details [exercise]="exercise" [exam]="exam" [isTestRun]="isTestRun" [displayBackButton]="false">
+    <span *ngIf="!isTestRun" pagetitle>{{ 'artemisApp.exerciseAssessmentDashboard.pageHeader' | artemisTranslate }} {{ exercise?.title }}</span>
+    <span *ngIf="isTestRun" pagetitle>{{ 'artemisApp.exerciseAssessmentDashboard.testRunPageHeader' | artemisTranslate }} {{ exercise?.title }}</span>
 </jhi-header-exercise-page-with-details>
 
 <jhi-alert></jhi-alert>
@@ -8,7 +8,7 @@
 <div *ngIf="exercise !== undefined">
     <div class="row my-3 justify-content-around">
         <div class="col-lg-5 col-md-6 col-sm-6 text-center" *ngIf="!isTestRun">
-            <p class="h3">{{ 'artemisApp.exerciseAssessmentDashboard.yourStatus' | translate }}:</p>
+            <p class="h3">{{ 'artemisApp.exerciseAssessmentDashboard.yourStatus' | artemisTranslate }}:</p>
             <jhi-tutor-participation-graph
                 [exercise]="exercise"
                 [tutorParticipation]="tutorParticipation"
@@ -29,30 +29,30 @@
                     [(secondCorrectionEnabled)]="secondCorrectionEnabled"
                     [(toggelingSecondCorrectionButton)]="toggelingSecondCorrectionButton"
                 ></jhi-second-correction-enable-button>
-                <a class="btn btn-primary btn-sm ml-1" [routerLink]="['/course-management', courseId, exercise.type + '-exercises', exercise.id, 'assessment']">
+                <a class="btn btn-primary btn-sm ml-1" [routerLink]="getSubmissionsLinkForExercise(exercise)">
                     <span jhiTranslate="artemisApp.assessmentDashboard.submissions">Submissions</span>
                 </a>
             </ng-container>
         </div>
 
         <div class="col-5">
-            <jhi-side-panel *ngIf="!isExamMode" [panelHeader]="'artemisApp.exerciseAssessmentDashboard.exerciseInformation' | translate">
+            <jhi-side-panel *ngIf="!isExamMode" [panelHeader]="'artemisApp.exerciseAssessmentDashboard.exerciseInformation' | artemisTranslate">
                 <div class="row mb-1 small" *ngIf="numberOfSubmissions.late > 0">
                     <div class="col-8"></div>
                     <div class="col-4">
-                        {{ 'artemisApp.exerciseAssessmentDashboard.stats.intime' | translate }}
-                        <span class="ml-1 result--late text-nowrap">| {{ 'artemisApp.exerciseAssessmentDashboard.stats.late' | translate }} </span>
+                        {{ 'artemisApp.exerciseAssessmentDashboard.stats.intime' | artemisTranslate }}
+                        <span class="ml-1 result--late text-nowrap">| {{ 'artemisApp.exerciseAssessmentDashboard.stats.late' | artemisTranslate }} </span>
                     </div>
                 </div>
                 <div class="row mb-1">
-                    <div class="col-8">{{ 'artemisApp.exerciseAssessmentDashboard.numberOfSubmissions' | translate }}</div>
+                    <div class="col-8">{{ 'artemisApp.exerciseAssessmentDashboard.numberOfSubmissions' | artemisTranslate }}</div>
                     <div class="col-4">
                         {{ numberOfSubmissions.inTime }}
                         <span *ngIf="numberOfSubmissions.late > 0" class="ml-1 result--late text-nowrap">| {{ numberOfSubmissions.late }}</span>
                     </div>
                 </div>
                 <div class="row mb-1">
-                    <div class="col-8">{{ 'artemisApp.exerciseAssessmentDashboard.numberOfAssessedSubmissions' | translate }}</div>
+                    <div class="col-8">{{ 'artemisApp.exerciseAssessmentDashboard.numberOfAssessedSubmissions' | artemisTranslate }}</div>
                     <div class="col-4">
                         {{ totalNumberOfAssessments.inTime }} ({{ totalAssessmentPercentage.inTime }}%)
                         <span *ngIf="numberOfSubmissions.late > 0" class="ml-2 result--late text-nowrap"
@@ -61,7 +61,7 @@
                     </div>
                 </div>
                 <div class="row mb-1">
-                    <div class="col-8">{{ 'artemisApp.exerciseAssessmentDashboard.numberOfUnassessedSubmissions' | translate }}</div>
+                    <div class="col-8">{{ 'artemisApp.exerciseAssessmentDashboard.numberOfUnassessedSubmissions' | artemisTranslate }}</div>
                     <div class="col-4">
                         {{ numberOfSubmissions.inTime - totalNumberOfAssessments.inTime }} ({{ 100 - totalAssessmentPercentage.inTime }}%)
                         <span *ngIf="numberOfSubmissions.late > 0" class="ml-2 result--late text-nowrap"
@@ -70,15 +70,15 @@
                     </div>
                 </div>
                 <div class="row mb-1">
-                    <div class="col-8">{{ 'artemisApp.exerciseAssessmentDashboard.numberOfSubmissionsAssessedByYou' | translate }}</div>
+                    <div class="col-8">{{ 'artemisApp.exerciseAssessmentDashboard.numberOfSubmissionsAssessedByYou' | artemisTranslate }}</div>
                     <div class="col-4">{{ numberOfTutorAssessments }} ({{ tutorAssessmentPercentage }}%)</div>
                 </div>
                 <div class="row mb-1">
-                    <div class="col-8">{{ 'artemisApp.assessmentDashboard.totalComplaints' | translate }}</div>
+                    <div class="col-8">{{ 'artemisApp.assessmentDashboard.totalComplaints' | artemisTranslate }}</div>
                     <div class="col-4">{{ numberOfComplaints }}</div>
                 </div>
                 <div class="row mb-1">
-                    <div class="col-8">{{ 'artemisApp.assessmentDashboard.complaintsAboutYourAssessments' | translate }}</div>
+                    <div class="col-8">{{ 'artemisApp.assessmentDashboard.complaintsAboutYourAssessments' | artemisTranslate }}</div>
                     <div class="col-4">
                         <a [routerLink]="['/course-management', courseId, 'exercises', exercise.id, 'complaints']" [queryParams]="{ tutorId: tutor?.id }">{{
                             numberOfTutorComplaints
@@ -86,11 +86,11 @@
                     </div>
                 </div>
                 <div class="row mb-1">
-                    <div class="col-8">{{ 'artemisApp.assessmentDashboard.totalMoreFeedbackRequests' | translate }}</div>
+                    <div class="col-8">{{ 'artemisApp.assessmentDashboard.totalMoreFeedbackRequests' | artemisTranslate }}</div>
                     <div class="col-4">{{ numberOfMoreFeedbackRequests }}</div>
                 </div>
                 <div class="row mb-1">
-                    <div class="col-8">{{ 'artemisApp.assessmentDashboard.moreFeedbackRequestsForYourAssessments' | translate }}</div>
+                    <div class="col-8">{{ 'artemisApp.assessmentDashboard.moreFeedbackRequestsForYourAssessments' | artemisTranslate }}</div>
                     <div class="col-4">
                         <a [routerLink]="['/course-management', courseId, 'exercises', exercise.id, 'more-feedback-requests']" [queryParams]="{ tutorId: tutor?.id }">{{
                             numberOfTutorMoreFeedbackRequests
@@ -103,7 +103,7 @@
 
     <div class="guided-tour-markdown-preview markdown-preview" *ngIf="tutorParticipationStatus === NOT_PARTICIPATED && !isTestRun">
         <div class="col-12" *ngIf="exercise.problemStatement && exercise.problemStatement.length > 0">
-            <h4>{{ 'artemisApp.exerciseAssessmentDashboard.problemStatement' | translate }}</h4>
+            <h4>{{ 'artemisApp.exerciseAssessmentDashboard.problemStatement' | artemisTranslate }}</h4>
 
             <p *ngIf="exercise.type !== ExerciseType.PROGRAMMING; else programmingInstructions" [innerHTML]="formattedProblemStatement"></p>
             <!-- Programming exercises have a couple of custom render modules, so we load the instructions component here.-->
@@ -117,26 +117,26 @@
         </div>
 
         <div class="col-12" *ngIf="exercise.type === ExerciseType.TEXT && formattedSampleSolution">
-            <h4>{{ 'artemisApp.exerciseAssessmentDashboard.exampleSolution' | translate }}</h4>
+            <h4>{{ 'artemisApp.exerciseAssessmentDashboard.exampleSolution' | artemisTranslate }}</h4>
 
             <p [innerHTML]="formattedSampleSolution"></p>
         </div>
 
         <div class="col-12" *ngIf="exercise.type === ExerciseType.MODELING && exampleSolutionModel">
-            <h4>{{ 'artemisApp.exerciseAssessmentDashboard.exampleSolution' | translate }}</h4>
+            <h4>{{ 'artemisApp.exerciseAssessmentDashboard.exampleSolution' | artemisTranslate }}</h4>
             <jhi-modeling-editor [umlModel]="exampleSolutionModel" [diagramType]="modelingExercise.diagramType" [readOnly]="true"></jhi-modeling-editor>
             <p class="mt-2" *ngIf="formattedSampleSolution" [innerHTML]="formattedSampleSolution"></p>
         </div>
 
         <div class="col-12" *ngIf="exercise.type === ExerciseType.PROGRAMMING">
-            <h4>{{ 'artemisApp.exerciseAssessmentDashboard.exampleSolution' | translate }}</h4>
+            <h4>{{ 'artemisApp.exerciseAssessmentDashboard.exampleSolution' | artemisTranslate }}</h4>
             <a jhiSecureLink [href]="asProgrammingExercise(exercise).solutionParticipation!.repositoryUrl">
                 <jhi-button jhiTranslate="artemisApp.exerciseAssessmentDashboard.programmingExercise.exampleSolution"> Example solution repository </jhi-button>
             </a>
         </div>
 
         <div class="col-12 mt-4" *ngIf="exercise.gradingInstructions && exercise.gradingInstructions.length > 0">
-            <h4>{{ 'artemisApp.exerciseAssessmentDashboard.gradingInstructions' | translate }}</h4>
+            <h4>{{ 'artemisApp.exerciseAssessmentDashboard.gradingInstructions' | artemisTranslate }}</h4>
 
             <p [innerHTML]="formattedGradingInstructions"></p>
         </div>
@@ -146,11 +146,11 @@
     <div class="col-12 text-center" *ngIf="tutorParticipationStatus === NOT_PARTICIPATED && !isTestRun">
         <button class="btn btn-primary guided-tour-instructions-button" (click)="readInstruction()">
             <span *ngIf="exercise.gradingInstructions && exercise.gradingInstructions.length > 0">
-                {{ 'artemisApp.exerciseAssessmentDashboard.readAndUnderstood' | translate }}
+                {{ 'artemisApp.exerciseAssessmentDashboard.readAndUnderstood' | artemisTranslate }}
             </span>
 
             <span *ngIf="!exercise.gradingInstructions || exercise.gradingInstructions.length == 0">
-                {{ 'artemisApp.exerciseAssessmentDashboard.startYourParticipation' | translate }}
+                {{ 'artemisApp.exerciseAssessmentDashboard.startYourParticipation' | artemisTranslate }}
             </span>
         </button>
     </div>
@@ -171,7 +171,7 @@
 
             <div class="row" *ngIf="tutorParticipationStatus !== NOT_PARTICIPATED && !isTestRun">
                 <div class="col-6" *ngIf="stats.toReview.total > 0">
-                    <p class="h3">{{ 'artemisApp.exerciseAssessmentDashboard.reviewSubmissions' | translate }} ({{ stats.toReview.done }} / {{ stats.toReview.total }})</p>
+                    <p class="h3">{{ 'artemisApp.exerciseAssessmentDashboard.reviewSubmissions' | artemisTranslate }} ({{ stats.toReview.done }} / {{ stats.toReview.total }})</p>
 
                     <button
                         *ngIf="stats.toReview.done < stats.toReview.total"
@@ -180,12 +180,12 @@
                         (click)="openExampleSubmission(nextExampleSubmissionId, true, false)"
                     >
                         <span *ngIf="stats.toReview.done <= 0; else elseBlockSubmissionSForTutorialButton">
-                            {{ 'artemisApp.exerciseAssessmentDashboard.start' | translate }}
+                            {{ 'artemisApp.exerciseAssessmentDashboard.start' | artemisTranslate }}
                         </span>
                         <ng-template #elseBlockSubmissionSForTutorialButton>
-                            {{ 'artemisApp.exerciseAssessmentDashboard.continue' | translate }}
+                            {{ 'artemisApp.exerciseAssessmentDashboard.continue' | artemisTranslate }}
                         </ng-template>
-                        {{ 'artemisApp.exerciseAssessmentDashboard.reviewingExampleSubmissions' | translate }}
+                        {{ 'artemisApp.exerciseAssessmentDashboard.reviewingExampleSubmissions' | artemisTranslate }}
                     </button>
 
                     <ul *ngIf="stats.toReview.done >= stats.toReview.total">
@@ -195,7 +195,7 @@
                                 [class.guided-tour]="exercise === exerciseForGuidedTour"
                                 (click)="openExampleSubmission(exampleSubmission.id, true, false)"
                             >
-                                {{ 'artemisApp.exerciseAssessmentDashboard.reviewExampleSubmission' | translate }} {{ i + 1 }}
+                                {{ 'artemisApp.exerciseAssessmentDashboard.reviewExampleSubmission' | artemisTranslate }} {{ i + 1 }}
                             </button>
                             <fa-icon [icon]="'check-circle'" *ngIf="hasBeenCompletedByTutor(exampleSubmission.id)"></fa-icon>
                         </li>
@@ -203,7 +203,7 @@
                 </div>
 
                 <div class="col-6" *ngIf="stats.toAssess.total > 0 && stats.toReview.done >= stats.toReview.total">
-                    <p class="h3">{{ 'artemisApp.exerciseAssessmentDashboard.tutorialSubmissions' | translate }} ({{ stats.toAssess.done }} / {{ stats.toAssess.total }})</p>
+                    <p class="h3">{{ 'artemisApp.exerciseAssessmentDashboard.tutorialSubmissions' | artemisTranslate }} ({{ stats.toAssess.done }} / {{ stats.toAssess.total }})</p>
                     <button
                         *ngIf="stats.toAssess.done < stats.toAssess.total"
                         class="btn btn-primary assess-example-submission"
@@ -211,12 +211,12 @@
                         (click)="openExampleSubmission(nextExampleSubmissionId, false, true)"
                     >
                         <span *ngIf="stats.toAssess.done <= 0; else elseBlockSubmissionsForReviewButton">
-                            {{ 'artemisApp.exerciseAssessmentDashboard.start' | translate }}
+                            {{ 'artemisApp.exerciseAssessmentDashboard.start' | artemisTranslate }}
                         </span>
                         <ng-template #elseBlockSubmissionsForReviewButton>
-                            {{ 'artemisApp.exerciseAssessmentDashboard.continue' | translate }}
+                            {{ 'artemisApp.exerciseAssessmentDashboard.continue' | artemisTranslate }}
                         </ng-template>
-                        {{ 'artemisApp.exerciseAssessmentDashboard.assessingExampleSubmission' | translate }}
+                        {{ 'artemisApp.exerciseAssessmentDashboard.assessingExampleSubmission' | artemisTranslate }}
                     </button>
 
                     <ul *ngIf="stats.toAssess.done >= stats.toAssess.total">
@@ -226,7 +226,7 @@
                                 [class.guided-tour]="exercise === exerciseForGuidedTour"
                                 (click)="openExampleSubmission(exampleSubmission.id, false, true)"
                             >
-                                {{ 'artemisApp.exerciseAssessmentDashboard.assessExampleSubmission' | translate }} {{ i + 1 }}
+                                {{ 'artemisApp.exerciseAssessmentDashboard.assessExampleSubmission' | artemisTranslate }} {{ i + 1 }}
                             </button>
                             <fa-icon [icon]="'check-circle'" *ngIf="hasBeenCompletedByTutor(exampleSubmission.id)"></fa-icon>
                         </li>
@@ -234,20 +234,20 @@
                 </div>
             </div>
             <div class="alert alert-danger" *ngIf="submissionLockLimitReached && tutorParticipationStatus !== REVIEWED_INSTRUCTIONS">
-                {{ 'artemisApp.submission.lockedSubmissionsLimitReached' | translate }}
+                {{ 'artemisApp.submission.lockedSubmissionsLimitReached' | artemisTranslate }}
             </div>
             <div *ngFor="let roundState of numberOfAssessmentsOfCorrectionRounds; let correctionRound = index">
                 <ng-container *ngIf="numberOfCorrectionRoundsEnabled > correctionRound">
                     <h4 *ngIf="(tutorParticipationStatus === TRAINED || tutorParticipationStatus === COMPLETED) && !isTestRun && !isExamMode">
-                        {{ 'artemisApp.exerciseAssessmentDashboard.studentsSubmissions' | translate }}
+                        {{ 'artemisApp.exerciseAssessmentDashboard.studentsSubmissions' | artemisTranslate }}
                     </h4>
 
                     <h4 *ngIf="(tutorParticipationStatus === TRAINED || tutorParticipationStatus === COMPLETED) && !isTestRun && isExamMode">
-                        {{ 'artemisApp.exerciseAssessmentDashboard.studentsSubmissions' | translate }}, Correction Round {{ correctionRound + 1 }}:
+                        {{ 'artemisApp.exerciseAssessmentDashboard.studentsSubmissions' | artemisTranslate }}, Correction Round {{ correctionRound + 1 }}:
                     </h4>
 
                     <h4 *ngIf="isTestRun">
-                        {{ 'artemisApp.exerciseAssessmentDashboard.testRunSubmissions' | translate }}
+                        {{ 'artemisApp.exerciseAssessmentDashboard.testRunSubmissions' | artemisTranslate }}
                     </h4>
                     <div class="table-responsive" *ngIf="tutorParticipationStatus === TRAINED || tutorParticipationStatus === COMPLETED || isTestRun">
                         <table
@@ -261,12 +261,12 @@
                             <thead>
                                 <tr>
                                     <th>#</th>
-                                    <th>{{ 'artemisApp.exerciseAssessmentDashboard.submissionDate' | translate }}</th>
-                                    <th>{{ 'artemisApp.exerciseAssessmentDashboard.result' | translate }}</th>
-                                    <th>{{ 'artemisApp.exerciseAssessmentDashboard.status' | translate }}</th>
-                                    <th>{{ 'artemisApp.exerciseAssessmentDashboard.score' | translate }}</th>
-                                    <th *ngIf="exercise.type === ExerciseType.TEXT">{{ 'artemisApp.exerciseAssessmentDashboard.language' | translate }}</th>
-                                    <th>{{ 'artemisApp.exerciseAssessmentDashboard.action' | translate }}</th>
+                                    <th>{{ 'artemisApp.exerciseAssessmentDashboard.submissionDate' | artemisTranslate }}</th>
+                                    <th>{{ 'artemisApp.exerciseAssessmentDashboard.result' | artemisTranslate }}</th>
+                                    <th>{{ 'artemisApp.exerciseAssessmentDashboard.status' | artemisTranslate }}</th>
+                                    <th>{{ 'artemisApp.exerciseAssessmentDashboard.score' | artemisTranslate }}</th>
+                                    <th *ngIf="exercise.type === ExerciseType.TEXT">{{ 'artemisApp.exerciseAssessmentDashboard.language' | artemisTranslate }}</th>
+                                    <th>{{ 'artemisApp.exerciseAssessmentDashboard.action' | artemisTranslate }}</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -288,7 +288,7 @@
                                         >
                                     </td>
                                     <td *ngIf="exercise.type === ExerciseType.TEXT">
-                                        {{ 'artemisApp.exerciseAssessmentDashboard.languages.' + (submission.language ? submission.language : 'UNKNOWN') | translate }}
+                                        {{ 'artemisApp.exerciseAssessmentDashboard.languages.' + (submission.language ? submission.language : 'UNKNOWN') | artemisTranslate }}
                                     </td>
                                     <td>
                                         <ng-container *ngIf="(isTestRun && complaints.length === 0) || !isTestRun">
@@ -299,7 +299,7 @@
                                                     class="btn btn-warning btn-sm"
                                                 >
                                                     <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>&nbsp;{{
-                                                        'artemisApp.exerciseAssessmentDashboard.continueAssessment' | translate
+                                                        'artemisApp.exerciseAssessmentDashboard.continueAssessment' | artemisTranslate
                                                     }}
                                                 </button>
                                                 <ng-template #continueButton>
@@ -309,7 +309,7 @@
                                                         class="btn btn-primary btn-sm"
                                                     >
                                                         <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>
-                                                        &nbsp;{{ 'artemisApp.exerciseAssessmentDashboard.openAssessment' | translate }}
+                                                        &nbsp;{{ 'artemisApp.exerciseAssessmentDashboard.openAssessment' | artemisTranslate }}
                                                     </button>
                                                 </ng-template>
                                             </ng-container>
@@ -329,12 +329,12 @@
                                         <td>{{ unassessedSubmissionByCorrectionRound.get(correctionRound)?.submissionDate | artemisDate }}</td>
 
                                         <td></td>
-                                        <td>{{ 'artemisApp.exerciseAssessmentDashboard.new' | translate }}</td>
+                                        <td>{{ 'artemisApp.exerciseAssessmentDashboard.new' | artemisTranslate }}</td>
                                         <td></td>
                                         <td *ngIf="exercise.type === ExerciseType.TEXT">
                                             {{
                                                 'artemisApp.exerciseAssessmentDashboard.languages.' + language(unassessedSubmissionByCorrectionRound.get(correctionRound)!)
-                                                    | translate
+                                                    | artemisTranslate
                                             }}
                                         </td>
                                         <td>
@@ -347,7 +347,7 @@
                                             >
                                                 <fa-icon *ngIf="openingAssessmentEditorForNewSubmission" [icon]="'spinner'" [spin]="true"></fa-icon>
                                                 <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>
-                                                {{ 'artemisApp.exerciseAssessmentDashboard.startAssessment' | translate }}
+                                                {{ 'artemisApp.exerciseAssessmentDashboard.startAssessment' | artemisTranslate }}
                                             </button>
                                         </td>
                                     </tr>
@@ -404,11 +404,11 @@
                 <ng-template #noSubmissions>
                     <jhi-assessment-warning [exercise]="exercise"></jhi-assessment-warning>
                     <div class="alert alert-info" *ngIf="!exercise.teamMode; else teamAssessmentInfo">
-                        {{ 'artemisApp.exerciseAssessmentDashboard.noSubmissions' | translate }}
+                        {{ 'artemisApp.exerciseAssessmentDashboard.noSubmissions' | artemisTranslate }}
                     </div>
                     <ng-template #teamAssessmentInfo>
                         <div class="alert alert-warning">
-                            {{ 'artemisApp.exerciseAssessmentDashboard.startAssessmentFromTeamPages' | translate }}
+                            {{ 'artemisApp.exerciseAssessmentDashboard.startAssessmentFromTeamPages' | artemisTranslate }}
                         </div>
                     </ng-template>
                 </ng-template>
@@ -416,18 +416,18 @@
             <!-- Complaints -->
             <ng-container *ngIf="tutorParticipationStatus === TRAINED || tutorParticipationStatus === COMPLETED || isTestRun">
                 <h4 class="d-inline-block">
-                    {{ 'artemisApp.exerciseAssessmentDashboard.complaints' | translate }}
+                    {{ 'artemisApp.exerciseAssessmentDashboard.complaints' | artemisTranslate }}
                 </h4>
-                <fa-icon [icon]="'question-circle'" [ngbTooltip]="'artemisApp.exerciseAssessmentDashboard.complaintHint' | translate"></fa-icon>
+                <fa-icon [icon]="'question-circle'" [ngbTooltip]="'artemisApp.exerciseAssessmentDashboard.complaintHint' | artemisTranslate"></fa-icon>
                 <div class="table-responsive">
                     <table class="table table-striped exercise-table" *ngIf="complaints?.length > 0; else noComplaints">
                         <thead>
                             <tr>
                                 <th>#</th>
-                                <th>{{ 'artemisApp.exerciseAssessmentDashboard.submissionDate' | translate }}</th>
-                                <th>{{ 'artemisApp.exerciseAssessmentDashboard.result' | translate }}</th>
-                                <th>{{ 'artemisApp.exerciseAssessmentDashboard.status' | translate }}</th>
-                                <th>{{ 'artemisApp.exerciseAssessmentDashboard.action' | translate }}</th>
+                                <th>{{ 'artemisApp.exerciseAssessmentDashboard.submissionDate' | artemisTranslate }}</th>
+                                <th>{{ 'artemisApp.exerciseAssessmentDashboard.result' | artemisTranslate }}</th>
+                                <th>{{ 'artemisApp.exerciseAssessmentDashboard.status' | artemisTranslate }}</th>
+                                <th>{{ 'artemisApp.exerciseAssessmentDashboard.action' | artemisTranslate }}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -448,12 +448,12 @@
                                         (click)="viewComplaint(complaint)"
                                     >
                                         <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>
-                                        {{ 'artemisApp.exerciseAssessmentDashboard.evaluateComplaint' | translate }}
+                                        {{ 'artemisApp.exerciseAssessmentDashboard.evaluateComplaint' | artemisTranslate }}
                                     </button>
                                     <ng-template #continueButton>
                                         <button class="btn btn-primary btn-sm" (click)="viewComplaint(complaint)">
                                             <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>
-                                            {{ 'artemisApp.exerciseAssessmentDashboard.showComplaint' | translate }}
+                                            {{ 'artemisApp.exerciseAssessmentDashboard.showComplaint' | artemisTranslate }}
                                         </button>
                                     </ng-template>
                                 </td>
@@ -463,10 +463,10 @@
 
                     <ng-template #noComplaints>
                         <div *ngIf="numberOfTutorComplaints === 0" class="alert alert-info">
-                            {{ 'artemisApp.exerciseAssessmentDashboard.noComplaints' | translate }}
+                            {{ 'artemisApp.exerciseAssessmentDashboard.noComplaints' | artemisTranslate }}
                         </div>
                         <div *ngIf="numberOfTutorComplaints !== 0" class="alert alert-info">
-                            {{ 'artemisApp.exerciseAssessmentDashboard.noComplaintsDisplayed' | translate }}
+                            {{ 'artemisApp.exerciseAssessmentDashboard.noComplaintsDisplayed' | artemisTranslate }}
                         </div>
                     </ng-template>
                 </div>
@@ -475,18 +475,18 @@
             <!-- More Feedback Requests -->
             <ng-container *ngIf="(tutorParticipationStatus === TRAINED || tutorParticipationStatus === COMPLETED) && !isExamMode">
                 <h4 class="d-inline-block">
-                    {{ 'artemisApp.exerciseAssessmentDashboard.moreFeedback' | translate }}
+                    {{ 'artemisApp.exerciseAssessmentDashboard.moreFeedback' | artemisTranslate }}
                 </h4>
-                <fa-icon [icon]="'question-circle'" [ngbTooltip]="'artemisApp.exerciseAssessmentDashboard.moreFeedbackRequestHint' | translate"></fa-icon>
+                <fa-icon [icon]="'question-circle'" [ngbTooltip]="'artemisApp.exerciseAssessmentDashboard.moreFeedbackRequestHint' | artemisTranslate"></fa-icon>
                 <div class="table-responsive">
                     <table class="table table-striped exercise-table" *ngIf="moreFeedbackRequests?.length > 0; else noComplaints">
                         <thead>
                             <tr>
                                 <th>#</th>
-                                <th>{{ 'artemisApp.exerciseAssessmentDashboard.submissionDate' | translate }}</th>
-                                <th>{{ 'artemisApp.exerciseAssessmentDashboard.result' | translate }}</th>
-                                <th>{{ 'artemisApp.exerciseAssessmentDashboard.status' | translate }}</th>
-                                <th>{{ 'artemisApp.exerciseAssessmentDashboard.action' | translate }}</th>
+                                <th>{{ 'artemisApp.exerciseAssessmentDashboard.submissionDate' | artemisTranslate }}</th>
+                                <th>{{ 'artemisApp.exerciseAssessmentDashboard.result' | artemisTranslate }}</th>
+                                <th>{{ 'artemisApp.exerciseAssessmentDashboard.status' | artemisTranslate }}</th>
+                                <th>{{ 'artemisApp.exerciseAssessmentDashboard.action' | artemisTranslate }}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -498,10 +498,10 @@
                                 </td>
                                 <td>
                                     <span *ngIf="moreFeedbackRequest.accepted !== undefined">{{
-                                        'artemisApp.exerciseAssessmentDashboard.moreFeedbackRequestEvaluated' | translate
+                                        'artemisApp.exerciseAssessmentDashboard.moreFeedbackRequestEvaluated' | artemisTranslate
                                     }}</span>
                                     <span *ngIf="moreFeedbackRequest.accepted === undefined"
-                                        >{{ 'artemisApp.exerciseAssessmentDashboard.moreFeedbackRequestNotEvaluated' | translate }}
+                                        >{{ 'artemisApp.exerciseAssessmentDashboard.moreFeedbackRequestNotEvaluated' | artemisTranslate }}
                                     </span>
                                 </td>
                                 <td>
@@ -511,12 +511,12 @@
                                         (click)="viewComplaint(moreFeedbackRequest)"
                                     >
                                         <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>
-                                        {{ 'artemisApp.exerciseAssessmentDashboard.evaluateMoreFeedbackRequest' | translate }}
+                                        {{ 'artemisApp.exerciseAssessmentDashboard.evaluateMoreFeedbackRequest' | artemisTranslate }}
                                     </button>
                                     <ng-template #continueButton>
                                         <button class="btn btn-primary btn-sm" (click)="viewComplaint(moreFeedbackRequest)">
                                             <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>
-                                            {{ 'artemisApp.exerciseAssessmentDashboard.showMoreFeedbackRequests' | translate }}
+                                            {{ 'artemisApp.exerciseAssessmentDashboard.showMoreFeedbackRequests' | artemisTranslate }}
                                         </button>
                                     </ng-template>
                                 </td>
@@ -526,10 +526,10 @@
 
                     <ng-template #noComplaints>
                         <div *ngIf="numberOfMoreFeedbackRequests === 0" class="alert alert-info">
-                            {{ 'artemisApp.exerciseAssessmentDashboard.noMoreFeedbackRequests' | translate }}
+                            {{ 'artemisApp.exerciseAssessmentDashboard.noMoreFeedbackRequests' | artemisTranslate }}
                         </div>
                         <div *ngIf="numberOfMoreFeedbackRequests !== 0" class="alert alert-info">
-                            {{ 'artemisApp.exerciseAssessmentDashboard.noMoreFeedbackRequestsDisplayed' | translate }}
+                            {{ 'artemisApp.exerciseAssessmentDashboard.noMoreFeedbackRequestsDisplayed' | artemisTranslate }}
                         </div>
                     </ng-template>
                 </div>
@@ -538,7 +538,7 @@
         <jhi-collapsable-assessment-instructions [readOnly]="true" [exercise]="exercise" [collapsed]="true"></jhi-collapsable-assessment-instructions>
     </div>
 
-    <h2 *ngIf="!isExamMode">{{ 'artemisApp.instructorExerciseDashboard.leaderboardTitle' | translate }}</h2>
+    <h2 *ngIf="!isExamMode">{{ 'artemisApp.instructorExerciseDashboard.leaderboardTitle' | artemisTranslate }}</h2>
 
-    <jhi-tutor-leaderboard *ngIf="!isExamMode" [tutorsData]="statsForDashboard.tutorLeaderboardEntries" [exercise]="exercise"></jhi-tutor-leaderboard>
+    <jhi-tutor-leaderboard [exam]="exam" [tutorsData]="statsForDashboard.tutorLeaderboardEntries" [exercise]="exercise"></jhi-tutor-leaderboard>
 </div>

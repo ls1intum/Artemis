@@ -25,7 +25,9 @@ import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.service.AssessmentDashboardService;
+import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.TutorParticipationService;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
 import de.tum.in.www1.artemis.service.exam.ExamAccessService;
 import de.tum.in.www1.artemis.service.exam.ExamDateService;
@@ -702,6 +704,32 @@ public class ExamResource {
         }
 
         examRegistrationService.unregisterStudentFromExam(examId, withParticipationsAndSubmission, optionalStudent.get());
+        return ResponseEntity.ok().body(null);
+    }
+
+    /**
+     * DELETE /courses/{courseId}/exams/{examId}/allstudents :
+     * Remove all students of the exam so that they cannot access the exam any more.
+     * Optionally, also deletes participations and submissions of all students in their student exams.
+     *
+     * @param courseId     the id of the course
+     * @param examId       the id of the exam
+     * @param withParticipationsAndSubmission request param deciding whether participations and submissions should also be deleted
+     *
+     * @return empty ResponseEntity with status 200 (OK) or with status 404 (Not Found)
+     */
+    @DeleteMapping(value = "/courses/{courseId}/exams/{examId}/students")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Void> removeAllStudentsFromExam(@PathVariable Long courseId, @PathVariable Long examId,
+            @RequestParam(defaultValue = "false") boolean withParticipationsAndSubmission) {
+        log.debug("REST request to remove all students from exam {} with courseId {}", examId, courseId);
+
+        Optional<ResponseEntity<Void>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccessForInstructor(courseId, examId);
+        if (courseAndExamAccessFailure.isPresent()) {
+            return courseAndExamAccessFailure.get();
+        }
+
+        examRegistrationService.unregisterAllStudentFromExam(examId, withParticipationsAndSubmission);
         return ResponseEntity.ok().body(null);
     }
 

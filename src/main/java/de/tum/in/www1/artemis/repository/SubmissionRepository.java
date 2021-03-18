@@ -167,12 +167,12 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
      *         due date at all
      */
     @Query("""
-            SELECT COUNT (DISTINCT submission) FROM Submission submission
-                WHERE TYPE(submission) IN (ModelingSubmission, TextSubmission, FileUploadSubmission)
-                AND submission.participation.exercise.course.id = :#{#courseId}
-                AND submission.submitted = TRUE
-                AND (submission.submissionDate <= submission.participation.exercise.dueDate
-                    OR submission.participation.exercise.dueDate IS NULL)
+            SELECT COUNT (DISTINCT s) FROM Submission s join s.participation p join p.exercise e join e.course c
+                WHERE TYPE(s) IN (ModelingSubmission, TextSubmission, FileUploadSubmission)
+                AND c.id = :#{#courseId}
+                AND s.submitted = TRUE
+                AND (s.submissionDate <= e.dueDate
+                    OR e.dueDate IS NULL)
             """)
     long countByCourseIdSubmittedBeforeDueDate(@Param("courseId") long courseId);
 
@@ -199,16 +199,18 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
      * @return the number of submissions belonging to the course id, which have the submitted flag set to true and the submission date after the exercise due date
      */
     @Query("""
-            SELECT COUNT (DISTINCT submission) FROM Submission submission
-                WHERE TYPE(submission) IN (ModelingSubmission, TextSubmission, FileUploadSubmission)
-                AND submission.participation.exercise.course.id = :#{#courseId}
-                AND submission.submitted = TRUE
-                AND submission.participation.exercise.dueDate IS NOT NULL
-                AND submission.submissionDate > submission.participation.exercise.dueDate
+            SELECT COUNT (DISTINCT s) FROM Submission s join s.participation p join p.exercise e join e.course c
+                WHERE TYPE(s) IN (ModelingSubmission, TextSubmission, FileUploadSubmission)
+                AND c.id = :#{#courseId}
+                AND s.submitted = TRUE
+                AND e.dueDate IS NOT NULL
+                AND s.submissionDate > e.dueDate
             """)
     long countByCourseIdSubmittedAfterDueDate(@Param("courseId") long courseId);
 
     /**
+     *
+     * TODO: speed improvements!
      * @param exerciseId the exercise id we are interested in
      * @return the number of submissions belonging to the exercise id, which have the submitted flag set to true and the submission date before the exercise due date, or no
      *         exercise due date at all

@@ -1,0 +1,75 @@
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { of } from 'rxjs';
+import { HttpResponse } from '@angular/common/http';
+import { TranslateService } from '@ngx-translate/core';
+import { ArtemisTestModule } from '../../test.module';
+import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
+import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { Course } from 'app/entities/course.model';
+import { NgbActiveModal, NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import * as chai from 'chai';
+import * as sinonChai from 'sinon-chai';
+import { restore, SinonStub, spy, stub } from 'sinon';
+import { ReEvaluateMultipleChoiceQuestionComponent } from 'app/exercises/quiz/manage/re-evaluate/multiple-choice-question/re-evaluate-multiple-choice-question.component';
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
+import { ReEvaluateDragAndDropQuestionComponent } from 'app/exercises/quiz/manage/re-evaluate/drag-and-drop-question/re-evaluate-drag-and-drop-question.component';
+import { ReEvaluateShortAnswerQuestionComponent } from 'app/exercises/quiz/manage/re-evaluate/short-answer-question/re-evaluate-short-answer-question.component';
+import { MockTranslateValuesDirective } from '../course/course-scores/course-scores.component.spec';
+import { NgModel } from '@angular/forms';
+import { JhiTranslateDirective } from 'ng-jhipster';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
+import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.model';
+import { QuizReEvaluateWarningComponent } from 'app/exercises/quiz/manage/re-evaluate/quiz-re-evaluate-warning.component';
+
+chai.use(sinonChai);
+const expect = chai.expect;
+
+describe('QuizExercise Re-evaluate Warning Component', () => {
+    let comp: QuizReEvaluateWarningComponent;
+    let fixture: ComponentFixture<QuizReEvaluateWarningComponent>;
+    let quizService: QuizExerciseService;
+    let quizServiceFindSpy: SinonStub;
+
+    const course = { id: 123 } as Course;
+    const quizExercise = new QuizExercise(course, undefined);
+    quizExercise.id = 456;
+    quizExercise.title = 'MyQuiz';
+
+    beforeEach(() => {
+        TestBed.configureTestingModule({
+            imports: [ArtemisTestModule],
+            declarations: [
+                NgModel,
+                QuizReEvaluateWarningComponent,
+                MockComponent(ReEvaluateMultipleChoiceQuestionComponent),
+                MockComponent(ReEvaluateDragAndDropQuestionComponent),
+                MockComponent(ReEvaluateShortAnswerQuestionComponent),
+                MockTranslateValuesDirective,
+                MockDirective(JhiTranslateDirective),
+                MockPipe(ArtemisDatePipe),
+            ],
+            providers: [NgbModal, NgbActiveModal, { provide: TranslateService, useClass: MockTranslateService }],
+        }).compileComponents();
+
+        fixture = TestBed.createComponent(QuizReEvaluateWarningComponent);
+        comp = fixture.componentInstance;
+        quizService = fixture.debugElement.injector.get(QuizExerciseService);
+        const quizQuestion1 = new MultipleChoiceQuestion();
+        const quizQuestion2 = new DragAndDropQuestion();
+        quizExercise.quizQuestions = [quizQuestion1, quizQuestion2];
+        // initial value
+        comp.quizExercise = quizExercise;
+        quizServiceFindSpy = stub(quizService, 'find').returns(of(new HttpResponse({ body: quizExercise })));
+    });
+
+    afterEach(() => {
+        restore();
+    });
+
+    it('Should initialize quiz exercise', () => {
+        comp.ngOnInit();
+        expect(comp.backUpQuiz).to.equal(quizExercise);
+    });
+});

@@ -4,7 +4,7 @@ import * as sinon from 'sinon';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTestModule } from '../../test.module';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
-import { TranslatePipe } from '@ngx-translate/core';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe.ts';
 import { FormsModule } from '@angular/forms';
 import { NgbPopoverModule, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ShortAnswerQuestionComponent } from 'app/exercises/quiz/shared/questions/short-answer-question/short-answer-question.component';
@@ -30,7 +30,7 @@ describe('ShortAnswerQuestionComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, FormsModule, NgbPopoverModule, ArtemisMarkdownEditorModule],
-            declarations: [ShortAnswerQuestionComponent, MockPipe(TranslatePipe), MockComponent(QuizScoringInfoStudentModalComponent), MockDirective(NgbTooltip)],
+            declarations: [ShortAnswerQuestionComponent, MockPipe(ArtemisTranslatePipe), MockComponent(QuizScoringInfoStudentModalComponent), MockDirective(NgbTooltip)],
             providers: [],
         }).compileComponents();
         fixture = TestBed.createComponent(ShortAnswerQuestionComponent);

@@ -12,6 +12,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Result;
@@ -20,7 +22,11 @@ import de.tum.in.www1.artemis.domain.scores.ParticipantScore;
 @Repository
 public interface ParticipantScoreRepository extends JpaRepository<ParticipantScore, Long> {
 
-    void removeAllByExercise(Exercise exercise);
+    List<ParticipantScore> removeAllByExerciseId(Long exerciseId);
+
+    List<ParticipantScore> removeAllByLastResultId(Long lastResultId);
+
+    List<ParticipantScore> removeAllByLastRatedResultId(Long lastResultId);
 
     @EntityGraph(type = LOAD, attributePaths = { "exercise", "lastResult", "lastRatedResult" })
     Optional<ParticipantScore> findParticipantScoreByLastRatedResult(Result result);
@@ -43,8 +49,8 @@ public interface ParticipantScoreRepository extends JpaRepository<ParticipantSco
     @Query("""
             SELECT AVG(p.lastRatedScore)
             FROM ParticipantScore p
-                WHERE p.exercise IN :exercises
-                """)
+            WHERE p.exercise IN :exercises
+            """)
     Double findAvgRatedScore(@Param("exercises") Set<Exercise> exercises);
 
     @Query("""
@@ -53,4 +59,15 @@ public interface ParticipantScoreRepository extends JpaRepository<ParticipantSco
             WHERE p.exercise IN :exercises
             """)
     Double findAvgScore(@Param("exercises") Set<Exercise> exercises);
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW) // ok because of delete
+    default void deleteAllByExerciseIdTransactional(Long exerciseId) {
+        this.removeAllByExerciseId(exerciseId);
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW) // ok because of delete
+    default void deleteAllByResultIdTransactional(Long resultId) {
+        this.removeAllByLastResultId(resultId);
+        this.removeAllByLastRatedResultId(resultId);
+    }
 }

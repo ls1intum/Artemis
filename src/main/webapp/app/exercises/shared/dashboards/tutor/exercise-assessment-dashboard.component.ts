@@ -39,6 +39,7 @@ import { Result } from 'app/entities/result.model';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { SortService } from 'app/shared/service/sort.service';
 import { round } from 'app/shared/util/utils';
+import { getExerciseSubmissionsLink, getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
 
 export interface ExampleSubmissionQueryParams {
     readOnly?: boolean;
@@ -57,6 +58,8 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
     modelingExercise: ModelingExercise;
     courseId: number;
     exam?: Exam;
+    examId: number;
+    exerciseGroupId: number;
     // TODO fix tutorLeaderboard and side panel for exam exercises
     isExamMode = false;
     isTestRun = false;
@@ -151,6 +154,11 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
         this.isTestRun = this.router.url.indexOf('test-assessment-dashboard') >= 0;
         this.unassessedSubmissionByCorrectionRound = new Map<number, Submission>();
+
+        if (this.route.snapshot.paramMap.has('examId')) {
+            this.examId = Number(this.route.snapshot.paramMap.get('examId'));
+            this.exerciseGroupId = Number(this.route.snapshot.paramMap.get('exerciseGroupId'));
+        }
 
         this.loadAll();
 
@@ -566,18 +574,12 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
         }
 
         this.openingAssessmentEditorForNewSubmission = true;
-        const submissionUrlParameter: number | 'new' = submission === 'new' ? 'new' : submission.id!;
-        let route;
-        if (this.exercise.type === ExerciseType.PROGRAMMING) {
-            const participationURLParameter: number | 'new' = submission === 'new' ? 'new' : submission.participation?.id!;
-            route = `/course-management/${this.courseId}/${this.exercise.type}-exercises/${this.exercise.id}/code-editor/${participationURLParameter}/assessment`;
-        } else {
-            route = `/course-management/${this.courseId}/${this.exercise.type}-exercises/${this.exercise.id}/submissions/${submissionUrlParameter}/assessment`;
-        }
+        const submissionId: number | 'new' = submission === 'new' ? 'new' : this.exercise.type === ExerciseType.PROGRAMMING ? submission.participation!.id! : submission.id!;
+        const url = getLinkToSubmissionAssessment(this.exercise.type!, this.courseId, this.exerciseId, submissionId, this.examId, this.exerciseGroupId);
         if (this.isTestRun) {
-            await this.router.navigate([route], { queryParams: { testRun: this.isTestRun, 'correction-round': correctionRound } });
+            await this.router.navigate(url, { queryParams: { testRun: this.isTestRun, 'correction-round': correctionRound } });
         } else {
-            await this.router.navigate([route], { queryParams: { 'correction-round': correctionRound } });
+            await this.router.navigate(url, { queryParams: { 'correction-round': correctionRound } });
         }
         this.openingAssessmentEditorForNewSubmission = false;
     }
@@ -611,18 +613,8 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
             this.toggelingSecondCorrectionButton = false;
         });
     }
-    /**
-     * Navigates back to the tutor (exam) dashboard
-     */
-    back() {
-        if (!this.isExamMode) {
-            this.router.navigate([`/course-management/${this.courseId}/assessment-dashboard`]);
-        } else {
-            if (this.isTestRun) {
-                this.router.navigate([`/course-management/${this.courseId}/exams/${this.exercise!.exerciseGroup!.exam!.id}/test-runs/assess`]);
-            } else {
-                this.router.navigate([`/course-management/${this.courseId}/exams/${this.exercise!.exerciseGroup!.exam!.id}/assessment-dashboard`]);
-            }
-        }
+
+    getSubmissionsLinkForExercise(exercise: Exercise): string[] {
+        return getExerciseSubmissionsLink(exercise.type!, this.courseId, exercise.id!, this.examId, this.exerciseGroupId);
     }
 }
