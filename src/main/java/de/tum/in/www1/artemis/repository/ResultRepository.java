@@ -269,12 +269,6 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
     boolean existsByParticipation_ExerciseId(long exerciseId);
 
     /**
-     * Delete all results that belong to the given submission
-     * @param submissionId the Id of the submission where the result should be deleted
-     */
-    void deleteBySubmission_Id(long submissionId);
-
-    /**
      * Use this method only for exams!
      * Given an exerciseId and the number of correctionRounds, return the number of assessments that have been finished, for that exerciseId and each correctionRound
      *

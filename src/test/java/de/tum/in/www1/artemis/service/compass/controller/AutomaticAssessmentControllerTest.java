@@ -12,7 +12,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
 import com.hazelcast.config.Config;
@@ -94,7 +93,7 @@ class AutomaticAssessmentControllerTest {
     @AfterEach
     void tearDown() {
         feedbacks = new ArrayList<>();
-        Mockito.reset(classDiagram, similaritySetAssessment, feedback1, feedback2);
+        reset(classDiagram, similaritySetAssessment, feedback1, feedback2);
     }
 
     @Test
@@ -109,12 +108,10 @@ class AutomaticAssessmentControllerTest {
         SimilaritySetAssessment similaritySetAssessment = new SimilaritySetAssessment(feedback3);
         automaticAssessmentController.addSimilaritySetAssessment(1, similaritySetAssessment);
         automaticAssessmentController.addFeedbacksToSimilaritySet(feedbacks, classDiagram);
-        Optional<SimilaritySetAssessment> ssA = automaticAssessmentController.getAssessmentForSimilaritySet(1);
-        List<Long> ids = ssA.get().getFeedbackList().stream().map(Feedback::getId).collect(Collectors.toList());
+        List<Long> ids = automaticAssessmentController.getAssessmentForSimilaritySet(1).get().getFeedbackList().stream().map(Feedback::getId).collect(Collectors.toList());
         assertThat(ids).contains(feedback3.getId());
         assertThat(ids).contains(feedback1.getId());
-        Optional<SimilaritySetAssessment> ssA2 = automaticAssessmentController.getAssessmentForSimilaritySet(2);
-        assertThat(ssA2.get().getFeedbackList().get(0).getId()).isEqualTo(feedback2.getId());
+        assertThat(automaticAssessmentController.getAssessmentForSimilaritySet(2).get().getFeedbackList().get(0).getId()).isEqualTo(feedback2.getId());
     }
 
     @Test

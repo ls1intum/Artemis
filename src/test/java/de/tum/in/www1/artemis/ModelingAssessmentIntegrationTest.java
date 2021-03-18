@@ -703,7 +703,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     public void testOverrideAutomaticAssessment() throws Exception {
-        classExercise.setDueDate((ZonedDateTime.now().minusHours(1)));
+        classExercise.setDueDate(ZonedDateTime.now().minusHours(1));
         exerciseRepo.save(classExercise);
         modelingSubmission = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.partial.json", "student1");
         modelingAssessment = database.addModelingAssessmentForSubmission(classExercise, modelingSubmission, "test-data/model-assessment/assessment.54727.partial.json", "tutor1",

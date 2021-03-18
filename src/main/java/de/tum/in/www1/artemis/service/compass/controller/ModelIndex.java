@@ -47,7 +47,6 @@ public class ModelIndex {
         var bestSimilarityFit = Pair.of(-1.0, -1);
 
         for (final var knownElement : uniqueModelElementList) {
-            String id = element.getJSONElementID();
             final var similarity = knownElement.similarity(element);
             if (similarity > CompassConfiguration.EQUALITY_THRESHOLD && similarity > bestSimilarityFit.getFirst()) {
                 // element is similar to existing element and has a higher similarity than another element
