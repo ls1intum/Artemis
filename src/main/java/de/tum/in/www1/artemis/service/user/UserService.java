@@ -246,6 +246,7 @@ public class UserService {
         saveUser(newUser);
         // we need to save first so that the user can be found in the database in the subsequent method
         optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.createVcsUser(newUser));
+        optionalCIUserManagementService.ifPresent(ciUserManagementService -> ciUserManagementService.createUser(newUser));
         log.debug("Created Information for User: {}", newUser);
         return newUser;
     }
