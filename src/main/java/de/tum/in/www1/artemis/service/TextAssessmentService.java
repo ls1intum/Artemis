@@ -48,7 +48,7 @@ public class TextAssessmentService extends AssessmentService {
      *   4. Compute Fallback Text Blocks if needed
      *
      * @param textSubmission Text Submission to be assessed
-     * @param result correction round for which we prepare the submission
+     * @param result for which we prepare the submission
      */
     public void prepareSubmissionForAssessment(TextSubmission textSubmission, Result result) {
         final Participation participation = textSubmission.getParticipation();
