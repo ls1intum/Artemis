@@ -41,6 +41,7 @@ import { ArtemisSharedPipesModule } from 'app/shared/pipes/shared-pipes.module';
 import { ArtemisLearningGoalsModule } from 'app/course/learning-goals/learning-goal.module';
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { ArtemisCourseParticipantScoresModule } from 'app/course/course-participant-scores/course-participant-scores.module';
+import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 
 @NgModule({
     imports: [
@@ -79,6 +80,7 @@ import { ArtemisCourseParticipantScoresModule } from 'app/course/course-particip
         ArtemisSharedPipesModule,
         ArtemisMarkdownModule,
         ArtemisCourseParticipantScoresModule,
+        ArtemisSharedComponentModule,
     ],
     declarations: [CourseManagementComponent, CourseDetailComponent, CourseUpdateComponent, CourseExerciseCardComponent, CourseManagementExercisesComponent, CourseGroupComponent],
 })
