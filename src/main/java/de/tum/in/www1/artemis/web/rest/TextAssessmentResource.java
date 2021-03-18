@@ -302,6 +302,8 @@ public class TextAssessmentResource extends AssessmentResource {
             }
 
             textSubmissionService.lockTextSubmissionToBeAssessed(textSubmission, correctionRound);
+            // set it since it has changed
+            result = textSubmission.getResultForCorrectionRound(correctionRound);
         }
 
         // prepare and load in all feedbacks
