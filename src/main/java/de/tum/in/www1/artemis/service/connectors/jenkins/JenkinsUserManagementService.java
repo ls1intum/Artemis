@@ -2,10 +2,12 @@ package de.tum.in.www1.artemis.service.connectors.jenkins;
 
 import java.io.IOException;
 import java.net.URL;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -91,7 +93,7 @@ public class JenkinsUserManagementService implements CIUserManagementService {
             restTemplate.exchange(uri, HttpMethod.POST, getCreateUserFormHttpEntity(user), Void.class);
 
             // Adds the user to groups of existing programming exercises
-            addUserToGroups(user.getLogin(), user.getGroups());
+            addUserToGroups(user.getLogin(), getUserWithGroups(user).getGroups());
         }
         catch (RestClientException e) {
             throw new JenkinsException("Cannot create user: " + user.getLogin(), e);
@@ -135,7 +137,7 @@ public class JenkinsUserManagementService implements CIUserManagementService {
         try {
             var uri = UriComponentsBuilder.fromHttpUrl(jenkinsServerUrl.toString()).pathSegment("user", userLogin, "doDelete").build().toUri();
             restTemplate.exchange(uri, HttpMethod.POST, null, Void.class);
-            removeUserFromGroups(userLogin, user.getGroups());
+            removeUserFromGroups(userLogin, getUserWithGroups(user).getGroups());
         }
         catch (RestClientException e) {
             throw new JenkinsException("Cannot delete user: " + userLogin, e);
@@ -188,7 +190,7 @@ public class JenkinsUserManagementService implements CIUserManagementService {
         // the new one.
         var oldUser = new User();
         oldUser.setLogin(oldLogin);
-        oldUser.setGroups(user.getGroups());
+        oldUser.setGroups(getUserWithGroups(user).getGroups());
         deleteUser(oldUser);
 
         createUser(user);
@@ -379,5 +381,18 @@ public class JenkinsUserManagementService implements CIUserManagementService {
     private boolean isUserLoginLegal(User user) {
         String regex = "^[a-zA-Z0-9_-]*$";
         return user.getLogin().matches(regex);
+    }
+
+    private User getUserWithGroups(User user) throws JenkinsException {
+        if (Hibernate.isInitialized(user.getGroups())) {
+            return user;
+        }
+        log.debug("Groups of user were not initialized. Fetching groups from repository.");
+        Optional<User> userWithGroups = userRepository.findOneWithGroupsByLogin(user.getLogin());
+        if (userWithGroups.isEmpty()) {
+            throw new JenkinsException("Cannot find user in repository: " + user.getLogin());
+        }
+
+        return userWithGroups.get();
     }
 }
