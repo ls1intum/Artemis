@@ -114,6 +114,12 @@ public class RestTemplateConfiguration {
         return initializeRestTemplateWithInterceptors(atheneAuthorizationInterceptor, createShortTimeoutRestTemplate());
     }
 
+    @Bean
+    @Profile("apollon")
+    public RestTemplate shortTimeoutApollonRestTemplate() {
+        return createShortTimeoutRestTemplate();
+    }
+
     @NotNull
     private RestTemplate initializeRestTemplateWithInterceptors(ClientHttpRequestInterceptor interceptor, RestTemplate restTemplate) {
         var interceptors = restTemplate.getInterceptors();
