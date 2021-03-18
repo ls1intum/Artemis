@@ -85,15 +85,12 @@ under ``localhost:7990``.
    Also, you can select the evaluation/internal/test/dev setups if you are asked.
    Follow the additional steps for Jira and Bitbucket.
 
-   Jira:
+   - Jira:
+    - On startup select ``I'll set it up myself``
+    - Select Build In Database Connection
+    - Create a sample project.
 
-   - On startup select ``I'll set it up myself``
-   - Select Build In Database Connection
-   - Create a sample project.
-
-   Bitbucket:
-
-   - Do not connect Bitbucket with Jira yet.
+   - Bitbucket: Do not connect Bitbucket with Jira yet.
 
 
 3. Execute the shell script ``atlassian-setup.sh`` in the
