@@ -250,7 +250,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
                 (res: HttpResponse<Complaint[]>) => (this.moreFeedbackRequests = res.body as Complaint[]),
                 (error: HttpErrorResponse) => this.onError(error.message),
             );
-            console.log('what');
+
             this.exerciseService.getStatsForTutors(this.exerciseId).subscribe(
                 (res: HttpResponse<StatsForDashboard>) => {
                     this.statsForDashboard = StatsForDashboard.from(res.body!);
@@ -258,7 +258,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
                     this.totalNumberOfAssessments = this.statsForDashboard.totalNumberOfAssessments;
                     this.numberOfAssessmentsOfCorrectionRounds = this.statsForDashboard.numberOfAssessmentsOfCorrectionRounds;
                     this.numberOfLockedAssessmentByOtherTutorsOfCorrectionRound = this.statsForDashboard.numberOfLockedAssessmentByOtherTutorsOfCorrectionRound;
-                    console.log('looked up stuff', this.numberOfLockedAssessmentByOtherTutorsOfCorrectionRound);
+
                     this.numberOfComplaints = this.statsForDashboard.numberOfComplaints;
                     this.numberOfOpenComplaints = this.statsForDashboard.numberOfOpenComplaints;
                     this.numberOfMoreFeedbackRequests = this.statsForDashboard.numberOfMoreFeedbackRequests;
