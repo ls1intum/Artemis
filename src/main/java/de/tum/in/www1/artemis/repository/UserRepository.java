@@ -38,7 +38,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     Optional<User> findOneByActivationKey(String activationKey);
 
-    Optional<User> findOneByResetKey(String resetKey);
+    @EntityGraph(type = LOAD, attributePaths = { "groups" })
+    Optional<User> findOneWithGroupsByResetKey(String resetKey);
 
     Optional<User> findOneByEmailIgnoreCase(String email);
 

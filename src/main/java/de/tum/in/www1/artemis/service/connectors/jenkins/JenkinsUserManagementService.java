@@ -64,7 +64,7 @@ public class JenkinsUserManagementService implements CIUserManagementService {
      * Creates a user in Jenkins. Note that the user login acts as
      * a unique identifier in Jenkins.
      *
-     * @param user The user to create
+     * @param user The user to create. Groups must be loaded.
      */
     @Override
     public void createUser(User user) throws ContinuousIntegrationException {
@@ -136,7 +136,7 @@ public class JenkinsUserManagementService implements CIUserManagementService {
      * <p>
      * Note that it's not possible to change the username of the Jenkins user.
      *
-     * @param user The user to update.
+     * @param user The user to update. Groups must be loaded.
      */
     @Override
     public void updateUser(User user) throws ContinuousIntegrationException {
