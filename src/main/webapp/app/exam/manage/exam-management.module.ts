@@ -43,6 +43,7 @@ import { ProgrammingExerciseGroupCellComponent } from './exercise-groups/program
 import { FileUploadExerciseGroupCellComponent } from './exercise-groups/file-upload-exercise-cell/file-upload-exercise-group-cell.component';
 import { ModelingExerciseGroupCellComponent } from './exercise-groups/modeling-exercise-cell/modeling-exercise-group-cell.component';
 import { QuizExerciseGroupCellComponent } from './exercise-groups/quiz-exercise-cell/quiz-exercise-group-cell.component';
+import { ArtemisTextSubmissionAssessmentModule } from 'app/exercises/text/assess/text-submission-assessment.module';
 
 const ENTITY_STATES = [...examManagementState];
 
@@ -69,6 +70,7 @@ const ENTITY_STATES = [...examManagementState];
         ArtemisMarkdownModule,
         ArtemisTutorParticipationGraphModule,
         ArtemisExamParticipantScoresModule,
+        ArtemisTextSubmissionAssessmentModule,
     ],
     declarations: [
         ExamManagementComponent,

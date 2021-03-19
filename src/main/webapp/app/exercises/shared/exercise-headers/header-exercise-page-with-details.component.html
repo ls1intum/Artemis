@@ -1,7 +1,7 @@
 <div class="course-info-bar" *ngIf="exercise">
     <div class="row">
         <div class="col general-info">
-            <h3>
+            <h3 *ngIf="displayBackButton">
                 <fa-icon [icon]="'arrow-left'" (click)="onBackClick()" class="back-button mr-2"></fa-icon>
                 <ng-content select="[pagetitle]"></ng-content>
             </h3>
@@ -10,7 +10,7 @@
                 <h4>
                     <span class="mr-2" *ngIf="!isTestRun"> {{ 'artemisApp.exam.endDate' | artemisTranslate }} : {{ exam?.endDate | artemisDate }} </span>
                     <span *ngIf="exam?.endDate && !isTestRun" [ngClass]="exerciseStatusBadge" class="badge">
-                        {{ exam?.endDate | amTimeAgo }}
+                        {{ exam?.endDate | artemisTimeAgo }}
                     </span>
                 </h4>
                 <h4 *ngIf="!isTestRun">
@@ -24,13 +24,13 @@
                 <h4>
                     <span class="mr-2"> {{ 'artemisApp.courseOverview.exerciseDetails.dueDate' | artemisTranslate }} {{ (exercise.dueDate | artemisDate) || 'N/A' }} </span>
                     <span *ngIf="exercise.dueDate" [ngClass]="exerciseStatusBadge" class="badge">
-                        {{ exercise.dueDate | amTimeAgo }}
+                        {{ exercise.dueDate | artemisTimeAgo }}
                     </span>
                 </h4>
                 <h4 *ngIf="exercise.assessmentDueDate">
                     <span class="mr-2"> {{ 'artemisApp.exercise.assessmentDueDate' | artemisTranslate }} : {{ (exercise.assessmentDueDate | artemisDate) || 'N/A' }} </span>
                     <span [ngClass]="exerciseStatusBadge" class="badge">
-                        {{ exercise.assessmentDueDate | amTimeAgo }}
+                        {{ exercise.assessmentDueDate | artemisTimeAgo }}
                     </span>
                 </h4>
             </ng-template>
