@@ -39,6 +39,10 @@ import { ExamChecklistCheckComponent } from 'app/exam/manage/exams/exam-checklis
 import { ExamChecklistExerciseGroupTableComponent } from 'app/exam/manage/exams/exam-checklist-component/exam-checklist-exercisegroup-table/exam-checklist-exercisegroup-table.component';
 import { ArtemisTutorParticipationGraphModule } from 'app/shared/dashboards/tutor-participation-graph/tutor-participation-graph.module';
 import { ArtemisExamParticipantScoresModule } from 'app/exam/manage/exam-participant-scores/exam-participant-scores.module';
+import { ProgrammingExerciseGroupCellComponent } from './exercise-groups/programming-exercise-cell/programming-exercise-group-cell.component';
+import { FileUploadExerciseGroupCellComponent } from './exercise-groups/file-upload-exercise-cell/file-upload-exercise-group-cell.component';
+import { ModelingExerciseGroupCellComponent } from './exercise-groups/modeling-exercise-cell/modeling-exercise-group-cell.component';
+import { QuizExerciseGroupCellComponent } from './exercise-groups/quiz-exercise-cell/quiz-exercise-group-cell.component';
 
 const ENTITY_STATES = [...examManagementState];
 
@@ -86,6 +90,10 @@ const ENTITY_STATES = [...examManagementState];
         ExamChecklistComponent,
         ExamChecklistExerciseGroupTableComponent,
         ExamChecklistCheckComponent,
+        ProgrammingExerciseGroupCellComponent,
+        FileUploadExerciseGroupCellComponent,
+        ModelingExerciseGroupCellComponent,
+        QuizExerciseGroupCellComponent,
     ],
 })
 export class ArtemisExamManagementModule {}
