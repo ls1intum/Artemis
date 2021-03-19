@@ -98,6 +98,14 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
             """)
     String findStudentGroupName(@Param("courseId") long courseId);
 
+    /**
+     * Get active students in the timeframe from startDate to endDate for the exerciseIds
+     *
+     * @param exerciseIds exerciseIds from all exercises to get the statistics for
+     * @param startDate the starting date of the query
+     * @param endDate the end date for the query
+     * @return List<Map<String, Object>> with a map for every submission containing date and the username
+     */
     @Query("""
             select s.submissionDate as day, p.student.login as username
             from StudentParticipation p join p.submissions s

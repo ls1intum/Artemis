@@ -601,7 +601,7 @@ public class ExerciseService {
      * @param amountOfStudentsInCourse the amount of students in the course
      * @return An Integer array containing active students for each index
      */
-    public List<CourseManagementOverviewExerciseStatisticsDTO> getStatisticsForCourseManagementOverview(Long courseId, Integer amountOfStudentsInCourse) {
+    public List<CourseManagementOverviewExerciseStatisticsDTO> getStatisticsForCourseManagementOverview(Long courseId, Integer amountOfStudentsInCourse, List<Long> exerciseIds) {
         List<CourseManagementOverviewExerciseStatisticsDTO> statisticsDTOS = new ArrayList<>();
         var now = ZonedDateTime.now();
         var sevenDaysAgo = ZonedDateTime.now().minusDays(7);
@@ -613,6 +613,11 @@ public class ExerciseService {
         long mid = System.currentTimeMillis();
         log.info("getting exercise stats (sql) took " + (mid - start) + "ms for course " + courseId);
 
+        var averageScore = participantScoreRepository.findAvgScoreForExercises(exerciseIds);
+        Map<Long, Double> averageScoreById = new HashMap<>();
+        for (var ele : averageScore) {
+            averageScoreById.put((Long) ele.get("exerciseId"), (Double) ele.get("averageScore"));
+        }
         for (var exercise : x) {
             var exerciseId = exercise.getId();
             var dto = new CourseManagementOverviewExerciseStatisticsDTO();
@@ -620,25 +625,15 @@ public class ExerciseService {
             dto.setExerciseId(exerciseId);
             dto.setExerciseMaxPoints(exercise.getMaxPoints());
 
-            // We only need to compute the average score for "past" exercises
-            var hasAssessmentDueDate = exercise.getAssessmentDueDate() != null;
-            if ((hasAssessmentDueDate && exercise.getAssessmentDueDate().isAfter(now)) ||
-                (!hasAssessmentDueDate && exercise.getDueDate() != null && exercise.getDueDate().isAfter(now)) ||
-                (exercise instanceof QuizExercise && exercise.getReleaseDate() != null && exercise.getReleaseDate().isBefore(ZonedDateTime.now().plusDays(7)))) {
-                long avStart = System.currentTimeMillis();
-                dto.setAverageScoreInPercent(exerciseRepository.getAverageScoreById(exerciseId));
-                long avEnd = System.currentTimeMillis();
-                log.info("getting average score took " + (avEnd - avStart) + "ms for course " + courseId + ", exercise " + exerciseId);
-            } else {
-                dto.setAverageScoreInPercent(0D);
-            }
+            var avgScore = averageScoreById.get(exerciseId) != null ? averageScoreById.get(exerciseId) : 0.0;
+            dto.setAverageScoreInPercent(avgScore);
 
             // We only need to compute the participations for "current" exercises
             long parStart = System.currentTimeMillis();
             var hasReleaseDate = exercise.getReleaseDate() != null;
-            var isCurrentExercise = (!hasReleaseDate && exercise.getDueDate() != null && exercise.getDueDate().isBefore(now)) ||
-                (hasReleaseDate && exercise.getReleaseDate().isAfter(now) && (exercise.getDueDate() == null || exercise.getDueDate().isBefore(now))) ||
-                (exercise instanceof QuizExercise && ((QuizExercise) exercise).isSubmissionAllowed());
+            var isCurrentExercise = (!hasReleaseDate && exercise.getDueDate() != null && exercise.getDueDate().isBefore(now))
+                    || (hasReleaseDate && exercise.getReleaseDate().isAfter(now) && (exercise.getDueDate() == null || exercise.getDueDate().isBefore(now)))
+                    || (exercise instanceof QuizExercise && ((QuizExercise) exercise).isSubmissionAllowed());
             if (!noStudentsInCourse && isCurrentExercise) {
                 Long rawParticipations = exerciseRepository.getParticipationCountById(exerciseId);
                 var participations = rawParticipations == null ? 0 : Math.toIntExact(rawParticipations);
@@ -652,7 +647,8 @@ public class ExerciseService {
                 else {
                     dto.setParticipationRateInPercent(Math.round(participations * 1000.0 / amountOfStudentsInCourse) / 10.0);
                 }
-            } else {
+            }
+            else {
                 dto.setNoOfParticipatingStudentsOrTeams(0);
                 dto.setParticipationRateInPercent(0D);
             }

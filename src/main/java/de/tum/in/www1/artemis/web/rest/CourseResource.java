@@ -934,7 +934,7 @@ public class CourseResource {
 
             var studentsGroup = courseRepository.findStudentGroupName(courseId);
             var amountOfStudentsInCourse = Math.toIntExact(userRepository.countUserInGroup(studentsGroup));
-            courseDTO.setExerciseDTOS(exerciseService.getStatisticsForCourseManagementOverview(courseId, amountOfStudentsInCourse));
+            courseDTO.setExerciseDTOS(exerciseService.getStatisticsForCourseManagementOverview(courseId, amountOfStudentsInCourse, exerciseIds));
             courseDTO.setActiveStudents(courseService.getActiveStudents(exerciseIds));
             courseDTOS.add(courseDTO);
         }
