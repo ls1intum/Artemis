@@ -478,7 +478,7 @@ recommended ones that got installed during the setup process):
 
     **Note:** This is a suite of plugins that will install multiple plugins
 
-4. `Pipeline Maven <https://plugins.jenkins.io/pipeline-maven/>`__ to use maven within the pipelines.
+4. `Pipeline Maven <https://plugins.jenkins.io/pipeline-maven/>`__ to use maven within the pipelines. If you want to use docker for your build agents you may also need to install `Docker Pipeline <https://plugins.jenkins.io/docker-workflow/>`__ .
 
 5. `Matrix Authorization Strategy Plugin <https://plugins.jenkins.io/matrix-auth/>`__ for configuring permissions for users on a project and build plan level (Matrix Authorization Strategy might already be installed).
 
