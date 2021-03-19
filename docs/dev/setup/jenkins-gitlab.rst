@@ -127,7 +127,21 @@ GitLab
 Gitlab Server Setup
 ~~~~~~~~~~~~~~~~~~~
 
-1. Pull the latest GitLab Docker image
+GitLab provides no possibility to set a users password via API without forcing the user to change it afterwards (see `Issue 19141 <https://gitlab.com/gitlab-org/gitlab/-/issues/19141>`__).
+Therefore, you may want to patch the official gitlab docker image.
+Thus, you can use the following Dockerfile:
+
+.. code:: dockerfile
+
+    FROM gitlab/gitlab-ce:latest
+    RUN sed -i '/^.*user_params\[:password_expires_at\] = Time.current if admin_making_changes_for_another_user.*$/s/^/#/' /opt/gitlab/embedded/service/gitlab-rails/lib/api/users.rb
+
+
+This dockerfile disables the mechanism that sets the password to expired state after changed via API.
+If you want to use this custom image, you have to build the image and replace all occurances of ``gitlab/gitlab-ce:latest`` in the following instructions by your chosen image name.
+
+
+1. Pull the latest GitLab Docker image (only if you don't use your custom gitlab image)
 
    ::
 
