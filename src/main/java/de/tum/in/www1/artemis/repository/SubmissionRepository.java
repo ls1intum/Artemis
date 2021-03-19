@@ -226,7 +226,7 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
      * @return the number of submissions belonging to the exercise id, which have the submitted flag set to true and the submission date after the exercise due date
      */
     @Query("""
-            SELECT COUNT (DISTINCT p) FROM StudentParticipation p
+            SELECT COUNT (DISTINCT p) FROM StudentParticipation p join p.submissions s
                 WHERE p.exercise.id = :#{#exerciseId}
                 AND s.submitted = TRUE
                 AND s.submissionDate > p.exercise.dueDate
