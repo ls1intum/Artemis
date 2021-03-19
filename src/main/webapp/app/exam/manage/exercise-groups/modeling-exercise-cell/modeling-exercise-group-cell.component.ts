@@ -1,5 +1,5 @@
 import { Component, Input } from '@angular/core';
-import { ExerciseType } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 
 @Component({
@@ -9,7 +9,10 @@ import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 })
 export class ModelingExerciseGroupCellComponent {
     exerciseType = ExerciseType;
+    modelingExercise: ModelingExercise;
 
     @Input()
-    exercise: ModelingExercise;
+    set exercise(exercise: Exercise) {
+        this.modelingExercise = exercise as ModelingExercise;
+    }
 }

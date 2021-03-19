@@ -2,6 +2,7 @@ import { Component, Input } from '@angular/core';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ProgrammingExerciseSimulationUtils } from 'app/exercises/programming/shared/utils/programming-exercise-simulation-utils';
 import { ProgrammingExerciseParticipationType } from 'app/entities/programming-exercise-participation.model';
+import { Exercise } from 'app/entities/exercise.model';
 
 @Component({
     selector: 'jhi-programming-exercise-group-cell',
@@ -11,8 +12,12 @@ import { ProgrammingExerciseParticipationType } from 'app/entities/programming-e
 export class ProgrammingExerciseGroupCellComponent {
     participationType = ProgrammingExerciseParticipationType;
 
+    programmingExercise: ProgrammingExercise;
+
     @Input()
-    exercise: ProgrammingExercise;
+    set exercise(exercise: Exercise) {
+        this.programmingExercise = exercise as ProgrammingExercise;
+    }
 
     constructor(private programmingExerciseSimulationUtils: ProgrammingExerciseSimulationUtils) {}
 

@@ -1,6 +1,6 @@
 import { Component, Input } from '@angular/core';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
-import { ExerciseType } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 
 @Component({
     selector: 'jhi-file-upload-exercise-group-cell',
@@ -10,6 +10,10 @@ import { ExerciseType } from 'app/entities/exercise.model';
 export class FileUploadExerciseGroupCellComponent {
     exerciseType = ExerciseType;
 
+    fileUploadExercise: FileUploadExercise;
+
     @Input()
-    exercise: FileUploadExercise;
+    set exercise(exercise: Exercise) {
+        this.fileUploadExercise = exercise as FileUploadExercise;
+    }
 }
