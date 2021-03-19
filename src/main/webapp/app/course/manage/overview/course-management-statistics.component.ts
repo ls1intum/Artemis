@@ -50,7 +50,7 @@ export class CourseManagementStatisticsComponent implements OnInit {
                 this.dataForSpanType.push((value * 100) / this.amountOfStudentsInCourse);
             }
         } else {
-            this.dataForSpanType = new Array(this.initialStats.length).fill(100);
+            this.dataForSpanType = new Array(this.initialStats.length).fill(0);
         }
 
         this.chartData = [

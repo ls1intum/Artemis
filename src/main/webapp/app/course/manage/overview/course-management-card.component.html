@@ -141,7 +141,7 @@
                 </div>
             </div>
             <div class="col-4 section-card statistics-card align-center">
-                <div class="section-content align-center" *ngIf="courseStatistics?.activeStudents && courseWithUsers?.numberOfStudents">
+                <div class="section-content align-center" *ngIf="courseStatistics?.activeStudents && courseWithUsers?.numberOfStudents != undefined">
                     <jhi-course-management-statistics
                         [courseId]="courseWithUsers.id"
                         [initialStats]="courseStatistics.activeStudents"
