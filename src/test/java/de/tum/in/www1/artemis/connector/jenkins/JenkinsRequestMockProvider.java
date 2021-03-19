@@ -435,7 +435,7 @@ public class JenkinsRequestMockProvider {
     public void mockDeleteBuildPlan(String projectKey, String planName, boolean shouldFail) throws IOException {
         mockGetFolderJob(projectKey, new FolderJob());
         if (shouldFail) {
-            doThrow(new HttpResponseException(40, "Bad Request")).when(jenkinsServer).deleteJob(any(FolderJob.class), eq(planName), eq(useCrumb));
+            doThrow(new HttpResponseException(400, "Bad Request")).when(jenkinsServer).deleteJob(any(FolderJob.class), eq(planName), eq(useCrumb));
         }
         else {
             doNothing().when(jenkinsServer).deleteJob(any(FolderJob.class), eq(planName), eq(useCrumb));
