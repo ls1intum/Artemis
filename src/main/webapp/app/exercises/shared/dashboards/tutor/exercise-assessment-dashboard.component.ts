@@ -264,8 +264,8 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
                     this.numberOfMoreFeedbackRequests = this.statsForDashboard.numberOfMoreFeedbackRequests;
                     this.numberOfOpenMoreFeedbackRequests = this.statsForDashboard.numberOfOpenMoreFeedbackRequests;
                     const tutorLeaderboardEntry = this.statsForDashboard.tutorLeaderboardEntries?.find((entry) => entry.userId === this.tutor!.id);
+                    this.sortService.sortByProperty(this.statsForDashboard.tutorLeaderboardEntries, 'points', false);
                     if (tutorLeaderboardEntry) {
-                        this.sortService.sortByProperty(this.statsForDashboard.tutorLeaderboardEntries, 'points', false);
                         this.numberOfTutorAssessments = tutorLeaderboardEntry.numberOfAssessments;
                         this.numberOfTutorComplaints = tutorLeaderboardEntry.numberOfTutorComplaints;
                         this.numberOfTutorMoreFeedbackRequests = tutorLeaderboardEntry.numberOfTutorMoreFeedbackRequests;
