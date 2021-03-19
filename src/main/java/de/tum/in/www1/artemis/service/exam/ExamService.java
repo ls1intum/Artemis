@@ -50,7 +50,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 @Service
 public class ExamService {
 
-    @Value("${artemis.exam-archives-path}")
+    @Value("${artemis.course-archives-path}")
     private String examArchivesDirPath;
 
     private final Logger log = LoggerFactory.getLogger(ExamService.class);
