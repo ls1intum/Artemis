@@ -95,7 +95,7 @@ public class SAML2Service {
                     mailService.sendSAML2SetPasswordMail(mailUser.get());
                 }
                 else {
-                    log.error("User {} was created but could not be found in the database!");
+                    log.error("User {} was created but could not be found in the database!", user.get());
                 }
             }
         }
