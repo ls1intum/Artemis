@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.service;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.HashSet;
 
 import org.junit.jupiter.api.AfterEach;
@@ -105,7 +106,9 @@ public class CourseServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
         submissionRepository.save(submission3);
         submissionRepository.save(submission4);
 
-        var activeStudents = courseService.getActiveStudents(course.getId());
+        var exerciseList = new ArrayList<Long>();
+        exerciseList.add(exercise.getId());
+        var activeStudents = courseService.getActiveStudents(exerciseList);
         assertThat(activeStudents.length).isEqualTo(4);
         assertThat(activeStudents).isEqualTo(new Integer[] { 0, 1, 1, 2 });
     }

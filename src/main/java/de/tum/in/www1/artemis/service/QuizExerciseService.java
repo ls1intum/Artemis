@@ -409,11 +409,10 @@ public class QuizExerciseService {
 
     /**
      * Evaluates the QuizStatus for a given quiz
-     * @param exerciseId Id of the quiz exercise to get the status of
+     * @param quizExercise the quiz exercise to get the status of
      * @return the status of the quiz
      */
-    public QuizStatus evaluateQuizStatus(Long exerciseId) {
-        QuizExercise quizExercise = quizExerciseRepository.findByIdElseThrow(exerciseId);
+    public QuizStatus evaluateQuizStatus(QuizExercise quizExercise) {
         if (quizExercise.isIsPlannedToStart() && quizExercise.getRemainingTime() != null) {
             if (quizExercise.getRemainingTime() <= 0) {
                 // the quiz is over

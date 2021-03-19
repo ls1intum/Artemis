@@ -294,7 +294,7 @@ public class CourseService {
      * @param courseId the id of the course
      * @return An Integer array containing active students for each index
      */
-    public Integer[] getActiveStudents(Long courseId) {
+    public Integer[] getActiveStudents(List<Long> exerciseIds) {
         ZonedDateTime now = ZonedDateTime.now();
         LocalDateTime localStartDate = now.toLocalDateTime().with(DayOfWeek.MONDAY);
         LocalDateTime localEndDate = now.toLocalDateTime().with(DayOfWeek.SUNDAY);
@@ -302,36 +302,9 @@ public class CourseService {
         ZonedDateTime startDate = localStartDate.atZone(zone).minusWeeks(3).withHour(0).withMinute(0).withSecond(0).withNano(0);
         ZonedDateTime endDate = localEndDate.atZone(zone).withHour(23).withMinute(59).withSecond(59);
 
-        log.info("getting active students for course " + courseId);
-        long start = System.currentTimeMillis();
-        List<Map<String, Object>> outcome = courseRepository.getActiveStudents(courseId, startDate, endDate);
-        long end = System.currentTimeMillis();
-        log.info("getting active students took " + (end - start) + "ms for course " + courseId);
-
+        List<Map<String, Object>> outcome = courseRepository.getActiveStudents(exerciseIds, startDate, endDate);
         List<Map<String, Object>> distinctOutcome = removeDuplicateActiveUserRows(outcome, startDate);
         return createResultArray(distinctOutcome, endDate);
-
-        // List<Map<String, Object>> outcome = courseRepository.getActiveStudents2(courseId, startDate, endDate);
-        // return createResultArray2(outcome, endDate);
-    }
-
-    private Integer[] createResultArray2(List<Map<String, Object>> outcome, ZonedDateTime endDate) {
-        Integer[] result = new Integer[12];
-        Arrays.fill(result, 0);
-        int week;
-        for (Map<String, Object> map : outcome) {
-            // ZonedDateTime date = (ZonedDateTime) map.get("date");
-            String stringDate = (String) map.get("date");
-            ZonedDateTime date = LocalDate.parse(stringDate, DateTimeFormatter.ofPattern("uuuu-MM-dd")).atStartOfDay(ZoneId.of("UTC"));
-            int amount = map.get("users") != null ? ((Long) map.get("users")).intValue() : 0;
-            week = getWeekOfDate(date);
-            for (int i = 0; i < result.length; i++) {
-                if (week == getWeekOfDate(endDate.minusWeeks(i))) {
-                    result[result.length - 1 - i] += amount;
-                }
-            }
-        }
-        return result;
     }
 
     /**

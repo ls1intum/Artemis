@@ -558,40 +558,33 @@ public class ExerciseService {
     public List<CourseManagementOverviewExerciseDetailsDTO> getExercisesForCourseManagementOverview(Long courseId) {
         List<CourseManagementOverviewExerciseDetailsDTO> detailsDTOS = new ArrayList<>();
         var sevenDaysAgo = ZonedDateTime.now().minusDays(7);
-        for (var listElement : exerciseRepository.getExercisesForCourseManagementOverview(courseId, sevenDaysAgo)) {
-            var exerciseId = (Long) listElement.get("id");
-            var exerciseType = listElement.get("type");
-            if (exerciseId == null || exerciseId == 0 || exerciseType == null) {
-                continue;
-            }
-
+        for (var exercise : exerciseRepository.getExercisesForCourseManagementOverview(courseId, sevenDaysAgo)) {
+            var exerciseId = exercise.getId();
             var dto = new CourseManagementOverviewExerciseDetailsDTO();
             dto.setExerciseId(exerciseId);
-            dto.setExerciseTitle((String) listElement.get("title"));
+            dto.setExerciseTitle(exercise.getTitle());
 
-            if (exerciseType == QuizExercise.class) {
+            if (exercise instanceof QuizExercise) {
                 dto.setExerciseType("quiz");
-                dto.setQuizStatus(quizExerciseService.evaluateQuizStatus(exerciseId));
+                dto.setQuizStatus(quizExerciseService.evaluateQuizStatus((QuizExercise) exercise));
             }
-            else if (exerciseType == ProgrammingExercise.class) {
+            else if (exercise instanceof ProgrammingExercise) {
                 dto.setExerciseType("programming");
             }
-            else if (exerciseType == TextExercise.class) {
+            else if (exercise instanceof TextExercise) {
                 dto.setExerciseType("text");
             }
-            else if (exerciseType == ModelingExercise.class) {
+            else if (exercise instanceof ModelingExercise) {
                 dto.setExerciseType("modeling");
             }
-            else if (exerciseType == FileUploadExercise.class) {
+            else if (exercise instanceof FileUploadExercise) {
                 dto.setExerciseType("file-upload");
             }
 
-            dto.setReleaseDate((ZonedDateTime) listElement.get("releaseDate"));
-            dto.setDueDate((ZonedDateTime) listElement.get("dueDate"));
-            dto.setAssessmentDueDate((ZonedDateTime) listElement.get("assessmentDueDate"));
-
-            var mode = listElement.get("mode");
-            dto.setTeamMode(mode == ExerciseMode.TEAM);
+            dto.setReleaseDate(exercise.getReleaseDate());
+            dto.setDueDate(exercise.getDueDate());
+            dto.setAssessmentDueDate(exercise.getAssessmentDueDate());
+            dto.setTeamMode(exercise.getMode() == ExerciseMode.TEAM);
 
             dto.setCategories(exerciseRepository.findAllCategories(exerciseId));
 
@@ -610,47 +603,76 @@ public class ExerciseService {
      */
     public List<CourseManagementOverviewExerciseStatisticsDTO> getStatisticsForCourseManagementOverview(Long courseId, Integer amountOfStudentsInCourse) {
         List<CourseManagementOverviewExerciseStatisticsDTO> statisticsDTOS = new ArrayList<>();
+        var now = ZonedDateTime.now();
         var sevenDaysAgo = ZonedDateTime.now().minusDays(7);
         var noStudentsInCourse = amountOfStudentsInCourse == null || amountOfStudentsInCourse == 0;
-        for (var listElement : exerciseRepository.getStatisticsForCourseManagementOverview(courseId, sevenDaysAgo)) {
-            var exerciseId = (Long) listElement.get("id");
-            if (exerciseId == null || exerciseId == 0) {
-                continue;
-            }
 
+        log.info("getting exercise stats for course " + courseId);
+        long start = System.currentTimeMillis();
+        var x = exerciseRepository.getExercisesForCourseManagementOverview(courseId, sevenDaysAgo);
+        long mid = System.currentTimeMillis();
+        log.info("getting exercise stats (sql) took " + (mid - start) + "ms for course " + courseId);
+
+        for (var exercise : x) {
+            var exerciseId = exercise.getId();
             var dto = new CourseManagementOverviewExerciseStatisticsDTO();
             dto.setNoOfStudentsInCourse(amountOfStudentsInCourse);
             dto.setExerciseId(exerciseId);
+            dto.setExerciseMaxPoints(exercise.getMaxPoints());
 
-            var maxPoints = (Double) listElement.get("maxPoints");
-            dto.setExerciseMaxPoints(maxPoints == null ? 0 : maxPoints);
-
-            var averagePoints = (Double) listElement.get("averageScore");
-            dto.setAverageScoreInPercent(averagePoints == null ? 0 : averagePoints);
-
-            Long rawParticipations = (Long) listElement.get("participations");
-            var participations = rawParticipations == null ? 0 : Math.toIntExact(rawParticipations);
-            dto.setNoOfParticipatingStudentsOrTeams(participations);
-
-            if (listElement.get("mode") == ExerciseMode.TEAM) {
-                Integer teams = teamRepository.getNumberOfTeamsForExercise(exerciseId);
-                dto.setNoOfTeamsInCourse(teams);
-
-                dto.setParticipationRateInPercent(teams == null || teams == 0 ? 0.0 : Math.round(participations * 1000.0 / teams) / 10.0);
-            }
-            else {
-                dto.setParticipationRateInPercent(noStudentsInCourse ? 0.0 : Math.round(participations * 1000.0 / amountOfStudentsInCourse) / 10.0);
+            // We only need to compute the average score for "past" exercises
+            var hasAssessmentDueDate = exercise.getAssessmentDueDate() != null;
+            if ((hasAssessmentDueDate && exercise.getAssessmentDueDate().isAfter(now)) ||
+                (!hasAssessmentDueDate && exercise.getDueDate() != null && exercise.getDueDate().isAfter(now)) ||
+                (exercise instanceof QuizExercise && exercise.getReleaseDate() != null && exercise.getReleaseDate().isBefore(ZonedDateTime.now().plusDays(7)))) {
+                long avStart = System.currentTimeMillis();
+                dto.setAverageScoreInPercent(exerciseRepository.getAverageScoreById(exerciseId));
+                long avEnd = System.currentTimeMillis();
+                log.info("getting average score took " + (avEnd - avStart) + "ms for course " + courseId + ", exercise " + exerciseId);
+            } else {
+                dto.setAverageScoreInPercent(0D);
             }
 
+            // We only need to compute the participations for "current" exercises
+            long parStart = System.currentTimeMillis();
+            var hasReleaseDate = exercise.getReleaseDate() != null;
+            var isCurrentExercise = (!hasReleaseDate && exercise.getDueDate() != null && exercise.getDueDate().isBefore(now)) ||
+                (hasReleaseDate && exercise.getReleaseDate().isAfter(now) && (exercise.getDueDate() == null || exercise.getDueDate().isBefore(now))) ||
+                (exercise instanceof QuizExercise && ((QuizExercise) exercise).isSubmissionAllowed());
+            if (!noStudentsInCourse && isCurrentExercise) {
+                Long rawParticipations = exerciseRepository.getParticipationCountById(exerciseId);
+                var participations = rawParticipations == null ? 0 : Math.toIntExact(rawParticipations);
+                dto.setNoOfParticipatingStudentsOrTeams(participations);
+
+                if (exercise.getMode() == ExerciseMode.TEAM) {
+                    Integer teams = teamRepository.getNumberOfTeamsForExercise(exerciseId);
+                    dto.setNoOfTeamsInCourse(teams);
+                    dto.setParticipationRateInPercent(teams == null || teams == 0 ? 0.0 : Math.round(participations * 1000.0 / teams) / 10.0);
+                }
+                else {
+                    dto.setParticipationRateInPercent(Math.round(participations * 1000.0 / amountOfStudentsInCourse) / 10.0);
+                }
+            } else {
+                dto.setNoOfParticipatingStudentsOrTeams(0);
+                dto.setParticipationRateInPercent(0D);
+            }
+            long parEnd = System.currentTimeMillis();
+            log.info("getting participations took " + (parEnd - parStart) + "ms for course " + courseId + ", exercise " + exerciseId);
+
+            long assessmentsStart = System.currentTimeMillis();
             long numberOfRatedAssessments = resultRepository.countNumberOfFinishedAssessmentsForExercise(exerciseId, false).getInTime();
             long noOfSubmissionsInTime = submissionRepository.countByExerciseIdSubmittedBeforeDueDate(exerciseId);
             dto.setNoOfRatedAssessments(numberOfRatedAssessments);
             dto.setNoOfSubmissionsInTime(noOfSubmissionsInTime);
             dto.setNoOfAssessmentsDoneInPercent(noOfSubmissionsInTime == 0 ? 0 : Math.round(numberOfRatedAssessments * 1000.0 / noOfSubmissionsInTime) / 10.0);
+            long assessEnd = System.currentTimeMillis();
+            log.info("getting participations took " + (assessEnd - assessmentsStart) + "ms for course " + courseId + ", exercise " + exerciseId);
 
             statisticsDTOS.add(dto);
         }
 
+        long end = System.currentTimeMillis();
+        log.info("getting exercise stats (java) took " + (end - mid) + "ms for course " + courseId);
         return statisticsDTOS;
     }
 

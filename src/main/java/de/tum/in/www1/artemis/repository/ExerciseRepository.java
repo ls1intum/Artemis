@@ -231,55 +231,54 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
      * @return <code>Object[]</code> where each index corresponds to the column from the db (0 refers to the exercise and so on)
      */
     @Query("""
-            SELECT
-            e.id as id,
-            e.title as title,
-            TYPE(e) as type,
-            e.releaseDate as releaseDate,
-            e.dueDate as dueDate,
-            e.assessmentDueDate as assessmentDueDate,
-            e.mode as mode
+            SELECT e
             FROM Exercise e
             WHERE e.course.id = :courseId
                 AND (e.assessmentDueDate IS NULL or e.assessmentDueDate >= :sevenDaysAgo)
                 AND (e.assessmentDueDate IS NOT NULL or e.dueDate IS NULL or e.dueDate >= :sevenDaysAgo)
             """)
-    List<Map<String, Object>> getExercisesForCourseManagementOverview(@Param("courseId") Long courseId, @Param("sevenDaysAgo") ZonedDateTime sevenDaysAgo);
+    List<Exercise> getExercisesForCourseManagementOverview(@Param("courseId") Long courseId, @Param("sevenDaysAgo") ZonedDateTime sevenDaysAgo);
 
     /**
-     * Fetches the statistics of the exercises for a course
+     * Fetches the amount of participations in the given exercise
      *
-     * @param courseId - course to get the statistics for
-     * @param sevenDaysAgo - a ZoneDateTime seen days in the past, exercises with an assessment due date (or due date if without assessment) older than that are filtered
-     * @return <code>Object[]</code> where each index corresponds to the column from the db (0 refers to the exercise and so on)
+     * @param exerciseId - exercise to get the amount for
+     * @return The amount of participations as <code>Long</code>
      */
     @Query("""
-            SELECT
-            e.id as id,
-            e.maxPoints as maxPoints,
-            e.mode as mode,
-            (SELECT AVG(r.score)
-            FROM e.studentParticipations p JOIN p.submissions s JOIN s.results r
-            WHERE e.course.id = :courseId
-                AND e.course.studentGroupName member of p.student.groups
-                AND s.id = (
-                    SELECT max(s2.id)
-                    FROM Submission s2 JOIN s2.results r2
-                    WHERE s2.participation.id = s.participation.id
-                    AND r2.score IS NOT NULL
-                )
-            GROUP BY e.id
-            ) as averageScore,
-            (SELECT COUNT(DISTINCT p.student.id)
-            FROM e.studentParticipations p
-            GROUP BY e.id
-            ) as participations
+            SELECT COUNT(DISTINCT p.student.id)
+            FROM Exercise e JOIN e.studentParticipations p
+            WHERE e.id = :exerciseId
+            """)
+    Long getParticipationCountById(@Param("exerciseId") Long exerciseId);
+
+    /**
+     * Fetches the score of the given exercise
+     *
+     * @param exerciseId - exercise to get the score for
+     * @return The average score as <code>Dobule</code>
+     */
+    @Query("""
+            SELECT AVG(r.score)
+            FROM Exercise e JOIN e.studentParticipations p JOIN p.submissions s JOIN s.results r
+            WHERE e.id = :exerciseId
+               AND s.id = (
+                   SELECT max(s2.id)
+                   FROM Submission s2 JOIN s2.results r2
+                   WHERE s2.participation.id = s.participation.id
+                       AND r2.score IS NOT NULL
+               )
+            """)
+    Double getAverageScoreById(@Param("exerciseId") Long exerciseId);
+
+    @Query("""
+            SELECT e.id
             FROM Exercise e
             WHERE e.course.id = :courseId
                 AND (e.assessmentDueDate IS NULL or e.assessmentDueDate >= :sevenDaysAgo)
                 AND (e.assessmentDueDate IS NOT NULL or e.dueDate IS NULL or e.dueDate >= :sevenDaysAgo)
             """)
-    List<Map<String, Object>> getStatisticsForCourseManagementOverview(@Param("courseId") Long courseId, @Param("sevenDaysAgo") ZonedDateTime sevenDaysAgo);
+    List<Long> getActiveExerciseIdsByCourseId(@Param("courseId") Long courseId, @Param("sevenDaysAgo") ZonedDateTime sevenDaysAgo);
 
     @NotNull
     default Exercise findByIdElseThrow(Long exerciseId) throws EntityNotFoundException {

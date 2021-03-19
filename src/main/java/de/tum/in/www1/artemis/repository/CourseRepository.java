@@ -101,23 +101,11 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     @Query("""
             select s.submissionDate as day, p.student.login as username
             from StudentParticipation p join p.submissions s
-            where p.exercise.course.id = :#{#courseId}
+            where p.exercise.id in :exerciseIds
                 and s.submissionDate >= :#{#startDate}
                 and s.submissionDate <= :#{#endDate}
-            order by s.submissionDate asc
             """)
-    List<Map<String, Object>> getActiveStudents(@Param("courseId") Long courseId, @Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate);
-
-    @Query("""
-            select substring(s.submissionDate, 1, 10) as day, count(DISTINCT p.student.login) as users
-            from StudentParticipation p join p.submissions s
-            where p.exercise.course.id = :#{#courseId}
-                and s.submissionDate >= :#{#startDate}
-                and s.submissionDate <= :#{#endDate}
-            group by substring(s.submissionDate, 1, 10)
-            order by substring(s.submissionDate, 1, 10) asc
-            """)
-    List<Map<String, Object>> getActiveStudents2(@Param("courseId") Long courseId, @Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate);
+    List<Map<String, Object>> getActiveStudents(@Param("exerciseIds") List<Long> exerciseIds, @Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate);
 
     @Query("""
             select c
