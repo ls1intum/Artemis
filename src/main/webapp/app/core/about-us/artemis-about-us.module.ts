@@ -11,6 +11,10 @@ import { RouterModule } from '@angular/router';
             {
                 path: '',
                 component: AboutUsComponent,
+                data: {
+                    authorities: [],
+                    pageTitle: 'overview.aboutUs',
+                },
             },
         ]),
         TranslateModule,
