@@ -35,6 +35,10 @@ public class PlagiarismComparison<E extends PlagiarismSubmissionElement> extends
 
     /**
      * First submission compared.
+     * <p>
+     * Using `CascadeType.ALL` here is fine because we'll never delete a single comparison alone,
+     * which would leave empty references from other plagiarism comparisons. Comparisons are
+     * always deleted all at once, so we can also cascade deletion.
      */
     @ManyToOne(targetEntity = PlagiarismSubmission.class, cascade = CascadeType.ALL)
     @JoinColumn(name = "submission_a_id")

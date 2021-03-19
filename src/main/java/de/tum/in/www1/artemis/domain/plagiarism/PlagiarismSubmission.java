@@ -31,7 +31,16 @@ public class PlagiarismSubmission<E extends PlagiarismSubmissionElement> extends
     private static final Logger logger = LoggerFactory.getLogger(PlagiarismSubmission.class);
 
     /**
-     * ID of the related submission.
+     * ID of the wrapped submission object.
+     * <p>
+     * We don't use a full relation to `Submission` here to decrease the overhead of creating and
+     * fetching `PlagiarismSubmission` objects. We get the submissionId for free, as JPlag
+     * uses it as an identifier of each submission during comparison. The ID is used in the client
+     * to fetch a submission's contents.
+     * <p>
+     * Note: For programming exercises, this field actually references the participation instead of
+     * a single submission of a student, since the participation ID is required to properly fetch the
+     * corresponding repository's contents.
      */
     private long submissionId;
 
