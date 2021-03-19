@@ -20,12 +20,12 @@
                 "fullFeatureOverview": {
                     "description": "Gesamter Überblick über alle Features:",
                     "studentLink": "Überblick für Studenten",
-                    "instructorLink": "Überblick für Instructors"
+                    "instructorLink": "Überblick für Dozenten"
                 },
                 "instructions": {
                     "description": "Anleitung für das Klausurfeature:",
                     "studentLink": "Anleitung für Studenten",
-                    "instructorLink": "Anleitung für Instructors"
+                    "instructorLink": "Anleitung für Dozenten"
                 }
             }
         },
