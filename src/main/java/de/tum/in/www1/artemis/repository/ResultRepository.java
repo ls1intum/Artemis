@@ -174,21 +174,8 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
                     AND s.submitted = TRUE
                     AND r.completionDate IS NULL
                     AND r.assessor.id <> :tutorId
-                    AND (SELECT COUNT(r2) FROM s.results r2 WHERE r2.assessmentType IN ('SEMI_AUTOMATIC','MANUAL')) = :numberOfCorrections
             """)
-    List<Result> countNumberOfLockedAssessmentsByOtherTutorsForExamExerciseForCorrectionRoundsIgnoreTestRuns(@Param("exerciseId") Long exerciseId, @Param("tutorId") Long tutorId,
-            @Param("numberOfCorrections") Long numberOfCorrections);
-
-    @Query("""
-            SELECT r
-                FROM StudentParticipation p join p.submissions s join s.results r
-                WHERE p.exercise.id = :exerciseId
-                    AND p.testRun = FALSE
-                    AND s.submitted = TRUE
-                    AND r.completionDate IS NULL
-                    AND r.assessor.id <> :tutorId
-            """)
-    List<Result> countNumberOfLockedAssessmentsByOtherTutorsForExamExerciseForCorrectionRoundsIgnoreTestRuns2(@Param("exerciseId") Long exerciseId, @Param("tutorId") Long tutorId);
+    List<Result> countNumberOfLockedAssessmentsByOtherTutorsForExamExerciseForCorrectionRoundsIgnoreTestRuns(@Param("exerciseId") Long exerciseId, @Param("tutorId") Long tutorId);
 
     /**
      * count the number of finsished assessments of an exam with given examId
@@ -320,7 +307,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
      */
     default DueDateStat[] countNumberOfLockedAssessmentsByOtherTutorsForExamExerciseForCorrectionRounds(Exercise exercise, int numberOfCorrectionRounds, User tutor) {
         DueDateStat[] correctionRoundsDataStats = new DueDateStat[numberOfCorrectionRounds];
-        var res = countNumberOfLockedAssessmentsByOtherTutorsForExamExerciseForCorrectionRoundsIgnoreTestRuns2(exercise.getId(), tutor.getId());
+        var res = countNumberOfLockedAssessmentsByOtherTutorsForExamExerciseForCorrectionRoundsIgnoreTestRuns(exercise.getId(), tutor.getId());
 
         correctionRoundsDataStats[0] = new DueDateStat(res.stream().filter(x -> x.isRated() == null).count(), 0L);
         // so far the number of correctionRounds is limited to 2
