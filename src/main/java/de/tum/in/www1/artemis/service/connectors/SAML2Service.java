@@ -110,7 +110,10 @@ public class SAML2Service {
         newUser.setFirstName(substituteAttributes(properties.getFirstNamePattern(), principal));
         newUser.setLastName(substituteAttributes(properties.getLastNamePattern(), principal));
         newUser.setEmail(substituteAttributes(properties.getEmailPattern(), principal));
-        newUser.setVisibleRegistrationNumber(substituteAttributes(properties.getRegistrationNumberPattern(), principal));
+        String registrationNumber = substituteAttributes(properties.getRegistrationNumberPattern(), principal);
+        if (!registrationNumber.isBlank()) {
+            newUser.setVisibleRegistrationNumber(registrationNumber);
+        } // else set registration number to null to preserve uniqueness
         newUser.setLangKey(substituteAttributes(properties.getLangKeyPattern(), principal));
         newUser.setAuthorities(new HashSet<>(Set.of(AuthoritiesConstants.USER)));
         newUser.setGroups(new HashSet<>());
