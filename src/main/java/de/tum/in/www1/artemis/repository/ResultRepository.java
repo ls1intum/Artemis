@@ -40,8 +40,12 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
     @EntityGraph(type = LOAD, attributePaths = "submission")
     List<Result> findByParticipationExerciseIdOrderByCompletionDateAsc(Long exerciseId);
 
-    // TODO: cleanup unused queries
-
+    /**
+     * Get the latest results for each participation in an exercise from the database together with the list of feedback items.
+     *
+     * @param exerciseId the id of the exercise to load from the database
+     * @return a list of results.
+     */
     @Query("""
             select distinct r from Result r left join fetch r.feedbacks
             where r.completionDate =
@@ -82,6 +86,9 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
 
     @Query("select r from Result r left join fetch r.feedbacks left join fetch r.assessor where r.id = :resultId")
     Optional<Result> findByIdWithEagerFeedbacksAndAssessor(@Param("resultId") Long id);
+
+    @Query("select r from Result r where r.participation.exercise.id = :exerciseId")
+    List<Result> findAllByExerciseId(@Param("exerciseId") Long exerciseId);
 
     /**
      * Load a result from the database by its id together with the associated submission, the list of feedback items and the assessor.
