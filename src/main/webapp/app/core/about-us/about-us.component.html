@@ -12,6 +12,37 @@
             <li>{{ 'aboutUsOverview.exercises.detail.textExercises' | translate }}</li>
             <li>{{ 'aboutUsOverview.exercises.detail.uploadExercises' | translate }}</li>
         </ul>
+        <h6>{{ 'aboutUsOverview.exam.title' | translate }}</h6>
+        <ul>
+            <li>{{ 'aboutUsOverview.exam.detail.supportedExerciseTypes' | translate }}</li>
+            <li>{{ 'aboutUsOverview.exam.detail.randomSelectionOfVariants' | translate }}</li>
+            <li>{{ 'aboutUsOverview.exam.detail.fullFeatureOverview.description' | translate }}</li>
+            <ul>
+                <li>
+                    <a [href]="examFeatureOverviewUrlStudents" rel="noreferrer noopener" class="footer-text ml-3" target="_blank">{{
+                        'aboutUsOverview.exam.detail.fullFeatureOverview.studentLink' | translate
+                    }}</a>
+                </li>
+                <li>
+                    <a [href]="examFeatureOverviewUrlInstructors" rel="noreferrer noopener" class="footer-text ml-3" target="_blank">{{
+                        'aboutUsOverview.exam.detail.fullFeatureOverview.instructorLink' | translate
+                    }}</a>
+                </li>
+            </ul>
+            <li>{{ 'aboutUsOverview.exam.detail.instructions.description' | translate }}</li>
+            <ul>
+                <li>
+                    <a [href]="examInstructionsUrlStudents" rel="noreferrer noopener" class="footer-text ml-3" target="_blank">{{
+                        'aboutUsOverview.exam.detail.instructions.studentLink' | translate
+                    }}</a>
+                </li>
+                <li>
+                    <a [href]="examInstructionsUrlInstructors" rel="noreferrer noopener" class="footer-text ml-3" target="_blank">{{
+                        'aboutUsOverview.exam.detail.instructions.instructorLink' | translate
+                    }}</a>
+                </li>
+            </ul>
+        </ul>
     </div>
 
     <div class="row ml-4 mr-4 mb-4" *ngIf="data && data.projectManagers">

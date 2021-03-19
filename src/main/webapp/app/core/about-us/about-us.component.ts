@@ -16,6 +16,10 @@ export class AboutUsComponent implements OnInit {
     private readonly issueBaseUrl = 'https://github.com/ls1intum/Artemis/issues/new?projects=ls1intum/1';
     readonly bugReportUrl = `${this.issueBaseUrl}&labels=bug&template=bug-report.md`;
     readonly featureRequestUrl = `${this.issueBaseUrl}&labels=feature&template=feature-request.md`;
+    readonly examFeatureOverviewUrlStudents = 'https://artemis.ase.in.tum.de/features/students/';
+    readonly examFeatureOverviewUrlInstructors = 'https://artemis.ase.in.tum.de/features/instructors/';
+    readonly examInstructionsUrlStudents = 'https://artemis-platform.readthedocs.io/en/latest/user/exams/students_guide/';
+    readonly examInstructionsUrlInstructors = 'https://artemis-platform.readthedocs.io/en/latest/user/exams/instructors_guide/';
     email: string;
 
     data: AboutUsModel;
