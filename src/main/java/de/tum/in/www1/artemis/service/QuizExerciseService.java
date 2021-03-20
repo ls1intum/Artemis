@@ -409,6 +409,8 @@ public class QuizExerciseService {
 
     /**
      * Evaluates the QuizStatus for a given quiz
+     * Note: This implements the same logic as the client side quiz-exercise.service.ts
+     *
      * @param quizExercise the quiz exercise to get the status of
      * @return the status of the quiz
      */

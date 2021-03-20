@@ -91,6 +91,12 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
             """)
     List<Course> findAllWithQuizExercisesWithEagerExercises();
 
+    /**
+     * Returns the student group name of a single course
+     *
+     * @param courseId the course id of the course to get the name for
+     * @return the student group name
+     */
     @Query("""
             select c.studentGroupName
             from Course c
@@ -104,7 +110,7 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
      * @param exerciseIds exerciseIds from all exercises to get the statistics for
      * @param startDate the starting date of the query
      * @param endDate the end date for the query
-     * @return List<Map<String, Object>> with a map for every submission containing date and the username
+     * @return A list with a map for every submission containing date and the username
      */
     @Query("""
             select s.submissionDate as day, p.student.login as username
@@ -115,6 +121,14 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
             """)
     List<Map<String, Object>> getActiveStudents(@Param("exerciseIds") List<Long> exerciseIds, @Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate);
 
+    /**
+     * Fetches the courses to display for the management overview
+     *
+     * @param now ZonedDateTime of the current time. If an end date is set only courses before this time are returned. May be null to return all
+     * @param isAdmin whether the user to fetch the courses for is an admin (which get all courses)
+     * @param userGroups the user groups of the user to fetch the courses for (ignored if the user is an admin)
+     * @return a list of courses for the overview
+     */
     @Query("""
             select c
             from Course c

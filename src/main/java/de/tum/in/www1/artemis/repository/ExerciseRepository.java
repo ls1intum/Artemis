@@ -67,6 +67,12 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
     @Query("select distinct exercise from Exercise exercise left join fetch exercise.exerciseHints left join fetch exercise.studentQuestions left join fetch exercise.categories where exercise.id = :#{#exerciseId}")
     Optional<Exercise> findByIdWithDetailsForStudent(@Param("exerciseId") Long exerciseId);
 
+    /**
+     * Fetches the categories for the given exercise
+     *
+     * @param exerciseId the id of the exercise to get the categories for
+     * @return a set containing the categories of the exercise
+     */
     @Query("select distinct c from Exercise e join e.categories c where e.id = :#{#exerciseId}")
     Set<String> findAllCategories(@Param("exerciseId") Long exerciseId);
 
@@ -224,11 +230,11 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
     Optional<Exercise> findWithEagerStudentParticipationsStudentAndSubmissionsById(Long exerciseId);
 
     /**
-     * Fetches the details of the exercises for a course
+     * Fetches the active exercises for a course
      *
      * @param courseId - course to get the statistics for
      * @param sevenDaysAgo - a ZoneDateTime seen days in the past, exercises with an assessment due date (or due date if without assessment) older than that are filtered
-     * @return <code>Object[]</code> where each index corresponds to the column from the db (0 refers to the exercise and so on)
+     * @return a list of exercises
      */
     @Query("""
             SELECT e
@@ -271,6 +277,13 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
             """)
     Double getAverageScoreById(@Param("exerciseId") Long exerciseId);
 
+    /**
+     * Fetches exercise ids of active exercises of a course
+     *
+     * @param courseId the id of the course the exercises are part of
+     * @param sevenDaysAgo a ZoneDateTime seen days in the past, exercises with an assessment due date (or due date if without assessment) older than that are filtered
+     * @return a list of ids of exercises
+     */
     @Query("""
             SELECT e.id
             FROM Exercise e

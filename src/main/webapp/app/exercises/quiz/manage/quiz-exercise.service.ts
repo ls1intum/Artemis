@@ -176,6 +176,13 @@ export class QuizExerciseService {
         downloadFile(blob, 'quiz.json');
     }
 
+    /**
+     * Evaluates the QuizStatus for a given quiz
+     * Note: This implements the same logic as the server side QuizExerciseService
+     *
+     * @param quizExercise the quiz exercise to get the status of
+     * @return the status of the quiz
+     */
     getStatus(quizExercise: QuizExercise) {
         if (quizExercise.isPlannedToStart && quizExercise.remainingTime != undefined) {
             if (quizExercise.remainingTime <= 0) {

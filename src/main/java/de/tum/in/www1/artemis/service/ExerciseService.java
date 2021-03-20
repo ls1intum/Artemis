@@ -603,7 +603,6 @@ public class ExerciseService {
      * @return An Integer array containing active students for each index
      */
     public List<CourseManagementOverviewExerciseStatisticsDTO> getStatisticsForCourseManagementOverview(Long courseId, Integer amountOfStudentsInCourse, List<Long> exerciseIds) {
-        long start = System.currentTimeMillis();
         List<CourseManagementOverviewExerciseStatisticsDTO> statisticsDTOS = new ArrayList<>();
         var sevenDaysAgo = ZonedDateTime.now().minusDays(7);
         var noStudentsInCourse = amountOfStudentsInCourse == null || amountOfStudentsInCourse == 0;
@@ -652,8 +651,6 @@ public class ExerciseService {
             statisticsDTOS.add(dto);
         }
 
-        long end = System.currentTimeMillis();
-        log.info("getting stat dtos took " + (end - start) + "ms for course " + courseId);
         return statisticsDTOS;
     }
 
