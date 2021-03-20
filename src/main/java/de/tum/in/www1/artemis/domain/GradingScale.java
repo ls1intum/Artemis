@@ -18,7 +18,7 @@ public class GradingScale extends DomainObject {
 
     @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    @OrderBy(value = "lowerBound")
+    @OrderBy("lowerBound ASC")
     private Set<GradeStep> gradeSteps;
 
     public boolean isDefault() {
