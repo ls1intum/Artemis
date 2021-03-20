@@ -481,6 +481,23 @@ public class SubmissionService {
     }
 
     /**
+     * Checks if the exam exercise end date has passed.
+     *
+     * @param exercise exam exercise that is checked
+     * @param user     user who participates in the exam
+     * @return if the end date is reached or not
+     */
+    public boolean checkIfIndividualExamExerciseDueDateIsReached(Exercise exercise, User user) throws AccessForbiddenException {
+        if (exercise.isExamExercise()) {
+            ZonedDateTime individualExamEndDate = examDateService.getIndividualExamEndDateOfUser(exercise.getExerciseGroup().getExam(), user, true);
+            if (individualExamEndDate != null && individualExamEndDate.isBefore(ZonedDateTime.now())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
      * Checks if the exercise due date has passed. For exam exercises it checks if the latest possible exam end date has passed.
      *
      * @param exercise course exercise or exam exercise that is checked

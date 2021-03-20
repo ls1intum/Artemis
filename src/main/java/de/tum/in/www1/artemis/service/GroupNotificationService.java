@@ -109,7 +109,7 @@ public class GroupNotificationService {
     }
 
     /**
-     * Notify instructor groups about duplicate test cases.
+     * Notify instructor and tutor groups about duplicate test cases.
      *
      * @param exercise         that has been updated
      * @param notificationText that should be displayed
@@ -117,6 +117,16 @@ public class GroupNotificationService {
     public void notifyInstructorGroupAboutDuplicateTestCasesForExercise(Exercise exercise, String notificationText) {
         saveAndSend(createNotification(exercise, null, GroupNotificationType.TA, NotificationType.DUPLICATE_TEST_CASE, notificationText));
         saveAndSend(createNotification(exercise, null, GroupNotificationType.INSTRUCTOR, NotificationType.DUPLICATE_TEST_CASE, notificationText));
+    }
+
+    /**
+     * Notify instructor groups about invalid submissions
+     *
+     * @param exercise         that has been affected
+     * @param notificationText that should be displayed
+     */
+    public void notifyInstructorGroupAboutInvalidSubmissionsForExercise(Exercise exercise, String notificationText) {
+        saveAndSend(createNotification(exercise, null, GroupNotificationType.INSTRUCTOR, NotificationType.INVALID_SUBMISSION, notificationText));
     }
 
     /**

@@ -8,6 +8,7 @@ import javax.validation.constraints.NotNull;
 
 import org.springframework.stereotype.Service;
 
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
@@ -80,6 +81,24 @@ public class ExamDateService {
     public ZonedDateTime getLatestIndividualExamEndDate(Exam exam) {
         var maxWorkingTime = studentExamRepository.findMaxWorkingTimeByExamId(exam.getId());
         return maxWorkingTime.map(timeInSeconds -> exam.getStartDate().plusSeconds(timeInSeconds)).orElse(exam.getEndDate());
+    }
+
+    /**
+     * Returns the individual exam end date of an individual user
+     *
+     * @param exam            the exam
+     * @param user            the student who participates in the exam
+     * @param withGracePeriod include grace period into end date
+     * @return the end date or the exam end date if the student exam was not found. May return <code>null</code>, if the exam has no start/end date.
+     */
+    public ZonedDateTime getIndividualExamEndDateOfUser(Exam exam, User user, boolean withGracePeriod) {
+        var optionalStudentExam = studentExamRepository.findByExamIdAndUserId(exam.getId(), user.getId());
+        return optionalStudentExam.map(studentExam -> {
+            if (studentExam.getWorkingTime() != null && studentExam.getWorkingTime() > 0) {
+                return withGracePeriod ? studentExam.getIndividualEndDateWithGracePeriod() : studentExam.getIndividualEndDate();
+            }
+            return exam.getEndDate();
+        }).orElse(exam.getEndDate());
     }
 
     /**

@@ -272,6 +272,9 @@ public class Result extends DomainObject {
         if (submission.getType() == SubmissionType.INSTRUCTOR || submission.getType() == SubmissionType.TEST) {
             this.rated = true;
         }
+        else if (submission.getType() == SubmissionType.INVALID) {
+            this.rated = false;
+        }
         else {
             setRatedIfNotExceeded(exerciseDueDate, submission.getSubmissionDate());
         }

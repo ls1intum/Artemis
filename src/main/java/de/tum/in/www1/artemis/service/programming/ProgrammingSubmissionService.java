@@ -113,6 +113,8 @@ public class ProgrammingSubmissionService extends SubmissionService {
         }
 
         ProgrammingExerciseParticipation programmingExerciseParticipation = (ProgrammingExerciseParticipation) participation;
+        ProgrammingExercise programmingExercise = programmingExerciseParticipation.getProgrammingExercise();
+        boolean isExamExercise = programmingExercise.isExamExercise();
 
         // if the commit is made by the Artemis user and contains the commit message "Setup" (use a constant to determine this), we should ignore this
         // and we should not create a new submission here
@@ -140,7 +142,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
             throw new IllegalStateException("Submission for participation id " + participationId + " based on an empty setup commit by Artemis will be ignored!");
         }
 
-        if (programmingExerciseParticipation instanceof ProgrammingExerciseStudentParticipation && (programmingExerciseParticipation.getBuildPlanId() == null
+        if (!isExamExercise && programmingExerciseParticipation instanceof ProgrammingExerciseStudentParticipation && (programmingExerciseParticipation.getBuildPlanId() == null
                 || !programmingExerciseParticipation.getInitializationState().hasCompletedState(InitializationState.INITIALIZED))) {
             // the build plan was deleted before, e.g. due to cleanup, therefore we need to reactivate the build plan by resuming the participation
             // This is needed as a request using a custom query is made using the ProgrammingExerciseRepository, but the user is not authenticated
@@ -165,13 +167,23 @@ public class ProgrammingSubmissionService extends SubmissionService {
 
         programmingSubmission = new ProgrammingSubmission();
         programmingSubmission.setCommitHash(commit.getCommitHash());
-        log.info("create new programmingSubmission with commitHash: " + commit.getCommitHash() + " for participation " + participationId);
+        log.info("Create new programmingSubmission with commitHash: " + commit.getCommitHash() + " for participation " + participationId);
 
         programmingSubmission.setSubmitted(true);
         programmingSubmission.setSubmissionDate(ZonedDateTime.now());
         programmingSubmission.setType(SubmissionType.MANUAL);
-
         programmingExerciseParticipation.addSubmission(programmingSubmission);
+
+        // Students are not allowed to submit a programming exercise after the exam due date, if this happens we set the Submission to Invalid
+        if (isExamExercise && programmingExerciseParticipation instanceof ProgrammingExerciseStudentParticipation) {
+            var optionalStudent = ((ProgrammingExerciseStudentParticipation) programmingExerciseParticipation).getStudent();
+            if (optionalStudent.isPresent() && this.checkIfIndividualExamExerciseDueDateIsReached(programmingExercise, optionalStudent.get())) {
+                final String message = "An illegal exam submission was created. A submission was created after the allowed due date for participation " + participationId;
+                programmingSubmission.setType(SubmissionType.INVALID);
+                log.warn(message);
+                groupNotificationService.notifyInstructorGroupAboutInvalidSubmissionsForExercise(programmingExercise, message);
+            }
+        }
 
         programmingSubmission = programmingSubmissionRepository.save(programmingSubmission);
         // NOTE: we don't need to save the participation here, this might lead to concurrency problems when doing the empty commit during resume exercise!
