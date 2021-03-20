@@ -112,7 +112,7 @@ public abstract class AbstractContinuousIntegrationService implements Continuous
      * @return if the commit hash for the given submission type was found, otherwise empty.
      */
     protected Optional<String> getCommitHash(AbstractBuildResultNotificationDTO buildResult, SubmissionType submissionType) {
-        final var isAssignmentSubmission = List.of(SubmissionType.MANUAL, SubmissionType.INSTRUCTOR).contains(submissionType);
+        final var isAssignmentSubmission = List.of(SubmissionType.MANUAL, SubmissionType.INSTRUCTOR, SubmissionType.INVALID).contains(submissionType);
         if (isAssignmentSubmission) {
             return buildResult.getCommitHashFromAssignmentRepo();
         }

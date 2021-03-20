@@ -34,6 +34,7 @@ import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.service.exam.ExamDateService;
+import de.tum.in.www1.artemis.service.exam.ExamSubmissionService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.websocket.programmingSubmission.BuildTriggerWebsocketError;
@@ -57,6 +58,8 @@ public class ProgrammingSubmissionService extends SubmissionService {
 
     private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
 
+    private final ExamSubmissionService examSubmissionService;
+
     private final GroupNotificationService groupNotificationService;
 
     private final WebsocketMessagingService websocketMessagingService;
@@ -77,9 +80,10 @@ public class ProgrammingSubmissionService extends SubmissionService {
             GroupNotificationService groupNotificationService, SubmissionRepository submissionRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
             WebsocketMessagingService websocketMessagingService, Optional<VersionControlService> versionControlService, ResultRepository resultRepository,
             Optional<ContinuousIntegrationService> continuousIntegrationService, ParticipationService participationService, SimpMessageSendingOperations messagingTemplate,
-            ProgrammingExerciseParticipationService programmingExerciseParticipationService, GitService gitService, StudentParticipationRepository studentParticipationRepository,
-            FeedbackRepository feedbackRepository, AuditEventRepository auditEventRepository, ExamDateService examDateService, CourseRepository courseRepository,
-            ParticipationRepository participationRepository, ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository) {
+            ProgrammingExerciseParticipationService programmingExerciseParticipationService, ExamSubmissionService examSubmissionService, GitService gitService,
+            StudentParticipationRepository studentParticipationRepository, FeedbackRepository feedbackRepository, AuditEventRepository auditEventRepository,
+            ExamDateService examDateService, CourseRepository courseRepository, ParticipationRepository participationRepository,
+            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository) {
         super(submissionRepository, userRepository, authCheckService, resultRepository, studentParticipationRepository, participationService, feedbackRepository, examDateService,
                 courseRepository, participationRepository);
         this.programmingSubmissionRepository = programmingSubmissionRepository;
@@ -90,6 +94,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
         this.continuousIntegrationService = continuousIntegrationService;
         this.messagingTemplate = messagingTemplate;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
+        this.examSubmissionService = examSubmissionService;
         this.gitService = gitService;
         this.resultRepository = resultRepository;
         this.auditEventRepository = auditEventRepository;
@@ -177,7 +182,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
         // Students are not allowed to submit a programming exercise after the exam due date, if this happens we set the Submission to Invalid
         if (isExamExercise && programmingExerciseParticipation instanceof ProgrammingExerciseStudentParticipation) {
             var optionalStudent = ((ProgrammingExerciseStudentParticipation) programmingExerciseParticipation).getStudent();
-            if (optionalStudent.isPresent() && this.checkIfIndividualExamExerciseDueDateIsReached(programmingExercise, optionalStudent.get())) {
+            if (optionalStudent.isPresent() && !examSubmissionService.isAllowedToSubmitDuringExam(programmingExercise, optionalStudent.get())) {
                 final String message = "An illegal exam submission was created. A submission was created after the allowed due date for participation " + participationId;
                 programmingSubmission.setType(SubmissionType.INVALID);
                 log.warn(message);
@@ -628,7 +633,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
             participations = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseId(exerciseId);
         }
         List<ProgrammingSubmission> submissions = new ArrayList<>();
-        participations.stream().peek(participation -> participation.getExercise().setStudentParticipations(null)).map(StudentParticipation::findLatestSubmission)
+        participations.stream().peek(participation -> participation.getExercise().setStudentParticipations(null)).map(StudentParticipation::findLatestValidSubmission)
                 // filter out non submitted submissions if the flag is set to true
                 .filter(submission -> submission.isPresent() && (!submittedOnly || submission.get().isSubmitted()))
                 .forEach(submission -> submissions.add((ProgrammingSubmission) submission.get()));

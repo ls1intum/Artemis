@@ -490,9 +490,7 @@ public class SubmissionService {
     public boolean checkIfIndividualExamExerciseDueDateIsReached(Exercise exercise, User user) throws AccessForbiddenException {
         if (exercise.isExamExercise()) {
             ZonedDateTime individualExamEndDate = examDateService.getIndividualExamEndDateOfUser(exercise.getExerciseGroup().getExam(), user, true);
-            if (individualExamEndDate != null && individualExamEndDate.isBefore(ZonedDateTime.now())) {
-                return true;
-            }
+            return individualExamEndDate != null && individualExamEndDate.isBefore(ZonedDateTime.now());
         }
         return false;
     }

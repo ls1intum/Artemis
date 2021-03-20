@@ -10,6 +10,7 @@ import javax.persistence.*;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.hibernate.annotations.DiscriminatorOptions;
+import org.jetbrains.annotations.NotNull;
 
 import com.fasterxml.jackson.annotation.*;
 
@@ -18,6 +19,7 @@ import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.Submission;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
+import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.view.QuizView;
 
 /**
@@ -228,6 +230,30 @@ public abstract class Participation extends DomainObject implements Participatio
             return Optional.empty();
         }
 
+        return getLatestSubmissionBySubmissionDate(submissions);
+    }
+
+    /**
+     * Finds the latest valid submission for the participation. Valid means that INVALID submissions (exam exercise submissions after the end date)
+     * are not used. Checks if the participation has any submissions. If there are no submissions, return null. Otherwise sort the submissions
+     * by submission date and return the first. WARNING: The submissions of the participation might not be loaded because of Hibernate and therefore, the function might return
+     * null, although the participation has submissions. This might not be high-performance, so use it at your own risk.
+     *
+     * @param <T> submission type
+     * @return the latest valid submission or null
+     */
+    public <T extends Submission> Optional<T> findLatestValidSubmission() {
+        Set<Submission> submissions = this.submissions;
+        if (submissions == null || submissions.size() == 0) {
+            return Optional.empty();
+        }
+
+        Set<Submission> validSubmissions = submissions.stream().filter(submission -> !SubmissionType.INVALID.equals(submission.getType())).collect(Collectors.toSet());
+        return getLatestSubmissionBySubmissionDate(validSubmissions);
+    }
+
+    @NotNull
+    private <T extends Submission> Optional<T> getLatestSubmissionBySubmissionDate(Set<Submission> submissions) {
         return (Optional<T>) submissions.stream().max((s1, s2) -> {
             if (s1.getSubmissionDate() == null || s2.getSubmissionDate() == null) {
                 // this case should not happen, but in the rare case we can compare the ids
