@@ -1361,8 +1361,8 @@ public class CourseTestService {
         assertThat(statisticsDTO.getAverageScoreInPercent()).isEqualTo(0.0);
         assertThat(statisticsDTO.getExerciseMaxPoints()).isEqualTo(5.0);
         assertThat(statisticsDTO.getNoOfParticipatingStudentsOrTeams()).isEqualTo(1);
-        assertThat(statisticsDTO.getParticipationRateInPercent()).isEqualTo(25.0);
-        assertThat(statisticsDTO.getNoOfStudentsInCourse()).isEqualTo(4);
+        assertThat(statisticsDTO.getParticipationRateInPercent()).isEqualTo(12.5);
+        assertThat(statisticsDTO.getNoOfStudentsInCourse()).isEqualTo(8);
         assertThat(statisticsDTO.getNoOfRatedAssessments()).isEqualTo(0);
         assertThat(statisticsDTO.getNoOfAssessmentsDoneInPercent()).isEqualTo(0.0);
         assertThat(statisticsDTO.getNoOfSubmissionsInTime()).isEqualTo(2L);
