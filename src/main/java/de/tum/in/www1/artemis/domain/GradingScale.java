@@ -1,11 +1,12 @@
 package de.tum.in.www1.artemis.domain;
 
+import java.util.Set;
+
+import javax.persistence.*;
+
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.springframework.cloud.cloudfoundry.com.fasterxml.jackson.annotation.JsonInclude;
-
-import javax.persistence.*;
-import java.util.Set;
 
 @Entity
 @Table(name = "grading_scale")

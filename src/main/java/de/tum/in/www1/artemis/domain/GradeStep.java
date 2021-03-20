@@ -1,18 +1,18 @@
 package de.tum.in.www1.artemis.domain;
 
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
-import org.springframework.cloud.cloudfoundry.com.fasterxml.jackson.annotation.JsonInclude;
-
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Table;
+
+import org.hibernate.annotations.Cache;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
+import org.springframework.cloud.cloudfoundry.com.fasterxml.jackson.annotation.JsonInclude;
 
 @Entity
 @Table(name = "grade_step")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class GradeStep extends DomainObject{
+public class GradeStep extends DomainObject {
 
     @Column(name = "lower_bound")
     private int lowerBound;
@@ -60,11 +60,6 @@ public class GradeStep extends DomainObject{
 
     @Override
     public String toString() {
-        return "GradeStep{" +
-            "lowerBound=" + lowerBound +
-            ", upperBound=" + upperBound +
-            ", gradeName='" + gradeName + '\'' +
-            ", isPassingGrade=" + isPassingGrade +
-            '}';
+        return "GradeStep{" + "lowerBound=" + lowerBound + ", upperBound=" + upperBound + ", gradeName='" + gradeName + '\'' + ", isPassingGrade=" + isPassingGrade + '}';
     }
 }
