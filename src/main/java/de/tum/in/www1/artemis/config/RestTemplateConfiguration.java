@@ -72,6 +72,12 @@ public class RestTemplateConfiguration {
         return initializeRestTemplateWithInterceptors(atheneAuthorizationInterceptor, createRestTemplate());
     }
 
+    @Bean
+    @Profile("apollon")
+    public RestTemplate apollonRestTemplate() {
+        return createRestTemplate();
+    }
+
     // Note: for certain requests, e.g. health(), we would like to have shorter timeouts, therefore we need additional rest templates, because
     // it is recommended to keep the timeout settings constant per rest template
 
