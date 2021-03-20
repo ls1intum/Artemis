@@ -69,7 +69,7 @@ export class CourseManagementCardComponent implements OnChanges {
         const inSevenDays = moment().add(7, 'days').endOf('day');
         const sevenDaysAgo = moment().subtract(7, 'days').startOf('day');
         this.futureExercises = exercises
-            .filter((e) => e.releaseDate && e.releaseDate > moment() && e.releaseDate <= inSevenDays)
+            .filter((e) => (e.releaseDate && e.releaseDate > moment() && e.releaseDate <= inSevenDays) || e.quizStatus === this.quizStatus.VISIBLE)
             .sort((a, b) => {
                 return a.releaseDate!.valueOf() - b.releaseDate!.valueOf();
             })
@@ -77,7 +77,7 @@ export class CourseManagementCardComponent implements OnChanges {
         this.currentExercises = exercises.filter(
             (e) =>
                 ((e.releaseDate && e.releaseDate <= moment() && (!e.dueDate || e.dueDate > moment())) || (!e.releaseDate && e.dueDate && e.dueDate > moment())) &&
-                (!e.quizStatus || e.quizStatus === this.quizStatus.VISIBLE),
+                (!e.quizStatus || e.quizStatus === this.quizStatus.ACTIVE),
         );
         this.exercisesInAssessment = exercises.filter((e) => e.dueDate && e.dueDate <= moment() && e.assessmentDueDate && e.assessmentDueDate > moment());
         this.pastExercises = exercises.filter(
