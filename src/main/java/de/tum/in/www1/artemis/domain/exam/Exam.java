@@ -9,6 +9,7 @@ import java.util.Set;
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 
+import de.tum.in.www1.artemis.domain.GradingScale;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
@@ -101,6 +102,10 @@ public class Exam extends DomainObject {
 
     @Column(name = "course_name")
     private String courseName;
+
+    @OneToOne
+    @JoinColumn(unique = true)
+    private GradingScale gradingScale;
 
     @ManyToOne
     @JoinColumn(name = "course_id")
@@ -287,6 +292,14 @@ public class Exam extends DomainObject {
 
     public void setCourse(Course course) {
         this.course = course;
+    }
+
+    public GradingScale getGradingScale() {
+        return gradingScale;
+    }
+
+    public void setGradingScale(GradingScale gradingScale) {
+        this.gradingScale = gradingScale;
     }
 
     public List<ExerciseGroup> getExerciseGroups() {

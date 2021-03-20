@@ -126,6 +126,10 @@ public class Course extends DomainObject {
     @Column(name = "course_archive_path")
     private String courseArchivePath;
 
+    @OneToOne
+    @JoinColumn(unique = true)
+    private GradingScale gradingScale;
+
     @OneToMany(mappedBy = "course", fetch = FetchType.LAZY)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonIgnoreProperties("course")
@@ -360,6 +364,14 @@ public class Course extends DomainObject {
 
     public void setPresentationScore(Integer presentationScore) {
         this.presentationScore = presentationScore;
+    }
+
+    public GradingScale getGradingScale() {
+        return gradingScale;
+    }
+
+    public void setGradingScale(GradingScale gradingScale) {
+        this.gradingScale = gradingScale;
     }
 
     public Set<Exercise> getExercises() {
