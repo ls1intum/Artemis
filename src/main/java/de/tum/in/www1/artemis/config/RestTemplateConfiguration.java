@@ -15,6 +15,7 @@ import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.xml.MappingJackson2XmlHttpMessageConverter;
 import org.springframework.web.client.RestTemplate;
 
+import de.tum.in.www1.artemis.config.auth.AtheneAuthorizationInterceptor;
 import de.tum.in.www1.artemis.config.auth.JiraAuthorizationInterceptor;
 import de.tum.in.www1.artemis.service.connectors.bamboo.BambooAuthorizationInterceptor;
 import de.tum.in.www1.artemis.service.connectors.bitbucket.BitbucketAuthorizationInterceptor;
@@ -65,6 +66,12 @@ public class RestTemplateConfiguration {
         return initializeRestTemplateWithInterceptors(bambooAuthorizationInterceptor, createRestTemplate());
     }
 
+    @Bean
+    @Profile("athene")
+    public RestTemplate atheneRestTemplate(AtheneAuthorizationInterceptor atheneAuthorizationInterceptor) {
+        return initializeRestTemplateWithInterceptors(atheneAuthorizationInterceptor, createRestTemplate());
+    }
+
     // Note: for certain requests, e.g. health(), we would like to have shorter timeouts, therefore we need additional rest templates, because
     // it is recommended to keep the timeout settings constant per rest template
 
@@ -99,6 +106,12 @@ public class RestTemplateConfiguration {
     @Profile("bamboo")
     public RestTemplate shortTimeoutBambooRestTemplate(BambooAuthorizationInterceptor bambooAuthorizationInterceptor) {
         return initializeRestTemplateWithInterceptors(bambooAuthorizationInterceptor, createShortTimeoutRestTemplate());
+    }
+
+    @Bean
+    @Profile("athene")
+    public RestTemplate shortTimeoutAtheneRestTemplate(AtheneAuthorizationInterceptor atheneAuthorizationInterceptor) {
+        return initializeRestTemplateWithInterceptors(atheneAuthorizationInterceptor, createShortTimeoutRestTemplate());
     }
 
     @NotNull

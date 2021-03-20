@@ -227,14 +227,44 @@ public class CourseBitbucketBambooJiraIntegrationTest extends AbstractSpringInte
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testGetAssessmentDashboardStats_withComplaints() throws Exception {
-        courseTestService.testGetAssessmentDashboardStats_withComplaints();
+    public void testGetAssessmentDashboardStats_withoutAssessments() throws Exception {
+        courseTestService.testGetAssessmentDashboardStats_withoutAssessments();
     }
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testGetAssessmentDashboardStats_withComplaints_withoutPoints() throws Exception {
-        courseTestService.testGetAssessmentDashboardStats_withComplaints_withoutPoints();
+    public void testGetAssessmentDashboardStats_withAssessments() throws Exception {
+        courseTestService.testGetAssessmentDashboardStats_withAssessments();
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testGetAssessmentDashboardStats_withAssessmentsAndComplaints() throws Exception {
+        courseTestService.testGetAssessmentDashboardStats_withAssessmentsAndComplaints();
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testGetAssessmentDashboardStats_withAssessmentsAndFeedbackRequests() throws Exception {
+        courseTestService.testGetAssessmentDashboardStats_withAssessmentsAndFeedbackRequests();
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testGetAssessmentDashboardStats_withAssessmentsAndComplaintsAndResponses() throws Exception {
+        courseTestService.testGetAssessmentDashboardStats_withAssessmentsAndComplaintsAndResponses();
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testGetAssessmentDashboardStats_withAssessmentsAndFeedBackRequestsAndResponses() throws Exception {
+        courseTestService.testGetAssessmentDashboardStats_withAssessmentsAndFeedBackRequestsAndResponses();
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testGetAssessmentDashboardStats_withAssessmentsAndComplaintsAndResponses_Large() throws Exception {
+        courseTestService.testGetAssessmentDashboardStats_withAssessmentsAndComplaintsAndResponses_Large();
     }
 
     @Test
@@ -265,6 +295,18 @@ public class CourseBitbucketBambooJiraIntegrationTest extends AbstractSpringInte
     @WithMockUser(username = "ab12cde")
     public void testRegisterForCourse_notMeetsDate() throws Exception {
         courseTestService.testRegisterForCourse_notMeetsDate();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testAddTutorAndInstructorToCourse_failsToAddUserToGroup() throws Exception {
+        courseTestService.testAddTutorAndInstructorToCourse_failsToAddUserToGroup(HttpStatus.OK);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testRemoveTutorFromCourse_failsToRemoveUserFromGroup() throws Exception {
+        courseTestService.testRemoveTutorFromCourse_failsToRemoveUserFromGroup();
     }
 
     @Test

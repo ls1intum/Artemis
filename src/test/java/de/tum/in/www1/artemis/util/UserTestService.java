@@ -82,7 +82,7 @@ public class UserTestService {
 
     // Test
     public void deleteUser_isSuccessful() throws Exception {
-        mockDelegate.mockDeleteUserInUserManagement(student, true);
+        mockDelegate.mockDeleteUserInUserManagement(student, true, false, false);
 
         request.delete("/api/users/" + student.getLogin(), HttpStatus.OK);
 
@@ -92,12 +92,32 @@ public class UserTestService {
 
     // Test
     public void deleteUser_doesntExistInUserManagement_isSuccessful() throws Exception {
-        mockDelegate.mockDeleteUserInUserManagement(student, false);
+        mockDelegate.mockDeleteUserInUserManagement(student, false, false, false);
 
         request.delete("/api/users/" + student.getLogin(), HttpStatus.OK);
 
         var deletedUser = userRepository.findById(student.getId());
         assertThat(deletedUser).isEmpty();
+    }
+
+    // Test
+    public void deleteUser_FailsInExternalCiUserManagement_isNotSuccessful() throws Exception {
+        mockDelegate.mockDeleteUserInUserManagement(student, true, false, true);
+
+        request.delete("/api/users/" + student.getLogin(), HttpStatus.INTERNAL_SERVER_ERROR);
+
+        var deletedUser = userRepository.findById(student.getId());
+        assertThat(deletedUser).isNotEmpty();
+    }
+
+    // Test
+    public void deleteUser_FailsInExternalVcsUserManagement_isNotSuccessful() throws Exception {
+        mockDelegate.mockDeleteUserInUserManagement(student, false, true, false);
+
+        request.delete("/api/users/" + student.getLogin(), HttpStatus.INTERNAL_SERVER_ERROR);
+
+        var deletedUser = userRepository.findById(student.getId());
+        assertThat(deletedUser).isNotEmpty();
     }
 
     // Test
@@ -204,7 +224,7 @@ public class UserTestService {
         student.setPassword("foobar");
         student.setEmail("batman@secret.invalid");
 
-        mockDelegate.mockCreateUserInUserManagement(student);
+        mockDelegate.mockCreateUserInUserManagement(student, false);
 
         final var response = request.postWithResponseBody("/api/users", new ManagedUserVM(student), User.class, HttpStatus.CREATED);
         assertThat(response).isNotNull();
@@ -218,13 +238,78 @@ public class UserTestService {
     }
 
     // Test
+    public void createUser_asAdmin_existsInCi_internalError() throws Exception {
+        student.setId(null);
+        student.setLogin("batman");
+        student.setPassword("foobar");
+        student.setEmail("batman@secret.invalid");
+
+        mockDelegate.mockCreateUserInUserManagement(student, true);
+
+        final var response = request.postWithResponseBody("/api/users", new ManagedUserVM(student), User.class, HttpStatus.INTERNAL_SERVER_ERROR);
+        assertThat(response).isNull();
+    }
+
+    // Test
+    public void createUser_asAdmin_illegalLogin_internalError() throws Exception {
+        student.setId(null);
+        student.setLogin("@someusername");
+        student.setPassword("foobar");
+        student.setEmail("batman@secret.invalid");
+
+        mockDelegate.mockCreateUserInUserManagement(student, false);
+
+        final var response = request.postWithResponseBody("/api/users", new ManagedUserVM(student), User.class, HttpStatus.INTERNAL_SERVER_ERROR);
+        assertThat(response).isNull();
+    }
+
+    // Test
+    public void createUser_asAdmin_failInExternalCiUserManagement_internalError() throws Exception {
+        student.setId(null);
+        student.setLogin("batman");
+        student.setPassword("foobar");
+        student.setEmail("batman@secret.invalid");
+
+        mockDelegate.mockFailToCreateUserInExernalUserManagement(student, false, true, false);
+
+        final var response = request.postWithResponseBody("/api/users", new ManagedUserVM(student), User.class, HttpStatus.INTERNAL_SERVER_ERROR);
+        assertThat(response).isNull();
+    }
+
+    // Test
+    public void createUser_asAdmin_failInExternalCiUserManagement_cannotGetCiUser_internalError() throws Exception {
+        student.setId(null);
+        student.setLogin("batman");
+        student.setPassword("foobar");
+        student.setEmail("batman@secret.invalid");
+
+        mockDelegate.mockFailToCreateUserInExernalUserManagement(student, false, false, true);
+
+        final var response = request.postWithResponseBody("/api/users", new ManagedUserVM(student), User.class, HttpStatus.INTERNAL_SERVER_ERROR);
+        assertThat(response).isNull();
+    }
+
+    // Test
+    public void createUser_asAdmin_failInExternalVcsUserManagement_internalError() throws Exception {
+        student.setId(null);
+        student.setLogin("batman");
+        student.setPassword("foobar");
+        student.setEmail("batman@secret.invalid");
+
+        mockDelegate.mockFailToCreateUserInExernalUserManagement(student, true, false, false);
+
+        final var response = request.postWithResponseBody("/api/users", new ManagedUserVM(student), User.class, HttpStatus.INTERNAL_SERVER_ERROR);
+        assertThat(response).isNull();
+    }
+
+    // Test
     public void createUser_withNullAsPassword_generatesRandomPassword() throws Exception {
         student.setId(null);
         student.setEmail("batman@invalid.tum");
         student.setLogin("batman");
         student.setPassword(null);
 
-        mockDelegate.mockCreateUserInUserManagement(student);
+        mockDelegate.mockCreateUserInUserManagement(student, false);
 
         final var response = request.postWithResponseBody("/api/users", new ManagedUserVM(student), User.class, HttpStatus.CREATED);
         assertThat(response).isNotNull();
@@ -240,7 +325,7 @@ public class UserTestService {
         newUser.setLogin("batman");
         newUser.setEmail("foobar@tum.com");
 
-        mockDelegate.mockCreateUserInUserManagement(newUser);
+        mockDelegate.mockCreateUserInUserManagement(newUser, false);
 
         request.post("/api/users", new ManagedUserVM(newUser), HttpStatus.CREATED);
 
@@ -261,7 +346,7 @@ public class UserTestService {
         newUser.setEmail("foobar@tum.com");
         newUser.setGroups(Set.of("tutor", "instructor"));
 
-        mockDelegate.mockCreateUserInUserManagement(newUser);
+        mockDelegate.mockCreateUserInUserManagement(newUser, false);
 
         request.post("/api/users", new ManagedUserVM(newUser), HttpStatus.CREATED);
 

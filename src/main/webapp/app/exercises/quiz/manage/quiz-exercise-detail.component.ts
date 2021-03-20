@@ -628,7 +628,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
      * @return {boolean} true if the provided Question[] objects are identical, false otherwise
      */
     areQuizExerciseEntityQuestionsIdentical(QA1?: QuizQuestion[], QA2?: QuizQuestion[]): boolean {
-        return JSON.stringify(QA1 || []).toLowerCase() === JSON.stringify(QA2 || []).toLowerCase();
+        return JSON.stringify(QA1 || []) === JSON.stringify(QA2 || []);
     }
 
     /**

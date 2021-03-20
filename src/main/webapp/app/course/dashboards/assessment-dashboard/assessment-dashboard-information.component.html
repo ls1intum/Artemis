@@ -72,7 +72,11 @@
                         <span *ngIf="numberOfAssessmentsOfCorrectionRounds[1]"> - {{ numberOfAssessmentsOfCorrectionRounds[1].inTime }}</span>
                     </li>
                     <li *ngIf="isExamMode">
-                        <a [routerLink]="['/course-management', courseId, 'exams', examId, 'complaints']" [class.disabled]="!isAtLeastInstructor">
+                        <a
+                            [routerLink]="['/course-management', courseId, 'exams', examId, 'complaints']"
+                            [queryParams]="{ correctionRound: numberOfCorrectionRounds - 1 }"
+                            [class.disabled]="!isAtLeastInstructor"
+                        >
                             <b>{{ 'artemisApp.assessmentDashboard.totalComplaints' | translate }}:</b> {{ numberOfComplaints }}
                         </a>
                     </li>
