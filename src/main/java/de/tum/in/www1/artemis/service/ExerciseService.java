@@ -602,23 +602,18 @@ public class ExerciseService {
      * @return An Integer array containing active students for each index
      */
     public List<CourseManagementOverviewExerciseStatisticsDTO> getStatisticsForCourseManagementOverview(Long courseId, Integer amountOfStudentsInCourse, List<Long> exerciseIds) {
+        long start = System.currentTimeMillis();
         List<CourseManagementOverviewExerciseStatisticsDTO> statisticsDTOS = new ArrayList<>();
-        var now = ZonedDateTime.now();
         var sevenDaysAgo = ZonedDateTime.now().minusDays(7);
         var noStudentsInCourse = amountOfStudentsInCourse == null || amountOfStudentsInCourse == 0;
-
-        log.info("getting exercise stats for course " + courseId);
-        long start = System.currentTimeMillis();
-        var x = exerciseRepository.getExercisesForCourseManagementOverview(courseId, sevenDaysAgo);
-        long mid = System.currentTimeMillis();
-        log.info("getting exercise stats (sql) took " + (mid - start) + "ms for course " + courseId);
 
         var averageScore = participantScoreRepository.findAvgScoreForExercises(exerciseIds);
         Map<Long, Double> averageScoreById = new HashMap<>();
         for (var ele : averageScore) {
             averageScoreById.put((Long) ele.get("exerciseId"), (Double) ele.get("averageScore"));
         }
-        for (var exercise : x) {
+
+        for (var exercise : exerciseRepository.getExercisesForCourseManagementOverview(courseId, sevenDaysAgo)) {
             var exerciseId = exercise.getId();
             var dto = new CourseManagementOverviewExerciseStatisticsDTO();
             dto.setNoOfStudentsInCourse(amountOfStudentsInCourse);
@@ -628,13 +623,7 @@ public class ExerciseService {
             var avgScore = averageScoreById.get(exerciseId) != null ? averageScoreById.get(exerciseId) : 0.0;
             dto.setAverageScoreInPercent(avgScore);
 
-            // We only need to compute the participations for "current" exercises
-            long parStart = System.currentTimeMillis();
-            var hasReleaseDate = exercise.getReleaseDate() != null;
-            var isCurrentExercise = (!hasReleaseDate && exercise.getDueDate() != null && exercise.getDueDate().isBefore(now))
-                    || (hasReleaseDate && exercise.getReleaseDate().isAfter(now) && (exercise.getDueDate() == null || exercise.getDueDate().isBefore(now)))
-                    || (exercise instanceof QuizExercise && ((QuizExercise) exercise).isSubmissionAllowed());
-            if (!noStudentsInCourse && isCurrentExercise) {
+            if (!noStudentsInCourse) {
                 Long rawParticipations = exerciseRepository.getParticipationCountById(exerciseId);
                 var participations = rawParticipations == null ? 0 : Math.toIntExact(rawParticipations);
                 dto.setNoOfParticipatingStudentsOrTeams(participations);
@@ -652,23 +641,21 @@ public class ExerciseService {
                 dto.setNoOfParticipatingStudentsOrTeams(0);
                 dto.setParticipationRateInPercent(0D);
             }
-            long parEnd = System.currentTimeMillis();
-            log.info("getting participations took " + (parEnd - parStart) + "ms for course " + courseId + ", exercise " + exerciseId);
 
-            long assessmentsStart = System.currentTimeMillis();
-            long numberOfRatedAssessments = resultRepository.countNumberOfFinishedAssessmentsForExercise(exerciseId, false).getInTime();
-            long noOfSubmissionsInTime = submissionRepository.countByExerciseIdSubmittedBeforeDueDate(exerciseId);
+            long numberOfRatedAssessments = resultRepository.countNumberOfRatedResultsForExercise(exerciseId);
+            long assessmentsMids = System.currentTimeMillis();
+            long noOfSubmissionsInTime = submissionRepository.countSubmissionsInTimeByExerciseId(exerciseId);
+            long assessmentsMids2= System.currentTimeMillis();
+            log.info("getting assessments2 took " + (assessmentsMids2 - assessmentsMids) + "ms for course " + courseId + ", exercise " + exerciseId);
             dto.setNoOfRatedAssessments(numberOfRatedAssessments);
             dto.setNoOfSubmissionsInTime(noOfSubmissionsInTime);
             dto.setNoOfAssessmentsDoneInPercent(noOfSubmissionsInTime == 0 ? 0 : Math.round(numberOfRatedAssessments * 1000.0 / noOfSubmissionsInTime) / 10.0);
-            long assessEnd = System.currentTimeMillis();
-            log.info("getting participations took " + (assessEnd - assessmentsStart) + "ms for course " + courseId + ", exercise " + exerciseId);
 
             statisticsDTOS.add(dto);
         }
 
         long end = System.currentTimeMillis();
-        log.info("getting exercise stats (java) took " + (end - mid) + "ms for course " + courseId);
+        log.info("getting stat dtos took " + (end - start) + "ms for course " + courseId);
         return statisticsDTOS;
     }
 

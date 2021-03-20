@@ -212,6 +212,19 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
     long countByExerciseIdSubmittedBeforeDueDate(@Param("exerciseId") long exerciseId);
 
     /**
+     * Gets the number of unique submissions made for the given exercise
+     *
+     * @param exerciseId the exercise id to get the number for
+     * @return the number of participations (= unique submissions) of the exercise,
+     * which have the submitted flag set to true and the submission date before the exercise due date, or no exercise due date at all
+     */
+    @Query("""
+            SELECT COUNT (DISTINCT p.id) FROM StudentParticipation p
+            WHERE p.exercise.id = :exerciseId
+            """)
+    long countSubmissionsInTimeByExerciseId(@Param("exerciseId") long exerciseId);
+
+    /**
      * Should be used for exam dashboard to ignore test run submissions
      * @param exerciseId the exercise id we are interested in
      * @return the number of submissions belonging to the exercise id, which have the submitted flag set to true and the submission date before the exercise due date, or no

@@ -926,12 +926,8 @@ public class CourseResource {
             final var courseDTO = new CourseManagementOverviewStatisticsDTO();
             courseDTO.setCourseId(courseId);
 
-            long st = System.currentTimeMillis();
             ZonedDateTime sevenDaysAgo = ZonedDateTime.now().minusDays(7);
             var exerciseIds = exerciseRepository.getActiveExerciseIdsByCourseId(courseId, sevenDaysAgo);
-            long en = System.currentTimeMillis();
-            log.info("getting exercises took " + (en - st) + "ms for course " + courseId);
-
             var studentsGroup = courseRepository.findStudentGroupName(courseId);
             var amountOfStudentsInCourse = Math.toIntExact(userRepository.countUserInGroup(studentsGroup));
             courseDTO.setExerciseDTOS(exerciseService.getStatisticsForCourseManagementOverview(courseId, amountOfStudentsInCourse, exerciseIds));

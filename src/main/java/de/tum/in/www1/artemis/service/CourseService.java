@@ -290,7 +290,7 @@ public class CourseService {
     /**
      * Get the active students for this particular course
      *
-     * @param courseId the id of the course
+     * @param exerciseIds the ids to get the active students for
      * @return An Integer array containing active students for each index
      */
     public Integer[] getActiveStudents(List<Long> exerciseIds) {
@@ -371,6 +371,12 @@ public class CourseService {
         return result;
     }
 
+    /**
+     * Gets the week of the given date
+     *
+     * @param date the date to get the week for
+     * @return the calendar week of the given date
+     */
     private Integer getWeekOfDate(ZonedDateTime date) {
         LocalDate localDate = date.toLocalDate();
         TemporalField woy = WeekFields.of(DayOfWeek.MONDAY, 4).weekOfWeekBasedYear();
