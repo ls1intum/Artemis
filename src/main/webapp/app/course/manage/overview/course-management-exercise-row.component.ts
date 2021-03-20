@@ -4,6 +4,7 @@ import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { CourseManagementOverviewExerciseStatisticsDTO } from 'app/course/manage/overview/course-management-overview-exercise-statistics-dto.model';
 import { CourseManagementOverviewExerciseDetailsDTO } from 'app/course/manage/overview/course-management-overview-exercise-details-dto.model';
 import { Course } from 'app/entities/course.model';
+import { round } from 'app/shared/util/utils';
 
 export enum ExerciseRowType {
     FUTURE = 'future',
@@ -93,6 +94,6 @@ export class CourseManagementExerciseRowComponent implements OnChanges {
         }
 
         this.statisticsLoaded = true;
-        this.averageScoreNumerator = Math.round((this.statistic.averageScoreInPercent! * this.statistic.exerciseMaxPoints!) / 100);
+        this.averageScoreNumerator = round((this.statistic.averageScoreInPercent! * this.statistic.exerciseMaxPoints!) / 100, 1);
     }
 }

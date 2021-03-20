@@ -599,6 +599,7 @@ public class ExerciseService {
      *
      * @param courseId the id of the course
      * @param amountOfStudentsInCourse the amount of students in the course
+     * @param exerciseIds the ids of the exercises to get the statistics for
      * @return An Integer array containing active students for each index
      */
     public List<CourseManagementOverviewExerciseStatisticsDTO> getStatisticsForCourseManagementOverview(Long courseId, Integer amountOfStudentsInCourse, List<Long> exerciseIds) {
