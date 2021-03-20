@@ -22,7 +22,7 @@ export class PlagiarismHeaderComponent {
 
     private resourceUrl = SERVER_API_URL + 'api/plagiarism-comparisons';
 
-    constructor(private http: HttpClient) {}
+    constructor(public http: HttpClient) {}
 
     /**
      * Set the status of the currently selected comparison to CONFIRMED.
