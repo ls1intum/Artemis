@@ -21,11 +21,11 @@ public class GradingScale extends DomainObject {
     @OrderBy(value = "lowerBound")
     private Set<GradeStep> gradeSteps;
 
-    private boolean isDefault() {
+    public boolean isDefault() {
         return isDefault;
     }
 
-    private void setIsDefault(boolean isDefault) {
+    public void setIsDefault(boolean isDefault) {
         this.isDefault = isDefault;
     }
 
