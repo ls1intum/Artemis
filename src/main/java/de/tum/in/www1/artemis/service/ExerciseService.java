@@ -643,10 +643,7 @@ public class ExerciseService {
             }
 
             long numberOfRatedAssessments = resultRepository.countNumberOfRatedResultsForExercise(exerciseId);
-            long assessmentsMids = System.currentTimeMillis();
-            long noOfSubmissionsInTime = submissionRepository.countSubmissionsInTimeByExerciseId(exerciseId);
-            long assessmentsMids2= System.currentTimeMillis();
-            log.info("getting assessments2 took " + (assessmentsMids2 - assessmentsMids) + "ms for course " + courseId + ", exercise " + exerciseId);
+            long noOfSubmissionsInTime = submissionRepository.countUniqueSubmissionsByExerciseId(exerciseId);
             dto.setNoOfRatedAssessments(numberOfRatedAssessments);
             dto.setNoOfSubmissionsInTime(noOfSubmissionsInTime);
             dto.setNoOfAssessmentsDoneInPercent(noOfSubmissionsInTime == 0 ? 0 : Math.round(numberOfRatedAssessments * 1000.0 / noOfSubmissionsInTime) / 10.0);

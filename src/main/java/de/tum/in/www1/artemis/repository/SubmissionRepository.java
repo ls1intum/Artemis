@@ -222,7 +222,7 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
             SELECT COUNT (DISTINCT p.id) FROM StudentParticipation p
             WHERE p.exercise.id = :exerciseId
             """)
-    long countSubmissionsInTimeByExerciseId(@Param("exerciseId") long exerciseId);
+    long countUniqueSubmissionsByExerciseId(@Param("exerciseId") long exerciseId);
 
     /**
      * Should be used for exam dashboard to ignore test run submissions

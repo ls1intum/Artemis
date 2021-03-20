@@ -143,8 +143,8 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
     @Query("""
             SELECT COUNT(DISTINCT p.id) FROM ParticipantScore p
             WHERE p.exercise.id = :exerciseId
-                AND p.lastRatedResult IS NOT NULL
-                AND p.lastRatedResult.assessor IS NOT NULL
+                AND p.lastResult IS NOT NULL
+                AND p.lastResult.assessor IS NOT NULL
             """)
     long countNumberOfRatedResultsForExercise(@Param("exerciseId") Long exerciseId);
 
