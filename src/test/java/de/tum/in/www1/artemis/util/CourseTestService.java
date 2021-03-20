@@ -1358,7 +1358,7 @@ public class CourseTestService {
         assertThat(statisticsOptional.isPresent()).isTrue();
 
         var statisticsDTO = statisticsOptional.get();
-        assertThat(statisticsDTO.getAverageScoreInPercent()).isEqualTo(11.0);
+        assertThat(statisticsDTO.getAverageScoreInPercent()).isEqualTo(0.0);
         assertThat(statisticsDTO.getExerciseMaxPoints()).isEqualTo(5.0);
         assertThat(statisticsDTO.getNoOfParticipatingStudentsOrTeams()).isEqualTo(1);
         assertThat(statisticsDTO.getParticipationRateInPercent()).isEqualTo(25.0);
