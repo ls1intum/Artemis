@@ -14,8 +14,8 @@
         [class.neutral-feedback]="singleFeedback?.credits === 0"
     >
         <strong>
-            <span> {{ round(singleFeedback.credits, 1) + ' Points: ' }} </span>
+            <span>{{ round(singleFeedback.credits, 1) + ' Points: ' }}</span>
         </strong>
-        <span> {{ singleFeedback.detailText }} </span>
+        <span class="feedback-detail-text">{{ singleFeedback.detailText }}</span>
     </div>
 </div>
