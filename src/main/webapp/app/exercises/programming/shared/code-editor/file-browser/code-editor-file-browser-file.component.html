@@ -12,7 +12,7 @@
         aria-hidden="true"
         [icon]="['fas', 'circle']"
         class="d-flex align-items-center text-warning"
-        title="{{ 'artemisApp.editor.fileBrowser.unsavedChanges' | translate }}"
+        title="{{ 'artemisApp.editor.fileBrowser.unsavedChanges' | artemisTranslate }}"
         size="xs"
     ></fa-icon>
     <span class="ml-1 list-group-item__fileName" *ngIf="!isBeingRenamed" [ngClass]="item.checked ? 'text-white' : 'primary'">{{ item.text }}</span>
@@ -29,10 +29,10 @@
     <!-- File level actions -->
     <span class="file-icons" [ngClass]="item.checked ? 'text-white' : 'primary'">
         <button [disabled]="disableActions" (click)="setRenamingNode($event)" class="btn btn-small">
-            <fa-icon [icon]="'edit'" title="{{ 'artemisApp.editor.fileBrowser.renameFile' | translate }}"></fa-icon>
+            <fa-icon [icon]="'edit'" title="{{ 'artemisApp.editor.fileBrowser.renameFile' | artemisTranslate }}"></fa-icon>
         </button>
         <button [disabled]="disableActions" (click)="deleteNode($event)" class="btn btn-small">
-            <fa-icon [icon]="'trash'" title="{{ 'artemisApp.editor.fileBrowser.deleteFile' | translate }}"></fa-icon>
+            <fa-icon [icon]="'trash'" title="{{ 'artemisApp.editor.fileBrowser.deleteFile' | artemisTranslate }}"></fa-icon>
         </button>
     </span>
 </li>

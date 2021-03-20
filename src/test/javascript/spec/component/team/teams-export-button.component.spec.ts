@@ -1,7 +1,7 @@
 import { DebugElement } from '@angular/core';
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
-import { TranslatePipe } from '@ngx-translate/core';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe.ts';
 import { TeamService } from 'app/exercises/shared/team/team.service';
 import { TeamsExportButtonComponent } from 'app/exercises/shared/team/teams-import-dialog/teams-export-button.component';
 import { ButtonComponent } from 'app/shared/components/button.component';
@@ -13,6 +13,7 @@ import { restore, SinonStub, stub } from 'sinon';
 import * as sinonChai from 'sinon-chai';
 import { mockTeams } from '../../helpers/mocks/service/mock-team.service';
 import { ArtemisTestModule } from '../../test.module';
+import { TranslatePipe } from '@ngx-translate/core';
 chai.use(sinonChai);
 const expect = chai.expect;
 
@@ -30,7 +31,7 @@ describe('TeamsExportButtonComponent', () => {
         waitForAsync(() => {
             TestBed.configureTestingModule({
                 imports: [ArtemisTestModule, MockModule(NgbModule), MockModule(NgJhipsterModule), MockModule(FeatureToggleModule)],
-                declarations: [TeamsExportButtonComponent, ButtonComponent, MockPipe(TranslatePipe)],
+                declarations: [TeamsExportButtonComponent, ButtonComponent, MockPipe(ArtemisTranslatePipe), MockPipe(TranslatePipe)],
                 providers: [MockProvider(TeamService)],
             }).compileComponents();
         }),

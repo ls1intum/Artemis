@@ -1,16 +1,16 @@
 <div class="page">
     <div class="card-title ml-2">
-        <h2 class="mb-3 mt-3 font-weight-bold">{{ 'aboutUsOverview.title' | translate }}</h2>
+        <h2 class="mb-3 mt-3 font-weight-bold">{{ 'aboutUsOverview.title' | artemisTranslate }}</h2>
     </div>
     <div class="mb-5 ml-2">
-        <h3 class="mb-3 font-weight-bold">{{ 'aboutUsOverview.feature' | translate }}</h3>
-        <h6>{{ 'aboutUsOverview.exercises.title' | translate }}</h6>
+        <h3 class="mb-3 font-weight-bold">{{ 'aboutUsOverview.feature' | artemisTranslate }}</h3>
+        <h6>{{ 'aboutUsOverview.exercises.title' | artemisTranslate }}</h6>
         <ul>
-            <li>{{ 'aboutUsOverview.exercises.detail.programmingExercises' | translate }}</li>
-            <li>{{ 'aboutUsOverview.exercises.detail.quiz' | translate }}</li>
-            <li>{{ 'aboutUsOverview.exercises.detail.modelingExercises' | translate }}</li>
-            <li>{{ 'aboutUsOverview.exercises.detail.textExercises' | translate }}</li>
-            <li>{{ 'aboutUsOverview.exercises.detail.uploadExercises' | translate }}</li>
+            <li>{{ 'aboutUsOverview.exercises.detail.programmingExercises' | artemisTranslate }}</li>
+            <li>{{ 'aboutUsOverview.exercises.detail.quiz' | artemisTranslate }}</li>
+            <li>{{ 'aboutUsOverview.exercises.detail.modelingExercises' | artemisTranslate }}</li>
+            <li>{{ 'aboutUsOverview.exercises.detail.textExercises' | artemisTranslate }}</li>
+            <li>{{ 'aboutUsOverview.exercises.detail.uploadExercises' | artemisTranslate }}</li>
         </ul>
         <h6>{{ 'aboutUsOverview.exam.title' | translate }}</h6>
         <ul>
@@ -63,22 +63,24 @@
         </div>
     </div>
     <div>
-        <h3 class="mb-3 ml-2 font-weight-bold">{{ 'aboutUsOverview.getInTouch' | translate }}</h3>
-        <span jhiTranslate="releaseNotes"></span>
+        <h3 class="mb-3 ml-2 font-weight-bold">{{ 'aboutUsOverview.getInTouch' | artemisTranslate }}</h3>
         <ul>
             <li>
-                <a [href]="bugReportUrl" rel="noreferrer noopener" class="footer-text ml-3" target="_blank">{{ 'bug' | translate }}</a>
+                <a [href]="bugReportUrl" rel="noreferrer noopener" class="footer-text ml-3" target="_blank">{{ 'bug' | artemisTranslate }}</a>
             </li>
             <li>
-                <a [href]="featureRequestUrl" class="footer-text ml-3" target="_blank"> {{ 'feature' | translate }}</a>
+                <a [href]="featureRequestUrl" class="footer-text ml-3" target="_blank"> {{ 'feature' | artemisTranslate }}</a>
             </li>
             <li>
-                <a [href]="email" class="footer-text ml-3" target="_top"> {{ 'contact' | translate }}</a>
+                <a [href]="email" class="footer-text ml-3" target="_top"> {{ 'contact' | artemisTranslate }}</a>
+            </li>
+            <li>
+                <a [href]="releaseNotesUrl" class="footer-text ml-3" target="_blank">{{ 'releaseNotes' | artemisTranslate }}</a>
             </li>
         </ul>
     </div>
     <div class="mt-5 ml-2 mr-2" *ngIf="data && data.contributors">
-        <h3 class="font-weight-bold">{{ 'aboutUsOverview.contributors' | translate }}</h3>
+        <h3 class="font-weight-bold">{{ 'aboutUsOverview.contributors' | artemisTranslate }}</h3>
         <div class="row">
             <div class="contributor text-center" *ngFor="let contributor of data.contributors">
                 <img class="img-fluid" [src]="SERVER_API_URL + contributor.photoDirectory" />

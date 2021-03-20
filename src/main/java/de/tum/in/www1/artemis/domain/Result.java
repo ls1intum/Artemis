@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.domain;
 
-import static de.tum.in.www1.artemis.service.util.RoundingUtil.round;
+import static de.tum.in.www1.artemis.service.util.RoundingUtil.*;
 
 import java.text.DecimalFormat;
 import java.time.ZonedDateTime;
@@ -29,12 +29,14 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.domain.view.QuizView;
+import de.tum.in.www1.artemis.service.listeners.ResultListener;
 
 /**
  * A Result.
  */
 @Entity
 @Table(name = "result")
+@EntityListeners(ResultListener.class)
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class Result extends DomainObject {
@@ -94,6 +96,7 @@ public class Result extends DomainObject {
     @JsonView(QuizView.Before.class)
     private Participation participation;
 
+    // TODO: this should actually be ManyToOne (however there is not mappedBy annotation used here, so this is unidirectional)
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn()
     private User assessor;
@@ -216,14 +219,17 @@ public class Result extends DomainObject {
     }
 
     /**
-     * 1. set score 2. set successful = true, if score >= 100 or false if not
+     * 1. set score and round it to 4 decimal places
+     * 2. set successful = true, if score >= 100 or false if not
      *
      * @param score new score
      */
     public void setScore(Double score) {
         if (score != null) {
-            this.score = score;
-            this.successful = score >= 100.0;
+            // We need to round the score to four decimal places to have a score of 99.999999 to be rounded to 100.0.
+            // Otherwise a result would not be successful.
+            this.score = roundToNDecimalPlaces(score, 4);
+            this.successful = this.score >= 100.0;
         }
     }
 

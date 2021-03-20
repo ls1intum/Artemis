@@ -1,10 +1,14 @@
 package de.tum.in.www1.artemis.service.user;
 
 import static de.tum.in.www1.artemis.domain.Authority.ADMIN_AUTHORITY;
-import static de.tum.in.www1.artemis.security.AuthoritiesConstants.*;
+import static de.tum.in.www1.artemis.security.AuthoritiesConstants.ADMIN;
+import static de.tum.in.www1.artemis.security.AuthoritiesConstants.USER;
 
 import java.time.Instant;
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -24,9 +28,11 @@ import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
 import de.tum.in.www1.artemis.exception.UsernameAlreadyUsedException;
 import de.tum.in.www1.artemis.repository.AuthorityRepository;
 import de.tum.in.www1.artemis.repository.GuidedTourSettingsRepository;
+import de.tum.in.www1.artemis.repository.StudentScoreRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
 import de.tum.in.www1.artemis.security.SecurityUtils;
+import de.tum.in.www1.artemis.service.connectors.CIUserManagementService;
 import de.tum.in.www1.artemis.service.connectors.VcsUserManagementService;
 import de.tum.in.www1.artemis.service.connectors.jira.JiraAuthenticationProvider;
 import de.tum.in.www1.artemis.service.dto.UserDTO;
@@ -66,7 +72,11 @@ public class UserService {
 
     private final Optional<VcsUserManagementService> optionalVcsUserManagementService;
 
+    private final Optional<CIUserManagementService> optionalCIUserManagementService;
+
     private final ArtemisAuthenticationProvider artemisAuthenticationProvider;
+
+    private final StudentScoreRepository studentScoreRepository;
 
     private final CacheManager cacheManager;
 
@@ -76,7 +86,8 @@ public class UserService {
 
     public UserService(UserCreationService userCreationService, UserRepository userRepository, AuthorityService authorityService, AuthorityRepository authorityRepository,
             CacheManager cacheManager, Optional<LdapUserService> ldapUserService, GuidedTourSettingsRepository guidedTourSettingsRepository, PasswordService passwordService,
-            Optional<VcsUserManagementService> optionalVcsUserManagementService, ArtemisAuthenticationProvider artemisAuthenticationProvider) {
+            Optional<VcsUserManagementService> optionalVcsUserManagementService, Optional<CIUserManagementService> optionalCIUserManagementService,
+            ArtemisAuthenticationProvider artemisAuthenticationProvider, StudentScoreRepository studentScoreRepository) {
         this.userCreationService = userCreationService;
         this.userRepository = userRepository;
         this.authorityService = authorityService;
@@ -86,7 +97,9 @@ public class UserService {
         this.guidedTourSettingsRepository = guidedTourSettingsRepository;
         this.passwordService = passwordService;
         this.optionalVcsUserManagementService = optionalVcsUserManagementService;
+        this.optionalCIUserManagementService = optionalCIUserManagementService;
         this.artemisAuthenticationProvider = artemisAuthenticationProvider;
+        this.studentScoreRepository = studentScoreRepository;
     }
 
     /**
@@ -162,6 +175,7 @@ public class UserService {
             user.setResetDate(null);
             saveUser(user);
             optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.updateVcsUser(user.getLogin(), user, null, null, true));
+            optionalCIUserManagementService.ifPresent(ciUserManagementService -> ciUserManagementService.updateUser(user));
             return user;
         });
     }
@@ -200,13 +214,13 @@ public class UserService {
      * @return newly registered user or throw registration exception
      */
     public User registerUser(UserDTO userDTO, String password) {
-        userRepository.findOneByLogin(userDTO.getLogin().toLowerCase()).ifPresent(existingUser -> {
+        userRepository.findOneWithGroupsByLogin(userDTO.getLogin().toLowerCase()).ifPresent(existingUser -> {
             boolean removed = removeNonActivatedUser(existingUser);
             if (!removed) {
                 throw new UsernameAlreadyUsedException();
             }
         });
-        userRepository.findOneByEmailIgnoreCase(userDTO.getEmail()).ifPresent(existingUser -> {
+        userRepository.findOneWithGroupsByEmailIgnoreCase(userDTO.getEmail()).ifPresent(existingUser -> {
             boolean removed = removeNonActivatedUser(existingUser);
             if (!removed) {
                 throw new EmailAlreadyUsedException();
@@ -247,6 +261,8 @@ public class UserService {
             return false;
         }
         optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.deleteVcsUser(existingUser.getLogin()));
+        optionalCIUserManagementService.ifPresent(ciUserManagementService -> ciUserManagementService.deleteUser(existingUser));
+
         deleteUser(existingUser);
         return true;
     }
@@ -307,7 +323,9 @@ public class UserService {
         final var removedGroups = oldGroups.stream().filter(group -> !updatedGroups.contains(group)).collect(Collectors.toSet());
         final var addedGroups = updatedGroups.stream().filter(group -> !oldGroups.contains(group)).collect(Collectors.toSet());
         optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.updateVcsUser(oldUserLogin, user, removedGroups, addedGroups, true));
-        removedGroups.forEach(group -> artemisAuthenticationProvider.removeUserFromGroup(user, group)); // e.g. JIRA
+        optionalCIUserManagementService.ifPresent(ciUserManagementService -> ciUserManagementService.updateUserAndGroups(oldUserLogin, user, addedGroups, removedGroups));
+
+        removedGroups.forEach(group -> artemisAuthenticationProvider.removeUserFromGroup(user, group)); // e.g. Jira
         try {
             addedGroups.forEach(group -> artemisAuthenticationProvider.addUserToGroup(user, group)); // e.g. JIRA
         }
@@ -327,6 +345,7 @@ public class UserService {
         optionalVcsUserManagementService.ifPresent(userManagementService -> userManagementService.deleteVcsUser(login));
         // Delete the user in the local Artemis database
         userRepository.findOneByLogin(login).ifPresent(user -> {
+            optionalCIUserManagementService.ifPresent(ciUserManagementService -> ciUserManagementService.deleteUser(user));
             deleteUser(user);
             log.warn("Deleted User: {}", user);
         });
@@ -345,6 +364,9 @@ public class UserService {
         // 8) Remove the user from its teams
         // 9) Delete the submissionVersion / remove the user from the submissionVersion
         // 10) Delete the tutor participation
+
+        studentScoreRepository.deleteAllByUser(user);
+
         userRepository.delete(user);
         clearUserCaches(user);
         userRepository.flush();
@@ -366,6 +388,8 @@ public class UserService {
             user.setPassword(encryptedPassword);
             saveUser(user);
             optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.updateVcsUser(user.getLogin(), user, null, null, true));
+            optionalCIUserManagementService.ifPresent(ciUserManagementService -> ciUserManagementService.updateUser(user));
+
             log.debug("Changed password for User: {}", user);
         });
     }
@@ -453,6 +477,7 @@ public class UserService {
         }
         // e.g. Gitlab
         optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.updateVcsUser(user.getLogin(), user, Set.of(), Set.of(group), false));
+        optionalCIUserManagementService.ifPresent(ciUserManagementService -> ciUserManagementService.addUserToGroups(user.getLogin(), Set.of(group)));
     }
 
     /**
@@ -481,6 +506,10 @@ public class UserService {
         artemisAuthenticationProvider.removeUserFromGroup(user, group); // e.g. JIRA
         // e.g. Gitlab
         optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.updateVcsUser(user.getLogin(), user, Set.of(group), Set.of(), false));
+        optionalCIUserManagementService.ifPresent(ciUserManagementService -> {
+            ciUserManagementService.removeUserFromGroups(user.getLogin(), Set.of(group));
+            ciUserManagementService.addUserToGroups(user.getLogin(), user.getGroups());
+        });
     }
 
     /**

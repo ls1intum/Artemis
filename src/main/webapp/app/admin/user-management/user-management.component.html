@@ -100,9 +100,9 @@
                             </a>
                             <button
                                 jhiDeleteButton
-                                [entityTitle]="user.login"
+                                [entityTitle]="user.login!"
                                 deleteQuestion="userManagement.delete.question"
-                                (delete)="deleteUser(user.login)"
+                                (delete)="deleteUser(user.login!)"
                                 [dialogError]="dialogError$"
                                 [disabled]="!currentAccount || currentAccount.login === user.login"
                             >
