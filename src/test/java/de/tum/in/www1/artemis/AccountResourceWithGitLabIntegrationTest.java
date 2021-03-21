@@ -76,7 +76,7 @@ public class AccountResourceWithGitLabIntegrationTest extends AbstractSpringInte
 
         SecurityUtils.setAuthorizationObject();
         jenkinsRequestMockProvider.mockDeleteUser(user, true, false);
-        jenkinsRequestMockProvider.mockCreateUser(user, true, false, false);
+        jenkinsRequestMockProvider.mockCreateUser(user, false, false, false);
 
         // make request and assert Status Created
         request.postWithoutLocation("/api/register", userVM, HttpStatus.CREATED, null);
