@@ -4,6 +4,7 @@ import { ChartDataSets, ChartType } from 'chart.js';
 import { Label } from 'ng2-charts';
 import { TranslateService } from '@ngx-translate/core';
 import { ChangeDetectionStrategy } from '@angular/core';
+import { DataSet } from 'app/exercises/quiz/manage/statistics/quiz-statistic/quiz-statistic.component';
 
 @Component({
     selector: 'jhi-course-management-statistics',
@@ -79,6 +80,20 @@ export class CourseManagementStatisticsComponent implements OnInit {
             },
             animation: {
                 duration: 1,
+                onComplete() {
+                    const chartInstance = this.chart,
+                        ctx = chartInstance.ctx;
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'bottom';
+
+                    this.data.datasets.forEach(function (dataset: DataSet, j: number) {
+                        const meta = chartInstance.controller.getDatasetMeta(j);
+                        meta.data.forEach(function (bar: any, index: number) {
+                            const data = dataset.data[index];
+                            ctx.fillText(String(data), bar._model.x, bar._model.y - 5);
+                        });
+                    });
+                },
             },
             scales: {
                 yAxes: [
@@ -89,6 +104,7 @@ export class CourseManagementStatisticsComponent implements OnInit {
                             max: 100,
                             autoSkip: true,
                             precision: 0,
+                            stepSize: 20,
                             callback(value: number) {
                                 return value + '%';
                             },
