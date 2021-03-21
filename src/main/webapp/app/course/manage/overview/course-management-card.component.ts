@@ -69,7 +69,7 @@ export class CourseManagementCardComponent implements OnChanges {
         const inSevenDays = moment().add(7, 'days').endOf('day');
         const sevenDaysAgo = moment().subtract(7, 'days').startOf('day');
         this.futureExercises = exercises
-            .filter((e) => (e.releaseDate && e.releaseDate > moment() && e.releaseDate <= inSevenDays) || e.quizStatus === this.quizStatus.VISIBLE)
+            .filter((e) => e.releaseDate && e.releaseDate > moment() && e.releaseDate <= inSevenDays)
             .sort((a, b) => {
                 return a.releaseDate!.valueOf() - b.releaseDate!.valueOf();
             })

@@ -89,7 +89,7 @@ export class CourseManagementStatisticsComponent implements OnInit {
                     this.data.datasets.forEach(function (dataset: DataSet, j: number) {
                         const meta = chartInstance.controller.getDatasetMeta(j);
                         meta.data.forEach(function (bar: any, index: number) {
-                            const data = dataset.data[index];
+                            const data = self.initialStats[index];
                             ctx.fillText(String(data), bar._model.x, bar._model.y - 5);
                         });
                     });
