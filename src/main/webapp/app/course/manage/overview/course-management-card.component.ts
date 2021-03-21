@@ -76,6 +76,11 @@ export class CourseManagementCardComponent implements OnChanges {
                 (!e.assessmentDueDate && e.dueDate && e.dueDate <= moment() && e.dueDate >= sevenDaysAgo) ||
                 (e.assessmentDueDate && e.assessmentDueDate <= moment() && e.assessmentDueDate >= sevenDaysAgo),
         );
+
+        // Directly show future exercises if there are no current exercises for the students or to assess
+        this.showFutureExercises = this.currentExercises?.length === 0 && this.exercisesInAssessment?.length === 0;
+
+        // If there are no future exercises either, show the past exercises by default
         this.showPastExercises = this.futureExercises?.length === 0 && this.currentExercises?.length === 0 && this.exercisesInAssessment?.length === 0;
     }
 }

@@ -1,7 +1,8 @@
 <div class="card">
     <div class="card-heading text-white" [ngStyle]="{ backgroundColor: course.color || ARTEMIS_DEFAULT_COLOR }">
-        <jhi-secured-image *ngIf="course.courseIcon" [cachingStrategy]="CachingStrategy.LOCAL_STORAGE" [src]="course.courseIcon"></jhi-secured-image>
-        <div class="card-date" [routerLink]="['/course-management', course.id]">
+        <a class="stretched-link" [routerLink]="['/course-management', course.id]"></a>
+        <jhi-secured-image class="header-item" *ngIf="course.courseIcon" [cachingStrategy]="CachingStrategy.LOCAL_STORAGE" [src]="course.courseIcon"></jhi-secured-image>
+        <div class="card-date">
             <span *ngIf="course.startDate && course.endDate">{{ course.startDate | artemisDate: 'long-date' }} - {{ course.endDate | artemisDate: 'long-date' }}</span>
             <span *ngIf="course.startDate && !course.endDate">
                 <span jhiTranslate="artemisApp.course.startDate">Start Date</span>: {{ course.startDate | artemisDate: 'long-date' }}

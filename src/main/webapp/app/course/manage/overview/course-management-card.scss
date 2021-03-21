@@ -5,6 +5,7 @@
     max-width: 2000px;
 
     .card-heading {
+        position: relative;
         display: flex;
         cursor: pointer;
         height: 75px;
@@ -40,6 +41,7 @@
             padding-bottom: 5px;
             flex-direction: column;
             align-self: center;
+            z-index: 1;
 
             a {
                 color: white;

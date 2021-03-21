@@ -162,9 +162,9 @@
                 <a
                     *ngIf="course.isAtLeastInstructor && details.exerciseType === exerciseType.PROGRAMMING"
                     [routerLink]="['/course-management', course.id, 'programming-exercises', details.exerciseId, 'grading', 'test-cases']"
-                    class="btn btn-success mr-1 mb-1"
+                    class="btn btn-secondary mr-1 mb-1"
                     [ngbTooltip]="'artemisApp.programmingExercise.configureGrading.shortTitle' | artemisTranslate"
-                ><fa-icon [icon]="'file-contract'"></fa-icon></a>
+                ><fa-icon [icon]="'pen'"></fa-icon></a>
             </div>
         </div>
     </div>

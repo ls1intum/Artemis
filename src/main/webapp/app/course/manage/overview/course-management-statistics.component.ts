@@ -21,6 +21,7 @@ export class CourseManagementStatisticsComponent implements OnInit, OnChanges {
     @Input()
     initialStats: number[] | undefined;
 
+    loading = true;
     graphType: Graphs = Graphs.ACTIVE_STUDENTS;
 
     // Chart
@@ -111,6 +112,7 @@ export class CourseManagementStatisticsComponent implements OnInit, OnChanges {
 
     ngOnChanges() {
         if (!!this.initialStats) {
+            this.loading = false;
             this.createChartData();
         }
     }
