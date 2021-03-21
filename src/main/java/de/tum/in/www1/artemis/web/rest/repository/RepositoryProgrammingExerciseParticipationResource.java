@@ -135,6 +135,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
     @Override
     @GetMapping(value = "/repository/{participationId}/files", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Map<String, FileType>> getFiles(@PathVariable Long participationId) {
+        // TODO: we need to fetch the commit which belongs to the last not ILLEGAL submission!
         return super.getFiles(participationId);
     }
 
@@ -150,6 +151,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Map<String, Boolean>> getFilesWithInformationAboutChange(@PathVariable Long participationId) {
         return super.executeAndCheckForExceptions(() -> {
+            // TODO: we need to fetch the commit which belongs to the last not ILLEGAL submission!
             Repository repository = getRepository(participationId, RepositoryActionType.READ, true);
             var participation = participationService.findParticipation(participationId);
             var exercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(participation.getExercise().getId());
@@ -163,6 +165,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
     @Override
     @GetMapping(value = "/repository/{participationId}/file", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
     public ResponseEntity<byte[]> getFile(@PathVariable Long participationId, @RequestParam("file") String filename) {
+        // TODO: we need to fetch the commit which belongs to the last not ILLEGAL submission!
         return super.getFile(participationId, filename);
     }
 
@@ -178,6 +181,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Map<String, String>> getFilesWithContent(@PathVariable Long participationId) {
         return super.executeAndCheckForExceptions(() -> {
+            // TODO: we need to fetch the commit which belongs to the last not ILLEGAL submission!
             Repository repository = getRepository(participationId, RepositoryActionType.READ, true);
             var filesWithContent = super.repositoryService.getFilesWithContent(repository);
             return new ResponseEntity<>(filesWithContent, HttpStatus.OK);
