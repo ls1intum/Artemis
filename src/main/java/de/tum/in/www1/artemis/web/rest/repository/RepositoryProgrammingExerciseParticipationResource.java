@@ -325,6 +325,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
     public ResponseEntity<List<BuildLogEntry>> getBuildLogs(@PathVariable Long participationId) {
         log.debug("REST request to get build log : {}", participationId);
 
+        // TODO: in case of ILLEGAL submissions this will be wrong during the assessment! Find latest valid submission
         ProgrammingExerciseParticipation participation = participationService.findProgrammingExerciseParticipationWithLatestSubmissionAndResult(participationId);
 
         if (!participationService.canAccessParticipation(participation)) {

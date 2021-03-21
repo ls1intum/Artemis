@@ -184,7 +184,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
             var optionalStudent = ((ProgrammingExerciseStudentParticipation) programmingExerciseParticipation).getStudent();
             if (optionalStudent.isPresent() && !examSubmissionService.isAllowedToSubmitDuringExam(programmingExercise, optionalStudent.get())) {
                 final String message = "An illegal exam submission was created. A submission was created after the allowed due date for participation " + participationId;
-                programmingSubmission.setType(SubmissionType.INVALID);
+                programmingSubmission.setType(SubmissionType.ILLEGAL);
                 log.warn(message);
                 groupNotificationService.notifyInstructorGroupAboutInvalidSubmissionsForExercise(programmingExercise, message);
             }
@@ -633,7 +633,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
             participations = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseId(exerciseId);
         }
         List<ProgrammingSubmission> submissions = new ArrayList<>();
-        participations.stream().peek(participation -> participation.getExercise().setStudentParticipations(null)).map(StudentParticipation::findLatestValidSubmission)
+        participations.stream().peek(participation -> participation.getExercise().setStudentParticipations(null)).map(StudentParticipation::findLatestSubmission)
                 // filter out non submitted submissions if the flag is set to true
                 .filter(submission -> submission.isPresent() && (!submittedOnly || submission.get().isSubmitted()))
                 .forEach(submission -> submissions.add((ProgrammingSubmission) submission.get()));
