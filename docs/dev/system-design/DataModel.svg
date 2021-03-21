@@ -1,3 +1,772 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
-<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" width="1376px" height="1152px" viewBox="-0.5 -0.5 1376 1152" content="&lt;mxfile host=&quot;app.diagrams.net&quot; modified=&quot;2021-02-23T23:06:46.958Z&quot; agent=&quot;5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4412.0 Safari/537.36 Edg/90.0.796.0&quot; etag=&quot;qjIoXeDzEDihaaW2HG3K&quot; version=&quot;14.4.2&quot;&gt;&lt;diagram id=&quot;hmF4Noz6D0v80xBQS-tb&quot; name=&quot;Page-1&quot;&gt;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&lt;/diagram&gt;&lt;/mxfile&gt;" style="background-color: rgb(255, 255, 255);"><defs><clipPath id="mx-clip-489-31-222-20-0"><rect x="489" y="31" width="222" height="20"/></clipPath><clipPath id="mx-clip-489-51-222-20-0"><rect x="489" y="51" width="222" height="20"/></clipPath><clipPath id="mx-clip-489-71-222-20-0"><rect x="489" y="71" width="222" height="20"/></clipPath><clipPath id="mx-clip-489-91-222-20-0"><rect x="489" y="91" width="222" height="20"/></clipPath><clipPath id="mx-clip-489-111-222-20-0"><rect x="489" y="111" width="222" height="20"/></clipPath><clipPath id="mx-clip-489-131-222-20-0"><rect x="489" y="131" width="222" height="20"/></clipPath><clipPath id="mx-clip-489-151-222-20-0"><rect x="489" y="151" width="222" height="20"/></clipPath><clipPath id="mx-clip-489-171-222-20-0"><rect x="489" y="171" width="222" height="20"/></clipPath><clipPath id="mx-clip-489-331-222-20-0"><rect x="489" y="331" width="222" height="20"/></clipPath><clipPath id="mx-clip-489-351-222-20-0"><rect x="489" y="351" width="222" height="20"/></clipPath><clipPath id="mx-clip-489-371-222-20-0"><rect x="489" y="371" width="222" height="20"/></clipPath><clipPath id="mx-clip-489-391-222-20-0"><rect x="489" y="391" width="222" height="20"/></clipPath><clipPath id="mx-clip-489-411-222-20-0"><rect x="489" y="411" width="222" height="20"/></clipPath><clipPath id="mx-clip-489-431-222-20-0"><rect x="489" y="431" width="222" height="20"/></clipPath><clipPath id="mx-clip-489-451-222-20-0"><rect x="489" y="451" width="222" height="20"/></clipPath><clipPath id="mx-clip-489-471-222-20-0"><rect x="489" y="471" width="222" height="20"/></clipPath><clipPath id="mx-clip-489-611-222-20-0"><rect x="489" y="611" width="222" height="20"/></clipPath><clipPath id="mx-clip-489-631-222-20-0"><rect x="489" y="631" width="222" height="20"/></clipPath><clipPath id="mx-clip-489-651-222-20-0"><rect x="489" y="651" width="222" height="20"/></clipPath><clipPath id="mx-clip-489-671-222-20-0"><rect x="489" y="671" width="222" height="20"/></clipPath><clipPath id="mx-clip-489-801-222-20-0"><rect x="489" y="801" width="222" height="20"/></clipPath><clipPath id="mx-clip-489-821-222-20-0"><rect x="489" y="821" width="222" height="20"/></clipPath><clipPath id="mx-clip-489-841-222-20-0"><rect x="489" y="841" width="222" height="20"/></clipPath><clipPath id="mx-clip-489-861-222-20-0"><rect x="489" y="861" width="222" height="20"/></clipPath><clipPath id="mx-clip-489-881-222-20-0"><rect x="489" y="881" width="222" height="20"/></clipPath><clipPath id="mx-clip-489-901-222-20-0"><rect x="489" y="901" width="222" height="20"/></clipPath><clipPath id="mx-clip-489-921-222-20-0"><rect x="489" y="921" width="222" height="20"/></clipPath><clipPath id="mx-clip-489-1066-222-20-0"><rect x="489" y="1066" width="222" height="20"/></clipPath><clipPath id="mx-clip-489-1086-222-20-0"><rect x="489" y="1086" width="222" height="20"/></clipPath><clipPath id="mx-clip-489-1106-222-20-0"><rect x="489" y="1106" width="222" height="20"/></clipPath><clipPath id="mx-clip-489-1126-222-20-0"><rect x="489" y="1126" width="222" height="20"/></clipPath><clipPath id="mx-clip-874-621-222-20-0"><rect x="874" y="621" width="222" height="20"/></clipPath><clipPath id="mx-clip-874-641-222-20-0"><rect x="874" y="641" width="222" height="20"/></clipPath><clipPath id="mx-clip-119-794-222-20-0"><rect x="119" y="794" width="222" height="20"/></clipPath><clipPath id="mx-clip-119-814-222-20-0"><rect x="119" y="814" width="222" height="20"/></clipPath><clipPath id="mx-clip-119-834-222-20-0"><rect x="119" y="834" width="222" height="20"/></clipPath><clipPath id="mx-clip-119-854-222-20-0"><rect x="119" y="854" width="222" height="20"/></clipPath><clipPath id="mx-clip-119-874-222-20-0"><rect x="119" y="874" width="222" height="20"/></clipPath><clipPath id="mx-clip-119-894-222-20-0"><rect x="119" y="894" width="222" height="20"/></clipPath></defs><g><path d="M 485 31 L 485 5 L 715 5 L 715 31" fill="none" stroke="#000000" stroke-miterlimit="10" pointer-events="all"/><path d="M 485 31 L 485 191 L 715 191 L 715 31" fill="none" stroke="#000000" stroke-miterlimit="10" pointer-events="none"/><path d="M 485 31 L 715 31" fill="none" stroke="#000000" stroke-miterlimit="10" pointer-events="none"/><g fill="#000000" font-family="Helvetica" font-weight="bold" pointer-events="none" text-anchor="middle" font-size="14px"><text x="599.5" y="23.5">Course</text></g><g fill="#000000" font-family="Helvetica" pointer-events="none" clip-path="url(#mx-clip-489-31-222-20-0)" font-size="13px"><text x="490.5" y="46">title</text></g><g fill="#000000" font-family="Helvetica" pointer-events="none" clip-path="url(#mx-clip-489-51-222-20-0)" font-size="13px"><text x="490.5" y="66">shortName</text></g><g fill="#000000" font-family="Helvetica" pointer-events="none" clip-path="url(#mx-clip-489-71-222-20-0)" font-size="13px"><text x="490.5" y="86">startDate</text></g><g fill="#000000" font-family="Helvetica" pointer-events="none" clip-path="url(#mx-clip-489-91-222-20-0)" font-size="13px"><text x="490.5" y="106">endDate</text></g><g fill="#000000" font-family="Helvetica" pointer-events="none" clip-path="url(#mx-clip-489-111-222-20-0)" font-size="13px"><text x="490.5" y="126">onlineCourse</text></g><g fill="#000000" font-family="Helvetica" pointer-events="none" clip-path="url(#mx-clip-489-131-222-20-0)" font-size="13px"><text x="490.5" y="146">studentGroupName</text></g><g fill="#000000" font-family="Helvetica" pointer-events="none" clip-path="url(#mx-clip-489-151-222-20-0)" font-size="13px"><text x="490.5" y="166">teachingAssistentGroupName</text></g><g fill="#000000" font-family="Helvetica" pointer-events="none" clip-path="url(#mx-clip-489-171-222-20-0)" font-size="13px"><text x="490.5" y="186">instructorGroupName</text></g><path d="M 600 305 L 600 191" fill="none" stroke="#000000" stroke-miterlimit="10" pointer-events="none"/><path d="M 727.12 398 L 792.5 398 L 792.5 378 L 870 378" fill="none" stroke="#000000" stroke-miterlimit="10" pointer-events="none"/><path d="M 716.12 398 L 727.12 392.5 L 727.12 403.5 Z" fill="none" stroke="#000000" stroke-miterlimit="10" pointer-events="none"/><path d="M 727.12 398 L 792.5 398 L 792.5 418 L 870 418" fill="none" stroke="#000000" stroke-miterlimit="10" pointer-events="none"/><path d="M 716.12 398 L 727.12 392.5 L 727.12 403.5 Z" fill="none" stroke="#000000" stroke-miterlimit="10" pointer-events="none"/><path d="M 727.12 398 L 792.5 398 L 792.5 458 L 870 458" fill="none" stroke="#000000" stroke-miterlimit="10" pointer-events="none"/><path d="M 716.12 398 L 727.12 392.5 L 727.12 403.5 Z" fill="none" stroke="#000000" stroke-miterlimit="10" pointer-events="none"/><path d="M 727.12 398 L 792.5 398 L 792.5 338 L 870 338" fill="none" stroke="#000000" stroke-miterlimit="10" pointer-events="none"/><path d="M 716.12 398 L 727.12 392.5 L 727.12 403.5 Z" fill="none" stroke="#000000" stroke-miterlimit="10" pointer-events="none"/><path d="M 485 331 L 485 305 L 715 305 L 715 331" fill="none" stroke="#000000" stroke-miterlimit="10" pointer-events="none"/><path d="M 485 331 L 485 491 L 715 491 L 715 331" fill="none" stroke="#000000" stroke-miterlimit="10" pointer-events="none"/><path d="M 485 331 L 715 331" fill="none" stroke="#000000" stroke-miterlimit="10" pointer-events="none"/><g fill="#000000" font-family="Helvetica" font-weight="bold" pointer-events="none" text-anchor="middle" font-size="14px"><text x="599.5" y="323.5">Exercise</text></g><g fill="#000000" font-family="Helvetica" pointer-events="none" clip-path="url(#mx-clip-489-331-222-20-0)" font-size="13px"><text x="490.5" y="346">title</text></g><g fill="#000000" font-family="Helvetica" pointer-events="none" clip-path="url(#mx-clip-489-351-222-20-0)" font-size="13px"><text x="490.5" y="366">shortName</text></g><g fill="#000000" font-family="Helvetica" pointer-events="none" clip-path="url(#mx-clip-489-371-222-20-0)" font-size="13px"><text x="490.5" y="386">releaseDate</text></g><g fill="#000000" font-family="Helvetica" pointer-events="none" clip-path="url(#mx-clip-489-391-222-20-0)" font-size="13px"><text x="490.5" y="406">dueDate</text></g><g fill="#000000" font-family="Helvetica" pointer-events="none" clip-path="url(#mx-clip-489-411-222-20-0)" font-size="13px"><text x="490.5" y="426">maxScore</text></g><g fill="#000000" font-family="Helvetica" pointer-events="none" clip-path="url(#mx-clip-489-431-222-20-0)" font-size="13px"><text x="490.5" y="446">problemStatement</text></g><g fill="#000000" font-family="Helvetica" pointer-events="none" clip-path="url(#mx-clip-489-451-222-20-0)" font-size="13px"><text x="490.5" y="466">gradingInstructions</text></g><g fill="#000000" font-family="Helvetica" pointer-events="none" clip-path="url(#mx-clip-489-471-222-20-0)" font-size="13px"><text x="490.5" y="486">assessmentDueDate</text></g><g transform="translate(-0.5 -0.5)"><switch><foreignObject style="overflow: visible; text-align: left;" pointer-events="none" width="100%" height="100%" requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility"><div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe center; justify-content: unsafe center; width: 38px; height: 1px; padding-top: 205px; margin-left: 556px;"><div style="box-sizing: border-box; font-size: 0; text-align: center; "><div style="display: inline-block; font-size: 14px; font-family: Helvetica; color: #000000; line-height: 1.2; pointer-events: none; white-space: normal; word-wrap: normal; ">course</div></div></div></foreignObject><text x="575" y="209" fill="#000000" font-family="Helvetica" font-size="14px" text-anchor="middle">course</text></switch></g><g transform="translate(-0.5 -0.5)"><switch><foreignObject style="overflow: visible; text-align: left;" pointer-events="none" width="100%" height="100%" requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility"><div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe center; justify-content: unsafe center; width: 38px; height: 1px; padding-top: 206px; margin-left: 596px;"><div style="box-sizing: border-box; font-size: 0; text-align: center; "><div style="display: inline-block; font-size: 14px; font-family: Helvetica; color: #000000; line-height: 1.2; pointer-events: none; white-space: normal; word-wrap: normal; ">1</div></div></div></foreignObject><text x="615" y="210" fill="#000000" font-family="Helvetica" font-size="14px" text-anchor="middle">1</text></switch></g><g transform="translate(-0.5 -0.5)"><switch><foreignObject style="overflow: visible; text-align: left;" pointer-events="none" width="100%" height="100%" requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility"><div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe center; justify-content: unsafe center; width: 38px; height: 1px; padding-top: 295px; margin-left: 571px;"><div style="box-sizing: border-box; font-size: 0; text-align: center; "><div style="display: inline-block; font-size: 14px; font-family: Helvetica; color: #000000; line-height: 1.2; pointer-events: none; white-space: normal; word-wrap: normal; "><font style="font-size: 20px">*</font></div></div></div></foreignObject><text x="590" y="299" fill="#000000" font-family="Helvetica" font-size="14px" text-anchor="middle">*</text></switch></g><g transform="translate(-0.5 -0.5)"><switch><foreignObject style="overflow: visible; text-align: left;" pointer-events="none" width="100%" height="100%" requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility"><div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe center; justify-content: unsafe center; width: 38px; height: 1px; padding-top: 290px; margin-left: 616px;"><div style="box-sizing: border-box; font-size: 0; text-align: center; "><div style="display: inline-block; font-size: 14px; font-family: Helvetica; color: #000000; line-height: 1.2; pointer-events: none; white-space: normal; word-wrap: normal; ">exercises</div></div></div></foreignObject><text x="635" y="294" fill="#000000" font-family="Helvetica" font-size="14px" text-anchor="middle">exerci...</text></switch></g><path d="M 600 585 L 600 491" fill="none" stroke="#000000" stroke-miterlimit="10" pointer-events="none"/><path d="M 485 611 L 485 585 L 715 585 L 715 611" fill="none" stroke="#000000" stroke-miterlimit="10" pointer-events="none"/><path d="M 485 611 L 485 691 L 715 691 L 715 611" fill="none" stroke="#000000" stroke-miterlimit="10" pointer-events="none"/><path d="M 485 611 L 715 611" fill="none" stroke="#000000" stroke-miterlimit="10" pointer-events="none"/><g fill="#000000" font-family="Helvetica" font-weight="bold" pointer-events="none" text-anchor="middle" font-size="14px"><text x="599.5" y="603.5">Participation</text></g><g fill="#000000" font-family="Helvetica" pointer-events="none" clip-path="url(#mx-clip-489-611-222-20-0)" font-size="13px"><text x="490.5" y="626">repositoryUrl</text></g><g fill="#000000" font-family="Helvetica" pointer-events="none" clip-path="url(#mx-clip-489-631-222-20-0)" font-size="13px"><text x="490.5" y="646">buildPlanId</text></g><g fill="#000000" font-family="Helvetica" pointer-events="none" clip-path="url(#mx-clip-489-651-222-20-0)" font-size="13px"><text x="490.5" y="666">initializationDate</text></g><g fill="#000000" font-family="Helvetica" pointer-events="none" clip-path="url(#mx-clip-489-671-222-20-0)" font-size="13px"><text x="490.5" y="686">presentationScore</text></g><g transform="translate(-0.5 -0.5)"><switch><foreignObject style="overflow: visible; text-align: left;" pointer-events="none" width="100%" height="100%" requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility"><div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe center; justify-content: unsafe center; width: 38px; height: 1px; padding-top: 760px; margin-left: 554px;"><div style="box-sizing: border-box; font-size: 0; text-align: center; "><div style="display: inline-block; font-size: 14px; font-family: Helvetica; color: #000000; line-height: 1.2; pointer-events: none; white-space: normal; word-wrap: normal; ">results</div></div></div></foreignObject><text x="573" y="764" fill="#000000" font-family="Helvetica" font-size="14px" text-anchor="middle">results</text></switch></g><g transform="translate(-0.5 -0.5)"><switch><foreignObject style="overflow: visible; text-align: left;" pointer-events="none" width="100%" height="100%" requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility"><div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe center; justify-content: unsafe center; width: 38px; height: 1px; padding-top: 765px; margin-left: 591px;"><div style="box-sizing: border-box; font-size: 0; text-align: center; "><div style="display: inline-block; font-size: 14px; font-family: Helvetica; color: #000000; line-height: 1.2; pointer-events: none; white-space: normal; word-wrap: normal; "><font style="font-size: 20px">*</font></div></div></div></foreignObject><text x="610" y="769" fill="#000000" font-family="Helvetica" font-size="14px" text-anchor="middle">*</text></switch></g><g transform="translate(-0.5 -0.5)"><switch><foreignObject style="overflow: visible; text-align: left;" pointer-events="none" width="100%" height="100%" requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility"><div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe center; justify-content: unsafe center; width: 38px; height: 1px; padding-top: 705px; margin-left: 630px;"><div style="box-sizing: border-box; font-size: 0; text-align: center; "><div style="display: inline-block; font-size: 14px; font-family: Helvetica; color: #000000; line-height: 1.2; pointer-events: none; white-space: normal; word-wrap: normal; ">participation</div></div></div></foreignObject><text x="649" y="709" fill="#000000" font-family="Helvetica" font-size="14px" text-anchor="middle">partic...</text></switch></g><g transform="translate(-0.5 -0.5)"><switch><foreignObject style="overflow: visible; text-align: left;" pointer-events="none" width="100%" height="100%" requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility"><div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe center; justify-content: unsafe center; width: 38px; height: 1px; padding-top: 706px; margin-left: 571px;"><div style="box-sizing: border-box; font-size: 0; text-align: center; "><div style="display: inline-block; font-size: 14px; font-family: Helvetica; color: #000000; line-height: 1.2; pointer-events: none; white-space: normal; word-wrap: normal; ">1</div></div></div></foreignObject><text x="590" y="710" fill="#000000" font-family="Helvetica" font-size="14px" text-anchor="middle">1</text></switch></g><path d="M 600 775 L 600 691" fill="none" stroke="#000000" stroke-miterlimit="10" pointer-events="none"/><path d="M 485 801 L 485 775 L 715 775 L 715 801" fill="none" stroke="#000000" stroke-miterlimit="10" pointer-events="none"/><path d="M 485 801 L 485 941 L 715 941 L 715 801" fill="none" stroke="#000000" stroke-miterlimit="10" pointer-events="none"/><path d="M 485 801 L 715 801" fill="none" stroke="#000000" stroke-miterlimit="10" pointer-events="none"/><g fill="#000000" font-family="Helvetica" font-weight="bold" pointer-events="none" text-anchor="middle" font-size="14px"><text x="599.5" y="793.5">Result</text></g><g fill="#000000" font-family="Helvetica" pointer-events="none" clip-path="url(#mx-clip-489-801-222-20-0)" font-size="13px"><text x="490.5" y="816">resultString</text></g><g fill="#000000" font-family="Helvetica" pointer-events="none" clip-path="url(#mx-clip-489-821-222-20-0)" font-size="13px"><text x="490.5" y="836">completionDate</text></g><g fill="#000000" font-family="Helvetica" pointer-events="none" clip-path="url(#mx-clip-489-841-222-20-0)" font-size="13px"><text x="490.5" y="856">successful</text></g><g fill="#000000" font-family="Helvetica" pointer-events="none" clip-path="url(#mx-clip-489-861-222-20-0)" font-size="13px"><text x="490.5" y="876">buildArtifact</text></g><g fill="#000000" font-family="Helvetica" pointer-events="none" clip-path="url(#mx-clip-489-881-222-20-0)" font-size="13px"><text x="490.5" y="896">score</text></g><g fill="#000000" font-family="Helvetica" pointer-events="none" clip-path="url(#mx-clip-489-901-222-20-0)" font-size="13px"><text x="490.5" y="916">rated</text></g><g fill="#000000" font-family="Helvetica" pointer-events="none" clip-path="url(#mx-clip-489-921-222-20-0)" font-size="13px"><text x="490.5" y="936">hasFeedback</text></g><g transform="translate(-0.5 -0.5)"><switch><foreignObject style="overflow: visible; text-align: left;" pointer-events="none" width="100%" height="100%" requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility"><div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe center; justify-content: unsafe center; width: 38px; height: 1px; padding-top: 501px; margin-left: 551px;"><div style="box-sizing: border-box; font-size: 0; text-align: center; "><div style="display: inline-block; font-size: 14px; font-family: Helvetica; color: #000000; line-height: 1.2; pointer-events: none; white-space: normal; word-wrap: normal; ">exercise</div></div></div></foreignObject><text x="570" y="505" fill="#000000" font-family="Helvetica" font-size="14px" text-anchor="middle">exerci...</text></switch></g><g transform="translate(-0.5 -0.5)"><switch><foreignObject style="overflow: visible; text-align: left;" pointer-events="none" width="100%" height="100%" requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility"><div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe center; justify-content: unsafe center; width: 38px; height: 1px; padding-top: 502px; margin-left: 596px;"><div style="box-sizing: border-box; font-size: 0; text-align: center; "><div style="display: inline-block; font-size: 14px; font-family: Helvetica; color: #000000; line-height: 1.2; pointer-events: none; white-space: normal; word-wrap: normal; ">1</div></div></div></foreignObject><text x="615" y="506" fill="#000000" font-family="Helvetica" font-size="14px" text-anchor="middle">1</text></switch></g><g transform="translate(-0.5 -0.5)"><switch><foreignObject style="overflow: visible; text-align: left;" pointer-events="none" width="100%" height="100%" requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility"><div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe center; justify-content: unsafe center; width: 38px; height: 1px; padding-top: 575px; margin-left: 569px;"><div style="box-sizing: border-box; font-size: 0; text-align: center; "><div style="display: inline-block; font-size: 14px; font-family: Helvetica; color: #000000; line-height: 1.2; pointer-events: none; white-space: normal; word-wrap: normal; "><font style="font-size: 20px">*</font></div></div></div></foreignObject><text x="588" y="579" fill="#000000" font-family="Helvetica" font-size="14px" text-anchor="middle">*</text></switch></g><g transform="translate(-0.5 -0.5)"><switch><foreignObject style="overflow: visible; text-align: left;" pointer-events="none" width="100%" height="100%" requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility"><div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe center; justify-content: unsafe center; width: 38px; height: 1px; padding-top: 570px; margin-left: 631px;"><div style="box-sizing: border-box; font-size: 0; text-align: center; "><div style="display: inline-block; font-size: 14px; font-family: Helvetica; color: #000000; line-height: 1.2; pointer-events: none; white-space: normal; word-wrap: normal; ">participations</div></div></div></foreignObject><text x="650" y="574" fill="#000000" font-family="Helvetica" font-size="14px" text-anchor="middle">partic...</text></switch></g><path d="M 600 1040 L 600 941" fill="none" stroke="#000000" stroke-miterlimit="10" pointer-events="none"/><path d="M 485 1066 L 485 1040 L 715 1040 L 715 1066" fill="none" stroke="#000000" stroke-miterlimit="10" pointer-events="none"/><path d="M 485 1066 L 485 1146 L 715 1146 L 715 1066" fill="none" stroke="#000000" stroke-miterlimit="10" pointer-events="none"/><path d="M 485 1066 L 715 1066" fill="none" stroke="#000000" stroke-miterlimit="10" pointer-events="none"/><g fill="#000000" font-family="Helvetica" font-weight="bold" pointer-events="none" text-anchor="middle" font-size="14px"><text x="599.5" y="1058.5">Feedback</text></g><g fill="#000000" font-family="Helvetica" pointer-events="none" clip-path="url(#mx-clip-489-1066-222-20-0)" font-size="13px"><text x="490.5" y="1081">text</text></g><g fill="#000000" font-family="Helvetica" pointer-events="none" clip-path="url(#mx-clip-489-1086-222-20-0)" font-size="13px"><text x="490.5" y="1101">detailText</text></g><g fill="#000000" font-family="Helvetica" pointer-events="none" clip-path="url(#mx-clip-489-1106-222-20-0)" font-size="13px"><text x="490.5" y="1121">reference</text></g><g fill="#000000" font-family="Helvetica" pointer-events="none" clip-path="url(#mx-clip-489-1126-222-20-0)" font-size="13px"><text x="490.5" y="1141">credits</text></g><g transform="translate(-0.5 -0.5)"><switch><foreignObject style="overflow: visible; text-align: left;" pointer-events="none" width="100%" height="100%" requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility"><div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe center; justify-content: unsafe center; width: 38px; height: 1px; padding-top: 952px; margin-left: 556px;"><div style="box-sizing: border-box; font-size: 0; text-align: center; "><div style="display: inline-block; font-size: 14px; font-family: Helvetica; color: #000000; line-height: 1.2; pointer-events: none; white-space: normal; word-wrap: normal; ">result</div></div></div></foreignObject><text x="575" y="956" fill="#000000" font-family="Helvetica" font-size="14px" text-anchor="middle">result</text></switch></g><g transform="translate(-0.5 -0.5)"><switch><foreignObject style="overflow: visible; text-align: left;" pointer-events="none" width="100%" height="100%" requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility"><div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe center; justify-content: unsafe center; width: 38px; height: 1px; padding-top: 952px; margin-left: 596px;"><div style="box-sizing: border-box; font-size: 0; text-align: center; "><div style="display: inline-block; font-size: 14px; font-family: Helvetica; color: #000000; line-height: 1.2; pointer-events: none; white-space: normal; word-wrap: normal; ">1</div></div></div></foreignObject><text x="615" y="956" fill="#000000" font-family="Helvetica" font-size="14px" text-anchor="middle">1</text></switch></g><g transform="translate(-0.5 -0.5)"><switch><foreignObject style="overflow: visible; text-align: left;" pointer-events="none" width="100%" height="100%" requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility"><div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe center; justify-content: unsafe center; width: 38px; height: 1px; padding-top: 1030px; margin-left: 569px;"><div style="box-sizing: border-box; font-size: 0; text-align: center; "><div style="display: inline-block; font-size: 14px; font-family: Helvetica; color: #000000; line-height: 1.2; pointer-events: none; white-space: normal; word-wrap: normal; "><font style="font-size: 20px">*</font></div></div></div></foreignObject><text x="588" y="1034" fill="#000000" font-family="Helvetica" font-size="14px" text-anchor="middle">*</text></switch></g><g transform="translate(-0.5 -0.5)"><switch><foreignObject style="overflow: visible; text-align: left;" pointer-events="none" width="100%" height="100%" requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility"><div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe center; justify-content: unsafe center; width: 38px; height: 1px; padding-top: 1025px; margin-left: 626px;"><div style="box-sizing: border-box; font-size: 0; text-align: center; "><div style="display: inline-block; font-size: 14px; font-family: Helvetica; color: #000000; line-height: 1.2; pointer-events: none; white-space: normal; word-wrap: normal; ">feedbacks</div></div></div></foreignObject><text x="645" y="1029" fill="#000000" font-family="Helvetica" font-size="14px" text-anchor="middle">feedba...</text></switch></g><rect x="870" y="323.5" width="170" height="29" fill="#ffffff" stroke="#000000" pointer-events="none"/><g transform="translate(-0.5 -0.5)"><switch><foreignObject style="overflow: visible; text-align: left;" pointer-events="none" width="100%" height="100%" requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility"><div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe center; justify-content: unsafe center; width: 1px; height: 1px; padding-top: 338px; margin-left: 955px;"><div style="box-sizing: border-box; font-size: 0; text-align: center; "><div style="display: inline-block; font-size: 14px; font-family: Helvetica; color: #000000; line-height: 1.2; pointer-events: none; white-space: nowrap; "><b>ProgrammingExercise</b></div></div></div></foreignObject><text x="955" y="342" fill="#000000" font-family="Helvetica" font-size="14px" text-anchor="middle">ProgrammingExercise</text></switch></g><rect x="870" y="363.5" width="170" height="29" fill="#ffffff" stroke="#000000" pointer-events="none"/><g transform="translate(-0.5 -0.5)"><switch><foreignObject style="overflow: visible; text-align: left;" pointer-events="none" width="100%" height="100%" requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility"><div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe center; justify-content: unsafe center; width: 1px; height: 1px; padding-top: 378px; margin-left: 955px;"><div style="box-sizing: border-box; font-size: 0; text-align: center; "><div style="display: inline-block; font-size: 14px; font-family: Helvetica; color: #000000; line-height: 1.2; pointer-events: none; white-space: nowrap; "><b>ModelingExercise</b></div></div></div></foreignObject><text x="955" y="382" fill="#000000" font-family="Helvetica" font-size="14px" text-anchor="middle">ModelingExercise</text></switch></g><rect x="870" y="403.5" width="170" height="29" fill="#ffffff" stroke="#000000" pointer-events="none"/><g transform="translate(-0.5 -0.5)"><switch><foreignObject style="overflow: visible; text-align: left;" pointer-events="none" width="100%" height="100%" requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility"><div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe center; justify-content: unsafe center; width: 1px; height: 1px; padding-top: 418px; margin-left: 955px;"><div style="box-sizing: border-box; font-size: 0; text-align: center; "><div style="display: inline-block; font-size: 14px; font-family: Helvetica; color: #000000; line-height: 1.2; pointer-events: none; white-space: nowrap; "><b>QuizExercise</b></div></div></div></foreignObject><text x="955" y="422" fill="#000000" font-family="Helvetica" font-size="14px" text-anchor="middle">QuizExercise</text></switch></g><rect x="870" y="443.5" width="170" height="29" fill="#ffffff" stroke="#000000" pointer-events="none"/><g transform="translate(-0.5 -0.5)"><switch><foreignObject style="overflow: visible; text-align: left;" pointer-events="none" width="100%" height="100%" requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility"><div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe center; justify-content: unsafe center; width: 1px; height: 1px; padding-top: 458px; margin-left: 955px;"><div style="box-sizing: border-box; font-size: 0; text-align: center; "><div style="display: inline-block; font-size: 14px; font-family: Helvetica; color: #000000; line-height: 1.2; pointer-events: none; white-space: nowrap; "><b>TextExercise</b></div></div></div></foreignObject><text x="955" y="462" fill="#000000" font-family="Helvetica" font-size="14px" text-anchor="middle">TextExercise</text></switch></g><path d="M 870 628 L 715.92 628" fill="none" stroke="#000000" stroke-miterlimit="10" pointer-events="none"/><path d="M 982.24 662.3 L 982.2 788.1 L 715 788.11" fill="none" stroke="#000000" stroke-miterlimit="10" pointer-events="none"/><path d="M 870 621 L 870 595 L 1100 595 L 1100 621" fill="none" stroke="#000000" stroke-miterlimit="10" pointer-events="none"/><path d="M 870 621 L 870 661 L 1100 661 L 1100 621" fill="none" stroke="#000000" stroke-miterlimit="10" pointer-events="none"/><path d="M 870 621 L 1100 621" fill="none" stroke="#000000" stroke-miterlimit="10" pointer-events="none"/><g fill="#000000" font-family="Helvetica" font-weight="bold" pointer-events="none" text-anchor="middle" font-size="14px"><text x="984.5" y="613.5">Submission</text></g><g fill="#000000" font-family="Helvetica" pointer-events="none" clip-path="url(#mx-clip-874-621-222-20-0)" font-size="13px"><text x="875.5" y="636">repositoryUrl</text></g><g fill="#000000" font-family="Helvetica" pointer-events="none" clip-path="url(#mx-clip-874-641-222-20-0)" font-size="13px"><text x="875.5" y="656">buildPlanId</text></g><g transform="translate(-0.5 -0.5)"><switch><foreignObject style="overflow: visible; text-align: left;" pointer-events="none" width="100%" height="100%" requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility"><div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe center; justify-content: unsafe center; width: 38px; height: 1px; padding-top: 615px; margin-left: 806px;"><div style="box-sizing: border-box; font-size: 0; text-align: center; "><div style="display: inline-block; font-size: 14px; font-family: Helvetica; color: #000000; line-height: 1.2; pointer-events: none; white-space: normal; word-wrap: normal; ">submissions</div></div></div></foreignObject><text x="825" y="619" fill="#000000" font-family="Helvetica" font-size="14px" text-anchor="middle">submis...</text></switch></g><g transform="translate(-0.5 -0.5)"><switch><foreignObject style="overflow: visible; text-align: left;" pointer-events="none" width="100%" height="100%" requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility"><div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe center; justify-content: unsafe center; width: 38px; height: 1px; padding-top: 616px; margin-left: 716px;"><div style="box-sizing: border-box; font-size: 0; text-align: center; "><div style="display: inline-block; font-size: 14px; font-family: Helvetica; color: #000000; line-height: 1.2; pointer-events: none; white-space: normal; word-wrap: normal; ">1</div></div></div></foreignObject><text x="735" y="620" fill="#000000" font-family="Helvetica" font-size="14px" text-anchor="middle">1</text></switch></g><g transform="translate(-0.5 -0.5)"><switch><foreignObject style="overflow: visible; text-align: left;" pointer-events="none" width="100%" height="100%" requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility"><div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe center; justify-content: unsafe center; width: 38px; height: 1px; padding-top: 638px; margin-left: 746px;"><div style="box-sizing: border-box; font-size: 0; text-align: center; "><div style="display: inline-block; font-size: 14px; font-family: Helvetica; color: #000000; line-height: 1.2; pointer-events: none; white-space: normal; word-wrap: normal; ">participation</div></div></div></foreignObject><text x="765" y="642" fill="#000000" font-family="Helvetica" font-size="14px" text-anchor="middle">partic...</text></switch></g><g transform="translate(-0.5 -0.5)"><switch><foreignObject style="overflow: visible; text-align: left;" pointer-events="none" width="100%" height="100%" requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility"><div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe center; justify-content: unsafe center; width: 38px; height: 1px; padding-top: 640px; margin-left: 836px;"><div style="box-sizing: border-box; font-size: 0; text-align: center; "><div style="display: inline-block; font-size: 14px; font-family: Helvetica; color: #000000; line-height: 1.2; pointer-events: none; white-space: normal; word-wrap: normal; "><font style="font-size: 20px">*</font></div></div></div></foreignObject><text x="855" y="644" fill="#000000" font-family="Helvetica" font-size="14px" text-anchor="middle">*</text></switch></g><path d="M 1180 571 L 1140 571 L 1140 631 L 1112.12 631" fill="none" stroke="#000000" stroke-miterlimit="10" pointer-events="none"/><path d="M 1101.12 631 L 1112.12 625.5 L 1112.12 636.5 Z" fill="none" stroke="#000000" stroke-miterlimit="10" pointer-events="none"/><rect x="1180" y="556.5" width="190" height="29" fill="#ffffff" stroke="#000000" pointer-events="none"/><g transform="translate(-0.5 -0.5)"><switch><foreignObject style="overflow: visible; text-align: left;" pointer-events="none" width="100%" height="100%" requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility"><div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe center; justify-content: unsafe center; width: 1px; height: 1px; padding-top: 571px; margin-left: 1275px;"><div style="box-sizing: border-box; font-size: 0; text-align: center; "><div style="display: inline-block; font-size: 14px; font-family: Helvetica; color: #000000; line-height: 1.2; pointer-events: none; white-space: nowrap; "><b>ProgrammingSubmission</b></div></div></div></foreignObject><text x="1275" y="575" fill="#000000" font-family="Helvetica" font-size="14px" text-anchor="middle">ProgrammingSubmission</text></switch></g><path d="M 1180 611 L 1140 611 L 1140 631 L 1112.12 631" fill="none" stroke="#000000" stroke-miterlimit="10" pointer-events="none"/><path d="M 1101.12 631 L 1112.12 625.5 L 1112.12 636.5 Z" fill="none" stroke="#000000" stroke-miterlimit="10" pointer-events="none"/><rect x="1180" y="596.5" width="190" height="29" fill="#ffffff" stroke="#000000" pointer-events="none"/><g transform="translate(-0.5 -0.5)"><switch><foreignObject style="overflow: visible; text-align: left;" pointer-events="none" width="100%" height="100%" requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility"><div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe center; justify-content: unsafe center; width: 1px; height: 1px; padding-top: 611px; margin-left: 1275px;"><div style="box-sizing: border-box; font-size: 0; text-align: center; "><div style="display: inline-block; font-size: 14px; font-family: Helvetica; color: #000000; line-height: 1.2; pointer-events: none; white-space: nowrap; "><b>Modeling</b><b>Submission</b></div></div></div></foreignObject><text x="1275" y="615" fill="#000000" font-family="Helvetica" font-size="14px" text-anchor="middle">ModelingSubmission</text></switch></g><path d="M 1180 651 L 1140 651 L 1140 631 L 1112.12 631" fill="none" stroke="#000000" stroke-miterlimit="10" pointer-events="none"/><path d="M 1101.12 631 L 1112.12 625.5 L 1112.12 636.5 Z" fill="none" stroke="#000000" stroke-miterlimit="10" pointer-events="none"/><rect x="1180" y="636.5" width="190" height="29" fill="#ffffff" stroke="#000000" pointer-events="none"/><g transform="translate(-0.5 -0.5)"><switch><foreignObject style="overflow: visible; text-align: left;" pointer-events="none" width="100%" height="100%" requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility"><div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe center; justify-content: unsafe center; width: 1px; height: 1px; padding-top: 651px; margin-left: 1275px;"><div style="box-sizing: border-box; font-size: 0; text-align: center; "><div style="display: inline-block; font-size: 14px; font-family: Helvetica; color: #000000; line-height: 1.2; pointer-events: none; white-space: nowrap; "><b>Quiz</b><b>Submission</b></div></div></div></foreignObject><text x="1275" y="655" fill="#000000" font-family="Helvetica" font-size="14px" text-anchor="middle">QuizSubmission</text></switch></g><path d="M 1180 691 L 1140 691 L 1140 631 L 1112.12 631" fill="none" stroke="#000000" stroke-miterlimit="10" pointer-events="none"/><path d="M 1101.12 631 L 1112.12 625.5 L 1112.12 636.5 Z" fill="none" stroke="#000000" stroke-miterlimit="10" pointer-events="none"/><rect x="1180" y="676.5" width="190" height="29" fill="#ffffff" stroke="#000000" pointer-events="none"/><g transform="translate(-0.5 -0.5)"><switch><foreignObject style="overflow: visible; text-align: left;" pointer-events="none" width="100%" height="100%" requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility"><div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe center; justify-content: unsafe center; width: 1px; height: 1px; padding-top: 691px; margin-left: 1275px;"><div style="box-sizing: border-box; font-size: 0; text-align: center; "><div style="display: inline-block; font-size: 14px; font-family: Helvetica; color: #000000; line-height: 1.2; pointer-events: none; white-space: nowrap; "><b>Text</b><b>Submission</b></div></div></div></foreignObject><text x="1275" y="695" fill="#000000" font-family="Helvetica" font-size="14px" text-anchor="middle">TextSubmission</text></switch></g><g transform="translate(-0.5 -0.5)"><switch><foreignObject style="overflow: visible; text-align: left;" pointer-events="none" width="100%" height="100%" requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility"><div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe center; justify-content: unsafe center; width: 38px; height: 1px; padding-top: 672px; margin-left: 916px;"><div style="box-sizing: border-box; font-size: 0; text-align: center; "><div style="display: inline-block; font-size: 14px; font-family: Helvetica; color: #000000; line-height: 1.2; pointer-events: none; white-space: normal; word-wrap: normal; ">submission</div></div></div></foreignObject><text x="935" y="676" fill="#000000" font-family="Helvetica" font-size="14px" text-anchor="middle">submis...</text></switch></g><g transform="translate(-0.5 -0.5)"><switch><foreignObject style="overflow: visible; text-align: left;" pointer-events="none" width="100%" height="100%" requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility"><div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe center; justify-content: unsafe center; width: 38px; height: 1px; padding-top: 672px; margin-left: 976px;"><div style="box-sizing: border-box; font-size: 0; text-align: center; "><div style="display: inline-block; font-size: 14px; font-family: Helvetica; color: #000000; line-height: 1.2; pointer-events: none; white-space: normal; word-wrap: normal; ">1</div></div></div></foreignObject><text x="995" y="676" fill="#000000" font-family="Helvetica" font-size="14px" text-anchor="middle">1</text></switch></g><g transform="translate(-0.5 -0.5)"><switch><foreignObject style="overflow: visible; text-align: left;" pointer-events="none" width="100%" height="100%" requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility"><div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe center; justify-content: unsafe center; width: 38px; height: 1px; padding-top: 775px; margin-left: 726px;"><div style="box-sizing: border-box; font-size: 0; text-align: center; "><div style="display: inline-block; font-size: 14px; font-family: Helvetica; color: #000000; line-height: 1.2; pointer-events: none; white-space: normal; word-wrap: normal; ">result</div></div></div></foreignObject><text x="745" y="779" fill="#000000" font-family="Helvetica" font-size="14px" text-anchor="middle">result</text></switch></g><g transform="translate(-0.5 -0.5)"><switch><foreignObject style="overflow: visible; text-align: left;" pointer-events="none" width="100%" height="100%" requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility"><div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe center; justify-content: unsafe center; width: 38px; height: 1px; padding-top: 800px; margin-left: 721px;"><div style="box-sizing: border-box; font-size: 0; text-align: center; "><div style="display: inline-block; font-size: 14px; font-family: Helvetica; color: #000000; line-height: 1.2; pointer-events: none; white-space: normal; word-wrap: normal; ">0..1</div></div></div></foreignObject><text x="740" y="804" fill="#000000" font-family="Helvetica" font-size="14px" text-anchor="middle">0..1</text></switch></g><path d="M 230 768 L 230 745 L 535 745 L 535 691" fill="none" stroke="#000000" stroke-miterlimit="10" pointer-events="none"/><path d="M 115 794 L 115 768 L 345 768 L 345 794" fill="none" stroke="#000000" stroke-miterlimit="10" pointer-events="none"/><path d="M 115 794 L 115 914 L 345 914 L 345 794" fill="none" stroke="#000000" stroke-miterlimit="10" pointer-events="none"/><path d="M 115 794 L 345 794" fill="none" stroke="#000000" stroke-miterlimit="10" pointer-events="none"/><g fill="#000000" font-family="Helvetica" font-weight="bold" pointer-events="none" text-anchor="middle" font-size="14px"><text x="229.5" y="786.5">User</text></g><g fill="#000000" font-family="Helvetica" pointer-events="none" clip-path="url(#mx-clip-119-794-222-20-0)" font-size="13px"><text x="120.5" y="809">login</text></g><g fill="#000000" font-family="Helvetica" pointer-events="none" clip-path="url(#mx-clip-119-814-222-20-0)" font-size="13px"><text x="120.5" y="829">password</text></g><g fill="#000000" font-family="Helvetica" pointer-events="none" clip-path="url(#mx-clip-119-834-222-20-0)" font-size="13px"><text x="120.5" y="849">firstName</text></g><g fill="#000000" font-family="Helvetica" pointer-events="none" clip-path="url(#mx-clip-119-854-222-20-0)" font-size="13px"><text x="120.5" y="869">lastName</text></g><g fill="#000000" font-family="Helvetica" pointer-events="none" clip-path="url(#mx-clip-119-874-222-20-0)" font-size="13px"><text x="120.5" y="889">email</text></g><g fill="#000000" font-family="Helvetica" pointer-events="none" clip-path="url(#mx-clip-119-894-222-20-0)" font-size="13px"><text x="120.5" y="909">activated</text></g><g transform="translate(-0.5 -0.5)"><switch><foreignObject style="overflow: visible; text-align: left;" pointer-events="none" width="100%" height="100%" requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility"><div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe center; justify-content: unsafe center; width: 38px; height: 1px; padding-top: 706px; margin-left: 466px;"><div style="box-sizing: border-box; font-size: 0; text-align: center; "><div style="display: inline-block; font-size: 14px; font-family: Helvetica; color: #000000; line-height: 1.2; pointer-events: none; white-space: normal; word-wrap: normal; ">participations</div></div></div></foreignObject><text x="485" y="710" fill="#000000" font-family="Helvetica" font-size="14px" text-anchor="middle">partic...</text></switch></g><g transform="translate(-0.5 -0.5)"><switch><foreignObject style="overflow: visible; text-align: left;" pointer-events="none" width="100%" height="100%" requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility"><div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe center; justify-content: unsafe center; width: 38px; height: 1px; padding-top: 710px; margin-left: 529px;"><div style="box-sizing: border-box; font-size: 0; text-align: center; "><div style="display: inline-block; font-size: 14px; font-family: Helvetica; color: #000000; line-height: 1.2; pointer-events: none; white-space: normal; word-wrap: normal; "><font style="font-size: 20px">*</font></div></div></div></foreignObject><text x="548" y="714" fill="#000000" font-family="Helvetica" font-size="14px" text-anchor="middle">*</text></switch></g><g transform="translate(-0.5 -0.5)"><switch><foreignObject style="overflow: visible; text-align: left;" pointer-events="none" width="100%" height="100%" requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility"><div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe center; justify-content: unsafe center; width: 38px; height: 1px; padding-top: 755px; margin-left: 240px;"><div style="box-sizing: border-box; font-size: 0; text-align: center; "><div style="display: inline-block; font-size: 14px; font-family: Helvetica; color: #000000; line-height: 1.2; pointer-events: none; white-space: normal; word-wrap: normal; ">student</div></div></div></foreignObject><text x="259" y="759" fill="#000000" font-family="Helvetica" font-size="14px" text-anchor="middle">student</text></switch></g><g transform="translate(-0.5 -0.5)"><switch><foreignObject style="overflow: visible; text-align: left;" pointer-events="none" width="100%" height="100%" requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility"><div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe center; justify-content: unsafe center; width: 38px; height: 1px; padding-top: 756px; margin-left: 201px;"><div style="box-sizing: border-box; font-size: 0; text-align: center; "><div style="display: inline-block; font-size: 14px; font-family: Helvetica; color: #000000; line-height: 1.2; pointer-events: none; white-space: normal; word-wrap: normal; ">1</div></div></div></foreignObject><text x="220" y="760" fill="#000000" font-family="Helvetica" font-size="14px" text-anchor="middle">1</text></switch></g><path d="M 345 844 L 484.08 844" fill="none" stroke="#000000" stroke-miterlimit="10" pointer-events="none"/><g transform="translate(-0.5 -0.5)"><switch><foreignObject style="overflow: visible; text-align: left;" pointer-events="none" width="100%" height="100%" requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility"><div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe center; justify-content: unsafe center; width: 38px; height: 1px; padding-top: 830px; margin-left: 361px;"><div style="box-sizing: border-box; font-size: 0; text-align: center; "><div style="display: inline-block; font-size: 14px; font-family: Helvetica; color: #000000; line-height: 1.2; pointer-events: none; white-space: normal; word-wrap: normal; ">assessor</div></div></div></foreignObject><text x="380" y="834" fill="#000000" font-family="Helvetica" font-size="14px" text-anchor="middle">assess...</text></switch></g><g transform="translate(-0.5 -0.5)"><switch><foreignObject style="overflow: visible; text-align: left;" pointer-events="none" width="100%" height="100%" requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility"><div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe center; justify-content: unsafe center; width: 38px; height: 1px; padding-top: 858px; margin-left: 336px;"><div style="box-sizing: border-box; font-size: 0; text-align: center; "><div style="display: inline-block; font-size: 14px; font-family: Helvetica; color: #000000; line-height: 1.2; pointer-events: none; white-space: normal; word-wrap: normal; ">1</div></div></div></foreignObject><text x="355" y="862" fill="#000000" font-family="Helvetica" font-size="14px" text-anchor="middle">1</text></switch></g><g transform="translate(-0.5 -0.5)"><switch><foreignObject style="overflow: visible; text-align: left;" pointer-events="none" width="100%" height="100%" requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility"><div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe center; justify-content: unsafe center; width: 38px; height: 1px; padding-top: 835px; margin-left: 451px;"><div style="box-sizing: border-box; font-size: 0; text-align: center; "><div style="display: inline-block; font-size: 14px; font-family: Helvetica; color: #000000; line-height: 1.2; pointer-events: none; white-space: normal; word-wrap: normal; "><font style="font-size: 20px">*</font></div></div></div></foreignObject><text x="470" y="839" fill="#000000" font-family="Helvetica" font-size="14px" text-anchor="middle">*</text></switch></g><path d="M 345 620.5 L 415 620.5 L 485 621" fill="none" stroke="#000000" stroke-miterlimit="10" pointer-events="none"/><rect x="115" y="543" width="230" height="155" fill="#ffffff" stroke="#000000" pointer-events="none"/><g transform="translate(-0.5 -0.5)"><switch><foreignObject style="overflow: visible; text-align: left;" pointer-events="none" width="100%" height="100%" requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility"><div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe flex-start; justify-content: unsafe flex-start; width: 232px; height: 155px; padding-top: 543px; margin-left: 115px;"><div style="box-sizing: border-box; font-size: 0; text-align: left; width: 230px; height: 155px; overflow: hidden; "><div style="display: inline-block; font-size: 12px; font-family: Helvetica; color: #000000; line-height: 1.2; pointer-events: none; width: 100%; height: 100%; white-space: nowrap; "><p style="margin: 0px ; margin-top: 4px ; text-align: center"><i>&lt;&lt;enumeration&gt;&gt;</i><br /><b style="font-size: 14px">InitializationState</b></p><hr size="1" /><p style="margin: 0px 0px 0px 4px ; font-size: 13px"><font style="font-size: 13px">UNINITIALIZED<br /></font></p><p style="margin: 0px 0px 0px 4px ; font-size: 13px"><font style="font-size: 13px">REPO_COPIED<br /></font></p><p style="margin: 0px 0px 0px 4px ; font-size: 13px"><font style="font-size: 13px">INACTIVE<br /></font></p><p style="margin: 0px 0px 0px 4px ; font-size: 13px"><font style="font-size: 13px">BUILD_PLAN_COPIED<br /></font></p><p style="margin: 0px 0px 0px 4px ; font-size: 13px"><font style="font-size: 13px">BUILD_PLAN_CONFIGURED<br /></font></p><p style="margin: 0px 0px 0px 4px ; font-size: 13px"><font style="font-size: 13px">INITIALIZED<br /></font></p><p style="margin: 0px 0px 0px 4px ; font-size: 13px"><font style="font-size: 13px">FINISHED</font><span style="font-size: 11px"><br /></span></p></div></div></div></foreignObject><text x="115" y="555" fill="#000000" font-family="Helvetica" font-size="12px">&lt;&lt;enumeration&gt;&gt;...</text></switch></g><g transform="translate(-0.5 -0.5)"><switch><foreignObject style="overflow: visible; text-align: left;" pointer-events="none" width="100%" height="100%" requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility"><div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe center; justify-content: unsafe center; width: 38px; height: 1px; padding-top: 607px; margin-left: 386px;"><div style="box-sizing: border-box; font-size: 0; text-align: center; "><div style="display: inline-block; font-size: 14px; font-family: Helvetica; color: #000000; line-height: 1.2; pointer-events: none; white-space: normal; word-wrap: normal; ">initializationState</div></div></div></foreignObject><text x="405" y="611" fill="#000000" font-family="Helvetica" font-size="14px" text-anchor="middle">initia...</text></switch></g><rect x="5" y="985" width="230" height="95" fill="#ffffff" stroke="#000000" pointer-events="none"/><g transform="translate(-0.5 -0.5)"><switch><foreignObject style="overflow: visible; text-align: left;" pointer-events="none" width="100%" height="100%" requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility"><div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe flex-start; justify-content: unsafe flex-start; width: 232px; height: 95px; padding-top: 985px; margin-left: 5px;"><div style="box-sizing: border-box; font-size: 0; text-align: left; width: 230px; height: 95px; overflow: hidden; "><div style="display: inline-block; font-size: 12px; font-family: Helvetica; color: #000000; line-height: 1.2; pointer-events: none; width: 100%; height: 100%; white-space: nowrap; "><p style="margin: 0px ; margin-top: 4px ; text-align: center"><i>&lt;&lt;enumeration&gt;&gt;</i><br /><b style="font-size: 14px">AssessmentType</b></p><hr size="1" /><p style="margin: 0px 0px 0px 4px ; font-size: 13px"><font style="font-size: 13px"><span style="font-size: 11px">AUTOMATIC</span><br /></font></p><p style="margin: 0px 0px 0px 4px ; font-size: 13px"><font style="font-size: 13px"><span style="font-size: 11px">SEMI_AUTOMATIC</span><br /></font></p><p style="margin: 0px 0px 0px 4px ; font-size: 13px"><font style="font-size: 13px"><span style="font-size: 11px">MANUAL</span></font></p></div></div></div></foreignObject><text x="5" y="997" fill="#000000" font-family="Helvetica" font-size="12px">&lt;&lt;enumeration&gt;&gt;...</text></switch></g><path d="M 485 421 L 62.5 421 L 62.5 985" fill="none" stroke="#000000" stroke-miterlimit="10" pointer-events="none"/><g transform="translate(-0.5 -0.5)"><switch><foreignObject style="overflow: visible; text-align: left;" pointer-events="none" width="100%" height="100%" requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility"><div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe center; justify-content: unsafe center; width: 38px; height: 1px; padding-top: 972px; margin-left: 106px;"><div style="box-sizing: border-box; font-size: 0; text-align: center; "><div style="display: inline-block; font-size: 14px; font-family: Helvetica; color: #000000; line-height: 1.2; pointer-events: none; white-space: normal; word-wrap: normal; ">assessmentType</div></div></div></foreignObject><text x="125" y="976" fill="#000000" font-family="Helvetica" font-size="14px" text-anchor="middle">assess...</text></switch></g><g transform="translate(-0.5 -0.5)"><switch><foreignObject style="overflow: visible; text-align: left;" pointer-events="none" width="100%" height="100%" requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility"><div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe center; justify-content: unsafe center; width: 38px; height: 1px; padding-top: 855px; margin-left: 436px;"><div style="box-sizing: border-box; font-size: 0; text-align: center; "><div style="display: inline-block; font-size: 14px; font-family: Helvetica; color: #000000; line-height: 1.2; pointer-events: none; white-space: normal; word-wrap: normal; ">results</div></div></div></foreignObject><text x="455" y="859" fill="#000000" font-family="Helvetica" font-size="14px" text-anchor="middle">results</text></switch></g><path d="M 485 911 L 415 911 L 415 1032.5 L 235 1032.5" fill="none" stroke="#000000" stroke-miterlimit="10" pointer-events="none"/><g transform="translate(-0.5 -0.5)"><switch><foreignObject style="overflow: visible; text-align: left;" pointer-events="none" width="100%" height="100%" requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility"><div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe center; justify-content: unsafe center; width: 38px; height: 1px; padding-top: 1020px; margin-left: 276px;"><div style="box-sizing: border-box; font-size: 0; text-align: center; "><div style="display: inline-block; font-size: 14px; font-family: Helvetica; color: #000000; line-height: 1.2; pointer-events: none; white-space: normal; word-wrap: normal; ">assessmentType</div></div></div></foreignObject><text x="295" y="1024" fill="#000000" font-family="Helvetica" font-size="14px" text-anchor="middle">assess...</text></switch></g></g><switch><g requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility"/><a transform="translate(0,-5)" xlink:href="https://www.diagrams.net/doc/faq/svg-export-text-problems" target="_blank"><text text-anchor="middle" font-size="10px" x="50%" y="100%">Viewer does not support full SVG 1.1</text></a></switch></svg>
+<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xl="http://www.w3.org/1999/xlink" xmlns:dc="http://purl.org/dc/elements/1.1/" viewBox="66 223 670 908" width="670" height="908">
+  <defs>
+    <font-face font-family="Helvetica" font-size="12" units-per-em="1000" underline-position="-75.68359" underline-thickness="49.316406" slope="0" x-height="522.9492" cap-height="717.28516" ascent="770.0195" descent="-229.98047" font-weight="400">
+      <font-face-src>
+        <font-face-name name="Helvetica"/>
+      </font-face-src>
+    </font-face>
+    <font-face font-family="Helvetica" font-size="13" units-per-em="1000" underline-position="-75.68359" underline-thickness="49.316406" slope="0" x-height="532.22656" cap-height="719.7266" ascent="770.0195" descent="-229.98047" font-weight="700">
+      <font-face-src>
+        <font-face-name name="Helvetica-Bold"/>
+      </font-face-src>
+    </font-face>
+    <marker orient="auto" overflow="visible" markerUnits="strokeWidth" id="UMLInheritance_Marker" stroke-linejoin="miter" stroke-miterlimit="10" viewBox="-1 -8 14 16" markerWidth="14" markerHeight="16" color="black">
+      <g>
+        <path d="M 12 0 L 0 -7 L 0 7 Z" fill="none" stroke="currentColor" stroke-width="1"/>
+      </g>
+    </marker>
+    <font-face font-family="Zapf Dingbats" font-size="9" panose-1="5 2 1 2 1 7 4 2 6 9" units-per-em="1000" underline-position="-100.09766" underline-thickness="60.058594" slope="0" x-height="542.4805" cap-height="723.1445" ascent="813.9648" descent="-176.75781" font-weight="400">
+      <font-face-src>
+        <font-face-name name="ZapfDingbatsITC"/>
+      </font-face-src>
+    </font-face>
+    <font-face font-family="Helvetica" font-size="9" units-per-em="1000" underline-position="-75.68359" underline-thickness="49.316406" slope="0" x-height="522.9492" cap-height="717.28516" ascent="770.0195" descent="-229.98047" font-weight="400">
+      <font-face-src>
+        <font-face-name name="Helvetica"/>
+      </font-face-src>
+    </font-face>
+    <font-face font-family="Helvetica" font-size="10" units-per-em="1000" underline-position="-75.68359" underline-thickness="49.316406" slope="0" x-height="522.9492" cap-height="717.28516" ascent="770.0195" descent="-229.98047" font-weight="400">
+      <font-face-src>
+        <font-face-name name="Helvetica"/>
+      </font-face-src>
+    </font-face>
+    <font-face font-family="Helvetica" font-size="8" units-per-em="1000" underline-position="-75.68359" underline-thickness="49.316406" slope="0" x-height="522.9492" cap-height="717.28516" ascent="770.0195" descent="-229.98047" font-weight="400">
+      <font-face-src>
+        <font-face-name name="Helvetica"/>
+      </font-face-src>
+    </font-face>
+    <font-face font-family="Helvetica" font-size="12" units-per-em="1000" underline-position="-75.68359" underline-thickness="49.316406" slope="0" x-height="532.22656" cap-height="719.7266" ascent="770.0195" descent="-229.98047" font-weight="700">
+      <font-face-src>
+        <font-face-name name="Helvetica-Bold"/>
+      </font-face-src>
+    </font-face>
+    <font-face font-family="Helvetica" font-size="11" units-per-em="1000" underline-position="-75.68359" underline-thickness="49.316406" slope="0" x-height="522.9492" cap-height="717.28516" ascent="770.0195" descent="-229.98047" font-weight="400">
+      <font-face-src>
+        <font-face-name name="Helvetica"/>
+      </font-face-src>
+    </font-face>
+    <marker orient="auto" overflow="visible" markerUnits="strokeWidth" id="StickArrow_Marker" stroke-linejoin="miter" stroke-miterlimit="10" viewBox="-9 -4 10 8" markerWidth="10" markerHeight="8" color="black">
+      <g>
+        <path d="M -8 0 L 0 0 M 0 3 L -8 0 L 0 -3" fill="none" stroke="currentColor" stroke-width="1"/>
+      </g>
+    </marker>
+    <marker orient="auto" overflow="visible" markerUnits="strokeWidth" id="StickArrow_Marker_2" stroke-linejoin="miter" stroke-miterlimit="10" viewBox="-1 -4 10 8" markerWidth="10" markerHeight="8" color="black">
+      <g>
+        <path d="M 8 0 L 0 0 M 0 -3 L 8 0 L 0 3" fill="none" stroke="currentColor" stroke-width="1"/>
+      </g>
+    </marker>
+  </defs>
+  <metadata> Produced by OmniGraffle 7.18.4\n2021-03-21 21:12:56 +0000</metadata>
+  <g id="Arbeitsfl_che_1" stroke="none" stroke-dasharray="none" stroke-opacity="1" fill="none" fill-opacity="1">
+    <title>Arbeitsfläche 1</title>
+    <g id="Arbeitsfl_che_1_Ebene_1">
+      <title>Ebene 1</title>
+      <g id="Group_22">
+        <title>Class with Attributes</title>
+        <g id="Graphic_24">
+          <title>Attributes</title>
+          <rect x="356.1993" y="251.81426" width="129.875" height="134.0712" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+          <text transform="translate(362.1993 257.81426)" fill="black">
+            <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="11">title</tspan>
+            <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="25">shortName</tspan>
+            <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="39">startDate</tspan>
+            <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="53">endDate</tspan>
+            <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="67">semester</tspan>
+            <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="81">onlineCourse</tspan>
+            <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="95">studentGroupName</tspan>
+            <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="109">taGroupName</tspan>
+            <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="123">instructorGroupName</tspan>
+          </text>
+        </g>
+        <g id="Graphic_23">
+          <title>Class Name</title>
+          <rect x="356.1993" y="224.38546" width="129.875" height="27.4288" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+          <text transform="translate(362.1993 230.09986)" fill="black">
+            <tspan font-family="Helvetica" font-size="13" font-weight="700" fill="black" x="36.54297" y="13">Course</tspan>
+          </text>
+        </g>
+      </g>
+      <g id="Group_29">
+        <title>Class with Attributes</title>
+        <g id="Graphic_31">
+          <title>Attributes</title>
+          <rect x="357.68187" y="462.4714" width="127.175" height="149.75526" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+          <text transform="translate(363.68187 468.4714)" fill="black">
+            <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="11">title</tspan>
+            <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="25">shortName</tspan>
+            <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="39">releaseDate</tspan>
+            <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="53">dueDate</tspan>
+            <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="67">maxScore</tspan>
+            <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="81">problemStatement</tspan>
+            <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="95">gradingInstructions</tspan>
+            <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="109">assessmentDueDate</tspan>
+            <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="123">mode</tspan>
+            <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="137">assessmentType</tspan>
+          </text>
+        </g>
+        <g id="Graphic_30">
+          <title>Class Name</title>
+          <rect x="357.68187" y="436.2822" width="127.175" height="26.18919" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+          <text transform="translate(363.68187 441.3768)" fill="black">
+            <tspan font-family="Helvetica" font-size="13" font-weight="700" fill="black" x="30.841648" y="13">Exercise</tspan>
+          </text>
+        </g>
+      </g>
+      <g id="Group_36">
+        <title>Class with Attributes</title>
+        <g id="Graphic_37">
+          <title>Class Name</title>
+          <rect x="526" y="511.5" width="152.5" height="24" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+          <text transform="translate(532 515.5)" fill="black">
+            <tspan font-family="Helvetica" font-size="13" font-weight="700" fill="black" x="14.980957" y="13">ModelingExercise</tspan>
+          </text>
+        </g>
+      </g>
+      <g id="Group_38">
+        <title>Class with Attributes</title>
+        <g id="Graphic_39">
+          <title>Class Name</title>
+          <rect x="526" y="541" width="152.5" height="24" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+          <text transform="translate(532 545)" fill="black">
+            <tspan font-family="Helvetica" font-size="13" font-weight="700" fill="black" x="29.421875" y="13">QuizExercise</tspan>
+          </text>
+        </g>
+      </g>
+      <g id="Group_40">
+        <title>Class with Attributes</title>
+        <g id="Graphic_41">
+          <title>Class Name</title>
+          <rect x="526" y="570.5" width="152.5" height="24" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+          <text transform="translate(532 574.5)" fill="black">
+            <tspan font-family="Helvetica" font-size="13" font-weight="700" fill="black" x="30.61841" y="13">TextExercise</tspan>
+          </text>
+        </g>
+      </g>
+      <g id="Line_46">
+        <path d="M 525.5 553 L 509 553 L 509 537.349 L 498.85687 537.349" marker-end="url(#UMLInheritance_Marker)" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+      </g>
+      <g id="Line_47">
+        <path d="M 525.5 582.5 L 509.1886 582.5 L 509.1886 537.349 L 498.85687 537.349" marker-end="url(#UMLInheritance_Marker)" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+      </g>
+      <g id="Group_48">
+        <title>Class with Attributes</title>
+        <g id="Graphic_49">
+          <title>Class Name</title>
+          <rect x="526" y="482" width="152.5" height="24" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+          <text transform="translate(532 486)" fill="black">
+            <tspan font-family="Helvetica" font-size="13" font-weight="700" fill="black" x="1.2478027" y="13">ProgrammingExercise</tspan>
+          </text>
+        </g>
+      </g>
+      <g id="Line_50">
+        <path d="M 525.5 494 L 509.1886 494 L 509.1886 537.349 L 498.85687 537.349" marker-end="url(#UMLInheritance_Marker)" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+      </g>
+      <g id="Line_51">
+        <path d="M 525.5 523.5 L 509 523.5 L 509 537.349 L 498.85687 537.349" marker-end="url(#UMLInheritance_Marker)" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+      </g>
+      <g id="Group_52">
+        <title>Class with Attributes</title>
+        <g id="Graphic_54">
+          <title>Attributes</title>
+          <rect x="362.7849" y="674.5" width="116.96844" height="78.5" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+          <text transform="translate(368.7849 680.5)" fill="black">
+            <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="11">repositoryUrl</tspan>
+            <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="25">buildPlanId</tspan>
+            <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="39">initializationDate</tspan>
+            <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="53">presentationScore</tspan>
+            <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="67">intializationState</tspan>
+          </text>
+        </g>
+        <g id="Graphic_53">
+          <title>Class Name</title>
+          <rect x="362.7849" y="648.71504" width="116.96844" height="25.784956" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+          <text transform="translate(368.7849 653.6075)" fill="black">
+            <tspan font-family="Helvetica" font-size="13" font-weight="700" fill="black" x="13.116058" y="13">Participation</tspan>
+          </text>
+        </g>
+      </g>
+      <g id="Line_59">
+        <path d="M 421.1368 386.38546 L 421.1368 393.38546 L 421.26937 428.7822 L 421.26937 435.7822" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+      </g>
+      <g id="Graphic_58">
+        <text transform="translate(403.38366 424.54337)" fill="black">
+          <tspan font-family="Zapf Dingbats" font-size="9" font-weight="400" fill="black" x="0" y="7">✱</tspan>
+        </text>
+      </g>
+      <g id="Graphic_57">
+        <text transform="translate(427.3621 389.31976)" fill="black">
+          <tspan font-family="Helvetica" font-size="9" font-weight="400" fill="black" x="0" y="9">1</tspan>
+        </text>
+      </g>
+      <g id="Graphic_55">
+        <text transform="translate(425.52325 422.0134)" fill="black">
+          <tspan font-family="Helvetica" font-size="10" font-weight="400" fill="black" x="0" y="10">exercises</tspan>
+        </text>
+      </g>
+      <g id="Line_61">
+        <line x1="421.2692" y1="612.72666" x2="421.26913" y2="648.21504" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+      </g>
+      <g id="Graphic_62">
+        <text transform="translate(429.56143 637.9093)" fill="black">
+          <tspan font-family="Zapf Dingbats" font-size="9" font-weight="400" fill="black" x="0" y="7">✱</tspan>
+        </text>
+      </g>
+      <g id="Graphic_63">
+        <text transform="translate(410.74326 612.7009)" fill="black">
+          <tspan font-family="Helvetica" font-size="9" font-weight="400" fill="black" x="0" y="9">1</tspan>
+        </text>
+      </g>
+      <g id="Graphic_64">
+        <text transform="translate(423.8788 611.58876)" fill="black">
+          <tspan font-family="Helvetica" font-size="10" font-weight="400" fill="black" x="6.071514" y="10">exercise</tspan>
+        </text>
+      </g>
+      <g id="Graphic_65">
+        <text transform="translate(353.4314 635.8651)" fill="black">
+          <tspan font-family="Helvetica" font-size="10" font-weight="400" fill="black" x="0" y="10">participations</tspan>
+        </text>
+      </g>
+      <g id="Group_71">
+        <title>Class with Attributes</title>
+        <g id="Graphic_73">
+          <title>Attributes</title>
+          <rect x="369.76163" y="846.354" width="101.47675" height="110" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+          <text transform="translate(375.76163 852.354)" fill="black">
+            <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="11">resultString</tspan>
+            <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="25">completionDate</tspan>
+            <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="39">successful</tspan>
+            <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="53">buildArtifact</tspan>
+            <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="67">score</tspan>
+            <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="81">rated</tspan>
+            <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="95">hasFeedback</tspan>
+          </text>
+        </g>
+        <g id="Graphic_72">
+          <title>Class Name</title>
+          <rect x="369.76163" y="822.354" width="101.47675" height="24" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+          <text transform="translate(375.76163 826.354)" fill="black">
+            <tspan font-family="Helvetica" font-size="13" font-weight="700" fill="black" x="24.873383" y="13">Result</tspan>
+          </text>
+        </g>
+      </g>
+      <g id="Line_74">
+        <path d="M 420.52325 753.4404 L 420.5 814.854 L 420.5 821.854" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+      </g>
+      <g id="Graphic_75">
+        <text transform="translate(425.52325 810.3484)" fill="black">
+          <tspan font-family="Zapf Dingbats" font-size="9" font-weight="400" fill="black" x="0" y="7">✱</tspan>
+        </text>
+      </g>
+      <g id="Graphic_76">
+        <text transform="translate(409.97406 752.9116)" fill="black">
+          <tspan font-family="Helvetica" font-size="9" font-weight="400" fill="black" x="0" y="9">1</tspan>
+        </text>
+      </g>
+      <g id="Graphic_78">
+        <text transform="translate(324 807.3484)" fill="black">
+          <tspan font-family="Helvetica" font-size="10" font-weight="400" fill="black" x="67.02362" y="10">result</tspan>
+        </text>
+      </g>
+      <g id="Group_79">
+        <title>Class with Attributes</title>
+        <g id="Graphic_81">
+          <title>Attributes</title>
+          <rect x="625.5" y="673.4336" width="109.3369" height="40.03208" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+          <text transform="translate(631.5 679.4336)" fill="black">
+            <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="11">submitted</tspan>
+            <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="25">submissionDate</tspan>
+          </text>
+        </g>
+        <g id="Graphic_80">
+          <title>Class Name</title>
+          <rect x="625.5" y="649.41434" width="109.3369" height="24.019248" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+          <text transform="translate(631.5 653.424)" fill="black">
+            <tspan font-family="Helvetica" font-size="13" font-weight="700" fill="black" x="11.829823" y="13">Submission</tspan>
+          </text>
+        </g>
+      </g>
+      <g id="Line_87">
+        <line x1="480.2533" y1="661.5657" x2="625" y2="661.4631" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+      </g>
+      <g id="Graphic_86">
+        <text transform="translate(614.7874 666.011)" fill="black">
+          <tspan font-family="Zapf Dingbats" font-size="9" font-weight="400" fill="black" x="0" y="7">✱</tspan>
+        </text>
+      </g>
+      <g id="Graphic_85">
+        <text transform="translate(486.5283 648.0362)" fill="black">
+          <tspan font-family="Helvetica" font-size="9" font-weight="400" fill="black" x="0" y="9">1</tspan>
+        </text>
+      </g>
+      <g id="Graphic_84">
+        <text transform="translate(485.5994 662.5186)" fill="black">
+          <tspan font-family="Helvetica" font-size="10" font-weight="400" fill="black" x="0" y="10">participation</tspan>
+        </text>
+      </g>
+      <g id="Graphic_83">
+        <text transform="translate(524.63533 649.5001)" fill="black">
+          <tspan font-family="Helvetica" font-size="10" font-weight="400" fill="black" x="41.180473" y="10">submissions</tspan>
+        </text>
+      </g>
+      <g id="Group_106">
+        <title>Class with Attributes</title>
+        <g id="Graphic_108">
+          <title>Attributes</title>
+          <rect x="593.2465" y="892.4" width="99.04651" height="68" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+          <text transform="translate(599.2465 898.4)" fill="black">
+            <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="11">text</tspan>
+            <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="25">detailText</tspan>
+            <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="39">reference</tspan>
+            <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="53">credits</tspan>
+          </text>
+        </g>
+        <g id="Graphic_107">
+          <title>Class Name</title>
+          <rect x="593.2465" y="868.4" width="99.04651" height="24" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+          <text transform="translate(599.2465 872.4)" fill="black">
+            <tspan font-family="Helvetica" font-size="13" font-weight="700" fill="black" x="13.536926" y="13">Feedback</tspan>
+          </text>
+        </g>
+      </g>
+      <g id="Line_109">
+        <path d="M 471.7384 901.354 L 478.7384 901.354 L 593.2465 900.9662" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+      </g>
+      <g id="Graphic_110">
+        <text transform="translate(581.9106 904.4553)" fill="black">
+          <tspan font-family="Zapf Dingbats" font-size="9" font-weight="400" fill="black" x="0" y="7">✱</tspan>
+        </text>
+      </g>
+      <g id="Graphic_111">
+        <text transform="translate(476.597 887.3464)" fill="black">
+          <tspan font-family="Helvetica" font-size="9" font-weight="400" fill="black" x="0" y="9">1</tspan>
+        </text>
+      </g>
+      <g id="Graphic_112">
+        <text transform="translate(452.4 902.4461)" fill="black">
+          <tspan font-family="Helvetica" font-size="10" font-weight="400" fill="black" x="23.23874" y="10">result</tspan>
+        </text>
+      </g>
+      <g id="Graphic_113">
+        <text transform="translate(544.2 886.6796)" fill="black">
+          <tspan font-family="Helvetica" font-size="10" font-weight="400" fill="black" x="0" y="10">feedbacks</tspan>
+        </text>
+      </g>
+      <g id="Group_114">
+        <title>Class with Attributes</title>
+        <g id="Graphic_116">
+          <title>Attributes</title>
+          <rect x="149.63636" y="755.8004" width="127.175" height="120.95484" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+          <text transform="translate(155.63636 761.8004)" fill="black">
+            <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="11">login</tspan>
+            <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="25">password</tspan>
+            <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="39">firstName</tspan>
+            <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="53">lastName</tspan>
+            <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="67">email</tspan>
+            <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="81">activated</tspan>
+            <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="95">lastNotificationRead</tspan>
+            <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="109">registrationNumber</tspan>
+          </text>
+        </g>
+        <g id="Graphic_115">
+          <title>Class Name</title>
+          <rect x="149.63636" y="727" width="127.175" height="28.800424" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+          <text transform="translate(155.63636 733.4002)" fill="black">
+            <tspan font-family="Helvetica" font-size="13" font-weight="700" fill="black" x="43.133884" y="13">User</tspan>
+          </text>
+        </g>
+      </g>
+      <g id="Group_120">
+        <g id="Graphic_121">
+          <rect x="136.49066" y="922.6722" width="127.175" height="34" fill="white"/>
+          <rect x="136.49066" y="922.6722" width="127.175" height="34" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+          <text transform="translate(141.49066 927.6722)" fill="black">
+            <tspan font-family="Helvetica" font-size="8" font-weight="400" fill="black" x="31.90195" y="8">«enumeration»</tspan>
+            <tspan font-family="Helvetica" font-size="12" font-weight="700" fill="black" x="9.673435" y="21">AssessmentType</tspan>
+          </text>
+        </g>
+        <g id="Graphic_122">
+          <rect x="136.49066" y="956.6722" width="127.175" height="49" fill="white"/>
+          <rect x="136.49066" y="956.6722" width="127.175" height="49" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+          <text transform="translate(141.49066 961.6722)" fill="black">
+            <tspan font-family="Helvetica" font-size="11" font-weight="400" fill="black" x="0" y="10">AUTOMATIC</tspan>
+            <tspan font-family="Helvetica" font-size="11" font-weight="400" fill="black" x="0" y="23">SEMI_AUTOMATIC</tspan>
+            <tspan font-family="Helvetica" font-size="11" font-weight="400" fill="black" x="0" y="36">MANUAL</tspan>
+          </text>
+        </g>
+      </g>
+      <g id="Line_123">
+        <path d="M 263.9662 941.3278 L 369.76163 941.3278 L 369.76163 942.8427" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+      </g>
+      <g id="Graphic_124">
+        <text transform="translate(268.4 924.3278)" fill="black">
+          <tspan font-family="Helvetica" font-size="10" font-weight="400" fill="black" x="0" y="10">assessmentType</tspan>
+        </text>
+      </g>
+      <g id="Line_125">
+        <line x1="276.81136" y1="865.3571" x2="369.76163" y2="865.4487" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+      </g>
+      <g id="Line_126">
+        <path d="M 276.81136 745.0421 L 362.7849 745.0421 L 362.7849 745.8219" stroke="black" stroke-linecap="round" stroke-linejoin="miter" stroke-width="1"/>
+      </g>
+      <g id="Graphic_128">
+        <text transform="translate(282.30868 729.8219)" fill="black">
+          <tspan font-family="Helvetica" font-size="9" font-weight="400" fill="black" x="0" y="9">1</tspan>
+        </text>
+      </g>
+      <g id="Graphic_129">
+        <text transform="translate(281.81136 743.8992)" fill="black">
+          <tspan font-family="Helvetica" font-size="10" font-weight="400" fill="black" x="0" y="10">student</tspan>
+        </text>
+      </g>
+      <g id="Graphic_130">
+        <text transform="translate(347.95137 730.8219)" fill="black">
+          <tspan font-family="Zapf Dingbats" font-size="9" font-weight="400" fill="black" x="0" y="7">✱</tspan>
+        </text>
+      </g>
+      <g id="Graphic_131">
+        <text transform="translate(354.40684 846.5)" fill="black">
+          <tspan font-family="Zapf Dingbats" font-size="9" font-weight="400" fill="black" x="0" y="7">✱</tspan>
+        </text>
+      </g>
+      <g id="Graphic_132">
+        <text transform="translate(280.29732 867.6)" fill="black">
+          <tspan font-family="Helvetica" font-size="9" font-weight="400" fill="black" x="0" y="9">1</tspan>
+        </text>
+      </g>
+      <g id="Graphic_133">
+        <text transform="translate(279.8 849.3571)" fill="black">
+          <tspan font-family="Helvetica" font-size="10" font-weight="400" fill="black" x="0" y="10">assessor</tspan>
+        </text>
+      </g>
+      <g id="Line_134">
+        <path d="M 680.16845 713.9657 L 680.16845 838.5617 L 471.59436 838.5617" stroke="black" stroke-linecap="round" stroke-linejoin="miter" stroke-width="1"/>
+      </g>
+      <g id="Graphic_135">
+        <text transform="translate(476.4942 843.0068)" fill="black">
+          <tspan font-family="Zapf Dingbats" font-size="9" font-weight="400" fill="black" x="0" y="7">✱</tspan>
+        </text>
+      </g>
+      <g id="Graphic_136">
+        <text transform="translate(685.689 718.0771)" fill="black">
+          <tspan font-family="Helvetica" font-size="9" font-weight="400" fill="black" x="0" y="9">1</tspan>
+        </text>
+      </g>
+      <g id="Graphic_137">
+        <text transform="translate(581.74957 717.0771)" fill="black">
+          <tspan font-family="Helvetica" font-size="10" font-weight="400" fill="black" x="41.457214" y="10">submission</tspan>
+        </text>
+      </g>
+      <g id="Graphic_138">
+        <text transform="translate(479.2385 821.8448)" fill="black">
+          <tspan font-family="Helvetica" font-size="10" font-weight="400" fill="black" x="0" y="10">results</tspan>
+        </text>
+      </g>
+      <g id="Graphic_148">
+        <text transform="translate(425.52325 752.9487)" fill="black">
+          <tspan font-family="Helvetica" font-size="10" font-weight="400" fill="black" x="0" y="10">participation</tspan>
+        </text>
+      </g>
+      <g id="Graphic_149">
+        <text transform="translate(373.5336 390.88546)" fill="black">
+          <tspan font-family="Helvetica" font-size="10" font-weight="400" fill="black" x="6.179779" y="10">course</tspan>
+        </text>
+      </g>
+      <g id="Group_150">
+        <title>Class with Attributes</title>
+        <g id="Graphic_152">
+          <title>Attributes</title>
+          <rect x="199.5" y="608.0801" width="71.87389" height="52" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+          <text transform="translate(205.5 614.0801)" fill="black">
+            <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="11">name</tspan>
+            <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="25">shortName</tspan>
+            <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="39">image</tspan>
+          </text>
+        </g>
+        <g id="Graphic_151">
+          <title>Class Name</title>
+          <rect x="199.5" y="586.0801" width="71.87389" height="22" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+          <text transform="translate(205.5 589.0801)" fill="black">
+            <tspan font-family="Helvetica" font-size="13" font-weight="700" fill="black" x="13.436213" y="13">Team</tspan>
+          </text>
+        </g>
+      </g>
+      <g id="Group_153">
+        <title>Class with Attributes</title>
+        <g id="Graphic_155">
+          <title>Attributes</title>
+          <rect x="139" y="251.81426" width="101.47675" height="134.0712" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+          <text transform="translate(145 257.81426)" fill="black">
+            <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="11">title</tspan>
+            <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="25">startDate</tspan>
+            <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="39">endDate</tspan>
+            <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="53">visibleDate</tspan>
+            <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="67">confirmationText</tspan>
+            <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="81">maxPoints</tspan>
+            <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="95">randomizeOrder</tspan>
+            <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="109">startText</tspan>
+            <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="123">gracePeriod</tspan>
+          </text>
+        </g>
+        <g id="Graphic_154">
+          <title>Class Name</title>
+          <rect x="139" y="224.38546" width="101.47675" height="27.4288" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+          <text transform="translate(145 230.09986)" fill="black">
+            <tspan font-family="Helvetica" font-size="13" font-weight="700" fill="black" x="27.393402" y="13">Exam</tspan>
+          </text>
+        </g>
+      </g>
+      <g id="Line_160">
+        <line x1="355.6993" y1="318.84986" x2="240.97675" y2="318.84986" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+      </g>
+      <g id="Graphic_159">
+        <text transform="translate(252.11756 328.38694)" fill="black">
+          <tspan font-family="Zapf Dingbats" font-size="9" font-weight="400" fill="black" x="0" y="7">✱</tspan>
+        </text>
+      </g>
+      <g id="Graphic_158">
+        <text transform="translate(333.5324 304.6273)" fill="black">
+          <tspan font-family="Helvetica" font-size="9" font-weight="400" fill="black" x="0" y="9">1</tspan>
+        </text>
+      </g>
+      <g id="Graphic_157">
+        <text transform="translate(247 302.5)" fill="black">
+          <tspan font-family="Helvetica" font-size="10" font-weight="400" fill="black" x="0" y="10">exams</tspan>
+        </text>
+      </g>
+      <g id="Graphic_156">
+        <text transform="translate(312.5 321.5)" fill="black">
+          <tspan font-family="Helvetica" font-size="10" font-weight="400" fill="black" x="6.179779" y="10">course</tspan>
+        </text>
+      </g>
+      <g id="Group_161">
+        <title>Class with Attributes</title>
+        <g id="Graphic_163">
+          <title>Attributes</title>
+          <rect x="143.78676" y="471.5897" width="106.2" height="24" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+          <text transform="translate(149.78676 477.5897)" fill="black">
+            <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="11">title</tspan>
+          </text>
+        </g>
+        <g id="Graphic_162">
+          <title>Class Name</title>
+          <rect x="143.78676" y="444.1609" width="106.2" height="27.4288" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+          <text transform="translate(149.78676 449.8753)" fill="black">
+            <tspan font-family="Helvetica" font-size="13" font-weight="700" fill="black" x=".8573265" y="13">ExerciseGroup</tspan>
+          </text>
+        </g>
+      </g>
+      <g id="Group_164">
+        <title>Class with Attributes</title>
+        <g id="Graphic_166">
+          <title>Attributes</title>
+          <rect x="67.478924" y="551.9288" width="106.2" height="92.5712" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+          <text transform="translate(73.47892 557.9288)" fill="black">
+            <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="11">workingTime</tspan>
+            <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="25">started</tspan>
+            <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="39">submitted</tspan>
+            <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="53">startedDate</tspan>
+            <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="67">submissionDate</tspan>
+            <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="81">testRun</tspan>
+          </text>
+        </g>
+        <g id="Graphic_165">
+          <title>Class Name</title>
+          <rect x="67.478924" y="524.5" width="106.2" height="27.4288" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+          <text transform="translate(73.47892 530.2144)" fill="black">
+            <tspan font-family="Helvetica" font-size="13" font-weight="700" fill="black" x="5.5641136" y="13">StudentExam</tspan>
+          </text>
+        </g>
+      </g>
+      <g id="Line_171">
+        <line x1="189.15867" y1="386.15136" x2="189.21338" y2="443.17523" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+      </g>
+      <g id="Graphic_170">
+        <text transform="translate(171.32077 430.9871)" fill="black">
+          <tspan font-family="Zapf Dingbats" font-size="9" font-weight="400" fill="black" x="0" y="7">✱</tspan>
+        </text>
+      </g>
+      <g id="Graphic_169">
+        <text transform="translate(195.3879 390.41727)" fill="black">
+          <tspan font-family="Helvetica" font-size="9" font-weight="400" fill="black" x="0" y="9">1</tspan>
+        </text>
+      </g>
+      <g id="Graphic_168">
+        <text transform="translate(193.48032 427.7115)" fill="black">
+          <tspan font-family="Helvetica" font-size="10" font-weight="400" fill="black" x="0" y="10">exerciseGroups</tspan>
+        </text>
+      </g>
+      <g id="Graphic_167">
+        <text transform="translate(141.49066 390.65136)" fill="black">
+          <tspan font-family="Helvetica" font-size="10" font-weight="400" fill="black" x="10.632904" y="10">Exam</tspan>
+        </text>
+      </g>
+      <g id="Line_176">
+        <path d="M 357.72256 485.3556 L 357.72256 484.6154 L 249.98676 484.6154" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+      </g>
+      <g id="Graphic_175">
+        <text transform="translate(261.18458 486.65946)" fill="black">
+          <tspan font-family="Helvetica" font-size="9" font-weight="400" fill="black" x="0" y="9">1</tspan>
+        </text>
+      </g>
+      <g id="Graphic_174">
+        <text transform="translate(348.26283 471.39283)" fill="black">
+          <tspan font-family="Zapf Dingbats" font-size="9" font-weight="400" fill="black" x="0" y="7">✱</tspan>
+        </text>
+      </g>
+      <g id="Graphic_173">
+        <text transform="translate(253.21906 469.00573)" fill="black">
+          <tspan font-family="Helvetica" font-size="10" font-weight="400" fill="black" x="0" y="10">exerciseGroup</tspan>
+        </text>
+      </g>
+      <g id="Graphic_172">
+        <text transform="translate(302.75584 491.00573)" fill="black">
+          <tspan font-family="Helvetica" font-size="10" font-weight="400" fill="black" x="7.981354" y="10">exercises</tspan>
+        </text>
+      </g>
+      <g id="Line_180">
+        <path d="M 272 599.7962 L 357.97352 599.7962 L 357.97352 600.576" stroke="black" stroke-linecap="round" stroke-linejoin="miter" stroke-width="1"/>
+      </g>
+      <g id="Graphic_179">
+        <text transform="translate(278.41773 586.7962)" fill="black">
+          <tspan font-family="Zapf Dingbats" font-size="9" font-weight="400" fill="black" x="0" y="7">✱</tspan>
+        </text>
+      </g>
+      <g id="Graphic_178">
+        <text transform="translate(278.41773 603.524)" fill="black">
+          <tspan font-family="Helvetica" font-size="10" font-weight="400" fill="black" x="0" y="10">teams</tspan>
+        </text>
+      </g>
+      <g id="Graphic_177">
+        <text transform="translate(344.43627 585.576)" fill="black">
+          <tspan font-family="Helvetica" font-size="9" font-weight="400" fill="black" x="0" y="9">1</tspan>
+        </text>
+      </g>
+      <g id="Line_185">
+        <path d="M 258.7137 660.5809 L 260.0959 660.5809 L 260.0959 726.18384" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+      </g>
+      <g id="Graphic_186">
+        <text transform="translate(265.8346 706.7364)" fill="black">
+          <tspan font-family="Helvetica" font-size="10" font-weight="400" fill="black" x="0" y="10">students</tspan>
+        </text>
+      </g>
+      <g id="Line_189">
+        <line x1="205.18672" y1="660.166" x2="205.32468" y2="727.013" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+      </g>
+      <g id="Graphic_187">
+        <text transform="translate(172.4 707.6)" fill="black">
+          <tspan font-family="Helvetica" font-size="10" font-weight="400" fill="black" x="0" y="10">owner</tspan>
+        </text>
+      </g>
+      <g id="Line_192">
+        <path d="M 139 313.98305 L 120.57892 313.98305 L 120.57892 524" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+      </g>
+      <g id="Graphic_191">
+        <text transform="translate(102.69321 512.1366)" fill="black">
+          <tspan font-family="Zapf Dingbats" font-size="9" font-weight="400" fill="black" x="0" y="7">✱</tspan>
+        </text>
+      </g>
+      <g id="Graphic_190">
+        <text transform="translate(126.45495 299.7605)" fill="black">
+          <tspan font-family="Helvetica" font-size="9" font-weight="400" fill="black" x="0" y="9">1</tspan>
+        </text>
+      </g>
+      <g id="Line_197">
+        <line x1="347.7087" y1="533.3459" x2="173.67893" y2="533.56643" marker-start="url(#StickArrow_Marker)" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+      </g>
+      <g id="Graphic_196">
+        <text transform="translate(182.25073 543.5884)" fill="black">
+          <tspan font-family="Zapf Dingbats" font-size="9" font-weight="400" fill="black" x="0" y="7">✱</tspan>
+        </text>
+      </g>
+      <g id="Graphic_195">
+        <text transform="translate(343.2005 520.1248)" fill="black">
+          <tspan font-family="Zapf Dingbats" font-size="9" font-weight="400" fill="black" x="0" y="7">✱</tspan>
+        </text>
+      </g>
+      <g id="Graphic_193">
+        <text transform="translate(307.40984 538.33333)" fill="black">
+          <tspan font-family="Helvetica" font-size="10" font-weight="400" fill="black" x="1.0715141" y="10">exercises</tspan>
+        </text>
+      </g>
+      <g id="Graphic_198">
+        <text transform="translate(248.39862 709.7364)" fill="black">
+          <tspan font-family="Zapf Dingbats" font-size="9" font-weight="400" fill="black" x="0" y="7">✱</tspan>
+        </text>
+      </g>
+      <g id="Graphic_199">
+        <text transform="translate(210.18672 708.4031)" fill="black">
+          <tspan font-family="Helvetica" font-size="9" font-weight="400" fill="black" x="0" y="9">1</tspan>
+        </text>
+      </g>
+      <g id="Group_200">
+        <title>Class with Attributes</title>
+        <g id="Graphic_202">
+          <title>Attributes</title>
+          <rect x="369.76163" y="1033.7964" width="101.47675" height="96" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+          <text transform="translate(375.76163 1039.7964)" fill="black">
+            <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="11">complaintText</tspan>
+            <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="25">accepted</tspan>
+            <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="39">submittedTime</tspan>
+            <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="53">complaintType</tspan>
+            <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="67">student: User</tspan>
+            <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="81">team: Team</tspan>
+          </text>
+        </g>
+        <g id="Graphic_201">
+          <title>Class Name</title>
+          <rect x="369.76163" y="1009.7964" width="101.47675" height="24" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+          <text transform="translate(375.76163 1013.7964)" fill="black">
+            <tspan font-family="Helvetica" font-size="13" font-weight="700" fill="black" x="12.962006" y="13">Complaint</tspan>
+          </text>
+        </g>
+      </g>
+      <g id="Line_207">
+        <line x1="420.47675" y1="1009.0116" x2="420.6428" y2="966.2539" marker-end="url(#StickArrow_Marker_2)" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+      </g>
+      <g id="Graphic_205">
+        <text transform="translate(405.3345 957)" fill="black">
+          <tspan font-family="Helvetica" font-size="9" font-weight="400" fill="black" x="0" y="9">1</tspan>
+        </text>
+      </g>
+      <g id="Graphic_203">
+        <text transform="translate(430.50757 957)" fill="black">
+          <tspan font-family="Helvetica" font-size="10" font-weight="400" fill="black" x="0" y="10">result</tspan>
+        </text>
+      </g>
+      <g id="Group_208">
+        <title>Class with Attributes</title>
+        <g id="Graphic_210">
+          <title>Attributes</title>
+          <rect x="547" y="1036.5" width="140" height="54" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+          <text transform="translate(553 1042.5)" fill="black">
+            <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="11">responseText</tspan>
+            <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="25">submittedTime</tspan>
+            <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="39">reviewer: User</tspan>
+          </text>
+        </g>
+        <g id="Graphic_209">
+          <title>Class Name</title>
+          <rect x="547" y="1012.5" width="140" height="24" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+          <text transform="translate(553 1016.5)" fill="black">
+            <tspan font-family="Helvetica" font-size="13" font-weight="700" fill="black" x="1.1582031" y="13">ComplaintResponse</tspan>
+          </text>
+        </g>
+      </g>
+      <g id="Line_213">
+        <line x1="547" y1="1070.0581" x2="481.89996" y2="1070.2444" marker-end="url(#StickArrow_Marker_2)" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+      </g>
+      <g id="Graphic_211">
+        <text transform="translate(475.9365 1052.8416)" fill="black">
+          <tspan font-family="Helvetica" font-size="9" font-weight="400" fill="black" x="0" y="9">1</tspan>
+        </text>
+      </g>
+      <g id="Graphic_214">
+        <text transform="translate(474.4 1073.8416)" fill="black">
+          <tspan font-family="Helvetica" font-size="10" font-weight="400" fill="black" x="0" y="10">complaint</tspan>
+        </text>
+      </g>
+    </g>
+  </g>
+</svg>
