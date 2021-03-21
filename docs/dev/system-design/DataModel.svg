@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
-<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xl="http://www.w3.org/1999/xlink" xmlns:dc="http://purl.org/dc/elements/1.1/" viewBox="66 223 670 908" width="670" height="908">
+<svg version="1.1" xmlns:xl="http://www.w3.org/1999/xlink" xmlns="http://www.w3.org/2000/svg" xmlns:dc="http://purl.org/dc/elements/1.1/" viewBox="86 223 592 891" width="592" height="891">
   <defs>
     <font-face font-family="Helvetica" font-size="12" units-per-em="1000" underline-position="-75.68359" underline-thickness="49.316406" slope="0" x-height="522.9492" cap-height="717.28516" ascent="770.0195" descent="-229.98047" font-weight="400">
       <font-face-src>
@@ -58,17 +58,18 @@
       </g>
     </marker>
   </defs>
-  <metadata> Produced by OmniGraffle 7.18.4\n2021-03-21 21:12:56 +0000</metadata>
-  <g id="Arbeitsfl_che_1" stroke="none" stroke-dasharray="none" stroke-opacity="1" fill="none" fill-opacity="1">
+  <metadata> Produced by OmniGraffle 7.18.4\n2021-03-21 21:36:02 +0000</metadata>
+  <g id="Arbeitsfl_che_1" stroke-opacity="1" stroke-dasharray="none" stroke="none" fill="none" fill-opacity="1">
     <title>Arbeitsfläche 1</title>
+    <rect fill="white" x="86" y="223" width="592" height="891"/>
     <g id="Arbeitsfl_che_1_Ebene_1">
       <title>Ebene 1</title>
       <g id="Group_22">
         <title>Class with Attributes</title>
         <g id="Graphic_24">
           <title>Attributes</title>
-          <rect x="356.1993" y="251.81426" width="129.875" height="134.0712" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
-          <text transform="translate(362.1993 257.81426)" fill="black">
+          <rect x="354.5566" y="251.81426" width="129.875" height="134.0712" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+          <text transform="translate(360.5566 257.81426)" fill="black">
             <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="11">title</tspan>
             <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="25">shortName</tspan>
             <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="39">startDate</tspan>
@@ -82,8 +83,8 @@
         </g>
         <g id="Graphic_23">
           <title>Class Name</title>
-          <rect x="356.1993" y="224.38546" width="129.875" height="27.4288" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
-          <text transform="translate(362.1993 230.09986)" fill="black">
+          <rect x="354.5566" y="224.38546" width="129.875" height="27.4288" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+          <text transform="translate(360.5566 230.09986)" fill="black">
             <tspan font-family="Helvetica" font-size="13" font-weight="700" fill="black" x="36.54297" y="13">Course</tspan>
           </text>
         </g>
@@ -92,7 +93,7 @@
         <title>Class with Attributes</title>
         <g id="Graphic_31">
           <title>Attributes</title>
-          <rect x="357.68187" y="462.4714" width="127.175" height="149.75526" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+          <rect x="357.68187" y="462.4714" width="123.51814" height="149.75526" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
           <text transform="translate(363.68187 468.4714)" fill="black">
             <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="11">title</tspan>
             <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="25">shortName</tspan>
@@ -108,9 +109,9 @@
         </g>
         <g id="Graphic_30">
           <title>Class Name</title>
-          <rect x="357.68187" y="436.2822" width="127.175" height="26.18919" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+          <rect x="357.68187" y="436.2822" width="123.51814" height="26.18919" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
           <text transform="translate(363.68187 441.3768)" fill="black">
-            <tspan font-family="Helvetica" font-size="13" font-weight="700" fill="black" x="30.841648" y="13">Exercise</tspan>
+            <tspan font-family="Helvetica" font-size="13" font-weight="700" fill="black" x="29.013222" y="13">Exercise</tspan>
           </text>
         </g>
       </g>
@@ -118,8 +119,8 @@
         <title>Class with Attributes</title>
         <g id="Graphic_37">
           <title>Class Name</title>
-          <rect x="526" y="511.5" width="152.5" height="24" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
-          <text transform="translate(532 515.5)" fill="black">
+          <rect x="524.28326" y="511.5" width="152.5" height="24" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+          <text transform="translate(530.28326 515.5)" fill="black">
             <tspan font-family="Helvetica" font-size="13" font-weight="700" fill="black" x="14.980957" y="13">ModelingExercise</tspan>
           </text>
         </g>
@@ -128,8 +129,8 @@
         <title>Class with Attributes</title>
         <g id="Graphic_39">
           <title>Class Name</title>
-          <rect x="526" y="541" width="152.5" height="24" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
-          <text transform="translate(532 545)" fill="black">
+          <rect x="524.28326" y="541" width="152.5" height="24" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+          <text transform="translate(530.28326 545)" fill="black">
             <tspan font-family="Helvetica" font-size="13" font-weight="700" fill="black" x="29.421875" y="13">QuizExercise</tspan>
           </text>
         </g>
@@ -138,33 +139,33 @@
         <title>Class with Attributes</title>
         <g id="Graphic_41">
           <title>Class Name</title>
-          <rect x="526" y="570.5" width="152.5" height="24" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
-          <text transform="translate(532 574.5)" fill="black">
+          <rect x="524.28326" y="570.5" width="152.5" height="24" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+          <text transform="translate(530.28326 574.5)" fill="black">
             <tspan font-family="Helvetica" font-size="13" font-weight="700" fill="black" x="30.61841" y="13">TextExercise</tspan>
           </text>
         </g>
       </g>
       <g id="Line_46">
-        <path d="M 525.5 553 L 509 553 L 509 537.349 L 498.85687 537.349" marker-end="url(#UMLInheritance_Marker)" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+        <path d="M 523.78326 553 L 507.28326 553 L 507.28326 537.349 L 495.2 537.349" marker-end="url(#UMLInheritance_Marker)" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
       </g>
       <g id="Line_47">
-        <path d="M 525.5 582.5 L 509.1886 582.5 L 509.1886 537.349 L 498.85687 537.349" marker-end="url(#UMLInheritance_Marker)" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+        <path d="M 523.78326 582.5 L 507.2222 582.5 L 507.2222 537.349 L 495.2 537.349" marker-end="url(#UMLInheritance_Marker)" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
       </g>
       <g id="Group_48">
         <title>Class with Attributes</title>
         <g id="Graphic_49">
           <title>Class Name</title>
-          <rect x="526" y="482" width="152.5" height="24" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
-          <text transform="translate(532 486)" fill="black">
+          <rect x="524.28326" y="482" width="152.5" height="24" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+          <text transform="translate(530.28326 486)" fill="black">
             <tspan font-family="Helvetica" font-size="13" font-weight="700" fill="black" x="1.2478027" y="13">ProgrammingExercise</tspan>
           </text>
         </g>
       </g>
       <g id="Line_50">
-        <path d="M 525.5 494 L 509.1886 494 L 509.1886 537.349 L 498.85687 537.349" marker-end="url(#UMLInheritance_Marker)" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+        <path d="M 523.78326 494 L 507.2222 494 L 507.2222 537.349 L 495.2 537.349" marker-end="url(#UMLInheritance_Marker)" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
       </g>
       <g id="Line_51">
-        <path d="M 525.5 523.5 L 509 523.5 L 509 537.349 L 498.85687 537.349" marker-end="url(#UMLInheritance_Marker)" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+        <path d="M 523.78326 523.5 L 507.28326 523.5 L 507.28326 537.349 L 495.2 537.349" marker-end="url(#UMLInheritance_Marker)" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
       </g>
       <g id="Group_52">
         <title>Class with Attributes</title>
@@ -188,43 +189,43 @@
         </g>
       </g>
       <g id="Line_59">
-        <path d="M 421.1368 386.38546 L 421.1368 393.38546 L 421.26937 428.7822 L 421.26937 435.7822" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+        <path d="M 419.4941 386.38546 L 419.4941 393.38546 L 419.44094 428.7822 L 419.44094 435.7822" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
       </g>
       <g id="Graphic_58">
-        <text transform="translate(403.38366 424.54337)" fill="black">
+        <text transform="translate(405.37435 422.67926)" fill="black">
           <tspan font-family="Zapf Dingbats" font-size="9" font-weight="400" fill="black" x="0" y="7">✱</tspan>
         </text>
       </g>
       <g id="Graphic_57">
-        <text transform="translate(427.3621 389.31976)" fill="black">
+        <text transform="translate(426.12835 391.20465)" fill="black">
           <tspan font-family="Helvetica" font-size="9" font-weight="400" fill="black" x="0" y="9">1</tspan>
         </text>
       </g>
       <g id="Graphic_55">
-        <text transform="translate(425.52325 422.0134)" fill="black">
+        <text transform="translate(425.6 419.8)" fill="black">
           <tspan font-family="Helvetica" font-size="10" font-weight="400" fill="black" x="0" y="10">exercises</tspan>
         </text>
       </g>
       <g id="Line_61">
-        <line x1="421.2692" y1="612.72666" x2="421.26913" y2="648.21504" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+        <path d="M 419.44094 612.72666 L 419.44094 648.71504 L 420.09804 648.71504" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
       </g>
       <g id="Graphic_62">
-        <text transform="translate(429.56143 637.9093)" fill="black">
+        <text transform="translate(404.4514 637.5904)" fill="black">
           <tspan font-family="Zapf Dingbats" font-size="9" font-weight="400" fill="black" x="0" y="7">✱</tspan>
         </text>
       </g>
       <g id="Graphic_63">
-        <text transform="translate(410.74326 612.7009)" fill="black">
+        <text transform="translate(424.9615 612.8794)" fill="black">
           <tspan font-family="Helvetica" font-size="9" font-weight="400" fill="black" x="0" y="9">1</tspan>
         </text>
       </g>
       <g id="Graphic_64">
-        <text transform="translate(423.8788 611.58876)" fill="black">
+        <text transform="translate(371.2359 612.9045)" fill="black">
           <tspan font-family="Helvetica" font-size="10" font-weight="400" fill="black" x="6.071514" y="10">exercise</tspan>
         </text>
       </g>
       <g id="Graphic_65">
-        <text transform="translate(353.4314 635.8651)" fill="black">
+        <text transform="translate(423.82326 633.2438)" fill="black">
           <tspan font-family="Helvetica" font-size="10" font-weight="400" fill="black" x="0" y="10">participations</tspan>
         </text>
       </g>
@@ -255,17 +256,17 @@
         <path d="M 420.52325 753.4404 L 420.5 814.854 L 420.5 821.854" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
       </g>
       <g id="Graphic_75">
-        <text transform="translate(425.52325 810.3484)" fill="black">
+        <text transform="translate(425.5 808.5)" fill="black">
           <tspan font-family="Zapf Dingbats" font-size="9" font-weight="400" fill="black" x="0" y="7">✱</tspan>
         </text>
       </g>
       <g id="Graphic_76">
-        <text transform="translate(409.97406 752.9116)" fill="black">
+        <text transform="translate(409.9973 756.5)" fill="black">
           <tspan font-family="Helvetica" font-size="9" font-weight="400" fill="black" x="0" y="9">1</tspan>
         </text>
       </g>
       <g id="Graphic_78">
-        <text transform="translate(324 807.3484)" fill="black">
+        <text transform="translate(324 806.5)" fill="black">
           <tspan font-family="Helvetica" font-size="10" font-weight="400" fill="black" x="67.02362" y="10">result</tspan>
         </text>
       </g>
@@ -273,83 +274,61 @@
         <title>Class with Attributes</title>
         <g id="Graphic_81">
           <title>Attributes</title>
-          <rect x="625.5" y="673.4336" width="109.3369" height="40.03208" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
-          <text transform="translate(631.5 679.4336)" fill="black">
+          <rect x="576.9681" y="673.41926" width="99.04651" height="40.03208" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+          <text transform="translate(582.9681 679.41926)" fill="black">
             <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="11">submitted</tspan>
             <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="25">submissionDate</tspan>
           </text>
         </g>
         <g id="Graphic_80">
           <title>Class Name</title>
-          <rect x="625.5" y="649.41434" width="109.3369" height="24.019248" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
-          <text transform="translate(631.5 653.424)" fill="black">
-            <tspan font-family="Helvetica" font-size="13" font-weight="700" fill="black" x="11.829823" y="13">Submission</tspan>
+          <rect x="576.9681" y="649.4" width="99.04651" height="24.019248" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+          <text transform="translate(582.9681 653.4096)" fill="black">
+            <tspan font-family="Helvetica" font-size="13" font-weight="700" fill="black" x="6.684631" y="13">Submission</tspan>
           </text>
         </g>
-      </g>
-      <g id="Line_87">
-        <line x1="480.2533" y1="661.5657" x2="625" y2="661.4631" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
-      </g>
-      <g id="Graphic_86">
-        <text transform="translate(614.7874 666.011)" fill="black">
-          <tspan font-family="Zapf Dingbats" font-size="9" font-weight="400" fill="black" x="0" y="7">✱</tspan>
-        </text>
-      </g>
-      <g id="Graphic_85">
-        <text transform="translate(486.5283 648.0362)" fill="black">
-          <tspan font-family="Helvetica" font-size="9" font-weight="400" fill="black" x="0" y="9">1</tspan>
-        </text>
-      </g>
-      <g id="Graphic_84">
-        <text transform="translate(485.5994 662.5186)" fill="black">
-          <tspan font-family="Helvetica" font-size="10" font-weight="400" fill="black" x="0" y="10">participation</tspan>
-        </text>
-      </g>
-      <g id="Graphic_83">
-        <text transform="translate(524.63533 649.5001)" fill="black">
-          <tspan font-family="Helvetica" font-size="10" font-weight="400" fill="black" x="41.180473" y="10">submissions</tspan>
-        </text>
       </g>
       <g id="Group_106">
         <title>Class with Attributes</title>
         <g id="Graphic_108">
           <title>Attributes</title>
-          <rect x="593.2465" y="892.4" width="99.04651" height="68" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
-          <text transform="translate(599.2465 898.4)" fill="black">
+          <rect x="566.20344" y="892.4" width="109.81119" height="82" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+          <text transform="translate(572.20344 898.4)" fill="black">
             <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="11">text</tspan>
             <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="25">detailText</tspan>
             <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="39">reference</tspan>
             <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="53">credits</tspan>
+            <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="67">gradingInstruction</tspan>
           </text>
         </g>
         <g id="Graphic_107">
           <title>Class Name</title>
-          <rect x="593.2465" y="868.4" width="99.04651" height="24" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
-          <text transform="translate(599.2465 872.4)" fill="black">
-            <tspan font-family="Helvetica" font-size="13" font-weight="700" fill="black" x="13.536926" y="13">Feedback</tspan>
+          <rect x="566.20344" y="868.4" width="109.81119" height="24" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+          <text transform="translate(572.20344 872.4)" fill="black">
+            <tspan font-family="Helvetica" font-size="13" font-weight="700" fill="black" x="18.919266" y="13">Feedback</tspan>
           </text>
         </g>
       </g>
       <g id="Line_109">
-        <path d="M 471.7384 901.354 L 478.7384 901.354 L 593.2465 900.9662" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+        <path d="M 471.7384 901.354 L 566.20344 901.354 L 566.20344 900.7246" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
       </g>
       <g id="Graphic_110">
-        <text transform="translate(581.9106 904.4553)" fill="black">
+        <text transform="translate(553.1988 906.3427)" fill="black">
           <tspan font-family="Zapf Dingbats" font-size="9" font-weight="400" fill="black" x="0" y="7">✱</tspan>
         </text>
       </g>
       <g id="Graphic_111">
-        <text transform="translate(476.597 887.3464)" fill="black">
+        <text transform="translate(477.57327 887.3476)" fill="black">
           <tspan font-family="Helvetica" font-size="9" font-weight="400" fill="black" x="0" y="9">1</tspan>
         </text>
       </g>
       <g id="Graphic_112">
-        <text transform="translate(452.4 902.4461)" fill="black">
+        <text transform="translate(453.4 903.8)" fill="black">
           <tspan font-family="Helvetica" font-size="10" font-weight="400" fill="black" x="23.23874" y="10">result</tspan>
         </text>
       </g>
       <g id="Graphic_113">
-        <text transform="translate(544.2 886.6796)" fill="black">
+        <text transform="translate(517 885.6)" fill="black">
           <tspan font-family="Helvetica" font-size="10" font-weight="400" fill="black" x="0" y="10">feedbacks</tspan>
         </text>
       </g>
@@ -357,8 +336,8 @@
         <title>Class with Attributes</title>
         <g id="Graphic_116">
           <title>Attributes</title>
-          <rect x="149.63636" y="755.8004" width="127.175" height="120.95484" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
-          <text transform="translate(155.63636 761.8004)" fill="black">
+          <rect x="158.07221" y="755.9785" width="127.175" height="120.95484" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+          <text transform="translate(164.07221 761.9785)" fill="black">
             <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="11">login</tspan>
             <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="25">password</tspan>
             <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="39">firstName</tspan>
@@ -371,8 +350,8 @@
         </g>
         <g id="Graphic_115">
           <title>Class Name</title>
-          <rect x="149.63636" y="727" width="127.175" height="28.800424" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
-          <text transform="translate(155.63636 733.4002)" fill="black">
+          <rect x="158.07221" y="727.1781" width="127.175" height="28.800424" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+          <text transform="translate(164.07221 733.5783)" fill="black">
             <tspan font-family="Helvetica" font-size="13" font-weight="700" fill="black" x="43.133884" y="13">User</tspan>
           </text>
         </g>
@@ -397,7 +376,7 @@
         </g>
       </g>
       <g id="Line_123">
-        <path d="M 263.9662 941.3278 L 369.76163 941.3278 L 369.76163 942.8427" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+        <path d="M 273.8662 941.3278 L 369.76163 941.3278 L 369.76163 942.8427" marker-start="url(#StickArrow_Marker)" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
       </g>
       <g id="Graphic_124">
         <text transform="translate(268.4 924.3278)" fill="black">
@@ -405,18 +384,18 @@
         </text>
       </g>
       <g id="Line_125">
-        <line x1="276.81136" y1="865.3571" x2="369.76163" y2="865.4487" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+        <line x1="295.14586" y1="865.3722" x2="369.76163" y2="865.3722" marker-start="url(#StickArrow_Marker)" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
       </g>
       <g id="Line_126">
-        <path d="M 276.81136 745.0421 L 362.7849 745.0421 L 362.7849 745.8219" stroke="black" stroke-linecap="round" stroke-linejoin="miter" stroke-width="1"/>
+        <path d="M 295.1472 745.22015 L 362.7849 745.22015 L 362.7849 745.9547" marker-start="url(#StickArrow_Marker)" stroke="black" stroke-linecap="round" stroke-linejoin="miter" stroke-width="1"/>
       </g>
       <g id="Graphic_128">
-        <text transform="translate(282.30868 729.8219)" fill="black">
+        <text transform="translate(290.74452 728.6604)" fill="black">
           <tspan font-family="Helvetica" font-size="9" font-weight="400" fill="black" x="0" y="9">1</tspan>
         </text>
       </g>
       <g id="Graphic_129">
-        <text transform="translate(281.81136 743.8992)" fill="black">
+        <text transform="translate(290.2472 747.2)" fill="black">
           <tspan font-family="Helvetica" font-size="10" font-weight="400" fill="black" x="0" y="10">student</tspan>
         </text>
       </g>
@@ -431,45 +410,45 @@
         </text>
       </g>
       <g id="Graphic_132">
-        <text transform="translate(280.29732 867.6)" fill="black">
+        <text transform="translate(289.49732 870.4)" fill="black">
           <tspan font-family="Helvetica" font-size="9" font-weight="400" fill="black" x="0" y="9">1</tspan>
         </text>
       </g>
       <g id="Graphic_133">
-        <text transform="translate(279.8 849.3571)" fill="black">
+        <text transform="translate(288.23585 849.5352)" fill="black">
           <tspan font-family="Helvetica" font-size="10" font-weight="400" fill="black" x="0" y="10">assessor</tspan>
         </text>
       </g>
       <g id="Line_134">
-        <path d="M 680.16845 713.9657 L 680.16845 838.5617 L 471.59436 838.5617" stroke="black" stroke-linecap="round" stroke-linejoin="miter" stroke-width="1"/>
+        <path d="M 626.4914 713.9513 L 626.4914 838.5617 L 471.59436 838.5617" stroke="black" stroke-linecap="round" stroke-linejoin="miter" stroke-width="1"/>
       </g>
       <g id="Graphic_135">
-        <text transform="translate(476.4942 843.0068)" fill="black">
+        <text transform="translate(477.2699 843.0068)" fill="black">
           <tspan font-family="Zapf Dingbats" font-size="9" font-weight="400" fill="black" x="0" y="7">✱</tspan>
         </text>
       </g>
       <g id="Graphic_136">
-        <text transform="translate(685.689 718.0771)" fill="black">
+        <text transform="translate(632.7753 717.6571)" fill="black">
           <tspan font-family="Helvetica" font-size="9" font-weight="400" fill="black" x="0" y="9">1</tspan>
         </text>
       </g>
       <g id="Graphic_137">
-        <text transform="translate(581.74957 717.0771)" fill="black">
+        <text transform="translate(530 717.2)" fill="black">
           <tspan font-family="Helvetica" font-size="10" font-weight="400" fill="black" x="41.457214" y="10">submission</tspan>
         </text>
       </g>
       <g id="Graphic_138">
-        <text transform="translate(479.2385 821.8448)" fill="black">
+        <text transform="translate(476.76224 821.8448)" fill="black">
           <tspan font-family="Helvetica" font-size="10" font-weight="400" fill="black" x="0" y="10">results</tspan>
         </text>
       </g>
       <g id="Graphic_148">
-        <text transform="translate(425.52325 752.9487)" fill="black">
+        <text transform="translate(425.5 755.5)" fill="black">
           <tspan font-family="Helvetica" font-size="10" font-weight="400" fill="black" x="0" y="10">participation</tspan>
         </text>
       </g>
       <g id="Graphic_149">
-        <text transform="translate(373.5336 390.88546)" fill="black">
+        <text transform="translate(378.28913 390.88546)" fill="black">
           <tspan font-family="Helvetica" font-size="10" font-weight="400" fill="black" x="6.179779" y="10">course</tspan>
         </text>
       </g>
@@ -477,8 +456,8 @@
         <title>Class with Attributes</title>
         <g id="Graphic_152">
           <title>Attributes</title>
-          <rect x="199.5" y="608.0801" width="71.87389" height="52" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
-          <text transform="translate(205.5 614.0801)" fill="black">
+          <rect x="222.5" y="608" width="71.87389" height="52" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+          <text transform="translate(228.5 614)" fill="black">
             <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="11">name</tspan>
             <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="25">shortName</tspan>
             <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="39">image</tspan>
@@ -486,8 +465,8 @@
         </g>
         <g id="Graphic_151">
           <title>Class Name</title>
-          <rect x="199.5" y="586.0801" width="71.87389" height="22" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
-          <text transform="translate(205.5 589.0801)" fill="black">
+          <rect x="222.5" y="586" width="71.87389" height="22" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+          <text transform="translate(228.5 589)" fill="black">
             <tspan font-family="Helvetica" font-size="13" font-weight="700" fill="black" x="13.436213" y="13">Team</tspan>
           </text>
         </g>
@@ -496,8 +475,8 @@
         <title>Class with Attributes</title>
         <g id="Graphic_155">
           <title>Attributes</title>
-          <rect x="139" y="251.81426" width="101.47675" height="134.0712" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
-          <text transform="translate(145 257.81426)" fill="black">
+          <rect x="153.5" y="251.81426" width="117.68995" height="134.0712" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+          <text transform="translate(159.5 257.81426)" fill="black">
             <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="11">title</tspan>
             <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="25">startDate</tspan>
             <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="39">endDate</tspan>
@@ -505,33 +484,33 @@
             <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="67">confirmationText</tspan>
             <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="81">maxPoints</tspan>
             <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="95">randomizeOrder</tspan>
-            <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="109">startText</tspan>
-            <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="123">gracePeriod</tspan>
+            <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="109">gracePeriod</tspan>
+            <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="123">registeredStudents</tspan>
           </text>
         </g>
         <g id="Graphic_154">
           <title>Class Name</title>
-          <rect x="139" y="224.38546" width="101.47675" height="27.4288" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
-          <text transform="translate(145 230.09986)" fill="black">
-            <tspan font-family="Helvetica" font-size="13" font-weight="700" fill="black" x="27.393402" y="13">Exam</tspan>
+          <rect x="153.5" y="224.38546" width="117.68995" height="27.4288" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+          <text transform="translate(159.5 230.09986)" fill="black">
+            <tspan font-family="Helvetica" font-size="13" font-weight="700" fill="black" x="35.500004" y="13">Exam</tspan>
           </text>
         </g>
       </g>
       <g id="Line_160">
-        <line x1="355.6993" y1="318.84986" x2="240.97675" y2="318.84986" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+        <line x1="354.0566" y1="318.84986" x2="271.68995" y2="318.84986" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
       </g>
       <g id="Graphic_159">
-        <text transform="translate(252.11756 328.38694)" fill="black">
+        <text transform="translate(276.8123 323.95344)" fill="black">
           <tspan font-family="Zapf Dingbats" font-size="9" font-weight="400" fill="black" x="0" y="7">✱</tspan>
         </text>
       </g>
       <g id="Graphic_158">
-        <text transform="translate(333.5324 304.6273)" fill="black">
+        <text transform="translate(337.4357 304.6273)" fill="black">
           <tspan font-family="Helvetica" font-size="9" font-weight="400" fill="black" x="0" y="9">1</tspan>
         </text>
       </g>
       <g id="Graphic_157">
-        <text transform="translate(247 302.5)" fill="black">
+        <text transform="translate(275.6 301.6)" fill="black">
           <tspan font-family="Helvetica" font-size="10" font-weight="400" fill="black" x="0" y="10">exams</tspan>
         </text>
       </g>
@@ -561,8 +540,8 @@
         <title>Class with Attributes</title>
         <g id="Graphic_166">
           <title>Attributes</title>
-          <rect x="67.478924" y="551.9288" width="106.2" height="92.5712" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
-          <text transform="translate(73.47892 557.9288)" fill="black">
+          <rect x="87.25161" y="551.8288" width="99.04651" height="92.5712" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+          <text transform="translate(93.25161 557.8288)" fill="black">
             <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="11">workingTime</tspan>
             <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="25">started</tspan>
             <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="39">submitted</tspan>
@@ -573,33 +552,33 @@
         </g>
         <g id="Graphic_165">
           <title>Class Name</title>
-          <rect x="67.478924" y="524.5" width="106.2" height="27.4288" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
-          <text transform="translate(73.47892 530.2144)" fill="black">
-            <tspan font-family="Helvetica" font-size="13" font-weight="700" fill="black" x="5.5641136" y="13">StudentExam</tspan>
+          <rect x="87.25161" y="524.4" width="99.04651" height="27.4288" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+          <text transform="translate(93.25161 530.1144)" fill="black">
+            <tspan font-family="Helvetica" font-size="13" font-weight="700" fill="black" x="1.9873657" y="13">StudentExam</tspan>
           </text>
         </g>
       </g>
       <g id="Line_171">
-        <line x1="189.15867" y1="386.15136" x2="189.21338" y2="443.17523" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+        <line x1="205.67176" y1="386" x2="205.72648" y2="443.02387" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
       </g>
       <g id="Graphic_170">
-        <text transform="translate(171.32077 430.9871)" fill="black">
+        <text transform="translate(187.83387 430.8357)" fill="black">
           <tspan font-family="Zapf Dingbats" font-size="9" font-weight="400" fill="black" x="0" y="7">✱</tspan>
         </text>
       </g>
       <g id="Graphic_169">
-        <text transform="translate(195.3879 390.41727)" fill="black">
+        <text transform="translate(211.901 390.2659)" fill="black">
           <tspan font-family="Helvetica" font-size="9" font-weight="400" fill="black" x="0" y="9">1</tspan>
         </text>
       </g>
       <g id="Graphic_168">
-        <text transform="translate(193.48032 427.7115)" fill="black">
+        <text transform="translate(209.99341 427.56014)" fill="black">
           <tspan font-family="Helvetica" font-size="10" font-weight="400" fill="black" x="0" y="10">exerciseGroups</tspan>
         </text>
       </g>
       <g id="Graphic_167">
-        <text transform="translate(141.49066 390.65136)" fill="black">
-          <tspan font-family="Helvetica" font-size="10" font-weight="400" fill="black" x="10.632904" y="10">Exam</tspan>
+        <text transform="translate(158.00376 390.5)" fill="black">
+          <tspan font-family="Helvetica" font-size="10" font-weight="400" fill="black" x="11.741302" y="10">exam</tspan>
         </text>
       </g>
       <g id="Line_176">
@@ -626,77 +605,77 @@
         </text>
       </g>
       <g id="Line_180">
-        <path d="M 272 599.7962 L 357.97352 599.7962 L 357.97352 600.576" stroke="black" stroke-linecap="round" stroke-linejoin="miter" stroke-width="1"/>
+        <path d="M 294.3739 597 L 357.68187 597 L 357.68187 603.0103" stroke="black" stroke-linecap="round" stroke-linejoin="miter" stroke-width="1"/>
       </g>
       <g id="Graphic_179">
-        <text transform="translate(278.41773 586.7962)" fill="black">
+        <text transform="translate(298 584.8)" fill="black">
           <tspan font-family="Zapf Dingbats" font-size="9" font-weight="400" fill="black" x="0" y="7">✱</tspan>
         </text>
       </g>
       <g id="Graphic_178">
-        <text transform="translate(278.41773 603.524)" fill="black">
+        <text transform="translate(298.8 602.2)" fill="black">
           <tspan font-family="Helvetica" font-size="10" font-weight="400" fill="black" x="0" y="10">teams</tspan>
         </text>
       </g>
       <g id="Graphic_177">
-        <text transform="translate(344.43627 585.576)" fill="black">
+        <text transform="translate(347.8 583)" fill="black">
           <tspan font-family="Helvetica" font-size="9" font-weight="400" fill="black" x="0" y="9">1</tspan>
         </text>
       </g>
       <g id="Line_185">
-        <path d="M 258.7137 660.5809 L 260.0959 660.5809 L 260.0959 726.18384" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+        <line x1="275.33008" y1="660.1473" x2="275.33008" y2="717.2808" marker-end="url(#StickArrow_Marker_2)" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
       </g>
       <g id="Graphic_186">
-        <text transform="translate(265.8346 706.7364)" fill="black">
+        <text transform="translate(281.0688 706.6604)" fill="black">
           <tspan font-family="Helvetica" font-size="10" font-weight="400" fill="black" x="0" y="10">students</tspan>
         </text>
       </g>
       <g id="Line_189">
-        <line x1="205.18672" y1="660.166" x2="205.32468" y2="727.013" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+        <line x1="229.86973" y1="660.08996" x2="229.98725" y2="717.037" marker-end="url(#StickArrow_Marker_2)" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
       </g>
       <g id="Graphic_187">
-        <text transform="translate(172.4 707.6)" fill="black">
+        <text transform="translate(197.083 707.524)" fill="black">
           <tspan font-family="Helvetica" font-size="10" font-weight="400" fill="black" x="0" y="10">owner</tspan>
         </text>
       </g>
       <g id="Line_192">
-        <path d="M 139 313.98305 L 120.57892 313.98305 L 120.57892 524" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+        <path d="M 153.00376 311.82266 L 105.05026 311.82266 L 105.05026 523.7903" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
       </g>
       <g id="Graphic_191">
-        <text transform="translate(102.69321 512.1366)" fill="black">
+        <text transform="translate(110.19086 509.83464)" fill="black">
           <tspan font-family="Zapf Dingbats" font-size="9" font-weight="400" fill="black" x="0" y="7">✱</tspan>
         </text>
       </g>
       <g id="Graphic_190">
-        <text transform="translate(126.45495 299.7605)" fill="black">
+        <text transform="translate(139.07468 297.6001)" fill="black">
           <tspan font-family="Helvetica" font-size="9" font-weight="400" fill="black" x="0" y="9">1</tspan>
         </text>
       </g>
       <g id="Line_197">
-        <line x1="347.7087" y1="533.3459" x2="173.67893" y2="533.56643" marker-start="url(#StickArrow_Marker)" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+        <line x1="347.7087" y1="540.03766" x2="187" y2="539.88523" marker-start="url(#StickArrow_Marker)" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
       </g>
       <g id="Graphic_196">
-        <text transform="translate(182.25073 543.5884)" fill="black">
+        <text transform="translate(194.68025 547.12904)" fill="black">
           <tspan font-family="Zapf Dingbats" font-size="9" font-weight="400" fill="black" x="0" y="7">✱</tspan>
         </text>
       </g>
       <g id="Graphic_195">
-        <text transform="translate(343.2005 520.1248)" fill="black">
+        <text transform="translate(344.02003 526.8148)" fill="black">
           <tspan font-family="Zapf Dingbats" font-size="9" font-weight="400" fill="black" x="0" y="7">✱</tspan>
         </text>
       </g>
       <g id="Graphic_193">
-        <text transform="translate(307.40984 538.33333)" fill="black">
+        <text transform="translate(307.40984 543.0062)" fill="black">
           <tspan font-family="Helvetica" font-size="10" font-weight="400" fill="black" x="1.0715141" y="10">exercises</tspan>
         </text>
       </g>
       <g id="Graphic_198">
-        <text transform="translate(248.39862 709.7364)" fill="black">
+        <text transform="translate(263.6328 709.6604)" fill="black">
           <tspan font-family="Zapf Dingbats" font-size="9" font-weight="400" fill="black" x="0" y="7">✱</tspan>
         </text>
       </g>
       <g id="Graphic_199">
-        <text transform="translate(210.18672 708.4031)" fill="black">
+        <text transform="translate(234.86973 708.32705)" fill="black">
           <tspan font-family="Helvetica" font-size="9" font-weight="400" fill="black" x="0" y="9">1</tspan>
         </text>
       </g>
@@ -704,8 +683,8 @@
         <title>Class with Attributes</title>
         <g id="Graphic_202">
           <title>Attributes</title>
-          <rect x="369.76163" y="1033.7964" width="101.47675" height="96" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
-          <text transform="translate(375.76163 1039.7964)" fill="black">
+          <rect x="362.6" y="1016.6" width="101.47675" height="96" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+          <text transform="translate(368.6 1022.6)" fill="black">
             <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="11">complaintText</tspan>
             <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="25">accepted</tspan>
             <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="39">submittedTime</tspan>
@@ -716,14 +695,14 @@
         </g>
         <g id="Graphic_201">
           <title>Class Name</title>
-          <rect x="369.76163" y="1009.7964" width="101.47675" height="24" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
-          <text transform="translate(375.76163 1013.7964)" fill="black">
+          <rect x="362.6" y="992.6" width="101.47675" height="24" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+          <text transform="translate(368.6 996.6)" fill="black">
             <tspan font-family="Helvetica" font-size="13" font-weight="700" fill="black" x="12.962006" y="13">Complaint</tspan>
           </text>
         </g>
       </g>
       <g id="Line_207">
-        <line x1="420.47675" y1="1009.0116" x2="420.6428" y2="966.2539" marker-end="url(#StickArrow_Marker_2)" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+        <path d="M 417.6928 992.6 L 420.5 992.6 L 420.5 966.754" marker-end="url(#StickArrow_Marker_2)" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
       </g>
       <g id="Graphic_205">
         <text transform="translate(405.3345 957)" fill="black">
@@ -739,8 +718,8 @@
         <title>Class with Attributes</title>
         <g id="Graphic_210">
           <title>Attributes</title>
-          <rect x="547" y="1036.5" width="140" height="54" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
-          <text transform="translate(553 1042.5)" fill="black">
+          <rect x="536.0146" y="1036.5037" width="140" height="54" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+          <text transform="translate(542.0146 1042.5037)" fill="black">
             <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="11">responseText</tspan>
             <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="25">submittedTime</tspan>
             <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="39">reviewer: User</tspan>
@@ -748,23 +727,46 @@
         </g>
         <g id="Graphic_209">
           <title>Class Name</title>
-          <rect x="547" y="1012.5" width="140" height="24" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
-          <text transform="translate(553 1016.5)" fill="black">
+          <rect x="536.0146" y="1012.5037" width="140" height="24" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+          <text transform="translate(542.0146 1016.5037)" fill="black">
             <tspan font-family="Helvetica" font-size="13" font-weight="700" fill="black" x="1.1582031" y="13">ComplaintResponse</tspan>
           </text>
         </g>
       </g>
       <g id="Line_213">
-        <line x1="547" y1="1070.0581" x2="481.89996" y2="1070.2444" marker-end="url(#StickArrow_Marker_2)" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+        <line x1="536.0146" y1="1070.267" x2="473.01166" y2="1070.2751" marker-end="url(#StickArrow_Marker_2)" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
       </g>
       <g id="Graphic_211">
-        <text transform="translate(475.9365 1052.8416)" fill="black">
+        <text transform="translate(470.98076 1052.8624)" fill="black">
           <tspan font-family="Helvetica" font-size="9" font-weight="400" fill="black" x="0" y="9">1</tspan>
         </text>
       </g>
       <g id="Graphic_214">
-        <text transform="translate(474.4 1073.8416)" fill="black">
+        <text transform="translate(467.0384 1073.8453)" fill="black">
           <tspan font-family="Helvetica" font-size="10" font-weight="400" fill="black" x="0" y="10">complaint</tspan>
+        </text>
+      </g>
+      <g id="Line_215">
+        <line x1="480.2" y1="690.1338" x2="577.0546" y2="690.0407" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+      </g>
+      <g id="Graphic_216">
+        <text transform="translate(567.39814 694.5898)" fill="black">
+          <tspan font-family="Zapf Dingbats" font-size="9" font-weight="400" fill="black" x="0" y="7">✱</tspan>
+        </text>
+      </g>
+      <g id="Graphic_217">
+        <text transform="translate(483.5668 676.6049)" fill="black">
+          <tspan font-family="Helvetica" font-size="9" font-weight="400" fill="black" x="0" y="9">1</tspan>
+        </text>
+      </g>
+      <g id="Graphic_218">
+        <text transform="translate(482.0548 692.2266)" fill="black">
+          <tspan font-family="Helvetica" font-size="10" font-weight="400" fill="black" x="0" y="10">participation</tspan>
+        </text>
+      </g>
+      <g id="Graphic_219">
+        <text transform="translate(478.362 675.79925)" fill="black">
+          <tspan font-family="Helvetica" font-size="10" font-weight="400" fill="black" x="41.180473" y="10">submissions</tspan>
         </text>
       </g>
     </g>
