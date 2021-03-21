@@ -445,12 +445,22 @@ public class GitlabRequestMockProvider {
         }
     }
 
-    public void mockDeleteRepository(String repositoryId) throws GitLabApiException {
-        doNothing().when(projectApi).deleteProject(repositoryId);
+    public void mockDeleteRepository(String repositoryId, boolean shouldFail) throws GitLabApiException {
+        if (shouldFail) {
+            doThrow(new GitLabApiException("Bad Request", 400)).when(projectApi).deleteProject(repositoryId);
+        }
+        else {
+            doNothing().when(projectApi).deleteProject(repositoryId);
+        }
     }
 
-    public void mockDeleteProject(String projectKey) throws GitLabApiException {
-        doNothing().when(groupApi).deleteGroup(projectKey);
+    public void mockDeleteProject(String projectKey, boolean shouldFail) throws GitLabApiException {
+        if (shouldFail) {
+            doThrow(new GitLabApiException("Bad request", 400)).when(groupApi).deleteGroup(projectKey);
+        }
+        else {
+            doNothing().when(groupApi).deleteGroup(projectKey);
+        }
     }
 
     public void mockRepositoryUrlIsValid(VcsRepositoryUrl repositoryUrl, boolean isUrlValid) throws GitLabApiException {
