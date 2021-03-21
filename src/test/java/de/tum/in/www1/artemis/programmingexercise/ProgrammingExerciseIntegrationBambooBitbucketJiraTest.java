@@ -22,7 +22,7 @@ class ProgrammingExerciseIntegrationBambooBitbucketJiraTest extends AbstractSpri
 
     @BeforeEach
     void initTestCase() throws Exception {
-        bitbucketRequestMockProvider.enableMockingOfRequests();
+        bitbucketRequestMockProvider.enableMockingOfRequests(true);
         bambooRequestMockProvider.enableMockingOfRequests(true);
         programmingExerciseIntegrationServiceTest.setup(this, versionControlService);
     }

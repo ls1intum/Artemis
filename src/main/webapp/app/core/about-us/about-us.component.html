@@ -33,7 +33,6 @@
     </div>
     <div>
         <h3 class="mb-3 ml-2 font-weight-bold">{{ 'aboutUsOverview.getInTouch' | artemisTranslate }}</h3>
-        <span jhiTranslate="releaseNotes"></span>
         <ul>
             <li>
                 <a [href]="bugReportUrl" rel="noreferrer noopener" class="footer-text ml-3" target="_blank">{{ 'bug' | artemisTranslate }}</a>
@@ -43,6 +42,9 @@
             </li>
             <li>
                 <a [href]="email" class="footer-text ml-3" target="_top"> {{ 'contact' | artemisTranslate }}</a>
+            </li>
+            <li>
+                <a [href]="releaseNotesUrl" class="footer-text ml-3" target="_blank">{{ 'releaseNotes' | artemisTranslate }}</a>
             </li>
         </ul>
     </div>

@@ -16,7 +16,9 @@ import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.ResultService;
+import de.tum.in.www1.artemis.service.SubmissionService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
@@ -79,9 +81,8 @@ public class SubmissionResource {
         }
 
         checkAccessPermissionAtInstructor(submission.get());
-
-        Result result = submission.get().getLatestResult();
-        if (result != null) {
+        List<Result> results = submission.get().getResults();
+        for (Result result : results) {
             resultService.deleteResultWithComplaint(result.getId());
         }
         submissionRepository.deleteById(id);
