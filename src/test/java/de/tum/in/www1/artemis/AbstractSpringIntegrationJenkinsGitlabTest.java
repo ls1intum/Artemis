@@ -341,13 +341,13 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
     }
 
     @Override
-    public void mockDeleteRepository(String projectKey, String repostoryName) throws Exception {
-        gitlabRequestMockProvider.mockDeleteRepository(projectKey);
+    public void mockDeleteRepository(String projectKey, String repostoryName, boolean shouldFail) throws Exception {
+        gitlabRequestMockProvider.mockDeleteRepository(projectKey + "/" + repostoryName, shouldFail);
     }
 
     @Override
-    public void mockDeleteProjectInVcs(String projectKey) throws Exception {
-        gitlabRequestMockProvider.mockDeleteProject(projectKey);
+    public void mockDeleteProjectInVcs(String projectKey, boolean shouldFail) throws Exception {
+        gitlabRequestMockProvider.mockDeleteProject(projectKey, shouldFail);
     }
 
     @Override
@@ -356,8 +356,8 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
     }
 
     @Override
-    public void mockDeleteBuildPlanProject(String projectKey) throws Exception {
-        jenkinsRequestMockProvider.mockDeleteBuildPlanProject(projectKey);
+    public void mockDeleteBuildPlanProject(String projectKey, boolean shouldFail) throws Exception {
+        jenkinsRequestMockProvider.mockDeleteBuildPlanProject(projectKey, shouldFail);
     }
 
     @Override
