@@ -90,4 +90,10 @@ export class ModelingExerciseService {
             .get<ModelingPlagiarismResult>(`${this.resourceUrl}/${exerciseId}/check-plagiarism`, { observe: 'response', params: { ...options?.toParams() } })
             .pipe(map((response: HttpResponse<ModelingPlagiarismResult>) => response.body!));
     }
+
+    convertToPdf(model: string): Observable<String> {
+        return this.http
+            .get<String>(`${SERVER_API_URL}api/apollon-convert/pdf`, { observe: 'response' })
+            .pipe(map((response: HttpResponse<String>) => response.body!));
+    }
 }

@@ -1,14 +1,12 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.Result;
-import de.tum.in.www1.artemis.service.connectors.apollon.ApollonConversionService;
 import de.tum.in.www1.artemis.web.rest.dto.ApollonConversionDTO;
 
 /**
@@ -16,14 +14,15 @@ import de.tum.in.www1.artemis.web.rest.dto.ApollonConversionDTO;
  */
 @RestController
 @RequestMapping("/api")
+@Profile("apollon")
 public class ApollonConversionResource {
 
     private final Logger log = LoggerFactory.getLogger(ApollonConversionResource.class);
 
-    private final ApollonConversionService apollonConversionService;
+    // private final ApollonConversionService apollonConversionService;
 
-    public ApollonConversionResource(ApollonConversionService apollonConversionService) {
-        this.apollonConversionService = apollonConversionService;
+    public ApollonConversionResource() {
+        // this.apollonConversionService = apollonConversionService;
     }
 
     /**
@@ -32,12 +31,12 @@ public class ApollonConversionResource {
      * @param requestBody The calculation results containing blocks and clusters
      * @return 200 Ok if successful or 401 unauthorized if secret is wrong
      */
-    @PostMapping(value = "/pdf", consumes = APPLICATION_JSON_VALUE)
+    @GetMapping("/apollon-convert/pdf")
     public ResponseEntity<Result> convertApollonDiagram(@RequestBody ApollonConversionDTO requestBody) {
         log.debug("REST call to inform about new Athene results for exercise: {}");
 
         // The apollonConversionService will manage the processing and database saving
-        apollonConversionService.convertDiagram(requestBody.getDiagram());
+        // apollonConversionService.convertDiagram(requestBody.getDiagram());
 
         log.debug("REST call for new Athene results for exercise {} finished");
 

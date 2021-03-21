@@ -52,6 +52,15 @@ export class ModelingExerciseDetailComponent implements OnInit, OnDestroy {
         });
     }
 
+    downloadAsPDf() {
+        const model = this.modelingExercise.sampleSolutionModel;
+        if (model) {
+            this.modelingExerciseService.convertToPdf(model).subscribe((response: HttpResponse<String>) => {
+                console.log(response);
+            });
+        }
+    }
+
     ngOnDestroy() {
         this.subscription.unsubscribe();
         this.eventManager.destroy(this.eventSubscriber);
