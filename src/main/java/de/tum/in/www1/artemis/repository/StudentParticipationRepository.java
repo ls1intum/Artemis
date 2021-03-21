@@ -435,7 +435,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             """)
     List<long[]> countSubmissionsPerParticipationByCourseIdAndTeamShortName(@Param("courseId") long courseId, @Param("teamShortName") String teamShortName);
 
-    // TODO SE Improve!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    // TODO SE Improve!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! // maybe leave out max id line
     @Query("""
             SELECT DISTINCT p FROM StudentParticipation p
             LEFT JOIN FETCH p.submissions s
@@ -443,10 +443,10 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
                 WHERE p.exercise.id = :#{#exerciseId}
                 AND p.testRun = FALSE
                 AND s.id = (SELECT max(id) FROM p.submissions)
-                AND EXISTS (SELECT s FROM Submission s
-                    WHERE s.participation.id = p.id
-                    AND s.submitted = TRUE
-                    AND (r.assessor = :#{#assessor} OR r.assessor.id = NULL))
+                AND EXISTS (SELECT s1 FROM p.submissions s1
+                    WHERE s1.participation.id = p.id
+                    AND s1.submitted = TRUE
+                    AND (r.assessor = :#{#assessor} OR r.assessor.id IS NULL))
             """)
     List<StudentParticipation> findAllByParticipationExerciseIdAndResultAssessorAndCorrectionRoundIgnoreTestRuns(@Param("exerciseId") Long exerciseId,
             @Param("assessor") User assessor);
@@ -597,7 +597,10 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
     }
 
     @Query("""
-            SELECT COUNT(sp) FROM StudentParticipation sp left join sp.exercise exercise WHERE exercise.id = :#{#exerciseId} and sp.testRun = false group by exercise.id
+            SELECT COUNT(p) FROM StudentParticipation p
+                LEFT JOIN p.exercise exercise WHERE exercise.id = :#{#exerciseId}
+            AND p.testRun = false
+            GROUP BY exercise.id
             """)
     Long countParticipationsIgnoreTestRunsByExerciseId(@Param("exerciseId") Long exerciseId);
 
