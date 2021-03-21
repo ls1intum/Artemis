@@ -1,7 +1,6 @@
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
-import * as sinon from 'sinon';
-import { ComponentFixture, fakeAsync, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTestModule } from '../../test.module';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
@@ -15,6 +14,7 @@ import { Result } from 'app/entities/result.model';
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { Feedback } from 'app/entities/feedback.model';
 import { TextBlock } from 'app/entities/text-block.model';
+import { TextResultBlock } from 'app/exercises/text/participate/text-result/text-result-block';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -22,6 +22,27 @@ const expect = chai.expect;
 describe('TextResultComponent', () => {
     let fixture: ComponentFixture<TextResultComponent>;
     let component: TextResultComponent;
+
+    const feedbacks = [
+        {
+            id: 1,
+            detailText: 'feedback1',
+            credits: 1.5,
+            reference: 'ed462aaf735fe740a260660cbbbfbcc0ee66f98f',
+        } as Feedback,
+        {
+            id: 3,
+            detailText: 'feedback3',
+            credits: 1,
+            reference: 'exercise',
+        } as Feedback,
+        {
+            id: 2,
+            detailText: 'feedback2',
+            credits: 0,
+            reference: 'ed462aaf735fe740a260660cbcbfbcc0ee66f98a',
+        } as Feedback,
+    ];
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -38,10 +59,6 @@ describe('TextResultComponent', () => {
                 fixture = TestBed.createComponent(TextResultComponent);
                 component = fixture.componentInstance;
             });
-    });
-
-    afterEach(() => {
-        // jest.clearAllMocks();
     });
 
     it('should initialize', () => {
@@ -81,26 +98,6 @@ describe('TextResultComponent', () => {
         ];
         submission.blocks = blocks;
         result.submission = submission;
-        const feedbacks = [
-            {
-                id: 1,
-                detailText: 'feedback1',
-                credits: 1.5,
-                reference: 'ed462aaf735fe740a260660cbbbfbcc0ee66f98f',
-            } as Feedback,
-            {
-                id: 3,
-                detailText: 'feedback3',
-                credits: 0.5,
-                reference: 'exercise',
-            } as Feedback,
-            {
-                id: 2,
-                detailText: 'feedback2',
-                credits: 2.5,
-                reference: 'ed462aaf735fe740a260660cbcbfbcc0ee66f98a',
-            } as Feedback,
-        ];
         result.feedbacks = feedbacks;
 
         component.result = result;
@@ -108,8 +105,58 @@ describe('TextResultComponent', () => {
         expect(component.textResults.length).to.equal(4);
     });
 
-    it('should ', () => {
-        fixture.detectChanges();
-        expect(component).to.be.ok;
+    it('should repeat steps for each credit', () => {
+        const textBlock = new TextBlock();
+        textBlock.text = 'this is a text block';
+        const textResultBlock = new TextResultBlock(textBlock, feedbacks[0]);
+
+        expect(component.repeatForEachCredit(textResultBlock)).to.deep.equal([1, 1]);
+    });
+
+    it('should translate credits', () => {
+        const textBlock = new TextBlock();
+        textBlock.text = 'this is a text block';
+        let textResultBlock = new TextResultBlock(textBlock, feedbacks[0]);
+
+        expect(component.creditsTranslationForTextResultBlock(textResultBlock)).to.equal('artemisApp.textAssessment.detail.credits.many');
+
+        textResultBlock = new TextResultBlock(textBlock, feedbacks[1]);
+
+        expect(component.creditsTranslationForTextResultBlock(textResultBlock)).to.equal('artemisApp.textAssessment.detail.credits.one');
+    });
+
+    it('should test result block methods', () => {
+        const textBlock = new TextBlock();
+        textBlock.text = 'this is a text block';
+        textBlock.startIndex = 0;
+        textBlock.endIndex = 5;
+        let textResultBlock = new TextResultBlock(textBlock, feedbacks[0]);
+
+        expect(textResultBlock.length).to.equal(5);
+        expect(textResultBlock.cssClass).to.equal('text-with-feedback positive-feedback');
+        expect(textResultBlock.icon).to.equal('check');
+        expect(textResultBlock.iconCssClass).to.equal('feedback-icon positive-feedback');
+        expect(textResultBlock.feedbackCssClass).to.equal('alert alert-success');
+
+        textResultBlock = new TextResultBlock(textBlock, feedbacks[2]);
+
+        expect(textResultBlock.cssClass).to.equal('text-with-feedback neutral-feedback');
+        expect(textResultBlock.icon).to.equal('dot');
+        expect(textResultBlock.iconCssClass).to.equal('feedback-icon neutral-feedback');
+        expect(textResultBlock.feedbackCssClass).to.equal('alert alert-secondary');
+
+        const feedback = {
+            id: 3,
+            detailText: 'feedback5',
+            credits: -1,
+            reference: 'exercise',
+        } as Feedback;
+
+        textResultBlock = new TextResultBlock(textBlock, feedback);
+
+        expect(textResultBlock.cssClass).to.equal('text-with-feedback negative-feedback');
+        expect(textResultBlock.icon).to.equal('times');
+        expect(textResultBlock.iconCssClass).to.equal('feedback-icon negative-feedback');
+        expect(textResultBlock.feedbackCssClass).to.equal('alert alert-danger');
     });
 });
