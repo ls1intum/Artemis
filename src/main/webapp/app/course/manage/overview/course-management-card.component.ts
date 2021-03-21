@@ -41,13 +41,6 @@ export class CourseManagementCardComponent implements OnChanges {
     // Expose enums to the template
     exerciseType = ExerciseType;
     exerciseRowType = ExerciseRowType;
-    quizStatus = {
-        CLOSED: 'CLOSED',
-        OPEN_FOR_PRACTICE: 'OPEN_FOR_PRACTICE',
-        ACTIVE: 'ACTIVE',
-        VISIBLE: 'VISIBLE',
-        HIDDEN: 'HIDDEN',
-    };
 
     private statisticsSorted = false;
     private exercisesSorted = false;
@@ -75,16 +68,13 @@ export class CourseManagementCardComponent implements OnChanges {
             })
             .slice(0, 5);
         this.currentExercises = exercises.filter(
-            (e) =>
-                ((e.releaseDate && e.releaseDate <= moment() && (!e.dueDate || e.dueDate > moment())) || (!e.releaseDate && e.dueDate && e.dueDate > moment())) &&
-                (!e.quizStatus || e.quizStatus === this.quizStatus.ACTIVE),
+            (e) => (e.releaseDate && e.releaseDate <= moment() && (!e.dueDate || e.dueDate > moment())) || (!e.releaseDate && e.dueDate && e.dueDate > moment()),
         );
         this.exercisesInAssessment = exercises.filter((e) => e.dueDate && e.dueDate <= moment() && e.assessmentDueDate && e.assessmentDueDate > moment());
         this.pastExercises = exercises.filter(
             (e) =>
                 (!e.assessmentDueDate && e.dueDate && e.dueDate <= moment() && e.dueDate >= sevenDaysAgo) ||
-                (e.assessmentDueDate && e.assessmentDueDate <= moment() && e.assessmentDueDate >= sevenDaysAgo) ||
-                ((e.quizStatus === this.quizStatus.OPEN_FOR_PRACTICE || e.quizStatus === this.quizStatus.CLOSED) && e.releaseDate && e.releaseDate >= sevenDaysAgo),
+                (e.assessmentDueDate && e.assessmentDueDate <= moment() && e.assessmentDueDate >= sevenDaysAgo),
         );
         this.showPastExercises = this.futureExercises?.length === 0 && this.currentExercises?.length === 0 && this.exercisesInAssessment?.length === 0;
     }

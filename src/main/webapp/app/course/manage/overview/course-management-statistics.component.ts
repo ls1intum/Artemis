@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnChanges, OnInit } from '@angular/core';
 import { Graphs } from 'app/entities/statistics.model';
 import { ChartDataSets, ChartType } from 'chart.js';
 import { Label } from 'ng2-charts';
@@ -11,7 +11,7 @@ import { DataSet } from 'app/exercises/quiz/manage/statistics/quiz-statistic/qui
     templateUrl: './course-management-statistics.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class CourseManagementStatisticsComponent implements OnInit {
+export class CourseManagementStatisticsComponent implements OnInit, OnChanges {
     @Input()
     courseId: number;
 
@@ -19,7 +19,7 @@ export class CourseManagementStatisticsComponent implements OnInit {
     amountOfStudentsInCourse: number;
 
     @Input()
-    initialStats: number[];
+    initialStats: number[] | undefined;
 
     graphType: Graphs = Graphs.ACTIVE_STUDENTS;
 
@@ -46,25 +46,7 @@ export class CourseManagementStatisticsComponent implements OnInit {
             this.barChartLabels[i] = this.translateService.instant(`overview.${3 - i}_weeks_ago`);
         }
 
-        if (this.amountOfStudentsInCourse > 0) {
-            for (const value of this.initialStats) {
-                this.dataForSpanType.push((value * 100) / this.amountOfStudentsInCourse);
-            }
-        } else {
-            this.dataForSpanType = new Array(this.initialStats.length).fill(0);
-        }
-
-        this.chartData = [
-            {
-                label: this.amountOfStudents,
-                data: this.dataForSpanType,
-                backgroundColor: 'rgba(53,61,71,1)',
-                borderColor: 'rgba(53,61,71,1)',
-                fill: false,
-                pointBackgroundColor: 'rgba(53,61,71,1)',
-                pointHoverBorderColor: 'rgba(53,61,71,1)',
-            },
-        ];
+        this.createChartData();
 
         // Store a reference for the label function
         const self = this;
@@ -89,7 +71,7 @@ export class CourseManagementStatisticsComponent implements OnInit {
                     this.data.datasets.forEach(function (dataset: DataSet, j: number) {
                         const meta = chartInstance.controller.getDatasetMeta(j);
                         meta.data.forEach(function (bar: any, index: number) {
-                            const data = self.initialStats[index];
+                            const data = !!self.initialStats ? self.initialStats[index] : 0;
                             ctx.fillText(String(data), bar._model.x, bar._model.y - 5);
                         });
                     });
@@ -116,10 +98,43 @@ export class CourseManagementStatisticsComponent implements OnInit {
                 enabled: true,
                 callbacks: {
                     label(tooltipItem: any) {
+                        if (!self.initialStats) {
+                            return ' 0';
+                        }
+
                         return ' ' + self.initialStats[tooltipItem.index];
                     },
                 },
             },
         };
+    }
+
+    ngOnChanges() {
+        if (!!this.initialStats) {
+            this.createChartData();
+        }
+    }
+
+    private createChartData() {
+        if (this.amountOfStudentsInCourse > 0 && !!this.initialStats) {
+            this.dataForSpanType = [];
+            for (const value of this.initialStats) {
+                this.dataForSpanType.push((value * 100) / this.amountOfStudentsInCourse);
+            }
+        } else {
+            this.dataForSpanType = new Array(4).fill(0);
+        }
+
+        this.chartData = [
+            {
+                label: this.amountOfStudents,
+                data: this.dataForSpanType,
+                backgroundColor: 'rgba(53,61,71,1)',
+                borderColor: 'rgba(53,61,71,1)',
+                fill: false,
+                pointBackgroundColor: 'rgba(53,61,71,1)',
+                pointHoverBorderColor: 'rgba(53,61,71,1)',
+            },
+        ];
     }
 }

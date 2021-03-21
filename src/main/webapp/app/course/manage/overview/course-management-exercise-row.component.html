@@ -2,8 +2,9 @@
     <div class="container">
         <div class="row">
             <div class="col row details-container">
-                <div class="col-5 row-flex pointer-row">
-                    <div class="ml-2 mr-1" *ngIf="hasLeftoverAssessments">
+                <a class="stretched-link" [routerLink]="['/course-management', course.id, details.exerciseType + '-exercises', details.exerciseId]"></a>
+                <div class="col-5 row-flex">
+                    <div class="ml-2 mr-1 exercise-details-item" *ngIf="hasLeftoverAssessments">
                         <fa-icon
                             [icon]="'exclamation-triangle'"
                             class="text-warning"
@@ -12,14 +13,14 @@
                             container="body"
                         ></fa-icon>
                     </div>
-                    <div class="ml-2" *ngIf="details.teamMode">
+                    <div class="ml-2 exercise-details-item" *ngIf="details.teamMode">
                         <fa-icon [icon]="'users'" placement="right" [ngbTooltip]="'artemisApp.exercise.isTeamExercise' | artemisTranslate" container="body"></fa-icon>
                     </div>
-                    <div class="ml-2">
+                    <div class="ml-2 exercise-details-item">
                         <fa-icon [icon]="icon" placement="right" [ngbTooltip]="iconTooltip | artemisTranslate" container="body"></fa-icon>
                     </div>
-                    <p class="item-title" [routerLink]="['/course-management', course.id, details.exerciseType + '-exercises', details.exerciseId]">{{ details.exerciseTitle }}</p>
-                    <div class="item-category d-flex hide-categories" *ngIf="details.categories?.length > 0">
+                    <span class="item-title exercise-details-item" style="z-index: 1">{{ details.exerciseTitle }}</span>
+                    <div class="item-category d-flex hide-categories exercise-details-item" *ngIf="details.categories?.length > 0">
                         <!-- We only support two categories -->
                         <h4 *ngFor="let category of details.categories">
                             <span class="badge text-white mr-1" [ngStyle]="{ backgroundColor: JSON.parse(category).color }">{{ JSON.parse(category).category }}</span>
@@ -30,51 +31,63 @@
                 <div class="col-4 row-flex hide-1400 exercise-date-container">
                     <div [ngClass]="!!details.releaseDate ? 'exercise-date' : 'exercise-date exercise-no-date'">
                         <div class="exercise-date-timeline"></div>
-                        <span class="small">{{ 'artemisApp.course.releaseDate' | artemisTranslate }}</span>
+                        <span>{{ 'artemisApp.course.releaseDate' | artemisTranslate }}</span>
                         <div *ngIf="!details.releaseDate">
                             <div class="calender-icon-container">
-                                <fa-icon class="calender-icon" [icon]="'times'"></fa-icon>
+                                <div class="calender-icon-circle">
+                                    <fa-icon class="calender-icon" [icon]="'times'"></fa-icon>
+                                </div>
                             </div>
                         </div>
                         <div *ngIf="details.releaseDate" [ngbTooltip]="details.releaseDate | artemisDate">
                             <div class="calender-icon-container">
-                                <fa-icon class="calender-icon" [icon]="'calendar-alt'"></fa-icon>
+                                <div class="calender-icon-circle">
+                                    <fa-icon class="calender-icon" [icon]="'calendar-alt'"></fa-icon>
+                                </div>
                             </div>
-                            <span class="small">{{ details.releaseDate! | amTimeAgo }}</span>
+                            <span>{{ details.releaseDate! | amTimeAgo }}</span>
                         </div>
                         <div *ngIf="!details.releaseDate"><p></p></div>
                     </div>
 
                     <div [ngClass]="!!details.dueDate ? 'exercise-date' : 'exercise-date exercise-no-date'">
                         <div class="exercise-date-timeline"></div>
-                        <span class="small">{{ 'artemisApp.course.dueDate' | artemisTranslate }}</span>
+                        <span>{{ 'artemisApp.course.dueDate' | artemisTranslate }}</span>
                         <div *ngIf="!details.dueDate">
                             <div class="calender-icon-container">
-                                <fa-icon class="calender-icon" [icon]="'times'"></fa-icon>
+                                <div class="calender-icon-circle">
+                                    <fa-icon class="calender-icon" [icon]="'times'"></fa-icon>
+                                </div>
                             </div>
                         </div>
                         <div *ngIf="details.dueDate" [ngbTooltip]="details.dueDate | artemisDate">
                             <div class="calender-icon-container">
-                                <fa-icon class="calender-icon" [icon]="'calendar-alt'"></fa-icon>
+                                <div class="calender-icon-circle">
+                                    <fa-icon class="calender-icon" [icon]="'calendar-alt'"></fa-icon>
+                                </div>
                             </div>
-                            <span class="small">{{ details.dueDate! | amTimeAgo }}</span>
+                            <span>{{ details.dueDate! | amTimeAgo }}</span>
                         </div>
                         <div *ngIf="!details.dueDate"><p></p></div>
                     </div>
 
                     <div [ngClass]="!!details.assessmentDueDate ? 'exercise-date' : 'exercise-date exercise-no-date'">
                         <div class="exercise-date-timeline"></div>
-                        <span class="small">{{ 'artemisApp.course.assessmentDueDate' | artemisTranslate }}</span>
+                        <span>{{ 'artemisApp.course.assessmentDueDate' | artemisTranslate }}</span>
                         <div *ngIf="!details.assessmentDueDate">
                             <div class="calender-icon-container">
-                                <fa-icon class="calender-icon" [icon]="'times'"></fa-icon>
+                                <div class="calender-icon-circle">
+                                    <fa-icon class="calender-icon" [icon]="'times'"></fa-icon>
+                                </div>
                             </div>
                         </div>
                         <div *ngIf="details.assessmentDueDate" [ngbTooltip]="details.assessmentDueDate | artemisDate">
                             <div class="calender-icon-container">
-                                <fa-icon class="calender-icon" [icon]="'calendar-alt'"></fa-icon>
+                                <div class="calender-icon-circle">
+                                    <fa-icon class="calender-icon" [icon]="'calendar-alt'"></fa-icon>
+                                </div>
                             </div>
-                            <span class="small">{{ details.assessmentDueDate! | amTimeAgo }}</span>
+                            <span>{{ details.assessmentDueDate! | amTimeAgo }}</span>
                         </div>
                         <div *ngIf="!details.assessmentDueDate"><p></p></div>
                     </div>
@@ -123,9 +136,7 @@
                     [routerLink]="['/course-management', course.id, details.exerciseType + '-exercises', details.exerciseId, 'edit']"
                     class="btn btn-warning mr-1 mb-1"
                     [ngbTooltip]="'entity.action.edit' | artemisTranslate"
-                >
-                    <fa-icon [icon]="'wrench'"></fa-icon>
-                </a>
+                ><fa-icon [icon]="'wrench'"></fa-icon></a>
                 <a
                     *ngIf="
                         course.isAtLeastInstructor &&
@@ -135,33 +146,25 @@
                     [routerLink]="['/course-management', course.id, details.exerciseType + '-exercises', details.exerciseId, 're-evaluate']"
                     class="btn btn-warning mr-1 mb-1"
                     [ngbTooltip]="'entity.action.re-evaluate' | artemisTranslate"
-                >
-                    <fa-icon [icon]="'pencil-alt'"></fa-icon>
-                </a>
+                ><fa-icon [icon]="'pencil-alt'"></fa-icon></a>
                 <a
                     *ngIf="course.isAtLeastTutor"
                     [routerLink]="['/course-management', course.id, 'exercises', details.exerciseId, 'scores']"
                     class="btn btn-primary mr-1 mb-1"
                     [ngbTooltip]="'entity.action.scores' | artemisTranslate"
-                >
-                    <fa-icon [icon]="'table'"></fa-icon>
-                </a>
+                ><fa-icon [icon]="'table'"></fa-icon></a>
                 <a
                     *ngIf="course.isAtLeastInstructor && details.exerciseType !== exerciseType.PROGRAMMING && details.exerciseType !== exerciseType.QUIZ"
                     [routerLink]="['/course-management', course.id, details.exerciseType + '-exercises', details.exerciseId, 'assessment']"
                     class="btn btn-success mr-1 mb-1"
                     [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.instructorActions.submissions' | artemisTranslate"
-                >
-                    <fa-icon [icon]="'file-contract'"></fa-icon>
-                </a>
+                ><fa-icon [icon]="'file-contract'"></fa-icon></a>
                 <a
                     *ngIf="course.isAtLeastInstructor && details.exerciseType === exerciseType.PROGRAMMING"
                     [routerLink]="['/course-management', course.id, 'programming-exercises', details.exerciseId, 'grading', 'test-cases']"
                     class="btn btn-success mr-1 mb-1"
                     [ngbTooltip]="'artemisApp.programmingExercise.configureGrading.shortTitle' | artemisTranslate"
-                >
-                    <fa-icon [icon]="'file-contract'"></fa-icon>
-                </a>
+                ><fa-icon [icon]="'file-contract'"></fa-icon></a>
             </div>
         </div>
     </div>

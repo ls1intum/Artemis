@@ -1,13 +1,13 @@
 @import '../../../overview/_overview-vars.scss';
 
 .course-item {
-    padding: 5px;
     border: 1px solid $blue-border-color;
     background-color: $light-background-color;
     border-radius: 0.1rem;
-    display: block ruby;
-    overflow: hidden;
-    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    align-content: center;
+    height: 60px;
 
     .item-title {
         font-weight: bold;
@@ -22,11 +22,11 @@
     .item-category {
         color: gray;
         margin-left: 15px;
-        flex-direction: column;
+        flex-direction: row;
         justify-content: center;
 
         h4 {
-            margin-bottom: 0;
+            margin-bottom: -5px;
 
             .badge {
                 max-width: 150px;
@@ -44,6 +44,7 @@
         width: 40px;
         display: flex;
         align-items: center;
+        justify-content: center;
     }
 
     .row-flex {
@@ -51,19 +52,30 @@
         flex-direction: row;
     }
 
+    .exercise-details-item {
+        z-index: 1;
+        display: flex;
+        align-items: center;
+    }
+
     .calender-icon-container {
-        width: 24px;
-        height: 24px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .calender-icon-circle {
+        width: 19px;
+        height: 19px;
         background-color: $light-border-color;
         border-radius: 25px;
-        border-color: #3e8acc;
-        border-width: 2px;
-        margin: auto;
-        display: block;
+        display: flex;
+        justify-content: center;
+        align-items: center;
     }
 
     .calender-icon {
-        font-size: 0.8em;
+        font-size: x-small;
     }
 
     .exercise-date-timeline {
@@ -89,6 +101,8 @@
         text-align: center;
         z-index: 1;
         min-width: 95px;
+        font-size: small;
+        margin-top: -5px;
     }
 
     .exercise-no-date {
@@ -98,6 +112,7 @@
     .exercise-score-container {
         padding-left: 0;
         margin: auto;
+        z-index: 1;
     }
 
     .exercise-score {
@@ -123,6 +138,8 @@
         z-index: 1;
         min-width: 132px;
         align-items: center;
+        justify-content: start;
+        margin-right: 5px;
     }
 }
 
@@ -160,8 +177,4 @@
     .details-container {
         max-width: 70% !important;
     }
-}
-
-.small {
-    font-size: small;
 }

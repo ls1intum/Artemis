@@ -141,11 +141,11 @@
                 </div>
             </div>
             <div class="col-4 section-card statistics-card align-center">
-                <div class="section-content align-center" *ngIf="courseStatistics?.activeStudents && courseWithUsers?.numberOfStudents != undefined">
+                <div class="section-content align-center">
                     <jhi-course-management-statistics
-                        [courseId]="courseWithUsers.id"
-                        [initialStats]="courseStatistics.activeStudents"
-                        [amountOfStudentsInCourse]="courseWithUsers.numberOfStudents"
+                        [courseId]="course.id"
+                        [initialStats]="courseStatistics?.activeStudents"
+                        [amountOfStudentsInCourse]="!!courseWithUsers ? courseWithUsers.numberOfStudents : 0"
                     >
                     </jhi-course-management-statistics>
                 </div>

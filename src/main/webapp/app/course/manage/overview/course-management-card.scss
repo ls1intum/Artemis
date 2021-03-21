@@ -1,12 +1,17 @@
 @import '../../../overview/_overview-vars.scss';
 
 .card {
-    min-height: 100%;
+    height: 425px;
     max-width: 2000px;
 
     .card-heading {
         display: flex;
         cursor: pointer;
+        height: 75px;
+
+        .card-title {
+            margin-bottom: 0;
+        }
 
         .container-padding {
             padding: 10px;
@@ -46,7 +51,7 @@
 
             ::ng-deep img {
                 border-radius: 50%;
-                height: 100px;
+                height: 65px;
                 width: auto;
             }
         }
@@ -56,6 +61,7 @@
         border: 1px solid $light-border-color;
         border-radius: 0.1rem;
         min-width: 30%;
+        height: 300px;
 
         .collapsed {
             margin-top: 2px;
@@ -75,8 +81,7 @@
 
     .section-content {
         overflow: auto;
-        max-height: 500px;
-        min-height: 200px;
+        height: 300px;
     }
 
     .control-label {
@@ -88,13 +93,11 @@
     }
 
     .card-footer {
-        justify-content: center;
+        height: 50px;
+        display: flex;
         align-items: center;
-        flex-direction: column;
-
-        .float-right {
-            float: right;
-        }
+        flex-direction: row;
+        padding-left: 15px;
     }
 
     .header-right {
