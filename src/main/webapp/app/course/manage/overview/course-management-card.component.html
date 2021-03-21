@@ -166,12 +166,12 @@
         </a>
         <a
             *ngIf="course.isAtLeastTutor"
-            [routerLink]="['/course-management', course.id, 'scores']"
+            [routerLink]="['/course-management', course.id, 'exams']"
             class="btn btn-info mr-1 mb-1"
-            [ngbTooltip]="'entity.action.scores' | artemisTranslate"
+            [ngbTooltip]="'entity.action.exams' | artemisTranslate"
         >
-            <fa-icon [icon]="'table'"></fa-icon>
-            <span class="d-none d-md-inline">{{ 'entity.action.scores' | artemisTranslate }}</span>
+            <fa-icon [icon]="'graduation-cap'"></fa-icon>
+            <span class="d-none d-md-inline">{{ 'entity.action.exams' | artemisTranslate }}</span>
         </a>
         <a
             *ngIf="course.isAtLeastTutor"
@@ -183,18 +183,18 @@
             <span class="d-none d-md-inline">{{ 'entity.action.lecture' | artemisTranslate }}</span>
         </a>
         <a
-            *ngIf="course.isAtLeastTutor"
-            [routerLink]="['/course-management', course.id, 'exams']"
+            *ngIf="course.isAtLeastInstructor"
+            [routerLink]="['/course-management', course.id, 'goal-management']"
             class="btn btn-info mr-1 mb-1"
-            [ngbTooltip]="'entity.action.exams' | artemisTranslate"
+            [ngbTooltip]="'artemisApp.learningGoal.learningGoalButton' | artemisTranslate"
         >
-            <fa-icon [icon]="'graduation-cap'"></fa-icon>
-            <span class="d-none d-md-inline">{{ 'entity.action.exams' | artemisTranslate }}</span>
+            <fa-icon [icon]="'flag'"></fa-icon>
+            <span [innerHTML]="'artemisApp.learningGoal.learningGoalButton' | artemisTranslate" class="d-none d-md-inline"></span>
         </a>
         <a
             *ngIf="course.isAtLeastTutor"
             [routerLink]="['/course-management', course.id, 'assessment-dashboard']"
-            class="btn btn-info mr-1 mb-1"
+            class="btn btn-primary mr-1 mb-1"
             [ngbTooltip]="'entity.action.assessmentDashboard' | artemisTranslate"
             [class.guided-tour]="isGuidedTour"
         >
@@ -204,20 +204,20 @@
         <a
             *ngIf="course.isAtLeastInstructor"
             [routerLink]="['/course-management', course.id, 'instructor-dashboard']"
-            class="btn btn-info mr-1 mb-1"
+            class="btn btn-primary mr-1 mb-1"
             [ngbTooltip]="'artemisApp.course.instructorDashboard' | artemisTranslate"
         >
             <fa-icon [icon]="'chess-king'"></fa-icon>
             <span class="d-none d-md-inline">{{ 'artemisApp.course.instructorDashboard' | artemisTranslate }}</span>
         </a>
         <a
-            *ngIf="course.isAtLeastInstructor"
-            [routerLink]="['/course-management', course.id, 'goal-management']"
-            class="btn btn-info mr-1 mb-1"
-            [ngbTooltip]="'artemisApp.learningGoal.learningGoalButton' | artemisTranslate"
+            *ngIf="course.isAtLeastTutor"
+            [routerLink]="['/course-management', course.id, 'scores']"
+            class="btn btn-primary mr-1 mb-1"
+            [ngbTooltip]="'entity.action.scores' | artemisTranslate"
         >
-            <fa-icon [icon]="'flag'"></fa-icon>
-            <span [innerHTML]="'artemisApp.learningGoal.learningGoalButton' | artemisTranslate" class="d-none d-md-inline"></span>
+            <fa-icon [icon]="'table'"></fa-icon>
+            <span class="d-none d-md-inline">{{ 'entity.action.scores' | artemisTranslate }}</span>
         </a>
     </div>
 </div>

@@ -86,5 +86,6 @@ export class CourseManagementCardComponent implements OnChanges {
                 (e.assessmentDueDate && e.assessmentDueDate <= moment() && e.assessmentDueDate >= sevenDaysAgo) ||
                 ((e.quizStatus === this.quizStatus.OPEN_FOR_PRACTICE || e.quizStatus === this.quizStatus.CLOSED) && e.releaseDate && e.releaseDate >= sevenDaysAgo),
         );
+        this.showPastExercises = this.futureExercises?.length === 0 && this.currentExercises?.length === 0 && this.exercisesInAssessment?.length === 0;
     }
 }
