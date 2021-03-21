@@ -179,12 +179,12 @@ public class TutorLeaderboardService {
             numberOfTutorComplaints += complaintsAboutTutor.getAllComplaints();
             numberOfAcceptedComplaints += complaintsAboutTutor.getAcceptedComplaints();
             // accepted complaints count 2x negatively
-            points -= 2 * complaintsAboutTutor.getPoints();
+            points -= 2.0 * complaintsAboutTutor.getPoints();
 
             var complaintResponsesOfTutor = complaintResponsesMap.getOrDefault(tutor.getId(), new TutorLeaderboardComplaintResponses());
             numberOfComplaintResponses += complaintResponsesOfTutor.getComplaintResponses();
             // resolved complaints count 2x
-            points += 2 * complaintResponsesOfTutor.getPoints();
+            points += 2.0 * complaintResponsesOfTutor.getPoints();
 
             if (!isExam) {
                 var feedbackRequestsAboutTutor = feedbackRequestsMap.getOrDefault(tutor.getId(), new TutorLeaderboardMoreFeedbackRequests());
