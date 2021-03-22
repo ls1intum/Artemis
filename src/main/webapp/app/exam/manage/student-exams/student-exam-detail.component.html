@@ -134,7 +134,7 @@
                             <span jhiTranslate="artemisApp.studentExamDetail.reviewer">Reviewer</span>
                         </th>
                         <th>
-                            <span>Has Complaint</span>
+                            <span jhiTranslate="artemisApp.studentExamDetail.hasComplaint">Action</span>
                         </th>
                         <th>
                             <span jhiTranslate="artemisApp.assessment.dashboard.columns.action">Action</span>
@@ -184,8 +184,8 @@
                                     (exercise?.studentParticipations)![0].results?.length > 0 &&
                                     (exercise?.studentParticipations)![0].results[0].hasComplaint
                                 "
-                                >Yes</span
-                            >
+                                jhiTranslate="artemisApp.studentExamDetail.hasComplaintYes"
+                            ></span>
                             <span
                                 *ngIf="
                                     !(
@@ -194,8 +194,8 @@
                                         (exercise?.studentParticipations)![0].results[0].hasComplaint
                                     )
                                 "
-                                >No</span
-                            >
+                                jhiTranslate="artemisApp.studentExamDetail.hasComplaintNo"
+                            ></span>
                         </td>
                         <td>
                             <div *ngIf="course?.isAtLeastInstructor && exercise?.studentParticipations && exercise.type != ExerciseType.QUIZ">
