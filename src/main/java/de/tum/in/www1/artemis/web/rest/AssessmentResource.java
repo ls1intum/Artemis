@@ -12,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
@@ -40,11 +41,11 @@ public abstract class AssessmentResource {
 
     protected final WebsocketMessagingService messagingService;
 
-    protected final ExampleSubmissionService exampleSubmissionService;
+    protected final ExampleSubmissionRepository exampleSubmissionRepository;
 
     public AssessmentResource(AuthorizationCheckService authCheckService, UserRepository userRepository, ExerciseRepository exerciseRepository, SubmissionService submissionService,
             AssessmentService assessmentService, ResultRepository resultRepository, ExamService examService, WebsocketMessagingService messagingService,
-            ExampleSubmissionService exampleSubmissionService) {
+            ExampleSubmissionRepository exampleSubmissionRepository) {
         this.authCheckService = authCheckService;
         this.userRepository = userRepository;
         this.exerciseRepository = exerciseRepository;
@@ -53,7 +54,7 @@ public abstract class AssessmentResource {
         this.resultRepository = resultRepository;
         this.examService = examService;
         this.messagingService = messagingService;
-        this.exampleSubmissionService = exampleSubmissionService;
+        this.exampleSubmissionRepository = exampleSubmissionRepository;
     }
 
     abstract String getEntityName();
@@ -134,7 +135,7 @@ public abstract class AssessmentResource {
      */
     protected ResponseEntity<Result> saveExampleAssessment(long exampleSubmissionId, List<Feedback> feedbacks) {
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        ExampleSubmission exampleSubmission = exampleSubmissionService.findOneWithEagerResult(exampleSubmissionId);
+        final var exampleSubmission = exampleSubmissionRepository.findByIdWithEagerResultAndFeedbackElseThrow(exampleSubmissionId);
         Submission submission = exampleSubmission.getSubmission();
         Exercise exercise = exampleSubmission.getExercise();
         checkAuthorization(exercise, user);
@@ -158,7 +159,7 @@ public abstract class AssessmentResource {
      */
     ResponseEntity<Result> getExampleAssessment(long exerciseId, long submissionId) {
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
-        ExampleSubmission exampleSubmission = exampleSubmissionService.findOneBySubmissionId(submissionId);
+        final var exampleSubmission = exampleSubmissionRepository.findBySubmissionIdWithResultsElseThrow(submissionId);
 
         // It is allowed to get the example assessment, if the user is an instructor or
         // if the user is a tutor and the submission is not used for tutorial in the assessment dashboard
