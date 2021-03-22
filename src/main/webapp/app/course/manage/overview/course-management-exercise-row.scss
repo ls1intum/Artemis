@@ -17,11 +17,15 @@
         overflow: hidden;
         text-overflow: ellipsis;
         max-width: 40ch;
+        display: flex;
+        align-items: center;
     }
 
     .item-category {
         color: gray;
         margin-left: 15px;
+        display: flex;
+        align-items: center;
         flex-direction: row;
         justify-content: center;
 
