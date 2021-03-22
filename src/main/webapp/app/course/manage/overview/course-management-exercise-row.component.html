@@ -141,7 +141,7 @@
                 <a
                     *ngIf="course.isAtLeastTutor"
                     [routerLink]="['/course-management', course.id, 'exercises', details.id, 'scores']"
-                    class="btn btn-primary mr-1 mb-1"
+                    class="btn btn-info mr-1 mb-1"
                     [ngbTooltip]="'entity.action.scores' | artemisTranslate"
                     ><fa-icon [icon]="'table'"></fa-icon
                 ></a>
