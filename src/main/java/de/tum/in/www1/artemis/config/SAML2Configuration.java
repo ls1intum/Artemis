@@ -1,20 +1,11 @@
 package de.tum.in.www1.artemis.config;
 
 import java.io.*;
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.security.KeyFactory;
-import java.security.NoSuchAlgorithmException;
-import java.security.PrivateKey;
 import java.security.Security;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.security.interfaces.RSAPrivateKey;
-import java.security.spec.InvalidKeySpecException;
-import java.security.spec.PKCS8EncodedKeySpec;
-import java.util.Base64;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
@@ -75,34 +66,34 @@ public class SAML2Configuration extends WebSecurityConfigurerAdapter {
                 .fromMetadataLocation(config.getMetadata())
                 .registrationId(config.getRegistrationId())
                 .entityId(config.getEntityId())
-                .decryptionX509Credentials(c -> this.addDecryptionInformation(c, config))
-                .signingX509Credentials(c -> this.addSigningInformation(c, config))
+                .decryptionX509Credentials(credentialsSink -> this.addDecryptionInformation(credentialsSink, config))
+                .signingX509Credentials(credentialsSink -> this.addSigningInformation(credentialsSink, config))
                 .build());
         }
 
         return new InMemoryRelyingPartyRegistrationRepository(relyingPartyRegistrations);
     }
 
-    private void addDecryptionInformation(Collection<Saml2X509Credential> c, SAML2Properties.RelyingPartyProperties config) {
+    private void addDecryptionInformation(Collection<Saml2X509Credential> credentialsSink, SAML2Properties.RelyingPartyProperties config) {
         if (!this.checkFiles(config))
             return;
 
         try {
             Saml2X509Credential credentials = Saml2X509Credential.decryption(readPrivateKey(config.getKeyFile()), readPublicCert(config.getCertFile()));
-            c.add(credentials);
+            credentialsSink.add(credentials);
         } catch (IOException | CertificateException e) {
             log.error(e.getMessage(), e);
         }
     }
 
 
-    private void addSigningInformation(Collection<Saml2X509Credential> c, SAML2Properties.RelyingPartyProperties config) {
+    private void addSigningInformation(Collection<Saml2X509Credential> credentialsSink, SAML2Properties.RelyingPartyProperties config) {
         if (!this.checkFiles(config))
             return;
 
         try {
             Saml2X509Credential credentials = Saml2X509Credential.signing(readPrivateKey(config.getKeyFile()), readPublicCert(config.getCertFile()));
-            c.add(credentials);
+            credentialsSink.add(credentials);
         } catch (IOException | CertificateException e) {
             log.error(e.getMessage(), e);
         }
