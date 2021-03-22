@@ -104,13 +104,14 @@ The Continuous Integration Server typically delegates the build jobs to local bu
 
 ### Data model
 
-The Artemis application server uses the following (simplified) data model in the MySQL database (note that the figure does not include all entities, attributes and relationships). It supports multiple courses with multiple exercises. Each student in the participating student group can participate in the exercise by clicking the **Start Exercise** button. 
-Then a repository and a build plan for the student (User) will be created and configured. The initialization state variable (Enum) helps to track the progress of this complex operation and allows recovering from errors. 
+The Artemis application server uses the following (simplified) data model in the MySQL database. It supports multiple courses with multiple exercises. Each student in the participating student group can participate in the exercise by clicking the **Start Exercise** button. 
+Then a repository and a build plan for the student (User) will be created and configured. The initialization state helps to track the progress of this complex operation and allows recovering from errors. 
 A student can submit multiple solutions by committing and pushing the source code changes to a given example code into the version control system or using the user interface. The continuous integration server automatically tests each submission, and notifies the Artemis application server, when a new result exists. 
 In addition, teaching assistants can assess student solutions and "manually" create results.
-The current data model is more complex and supports more features such as online exams, lectures, student questions and static code analysis.
 
 ![Data Model](docs/dev/system-design/DataModel.svg "Data Model")
+
+Please note, that the actual database model is more complex. The UML class diagram above omits some details for readability (e.g. lectures, student questions, exercise details, static code analysis, quiz questions, exam sessions, submission subclasses, etc.)
 
 ### Artemis Community
 
