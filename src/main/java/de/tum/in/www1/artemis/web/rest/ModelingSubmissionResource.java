@@ -173,6 +173,8 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
     /**
      * GET /modeling-submissions/{submissionId} : Gets an existing modelingSubmission with result. If no result exists for this submission a new Result object is created and
      * assigned to the submission.
+     * In case an instructors calls, the resultId is used first. In case the resultId is not set, the correctionRound is used.
+     * In case neither resultId nor correctionRound is set, the first correctionRound is used.
      *
      * @param submissionId the id of the modelingSubmission to retrieve
      * @param correctionRound correction round for which we prepare the submission
@@ -183,7 +185,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
     @GetMapping("/modeling-submissions/{submissionId}")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<ModelingSubmission> getModelingSubmission(@PathVariable Long submissionId,
-            @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound, @RequestParam(value = "resultId", defaultValue = "0") long resultId) {
+            @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound, @RequestParam(value = "resultId", required = false) Long resultId) {
         log.debug("REST request to get ModelingSubmission with id: {}", submissionId);
         // TODO CZ: include exerciseId in path to get exercise for auth check more easily?
         var modelingSubmission = modelingSubmissionService.findOne(submissionId);
@@ -191,14 +193,15 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
         var modelingExercise = (ModelingExercise) studentParticipation.getExercise();
         var gradingCriteria = gradingCriterionService.findByExerciseIdWithEagerGradingCriteria(modelingExercise.getId());
         modelingExercise.setGradingCriteria(gradingCriteria);
+
         final User user = userRepository.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isAtLeastTeachingAssistantForExercise(modelingExercise, user)
-                || (resultId > 0 && !authCheckService.isAtLeastInstructorForExercise(modelingExercise, user))) {
+        if (!authCheckService.isAllowedToAssessSubmission(modelingExercise, user, resultId)) {
             return forbidden();
         }
 
-        if (resultId > 0) {
-            modelingSubmission = modelingSubmissionService.findOneWithEagerResultAndFeedback(submissionId);
+        if (resultId != null) {
+            // load the submission with additional needed properties
+            modelingSubmission = (ModelingSubmission) submissionRepository.findOneWithEagerResultAndFeedback(submissionId);
             // check if result exists
             Result result = modelingSubmission.getManualResultsById(resultId);
             if (result == null) {
@@ -213,6 +216,8 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
         studentParticipation.setExercise(modelingExercise);
         modelingSubmission.getParticipation().getExercise().setGradingCriteria(gradingCriteria);
         this.modelingSubmissionService.hideDetails(modelingSubmission, user);
+        submissionService.removeNotNeededResults(modelingSubmission, correctionRound, resultId);
+
         return ResponseEntity.ok(modelingSubmission);
     }
 

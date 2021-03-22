@@ -411,4 +411,16 @@ public class AuthorizationCheckService {
         Course course = participation.getExercise().getCourseViaExerciseGroupOrCourseMember();
         return isAtLeastTeachingAssistantInCourse(course, user);
     }
+
+    /**
+     * Tutors of an exercise are allowed to assess the submissions, but only instructors are allowed to assess with a specific result
+     *
+     * @param exercise Exercise of the submission
+     * @param user User the requests the assessment
+     * @param resultId Id of the result he wants to assess
+     * @return true if caller is allows to assess submission
+     */
+    public boolean isAllowedToAssessSubmission(Exercise exercise, User user, Long resultId) {
+        return this.isAtLeastTeachingAssistantForExercise(exercise, user) || (resultId != null && !isAtLeastInstructorForExercise(exercise, user));
+    }
 }

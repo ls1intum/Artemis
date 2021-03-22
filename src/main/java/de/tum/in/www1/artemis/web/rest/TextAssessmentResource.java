@@ -71,9 +71,9 @@ public class TextAssessmentResource extends AssessmentResource {
             TextSubmissionService textSubmissionService, WebsocketMessagingService messagingService, ExerciseRepository exerciseRepository, ResultRepository resultRepository,
             GradingCriterionService gradingCriterionService, Optional<AtheneTrackingTokenProvider> atheneTrackingTokenProvider, ExamService examService,
             Optional<AutomaticTextAssessmentConflictService> automaticTextAssessmentConflictService, FeedbackConflictRepository feedbackConflictRepository,
-            ExampleSubmissionService exampleSubmissionService) {
+            ExampleSubmissionService exampleSubmissionService, SubmissionRepository submissionRepository) {
         super(authCheckService, userRepository, exerciseRepository, textSubmissionService, textAssessmentService, resultRepository, examService, messagingService,
-                exampleSubmissionService);
+                exampleSubmissionService, submissionRepository);
 
         this.textAssessmentService = textAssessmentService;
         this.textBlockService = textBlockService;
@@ -250,6 +250,8 @@ public class TextAssessmentResource extends AssessmentResource {
      * Given an exerciseId and a submissionId, the method retrieves from the database all the data needed by the tutor to assess the submission. If the tutor has already started
      * assessing the submission, then we also return all the results the tutor has already inserted. If another tutor has already started working on this submission, the system
      * returns an error
+     * In case an instructors calls, the resultId is used first. In case the resultId is not set, the correctionRound is used.
+     * In case neither resultId nor correctionRound are set, the first correctionRound is used.
      *
      * @param submissionId the id of the submission we want
      * @param correctionRound correction round for which we want the submission
@@ -259,7 +261,7 @@ public class TextAssessmentResource extends AssessmentResource {
     @GetMapping("/submission/{submissionId}")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Participation> retrieveParticipationForSubmission(@PathVariable Long submissionId,
-            @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound, @RequestParam(value = "resultId", defaultValue = "0") long resultId) {
+            @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound, @RequestParam(value = "resultId", required = false) Long resultId) {
 
         log.debug("REST request to get data for tutors text assessment submission: {}", submissionId);
 
@@ -277,12 +279,13 @@ public class TextAssessmentResource extends AssessmentResource {
         checkAuthorization(exercise, user);
         final boolean isAtLeastInstructorForExercise = authCheckService.isAtLeastInstructorForExercise(exercise, user);
 
-        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user) || (resultId > 0 && !isAtLeastInstructorForExercise)) {
+        // return forbidden if caller is not allowed to assess
+        if (!authCheckService.isAllowedToAssessSubmission(exercise, user, resultId)) {
             return forbidden();
         }
 
         Result result;
-        if (resultId > 0) {
+        if (resultId != null) {
             // in case resultId is set we get result by id
             result = textSubmission.getManualResultsById(resultId);
 
@@ -319,7 +322,7 @@ public class TextAssessmentResource extends AssessmentResource {
         textSubmission.getResults().forEach(r -> r.setSubmission(null));
 
         // set result again as it was changed
-        if (resultId > 0) {
+        if (resultId != null) {
             result = textSubmission.getManualResultsById(resultId);
             textSubmission.setResults(Collections.singletonList(result));
         }
@@ -327,6 +330,7 @@ public class TextAssessmentResource extends AssessmentResource {
             result = textSubmission.getResultForCorrectionRound(correctionRound);
         }
 
+        submissionService.removeNotNeededResults(textSubmission, correctionRound, resultId);
         participation.setResults(Set.copyOf(textSubmission.getResults()));
 
         final ResponseEntity.BodyBuilder bodyBuilder = ResponseEntity.ok();

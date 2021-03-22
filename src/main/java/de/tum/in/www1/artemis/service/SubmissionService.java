@@ -217,18 +217,6 @@ public class SubmissionService {
     }
 
     /**
-     * Get the submission with the given id from the database. The submission is loaded together with its result, the feedback of the result and the assessor of the
-     * result. Throws an EntityNotFoundException if no submission could be found for the given id.
-     *
-     * @param submissionId the id of the submission that should be loaded from the database
-     * @return the submission with the given id
-     */
-    public Submission findOneWithEagerResultAndFeedback(long submissionId) {
-        return submissionRepository.findWithEagerResultAndFeedbackById(submissionId)
-                .orElseThrow(() -> new EntityNotFoundException("Submission with id \"" + submissionId + "\" does not exist"));
-    }
-
-    /**
      * Removes sensitive information (e.g. example solution of the exercise) from the submission based on the role of the current user. This should be called before sending a
      * submission to the client.
      * ***IMPORTANT***: Do not call this method from a transactional context as this would remove the sensitive information also from the entities in the
@@ -536,5 +524,21 @@ public class SubmissionService {
                 // filter out non submitted submissions if the flag is set to true
                 .filter(submission -> submission.isPresent() && (!submittedOnly || submission.get().isSubmitted())).forEach(submission -> submissions.add((T) submission.get()));
         return submissions;
+    }
+
+    /**
+     * In case user calls for correctionRound 0, but more results already exists
+     * and he has not requested a specific result, remove any other results
+     *
+     * @param submission for which to remove results
+     * @param correctionRound for which not to remove results
+     * @param resultId specific resultId
+     */
+    public void removeNotNeededResults(Submission submission, int correctionRound, Long resultId) {
+        if (correctionRound == 0 && resultId == null && submission.getResults().size() >= 2) {
+            var resultList = new ArrayList<Result>();
+            resultList.add(submission.getFirstResult());
+            submission.setResults(resultList);
+        }
     }
 }

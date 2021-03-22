@@ -209,6 +209,20 @@ public abstract class Submission extends DomainObject {
     }
 
     /**
+     * Get the first manual result of the submission
+     *
+     * @return a {@link Result} or null if no result is present
+     */
+    @Nullable
+    @JsonIgnore
+    public Result getFirstManualResult() {
+        if (results != null && !results.isEmpty()) {
+            return this.getManualResults().get(0);
+        }
+        return null;
+    }
+
+    /**
      * Add a result to the list.
      * NOTE: You must make sure to correctly persist the result in the database!
      *
