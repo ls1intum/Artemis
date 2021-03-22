@@ -284,12 +284,12 @@ public class ProgrammingExerciseIntegrationServiceTest {
         for (final var planName : List.of("student1", "student2", TEMPLATE.getName(), SOLUTION.getName())) {
             mockDelegate.mockDeleteBuildPlan(projectKey, projectKey + "-" + planName.toUpperCase(), false);
         }
-        mockDelegate.mockDeleteBuildPlanProject(projectKey);
+        mockDelegate.mockDeleteBuildPlanProject(projectKey, false);
 
         for (final var repoName : List.of("student1", "student2", RepositoryType.TEMPLATE.getName(), RepositoryType.SOLUTION.getName(), RepositoryType.TESTS.getName())) {
-            mockDelegate.mockDeleteRepository(projectKey, (projectKey + "-" + repoName).toLowerCase());
+            mockDelegate.mockDeleteRepository(projectKey, (projectKey + "-" + repoName).toLowerCase(), false);
         }
-        mockDelegate.mockDeleteProjectInVcs(projectKey);
+        mockDelegate.mockDeleteProjectInVcs(projectKey, false);
 
         request.delete(path, HttpStatus.OK, params);
     }
@@ -304,12 +304,77 @@ public class ProgrammingExerciseIntegrationServiceTest {
         for (final var planName : List.of("student1", "student2", TEMPLATE.getName(), SOLUTION.getName())) {
             mockDelegate.mockDeleteBuildPlan(projectKey, projectKey + "-" + planName.toUpperCase(), true);
         }
-        mockDelegate.mockDeleteBuildPlanProject(projectKey);
+        mockDelegate.mockDeleteBuildPlanProject(projectKey, false);
+
+        request.delete(path, HttpStatus.INTERNAL_SERVER_ERROR, params);
+    }
+
+    public void testProgrammingExerciseDelete_buildPlanDoesntExist() throws Exception {
+        final var projectKey = programmingExercise.getProjectKey();
+        final var path = ROOT + PROGRAMMING_EXERCISE.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("deleteStudentReposBuildPlans", "true");
+        params.add("deleteBaseReposBuildPlans", "true");
+
+        for (final var planName : List.of("student1", "student2", TEMPLATE.getName(), SOLUTION.getName())) {
+            mockDelegate.mockDeleteBuildPlan(projectKey, projectKey + "-" + planName.toUpperCase(), false);
+        }
+        mockDelegate.mockDeleteBuildPlanProject(projectKey, false);
+
+        request.delete(path, HttpStatus.OK, params);
+    }
+
+    public void testProgrammingExerciseDelete_failToDeleteCiProject() throws Exception {
+        final var projectKey = programmingExercise.getProjectKey();
+        final var path = ROOT + PROGRAMMING_EXERCISE.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("deleteStudentReposBuildPlans", "true");
+        params.add("deleteBaseReposBuildPlans", "true");
+
+        for (final var planName : List.of("student1", "student2", TEMPLATE.getName(), SOLUTION.getName())) {
+            mockDelegate.mockDeleteBuildPlan(projectKey, projectKey + "-" + planName.toUpperCase(), false);
+        }
+        mockDelegate.mockDeleteBuildPlanProject(projectKey, true);
+
+        request.delete(path, HttpStatus.INTERNAL_SERVER_ERROR, params);
+    }
+
+    public void testProgrammingExerciseDelete_failToDeleteVcsProject() throws Exception {
+        final var projectKey = programmingExercise.getProjectKey();
+        final var path = ROOT + PROGRAMMING_EXERCISE.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("deleteStudentReposBuildPlans", "true");
+        params.add("deleteBaseReposBuildPlans", "true");
+
+        for (final var planName : List.of("student1", "student2", TEMPLATE.getName(), SOLUTION.getName())) {
+            mockDelegate.mockDeleteBuildPlan(projectKey, projectKey + "-" + planName.toUpperCase(), false);
+        }
+        mockDelegate.mockDeleteBuildPlanProject(projectKey, false);
 
         for (final var repoName : List.of("student1", "student2", RepositoryType.TEMPLATE.getName(), RepositoryType.SOLUTION.getName(), RepositoryType.TESTS.getName())) {
-            mockDelegate.mockDeleteRepository(projectKey, (projectKey + "-" + repoName).toLowerCase());
+            mockDelegate.mockDeleteRepository(projectKey, (projectKey + "-" + repoName).toLowerCase(), false);
         }
-        mockDelegate.mockDeleteProjectInVcs(projectKey);
+        mockDelegate.mockDeleteProjectInVcs(projectKey, true);
+
+        request.delete(path, HttpStatus.INTERNAL_SERVER_ERROR, params);
+    }
+
+    public void testProgrammingExerciseDelete_failToDeleteVcsRepositories() throws Exception {
+        final var projectKey = programmingExercise.getProjectKey();
+        final var path = ROOT + PROGRAMMING_EXERCISE.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("deleteStudentReposBuildPlans", "true");
+        params.add("deleteBaseReposBuildPlans", "true");
+
+        for (final var planName : List.of("student1", "student2", TEMPLATE.getName(), SOLUTION.getName())) {
+            mockDelegate.mockDeleteBuildPlan(projectKey, projectKey + "-" + planName.toUpperCase(), false);
+        }
+        mockDelegate.mockDeleteBuildPlanProject(projectKey, false);
+
+        for (final var repoName : List.of("student1", "student2", RepositoryType.TEMPLATE.getName(), RepositoryType.SOLUTION.getName(), RepositoryType.TESTS.getName())) {
+            mockDelegate.mockDeleteRepository(projectKey, (projectKey + "-" + repoName).toLowerCase(), true);
+        }
+        mockDelegate.mockDeleteProjectInVcs(projectKey, false);
 
         request.delete(path, HttpStatus.INTERNAL_SERVER_ERROR, params);
     }
