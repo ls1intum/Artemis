@@ -5,13 +5,7 @@
                 <a class="stretched-link" [routerLink]="['/course-management', course.id, details.type + '-exercises', details.id]"></a>
                 <div class="col-5 row-flex">
                     <div class="ml-2 mr-1 exercise-details-item" *ngIf="hasLeftoverAssessments">
-                        <fa-icon
-                            [icon]="'exclamation-triangle'"
-                            class="text-warning"
-                            placement="right"
-                            [ngbTooltip]="iconTooltip | artemisTranslate"
-                            container="body"
-                        ></fa-icon>
+                        <fa-icon [icon]="'exclamation-triangle'" class="text-warning" placement="right" [ngbTooltip]="iconTooltip | artemisTranslate" container="body"></fa-icon>
                     </div>
                     <div class="ml-2 exercise-details-item" *ngIf="details.teamMode">
                         <fa-icon [icon]="'users'" placement="right" [ngbTooltip]="'artemisApp.exercise.isTeamExercise' | artemisTranslate" container="body"></fa-icon>
@@ -19,7 +13,9 @@
                     <div class="ml-2 exercise-details-item">
                         <fa-icon [icon]="icon" placement="right" [ngbTooltip]="iconTooltip | artemisTranslate" container="body"></fa-icon>
                     </div>
-                    <div class="item-title-container"><span class="item-title">{{ details.title }}</span></div>
+                    <div class="item-title-container">
+                        <span class="item-title">{{ details.title }}</span>
+                    </div>
                     <div class="item-category d-flex hide-categories" *ngIf="details.categories?.length > 0">
                         <!-- We only support two categories -->
                         <h4 *ngFor="let category of details.categories">
