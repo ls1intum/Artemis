@@ -58,7 +58,7 @@ public class TutorParticipationResourceIntegrationTest extends AbstractSpringInt
         exampleSubmission.addTutorParticipations(tutorParticipationRepository.findWithEagerExampleSubmissionAndResultsByAssessedExerciseAndTutor(exercise, tutor));
         exampleSubmissionRepository.save(exampleSubmission);
 
-        Optional<ExampleSubmission> exampleSubmissionWithEagerExercise = exampleSubmissionRepository.findWithEagerExerciseById(exampleSubmission.getId());
+        Optional<ExampleSubmission> exampleSubmissionWithEagerExercise = exampleSubmissionRepository.findWithSubmissionResultExerciseGradingCriteriaById(exampleSubmission.getId());
         if (exampleSubmissionWithEagerExercise.isPresent()) {
             exercise = exampleSubmissionWithEagerExercise.get().getExercise();
             exercise.setTitle("Patterns in Software Engineering");
