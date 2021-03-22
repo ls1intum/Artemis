@@ -56,8 +56,25 @@
                     <td>
                         <ng-container *ngIf="submission.participation.submissions">
                             <a
-                                *ngIf="exercise.isAtLeastInstructor"
+                                *ngIf="exercise.isAtLeastInstructor && !examId"
                                 [routerLink]="['/course-management', courseId, 'exercises', exercise.id, 'participations', submission.participation.id, 'submissions']"
+                            >
+                                {{ submission.participation.submissions.length }}
+                            </a>
+                            <a
+                                *ngIf="exercise.isAtLeastInstructor && !!examId"
+                                [routerLink]="[
+                                    '/course-management',
+                                    courseId,
+                                    'exams',
+                                    examId,
+                                    'exercise-groups',
+                                    exerciseGroupId,
+                                    'exercises',
+                                    exercise.id,
+                                    'participations',
+                                    submission.participation.id
+                                ]"
                             >
                                 {{ submission.participation.submissions.length }}
                             </a>

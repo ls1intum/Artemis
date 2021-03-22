@@ -31,7 +31,7 @@ plugins {
 }
 
 group = "de.tum.in.www1.artemis"
-version = "4.11.0"
+version = "4.11.1"
 description = "Interactive Learning with Individual Feedback"
 
 sourceCompatibility=15
@@ -219,10 +219,10 @@ dependencies {
     implementation "org.springframework.boot:spring-boot-starter-thymeleaf:${spring_boot_version}"
 
     implementation "org.springframework.ldap:spring-ldap-core:2.3.3.RELEASE"
-    implementation "org.springframework.data:spring-data-ldap:2.4.5"
+    implementation "org.springframework.data:spring-data-ldap:2.4.6"
 
-    implementation "org.springframework.cloud:spring-cloud-starter-netflix-eureka-client:${spring_cloud_version}"
-    implementation "org.springframework.cloud:spring-cloud-starter-config:3.0.2"
+    implementation "org.springframework.cloud:spring-cloud-starter-netflix-eureka-client:3.0.2"
+    implementation "org.springframework.cloud:spring-cloud-starter-config:3.0.3"
     implementation "org.springframework.boot:spring-boot-starter-cloud-connectors:2.2.13.RELEASE"
 
     implementation "io.netty:netty-all:4.1.60.Final"
