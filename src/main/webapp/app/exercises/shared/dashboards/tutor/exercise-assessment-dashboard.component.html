@@ -372,7 +372,7 @@
                                             numberOfSubmissions.inTime -
                                             numberOfAssessmentsOfCorrectionRounds[correctionRound].inTime -
                                             numberOfLockedAssessmentByOtherTutorsOfCorrectionRound[correctionRound]?.inTime -
-                                            (correctionRound === 0 ? 0 : numberOfSubmissions.inTime - numberOfAssessmentsOfCorrectionRounds[1].inTime),
+                                            (correctionRound === 0 ? 0 : numberOfSubmissions.inTime - numberOfAssessmentsOfCorrectionRounds[0].inTime),
                                         openAssessments: numberOfSubmissions.inTime - numberOfAssessmentsOfCorrectionRounds[correctionRound].inTime,
                                         lockedSubmissionsByOtherTutor: numberOfLockedAssessmentByOtherTutorsOfCorrectionRound[correctionRound]?.inTime
                                     }"
