@@ -88,13 +88,13 @@ public interface MockDelegate {
 
     void mockRemoveUserFromGroup(User user, String group, boolean failInCi) throws Exception;
 
-    void mockDeleteRepository(String projectKey, String repostoryName) throws Exception;
+    void mockDeleteRepository(String projectKey, String repostoryName, boolean shouldFail) throws Exception;
 
-    void mockDeleteProjectInVcs(String projectKey) throws Exception;
+    void mockDeleteProjectInVcs(String projectKey, boolean shouldFail) throws Exception;
 
     void mockDeleteBuildPlan(String projectKey, String planName, boolean shouldFail) throws Exception;
 
-    void mockDeleteBuildPlanProject(String projectKey) throws Exception;
+    void mockDeleteBuildPlanProject(String projectKey, boolean shouldFail) throws Exception;
 
     void mockGetBuildPlan(String projectKey, String planName, boolean planExistsInCi, boolean planIsActive, boolean planIsBuilding, boolean failToGetBuild) throws Exception;
 
