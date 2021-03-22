@@ -205,13 +205,18 @@ public abstract class Participation extends DomainObject implements Participatio
         if (results == null || results.size() == 0) {
             return null;
         }
-        // TODO: we need to filter ILLEGAL results but we would need to check its submission which might be undefined..
+
         List<Result> sortedResultsWithCompletionDate = results.stream().filter(r -> r.getCompletionDate() != null)
                 .sorted((r1, r2) -> r2.getCompletionDate().compareTo(r1.getCompletionDate())).collect(Collectors.toList());
-        if (sortedResultsWithCompletionDate.size() == 0) {
+
+        // Filter out results that belong to an illegal submission (if the submission exists).
+        List<Result> sortedLegalResults = sortedResultsWithCompletionDate.stream()
+                .filter(result -> result.getSubmission() == null || !result.getSubmission().getType().equals(SubmissionType.ILLEGAL)).collect(Collectors.toList());
+
+        if (sortedLegalResults.size() == 0) {
             return null;
         }
-        return sortedResultsWithCompletionDate.get(0);
+        return sortedLegalResults.get(0);
     }
 
     // TODO: implement a method Result findLatestResultBeforeDueDate(ZonedDateTime dueDate)

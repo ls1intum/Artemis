@@ -1026,4 +1026,24 @@ public class GitService {
         git.stashCreate().call();
         git.close();
     }
+
+    /**
+     * Checks out the specified branch and executes a git-pull. Creates a new branch if it doesn't exist.
+     * @param repository the repository
+     * @param branchName the branch name to checkout
+     * @throws GitAPIException if the git operation does not work
+     */
+    public void checkoutOrCreateBranch(Repository repository, String branchName) throws GitAPIException {
+        Git git = new Git(repository);
+        var branchRef = "refs/heads/" + branchName;
+        var branchExists = git.branchList().call().stream().anyMatch(ref -> ref.getName().equals(branchRef));
+        if (branchExists) {
+            git.checkout().setName(branchName).call();
+        }
+        else {
+            git.checkout().setCreateBranch(true).setName(branchName).call();
+        }
+        git.pull().call();
+        git.close();
+    }
 }

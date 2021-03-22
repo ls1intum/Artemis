@@ -270,26 +270,6 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
     @Query("select distinct p from StudentParticipation p left join fetch p.submissions s left join fetch s.results r left join fetch p.team t where p.exercise.course.id = :#{#courseId} and t.shortName = :#{#teamShortName}")
     List<StudentParticipation> findAllByCourseIdAndTeamShortNameWithEagerSubmissionsResult(@Param("courseId") Long courseId, @Param("teamShortName") String teamShortName);
 
-    // TODO: also filter here for ILLEGAL Submission results?
-    @EntityGraph(type = LOAD, attributePaths = { "submissions.results.assessor" })
-    @Query("select distinct p from StudentParticipation p left join fetch p.submissions s left join fetch s.results r where p.exercise.id = :#{#exerciseId} and (r.assessor.id = :#{#assessorId} and s.id = (select max(id) from p.submissions) or s.id = null)")
-    List<StudentParticipation> findWithLatestSubmissionByExerciseAndAssessor(@Param("exerciseId") Long exerciseId, @Param("assessorId") Long assessorId);
-
-    // TODO: also filter here for ILLEGAL Submission results?
-    @Query("""
-            SELECT DISTINCT p FROM StudentParticipation p
-            LEFT JOIN FETCH p.submissions s
-            LEFT JOIN FETCH s.results r
-            WHERE p.exercise.id = :#{#exerciseId}
-            AND p.testRun = FALSE
-            AND (r.assessor.id = :#{#assessorId}
-                AND s.id = (SELECT MAX(id) FROM p.submissions)
-                OR s.id = NULL)
-            AND 0L = :#{#correctionRound}
-                """)
-    List<StudentParticipation> findWithLatestSubmissionByExerciseAndAssessorAndCorrectionRoundIgnoreTestRuns(@Param("exerciseId") Long exerciseId,
-            @Param("assessorId") Long assessorId, @Param("correctionRound") long correctionRound);
-
     /**
      * Count the number of submissions for each participation in a given exercise.
      *

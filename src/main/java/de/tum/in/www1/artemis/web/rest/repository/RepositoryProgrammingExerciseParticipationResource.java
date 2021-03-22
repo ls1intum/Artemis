@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -21,6 +22,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
@@ -181,9 +183,14 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Map<String, String>> getFilesWithContent(@PathVariable Long participationId) {
         return super.executeAndCheckForExceptions(() -> {
-            // TODO: we need to fetch the commit which belongs to the last not ILLEGAL submission!
             Repository repository = getRepository(participationId, RepositoryActionType.READ, true);
-            var filesWithContent = super.repositoryService.getFilesWithContent(repository);
+
+            // Retrieve the last legal submission because we are getting the files for that commit.
+            var participation = participationService.findProgrammingExerciseParticipationWithLatestSubmissionAndResult(participationId);
+            var legalSubmissions = participation.getSubmissions().stream().filter(submission -> !submission.getType().equals(SubmissionType.ILLEGAL)).collect(Collectors.toList());
+            var latestLegalSubmission = (ProgrammingSubmission) legalSubmissions.get(legalSubmissions.size() - 1);
+
+            var filesWithContent = super.repositoryService.getFilesWithContentForCommitRef(repository, latestLegalSubmission.getCommitHash());
             return new ResponseEntity<>(filesWithContent, HttpStatus.OK);
         });
     }
