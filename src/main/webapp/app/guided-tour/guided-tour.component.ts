@@ -492,8 +492,6 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
      * @return style object for the rectangle beside the highlighted element
      */
     public getOverlayStyle(position: OverlayPosition) {
-        let style = undefined;
-
         if (this.selectedElementRect) {
             const selectedElementTop = this.selectedElementRect.top - this.getHighlightPadding();
             const selectedElementLeft = this.selectedElementRect.left - this.getHighlightPadding();
@@ -501,33 +499,24 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
             const selectedElementWidth = this.selectedElementRect.width + this.getHighlightPadding() * 2;
 
             switch (position) {
-                case OverlayPosition.TOP: {
-                    style = { 'top.px': 0, 'left.px': 0, 'height.px': selectedElementTop > 0 ? selectedElementTop : 0 };
-                    break;
-                }
-                case OverlayPosition.LEFT: {
-                    style = {
+                case OverlayPosition.TOP:
+                    return { 'top.px': 0, 'left.px': 0, 'height.px': selectedElementTop > 0 ? selectedElementTop : 0 };
+                case OverlayPosition.LEFT:
+                    return {
                         'top.px': selectedElementTop,
                         'left.px': selectedElementLeft < 0 ? selectedElementLeft : 0,
                         'height.px': selectedElementHeight,
                         'width.px': selectedElementLeft > 0 ? selectedElementLeft : 0,
                     };
-                    break;
-                }
-                case OverlayPosition.RIGHT: {
-                    style = { 'top.px': selectedElementTop, 'left.px': selectedElementLeft + selectedElementWidth, 'height.px': selectedElementHeight };
-                    break;
-                }
-                case OverlayPosition.BOTTOM: {
-                    style = { 'top.px': selectedElementTop + selectedElementHeight > 0 ? selectedElementTop + selectedElementHeight : 0 };
-                    break;
-                }
-                case OverlayPosition.ELEMENT: {
-                    style = { 'top.px': selectedElementTop, 'left.px': selectedElementLeft, 'height.px': selectedElementHeight, 'width.px': selectedElementWidth };
-                }
+                case OverlayPosition.RIGHT:
+                    return { 'top.px': selectedElementTop, 'left.px': selectedElementLeft + selectedElementWidth, 'height.px': selectedElementHeight };
+                case OverlayPosition.BOTTOM:
+                    return { 'top.px': selectedElementTop + selectedElementHeight > 0 ? selectedElementTop + selectedElementHeight : 0 };
+                case OverlayPosition.ELEMENT:
+                    return { 'top.px': selectedElementTop, 'left.px': selectedElementLeft, 'height.px': selectedElementHeight, 'width.px': selectedElementWidth };
             }
         }
-        return style;
+        return undefined;
     }
 
     /**
