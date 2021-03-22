@@ -5,7 +5,6 @@ import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { Notification } from 'app/entities/notification.model';
 import { GroupNotification } from 'app/entities/group-notification.model';
-import { IconProp } from '@fortawesome/fontawesome-svg-core';
 
 @Component({
     selector: 'jhi-notification-popup',
