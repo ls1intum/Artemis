@@ -6,6 +6,7 @@ import javax.persistence.*;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.in.www1.artemis.domain.enumeration.Visibility;
@@ -127,10 +128,12 @@ public class ProgrammingExerciseTestCase extends DomainObject {
         this.exercise = exercise;
     }
 
+    @JsonIgnore
     public boolean isAfterDueDate() {
         return visibility == Visibility.AFTER_DUE_DATE;
     }
 
+    @JsonIgnore
     public boolean isInvisible() {
         return visibility == Visibility.NEVER;
     }

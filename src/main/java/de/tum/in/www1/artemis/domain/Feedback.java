@@ -192,10 +192,12 @@ public class Feedback extends DomainObject {
         return visibility;
     }
 
+    @JsonIgnore
     public boolean isAfterDueDate() {
         return this.visibility == Visibility.AFTER_DUE_DATE;
     }
 
+    @JsonIgnore
     public boolean isInvisible() {
         return this.visibility == Visibility.NEVER;
     }

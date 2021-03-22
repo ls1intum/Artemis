@@ -483,6 +483,7 @@ public abstract class Exercise extends DomainObject {
      *
      * @return true if the due date is in the future, otherwise false
      */
+    @JsonIgnore
     public boolean isBeforeDueDate() {
         if (dueDate == null) {
             return true;
