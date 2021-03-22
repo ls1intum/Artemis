@@ -1380,13 +1380,13 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         List<String> repoNames = new ArrayList<>(studentLogins);
 
         for (final var repoType : RepositoryType.values()) {
-            bitbucketRequestMockProvider.mockDeleteRepository(projectKey, programmingExercise.generateRepositoryName(repoType));
+            bitbucketRequestMockProvider.mockDeleteRepository(projectKey, programmingExercise.generateRepositoryName(repoType), false);
         }
 
         for (final var repoName : repoNames) {
-            bitbucketRequestMockProvider.mockDeleteRepository(projectKey, (projectKey + "-" + repoName).toLowerCase());
+            bitbucketRequestMockProvider.mockDeleteRepository(projectKey, (projectKey + "-" + repoName).toLowerCase(), false);
         }
-        bitbucketRequestMockProvider.mockDeleteProject(projectKey);
+        bitbucketRequestMockProvider.mockDeleteProject(projectKey, false);
         request.delete("/api/courses/" + exam2.getCourse().getId() + "/exams/" + exam2.getId(), HttpStatus.OK);
         assertThat(examRepository.findById(exam2.getId())).as("Exam was deleted").isEmpty();
 
