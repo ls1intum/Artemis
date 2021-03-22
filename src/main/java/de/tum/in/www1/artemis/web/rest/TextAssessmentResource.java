@@ -348,7 +348,7 @@ public class TextAssessmentResource extends AssessmentResource {
                 result.setFeedbacks(assessments);
             }
         }
-        if (result != null) {
+        if (result == null) {
             result = new Result();
             result.setSubmission(textSubmission);
         }
