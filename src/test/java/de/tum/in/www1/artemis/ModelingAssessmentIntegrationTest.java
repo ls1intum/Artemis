@@ -24,7 +24,6 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.AssessmentService;
-import de.tum.in.www1.artemis.service.ExampleSubmissionService;
 import de.tum.in.www1.artemis.service.ModelingSubmissionService;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.compass.CompassService;
@@ -57,7 +56,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
     ParticipationService participationService;
 
     @Autowired
-    ExampleSubmissionService exampleSubmissionService;
+    ExampleSubmissionRepository exampleSubmissionRepository;
 
     @Autowired
     CompassService compassService;
@@ -168,7 +167,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
         Result storedResult = request.putWithResponseBody("/api/modeling-submissions/" + storedExampleSubmission.getId() + "/example-assessment", feedbackList, Result.class,
                 HttpStatus.OK);
         assertThat(storedResult.isExampleResult()).as("stored result is flagged as example result").isTrue();
-        assertThat(exampleSubmissionService.findById(storedExampleSubmission.getId())).isPresent();
+        assertThat(exampleSubmissionRepository.findById(storedExampleSubmission.getId())).isPresent();
         // NOTE: for some reason this test fails in IntelliJ but works fine on the command line
         request.get("/api/exercise/" + classExercise.getId() + "/modeling-submissions/" + storedExampleSubmission.getSubmission().getId() + "/example-assessment", HttpStatus.OK,
                 Result.class);
