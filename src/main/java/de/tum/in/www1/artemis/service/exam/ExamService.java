@@ -10,6 +10,7 @@ import java.util.stream.Stream;
 
 import javax.validation.constraints.NotNull;
 
+import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.actuate.audit.AuditEvent;
@@ -36,6 +37,7 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.ExerciseService;
 import de.tum.in.www1.artemis.service.SubmissionService;
 import de.tum.in.www1.artemis.service.TutorLeaderboardService;
+import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 import de.tum.in.www1.artemis.web.rest.dto.*;
@@ -82,11 +84,13 @@ public class ExamService {
 
     private final SubmissionService submissionService;
 
+    private final GitService gitService;
+
     public ExamService(ExamRepository examRepository, StudentExamRepository studentExamRepository, ExamQuizService examQuizService, ExerciseService exerciseService,
             InstanceMessageSendService instanceMessageSendService, TutorLeaderboardService tutorLeaderboardService, AuditEventRepository auditEventRepository,
             StudentParticipationRepository studentParticipationRepository, ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository,
             UserRepository userRepository, ProgrammingExerciseRepository programmingExerciseRepository, QuizExerciseRepository quizExerciseRepository,
-            ResultRepository resultRepository, SubmissionRepository submissionRepository, SubmissionService submissionService) {
+            ResultRepository resultRepository, SubmissionRepository submissionRepository, SubmissionService submissionService, GitService gitService) {
         this.examRepository = examRepository;
         this.studentExamRepository = studentExamRepository;
         this.userRepository = userRepository;
@@ -103,6 +107,7 @@ public class ExamService {
         this.submissionRepository = submissionRepository;
         this.tutorLeaderboardService = tutorLeaderboardService;
         this.submissionService = submissionService;
+        this.gitService = gitService;
     }
 
     /**
@@ -765,8 +770,9 @@ public class ExamService {
     /**
      * Gets a collection of useful statistics for the tutor exam-assessment-dashboard, including: - number of submissions to the course - number of
      * assessments - number of assessments assessed by the tutor - number of complaints
-     * @param course    - the couse of the exam
-     * @param examId    - the id of the exam to retrieve stats from
+     *
+     * @param course - the couse of the exam
+     * @param examId - the id of the exam to retrieve stats from
      * @return data about a exam including all exercises, plus some data for the tutor as tutor status for assessment
      */
     public StatsForInstructorDashboardDTO getStatsForExamAssessmentDashboard(Course course, Long examId) {
@@ -799,9 +805,9 @@ public class ExamService {
      * Get all currently locked submissions for all users in the given exam.
      * These are all submissions for which users started, but did not yet finish the assessment.
      *
-     * @param examId  - the exam id
-     * @param user    - the user trying to access the locked submissions
-     * @return        - list of submissions that have locked results in the exam
+     * @param examId - the exam id
+     * @param user   - the user trying to access the locked submissions
+     * @return - list of submissions that have locked results in the exam
      */
     public List<Submission> getLockedSubmissions(Long examId, User user) {
         List<Submission> submissions = submissionRepository.getLockedSubmissionsAndResultsByExamId(examId);
@@ -810,5 +816,17 @@ public class ExamService {
             submissionService.hideDetails(submission, user);
         }
         return submissions;
+    }
+
+    public void squashTemplates(Exam exam) {
+        exam.getExerciseGroups().forEach(group -> group.getExercises().stream().filter(exercise -> exercise instanceof ProgrammingExercise)
+                .map(exercise -> (ProgrammingExercise) exercise).forEach(exercise -> {
+                    try {
+                        gitService.combineAllCommitsOfRepositoryIntoOne(exercise.getVcsTemplateRepositoryUrl());
+                    }
+                    catch (InterruptedException | GitAPIException e) {
+                        e.printStackTrace();
+                    }
+                }));
     }
 }
