@@ -18,6 +18,7 @@ import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.Submission;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
+import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -459,7 +460,6 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
      * @return map of participation id to submission count
      */
     private static Map<Long, Integer> convertListOfCountsIntoMap(List<long[]> participationIdAndSubmissionCountPairs) {
-
         return participationIdAndSubmissionCountPairs.stream().collect(Collectors.toMap(participationIdAndSubmissionCountPair -> participationIdAndSubmissionCountPair[0], // participationId
                 participationIdAndSubmissionCountPair -> Math.toIntExact(participationIdAndSubmissionCountPair[1]) // submissionCount
         ));
@@ -468,4 +468,16 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
     @Query("select count(sp) from StudentParticipation sp left join sp.exercise exercise where exercise.id = :#{#exerciseId} and sp.testRun = false group by exercise.id")
     Long countParticipationsIgnoreTestRunsByExerciseId(@Param("exerciseId") Long exerciseId);
 
+    /**
+     * Adds the transient property numberOfParticipations for each exercise to
+     * let instructors know which exercise has how many participations
+     *
+     * @param exerciseGroupList list of exercise groups
+     */
+    default void addNumberOfExamExerciseParticipations(List<ExerciseGroup> exerciseGroupList) {
+        exerciseGroupList.forEach((exerciseGroup -> exerciseGroup.getExercises().forEach(exercise -> {
+            Long numberOfParticipations = countParticipationsIgnoreTestRunsByExerciseId(exercise.getId());
+            exercise.setNumberOfParticipations(numberOfParticipations);
+        })));
+    }
 }
