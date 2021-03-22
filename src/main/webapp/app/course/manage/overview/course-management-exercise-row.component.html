@@ -19,7 +19,7 @@
                     <div class="ml-2 exercise-details-item">
                         <fa-icon [icon]="icon" placement="right" [ngbTooltip]="iconTooltip | artemisTranslate" container="body"></fa-icon>
                     </div>
-                    <span class="item-title">{{ details.exerciseTitle }}</span>
+                    <div class="item-title-container"><span class="item-title">{{ details.exerciseTitle }}</span></div>
                     <div class="item-category d-flex hide-categories" *ngIf="details.categories?.length > 0">
                         <!-- We only support two categories -->
                         <h4 *ngFor="let category of details.categories">

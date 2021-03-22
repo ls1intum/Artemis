@@ -9,6 +9,11 @@
     align-content: center;
     height: 60px;
 
+    .item-title-container {
+        display: flex;
+        align-items: center;
+    }
+
     .item-title {
         font-weight: bold;
         margin-left: 15px;
@@ -17,8 +22,7 @@
         overflow: hidden;
         text-overflow: ellipsis;
         max-width: 40ch;
-        display: flex;
-        align-items: center;
+        display: block;
     }
 
     .item-category {
@@ -167,8 +171,10 @@
         min-width: 45%;
     }
 
-    .exercise-date-container {
-        padding-right: 10px !important;
+    .course-item {
+        .exercise-date-container {
+            margin-right: unset !important;
+        }
     }
 }
 
@@ -185,5 +191,19 @@
 @media screen and (max-width: 675px) {
     .details-container {
         max-width: 70% !important;
+    }
+
+    .course-item {
+        .item-title {
+            max-width: 20ch;
+        }
+    }
+}
+
+@media screen and (max-width: 480px) {
+    .course-item {
+        .item-title {
+            max-width: 15ch;
+        }
     }
 }

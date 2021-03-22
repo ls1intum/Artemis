@@ -139,7 +139,7 @@
     }
 }
 
-@media screen and (max-width: 950px) {
+@media screen and (max-width: 960px) {
     .card {
         .statistics-card {
             display: none;
@@ -151,6 +151,7 @@
 
         .card-heading {
             flex-direction: column;
+            height: unset;
 
             .card-date {
                 justify-content: center;
@@ -161,6 +162,8 @@
                 display: flex;
             }
         }
+
+        height: unset;
     }
 }
 
@@ -170,6 +173,10 @@
             .card-description {
                 max-width: 40ch !important;
             }
+
+            height: unset;
         }
+
+        height: unset;
     }
 }
