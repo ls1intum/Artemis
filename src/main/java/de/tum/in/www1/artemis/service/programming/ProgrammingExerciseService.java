@@ -251,9 +251,9 @@ public class ProgrammingExerciseService {
         // Get path, files and prefix for the programming-language dependent files. They are copied first.
         String programmingLanguage = programmingExercise.getProgrammingLanguage().toString().toLowerCase();
         String programmingLanguageTemplate = getProgrammingLanguageTemplatePath(programmingExercise.getProgrammingLanguage());
-        String exercisePath = programmingLanguageTemplate + "/exercise/**/*";
-        String solutionPath = programmingLanguageTemplate + "/solution/**/*";
-        String testPath = programmingLanguageTemplate + "/test/**/*";
+        String exercisePath = programmingLanguageTemplate + "/exercise/**/*.*";
+        String solutionPath = programmingLanguageTemplate + "/solution/**/*.*";
+        String testPath = programmingLanguageTemplate + "/test/**/*.*";
 
         Resource[] exerciseResources = resourceLoaderService.getResources(exercisePath);
         Resource[] testResources = resourceLoaderService.getResources(testPath);
@@ -282,9 +282,9 @@ public class ProgrammingExerciseService {
             projectTypeTestPrefix = programmingLanguage + "/" + projectType + "/test";
             projectTypeSolutionPrefix = programmingLanguage + "/" + projectType + "/solution";
 
-            exercisePath = programmingLanguageProjectTypePath + "/exercise/**/*";
-            solutionPath = programmingLanguageProjectTypePath + "/solution/**/*";
-            testPath = programmingLanguageProjectTypePath + "/test/**/*";
+            exercisePath = programmingLanguageProjectTypePath + "/exercise/**/*.*";
+            solutionPath = programmingLanguageProjectTypePath + "/solution/**/*.*";
+            testPath = programmingLanguageProjectTypePath + "/test/**/*.*";
 
             projectTypeExerciseResources = resourceLoaderService.getResources(exercisePath);
             projectTypeTestResources = resourceLoaderService.getResources(testPath);
@@ -418,7 +418,7 @@ public class ProgrammingExerciseService {
             // First get files that are not dependent on the project type
             String templatePath = getProgrammingLanguageTemplatePath(programmingExercise.getProgrammingLanguage()) + "/test";
 
-            String projectTemplatePath = templatePath + "/projectTemplate/**/*";
+            String projectTemplatePath = templatePath + "/projectTemplate/**/*.*";
             Resource[] projectTemplate = resourceLoaderService.getResources(projectTemplatePath);
             fileService.copyResources(projectTemplate, prefix, repository.getLocalPath().toAbsolutePath().toString(), false);
 
@@ -427,7 +427,7 @@ public class ProgrammingExerciseService {
             if (projectType != null) {
                 String projectTypeTemplatePath = getProgrammingLanguageProjectTypePath(programmingExercise.getProgrammingLanguage(), projectType) + "/test";
 
-                String projectTypeProjectTemplatePath = projectTypeTemplatePath + "/projectTemplate/**/*";
+                String projectTypeProjectTemplatePath = projectTypeTemplatePath + "/projectTemplate/**/*.*";
 
                 try {
                     Resource[] projectTypeProjectTemplate = resourceLoaderService.getResources(projectTypeProjectTemplatePath);
@@ -443,7 +443,7 @@ public class ProgrammingExerciseService {
             sectionsMap.put("static-code-analysis", Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled()));
 
             if (!programmingExercise.hasSequentialTestRuns()) {
-                String testFilePath = templatePath + "/testFiles/**/*";
+                String testFilePath = templatePath + "/testFiles/**/*.*";
                 Resource[] testFileResources = resourceLoaderService.getResources(testFilePath);
                 String packagePath = Paths.get(repository.getLocalPath().toAbsolutePath().toString(), "test", "${packageNameFolder}").toAbsolutePath().toString();
 
@@ -478,7 +478,7 @@ public class ProgrammingExerciseService {
                 // Copy static code analysis config files
                 // TODO: rene: SWIFT - if we keep the parent folder, we need to enable showing the hidden .swiftlint.yml file otherwise the OE shows an empty folder
                 if (Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled())) {
-                    String staticCodeAnalysisConfigPath = templatePath + "/staticCodeAnalysisConfig/**/*";
+                    String staticCodeAnalysisConfigPath = templatePath + "/staticCodeAnalysisConfig/**/*.*";
                     Resource[] staticCodeAnalysisResources = resourceLoaderService.getResources(staticCodeAnalysisConfigPath);
                     fileService.copyResources(staticCodeAnalysisResources, prefix, repository.getLocalPath().toAbsolutePath().toString(), true);
                 }
@@ -505,7 +505,7 @@ public class ProgrammingExerciseService {
                     Path buildStagePath = Paths.get(repository.getLocalPath().toAbsolutePath().toString(), buildStage);
                     Files.createDirectory(buildStagePath);
 
-                    String buildStageResourcesPath = templatePath + "/testFiles/" + buildStage + "/**/*";
+                    String buildStageResourcesPath = templatePath + "/testFiles/" + buildStage + "/**/*.*";
                     Resource[] buildStageResources = resourceLoaderService.getResources(buildStageResourcesPath);
 
                     Files.createDirectory(Paths.get(buildStagePath.toAbsolutePath().toString(), "test"));
@@ -518,7 +518,7 @@ public class ProgrammingExerciseService {
 
                     // Possibly overwrite files if the project type is defined
                     if (projectType != null) {
-                        buildStageResourcesPath = projectTemplatePath + "/testFiles/" + buildStage + "/**/*";
+                        buildStageResourcesPath = projectTemplatePath + "/testFiles/" + buildStage + "/**/*.*";
                         try {
                             buildStageResources = resourceLoaderService.getResources(buildStageResourcesPath);
                             fileService.copyResources(buildStageResources, prefix, packagePath, false);

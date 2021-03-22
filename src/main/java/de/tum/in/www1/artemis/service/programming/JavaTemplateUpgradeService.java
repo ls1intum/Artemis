@@ -117,7 +117,7 @@ public class JavaTemplateUpgradeService implements TemplateUpgradeService {
 
                 // Add latest static code analysis tool configurations or remove configurations
                 if (Boolean.TRUE.equals(exercise.isStaticCodeAnalysisEnabled())) {
-                    Resource[] staticCodeAnalysisResources = getTemplateResources(exercise, "test/" + SCA_CONFIG_FOLDER + "/**/*");
+                    Resource[] staticCodeAnalysisResources = getTemplateResources(exercise, "test/" + SCA_CONFIG_FOLDER + "/**/*.*");
                     fileService.copyResources(staticCodeAnalysisResources, "java/test", repository.getLocalPath().toAbsolutePath().toString(), true);
                 }
                 else {
