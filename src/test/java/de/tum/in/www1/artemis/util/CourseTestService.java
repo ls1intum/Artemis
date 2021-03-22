@@ -1313,22 +1313,21 @@ public class CourseTestService {
         var exerciseDetails = dto.getExerciseDetails();
         assertThat(exerciseDetails.size()).isEqualTo(5);
 
-        var quizDtoOptional = exerciseDetails.stream().filter(e -> e.getExerciseType().equals("quiz")).findFirst();
-        assertThat(quizDtoOptional.isPresent()).isTrue();
+        var quizDetailsOptional = exerciseDetails.stream().filter(e -> e instanceof QuizExercise).findFirst();
+        assertThat(quizDetailsOptional.isPresent()).isTrue();
 
         var quizExerciseOptional = instructorsCourse.getExercises().stream().filter(e -> e instanceof QuizExercise).findFirst();
         assertThat(quizExerciseOptional.isPresent()).isTrue();
 
-        var quizDto = quizDtoOptional.get();
+        var quizDetails = quizDetailsOptional.get();
         var quizExercise = quizExerciseOptional.get();
-        assertThat(quizDto.getQuizStatus()).isEqualTo(QuizStatus.CLOSED);
-        assertThat(quizDto.getCategories().size()).isEqualTo(quizExercise.getCategories().size());
+        assertThat(quizDetails.getCategories().size()).isEqualTo(quizExercise.getCategories().size());
 
-        var dtoCategories = quizDto.getCategories().stream().findFirst();
+        var detailsCategories = quizDetails.getCategories().stream().findFirst();
         var exerciseCategories = quizExercise.getCategories().stream().findFirst();
-        assertThat(dtoCategories.isPresent()).isTrue();
+        assertThat(detailsCategories.isPresent()).isTrue();
         assertThat(exerciseCategories.isPresent()).isTrue();
-        assertThat(dtoCategories.get()).isEqualTo(exerciseCategories.get());
+        assertThat(detailsCategories.get()).isEqualTo(exerciseCategories.get());
     }
 
     // Test
