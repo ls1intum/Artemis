@@ -5,18 +5,18 @@
         "exercises": {
             "title": "Artemis unterstützt folgende Aufgabentypen",
             "detail": {
-                "programmingExercises": "Programmierübungen mit Versionskontrolle und automatischer Bewertung mit Testfällen und kontinuierlicher Integration",
+                "programmingExercises": "Programmierübungen mit Versionskontrolle und automatischer Bewertung anhand von Testfällen und kontinuierlicher Integration",
                 "quiz": "Quizübungen mit Multiple-Choice-, Drag & Drop- und Kurzantwort-Quizfragen",
-                "modelingExercises": "Modellierungsübungen mit halbautomatischer Bewertung unter Verwendung von Konzepten von Machine Learning",
+                "modelingExercises": "Modellierungsübungen mit halbautomatischer Bewertung unter Verwendung von Machine Learning Konzepten",
                 "textExercises": "Textübungen mit manueller (und experimenteller halbautomatischer) Bewertung",
-                "uploadExercises": "Übungen mit Hochladen von Dateien mit manueller Bewertung"
+                "uploadExercises": "Übungen zum Hochladen von Dateien mit anschießender manueller Bewertung"
             }
         },
         "exam": {
             "title": "Artemis unterstützt folgende Features für Klausuren",
             "detail": {
                 "supportedExerciseTypes": "Alle Aufgabentypen sind auch in der Klausur verfügbar",
-                "randomSelectionOfVariants": "Mehrere Varianten von Aufgaben können erstellt und zufällig den Studenten zugewiesen werden",
+                "randomSelectionOfVariants": "Mehrere Varianten von Aufgaben können erstellt und den Studenten zufällig zugewiesen werden",
                 "fullFeatureOverview": {
                     "description": "Gesamter Überblick über alle Features:",
                     "studentLink": "Überblick für Studenten",
