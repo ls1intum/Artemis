@@ -60,7 +60,7 @@ describe('ShortAnswerQuestionComponent', () => {
         const explanation = 'This is a very good explanation!';
         alternativeQuestion.explanation = explanation;
 
-        component.shortAnswerQuestion = alternativeQuestion;
+        component.question = alternativeQuestion;
 
         expect(component.textParts).to.deep.equal([[`<p>${text}</p>`]]);
         expect(component.shortAnswerQuestion).to.deep.equal(alternativeQuestion);
@@ -85,7 +85,7 @@ describe('ShortAnswerQuestionComponent', () => {
         const returnValue = ({ value: text } as unknown) as HTMLElement;
         const getNavigationStub = stub(document, 'getElementById').returns(returnValue);
 
-        component.shortAnswerQuestion = alternativeQuestion;
+        component.question = alternativeQuestion;
         component.setSubmittedText();
 
         expect(getNavigationStub).to.have.been.called;
