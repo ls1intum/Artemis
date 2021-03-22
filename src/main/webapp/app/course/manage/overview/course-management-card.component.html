@@ -83,7 +83,7 @@
                                 [course]="course"
                                 [rowType]="exerciseRowType.FUTURE"
                                 [details]="exercise"
-                                [statistic]="statisticsPerExercise[exercise.exerciseId]"
+                                [statistic]="statisticsPerExercise[exercise.id]"
                             ></jhi-course-management-exercise-row>
                         </div>
                         <div *ngIf="!showFutureExercises" class="collapsed"></div>
@@ -99,7 +99,7 @@
                                 [course]="course"
                                 [rowType]="exerciseRowType.CURRENT"
                                 [details]="exercise"
-                                [statistic]="statisticsPerExercise[exercise.exerciseId]"
+                                [statistic]="statisticsPerExercise[exercise.id]"
                             ></jhi-course-management-exercise-row>
                         </div>
                         <div *ngIf="!showCurrentExercises" class="collapsed"></div>
@@ -115,7 +115,7 @@
                                 [course]="course"
                                 [rowType]="exerciseRowType.ASSESSING"
                                 [details]="exercise"
-                                [statistic]="statisticsPerExercise[exercise.exerciseId]"
+                                [statistic]="statisticsPerExercise[exercise.id]"
                             ></jhi-course-management-exercise-row>
                         </div>
                         <div *ngIf="!showExercisesInAssessment" class="collapsed"></div>
@@ -131,7 +131,7 @@
                                 [course]="course"
                                 [rowType]="exerciseRowType.PAST"
                                 [details]="exercise"
-                                [statistic]="statisticsPerExercise[exercise.exerciseId]"
+                                [statistic]="statisticsPerExercise[exercise.id]"
                             ></jhi-course-management-exercise-row>
                         </div>
                         <div *ngIf="!showPastExercises" class="collapsed"></div>

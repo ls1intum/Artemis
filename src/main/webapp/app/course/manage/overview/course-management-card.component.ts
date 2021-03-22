@@ -1,11 +1,10 @@
 import { ChangeDetectionStrategy, Component, Input, OnChanges } from '@angular/core';
 import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
-import { ExerciseType } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import * as moment from 'moment';
 import { ExerciseRowType } from 'app/course/manage/overview/course-management-exercise-row.component';
 import { CourseManagementOverviewExerciseStatisticsDTO } from 'app/course/manage/overview/course-management-overview-exercise-statistics-dto.model';
 import { CourseManagementOverviewStatisticsDto } from 'app/course/manage/overview/course-management-overview-statistics-dto.model';
-import { CourseManagementOverviewExerciseDetailsDTO } from 'app/course/manage/overview/course-management-overview-exercise-details-dto.model';
 import { CourseManagementOverviewDto } from 'app/course/manage/overview/course-management-overview-dto.model';
 import { Course } from 'app/entities/course.model';
 import { CachingStrategy } from 'app/shared/image/secured-image.component';
@@ -28,10 +27,10 @@ export class CourseManagementCardComponent implements OnChanges {
 
     statisticsPerExercise = new Map<number, CourseManagementOverviewExerciseStatisticsDTO>();
 
-    futureExercises: CourseManagementOverviewExerciseDetailsDTO[];
-    currentExercises: CourseManagementOverviewExerciseDetailsDTO[];
-    exercisesInAssessment: CourseManagementOverviewExerciseDetailsDTO[];
-    pastExercises: CourseManagementOverviewExerciseDetailsDTO[];
+    futureExercises: Exercise[];
+    currentExercises: Exercise[];
+    exercisesInAssessment: Exercise[];
+    pastExercises: Exercise[];
 
     showFutureExercises = false;
     showCurrentExercises = true;

@@ -12,9 +12,8 @@ import { CourseManagementExerciseRowComponent } from 'app/course/manage/overview
 import { ProgressBarComponent } from 'app/shared/dashboards/tutor-participation-graph/progress-bar/progress-bar.component';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { MockRouterLinkDirective } from '../lecture-unit/lecture-unit-management.component.spec';
-import { CourseManagementOverviewExerciseDetailsDTO } from 'app/course/manage/overview/course-management-overview-exercise-details-dto.model';
 import { CourseManagementOverviewExerciseStatisticsDTO } from 'app/course/manage/overview/course-management-overview-exercise-statistics-dto.model';
-import { ExerciseType } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { Course } from 'app/entities/course.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
@@ -26,9 +25,10 @@ describe('CourseManagementExerciseRowComponent', () => {
     let fixture: ComponentFixture<CourseManagementExerciseRowComponent>;
     let component: CourseManagementExerciseRowComponent;
 
-    const exerciseDetailDTO = new CourseManagementOverviewExerciseDetailsDTO();
-    exerciseDetailDTO.teamMode = false;
-    exerciseDetailDTO.exerciseTitle = 'ModelingExercise';
+    const exerciseDetails = {
+        teamMode: false,
+        title: 'ModelingExercise',
+    } as Exercise;
 
     const exerciseStatisticsDTO = new CourseManagementOverviewExerciseStatisticsDTO();
     exerciseStatisticsDTO.averageScoreInPercent = 50;
@@ -57,9 +57,8 @@ describe('CourseManagementExerciseRowComponent', () => {
 
     it('should initialize component', () => {
         component.course = new Course();
-        component.details = exerciseDetailDTO;
+        component.details = exerciseDetails;
         component.ngOnChanges();
-        expect(component.displayTitle).to.equal('ModelingExercise');
         component.statistic = exerciseStatisticsDTO;
         component.ngOnChanges();
         expect(component.averageScoreNumerator).to.equal(5);

@@ -406,25 +406,4 @@ public class QuizExerciseService {
         quizScheduleService.cancelScheduledQuizStart(quizExerciseId);
         quizScheduleService.clearQuizData(quizExerciseId);
     }
-
-    /**
-     * Evaluates the QuizStatus for a given quiz
-     * Note: This implements the same logic as the client side quiz-exercise.service.ts
-     *
-     * @param quizExercise the quiz exercise to get the status of
-     * @return the status of the quiz
-     */
-    public QuizStatus evaluateQuizStatus(QuizExercise quizExercise) {
-        if (quizExercise.isIsPlannedToStart() && quizExercise.getRemainingTime() != null) {
-            if (quizExercise.getRemainingTime() <= 0) {
-                // the quiz is over
-                return quizExercise.isIsOpenForPractice() ? QuizStatus.OPEN_FOR_PRACTICE : QuizStatus.CLOSED;
-            }
-            else {
-                return QuizStatus.ACTIVE;
-            }
-        }
-        // the quiz hasn't started yet
-        return quizExercise.isIsVisibleBeforeStart() ? QuizStatus.VISIBLE : QuizStatus.HIDDEN;
-    }
 }

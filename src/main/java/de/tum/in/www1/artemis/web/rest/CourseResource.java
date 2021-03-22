@@ -898,11 +898,12 @@ public class CourseResource {
     @GetMapping("/courses/exercises-for-management-overview")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<List<CourseManagementOverviewDTO>> getExercisesForCourseOverview(@RequestParam(defaultValue = "false") boolean onlyActive) {
+        var sevenDaysAgo = ZonedDateTime.now().minusDays(7);
         final List<CourseManagementOverviewDTO> courseDTOS = new ArrayList<>();
         for (final var course : courseService.getAllCoursesForOverview(onlyActive)) {
             final var courseDTO = new CourseManagementOverviewDTO();
             courseDTO.setCourseId(course.getId());
-            courseDTO.setExerciseDetails(exerciseService.getExercisesForCourseManagementOverview(course.getId()));
+            courseDTO.setExerciseDetails(exerciseRepository.getExercisesForCourseManagementOverview(course.getId(), sevenDaysAgo));
             courseDTOS.add(courseDTO);
         }
 

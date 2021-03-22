@@ -33,7 +33,6 @@ import de.tum.in.www1.artemis.domain.scores.ParticipantScore;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseService;
 import de.tum.in.www1.artemis.service.scheduled.quiz.QuizScheduleService;
-import de.tum.in.www1.artemis.web.rest.dto.CourseManagementOverviewExerciseDetailsDTO;
 import de.tum.in.www1.artemis.web.rest.dto.CourseManagementOverviewExerciseStatisticsDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -547,51 +546,6 @@ public class ExerciseService {
             exercise.setStudentAssignedTeamId(team.map(Team::getId).orElse(null));
             exercise.setStudentAssignedTeamIdComputed(true);
         }
-    }
-
-    /**
-     * Get specific exercise information
-     *
-     * @param courseId the id of the course
-     * @return An Integer array containing active students for each index
-     */
-    public List<CourseManagementOverviewExerciseDetailsDTO> getExercisesForCourseManagementOverview(Long courseId) {
-        List<CourseManagementOverviewExerciseDetailsDTO> detailsDTOS = new ArrayList<>();
-        var sevenDaysAgo = ZonedDateTime.now().minusDays(7);
-        for (var exercise : exerciseRepository.getExercisesForCourseManagementOverview(courseId, sevenDaysAgo)) {
-            var exerciseId = exercise.getId();
-            var dto = new CourseManagementOverviewExerciseDetailsDTO();
-            dto.setExerciseId(exerciseId);
-            dto.setExerciseTitle(exercise.getTitle());
-
-            if (exercise instanceof QuizExercise) {
-                dto.setExerciseType("quiz");
-                dto.setQuizStatus(quizExerciseService.evaluateQuizStatus((QuizExercise) exercise));
-            }
-            else if (exercise instanceof ProgrammingExercise) {
-                dto.setExerciseType("programming");
-            }
-            else if (exercise instanceof TextExercise) {
-                dto.setExerciseType("text");
-            }
-            else if (exercise instanceof ModelingExercise) {
-                dto.setExerciseType("modeling");
-            }
-            else if (exercise instanceof FileUploadExercise) {
-                dto.setExerciseType("file-upload");
-            }
-
-            dto.setReleaseDate(exercise.getReleaseDate());
-            dto.setDueDate(exercise.getDueDate());
-            dto.setAssessmentDueDate(exercise.getAssessmentDueDate());
-            dto.setTeamMode(exercise.getMode() == ExerciseMode.TEAM);
-
-            dto.setCategories(exerciseRepository.findAllCategories(exerciseId));
-
-            detailsDTOS.add(dto);
-        }
-
-        return detailsDTOS;
     }
 
     /**

@@ -1,8 +1,7 @@
 import { ChangeDetectionStrategy, Component, Input, OnChanges } from '@angular/core';
-import { ExerciseType } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { CourseManagementOverviewExerciseStatisticsDTO } from 'app/course/manage/overview/course-management-overview-exercise-statistics-dto.model';
-import { CourseManagementOverviewExerciseDetailsDTO } from 'app/course/manage/overview/course-management-overview-exercise-details-dto.model';
 import { Course } from 'app/entities/course.model';
 import { round } from 'app/shared/util/utils';
 
@@ -21,7 +20,7 @@ export enum ExerciseRowType {
 })
 export class CourseManagementExerciseRowComponent implements OnChanges {
     @Input() course: Course;
-    @Input() details: CourseManagementOverviewExerciseDetailsDTO;
+    @Input() details: Exercise;
     @Input() statistic: CourseManagementOverviewExerciseStatisticsDTO;
     @Input() rowType: ExerciseRowType;
 
@@ -39,7 +38,6 @@ export class CourseManagementExerciseRowComponent implements OnChanges {
     JSON = JSON;
 
     hasLeftoverAssessments = false;
-    displayTitle: string;
     averageScoreNumerator: number;
     icon: IconProp;
     iconTooltip: string;
@@ -84,9 +82,8 @@ export class CourseManagementExerciseRowComponent implements OnChanges {
     ngOnChanges() {
         if (this.details && !this.detailsLoaded) {
             this.detailsLoaded = true;
-            this.displayTitle = this.details.exerciseTitle ?? '';
-            this.icon = this.getIcon(this.details.exerciseType);
-            this.iconTooltip = this.getIconTooltip(this.details.exerciseType);
+            this.icon = this.getIcon(this.details.type);
+            this.iconTooltip = this.getIconTooltip(this.details.type);
         }
 
         if (!this.statistic || this.statisticsLoaded) {

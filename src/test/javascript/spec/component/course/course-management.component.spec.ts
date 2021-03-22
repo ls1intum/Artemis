@@ -24,10 +24,10 @@ import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.di
 import { MomentModule } from 'ngx-moment';
 import { CourseManagementCardComponent } from 'app/course/manage/overview/course-management-card.component';
 import { CourseManagementOverviewDto } from 'app/course/manage/overview/course-management-overview-dto.model';
-import { CourseManagementOverviewExerciseDetailsDTO } from 'app/course/manage/overview/course-management-overview-exercise-details-dto.model';
 import { CourseManagementOverviewStatisticsDto } from 'app/course/manage/overview/course-management-overview-statistics-dto.model';
 import { CourseManagementOverviewExerciseStatisticsDTO } from 'app/course/manage/overview/course-management-overview-exercise-statistics-dto.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe.ts';
+import { Exercise } from 'app/entities/exercise.model';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -41,20 +41,20 @@ describe('CourseManagementComponent', () => {
     const pastExercise = {
         dueDate: moment().subtract(6, 'days'),
         assessmentDueDate: moment().subtract(1, 'days'),
-    } as CourseManagementOverviewExerciseDetailsDTO;
+    } as Exercise;
 
     const currentExercise = {
         dueDate: moment().add(2, 'days'),
         releaseDate: moment().subtract(2, 'days'),
-    } as CourseManagementOverviewExerciseDetailsDTO;
+    } as Exercise;
 
     const futureExercise1 = {
         releaseDate: moment().add(4, 'days'),
-    } as CourseManagementOverviewExerciseDetailsDTO;
+    } as Exercise;
 
     const futureExercise2 = {
         releaseDate: moment().add(6, 'days'),
-    } as CourseManagementOverviewExerciseDetailsDTO;
+    } as Exercise;
 
     const courseDTO187 = {
         courseId: 187,

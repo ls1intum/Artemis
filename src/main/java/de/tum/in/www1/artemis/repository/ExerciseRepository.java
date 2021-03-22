@@ -68,15 +68,6 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
     Optional<Exercise> findByIdWithDetailsForStudent(@Param("exerciseId") Long exerciseId);
 
     /**
-     * Fetches the categories for the given exercise
-     *
-     * @param exerciseId the id of the exercise to get the categories for
-     * @return a set containing the categories of the exercise
-     */
-    @Query("select distinct c from Exercise e join e.categories c where e.id = :#{#exerciseId}")
-    Set<String> findAllCategories(@Param("exerciseId") Long exerciseId);
-
-    /**
      * calculates the average score and the participation rate of students for each given individual course exercise
      * by using the last result (rated or not)
      * @param exerciseIds - exercise ids to count the statistics for
@@ -237,8 +228,8 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
      * @return a list of exercises
      */
     @Query("""
-            SELECT e
-            FROM Exercise e
+            SELECT distinct e
+            FROM Exercise e left join fetch e.categories
             WHERE e.course.id = :courseId
                 AND (e.assessmentDueDate IS NULL or e.assessmentDueDate >= :sevenDaysAgo)
                 AND (e.assessmentDueDate IS NOT NULL or e.dueDate IS NULL or e.dueDate >= :sevenDaysAgo)
