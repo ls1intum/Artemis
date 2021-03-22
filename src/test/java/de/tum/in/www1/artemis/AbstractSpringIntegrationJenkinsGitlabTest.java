@@ -77,7 +77,7 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
     }
 
     @Override
-    public void mockConnectorRequestsForSetup(ProgrammingExercise exercise) throws Exception {
+    public void mockConnectorRequestsForSetup(ProgrammingExercise exercise, boolean failToCreateCiProject) throws Exception {
         final var projectKey = exercise.getProjectKey();
         final var exerciseRepoName = exercise.generateRepositoryName(RepositoryType.TEMPLATE);
         final var solutionRepoName = exercise.generateRepositoryName(RepositoryType.SOLUTION);
@@ -89,26 +89,45 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
         gitlabRequestMockProvider.mockCreateRepository(exercise, solutionRepoName);
         gitlabRequestMockProvider.mockGetDefaultBranch("master", exercise.getVcsTemplateRepositoryUrl());
         gitlabRequestMockProvider.mockAddAuthenticatedWebHook();
-        jenkinsRequestMockProvider.mockCreateProjectForExercise(exercise);
+        jenkinsRequestMockProvider.mockCreateProjectForExercise(exercise, failToCreateCiProject);
         jenkinsRequestMockProvider.mockCreateBuildPlan(projectKey, TEMPLATE.getName());
         jenkinsRequestMockProvider.mockCreateBuildPlan(projectKey, SOLUTION.getName());
-        jenkinsRequestMockProvider.mockTriggerBuild(projectKey, TEMPLATE.getName());
-        jenkinsRequestMockProvider.mockTriggerBuild(projectKey, SOLUTION.getName());
+        jenkinsRequestMockProvider.mockTriggerBuild(projectKey, TEMPLATE.getName(), false);
+        jenkinsRequestMockProvider.mockTriggerBuild(projectKey, SOLUTION.getName(), false);
 
         doNothing().when(gitService).pushSourceToTargetRepo(any(), any());
     }
 
     @Override
     public void mockConnectorRequestsForImport(ProgrammingExercise sourceExercise, ProgrammingExercise exerciseToBeImported, boolean recreateBuildPlans) throws Exception {
-        final var targetProjectKey = exerciseToBeImported.getProjectKey();
+        mockImportRepositories(exerciseToBeImported);
+        doNothing().when(gitService).pushSourceToTargetRepo(any(), any());
+
+        if (!recreateBuildPlans) {
+            mockCloneAndEnableAllBuildPlans(sourceExercise, exerciseToBeImported, true, false);
+            mockUpdatePlanRepositoriesInBuildPlans(exerciseToBeImported);
+        }
+        else {
+            mockSetupBuildPlansForNewExercise(exerciseToBeImported);
+        }
+    }
+
+    @Override
+    public void mockImportProgrammingExerciseWithFailingEnablePlan(ProgrammingExercise sourceExercise, ProgrammingExercise exerciseToBeImported, boolean planExistsInCi,
+            boolean shouldPlanEnableFail) throws Exception {
+        mockImportRepositories(exerciseToBeImported);
+        doNothing().when(gitService).pushSourceToTargetRepo(any(), any());
+        mockCloneAndEnableAllBuildPlans(sourceExercise, exerciseToBeImported, planExistsInCi, shouldPlanEnableFail);
+        mockUpdatePlanRepositoriesInBuildPlans(exerciseToBeImported);
+    }
+
+    private void mockImportRepositories(ProgrammingExercise exerciseToBeImported) throws Exception {
         final var targetTemplateRepoName = exerciseToBeImported.generateRepositoryName(RepositoryType.TEMPLATE);
         final var targetSolutionRepoName = exerciseToBeImported.generateRepositoryName(RepositoryType.SOLUTION);
         final var targetTestsRepoName = exerciseToBeImported.generateRepositoryName(RepositoryType.TESTS);
 
         gitlabRequestMockProvider.mockCheckIfProjectExists(exerciseToBeImported, false);
-        jenkinsRequestMockProvider.mockCheckIfProjectExists(exerciseToBeImported, false);
 
-        // Mock ProgramingExerciseImportService::importRepositories
         gitlabRequestMockProvider.mockCreateProjectForExercise(exerciseToBeImported);
         gitlabRequestMockProvider.mockCreateRepository(exerciseToBeImported, targetTemplateRepoName);
         gitlabRequestMockProvider.mockCreateRepository(exerciseToBeImported, targetSolutionRepoName);
@@ -117,36 +136,44 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
         gitlabRequestMockProvider.mockAddAuthenticatedWebHook();
         gitlabRequestMockProvider.mockAddAuthenticatedWebHook();
         gitlabRequestMockProvider.mockAddAuthenticatedWebHook();
+    }
 
-        doNothing().when(gitService).pushSourceToTargetRepo(any(), any());
+    private void mockCloneAndEnableAllBuildPlans(ProgrammingExercise sourceExercise, ProgrammingExercise exerciseToBeImported, boolean planExistsInCi, boolean shouldPlanEnableFail)
+            throws Exception {
+        final var targetProjectKey = exerciseToBeImported.getProjectKey();
+        String templateBuildPlanId = targetProjectKey + "-" + TEMPLATE.getName();
+        String solutionBuildPlanId = targetProjectKey + "-" + SOLUTION.getName();
 
-        if (!recreateBuildPlans) {
-            String templateBuildPlanId = targetProjectKey + "-" + TEMPLATE.getName();
-            String solutionBuildPlanId = targetProjectKey + "-" + SOLUTION.getName();
+        jenkinsRequestMockProvider.mockCreateProjectForExercise(exerciseToBeImported, false);
+        jenkinsRequestMockProvider.mockCopyBuildPlan(sourceExercise.getProjectKey(), targetProjectKey);
+        jenkinsRequestMockProvider.mockCopyBuildPlan(sourceExercise.getProjectKey(), targetProjectKey);
+        jenkinsRequestMockProvider.mockGivePlanPermissions(targetProjectKey, templateBuildPlanId);
+        jenkinsRequestMockProvider.mockGivePlanPermissions(targetProjectKey, solutionBuildPlanId);
+        jenkinsRequestMockProvider.mockEnablePlan(targetProjectKey, templateBuildPlanId, planExistsInCi, shouldPlanEnableFail);
+        jenkinsRequestMockProvider.mockEnablePlan(targetProjectKey, solutionBuildPlanId, planExistsInCi, shouldPlanEnableFail);
+    }
 
-            // Mocks ProgramingExerciseImportService::cloneAndEnableAllBuildPlans
-            jenkinsRequestMockProvider.mockCreateProjectForExercise(exerciseToBeImported);
-            jenkinsRequestMockProvider.mockCopyBuildPlan(sourceExercise.getProjectKey(), targetProjectKey);
-            jenkinsRequestMockProvider.mockCopyBuildPlan(sourceExercise.getProjectKey(), targetProjectKey);
-            jenkinsRequestMockProvider.mockGivePlanPermissions(targetProjectKey, templateBuildPlanId);
-            jenkinsRequestMockProvider.mockGivePlanPermissions(targetProjectKey, solutionBuildPlanId);
-            jenkinsRequestMockProvider.mockEnablePlan(targetProjectKey, templateBuildPlanId);
-            jenkinsRequestMockProvider.mockEnablePlan(targetProjectKey, solutionBuildPlanId);
+    private void mockUpdatePlanRepositoriesInBuildPlans(ProgrammingExercise exerciseToBeImported) throws Exception {
+        String templateBuildPlanId = exerciseToBeImported.getProjectKey() + "-" + TEMPLATE.getName();
+        String solutionBuildPlanId = exerciseToBeImported.getProjectKey() + "-" + SOLUTION.getName();
 
-            // Mocks ProgramingExerciseImportService::updatePlanRepositoriesInBuildPlans
-            mockUpdatePlanRepository(exerciseToBeImported, templateBuildPlanId, ASSIGNMENT_REPO_NAME, targetTemplateRepoName, List.of(ASSIGNMENT_REPO_NAME));
-            mockUpdatePlanRepository(exerciseToBeImported, templateBuildPlanId, TEST_REPO_NAME, targetTestsRepoName, List.of());
-            mockUpdatePlanRepository(exerciseToBeImported, solutionBuildPlanId, ASSIGNMENT_REPO_NAME, targetSolutionRepoName, List.of());
-            mockUpdatePlanRepository(exerciseToBeImported, solutionBuildPlanId, TEST_REPO_NAME, targetTestsRepoName, List.of());
-        }
-        else {
-            // Mocks for recreating the build plans
-            jenkinsRequestMockProvider.mockCreateProjectForExercise(exerciseToBeImported);
-            jenkinsRequestMockProvider.mockCreateBuildPlan(targetProjectKey, TEMPLATE.getName());
-            jenkinsRequestMockProvider.mockCreateBuildPlan(targetProjectKey, SOLUTION.getName());
-            jenkinsRequestMockProvider.mockTriggerBuild(targetProjectKey, TEMPLATE.getName());
-            jenkinsRequestMockProvider.mockTriggerBuild(targetProjectKey, SOLUTION.getName());
-        }
+        final var targetTemplateRepoName = exerciseToBeImported.generateRepositoryName(RepositoryType.TEMPLATE);
+        final var targetSolutionRepoName = exerciseToBeImported.generateRepositoryName(RepositoryType.SOLUTION);
+        final var targetTestsRepoName = exerciseToBeImported.generateRepositoryName(RepositoryType.TESTS);
+
+        mockUpdatePlanRepository(exerciseToBeImported, templateBuildPlanId, ASSIGNMENT_REPO_NAME, targetTemplateRepoName, List.of(ASSIGNMENT_REPO_NAME));
+        mockUpdatePlanRepository(exerciseToBeImported, templateBuildPlanId, TEST_REPO_NAME, targetTestsRepoName, List.of());
+        mockUpdatePlanRepository(exerciseToBeImported, solutionBuildPlanId, ASSIGNMENT_REPO_NAME, targetSolutionRepoName, List.of());
+        mockUpdatePlanRepository(exerciseToBeImported, solutionBuildPlanId, TEST_REPO_NAME, targetTestsRepoName, List.of());
+    }
+
+    private void mockSetupBuildPlansForNewExercise(ProgrammingExercise exerciseToBeImported) throws Exception {
+        final var targetProjectKey = exerciseToBeImported.getProjectKey();
+        jenkinsRequestMockProvider.mockCreateProjectForExercise(exerciseToBeImported, false);
+        jenkinsRequestMockProvider.mockCreateBuildPlan(targetProjectKey, TEMPLATE.getName());
+        jenkinsRequestMockProvider.mockCreateBuildPlan(targetProjectKey, SOLUTION.getName());
+        jenkinsRequestMockProvider.mockTriggerBuild(targetProjectKey, TEMPLATE.getName(), false);
+        jenkinsRequestMockProvider.mockTriggerBuild(targetProjectKey, SOLUTION.getName(), false);
     }
 
     @Override
@@ -191,7 +218,7 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
     @Override
     public void mockUpdatePlanRepository(ProgrammingExercise exercise, String planName, String repoNameInCI, String repoNameInVcs, List<String> triggeredBy)
             throws IOException, URISyntaxException {
-        jenkinsRequestMockProvider.mockUpdatePlanRepository(exercise.getProjectKey(), planName);
+        jenkinsRequestMockProvider.mockUpdatePlanRepository(exercise.getProjectKey(), planName, false);
     }
 
     @Override
@@ -238,11 +265,11 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
 
         var projectKey = participation.getProgrammingExercise().getProjectKey();
         var buildPlanId = participation.getBuildPlanId();
-        jenkinsRequestMockProvider.mockGetBuildStatus(projectKey, buildPlanId, true, false, false);
+        jenkinsRequestMockProvider.mockGetBuildStatus(projectKey, buildPlanId, true, false, false, false);
 
         mockCopyBuildPlan(participation);
         mockConfigureBuildPlan(participation);
-        jenkinsRequestMockProvider.mockTriggerBuild(projectKey, buildPlanId);
+        jenkinsRequestMockProvider.mockTriggerBuild(projectKey, buildPlanId, false);
     }
 
     @Override
@@ -251,7 +278,7 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
         final String hash = "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d";
         final String projectKey = participation.getProgrammingExercise().getProjectKey();
         mockFetchCommitInfo(projectKey, slug, hash);
-        jenkinsRequestMockProvider.mockTriggerBuild(projectKey, participation.getBuildPlanId());
+        jenkinsRequestMockProvider.mockTriggerBuild(projectKey, participation.getBuildPlanId(), false);
     }
 
     @Override
@@ -259,7 +286,7 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
         doReturn(COMMIT_HASH_OBJECT_ID).when(gitService).getLastCommitHash(any());
         mockCopyBuildPlan(participation);
         mockConfigureBuildPlan(participation);
-        jenkinsRequestMockProvider.mockTriggerBuild(participation.getProgrammingExercise().getProjectKey(), participation.getBuildPlanId());
+        jenkinsRequestMockProvider.mockTriggerBuild(participation.getProgrammingExercise().getProjectKey(), participation.getBuildPlanId(), false);
     }
 
     @Override
@@ -267,7 +294,7 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
         doReturn(COMMIT_HASH_OBJECT_ID).when(gitService).getLastCommitHash(any());
         mockCopyBuildPlan(participation);
         mockConfigureBuildPlan(participation);
-        jenkinsRequestMockProvider.mockTriggerBuild(participation.getProgrammingExercise().getProjectKey(), participation.getBuildPlanId());
+        jenkinsRequestMockProvider.mockTriggerBuild(participation.getProgrammingExercise().getProjectKey(), participation.getBuildPlanId(), false);
     }
 
     @Override
@@ -277,21 +304,34 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
     }
 
     @Override
-    public void mockCreateUserInUserManagement(User user) throws Exception {
-        gitlabRequestMockProvider.mockCreateVcsUser(user);
-        jenkinsRequestMockProvider.mockCreateUser(user);
+    public void mockCreateUserInUserManagement(User user, boolean userExistsInCi) throws Exception {
+        gitlabRequestMockProvider.mockCreateVcsUser(user, false);
+        jenkinsRequestMockProvider.mockCreateUser(user, userExistsInCi, false, false);
     }
 
     @Override
-    public void mockDeleteUserInUserManagement(User user, boolean userExistsInUserManagement) throws Exception {
-        gitlabRequestMockProvider.mockDeleteVcsUser(user.getLogin());
-        jenkinsRequestMockProvider.mockDeleteUser(user, userExistsInUserManagement);
+    public void mockFailToCreateUserInExernalUserManagement(User user, boolean failInVcs, boolean failInCi, boolean failToGetCiUser) throws Exception {
+        gitlabRequestMockProvider.mockCreateVcsUser(user, failInVcs);
+        jenkinsRequestMockProvider.mockCreateUser(user, false, failInCi, failToGetCiUser);
+    }
+
+    @Override
+    public void mockDeleteUserInUserManagement(User user, boolean userExistsInUserManagement, boolean failInVcs, boolean failInCi) throws Exception {
+        gitlabRequestMockProvider.mockDeleteVcsUser(user.getLogin(), failInVcs);
+        jenkinsRequestMockProvider.mockDeleteUser(user, userExistsInUserManagement, failInCi);
     }
 
     @Override
     public void mockUpdateCoursePermissions(Course updatedCourse, String oldInstructorGroup, String oldTeachingAssistantGroup) throws Exception {
         gitlabRequestMockProvider.mockUpdateCoursePermissions(updatedCourse, oldInstructorGroup, oldTeachingAssistantGroup);
-        jenkinsRequestMockProvider.mockUpdateCoursePermissions(updatedCourse, oldInstructorGroup, oldTeachingAssistantGroup);
+        jenkinsRequestMockProvider.mockUpdateCoursePermissions(updatedCourse, oldInstructorGroup, oldTeachingAssistantGroup, false, false);
+    }
+
+    @Override
+    public void mockFailUpdateCoursePermissionsInCi(Course updatedCourse, String oldInstructorGroup, String oldTeachingAssistantGroup, boolean failToAddUsers,
+            boolean failToRemoveUsers) throws Exception {
+        gitlabRequestMockProvider.mockUpdateCoursePermissions(updatedCourse, oldInstructorGroup, oldTeachingAssistantGroup);
+        jenkinsRequestMockProvider.mockUpdateCoursePermissions(updatedCourse, oldInstructorGroup, oldTeachingAssistantGroup, failToAddUsers, failToRemoveUsers);
     }
 
     @Override
@@ -305,41 +345,42 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
     }
 
     @Override
-    public void mockDeleteRepository(String projectKey, String repostoryName) throws Exception {
-        gitlabRequestMockProvider.mockDeleteRepository(projectKey);
+    public void mockDeleteRepository(String projectKey, String repostoryName, boolean shouldFail) throws Exception {
+        gitlabRequestMockProvider.mockDeleteRepository(projectKey + "/" + repostoryName, shouldFail);
     }
 
     @Override
-    public void mockDeleteProjectInVcs(String projectKey) throws Exception {
-        gitlabRequestMockProvider.mockDeleteProject(projectKey);
+    public void mockDeleteProjectInVcs(String projectKey, boolean shouldFail) throws Exception {
+        gitlabRequestMockProvider.mockDeleteProject(projectKey, shouldFail);
     }
 
     @Override
-    public void mockDeleteBuildPlan(String projectKey, String planName) throws Exception {
-        jenkinsRequestMockProvider.mockDeleteBuildPlan(projectKey, planName);
+    public void mockDeleteBuildPlan(String projectKey, String planName, boolean shouldFail) throws Exception {
+        jenkinsRequestMockProvider.mockDeleteBuildPlan(projectKey, planName, shouldFail);
     }
 
     @Override
-    public void mockDeleteBuildPlanProject(String projectKey) throws Exception {
-        jenkinsRequestMockProvider.mockDeleteBuildPlanProject(projectKey);
+    public void mockDeleteBuildPlanProject(String projectKey, boolean shouldFail) throws Exception {
+        jenkinsRequestMockProvider.mockDeleteBuildPlanProject(projectKey, shouldFail);
     }
 
     @Override
-    public void mockAddUserToGroupInUserManagement(User user, String group) throws Exception {
+    public void mockAddUserToGroupInUserManagement(User user, String group, boolean failInCi) throws Exception {
         gitlabRequestMockProvider.mockUpdateVcsUser(user.getLogin(), user, Set.of(), Set.of(group), false);
-        jenkinsRequestMockProvider.mockAddUsersToGroups(user.getLogin(), Set.of(group));
+        jenkinsRequestMockProvider.mockAddUsersToGroups(user.getLogin(), Set.of(group), failInCi);
     }
 
     @Override
-    public void mockRemoveUserFromGroup(User user, String group) throws Exception {
+    public void mockRemoveUserFromGroup(User user, String group, boolean failInCi) throws Exception {
         gitlabRequestMockProvider.mockUpdateVcsUser(user.getLogin(), user, Set.of(group), Set.of(), false);
-        jenkinsRequestMockProvider.mockRemoveUserFromGroups(Set.of(group));
-        jenkinsRequestMockProvider.mockAddUsersToGroups(user.getLogin(), Set.of(group));
+        jenkinsRequestMockProvider.mockRemoveUserFromGroups(Set.of(group), failInCi);
+        jenkinsRequestMockProvider.mockAddUsersToGroups(user.getLogin(), Set.of(group), false);
     }
 
     @Override
-    public void mockGetBuildPlan(String projectKey, String planName, boolean planExistsInCi, boolean planIsActive, boolean planIsBuilding) throws Exception {
-        jenkinsRequestMockProvider.mockGetBuildStatus(projectKey, planName, planExistsInCi, planIsActive, planIsBuilding);
+    public void mockGetBuildPlan(String projectKey, String planName, boolean planExistsInCi, boolean planIsActive, boolean planIsBuilding, boolean failToGetBuild)
+            throws Exception {
+        jenkinsRequestMockProvider.mockGetBuildStatus(projectKey, planName, planExistsInCi, planIsActive, planIsBuilding, failToGetBuild);
     }
 
     @Override
@@ -353,8 +394,8 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
     }
 
     @Override
-    public void mockCheckIfProjectExistsInCi(ProgrammingExercise exercise, boolean existsInCi) throws Exception {
-        jenkinsRequestMockProvider.mockCheckIfProjectExists(exercise, existsInCi);
+    public void mockCheckIfProjectExistsInCi(ProgrammingExercise exercise, boolean existsInCi, boolean shouldFail) throws Exception {
+        jenkinsRequestMockProvider.mockCheckIfProjectExists(exercise, existsInCi, shouldFail);
     }
 
     @Override
@@ -363,15 +404,22 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
     }
 
     @Override
-    public void mockCheckIfBuildPlanExists(String projectKey, String buildPlanId, boolean buildPlanExists) throws Exception {
-        jenkinsRequestMockProvider.mockCheckIfBuildPlanExists(projectKey, buildPlanId, buildPlanExists);
+    public void mockCheckIfBuildPlanExists(String projectKey, String buildPlanId, boolean buildPlanExists, boolean shouldFail) throws Exception {
+        jenkinsRequestMockProvider.mockCheckIfBuildPlanExists(projectKey, buildPlanId, buildPlanExists, shouldFail);
     }
 
     @Override
     public void mockTriggerBuild(AbstractBaseProgrammingExerciseParticipation programmingExerciseParticipation) throws Exception {
         var projectKey = programmingExerciseParticipation.getProgrammingExercise().getProjectKey();
         var buildPlanId = programmingExerciseParticipation.getBuildPlanId();
-        jenkinsRequestMockProvider.mockTriggerBuild(projectKey, buildPlanId);
+        jenkinsRequestMockProvider.mockTriggerBuild(projectKey, buildPlanId, false);
+    }
+
+    @Override
+    public void mockTriggerBuildFailed(AbstractBaseProgrammingExerciseParticipation programmingExerciseParticipation) throws Exception {
+        var projectKey = programmingExerciseParticipation.getProgrammingExercise().getProjectKey();
+        var buildPlanId = programmingExerciseParticipation.getBuildPlanId();
+        jenkinsRequestMockProvider.mockTriggerBuild(projectKey, buildPlanId, true);
     }
 
     @Override

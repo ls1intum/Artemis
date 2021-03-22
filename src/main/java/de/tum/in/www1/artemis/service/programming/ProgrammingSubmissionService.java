@@ -9,7 +9,6 @@ import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
 
-import org.apache.http.HttpException;
 import org.eclipse.jgit.lib.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,6 +25,7 @@ import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.*;
+import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
@@ -153,7 +153,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
             try {
                 continuousIntegrationService.get().triggerBuild(programmingExerciseParticipation);
             }
-            catch (HttpException ex) {
+            catch (ContinuousIntegrationException ex) {
                 // TODO: This case is currently not handled. The correct handling would be creating the submission and informing the user that the build trigger failed.
             }
         }
@@ -448,7 +448,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
             continuousIntegrationService.get().triggerBuild((ProgrammingExerciseParticipation) submission.getParticipation());
             notifyUserAboutSubmission(submission);
         }
-        catch (HttpException e) {
+        catch (Exception e) {
             BuildTriggerWebsocketError error = new BuildTriggerWebsocketError(e.getMessage(), submission.getParticipation().getId());
             notifyUserAboutSubmissionError(submission, error);
         }
@@ -469,7 +469,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
             continuousIntegrationService.get().triggerBuild(programmingExercise.getSolutionParticipation());
             continuousIntegrationService.get().triggerBuild(programmingExercise.getTemplateParticipation());
         }
-        catch (HttpException ex) {
+        catch (ContinuousIntegrationException ex) {
             log.error("Could not trigger build for solution repository after test case update for programming exercise with id " + programmingExerciseId);
         }
     }

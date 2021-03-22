@@ -40,7 +40,7 @@ public class JenkinsJobService {
     }
 
     /**
-     * Retrieves the job inside a folder job.
+     * Retrieves the job inside a folder job or null if it doesn't exist.
      * @param folderJobName the name of the folder job
      * @param jobName the name of the job
      * @return the job with details
@@ -50,7 +50,13 @@ public class JenkinsJobService {
             log.warn("Cannot get the job, because projectKey " + folderJobName + " or jobName " + jobName + " is null");
             return null;
         }
+
         final var folder = getFolderJob(folderJobName);
+        if (folder == null) {
+            log.warn("Cannot get the job" + jobName + " in folder " + folderJobName + " because it doesn't exist.");
+            return null;
+        }
+
         try {
             return jenkinsServer.getJob(folder, jobName);
         }
@@ -61,7 +67,7 @@ public class JenkinsJobService {
     }
 
     /**
-     * Gets the folder job
+     * Gets the folder job or null if it doesn't exist
      * @param folderName the name of the folder job
      * @return the folder job
      */
@@ -69,11 +75,12 @@ public class JenkinsJobService {
         try {
             final var job = jenkinsServer.getJob(folderName);
             if (job == null) {
-                throw new JenkinsException("The job " + folderName + " does not exist!");
+                return null;
             }
+
             final var folderJob = jenkinsServer.getFolderJob(job);
             if (!folderJob.isPresent()) {
-                throw new JenkinsException("Folder " + folderName + " does not exist!");
+                return null;
             }
             return folderJob.get();
         }
@@ -92,6 +99,10 @@ public class JenkinsJobService {
     public Document getJobConfigForJobInFolder(String folderName, String jobName) {
         try {
             var folder = getFolderJob(folderName);
+            if (folder == null) {
+                throw new JenkinsException("The folder " + folderName + "does not exist.");
+            }
+
             var xmlString = jenkinsServer.getJobXml(folder, jobName);
             return XmlFileUtils.readFromString(xmlString);
         }
@@ -130,6 +141,9 @@ public class JenkinsJobService {
     public void createJobInFolder(Document jobConfig, String folderName, String jobName) {
         try {
             var folder = getFolderJob(folderName);
+            if (folder == null) {
+                throw new JenkinsException("Cannot create job " + jobName + " because the folder " + folderName + " does not exist.");
+            }
             jenkinsServer.createJob(folder, jobName, writeXmlToString(jobConfig), useCrumb);
         }
         catch (IOException e) {

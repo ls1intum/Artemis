@@ -6,8 +6,7 @@ import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.TEMPLATE;
 import static de.tum.in.www1.artemis.util.TestConstants.COMMIT_HASH_OBJECT_ID;
 import static io.github.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.*;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -16,7 +15,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import org.eclipse.jgit.api.errors.GitAPIException;
 import org.junit.jupiter.api.AfterEach;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,6 +25,7 @@ import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.context.ActiveProfiles;
 
+import com.atlassian.bamboo.specs.api.exceptions.BambooSpecsPublishingException;
 import com.atlassian.bamboo.specs.util.BambooServer;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
@@ -127,7 +126,7 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
         final var projectKey = exercise.getProjectKey();
         final var bitbucketRepoName = projectKey.toLowerCase() + "-" + username;
         mockUpdatePlanRepository(exercise, username, ASSIGNMENT_REPO_NAME, bitbucketRepoName, List.of());
-        bambooRequestMockProvider.mockEnablePlan(exercise.getProjectKey(), username);
+        bambooRequestMockProvider.mockEnablePlan(exercise.getProjectKey(), username, true, false);
     }
 
     @Override
@@ -171,11 +170,11 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
     }
 
     @Override
-    public void mockConnectorRequestsForSetup(ProgrammingExercise exercise) throws Exception {
+    public void mockConnectorRequestsForSetup(ProgrammingExercise exercise, boolean failToCreateCiProject) throws Exception {
         final var exerciseRepoName = exercise.generateRepositoryName(RepositoryType.TEMPLATE);
         final var solutionRepoName = exercise.generateRepositoryName(RepositoryType.SOLUTION);
         final var testRepoName = exercise.generateRepositoryName(RepositoryType.TESTS);
-        bambooRequestMockProvider.mockCheckIfProjectExists(exercise, false);
+        bambooRequestMockProvider.mockCheckIfProjectExists(exercise, false, false);
         bitbucketRequestMockProvider.mockCheckIfProjectExists(exercise, false);
         bitbucketRequestMockProvider.mockCreateProjectForExercise(exercise);
         bitbucketRequestMockProvider.mockCreateRepository(exercise, exerciseRepoName);
@@ -184,25 +183,54 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
         bitbucketRequestMockProvider.mockGetDefaultBranch("master", exercise.getProjectKey());
         bitbucketRequestMockProvider.mockAddWebHooks(exercise);
         bitbucketRequestMockProvider.mockGetDefaultBranch("master", exercise.getProjectKey());
-        mockBambooBuildPlanCreation(exercise);
+        mockBambooBuildPlanCreation(exercise, failToCreateCiProject);
 
         doNothing().when(gitService).pushSourceToTargetRepo(any(), any());
     }
 
-    private void mockBambooBuildPlanCreation(ProgrammingExercise exercise) throws IOException, URISyntaxException {
-        // TODO: check the actual plan and plan permissions that get passed here
-        doReturn(null).when(bambooServer).publish(any());
-        bambooRequestMockProvider.mockRemoveAllDefaultProjectPermissions(exercise);
-        bambooRequestMockProvider.mockGiveProjectPermissions(exercise);
+    private void mockBambooBuildPlanCreation(ProgrammingExercise exercise, boolean failToCreateCiProject) throws IOException, URISyntaxException {
+        if (!failToCreateCiProject) {
+            // TODO: check the actual plan and plan permissions that get passed here
+            doReturn(null).when(bambooServer).publish(any());
+            bambooRequestMockProvider.mockRemoveAllDefaultProjectPermissions(exercise);
+            bambooRequestMockProvider.mockGiveProjectPermissions(exercise);
+        }
+        else {
+            doThrow(BambooSpecsPublishingException.class).when(bambooServer).publish(any());
+        }
     }
 
     @Override
-    public void mockConnectorRequestsForImport(ProgrammingExercise sourceExercise, ProgrammingExercise exerciseToBeImported, boolean recreateBuildPlans)
-            throws IOException, URISyntaxException, GitAPIException {
+    public void mockConnectorRequestsForImport(ProgrammingExercise sourceExercise, ProgrammingExercise exerciseToBeImported, boolean recreateBuildPlans) throws Exception {
+
+        mockImportRepositories(sourceExercise, exerciseToBeImported);
+        doNothing().when(gitService).pushSourceToTargetRepo(any(), any());
+
+        bambooRequestMockProvider.mockCheckIfProjectExists(exerciseToBeImported, false, false);
+        if (!recreateBuildPlans) {
+            mockCloneAndEnableAllBuildPlans(sourceExercise, exerciseToBeImported, true, false);
+        }
+        else {
+            // Mocks for recreating the build plans
+            mockBambooBuildPlanCreation(exerciseToBeImported, false);
+        }
+    }
+
+    @Override
+    public void mockImportProgrammingExerciseWithFailingEnablePlan(ProgrammingExercise sourceExercise, ProgrammingExercise exerciseToBeImported, boolean planExistsInCi,
+            boolean shouldPlanEnableFail) throws Exception {
+        mockImportRepositories(sourceExercise, exerciseToBeImported);
+        doNothing().when(gitService).pushSourceToTargetRepo(any(), any());
+        bambooRequestMockProvider.mockCheckIfProjectExists(exerciseToBeImported, false, false);
+        mockCloneAndEnableAllBuildPlans(sourceExercise, exerciseToBeImported, planExistsInCi, shouldPlanEnableFail);
+    }
+
+    private void mockImportRepositories(ProgrammingExercise sourceExercise, ProgrammingExercise exerciseToBeImported) throws Exception {
         final var projectKey = exerciseToBeImported.getProjectKey();
         final var templateRepoName = exerciseToBeImported.generateRepositoryName(RepositoryType.TEMPLATE);
         final var solutionRepoName = exerciseToBeImported.generateRepositoryName(RepositoryType.SOLUTION);
         final var testsRepoName = exerciseToBeImported.generateRepositoryName(RepositoryType.TESTS);
+
         var nextParticipationId = sourceExercise.getTemplateParticipation().getId() + 1;
         final var artemisSolutionHookPath = artemisServerUrl + PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + nextParticipationId++;
         final var artemisTemplateHookPath = artemisServerUrl + PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + nextParticipationId;
@@ -220,30 +248,28 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
         bitbucketRequestMockProvider.mockAddWebhook(projectKey, solutionRepoName, artemisSolutionHookPath);
         bitbucketRequestMockProvider.mockGetExistingWebhooks(projectKey, testsRepoName);
         bitbucketRequestMockProvider.mockAddWebhook(projectKey, testsRepoName, artemisTestsHookPath);
+    }
 
-        doNothing().when(gitService).pushSourceToTargetRepo(any(), any());
+    private void mockCloneAndEnableAllBuildPlans(ProgrammingExercise sourceExercise, ProgrammingExercise exerciseToBeImported, boolean planExistsInCi, boolean shouldPlanEnableFail)
+            throws Exception {
+        final var projectKey = exerciseToBeImported.getProjectKey();
+        final var templateRepoName = exerciseToBeImported.generateRepositoryName(RepositoryType.TEMPLATE);
+        final var solutionRepoName = exerciseToBeImported.generateRepositoryName(RepositoryType.SOLUTION);
+        final var testsRepoName = exerciseToBeImported.generateRepositoryName(RepositoryType.TESTS);
 
-        bambooRequestMockProvider.mockCheckIfProjectExists(exerciseToBeImported, false);
-        if (!recreateBuildPlans) {
-            // Mocks for copying the build plans
-            bambooRequestMockProvider.mockCopyBuildPlan(sourceExercise.getProjectKey(), TEMPLATE.getName(), projectKey, TEMPLATE.getName(), false);
-            bambooRequestMockProvider.mockCopyBuildPlan(sourceExercise.getProjectKey(), SOLUTION.getName(), projectKey, SOLUTION.getName(), true);
-            // TODO: Mock continuousIntegrationService.givePlanPermissions for Template and Solution plan
-            doReturn(null).when(bambooServer).publish(any());
-            bambooRequestMockProvider.mockGiveProjectPermissions(exerciseToBeImported);
-            bambooRequestMockProvider.mockEnablePlan(projectKey, TEMPLATE.getName());
-            bambooRequestMockProvider.mockEnablePlan(projectKey, SOLUTION.getName());
-            mockUpdatePlanRepository(exerciseToBeImported, TEMPLATE.getName(), ASSIGNMENT_REPO_NAME, templateRepoName, List.of(ASSIGNMENT_REPO_NAME));
-            mockUpdatePlanRepository(exerciseToBeImported, TEMPLATE.getName(), TEST_REPO_NAME, testsRepoName, List.of());
-            mockUpdatePlanRepository(exerciseToBeImported, SOLUTION.getName(), ASSIGNMENT_REPO_NAME, solutionRepoName, List.of());
-            mockUpdatePlanRepository(exerciseToBeImported, SOLUTION.getName(), TEST_REPO_NAME, testsRepoName, List.of());
-            bambooRequestMockProvider.mockTriggerBuild(exerciseToBeImported.getProjectKey() + "-" + TEMPLATE.getName());
-            bambooRequestMockProvider.mockTriggerBuild(exerciseToBeImported.getProjectKey() + "-" + SOLUTION.getName());
-        }
-        else {
-            // Mocks for recreating the build plans
-            mockBambooBuildPlanCreation(exerciseToBeImported);
-        }
+        bambooRequestMockProvider.mockCopyBuildPlan(sourceExercise.getProjectKey(), TEMPLATE.getName(), projectKey, TEMPLATE.getName(), false);
+        bambooRequestMockProvider.mockCopyBuildPlan(sourceExercise.getProjectKey(), SOLUTION.getName(), projectKey, SOLUTION.getName(), true);
+        // TODO: Mock continuousIntegrationService.givePlanPermissions for Template and Solution plan
+        doReturn(null).when(bambooServer).publish(any());
+        bambooRequestMockProvider.mockGiveProjectPermissions(exerciseToBeImported);
+        bambooRequestMockProvider.mockEnablePlan(projectKey, TEMPLATE.getName(), planExistsInCi, shouldPlanEnableFail);
+        bambooRequestMockProvider.mockEnablePlan(projectKey, SOLUTION.getName(), planExistsInCi, shouldPlanEnableFail);
+        mockUpdatePlanRepository(exerciseToBeImported, TEMPLATE.getName(), ASSIGNMENT_REPO_NAME, templateRepoName, List.of(ASSIGNMENT_REPO_NAME));
+        mockUpdatePlanRepository(exerciseToBeImported, TEMPLATE.getName(), TEST_REPO_NAME, testsRepoName, List.of());
+        mockUpdatePlanRepository(exerciseToBeImported, SOLUTION.getName(), ASSIGNMENT_REPO_NAME, solutionRepoName, List.of());
+        mockUpdatePlanRepository(exerciseToBeImported, SOLUTION.getName(), TEST_REPO_NAME, testsRepoName, List.of());
+        bambooRequestMockProvider.mockTriggerBuild(exerciseToBeImported.getProjectKey() + "-" + TEMPLATE.getName());
+        bambooRequestMockProvider.mockTriggerBuild(exerciseToBeImported.getProjectKey() + "-" + SOLUTION.getName());
     }
 
     @Override
@@ -297,14 +323,14 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
 
         // Isn't mockEnablePlan() written incorrectly since projectKey isn't even used by the bamboo service?
         var splitted = buildPlanId.split("-");
-        bambooRequestMockProvider.mockEnablePlan(splitted[0], splitted[1]);
+        bambooRequestMockProvider.mockEnablePlan(splitted[0], splitted[1], true, false);
     }
 
     @Override
     public void mockTriggerFailedBuild(ProgrammingExerciseStudentParticipation participation) throws Exception {
         doReturn(COMMIT_HASH_OBJECT_ID).when(gitService).getLastCommitHash(any());
         String buildPlanId = participation.getBuildPlanId();
-        bambooRequestMockProvider.mockGetBuildPlan(buildPlanId, buildPlanId != null ? new BambooBuildPlanDTO() : null);
+        bambooRequestMockProvider.mockGetBuildPlan(buildPlanId, buildPlanId != null ? new BambooBuildPlanDTO() : null, false);
         mockCopyBuildPlan(participation);
         mockConfigureBuildPlan(participation);
         bambooRequestMockProvider.mockTriggerBuild(participation);
@@ -338,25 +364,36 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
     public void mockUpdateUserInUserManagement(String oldLogin, User user, Set<String> oldGroups) throws URISyntaxException {
         var managedUserVM = new ManagedUserVM(user);
         jiraRequestMockProvider.mockIsGroupAvailableForMultiple(managedUserVM.getGroups());
-        jiraRequestMockProvider.mockRemoveUserFromGroup(oldGroups, managedUserVM.getLogin());
+        jiraRequestMockProvider.mockRemoveUserFromGroup(oldGroups, managedUserVM.getLogin(), false);
         jiraRequestMockProvider.mockAddUserToGroupForMultipleGroups(managedUserVM.getGroups());
     }
 
     @Override
-    public void mockCreateUserInUserManagement(User user) throws URISyntaxException {
+    public void mockCreateUserInUserManagement(User user, boolean userExistsInCi) throws URISyntaxException {
         var managedUserVM = new ManagedUserVM(user);
         jiraRequestMockProvider.mockIsGroupAvailableForMultiple(managedUserVM.getGroups());
         jiraRequestMockProvider.mockAddUserToGroupForMultipleGroups(managedUserVM.getGroups());
     }
 
     @Override
-    public void mockDeleteUserInUserManagement(User user, boolean userExistsInUserManagement) {
+    public void mockFailToCreateUserInExernalUserManagement(User user, boolean failInVcs, boolean failInCi, boolean failToGetCiUser) throws Exception {
+        // Not needed here
+    }
+
+    @Override
+    public void mockDeleteUserInUserManagement(User user, boolean userExistsInUserManagement, boolean failInVcs, boolean failInCi) {
         // Not needed here
     }
 
     @Override
     public void mockUpdateCoursePermissions(Course updatedCourse, String oldInstructorGroup, String oldTeachingAssistantGroup) {
         // Not needed here.
+    }
+
+    @Override
+    public void mockFailUpdateCoursePermissionsInCi(Course updatedCourse, String oldInstructorGroup, String oldTeachingAssistantGroup, boolean failToAddUsers,
+            boolean failToRemoveUsers) throws Exception {
+        // Not needed here
     }
 
     @Override
@@ -370,40 +407,41 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
     }
 
     @Override
-    public void mockDeleteRepository(String projectKey, String repostoryName) throws Exception {
-        bitbucketRequestMockProvider.mockDeleteRepository(projectKey, repostoryName);
+    public void mockDeleteRepository(String projectKey, String repostoryName, boolean shouldFail) throws Exception {
+        bitbucketRequestMockProvider.mockDeleteRepository(projectKey, repostoryName, shouldFail);
     }
 
     @Override
-    public void mockDeleteProjectInVcs(String projectKey) throws Exception {
-        bitbucketRequestMockProvider.mockDeleteProject(projectKey);
+    public void mockDeleteProjectInVcs(String projectKey, boolean shouldFail) throws Exception {
+        bitbucketRequestMockProvider.mockDeleteProject(projectKey, shouldFail);
     }
 
     @Override
-    public void mockDeleteBuildPlan(String projectKey, String planName) throws Exception {
+    public void mockDeleteBuildPlan(String projectKey, String planName, boolean shouldFail) throws Exception {
         // var planKey = (projectKey + "-" + planName).toUpperCase();
         bambooRequestMockProvider.mockDeleteBambooBuildPlan(planName, false);
     }
 
     @Override
-    public void mockDeleteBuildPlanProject(String projectKey) throws Exception {
+    public void mockDeleteBuildPlanProject(String projectKey, boolean shouldFail) throws Exception {
         bambooRequestMockProvider.mockDeleteBambooBuildProject(projectKey);
     }
 
     @Override
-    public void mockAddUserToGroupInUserManagement(User user, String group) throws Exception {
-        jiraRequestMockProvider.mockAddUserToGroup(group);
+    public void mockAddUserToGroupInUserManagement(User user, String group, boolean failInCi) throws Exception {
+        jiraRequestMockProvider.mockAddUserToGroup(group, failInCi);
     }
 
     @Override
-    public void mockRemoveUserFromGroup(User user, String group) {
-        jiraRequestMockProvider.mockRemoveUserFromGroup(Set.of(group), user.getLogin());
+    public void mockRemoveUserFromGroup(User user, String group, boolean failInCi) {
+        jiraRequestMockProvider.mockRemoveUserFromGroup(Set.of(group), user.getLogin(), failInCi);
     }
 
     @Override
-    public void mockGetBuildPlan(String porjectKey, String planName, boolean planExistsInCi, boolean planIsActive, boolean planIsBuilding) throws Exception {
-        var buildPlanToReturn = planExistsInCi ? new BambooBuildPlanDTO(planIsActive, planIsBuilding) : null;
-        bambooRequestMockProvider.mockGetBuildPlan(planName, buildPlanToReturn);
+    public void mockGetBuildPlan(String porjectKey, String planName, boolean planExistsInCi, boolean planIsActive, boolean planIsBuilding, boolean failToGetBuild)
+            throws Exception {
+        var buildPlanToReturn = planExistsInCi || failToGetBuild ? new BambooBuildPlanDTO(planIsActive, planIsBuilding) : null;
+        bambooRequestMockProvider.mockGetBuildPlan(planName, buildPlanToReturn, failToGetBuild);
     }
 
     @Override
@@ -414,12 +452,12 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
 
     @Override
     public void mockCheckIfProjectExistsInVcs(ProgrammingExercise exercise, boolean existsInVcs) throws Exception {
-        bitbucketRequestMockProvider.mockCheckIfProjectExists(exercise, true);
+        bitbucketRequestMockProvider.mockCheckIfProjectExists(exercise, existsInVcs);
     }
 
     @Override
-    public void mockCheckIfProjectExistsInCi(ProgrammingExercise exercise, boolean existsInCi) throws Exception {
-        bambooRequestMockProvider.mockCheckIfProjectExists(exercise, existsInCi);
+    public void mockCheckIfProjectExistsInCi(ProgrammingExercise exercise, boolean existsInCi, boolean shouldFail) throws Exception {
+        bambooRequestMockProvider.mockCheckIfProjectExists(exercise, existsInCi, shouldFail);
     }
 
     @Override
@@ -428,13 +466,19 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
     }
 
     @Override
-    public void mockCheckIfBuildPlanExists(String projectKey, String templateBuildPlanId, boolean buildPlanExists) throws Exception {
-        bambooRequestMockProvider.mockBuildPlanExists(templateBuildPlanId, buildPlanExists);
+    public void mockCheckIfBuildPlanExists(String projectKey, String templateBuildPlanId, boolean buildPlanExists, boolean shouldFail) throws Exception {
+        bambooRequestMockProvider.mockBuildPlanExists(templateBuildPlanId, buildPlanExists, shouldFail);
     }
 
     @Override
     public void mockTriggerBuild(AbstractBaseProgrammingExerciseParticipation programmingExerciseParticipation) throws Exception {
         bambooRequestMockProvider.mockTriggerBuild(programmingExerciseParticipation);
+    }
+
+    @Override
+    public void mockTriggerBuildFailed(AbstractBaseProgrammingExerciseParticipation programmingExerciseParticipation) throws Exception {
+        final var buildPlan = programmingExerciseParticipation.getBuildPlanId();
+        bambooRequestMockProvider.mockTriggerBuildFailed(buildPlan);
     }
 
     @Override

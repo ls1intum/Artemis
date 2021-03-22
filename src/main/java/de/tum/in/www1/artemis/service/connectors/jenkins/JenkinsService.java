@@ -8,6 +8,7 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 
+import org.apache.http.client.HttpResponseException;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Element;
 import org.jsoup.nodes.Node;
@@ -31,6 +32,7 @@ import com.offbytwo.jenkins.JenkinsServer;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.exception.JenkinsException;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
@@ -248,6 +250,13 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
     public void deleteProject(String projectKey) {
         try {
             jenkinsServer.deleteJob(projectKey, useCrumb);
+        }
+        catch (HttpResponseException e) {
+            // We don't throw an exception if the project doesn't exist in Jenkins (404 status)
+            if (e.getStatusCode() != org.apache.http.HttpStatus.SC_NOT_FOUND) {
+                log.error(e.getMessage(), e);
+                throw new JenkinsException("Error while trying to delete folder in Jenkins for " + projectKey, e);
+            }
         }
         catch (IOException e) {
             log.error(e.getMessage(), e);
@@ -520,8 +529,8 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
         }
         catch (Exception emAll) {
             log.warn(emAll.getMessage());
-            // in case of an error message, we assume the project does not exist
-            return null;
+            // in case of an error message, we assume the project exist (like in Bamboo service)
+            return "The project already exists on the Continuous Integration Server. Please choose a different title and short name!";
         }
     }
 
@@ -555,7 +564,7 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
     }
 
     @Override
-    public void createProjectForExercise(ProgrammingExercise programmingExercise) {
+    public void createProjectForExercise(ProgrammingExercise programmingExercise) throws ContinuousIntegrationException {
         try {
             jenkinsServer.createFolder(programmingExercise.getProjectKey(), useCrumb);
         }
