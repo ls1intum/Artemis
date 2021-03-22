@@ -170,7 +170,7 @@ public class ExerciseResource {
             return badRequest();
         }
 
-        Set<ExampleSubmission> exampleSubmissions = this.exampleSubmissionRepository.findAllWithEagerResultByExerciseId(exerciseId);
+        Set<ExampleSubmission> exampleSubmissions = this.exampleSubmissionRepository.findAllWithResultByExerciseId(exerciseId);
         // Do not provide example submissions without any assessment
         exampleSubmissions.removeIf(exampleSubmission -> exampleSubmission.getSubmission().getLatestResult() == null);
         exercise.setExampleSubmissions(exampleSubmissions);
