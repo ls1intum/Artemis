@@ -271,7 +271,8 @@ export class CourseExercisesComponent implements OnInit, OnChanges, OnDestroy {
             const sortingAttributeB = byAttribute(b);
             const aValue = sortingAttributeA ? sortingAttributeA.seconds(0).milliseconds(0).valueOf() : moment().valueOf();
             const bValue = sortingAttributeB ? sortingAttributeB.seconds(0).milliseconds(0).valueOf() : moment().valueOf();
-            return this.sortingOrder.valueOf() * (aValue - bValue === 0 ? a.title!.localeCompare(b.title!) : aValue - bValue);
+            const titleSortValue = a.title && b.title ? a.title.localeCompare(b.title) : 0;
+            return this.sortingOrder.valueOf() * (aValue - bValue === 0 ? titleSortValue : aValue - bValue);
         });
     }
 }
