@@ -408,9 +408,7 @@
             "saveWorkingTimeSuccessful": "The working time was saved successfully.",
             "toggleSuccessful": "The submitted status was changed successfully.",
             "togglefailed": "The submitted status could not be changed!",
-            "hasComplaint": "Has Complaint",
-            "hasComplaintYes": "Yes",
-            "hasComplaintNo": "No"
+            "hasComplaint": "Has Complaint"
         }
     },
     "studentExam": {

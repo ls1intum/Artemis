@@ -407,9 +407,7 @@
             "saveWorkingTimeSuccessful": "Die Bearbeitungszeit wurde erfolgreich gespeichert.",
             "toggleSuccessful": "Der Abgabestatus wurde erfolgreich geändert.",
             "togglefailed": "Der Abgabestatus konnte nicht geändert werden!",
-            "hasComplaint": "Beschwerde existiert",
-            "hasComplaintYes": "Ja",
-            "hasComplaintNo": "Nein"
+            "hasComplaint": "Beschwerde existiert"
         }
     },
     "studentExam": {

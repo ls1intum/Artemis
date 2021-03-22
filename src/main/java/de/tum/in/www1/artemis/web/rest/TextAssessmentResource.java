@@ -71,9 +71,9 @@ public class TextAssessmentResource extends AssessmentResource {
             TextSubmissionService textSubmissionService, WebsocketMessagingService messagingService, ExerciseRepository exerciseRepository, ResultRepository resultRepository,
             GradingCriterionService gradingCriterionService, Optional<AtheneTrackingTokenProvider> atheneTrackingTokenProvider, ExamService examService,
             Optional<AutomaticTextAssessmentConflictService> automaticTextAssessmentConflictService, FeedbackConflictRepository feedbackConflictRepository,
-            ExampleSubmissionService exampleSubmissionService, SubmissionRepository submissionRepository) {
+            ExampleSubmissionRepository exampleSubmissionRepository, SubmissionRepository submissionRepository) {
         super(authCheckService, userRepository, exerciseRepository, textSubmissionService, textAssessmentService, resultRepository, examService, messagingService,
-                exampleSubmissionService, submissionRepository);
+                exampleSubmissionRepository, submissionRepository);
 
         this.textAssessmentService = textAssessmentService;
         this.textBlockService = textBlockService;
@@ -88,7 +88,7 @@ public class TextAssessmentResource extends AssessmentResource {
 
     /**
      * Saves a given manual textAssessment
-     * TODO SE: refactor this restcall to not use the exerciseId anymore, and make uniform with other save..Assessment callse
+     * TODO SE: refactor this REST call to not use the exerciseId anymore, and make uniform with other save..Assessment calls
      * @param exerciseId the exerciseId of the exercise which will be saved
      * @param resultId the resultId the assessment belongs to
      * @param textAssessment the assessments
@@ -98,12 +98,12 @@ public class TextAssessmentResource extends AssessmentResource {
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Result> saveTextAssessment(@PathVariable Long exerciseId, @PathVariable Long resultId, @RequestBody TextAssessmentDTO textAssessment) {
         final boolean hasAssessmentWithTooLongReference = textAssessment.getFeedbacks().stream().filter(Feedback::hasReference)
-                .anyMatch(f -> f.getReference().length() > Feedback.MAX_REFERENCE_LENGTH);
+                .anyMatch(feedback -> feedback.getReference().length() > Feedback.MAX_REFERENCE_LENGTH);
         if (hasAssessmentWithTooLongReference) {
             throw new BadRequestAlertException("Please select a text block shorter than " + Feedback.MAX_REFERENCE_LENGTH + " characters.", "feedbackList",
                     "feedbackReferenceTooLong");
         }
-        final TextSubmission textSubmission = textSubmissionService.getTextSubmissionWithResultAndTextBlocksAndFeedbackByResultId(resultId);
+        final var textSubmission = textSubmissionService.getTextSubmissionWithResultAndTextBlocksAndFeedbackByResultId(resultId);
         ResponseEntity<Result> response = super.saveAssessment(textSubmission, false, textAssessment.getFeedbacks(), resultId);
 
         if (response.getStatusCode().is2xxSuccessful()) {
@@ -148,7 +148,7 @@ public class TextAssessmentResource extends AssessmentResource {
     public ResponseEntity<Void> deleteTextExampleAssessment(@PathVariable long exampleSubmissionId) {
         log.debug("REST request to delete text example assessment : {}", exampleSubmissionId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        ExampleSubmission exampleSubmission = exampleSubmissionService.findOneWithEagerResult(exampleSubmissionId);
+        final var exampleSubmission = exampleSubmissionRepository.findByIdWithEagerResultAndFeedbackElseThrow(exampleSubmissionId);
         Submission submission = exampleSubmission.getSubmission();
         Exercise exercise = exampleSubmission.getExercise();
         checkAuthorization(exercise, user);
@@ -157,7 +157,7 @@ public class TextAssessmentResource extends AssessmentResource {
             return ResponseEntity.badRequest().build();
         }
 
-        // 1. Delete Textblocks
+        // 1. Delete Text blocks
         textBlockService.deleteForSubmission((TextSubmission) submission);
 
         // 2. Delete Feedbacks
@@ -359,7 +359,7 @@ public class TextAssessmentResource extends AssessmentResource {
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(textExercise, user)) {
             return forbidden();
         }
-        final ExampleSubmission exampleSubmission = exampleSubmissionService.findOneBySubmissionId(submissionId);
+        final ExampleSubmission exampleSubmission = exampleSubmissionRepository.findBySubmissionIdWithResultsElseThrow(submissionId);
         Submission submission = exampleSubmission.getSubmission();
 
         if (!(submission instanceof TextSubmission)) {
@@ -373,13 +373,15 @@ public class TextAssessmentResource extends AssessmentResource {
             textBlockService.computeTextBlocksForSubmissionBasedOnSyntax(textSubmission);
         }
 
-        Result result;
+        Result result = null;
         if (!Boolean.TRUE.equals(exampleSubmission.isUsedForTutorial()) || authCheckService.isAtLeastInstructorForExercise(textExercise, user)) {
             result = textSubmission.getLatestResult();
-            final List<Feedback> assessments = textAssessmentService.getAssessmentsForResult(result);
-            result.setFeedbacks(assessments);
+            if (result != null) {
+                final List<Feedback> assessments = textAssessmentService.getAssessmentsForResult(result);
+                result.setFeedbacks(assessments);
+            }
         }
-        else {
+        if (result == null) {
             result = new Result();
             result.setSubmission(textSubmission);
         }
