@@ -73,7 +73,7 @@
             <jhi-short-answer-question
                 id="question{{ question.id }}"
                 *ngIf="question.type === SHORT_ANSWER"
-                [question]="question"
+                [shortAnswerQuestion]="question"
                 [submittedTexts]="shortAnswerSubmittedTexts.get(question.id!)!"
                 (submittedTextsChange)="shortAnswerSubmittedTexts.set(question.id!, $event)"
                 [fnOnSubmittedTextUpdate]="onSelectionChanged.bind(this)"

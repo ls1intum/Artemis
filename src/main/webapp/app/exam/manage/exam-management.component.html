@@ -103,7 +103,7 @@
 
                         <div class="btn-group-vertical mr-1 mb-1" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA']">
                             <a
-                                *ngIf="(isAtLeastTutor && examHasFinished(exam.id)) || isAtLeastInstructor"
+                                *ngIf="(isAtLeastTutor && exam.id && examHasFinished(exam.id)) || isAtLeastInstructor"
                                 [routerLink]="[exam.id, 'assessment-dashboard']"
                                 class="btn btn-primary btn-sm mr-1 mb-1 exercise-button"
                                 id="exercises-button-{{ exam.id }}"
@@ -167,12 +167,12 @@
                             </div>
                             <div class="d-flex flex-column mr-1 mb-1" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']">
                                 <button
-                                    *ngIf="isAtLeastInstructor"
+                                    *ngIf="isAtLeastInstructor && exam"
                                     jhiDeleteButton
-                                    [entityTitle]="exam.title"
+                                    [entityTitle]="exam.title || ''"
                                     deleteQuestion="artemisApp.examManagement.delete.question"
                                     deleteConfirmationText="artemisApp.examManagement.delete.typeNameToConfirm"
-                                    (delete)="deleteExam(exam.id)"
+                                    (delete)="deleteExam(exam.id!)"
                                     [dialogError]="dialogError$"
                                 >
                                     <fa-icon [icon]="'times'"></fa-icon>
