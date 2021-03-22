@@ -147,13 +147,14 @@ public class ProgrammingSubmissionService extends SubmissionService {
             throw new IllegalStateException("Submission for participation id " + participationId + " based on an empty setup commit by Artemis will be ignored!");
         }
 
-        if (!isExamExercise && programmingExerciseParticipation instanceof ProgrammingExerciseStudentParticipation && (programmingExerciseParticipation.getBuildPlanId() == null
+        if (programmingExerciseParticipation instanceof ProgrammingExerciseStudentParticipation && (programmingExerciseParticipation.getBuildPlanId() == null
                 || !programmingExerciseParticipation.getInitializationState().hasCompletedState(InitializationState.INITIALIZED))) {
             // the build plan was deleted before, e.g. due to cleanup, therefore we need to reactivate the build plan by resuming the participation
             // This is needed as a request using a custom query is made using the ProgrammingExerciseRepository, but the user is not authenticated
             // as the VCS-server performs the request
             SecurityUtils.setAuthorizationObject();
 
+            // TODO: is this still allowed for an exam? what do we want to do here?
             participationService.resumeProgrammingExercise((ProgrammingExerciseStudentParticipation) programmingExerciseParticipation);
             // Note: in this case we do not need an empty commit: when we trigger the build manually (below), subsequent commits will work correctly
             try {
