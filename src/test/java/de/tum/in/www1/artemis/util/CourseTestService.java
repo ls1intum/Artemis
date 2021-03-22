@@ -290,11 +290,11 @@ public class CourseTestService {
                     database.addTemplateParticipationForProgrammingExercise(programmingExercise);
                     mockDelegate.mockDeleteBuildPlan(projectKey, programmingExercise.getTemplateBuildPlanId(), false);
                     mockDelegate.mockDeleteBuildPlan(projectKey, programmingExercise.getSolutionBuildPlanId(), false);
-                    mockDelegate.mockDeleteBuildPlanProject(projectKey);
-                    mockDelegate.mockDeleteRepository(projectKey, templateRepoName);
-                    mockDelegate.mockDeleteRepository(projectKey, solutionRepoName);
-                    mockDelegate.mockDeleteRepository(projectKey, testsRepoName);
-                    mockDelegate.mockDeleteProjectInVcs(projectKey);
+                    mockDelegate.mockDeleteBuildPlanProject(projectKey, false);
+                    mockDelegate.mockDeleteRepository(projectKey, templateRepoName, false);
+                    mockDelegate.mockDeleteRepository(projectKey, solutionRepoName, false);
+                    mockDelegate.mockDeleteRepository(projectKey, testsRepoName, false);
+                    mockDelegate.mockDeleteProjectInVcs(projectKey, false);
                 }
             }
         }
@@ -1265,7 +1265,7 @@ public class CourseTestService {
         database.addStudentParticipationForProgrammingExercise(programmingExercise, "student1");
         database.addStudentParticipationForProgrammingExercise(programmingExercise, "student1");
 
-        mockDelegate.mockDeleteRepository(programmingExercise.getProjectKey(), (programmingExercise.getProjectKey()).toLowerCase() + "-student1");
+        mockDelegate.mockDeleteRepository(programmingExercise.getProjectKey(), (programmingExercise.getProjectKey()).toLowerCase() + "-student1", false);
         var buildPlanId = (programmingExercise.getProjectKey() + "-student1").toUpperCase();
         mockDelegate.mockDeleteBuildPlan(programmingExercise.getProjectKey(), buildPlanId, false);
         request.delete("/api/courses/" + course.getId() + "/cleanup", HttpStatus.OK);
