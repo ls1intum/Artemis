@@ -159,11 +159,23 @@ describe('ShortAnswerQuestionEditComponent', () => {
 
         // tests simple indentation
         component.question.text =
-            '[-spot 5]\n' + '    [-spot 6]\n' + '        [-spot 7]\n' + '            [-spot 8]\n' + '                [-spot 9]\n' + '                    [-spot 10]';
+            '[-spot 5]\n' +
+            '    [-spot 6]\n' +
+            '        [-spot 7]\n' +
+            '            [-spot 8]\n' +
+            '                [-spot 9]\n' +
+            '                    [-spot 10]';
 
         component.ngOnInit();
 
-        expectedTextParts = [['[-spot 5]'], ['    [-spot 6]'], ['        [-spot 7]'], ['            [-spot 8]'], ['                [-spot 9]'], ['                    [-spot 10]']];
+        expectedTextParts = [
+        ['[-spot 5]'],
+        ['    [-spot 6]'],
+        ['        [-spot 7]'],
+        ['            [-spot 8]'],
+        ['                [-spot 9]'],
+        ['                    [-spot 10]']
+        ];
         expect(component.textParts).to.deep.equal(expectedTextParts);
 
         // classic java main method test
