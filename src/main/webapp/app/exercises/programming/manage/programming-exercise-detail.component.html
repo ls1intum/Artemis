@@ -32,21 +32,21 @@
 
                 <a
                     *ngIf="programmingExercise.course !== undefined"
-                    [routerLink]="['/course-management', programmingExercise.course.id, 'exercises', programmingExercise.id, 'scores']"
-                    class="btn btn-primary btn-sm mr-1"
-                    style="margin-bottom: 10px"
-                >
-                    <fa-icon [icon]="'table'"></fa-icon>
-                    <span class="d-none d-md-inline" jhiTranslate="entity.action.scores">Scores</span>
-                </a>
-                <a
-                    *ngIf="programmingExercise.course !== undefined"
                     [routerLink]="['/course-management', programmingExercise.course.id, 'exercises', programmingExercise.id, 'participations']"
                     class="btn btn-primary btn-sm mr-1"
                     style="margin-bottom: 10px"
                 >
                     <fa-icon [icon]="'list-alt'"></fa-icon>
                     <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.participations">Participations</span>
+                </a>
+                <a
+                    *ngIf="programmingExercise.course !== undefined"
+                    [routerLink]="['/course-management', programmingExercise.course.id, 'exercises', programmingExercise.id, 'scores']"
+                    class="btn btn-info btn-sm mr-1"
+                    style="margin-bottom: 10px"
+                >
+                    <fa-icon [icon]="'table'"></fa-icon>
+                    <span class="d-none d-md-inline" jhiTranslate="entity.action.scores">Scores</span>
                 </a>
 
                 <a
