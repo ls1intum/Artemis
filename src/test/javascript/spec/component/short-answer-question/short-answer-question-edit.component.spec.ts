@@ -222,7 +222,13 @@ describe('ShortAnswerQuestionEditComponent', () => {
 
         // test nested arrays
         component.question.text =
-            'const manyArrayFields = [\n' + "    ['test1'],\n" + "    ['test2'],\n" + "    ['[-spot 1]'],\n" + "    ['middleField'],\n" + "    ['[-spot 2]'],\n" + '];';
+            'const manyArrayFields = [\n' +
+            "    ['test1'],\n" +
+            "    ['test2'],\n" +
+            "    ['[-spot 1]'],\n" +
+            "    ['middleField'],\n" +
+            "    ['[-spot 2]'],\n" +
+            '];';
 
         component.ngOnInit();
 
