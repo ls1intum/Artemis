@@ -31,7 +31,7 @@ plugins {
 }
 
 group = "de.tum.in.www1.artemis"
-version = "4.11.0"
+version = "4.11.1"
 description = "Interactive Learning with Individual Feedback"
 
 sourceCompatibility=15
