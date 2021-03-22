@@ -95,7 +95,7 @@
 
                 <div class="col-2 row-flex hide-1680 exercise-score-container">
                     <div class="exercise-score" *ngIf="statistic && rowType == exerciseRowType.CURRENT">
-                        <span class="bold">{{ 'artemisApp.course.participations' | artemisTranslate }}</span>
+                        <span>{{ 'artemisApp.course.participations' | artemisTranslate }}</span>
                         <jhi-progress-bar
                             [tooltip]="'artemisApp.course.participations' | artemisTranslate"
                             [percentage]="statistic.participationRateInPercent"
@@ -105,7 +105,7 @@
                         </jhi-progress-bar>
                     </div>
                     <div class="exercise-score" *ngIf="statistic && rowType == exerciseRowType.ASSESSING">
-                        <span class="bold">{{ 'artemisApp.course.assessmentProgress' | artemisTranslate }}</span>
+                        <span>{{ 'artemisApp.course.assessmentProgress' | artemisTranslate }}</span>
                         <jhi-progress-bar
                             [tooltip]="'artemisApp.course.assessmentProgress' | artemisTranslate"
                             [percentage]="statistic.noOfAssessmentsDoneInPercent"
@@ -115,7 +115,7 @@
                         </jhi-progress-bar>
                     </div>
                     <div class="exercise-score" *ngIf="statistic && rowType == exerciseRowType.PAST">
-                        <span class="bold">{{ 'artemisApp.course.averageScore' | artemisTranslate }}</span>
+                        <span>{{ 'artemisApp.course.averageScore' | artemisTranslate }}</span>
                         <jhi-progress-bar
                             [tooltip]="'artemisApp.course.averageScore' | artemisTranslate"
                             [percentage]="statistic.averageScoreInPercent"
@@ -147,7 +147,7 @@
                     [routerLink]="['/course-management', course.id, details.exerciseType + '-exercises', details.exerciseId, 're-evaluate']"
                     class="btn btn-warning mr-1 mb-1"
                     [ngbTooltip]="'entity.action.re-evaluate' | artemisTranslate"
-                    ><fa-icon [icon]="'pencil-alt'"></fa-icon
+                    ><fa-icon [icon]="'wrench'"></fa-icon
                 ></a>
                 <a
                     *ngIf="course.isAtLeastTutor"
@@ -161,14 +161,14 @@
                     [routerLink]="['/course-management', course.id, details.exerciseType + '-exercises', details.exerciseId, 'assessment']"
                     class="btn btn-success mr-1 mb-1"
                     [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.instructorActions.submissions' | artemisTranslate"
-                    ><fa-icon [icon]="'file-contract'"></fa-icon
+                    ><fa-icon [icon]="'book'"></fa-icon
                 ></a>
                 <a
                     *ngIf="course.isAtLeastInstructor && details.exerciseType === exerciseType.PROGRAMMING"
                     [routerLink]="['/course-management', course.id, 'programming-exercises', details.exerciseId, 'grading', 'test-cases']"
-                    class="btn btn-secondary mr-1 mb-1"
+                    class="btn btn-info mr-1 mb-1"
                     [ngbTooltip]="'artemisApp.programmingExercise.configureGrading.shortTitle' | artemisTranslate"
-                    ><fa-icon [icon]="'pen'"></fa-icon
+                    ><fa-icon class="grading-icon" [icon]="'file-signature'"></fa-icon
                 ></a>
             </div>
         </div>

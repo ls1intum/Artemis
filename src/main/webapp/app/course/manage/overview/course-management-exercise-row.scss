@@ -101,7 +101,7 @@
         text-align: center;
         z-index: 1;
         min-width: 95px;
-        font-size: small;
+        font-size: x-small;
         margin-top: -5px;
     }
 
@@ -140,6 +140,11 @@
         align-items: center;
         justify-content: start;
         margin-right: 5px;
+    }
+
+    .grading-icon {
+        font-size: large;
+        margin-left: 5px;
     }
 }
 
