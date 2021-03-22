@@ -103,8 +103,8 @@ public class Exam extends DomainObject {
     @Column(name = "course_name")
     private String courseName;
 
-    @OneToOne
-    @JoinColumn(unique = true)
+    @OneToOne(mappedBy = "exam")
+    @PrimaryKeyJoinColumn
     private GradingScale gradingScale;
 
     @ManyToOne

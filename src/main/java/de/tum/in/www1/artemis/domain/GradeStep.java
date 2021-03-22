@@ -14,11 +14,17 @@ import org.springframework.cloud.cloudfoundry.com.fasterxml.jackson.annotation.J
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class GradeStep extends DomainObject {
 
-    @Column(name = "lower_bound")
-    private int lowerBound;
+    @Column(name = "lower_bound_percentage")
+    private double lowerBoundPercentage;
 
-    @Column(name = "upper_bound")
-    private int upperBound;
+    @Column(name = "lower_bound_inclusive")
+    private boolean lowerBoundInclusive = true; // default
+
+    @Column(name = "upper_bound_percentage")
+    private double upperBoundPercentage;
+
+    @Column(name = "upper_bound_inclusive")
+    private boolean upperBoundInclusive = false; // default
 
     @Column(name = "grade_name")
     private String gradeName;
@@ -26,20 +32,36 @@ public class GradeStep extends DomainObject {
     @Column(name = "is_passing_grade")
     private boolean isPassingGrade;
 
-    public int getLowerBound() {
-        return lowerBound;
+    public double getLowerBoundPercentage() {
+        return lowerBoundPercentage;
     }
 
-    public void setLowerBound(int lowerBound) {
-        this.lowerBound = lowerBound;
+    public void setLowerBoundPercentage(double lowerBoundPercentage) {
+        this.lowerBoundPercentage = lowerBoundPercentage;
     }
 
-    public int getUpperBound() {
-        return upperBound;
+    public boolean isLowerBoundInclusive() {
+        return lowerBoundInclusive;
     }
 
-    public void setUpperBound(int upperBound) {
-        this.upperBound = upperBound;
+    public void setLowerBoundInclusive(boolean lowerBoundInclusive) {
+        this.lowerBoundInclusive = lowerBoundInclusive;
+    }
+
+    public double getUpperBoundPercentage() {
+        return upperBoundPercentage;
+    }
+
+    public void setUpperBoundPercentage(double upperBoundPercentage) {
+        this.upperBoundPercentage = upperBoundPercentage;
+    }
+
+    public boolean isUpperBoundInclusive() {
+        return upperBoundInclusive;
+    }
+
+    public void setUpperBoundInclusive(boolean upperBoundInclusive) {
+        this.upperBoundInclusive = upperBoundInclusive;
     }
 
     public String getGradeName() {
@@ -60,6 +82,7 @@ public class GradeStep extends DomainObject {
 
     @Override
     public String toString() {
-        return "GradeStep{" + "lowerBound=" + lowerBound + ", upperBound=" + upperBound + ", gradeName='" + gradeName + '\'' + ", isPassingGrade=" + isPassingGrade + '}';
+        return "GradeStep{" + "lowerBoundPercentage=" + lowerBoundPercentage + ", lowerBoundInclusive=" + lowerBoundInclusive + ", upperBoundPercentage=" + upperBoundPercentage
+                + ", upperBoundInclusive=" + upperBoundInclusive + ", gradeName='" + gradeName + '\'' + ", isPassingGrade=" + isPassingGrade + '}';
     }
 }

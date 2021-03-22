@@ -1,14 +1,20 @@
 <?xml version="1.1" encoding="UTF-8" standalone="no"?>
 <databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext" xmlns:pro="http://www.liquibase.org/xml/ns/pro" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd http://www.liquibase.org/xml/ns/pro http://www.liquibase.org/xml/ns/pro/liquibase-pro-3.9.xsd http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.9.xsd">
-    <changeSet author="ivohashamov" id="20210319163146">
+    <changeSet author="ivohashamov" id="20210319163147">
         <createTable tableName="grade_step">
             <column autoIncrement="true" name="id" type="BIGINT">
                 <constraints nullable="false" primaryKey="true"/>
             </column>
-            <column name="lower_bound" type="INT">
+            <column name="lower_bound_percentage" type="DOUBLE">
                 <constraints nullable="false"/>
             </column>
-            <column name="upper_bound" type="INT">
+            <column name="upper_bound_percentage" type="DOUBLE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="lower_bound_inclusive" type="BIT(1)" defaultValueNumeric="1">
+                <constraints nullable="false"/>
+            </column>
+            <column name="upper_bound_inclusive" type="BIT(1)" defaultValueNumeric="0">
                 <constraints nullable="false"/>
             </column>
             <column name="grade_name" type="VARCHAR(100)">
@@ -17,13 +23,15 @@
             <column name="is_passing_grade" type="BIT(1)">
                 <constraints nullable="false"/>
             </column>
-            <column name="grading_scale_id" type="BIGINT"/>
+            <column name="grading_scale_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
         </createTable>
         <createTable tableName="grading_scale">
             <column autoIncrement="true" name="id" type="BIGINT">
                 <constraints nullable="false" primaryKey="true"/>
             </column>
-            <column name="is_default" type="BIT(1)">
+            <column name="grade_type" type="VARCHAR(10)" defaultValue="NONE">
                 <constraints nullable="false"/>
             </column>
             <column name="course_id" type="BIGINT"/>

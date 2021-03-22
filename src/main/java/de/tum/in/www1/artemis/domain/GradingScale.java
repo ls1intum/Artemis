@@ -8,25 +8,38 @@ import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.springframework.cloud.cloudfoundry.com.fasterxml.jackson.annotation.JsonInclude;
 
+import de.tum.in.www1.artemis.domain.exam.Exam;
+
 @Entity
 @Table(name = "grading_scale")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class GradingScale extends DomainObject {
 
-    @Column(name = "is_default")
-    private boolean isDefault;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "grade_type")
+    private GradeType gradeType = GradeType.NONE; // default
+
+    @OneToOne
+    @MapsId
+    @JoinColumn(name = "course_id")
+    private Course course;
+
+    @OneToOne
+    @MapsId
+    @JoinColumn(name = "exam_id")
+    private Exam exam;
 
     @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    @OrderBy("lowerBound ASC")
+    @OrderBy("lowerBoundPercentage ASC")
     private Set<GradeStep> gradeSteps;
 
-    public boolean isDefault() {
-        return isDefault;
+    public GradeType getGradeType() {
+        return gradeType;
     }
 
-    public void setIsDefault(boolean isDefault) {
-        this.isDefault = isDefault;
+    public void setGradeType(GradeType gradeType) {
+        this.gradeType = gradeType;
     }
 
     public Set<GradeStep> getGradeSteps() {
