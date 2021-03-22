@@ -126,7 +126,7 @@ public class GroupNotificationService {
      * @param notificationText that should be displayed
      */
     public void notifyInstructorGroupAboutInvalidSubmissionsForExercise(Exercise exercise, String notificationText) {
-        saveAndSend(createNotification(exercise, null, GroupNotificationType.INSTRUCTOR, NotificationType.INVALID_SUBMISSION, notificationText));
+        saveAndSend(createNotification(exercise, null, GroupNotificationType.INSTRUCTOR, NotificationType.ILLEGAL_SUBMISSION, notificationText));
     }
 
     /**

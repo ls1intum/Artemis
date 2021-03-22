@@ -83,7 +83,7 @@ public class GroupNotificationFactory {
                 title = "Duplicate test case was found.";
                 text = "Exercise \"" + exercise.getTitle() + "\" has multiple test cases with the same name.";
             }
-            case INVALID_SUBMISSION -> {
+            case ILLEGAL_SUBMISSION -> {
                 title = "Invalid submission of a student.";
                 text = "Exercise \"" + exercise.getTitle() + "\" has invalid submissions of students.";
             }
