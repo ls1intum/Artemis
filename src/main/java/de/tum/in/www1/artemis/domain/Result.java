@@ -257,7 +257,7 @@ public class Result extends DomainObject {
     }
 
     public void setRatedIfNotExceeded(@Nullable ZonedDateTime exerciseDueDate, ZonedDateTime submissionDate) {
-        this.rated = exerciseDueDate == null || (!submissionDate.isAfter(exerciseDueDate));
+        this.rated = exerciseDueDate == null || !submissionDate.isAfter(exerciseDueDate);
     }
 
     /**
