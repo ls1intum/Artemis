@@ -10,7 +10,7 @@ import { Graphs, SpanType } from 'app/entities/statistics.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe.ts';
 import * as chai from 'chai';
 import * as moment from 'moment';
-import { MockComponent, MockPipe } from 'ng-mocks';
+import { MockPipe } from 'ng-mocks';
 import { ChartsModule } from 'ng2-charts';
 import { MomentModule } from 'ngx-moment';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';

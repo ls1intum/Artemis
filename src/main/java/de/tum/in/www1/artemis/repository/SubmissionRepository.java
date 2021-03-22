@@ -215,8 +215,7 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
      * Gets the number of unique submissions made for the given exercise
      *
      * @param exerciseId the exercise id to get the number for
-     * @return the number of participations (= unique submissions) of the exercise,
-     * which have the submitted flag set to true and the submission date before the exercise due date, or no exercise due date at all
+     * @return the number of participations (= unique submissions) of the exercise
      */
     @Query("""
             SELECT COUNT (DISTINCT p.id) FROM StudentParticipation p

@@ -223,8 +223,8 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
     /**
      * Fetches the active exercises for a course
      *
-     * @param courseId - course to get the statistics for
-     * @param sevenDaysAgo - a ZoneDateTime seen days in the past, exercises with an assessment due date (or due date if without assessment) older than that are filtered
+     * @param courseId the course to get the statistics for
+     * @param sevenDaysAgo a ZoneDateTime seven days in the past, exercises with an assessment due date (or due date if without assessment) older than that are filtered
      * @return a list of exercises
      */
     @Query("""
@@ -239,7 +239,7 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
     /**
      * Fetches the amount of participations in the given exercise
      *
-     * @param exerciseId - exercise to get the amount for
+     * @param exerciseId the id of the exercise to get the amount for
      * @return The amount of participations as <code>Long</code>
      */
     @Query("""
@@ -252,8 +252,8 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
     /**
      * Fetches the score of the given exercise
      *
-     * @param exerciseId - exercise to get the score for
-     * @return The average score as <code>Dobule</code>
+     * @param exerciseId the id of the exercise to get the score for
+     * @return The average score as <code>Double</code>
      */
     @Query("""
             SELECT AVG(r.score)
@@ -272,7 +272,7 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
      * Fetches exercise ids of active exercises of a course
      *
      * @param courseId the id of the course the exercises are part of
-     * @param sevenDaysAgo a ZoneDateTime seen days in the past, exercises with an assessment due date (or due date if without assessment) older than that are filtered
+     * @param sevenDaysAgo a ZoneDateTime seven days in the past, exercises with an assessment due date (or due date if without assessment) older than that are filtered
      * @return a list of ids of exercises
      */
     @Query("""

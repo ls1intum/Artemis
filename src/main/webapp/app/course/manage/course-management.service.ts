@@ -232,8 +232,8 @@ export class CourseManagementService {
     }
 
     /**
-     * finds all courses as DTOs using a GET request
-     * @param req
+     * finds all courses for the overview using a GET request
+     * @param req a dictionary which is send as request option along the REST call
      */
     getCourseOverview(req?: any): Observable<HttpResponse<Course[]>> {
         const options = createRequestOption(req);

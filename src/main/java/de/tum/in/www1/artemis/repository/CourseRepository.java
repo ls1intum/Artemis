@@ -125,7 +125,7 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
      * Fetches the courses to display for the management overview
      *
      * @param now ZonedDateTime of the current time. If an end date is set only courses before this time are returned. May be null to return all
-     * @param isAdmin whether the user to fetch the courses for is an admin (which get all courses)
+     * @param isAdmin whether the user to fetch the courses for is an admin (which gets all courses)
      * @param userGroups the user groups of the user to fetch the courses for (ignored if the user is an admin)
      * @return a list of courses for the overview
      */

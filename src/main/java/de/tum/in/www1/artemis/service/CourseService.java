@@ -272,7 +272,7 @@ public class CourseService {
     }
 
     /**
-     * Fetches Course Management data from repository and returns a list of Courses
+     * Fetches a list of Courses
      *
      * @param onlyActive Whether or not to include courses with a past endDate
      * @return A list of Courses for the course management overview
@@ -285,10 +285,10 @@ public class CourseService {
     }
 
     /**
-     * Get the active students for this particular course
+     * Get the active students for these particular exercise ids
      *
      * @param exerciseIds the ids to get the active students for
-     * @return An Integer array containing active students for each index
+     * @return An Integer array containing active students for each index. An index corresponds to a week
      */
     public Integer[] getActiveStudents(List<Long> exerciseIds) {
         ZonedDateTime now = ZonedDateTime.now();
@@ -304,7 +304,7 @@ public class CourseService {
     }
 
     /**
-     * the List of maps result contains duplicated entries. This method compares the values and returns a List<Map<String, Object>>
+     * The List of maps contains duplicated entries. This method compares the values and returns a List<Map<String, Object>>
      * without duplicated entries
      *
      * @param activeUserRows the result given by the Repository call
@@ -342,10 +342,10 @@ public class CourseService {
     }
 
     /**
-     * Gets a list of maps, each map describing an entry in the database. The map has the two keys "day" and "amount",
-     * which map to the date and the amount of the findings. This Map-List is taken and converted into a Integer array,
+     * Gets a list of maps as parameter, each map describing an entry in the database. The map has the two keys "day" and "amount",
+     * which map to the date and the amount of the findings. This Map-List is taken and converted into an Integer array,
      * containing the values for each point of the graph. In the course management overview, we want to display the last
-     * 4 weeks, each week represented by one point in the graph (Beginning with the current week)
+     * 4 weeks, each week represented by one point in the graph. (Beginning with the current week.)
      *
      * @param outcome A List<Map<String, Object>>, containing the content which should be refactored into an array
      * @param endDate the endDate

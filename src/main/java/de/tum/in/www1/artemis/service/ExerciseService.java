@@ -547,12 +547,12 @@ public class ExerciseService {
     }
 
     /**
-     * Get the exercise statistics
+     * Gets the exercise statistics by setting values for each field of the <code>CourseManagementOverviewExerciseStatisticsDTO</code>
      *
      * @param courseId the id of the course
      * @param amountOfStudentsInCourse the amount of students in the course
      * @param exerciseIds the ids of the exercises to get the statistics for
-     * @return An Integer array containing active students for each index
+     * @return A list of filled <code>CourseManagementOverviewExerciseStatisticsDTO</code>
      */
     public List<CourseManagementOverviewExerciseStatisticsDTO> getStatisticsForCourseManagementOverview(Long courseId, Integer amountOfStudentsInCourse, List<Long> exerciseIds) {
         List<CourseManagementOverviewExerciseStatisticsDTO> statisticsDTOS = new ArrayList<>();
@@ -561,8 +561,8 @@ public class ExerciseService {
 
         var averageScore = participantScoreRepository.findAvgScoreForExercises(exerciseIds);
         Map<Long, Double> averageScoreById = new HashMap<>();
-        for (var ele : averageScore) {
-            averageScoreById.put((Long) ele.get("exerciseId"), (Double) ele.get("averageScore"));
+        for (var element : averageScore) {
+            averageScoreById.put((Long) element.get("exerciseId"), (Double) element.get("averageScore"));
         }
 
         for (var exercise : exerciseRepository.getExercisesForCourseManagementOverview(courseId, sevenDaysAgo)) {

@@ -460,10 +460,10 @@ public class CourseResource {
     }
 
     /**
-     * GET /courses/course-overview : get all courses DTOs for administration purposes.
+     * GET /courses/course-overview : get all courses for the management overview
      *
      * @param onlyActive if true, only active courses will be considered in the result
-     * @return the list of courseDTOs (the user has access to)
+     * @return a list of courses (the user has access to)
      */
     @GetMapping("/courses/course-overview")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
@@ -474,7 +474,7 @@ public class CourseResource {
     /**
      * GET /courses/to-register : get all courses that the current user can register to. Decided by the start and end date and if the registrationEnabled flag is set correctly
      *
-     * @return the list of courses which are active)
+     * @return the list of courses which are active
      */
     @GetMapping("/courses/to-register")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
@@ -893,7 +893,7 @@ public class CourseResource {
      * gets the exercise details for the courses of the user
      *
      * @param onlyActive if true, only active courses will be considered in the result
-     * @return ResponseEntity with status
+     * @return ResponseEntity with status, containing a list of <code>CourseManagementOverviewDTO</code>
      */
     @GetMapping("/courses/exercises-for-management-overview")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
@@ -916,7 +916,7 @@ public class CourseResource {
      * gets the statistics for the courses of the user
      *
      * @param onlyActive if true, only active courses will be considered in the result
-     * @return ResponseEntity with status
+     * @return ResponseEntity with status, containing a list of <code>CourseManagementOverviewStatisticsDTO</code>
      */
     @GetMapping("/courses/stats-for-management-overview")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
