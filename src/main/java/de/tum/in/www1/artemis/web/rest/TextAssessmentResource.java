@@ -280,7 +280,7 @@ public class TextAssessmentResource extends AssessmentResource {
         final boolean isAtLeastInstructorForExercise = authCheckService.isAtLeastInstructorForExercise(exercise, user);
 
         // return forbidden if caller is not allowed to assess
-        if (!authCheckService.isAllowedToAssessSubmission(exercise, user, resultId)) {
+        if (!authCheckService.isAllowedToAssesExercise(exercise, user, resultId)) {
             return forbidden();
         }
 

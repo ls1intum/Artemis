@@ -162,7 +162,7 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
         var fileUploadExercise = (FileUploadExercise) studentParticipation.getExercise();
 
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isAllowedToAssessSubmission(fileUploadExercise, user, resultId)) {
+        if (!authCheckService.isAllowedToAssesExercise(fileUploadExercise, user, resultId)) {
             return forbidden();
         }
 

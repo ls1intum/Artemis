@@ -418,9 +418,9 @@ public class AuthorizationCheckService {
      * @param exercise Exercise of the submission
      * @param user User the requests the assessment
      * @param resultId Id of the result he wants to assess
-     * @return true if caller is allows to assess submission
+     * @return true if caller is allowed to assess submissions
      */
-    public boolean isAllowedToAssessSubmission(Exercise exercise, User user, Long resultId) {
-        return this.isAtLeastTeachingAssistantForExercise(exercise, user) || (resultId != null && !isAtLeastInstructorForExercise(exercise, user));
+    public boolean isAllowedToAssesExercise(Exercise exercise, User user, Long resultId) {
+        return this.isAtLeastTeachingAssistantForExercise(exercise, user) && (resultId == null || isAtLeastInstructorForExercise(exercise, user));
     }
 }
