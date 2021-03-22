@@ -25,6 +25,7 @@ import org.springframework.web.bind.annotation.*;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.ExerciseGroupRepository;
 import de.tum.in.www1.artemis.repository.FileUploadExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.*;
@@ -62,13 +63,13 @@ public class FileUploadExerciseResource {
 
     private final GradingCriterionService gradingCriterionService;
 
-    private final ExerciseGroupService exerciseGroupService;
+    private final ExerciseGroupRepository exerciseGroupRepository;
 
     private final FileUploadSubmissionExportService fileUploadSubmissionExportService;
 
     public FileUploadExerciseResource(FileUploadExerciseService fileUploadExerciseService, FileUploadExerciseRepository fileUploadExerciseRepository, UserRepository userRepository,
             AuthorizationCheckService authCheckService, CourseService courseService, GroupNotificationService groupNotificationService, ExerciseService exerciseService,
-            FileUploadSubmissionExportService fileUploadSubmissionExportService, GradingCriterionService gradingCriterionService, ExerciseGroupService exerciseGroupService,
+            FileUploadSubmissionExportService fileUploadSubmissionExportService, GradingCriterionService gradingCriterionService, ExerciseGroupRepository exerciseGroupRepository,
             CourseRepository courseRepository) {
         this.fileUploadExerciseService = fileUploadExerciseService;
         this.fileUploadExerciseRepository = fileUploadExerciseRepository;
@@ -78,7 +79,7 @@ public class FileUploadExerciseResource {
         this.groupNotificationService = groupNotificationService;
         this.exerciseService = exerciseService;
         this.gradingCriterionService = gradingCriterionService;
-        this.exerciseGroupService = exerciseGroupService;
+        this.exerciseGroupRepository = exerciseGroupRepository;
         this.fileUploadSubmissionExportService = fileUploadSubmissionExportService;
         this.courseRepository = courseRepository;
     }
@@ -252,7 +253,7 @@ public class FileUploadExerciseResource {
         // If the exercise belongs to an exam, only instructors and admins are allowed to access it, otherwise also TA have access
         if (fileUploadExercise.isExamExercise()) {
             // Get the course over the exercise group
-            ExerciseGroup exerciseGroup = exerciseGroupService.findOneWithExam(fileUploadExercise.getExerciseGroup().getId());
+            ExerciseGroup exerciseGroup = exerciseGroupRepository.findByIdElseThrow(fileUploadExercise.getExerciseGroup().getId());
             Course course = exerciseGroup.getExam().getCourse();
 
             if (!authCheckService.isAtLeastInstructorInCourse(course, null)) {
@@ -290,7 +291,7 @@ public class FileUploadExerciseResource {
         // If the exercise belongs to an exam, the course must be retrieved over the exerciseGroup
         Course course;
         if (fileUploadExercise.isExamExercise()) {
-            course = exerciseGroupService.retrieveCourseOverExerciseGroup(fileUploadExercise.getExerciseGroup().getId());
+            course = exerciseGroupRepository.retrieveCourseOverExerciseGroup(fileUploadExercise.getExerciseGroup().getId());
         }
         else {
             course = fileUploadExercise.getCourseViaExerciseGroupOrCourseMember();
