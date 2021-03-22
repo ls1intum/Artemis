@@ -72,6 +72,16 @@ export class CourseManagementService {
     }
 
     /**
+     * Returns the title of the course with the given id
+     *
+     * @param courseId the id of the course
+     * @return the name/title of the course
+     */
+    getTitle(courseId: number): Observable<HttpResponse<string>> {
+        return this.http.get<string>(`${this.resourceUrl}/${courseId}/get-title`, { observe: 'response' });
+    }
+
+    /**
      * finds the course with the provided unique identifier together with its exercises
      * @param courseId - the id of the course to be found
      */

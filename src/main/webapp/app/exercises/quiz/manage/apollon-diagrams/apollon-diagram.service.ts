@@ -44,6 +44,16 @@ export class ApollonDiagramService {
     }
 
     /**
+     * Returns the title of the diagram with the given id
+     *
+     * @param diagramId the id of the diagram
+     * @return the name/title of the diagram
+     */
+    getTitle(diagramId: number): Observable<HttpResponse<string>> {
+        return this.http.get<string>(`${this.resourceUrl}/apollon-diagrams/${diagramId}/get-title`, { observe: 'response' });
+    }
+
+    /**
      * Deletes diagram with that id.
      * @param id - id of diagram to be deleted.
      * @param courseId - id of the course.

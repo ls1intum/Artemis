@@ -19,17 +19,12 @@ import { Exam } from 'app/entities/exam.model';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { LocaleConversionService } from 'app/shared/service/locale-conversion.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { Course } from 'app/entities/course.model';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { Exercise } from 'app/entities/exercise.model';
 import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/manage/exercise-hint.service';
-import { ExerciseHint } from 'app/entities/exercise-hint.model';
 import { ApollonDiagramService } from 'app/exercises/quiz/manage/apollon-diagrams/apollon-diagram.service';
-import { Lecture } from 'app/entities/lecture.model';
 import { LectureService } from 'app/lecture/lecture.service';
-import { ApollonDiagram } from 'app/entities/apollon-diagram.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 
 @Component({
@@ -257,7 +252,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
                 break;
             case 'course-management':
                 this.routeCourseId = Number(segment);
-                this.addResolvedTitleAsCrumb<Course>(this.courseManagementService.find(this.routeCourseId), currentPath, segment);
+                this.addResolvedTitleAsCrumb(this.courseManagementService.getTitle(this.routeCourseId), currentPath, segment);
                 break;
             case 'exercises':
             case 'text-exercises':
@@ -265,20 +260,20 @@ export class NavbarComponent implements OnInit, OnDestroy {
             case 'file-upload-exercises':
             case 'programming-exercises':
             case 'quiz-exercises':
-                this.addResolvedTitleAsCrumb<Exercise>(this.exerciseService.find(Number(segment)), currentPath, segment);
+                this.addResolvedTitleAsCrumb(this.exerciseService.getTitle(Number(segment)), currentPath, segment);
                 break;
             case 'hints':
-                this.addResolvedTitleAsCrumb<ExerciseHint>(this.hintService.find(Number(segment)), currentPath, segment);
+                this.addResolvedTitleAsCrumb(this.hintService.getTitle(Number(segment)), currentPath, segment);
                 break;
             case 'apollon-diagrams':
-                this.addResolvedTitleAsCrumb<ApollonDiagram>(this.apollonDiagramService.find(Number(segment), this.routeCourseId), currentPath, segment);
+                this.addResolvedTitleAsCrumb(this.apollonDiagramService.getTitle(Number(segment)), currentPath, segment);
                 break;
             case 'lectures':
-                this.addResolvedTitleAsCrumb<Lecture>(this.lectureService.find(Number(segment)), currentPath, segment);
+                this.addResolvedTitleAsCrumb(this.lectureService.getTitle(Number(segment)), currentPath, segment);
                 break;
             case 'exams':
                 this.routeExamId = Number(segment);
-                this.addResolvedTitleAsCrumb<Exam>(this.examService.find(this.routeCourseId, this.routeExamId), currentPath, segment);
+                this.addResolvedTitleAsCrumb(this.examService.getTitle(this.routeExamId), currentPath, segment);
                 break;
             case 'import':
                 // Special case: Don't display the ID here but the name directly (clicking the ID wouldn't work)
@@ -390,14 +385,14 @@ export class NavbarComponent implements OnInit, OnDestroy {
      * @param uri the uri/path for the breadcrumb
      * @param segment the current url segment to add a breadcrumb for
      */
-    private addResolvedTitleAsCrumb<T>(observable: Observable<HttpResponse<T>>, uri: string, segment: string): void {
+    private addResolvedTitleAsCrumb(observable: Observable<HttpResponse<string>>, uri: string, segment: string): void {
         // Insert the segment until we fetched a title from the server to insert at the correct index
         const index = this.breadcrumbs.length;
         this.addBreadcrumb(uri, segment, false);
 
         observable.subscribe(
-            (response: HttpResponse<T>) => {
-                const title = !!response.body ? response.body!['title'] : segment;
+            (response: HttpResponse<string>) => {
+                const title = !!response.body ? response.body!['response'] : segment;
                 this.setBreadcrumb(uri, title, false, index);
             },
             (error: HttpErrorResponse) => onError(this.jhiAlertService, error),

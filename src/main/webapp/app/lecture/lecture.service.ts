@@ -48,6 +48,16 @@ export class LectureService {
             .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
     }
 
+    /**
+     * Returns the title of the lecture with the given id
+     *
+     * @param lectureId the id of the lecture
+     * @return the name/title of the lecture
+     */
+    getTitle(lectureId: number): Observable<HttpResponse<string>> {
+        return this.http.get<string>(`${this.resourceUrl}/${lectureId}/get-title`, { observe: 'response' });
+    }
+
     query(req?: any): Observable<EntityArrayResponseType> {
         const options = createRequestOption(req);
         return this.http

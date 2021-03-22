@@ -72,11 +72,14 @@ export class ExerciseService {
             .map((res: EntityResponseType) => this.checkPermission(res));
     }
 
-    findExamExercise(exerciseId: number): Observable<EntityResponseType> {
-        return this.http
-            .get<Exercise>(`${this.resourceUrl}/examExercise/${exerciseId}`, { observe: 'response' })
-            .map((res: EntityResponseType) => this.convertDateFromServer(res))
-            .map((res: EntityResponseType) => this.checkPermission(res));
+    /**
+     * Returns the title of the exercise with the given id
+     *
+     * @param exerciseId the id of the exercise
+     * @return the name/title of the exercise
+     */
+    getTitle(exerciseId: number): Observable<HttpResponse<string>> {
+        return this.http.get<string>(`${this.resourceUrl}/${exerciseId}/get-title`, { observe: 'response' });
     }
 
     /**

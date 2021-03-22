@@ -78,6 +78,16 @@ export class ExerciseHintService implements IExerciseHintService {
     }
 
     /**
+     * Returns the title of the hint with the given id
+     *
+     * @param hintId the id of the hint
+     * @return the name/title of the hint
+     */
+    getTitle(hintId: number): Observable<HttpResponse<string>> {
+        return this.http.get<string>(`${this.resourceUrl}/${hintId}/get-title`, { observe: 'response' });
+    }
+
+    /**
      * Deletes an exercise hint
      * @param id Id of exercise hint to delete
      */

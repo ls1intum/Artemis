@@ -19,6 +19,7 @@ import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.web.rest.dto.StringDTO;
 import io.github.jhipster.web.util.HeaderUtil;
 
 /**
@@ -113,6 +114,18 @@ public class ExerciseHintResource {
         }
         ExerciseHint result = exerciseHintRepository.save(exerciseHint);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, exerciseHint.getId().toString())).body(result);
+    }
+
+    /**
+     * GET /exercise-hints/:hintId/get-title : Returns the title of the hint with the given id
+     *
+     * @param hintId the id of the hint
+     * @return the name/title of the hint
+     */
+    @GetMapping(value = "/exercise-hints/{hintId}/get-title")
+    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    public StringDTO getHintTitle(@PathVariable Long hintId) {
+        return new StringDTO(exerciseHintRepository.getHintTitle(hintId));
     }
 
     /**

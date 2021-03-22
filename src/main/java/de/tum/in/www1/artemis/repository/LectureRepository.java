@@ -44,4 +44,16 @@ public interface LectureRepository extends JpaRepository<Lecture, Long> {
             """)
     Optional<Lecture> findByIdWithStudentQuestionsAndLectureUnitsAndLearningGoals(@Param("lectureId") Long lectureId);
 
+    /**
+     * Returns the title of the lecture with the given id
+     *
+     * @param lectureId the id of the lecture
+     * @return the name/title of the lecture
+     */
+    @Query("""
+            select l.title
+            from Lecture l
+            where l.id = :lectureId
+            """)
+    String getLectureTitle(Long lectureId);
 }

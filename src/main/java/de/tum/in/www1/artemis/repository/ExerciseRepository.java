@@ -220,6 +220,19 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
     @EntityGraph(type = LOAD, attributePaths = { "studentParticipations", "studentParticipations.student", "studentParticipations.submissions" })
     Optional<Exercise> findWithEagerStudentParticipationsStudentAndSubmissionsById(Long exerciseId);
 
+    /**
+     * Returns the title of the exercise with the given id
+     *
+     * @param exerciseId the id of the exercise
+     * @return the name/title of the exercise
+     */
+    @Query("""
+            select e.title
+            from Exercise e
+            where e.id = :exerciseId
+            """)
+    String getExerciseTitle(Long exerciseId);
+
     @NotNull
     default Exercise findByIdElseThrow(Long exerciseId) throws EntityNotFoundException {
         return findById(exerciseId).orElseThrow(() -> new EntityNotFoundException("Exercise", exerciseId));

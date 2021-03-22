@@ -30,6 +30,7 @@ import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ExerciseService;
 import de.tum.in.www1.artemis.service.LectureService;
+import de.tum.in.www1.artemis.web.rest.dto.StringDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
@@ -177,6 +178,18 @@ public class LectureResource {
         lecture = filterLectureContentForUser(lecture, user);
 
         return ResponseEntity.ok(lecture);
+    }
+
+    /**
+     * GET /lectures/:lectureId/get-title : Returns the title of the lecture with the given id
+     *
+     * @param lectureId the id of the lecture
+     * @return the name/title of the lecture
+     */
+    @GetMapping(value = "/lectures/{lectureId}/get-title")
+    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    public StringDTO getLectureTitle(@PathVariable Long lectureId) {
+        return new StringDTO(lectureRepository.getLectureTitle(lectureId));
     }
 
     private Lecture filterLectureContentForUser(Lecture lecture, User user) {

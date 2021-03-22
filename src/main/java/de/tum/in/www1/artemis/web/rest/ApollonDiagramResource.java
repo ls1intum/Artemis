@@ -19,6 +19,7 @@ import de.tum.in.www1.artemis.repository.ApollonDiagramRepository;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.web.rest.dto.StringDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
@@ -108,6 +109,18 @@ public class ApollonDiagramResource {
         ApollonDiagram result = apollonDiagramRepository.save(apollonDiagram);
 
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, apollonDiagram.getId().toString())).body(result);
+    }
+
+    /**
+     * GET /apollon-diagrams/:diagramId/get-title : Returns the title of the diagram with the given id
+     *
+     * @param diagramId the id of the diagram
+     * @return the name/title of the diagram
+     */
+    @GetMapping(value = "/apollon-diagrams/{diagramId}/get-title")
+    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    public StringDTO getExerciseTitle(@PathVariable Long diagramId) {
+        return new StringDTO(apollonDiagramRepository.getDiagramTitle(diagramId));
     }
 
     /**
