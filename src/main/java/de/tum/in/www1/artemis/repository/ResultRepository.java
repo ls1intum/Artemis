@@ -307,12 +307,12 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
      */
     default DueDateStat[] countNumberOfLockedAssessmentsByOtherTutorsForExamExerciseForCorrectionRounds(Exercise exercise, int numberOfCorrectionRounds, User tutor) {
         DueDateStat[] correctionRoundsDataStats = new DueDateStat[numberOfCorrectionRounds];
-        var res = countNumberOfLockedAssessmentsByOtherTutorsForExamExerciseForCorrectionRoundsIgnoreTestRuns(exercise.getId(), tutor.getId());
+        var resultsLockedByOtherTutors = countNumberOfLockedAssessmentsByOtherTutorsForExamExerciseForCorrectionRoundsIgnoreTestRuns(exercise.getId(), tutor.getId());
 
-        correctionRoundsDataStats[0] = new DueDateStat(res.stream().filter(x -> x.isRated() == null).count(), 0L);
+        correctionRoundsDataStats[0] = new DueDateStat(resultsLockedByOtherTutors.stream().filter(result -> result.isRated() == null).count(), 0L);
         // so far the number of correctionRounds is limited to 2
         if (numberOfCorrectionRounds == 2) {
-            correctionRoundsDataStats[1] = new DueDateStat(res.stream().filter(x -> x.isRated() != null).count(), 0L);
+            correctionRoundsDataStats[1] = new DueDateStat(resultsLockedByOtherTutors.stream().filter(result -> result.isRated() != null).count(), 0L);
         }
 
         return correctionRoundsDataStats;
