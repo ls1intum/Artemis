@@ -157,7 +157,6 @@ describe('ShortAnswerQuestionEditComponent', () => {
         ];
         expect(component.textParts).to.deep.equal(expectedTextParts);
 
-        // @formatter:off
         // tests simple indentation
         component.question.text =
             '[-spot 5]\n' + '    [-spot 6]\n' + '        [-spot 7]\n' + '            [-spot 8]\n' + '                [-spot 9]\n' + '                    [-spot 10]';
@@ -248,7 +247,6 @@ describe('ShortAnswerQuestionEditComponent', () => {
             ['        -', 'first', 'very', 'not', 'major', 'point,', 'super', 'indented'],
         ];
         expect(component.textParts).to.deep.equal(expectedTextParts);
-        // @formatter:on
     });
 
     it('should invoke ngOnChanges', () => {
