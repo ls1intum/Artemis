@@ -75,8 +75,9 @@ public class SAML2Configuration extends WebSecurityConfigurerAdapter {
     }
 
     private void addDecryptionInformation(Collection<Saml2X509Credential> credentialsSink, SAML2Properties.RelyingPartyProperties config) {
-        if (!this.checkFiles(config))
+        if (!this.checkFiles(config)) {
             return;
+        }
 
         try {
             Saml2X509Credential credentials = Saml2X509Credential.decryption(readPrivateKey(config.getKeyFile()), readPublicCert(config.getCertFile()));
@@ -88,8 +89,9 @@ public class SAML2Configuration extends WebSecurityConfigurerAdapter {
 
 
     private void addSigningInformation(Collection<Saml2X509Credential> credentialsSink, SAML2Properties.RelyingPartyProperties config) {
-        if (!this.checkFiles(config))
+        if (!this.checkFiles(config)) {
             return;
+        }
 
         try {
             Saml2X509Credential credentials = Saml2X509Credential.signing(readPrivateKey(config.getKeyFile()), readPublicCert(config.getCertFile()));
