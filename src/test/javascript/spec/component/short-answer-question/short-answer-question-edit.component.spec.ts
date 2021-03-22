@@ -157,25 +157,14 @@ describe('ShortAnswerQuestionEditComponent', () => {
         ];
         expect(component.textParts).to.deep.equal(expectedTextParts);
 
+        // @formatter:off
         // tests simple indentation
         component.question.text =
-            '[-spot 5]\n' +
-            '    [-spot 6]\n' +
-            '        [-spot 7]\n' +
-            '            [-spot 8]\n' +
-            '                [-spot 9]\n' +
-            '                    [-spot 10]';
+            '[-spot 5]\n' + '    [-spot 6]\n' + '        [-spot 7]\n' + '            [-spot 8]\n' + '                [-spot 9]\n' + '                    [-spot 10]';
 
         component.ngOnInit();
 
-        expectedTextParts = [
-        ['[-spot 5]'],
-        ['    [-spot 6]'],
-        ['        [-spot 7]'],
-        ['            [-spot 8]'],
-        ['                [-spot 9]'],
-        ['                    [-spot 10]']
-        ];
+        expectedTextParts = [['[-spot 5]'], ['    [-spot 6]'], ['        [-spot 7]'], ['            [-spot 8]'], ['                [-spot 9]'], ['                    [-spot 10]']];
         expect(component.textParts).to.deep.equal(expectedTextParts);
 
         // classic java main method test
@@ -222,13 +211,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
 
         // test nested arrays
         component.question.text =
-            'const manyArrayFields = [\n' +
-            "    ['test1'],\n" +
-            "    ['test2'],\n" +
-            "    ['[-spot 1]'],\n" +
-            "    ['middleField'],\n" +
-            "    ['[-spot 2]'],\n" +
-            '];';
+            'const manyArrayFields = [\n' + "    ['test1'],\n" + "    ['test2'],\n" + "    ['[-spot 1]'],\n" + "    ['middleField'],\n" + "    ['[-spot 2]'],\n" + '];';
 
         component.ngOnInit();
 
@@ -265,6 +248,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
             ['        -', 'first', 'very', 'not', 'major', 'point,', 'super', 'indented'],
         ];
         expect(component.textParts).to.deep.equal(expectedTextParts);
+        // @formatter:on
     });
 
     it('should invoke ngOnChanges', () => {
