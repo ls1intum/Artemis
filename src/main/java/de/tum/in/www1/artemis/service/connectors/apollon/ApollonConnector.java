@@ -1,17 +1,15 @@
 package de.tum.in.www1.artemis.service.connectors.apollon;
 
-import java.util.List;
+import java.io.IOException;
+import java.io.InputStream;
 
 import javax.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
+import org.springframework.core.io.Resource;
+import org.springframework.http.*;
 import org.springframework.web.client.RestTemplate;
 
-import de.tum.in.www1.artemis.domain.TextSubmission;
 import de.tum.in.www1.artemis.exception.NetworkingError;
 
 /**
@@ -36,14 +34,10 @@ class ApollonConnector {
     // region Request/Response DTOs
     public static class RequestDTO {
 
-        public String diagram;
-
-        public String callbackUrl;
-
-        public List<TextSubmission> submissions;
+        public String model;
 
         RequestDTO(@NotNull String diagram) {
-            this.diagram = diagram;
+            this.model = diagram;
         }
 
     }
@@ -63,25 +57,35 @@ class ApollonConnector {
      * @return response body from remote service
      * @throws NetworkingError exception in case of unsuccessful responses or responses without a body.
      */
-    ResponseDTO invoke(@NotNull String url, @NotNull RequestDTO requestObject) throws NetworkingError {
+    InputStream invoke(@NotNull String url, @NotNull RequestDTO requestObject) throws NetworkingError {
         long start = System.currentTimeMillis();
         log.debug("Calling Remote Artemis Service.");
+        System.out.println("url");
+        System.out.println(url);
+        System.out.println("requestObject");
+        System.out.println(requestObject.model);
 
         var headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
 
         final HttpEntity<RequestDTO> httpRequestEntity = new HttpEntity<>(requestObject, headers);
-
-        final ResponseEntity<ResponseDTO> response = restTemplate.postForEntity(url, httpRequestEntity, genericResponseType);
+        System.out.println("requestBody");
+        System.out.println(httpRequestEntity.getBody().model);
+        final ResponseEntity<Resource> response = restTemplate.exchange(url, HttpMethod.POST, httpRequestEntity, Resource.class);
 
         if (!response.getStatusCode().is2xxSuccessful() || !response.hasBody()) {
             throw new NetworkingError("An Error occurred while calling Remote Artemis Service. Check Remote Logs for debugging information.");
         }
-
-        final ResponseDTO responseBody = response.getBody();
-        assert responseBody != null;
+        InputStream responseInputStream;
+        assert response.getBody() != null;
+        try {
+            responseInputStream = response.getBody().getInputStream();
+        }
+        catch (IOException e) {
+            throw new RuntimeException(e);
+        }
         log.debug("Finished remote call in " + (System.currentTimeMillis() - start) + "ms");
 
-        return responseBody;
+        return responseInputStream;
     }
 }

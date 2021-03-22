@@ -31,3 +31,8 @@ export function downloadFile(blob: Blob, filename: string) {
         window.URL.revokeObjectURL(url);
     }
 }
+
+export function downloadStream(data: any, type: string) {
+    const blob = new Blob([data], { type });
+    downloadFile(blob, 'file.pdf');
+}

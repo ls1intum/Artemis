@@ -10,6 +10,7 @@ import { ModelingStatistic } from 'app/entities/modeling-statistic.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { ModelingPlagiarismResult } from 'app/exercises/shared/plagiarism/types/modeling/ModelingPlagiarismResult';
 import { PlagiarismOptions } from 'app/exercises/shared/plagiarism/types/PlagiarismOptions';
+import { downloadStream } from 'app/shared/util/download.util';
 
 export type EntityResponseType = HttpResponse<ModelingExercise>;
 export type EntityArrayResponseType = HttpResponse<ModelingExercise[]>;
@@ -91,9 +92,9 @@ export class ModelingExerciseService {
             .pipe(map((response: HttpResponse<ModelingPlagiarismResult>) => response.body!));
     }
 
-    convertToPdf(model: string): Observable<String> {
+    convertToPdf(model: string): Observable<any> {
         return this.http
-            .get<String>(`${SERVER_API_URL}api/apollon-convert/pdf`, { observe: 'response' })
-            .pipe(map((response: HttpResponse<String>) => response.body!));
+            .post(`${SERVER_API_URL}api/apollon-convert/pdf`, { diagram: model }, { observe: 'response', responseType: 'blob' })
+            .pipe(map((response: HttpResponse<Blob>) => downloadStream(response.body, 'application/pdf')));
     }
 }
