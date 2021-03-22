@@ -15,6 +15,7 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
@@ -48,10 +49,10 @@ public class ModelingAssessmentResource extends AssessmentResource {
 
     public ModelingAssessmentResource(AuthorizationCheckService authCheckService, UserRepository userRepository, CompassService compassService,
             ModelingExerciseService modelingExerciseService, AssessmentService assessmentService, ModelingSubmissionService modelingSubmissionService,
-            ExampleSubmissionService exampleSubmissionService, WebsocketMessagingService messagingService, ExerciseRepository exerciseRepository, ResultRepository resultRepository,
-            ExamService examService) {
+            ExampleSubmissionRepository exampleSubmissionRepository, WebsocketMessagingService messagingService, ExerciseRepository exerciseRepository,
+            ResultRepository resultRepository, ExamService examService) {
         super(authCheckService, userRepository, exerciseRepository, modelingSubmissionService, assessmentService, resultRepository, examService, messagingService,
-                exampleSubmissionService);
+                exampleSubmissionRepository);
         this.compassService = compassService;
         this.modelingExerciseService = modelingExerciseService;
         this.authCheckService = authCheckService;
