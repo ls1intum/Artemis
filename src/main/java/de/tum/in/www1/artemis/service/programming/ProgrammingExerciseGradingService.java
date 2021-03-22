@@ -413,7 +413,8 @@ public class ProgrammingExerciseGradingService {
      */
     private void setVisibilityForFeedbacksWithTestCase(Result result, final Set<ProgrammingExerciseTestCase> allTests) {
         for (Feedback feedback : result.getFeedbacks()) {
-            allTests.stream().filter(t -> t.getTestName().equals(feedback.getText())).findFirst().ifPresent(testCase -> feedback.setVisibility(testCase.getVisibility()));
+            allTests.stream().filter(testCase -> testCase.getTestName().equals(feedback.getText())).findFirst()
+                    .ifPresent(testCase -> feedback.setVisibility(testCase.getVisibility()));
         }
     }
 
@@ -478,7 +479,7 @@ public class ProgrammingExerciseGradingService {
             result.setScore(0D);
         }
         else {
-            double weightSum = allTests.stream().filter(t -> !t.isInvisible()).mapToDouble(ProgrammingExerciseTestCase::getWeight).sum();
+            double weightSum = allTests.stream().filter(testCase -> !testCase.isInvisible()).mapToDouble(ProgrammingExerciseTestCase::getWeight).sum();
 
             // calculate the achieved points from the passed test cases
             double successfulTestPoints = successfulTestCases.stream().mapToDouble(test -> {

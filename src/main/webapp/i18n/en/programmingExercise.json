@@ -177,7 +177,7 @@
                     "weight": "The weight of a test-case determine the points a student receives for passing the test-case. The points of a test-case are proportional to its weight and calculated as a fraction of the total exercise points.",
                     "bonusMultiplier": "This multiplies the points given for passing a test-case without affecting the fractions of other test-cases. Multipliers greater than 1 can produce student scores greater than 100%.",
                     "bonusPoints": "Bonus points added on top of the regular points for passing a test-case. Setting bonus points can produce student scores greater than 100%.",
-                    "visibility": "Feedback and points for test cases marked as ‘After Due Date’ only become visible to students after it has passed. Never visible tests do not influence the student score."
+                    "visibility": "Feedback and points for test cases marked as ‘After Due Date’ only become visible to students after it has passed. Tests with visibility ‘Never’ do not influence the student score."
                 },
                 "updatedGradingConfigShort": "Updated grading",
                 "updatedGradingConfig": "Warning: You have updated the exercise's grading configuration, but you have not triggered all student submissions with the new grading. Newly created results will be graded with the new configuration, existing results will not be changed. If you don't trigger all student submissions, the results across your students might therefore be inconsistent. You can still trigger the student submissions at a later point. Do you really want to leave the area?",

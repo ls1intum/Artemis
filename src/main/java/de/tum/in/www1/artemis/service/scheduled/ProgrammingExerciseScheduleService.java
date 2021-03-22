@@ -179,7 +179,9 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
         // For any course exercise that needsToBeScheduled (dueDate, buildAndTestAfterDueDate and/or manual assessment)
         if (exercise.getDueDate() != null && ZonedDateTime.now().isBefore(exercise.getDueDate())) {
             scheduleService.scheduleTask(exercise, ExerciseLifecycle.DUE, () -> {
+                // disallow further submissions after the due date
                 lockAllStudentRepositories(exercise).run();
+                // test cases marked with AFTER_DUE_DATE become visible and should be included in an updated score
                 updateAllStudentScores(exercise).run();
             });
             log.debug("Scheduled lock student repositories and update scores after due date for Programming Exercise \"" + exercise.getTitle() + "\" (#" + exercise.getId()
@@ -262,7 +264,17 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
 
     /**
      * Returns a runnable, that, once executed, will update all results for the given exercise.
-     * @param exercise The exercise for which the results should be updated
+     *
+     * This might be needed for an exercise that has test cases marked with
+     * {@link de.tum.in.www1.artemis.domain.enumeration.Visibility#AFTER_DUE_DATE}.
+     *
+     * Those test cases might already have been run in the continuous integration
+     * service and their feedbacks are therefore stored in the database.
+     * However, they are not included in the student score before the due date has passed.
+     * Updating the student score includes the feedbacks of those test cases into
+     * the result without having to trigger a new continuous integration job.
+     *
+     * @param exercise the exercise for which the results should be updated
      * @return a Runnable that will update all results for the given exercise
      */
     @NotNull
