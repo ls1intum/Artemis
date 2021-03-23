@@ -566,8 +566,8 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         exam.addRegisteredUser(user);
         exam = examRepository.save(exam);
 
-        // Create student exam and add a participation for the programming exercise
-        var studentExam = database.addStudentExam(exam);
+        // Get student exam and add a participation for the programming exercise
+        var studentExam = studentExamRepository.findWithExercisesByUserIdAndExamId(user.getId(), exam.getId()).get();
         studentExam.setWorkingTime(0);
         studentExam.setExercises(new ArrayList<>(exam.getExerciseGroups().get(6).getExercises()));
         studentExam.setUser(user);
