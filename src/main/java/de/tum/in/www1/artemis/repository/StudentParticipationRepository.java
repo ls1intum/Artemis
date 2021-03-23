@@ -13,7 +13,10 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.Submission;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
@@ -77,7 +80,6 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
      * @param exerciseId Exercise id.
      * @return participations for exercise.
      */
-    // TODO: also filter here for ILLEGAL Submission results?
     @Query("select distinct participation from StudentParticipation participation left join fetch participation.results result where participation.exercise.id = :#{#exerciseId} and (result.id = (select max(id) from participation.results) or result is null)")
     List<StudentParticipation> findByExerciseIdWithLatestResult(@Param("exerciseId") Long exerciseId);
 
@@ -97,7 +99,6 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
      * @param exerciseId Exercise id.
      * @return participations for exercise.
      */
-    // TODO: also filter here for ILLEGAL Submission results?
     @Query("select distinct participation from StudentParticipation participation left join fetch participation.results result left join fetch result.feedbacks where participation.exercise.id = :#{#exerciseId} and (result.id = (select max(prs.id) from participation.results prs where prs.assessmentType = 'AUTOMATIC'))")
     List<StudentParticipation> findByExerciseIdWithLatestAutomaticResultAndFeedbacks(@Param("exerciseId") Long exerciseId);
 
@@ -130,11 +131,9 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
     @Query("select distinct participation from StudentParticipation participation left join fetch participation.results left join fetch participation.submissions where participation.exercise.id = :#{#exerciseId} and participation.team.id = :#{#teamId}")
     List<StudentParticipation> findByExerciseIdAndTeamIdWithEagerResultsAndSubmissions(@Param("exerciseId") Long exerciseId, @Param("teamId") Long teamId);
 
-    // TODO: also filter here for ILLEGAL Submission results?
     @Query("select distinct participation from StudentParticipation participation left join fetch participation.results as par left join fetch par.feedbacks left join fetch par.submission where participation.exercise.id = :#{#exerciseId} and participation.student.id = :#{#studentId} and (par.id = (select max(id) from participation.results) or par.id = null)")
     Optional<StudentParticipation> findByExerciseIdAndStudentIdWithLatestResult(@Param("exerciseId") Long exerciseId, @Param("studentId") Long studentId);
 
-    // TODO: also filter here for ILLEGAL Submission results?
     @Query("select distinct participation from StudentParticipation participation left join fetch participation.results as par left join fetch par.feedbacks where participation.exercise.id = :#{#exerciseId} and participation.team.id = :#{#teamId} and (par.id = (select max(id) from participation.results) or par.id = null)")
     Optional<StudentParticipation> findByExerciseIdAndTeamIdWithLatestResult(@Param("exerciseId") Long exerciseId, @Param("teamId") Long teamId);
 
@@ -142,7 +141,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
      * Find all participations of submissions that are submitted and do not already have a manual result and do not belong to test runs.
      * No manual result means that no user has started an assessment for the corresponding submission yet.
      *
-     * If a student can have multiple submissions per exercise type, the latest not {@link de.tum.in.www1.artemis.domain.enumeration.SubmissionType#ILLEGAL} ILLEGAL submission (by id) will be returned.
+     * If a student can have multiple submissions per exercise type, the latest submission (by id) will be returned.
      *
      * @param correctionRound the correction round the fetched results should belong to
      * @param exerciseId      the exercise id the participations should belong to
@@ -162,17 +161,17 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
                                  AND r2.submission = submission)
             AND
               :#{#correctionRound} = (SELECT COUNT(r)
-                     FROM Result r where r.assessor IS NOT NULL
-                         AND r.rated = TRUE
-                         AND r.submission = submission
-                         AND r.completionDate IS NOT NULL
-                         AND r.assessmentType IN ('MANUAL', 'SEMI_AUTOMATIC')
-                         AND (participation.exercise.dueDate IS NULL OR r.submission.submissionDate <= participation.exercise.dueDate))
+                             FROM Result r where r.assessor IS NOT NULL
+                                 AND r.rated = TRUE
+                                 AND r.submission = submission
+                                 AND r.completionDate IS NOT NULL
+                                 AND r.assessmentType IN ('MANUAL', 'SEMI_AUTOMATIC')
+                                 AND (participation.exercise.dueDate IS NULL OR r.submission.submissionDate <= participation.exercise.dueDate))
             AND :#{#correctionRound} = (SELECT COUNT (prs)
-                    FROM participation.results prs
-                    WHERE prs.assessmentType IN ('MANUAL', 'SEMI_AUTOMATIC'))
+                            FROM participation.results prs
+                            WHERE prs.assessmentType IN ('MANUAL', 'SEMI_AUTOMATIC'))
             AND submission.submitted = true
-            AND submission.id = (SELECT max(s.id) FROM participation.submissions s WHERE s.type NOT IN ('ILLEGAL'))
+            AND submission.id = (SELECT max(id) FROM participation.submissions)
             """)
     List<StudentParticipation> findByExerciseIdWithLatestSubmissionWithoutManualResultsAndIgnoreTestRunParticipation(@Param("exerciseId") Long exerciseId,
             @Param("correctionRound") long correctionRound);
@@ -181,21 +180,20 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
      * Find all participations of submissions that are submitted and do not already have a manual result. No manual result means that no user has started an assessment for the
      * corresponding submission yet.
      *
-     * If a student can have multiple submissions per exercise type, the latest not {@link de.tum.in.www1.artemis.domain.enumeration.SubmissionType#ILLEGAL} ILLEGAL submission (by id) will be returned.
+     * If a student can have multiple submissions per exercise type, the latest submission (by id) will be returned.
      *
      * @param exerciseId the exercise id the participations should belong to
      * @return a list of participations including their submitted submissions that do not have a manual result
      */
     @Query("""
-            SELECT DISTINCT participation FROM Participation participation
-            LEFT JOIN FETCH participation.submissions submission
-            LEFT JOIN FETCH submission.results result
-            LEFT JOIN FETCH result.feedbacks feedbacks
-            WHERE participation.exercise.id = :#{#exerciseId}
-            AND NOT EXISTS (SELECT prs FROM participation.results prs
-                WHERE prs.assessmentType in ('MANUAL', 'SEMI_AUTOMATIC'))
-            AND submission.submitted = true
-            AND submission.id = (SELECT max(s.id) FROM participation.submissions s WHERE s.type NOT IN ('ILLEGAL'))
+            select distinct participation from Participation participation
+            left join fetch participation.submissions submission
+            left join fetch submission.results result
+            left join fetch result.feedbacks feedbacks
+            where participation.exercise.id = :#{#exerciseId}
+            and not exists (select prs from participation.results prs
+                where prs.assessmentType in ('MANUAL', 'SEMI_AUTOMATIC')) and submission.submitted = true and
+                submission.id = (select max(id) from participation.submissions)
             """)
     List<StudentParticipation> findByExerciseIdWithLatestSubmissionWithoutManualResults(@Param("exerciseId") Long exerciseId);
 
@@ -283,6 +281,24 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
     @Query("select distinct p from StudentParticipation p left join fetch p.submissions s left join fetch s.results r left join fetch p.team t where p.exercise.course.id = :#{#courseId} and t.shortName = :#{#teamShortName}")
     List<StudentParticipation> findAllByCourseIdAndTeamShortNameWithEagerSubmissionsResult(@Param("courseId") Long courseId, @Param("teamShortName") String teamShortName);
 
+    @EntityGraph(type = LOAD, attributePaths = { "submissions.results.assessor" })
+    @Query("select distinct p from StudentParticipation p left join fetch p.submissions s left join fetch s.results r where p.exercise.id = :#{#exerciseId} and (r.assessor.id = :#{#assessorId} and s.id = (select max(id) from p.submissions) or s.id = null)")
+    List<StudentParticipation> findWithLatestSubmissionByExerciseAndAssessor(@Param("exerciseId") Long exerciseId, @Param("assessorId") Long assessorId);
+
+    @Query("""
+            SELECT DISTINCT p FROM StudentParticipation p
+            LEFT JOIN FETCH p.submissions s
+            LEFT JOIN FETCH s.results r
+            WHERE p.exercise.id = :#{#exerciseId}
+            AND p.testRun = FALSE
+            AND (r.assessor.id = :#{#assessorId}
+                AND s.id = (SELECT MAX(id) FROM p.submissions)
+                OR s.id = NULL)
+            AND 0L = :#{#correctionRound}
+                """)
+    List<StudentParticipation> findWithLatestSubmissionByExerciseAndAssessorAndCorrectionRoundIgnoreTestRuns(@Param("exerciseId") Long exerciseId,
+            @Param("assessorId") Long assessorId, @Param("correctionRound") long correctionRound);
+
     /**
      * Count the number of submissions for each participation in a given exercise.
      *
@@ -308,7 +324,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             LEFT JOIN FETCH s.results r
                 WHERE p.exercise.id = :#{#exerciseId}
                 AND p.testRun = FALSE
-                AND s.id = (SELECT max(ps.id) FROM p.submissions ps WHERE ps.type NOT IN ('ILLEGAL'))
+                AND s.id = (SELECT max(id) FROM p.submissions)
                 AND EXISTS (SELECT s FROM Submission s
                     WHERE s.participation.id = p.id
                     AND s.submitted = TRUE

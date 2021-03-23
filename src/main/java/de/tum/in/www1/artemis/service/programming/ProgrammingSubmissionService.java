@@ -180,7 +180,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
         programmingSubmission.setType(SubmissionType.MANUAL);
         programmingExerciseParticipation.addSubmission(programmingSubmission);
 
-        // Students are not allowed to submit a programming exercise after the exam due date, if this happens we set the Submission to Invalid
+        // Students are not allowed to submit a programming exercise after the exam due date, if this happens we set the Submission to ILLEGAL
         if (isExamExercise && programmingExerciseParticipation instanceof ProgrammingExerciseStudentParticipation) {
             var optionalStudent = ((ProgrammingExerciseStudentParticipation) programmingExerciseParticipation).getStudent();
             if (optionalStudent.isPresent() && !examSubmissionService.isAllowedToSubmitDuringExam(programmingExercise, optionalStudent.get())) {
@@ -730,12 +730,10 @@ public class ProgrammingSubmissionService extends SubmissionService {
         if (optionalExistingResult.isPresent()) {
             automaticFeedbacks = optionalExistingResult.get().getFeedbacks().stream().map(Feedback::copyFeedback).collect(Collectors.toList());
         }
-        // Create a new result (manual result) and try to reuse the existing submission with the latest commit hash. In case the latest commit hash belongs to an ILLEGAL submission
-        // use the received submission.
+        // Create a new result (manual result) and try to reuse the existing submission with the latest commit hash
         ProgrammingSubmission existingSubmission = getOrCreateSubmissionWithLastCommitHashForParticipation((ProgrammingExerciseStudentParticipation) submission.getParticipation(),
                 SubmissionType.MANUAL);
-        Submission legalSubmission = SubmissionType.ILLEGAL.equals(existingSubmission.getType()) ? submission : existingSubmission;
-        Result newResult = saveNewEmptyResult(legalSubmission);
+        Result newResult = saveNewEmptyResult(existingSubmission);
         newResult.setAssessor(userRepository.getUser());
         newResult.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         // Copy automatic feedbacks into the manual result
@@ -753,7 +751,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
         newResult.setAssessor(assessor);
         log.debug("Assessment locked with result id: " + newResult.getId() + " for assessor: " + newResult.getAssessor().getName());
         // Make sure that submission is set back after saving
-        newResult.setSubmission(legalSubmission);
+        newResult.setSubmission(existingSubmission);
         return newResult;
     }
 

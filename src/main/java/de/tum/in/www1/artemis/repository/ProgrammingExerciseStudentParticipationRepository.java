@@ -25,7 +25,6 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 @Repository
 public interface ProgrammingExerciseStudentParticipationRepository extends JpaRepository<ProgrammingExerciseStudentParticipation, Long> {
 
-    // TODO: also filter here for ILLEGAL Submission results?
     @Query("""
             select p from ProgrammingExerciseStudentParticipation p
             left join fetch p.results pr

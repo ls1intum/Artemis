@@ -7,7 +7,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -22,7 +21,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
@@ -137,7 +135,6 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
     @Override
     @GetMapping(value = "/repository/{participationId}/files", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Map<String, FileType>> getFiles(@PathVariable Long participationId) {
-        // TODO: we need to fetch the commit which belongs to the last not ILLEGAL submission!
         return super.getFiles(participationId);
     }
 
@@ -153,7 +150,6 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Map<String, Boolean>> getFilesWithInformationAboutChange(@PathVariable Long participationId) {
         return super.executeAndCheckForExceptions(() -> {
-            // TODO: we need to fetch the commit which belongs to the last not ILLEGAL submission!
             Repository repository = getRepository(participationId, RepositoryActionType.READ, true);
             var participation = participationService.findParticipation(participationId);
             var exercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(participation.getExercise().getId());
@@ -167,7 +163,6 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
     @Override
     @GetMapping(value = "/repository/{participationId}/file", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
     public ResponseEntity<byte[]> getFile(@PathVariable Long participationId, @RequestParam("file") String filename) {
-        // TODO: we need to fetch the commit which belongs to the last not ILLEGAL submission!
         return super.getFile(participationId, filename);
     }
 
@@ -184,13 +179,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
     public ResponseEntity<Map<String, String>> getFilesWithContent(@PathVariable Long participationId) {
         return super.executeAndCheckForExceptions(() -> {
             Repository repository = getRepository(participationId, RepositoryActionType.READ, true);
-
-            // Retrieve the last legal submission because we are getting the files for that commit.
-            var participation = participationService.findProgrammingExerciseParticipationWithLatestSubmissionAndResult(participationId);
-            var legalSubmissions = participation.getSubmissions().stream().filter(submission -> !submission.getType().equals(SubmissionType.ILLEGAL)).collect(Collectors.toList());
-            var latestLegalSubmission = (ProgrammingSubmission) legalSubmissions.get(legalSubmissions.size() - 1);
-
-            var filesWithContent = super.repositoryService.getFilesWithContentForCommitRef(repository, latestLegalSubmission.getCommitHash());
+            var filesWithContent = super.repositoryService.getFilesWithContent(repository);
             return new ResponseEntity<>(filesWithContent, HttpStatus.OK);
         });
     }
@@ -336,7 +325,6 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
     public ResponseEntity<List<BuildLogEntry>> getBuildLogs(@PathVariable Long participationId) {
         log.debug("REST request to get build log : {}", participationId);
 
-        // TODO: in case of ILLEGAL submissions this will be wrong during the assessment! Find latest valid submission
         ProgrammingExerciseParticipation participation = participationService.findProgrammingExerciseParticipationWithLatestSubmissionAndResult(participationId);
 
         if (!participationService.canAccessParticipation(participation)) {
