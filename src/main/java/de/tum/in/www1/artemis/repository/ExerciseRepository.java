@@ -228,11 +228,11 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
      * @return a list of exercises
      */
     @Query("""
-            SELECT distinct e
-            FROM Exercise e left join fetch e.categories
+            SELECT DISTINCT e
+            FROM Exercise e LEFT JOIN FETCH e.categories
             WHERE e.course.id = :courseId
-                AND (e.assessmentDueDate IS NULL or e.assessmentDueDate >= :sevenDaysAgo)
-                AND (e.assessmentDueDate IS NOT NULL or e.dueDate IS NULL or e.dueDate >= :sevenDaysAgo)
+                AND (e.assessmentDueDate IS NULL OR e.assessmentDueDate >= :sevenDaysAgo)
+                AND (e.assessmentDueDate IS NOT NULL OR e.dueDate IS NULL OR e.dueDate >= :sevenDaysAgo)
             """)
     List<Exercise> getExercisesForCourseManagementOverview(@Param("courseId") Long courseId, @Param("sevenDaysAgo") ZonedDateTime sevenDaysAgo);
 
@@ -279,8 +279,8 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
             SELECT e.id
             FROM Exercise e
             WHERE e.course.id = :courseId
-                AND (e.assessmentDueDate IS NULL or e.assessmentDueDate >= :sevenDaysAgo)
-                AND (e.assessmentDueDate IS NOT NULL or e.dueDate IS NULL or e.dueDate >= :sevenDaysAgo)
+                AND (e.assessmentDueDate IS NULL OR e.assessmentDueDate >= :sevenDaysAgo)
+                AND (e.assessmentDueDate IS NOT NULL OR e.dueDate IS NULL OR e.dueDate >= :sevenDaysAgo)
             """)
     List<Long> getActiveExerciseIdsByCourseId(@Param("courseId") Long courseId, @Param("sevenDaysAgo") ZonedDateTime sevenDaysAgo);
 

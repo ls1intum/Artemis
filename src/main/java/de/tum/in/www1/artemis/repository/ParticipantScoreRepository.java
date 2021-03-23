@@ -68,9 +68,9 @@ public interface ParticipantScoreRepository extends JpaRepository<ParticipantSco
      * @return List<Map<String, Object>> with a map for every exercise containing exerciseId and the average Score
      */
     @Query("""
-            SELECT p.exercise.id as exerciseId, AVG(p.lastScore) as averageScore
+            SELECT p.exercise.id AS exerciseId, AVG(p.lastScore) AS averageScore
             FROM ParticipantScore p
-            WHERE p.exercise.id in :exerciseIds
+            WHERE p.exercise.id IN :exerciseIds
             GROUP BY p.exercise.id
             """)
     List<Map<String, Object>> findAvgScoreForExercises(@Param("exerciseIds") List<Long> exerciseIds);

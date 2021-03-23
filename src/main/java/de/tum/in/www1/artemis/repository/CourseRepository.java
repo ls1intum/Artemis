@@ -98,9 +98,9 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
      * @return the student group name
      */
     @Query("""
-            select c.studentGroupName
-            from Course c
-            where c.id = :courseId
+            SELECT c.studentGroupName
+            FROM Course c
+            WHERE c.id = :courseId
             """)
     String findStudentGroupName(@Param("courseId") long courseId);
 
@@ -113,11 +113,11 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
      * @return A list with a map for every submission containing date and the username
      */
     @Query("""
-            select s.submissionDate as day, p.student.login as username
-            from StudentParticipation p join p.submissions s
-            where p.exercise.id in :exerciseIds
-                and s.submissionDate >= :#{#startDate}
-                and s.submissionDate <= :#{#endDate}
+            SELECT s.submissionDate AS day, p.student.login AS username
+            FROM StudentParticipation p JOIN p.submissions s
+            WHERE p.exercise.id IN :exerciseIds
+                AND s.submissionDate >= :#{#startDate}
+                AND s.submissionDate <= :#{#endDate}
             """)
     List<Map<String, Object>> getActiveStudents(@Param("exerciseIds") List<Long> exerciseIds, @Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate);
 
@@ -130,10 +130,10 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
      * @return a list of courses for the overview
      */
     @Query("""
-            select c
-            from Course c
-            where (c.endDate is null or :#{#now} is null or c.endDate >= :#{#now})
-                and (:isAdmin = true or c.teachingAssistantGroupName in :userGroups or c.instructorGroupName in :userGroups)
+            SELECT c
+            FROM Course c
+            WHERE (c.endDate IS NULL OR :#{#now} IS NULL OR c.endDate >= :#{#now})
+                AND (:isAdmin = TRUE OR c.teachingAssistantGroupName IN :userGroups OR c.instructorGroupName IN :userGroups)
             """)
     List<Course> getAllCoursesForManagementOverview(@Param("now") ZonedDateTime now, @Param("isAdmin") boolean isAdmin, @Param("userGroups") List<String> userGroups);
 
