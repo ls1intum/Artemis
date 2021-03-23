@@ -12,6 +12,10 @@ import { ArtemisSharedModule } from 'app/shared/shared.module';
             {
                 path: '',
                 component: AboutUsComponent,
+                data: {
+                    authorities: [],
+                    pageTitle: 'overview.aboutUs',
+                },
             },
         ]),
         TranslateModule,
