@@ -23,6 +23,7 @@ import { CustomMinDirective } from 'app/shared/validators/custom-min-validator.d
 import { AdditionalFeedbackComponent } from './additional-feedback/additional-feedback.component';
 import { ResizeableContainerComponent } from './resizeable-container/resizeable-container.component';
 import { TranslatePipe } from '@ngx-translate/core';
+import { StatisticsGraphComponent } from 'app/admin/statistics/statistics-graph.component';
 
 @NgModule({
     imports: [ArtemisSharedLibsModule, ArtemisSharedCommonModule, ArtemisSharedPipesModule],
@@ -44,6 +45,7 @@ import { TranslatePipe } from '@ngx-translate/core';
         CustomMaxDirective,
         ArtemisTranslatePipe,
         ArtemisTimeAgoPipe,
+        StatisticsGraphComponent,
     ],
     entryComponents: [DeleteDialogComponent],
     exports: [
@@ -70,6 +72,7 @@ import { TranslatePipe } from '@ngx-translate/core';
         CustomMaxDirective,
         ArtemisTranslatePipe,
         ArtemisTimeAgoPipe,
+        StatisticsGraphComponent,
     ],
     providers: [ArtemisDatePipe, TranslatePipe],
 })

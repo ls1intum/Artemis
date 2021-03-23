@@ -20,7 +20,6 @@ import { UserManagementComponent } from 'app/admin/user-management/user-manageme
 import { UserManagementUpdateComponent } from 'app/admin/user-management/user-management-update.component';
 import { SystemNotificationManagementDetailComponent } from 'app/admin/system-notification-management/system-notification-management-detail.component';
 import { UpcomingExamsAndExercisesComponent } from './upcoming-exams-and-exercises/upcoming-exams-and-exercises.component';
-import { StatisticsGraphComponent } from 'app/admin/statistics/statistics-graph.component';
 import { DocsComponent } from 'app/admin/docs/docs.component';
 
 /* jhipster-needle-add-admin-module-import - JHipster will add admin modules imports here */
@@ -50,7 +49,6 @@ const ENTITY_STATES = [...adminState];
         HealthComponent,
         HealthModalComponent,
         StatisticsComponent,
-        StatisticsGraphComponent,
         JhiMetricsMonitoringComponent,
         AdminFeatureToggleComponent,
         UpcomingExamsAndExercisesComponent,

@@ -134,6 +134,7 @@
             }
         },
         "courseStatistics": {
+            "statistics": "Statistiken",
             "amountOfStudents": "# an Studenten",
             "activeStudents": "Aktive Studenten"
         }
