@@ -87,7 +87,7 @@ public class TextExerciseResource {
 
     private final GradingCriterionService gradingCriterionService;
 
-    private final ExerciseGroupService exerciseGroupService;
+    private final ExerciseGroupRepository exerciseGroupRepository;
 
     private final InstanceMessageSendService instanceMessageSendService;
 
@@ -99,8 +99,9 @@ public class TextExerciseResource {
             UserRepository userRepository, AuthorizationCheckService authCheckService, CourseService courseService, StudentParticipationRepository studentParticipationRepository,
             ResultRepository resultRepository, PlagiarismService plagiarismService, GroupNotificationService groupNotificationService,
             TextExerciseImportService textExerciseImportService, TextSubmissionExportService textSubmissionExportService, ExampleSubmissionRepository exampleSubmissionRepository,
-            ExerciseService exerciseService, GradingCriterionService gradingCriterionService, TextBlockRepository textBlockRepository, ExerciseGroupService exerciseGroupService,
-            InstanceMessageSendService instanceMessageSendService, TextPlagiarismDetectionService textPlagiarismDetectionService, CourseRepository courseRepository) {
+            ExerciseService exerciseService, GradingCriterionService gradingCriterionService, TextBlockRepository textBlockRepository,
+            ExerciseGroupRepository exerciseGroupRepository, InstanceMessageSendService instanceMessageSendService, TextPlagiarismDetectionService textPlagiarismDetectionService,
+            CourseRepository courseRepository) {
         this.textAssessmentService = textAssessmentService;
         this.textBlockRepository = textBlockRepository;
         this.textExerciseService = textExerciseService;
@@ -117,7 +118,7 @@ public class TextExerciseResource {
         this.exampleSubmissionRepository = exampleSubmissionRepository;
         this.exerciseService = exerciseService;
         this.gradingCriterionService = gradingCriterionService;
-        this.exerciseGroupService = exerciseGroupService;
+        this.exerciseGroupRepository = exerciseGroupRepository;
         this.instanceMessageSendService = instanceMessageSendService;
         this.textPlagiarismDetectionService = textPlagiarismDetectionService;
         this.courseRepository = courseRepository;
@@ -226,7 +227,7 @@ public class TextExerciseResource {
 
         // Avoid recursions
         if (textExercise.getExampleSubmissions().size() != 0) {
-            Set<ExampleSubmission> exampleSubmissionsWithResults = exampleSubmissionRepository.findAllWithEagerResultByExerciseId(textExercise.getId());
+            Set<ExampleSubmission> exampleSubmissionsWithResults = exampleSubmissionRepository.findAllWithResultByExerciseId(textExercise.getId());
             result.setExampleSubmissions(exampleSubmissionsWithResults);
             result.getExampleSubmissions().forEach(exampleSubmission -> exampleSubmission.setExercise(null));
             result.getExampleSubmissions().forEach(exampleSubmission -> exampleSubmission.setTutorParticipations(null));
@@ -289,7 +290,7 @@ public class TextExerciseResource {
         // If the exercise belongs to an exam, only instructors and admins are allowed to access it
         if (textExercise.isExamExercise()) {
             // Get the course over the exercise group
-            ExerciseGroup exerciseGroup = exerciseGroupService.findOneWithExam(textExercise.getExerciseGroup().getId());
+            ExerciseGroup exerciseGroup = exerciseGroupRepository.findByIdElseThrow(textExercise.getExerciseGroup().getId());
             Course course = exerciseGroup.getExam().getCourse();
 
             if (!authCheckService.isAtLeastInstructorInCourse(course, null)) {
@@ -302,7 +303,7 @@ public class TextExerciseResource {
             return forbidden();
         }
 
-        Set<ExampleSubmission> exampleSubmissions = this.exampleSubmissionRepository.findAllWithEagerResultByExerciseId(exerciseId);
+        Set<ExampleSubmission> exampleSubmissions = this.exampleSubmissionRepository.findAllWithResultByExerciseId(exerciseId);
         List<GradingCriterion> gradingCriteria = gradingCriterionService.findByExerciseIdWithEagerGradingCriteria(exerciseId);
         textExercise.setGradingCriteria(gradingCriteria);
         textExercise.setExampleSubmissions(exampleSubmissions);
@@ -329,7 +330,7 @@ public class TextExerciseResource {
         // If the exercise belongs to an exam, the course must be retrieved over the exerciseGroup
         Course course;
         if (textExercise.isExamExercise()) {
-            course = exerciseGroupService.retrieveCourseOverExerciseGroup(textExercise.getExerciseGroup().getId());
+            course = exerciseGroupRepository.retrieveCourseOverExerciseGroup(textExercise.getExerciseGroup().getId());
         }
         else {
             course = textExercise.getCourseViaExerciseGroupOrCourseMember();

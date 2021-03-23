@@ -81,6 +81,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     public supportsVHDL = false;
     public supportsAssembler = false;
     public supportsSwift = false;
+    public supportsOCaml = false;
 
     public packageNameRequired = true;
     public staticCodeAnalysisAllowed = false;
@@ -243,6 +244,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         this.supportsVHDL = this.programmingLanguageFeatureService.supportsProgrammingLanguage(ProgrammingLanguage.VHDL);
         this.supportsAssembler = this.programmingLanguageFeatureService.supportsProgrammingLanguage(ProgrammingLanguage.ASSEMBLER);
         this.supportsSwift = this.programmingLanguageFeatureService.supportsProgrammingLanguage(ProgrammingLanguage.SWIFT);
+        this.supportsOCaml = this.programmingLanguageFeatureService.supportsProgrammingLanguage(ProgrammingLanguage.OCAML);
     }
 
     /**

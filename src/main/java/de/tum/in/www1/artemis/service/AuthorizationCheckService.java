@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.service;
 
-import static de.tum.in.www1.artemis.security.AuthoritiesConstants.*;
-
 import java.security.Principal;
 import java.time.ZonedDateTime;
 import java.util.Optional;
