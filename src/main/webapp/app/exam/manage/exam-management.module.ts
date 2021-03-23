@@ -40,6 +40,7 @@ import { ExamChecklistExerciseGroupTableComponent } from 'app/exam/manage/exams/
 import { ArtemisTutorParticipationGraphModule } from 'app/shared/dashboards/tutor-participation-graph/tutor-participation-graph.module';
 import { ArtemisExamParticipantScoresModule } from 'app/exam/manage/exam-participant-scores/exam-participant-scores.module';
 import { ArtemisTextSubmissionAssessmentModule } from 'app/exercises/text/assess/text-submission-assessment.module';
+import { StudentExamDetailTableRowComponent } from 'app/exam/manage/student-exams/student-exam-detail-table-row/student-exam-detail-table-row.component';
 
 const ENTITY_STATES = [...examManagementState];
 
@@ -88,6 +89,7 @@ const ENTITY_STATES = [...examManagementState];
         ExamChecklistComponent,
         ExamChecklistExerciseGroupTableComponent,
         ExamChecklistCheckComponent,
+        StudentExamDetailTableRowComponent,
     ],
 })
 export class ArtemisExamManagementModule {}
