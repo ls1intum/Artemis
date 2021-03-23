@@ -86,12 +86,12 @@ under ``localhost:7990``.
    Follow the additional steps for Jira and Bitbucket.
 
    - Jira:
+
     - On startup select ``I'll set it up myself``
     - Select Build In Database Connection
     - Create a sample project
 
    - Bitbucket: Do not connect Bitbucket with Jira yet
-
 
 3. Execute the shell script ``atlassian-setup.sh`` in the
    ``src/main/docker`` directory (e.g. with
