@@ -554,6 +554,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
     }
 
     @Test
+    @WithMockUser(username = "student1", roles = "USER")
     void shouldCreateIllegalSubmissionOnNotifyPushForExamProgrammingExerciseAfterDueDate() throws Exception {
         var user = userRepository.findUserWithGroupsAndAuthoritiesByLogin("student1").get();
 
