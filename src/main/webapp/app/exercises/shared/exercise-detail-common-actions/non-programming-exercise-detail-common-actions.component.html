@@ -1,0 +1,44 @@
+<ng-container>
+    <a *ngIf="exercise.isAtLeastInstructor" [routerLink]="getEditRoute()" class="btn btn-primary btn-sm mr-1">
+        <fa-icon [icon]="'pencil-alt'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.edit"> Edit</span>
+    </a>
+
+    <a *ngIf="exercise.course" [routerLink]="['/course-management', courseId, 'exercises', exercise.id!, 'scores']" class="btn btn-info btn-sm mr-1">
+        <fa-icon [icon]="'eye'"></fa-icon>
+        <span class="d-none d-md-inline" jhiTranslate="entity.action.scores">Scores</span>
+    </a>
+
+    <!-- Participations  -->
+    <a *ngIf="exercise.course" [routerLink]="['/course-management', courseId, 'exercises', exercise.id!, 'participations']" class="btn btn-primary btn-sm mr-1">
+        <fa-icon [icon]="'list-alt'"></fa-icon>
+        <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.participations">Participations</span>
+    </a>
+
+    <!--Submissions -->
+    <a
+        *ngIf="exercise.isAtLeastInstructor && exercise.course"
+        [routerLink]="['/course-management', courseId, exercise.type! + '-exercises', exercise.id!, 'assessment']"
+        class="btn btn-primary btn-sm mr-1"
+    >
+        <fa-icon [icon]="['far', 'list-alt']"></fa-icon>
+        <span class="d-none d-md-inline" jhiTranslate="artemisApp.courseOverview.exerciseDetails.instructorActions.submissions">Submissions</span>
+    </a>
+
+    <!-- Export submissions -->
+    <jhi-exercise-submission-export [exerciseId]="exercise.id" [exerciseType]="exercise.type" class="mr-1"></jhi-exercise-submission-export>
+
+    <!-- Delete exercise -->
+    <button
+        *ngIf="exercise.isAtLeastInstructor"
+        jhiDeleteButton
+        [entityTitle]="exercise.title"
+        deleteQuestion="artemisApp.exercise.delete.question"
+        deleteConfirmationText="artemisApp.exercise.delete.typeNameToConfirm"
+        (delete)="deleteExercise()"
+        [dialogError]="dialogError$"
+    >
+        <fa-icon [icon]="'times'"></fa-icon>
+    </button>
+
+    <!--<jhi-external-submission [exercise]="exercise"></jhi-external-submission> -->
+</ng-container>

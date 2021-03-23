@@ -5,9 +5,15 @@
             <hr />
             <jhi-alert></jhi-alert>
             <jhi-alert-error></jhi-alert-error>
-            <div class="text-right">
-                <jhi-external-submission [exercise]="modelingExercise"></jhi-external-submission>
+            <div class="text-left">
+                <jhi-non-programming-exercise-detail-common-actions
+                    *ngIf="modelingExercise.course"
+                    [exercise]="modelingExercise"
+                    [courseId]="modelingExercise.course.id!"
+                    [isExamExercise]="false"
+                ></jhi-non-programming-exercise-detail-common-actions>
             </div>
+
             <dl class="row-md jh-entity-details markdown-preview">
                 <jhi-exercise-details [exercise]="modelingExercise"></jhi-exercise-details>
                 <dt><span jhiTranslate="artemisApp.modelingExercise.diagramType">Diagram Type</span></dt>

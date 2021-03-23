@@ -5,8 +5,13 @@
             <hr />
             <jhi-alert></jhi-alert>
             <jhi-alert-error></jhi-alert-error>
-            <div class="text-right">
-                <jhi-external-submission [exercise]="textExercise"></jhi-external-submission>
+            <div class="text-left">
+                <jhi-non-programming-exercise-detail-common-actions
+                    *ngIf="textExercise.course"
+                    [isExamExercise]="isExamExercise"
+                    [courseId]="textExercise.course.id!"
+                    [exercise]="textExercise"
+                ></jhi-non-programming-exercise-detail-common-actions>
             </div>
             <dl class="row-md jh-entity-details markdown-preview">
                 <jhi-exercise-details [exercise]="textExercise"></jhi-exercise-details>
