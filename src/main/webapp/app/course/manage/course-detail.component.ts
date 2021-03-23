@@ -9,6 +9,7 @@ import { CachingStrategy } from 'app/shared/image/secured-image.component';
 import { JhiAlertService } from 'ng-jhipster';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { ButtonSize } from 'app/shared/components/button.component';
+import { Subject } from 'rxjs';
 
 @Component({
     selector: 'jhi-course-detail',
@@ -21,6 +22,8 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
     CachingStrategy = CachingStrategy;
     course: Course;
     private eventSubscriber: Subscription;
+    private dialogErrorSource = new Subject<string>();
+    dialogError$ = this.dialogErrorSource.asObservable();
 
     constructor(
         private eventManager: JhiEventManager,
