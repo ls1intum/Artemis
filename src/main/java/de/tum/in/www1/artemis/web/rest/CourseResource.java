@@ -45,6 +45,7 @@ import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.CIUserManagementService;
 import de.tum.in.www1.artemis.service.connectors.VcsUserManagementService;
+import de.tum.in.www1.artemis.web.rest.dto.*;
 import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
 import de.tum.in.www1.artemis.web.rest.dto.StatsForInstructorDashboardDTO;
 import de.tum.in.www1.artemis.web.rest.dto.TutorLeaderboardDTO;
@@ -437,7 +438,7 @@ public class CourseResource {
     }
 
     /**
-     * GET /courses : get all courses for administration purposes with user stats.
+     * GET /courses/with-user-stats : get all courses for administration purposes with user stats.
      *
      * @param onlyActive if true, only active courses will be considered in the result
      * @return the list of courses (the user has access to)
@@ -459,9 +460,21 @@ public class CourseResource {
     }
 
     /**
+     * GET /courses/course-overview : get all courses for the management overview
+     *
+     * @param onlyActive if true, only active courses will be considered in the result
+     * @return a list of courses (the user has access to)
+     */
+    @GetMapping("/courses/course-management-overview")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    public List<Course> getAllCoursesForManagementOverview(@RequestParam(defaultValue = "false") boolean onlyActive) {
+        return courseService.getAllCoursesForManagementOverview(onlyActive);
+    }
+
+    /**
      * GET /courses/to-register : get all courses that the current user can register to. Decided by the start and end date and if the registrationEnabled flag is set correctly
      *
-     * @return the list of courses which are active)
+     * @return the list of courses which are active
      */
     @GetMapping("/courses/to-register")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
@@ -872,6 +885,56 @@ public class CourseResource {
 
         log.info("Finished /courses/" + courseId + "/stats-for-instructor-dashboard call in " + (System.currentTimeMillis() - start) + "ms");
         return ResponseEntity.ok(stats);
+    }
+
+    /**
+     * GET /courses/exercises-for-management-overview
+     *
+     * gets the exercise details for the courses of the user
+     *
+     * @param onlyActive if true, only active courses will be considered in the result
+     * @return ResponseEntity with status, containing a list of <code>CourseManagementOverviewDTO</code>
+     */
+    @GetMapping("/courses/exercises-for-management-overview")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<List<Course>> getExercisesForCourseOverview(@RequestParam(defaultValue = "false") boolean onlyActive) {
+        var sevenDaysAgo = ZonedDateTime.now().minusDays(7);
+        final List<Course> courses = new ArrayList<>();
+        for (final var course : courseService.getAllCoursesForManagementOverview(onlyActive)) {
+            course.setExercises(exerciseRepository.getExercisesForCourseManagementOverview(course.getId(), sevenDaysAgo));
+            courses.add(course);
+        }
+
+        return ResponseEntity.ok(courses);
+    }
+
+    /**
+     * GET /courses/stats-for-management-overview
+     *
+     * gets the statistics for the courses of the user
+     *
+     * @param onlyActive if true, only active courses will be considered in the result
+     * @return ResponseEntity with status, containing a list of <code>CourseManagementOverviewStatisticsDTO</code>
+     */
+    @GetMapping("/courses/stats-for-management-overview")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<List<CourseManagementOverviewStatisticsDTO>> getExerciseStatsForCourseOverview(@RequestParam(defaultValue = "false") boolean onlyActive) {
+        final List<CourseManagementOverviewStatisticsDTO> courseDTOs = new ArrayList<>();
+        for (final var course : courseService.getAllCoursesForManagementOverview(onlyActive)) {
+            final var courseId = course.getId();
+            final var courseDTO = new CourseManagementOverviewStatisticsDTO();
+            courseDTO.setCourseId(courseId);
+
+            ZonedDateTime sevenDaysAgo = ZonedDateTime.now().minusDays(7);
+            var exerciseIds = exerciseRepository.getActiveExerciseIdsByCourseId(courseId, sevenDaysAgo);
+            var studentsGroup = courseRepository.findStudentGroupName(courseId);
+            var amountOfStudentsInCourse = Math.toIntExact(userRepository.countUserInGroup(studentsGroup));
+            courseDTO.setExerciseDTOS(exerciseService.getStatisticsForCourseManagementOverview(courseId, amountOfStudentsInCourse, exerciseIds));
+            courseDTO.setActiveStudents(courseService.getActiveStudents(exerciseIds));
+            courseDTOs.add(courseDTO);
+        }
+
+        return ResponseEntity.ok(courseDTOs);
     }
 
     /**
