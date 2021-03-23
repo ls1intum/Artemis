@@ -7,6 +7,7 @@ export enum SpanType {
 }
 
 export enum Graphs {
+    // User statistics
     SUBMISSIONS = 'SUBMISSIONS',
     ACTIVE_USERS = 'ACTIVE_USERS',
     LOGGED_IN_USERS = 'LOGGED_IN_USERS',
@@ -18,4 +19,7 @@ export enum Graphs {
     ACTIVE_TUTORS = 'ACTIVE_TUTORS',
     CREATED_RESULTS = 'CREATED_RESULTS',
     CREATED_FEEDBACKS = 'CREATED_FEEDBACKS',
+
+    // Course overview
+    ACTIVE_STUDENTS = 'ACTIVE_STUDENTS',
 }

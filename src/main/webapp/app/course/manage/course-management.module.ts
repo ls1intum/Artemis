@@ -39,8 +39,13 @@ import { ArtemisAssessmentSharedModule } from 'app/assessment/assessment-shared.
 import { ArtemisCourseQuestionsModule } from 'app/course/course-questions/course-questions.module';
 import { ArtemisSharedPipesModule } from 'app/shared/pipes/shared-pipes.module';
 import { ArtemisLearningGoalsModule } from 'app/course/learning-goals/learning-goal.module';
+import { CourseManagementCardComponent } from 'app/course/manage/overview/course-management-card.component';
+import { CourseManagementExerciseRowComponent } from './overview/course-management-exercise-row.component';
+import { CourseManagementStatisticsComponent } from './overview/course-management-statistics.component';
+import { ArtemisTutorParticipationGraphModule } from 'app/shared/dashboards/tutor-participation-graph/tutor-participation-graph.module';
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { ArtemisCourseParticipantScoresModule } from 'app/course/course-participant-scores/course-participant-scores.module';
+import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 
 @NgModule({
     imports: [
@@ -77,9 +82,21 @@ import { ArtemisCourseParticipantScoresModule } from 'app/course/course-particip
         ArtemisAssessmentSharedModule,
         ArtemisCourseQuestionsModule,
         ArtemisSharedPipesModule,
+        ArtemisTutorParticipationGraphModule,
         ArtemisMarkdownModule,
         ArtemisCourseParticipantScoresModule,
+        ArtemisSharedComponentModule,
     ],
-    declarations: [CourseManagementComponent, CourseDetailComponent, CourseUpdateComponent, CourseExerciseCardComponent, CourseManagementExercisesComponent, CourseGroupComponent],
+    declarations: [
+        CourseManagementComponent,
+        CourseDetailComponent,
+        CourseUpdateComponent,
+        CourseExerciseCardComponent,
+        CourseManagementExercisesComponent,
+        CourseGroupComponent,
+        CourseManagementCardComponent,
+        CourseManagementExerciseRowComponent,
+        CourseManagementStatisticsComponent,
+    ],
 })
 export class ArtemisCourseManagementModule {}
