@@ -202,8 +202,9 @@ public class ProgrammingSubmissionService extends SubmissionService {
             Optional<User> optionalStudentWithGroups = optionalStudent.isPresent() ? userRepository.findOneWithGroupsAndAuthoritiesByLogin(optionalStudent.get().getLogin())
                     : Optional.empty();
             if (optionalStudentWithGroups.isPresent() && !examSubmissionService.isAllowedToSubmitDuringExam(programmingExercise, optionalStudentWithGroups.get())) {
-                final String message = "An illegal exam submission was created. A submission was created after the allowed due date for participation "
-                        + programmingExerciseParticipation.getId() + " by the student " + optionalStudentWithGroups.get().getLogin();
+                final String message = "The student " + optionalStudentWithGroups.get().getLogin()
+                        + "just illegally submitted code after the allowed individual due date (including the grace period) in the participation "
+                        + programmingExerciseParticipation.getId() + " for the exam programming exercise " + programmingExercise.getId();
                 programmingSubmission.setType(SubmissionType.ILLEGAL);
                 groupNotificationService.notifyInstructorGroupAboutIllegalSubmissionsForExercise(programmingExercise, message);
                 log.warn(message);
