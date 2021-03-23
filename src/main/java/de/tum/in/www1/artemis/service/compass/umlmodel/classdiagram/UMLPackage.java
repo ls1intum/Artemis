@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram;
 
+import java.io.Serializable;
 import java.util.List;
 
 import de.tum.in.www1.artemis.service.compass.strategy.NameSimilarity;
@@ -7,7 +8,7 @@ import de.tum.in.www1.artemis.service.compass.umlmodel.Similarity;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLContainerElement;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
 
-public class UMLPackage extends UMLContainerElement {
+public class UMLPackage extends UMLContainerElement implements Serializable {
 
     public static final String UML_PACKAGE_TYPE = "Package";
 
