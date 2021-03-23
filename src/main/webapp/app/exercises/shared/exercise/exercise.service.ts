@@ -76,8 +76,8 @@ export class ExerciseService {
      * @param exerciseId the id of the exercise
      * @return the name/title of the exercise
      */
-    getTitle(exerciseId: number): Observable<HttpResponse<string>> {
-        return this.http.get<string>(`${this.resourceUrl}/${exerciseId}/get-title`, { observe: 'response' });
+    getTitle(exerciseId: number): Observable<HttpResponse<Map<string, string>>> {
+        return this.http.get<Map<string, string>>(`${this.resourceUrl}/${exerciseId}/get-title`, { observe: 'response' });
     }
 
     /**

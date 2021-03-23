@@ -294,6 +294,9 @@ export class NavbarComponent implements OnInit, OnDestroy {
             case 'exercise-groups':
             case 'student-exams':
             case 'test-runs':
+            case 'mc-question-statistic':
+            case 'dnd-question-statistic':
+            case 'sa-question-statistic':
             default:
                 break;
         }
@@ -322,6 +325,9 @@ export class NavbarComponent implements OnInit, OnDestroy {
             case 'video-units':
             case 'text-feedback-conflict':
             case 'grading':
+            case 'mc-question-statistic':
+            case 'dnd-question-statistic':
+            case 'sa-question-statistic':
                 break;
             default:
                 // Special cases:
@@ -385,13 +391,13 @@ export class NavbarComponent implements OnInit, OnDestroy {
      * @param uri the uri/path for the breadcrumb
      * @param segment the current url segment to add a breadcrumb for
      */
-    private addResolvedTitleAsCrumb(observable: Observable<HttpResponse<string>>, uri: string, segment: string): void {
+    private addResolvedTitleAsCrumb(observable: Observable<HttpResponse<Map<string, string>>>, uri: string, segment: string): void {
         // Insert the segment until we fetched a title from the server to insert at the correct index
         const index = this.breadcrumbs.length;
         this.addBreadcrumb(uri, segment, false);
 
         observable.subscribe(
-            (response: HttpResponse<string>) => {
+            (response: HttpResponse<Map<string, string>>) => {
                 const title = !!response.body ? response.body!['response'] : segment;
                 this.setBreadcrumb(uri, title, false, index);
             },

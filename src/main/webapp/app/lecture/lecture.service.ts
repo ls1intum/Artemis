@@ -54,8 +54,8 @@ export class LectureService {
      * @param lectureId the id of the lecture
      * @return the name/title of the lecture
      */
-    getTitle(lectureId: number): Observable<HttpResponse<string>> {
-        return this.http.get<string>(`${this.resourceUrl}/${lectureId}/get-title`, { observe: 'response' });
+    getTitle(lectureId: number): Observable<HttpResponse<Map<string, string>>> {
+        return this.http.get<Map<string, string>>(`${this.resourceUrl}/${lectureId}/get-title`, { observe: 'response' });
     }
 
     query(req?: any): Observable<EntityArrayResponseType> {

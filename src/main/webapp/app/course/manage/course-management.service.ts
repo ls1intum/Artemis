@@ -78,8 +78,8 @@ export class CourseManagementService {
      * @param courseId the id of the course
      * @return the name/title of the course
      */
-    getTitle(courseId: number): Observable<HttpResponse<string>> {
-        return this.http.get<string>(`${this.resourceUrl}/${courseId}/get-title`, { observe: 'response' });
+    getTitle(courseId: number): Observable<HttpResponse<Map<string, string>>> {
+        return this.http.get<Map<string, string>>(`${this.resourceUrl}/${courseId}/get-title`, { observe: 'response' });
     }
 
     /**

@@ -70,8 +70,8 @@ export class ExamManagementService {
      * @param examId the id of the exam
      * @return the name/title of the exam
      */
-    getTitle(examId: number): Observable<HttpResponse<string>> {
-        return this.http.get<string>(`api/exams/${examId}/get-title`, { observe: 'response' });
+    getTitle(examId: number): Observable<HttpResponse<Map<string, string>>> {
+        return this.http.get<Map<string, string>>(`api/exams/${examId}/get-title`, { observe: 'response' });
     }
 
     /**

@@ -83,8 +83,8 @@ export class ExerciseHintService implements IExerciseHintService {
      * @param hintId the id of the hint
      * @return the name/title of the hint
      */
-    getTitle(hintId: number): Observable<HttpResponse<string>> {
-        return this.http.get<string>(`${this.resourceUrl}/${hintId}/get-title`, { observe: 'response' });
+    getTitle(hintId: number): Observable<HttpResponse<Map<string, string>>> {
+        return this.http.get<Map<string, string>>(`${this.resourceUrl}/${hintId}/get-title`, { observe: 'response' });
     }
 
     /**
