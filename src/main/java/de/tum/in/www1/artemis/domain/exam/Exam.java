@@ -122,6 +122,9 @@ public class Exam extends DomainObject {
     @JsonIgnoreProperties("exam")
     private Set<StudentExam> studentExams = new HashSet<>();
 
+    @Column(name = "exam_archive_path")
+    private String examArchivePath;
+
     // Unidirectional
     @ManyToMany
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
@@ -397,5 +400,17 @@ public class Exam extends DomainObject {
             return false;
         }
         return publishResultsDate.isBefore(ZonedDateTime.now());
+    }
+
+    public boolean hasExamArchive() {
+        return examArchivePath != null && !examArchivePath.isEmpty();
+    }
+
+    public String getExamArchivePath() {
+        return examArchivePath;
+    }
+
+    public void setExamArchivePath(String examArchivePath) {
+        this.examArchivePath = examArchivePath;
     }
 }

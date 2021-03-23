@@ -36,11 +36,16 @@ export class FileUploadSubmissionService {
     /**
      * Returns File Upload submission from the server
      * @param fileUploadSubmissionId the id of the File Upload submission
+     * @param correctionRound
+     * @param resultId
      */
-    get(fileUploadSubmissionId: number, correctionRound = 0): Observable<HttpResponse<FileUploadSubmission>> {
+    get(fileUploadSubmissionId: number, correctionRound = 0, resultId?: number): Observable<HttpResponse<FileUploadSubmission>> {
         const url = `api/file-upload-submissions/${fileUploadSubmissionId}`;
         let params = new HttpParams();
-        if (correctionRound !== 0) {
+        if (resultId && resultId > 0) {
+            // in case resultId is set, we do not need the correction round
+            params = params.set('resultId', resultId!.toString());
+        } else {
             params = params.set('correction-round', correctionRound.toString());
         }
         return this.http

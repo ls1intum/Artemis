@@ -401,11 +401,13 @@
             "reviewer": "Reviewer",
             "openSubmission": "Einreichung öffnen",
             "openAssessment": " Bewertung öffnen",
+            "openLatestAssessment": "Aktuellste Bewertung öffnen",
             "cancelAssessment": " Bewertung abbrechen",
             "workingTimeCouldNotBeSaved": "Die Bearbeitungszeit konnte nicht gespeichert werden.",
             "saveWorkingTimeSuccessful": "Die Bearbeitungszeit wurde erfolgreich gespeichert.",
             "toggleSuccessful": "Der Abgabestatus wurde erfolgreich geändert.",
-            "togglefailed": "Der Abgabestatus konnte nicht geändert werden!"
+            "togglefailed": "Der Abgabestatus konnte nicht geändert werden!",
+            "hasComplaint": "Beschwerde existiert"
         }
     },
     "studentExam": {

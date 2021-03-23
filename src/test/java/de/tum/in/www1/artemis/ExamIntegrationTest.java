@@ -1688,6 +1688,62 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     }
 
     @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testArchiveExamAsInstructor() throws Exception {
+        Course course = courseRepo.save(database.addEmptyCourse());
+
+        ExerciseGroup exerciseGroup1 = new ExerciseGroup();
+
+        Exam exam = database.addExam(course);
+        exam.setEndDate(ZonedDateTime.now().minusMinutes(5));
+        exam.addExerciseGroup(exerciseGroup1);
+        exam = examRepository.save(exam);
+
+        Exam examWithExerciseGroups = examRepository.findWithExerciseGroupsAndExercisesById(exam.getId()).get();
+        exerciseGroup1 = examWithExerciseGroups.getExerciseGroups().get(0);
+
+        ProgrammingExercise programmingExercise = ModelFactory.generateProgrammingExerciseForExam(exerciseGroup1);
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+        exerciseGroup1.addExercise(programmingExercise);
+
+        exerciseGroupRepository.save(exerciseGroup1);
+
+        request.put("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/archive", null, HttpStatus.OK);
+
+        final var examId = exam.getId();
+        await().until(() -> examRepository.findById(examId).get().getExamArchivePath() != null);
+
+        var updatedExam = examRepository.findById(examId).get();
+        assertThat(updatedExam.getExamArchivePath()).isNotEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testArchiveExamAsStudent_forbidden() throws Exception {
+        Course course = database.addEmptyCourse();
+        course.setEndDate(ZonedDateTime.now().minusMinutes(5));
+        course = courseRepo.save(course);
+
+        Exam exam = database.addExam(course);
+        exam = examRepository.save(exam);
+
+        request.put("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/archive", null, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testArchiveExamBeforeEndDate_badRequest() throws Exception {
+        Course course = database.addEmptyCourse();
+        course.setEndDate(ZonedDateTime.now().plusMinutes(5));
+        course = courseRepo.save(course);
+
+        Exam exam = database.addExam(course);
+        exam = examRepository.save(exam);
+
+        request.put("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/archive", null, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void testGetStatsForExamAssessmentDashboard() throws Exception {
         User examInstructor = userRepo.findOneByLogin("instructor1").get();

@@ -6,7 +6,8 @@ public class BubbleSort {
 
      - Parameter input: the List of Dates to be sorted
     */
-    public func performSort(_ input: inout [Date]) {
-        //TODO: implement
+    public func performSort(_ input: [Date]) -> [Date] {
+        /// TODO: implement
+        return input
     }
 }
