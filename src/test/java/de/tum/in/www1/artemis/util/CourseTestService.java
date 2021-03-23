@@ -21,22 +21,21 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.Language;
-import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
-import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
-import de.tum.in.www1.artemis.domain.enumeration.TutorParticipationStatus;
-import de.tum.in.www1.artemis.domain.leaderboard.tutor.*;
+import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
+import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.programmingexercise.MockDelegate;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.GroupNotificationService;
 import de.tum.in.www1.artemis.service.user.UserService;
 import de.tum.in.www1.artemis.web.rest.dto.StatsForDashboardDTO;
+import de.tum.in.www1.artemis.web.rest.dto.CourseManagementOverviewStatisticsDTO;
+
 
 @Service
 public class CourseTestService {
@@ -1281,5 +1280,104 @@ public class CourseTestService {
 
             // TODO: Assert the other exercises after it's implemented
         });
+    }
+
+    // Test
+    public void testGetAllCoursesForManagementOverview() throws Exception {
+        // Add two courses, containing one not belonging to the instructor
+        var testCourses = database.createCoursesWithExercisesAndLectures(true);
+        var instructorsCourse = testCourses.get(0);
+        instructorsCourse.setInstructorGroupName("test-instructors");
+        courseRepo.save(instructorsCourse);
+
+        var instructor = database.getUserByLogin("instructor1");
+        var groups = new HashSet<String>();
+        groups.add("test-instructors");
+        instructor.setGroups(groups);
+        userRepo.save(instructor);
+
+        var courses = request.getList("/api/courses/course-management-overview", HttpStatus.OK, Course.class);
+        assertThat(courses.size()).isEqualTo(1);
+
+        var course = courses.get(0);
+        assertThat(course.getId()).isEqualTo(instructorsCourse.getId());
+    }
+
+    // Test
+    public void testGetExercisesForCourseOverview() throws Exception {
+        // Add two courses, containing one not belonging to the instructor
+        var testCourses = database.createCoursesWithExercisesAndLectures(true);
+        var instructorsCourse = testCourses.get(0);
+        instructorsCourse.setInstructorGroupName("test-instructors");
+        courseRepo.save(instructorsCourse);
+
+        var instructor = database.getUserByLogin("instructor1");
+        var groups = new HashSet<String>();
+        groups.add("test-instructors");
+        instructor.setGroups(groups);
+        userRepo.save(instructor);
+
+        var courses = request.getList("/api/courses/exercises-for-management-overview", HttpStatus.OK, Course.class);
+        assertThat(courses.size()).isEqualTo(1);
+
+        var course = courses.get(0);
+        assertThat(course.getId()).isEqualTo(instructorsCourse.getId());
+
+        var exerciseDetails = course.getExercises();
+        assertThat(exerciseDetails).isNotNull();
+        assertThat(exerciseDetails.size()).isEqualTo(5);
+
+        var quizDetailsOptional = exerciseDetails.stream().filter(e -> e instanceof QuizExercise).findFirst();
+        assertThat(quizDetailsOptional.isPresent()).isTrue();
+
+        var quizExerciseOptional = instructorsCourse.getExercises().stream().filter(e -> e instanceof QuizExercise).findFirst();
+        assertThat(quizExerciseOptional.isPresent()).isTrue();
+
+        var quizDetails = quizDetailsOptional.get();
+        var quizExercise = quizExerciseOptional.get();
+        assertThat(quizDetails.getCategories().size()).isEqualTo(quizExercise.getCategories().size());
+
+        var detailsCategories = quizDetails.getCategories().stream().findFirst();
+        var exerciseCategories = quizExercise.getCategories().stream().findFirst();
+        assertThat(detailsCategories.isPresent()).isTrue();
+        assertThat(exerciseCategories.isPresent()).isTrue();
+        assertThat(detailsCategories.get()).isEqualTo(exerciseCategories.get());
+    }
+
+    // Test
+    public void testGetExerciseStatsForCourseOverview() throws Exception {
+        // Add two courses, containing one not belonging to the instructor
+        var courses = database.createCoursesWithExercisesAndLectures(true);
+        var instructorsCourse = courses.get(0);
+        instructorsCourse.setInstructorGroupName("test-instructors");
+        courseRepo.save(instructorsCourse);
+
+        var instructor = database.getUserByLogin("instructor1");
+        var groups = new HashSet<String>();
+        groups.add("test-instructors");
+        instructor.setGroups(groups);
+        userRepo.save(instructor);
+
+        var courseDtos = request.getList("/api/courses/stats-for-management-overview", HttpStatus.OK, CourseManagementOverviewStatisticsDTO.class);
+        assertThat(courseDtos.size()).isEqualTo(1);
+
+        var dto = courseDtos.get(0);
+        assertThat(dto.getCourseId()).isEqualTo(instructorsCourse.getId());
+
+        var exerciseDTOS = dto.getExerciseDTOS();
+        assertThat(exerciseDTOS.size()).isEqualTo(5);
+
+        var statisticsOptional = exerciseDTOS.stream().findFirst();
+        assertThat(statisticsOptional.isPresent()).isTrue();
+
+        var statisticsDTO = statisticsOptional.get();
+        assertThat(statisticsDTO.getAverageScoreInPercent()).isEqualTo(0.0);
+        assertThat(statisticsDTO.getExerciseMaxPoints()).isEqualTo(5.0);
+        assertThat(statisticsDTO.getNoOfParticipatingStudentsOrTeams()).isEqualTo(1);
+        assertThat(statisticsDTO.getParticipationRateInPercent()).isEqualTo(12.5);
+        assertThat(statisticsDTO.getNoOfStudentsInCourse()).isEqualTo(8);
+        assertThat(statisticsDTO.getNoOfRatedAssessments()).isEqualTo(0);
+        assertThat(statisticsDTO.getNoOfAssessmentsDoneInPercent()).isEqualTo(0.0);
+        assertThat(statisticsDTO.getNoOfSubmissionsInTime()).isEqualTo(2L);
     }
 }

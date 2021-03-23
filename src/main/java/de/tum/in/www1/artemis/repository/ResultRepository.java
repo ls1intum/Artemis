@@ -135,6 +135,20 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
             """)
     long countNumberOfFinishedAssessmentsForExercise(@Param("exerciseId") Long exerciseId);
 
+    /**
+     * Gets the number of assessments with a rated result set by an assessor for an exercise
+     *
+     * @param exerciseId the exercise to get the number for
+     * @return the number of assessments with a rated result set by an assessor
+     */
+    @Query("""
+            SELECT COUNT(DISTINCT p.id) FROM ParticipantScore p
+            WHERE p.exercise.id = :exerciseId
+                AND p.lastResult IS NOT NULL
+                AND p.lastResult.assessor IS NOT NULL
+            """)
+    long countNumberOfRatedResultsForExercise(@Param("exerciseId") Long exerciseId);
+
     @Query("""
             SELECT COUNT(DISTINCT p) FROM StudentParticipation p
             left join p.results r

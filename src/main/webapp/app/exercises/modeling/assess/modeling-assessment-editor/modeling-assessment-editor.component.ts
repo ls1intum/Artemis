@@ -25,7 +25,7 @@ import { ModelingAssessmentService } from 'app/exercises/modeling/assess/modelin
 import { assessmentNavigateBack } from 'app/exercises/shared/navigate-back.util';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
-import { getSubmissionResultByCorrectionRound } from 'app/entities/submission.model';
+import { getSubmissionResultByCorrectionRound, getSubmissionResultById } from 'app/entities/submission.model';
 import { getExerciseDashboardLink, getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
 import { ExerciseType } from 'app/entities/exercise.model';
 
@@ -63,6 +63,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     hasAutomaticFeedback = false;
     hasAssessmentDueDatePassed: boolean;
     correctionRound = 0;
+    resultId: number;
     loadingInitialSubmission = true;
 
     private cancelConfirmationText: string;
@@ -112,6 +113,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
             this.exerciseDashboardLink = getExerciseDashboardLink(this.courseId, this.exerciseId, this.examId, this.isTestRun);
 
             const submissionId = params.get('submissionId');
+            this.resultId = Number(params.get('resultId')) ?? 0;
             if (submissionId === 'new') {
                 this.loadRandomSubmission(this.exerciseId);
             } else {
@@ -121,7 +123,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     }
 
     private loadSubmission(submissionId: number): void {
-        this.modelingSubmissionService.getSubmission(submissionId, this.correctionRound).subscribe(
+        this.modelingSubmissionService.getSubmission(submissionId, this.correctionRound, this.resultId).subscribe(
             (submission: ModelingSubmission) => {
                 this.handleReceivedSubmission(submission);
             },
@@ -151,7 +153,12 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         this.submission = submission;
         const studentParticipation = this.submission.participation as StudentParticipation;
         this.modelingExercise = studentParticipation.exercise as ModelingExercise;
-        this.result = getSubmissionResultByCorrectionRound(this.submission, this.correctionRound);
+        if (this.resultId > 0) {
+            this.result = getSubmissionResultById(submission, this.resultId);
+            this.correctionRound = submission.results?.findIndex((result) => result.id === this.resultId)!;
+        } else {
+            this.result = getSubmissionResultByCorrectionRound(this.submission, this.correctionRound);
+        }
         this.hasAssessmentDueDatePassed = !!this.modelingExercise!.assessmentDueDate && moment(this.modelingExercise!.assessmentDueDate).isBefore(now());
         if (this.result?.hasComplaint) {
             this.getComplaint(this.result.id);

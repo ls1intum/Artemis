@@ -144,37 +144,54 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
 
     /**
      * GET /file-upload-submissions/:id : get the fileUploadSubmissions by it's id. Is used by tutor when assessing submissions.
+     * In case an instructors calls, the resultId is used first. If the resultId is not set, the correctionRound is used.
+     * If neither resultId nor correctionRound is set, the first correctionRound is used.
      *
      * @param submissionId the id of the fileUploadSubmission to retrieve
      * @param correctionRound the correctionRound of the result we want to receive
+     * @param resultId the resultId for which we want to get the submission
      * @return the ResponseEntity with status 200 (OK) and with body the fileUploadSubmission, or with status 404 (Not Found)
      */
     @GetMapping("/file-upload-submissions/{submissionId}")
     @PreAuthorize("hasAnyRole('TA','INSTRUCTOR','ADMIN')")
     public ResponseEntity<FileUploadSubmission> getFileUploadSubmission(@PathVariable Long submissionId,
-            @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound) {
+            @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound, @RequestParam(value = "resultId", required = false) Long resultId) {
         log.debug("REST request to get FileUploadSubmission with id: {}", submissionId);
         var fileUploadSubmission = fileUploadSubmissionService.findOne(submissionId);
         var studentParticipation = (StudentParticipation) fileUploadSubmission.getParticipation();
         var fileUploadExercise = (FileUploadExercise) studentParticipation.getExercise();
-        var gradingCriteria = gradingCriterionService.findByExerciseIdWithEagerGradingCriteria(fileUploadExercise.getId());
-        fileUploadExercise.setGradingCriteria(gradingCriteria);
+
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isAtLeastTeachingAssistantForExercise(fileUploadExercise, user)) {
+        if (!authCheckService.isAllowedToAssesExercise(fileUploadExercise, user, resultId)) {
             return forbidden();
         }
-        fileUploadSubmission = fileUploadSubmissionService.lockAndGetFileUploadSubmission(submissionId, fileUploadExercise, correctionRound);
-        // Make sure the exercise is connected to the participation in the json response
-        studentParticipation.setExercise(fileUploadExercise);
-        fileUploadSubmission.getParticipation().getExercise().setGradingCriteria(gradingCriteria);
-        this.fileUploadSubmissionService.hideDetails(fileUploadSubmission, user);
 
-        if (correctionRound == 0 && fileUploadSubmission.getResults().size() == 2) {
-            var resultList = new ArrayList<Result>();
-            resultList.add(fileUploadSubmission.getFirstResult());
-            fileUploadSubmission.setResults(resultList);
+        // load submission with results either by resultId or by correctionRound
+        if (resultId != null) {
+            // load the submission with additional needed properties by resultId
+            fileUploadSubmission = (FileUploadSubmission) submissionRepository.findOneWithEagerResultAndFeedback(submissionId);
+            // check if result with the requested id exists
+            Result result = fileUploadSubmission.getManualResultsById(resultId);
+            if (result == null) {
+                return ResponseEntity.badRequest()
+                        .headers(HeaderUtil.createFailureAlert(applicationName, true, "FileUploadSubmission", "ResultNotFound", "No Result was found for the given ID."))
+                        .body(null);
+            }
+        }
+        else {
+            // load and potentially lock the submission with additional needed properties by correctionRound
+            fileUploadSubmission = fileUploadSubmissionService.lockAndGetFileUploadSubmission(submissionId, fileUploadExercise, correctionRound);
         }
 
+        // Make sure the exercise is connected to the participation in the json response
+        studentParticipation.setExercise(fileUploadExercise);
+        var gradingCriteria = gradingCriterionService.findByExerciseIdWithEagerGradingCriteria(fileUploadExercise.getId());
+        fileUploadExercise.setGradingCriteria(gradingCriteria);
+        fileUploadSubmission.getParticipation().getExercise().setGradingCriteria(gradingCriteria);
+
+        // prepare fileUploadSubmission for response
+        this.fileUploadSubmissionService.hideDetails(fileUploadSubmission, user);
+        this.submissionService.removeNotNeededResults(fileUploadSubmission, correctionRound, resultId);
         return ResponseEntity.ok(fileUploadSubmission);
     }
 
