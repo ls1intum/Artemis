@@ -111,12 +111,6 @@ class ModelIndexTest {
 
     @Test
     void retrieveSimilarityId_twoSimilarElements() {
-        // mockSimilarityBetweenElements(umlElement2, umlElement1, EQUALITY_THRESHOLD / 2);
-        // mockSimilarityBetweenElements(umlElement3, umlElement1, EQUALITY_THRESHOLD / 2);
-        // mockSimilarityBetweenElements(umlElement3, umlElement2, EQUALITY_THRESHOLD / 2);
-        // mockSimilarityBetweenElements(umlElement4, umlElement1, EQUALITY_THRESHOLD / 2);
-        // mockSimilarityBetweenElements(umlElement4, umlElement2, EQUALITY_THRESHOLD + 0.01);
-        // mockSimilarityBetweenElements(umlElement4, umlElement3, EQUALITY_THRESHOLD / 2);
         mockSimilarityBetweenElements(List.of(umlElement2, umlElement3, umlElement4), umlElement1, List.of(EQUALITY_THRESHOLD / 2, EQUALITY_THRESHOLD / 2, EQUALITY_THRESHOLD / 2));
         mockSimilarityBetweenElements(List.of(umlElement3, umlElement4), umlElement2, List.of(EQUALITY_THRESHOLD / 2, EQUALITY_THRESHOLD + 0.01));
         mockSimilarityBetweenElements(List.of(umlElement4), umlElement3, List.of(EQUALITY_THRESHOLD / 2));

@@ -468,11 +468,6 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
 
         Result automaticResult = compassService.getResultWithFeedbackSuggestionsForSubmission(storedSubmission.getId());
         assertThat(automaticResult).as("automatic result is not created").isNull();
-        // checkAutomaticAssessment(automaticResult);
-        // List<Feedback> feedbackUsedForAutomaticAssessment = modelingAssessment.getFeedbacks().stream()
-        // .filter(feedback -> automaticResult.getFeedbacks().stream().anyMatch(storedFeedback -> storedFeedback.getReference().equals(feedback.getReference())))
-        // .collect(Collectors.toList());
-        // checkFeedbackCorrectlyStored(feedbackUsedForAutomaticAssessment, automaticResult.getFeedbacks(), FeedbackType.AUTOMATIC);
     }
 
     @Test
@@ -489,8 +484,6 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
 
         Result automaticResult = compassService.getResultWithFeedbackSuggestionsForSubmission(storedSubmission.getId());
         assertThat(automaticResult).as("automatic result is not created").isNull();
-        // checkAutomaticAssessment(automaticResult);
-        // checkFeedbackCorrectlyStored(modelingAssessment.getFeedbacks(), automaticResult.getFeedbacks(), FeedbackType.AUTOMATIC);
     }
 
     @Test
@@ -521,8 +514,6 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
 
         Result automaticResult = compassService.getResultWithFeedbackSuggestionsForSubmission(storedSubmission.getId());
         assertThat(automaticResult).as("automatic result is not created").isNull();
-        // checkAutomaticAssessment(automaticResult);
-        // assertThat(automaticResult.getFeedbacks()).as("no feedback has been assigned").isEmpty();
     }
 
     @Test
@@ -540,8 +531,6 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
 
         Result automaticResult = compassService.getResultWithFeedbackSuggestionsForSubmission(storedSubmission.getId());
         assertThat(automaticResult).as("automatic result is not created").isNull();
-        // checkAutomaticAssessment(automaticResult);
-        // checkFeedbackCorrectlyStored(modelingAssessment.getFeedbacks(), automaticResult.getFeedbacks(), FeedbackType.AUTOMATIC);
     }
 
     @Test
