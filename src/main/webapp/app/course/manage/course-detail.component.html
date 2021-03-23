@@ -6,13 +6,31 @@
                     <fa-icon [icon]="'wrench'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.edit">Edit</span>
                 </a>
 
+                <a [routerLink]="['/course-management', course.id, 'exercises']" class="btn btn-primary mr-1 mb-1">
+                    <fa-icon [icon]="'list-alt'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.exercise">Exercises</span>
+                </a>
+                <a [routerLink]="['/course-management', course.id, 'exams']" class="btn btn-primary mr-1 mb-1">
+                    <fa-icon [icon]="'graduation-cap'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.exams">Exams</span>
+                </a>
+                <a *ngIf="course.isAtLeastInstructor" [routerLink]="['/course-management', course.id, 'lectures']" class="btn btn-primary mr-1 mb-1">
+                    <fa-icon [icon]="'file-pdf'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.lecture">Lectures</span>
+                </a>
                 <a *ngIf="course.isAtLeastInstructor" [routerLink]="['/course-management', course.id, 'goal-management']" class="btn btn-primary mr-1 mb-1">
                     <fa-icon [icon]="'flag'"></fa-icon>
                     <span [innerHTML]="'artemisApp.learningGoal.learningGoalButton' | artemisTranslate" class="d-none d-md-inline"></span>
                 </a>
 
-                <a *ngIf="course.isAtLeastInstructor" type="button" [routerLink]="['/course-management', course.id, 'participant-scores']" class="btn btn-primary mr-1 mb-1">
-                    <fa-icon [icon]="'table'"></fa-icon>
+                <a [routerLink]="['/course-management', course.id, 'assessment-dashboard']" class="btn btn-info mr-1 mb-1">
+                    <fa-icon [icon]="'user-check'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.assessmentDashboard">Assessment Dashboard</span>
+                </a>
+                <a *ngIf="course.isAtLeastInstructor" [routerLink]="['/course-management', course.id, 'instructor-dashboard']" class="btn btn-info mr-1 mb-1">
+                    <fa-icon [icon]="'chess-king'"></fa-icon>&nbsp;<span jhiTranslate="artemisApp.course.instructorDashboard">Instructor Dashboard</span>
+                </a>
+                <a *ngIf="course.isAtLeastInstructor" [routerLink]="['/course-management', course.id, 'scores']" class="btn btn-info mr-1 mb-1">
+                    <fa-icon [icon]="'table'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.scores">Scores</span>
+                </a>
+                <a *ngIf="course.isAtLeastInstructor" type="button" [routerLink]="['/course-management', course.id, 'participant-scores']" class="btn btn-info mr-1 mb-1">
+                    <fa-icon [icon]="'eye'"></fa-icon>
                     <span class="d-none d-md-inline" [innerHTML]="'artemisApp.participantScores.pageTitle' | artemisTranslate"></span>
                 </a>
 
@@ -46,6 +64,19 @@
                     <fa-icon [icon]="'th-list'"></fa-icon>&nbsp;<span jhiTranslate="artemisApp.course.instructorDashboard">Instructor Dashboard</span>
                 </a>
                 <jhi-course-exam-archive-button [archiveMode]="'Course'" [course]="course"></jhi-course-exam-archive-button>
+                <button
+                    class="mb-1"
+                    *jhiHasAnyAuthority="['ROLE_ADMIN']"
+                    [buttonSize]="ButtonSize.MEDIUM"
+                    jhiDeleteButton
+                    [entityTitle]="course.title"
+                    deleteQuestion="artemisApp.course.delete.question"
+                    deleteConfirmationText="artemisApp.course.delete.typeNameToConfirm"
+                    (delete)="deleteCourse(course.id!)"
+                    [dialogError]="dialogError$"
+                >
+                    <fa-icon [icon]="'times'"></fa-icon>
+                </button>
             </div>
             <hr />
             <div>

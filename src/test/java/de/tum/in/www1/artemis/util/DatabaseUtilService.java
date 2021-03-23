@@ -1,8 +1,7 @@
 package de.tum.in.www1.artemis.util;
 
 import static com.google.gson.JsonParser.parseString;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.fail;
+import static org.assertj.core.api.Assertions.*;
 
 import java.net.URL;
 import java.time.Duration;
@@ -2207,10 +2206,22 @@ public class DatabaseUtilService {
         return submission;
     }
 
-    public ModelingSubmission addModelingSubmissionWithFinishedResultAndAssessor(ModelingExercise exercise, ModelingSubmission submission, String login, String assessorLogin) {
+    public Submission addModelingSubmissionWithFinishedResultAndAssessor(ModelingExercise exercise, ModelingSubmission submission, String login, String assessorLogin) {
         StudentParticipation participation = createAndSaveParticipationForExercise(exercise, login);
+        return addSubmissionWithFinishedResultsWithAssessor(participation, exercise, submission, login, assessorLogin);
+    }
+
+    public Submission addSubmissionWithTwoFinishedResultsWithAssessor(Exercise exercise, Submission submission, String login, String assessorLogin) {
+        StudentParticipation participation = createAndSaveParticipationForExercise(exercise, login);
+        submission = addSubmissionWithFinishedResultsWithAssessor(participation, exercise, submission, login, assessorLogin);
+        submission = addSubmissionWithFinishedResultsWithAssessor(participation, exercise, submission, login, assessorLogin);
+        return submission;
+    }
+
+    public Submission addSubmissionWithFinishedResultsWithAssessor(StudentParticipation participation, Exercise exercise, Submission submission, String login,
+            String assessorLogin) {
         participation.addSubmission(submission);
-        submission = modelingSubmissionRepo.save(submission);
+        submission = saveSubmissionToRepo(submission);
         Result result = new Result();
         result.setAssessor(getUserByLogin(assessorLogin));
         result.setCompletionDate(ZonedDateTime.now());
@@ -2219,10 +2230,23 @@ public class DatabaseUtilService {
         submission.setParticipation(participation);
         submission.addResult(result);
         submission.getParticipation().addResult(result);
-        submission = modelingSubmissionRepo.save(submission);
+        submission = saveSubmissionToRepo(submission);
         result = resultRepo.save(result);
         studentParticipationRepo.save(participation);
         return submission;
+    }
+
+    private Submission saveSubmissionToRepo(Submission submission) {
+        if (submission instanceof ModelingSubmission) {
+            return modelingSubmissionRepo.save((ModelingSubmission) submission);
+        }
+        else if (submission instanceof TextSubmission) {
+            return textSubmissionRepo.save((TextSubmission) submission);
+        }
+        else if (submission instanceof ProgrammingSubmission) {
+            return programmingSubmissionRepo.save((ProgrammingSubmission) submission);
+        }
+        return null;
     }
 
     public FileUploadSubmission addFileUploadSubmission(FileUploadExercise fileUploadExercise, FileUploadSubmission fileUploadSubmission, String login) {

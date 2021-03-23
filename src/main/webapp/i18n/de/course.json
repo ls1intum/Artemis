@@ -86,6 +86,7 @@
             "uploading": "Lade hoch...",
             "fileUploadExercises": "Dateiupload-Aufgabe",
             "students": "Studierende",
+            "participations": "Teilnahmen",
             "tutors": "Tutoren",
             "instructors": "Dozenten",
             "student": "Student",
@@ -97,6 +98,7 @@
                     "forbidden": "Der Kurzname muss mit einem Buchstaben beginnen und darf keine Sonderzeichen beinhalten."
                 }
             },
+            "courseDashboard": "Kurs Dashboard",
             "instructorDashboard": "Dozenten-Kursdashboard",
             "presentationScoreEnabled": {
                 "title": "Präsentationsbewertung aktiviert",
@@ -116,10 +118,24 @@
                     "modalQuestion": "Soll der Nutzer mit dem Login <strong>{{ title }}</strong> wirklich aus dieser Kursgruppe entfernt werden?"
                 }
             },
+            "averageScore": "Punkte im Schnitt",
+            "releasedSoon": "Bald veröffentlicht",
+            "currentWorking": "Derzeitig in Bearbeitung",
+            "inAssessment": "Derzeitig in Bewertung",
+            "pastExercises": "Vergangene Übungen",
+            "noExercises": "Keine aktiven Übungen vorhanden",
+            "assessmentProgress": "Bewertungen",
+            "releaseDate": "Veröffentlichung",
+            "dueDate": "Einreichungsfrist",
+            "assessmentDueDate": "Bewertungsfrist",
             "cleanup": {
                 "title": "Aufräumen",
                 "question": "Möchtest du den Kurs <strong>{{title}}</strong> wirklich bereinigen? Dadurch werden alle Studenten-Repositories für <strong>Übungen</strong> und <strong>Prüfungen</strong> gelöscht. Diese Aktion kann <strong class='text-danger'>NICHT</strong> rückgängig gemacht werden!"
             }
+        },
+        "courseStatistics": {
+            "amountOfStudents": "# an Studenten",
+            "activeStudents": "Aktive Studenten"
         }
     }
 }

@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.web.rest;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 import static java.util.stream.Collectors.toSet;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -70,9 +71,9 @@ public class TextAssessmentResource extends AssessmentResource {
             TextSubmissionService textSubmissionService, WebsocketMessagingService messagingService, ExerciseRepository exerciseRepository, ResultRepository resultRepository,
             GradingCriterionService gradingCriterionService, Optional<AtheneTrackingTokenProvider> atheneTrackingTokenProvider, ExamService examService,
             Optional<AutomaticTextAssessmentConflictService> automaticTextAssessmentConflictService, FeedbackConflictRepository feedbackConflictRepository,
-            ExampleSubmissionRepository exampleSubmissionRepository) {
+            ExampleSubmissionRepository exampleSubmissionRepository, SubmissionRepository submissionRepository) {
         super(authCheckService, userRepository, exerciseRepository, textSubmissionService, textAssessmentService, resultRepository, examService, messagingService,
-                exampleSubmissionRepository);
+                exampleSubmissionRepository, submissionRepository);
 
         this.textAssessmentService = textAssessmentService;
         this.textBlockService = textBlockService;
@@ -249,15 +250,19 @@ public class TextAssessmentResource extends AssessmentResource {
      * Given an exerciseId and a submissionId, the method retrieves from the database all the data needed by the tutor to assess the submission. If the tutor has already started
      * assessing the submission, then we also return all the results the tutor has already inserted. If another tutor has already started working on this submission, the system
      * returns an error
+     * In case an instructors calls, the resultId is used first. In case the resultId is not set, the correctionRound is used.
+     * In case neither resultId nor correctionRound are set, the first correctionRound is used.
      *
      * @param submissionId the id of the submission we want
      * @param correctionRound correction round for which we want the submission
+     * @param resultId if result already exists, we want to get the submission for this specific result
      * @return a Participation of the tutor in the submission
      */
     @GetMapping("/submission/{submissionId}")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Participation> retrieveParticipationForSubmission(@PathVariable Long submissionId,
-            @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound) {
+            @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound, @RequestParam(value = "resultId", required = false) Long resultId) {
+
         log.debug("REST request to get data for tutors text assessment submission: {}", submissionId);
 
         final Optional<TextSubmission> optionalTextSubmission = textSubmissionRepository.findByIdWithEagerParticipationExerciseResultAssessor(submissionId);
@@ -270,20 +275,42 @@ public class TextAssessmentResource extends AssessmentResource {
         final TextSubmission textSubmission = optionalTextSubmission.get();
         final Participation participation = textSubmission.getParticipation();
         final TextExercise exercise = (TextExercise) participation.getExercise();
-        Result result = textSubmission.getResultForCorrectionRound(correctionRound);
-
         final User user = userRepository.getUserWithGroupsAndAuthorities();
         checkAuthorization(exercise, user);
         final boolean isAtLeastInstructorForExercise = authCheckService.isAtLeastInstructorForExercise(exercise, user);
 
-        if (result != null && !isAtLeastInstructorForExercise && result.getAssessor() != null && !result.getAssessor().getLogin().equals(user.getLogin())
-                && result.getCompletionDate() == null) {
-            // If we already have a result, we need to check if it is locked.
-            throw new BadRequestAlertException("This submission is being assessed by another tutor", ENTITY_NAME, "alreadyAssessed");
+        // return forbidden if caller is not allowed to assess
+        if (!authCheckService.isAllowedToAssesExercise(exercise, user, resultId)) {
+            return forbidden();
         }
 
-        textSubmissionService.lockTextSubmissionToBeAssessed(textSubmission, correctionRound);
-        textAssessmentService.prepareSubmissionForAssessment(textSubmission, correctionRound);
+        Result result;
+        if (resultId != null) {
+            // in case resultId is set we get result by id
+            result = textSubmission.getManualResultsById(resultId);
+
+            if (result == null) {
+                return ResponseEntity.badRequest()
+                        .headers(HeaderUtil.createFailureAlert(applicationName, true, "TextSubmission", "ResultNotFound", "No Result was found for the given ID.")).body(null);
+            }
+        }
+        else {
+            // in case no resultId is set we get result by correctionRound
+            result = textSubmission.getResultForCorrectionRound(correctionRound);
+
+            if (result != null && !isAtLeastInstructorForExercise && result.getAssessor() != null && !result.getAssessor().getLogin().equals(user.getLogin())
+                    && result.getCompletionDate() == null) {
+                // If we already have a result, we need to check if it is locked.
+                throw new BadRequestAlertException("This submission is being assessed by another tutor", ENTITY_NAME, "alreadyAssessed");
+            }
+
+            textSubmissionService.lockTextSubmissionToBeAssessed(textSubmission, correctionRound);
+            // set it since it has changed
+            result = textSubmission.getResultForCorrectionRound(correctionRound);
+        }
+
+        // prepare and load in all feedbacks
+        textAssessmentService.prepareSubmissionForAssessment(textSubmission, result);
 
         List<GradingCriterion> gradingCriteria = gradingCriterionService.findByExerciseIdWithEagerGradingCriteria(exercise.getId());
         exercise.setGradingCriteria(gradingCriteria);
@@ -295,9 +322,15 @@ public class TextAssessmentResource extends AssessmentResource {
         textSubmission.getResults().forEach(r -> r.setSubmission(null));
 
         // set result again as it was changed
-        result = textSubmission.getResultForCorrectionRound(correctionRound);
+        if (resultId != null) {
+            result = textSubmission.getManualResultsById(resultId);
+            textSubmission.setResults(Collections.singletonList(result));
+        }
+        else {
+            result = textSubmission.getResultForCorrectionRound(correctionRound);
+        }
 
-        // sets results for participation as legacy requires it, will change in follow up NR SE
+        submissionService.removeNotNeededResults(textSubmission, correctionRound, resultId);
         participation.setResults(Set.copyOf(textSubmission.getResults()));
 
         final ResponseEntity.BodyBuilder bodyBuilder = ResponseEntity.ok();

@@ -79,4 +79,21 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
     ngOnDestroy() {
         this.eventManager.destroy(this.eventSubscriber);
     }
+
+    /**
+     * Deletes the course
+     * @param courseId id the course that will be deleted
+     */
+    deleteCourse(courseId: number) {
+        this.courseService.delete(courseId).subscribe(
+            () => {
+                this.eventManager.broadcast({
+                    name: 'courseListModification',
+                    content: 'Deleted an course',
+                });
+                this.dialogErrorSource.next('');
+            },
+            (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+        );
+    }
 }
