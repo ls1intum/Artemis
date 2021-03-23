@@ -319,7 +319,7 @@ public class GitLabUserManagementService implements VcsUserManagementService {
         }
     }
 
-    private String getUsersName(User user){
+    private String getUsersName(User user) {
         // Get User's name by checking the use of pseudonyms
         String name;
         if (usePseudonyms) {
