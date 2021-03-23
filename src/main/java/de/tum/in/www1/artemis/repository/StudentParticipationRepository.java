@@ -144,7 +144,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
      * If a student can have multiple submissions per exercise type, the latest submission (by id) will be returned.
      *
      * @param correctionRound the correction round the fetched results should belong to
-     * @param exerciseId the exercise id the participations should belong to
+     * @param exerciseId      the exercise id the participations should belong to
      * @return a list of participations including their submitted submissions that do not have a manual result
      */
     @Query("""
