@@ -1,0 +1,50 @@
+version: "2"
+services:
+    gitlab:
+        image: gitlab/gitlab-ce:latest
+        volumes:
+            - artemis-gitlab-data:/var/opt/gitlab
+            - artemis-gitlab-logs:/var/log/gitlab
+            - artemis-gitlab-config:/etc/gitlab
+        ports:
+            - "2222:22"
+            - "8082:80"
+        mem_limit: 3000m
+        hostname: gitlab
+        networks:
+            - artemis
+    jenkins:
+        build: jenkins
+        volumes:
+            - artemis-jenkins-data:/var/jenkins_home
+            - /var/run/docker.sock:/var/run/docker.sock
+            - /usr/local/bin/docker:/usr/bin/docker
+            - ./jenkins/jenkins-casc-config.yml:/usr/share/jenkins/ref/jenkins-casc-config.yml
+        ports:
+            - "8083:8080"
+        hostname: jenkins
+        environment:
+            - CASC_JENKINS_CONFIG=/usr/share/jenkins/ref/jenkins-casc-config.yml
+        networks:
+            - artemis
+    mysql:
+        command: mysqld --lower_case_table_names=1 --skip-ssl --character_set_server=utf8mb4 --explicit_defaults_for_timestamp
+        environment:
+            - MYSQL_USER=root
+            - MYSQL_ALLOW_EMPTY_PASSWORD=yes
+            - MYSQL_DATABASE=Artemis
+        image: mysql:8.0.23
+        networks:
+            - artemis
+        ports:
+            - 3306:3306
+        volumes:
+            - ./data/.db:/var/lib/mysql
+networks:
+    artemis:
+        driver: bridge
+volumes:
+    artemis-gitlab-data:
+    artemis-gitlab-logs:
+    artemis-gitlab-config:
+    artemis-jenkins-data:
