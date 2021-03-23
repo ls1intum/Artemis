@@ -183,7 +183,9 @@ public class ProgrammingSubmissionService extends SubmissionService {
         // Students are not allowed to submit a programming exercise after the exam due date, if this happens we set the Submission to ILLEGAL
         if (isExamExercise && programmingExerciseParticipation instanceof ProgrammingExerciseStudentParticipation) {
             var optionalStudent = ((ProgrammingExerciseStudentParticipation) programmingExerciseParticipation).getStudent();
-            if (optionalStudent.isPresent() && !examSubmissionService.isAllowedToSubmitDuringExam(programmingExercise, optionalStudent.get())) {
+            Optional<User> optionalStudentWithGroups = optionalStudent.isPresent() ? userRepository.findOneWithGroupsAndAuthoritiesByLogin(optionalStudent.get().getLogin())
+                    : Optional.empty();
+            if (optionalStudentWithGroups.isPresent() && !examSubmissionService.isAllowedToSubmitDuringExam(programmingExercise, optionalStudentWithGroups.get())) {
                 final String message = "An illegal exam submission was created. A submission was created after the allowed due date for participation " + participationId;
                 programmingSubmission.setType(SubmissionType.ILLEGAL);
                 log.warn(message);
