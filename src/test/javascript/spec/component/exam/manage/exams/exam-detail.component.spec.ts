@@ -26,6 +26,7 @@ import { JhiTranslateDirective } from 'ng-jhipster';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import * as sinon from 'sinon';
 import * as sinonChai from 'sinon-chai';
+import { CourseExamArchiveButtonComponent } from 'app/shared/components/course-exam-archive-button/course-exam-archive-button.component';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -71,6 +72,7 @@ describe('ExamDetailComponent', () => {
                 ExamChecklistExerciseGroupTableComponent,
                 ProgressBarComponent,
                 MockDirective(NgbTooltip),
+                MockComponent(CourseExamArchiveButtonComponent),
             ],
             providers: [
                 {
