@@ -227,9 +227,9 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
      * @return the name/title of the exercise
      */
     @Query("""
-            select e.title
-            from Exercise e
-            where e.id = :exerciseId
+            SELECT e.title
+            FROM Exercise e
+            WHERE e.id = :exerciseId
             """)
     String getExerciseTitle(Long exerciseId);
 

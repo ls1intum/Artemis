@@ -66,9 +66,9 @@ public interface ExerciseHintRepository extends JpaRepository<ExerciseHint, Long
      * @return the name/title of the hint
      */
     @Query("""
-            select h.title
-            from ExerciseHint h
-            where h.id = :hintId
+            SELECT h.title
+            FROM ExerciseHint h
+            WHERE h.id = :hintId
             """)
     String getHintTitle(Long hintId);
 }

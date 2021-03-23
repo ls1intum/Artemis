@@ -24,9 +24,9 @@ public interface ApollonDiagramRepository extends JpaRepository<ApollonDiagram, 
      * @return the name/title of the diagram
      */
     @Query("""
-            select ad.title
-            from ApollonDiagram ad
-            where ad.id = :diagramId
+            SELECT ad.title
+            FROM ApollonDiagram ad
+            WHERE ad.id = :diagramId
             """)
     String getDiagramTitle(Long diagramId);
 }

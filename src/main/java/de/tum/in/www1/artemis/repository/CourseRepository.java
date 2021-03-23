@@ -84,9 +84,9 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
      * @return the name/title of the course
      */
     @Query("""
-            select c.title
-            from Course c
-            where c.id = :courseId
+            SELECT c.title
+            FROM Course c
+            WHERE c.id = :courseId
             """)
     String getCourseTitle(Long courseId);
 

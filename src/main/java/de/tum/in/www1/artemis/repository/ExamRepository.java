@@ -103,9 +103,9 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
      * @return the name/title of the exam
      */
     @Query("""
-            select e.title
-            from Exam e
-            where e.id = :examId
+            SELECT e.title
+            FROM Exam e
+            WHERE e.id = :examId
             """)
     String getExamTitle(Long examId);
 

@@ -51,9 +51,9 @@ public interface LectureRepository extends JpaRepository<Lecture, Long> {
      * @return the name/title of the lecture
      */
     @Query("""
-            select l.title
-            from Lecture l
-            where l.id = :lectureId
+            SELECT l.title
+            FROM Lecture l
+            WHERE l.id = :lectureId
             """)
     String getLectureTitle(Long lectureId);
 }
