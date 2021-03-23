@@ -31,10 +31,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
-import de.tum.in.www1.artemis.domain.Feedback;
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
-import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.Participation;
@@ -82,6 +79,15 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
 
     @Autowired
     ProgrammingExerciseRepository programmingExerciseRepository;
+
+    @Autowired
+    ExamRepository examRepository;
+
+    @Autowired
+    UserRepository userRepository;
+
+    @Autowired
+    StudentExamRepository studentExamRepository;
 
     @Autowired
     ResultRepository resultRepository;
@@ -545,6 +551,45 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         var submissions = submissionRepository.findAll();
         assertThat(submissions.size()).isEqualTo(1);
         assertThat(submissions.get(0).getId()).isEqualTo(submission.getId());
+    }
+
+    @Test
+    void shouldCreateIllegalSubmissionOnNotifyPushForExamProgrammingExerciseAfterDueDate() throws Exception {
+        var user = userRepository.findUserWithGroupsAndAuthoritiesByLogin("student1").get();
+
+        // Create an exam with programming exercise
+        // The exam has to be over
+        var course = database.addEmptyCourse();
+        var exam = database.addActiveExamWithRegisteredUser(course, user);
+        exam = database.addExerciseGroupsAndExercisesToExam(exam, true);
+        exam.setEndDate(ZonedDateTime.now().minusMinutes(1));
+        exam.addRegisteredUser(user);
+        exam = examRepository.save(exam);
+
+        // Create student exam and add a participation for the programming exercise
+        var studentExam = studentExamRepository.findByIdElseThrow(exam.getId());
+        studentExam.setWorkingTime(0);
+        studentExam.setExercises(new ArrayList<>(exam.getExerciseGroups().get(6).getExercises()));
+        studentExam.setUser(user);
+        studentExam = studentExamRepository.save(studentExam);
+        ProgrammingExercise programmingExercise = (ProgrammingExercise) studentExam.getExercises().get(0);
+        var participation = database.addStudentParticipationForProgrammingExercise(programmingExercise, user.getLogin());
+
+        // set the author name to "Artemis"
+        final String requestAsArtemisUser = BITBUCKET_REQUEST.replace("\"name\": \"admin\"", "\"name\": \"Artemis\"").replace("\"displayName\": \"Admin\"",
+                "\"displayName\": \"Artemis\"");
+        // mock request for fetchCommitInfo()
+        final String projectKey = "test201904bprogrammingexercise6";
+        final String slug = "test201904bprogrammingexercise6-exercise-testuser";
+        final String hash = "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d";
+        bitbucketRequestMockProvider.mockFetchCommitInfo(projectKey, slug, hash);
+        ProgrammingSubmission submission = postSubmission(participation.getId(), HttpStatus.OK, requestAsArtemisUser);
+
+        // Assert that the submission is illegal
+        assertThat(submission.getParticipation().getId()).isEqualTo(participation.getId());
+        var illegalSubmission = submissionRepository.findById(submission.getId());
+        assertThat(illegalSubmission).isPresent();
+        assertThat(illegalSubmission.get().getType()).isEqualTo(SubmissionType.ILLEGAL);
     }
 
     private Result assertBuildError(Long participationId, String userLogin, ProgrammingLanguage programmingLanguage) throws Exception {
