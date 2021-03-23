@@ -199,6 +199,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
             return forbidden();
         }
 
+        // load submission with results either by resultId or by correctionRound
         if (resultId != null) {
             // load the submission with additional needed properties
             modelingSubmission = (ModelingSubmission) submissionRepository.findOneWithEagerResultAndFeedback(submissionId);
@@ -210,14 +211,17 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
             }
         }
         else {
+            // load and potentially lock the submission with additional needed properties by correctionRound
             modelingSubmission = modelingSubmissionService.lockAndGetModelingSubmission(submissionId, modelingExercise, correctionRound);
         }
+
         // Make sure the exercise is connected to the participation in the json response
         studentParticipation.setExercise(modelingExercise);
         modelingSubmission.getParticipation().getExercise().setGradingCriteria(gradingCriteria);
-        this.modelingSubmissionService.hideDetails(modelingSubmission, user);
-        submissionService.removeNotNeededResults(modelingSubmission, correctionRound, resultId);
 
+        // prepare fileUploadSubmission for response
+        this.modelingSubmissionService.hideDetails(modelingSubmission, user);
+        this.submissionService.removeNotNeededResults(modelingSubmission, correctionRound, resultId);
         return ResponseEntity.ok(modelingSubmission);
     }
 

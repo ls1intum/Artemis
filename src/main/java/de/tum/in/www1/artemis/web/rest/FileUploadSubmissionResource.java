@@ -166,12 +166,11 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
             return forbidden();
         }
 
-        var gradingCriteria = gradingCriterionService.findByExerciseIdWithEagerGradingCriteria(fileUploadExercise.getId());
-        fileUploadExercise.setGradingCriteria(gradingCriteria);
-
+        // load submission with results either by resultId or by correctionRound
         if (resultId != null) {
-            // load the submission with additional needed properties
+            // load the submission with additional needed properties by resultId
             fileUploadSubmission = (FileUploadSubmission) submissionRepository.findOneWithEagerResultAndFeedback(submissionId);
+            // check if result with the requested id exists
             Result result = fileUploadSubmission.getManualResultsById(resultId);
             if (result == null) {
                 return ResponseEntity.badRequest()
@@ -180,16 +179,19 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
             }
         }
         else {
+            // load and potentially lock the submission with additional needed properties by correctionRound
             fileUploadSubmission = fileUploadSubmissionService.lockAndGetFileUploadSubmission(submissionId, fileUploadExercise, correctionRound);
         }
 
         // Make sure the exercise is connected to the participation in the json response
         studentParticipation.setExercise(fileUploadExercise);
+        var gradingCriteria = gradingCriterionService.findByExerciseIdWithEagerGradingCriteria(fileUploadExercise.getId());
+        fileUploadExercise.setGradingCriteria(gradingCriteria);
         fileUploadSubmission.getParticipation().getExercise().setGradingCriteria(gradingCriteria);
+
+        // prepare fileUploadSubmission for response
         this.fileUploadSubmissionService.hideDetails(fileUploadSubmission, user);
-
-        submissionService.removeNotNeededResults(fileUploadSubmission, correctionRound, resultId);
-
+        this.submissionService.removeNotNeededResults(fileUploadSubmission, correctionRound, resultId);
         return ResponseEntity.ok(fileUploadSubmission);
     }
 
