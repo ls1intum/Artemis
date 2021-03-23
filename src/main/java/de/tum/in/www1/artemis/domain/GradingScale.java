@@ -42,6 +42,22 @@ public class GradingScale extends DomainObject {
         this.gradeType = gradeType;
     }
 
+    public Course getCourse() {
+        return course;
+    }
+
+    public void setCourse(Course course) {
+        this.course = course;
+    }
+
+    public Exam getExam() {
+        return exam;
+    }
+
+    public void setExam(Exam exam) {
+        this.exam = exam;
+    }
+
     public Set<GradeStep> getGradeSteps() {
         return gradeSteps;
     }
