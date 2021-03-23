@@ -1,5 +1,5 @@
 import { Component, OnChanges, Input } from '@angular/core';
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType, getIcon } from 'app/entities/exercise.model';
 import { Submission } from 'app/entities/submission.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { getExerciseSubmissionsLink, getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
@@ -26,6 +26,7 @@ export class StudentExamDetailTableRowComponent implements OnChanges {
     result: Result;
     openingAssessmentEditorForNewSubmission = false;
     readonly ExerciseType = ExerciseType;
+    getIcon = getIcon;
 
     ngOnChanges() {
         if (this.exercise.studentParticipations?.[0]) {
@@ -39,25 +40,6 @@ export class StudentExamDetailTableRowComponent implements OnChanges {
         }
         if (this.course && this.course.id) {
             this.courseId = this.course.id!;
-        }
-    }
-
-    /**
-     * Get an icon for the type of the given exercise.
-     * @param exercise {Exercise}
-     */
-    exerciseIcon(exercise: Exercise): string {
-        switch (exercise.type) {
-            case ExerciseType.QUIZ:
-                return 'check-double';
-            case ExerciseType.FILE_UPLOAD:
-                return 'file-upload';
-            case ExerciseType.MODELING:
-                return 'project-diagram';
-            case ExerciseType.PROGRAMMING:
-                return 'keyboard';
-            default:
-                return 'font';
         }
     }
 

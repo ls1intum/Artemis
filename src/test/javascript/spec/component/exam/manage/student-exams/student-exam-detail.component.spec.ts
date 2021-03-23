@@ -24,7 +24,7 @@ import * as sinonChai from 'sinon-chai';
 import * as chai from 'chai';
 import { ReactiveFormsModule } from '@angular/forms';
 import { MockTranslateValuesDirective } from '../../../course/course-scores/course-scores.component.spec';
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { Exercise } from 'app/entities/exercise.model';
 import { ModelingExercise, UMLDiagramType } from 'app/entities/modeling-exercise.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { Exam } from 'app/entities/exam.model';

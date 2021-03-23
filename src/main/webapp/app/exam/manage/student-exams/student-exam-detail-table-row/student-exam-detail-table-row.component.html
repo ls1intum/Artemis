@@ -2,7 +2,7 @@
     {{ exercise?.id }}
 </td>
 <td class="align-middle" style="font-size: 1.35rem">
-    <fa-icon *ngIf="exercise" [icon]="exerciseIcon(exercise)"></fa-icon>
+    <fa-icon *ngIf="exercise" [icon]="getIcon(exercise.type)"></fa-icon>
 </td>
 <td class="align-middle">
     {{ exercise?.title }}

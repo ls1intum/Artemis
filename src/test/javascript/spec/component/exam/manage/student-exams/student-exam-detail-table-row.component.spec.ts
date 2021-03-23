@@ -1,10 +1,7 @@
-import { StudentExamDetailComponent } from 'app/exam/manage/student-exams/student-exam-detail.component';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Course } from 'app/entities/course.model';
 import { ArtemisDataTableModule } from 'app/shared/data-table/data-table.module';
 import { AlertComponent } from 'app/shared/alert/alert.component';
-import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { JhiAlertService, JhiTranslateDirective } from 'ng-jhipster';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
@@ -77,16 +74,16 @@ describe('StudentExamDetailTableRowComponent', () => {
 
     it('should return the right icon based on exercise type', () => {
         exercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course, new ExerciseGroup());
-        expect(studentExamDetailTableRowComponent.exerciseIcon(exercise)).to.equal('project-diagram');
+        expect(studentExamDetailTableRowComponent.getIcon(exercise.type)).to.equal('project-diagram');
 
         exercise = new ProgrammingExercise(course, new ExerciseGroup());
-        expect(studentExamDetailTableRowComponent.exerciseIcon(exercise)).to.equal('keyboard');
+        expect(studentExamDetailTableRowComponent.getIcon(exercise.type)).to.equal('keyboard');
 
         exercise = new QuizExercise(course, new ExerciseGroup());
-        expect(studentExamDetailTableRowComponent.exerciseIcon(exercise)).to.equal('check-double');
+        expect(studentExamDetailTableRowComponent.getIcon(exercise.type)).to.equal('check-double');
 
         exercise = new FileUploadExercise(course, new ExerciseGroup());
-        expect(studentExamDetailTableRowComponent.exerciseIcon(exercise)).to.equal('file-upload');
+        expect(studentExamDetailTableRowComponent.getIcon(exercise.type)).to.equal('file-upload');
     });
 
     it('should route to programming submission dashboard', () => {
