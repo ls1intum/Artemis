@@ -537,7 +537,7 @@ public class SubmissionService {
     public void removeNotNeededResults(Submission submission, int correctionRound, Long resultId) {
         if (correctionRound == 0 && resultId == null && submission.getResults().size() >= 2) {
             var resultList = new ArrayList<Result>();
-            resultList.add(submission.getFirstResult());
+            resultList.add(submission.getFirstManualResult());
             submission.setResults(resultList);
         }
     }
