@@ -91,6 +91,8 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
 
     private Course course;
 
+    private Double offsetByTenThousandth = 0.0001;
+
     @BeforeEach
     public void initTestCase() {
         database.addUsers(2, 3, 1);
@@ -136,6 +138,33 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
     public void retrieveParticipationForNonExistingSubmission() throws Exception {
         StudentParticipation participation = request.get("/api/text-assessments/submission/345395769256365", HttpStatus.BAD_REQUEST, StudentParticipation.class);
         assertThat(participation).as("participation should not be found").isNull();
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "TA")
+    public void getTextSubmissionWithResultId() throws Exception {
+        User user = database.getUserByLogin("tutor1");
+        TextSubmission submission = ModelFactory.generateTextSubmission("asdf", null, true);
+        submission = (TextSubmission) database.addSubmissionWithTwoFinishedResultsWithAssessor(textExercise, submission, "student1", "tutor1");
+        Result storedResult = submission.getResultForCorrectionRound(1);
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("resultId", String.valueOf(storedResult.getId()));
+        StudentParticipation participation = request.get("/api/text-assessments/submission/" + submission.getId(), HttpStatus.OK, StudentParticipation.class, params);
+
+        assertThat(participation.getResults()).isNotNull();
+        assertThat(participation.getResults().contains(storedResult)).isEqualTo(true);
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void getTextSubmissionWithResultIdAsTutor_badRequest() throws Exception {
+        User user = database.getUserByLogin("tutor1");
+        TextSubmission submission = ModelFactory.generateTextSubmission("asdf", null, true);
+        submission = (TextSubmission) database.addSubmissionWithTwoFinishedResultsWithAssessor(textExercise, submission, "student1", "tutor1");
+        Result storedResult = submission.getResultForCorrectionRound(0);
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("resultId", String.valueOf(storedResult.getId()));
+        request.get("/api/text-assessments/submission/" + submission.getId(), HttpStatus.FORBIDDEN, TextSubmission.class, params);
     }
 
     @Test
@@ -706,7 +735,7 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
                 "/api/text-assessments/exercise/" + textExercise.getId() + "/result/" + submissionWithoutAssessment.getLatestResult().getId() + "/submit", textAssessmentDTO,
                 Result.class, HttpStatus.OK);
 
-        assertThat(response.getScore()).isEqualTo(110, Offset.offset(0.00001));
+        assertThat(response.getScore()).isEqualTo(110, Offset.offset(offsetByTenThousandth));
     }
 
     private void exerciseDueDatePassed() {

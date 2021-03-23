@@ -21,6 +21,7 @@ import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
  * Spring Data repository for the Submission entity.
@@ -152,12 +153,12 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
      *         due date at all
      */
     @Query("""
-            SELECT COUNT (DISTINCT submission) FROM Submission submission
-                WHERE TYPE(submission) IN (ModelingSubmission, TextSubmission, FileUploadSubmission)
-                AND submission.participation.exercise.course.id = :#{#courseId}
-                AND submission.submitted = TRUE
-                AND (submission.submissionDate <= submission.participation.exercise.dueDate
-                    OR submission.participation.exercise.dueDate IS NULL)
+            SELECT COUNT (DISTINCT s) FROM Submission s join s.participation p join p.exercise e join e.course c
+                WHERE TYPE(s) IN (ModelingSubmission, TextSubmission, FileUploadSubmission)
+                AND c.id = :#{#courseId}
+                AND s.submitted = TRUE
+                AND (s.submissionDate <= e.dueDate
+                    OR e.dueDate IS NULL)
             """)
     long countByCourseIdSubmittedBeforeDueDate(@Param("courseId") long courseId);
 
@@ -184,16 +185,18 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
      * @return the number of submissions belonging to the course id, which have the submitted flag set to true and the submission date after the exercise due date
      */
     @Query("""
-            SELECT COUNT (DISTINCT submission) FROM Submission submission
-                WHERE TYPE(submission) IN (ModelingSubmission, TextSubmission, FileUploadSubmission)
-                AND submission.participation.exercise.course.id = :#{#courseId}
-                AND submission.submitted = TRUE
-                AND submission.participation.exercise.dueDate IS NOT NULL
-                AND submission.submissionDate > submission.participation.exercise.dueDate
+            SELECT COUNT (DISTINCT s) FROM Submission s join s.participation p join p.exercise e join e.course c
+                WHERE TYPE(s) IN (ModelingSubmission, TextSubmission, FileUploadSubmission)
+                AND c.id = :#{#courseId}
+                AND s.submitted = TRUE
+                AND e.dueDate IS NOT NULL
+                AND s.submissionDate > e.dueDate
             """)
     long countByCourseIdSubmittedAfterDueDate(@Param("courseId") long courseId);
 
     /**
+     *
+     * TODO: speed improvements!
      * @param exerciseId the exercise id we are interested in
      * @return the number of submissions belonging to the exercise id, which have the submitted flag set to true and the submission date before the exercise due date, or no
      *         exercise due date at all
@@ -208,6 +211,18 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
                         OR s.submissionDate <= p.exercise.dueDate))
             """)
     long countByExerciseIdSubmittedBeforeDueDate(@Param("exerciseId") long exerciseId);
+
+    /**
+     * Gets the number of unique submissions made for the given exercise
+     *
+     * @param exerciseId the exercise id to get the number for
+     * @return the number of participations (= unique submissions) of the exercise
+     */
+    @Query("""
+            SELECT COUNT (DISTINCT p.id) FROM StudentParticipation p
+            WHERE p.exercise.id = :exerciseId
+            """)
+    long countUniqueSubmissionsByExerciseId(@Param("exerciseId") long exerciseId);
 
     /**
      * Should be used for exam dashboard to ignore test run submissions
@@ -316,5 +331,16 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
             return new DueDateStat(countByExerciseIdSubmittedBeforeDueDateIgnoreTestRuns(exerciseId), 0L);
         }
         return new DueDateStat(countByExerciseIdSubmittedBeforeDueDate(exerciseId), countByExerciseIdSubmittedAfterDueDate(exerciseId));
+    }
+
+    /**
+     * Get the submission with the given id from the database. The submission is loaded together with its result, the feedback of the result and the assessor of the
+     * result. Throws an EntityNotFoundException if no submission could be found for the given id.
+     *
+     * @param submissionId the id of the submission that should be loaded from the database
+     * @return the submission with the given id
+     */
+    default Submission findOneWithEagerResultAndFeedback(long submissionId) {
+        return this.findWithEagerResultAndFeedbackById(submissionId).orElseThrow(() -> new EntityNotFoundException("Submission with id \"" + submissionId + "\" does not exist"));
     }
 }

@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.compass.umlmodel;
 
+import java.io.Serializable;
 import java.util.List;
 import java.util.Objects;
 
@@ -7,7 +8,7 @@ import javax.annotation.Nullable;
 
 import de.tum.in.www1.artemis.service.compass.assessment.Context;
 
-public abstract class UMLElement implements Similarity<UMLElement> {
+public abstract class UMLElement implements Similarity<UMLElement>, Serializable {
 
     private int similarityID = -1; // id of similarity set the element belongs to
 

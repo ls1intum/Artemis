@@ -183,6 +183,18 @@ public abstract class Submission extends DomainObject {
     }
 
     /**
+     * Get the manual result by id of the submission
+     * @param resultId id of result
+     *
+     * @return a {@link Result} or null
+     */
+    @Nullable
+    @JsonIgnore
+    public Result getManualResultsById(long resultId) {
+        return getManualResults().stream().filter(result1 -> result1.getId().equals(resultId)).findFirst().get();
+    }
+
+    /**
      * Get the first result of the submission
      *
      * @return a {@link Result} or null if no result is present
@@ -192,6 +204,20 @@ public abstract class Submission extends DomainObject {
     public Result getFirstResult() {
         if (results != null && !results.isEmpty()) {
             return results.get(0);
+        }
+        return null;
+    }
+
+    /**
+     * Get the first manual result of the submission
+     *
+     * @return a {@link Result} or null if no result is present
+     */
+    @Nullable
+    @JsonIgnore
+    public Result getFirstManualResult() {
+        if (results != null && !results.isEmpty()) {
+            return this.getManualResults().get(0);
         }
         return null;
     }

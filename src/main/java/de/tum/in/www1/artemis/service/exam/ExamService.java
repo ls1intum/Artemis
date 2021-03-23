@@ -2,8 +2,12 @@ package de.tum.in.www1.artemis.service.exam;
 
 import static de.tum.in.www1.artemis.service.util.RoundingUtil.round;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.security.SecureRandom;
 import java.time.Duration;
+import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -13,18 +17,17 @@ import javax.validation.constraints.NotNull;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.boot.actuate.audit.AuditEventRepository;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
-import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
-import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
-import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
+import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
@@ -34,9 +37,8 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.service.ExerciseService;
-import de.tum.in.www1.artemis.service.SubmissionService;
-import de.tum.in.www1.artemis.service.TutorLeaderboardService;
+import de.tum.in.www1.artemis.security.SecurityUtils;
+import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
@@ -49,6 +51,9 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
  */
 @Service
 public class ExamService {
+
+    @Value("${artemis.course-archives-path}")
+    private String examArchivesDirPath;
 
     private final Logger log = LoggerFactory.getLogger(ExamService.class);
 
@@ -86,11 +91,15 @@ public class ExamService {
 
     private final GitService gitService;
 
+    private final CourseExamExportService courseExamExportService;
+
+    private final GroupNotificationService groupNotificationService;
+
     public ExamService(ExamRepository examRepository, StudentExamRepository studentExamRepository, ExamQuizService examQuizService, ExerciseService exerciseService,
             InstanceMessageSendService instanceMessageSendService, TutorLeaderboardService tutorLeaderboardService, AuditEventRepository auditEventRepository,
             StudentParticipationRepository studentParticipationRepository, ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository,
             UserRepository userRepository, ProgrammingExerciseRepository programmingExerciseRepository, QuizExerciseRepository quizExerciseRepository,
-            ResultRepository resultRepository, SubmissionRepository submissionRepository, SubmissionService submissionService, GitService gitService) {
+                       ResultRepository resultRepository, SubmissionRepository submissionRepository, SubmissionService submissionService, CourseExamExportService courseExamExportService, GitService gitService, GroupNotificationService groupNotificationService) {
         this.examRepository = examRepository;
         this.studentExamRepository = studentExamRepository;
         this.userRepository = userRepository;
@@ -107,6 +116,8 @@ public class ExamService {
         this.submissionRepository = submissionRepository;
         this.tutorLeaderboardService = tutorLeaderboardService;
         this.submissionService = submissionService;
+        this.courseExamExportService = courseExamExportService;
+        this.groupNotificationService = groupNotificationService;
         this.gitService = gitService;
     }
 
@@ -805,9 +816,9 @@ public class ExamService {
      * Get all currently locked submissions for all users in the given exam.
      * These are all submissions for which users started, but did not yet finish the assessment.
      *
-     * @param examId - the exam id
-     * @param user   - the user trying to access the locked submissions
-     * @return - list of submissions that have locked results in the exam
+     * @param examId  - the exam id
+     * @param user    - the user trying to access the locked submissions
+     * @return        - list of submissions that have locked results in the exam
      */
     public List<Submission> getLockedSubmissions(Long examId, User user) {
         List<Submission> submissions = submissionRepository.getLockedSubmissionsAndResultsByExamId(examId);
@@ -819,6 +830,53 @@ public class ExamService {
     }
 
     /**
+     * Archives the exam by creating a zip file with student submissions for
+     * exercises of the exam.
+     *
+     * @param exam the exam to archive
+     */
+    @Async
+    public void archiveExam(Exam exam) {
+        SecurityUtils.setAuthorizationObject();
+
+        // Archiving a course is only possible after the exam is over
+        if (ZonedDateTime.now().isBefore(exam.getEndDate())) {
+            return;
+        }
+
+        // This contains possible errors encountered during the archive process
+        ArrayList<String> exportErrors = new ArrayList<>();
+
+        groupNotificationService.notifyInstructorGroupAboutExamArchiveState(exam, NotificationType.EXAM_ARCHIVE_STARTED, exportErrors);
+
+        try {
+            // Create exam archives directory if it doesn't exist
+            Files.createDirectories(Path.of(examArchivesDirPath));
+            log.info("Created the exam archives directory at {} because it didn't exist.", examArchivesDirPath);
+
+            // Export the exam to the archives directory.
+            var archivedExamPath = courseExamExportService.exportExam(exam, examArchivesDirPath, exportErrors);
+
+            // Attach the path to the archive to the exam and save it in the database
+            if (archivedExamPath.isPresent()) {
+                exam.setExamArchivePath(archivedExamPath.get().toString());
+                examRepository.save(exam);
+            }
+            else {
+                groupNotificationService.notifyInstructorGroupAboutExamArchiveState(exam, NotificationType.EXAM_ARCHIVE_FAILED, exportErrors);
+                return;
+            }
+        }
+        catch (IOException e) {
+            var error = "Failed to create exam archives directory " + examArchivesDirPath + ": " + e.getMessage();
+            exportErrors.add(error);
+            log.info(error);
+        }
+
+        groupNotificationService.notifyInstructorGroupAboutExamArchiveState(exam, NotificationType.EXAM_ARCHIVE_FINISHED, exportErrors);
+    }
+
+    /**
      * Combines the template commits of all programming exercises in the exam.
      * This is executed before the individual student exams are generated.
      *
@@ -826,14 +884,14 @@ public class ExamService {
      */
     public void combineTemplateCommitsOfAllProgrammingExercisesInExam(Exam exam) {
         exam.getExerciseGroups().forEach(group -> group.getExercises().stream().filter(exercise -> exercise instanceof ProgrammingExercise)
-                .map(exercise -> (ProgrammingExercise) exercise).forEach(exercise -> {
-                    try {
-                        ProgrammingExercise programmingExerciseWithTemplateParticipation = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exercise.getId());
-                        gitService.combineAllCommitsOfRepositoryIntoOne(programmingExerciseWithTemplateParticipation.getTemplateParticipation().getVcsRepositoryUrl());
-                        log.debug("Finished combination of template commits for programming exercise " + programmingExerciseWithTemplateParticipation.toString());
-                    } catch (InterruptedException | GitAPIException e) {
-                        log.error("An error occurred when trying to combine template commits for exam " + exam.getId() + ".", e);
-                    }
+            .map(exercise -> (ProgrammingExercise) exercise).forEach(exercise -> {
+                try {
+                    ProgrammingExercise programmingExerciseWithTemplateParticipation = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exercise.getId());
+                    gitService.combineAllCommitsOfRepositoryIntoOne(programmingExerciseWithTemplateParticipation.getTemplateParticipation().getVcsRepositoryUrl());
+                    log.debug("Finished combination of template commits for programming exercise " + programmingExerciseWithTemplateParticipation.toString());
+                } catch (InterruptedException | GitAPIException e) {
+                    log.error("An error occurred when trying to combine template commits for exam " + exam.getId() + ".", e);
+                }
             })
         );
     }

@@ -435,7 +435,6 @@ describe('ExerciseAssessmentDashboardComponent', () => {
     });
 
     describe('openAssessmentEditor', () => {
-        const courseId = 4;
         it('should not openExampleSubmission', () => {
             navigateSpy.resetHistory();
             const submission = { id: 8 };

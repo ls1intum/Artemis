@@ -74,18 +74,6 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
     /** For visual mode **/
     textParts: (string | undefined)[][];
 
-    /**
-     * This is the regex used for splitting the text into words and spots.
-     * The regex splits the text the same was as {@link ShortAnswerQuestionUtil#divideQuestionTextIntoTextParts} does.
-     * The regex matches following cases:
-     * 1. All whitespace characters outside of spots
-     * 2. The left boundary of a spot if it is not immediately followed by a whitespace character
-     * 3. The right boundary of a spot if it is not immediately preceded by a whitespace character
-     */
-    // TODO: Dominik Fuchs: this regex seems to be invalid
-    // wordParserRegex = /(?<!\[-spot\s*)\s+|(?<=\[-spot\s*\d+\])(?=\S)|(?<=\S)(?=\[-spot\s*\d+\])/g;
-    wordParserRegex = /\s+(?![^[]?[\d]]*])/g;
-
     backupQuestion: ShortAnswerQuestion;
 
     constructor(
@@ -103,15 +91,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
          * 1. The question text is split at every new line. The first element of the array would be then the first line of the question text.
          * 2. Now each line of the question text will be divided into each word (we use whitespace and the borders of spots as separator, see {@link #regex}).
          */
-        const textForEachLine = this.question.text!.split(/\n+/g);
-        this.textParts = textForEachLine.map((line) => {
-            const indentation = this.shortAnswerQuestionUtil.getIndentation(line);
-            const lineParts = line.split(this.wordParserRegex);
-            if (lineParts.length > 1) {
-                lineParts[1] = indentation.concat(lineParts[1]);
-            }
-            return lineParts;
-        });
+        this.textParts = this.parseQuestionTextIntoTextBlocks(this.question.text!);
 
         /** Assign status booleans and strings **/
         this.showVisualMode = false;
@@ -138,6 +118,37 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
         if (!this.reEvaluationInProgress) {
             requestAnimationFrame(this.setupQuestionEditor.bind(this));
         }
+    }
+
+    /**
+     * Parses the text taken as parameter into text blocks
+     * @param text the text which should be parsed
+     */
+    private parseQuestionTextIntoTextBlocks(text: string): string[][] {
+        const returnValue: string[][] = [];
+        const lineText = text.split(/\n+/g);
+        lineText.forEach((line) => {
+            const textParts = this.shortAnswerQuestionUtil.divideQuestionTextIntoTextParts(line)[0];
+            let parsedLine: string[] = [];
+            textParts.forEach((block) => {
+                if (block.includes('[-spot ', 0)) {
+                    parsedLine.push(block);
+                } else {
+                    let blockSplit = block.split(/\s+/g);
+                    blockSplit = blockSplit.filter((ele) => ele !== '');
+                    if (blockSplit.length > 0) {
+                        parsedLine = parsedLine.concat(blockSplit);
+                    }
+                }
+            });
+            // add indentation
+            if (parsedLine.length > 0) {
+                const indentation = this.shortAnswerQuestionUtil.getIndentation(line);
+                parsedLine[0] = indentation.concat(parsedLine[0]);
+            }
+            returnValue.push(parsedLine);
+        });
+        return returnValue;
     }
 
     /**
@@ -626,9 +637,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
     resetQuestionText() {
         this.question.text = this.backupQuestion.text;
         this.question.spots = cloneDeep(this.backupQuestion.spots);
-        // split on every whitespace. !!!only exception: [-spot 1] is not split!!! for more details see description in ngOnInit.
-        const textForEachLine = this.question.text!.split(/\n+/g);
-        this.textParts = textForEachLine.map((line) => line.split(this.wordParserRegex));
+        this.textParts = this.parseQuestionTextIntoTextBlocks(this.question.text!);
         this.question.explanation = this.backupQuestion.explanation;
         this.question.hint = this.backupQuestion.hint;
     }
@@ -672,9 +681,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
         this.question.spots = this.question.spots?.filter((spot) => spot !== spotToDelete);
         this.deleteMappingsForSpot(spotToDelete);
 
-        // split on every whitespace. !!!only exception: [-spot 1] is not split!!! for more details see description in ngOnInit.
-        const textForEachLine = this.question.text!.split(/\n+/g);
-        this.textParts = textForEachLine.map((line) => line.split(this.wordParserRegex));
+        this.textParts = this.parseQuestionTextIntoTextBlocks(this.question.text!);
 
         this.textParts = this.textParts.map((part) => part.filter((text) => !text || !text.includes('[-spot ' + spotToDelete.spotNr + ']')));
 
@@ -702,9 +709,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
         const rowColumn: string[] = id.split('-').slice(1);
         this.textParts[rowColumn[0]][rowColumn[1]] = (<HTMLInputElement>document.getElementById(id)).value;
         this.question.text = this.textParts.map((textPart) => textPart.join(' ')).join('\n');
-        // split on every whitespace. !!!only exception: [-spot 1] is not split!!! for more details see description in ngOnInit.
-        const textForEachLine = this.question.text.split(/\n+/g);
-        this.textParts = textForEachLine.map((line) => line.split(this.wordParserRegex));
+        this.textParts = this.parseQuestionTextIntoTextBlocks(this.question.text);
     }
 
     /**

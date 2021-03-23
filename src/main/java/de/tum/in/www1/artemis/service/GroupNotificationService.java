@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.GroupNotificationType;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
+import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.notification.GroupNotification;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.GroupNotificationRepository;
@@ -109,6 +110,17 @@ public class GroupNotificationService {
     }
 
     /**
+     * Notify instructor groups about duplicate test cases.
+     *
+     * @param exercise         that has been updated
+     * @param notificationText that should be displayed
+     */
+    public void notifyInstructorGroupAboutDuplicateTestCasesForExercise(Exercise exercise, String notificationText) {
+        saveAndSend(createNotification(exercise, null, GroupNotificationType.TA, NotificationType.DUPLICATE_TEST_CASE, notificationText));
+        saveAndSend(createNotification(exercise, null, GroupNotificationType.INSTRUCTOR, NotificationType.DUPLICATE_TEST_CASE, notificationText));
+    }
+
+    /**
      * Notify tutor and instructor groups about a new question in a lecture.
      *
      * @param studentQuestion that has been posted
@@ -147,6 +159,17 @@ public class GroupNotificationService {
      */
     public void notifyInstructorGroupAboutCourseArchiveState(Course course, NotificationType notificationType, List<String> archiveErrors) {
         saveAndSend(createNotification(course, null, GroupNotificationType.INSTRUCTOR, notificationType, archiveErrors));
+    }
+
+    /**
+     * Notify instructor groups about the archive state of the exam.
+     *
+     * @param exam           The exam
+     * @param notificationType The state of the archiving process
+     * @param archiveErrors    a list of errors that happened during archiving
+     */
+    public void notifyInstructorGroupAboutExamArchiveState(Exam exam, NotificationType notificationType, List<String> archiveErrors) {
+        saveAndSend(createNotification(exam, null, GroupNotificationType.INSTRUCTOR, notificationType, archiveErrors));
     }
 
     /**
