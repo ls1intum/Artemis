@@ -30,6 +30,9 @@ public class StatsForDashboardDTO {
 
     private List<TutorLeaderboardDTO> tutorLeaderboardEntries;
 
+    /**
+     * Empty constructor is needed by Jackson
+     */
     public StatsForDashboardDTO() {
     }
 

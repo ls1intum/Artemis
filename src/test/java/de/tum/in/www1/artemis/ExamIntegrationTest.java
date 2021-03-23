@@ -1889,7 +1889,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         assertThat(stats.getNumberOfAssessmentLocks()).isEqualTo(75L);
         // 75 = (15 users * 5 exercises); quiz submissions are not counted
         assertThat(stats.getNumberOfSubmissions().getInTime()).isEqualTo(75L);
-        // the 15 quiz submissions are already assessed - and all are assessed in teh first correctionRound
+        // the 15 quiz submissions are already assessed - and all are assessed in the first correctionRound
         assertThat(stats.getNumberOfAssessmentsOfCorrectionRounds()[0].getInTime()).isEqualTo(90L);
         assertThat(stats.getNumberOfAssessmentsOfCorrectionRounds()[1].getInTime()).isEqualTo(15L);
         assertThat(stats.getNumberOfComplaints()).isEqualTo(0L);
@@ -1901,15 +1901,15 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
             var locksRound1 = group.getExercises().stream().map(
                     exercise -> resultRepository.countNumberOfLockedAssessmentsByOtherTutorsForExamExerciseForCorrectionRounds(exercise, numberOfCorrectionRounds, examTutor2)[0]
                             .getInTime())
-                    .reduce((x, y) -> x + y).get();
-            if (group.getExercises().stream().filter(exercise -> !(exercise instanceof QuizExercise)).count() != 0)
+                    .reduce(Long::sum).get();
+            if (group.getExercises().stream().anyMatch(exercise -> !(exercise instanceof QuizExercise)))
                 assertThat(locksRound1).isEqualTo(0L);
 
             var locksRound2 = group.getExercises().stream().map(
                     exercise -> resultRepository.countNumberOfLockedAssessmentsByOtherTutorsForExamExerciseForCorrectionRounds(exercise, numberOfCorrectionRounds, examTutor2)[1]
                             .getInTime())
-                    .reduce((x, y) -> x + y).get();
-            if (group.getExercises().stream().filter(exercise -> !(exercise instanceof QuizExercise)).count() != 0)
+                    .reduce(Long::sum).get();
+            if (group.getExercises().stream().anyMatch(exercise -> !(exercise instanceof QuizExercise)))
                 assertThat(locksRound2).isEqualTo(15L);
         });
 
