@@ -52,7 +52,7 @@ export class CourseExamArchiveButtonComponent implements OnInit, OnDestroy {
         private translateService: TranslateService,
         private modalService: NgbModal,
         private accountService: AccountService,
-        private changedetectionReF: ChangeDetectorRef,
+        private changeDetectionRef: ChangeDetectorRef,
     ) {}
 
     ngOnInit() {
@@ -104,12 +104,12 @@ export class CourseExamArchiveButtonComponent implements OnInit, OnDestroy {
         if (this.archiveMode === 'Exam' && this.exam) {
             this.examService.find(this.course.id!, this.exam.id!).subscribe((res) => {
                 this.exam = res.body!;
-                this.changedetectionReF.detectChanges();
+                this.changeDetectionRef.detectChanges();
             });
         } else {
             this.courseService.find(this.course.id!).subscribe((res) => {
                 this.course = res.body!;
-                this.changedetectionReF.detectChanges();
+                this.changeDetectionRef.detectChanges();
             });
         }
     }
@@ -203,8 +203,8 @@ export class CourseExamArchiveButtonComponent implements OnInit, OnDestroy {
         }
 
         // A course can only be cleaned up if the course has been archived.
-        const canCleanup = !!this.course.courseArchivePath && this.course.courseArchivePath.length > 0;
-        return this.accountService.isAtLeastInstructorInCourse(this.course) && canCleanup;
+        const courseHasBeenArchived = !!this.course.courseArchivePath && this.course.courseArchivePath.length > 0;
+        return this.accountService.isAtLeastInstructorInCourse(this.course) && courseHasBeenArchived;
     }
 
     cleanupCourse() {
