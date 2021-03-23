@@ -45,6 +45,7 @@ import { CourseManagementStatisticsComponent } from './overview/course-managemen
 import { ArtemisTutorParticipationGraphModule } from 'app/shared/dashboards/tutor-participation-graph/tutor-participation-graph.module';
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { ArtemisCourseParticipantScoresModule } from 'app/course/course-participant-scores/course-participant-scores.module';
+import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 
 @NgModule({
     imports: [
@@ -84,6 +85,7 @@ import { ArtemisCourseParticipantScoresModule } from 'app/course/course-particip
         ArtemisTutorParticipationGraphModule,
         ArtemisMarkdownModule,
         ArtemisCourseParticipantScoresModule,
+        ArtemisSharedComponentModule,
     ],
     declarations: [
         CourseManagementComponent,

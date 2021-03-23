@@ -395,4 +395,26 @@ export class ExamManagementService {
                 ),
             );
     }
+
+    /**
+     * Downloads the exam archive of the specified examId. Returns an error
+     * if the archive does not exist.
+     * @param courseId
+     * @param examId The id of the exam
+     */
+    downloadExamArchive(courseId: number, examId: number): Observable<HttpResponse<Blob>> {
+        return this.http.get(`${this.resourceUrl}/${courseId}/exams/${examId}/download-archive`, {
+            observe: 'response',
+            responseType: 'blob',
+        });
+    }
+
+    /**
+     * Archives the exam of the specified examId.
+     * @param courseId the id of the course of the exam
+     * @param examId The id of the exam to archive
+     */
+    archiveExam(courseId: number, examId: number): Observable<HttpResponse<any>> {
+        return this.http.put(`${this.resourceUrl}/${courseId}/exams/${examId}/archive`, {}, { observe: 'response' });
+    }
 }

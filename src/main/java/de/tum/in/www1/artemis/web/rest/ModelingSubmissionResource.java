@@ -246,6 +246,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
             return forbidden();
         }
+
         if (!(exercise instanceof ModelingExercise)) {
             return badRequest();
         }

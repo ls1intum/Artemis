@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.compass.umlmodel.activity;
 
+import java.io.Serializable;
 import java.util.Objects;
 
 import com.google.common.base.CaseFormat;
@@ -8,7 +9,7 @@ import de.tum.in.www1.artemis.service.compass.strategy.NameSimilarity;
 import de.tum.in.www1.artemis.service.compass.umlmodel.Similarity;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
 
-public class UMLActivityNode extends UMLActivityElement {
+public class UMLActivityNode extends UMLActivityElement implements Serializable {
 
     public enum UMLActivityNodeType {
         ACTIVITY_INITIAL_NODE, ACTIVITY_FINAL_NODE, ACTIVITY_ACTION_NODE, ACTIVITY_OBJECT_NODE, ACTIVITY_FORK_NODE, ACTIVITY_JOIN_NODE, ACTIVITY_DECISION_NODE, ACTIVITY_MERGE_NODE

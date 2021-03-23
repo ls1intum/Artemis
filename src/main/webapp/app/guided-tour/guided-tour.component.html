@@ -181,14 +181,14 @@
     </div>
 </div>
 <ng-template #selectedElementOverlay>
-    <div class="guided-tour-overlay" [ngStyle]="getOverlayStyle(OverlayPosition.TOP)" (click)="backdropClick($event)"></div>
-    <div class="guided-tour-overlay" [ngStyle]="getOverlayStyle(OverlayPosition.LEFT)" (click)="backdropClick($event)"></div>
-    <div class="guided-tour-overlay" [ngStyle]="getOverlayStyle(OverlayPosition.RIGHT)" (click)="backdropClick($event)"></div>
-    <div class="guided-tour-overlay" [ngStyle]="getOverlayStyle(OverlayPosition.BOTTOM)" (click)="backdropClick($event)"></div>
+    <div class="guided-tour-overlay" [ngStyle]="getOverlayStyle(OverlayPosition.TOP) || null" (click)="backdropClick($event)"></div>
+    <div class="guided-tour-overlay" [ngStyle]="getOverlayStyle(OverlayPosition.LEFT) || null" (click)="backdropClick($event)"></div>
+    <div class="guided-tour-overlay" [ngStyle]="getOverlayStyle(OverlayPosition.RIGHT) || null" (click)="backdropClick($event)"></div>
+    <div class="guided-tour-overlay" [ngStyle]="getOverlayStyle(OverlayPosition.BOTTOM) || null" (click)="backdropClick($event)"></div>
     <div
         class="guided-tour-element-overlay"
         [class.click-through]="currentTourStep.userInteractionEvent"
-        [ngStyle]="getOverlayStyle(OverlayPosition.ELEMENT)"
+        [ngStyle]="getOverlayStyle(OverlayPosition.ELEMENT) || null"
         (click)="backdropClick($event)"
     ></div>
 </ng-template>

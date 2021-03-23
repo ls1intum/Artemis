@@ -119,7 +119,7 @@
     <button
         *ngIf="course.isAtLeastInstructor && exercise.type !== exerciseType.PROGRAMMING"
         jhiDeleteButton
-        [entityTitle]="exercise.title"
+        [entityTitle]="exercise.title || ''"
         deleteQuestion="artemisApp.exercise.delete.question"
         deleteConfirmationText="artemisApp.exercise.delete.typeNameToConfirm"
         (delete)="deleteExercise()"
@@ -131,7 +131,7 @@
     <button
         *ngIf="course.isAtLeastInstructor && exercise.type === exerciseType.PROGRAMMING"
         jhiDeleteButton
-        [entityTitle]="exercise.title"
+        [entityTitle]="exercise.title || ''"
         deleteQuestion="artemisApp.programmingExercise.delete.question"
         (delete)="deleteProgrammingExercise($event)"
         [dialogError]="dialogError$"
