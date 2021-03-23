@@ -180,8 +180,7 @@ describe('CoursesComponent', () => {
     it('Should load next relevant exam', () => {
         const navigateSpy = sinon.spy(router, 'navigate');
         component.nextRelevantCourseForExam = course1;
-        component.nextRelevantExams = exams;
-
+        component.nextRelevantExams = [exam1];
         component.openExam();
 
         expect(navigateSpy).to.have.been.calledWith(['courses', 1, 'exams', 3]);
