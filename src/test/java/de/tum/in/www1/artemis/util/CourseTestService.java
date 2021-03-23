@@ -35,6 +35,7 @@ import de.tum.in.www1.artemis.service.GroupNotificationService;
 import de.tum.in.www1.artemis.service.user.UserService;
 import de.tum.in.www1.artemis.web.rest.dto.CourseManagementOverviewStatisticsDTO;
 import de.tum.in.www1.artemis.web.rest.dto.StatsForInstructorDashboardDTO;
+import de.tum.in.www1.artemis.web.rest.dto.StringDTO;
 
 @Service
 public class CourseTestService {
@@ -1287,6 +1288,16 @@ public class CourseTestService {
 
             // TODO: Assert the other exercises after it's implemented
         });
+    }
+
+    // Test
+    public void testGetCourseTitle() throws Exception {
+        Course course = database.createCourse();
+        course.setTitle("Test Course");
+        course = courseRepo.save(course);
+
+        final var stringDTO = request.get("/api/courses/" + course.getId() + "/get-title", HttpStatus.OK, StringDTO.class);
+        assertThat(stringDTO.getResponse()).isEqualTo(course.getTitle());
     }
 
     // Test

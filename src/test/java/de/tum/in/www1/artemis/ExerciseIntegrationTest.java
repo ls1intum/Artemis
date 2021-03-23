@@ -34,6 +34,7 @@ import de.tum.in.www1.artemis.service.ExerciseService;
 import de.tum.in.www1.artemis.util.FileUtils;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.dto.StatsForInstructorDashboardDTO;
+import de.tum.in.www1.artemis.web.rest.dto.StringDTO;
 
 public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -658,5 +659,36 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
         Course courseWithOneReleasedTextExercise = database.addCourseWithOneReleasedTextExercise();
         Exercise exercise = (Exercise) courseWithOneReleasedTextExercise.getExercises().toArray()[0];
         request.putWithResponseBody("/api/exercises/" + exercise.getId() + "/toggle-second-correction", null, Boolean.class, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testGetExerciseTitleAsInstuctor() throws Exception {
+        // Only user and role matter, so we can re-use the logic
+        testGetExerciseTitle();
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testGetExerciseTitleAsTeachingAssistant() throws Exception {
+        // Only user and role matter, so we can re-use the logic
+        testGetExerciseTitle();
+    }
+
+    @Test
+    @WithMockUser(username = "user1", roles = "USER")
+    public void testGetExerciseTitleAsUser() throws Exception {
+        // Only user and role matter, so we can re-use the logic
+        testGetExerciseTitle();
+    }
+
+    private void testGetExerciseTitle() throws Exception {
+        Course courseWithOneReleasedTextExercise = database.addCourseWithOneReleasedTextExercise();
+        Exercise exercise = (Exercise) courseWithOneReleasedTextExercise.getExercises().toArray()[0];
+        exercise.setTitle("Test Exercise");
+        exerciseRepository.save(exercise);
+
+        final var stringDTO = request.get("/api/exercises/" + exercise.getId() + "/get-title", HttpStatus.OK, StringDTO.class);
+        assertThat(stringDTO.getResponse()).isEqualTo(exercise.getTitle());
     }
 }

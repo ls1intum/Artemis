@@ -1829,6 +1829,38 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
         lockedSubmissions = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/lockedSubmissions", HttpStatus.OK, List.class);
         assertThat(lockedSubmissions.size()).isEqualTo(0);
+    }
 
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testGetExamTitleAsInstuctor() throws Exception {
+        // Only user and role matter, so we can re-use the logic
+        testGetExamTitle();
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testGetExamTitleAsTeachingAssistant() throws Exception {
+        // Only user and role matter, so we can re-use the logic
+        testGetExamTitle();
+    }
+
+    @Test
+    @WithMockUser(username = "user1", roles = "USER")
+    public void testGetExamTitleAsUser() throws Exception {
+        // Only user and role matter, so we can re-use the logic
+        testGetExamTitle();
+    }
+
+    private void testGetExamTitle() throws Exception {
+        Course course = database.createCourse();
+        Exam exam = ModelFactory.generateExam(course);
+        exam.setTitle("Test Exam");
+        exam = examRepository.save(exam);
+        course.addExam(exam);
+        courseRepo.save(course);
+
+        final var stringDTO = request.get("/api/exams/" + exam.getId() + "/get-title", HttpStatus.OK, StringDTO.class);
+        assertThat(stringDTO.getResponse()).isEqualTo(exam.getTitle());
     }
 }

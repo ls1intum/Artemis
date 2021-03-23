@@ -17,6 +17,7 @@ import de.tum.in.www1.artemis.domain.ExerciseHint;
 import de.tum.in.www1.artemis.repository.ExerciseHintRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.web.rest.ExerciseHintResource;
+import de.tum.in.www1.artemis.web.rest.dto.StringDTO;
 
 public class ExerciseHintIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -163,5 +164,32 @@ public class ExerciseHintIntegrationTest extends AbstractSpringIntegrationBamboo
         request.post("/api/exercise-hints", exerciseHint, HttpStatus.CREATED);
         List<ExerciseHint> exerciseHints = exerciseHintRepository.findAll();
         request.delete("/api/exercise-hints/" + exerciseHints.get(0).getId(), HttpStatus.NO_CONTENT);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testGetHintTitleAsInstuctor() throws Exception {
+        // Only user and role matter, so we can re-use the logic
+        testGetHintTitle();
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testGetHintTitleAsTeachingAssistant() throws Exception {
+        // Only user and role matter, so we can re-use the logic
+        testGetHintTitle();
+    }
+
+    @Test
+    @WithMockUser(username = "user1", roles = "USER")
+    public void testGetHintTitleAsUser() throws Exception {
+        // Only user and role matter, so we can re-use the logic
+        testGetHintTitle();
+    }
+
+    private void testGetHintTitle() throws Exception {
+        final var hint = new ExerciseHint().title("Test Hint").exercise(exercise);
+        final var stringDTO = request.get("/api/exercise-hints/" + hint.getId() + "/get-title", HttpStatus.OK, StringDTO.class);
+        assertThat(stringDTO.getResponse()).isEqualTo(hint.getTitle());
     }
 }
