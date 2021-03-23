@@ -121,12 +121,12 @@ public class GroupNotificationService {
     }
 
     /**
-     * Notify instructor groups about invalid submissions
+     * Notify instructor groups about illegal submissions
      *
      * @param exercise         that has been affected
      * @param notificationText that should be displayed
      */
-    public void notifyInstructorGroupAboutInvalidSubmissionsForExercise(Exercise exercise, String notificationText) {
+    public void notifyInstructorGroupAboutIllegalSubmissionsForExercise(Exercise exercise, String notificationText) {
         saveAndSend(createNotification(exercise, null, GroupNotificationType.INSTRUCTOR, NotificationType.ILLEGAL_SUBMISSION, notificationText));
     }
 

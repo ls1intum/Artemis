@@ -85,8 +85,8 @@ public class GroupNotificationFactory {
                 text = "Exercise \"" + exercise.getTitle() + "\" has multiple test cases with the same name.";
             }
             case ILLEGAL_SUBMISSION -> {
-                title = "Invalid submission of a student.";
-                text = "Exercise \"" + exercise.getTitle() + "\" has invalid submissions of students.";
+                title = "Illegal submission of a student.";
+                text = "Exercise \"" + exercise.getTitle() + "\" has illegal submissions of students.";
             }
 
             default -> throw new UnsupportedOperationException("Unsupported NotificationType: " + notificationType);

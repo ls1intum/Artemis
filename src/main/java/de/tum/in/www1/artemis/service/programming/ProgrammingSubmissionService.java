@@ -189,7 +189,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
                 final String message = "An illegal exam submission was created. A submission was created after the allowed due date for participation " + participationId;
                 programmingSubmission.setType(SubmissionType.ILLEGAL);
                 log.warn(message);
-                groupNotificationService.notifyInstructorGroupAboutInvalidSubmissionsForExercise(programmingExercise, message);
+                groupNotificationService.notifyInstructorGroupAboutIllegalSubmissionsForExercise(programmingExercise, message);
             }
         }
 
