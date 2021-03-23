@@ -33,9 +33,8 @@ import de.tum.in.www1.artemis.programmingexercise.MockDelegate;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.GroupNotificationService;
 import de.tum.in.www1.artemis.service.user.UserService;
-import de.tum.in.www1.artemis.web.rest.dto.StatsForDashboardDTO;
 import de.tum.in.www1.artemis.web.rest.dto.CourseManagementOverviewStatisticsDTO;
-
+import de.tum.in.www1.artemis.web.rest.dto.StatsForDashboardDTO;
 
 @Service
 public class CourseTestService {
