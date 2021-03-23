@@ -81,11 +81,9 @@
             },
             "complaintHint": "Shows complaints about assessments of other tutors. Note: complaints about your assessments are not shown here.",
             "moreFeedbackRequestHint": "Shows more feedback requests for your assessments.",
-            "noSubmissionsBecauseOfOtherLockedSubmissions": "All submissions are locked by other tutors or you.",
-            "noSubmissionsInfo": "{{freeAssessments}} out of {{openAssessments}} submissions can be corrected. {{lockedSubmissionsByOtherTutor}} submissions are locked by other tutors. ",
-            "noSubmissionsInfoSecondCorrectionSingular": "{{notYetAssessed}} submission is not yet assessed in the first correction round.",
-            "noSubmissionsInfoSecondCorrectionPlural": "{{notYetAssessed}} submissions are not yet assessed in the first correction round.",
-            "noSubmissionsBecauseFirstAssessedByYourself": "You can only assess submissions in the second correction round, which you have not assessed in the first round."
+            "noSubmissionsInfo": "You can assess 0 submissions in this round. {{notYetAssessed}} submissions are not yet assessed, of which {{lockedSubmissionsByOtherTutor}} are locked by other tutors ",
+            "noSubmissionsInfoSecondCorrection": " and {{firstRoundAssessments}} were assessed by you in the first round. {{remainingAssessments}} are still remaining, but you assessed them in the first correction round.",
+            "noSubmissionsBecauseFirstAssessedByYourself": "In the second correction round, you can only assess submissions which you have not assessed in the first round."
         }
     }
 }

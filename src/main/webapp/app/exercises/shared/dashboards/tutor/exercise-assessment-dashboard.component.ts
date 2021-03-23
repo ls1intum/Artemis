@@ -102,6 +102,12 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
     formattedSampleSolution?: SafeHtml;
     getSubmissionResultByCorrectionRound = getSubmissionResultByCorrectionRound;
 
+    // helper variables to display information message
+    remainingAssessments: number[];
+    lockedSubmissionsByOtherTutor: number[];
+    notYetAssessed: number[];
+    firstRoundAssessments: number;
+
     readonly ExerciseType = ExerciseType;
 
     stats = {
@@ -161,7 +167,6 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
         }
 
         this.loadAll();
-
         this.accountService.identity().then((user: User) => (this.tutor = user));
     }
 
@@ -290,6 +295,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
                     } else {
                         this.tutorAssessmentPercentage = 100;
                     }
+                    this.calculateAssessmentProgressInformation();
                 },
                 (response: string) => this.onError(response),
             );
@@ -376,7 +382,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
                     return submission;
                 });
 
-                this.submissionsByCorrectionRound!.set(correctionRound, sub); // todo NR
+                this.submissionsByCorrectionRound!.set(correctionRound, sub);
             });
     }
 
@@ -616,5 +622,22 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
 
     getSubmissionsLinkForExercise(exercise: Exercise): string[] {
         return getExerciseSubmissionsLink(exercise.type!, this.courseId, exercise.id!, this.examId, this.exerciseGroupId);
+    }
+
+    calculateAssessmentProgressInformation() {
+        if (this.exam) {
+            this.firstRoundAssessments = this.submissionsByCorrectionRound?.get(0 ?? 0)?.length ?? 0;
+            for (let i = 0; i < (this.exam.numberOfCorrectionRoundsInExam ?? 0); i++) {
+                this.lockedSubmissionsByOtherTutor[i] = this.numberOfLockedAssessmentByOtherTutorsOfCorrectionRound[i]?.inTime;
+
+                this.notYetAssessed[i] = this.numberOfSubmissions.inTime - this.numberOfAssessmentsOfCorrectionRounds[i].inTime - this.lockedSubmissionsByOtherTutor[i];
+                // docu
+                if (i === 0) {
+                    this.remainingAssessments[i] = this.notYetAssessed[i];
+                } else {
+                    this.remainingAssessments[i] = this.notYetAssessed[i] - (this.numberOfSubmissions.inTime - this.numberOfAssessmentsOfCorrectionRounds[0].inTime);
+                }
+            }
+        }
     }
 }
