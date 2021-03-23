@@ -12,6 +12,6 @@ jenkins:
     use-crumb: true
 
     # The following (optional) parameter allows to enable the use of pseudonyms.
-    # Iff activated, the user's first and last name are not transferred to jenkins.
+    # If activated, the user's first and last name are not transferred to jenkins.
     # Instead the user will be called "user <loginname>".
     use-pseudonyms: false
