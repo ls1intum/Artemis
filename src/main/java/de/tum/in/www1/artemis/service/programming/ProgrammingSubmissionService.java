@@ -118,8 +118,6 @@ public class ProgrammingSubmissionService extends SubmissionService {
         }
 
         ProgrammingExerciseParticipation programmingExerciseParticipation = (ProgrammingExerciseParticipation) participation;
-        ProgrammingExercise programmingExercise = programmingExerciseParticipation.getProgrammingExercise();
-        boolean isExamExercise = programmingExercise.isExamExercise();
 
         // if the commit is made by the Artemis user and contains the commit message "Setup" (use a constant to determine this), we should ignore this
         // and we should not create a new submission here
@@ -181,17 +179,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
         programmingExerciseParticipation.addSubmission(programmingSubmission);
 
         // Students are not allowed to submit a programming exercise after the exam due date, if this happens we set the Submission to ILLEGAL
-        if (isExamExercise && programmingExerciseParticipation instanceof ProgrammingExerciseStudentParticipation) {
-            var optionalStudent = ((ProgrammingExerciseStudentParticipation) programmingExerciseParticipation).getStudent();
-            Optional<User> optionalStudentWithGroups = optionalStudent.isPresent() ? userRepository.findOneWithGroupsAndAuthoritiesByLogin(optionalStudent.get().getLogin())
-                    : Optional.empty();
-            if (optionalStudentWithGroups.isPresent() && !examSubmissionService.isAllowedToSubmitDuringExam(programmingExercise, optionalStudentWithGroups.get())) {
-                final String message = "An illegal exam submission was created. A submission was created after the allowed due date for participation " + participationId;
-                programmingSubmission.setType(SubmissionType.ILLEGAL);
-                log.warn(message);
-                groupNotificationService.notifyInstructorGroupAboutIllegalSubmissionsForExercise(programmingExercise, message);
-            }
-        }
+        checkForIllegalExamSubmission(programmingExerciseParticipation, programmingSubmission);
 
         programmingSubmission = programmingSubmissionRepository.save(programmingSubmission);
         // NOTE: we don't need to save the participation here, this might lead to concurrency problems when doing the empty commit during resume exercise!
@@ -199,12 +187,37 @@ public class ProgrammingSubmissionService extends SubmissionService {
     }
 
     /**
+     * We check if a submission for an exam programming exercise is after the individual end date and a student is not allowed to submit anymore.
+     * If this is the case, the submission is set to {@link SubmissionType#ILLEGAL}.
+     *
+     * @param programmingExerciseParticipation current participation of the exam exercise
+     * @param programmingSubmission            new created submission of the repository commit
+     */
+    private void checkForIllegalExamSubmission(ProgrammingExerciseParticipation programmingExerciseParticipation, ProgrammingSubmission programmingSubmission) {
+        ProgrammingExercise programmingExercise = programmingExerciseParticipation.getProgrammingExercise();
+        boolean isExamExercise = programmingExercise.isExamExercise();
+        // Students are not allowed to submit a programming exercise after the exam due date, if this happens we set the Submission to ILLEGAL
+        if (isExamExercise && programmingExerciseParticipation instanceof ProgrammingExerciseStudentParticipation) {
+            var optionalStudent = ((ProgrammingExerciseStudentParticipation) programmingExerciseParticipation).getStudent();
+            Optional<User> optionalStudentWithGroups = optionalStudent.isPresent() ? userRepository.findOneWithGroupsAndAuthoritiesByLogin(optionalStudent.get().getLogin())
+                    : Optional.empty();
+            if (optionalStudentWithGroups.isPresent() && !examSubmissionService.isAllowedToSubmitDuringExam(programmingExercise, optionalStudentWithGroups.get())) {
+                final String message = "An illegal exam submission was created. A submission was created after the allowed due date for participation "
+                        + programmingExerciseParticipation.getId() + " by the student " + optionalStudentWithGroups.get().getLogin();
+                programmingSubmission.setType(SubmissionType.ILLEGAL);
+                groupNotificationService.notifyInstructorGroupAboutIllegalSubmissionsForExercise(programmingExercise, message);
+                log.warn(message);
+            }
+        }
+    }
+
+    /**
      * A pending submission is one that does not have a result yet.
      *
      * @param participationId the id of the participation get the latest submission for
-     * @param filterGraded if true will not use the latest submission, but the latest graded submission.
+     * @param filterGraded    if true will not use the latest submission, but the latest graded submission.
      * @return the latest pending submission if exists or null.
-     * @throws EntityNotFoundException if the participation for the given id can't be found.
+     * @throws EntityNotFoundException  if the participation for the given id can't be found.
      * @throws IllegalArgumentException if the participation for the given id is not a programming exercise participation.
      */
     public Optional<ProgrammingSubmission> getLatestPendingSubmission(Long participationId, boolean filterGraded) throws EntityNotFoundException, IllegalArgumentException {

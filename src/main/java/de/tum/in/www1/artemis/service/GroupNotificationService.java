@@ -121,7 +121,8 @@ public class GroupNotificationService {
     }
 
     /**
-     * Notify instructor groups about illegal submissions
+     * Notify instructor groups about illegal submissions. In case a student has submitted after the individual end date or exam end date,
+     * the submission is not valid and therefore marked as illegal. We notify the instructor about this cheating attempt.
      *
      * @param exercise         that has been affected
      * @param notificationText that should be displayed
