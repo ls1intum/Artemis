@@ -306,16 +306,18 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
      * @return an array of the number of assessments for the exercise for a given correction round
      */
     default DueDateStat[] countNumberOfLockedAssessmentsByOtherTutorsForExamExerciseForCorrectionRounds(Exercise exercise, int numberOfCorrectionRounds, User tutor) {
-        DueDateStat[] correctionRoundsDataStats = new DueDateStat[numberOfCorrectionRounds];
-        var resultsLockedByOtherTutors = countNumberOfLockedAssessmentsByOtherTutorsForExamExerciseForCorrectionRoundsIgnoreTestRuns(exercise.getId(), tutor.getId());
+        if (exercise.isExamExercise()) {
+            DueDateStat[] correctionRoundsDataStats = new DueDateStat[numberOfCorrectionRounds];
+            var resultsLockedByOtherTutors = countNumberOfLockedAssessmentsByOtherTutorsForExamExerciseForCorrectionRoundsIgnoreTestRuns(exercise.getId(), tutor.getId());
 
-        correctionRoundsDataStats[0] = new DueDateStat(resultsLockedByOtherTutors.stream().filter(result -> result.isRated() == null).count(), 0L);
-        // so far the number of correctionRounds is limited to 2
-        if (numberOfCorrectionRounds == 2) {
-            correctionRoundsDataStats[1] = new DueDateStat(resultsLockedByOtherTutors.stream().filter(result -> result.isRated() != null).count(), 0L);
+            correctionRoundsDataStats[0] = new DueDateStat(resultsLockedByOtherTutors.stream().filter(result -> result.isRated() == null).count(), 0L);
+            // so far the number of correctionRounds is limited to 2
+            if (numberOfCorrectionRounds == 2) {
+                correctionRoundsDataStats[1] = new DueDateStat(resultsLockedByOtherTutors.stream().filter(result -> result.isRated() != null).count(), 0L);
+            }
+            return correctionRoundsDataStats;
         }
-
-        return correctionRoundsDataStats;
+        return null;
     }
 
     /**
