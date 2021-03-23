@@ -585,11 +585,26 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         bitbucketRequestMockProvider.mockFetchCommitInfo(projectKey, slug, hash);
         ProgrammingSubmission submission = postSubmission(participation.getId(), HttpStatus.OK, requestAsArtemisUser);
 
+        // Mock result from bamboo
+        postResult(participation.getBuildPlanId(), HttpStatus.OK, false);
+
+        // Check that the result was created successfully and is linked to the participation and submission.
+        List<Result> results = resultRepository.findByParticipationIdOrderByCompletionDateDesc(participation.getId());
+        assertThat(results).hasSize(1);
+        Result createdResult = results.get(0);
+        createdResult = resultRepository.findByIdWithEagerFeedbacksAndAssessor(createdResult.getId()).get();
+
         // Assert that the submission is illegal
         assertThat(submission.getParticipation().getId()).isEqualTo(participation.getId());
-        var illegalSubmission = submissionRepository.findById(submission.getId());
-        assertThat(illegalSubmission).isPresent();
-        assertThat(illegalSubmission.get().getType()).isEqualTo(SubmissionType.ILLEGAL);
+        var illegalSubmission = submissionRepository.findWithEagerResultsById(submission.getId()).get();
+        assertThat(illegalSubmission.getType()).isEqualTo(SubmissionType.ILLEGAL);
+        assertThat(illegalSubmission.isSubmitted()).isTrue();
+        assertThat(illegalSubmission.getLatestResult().isRated()).isFalse();
+        assertThat(illegalSubmission.getLatestResult().getId()).isEqualTo(createdResult.getId());
+
+        // Check that the result belongs to the participation
+        Participation updatedParticipation = participationRepository.findWithEagerSubmissionsById(participation.getId()).get();
+        assertThat(createdResult.getParticipation().getId()).isEqualTo(updatedParticipation.getId());
     }
 
     private Result assertBuildError(Long participationId, String userLogin, ProgrammingLanguage programmingLanguage) throws Exception {
