@@ -14,7 +14,8 @@ public class StringDTO {
     }
 
     // Dummy constructor for the tests
-    public StringDTO() {}
+    public StringDTO() {
+    }
 
     public StringDTO(String value) {
         this.response = value;

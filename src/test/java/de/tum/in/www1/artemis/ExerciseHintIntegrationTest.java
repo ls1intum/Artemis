@@ -189,6 +189,8 @@ public class ExerciseHintIntegrationTest extends AbstractSpringIntegrationBamboo
 
     private void testGetHintTitle() throws Exception {
         final var hint = new ExerciseHint().title("Test Hint").exercise(exercise);
+        exerciseHintRepository.save(hint);
+
         final var stringDTO = request.get("/api/exercise-hints/" + hint.getId() + "/get-title", HttpStatus.OK, StringDTO.class);
         assertThat(stringDTO.getResponse()).isEqualTo(hint.getTitle());
     }
