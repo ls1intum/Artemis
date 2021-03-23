@@ -436,8 +436,6 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
 
         Result automaticResult = compassService.getResultWithFeedbackSuggestionsForSubmission(storedSubmission.getId());
         assertThat(automaticResult).as("automatic result is not created").isNull();
-        // checkAutomaticAssessment(automaticResult);
-        // checkFeedbackCorrectlyStored(modelingAssessment.getFeedbacks(), automaticResult.getFeedbacks(), FeedbackType.AUTOMATIC);
     }
 
     @Test
@@ -452,8 +450,6 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
 
         Result automaticResult = compassService.getResultWithFeedbackSuggestionsForSubmission(storedSubmission.getId());
         assertThat(automaticResult).as("automatic result is not created").isNull();
-        // checkAutomaticAssessment(automaticResult);
-        // checkFeedbackCorrectlyStored(modelingAssessment.getFeedbacks(), automaticResult.getFeedbacks(), FeedbackType.AUTOMATIC);
     }
 
     @Test
