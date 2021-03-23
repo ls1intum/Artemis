@@ -89,35 +89,21 @@ describe('OrganizationManagementDetailComponent', () => {
     }));
 
     it('should remove user from organization', fakeAsync(() => {
-        const user1 = new User();
-        user1.id = 11;
-        user1.login = 'userOne';
-        const user2 = new User();
-        user2.id = 12;
-        const user3 = new User();
-        user3.id = 13;
-        organization1.users = [user1, user2, user3];
+        organization1.users = createTestUsers();
         component.organization = organization1;
         spyOn(organizationService, 'removeUserFromOrganization').and.returnValue(of(new HttpResponse<void>()));
 
-        component.removeFromOrganization(user1);
+        component.removeFromOrganization(organization1.users[0]);
         tick();
         expect(component.organization.users?.length).toEqual(2);
     }));
 
     it('should not remove user from organization if error occurred', fakeAsync(() => {
-        const user1 = new User();
-        user1.id = 11;
-        user1.login = 'userOne';
-        const user2 = new User();
-        user2.id = 12;
-        const user3 = new User();
-        user3.id = 13;
-        organization1.users = [user1, user2, user3];
+        organization1.users = createTestUsers();
         component.organization = organization1;
         spyOn(organizationService, 'removeUserFromOrganization').and.returnValue(throwError(new HttpErrorResponse({ status: 404 })));
 
-        component.removeFromOrganization(user1);
+        component.removeFromOrganization(organization1.users[0]);
         tick();
         expect(component.organization.users?.length).toEqual(3);
     }));
@@ -161,4 +147,15 @@ describe('OrganizationManagementDetailComponent', () => {
         tick();
         expect(userService.search).toHaveBeenCalled();
     }));
+
+    function createTestUsers() {
+        const user1 = new User();
+        user1.id = 11;
+        user1.login = 'userOne';
+        const user2 = new User();
+        user2.id = 12;
+        const user3 = new User();
+        user3.id = 13;
+        return [user1, user2, user3];
+    }
 });

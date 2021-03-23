@@ -45,11 +45,7 @@ describe('Organization Service', () => {
     });
 
     it('should return all organizations', async () => {
-        const elem2 = new Organization();
-        elem2.id = 1;
-        elem2.name = 'test2';
-        elem2.shortName = 'test2';
-        const returnElement = [elemDefault, elem2];
+        const returnElement = createTestReturnElement();
         service.getOrganizations().subscribe((data) => expect(data).toMatchObject({ body: returnElement }));
 
         const req = httpMock.expectOne({ method: 'GET' });
@@ -57,11 +53,7 @@ describe('Organization Service', () => {
     });
 
     it('should return all Organizations a course is assigned to', async () => {
-        const elem2 = new Organization();
-        elem2.id = 1;
-        elem2.name = 'test2';
-        elem2.shortName = 'test2';
-        const returnElement = [elemDefault, elem2];
+        const returnElement = createTestReturnElement();
         service.getOrganizationsByCourse(1).subscribe((data) => expect(data).toMatchObject({ body: returnElement }));
 
         const req = httpMock.expectOne({ method: 'GET' });
@@ -69,11 +61,7 @@ describe('Organization Service', () => {
     });
 
     it('should return all Organizations a user is assigned to', async () => {
-        const elem2 = new Organization();
-        elem2.id = 1;
-        elem2.name = 'test2';
-        elem2.shortName = 'test2';
-        const returnElement = [elemDefault, elem2];
+        const returnElement = createTestReturnElement();
         service.getOrganizationsByUser(1).subscribe((data) => expect(data).toMatchObject({ body: returnElement }));
 
         const req = httpMock.expectOne({ method: 'GET' });
@@ -119,4 +107,12 @@ describe('Organization Service', () => {
         const req = httpMock.expectOne({ method: 'DELETE' });
         req.flush({ status: 200 });
     });
+
+    function createTestReturnElement() {
+        const elem2 = new Organization();
+        elem2.id = 1;
+        elem2.name = 'test2';
+        elem2.shortName = 'test2';
+        return [elemDefault, elem2];
+    }
 });
