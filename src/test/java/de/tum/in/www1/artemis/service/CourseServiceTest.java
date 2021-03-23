@@ -126,10 +126,10 @@ public class CourseServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
         // 'addUsers' adds the admin as well
         database.addUsers(0, 0, 0);
 
-        var courses = courseService.getAllCoursesForOverview(false);
+        var courses = courseService.getAllCoursesForManagementOverview(false);
         assertThat(courses.size()).isEqualTo(2);
 
-        courses = courseService.getAllCoursesForOverview(true);
+        courses = courseService.getAllCoursesForManagementOverview(true);
         assertThat(courses.size()).isEqualTo(1);
     }
 
@@ -154,10 +154,10 @@ public class CourseServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
         instructor.setGroups(groups);
         userRepository.save(instructor);
 
-        var courses = courseService.getAllCoursesForOverview(false);
+        var courses = courseService.getAllCoursesForManagementOverview(false);
         assertThat(courses.size()).isEqualTo(2);
 
-        courses = courseService.getAllCoursesForOverview(true);
+        courses = courseService.getAllCoursesForManagementOverview(true);
         assertThat(courses.size()).isEqualTo(1);
     }
 
@@ -182,10 +182,10 @@ public class CourseServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
         student.setGroups(groups);
         userRepository.save(student);
 
-        var courses = courseService.getAllCoursesForOverview(false);
+        var courses = courseService.getAllCoursesForManagementOverview(false);
         assertThat(courses.size()).isEqualTo(0);
 
-        courses = courseService.getAllCoursesForOverview(true);
+        courses = courseService.getAllCoursesForManagementOverview(true);
         assertThat(courses.size()).isEqualTo(0);
     }
 }

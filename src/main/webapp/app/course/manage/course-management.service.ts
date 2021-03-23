@@ -239,8 +239,8 @@ export class CourseManagementService {
         const options = createRequestOption(req);
         this.fetchingCoursesForNotifications = true;
         return this.http
-            .get<Course[]>(`${this.resourceUrl}/course-overview`, { params: options, observe: 'response' })
-            .pipe(tap((res: HttpResponse<Course[]>) => res.body!.forEach((c) => this.checkAndSetCourseRights(c))));
+            .get<Course[]>(`${this.resourceUrl}/course-management-overview`, { params: options, observe: 'response' })
+            .pipe(tap((res: HttpResponse<Course[]>) => res.body!.forEach((course) => this.checkAndSetCourseRights(course))));
     }
 
     /**
@@ -271,9 +271,9 @@ export class CourseManagementService {
             .pipe(
                 map((res: HttpResponse<CourseManagementOverviewDto[]>) => {
                     if (res.body) {
-                        res.body.forEach((b) => {
-                            if (b.exerciseDetails && b.exerciseDetails.length > 0) {
-                                b.exerciseDetails.forEach((details) => {
+                        res.body.forEach((courseManagementDTO) => {
+                            if (courseManagementDTO.exerciseDetails && courseManagementDTO.exerciseDetails.length > 0) {
+                                courseManagementDTO.exerciseDetails.forEach((details) => {
                                     details.assessmentDueDate = details.assessmentDueDate ? moment(details.assessmentDueDate) : undefined;
                                     details.releaseDate = details.releaseDate ? moment(details.releaseDate) : undefined;
                                     details.dueDate = details.dueDate ? moment(details.dueDate) : undefined;

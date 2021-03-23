@@ -41,7 +41,7 @@ export class CourseManagementStatisticsComponent implements OnInit, OnChanges {
     constructor(private translateService: TranslateService) {}
 
     ngOnInit() {
-        this.amountOfStudents = this.translateService.instant('courseStatistics.amountOfStudents');
+        this.amountOfStudents = this.translateService.instant('artemisApp.courseStatistics.amountOfStudents');
 
         for (let i = 0; i < 4; i++) {
             this.barChartLabels[i] = this.translateService.instant(`overview.${3 - i}_weeks_ago`);

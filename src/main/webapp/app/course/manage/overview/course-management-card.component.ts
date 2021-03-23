@@ -61,19 +61,23 @@ export class CourseManagementCardComponent implements OnChanges {
         const inSevenDays = moment().add(7, 'days').endOf('day');
         const sevenDaysAgo = moment().subtract(7, 'days').startOf('day');
         this.futureExercises = exercises
-            .filter((e) => e.releaseDate && e.releaseDate > moment() && e.releaseDate <= inSevenDays)
-            .sort((a, b) => {
-                return a.releaseDate!.valueOf() - b.releaseDate!.valueOf();
+            .filter((exercise) => exercise.releaseDate && exercise.releaseDate > moment() && exercise.releaseDate <= inSevenDays)
+            .sort((exerciseA, exerciseB) => {
+                return exerciseA.releaseDate!.valueOf() - exerciseB.releaseDate!.valueOf();
             })
             .slice(0, 5);
         this.currentExercises = exercises.filter(
-            (e) => (e.releaseDate && e.releaseDate <= moment() && (!e.dueDate || e.dueDate > moment())) || (!e.releaseDate && e.dueDate && e.dueDate > moment()),
+            (exercise) =>
+                (exercise.releaseDate && exercise.releaseDate <= moment() && (!exercise.dueDate || exercise.dueDate > moment())) ||
+                (!exercise.releaseDate && exercise.dueDate && exercise.dueDate > moment()),
         );
-        this.exercisesInAssessment = exercises.filter((e) => e.dueDate && e.dueDate <= moment() && e.assessmentDueDate && e.assessmentDueDate > moment());
+        this.exercisesInAssessment = exercises.filter(
+            (exercise) => exercise.dueDate && exercise.dueDate <= moment() && exercise.assessmentDueDate && exercise.assessmentDueDate > moment(),
+        );
         this.pastExercises = exercises.filter(
-            (e) =>
-                (!e.assessmentDueDate && e.dueDate && e.dueDate <= moment() && e.dueDate >= sevenDaysAgo) ||
-                (e.assessmentDueDate && e.assessmentDueDate <= moment() && e.assessmentDueDate >= sevenDaysAgo),
+            (exercise) =>
+                (!exercise.assessmentDueDate && exercise.dueDate && exercise.dueDate <= moment() && exercise.dueDate >= sevenDaysAgo) ||
+                (exercise.assessmentDueDate && exercise.assessmentDueDate <= moment() && exercise.assessmentDueDate >= sevenDaysAgo),
         );
 
         // Directly show future exercises if there are no current exercises for the students or to assess

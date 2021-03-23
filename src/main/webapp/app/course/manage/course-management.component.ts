@@ -62,25 +62,25 @@ export class CourseManagementComponent implements OnInit, OnDestroy, AfterViewIn
                 this.courses = res.body!;
                 this.courseSemesters = this.courses
                     // test courses get their own section later
-                    .filter((c) => !c.testCourse)
-                    .map((c) => c.semester ?? '')
+                    .filter((course) => !course.testCourse)
+                    .map((course) => course.semester ?? '')
                     // filter down to unique values
                     .filter((course, index, courses) => courses.indexOf(course) === index)
-                    .sort((a, b) => {
+                    .sort((semesterA, semesterB) => {
                         // sort last if the semester is unset
-                        if (a === '') {
+                        if (semesterA === '') {
                             return 1;
                         }
-                        if (b === '') {
+                        if (semesterB === '') {
                             return -1;
                         }
                         // parse years in base 10 by extracting the two digits after the WS or SS prefix
-                        const yearsCompared = parseInt(b.substr(2, 2), 10) - parseInt(a.substr(2, 2), 10);
+                        const yearsCompared = parseInt(semesterB.substr(2, 2), 10) - parseInt(semesterA.substr(2, 2), 10);
                         if (yearsCompared !== 0) {
                             return yearsCompared;
                         }
                         // if years are the same, sort WS over SS
-                        return a.substr(0, 2) === 'WS' ? -1 : 1;
+                        return semesterA.substr(0, 2) === 'WS' ? -1 : 1;
                     });
 
                 this.semesterCollapsed = {};
@@ -89,10 +89,10 @@ export class CourseManagementComponent implements OnInit, OnDestroy, AfterViewIn
                 for (const semester of this.courseSemesters) {
                     this.semesterCollapsed[semester] = firstUncollapsed;
                     firstUncollapsed = true;
-                    this.coursesBySemester[semester] = this.courses.filter((c) => !c.testCourse && (c.semester ?? '') === semester);
+                    this.coursesBySemester[semester] = this.courses.filter((course) => !course.testCourse && (course.semester ?? '') === semester);
                 }
                 // Add an extra category for test courses
-                const testCourses = this.courses.filter((c) => c.testCourse);
+                const testCourses = this.courses.filter((course) => course.testCourse);
                 if (testCourses.length > 0) {
                     this.courseSemesters[this.courseSemesters.length] = 'test';
                     this.semesterCollapsed['test'] = false;
@@ -119,7 +119,7 @@ export class CourseManagementComponent implements OnInit, OnDestroy, AfterViewIn
                         this.courseForGuidedTour = this.guidedTourService.enableTourForCourseOverview(result.body!, tutorAssessmentTour, true);
 
                         // We use this extra map of courses to improve performance by allowing us to use OnPush change detection
-                        result.body!.forEach((c) => (this.coursesWithUsers[c.id!] = c));
+                        result.body!.forEach((course) => (this.coursesWithUsers[course.id!] = course));
                     },
                     (result: HttpErrorResponse) => onError(this.jhiAlertService, result, false),
                 );

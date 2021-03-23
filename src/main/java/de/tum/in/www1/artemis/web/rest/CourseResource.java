@@ -465,10 +465,10 @@ public class CourseResource {
      * @param onlyActive if true, only active courses will be considered in the result
      * @return a list of courses (the user has access to)
      */
-    @GetMapping("/courses/course-overview")
+    @GetMapping("/courses/course-management-overview")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public List<Course> getAllCoursesForOverview(@RequestParam(defaultValue = "false") boolean onlyActive) {
-        return courseService.getAllCoursesForOverview(onlyActive);
+    public List<Course> getAllCoursesForManagementOverview(@RequestParam(defaultValue = "false") boolean onlyActive) {
+        return courseService.getAllCoursesForManagementOverview(onlyActive);
     }
 
     /**
@@ -900,7 +900,7 @@ public class CourseResource {
     public ResponseEntity<List<CourseManagementOverviewDTO>> getExercisesForCourseOverview(@RequestParam(defaultValue = "false") boolean onlyActive) {
         var sevenDaysAgo = ZonedDateTime.now().minusDays(7);
         final List<CourseManagementOverviewDTO> courseDTOS = new ArrayList<>();
-        for (final var course : courseService.getAllCoursesForOverview(onlyActive)) {
+        for (final var course : courseService.getAllCoursesForManagementOverview(onlyActive)) {
             final var courseDTO = new CourseManagementOverviewDTO();
             courseDTO.setCourseId(course.getId());
             courseDTO.setExerciseDetails(exerciseRepository.getExercisesForCourseManagementOverview(course.getId(), sevenDaysAgo));
@@ -921,8 +921,8 @@ public class CourseResource {
     @GetMapping("/courses/stats-for-management-overview")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<List<CourseManagementOverviewStatisticsDTO>> getExerciseStatsForCourseOverview(@RequestParam(defaultValue = "false") boolean onlyActive) {
-        final List<CourseManagementOverviewStatisticsDTO> courseDTOS = new ArrayList<>();
-        for (final var course : courseService.getAllCoursesForOverview(onlyActive)) {
+        final List<CourseManagementOverviewStatisticsDTO> courseDTOs = new ArrayList<>();
+        for (final var course : courseService.getAllCoursesForManagementOverview(onlyActive)) {
             final var courseId = course.getId();
             final var courseDTO = new CourseManagementOverviewStatisticsDTO();
             courseDTO.setCourseId(courseId);
@@ -933,10 +933,10 @@ public class CourseResource {
             var amountOfStudentsInCourse = Math.toIntExact(userRepository.countUserInGroup(studentsGroup));
             courseDTO.setExerciseDTOS(exerciseService.getStatisticsForCourseManagementOverview(courseId, amountOfStudentsInCourse, exerciseIds));
             courseDTO.setActiveStudents(courseService.getActiveStudents(exerciseIds));
-            courseDTOS.add(courseDTO);
+            courseDTOs.add(courseDTO);
         }
 
-        return ResponseEntity.ok(courseDTOS);
+        return ResponseEntity.ok(courseDTOs);
     }
 
     /**

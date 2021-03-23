@@ -555,9 +555,7 @@ public class ExerciseService {
      * @return A list of filled <code>CourseManagementOverviewExerciseStatisticsDTO</code>
      */
     public List<CourseManagementOverviewExerciseStatisticsDTO> getStatisticsForCourseManagementOverview(Long courseId, Integer amountOfStudentsInCourse, List<Long> exerciseIds) {
-        List<CourseManagementOverviewExerciseStatisticsDTO> statisticsDTOS = new ArrayList<>();
         var sevenDaysAgo = ZonedDateTime.now().minusDays(7);
-        var noStudentsInCourse = amountOfStudentsInCourse == null || amountOfStudentsInCourse == 0;
 
         var averageScore = participantScoreRepository.findAvgScoreForExercises(exerciseIds);
         Map<Long, Double> averageScoreById = new HashMap<>();
@@ -565,45 +563,72 @@ public class ExerciseService {
             averageScoreById.put((Long) element.get("exerciseId"), (Double) element.get("averageScore"));
         }
 
-        for (var exercise : exerciseRepository.getExercisesForCourseManagementOverview(courseId, sevenDaysAgo)) {
+        var exercisesForManagementOverview = exerciseRepository.getExercisesForCourseManagementOverview(courseId, sevenDaysAgo);
+        return generateCourseManagementDTOs(exercisesForManagementOverview, amountOfStudentsInCourse, averageScoreById);
+    }
+
+    /**
+     * Generates a <code>CourseManagementOverviewExerciseStatisticsDTO</code> for each given exercise
+     *
+     * @param exercisesForManagementOverview a list of exercises to generate the statistics for
+     * @param amountOfStudentsInCourse the amount of students in the course
+     * @param averageScoreById the average score for each exercise indexed by exerciseId
+     * @return A list of filled <code>CourseManagementOverviewExerciseStatisticsDTO</code>
+     */
+    private List<CourseManagementOverviewExerciseStatisticsDTO> generateCourseManagementDTOs(List<Exercise> exercisesForManagementOverview, Integer amountOfStudentsInCourse,
+            Map<Long, Double> averageScoreById) {
+        List<CourseManagementOverviewExerciseStatisticsDTO> statisticsDTOS = new ArrayList<>();
+        for (var exercise : exercisesForManagementOverview) {
             var exerciseId = exercise.getId();
-            var dto = new CourseManagementOverviewExerciseStatisticsDTO();
-            dto.setNoOfStudentsInCourse(amountOfStudentsInCourse);
-            dto.setExerciseId(exerciseId);
-            dto.setExerciseMaxPoints(exercise.getMaxPoints());
+            var exerciseStatisticsDTO = new CourseManagementOverviewExerciseStatisticsDTO();
+            exerciseStatisticsDTO.setExerciseId(exerciseId);
+            exerciseStatisticsDTO.setExerciseMaxPoints(exercise.getMaxPoints());
 
             var avgScore = averageScoreById.get(exerciseId) != null ? averageScoreById.get(exerciseId) : 0.0;
-            dto.setAverageScoreInPercent(avgScore);
+            exerciseStatisticsDTO.setAverageScoreInPercent(avgScore);
 
-            if (!noStudentsInCourse) {
-                Long rawParticipations = exerciseRepository.getParticipationCountById(exerciseId);
-                var participations = rawParticipations == null ? 0 : Math.toIntExact(rawParticipations);
-                dto.setNoOfParticipatingStudentsOrTeams(participations);
-
-                if (exercise.getMode() == ExerciseMode.TEAM) {
-                    Integer teams = teamRepository.getNumberOfTeamsForExercise(exerciseId);
-                    dto.setNoOfTeamsInCourse(teams);
-                    dto.setParticipationRateInPercent(teams == null || teams == 0 ? 0.0 : Math.round(participations * 1000.0 / teams) / 10.0);
-                }
-                else {
-                    dto.setParticipationRateInPercent(Math.round(participations * 1000.0 / amountOfStudentsInCourse) / 10.0);
-                }
-            }
-            else {
-                dto.setNoOfParticipatingStudentsOrTeams(0);
-                dto.setParticipationRateInPercent(0D);
-            }
+            setStudentsAndParticipationsAmountForStatisticsDTO(exerciseStatisticsDTO, amountOfStudentsInCourse, exercise);
 
             long numberOfRatedAssessments = resultRepository.countNumberOfRatedResultsForExercise(exerciseId);
             long noOfSubmissionsInTime = submissionRepository.countUniqueSubmissionsByExerciseId(exerciseId);
-            dto.setNoOfRatedAssessments(numberOfRatedAssessments);
-            dto.setNoOfSubmissionsInTime(noOfSubmissionsInTime);
-            dto.setNoOfAssessmentsDoneInPercent(noOfSubmissionsInTime == 0 ? 0 : Math.round(numberOfRatedAssessments * 1000.0 / noOfSubmissionsInTime) / 10.0);
+            exerciseStatisticsDTO.setNoOfRatedAssessments(numberOfRatedAssessments);
+            exerciseStatisticsDTO.setNoOfSubmissionsInTime(noOfSubmissionsInTime);
+            exerciseStatisticsDTO.setNoOfAssessmentsDoneInPercent(noOfSubmissionsInTime == 0 ? 0 : Math.round(numberOfRatedAssessments * 1000.0 / noOfSubmissionsInTime) / 10.0);
 
-            statisticsDTOS.add(dto);
+            statisticsDTOS.add(exerciseStatisticsDTO);
         }
-
         return statisticsDTOS;
+    }
+
+    /**
+     * Sets the amount of students, participations and teams for the given <code>CourseManagementOverviewExerciseStatisticsDTO</code>
+     *
+     * @param exerciseStatisticsDTO the <code>CourseManagementOverviewExerciseStatisticsDTO</code> to set the amounts for
+     * @param amountOfStudentsInCourse the amount of students in the course
+     * @param exercise the exercise corresponding to the <code>CourseManagementOverviewExerciseStatisticsDTO</code>
+     */
+    private void setStudentsAndParticipationsAmountForStatisticsDTO(CourseManagementOverviewExerciseStatisticsDTO exerciseStatisticsDTO, Integer amountOfStudentsInCourse,
+            Exercise exercise) {
+        exerciseStatisticsDTO.setNoOfStudentsInCourse(amountOfStudentsInCourse);
+
+        if (amountOfStudentsInCourse != null && amountOfStudentsInCourse != 0) {
+            Long rawParticipations = exerciseRepository.getParticipationCountById(exercise.getId());
+            var participations = rawParticipations == null ? 0 : Math.toIntExact(rawParticipations);
+            exerciseStatisticsDTO.setNoOfParticipatingStudentsOrTeams(participations);
+
+            if (exercise.getMode() == ExerciseMode.TEAM) {
+                Integer teams = teamRepository.getNumberOfTeamsForExercise(exercise.getId());
+                exerciseStatisticsDTO.setNoOfTeamsInCourse(teams);
+                exerciseStatisticsDTO.setParticipationRateInPercent(teams == null || teams == 0 ? 0.0 : Math.round(participations * 1000.0 / teams) / 10.0);
+            }
+            else {
+                exerciseStatisticsDTO.setParticipationRateInPercent(Math.round(participations * 1000.0 / amountOfStudentsInCourse) / 10.0);
+            }
+        }
+        else {
+            exerciseStatisticsDTO.setNoOfParticipatingStudentsOrTeams(0);
+            exerciseStatisticsDTO.setParticipationRateInPercent(0D);
+        }
     }
 
     /**

@@ -13,7 +13,7 @@ import { ProgressBarComponent } from 'app/shared/dashboards/tutor-participation-
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { MockRouterLinkDirective } from '../lecture-unit/lecture-unit-management.component.spec';
 import { CourseManagementOverviewExerciseStatisticsDTO } from 'app/course/manage/overview/course-management-overview-exercise-statistics-dto.model';
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { Exercise } from 'app/entities/exercise.model';
 import { Course } from 'app/entities/course.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
@@ -62,21 +62,5 @@ describe('CourseManagementExerciseRowComponent', () => {
         component.statistic = exerciseStatisticsDTO;
         component.ngOnChanges();
         expect(component.averageScoreNumerator).to.equal(5);
-    });
-
-    it('should get different icons', () => {
-        expect(component.getIcon(ExerciseType.MODELING)).to.equal('project-diagram');
-        expect(component.getIcon(ExerciseType.PROGRAMMING)).to.equal('keyboard');
-        expect(component.getIcon(ExerciseType.TEXT)).to.equal('font');
-        expect(component.getIcon(ExerciseType.FILE_UPLOAD)).to.equal('file-upload');
-        expect(component.getIcon(ExerciseType.QUIZ)).to.equal('check-double');
-    });
-
-    it('should get different tooltips', () => {
-        expect(component.getIconTooltip(ExerciseType.MODELING)).to.equal('artemisApp.exercise.isModeling');
-        expect(component.getIconTooltip(ExerciseType.PROGRAMMING)).to.equal('artemisApp.exercise.isProgramming');
-        expect(component.getIconTooltip(ExerciseType.TEXT)).to.equal('artemisApp.exercise.isText');
-        expect(component.getIconTooltip(ExerciseType.FILE_UPLOAD)).to.equal('artemisApp.exercise.isFileUpload');
-        expect(component.getIconTooltip(ExerciseType.QUIZ)).to.equal('artemisApp.exercise.isQuiz');
     });
 });

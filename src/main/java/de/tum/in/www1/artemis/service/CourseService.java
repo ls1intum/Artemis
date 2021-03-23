@@ -277,11 +277,11 @@ public class CourseService {
      * @param onlyActive Whether or not to include courses with a past endDate
      * @return A list of Courses for the course management overview
      */
-    public List<Course> getAllCoursesForOverview(Boolean onlyActive) {
+    public List<Course> getAllCoursesForManagementOverview(boolean onlyActive) {
         var dateTimeNow = onlyActive ? ZonedDateTime.now() : null;
         var user = userRepository.getUserWithGroupsAndAuthorities();
         var userGroups = new ArrayList<>(user.getGroups());
-        return courseRepository.getAllCoursesForOverview(dateTimeNow, authCheckService.isAdmin(user), userGroups);
+        return courseRepository.getAllCoursesForManagementOverview(dateTimeNow, authCheckService.isAdmin(user), userGroups);
     }
 
     /**
@@ -300,42 +300,42 @@ public class CourseService {
 
         List<Map<String, Object>> outcome = courseRepository.getActiveStudents(exerciseIds, startDate, endDate);
         List<Map<String, Object>> distinctOutcome = removeDuplicateActiveUserRows(outcome, startDate);
-        return createResultArray(distinctOutcome, endDate);
+        return sortUserIntoWeeks(distinctOutcome, endDate);
     }
 
     /**
      * The List of maps contains duplicated entries. This method compares the values and returns a List<Map<String, Object>>
      * without duplicated entries
      *
-     * @param activeUserRows the result given by the Repository call
+     * @param activeUserRows a list with a map for every submission of an user containing date and the username
      * @param startDate the startDate of the period
-     * @return A List<Map<String, Object>> containing date and amount of active users in this period
+     * @return a List<Map<String, Object>> containing date and amount of active users in this period
      */
     private List<Map<String, Object>> removeDuplicateActiveUserRows(List<Map<String, Object>> activeUserRows, ZonedDateTime startDate) {
-        Map<Object, List<String>> users = new HashMap<>();
+        Map<Object, List<String>> usersByDate = new HashMap<>();
         for (Map<String, Object> listElement : activeUserRows) {
             ZonedDateTime date = (ZonedDateTime) listElement.get("day");
             int index = getWeekOfDate(date);
             String username = listElement.get("username").toString();
-            List<String> usersInSameSlot = users.get(index);
+            List<String> usersInSameSlot = usersByDate.get(index);
             // if this index is not yet existing in users
             if (usersInSameSlot == null) {
                 usersInSameSlot = new ArrayList<>();
                 usersInSameSlot.add(username);
-                users.put(index, usersInSameSlot);
+                usersByDate.put(index, usersInSameSlot);
             }   // if the value of the map for this index does not contain this username
             else if (!usersInSameSlot.contains(username)) {
                 usersInSameSlot.add(username);
             }
         }
         List<Map<String, Object>> returnList = new ArrayList<>();
-        users.forEach((k, v) -> {
-            int year = (Integer) k < getWeekOfDate(startDate) ? startDate.getYear() + 1 : startDate.getYear();
+        usersByDate.forEach((date, users) -> {
+            int year = (Integer) date < getWeekOfDate(startDate) ? startDate.getYear() + 1 : startDate.getYear();
             ZonedDateTime firstDateOfYear = ZonedDateTime.of(year, 1, 1, 0, 0, 0, 0, startDate.getZone());
-            ZonedDateTime start = getWeekOfDate(firstDateOfYear) == 1 ? firstDateOfYear.plusWeeks(((Integer) k) - 1) : firstDateOfYear.plusWeeks((Integer) k);
+            ZonedDateTime start = getWeekOfDate(firstDateOfYear) == 1 ? firstDateOfYear.plusWeeks(((Integer) date) - 1) : firstDateOfYear.plusWeeks((Integer) date);
             Map<String, Object> listElement = new HashMap<>();
             listElement.put("day", start);
-            listElement.put("amount", (long) v.size());
+            listElement.put("amount", (long) users.size());
             returnList.add(listElement);
         });
         return returnList;
@@ -349,9 +349,9 @@ public class CourseService {
      *
      * @param outcome A List<Map<String, Object>>, containing the content which should be refactored into an array
      * @param endDate the endDate
-     * @return an array, containing the values for each bar in the graph
+     * @return an array, containing the amount of active users. One entry corresponds to one week
      */
-    private Integer[] createResultArray(List<Map<String, Object>> outcome, ZonedDateTime endDate) {
+    private Integer[] sortUserIntoWeeks(List<Map<String, Object>> outcome, ZonedDateTime endDate) {
         Integer[] result = new Integer[4];
         Arrays.fill(result, 0);
         int week;
@@ -376,8 +376,8 @@ public class CourseService {
      */
     private Integer getWeekOfDate(ZonedDateTime date) {
         LocalDate localDate = date.toLocalDate();
-        TemporalField woy = WeekFields.of(DayOfWeek.MONDAY, 4).weekOfWeekBasedYear();
-        return localDate.get(woy);
+        TemporalField weekOfYear = WeekFields.of(DayOfWeek.MONDAY, 4).weekOfWeekBasedYear();
+        return localDate.get(weekOfYear);
     }
 
     /**
