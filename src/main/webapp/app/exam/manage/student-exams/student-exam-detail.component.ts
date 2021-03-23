@@ -6,14 +6,12 @@ import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.s
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { User } from 'app/core/user/user.model';
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
 import { JhiAlertService } from 'ng-jhipster';
 import { round } from 'app/shared/util/utils';
 import * as moment from 'moment';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { getLatestSubmissionResult, setLatestSubmissionResult, Submission } from 'app/entities/submission.model';
-import { getExerciseSubmissionsLink, getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
+import { getLatestSubmissionResult, setLatestSubmissionResult } from 'app/entities/submission.model';
 
 @Component({
     selector: 'jhi-student-exam-detail',
@@ -32,8 +30,7 @@ export class StudentExamDetailComponent implements OnInit {
     achievedTotalPoints = 0;
     bonusTotalPoints = 0;
     busy = false;
-    openingAssessmentEditorForNewSubmission = false;
-    readonly ExerciseType = ExerciseType;
+
     examId: number;
 
     constructor(
@@ -65,25 +62,6 @@ export class StudentExamDetailComponent implements OnInit {
             this.course = courseResponse.body!;
         });
         this.student = this.studentExam.user!;
-    }
-
-    /**
-     * Get an icon for the type of the given exercise.
-     * @param exercise {Exercise}
-     */
-    exerciseIcon(exercise: Exercise): string {
-        switch (exercise.type) {
-            case ExerciseType.QUIZ:
-                return 'check-double';
-            case ExerciseType.FILE_UPLOAD:
-                return 'file-upload';
-            case ExerciseType.MODELING:
-                return 'project-diagram';
-            case ExerciseType.PROGRAMMING:
-                return 'keyboard';
-            default:
-                return 'font';
-        }
     }
 
     /**
@@ -219,27 +197,5 @@ export class StudentExamDetailComponent implements OnInit {
             },
             () => {},
         );
-    }
-
-    /**
-     * get the link for the assessment of a specific submission of the current exercise
-     * @param exercise
-     * @param submission
-     * @param resultId
-     */
-    getAssessmentLink(exercise: Exercise, submission?: Submission, resultId?: number) {
-        let route;
-        if (!exercise || !exercise.type) {
-            return;
-        }
-
-        if (exercise.type === ExerciseType.PROGRAMMING) {
-            route = getExerciseSubmissionsLink(exercise.type, this.courseId, exercise.id!, this.examId, exercise.exerciseGroup?.id!);
-        } else if (submission) {
-            this.openingAssessmentEditorForNewSubmission = true;
-            route = getLinkToSubmissionAssessment(exercise.type, this.courseId, exercise.id!, submission.id!, this.examId, exercise.exerciseGroup?.id!, resultId);
-            this.openingAssessmentEditorForNewSubmission = false;
-        }
-        return route;
     }
 }
