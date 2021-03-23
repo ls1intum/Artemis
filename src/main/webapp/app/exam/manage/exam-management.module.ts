@@ -44,6 +44,7 @@ import { FileUploadExerciseGroupCellComponent } from './exercise-groups/file-upl
 import { ModelingExerciseGroupCellComponent } from './exercise-groups/modeling-exercise-cell/modeling-exercise-group-cell.component';
 import { QuizExerciseGroupCellComponent } from './exercise-groups/quiz-exercise-cell/quiz-exercise-group-cell.component';
 import { ArtemisTextSubmissionAssessmentModule } from 'app/exercises/text/assess/text-submission-assessment.module';
+import { StudentExamDetailTableRowComponent } from 'app/exam/manage/student-exams/student-exam-detail-table-row/student-exam-detail-table-row.component';
 
 const ENTITY_STATES = [...examManagementState];
 
@@ -96,6 +97,7 @@ const ENTITY_STATES = [...examManagementState];
         FileUploadExerciseGroupCellComponent,
         ModelingExerciseGroupCellComponent,
         QuizExerciseGroupCellComponent,
+        StudentExamDetailTableRowComponent,
     ],
 })
 export class ArtemisExamManagementModule {}

@@ -200,7 +200,7 @@ public class BambooBuildPlanService {
                 defaultStage.jobs(defaultJob);
                 return defaultStage;
             }
-            case HASKELL -> {
+            case HASKELL, OCAML -> {
                 return createDefaultStage(programmingLanguage, sequentialBuildRuns, checkoutTask, defaultStage, defaultJob, "**/test-reports/*.xml");
             }
             case VHDL, ASSEMBLER -> {

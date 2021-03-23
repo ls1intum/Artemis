@@ -77,9 +77,13 @@ export const matchRegexWithLineNumbers = (multiLineText: string, regex: RegExp):
  * Use alert service to show the error message from the error response
  * @param jhiAlertService the service used to show the exception messages to the user
  * @param error returned from the request
+ * @param translate if the error should be translated
  */
-export const onError = (jhiAlertService: JhiAlertService, error: HttpErrorResponse) => {
-    jhiAlertService.error(error.message);
+export const onError = (jhiAlertService: JhiAlertService, error: HttpErrorResponse, translate = true) => {
+    const alert = jhiAlertService.error(error.message);
+    if (!translate) {
+        alert.msg = error.message;
+    }
 };
 
 /**

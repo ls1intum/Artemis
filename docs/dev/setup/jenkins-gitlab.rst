@@ -127,7 +127,21 @@ GitLab
 Gitlab Server Setup
 ~~~~~~~~~~~~~~~~~~~
 
-1. Pull the latest GitLab Docker image
+GitLab provides no possibility to set a users password via API without forcing the user to change it afterwards (see `Issue 19141 <https://gitlab.com/gitlab-org/gitlab/-/issues/19141>`__).
+Therefore, you may want to patch the official gitlab docker image.
+Thus, you can use the following Dockerfile:
+
+.. code:: dockerfile
+
+    FROM gitlab/gitlab-ce:latest
+    RUN sed -i '/^.*user_params\[:password_expires_at\] = Time.current if admin_making_changes_for_another_user.*$/s/^/#/' /opt/gitlab/embedded/service/gitlab-rails/lib/api/users.rb
+
+
+This dockerfile disables the mechanism that sets the password to expired state after changed via API.
+If you want to use this custom image, you have to build the image and replace all occurances of ``gitlab/gitlab-ce:latest`` in the following instructions by your chosen image name.
+
+
+1. Pull the latest GitLab Docker image (only if you don't use your custom gitlab image)
 
    ::
 
@@ -478,7 +492,7 @@ recommended ones that got installed during the setup process):
 
     **Note:** This is a suite of plugins that will install multiple plugins
 
-4. `Pipeline Maven <https://plugins.jenkins.io/pipeline-maven/>`__ to use maven within the pipelines.
+4. `Pipeline Maven <https://plugins.jenkins.io/pipeline-maven/>`__ to use maven within the pipelines. If you want to use docker for your build agents you may also need to install `Docker Pipeline <https://plugins.jenkins.io/docker-workflow/>`__ .
 
 5. `Matrix Authorization Strategy Plugin <https://plugins.jenkins.io/matrix-auth/>`__ for configuring permissions for users on a project and build plan level (Matrix Authorization Strategy might already be installed).
 
