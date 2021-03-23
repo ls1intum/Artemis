@@ -31,6 +31,8 @@ Instructors can still use those templates to generate programming exercises and 
   +----------------------+--------+---------+
   | Swift                | yes   | no       |
   +----------------------+--------+---------+
+  | OCaml                | yes   | no       |
+  +----------------------+--------+---------+
 
 - Not all ``templates`` support the same feature set.
   Depending on the feature set, some options might not be available during the creation of the programming exercise.
@@ -54,6 +56,8 @@ Instructors can still use those templates to generate programming exercises and 
   | Assembler            | no                   | no                   | no               | no           | no           | no                           |
   +----------------------+----------------------+----------------------+------------------+--------------+--------------+------------------------------+
   | Swift                | no                   | no                   | no               | no           | no           | no                           |
+  +----------------------+----------------------+----------------------+------------------+--------------+--------------+------------------------------+
+  | OCaml                | no                   | no                   | no               | no           | no           | no                           |
   +----------------------+----------------------+----------------------+------------------+--------------+--------------+------------------------------+
 
   - *Sequential Test Runs*: ``Artemis`` can generate a build plan which first executes structural and then behavioral tests. This feature can help students to better concentrate on the immediate challenge at hand.

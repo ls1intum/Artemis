@@ -45,9 +45,9 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
     public ProgrammingAssessmentResource(AuthorizationCheckService authCheckService, UserRepository userRepository, ProgrammingAssessmentService programmingAssessmentService,
             ProgrammingSubmissionService programmingSubmissionService, ExerciseRepository exerciseRepository, ResultRepository resultRepository, ExamService examService,
             WebsocketMessagingService messagingService, LtiService ltiService, StudentParticipationRepository studentParticipationRepository,
-            ExampleSubmissionRepository exampleSubmissionRepository) {
+            ExampleSubmissionRepository exampleSubmissionRepository, SubmissionRepository submissionRepository) {
         super(authCheckService, userRepository, exerciseRepository, programmingSubmissionService, programmingAssessmentService, resultRepository, examService, messagingService,
-                exampleSubmissionRepository);
+                exampleSubmissionRepository, submissionRepository);
         this.programmingAssessmentService = programmingAssessmentService;
         this.programmingSubmissionService = programmingSubmissionService;
         this.ltiService = ltiService;

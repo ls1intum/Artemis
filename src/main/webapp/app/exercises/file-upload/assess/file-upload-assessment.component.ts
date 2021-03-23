@@ -26,7 +26,7 @@ import { StructuredGradingCriterionService } from 'app/exercises/shared/structur
 import { assessmentNavigateBack } from 'app/exercises/shared/navigate-back.util';
 import { ExerciseType, getCourseFromExercise } from 'app/entities/exercise.model';
 import { Authority } from 'app/shared/constants/authority.constants';
-import { getLatestSubmissionResult } from 'app/entities/submission.model';
+import { getLatestSubmissionResult, getSubmissionResultById } from 'app/entities/submission.model';
 import { getExerciseDashboardLink, getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
 
 @Component({
@@ -40,7 +40,7 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
     participation: StudentParticipation;
     submission: FileUploadSubmission;
     unassessedSubmission: FileUploadSubmission;
-    result: Result;
+    result?: Result;
     unreferencedFeedback: Feedback[] = [];
     exercise?: FileUploadExercise;
     exerciseId: number;
@@ -61,6 +61,7 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
     hasAssessmentDueDatePassed: boolean;
     correctionRound = 0;
     hasNewSubmissions = true;
+    resultId: number;
     examId = 0;
     exerciseGroupId: number;
     exerciseDashboardLink: string[];
@@ -110,7 +111,10 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
 
         this.route.params.subscribe((params) => {
             this.courseId = Number(params['courseId']);
-            this.exerciseId = Number(params['exerciseId']);
+            const exerciseId = Number(params['exerciseId']);
+            this.resultId = Number(params['resultId']) ?? 0;
+            this.exerciseId = exerciseId;
+
             const examId = params['examId'];
             if (examId) {
                 this.examId = Number(examId);
@@ -162,7 +166,7 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
 
     private loadSubmission(submissionId: number): void {
         this.fileUploadSubmissionService
-            .get(submissionId, this.correctionRound)
+            .get(submissionId, this.correctionRound, this.resultId)
             .pipe(filter((res) => !!res))
             .subscribe(
                 (res) => {
@@ -185,18 +189,25 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
         this.participation = this.submission.participation as StudentParticipation;
         this.exercise = this.participation.exercise as FileUploadExercise;
         this.hasAssessmentDueDatePassed = !!this.exercise.assessmentDueDate && moment(this.exercise.assessmentDueDate).isBefore(now());
-        this.result = getLatestSubmissionResult(this.submission)!;
-        if (this.result.hasComplaint) {
+        if (this.resultId > 0) {
+            this.correctionRound = this.submission.results?.findIndex((result) => result.id === this.resultId)!;
+            this.result = getSubmissionResultById(this.submission, this.resultId);
+        } else {
+            this.result = getLatestSubmissionResult(this.submission);
+        }
+        if (this.result?.hasComplaint) {
             this.getComplaint();
         }
-        this.submission.participation!.results = [this.result];
-        this.result.participation = this.submission.participation;
-        if (this.result.feedbacks) {
-            this.unreferencedFeedback = this.result.feedbacks;
-        } else {
-            this.result.feedbacks = [];
+        if (this.result) {
+            this.submission.participation!.results = [this.result];
+            this.result!.participation = this.submission.participation;
         }
-        if ((!this.result.assessor || this.result.assessor.id === this.userId) && !this.result.completionDate) {
+        if (this.result?.feedbacks) {
+            this.unreferencedFeedback = this.result.feedbacks;
+        } else if (this.result) {
+            this.result!.feedbacks = [];
+        }
+        if ((!this.result?.assessor || this.result?.assessor.id === this.userId) && !this.result?.completionDate) {
             this.jhiAlertService.clear();
             this.jhiAlertService.info('artemisApp.fileUploadAssessment.messages.lock');
         }

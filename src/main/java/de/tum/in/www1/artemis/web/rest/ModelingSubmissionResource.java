@@ -173,16 +173,19 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
     /**
      * GET /modeling-submissions/{submissionId} : Gets an existing modelingSubmission with result. If no result exists for this submission a new Result object is created and
      * assigned to the submission.
+     * In case an instructors calls, the resultId is used first. In case the resultId is not set, the correctionRound is used.
+     * In case neither resultId nor correctionRound is set, the first correctionRound is used.
      *
      * @param submissionId the id of the modelingSubmission to retrieve
      * @param correctionRound correction round for which we prepare the submission
+     * @param resultId the resultId for which we want do get the submission
      * @return the ResponseEntity with status 200 (OK) and with body the modelingSubmission for the given id, or with status 404 (Not Found) if the modelingSubmission could not be
      *         found
      */
     @GetMapping("/modeling-submissions/{submissionId}")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<ModelingSubmission> getModelingSubmission(@PathVariable Long submissionId,
-            @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound) {
+            @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound, @RequestParam(value = "resultId", required = false) Long resultId) {
         log.debug("REST request to get ModelingSubmission with id: {}", submissionId);
         // TODO CZ: include exerciseId in path to get exercise for auth check more easily?
         var modelingSubmission = modelingSubmissionService.findOne(submissionId);
@@ -190,15 +193,35 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
         var modelingExercise = (ModelingExercise) studentParticipation.getExercise();
         var gradingCriteria = gradingCriterionService.findByExerciseIdWithEagerGradingCriteria(modelingExercise.getId());
         modelingExercise.setGradingCriteria(gradingCriteria);
+
         final User user = userRepository.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isAtLeastTeachingAssistantForExercise(modelingExercise, user)) {
+        if (!authCheckService.isAllowedToAssesExercise(modelingExercise, user, resultId)) {
             return forbidden();
         }
-        modelingSubmission = modelingSubmissionService.lockAndGetModelingSubmission(submissionId, modelingExercise, correctionRound);
+
+        // load submission with results either by resultId or by correctionRound
+        if (resultId != null) {
+            // load the submission with additional needed properties
+            modelingSubmission = (ModelingSubmission) submissionRepository.findOneWithEagerResultAndFeedback(submissionId);
+            // check if result exists
+            Result result = modelingSubmission.getManualResultsById(resultId);
+            if (result == null) {
+                return ResponseEntity.badRequest()
+                        .headers(HeaderUtil.createFailureAlert(applicationName, true, "ModelingSubmission", "ResultNotFound", "No Result was found for the given ID.")).body(null);
+            }
+        }
+        else {
+            // load and potentially lock the submission with additional needed properties by correctionRound
+            modelingSubmission = modelingSubmissionService.lockAndGetModelingSubmission(submissionId, modelingExercise, correctionRound);
+        }
+
         // Make sure the exercise is connected to the participation in the json response
         studentParticipation.setExercise(modelingExercise);
         modelingSubmission.getParticipation().getExercise().setGradingCriteria(gradingCriteria);
+
+        // prepare fileUploadSubmission for response
         this.modelingSubmissionService.hideDetails(modelingSubmission, user);
+        this.submissionService.removeNotNeededResults(modelingSubmission, correctionRound, resultId);
         return ResponseEntity.ok(modelingSubmission);
     }
 
