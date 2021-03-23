@@ -122,6 +122,10 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
         if (exercise.getAssessmentType() != AssessmentType.AUTOMATIC) {
             return true;
         }
+        // Exercises with a release date in the future must be scheduled as well
+        if (exercise.getReleaseDate() != null && ZonedDateTime.now().isBefore(exercise.getReleaseDate())) {
+            return true;
+        }
         // If tests are run after due date and that due date lies in the future, we need to schedule that as well
         return exercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null && ZonedDateTime.now().isBefore(exercise.getBuildAndTestStudentSubmissionsAfterDueDate());
     }
@@ -151,9 +155,9 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
 
         // For any course exercise with a valid release date
         if (exercise.getReleaseDate() != null && ZonedDateTime.now().isBefore(exercise.getReleaseDate())) {
-
+            scheduleService.scheduleTask(exercise, ExerciseLifecycle.RELEASE, Set.of(new Tuple<>(exercise.getReleaseDate().minusSeconds(Constants.SECONDS_BEFORE_RELEASE_DATE_FOR_COMBINING_TEMPLATE_COMMITS), combineTemplateCommitsForExercise(exercise))));
             log.debug("Scheduled combining template commits before release date for Programming Exercise \"" + exercise.getTitle() + "\" (#" + exercise.getId() + ") for "
-                    + exercise.getReleaseDate() + ".");
+                + exercise.getReleaseDate() + ".");
         }
         else {
             scheduleService.cancelScheduledTaskForLifecycle(exercise, ExerciseLifecycle.RELEASE);
@@ -171,8 +175,6 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
 
         // For exercises with buildAndTestAfterDueDate
         if (exercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null && ZonedDateTime.now().isBefore(exercise.getBuildAndTestStudentSubmissionsAfterDueDate())) {
-            scheduleService.scheduleTask(exercise, ExerciseLifecycle.BUILD_AND_TEST_AFTER_DUE_DATE, combineTemplateCommitsForExercise(exercise));
-
             scheduleService.scheduleTask(exercise, ExerciseLifecycle.BUILD_AND_TEST_AFTER_DUE_DATE, buildAndTestRunnableForExercise(exercise));
             log.debug("Scheduled build and test for student submissions after due date for Programming Exercise \"" + exercise.getTitle() + "\" (#" + exercise.getId() + ") for "
                     + exercise.getBuildAndTestStudentSubmissionsAfterDueDate() + ".");
@@ -203,7 +205,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
             // This is only a backup (e.g. a crash of this node and restart during the exam)
             // TODO: Christian Femers: this can lead to a weired edge case after the normal exam end date and before the last individual exam end date (in case of working time
             // extensions)
-            scheduleService.scheduleTask(exercise, ExerciseLifecycle.RELEASE, Set.of(new Tuple<>(ZonedDateTime.now().plusSeconds(5), unlockAllStudentRepositories(exercise))));
+            scheduleService.scheduleTask(exercise, ExerciseLifecycle.RELEASE, Set.of(new Tuple<>(ZonedDateTime.now().plusSeconds(Constants.SECONDS_AFTER_RELEASE_DATE_FOR_UNLOCKING_STUDENT_EXAM_REPOS), unlockAllStudentRepositories(exercise))));
         }
         // NOTHING TO DO AFTER EXAM
 
@@ -221,8 +223,10 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
         return () -> {
             SecurityUtils.setAuthorizationObject();
             try {
-                gitService.combineAllCommitsOfRepositoryIntoOne(exercise.getVcsTemplateRepositoryUrl());
-                groupNotificationService.notifyInstructorGroupAboutExerciseUpdate(exercise, Constants.PROGRAMMING_EXERCISE_SUCCESSFUL_COMBINE_OF_TEMPLATE_COMMITS);
+                ProgrammingExercise programmingExerciseWithTemplateParticipation = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exercise.getId());
+                gitService.combineAllCommitsOfRepositoryIntoOne(programmingExerciseWithTemplateParticipation.getTemplateParticipation().getVcsRepositoryUrl());
+                log.debug("Combined template repository commits of programming exercise " + programmingExerciseWithTemplateParticipation.getId() + ".");
+                groupNotificationService.notifyInstructorGroupAboutExerciseUpdate(programmingExerciseWithTemplateParticipation, Constants.PROGRAMMING_EXERCISE_SUCCESSFUL_COMBINE_OF_TEMPLATE_COMMITS);
             }
             catch (InterruptedException e) {
                 log.error("Failed to schedule combining of template commits of exercise " + exercise.getId(), e);

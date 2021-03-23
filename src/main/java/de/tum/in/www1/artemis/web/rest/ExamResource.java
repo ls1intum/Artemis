@@ -506,7 +506,7 @@ public class ExamResource {
         // Validate settings of the exam
         examService.validateForStudentExamGeneration(exam);
 
-        examService.squashTemplates(exam);
+        examService.combineTemplateCommitsOfAllProgrammingExercisesInExam(exam);
 
         List<StudentExam> studentExams = examService.generateStudentExams(exam);
 

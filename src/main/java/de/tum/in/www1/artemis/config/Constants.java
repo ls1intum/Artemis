@@ -9,6 +9,10 @@ public final class Constants {
 
     public static int COMPLAINT_LOCK_DURATION_IN_MINUTES = 1440; // 24h
 
+    public static int SECONDS_BEFORE_RELEASE_DATE_FOR_COMBINING_TEMPLATE_COMMITS = 60;
+
+    public static int SECONDS_AFTER_RELEASE_DATE_FOR_UNLOCKING_STUDENT_EXAM_REPOS = 5;
+
     // Regex for acceptable logins
     public static final String LOGIN_REGEX = "^[_'.@A-Za-z0-9-]*$";
 
