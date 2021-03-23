@@ -4,7 +4,6 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import { JhiAlertService } from 'ng-jhipster';
 import { Organization } from 'app/entities/organization.model';
-import { Course } from 'app/entities/course.model';
 
 @Component({
     selector: 'jhi-organization-selector',
@@ -13,7 +12,6 @@ import { Course } from 'app/entities/course.model';
 export class OrganizationSelectorComponent implements OnInit {
     organizations: Organization[];
     availableOrganizations: Organization[];
-    course: Course;
 
     constructor(
         private activeModal: NgbActiveModal,
@@ -26,12 +24,8 @@ export class OrganizationSelectorComponent implements OnInit {
         this.organizationService.getOrganizations().subscribe((data) => {
             this.availableOrganizations = data;
             if (this.organizations !== undefined) {
-                this.availableOrganizations.forEach((organization) => {
-                    this.organizations.forEach((currentOrganization) => {
-                        if (organization.id === currentOrganization.id) {
-                            this.availableOrganizations = this.availableOrganizations.filter((org) => org.id !== organization.id);
-                        }
-                    });
+                this.availableOrganizations = this.availableOrganizations.filter((organization) => {
+                    return !this.organizations.some((currentOrganization) => currentOrganization.id === organization.id);
                 });
             }
         });
