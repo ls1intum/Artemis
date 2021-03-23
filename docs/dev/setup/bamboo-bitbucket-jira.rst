@@ -97,7 +97,7 @@ under ``localhost:7990``.
    ``src/main/docker`` directory (e.g. with
    ``src/main/docker/./atlassian-setup.sh``). This script creates
    groups, users ([STRIKEOUT:and adds them to the created groups] NOT
-   YET) and disabled application links between the 3 applications. Make sure that ``xdg-utils`` is installed before running the script. `xdg-utils <https://www.howtoinstall.me/ubuntu/18-04/xdg-utils/>`__
+   YET) and disabled application links between the 3 applications. Make sure that `xdg-utils <https://www.howtoinstall.me/ubuntu/18-04/xdg-utils/>`__ is installed before running the script.
 
 4. Enable the created `application
    links <https://confluence.atlassian.com/doc/linking-to-another-application-360677690.html>`__
