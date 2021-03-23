@@ -48,12 +48,11 @@ public class TextAssessmentService extends AssessmentService {
      *   4. Compute Fallback Text Blocks if needed
      *
      * @param textSubmission Text Submission to be assessed
-     * @param correctionRound correction round for which we prepare the submission
+     * @param result for which we prepare the submission
      */
-    public void prepareSubmissionForAssessment(TextSubmission textSubmission, int correctionRound) {
+    public void prepareSubmissionForAssessment(TextSubmission textSubmission, Result result) {
         final Participation participation = textSubmission.getParticipation();
         final TextExercise exercise = (TextExercise) participation.getExercise();
-        Result result = textSubmission.getResultForCorrectionRound(correctionRound);
 
         final boolean computeFeedbackSuggestions = automaticTextFeedbackService.isPresent() && exercise.isAutomaticAssessmentEnabled();
 
