@@ -32,10 +32,8 @@ import * as moment from 'moment';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ParticipationType } from 'app/entities/participation/participation.model';
 import { Result } from 'app/entities/result.model';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
-import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe.ts';
+import { StudentExamDetailTableRowComponent } from 'app/exam/manage/student-exams/student-exam-detail-table-row/student-exam-detail-table-row.component';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -115,6 +113,7 @@ describe('StudentExamDetailComponent', () => {
                 MockPipe(ArtemisDatePipe),
                 MockTranslateValuesDirective,
                 MockPipe(ArtemisTranslatePipe),
+                StudentExamDetailTableRowComponent,
             ],
             providers: [
                 MockProvider(StudentExamService, {
@@ -195,20 +194,6 @@ describe('StudentExamDetailComponent', () => {
         expect(studentExamDetailComponent.achievedTotalPoints).to.equal(40);
     });
 
-    it('should return the right icon based on exercise type', () => {
-        exercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course, new ExerciseGroup());
-        expect(studentExamDetailComponent.exerciseIcon(exercise)).to.equal('project-diagram');
-
-        exercise = new ProgrammingExercise(course, new ExerciseGroup());
-        expect(studentExamDetailComponent.exerciseIcon(exercise)).to.equal('keyboard');
-
-        exercise = new QuizExercise(course, new ExerciseGroup());
-        expect(studentExamDetailComponent.exerciseIcon(exercise)).to.equal('check-double');
-
-        exercise = new FileUploadExercise(course, new ExerciseGroup());
-        expect(studentExamDetailComponent.exerciseIcon(exercise)).to.equal('file-upload');
-    });
-
     it('should save working time', () => {
         const studentExamSpy = sinon.spy(studentExamService, 'updateWorkingTime');
         studentExamDetailComponentFixture.detectChanges();
@@ -259,43 +244,5 @@ describe('StudentExamDetailComponent', () => {
         expect(toggleSubmittedStateSpy).to.have.been.calledOnce;
         expect(studentExamDetailComponent.studentExam.submitted).to.equal(true);
         expect(studentExamDetailComponent.studentExam.submissionDate).to.not.equal(undefined);
-    });
-
-    it('should route to programming submission dashboard', () => {
-        const getAssessmentLinkSpy = sinon.spy(studentExamDetailComponent, 'getAssessmentLink');
-        studentExamDetailComponentFixture.detectChanges();
-        studentExamDetailComponent.courseId = 23;
-        studentExamDetailComponent.examId = exam.id!;
-
-        const programmingExercise = {
-            numberOfAssessmentsOfCorrectionRounds: [],
-            secondCorrectionEnabled: false,
-            studentAssignedTeamIdComputed: false,
-            id: 12,
-            exerciseGroup: { id: 13 },
-            type: ExerciseType.PROGRAMMING,
-        };
-        const route = studentExamDetailComponent.getAssessmentLink(programmingExercise);
-        expect(getAssessmentLinkSpy).to.have.been.calledOnce;
-        expect(route).to.deep.equal(['/course-management', '23', 'exams', '1', 'exercise-groups', '13', 'programming-exercises', '12', 'assessment']);
-    });
-
-    it('should route to modeling submission', () => {
-        const getAssessmentLinkSpy = sinon.spy(studentExamDetailComponent, 'getAssessmentLink');
-        studentExamDetailComponentFixture.detectChanges();
-        studentExamDetailComponent.courseId = 23;
-        studentExamDetailComponent.examId = exam.id!;
-        const modelingExercise = {
-            numberOfAssessmentsOfCorrectionRounds: [],
-            secondCorrectionEnabled: false,
-            studentAssignedTeamIdComputed: false,
-            id: 12,
-            type: ExerciseType.MODELING,
-            exerciseGroup: { id: 12 },
-        };
-        const submission = { id: 14 };
-        const route = studentExamDetailComponent.getAssessmentLink(modelingExercise, submission);
-        expect(getAssessmentLinkSpy).to.have.been.calledOnce;
-        expect(route).to.deep.equal(['/course-management', '23', 'exams', '1', 'exercise-groups', '12', 'modeling-exercises', '12', 'submissions', '14', 'assessment']);
     });
 });
