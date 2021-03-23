@@ -1,5 +1,5 @@
 # ===================================================================
-# GitLab specific properties: this file will only be loaded during startup if the profile jenkins is active
+# GitLab specific properties: this file will only be loaded during startup if the profile gitlab is active
 #
 # This configuration overrides the application.yml file.
 # ===================================================================
