@@ -3,10 +3,11 @@ package de.tum.in.www1.artemis.service.compass.controller;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Queue;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentLinkedQueue;
 
 import org.springframework.data.util.Pair;
+
+import com.hazelcast.core.HazelcastInstance;
+import com.hazelcast.map.IMap;
 
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLDiagram;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
@@ -19,14 +20,15 @@ public class ModelIndex {
     /**
      * Note: The key is the model submission id
      */
-    private Map<Long, UMLDiagram> modelMap;
+    private IMap<Long, UMLDiagram> modelMap;
 
-    private Map<UMLElement, Integer> modelElementMapping;
+    private IMap<UMLElement, Integer> elementSimilarityMap;
 
-    public ModelIndex() {
-        modelElementMapping = new ConcurrentHashMap<>();
-        uniqueModelElementList = new ConcurrentLinkedQueue<>();
-        modelMap = new ConcurrentHashMap<>();
+    public ModelIndex(Long exerciseId, HazelcastInstance hazelcastInstance) {
+        elementSimilarityMap = hazelcastInstance.getMap("similarities - " + exerciseId);
+        uniqueModelElementList = hazelcastInstance.getQueue("elements - " + exerciseId);
+        modelMap = hazelcastInstance.getMap("models - " + exerciseId);
+
     }
 
     /**
@@ -37,8 +39,8 @@ public class ModelIndex {
      * @return the similarity ID for the given model element, i.e. the ID of the similarity set the element belongs to
      */
     int retrieveSimilarityId(UMLElement element) {
-        if (modelElementMapping.containsKey(element)) {
-            return modelElementMapping.get(element);
+        if (elementSimilarityMap.containsKey(element)) {
+            return elementSimilarityMap.get(element);
         }
 
         // Pair of similarity value and similarity ID
@@ -53,14 +55,18 @@ public class ModelIndex {
         }
 
         if (bestSimilarityFit.getFirst() != -1.0) {
-            modelElementMapping.put(element, bestSimilarityFit.getSecond());
+            int similarityId = bestSimilarityFit.getSecond();
+            element.setSimilarityID(similarityId);
+            elementSimilarityMap.put(element, similarityId);
             return bestSimilarityFit.getSecond();
         }
 
         // element does not fit already known element / similarity set
+        int similarityId = uniqueModelElementList.size();
+        element.setSimilarityID(similarityId);
         uniqueModelElementList.add(element);
-        modelElementMapping.put(element, uniqueModelElementList.size() - 1);
-        return uniqueModelElementList.size() - 1;
+        elementSimilarityMap.put(element, similarityId);
+        return similarityId;
     }
 
     /**
@@ -123,8 +129,8 @@ public class ModelIndex {
      *
      * @return the model element to similarity id mapping
      */
-    public Map<UMLElement, Integer> getModelElementMapping() {
-        return modelElementMapping;
+    public Map<UMLElement, Integer> getElementSimilarityMap() {
+        return elementSimilarityMap;
     }
 
     /**

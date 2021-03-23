@@ -1,0 +1,103 @@
+<ng-container *ngIf="programmingExercise">
+    <td class="align-middle">
+        {{ programmingExercise.shortName || '' }}
+    </td>
+    <td class="align-middle">
+        <div>
+            <span *ngIf="programmingExercise.templateParticipation?.repositoryUrl">
+                <!--Checks if the programming exercise has a setup with VCS and CI, if this not the case
+                                            the links are disabled--->
+                <a
+                    *ngIf="
+                        !noVersionControlAndContinuousIntegrationAvailableCheck(programmingExercise.templateParticipation?.repositoryUrl || '');
+                        else noVersionControlAndContinuousIntegrationAvailableTemplate
+                    "
+                    href="{{ programmingExercise.templateParticipation?.repositoryUrl || '' }}"
+                    target="_blank"
+                    >Template</a
+                >
+            </span>
+            <ng-template #noVersionControlAndContinuousIntegrationAvailableTemplate>Template</ng-template>
+            <jhi-programming-exercise-instructor-status
+                *ngIf="programmingExercise.templateParticipation?.results?.length"
+                [participationType]="participationType.TEMPLATE"
+                [participation]="programmingExercise.templateParticipation!"
+                [exercise]="programmingExercise"
+            ></jhi-programming-exercise-instructor-status>
+        </div>
+        <div>
+            <span *ngIf="programmingExercise.solutionParticipation?.repositoryUrl">
+                <a
+                    *ngIf="
+                        !noVersionControlAndContinuousIntegrationAvailableCheck(programmingExercise.solutionParticipation?.repositoryUrl || '');
+                        else noVersionControlAndContinuousIntegrationAvailableSolution
+                    "
+                    href="{{ programmingExercise.solutionParticipation!.repositoryUrl! }}"
+                    target="_blank"
+                    >Solution</a
+                >
+            </span>
+            <ng-template #noVersionControlAndContinuousIntegrationAvailableSolution>Solution</ng-template>
+            <jhi-programming-exercise-instructor-status
+                *ngIf="programmingExercise.solutionParticipation?.results?.length"
+                [participationType]="participationType.SOLUTION"
+                [participation]="programmingExercise.solutionParticipation!"
+                [exercise]="programmingExercise"
+            ></jhi-programming-exercise-instructor-status>
+        </div>
+        <div>
+            <span *ngIf="programmingExercise.testRepositoryUrl">
+                <a
+                    *ngIf="
+                        !noVersionControlAndContinuousIntegrationAvailableCheck(programmingExercise.testRepositoryUrl || '');
+                        else noVersionControlAndContinuousIntegrationAvailableTest
+                    "
+                    href="{{ programmingExercise.testRepositoryUrl }}"
+                    target="_blank"
+                    >Test</a
+                >
+            </span>
+            <ng-template #noVersionControlAndContinuousIntegrationAvailableTest>Test</ng-template>
+        </div>
+    </td>
+    <td class="align-middle">
+        <span *ngIf="programmingExercise.templateParticipation?.buildPlanId"
+            ><a
+                *ngIf="
+                    !noVersionControlAndContinuousIntegrationAvailableCheck(programmingExercise.templateParticipation?.repositoryUrl || '');
+                    else noVersionControlAndContinuousIntegrationAvailableTemplate
+                "
+                jhiBuildPlanLink
+                [projectKey]="programmingExercise.projectKey || ''"
+                [buildPlanId]="programmingExercise.templateParticipation?.buildPlanId || ''"
+                >Template</a
+            ></span
+        >
+        <ng-template #noVersionControlAndContinuousIntegrationAvailableTemplate>Template</ng-template>
+        <br />
+        <span *ngIf="programmingExercise.solutionParticipation?.buildPlanId"
+            ><a
+                *ngIf="
+                    !noVersionControlAndContinuousIntegrationAvailableCheck(programmingExercise.solutionParticipation?.repositoryUrl || '');
+                    else noVersionControlAndContinuousIntegrationAvailableSolution
+                "
+                jhiBuildPlanLink
+                [projectKey]="programmingExercise.projectKey || ''"
+                [buildPlanId]="programmingExercise.solutionParticipation?.buildPlanId || ''"
+                >Solution</a
+            ></span
+        >
+        <ng-template #noVersionControlAndContinuousIntegrationAvailableSolution>Solution</ng-template>
+        <br />
+    </td>
+    <td class="align-middle d-none d-md-table-cell">
+        <div class="d-flex justify-content-between">
+            {{ 'artemisApp.programmingExercise.offlineIde' | artemisTranslate }}
+            : {{ programmingExercise.allowOfflineIde || false }}
+        </div>
+        <div class="d-flex justify-content-between">
+            {{ 'artemisApp.programmingExercise.onlineEditor' | artemisTranslate }}
+            : {{ programmingExercise.allowOnlineEditor || false }}
+        </div>
+    </td>
+</ng-container>

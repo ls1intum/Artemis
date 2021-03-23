@@ -5,5 +5,5 @@ import { Component, Input } from '@angular/core';
     templateUrl: './exam-checklist-check.component.html',
 })
 export class ExamChecklistCheckComponent {
-    @Input() checkAttribute = false;
+    @Input() checkAttribute: boolean | undefined = false;
 }
