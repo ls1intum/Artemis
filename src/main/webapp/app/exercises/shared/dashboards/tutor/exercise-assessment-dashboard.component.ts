@@ -102,7 +102,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
     formattedSampleSolution?: SafeHtml;
     getSubmissionResultByCorrectionRound = getSubmissionResultByCorrectionRound;
 
-    // helper variables to display information message
+    // helper variables to display information message about why no new assessments are possible anymore
     remainingAssessments: number[];
     lockedSubmissionsByOtherTutor: number[];
     notYetAssessed: number[];
@@ -626,17 +626,12 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
 
     calculateAssessmentProgressInformation() {
         if (this.exam) {
-            this.firstRoundAssessments = this.submissionsByCorrectionRound?.get(0 ?? 0)?.length ?? 0;
             for (let i = 0; i < (this.exam.numberOfCorrectionRoundsInExam ?? 0); i++) {
                 this.lockedSubmissionsByOtherTutor[i] = this.numberOfLockedAssessmentByOtherTutorsOfCorrectionRound[i]?.inTime;
 
                 this.notYetAssessed[i] = this.numberOfSubmissions.inTime - this.numberOfAssessmentsOfCorrectionRounds[i].inTime - this.lockedSubmissionsByOtherTutor[i];
                 // docu
-                if (i === 0) {
-                    this.remainingAssessments[i] = this.notYetAssessed[i];
-                } else {
-                    this.remainingAssessments[i] = this.notYetAssessed[i] - (this.numberOfSubmissions.inTime - this.numberOfAssessmentsOfCorrectionRounds[0].inTime);
-                }
+                this.firstRoundAssessments = this.notYetAssessed[i] - this.lockedSubmissionsByOtherTutor[i];
             }
         }
     }
