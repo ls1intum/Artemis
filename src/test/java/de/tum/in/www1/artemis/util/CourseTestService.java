@@ -1290,6 +1290,27 @@ public class CourseTestService {
     }
 
     // Test
+    public void testGetAllCoursesForManagementOverview() throws Exception {
+        // Add two courses, containing one not belonging to the instructor
+        var testCourses = database.createCoursesWithExercisesAndLectures(true);
+        var instructorsCourse = testCourses.get(0);
+        instructorsCourse.setInstructorGroupName("test-instructors");
+        courseRepo.save(instructorsCourse);
+
+        var instructor = database.getUserByLogin("instructor1");
+        var groups = new HashSet<String>();
+        groups.add("test-instructors");
+        instructor.setGroups(groups);
+        userRepo.save(instructor);
+
+        var courses = request.getList("/api/courses/course-management-overview", HttpStatus.OK, Course.class);
+        assertThat(courses.size()).isEqualTo(1);
+
+        var course = courses.get(0);
+        assertThat(course.getId()).isEqualTo(instructorsCourse.getId());
+    }
+
+    // Test
     public void testGetExercisesForCourseOverview() throws Exception {
         // Add two courses, containing one not belonging to the instructor
         var testCourses = database.createCoursesWithExercisesAndLectures(true);
