@@ -11,7 +11,6 @@ import { tutorAssessmentTour } from 'app/guided-tour/tours/tutor-assessment-tour
 import { JhiAlertService } from 'ng-jhipster';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { LectureService } from 'app/lecture/lecture.service';
-import { CourseManagementOverviewDto } from 'app/course/manage/overview/course-management-overview-dto.model';
 import { CourseManagementOverviewStatisticsDto } from 'app/course/manage/overview/course-management-overview-statistics-dto.model';
 
 @Component({
@@ -21,13 +20,11 @@ import { CourseManagementOverviewStatisticsDto } from 'app/course/manage/overvie
     styleUrls: ['./course-management.component.scss'],
 })
 export class CourseManagementComponent implements OnInit, OnDestroy, AfterViewInit {
-    predicate: string;
-    reverse: boolean;
     showOnlyActive = true;
 
     courses: Course[];
-    details = new Map<number, CourseManagementOverviewDto>();
     statistics = new Map<number, CourseManagementOverviewStatisticsDto>();
+    coursesWithExercises = new Map<number, Course>();
     coursesWithUsers = new Map<number, Course>();
     courseSemesters: string[];
     semesterCollapsed: { [key: string]: boolean };
@@ -47,11 +44,7 @@ export class CourseManagementComponent implements OnInit, OnDestroy, AfterViewIn
         private jhiAlertService: JhiAlertService,
         private eventManager: JhiEventManager,
         private guidedTourService: GuidedTourService,
-    ) {
-        this.predicate = 'id';
-        // show the newest courses first and the oldest last
-        this.reverse = false;
-    }
+    ) {}
 
     /**
      * loads all courses from courseService
@@ -60,71 +53,132 @@ export class CourseManagementComponent implements OnInit, OnDestroy, AfterViewIn
         this.courseService.getCourseOverview({ onlyActive: this.showOnlyActive }).subscribe(
             (res: HttpResponse<Course[]>) => {
                 this.courses = res.body!;
-                this.courseSemesters = this.courses
-                    // test courses get their own section later
-                    .filter((course) => !course.testCourse)
-                    .map((course) => course.semester ?? '')
-                    // filter down to unique values
-                    .filter((course, index, courses) => courses.indexOf(course) === index)
-                    .sort((semesterA, semesterB) => {
-                        // sort last if the semester is unset
-                        if (semesterA === '') {
-                            return 1;
-                        }
-                        if (semesterB === '') {
-                            return -1;
-                        }
-                        // parse years in base 10 by extracting the two digits after the WS or SS prefix
-                        const yearsCompared = parseInt(semesterB.substr(2, 2), 10) - parseInt(semesterA.substr(2, 2), 10);
-                        if (yearsCompared !== 0) {
-                            return yearsCompared;
-                        }
-                        // if years are the same, sort WS over SS
-                        return semesterA.substr(0, 2) === 'WS' ? -1 : 1;
-                    });
+                this.courseForGuidedTour = this.guidedTourService.enableTourForCourseOverview(this.courses, tutorAssessmentTour, true);
 
-                this.semesterCollapsed = {};
-                this.coursesBySemester = {};
-                let firstUncollapsed = false;
-                for (const semester of this.courseSemesters) {
-                    this.semesterCollapsed[semester] = firstUncollapsed;
-                    firstUncollapsed = true;
-                    this.coursesBySemester[semester] = this.courses.filter((course) => !course.testCourse && (course.semester ?? '') === semester);
-                }
-                // Add an extra category for test courses
-                const testCourses = this.courses.filter((course) => course.testCourse);
-                if (testCourses.length > 0) {
-                    this.courseSemesters[this.courseSemesters.length] = 'test';
-                    this.semesterCollapsed['test'] = false;
-                    this.coursesBySemester['test'] = testCourses;
-                }
+                this.courseSemesters = this.getUniqueSemesterNamesSorted(this.courses);
+                this.sortCoursesIntoSemesters();
 
-                // First fetch important data like title for each course
-                this.courseManagementService.getExercisesForManagementOverview(this.showOnlyActive).subscribe(
-                    (result: HttpResponse<CourseManagementOverviewDto[]>) => {
-                        result.body!.forEach((dto) => (this.details[dto.courseId] = dto));
-                    },
-                    (result: HttpErrorResponse) => onError(this.jhiAlertService, result, false),
-                );
+                // First fetch important data like title for each exercise
+                this.fetchExercises();
+
                 // Once the important part is loaded we can fetch the statistics
-                this.courseManagementService.getStatsForManagementOverview(this.showOnlyActive).subscribe(
-                    (result: HttpResponse<CourseManagementOverviewStatisticsDto[]>) => {
-                        result.body!.forEach((dto) => (this.statistics[dto.courseId] = dto));
-                    },
-                    (result: HttpErrorResponse) => onError(this.jhiAlertService, result, false),
-                );
-                // load courses after initialization for guidedTour, notifications and group numbers
-                this.courseManagementService.getWithUserStats({ onlyActive: this.showOnlyActive }).subscribe(
-                    (result: HttpResponse<Course[]>) => {
-                        this.courseForGuidedTour = this.guidedTourService.enableTourForCourseOverview(result.body!, tutorAssessmentTour, true);
+                this.fetchExerciseStats();
 
-                        // We use this extra map of courses to improve performance by allowing us to use OnPush change detection
-                        result.body!.forEach((course) => (this.coursesWithUsers[course.id!] = course));
-                    },
-                    (result: HttpErrorResponse) => onError(this.jhiAlertService, result, false),
-                );
+                // Load the user group numbers lastly
+                this.fetchUserStats();
             },
             (res: HttpErrorResponse) => onError(this.jhiAlertService, res, false),
+        );
+    }
+
+    /**
+     * Sorts and returns the semesters by year descending
+     * WS is sorted above SS
+     *
+     * @param coursesWithSemesters the courses to sort the semesters of
+     * @return An array of sorted semester names
+     */
+    private getUniqueSemesterNamesSorted(coursesWithSemesters: Course[]): string[] {
+        return (
+            coursesWithSemesters
+                // Test courses get their own section later
+                .filter((course) => !course.testCourse)
+                .map((course) => course.semester ?? '')
+                // Filter down to unique values
+                .filter((course, index, courses) => courses.indexOf(course) === index)
+                .sort((semesterA, semesterB) => {
+                    // Sort last if the semester is unset
+                    if (semesterA === '') {
+                        return 1;
+                    }
+                    if (semesterB === '') {
+                        return -1;
+                    }
+
+                    // Parse years in base 10 by extracting the two digits after the WS or SS prefix
+                    const yearsCompared = parseInt(semesterB.substr(2, 2), 10) - parseInt(semesterA.substr(2, 2), 10);
+                    if (yearsCompared !== 0) {
+                        return yearsCompared;
+                    }
+
+                    // If years are the same, sort WS over SS
+                    return semesterA.substr(0, 2) === 'WS' ? -1 : 1;
+                })
+        );
+    }
+
+    /**
+     * Sorts the courses into the coursesBySemester map.
+     * Fills the semesterCollapsed map depending on if the semester should be uncollapsed by default.
+     * The first semester is always uncollapsed. The test course group is also uncollapsed.
+     */
+    private sortCoursesIntoSemesters(): void {
+        this.semesterCollapsed = {};
+        this.coursesBySemester = {};
+
+        let firstUncollapsed = false;
+        for (const semester of this.courseSemesters) {
+            this.semesterCollapsed[semester] = firstUncollapsed;
+            firstUncollapsed = true;
+            this.coursesBySemester[semester] = this.courses.filter((course) => !course.testCourse && (course.semester ?? '') === semester);
+        }
+
+        // Add an extra category for test courses
+        const testCourses = this.courses.filter((course) => course.testCourse);
+        if (testCourses.length > 0) {
+            this.courseSemesters[this.courseSemesters.length] = 'test';
+            this.semesterCollapsed['test'] = false;
+            this.coursesBySemester['test'] = testCourses;
+        }
+    }
+
+    /**
+     * Gets the exercises to display from the server and sorts them into coursesWithExercises by course id
+     */
+    private fetchExercises(): void {
+        this.courseManagementService.getExercisesForManagementOverview(this.showOnlyActive).subscribe(
+            (result: HttpResponse<Course[]>) => {
+                // We use this extra map of courses to improve performance by allowing us to use OnPush change detection
+                result.body!.forEach((course) => {
+                    if (course.id) {
+                        this.coursesWithExercises[course.id] = course;
+                    }
+                });
+            },
+            (result: HttpErrorResponse) => onError(this.jhiAlertService, result, false),
+        );
+    }
+
+    /**
+     * Gets the exercise statistics to display from the server and sorts them into the statistics map by course id
+     */
+    private fetchExerciseStats(): void {
+        this.courseManagementService.getStatsForManagementOverview(this.showOnlyActive).subscribe(
+            (result: HttpResponse<CourseManagementOverviewStatisticsDto[]>) => {
+                result.body!.forEach((statisticsDTO) => {
+                    if (statisticsDTO.courseId) {
+                        this.statistics[statisticsDTO.courseId] = statisticsDTO;
+                    }
+                });
+            },
+            (result: HttpErrorResponse) => onError(this.jhiAlertService, result, false),
+        );
+    }
+
+    /**
+     * Gets the amount of users in the user groups to display and sorts them into coursesWithUsers by course id
+     */
+    private fetchUserStats(): void {
+        this.courseManagementService.getWithUserStats({ onlyActive: this.showOnlyActive }).subscribe(
+            (result: HttpResponse<Course[]>) => {
+                // We use this extra map of courses to improve performance by allowing us to use OnPush change detection
+                result.body!.forEach((course) => {
+                    if (course.id) {
+                        this.coursesWithUsers[course.id] = course;
+                    }
+                });
+            },
+            (result: HttpErrorResponse) => onError(this.jhiAlertService, result, false),
         );
     }
 

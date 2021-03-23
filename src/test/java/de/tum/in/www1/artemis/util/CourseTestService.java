@@ -33,7 +33,6 @@ import de.tum.in.www1.artemis.programmingexercise.MockDelegate;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.GroupNotificationService;
 import de.tum.in.www1.artemis.service.user.UserService;
-import de.tum.in.www1.artemis.web.rest.dto.CourseManagementOverviewDTO;
 import de.tum.in.www1.artemis.web.rest.dto.CourseManagementOverviewStatisticsDTO;
 import de.tum.in.www1.artemis.web.rest.dto.StatsForInstructorDashboardDTO;
 
@@ -1293,8 +1292,8 @@ public class CourseTestService {
     // Test
     public void testGetExercisesForCourseOverview() throws Exception {
         // Add two courses, containing one not belonging to the instructor
-        var courses = database.createCoursesWithExercisesAndLectures(true);
-        var instructorsCourse = courses.get(0);
+        var testCourses = database.createCoursesWithExercisesAndLectures(true);
+        var instructorsCourse = testCourses.get(0);
         instructorsCourse.setInstructorGroupName("test-instructors");
         courseRepo.save(instructorsCourse);
 
@@ -1304,13 +1303,14 @@ public class CourseTestService {
         instructor.setGroups(groups);
         userRepo.save(instructor);
 
-        var courseDtos = request.getList("/api/courses/exercises-for-management-overview", HttpStatus.OK, CourseManagementOverviewDTO.class);
-        assertThat(courseDtos.size()).isEqualTo(1);
+        var courses = request.getList("/api/courses/exercises-for-management-overview", HttpStatus.OK, Course.class);
+        assertThat(courses.size()).isEqualTo(1);
 
-        var dto = courseDtos.get(0);
-        assertThat(dto.getCourseId()).isEqualTo(instructorsCourse.getId());
+        var course = courses.get(0);
+        assertThat(course.getId()).isEqualTo(instructorsCourse.getId());
 
-        var exerciseDetails = dto.getExerciseDetails();
+        var exerciseDetails = course.getExercises();
+        assertThat(exerciseDetails).isNotNull();
         assertThat(exerciseDetails.size()).isEqualTo(5);
 
         var quizDetailsOptional = exerciseDetails.stream().filter(e -> e instanceof QuizExercise).findFirst();

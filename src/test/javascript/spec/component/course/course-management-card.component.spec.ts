@@ -12,7 +12,6 @@ import { MockRouterLinkDirective } from '../lecture-unit/lecture-unit-management
 import { CourseManagementCardComponent } from 'app/course/manage/overview/course-management-card.component';
 import { CourseManagementStatisticsComponent } from 'app/course/manage/overview/course-management-statistics.component';
 import * as moment from 'moment';
-import { CourseManagementOverviewDto } from 'app/course/manage/overview/course-management-overview-dto.model';
 import { CourseManagementOverviewStatisticsDto } from 'app/course/manage/overview/course-management-overview-statistics-dto.model';
 import { CourseManagementOverviewExerciseStatisticsDTO } from 'app/course/manage/overview/course-management-overview-exercise-statistics-dto.model';
 import { Course } from 'app/entities/course.model';
@@ -28,8 +27,6 @@ describe('CourseManagementCardComponent', () => {
     let fixture: ComponentFixture<CourseManagementCardComponent>;
     let component: CourseManagementCardComponent;
 
-    const courseDTO = new CourseManagementOverviewDto();
-    courseDTO.courseId = 1;
     const pastExercise = {
         dueDate: moment().subtract(6, 'days'),
         assessmentDueDate: moment().subtract(1, 'days'),
@@ -44,11 +41,11 @@ describe('CourseManagementCardComponent', () => {
     const futureExercise2 = {
         releaseDate: moment().add(6, 'days'),
     } as Exercise;
-    courseDTO.exerciseDetails = [pastExercise, currentExercise, futureExercise2, futureExercise1];
 
     const course = new Course();
     course.id = 1;
     course.color = 'red';
+    course.exercises = [pastExercise, currentExercise, futureExercise2, futureExercise1];
 
     const courseStatisticsDTO = new CourseManagementOverviewStatisticsDto();
     const exerciseDTO = new CourseManagementOverviewExerciseStatisticsDTO();
@@ -85,7 +82,7 @@ describe('CourseManagementCardComponent', () => {
         component.ngOnChanges();
         expect(component.statisticsPerExercise[exerciseDTO.exerciseId!]).to.deep.equal(exerciseDTO);
 
-        component.courseDetails = courseDTO;
+        component.courseWithExercises = course;
         component.ngOnChanges();
         expect(component.futureExercises).to.deep.equal([futureExercise1, futureExercise2]);
         expect(component.currentExercises).to.deep.equal([currentExercise]);

@@ -570,12 +570,12 @@ public class ExerciseService {
     /**
      * Generates a <code>CourseManagementOverviewExerciseStatisticsDTO</code> for each given exercise
      *
-     * @param exercisesForManagementOverview a list of exercises to generate the statistics for
+     * @param exercisesForManagementOverview a set of exercises to generate the statistics for
      * @param amountOfStudentsInCourse the amount of students in the course
      * @param averageScoreById the average score for each exercise indexed by exerciseId
      * @return A list of filled <code>CourseManagementOverviewExerciseStatisticsDTO</code>
      */
-    private List<CourseManagementOverviewExerciseStatisticsDTO> generateCourseManagementDTOs(List<Exercise> exercisesForManagementOverview, Integer amountOfStudentsInCourse,
+    private List<CourseManagementOverviewExerciseStatisticsDTO> generateCourseManagementDTOs(Set<Exercise> exercisesForManagementOverview, Integer amountOfStudentsInCourse,
             Map<Long, Double> averageScoreById) {
         List<CourseManagementOverviewExerciseStatisticsDTO> statisticsDTOS = new ArrayList<>();
         for (var exercise : exercisesForManagementOverview) {
