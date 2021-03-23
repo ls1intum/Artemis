@@ -14,6 +14,7 @@ import org.gitlab4j.api.GitLabApiException;
 import org.gitlab4j.api.models.AccessLevel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -38,6 +39,9 @@ public class GitLabUserManagementService implements VcsUserManagementService {
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
     private final GitLabApi gitlabApi;
+
+    @Value("${gitlab.use-pseudonyms:#{false}}")
+    private boolean usePseudonyms;
 
     public GitLabUserManagementService(ProgrammingExerciseRepository programmingExerciseRepository, GitLabApi gitlabApi, UserRepository userRepository,
             PasswordService passwordService) {
@@ -74,7 +78,7 @@ public class GitLabUserManagementService implements VcsUserManagementService {
 
             // Update general user information. Skip confirmation is necessary
             // in order to update the email without user re-confirmation
-            gitlabUser.setName(user.getName());
+            gitlabUser.setName(getUsersName(user));
             gitlabUser.setUsername(user.getLogin());
             gitlabUser.setEmail(user.getEmail());
             gitlabUser.setSkipConfirmation(true);
@@ -305,7 +309,7 @@ public class GitLabUserManagementService implements VcsUserManagementService {
      * @return a Gitlab user
      */
     public org.gitlab4j.api.models.User importUser(User user) {
-        final var gitlabUser = new org.gitlab4j.api.models.User().withEmail(user.getEmail()).withUsername(user.getLogin()).withName(user.getName()).withCanCreateGroup(false)
+        final var gitlabUser = new org.gitlab4j.api.models.User().withEmail(user.getEmail()).withUsername(user.getLogin()).withName(getUsersName(user)).withCanCreateGroup(false)
                 .withCanCreateProject(false).withSkipConfirmation(true);
         try {
             return gitlabApi.getUserApi().createUser(gitlabUser, passwordService.decryptPassword(user), false);
@@ -313,6 +317,18 @@ public class GitLabUserManagementService implements VcsUserManagementService {
         catch (GitLabApiException e) {
             throw new GitLabException("Unable to create new user in GitLab " + user.getLogin(), e);
         }
+    }
+
+    private String getUsersName(User user){
+        // Get User's name by checking the use of pseudonyms
+        String name;
+        if (usePseudonyms) {
+            name = String.format("User %s", user.getLogin());
+        }
+        else {
+            name = user.getName();
+        }
+        return name;
     }
 
     /**
