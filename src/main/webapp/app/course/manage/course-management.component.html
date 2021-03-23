@@ -42,8 +42,8 @@
                     *ngFor="let course of coursesBySemester[semester]"
                     class="col-md-8"
                     [course]="course"
-                    [courseDetails]="details[course.id]"
                     [courseStatistics]="statistics[course.id]"
+                    [courseWithExercises]="coursesWithExercises[course.id]"
                     [courseWithUsers]="coursesWithUsers[course.id]"
                     [isGuidedTour]="course === courseForGuidedTour"
                 ></jhi-course-management-card>

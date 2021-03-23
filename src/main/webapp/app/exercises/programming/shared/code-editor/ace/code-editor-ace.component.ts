@@ -4,6 +4,7 @@ import 'brace/ext/modelist';
 import 'brace/mode/java';
 import 'brace/mode/markdown';
 import 'brace/mode/haskell';
+import 'brace/mode/ocaml';
 import 'brace/mode/c_cpp';
 import 'brace/mode/python';
 import 'brace/mode/swift';

@@ -224,8 +224,8 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
      * Fetches the active exercises for a course
      *
      * @param courseId the course to get the statistics for
-     * @param sevenDaysAgo a ZoneDateTime seven days in the past, exercises with an assessment due date (or due date if without assessment) older than that are filtered
-     * @return a list of exercises
+     * @param sevenDaysAgo a ZoneDateTime seven days in the past
+     * @return a set of exercises with categories, which have an assessment due date (or due date if without assessment) not older than sevenDaysAgo
      */
     @Query("""
             SELECT DISTINCT e
@@ -234,7 +234,7 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
                 AND (e.assessmentDueDate IS NULL OR e.assessmentDueDate >= :sevenDaysAgo)
                 AND (e.assessmentDueDate IS NOT NULL OR e.dueDate IS NULL OR e.dueDate >= :sevenDaysAgo)
             """)
-    List<Exercise> getExercisesForCourseManagementOverview(@Param("courseId") Long courseId, @Param("sevenDaysAgo") ZonedDateTime sevenDaysAgo);
+    Set<Exercise> getExercisesForCourseManagementOverview(@Param("courseId") Long courseId, @Param("sevenDaysAgo") ZonedDateTime sevenDaysAgo);
 
     /**
      * Fetches the amount of participations in the given exercise

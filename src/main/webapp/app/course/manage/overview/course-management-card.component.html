@@ -71,7 +71,7 @@
     <div class="container flex-container">
         <div class="row">
             <div class="col-md-8 section-card">
-                <div class="section-content" *ngIf="courseDetails">
+                <div class="section-content" *ngIf="courseWithExercises">
                     <div *ngIf="futureExercises?.length > 0">
                         <div class="control-label" (click)="showFutureExercises = !showFutureExercises">
                             <fa-icon class="control-icon" [icon]="showFutureExercises ? 'angle-down' : 'angle-up'"></fa-icon>
@@ -175,7 +175,7 @@
             <span class="d-none d-md-inline">{{ 'entity.action.exams' | artemisTranslate }}</span>
         </a>
         <a
-            *ngIf="course.isAtLeastTutor"
+            *ngIf="course.isAtLeastInstructor"
             [routerLink]="['/course-management', course.id, 'lectures']"
             class="btn btn-primary mr-1 mb-1"
             [ngbTooltip]="'entity.action.lecture' | artemisTranslate"
@@ -212,7 +212,7 @@
             <span class="d-none d-md-inline">{{ 'artemisApp.course.instructorDashboard' | artemisTranslate }}</span>
         </a>
         <a
-            *ngIf="course.isAtLeastTutor"
+            *ngIf="course.isAtLeastInstructor"
             [routerLink]="['/course-management', course.id, 'scores']"
             class="btn btn-info mr-1 mb-1"
             [ngbTooltip]="'entity.action.scores' | artemisTranslate"

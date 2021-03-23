@@ -23,7 +23,6 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { MomentModule } from 'ngx-moment';
 import { CourseManagementCardComponent } from 'app/course/manage/overview/course-management-card.component';
-import { CourseManagementOverviewDto } from 'app/course/manage/overview/course-management-overview-dto.model';
 import { CourseManagementOverviewStatisticsDto } from 'app/course/manage/overview/course-management-overview-statistics-dto.model';
 import { CourseManagementOverviewExerciseStatisticsDTO } from 'app/course/manage/overview/course-management-overview-exercise-statistics-dto.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe.ts';
@@ -56,15 +55,15 @@ describe('CourseManagementComponent', () => {
         releaseDate: moment().add(6, 'days'),
     } as Exercise;
 
-    const courseDTO187 = {
+    const courseWithExercises187 = {
         courseId: 187,
         exerciseDetails: [pastExercise, currentExercise, futureExercise2, futureExercise1],
-    } as CourseManagementOverviewDto;
+    } as Course;
 
-    const courseDTO188 = {
+    const courseWithExercises188 = {
         courseId: 188,
         exerciseDetails: [],
-    } as CourseManagementOverviewDto;
+    } as Course;
 
     const course187 = {
         id: 187,
@@ -125,7 +124,7 @@ describe('CourseManagementComponent', () => {
 
     it('should initialize', () => {
         sinon.stub(service, 'getCourseOverview').returns(of(new HttpResponse({ body: [courseDetails187, courseDetails188] })));
-        sinon.stub(service, 'getExercisesForManagementOverview').returns(of(new HttpResponse({ body: [courseDTO187, courseDTO188] })));
+        sinon.stub(service, 'getExercisesForManagementOverview').returns(of(new HttpResponse({ body: [courseWithExercises187, courseWithExercises188] })));
         sinon.stub(service, 'getStatsForManagementOverview').returns(of(new HttpResponse({ body: [] })));
         sinon.stub(service, 'getWithUserStats').returns(of(new HttpResponse({ body: [course187, course188] })));
         sinon.stub(guidedTourService, 'enableTourForCourseOverview').returns(course187);

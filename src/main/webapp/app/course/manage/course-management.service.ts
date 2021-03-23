@@ -21,7 +21,6 @@ import { createRequestOption } from 'app/shared/util/request-util';
 import { getLatestSubmissionResult, setLatestSubmissionResult, Submission } from 'app/entities/submission.model';
 import { SubjectObservablePair } from 'app/utils/rxjs.utils';
 import { participationStatus } from 'app/exercises/shared/exercise/exercise-utils';
-import { CourseManagementOverviewDto } from './overview/course-management-overview-dto.model';
 import { CourseManagementOverviewStatisticsDto } from 'app/course/manage/overview/course-management-overview-statistics-dto.model';
 import { addUserIndependentRepositoryUrl } from 'app/overview/participation-utils';
 import { ParticipationType } from 'app/entities/participation/participation.model';
@@ -263,28 +262,12 @@ export class CourseManagementService {
      * returns the exercise details of the courses for the courses management dashboard
      * @param onlyActive - if true, only active courses will be considered in the result
      */
-    getExercisesForManagementOverview(onlyActive: boolean): Observable<HttpResponse<CourseManagementOverviewDto[]>> {
+    getExercisesForManagementOverview(onlyActive: boolean): Observable<HttpResponse<Course[]>> {
         let httpParams = new HttpParams();
         httpParams = httpParams.append('onlyActive', onlyActive.toString());
         return this.http
-            .get<CourseManagementOverviewDto[]>(`${this.resourceUrl}/exercises-for-management-overview`, { params: httpParams, observe: 'response' })
-            .pipe(
-                map((res: HttpResponse<CourseManagementOverviewDto[]>) => {
-                    if (res.body) {
-                        res.body.forEach((courseManagementDTO) => {
-                            if (courseManagementDTO.exerciseDetails && courseManagementDTO.exerciseDetails.length > 0) {
-                                courseManagementDTO.exerciseDetails.forEach((details) => {
-                                    details.assessmentDueDate = details.assessmentDueDate ? moment(details.assessmentDueDate) : undefined;
-                                    details.releaseDate = details.releaseDate ? moment(details.releaseDate) : undefined;
-                                    details.dueDate = details.dueDate ? moment(details.dueDate) : undefined;
-                                });
-                            }
-                        });
-                    }
-
-                    return res;
-                }),
-            );
+            .get<Course[]>(`${this.resourceUrl}/exercises-for-management-overview`, { params: httpParams, observe: 'response' })
+            .pipe(map((res: HttpResponse<Course[]>) => this.convertDateArrayFromServer(res)));
     }
 
     /**
