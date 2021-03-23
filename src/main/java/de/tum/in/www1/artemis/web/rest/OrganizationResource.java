@@ -106,6 +106,9 @@ public class OrganizationResource {
      * DELETE /organizations/user/:userLogin/organization/:organizationId :
      * Remove a user from an organization
      *
+     * Keep in mind that removing a user from an organization does not remove it
+     * from the Access Groups of a course if already added.
+     *
      * @param userLogin the login of the user to remove
      * @param organizationId the id of the organization from with the user should be removed
      * @return empty ResponseEntity with status 200 (OK), or 404 (Not Found) otherwise
