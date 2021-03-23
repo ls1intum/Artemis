@@ -23,7 +23,6 @@ import de.tum.in.www1.artemis.domain.lecture.TextUnit;
 import de.tum.in.www1.artemis.domain.lecture.VideoUnit;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.util.ModelFactory;
-import de.tum.in.www1.artemis.web.rest.dto.StringDTO;
 
 public class LectureIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -295,7 +294,14 @@ public class LectureIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         lecture.title("Test Lecture");
         lectureRepository.save(lecture);
 
-        final var stringDTO = request.get("/api/lectures/" + lecture.getId() + "/get-title", HttpStatus.OK, StringDTO.class);
-        assertThat(stringDTO.getResponse()).isEqualTo(lecture.getTitle());
+        final var title = request.get("/api/lectures/" + lecture.getId() + "/title", HttpStatus.OK, String.class);
+        assertThat(title).isEqualTo(lecture.getTitle());
+    }
+
+    @Test
+    @WithMockUser(username = "user1", roles = "USER")
+    public void testGetLectureTitleForNonExistingLecture() throws Exception {
+        // No lecture with id 10 was created
+        request.get("/api/lectures/10/title", HttpStatus.NOT_FOUND, String.class);
     }
 }

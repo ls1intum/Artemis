@@ -251,8 +251,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
                 this.addBreadcrumb(currentPath, segment, false);
                 break;
             case 'course-management':
-                this.routeCourseId = Number(segment);
-                this.addResolvedTitleAsCrumb(this.courseManagementService.getTitle(this.routeCourseId), currentPath, segment);
+                this.addResolvedTitleAsCrumb(this.courseManagementService.getTitle(Number(segment)), currentPath, segment);
                 break;
             case 'exercises':
             case 'text-exercises':
@@ -391,17 +390,18 @@ export class NavbarComponent implements OnInit, OnDestroy {
      * @param uri the uri/path for the breadcrumb
      * @param segment the current url segment to add a breadcrumb for
      */
-    private addResolvedTitleAsCrumb(observable: Observable<HttpResponse<Map<string, string>>>, uri: string, segment: string): void {
+    private addResolvedTitleAsCrumb(observable: Observable<HttpResponse<string>>, uri: string, segment: string): void {
         // Insert the segment until we fetched a title from the server to insert at the correct index
         const index = this.breadcrumbs.length;
         this.addBreadcrumb(uri, segment, false);
 
         observable.subscribe(
-            (response: HttpResponse<Map<string, string>>) => {
-                const title = !!response.body ? response.body!['response'] : segment;
+            (response: HttpResponse<string>) => {
+                // Fall back to the segment in case there is no body returned
+                const title = response.body ?? segment;
                 this.setBreadcrumb(uri, title, false, index);
             },
-            (error: HttpErrorResponse) => onError(this.jhiAlertService, error),
+            (error: HttpErrorResponse) => onError(this.jhiAlertService, error, false),
         );
     }
 

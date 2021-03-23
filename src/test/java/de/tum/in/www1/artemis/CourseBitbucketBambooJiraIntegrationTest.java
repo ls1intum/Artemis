@@ -492,6 +492,12 @@ public class CourseBitbucketBambooJiraIntegrationTest extends AbstractSpringInte
     }
 
     @Test
+    @WithMockUser(username = "user1", roles = "USER")
+    public void testGetCourseTitleForNonExistingCourse() throws Exception {
+        courseTestService.testGetCourseTitleForNonExistingCourse();
+    }
+
+    @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void testGetAllCoursesForManagementOverview() throws Exception {
         courseTestService.testGetAllCoursesForManagementOverview();

@@ -17,7 +17,6 @@ import de.tum.in.www1.artemis.domain.ExerciseHint;
 import de.tum.in.www1.artemis.repository.ExerciseHintRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.web.rest.ExerciseHintResource;
-import de.tum.in.www1.artemis.web.rest.dto.StringDTO;
 
 public class ExerciseHintIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -191,7 +190,14 @@ public class ExerciseHintIntegrationTest extends AbstractSpringIntegrationBamboo
         final var hint = new ExerciseHint().title("Test Hint").exercise(exercise);
         exerciseHintRepository.save(hint);
 
-        final var stringDTO = request.get("/api/exercise-hints/" + hint.getId() + "/get-title", HttpStatus.OK, StringDTO.class);
-        assertThat(stringDTO.getResponse()).isEqualTo(hint.getTitle());
+        final var title = request.get("/api/exercise-hints/" + hint.getId() + "/title", HttpStatus.OK, String.class);
+        assertThat(title).isEqualTo(hint.getTitle());
+    }
+
+    @Test
+    @WithMockUser(username = "user1", roles = "USER")
+    public void testGetHintTitleForNonExistingHint() throws Exception {
+        // No hint with id 10 was created
+        request.get("/api/exercise-hints/10/title", HttpStatus.NOT_FOUND, String.class);
     }
 }

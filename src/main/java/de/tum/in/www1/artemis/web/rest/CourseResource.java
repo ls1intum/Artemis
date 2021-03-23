@@ -48,7 +48,6 @@ import de.tum.in.www1.artemis.service.connectors.VcsUserManagementService;
 import de.tum.in.www1.artemis.web.rest.dto.*;
 import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
 import de.tum.in.www1.artemis.web.rest.dto.StatsForInstructorDashboardDTO;
-import de.tum.in.www1.artemis.web.rest.dto.StringDTO;
 import de.tum.in.www1.artemis.web.rest.dto.TutorLeaderboardDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -1122,16 +1121,17 @@ public class CourseResource {
     }
 
     /**
-     * GET /courses/:courseId/get-title : Returns the title of the course with the given id
+     * GET /courses/:courseId/title : Returns the title of the course with the given id
      *
      * @param courseId the id of the course
-     * @return the name/title of the course
+     * @return the title of the course wrapped in an ResponseEntity or 404 Not Found if no course with that id exists
      */
-    @GetMapping(value = "/courses/{courseId}/get-title")
+    @GetMapping(value = "/courses/{courseId}/title")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     @ResponseBody
-    public StringDTO getCourseTitle(@PathVariable Long courseId) {
-        return new StringDTO(courseRepository.getCourseTitle(courseId));
+    public ResponseEntity<String> getCourseTitle(@PathVariable Long courseId) {
+        final var title = courseRepository.getCourseTitle(courseId);
+        return title == null ? ResponseEntity.notFound().build() : ResponseEntity.ok(title);
     }
 
     /**

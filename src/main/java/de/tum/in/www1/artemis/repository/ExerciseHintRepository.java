@@ -63,7 +63,7 @@ public interface ExerciseHintRepository extends JpaRepository<ExerciseHint, Long
      * Returns the title of the hint with the given id
      *
      * @param hintId the id of the hint
-     * @return the name/title of the hint
+     * @return the name/title of the hint or null if the hint does not exist
      */
     @Query("""
             SELECT h.title

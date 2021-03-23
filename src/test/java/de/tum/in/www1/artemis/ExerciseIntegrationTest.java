@@ -34,7 +34,6 @@ import de.tum.in.www1.artemis.service.ExerciseService;
 import de.tum.in.www1.artemis.util.FileUtils;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.dto.StatsForInstructorDashboardDTO;
-import de.tum.in.www1.artemis.web.rest.dto.StringDTO;
 
 public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -688,7 +687,14 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
         exercise.setTitle("Test Exercise");
         exerciseRepository.save(exercise);
 
-        final var stringDTO = request.get("/api/exercises/" + exercise.getId() + "/get-title", HttpStatus.OK, StringDTO.class);
-        assertThat(stringDTO.getResponse()).isEqualTo(exercise.getTitle());
+        final var title = request.get("/api/exercises/" + exercise.getId() + "/title", HttpStatus.OK, String.class);
+        assertThat(title).isEqualTo(exercise.getTitle());
+    }
+
+    @Test
+    @WithMockUser(username = "user1", roles = "USER")
+    public void testGetExerciseTitleForNonExistingExercise() throws Exception {
+        // No exercise with id 1 was created
+        request.get("/api/exercises/1/title", HttpStatus.NOT_FOUND, String.class);
     }
 }

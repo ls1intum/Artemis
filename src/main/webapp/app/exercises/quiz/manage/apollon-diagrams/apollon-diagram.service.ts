@@ -44,13 +44,13 @@ export class ApollonDiagramService {
     }
 
     /**
-     * Returns the title of the diagram with the given id
+     * Fetches the title of the diagram with the given id
      *
      * @param diagramId the id of the diagram
-     * @return the name/title of the diagram
+     * @return the title of the diagram in an HttpResponse, or an HttpErrorResponse on error
      */
-    getTitle(diagramId: number): Observable<HttpResponse<Map<string, string>>> {
-        return this.http.get<Map<string, string>>(`${this.resourceUrl}/apollon-diagrams/${diagramId}/get-title`, { observe: 'response' });
+    getTitle(diagramId: number): Observable<HttpResponse<string>> {
+        return this.http.get(`${this.resourceUrl}/apollon-diagrams/${diagramId}/title`, { observe: 'response', responseType: 'text' });
     }
 
     /**

@@ -28,7 +28,6 @@ import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
 import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
 import de.tum.in.www1.artemis.web.rest.dto.StatsForInstructorDashboardDTO;
-import de.tum.in.www1.artemis.web.rest.dto.StringDTO;
 import de.tum.in.www1.artemis.web.rest.dto.TutorLeaderboardDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
@@ -207,15 +206,16 @@ public class ExerciseResource {
     }
 
     /**
-     * GET /exercises/:exerciseId/get-title : Returns the title of the exercise with the given id
+     * GET /exercises/:exerciseId/title : Returns the title of the exercise with the given id
      *
      * @param exerciseId the id of the exercise
-     * @return the name/title of the exercise
+     * @return the title of the exercise wrapped in an ResponseEntity or 404 Not Found if no exercise with that id exists
      */
-    @GetMapping(value = "/exercises/{exerciseId}/get-title")
+    @GetMapping(value = "/exercises/{exerciseId}/title")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    public StringDTO getExerciseTitle(@PathVariable Long exerciseId) {
-        return new StringDTO(exerciseRepository.getExerciseTitle(exerciseId));
+    public ResponseEntity<String> getExerciseTitle(@PathVariable Long exerciseId) {
+        final var title = exerciseRepository.getExerciseTitle(exerciseId);
+        return title == null ? ResponseEntity.notFound().build() : ResponseEntity.ok(title);
     }
 
     /**

@@ -5,6 +5,7 @@ import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.http.HttpResponse;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
@@ -229,15 +230,16 @@ public class ExamResource {
     }
 
     /**
-     * GET /exams/{examId}/get-title : Returns the title of the exam with the given id
+     * GET /exams/{examId}/title : Returns the title of the exam with the given id
      *
      * @param examId the id of the exam
-     * @return the name/title of the exam
+     * @return the title of the exam wrapped in an ResponseEntity or 404 Not Found if no exam with that id exists
      */
-    @GetMapping(value = "/exams/{examId}/get-title")
+    @GetMapping(value = "/exams/{examId}/title")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    public StringDTO getExamTitle(@PathVariable Long examId) {
-        return new StringDTO(examRepository.getExamTitle(examId));
+    public ResponseEntity<String> getExamTitle(@PathVariable Long examId) {
+        final var title = examRepository.getExamTitle(examId);
+        return title == null ? ResponseEntity.notFound().build() : ResponseEntity.ok(title);
     }
 
     /**

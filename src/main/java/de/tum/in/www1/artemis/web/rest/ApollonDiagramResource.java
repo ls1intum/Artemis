@@ -19,7 +19,6 @@ import de.tum.in.www1.artemis.repository.ApollonDiagramRepository;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.web.rest.dto.StringDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
@@ -112,15 +111,16 @@ public class ApollonDiagramResource {
     }
 
     /**
-     * GET /apollon-diagrams/:diagramId/get-title : Returns the title of the diagram with the given id
+     * GET /apollon-diagrams/:diagramId/title : Returns the title of the diagram with the given id
      *
      * @param diagramId the id of the diagram
-     * @return the name/title of the diagram
+     * @return the title of the diagram wrapped in an ResponseEntity or 404 Not Found if no diagram with that id exists
      */
-    @GetMapping(value = "/apollon-diagrams/{diagramId}/get-title")
+    @GetMapping(value = "/apollon-diagrams/{diagramId}/title")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    public StringDTO getExerciseTitle(@PathVariable Long diagramId) {
-        return new StringDTO(apollonDiagramRepository.getDiagramTitle(diagramId));
+    public ResponseEntity<String> getExerciseTitle(@PathVariable Long diagramId) {
+        final var title = apollonDiagramRepository.getDiagramTitle(diagramId);
+        return title == null ? ResponseEntity.notFound().build() : ResponseEntity.ok(title);
     }
 
     /**

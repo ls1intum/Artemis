@@ -109,10 +109,10 @@ describe('NavbarComponent', () => {
                 component = fixture.componentInstance;
 
                 const courseManagementService = fixture.debugElement.injector.get(CourseManagementService);
-                courseManagementStub = sinon.stub(courseManagementService, 'getTitle').returns(of({ body: { response: 'Test Course' } } as HttpResponse<any>));
+                courseManagementStub = sinon.stub(courseManagementService, 'getTitle').returns(of({ body: 'Test Course' } as HttpResponse<string>));
 
                 const exerciseService = fixture.debugElement.injector.get(ExerciseService);
-                exerciseStub = sinon.stub(exerciseService, 'getTitle').returns(of({ body: { response: 'Test Exercise' } } as HttpResponse<any>));
+                exerciseStub = sinon.stub(exerciseService, 'getTitle').returns(of({ body: 'Test Exercise' } as HttpResponse<string>));
             });
     });
 
@@ -277,7 +277,7 @@ describe('NavbarComponent', () => {
             router.setUrl(testUrl);
 
             const hintService = fixture.debugElement.injector.get(ExerciseHintService);
-            const hintsStub = sinon.stub(hintService, 'getTitle').returns(of({ body: { response: 'Exercise Hint' } } as HttpResponse<any>));
+            const hintsStub = sinon.stub(hintService, 'getTitle').returns(of({ body: 'Exercise Hint' } as HttpResponse<string>));
 
             fixture.detectChanges();
 
@@ -403,7 +403,7 @@ describe('NavbarComponent', () => {
             router.setUrl(testUrl);
 
             const lectureService = fixture.debugElement.injector.get(LectureService);
-            const lectureStub = sinon.stub(lectureService, 'getTitle').returns(of({ body: { response: 'Test Lecture' } } as HttpResponse<any>));
+            const lectureStub = sinon.stub(lectureService, 'getTitle').returns(of({ body: 'Test Lecture' } as HttpResponse<string>));
 
             fixture.detectChanges();
 
@@ -438,7 +438,7 @@ describe('NavbarComponent', () => {
             router.setUrl(testUrl);
 
             const apollonDiagramService = fixture.debugElement.injector.get(ApollonDiagramService);
-            const apollonStub = sinon.stub(apollonDiagramService, 'getTitle').returns(of({ body: { response: 'Apollon Diagram' } } as HttpResponse<any>));
+            const apollonStub = sinon.stub(apollonDiagramService, 'getTitle').returns(of({ body: 'Apollon Diagram' } as HttpResponse<string>));
 
             fixture.detectChanges();
 
@@ -463,7 +463,7 @@ describe('NavbarComponent', () => {
             router.setUrl(testUrl);
 
             const examService = fixture.debugElement.injector.get(ExamManagementService);
-            const examStub = sinon.stub(examService, 'getTitle').returns(of({ body: { response: 'Test Exam' } } as HttpResponse<any>));
+            const examStub = sinon.stub(examService, 'getTitle').returns(of({ body: 'Test Exam' } as HttpResponse<string>));
 
             fixture.detectChanges();
 

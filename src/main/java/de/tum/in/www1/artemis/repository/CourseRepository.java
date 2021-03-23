@@ -81,7 +81,7 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
      * Returns the title of the course with the given id
      *
      * @param courseId the id of the course
-     * @return the name/title of the course
+     * @return the name/title of the course or null if the course does not exist
      */
     @Query("""
             SELECT c.title

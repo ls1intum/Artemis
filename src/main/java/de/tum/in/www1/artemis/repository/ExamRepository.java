@@ -100,7 +100,7 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
      * Returns the title of the exam with the given id
      *
      * @param examId the id of the exam
-     * @return the name/title of the exam
+     * @return the name/title of the exam or null if the exam does not exist
      */
     @Query("""
             SELECT e.title

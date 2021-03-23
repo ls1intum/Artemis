@@ -35,7 +35,6 @@ import de.tum.in.www1.artemis.service.GroupNotificationService;
 import de.tum.in.www1.artemis.service.user.UserService;
 import de.tum.in.www1.artemis.web.rest.dto.CourseManagementOverviewStatisticsDTO;
 import de.tum.in.www1.artemis.web.rest.dto.StatsForInstructorDashboardDTO;
-import de.tum.in.www1.artemis.web.rest.dto.StringDTO;
 
 @Service
 public class CourseTestService {
@@ -1296,8 +1295,14 @@ public class CourseTestService {
         course.setTitle("Test Course");
         course = courseRepo.save(course);
 
-        final var stringDTO = request.get("/api/courses/" + course.getId() + "/get-title", HttpStatus.OK, StringDTO.class);
-        assertThat(stringDTO.getResponse()).isEqualTo(course.getTitle());
+        final var title = request.get("/api/courses/" + course.getId() + "/get-title", HttpStatus.OK, String.class);
+        assertThat(title).isEqualTo(course.getTitle());
+    }
+
+    // Test
+    public void testGetCourseTitleForNonExistingCourse() throws Exception {
+        // No course with id 10 was created
+        request.get("/api/courses/10/title", HttpStatus.NOT_FOUND, String.class);
     }
 
     // Test

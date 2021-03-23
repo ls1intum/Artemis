@@ -19,7 +19,6 @@ import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.*;
-import de.tum.in.www1.artemis.web.rest.dto.StringDTO;
 import io.github.jhipster.web.util.HeaderUtil;
 
 /**
@@ -117,15 +116,16 @@ public class ExerciseHintResource {
     }
 
     /**
-     * GET /exercise-hints/:hintId/get-title : Returns the title of the hint with the given id
+     * GET /exercise-hints/:hintId/title : Returns the title of the hint with the given id
      *
      * @param hintId the id of the hint
-     * @return the name/title of the hint
+     * @return the title of the hint wrapped in an ResponseEntity or 404 Not Found if no hint with that id exists
      */
-    @GetMapping(value = "/exercise-hints/{hintId}/get-title")
+    @GetMapping(value = "/exercise-hints/{hintId}/title")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    public StringDTO getHintTitle(@PathVariable Long hintId) {
-        return new StringDTO(exerciseHintRepository.getHintTitle(hintId));
+    public ResponseEntity<String> getHintTitle(@PathVariable Long hintId) {
+        final var title = exerciseHintRepository.getHintTitle(hintId);
+        return title == null ? ResponseEntity.notFound().build() : ResponseEntity.ok(title);
     }
 
     /**

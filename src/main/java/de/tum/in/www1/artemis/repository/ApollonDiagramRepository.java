@@ -21,7 +21,7 @@ public interface ApollonDiagramRepository extends JpaRepository<ApollonDiagram, 
      * Returns the title of the diagram with the given id
      *
      * @param diagramId the id of the diagram
-     * @return the name/title of the diagram
+     * @return the name/title of the diagram or null if the diagram does not exist
      */
     @Query("""
             SELECT ad.title

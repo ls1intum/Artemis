@@ -73,13 +73,13 @@ export class CourseManagementService {
     }
 
     /**
-     * Returns the title of the course with the given id
+     * Fetches the title of the course with the given id
      *
      * @param courseId the id of the course
-     * @return the name/title of the course
+     * @return the title of the course in an HttpResponse, or an HttpErrorResponse on error
      */
-    getTitle(courseId: number): Observable<HttpResponse<Map<string, string>>> {
-        return this.http.get<Map<string, string>>(`${this.resourceUrl}/${courseId}/get-title`, { observe: 'response' });
+    getTitle(courseId: number): Observable<HttpResponse<string>> {
+        return this.http.get(`${this.resourceUrl}/${courseId}/title`, { observe: 'response', responseType: 'text' });
     }
 
     /**

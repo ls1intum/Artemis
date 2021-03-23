@@ -1860,7 +1860,14 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         course.addExam(exam);
         courseRepo.save(course);
 
-        final var stringDTO = request.get("/api/exams/" + exam.getId() + "/get-title", HttpStatus.OK, StringDTO.class);
-        assertThat(stringDTO.getResponse()).isEqualTo(exam.getTitle());
+        final var title = request.get("/api/exams/" + exam.getId() + "/title", HttpStatus.OK, String.class);
+        assertThat(title).isEqualTo(exam.getTitle());
+    }
+
+    @Test
+    @WithMockUser(username = "user1", roles = "USER")
+    public void testGetExamTitleForNonExistingExam() throws Exception {
+        // No exam with id 10 was created
+        request.get("/api/exams/10/title", HttpStatus.NOT_FOUND, String.class);
     }
 }

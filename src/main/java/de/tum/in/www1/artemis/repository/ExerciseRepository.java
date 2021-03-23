@@ -224,7 +224,7 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
      * Returns the title of the exercise with the given id
      *
      * @param exerciseId the id of the exercise
-     * @return the name/title of the exercise
+     * @return the name/title of the exercise or null if the exercise does not exist
      */
     @Query("""
             SELECT e.title

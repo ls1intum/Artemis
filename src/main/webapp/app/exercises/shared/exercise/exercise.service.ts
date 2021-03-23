@@ -71,13 +71,13 @@ export class ExerciseService {
     }
 
     /**
-     * Returns the title of the exercise with the given id
+     * Fetches the title of the exercise with the given id
      *
      * @param exerciseId the id of the exercise
-     * @return the name/title of the exercise
+     * @return the title of the exercise in an HttpResponse, or an HttpErrorResponse on error
      */
-    getTitle(exerciseId: number): Observable<HttpResponse<Map<string, string>>> {
-        return this.http.get<Map<string, string>>(`${this.resourceUrl}/${exerciseId}/get-title`, { observe: 'response' });
+    getTitle(exerciseId: number): Observable<HttpResponse<string>> {
+        return this.http.get(`${this.resourceUrl}/${exerciseId}/title`, { observe: 'response', responseType: 'text' });
     }
 
     /**

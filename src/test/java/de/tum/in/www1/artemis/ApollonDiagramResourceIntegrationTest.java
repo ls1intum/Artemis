@@ -22,7 +22,6 @@ import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.CourseService;
 import de.tum.in.www1.artemis.service.user.UserService;
 import de.tum.in.www1.artemis.util.ModelFactory;
-import de.tum.in.www1.artemis.web.rest.dto.StringDTO;
 
 public class ApollonDiagramResourceIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -232,7 +231,14 @@ public class ApollonDiagramResourceIntegrationTest extends AbstractSpringIntegra
         apollonDiagram.setCourseId(course1.getId());
         ApollonDiagram savedDiagram = apollonDiagramRepository.save(apollonDiagram);
 
-        final var stringDTO = request.get("/api/apollon-diagrams/" + savedDiagram.getId() + "/get-title", HttpStatus.OK, StringDTO.class);
-        assertThat(stringDTO.getResponse()).isEqualTo(apollonDiagram.getTitle());
+        final var title = request.get("/api/apollon-diagrams/" + savedDiagram.getId() + "/title", HttpStatus.OK, String.class);
+        assertThat(title).isEqualTo(apollonDiagram.getTitle());
+    }
+
+    @Test
+    @WithMockUser(username = "user1", roles = "USER")
+    public void testGetDiagramTitleForNonExistingDiagram() throws Exception {
+        // No diagram with id 1 was created
+        request.get("/api/apollon-diagrams/1/title", HttpStatus.NOT_FOUND, String.class);
     }
 }
