@@ -61,7 +61,7 @@ describe('ModelingAssessmentDashboardComponent', () => {
 
     beforeEach(async(() => {
         TestBed.configureTestingModule({
-            imports: [RouterTestingModule.withRoutes([routes[1]]), TranslateModule.forRoot(), ArtemisTestModule],
+            imports: [RouterTestingModule.withRoutes([routes[2]]), TranslateModule.forRoot(), ArtemisTestModule],
             declarations: [ModelingAssessmentDashboardComponent],
             providers: [
                 JhiLanguageHelper,
