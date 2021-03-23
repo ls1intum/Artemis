@@ -146,7 +146,7 @@ public class TutorParticipationService {
     public TutorParticipation addExampleSubmission(Exercise exercise, ExampleSubmission exampleSubmission, User user) throws EntityNotFoundException, BadRequestAlertException {
         TutorParticipation existingTutorParticipation = this.findByExerciseAndTutor(exercise, user);
         // Do not trust the user input
-        Optional<ExampleSubmission> exampleSubmissionFromDatabase = exampleSubmissionService.findByIdWithEagerTutorParticipations(exampleSubmission.getId());
+        Optional<ExampleSubmission> exampleSubmissionFromDatabase = exampleSubmissionRepository.findByIdWithResultsAndTutorParticipations(exampleSubmission.getId());
 
         if (existingTutorParticipation == null || exampleSubmissionFromDatabase.isEmpty()) {
             throw new EntityNotFoundException("There isn't such example submission, or there isn't any tutor participation for this exercise");
@@ -165,7 +165,7 @@ public class TutorParticipationService {
         // If it is a tutorial we check the assessment
         if (isTutorial) {
             // Retrieve the example feedback created by the instructor
-            List<Feedback> existingFeedback = this.exampleSubmissionService.getFeedbackForExampleSubmission(exampleSubmission.getId());
+            List<Feedback> existingFeedback = exampleSubmissionRepository.getFeedbackForExampleSubmission(exampleSubmission.getId());
 
             // Check if the result is the same
             // TODO: at the moment we check only the score +/10%, maybe we want to do something smarter?
@@ -191,7 +191,7 @@ public class TutorParticipationService {
             return existingTutorParticipation;
         }
 
-        long numberOfExampleSubmissionsForTutor = this.exampleSubmissionRepository.findAllWithEagerResultByExerciseId(exercise.getId()).stream()
+        long numberOfExampleSubmissionsForTutor = exampleSubmissionRepository.findAllWithResultByExerciseId(exercise.getId()).stream()
                 // We are only interested in example submissions with an assessment as these are the ones that can be reviewed/assessed by tutors.
                 // Otherwise, the tutor could not reach the total number of example submissions, if there are example submissions without assessment.
                 // In this case the tutor could not reach status "TRAINED" in the if statement below and would not be allowed
@@ -234,8 +234,7 @@ public class TutorParticipationService {
         TutorParticipation tutorParticipation = tutorParticipationRepository.findWithEagerExampleSubmissionAndResultsByAssessedExerciseAndTutor(exercise, user);
 
         for (ExampleSubmission exampleSubmission : exampleSubmissions) {
-            Optional<ExampleSubmission> exampleSubmissionWithTutorParticipation = exampleSubmissionRepository
-                    .findByIdWithEagerResultsAndTutorParticipations(exampleSubmission.getId());
+            Optional<ExampleSubmission> exampleSubmissionWithTutorParticipation = exampleSubmissionRepository.findByIdWithResultsAndTutorParticipations(exampleSubmission.getId());
             if (exampleSubmissionWithTutorParticipation.isPresent()) {
                 exampleSubmissionWithTutorParticipation.get().removeTutorParticipations(tutorParticipation);
                 tutorParticipationRepository.delete(tutorParticipation);

@@ -280,7 +280,7 @@ public class ModelingSubmissionService extends SubmissionService {
      * @return the modeling submission with the given id
      */
     public ModelingSubmission findOneWithEagerResultAndFeedback(Long submissionId) {
-        return modelingSubmissionRepository.findByIdWithEagerResultAndFeedback(submissionId)
+        return modelingSubmissionRepository.findByIdWithEagerResultAndAssessorAndFeedback(submissionId)
                 .orElseThrow(() -> new EntityNotFoundException("Modeling submission with id \"" + submissionId + "\" does not exist"));
     }
 

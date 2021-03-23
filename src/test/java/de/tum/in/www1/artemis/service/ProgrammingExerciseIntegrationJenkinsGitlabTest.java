@@ -87,6 +87,36 @@ public class ProgrammingExerciseIntegrationJenkinsGitlabTest extends AbstractSpr
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    void testProgrammingExerciseDelete_failToDeleteBuildPlan() throws Exception {
+        programmingExerciseIntegrationServiceTest.testProgrammingExerciseDelete_failToDeleteBuildPlan();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    void testProgrammingExerciseDelete_buildPlanDoesntExist() throws Exception {
+        programmingExerciseIntegrationServiceTest.testProgrammingExerciseDelete_buildPlanDoesntExist();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    void testProgrammingExerciseDelete_failToDeleteCiProject() throws Exception {
+        programmingExerciseIntegrationServiceTest.testProgrammingExerciseDelete_failToDeleteCiProject();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    void testProgrammingExerciseDelete_failToDeleteVcsProject() throws Exception {
+        programmingExerciseIntegrationServiceTest.testProgrammingExerciseDelete_failToDeleteVcsProject();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    void testProgrammingExerciseDelete_failToDeleteVcsRepositories() throws Exception {
+        programmingExerciseIntegrationServiceTest.testProgrammingExerciseDelete_failToDeleteVcsRepositories();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void testProgrammingExerciseDelete_invalidId_notFound() throws Exception {
         programmingExerciseIntegrationServiceTest.testProgrammingExerciseDelete_invalidId_notFound();
     }
@@ -212,6 +242,12 @@ public class ProgrammingExerciseIntegrationJenkinsGitlabTest extends AbstractSpr
     }
 
     @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void updateProgrammingExercise_checkIfBuildPlanExistsFails_badRequest() throws Exception {
+        programmingExerciseIntegrationServiceTest.updateProgrammingExercise_checkIfBuildPlanExistsFails_badRequest();
+    }
+
+    @Test
     @WithMockUser(username = "instructoralt1", roles = "INSTRUCTOR")
     public void updateTimeline_intructorNotInCourse_forbidden() throws Exception {
         programmingExerciseIntegrationServiceTest.updateTimeline_intructorNotInCourse_forbidden();
@@ -239,6 +275,12 @@ public class ProgrammingExerciseIntegrationJenkinsGitlabTest extends AbstractSpr
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void updateProblemStatement_invalidId_notFound() throws Exception {
         programmingExerciseIntegrationServiceTest.updateProblemStatement_invalidId_notFound();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void createProgrammingExercise_failToCheckIfProjectExistsInCi() throws Exception {
+        programmingExerciseIntegrationServiceTest.createProgrammingExercise_failToCheckIfProjectExistsInCi();
     }
 
     @Test
@@ -412,7 +454,7 @@ public class ProgrammingExerciseIntegrationJenkinsGitlabTest extends AbstractSpr
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     @ParameterizedTest
     // It should fail for all ProgrammingExercises except Haskell
-    @EnumSource(value = ProgrammingLanguage.class, names = { "HASKELL", "KOTLIN", "VHDL", "ASSEMBLER" }, mode = EnumSource.Mode.EXCLUDE)
+    @EnumSource(value = ProgrammingLanguage.class, names = { "HASKELL", "KOTLIN", "VHDL", "ASSEMBLER", "OCAML" }, mode = EnumSource.Mode.EXCLUDE)
     public void createProgrammingExercise_checkoutSolutionRepositoryProgrammingLanguageNotSupported_badRequest(ProgrammingLanguage programmingLanguage) throws Exception {
         programmingExerciseIntegrationServiceTest.createProgrammingExercise_checkoutSolutionRepositoryProgrammingLanguageNotSupported_badRequest(programmingLanguage);
     }
@@ -590,6 +632,12 @@ public class ProgrammingExerciseIntegrationJenkinsGitlabTest extends AbstractSpr
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void updateTestCases_asInstrutor() throws Exception {
         programmingExerciseIntegrationServiceTest.updateTestCases_asInstrutor();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void updateTestCases_asInstrutor_triggerBuildFails() throws Exception {
+        programmingExerciseIntegrationServiceTest.updateTestCases_asInstrutor_triggerBuildFails();
     }
 
     @Test

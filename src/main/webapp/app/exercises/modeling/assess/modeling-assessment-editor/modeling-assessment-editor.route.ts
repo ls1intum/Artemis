@@ -16,6 +16,17 @@ export const routes: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
+        path: ':courseId/modeling-exercises/:exerciseId/submissions/:submissionId/assessments/:resultId',
+        component: ModelingAssessmentEditorComponent,
+        data: {
+            authorities: [Authority.ADMIN, Authority.INSTRUCTOR],
+            usePathForBreadcrumbs: true,
+            pageTitle: 'artemisApp.apollonDiagram.detail.title',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+
+    {
         path: ':courseId/modeling-exercises/:exerciseId/assessment',
         component: ModelingAssessmentDashboardComponent,
         data: {

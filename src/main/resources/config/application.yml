@@ -80,6 +80,10 @@ spring:
         name: Artemis
     jmx:
         enabled: false
+    cloud:
+        config:
+            import-check:
+                enabled: false
     data:
         jpa:
             repositories:

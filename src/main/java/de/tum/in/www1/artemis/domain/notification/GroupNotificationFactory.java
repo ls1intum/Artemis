@@ -79,6 +79,11 @@ public class GroupNotificationFactory {
                 title = "Exercise updated";
                 text = "Exercise \"" + exercise.getTitle() + "\" updated.";
             }
+            case DUPLICATE_TEST_CASE -> {
+                title = "Duplicate test case was found.";
+                text = "Exercise \"" + exercise.getTitle() + "\" has multiple test cases with the same name.";
+            }
+
             default -> throw new UnsupportedOperationException("Unsupported NotificationType: " + notificationType);
         }
 
@@ -91,13 +96,15 @@ public class GroupNotificationFactory {
         // Exercises for exams
         if (exercise.isExamExercise()) {
             if (exercise instanceof ProgrammingExercise) {
-                notification.setTarget(notification.getExamProgrammingExerciseTarget((ProgrammingExercise) exercise, "exerciseUpdated"));
+                notification.setTarget(notification.getExamProgrammingExerciseOrTestCaseTarget((ProgrammingExercise) exercise, "exerciseUpdated"));
             }
-
         }
         // Exercises for courses (not for exams)
         else if (notificationType == NotificationType.EXERCISE_CREATED) {
             notification.setTarget(notification.getExerciseCreatedTarget(exercise));
+        }
+        else if (notificationType == NotificationType.DUPLICATE_TEST_CASE) {
+            notification.setTarget(notification.getExamProgrammingExerciseOrTestCaseTarget((ProgrammingExercise) exercise, "duplicateTestCase"));
         }
         else {
             notification.setTarget(notification.getExerciseUpdatedTarget(exercise));

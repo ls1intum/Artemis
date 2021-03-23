@@ -170,7 +170,7 @@ public class ExerciseResource {
             return badRequest();
         }
 
-        Set<ExampleSubmission> exampleSubmissions = this.exampleSubmissionRepository.findAllWithEagerResultByExerciseId(exerciseId);
+        Set<ExampleSubmission> exampleSubmissions = this.exampleSubmissionRepository.findAllWithResultByExerciseId(exerciseId);
         // Do not provide example submissions without any assessment
         exampleSubmissions.removeIf(exampleSubmission -> exampleSubmission.getSubmission().getLatestResult() == null);
         exercise.setExampleSubmissions(exampleSubmissions);
@@ -228,6 +228,7 @@ public class ExerciseResource {
     /**
      * Given an exercise exerciseId, it creates an object node with numberOfSubmissions, totalNumberOfAssessments, numberOfComplaints and numberOfMoreFeedbackRequests, that are used by both
      * stats for assessment dashboard and for instructor dashboard
+     * TODO: refactor and improve this method
      *
      * @param exercise - the exercise we are interested in
      * @param examMode - flag to determine if test run submissions should be deducted from the statistics
@@ -290,11 +291,8 @@ public class ExerciseResource {
 
         stats.setNumberOfOpenMoreFeedbackRequests(numberOfMoreFeedbackRequests - numberOfMoreFeedbackComplaintResponses);
 
-        // tutor leaderboards are currently not supported for exams
-        if (!examMode) {
-            List<TutorLeaderboardDTO> leaderboardEntries = tutorLeaderboardService.getExerciseLeaderboard(exercise);
-            stats.setTutorLeaderboardEntries(leaderboardEntries);
-        }
+        List<TutorLeaderboardDTO> leaderboardEntries = tutorLeaderboardService.getExerciseLeaderboard(exercise);
+        stats.setTutorLeaderboardEntries(leaderboardEntries);
 
         return stats;
     }

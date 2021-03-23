@@ -224,12 +224,10 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
      *         due date at all (only exercises with manual or semi automatic correction are considered)
      */
     @Query("""
-            SELECT COUNT (DISTINCT p) FROM ProgrammingExerciseStudentParticipation p
+            SELECT COUNT (DISTINCT p) FROM ProgrammingExerciseStudentParticipation p join p.submissions s
                 WHERE p.exercise.assessmentType <> 'AUTOMATIC'
                 AND p.exercise.course.id = :#{#courseId}
-                AND EXISTS (SELECT s FROM ProgrammingSubmission s
-                    WHERE s.participation.id = p.id
-                    AND s.submitted = TRUE)
+                AND s.submitted = TRUE
             """)
     long countSubmissionsByCourseIdSubmitted(@Param("courseId") Long courseId);
 

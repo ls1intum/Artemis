@@ -127,7 +127,21 @@ GitLab
 Gitlab Server Setup
 ~~~~~~~~~~~~~~~~~~~
 
-1. Pull the latest GitLab Docker image
+GitLab provides no possibility to set a users password via API without forcing the user to change it afterwards (see `Issue 19141 <https://gitlab.com/gitlab-org/gitlab/-/issues/19141>`__).
+Therefore, you may want to patch the official gitlab docker image.
+Thus, you can use the following Dockerfile:
+
+.. code:: dockerfile
+
+    FROM gitlab/gitlab-ce:latest
+    RUN sed -i '/^.*user_params\[:password_expires_at\] = Time.current if admin_making_changes_for_another_user.*$/s/^/#/' /opt/gitlab/embedded/service/gitlab-rails/lib/api/users.rb
+
+
+This dockerfile disables the mechanism that sets the password to expired state after changed via API.
+If you want to use this custom image, you have to build the image and replace all occurances of ``gitlab/gitlab-ce:latest`` in the following instructions by your chosen image name.
+
+
+1. Pull the latest GitLab Docker image (only if you don't use your custom gitlab image)
 
    ::
 
@@ -478,7 +492,9 @@ recommended ones that got installed during the setup process):
 
     **Note:** This is a suite of plugins that will install multiple plugins
 
-4. `Pipeline Maven <https://plugins.jenkins.io/pipeline-maven/>`__ to use maven within the pipelines.
+4. `Pipeline Maven <https://plugins.jenkins.io/pipeline-maven/>`__ to use maven within the pipelines. If you want to use docker for your build agents you may also need to install `Docker Pipeline <https://plugins.jenkins.io/docker-workflow/>`__ .
+
+5. `Matrix Authorization Strategy Plugin <https://plugins.jenkins.io/matrix-auth/>`__ for configuring permissions for users on a project and build plan level (Matrix Authorization Strategy might already be installed).
 
 
 The plugins above (and the pipeline-setup associated with it) got introduced in Artemis 4.7.3.
@@ -898,6 +914,44 @@ Prerequisites:
 
 11. You are finished, the new agent should now also process builds.
 
+
+Jenkins User Management
+~~~~~~~~~~~~~~~~~~~~~~~
+
+Artemis supports user management in Jenkins as of version 4.11.0. Creating an account in Artemis will also create an
+account on Jenkins using the same password. This enables users to login and access Jenkins. Updating and/or deleting
+users from Artemis will also lead to updating and/or deleting from Jenkins.
+
+Unfortunately, Jenkins does not provide a Rest API for user management which present the following **caveats**:
+
+ - The username of a user is treated as a unique identifier in Jenkins.
+ - It's not possible to update an existing user with a single request. We update by deleting the user from Jenkins and recreating it with the updated data.
+ - In Jenkins, users are created in an on-demand basis. For example, when a build is performed, its change log is computed and as a result commits from users who Jenkins has never seen may be discovered and created.
+ - Since Jenkins users may be re-created automatically, issues may occur such as 1) creating a user, deleting it, and  then re-creating it and 2) changing the username of the user and reverting back to the previous one.
+ - Updating a user will re-create it in Jenkins and therefore remove any additionally saved Jenkins-specific user data such as API access tokens.
+
+
+Jenkins Build Plan Access Control Configuration
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Artemis takes advantage of the Project-based Matrix Authorization Strategy plugin to support build plan access control in Jenkins.
+This enables specific Artemis users to access build plans and execute actions such as triggering a build.
+This section explains the changes required in Jenkins in order to set up build plan access control:
+
+1. Navigate to Manage Jenkins -> Manage Plugins -> Installed and make sure that you have the `Matrix Authorization Strategy <https://plugins.jenkins.io/matrix-auth/>`__ plugin installed
+
+2. Navigate to Manage Jenkins -> Configure Global Security and navigate to the "Authorization" section
+
+3. Select the "Project-based Matrix Authorization Strategy" option
+
+4. In the table make sure that the "Read" permission under the "Overall" section is assigned to the "Authenticated Users" user group.
+
+5. In the table make sure that all "Administer" permission is assigned to all administrators.
+
+6. You are finished. If you want to fine-tune permissions assigned to teaching assistants and/or instructors, you can change them within the ``JenkinsJobPermission.java`` file.
+
+.. figure:: jenkins-gitlab/jenkins_authorization_permissions.png
+    :align: center
 
 
 Caching

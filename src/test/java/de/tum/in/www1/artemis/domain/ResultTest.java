@@ -19,6 +19,8 @@ public class ResultTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
 
     List<Feedback> feedbackList;
 
+    Double offsetByTenThousandth = 0.0001;
+
     @Autowired
     AssessmentService assessmentService;
 
@@ -47,7 +49,7 @@ public class ResultTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
         result.setScore(totalPoints, maxPoints);
         result.setResultString(totalPoints, maxPoints);
 
-        assertThat(result.getScore()).isEqualTo(5.0 / maxPoints * 100, Offset.offset(0.00001));
+        assertThat(result.getScore()).isEqualTo(5.0 / maxPoints * 100, Offset.offset(offsetByTenThousandth));
         assertThat(result.getResultString()).isEqualToIgnoringCase("5 of 7 points");
     }
 
