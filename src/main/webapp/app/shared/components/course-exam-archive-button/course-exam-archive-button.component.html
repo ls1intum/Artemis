@@ -32,7 +32,14 @@
             </p>
         </div>
         <div class="modal-footer">
-            <button type="button" class="btn btn-warning" (click)="modal.close('archive')">Archive Course</button>
+            <button
+                type="button"
+                class="btn btn-warning"
+                (click)="modal.close('archive')"
+                [jhiTranslate]="archiveMode === 'Course' ? 'artemisApp.courseExamArchive.archiveCourse' : 'artemisApp.courseExamArchive.archiveExam'"
+            >
+                Archive
+            </button>
         </div>
     </ng-template>
     <button *ngIf="canArchive()" [disabled]="isBeingArchived" type="button" class="btn btn-warning mr-1 mb-1" (click)="openArchiveWarningModal(archiveWarningPopup)">
