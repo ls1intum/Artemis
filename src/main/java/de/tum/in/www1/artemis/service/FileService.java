@@ -346,6 +346,10 @@ public class FileService implements DisposableBean {
             if (targetFilePath.endsWith("classpath.file")) {
                 targetFilePath = targetFilePath.replace("classpath.file", ".classpath");
             }
+            // special case for 'dune' files which would not be included in the build otherwise
+            if (targetFilePath.endsWith("dune.file")) {
+                targetFilePath = targetFilePath.replace("dune.file", "dune");
+            }
 
             Path copyPath = Paths.get(targetDirectoryPath + targetFilePath);
             File parentFolder = copyPath.toFile().getParentFile();
