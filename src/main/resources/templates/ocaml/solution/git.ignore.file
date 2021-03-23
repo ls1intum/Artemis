@@ -1,0 +1,8 @@
+# OCaml output files
+*.out
+*.exe
+*.cmi
+*.cmo
+
+# Dune output
+_build
