@@ -103,9 +103,9 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
     getSubmissionResultByCorrectionRound = getSubmissionResultByCorrectionRound;
 
     // helper variables to display information message about why no new assessments are possible anymore
-    remainingAssessments: number[];
-    lockedSubmissionsByOtherTutor: number[];
-    notYetAssessed: number[];
+    remainingAssessments: number[] = [];
+    lockedSubmissionsByOtherTutor: number[] = [];
+    notYetAssessed: number[] = [];
     firstRoundAssessments: number;
 
     readonly ExerciseType = ExerciseType;
@@ -624,13 +624,20 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
         return getExerciseSubmissionsLink(exercise.type!, this.courseId, exercise.id!, this.examId, this.exerciseGroupId);
     }
 
+    /**
+     * To correctly display why a tutor cannot assess any further submissions we need to calculate those values.
+     */
     calculateAssessmentProgressInformation() {
         if (this.exam) {
             for (let i = 0; i < (this.exam.numberOfCorrectionRoundsInExam ?? 0); i++) {
                 this.lockedSubmissionsByOtherTutor[i] = this.numberOfLockedAssessmentByOtherTutorsOfCorrectionRound[i]?.inTime;
 
+                // number of submissions in the particular round that still need assessment and are not locked
                 this.notYetAssessed[i] = this.numberOfSubmissions.inTime - this.numberOfAssessmentsOfCorrectionRounds[i].inTime - this.lockedSubmissionsByOtherTutor[i];
-                // docu
+
+                // The number of assessments which are still open but cannot be assessed as they were already assessed in the first round.
+                // Since if this will be displayed the number of assessments the tutor can create is 0 we can simply get this number by subtracting the
+                // lock-count from the remaining unassessed submisssions of the current correction round.
                 this.firstRoundAssessments = this.notYetAssessed[i] - this.lockedSubmissionsByOtherTutor[i];
             }
         }
