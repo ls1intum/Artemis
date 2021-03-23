@@ -1295,7 +1295,7 @@ public class CourseTestService {
         course.setTitle("Test Course");
         course = courseRepo.save(course);
 
-        final var title = request.get("/api/courses/" + course.getId() + "/get-title", HttpStatus.OK, String.class);
+        final var title = request.get("/api/courses/" + course.getId() + "/title", HttpStatus.OK, String.class);
         assertThat(title).isEqualTo(course.getTitle());
     }
 
