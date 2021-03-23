@@ -82,7 +82,7 @@
             "complaintHint": "Zeigt Beschwerden über Bewertungen von anderen Tutoren. Beachte: Beschwerden über deine Bewertungen werden hier nicht angezeigt.",
             "moreFeedbackRequestHint": "Zeigt Anfragen für weiteres Feedback von deinen Bewertungen an.",
             "noSubmissionsBecauseOfOtherLockedSubmissions": "Alle Einreichungen sind von anderen Tutoren gesperrt.",
-            "noSubmissionsInfo": "Es gibt {{freeAssessments}} offenen Abgaben, davon können {{openAssessments}} von dir bewertet werden. {{lockedSubmissionsByOtherTutor}} Abgaben sind von anderen Tutoren gesperrt. ",
+            "noSubmissionsInfo": "Es gibt {{freeAssessments}} offenen Abgaben, davon können {{openAssessments}} bewertet werden. {{lockedSubmissionsByOtherTutor}} Abgaben sind von anderen Tutoren gesperrt. ",
             "noSubmissionsInfoSecondCorrectionSingular": "Eine Abgabe hat noch keine Erstkorrektur.",
             "noSubmissionsInfoSecondCorrectionPlural": "{{notYetAssessed}} Abgaben haben noch keine Erstkorrektur.",
             "noSubmissionsBecauseFirstAssessedByYourself": "Nur Einreichungen die du nicht selbst in der ersten Korrekturrunde bearbeitet hast können korrigiert werden."
