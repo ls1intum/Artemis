@@ -10,11 +10,9 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import org.apache.http.HttpException;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,11 +23,8 @@ import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
-import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
-import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
-import de.tum.in.www1.artemis.repository.StaticCodeAnalysisCategoryRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.service.ExerciseHintService;
+import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.StaticCodeAnalysisService;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
@@ -41,10 +36,7 @@ public class ProgrammingExerciseImportService {
 
     private final Logger log = LoggerFactory.getLogger(ProgrammingExerciseImportService.class);
 
-    @Value("${artemis.repo-download-clone-path}")
-    private String repoDownloadClonePath;
-
-    private final ExerciseHintService exerciseHintService;
+    private final ExerciseHintRepository exerciseHintRepository;
 
     private final Optional<VersionControlService> versionControlService;
 
@@ -68,12 +60,12 @@ public class ProgrammingExerciseImportService {
 
     private final StaticCodeAnalysisService staticCodeAnalysisService;
 
-    public ProgrammingExerciseImportService(ExerciseHintService exerciseHintService, Optional<VersionControlService> versionControlService,
+    public ProgrammingExerciseImportService(ExerciseHintRepository exerciseHintRepository, Optional<VersionControlService> versionControlService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, ProgrammingExerciseParticipationService programmingExerciseParticipationService,
             ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository, StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository,
             ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseService programmingExerciseService, GitService gitService, FileService fileService,
             UserRepository userRepository, StaticCodeAnalysisService staticCodeAnalysisService) {
-        this.exerciseHintService = exerciseHintService;
+        this.exerciseHintRepository = exerciseHintRepository;
         this.versionControlService = versionControlService;
         this.continuousIntegrationService = continuousIntegrationService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
@@ -116,7 +108,7 @@ public class ProgrammingExerciseImportService {
         programmingExerciseService.initParticipations(newExercise);
 
         // Hints, test cases and static code analysis categories
-        exerciseHintService.copyExerciseHints(templateExercise, newExercise);
+        exerciseHintRepository.copyExerciseHints(templateExercise, newExercise);
         programmingExerciseRepository.save(newExercise);
         importTestCases(templateExercise, newExercise);
 
@@ -177,9 +169,8 @@ public class ProgrammingExerciseImportService {
      *
      * @param templateExercise The template exercise which plans should get copied
      * @param newExercise The new exercise to which all plans should get copied
-     * @throws HttpException If the copied build plans could not get triggered
      */
-    public void importBuildPlans(final ProgrammingExercise templateExercise, final ProgrammingExercise newExercise) throws HttpException {
+    public void importBuildPlans(final ProgrammingExercise templateExercise, final ProgrammingExercise newExercise) {
         final var templateParticipation = newExercise.getTemplateParticipation();
         final var solutionParticipation = newExercise.getSolutionParticipation();
         final var targetExerciseProjectKey = newExercise.getProjectKey();
@@ -195,7 +186,7 @@ public class ProgrammingExerciseImportService {
             continuousIntegrationService.get().triggerBuild(templateParticipation);
             continuousIntegrationService.get().triggerBuild(solutionParticipation);
         }
-        catch (HttpException e) {
+        catch (ContinuousIntegrationException e) {
             log.error("Unable to trigger imported build plans", e);
             throw e;
         }

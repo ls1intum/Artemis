@@ -19,7 +19,7 @@
                     <a class="th-link">{{ 'artemisApp.instructorCourseDashboard.tutorLeaderboard.numberOfAcceptedComplaints' | artemisTranslate }}</a>
                     <fa-icon [icon]="'sort'"></fa-icon>
                 </th>
-                <th jhiSortBy="numberOfNotAnsweredMoreFeedbackRequests">
+                <th *ngIf="!isExamMode" jhiSortBy="numberOfNotAnsweredMoreFeedbackRequests">
                     <a class="th-link">{{ 'artemisApp.instructorCourseDashboard.tutorLeaderboard.numberOfNotAnsweredMoreFeedbackRequests' | artemisTranslate }}</a>
                     <fa-icon [icon]="'sort'"></fa-icon>
                 </th>
@@ -27,7 +27,7 @@
                     <a class="th-link">{{ 'artemisApp.instructorCourseDashboard.tutorLeaderboard.numberOfComplaintResponses' | artemisTranslate }}</a>
                     <fa-icon [icon]="'sort'"></fa-icon>
                 </th>
-                <th jhiSortBy="numberOfAnsweredMoreFeedbackRequests">
+                <th *ngIf="!isExamMode" jhiSortBy="numberOfAnsweredMoreFeedbackRequests">
                     <a class="th-link">{{ 'artemisApp.instructorCourseDashboard.tutorLeaderboard.numberOfAnsweredMoreFeedbackRequests' | artemisTranslate }}</a>
                     <fa-icon [icon]="'sort'"></fa-icon>
                 </th>
@@ -41,30 +41,30 @@
                 <td>{{ tutor.numberOfAssessments }}</td>
                 <ng-container *ngIf="!isAtLeastInstructor; else atLeastInstructor">
                     <td>{{ tutor.numberOfAcceptedComplaints }}</td>
-                    <td>{{ tutor.numberOfNotAnsweredMoreFeedbackRequests }}</td>
+                    <td *ngIf="!isExamMode">{{ tutor.numberOfNotAnsweredMoreFeedbackRequests }}</td>
                 </ng-container>
 
                 <ng-template #atLeastInstructor>
-                    <ng-container *ngIf="exercise && course">
+                    <ng-container *ngIf="isExerciseDashboard && exercise && exercise.id && course && course.id">
                         <td>
                             <a [routerLink]="['/course-management', course.id, 'exercises', exercise.id, 'complaints']" [queryParams]="{ tutorId: tutor.userId }">
                                 {{ tutor.numberOfAcceptedComplaints }}
                             </a>
                         </td>
-                        <td>
+                        <td *ngIf="!isExamMode">
                             <a [routerLink]="['/course-management', course.id, 'exercises', exercise.id, 'more-feedback-requests']" [queryParams]="{ tutorId: tutor.userId }">
                                 {{ tutor.numberOfNotAnsweredMoreFeedbackRequests }}
                             </a>
                         </td>
                     </ng-container>
 
-                    <ng-container *ngIf="course">
+                    <ng-container *ngIf="!isExerciseDashboard && course && course.id">
                         <td>
                             <a [routerLink]="['/course-management', course.id, 'complaints']" [queryParams]="{ tutorId: tutor.userId }">
                                 {{ tutor.numberOfAcceptedComplaints }}
                             </a>
                         </td>
-                        <td>
+                        <td *ngIf="!isExamMode">
                             <a [routerLink]="['/course-management', course.id, 'more-feedback-requests']" [queryParams]="{ tutorId: tutor.userId }">
                                 {{ tutor.numberOfNotAnsweredMoreFeedbackRequests }}
                             </a>
@@ -73,7 +73,7 @@
                 </ng-template>
 
                 <td>{{ tutor.numberOfComplaintResponses }}</td>
-                <td>{{ tutor.numberOfAnsweredMoreFeedbackRequests }}</td>
+                <td *ngIf="!isExamMode">{{ tutor.numberOfAnsweredMoreFeedbackRequests }}</td>
             </tr>
         </tbody>
     </table>

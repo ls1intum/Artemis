@@ -23,7 +23,7 @@ public interface FileUploadSubmissionRepository extends JpaRepository<FileUpload
      * @return the submission with its feedback and assessor
      */
     @Query("select distinct submission from FileUploadSubmission submission left join fetch submission.results r left join fetch r.feedbacks left join fetch r.assessor where submission.id = :#{#submissionId}")
-    Optional<FileUploadSubmission> findByIdWithEagerResultAndFeedback(@Param("submissionId") Long submissionId);
+    Optional<FileUploadSubmission> findByIdWithEagerResultAndAssessorAndFeedback(@Param("submissionId") Long submissionId);
 
     /**
      * @param submissionId the submission id we are interested in

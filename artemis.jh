@@ -104,7 +104,8 @@ enum ProgrammingLanguage {
     KOTLIN,
     VHDL,
     ASSEMBLER,
-    SWIFT
+    SWIFT,
+    OCAML
 }
 
 entity ModelingExercise {           //extends Exercise

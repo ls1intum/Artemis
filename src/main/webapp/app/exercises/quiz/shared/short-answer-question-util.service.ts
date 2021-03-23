@@ -218,7 +218,7 @@ export class ShortAnswerQuestionUtil {
         let duplicateValues = 0;
         for (let i = 0; i < mappings.length - 1; i++) {
             for (let j = i + 1; j < mappings.length; j++) {
-                if (mappings[i].spot!.spotNr === mappings[j].spot!.spotNr && mappings[i].solution!.text!.toLowerCase() === mappings[j].solution!.text!.toLowerCase()) {
+                if (mappings[i].spot!.spotNr === mappings[j].spot!.spotNr && mappings[i].solution!.text! === mappings[j].solution!.text!) {
                     duplicateValues++;
                 }
             }
@@ -388,7 +388,7 @@ export class ShortAnswerQuestionUtil {
      * @desc Returns the whitespace in front of the text.
      * @param text {string} the text for which we get the indentation
      */
-    getIndentation(text: string): string {
+    public getIndentation(text: string): string {
         if (!text) {
             return '';
         }

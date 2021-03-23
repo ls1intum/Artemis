@@ -12,6 +12,37 @@
             <li>{{ 'aboutUsOverview.exercises.detail.textExercises' | artemisTranslate }}</li>
             <li>{{ 'aboutUsOverview.exercises.detail.uploadExercises' | artemisTranslate }}</li>
         </ul>
+        <h6>{{ 'aboutUsOverview.exam.title' | artemisTranslate }}</h6>
+        <ul>
+            <li>{{ 'aboutUsOverview.exam.detail.supportedExerciseTypes' | artemisTranslate }}</li>
+            <li>{{ 'aboutUsOverview.exam.detail.randomSelectionOfVariants' | artemisTranslate }}</li>
+            <li>{{ 'aboutUsOverview.exam.detail.fullFeatureOverview.description' | artemisTranslate }}</li>
+            <ul>
+                <li>
+                    <a [href]="examFeatureOverviewUrlStudents" rel="noreferrer noopener" class="footer-text ml-3" target="_blank">{{
+                        'aboutUsOverview.exam.detail.fullFeatureOverview.studentLink' | artemisTranslate
+                    }}</a>
+                </li>
+                <li>
+                    <a [href]="examFeatureOverviewUrlInstructors" rel="noreferrer noopener" class="footer-text ml-3" target="_blank">{{
+                        'aboutUsOverview.exam.detail.fullFeatureOverview.instructorLink' | artemisTranslate
+                    }}</a>
+                </li>
+            </ul>
+            <li>{{ 'aboutUsOverview.exam.detail.instructions.description' | artemisTranslate }}</li>
+            <ul>
+                <li>
+                    <a [href]="examInstructionsUrlStudents" rel="noreferrer noopener" class="footer-text ml-3" target="_blank">{{
+                        'aboutUsOverview.exam.detail.instructions.studentLink' | artemisTranslate
+                    }}</a>
+                </li>
+                <li>
+                    <a [href]="examInstructionsUrlInstructors" rel="noreferrer noopener" class="footer-text ml-3" target="_blank">{{
+                        'aboutUsOverview.exam.detail.instructions.instructorLink' | artemisTranslate
+                    }}</a>
+                </li>
+            </ul>
+        </ul>
     </div>
 
     <div class="row ml-4 mr-4 mb-4" *ngIf="data && data.projectManagers">
@@ -33,7 +64,6 @@
     </div>
     <div>
         <h3 class="mb-3 ml-2 font-weight-bold">{{ 'aboutUsOverview.getInTouch' | artemisTranslate }}</h3>
-        <span jhiTranslate="releaseNotes"></span>
         <ul>
             <li>
                 <a [href]="bugReportUrl" rel="noreferrer noopener" class="footer-text ml-3" target="_blank">{{ 'bug' | artemisTranslate }}</a>
@@ -43,6 +73,9 @@
             </li>
             <li>
                 <a [href]="email" class="footer-text ml-3" target="_top"> {{ 'contact' | artemisTranslate }}</a>
+            </li>
+            <li>
+                <a [href]="releaseNotesUrl" class="footer-text ml-3" target="_blank">{{ 'releaseNotes' | artemisTranslate }}</a>
             </li>
         </ul>
     </div>

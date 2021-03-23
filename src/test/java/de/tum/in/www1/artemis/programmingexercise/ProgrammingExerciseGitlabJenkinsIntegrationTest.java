@@ -63,7 +63,7 @@ class ProgrammingExerciseGitlabJenkinsIntegrationTest extends AbstractSpringInte
 
     // TODO: Add template for Kotlin, VHDL, Assembler for Jenkins, Simon Leiß reactivate C and Haskell here
     @ParameterizedTest
-    @EnumSource(value = ProgrammingLanguage.class, names = { "KOTLIN", "VHDL", "ASSEMBLER", "C", "HASKELL" }, mode = EnumSource.Mode.EXCLUDE)
+    @EnumSource(value = ProgrammingLanguage.class, names = { "KOTLIN", "VHDL", "ASSEMBLER", "C", "HASKELL", "OCAML" }, mode = EnumSource.Mode.EXCLUDE)
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void createProgrammingExercise_programmingLanguage_validExercise_created(ProgrammingLanguage language) throws Exception {
         programmingExerciseTestService.createProgrammingExercise_programmingLanguage_validExercise_created(language,
@@ -107,6 +107,18 @@ class ProgrammingExerciseGitlabJenkinsIntegrationTest extends AbstractSpringInte
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void importExercise_enablePlanFails() throws Exception {
+        programmingExerciseTestService.importExercise_enablePlanFails();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void importExercise_planDoesntExist() throws Exception {
+        programmingExerciseTestService.importExercise_planDoesntExist();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void importExercise_sca_deactivated() throws Exception {
         programmingExerciseTestService.testImportProgrammingExercise_scaChange_deactivated();
     }
@@ -134,6 +146,12 @@ class ProgrammingExerciseGitlabJenkinsIntegrationTest extends AbstractSpringInte
     @WithMockUser(username = studentLogin, roles = "USER")
     public void startProgrammingExercise_correctInitializationState(ExerciseMode exerciseMode) throws Exception {
         programmingExerciseTestService.startProgrammingExercise_correctInitializationState(exerciseMode);
+    }
+
+    @Test
+    @WithMockUser(username = "edx_student1", roles = "USER")
+    public void startProgrammingExerciseEdxUser_correctInitializationState() throws Exception {
+        programmingExerciseTestService.startProgrammingExerciseAutomaticallyCreateEdxUser_correctInitializationState();
     }
 
     @ParameterizedTest
@@ -257,6 +275,12 @@ class ProgrammingExerciseGitlabJenkinsIntegrationTest extends AbstractSpringInte
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testArchiveCourseWithProgrammingExercise() throws Exception {
         programmingExerciseTestService.testArchiveCourseWithProgrammingExercise();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void createProgrammingExercise_failToCreateProjectInCi() throws Exception {
+        programmingExerciseTestService.createProgrammingExercise_failToCreateProjectInCi();
     }
 
     // TODO: add startProgrammingExerciseStudentSubmissionFailedWithBuildlog & copyRepository_testConflictError

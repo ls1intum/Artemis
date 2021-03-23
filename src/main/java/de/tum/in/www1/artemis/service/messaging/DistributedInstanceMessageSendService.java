@@ -36,6 +36,12 @@ public class DistributedInstanceMessageSendService implements InstanceMessageSen
     }
 
     @Override
+    public void sendProgrammingExerciseScheduleCancel(Long exerciseId) {
+        log.info("Sending schedule cancel for programming exercise " + exerciseId + " to broker.");
+        sendMessageDelayed("programming-exercise-schedule-cancel", exerciseId);
+    }
+
+    @Override
     public void sendTextExerciseSchedule(Long exerciseId) {
         log.info("Sending schedule for text exercise " + exerciseId + " to broker.");
         sendMessageDelayed("text-exercise-schedule", exerciseId);
