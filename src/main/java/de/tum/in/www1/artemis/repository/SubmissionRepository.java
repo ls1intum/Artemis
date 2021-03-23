@@ -109,7 +109,7 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
      * @return the number of currently locked submissions for a specific user in the given course
      */
     @Query("""
-            SELECT COUNT (DISTINCT s) FROM Submission s left join s.results r
+            SELECT COUNT (DISTINCT s) FROM Submission s LEFT JOIN s.results r
                 WHERE r.assessor.id IS NOT NULL
                 AND r.completionDate IS NULL
                 AND s.participation.exercise.id = :exerciseId
