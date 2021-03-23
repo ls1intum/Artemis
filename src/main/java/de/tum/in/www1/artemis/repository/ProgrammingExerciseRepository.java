@@ -62,9 +62,11 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     // 1. The release date is in the future --> Schedule combine template commits
     // 2. The build and test student submissions after deadline date is in the future
     // 3. Manual assessment is enabled and the due date is in the future
-    @Query("select distinct pe from ProgrammingExercise pe where pe.releaseDate > :#{#now} or " +
-        "pe.buildAndTestStudentSubmissionsAfterDueDate > :#{#now} or " +
-        "pe.assessmentType <> 'AUTOMATIC' and pe.dueDate > :#{#now}")
+    @Query("""
+         select distinct pe from ProgrammingExercise pe where pe.releaseDate > :#{#now} or
+         pe.buildAndTestStudentSubmissionsAfterDueDate > :#{#now} or
+         pe.assessmentType <> 'AUTOMATIC' and pe.dueDate > :#{#now}
+             """)
     List<ProgrammingExercise> findAllToBeScheduled(@Param("now") ZonedDateTime now);
 
     @Query("select distinct pe from ProgrammingExercise pe where pe.course.endDate between :#{#endDate1} and :#{#endDate2}")
