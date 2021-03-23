@@ -1,0 +1,186 @@
+@import '../../../overview/_overview-vars.scss';
+
+.card {
+    height: 425px;
+    max-width: 2000px;
+
+    .card-heading {
+        position: relative;
+        display: flex;
+        cursor: pointer;
+        height: 75px;
+
+        .card-title {
+            margin-bottom: 0;
+        }
+
+        .container-padding {
+            padding: 10px;
+        }
+
+        .card-description {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 100ch;
+            display: inline-block;
+        }
+
+        .card-date {
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            padding-left: 15px;
+        }
+
+        .card-groups {
+            white-space: nowrap;
+            display: flex;
+            padding-right: 15px;
+            padding-top: 5px;
+            padding-bottom: 5px;
+            flex-direction: column;
+            align-self: center;
+            z-index: 1;
+
+            a {
+                color: white;
+            }
+        }
+
+        jhi-secured-image {
+            padding: 5px 0 5px 5px;
+
+            ::ng-deep img {
+                border-radius: 50%;
+                height: 65px;
+                width: auto;
+            }
+        }
+    }
+
+    .section-card {
+        border: 1px solid $light-border-color;
+        border-radius: 0.1rem;
+        min-width: 30%;
+        height: 300px;
+
+        .collapsed {
+            margin-top: 2px;
+        }
+    }
+
+    .section-header {
+        height: 40px;
+        background-color: $primary;
+        border-radius: 0.1rem;
+        cursor: pointer;
+
+        .text-center {
+            line-height: 2;
+        }
+    }
+
+    .section-content {
+        overflow: auto;
+        height: 300px;
+    }
+
+    .control-label {
+        cursor: pointer;
+    }
+
+    .control-icon {
+        padding-right: 0.5rem;
+    }
+
+    .card-footer {
+        height: 50px;
+        display: flex;
+        align-items: center;
+        flex-direction: row;
+        padding-left: 15px;
+        padding-bottom: 0;
+        padding-top: 5px;
+    }
+
+    .header-right {
+        float: right;
+        text-align: right;
+    }
+
+    .container {
+        max-width: inherit;
+    }
+
+    .flex-container {
+        flex: 1;
+    }
+
+    .align-center {
+        display: flex;
+        align-items: center;
+    }
+
+    .no-exercises {
+        font-weight: 300;
+    }
+}
+
+@media screen and (min-width: 2010px) {
+    .exercises-cards {
+        max-width: 1400px;
+    }
+}
+
+@media screen and (max-width: 1200px) {
+    .card {
+        .card-heading {
+            .card-description {
+                max-width: 80ch;
+            }
+        }
+    }
+}
+
+@media screen and (max-width: 960px) {
+    .card {
+        .statistics-card {
+            display: none;
+        }
+
+        .section-card {
+            min-width: 100%;
+        }
+
+        .card-heading {
+            flex-direction: column;
+            height: unset;
+
+            .card-date {
+                justify-content: center;
+            }
+
+            jhi-secured-image {
+                margin: auto;
+                display: flex;
+            }
+        }
+
+        height: unset;
+    }
+}
+
+@media screen and (max-width: 700px) {
+    .card {
+        .card-heading {
+            .card-description {
+                max-width: 40ch !important;
+            }
+
+            height: unset;
+        }
+
+        height: unset;
+    }
+}
