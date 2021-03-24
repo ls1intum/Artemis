@@ -612,16 +612,20 @@ public class ExerciseService {
         exerciseStatisticsDTO.setNoOfStudentsInCourse(amountOfStudentsInCourse);
 
         if (amountOfStudentsInCourse != null && amountOfStudentsInCourse != 0 && !exercise.isEnded()) {
-            Long rawParticipations = exerciseRepository.getParticipationCountById(exercise.getId());
-            var participations = rawParticipations == null ? 0 : Math.toIntExact(rawParticipations);
-            exerciseStatisticsDTO.setNoOfParticipatingStudentsOrTeams(participations);
-
             if (exercise.getMode() == ExerciseMode.TEAM) {
+                Long teamParticipations = exerciseRepository.getTeamParticipationCountById(exercise.getId());
+                var participations = teamParticipations == null ? 0 : Math.toIntExact(teamParticipations);
+                exerciseStatisticsDTO.setNoOfParticipatingStudentsOrTeams(participations);
+
                 Integer teams = teamRepository.getNumberOfTeamsForExercise(exercise.getId());
                 exerciseStatisticsDTO.setNoOfTeamsInCourse(teams);
                 exerciseStatisticsDTO.setParticipationRateInPercent(teams == null || teams == 0 ? 0.0 : Math.round(participations * 1000.0 / teams) / 10.0);
             }
             else {
+                Long studentParticipations = exerciseRepository.getStudentParticipationCountById(exercise.getId());
+                var participations = studentParticipations == null ? 0 : Math.toIntExact(studentParticipations);
+                exerciseStatisticsDTO.setNoOfParticipatingStudentsOrTeams(participations);
+
                 exerciseStatisticsDTO.setParticipationRateInPercent(Math.round(participations * 1000.0 / amountOfStudentsInCourse) / 10.0);
             }
         }

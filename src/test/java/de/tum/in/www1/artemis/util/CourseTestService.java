@@ -1345,39 +1345,89 @@ public class CourseTestService {
 
     // Test
     public void testGetExerciseStatsForCourseOverview() throws Exception {
-        // Add two courses, containing one not belonging to the instructor
+        // Add courses with existing exercises and set the instructor group name
         var courses = database.createCoursesWithExercisesAndLectures(true);
         var instructorsCourse = courses.get(0);
         instructorsCourse.setInstructorGroupName("test-instructors");
-        courseRepo.save(instructorsCourse);
 
+        // Fetch and update an instructor
         var instructor = database.getUserByLogin("instructor1");
         var groups = new HashSet<String>();
         groups.add("test-instructors");
         instructor.setGroups(groups);
         userRepo.save(instructor);
 
+        // Get a student
+        var student = ModelFactory.generateActivatedUser("user1");
+        userRepo.save(student);
+
+        // Add a team exercise which was just released but not due
+        var releaseDate = ZonedDateTime.now().minusDays(4);
+        var teamExerciseNotEnded = database.createTeamTextExercise(instructorsCourse, releaseDate, null, null);
+        teamExerciseNotEnded = exerciseRepo.save(teamExerciseNotEnded);
+
+        // Add a team with a participation to the exercise
+        final var teamExerciseId = teamExerciseNotEnded.getId();
+        var teamStudents = new HashSet<User>();
+        teamStudents.add(student);
+        var team = database.createTeam(teamStudents, instructor, teamExerciseNotEnded);
+        database.addTeamParticipationForExercise(teamExerciseNotEnded, team.getId());
+
+        instructorsCourse.addExercises(teamExerciseNotEnded);
+
+        // Create an exercise which has passed the due and assessment due date
+        var dueDate = ZonedDateTime.now().minusDays(2);
+        var exerciseAssessmentDone = ModelFactory.generateTextExercise(releaseDate, dueDate, dueDate, instructorsCourse);
+        exerciseAssessmentDone.setMaxPoints(5.0);
+        exerciseAssessmentDone = exerciseRepo.save(exerciseAssessmentDone);
+
+        // Add a single participation to that exercise
+        final var exerciseId = exerciseAssessmentDone.getId();
+        database.createParticipationSubmissionAndResult(exerciseId, student, 5.0, 0.0, 60, true);
+
+        instructorsCourse.addExercises(exerciseAssessmentDone);
+
+        courseRepo.save(instructorsCourse);
+
+        // We only added one course, so expect one dto
         var courseDtos = request.getList("/api/courses/stats-for-management-overview", HttpStatus.OK, CourseManagementOverviewStatisticsDTO.class);
         assertThat(courseDtos.size()).isEqualTo(1);
-
         var dto = courseDtos.get(0);
         assertThat(dto.getCourseId()).isEqualTo(instructorsCourse.getId());
 
+        // We have five default exercises and two custom ones, making for a total of seven
         var exerciseDTOS = dto.getExerciseDTOS();
-        assertThat(exerciseDTOS.size()).isEqualTo(5);
+        assertThat(exerciseDTOS.size()).isEqualTo(7);
 
-        var statisticsOptional = exerciseDTOS.stream().findFirst();
+        // Get the statistics of the exercise with passed assessment due date
+        var statisticsOptional = exerciseDTOS.stream().filter(exercise -> exercise.getExerciseId().equals(exerciseId)).findFirst();
         assertThat(statisticsOptional.isPresent()).isTrue();
 
-        // since the exercise is still "currently in progress", the participations are the only statistics we set
+        // Since the exercise is a "past exercise", the average score are the only statistics we set
         var statisticsDTO = statisticsOptional.get();
-        assertThat(statisticsDTO.getAverageScoreInPercent()).isEqualTo(0.0);
+        assertThat(statisticsDTO.getAverageScoreInPercent()).isEqualTo(60.0);
         assertThat(statisticsDTO.getExerciseMaxPoints()).isEqualTo(5.0);
-        assertThat(statisticsDTO.getNoOfParticipatingStudentsOrTeams()).isEqualTo(1);
-        assertThat(statisticsDTO.getParticipationRateInPercent()).isEqualTo(12.5);
+        assertThat(statisticsDTO.getNoOfParticipatingStudentsOrTeams()).isEqualTo(0);
+        assertThat(statisticsDTO.getParticipationRateInPercent()).isEqualTo(0.0);
         assertThat(statisticsDTO.getNoOfStudentsInCourse()).isEqualTo(8);
         assertThat(statisticsDTO.getNoOfRatedAssessments()).isEqualTo(0);
         assertThat(statisticsDTO.getNoOfAssessmentsDoneInPercent()).isEqualTo(0.0);
-        assertThat(statisticsDTO.getNoOfSubmissionsInTime()).isEqualTo(0L);
+        assertThat(statisticsDTO.getNoOfSubmissionsInTime()).isEqualTo(1L);
+
+        //  Get the statistics of the team exercise
+        var teamStatisticsOptional = exerciseDTOS.stream().filter(exercise -> exercise.getExerciseId().equals(teamExerciseId)).findFirst();
+        assertThat(teamStatisticsOptional.isPresent()).isTrue();
+
+        // Since that exercise is still "currently in progress", the participations are the only statistics we set
+        var teamStatisticsDTO = teamStatisticsOptional.get();
+        assertThat(teamStatisticsDTO.getAverageScoreInPercent()).isEqualTo(0.0);
+        assertThat(teamStatisticsDTO.getExerciseMaxPoints()).isEqualTo(10.0);
+        assertThat(teamStatisticsDTO.getNoOfParticipatingStudentsOrTeams()).isEqualTo(1);
+        assertThat(teamStatisticsDTO.getParticipationRateInPercent()).isEqualTo(100D);
+        assertThat(teamStatisticsDTO.getNoOfStudentsInCourse()).isEqualTo(8);
+        assertThat(teamStatisticsDTO.getNoOfTeamsInCourse()).isEqualTo(1);
+        assertThat(teamStatisticsDTO.getNoOfRatedAssessments()).isEqualTo(0);
+        assertThat(teamStatisticsDTO.getNoOfAssessmentsDoneInPercent()).isEqualTo(0.0);
+        assertThat(teamStatisticsDTO.getNoOfSubmissionsInTime()).isEqualTo(0L);
     }
 }
