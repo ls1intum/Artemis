@@ -25,6 +25,7 @@ import { of } from 'rxjs/internal/observable/of';
 import { HttpResponse } from '@angular/common/http';
 import * as sinon from 'sinon';
 import { ModelingExerciseService } from 'app/exercises/modeling/manage/modeling-exercise.service';
+import { ExternalSubmissionButtonComponent } from 'app/exercises/shared/external-submission/external-submission-button.component';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -36,7 +37,12 @@ describe('Exercise detail common actions Component', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, RouterTestingModule, TranslateModule.forRoot()],
-            declarations: [NonProgrammingExerciseDetailCommonActionsComponent, MockComponent(SubmissionExportButtonComponent), MockDirective(DeleteButtonDirective)],
+            declarations: [
+                NonProgrammingExerciseDetailCommonActionsComponent,
+                MockComponent(SubmissionExportButtonComponent),
+                MockDirective(DeleteButtonDirective),
+                MockComponent(ExternalSubmissionButtonComponent),
+            ],
             providers: [JhiLanguageHelper, JhiAlertService, { provide: FileUploadExerciseService, useClass: MockFileUploadExerciseService }],
         })
             .overrideTemplate(ProgrammingExerciseDetailComponent, '')
