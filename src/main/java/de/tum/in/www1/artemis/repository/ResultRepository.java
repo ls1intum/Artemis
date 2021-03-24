@@ -5,6 +5,8 @@ import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphTyp
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -103,7 +105,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
     /**
      * counts the number of assessments of a course, which are either rated or not rated
      *
-     * @param courseId  - the id of the course
+     * @param exerciseIds - the exercises of the course
      * @param rated     - only counts assessments which are either rated or not rated
      * @return count of rated/unrated assessments of a course
      */
@@ -111,14 +113,14 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
             SELECT
                 count(r)
             FROM
-                Result r join r.participation p join p.exercise e join e.course c
+                Result r join r.participation p join p.exercise e
             WHERE
                 r.completionDate is not null
                 and r.assessor is not null
-                and r.rated = :#{#rated}
-                and c.id = :#{#courseId}
+                and r.rated = :rated
+                and e.id IN :exerciseIds
             """)
-    Long countAssessmentsByCourseIdAndRated(long courseId, boolean rated);
+    Long countAssessmentsByCourseIdAndRated(@Param("exerciseIds") Set<Long> exerciseIds, boolean rated);
 
     List<Result> findAllByParticipation_Exercise_CourseId(Long courseId);
 
@@ -407,21 +409,11 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
      *
      * !! this is very slow - 3787 ms TODO improve
      *
-     * @param courseId - the course we are interested in
+     * @param exerciseIds - the exercise ids of the course we are interested in
      * @return a number of assessments for the course
      */
-    default DueDateStat countNumberOfAssessments(Long courseId) {
-        return new DueDateStat(countAssessmentsByCourseIdAndRated(courseId, true), countAssessmentsByCourseIdAndRated(courseId, false));
-    }
-
-    /**
-     * Given a courseId, return the number of assessments for that course that have been completed (e.g. no draft!)
-     *
-     * @param courseId - the course we are interested in
-     * @return a number of assessments for the course
-     */
-    default DueDateStat countNumberOfAssessmentsOfExam(Long courseId) {
-        return new DueDateStat(countAssessmentsByCourseIdAndRated(courseId, true), 0);
+    default DueDateStat countNumberOfAssessments(Set<Long> exerciseIds) {
+        return new DueDateStat(countAssessmentsByCourseIdAndRated(exerciseIds, true), countAssessmentsByCourseIdAndRated(exerciseIds, false));
     }
 
     @Query("""
@@ -432,13 +424,13 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
                 sum(e.maxPoints)
                 )
             FROM
-                Result r join r.participation p join p.exercise e join e.course c join r.assessor a
+                Result r join r.participation p join p.exercise e join r.assessor a
             WHERE
                 r.completionDate is not null
-                and c.id = :#{#courseId}
+                and e.id IN :exerciseIds
             GROUP BY a.id
             """)
-    List<TutorLeaderboardAssessments> findTutorLeaderboardAssessmentByCourseId(@Param("courseId") long courseId);
+    List<TutorLeaderboardAssessments> findTutorLeaderboardAssessmentByCourseId(@Param("exerciseIds") Set<Long> exerciseIds);
 
     // Alternative which might be faster, in particular for complaints in the other repositories
 
@@ -474,4 +466,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
             """)
     List<TutorLeaderboardAssessments> findTutorLeaderboardAssessmentByExamId(@Param("examId") long examId);
 
+    default Set<Long> mapExerciseToId(Set<Exercise> exercises) {
+        return exercises.stream().map(exercise -> exercise.getId()).collect(Collectors.toSet());
+    }
 }

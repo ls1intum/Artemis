@@ -159,7 +159,7 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
             """)
     long countSubmissionsByExerciseIdSubmittedIgnoreTestRunSubmissions(@Param("exerciseId") Long exerciseId);
 
-    /**
+    /** needs improvement
      * In distinction to other exercise types, students can have multiple submissions in a programming exercise.
      * We therefore have to check here that a submission exists, that was submitted before the deadline.
      *
@@ -167,14 +167,11 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
      * @return the number of distinct submissions belonging to the exercise id that are assessed
      */
     @Query("""
-            SELECT COUNT (DISTINCT p) FROM ProgrammingExerciseStudentParticipation p
+            SELECT COUNT (DISTINCT p) FROM ProgrammingExerciseStudentParticipation p left join p.results r
             WHERE p.exercise.id = :#{#exerciseId}
-            AND EXISTS (SELECT s FROM ProgrammingSubmission s
-                WHERE s.participation.id = p.id
-                AND s.submitted = TRUE
-                AND EXISTS (SELECT r.assessor FROM s.results r
-                    WHERE r.assessor IS NOT NULL
-                    AND r.completionDate IS NOT NULL))
+            AND r.submission.submitted = TRUE
+            AND r.assessor IS NOT NULL
+            AND r.completionDate IS NOT NULL
             """)
     long countAssessmentsByExerciseIdSubmitted(@Param("exerciseId") Long exerciseId);
 

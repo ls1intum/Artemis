@@ -68,6 +68,17 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
     Optional<Exercise> findByIdWithDetailsForStudent(@Param("exerciseId") Long exerciseId);
 
     /**
+     *
+     * @param courseId - course id of the exercises we want to fetch
+     * @return all exercise-ids which belong to the course
+     */
+    @Query("""
+                SELECT e.id FROM Exercise e LEFT JOIN e.course c
+                WHERE c.id = :courseId
+            """)
+    Set<Long> findAllIdsByCourseId(@Param("courseId") Long courseId);
+
+    /**
      * calculates the average score and the participation rate of students for each given individual course exercise
      * by using the last result (rated or not)
      * @param exerciseIds - exercise ids to count the statistics for

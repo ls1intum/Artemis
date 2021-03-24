@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
@@ -43,13 +44,13 @@ public class TutorLeaderboardService {
      * @param course course for which leaderboard is created
      * @return list of tutor leaderboard objects
      */
-    public List<TutorLeaderboardDTO> getCourseLeaderboard(Course course) {
+    public List<TutorLeaderboardDTO> getCourseLeaderboard(Course course, Set<Long> exerciseIdsOfCourse) {
 
         List<User> tutors = userRepository.getTutors(course);
         String groupName = course.getTeachingAssistantGroupName();
 
         long start = System.currentTimeMillis();
-        List<TutorLeaderboardAssessments> tutorLeaderboardAssessments = resultRepository.findTutorLeaderboardAssessmentByCourseId(course.getId());
+        List<TutorLeaderboardAssessments> tutorLeaderboardAssessments = resultRepository.findTutorLeaderboardAssessmentByCourseId(exerciseIdsOfCourse);
         long end = System.currentTimeMillis();
         log.info("Finished >>resultRepository.findTutorLeaderboardAssessmentByCourseId<< call for course " + course.getId() + " in " + (end - start) + "ms");
 
