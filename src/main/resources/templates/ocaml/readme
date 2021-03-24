@@ -1,0 +1,15 @@
+# Arithemtic, Lists and Using Libraries
+
+In this exercise, you will use basic features of the OCaml programming language for arithemtic, list and string operations.
+
+1. [task][add](test suite for sum:0:add 0 0,test suite for sum:1:add 2 1)
+Implement the function `add` that takes two values of type `int` and returns their sum.
+
+2. [task][filter](test suite for sum:2:filter even [1;2])
+Implement the generic and recursive function `filter` that that takes a predicate of type `'a -> bool` and a list of type `'a list`. The function should return the list of elements contained in the input list that fulfill the predicate. The elements in the returned list must appear in the same order as in the input list.
+
+3. [task][starts_with](test suite for sum:4:starts_with false, test suite for sum:3:starts_with true)
+Implement the function `starts_with` that takes two `string`s and returns `true` if, and only if, the second string is a prefix of the first. Use the appropriate library function provided by the `BatString` module from the "batteries" library.
+
+3. [task][starts_with2](test suite for sum:5:starts_with2 true , test suite for sum:6:starts_with2 false)
+Implement the function `starts_with2` which has the same specification as `starts_with`, but now, use the appropriate library function provided by the `Base.String` module from the "core" library.

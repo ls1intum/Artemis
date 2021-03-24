@@ -21,6 +21,7 @@ import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
  * Spring Data repository for the Submission entity.
@@ -97,9 +98,24 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
             SELECT COUNT (DISTINCT s) FROM Submission s left join s.results r
                 WHERE r.assessor.id IS NOT NULL
                 AND r.completionDate IS NULL
-                AND s.participation.exercise.exerciseGroup.exam.id= :examId
+                AND s.participation.exercise.exerciseGroup.exam.id = :examId
             """)
     long countLockedSubmissionsByExamId(@Param("examId") Long examId);
+
+    /**
+     * Get the number of currently locked submissions for a given exam. These are all submissions for which users started, but have not yet finished the
+     * assessments.
+     *
+     * @param exerciseId the id of the exam
+     * @return the number of currently locked submissions for a specific user in the given course
+     */
+    @Query("""
+            SELECT COUNT (DISTINCT s) FROM Submission s LEFT JOIN s.results r
+                WHERE r.assessor.id IS NOT NULL
+                AND r.completionDate IS NULL
+                AND s.participation.exercise.id = :exerciseId
+            """)
+    long countLockedSubmissionsByExerciseId(@Param("exerciseId") Long exerciseId);
 
     /**
      * Get currently locked submissions for a specific user in the given course.
@@ -212,6 +228,18 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
     long countByExerciseIdSubmittedBeforeDueDate(@Param("exerciseId") long exerciseId);
 
     /**
+     * Gets the number of unique submissions made for the given exercise
+     *
+     * @param exerciseId the exercise id to get the number for
+     * @return the number of participations (= unique submissions) of the exercise
+     */
+    @Query("""
+            SELECT COUNT (DISTINCT p.id) FROM StudentParticipation p
+            WHERE p.exercise.id = :exerciseId
+            """)
+    long countUniqueSubmissionsByExerciseId(@Param("exerciseId") long exerciseId);
+
+    /**
      * Should be used for exam dashboard to ignore test run submissions
      * @param exerciseId the exercise id we are interested in
      * @return the number of submissions belonging to the exercise id, which have the submitted flag set to true and the submission date before the exercise due date, or no
@@ -318,5 +346,16 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
             return new DueDateStat(countByExerciseIdSubmittedBeforeDueDateIgnoreTestRuns(exerciseId), 0L);
         }
         return new DueDateStat(countByExerciseIdSubmittedBeforeDueDate(exerciseId), countByExerciseIdSubmittedAfterDueDate(exerciseId));
+    }
+
+    /**
+     * Get the submission with the given id from the database. The submission is loaded together with its result, the feedback of the result and the assessor of the
+     * result. Throws an EntityNotFoundException if no submission could be found for the given id.
+     *
+     * @param submissionId the id of the submission that should be loaded from the database
+     * @return the submission with the given id
+     */
+    default Submission findOneWithEagerResultAndFeedback(long submissionId) {
+        return this.findWithEagerResultAndFeedbackById(submissionId).orElseThrow(() -> new EntityNotFoundException("Submission with id \"" + submissionId + "\" does not exist"));
     }
 }

@@ -20,6 +20,19 @@ public interface TeamRepository extends JpaRepository<Team, Long> {
 
     List<Team> findAllByExerciseCourseIdAndShortName(@Param("courseId") Long courseId, @Param("shortName") String shortName);
 
+    /**
+     * Fetches the number of teams created for an exercise
+     *
+     * @param exerciseId the id of the exercise to get the number of teams for
+     * @return the amount of teams for an exercise
+     */
+    @Query("""
+            SELECT COUNT(DISTINCT team)
+            FROM Team team
+            WHERE team.exercise.id = :#{#exerciseId}
+            """)
+    Integer getNumberOfTeamsForExercise(@Param("exerciseId") Long exerciseId);
+
     @Query(value = "select distinct team from Team team left join team.students student where team.exercise.course.id = :#{#courseId} and student.id = :#{#userId} order by team.id desc")
     List<Team> findAllByCourseIdAndUserIdOrderByIdDesc(@Param("courseId") long courseId, @Param("userId") long userId);
 

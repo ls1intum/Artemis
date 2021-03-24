@@ -63,7 +63,7 @@ class ProgrammingExerciseGitlabJenkinsIntegrationTest extends AbstractSpringInte
 
     // TODO: Add template for Kotlin, VHDL, Assembler for Jenkins, Simon Leiß reactivate C and Haskell here
     @ParameterizedTest
-    @EnumSource(value = ProgrammingLanguage.class, names = { "KOTLIN", "VHDL", "ASSEMBLER", "C", "HASKELL" }, mode = EnumSource.Mode.EXCLUDE)
+    @EnumSource(value = ProgrammingLanguage.class, names = { "KOTLIN", "VHDL", "ASSEMBLER", "C", "HASKELL", "OCAML" }, mode = EnumSource.Mode.EXCLUDE)
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void createProgrammingExercise_programmingLanguage_validExercise_created(ProgrammingLanguage language) throws Exception {
         programmingExerciseTestService.createProgrammingExercise_programmingLanguage_validExercise_created(language,
