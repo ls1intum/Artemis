@@ -234,9 +234,10 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
     Set<Exercise> getExercisesForCourseManagementOverview(@Param("courseId") Long courseId);
 
     /**
-     * Fetches the active exercises for a course
+     * Fetches the exercises for a course with an assessment due date (or due date if without assessment due date) in the future
      *
      * @param courseId the course to get the exercises for
+     * @param now the current date time
      * @return a set of exercises
      */
     @Query("""
@@ -249,10 +250,11 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
     Set<Exercise> getActiveExercisesForCourseManagementOverview(@Param("courseId") Long courseId, @Param("now") ZonedDateTime now);
 
     /**
-     * Fetches the active exercises for a course
+     * Fetches the exercises for a course with a passed assessment due date (or due date if without assessment due date)
      *
      * @param courseId the course to get the exercises for
-     * @return a set of exercises
+     * @param now the current date time
+     * @return a set of exercises ordered descending by assessment due date, then due date
      */
     @Query("""
             SELECT DISTINCT e
@@ -278,25 +280,6 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
     Long getParticipationCountById(@Param("exerciseId") Long exerciseId);
 
     /**
-     * Fetches the score of the given exercise
-     *
-     * @param exerciseId the id of the exercise to get the score for
-     * @return The average score as <code>Double</code>
-     */
-    @Query("""
-            SELECT AVG(r.score)
-            FROM Exercise e JOIN e.studentParticipations p JOIN p.submissions s JOIN s.results r
-            WHERE e.id = :exerciseId
-               AND s.id = (
-                   SELECT max(s2.id)
-                   FROM Submission s2 JOIN s2.results r2
-                   WHERE s2.participation.id = s.participation.id
-                       AND r2.score IS NOT NULL
-               )
-            """)
-    Double getAverageScoreById(@Param("exerciseId") Long exerciseId);
-
-    /**
      * Fetches exercise ids of exercises of a course
      *
      * @param courseId the id of the course the exercises are part of
@@ -308,23 +291,6 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
             WHERE e.course.id = :courseId
             """)
     List<Long> getExerciseIdsByCourseId(@Param("courseId") Long courseId);
-
-    /**
-     * Fetches exercise ids of exercises of a course with a past assessment due date,
-     * or a past due date if there is no assessment due date
-     *
-     * @param courseId the id of the course the exercises are part of
-     * @return a list of ids of past exercises sorted by assessment due date, then due date descending
-     */
-    @Query("""
-            SELECT e.id
-            FROM Exercise e
-            WHERE e.course.id = :courseId
-                AND (e.assessmentDueDate IS NOT NULL AND e.assessmentDueDate < :now
-                    OR e.assessmentDueDate IS NULL AND e.dueDate IS NOT NULL AND e.dueDate < :now)
-            ORDER BY e.assessmentDueDate DESC, e.dueDate DESC
-            """)
-    List<Long> findPastExerciseIds(@Param("courseId") Long courseId, @Param("now") ZonedDateTime now);
 
     @NotNull
     default Exercise findByIdElseThrow(Long exerciseId) throws EntityNotFoundException {

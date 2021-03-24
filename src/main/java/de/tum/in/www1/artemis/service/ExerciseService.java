@@ -548,21 +548,26 @@ public class ExerciseService {
 
     /**
      * Gets the exercise statistics by setting values for each field of the <code>CourseManagementOverviewExerciseStatisticsDTO</code>
+     * Exercises with an assessment due date (or due date if there is no assessment due date) in the past are limited to the five most recent
      *
      * @param courseId the id of the course
      * @param amountOfStudentsInCourse the amount of students in the course
      * @return A list of filled <code>CourseManagementOverviewExerciseStatisticsDTO</code>
      */
     public List<CourseManagementOverviewExerciseStatisticsDTO> getStatisticsForCourseManagementOverview(Long courseId, Integer amountOfStudentsInCourse) {
-        var pastExerciseIds = exerciseRepository.findPastExerciseIds(courseId, ZonedDateTime.now()).stream().limit(5).collect(Collectors.toList());
+        // We only display the latest five past exercises in the client, only calculate statistics for those
+        var fivePastExercises = exerciseRepository.getPastExercisesForCourseManagementOverviewSorted(courseId, ZonedDateTime.now()).stream().limit(5);
+
+        // Calculate the average score for all five exercises at once
+        var pastExerciseIds = fivePastExercises.map(Exercise::getId).collect(Collectors.toList());
         var averageScore = participantScoreRepository.findAvgScoreForExercises(pastExerciseIds);
         Map<Long, Double> averageScoreById = new HashMap<>();
         for (var element : averageScore) {
             averageScoreById.put((Long) element.get("exerciseId"), (Double) element.get("averageScore"));
         }
 
+        // Fill statistics for all exercises potentially displayed on the client
         var exercisesForManagementOverview = exerciseRepository.getActiveExercisesForCourseManagementOverview(courseId, ZonedDateTime.now());
-        var fivePastExercises = exerciseRepository.getPastExercisesForCourseManagementOverviewSorted(courseId, ZonedDateTime.now()).stream().limit(5);
         exercisesForManagementOverview.addAll(fivePastExercises.collect(Collectors.toList()));
         return generateCourseManagementDTOs(exercisesForManagementOverview, amountOfStudentsInCourse, averageScoreById);
     }
