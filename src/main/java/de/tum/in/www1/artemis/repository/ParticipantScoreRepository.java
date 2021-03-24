@@ -70,10 +70,10 @@ public interface ParticipantScoreRepository extends JpaRepository<ParticipantSco
     @Query("""
             SELECT p.exercise.id AS exerciseId, AVG(p.lastScore) AS averageScore
             FROM ParticipantScore p
-            WHERE p.exercise.id IN :exerciseIds
+            WHERE p.exercise IN :exercises
             GROUP BY p.exercise.id
             """)
-    List<Map<String, Object>> findAvgScoreForExercises(@Param("exerciseIds") List<Long> exerciseIds);
+    List<Map<String, Object>> findAverageScoreForExercises(@Param("exercises") List<Exercise> exercises);
 
     @Transactional(propagation = Propagation.REQUIRES_NEW) // ok because of delete
     default void deleteAllByExerciseIdTransactional(Long exerciseId) {

@@ -556,11 +556,10 @@ public class ExerciseService {
      */
     public List<CourseManagementOverviewExerciseStatisticsDTO> getStatisticsForCourseManagementOverview(Long courseId, Integer amountOfStudentsInCourse) {
         // We only display the latest five past exercises in the client, only calculate statistics for those
-        var fivePastExercises = exerciseRepository.getPastExercisesForCourseManagementOverviewSorted(courseId, ZonedDateTime.now()).stream().limit(5);
+        var fivePastExercises = exerciseRepository.getPastExercisesForCourseManagementOverviewSorted(courseId, ZonedDateTime.now()).stream().limit(5).collect(Collectors.toList());
 
         // Calculate the average score for all five exercises at once
-        var pastExerciseIds = fivePastExercises.map(Exercise::getId).collect(Collectors.toList());
-        var averageScore = participantScoreRepository.findAvgScoreForExercises(pastExerciseIds);
+        var averageScore = participantScoreRepository.findAverageScoreForExercises(fivePastExercises);
         Map<Long, Double> averageScoreById = new HashMap<>();
         for (var element : averageScore) {
             averageScoreById.put((Long) element.get("exerciseId"), (Double) element.get("averageScore"));
@@ -568,7 +567,7 @@ public class ExerciseService {
 
         // Fill statistics for all exercises potentially displayed on the client
         var exercisesForManagementOverview = exerciseRepository.getActiveExercisesForCourseManagementOverview(courseId, ZonedDateTime.now());
-        exercisesForManagementOverview.addAll(fivePastExercises.collect(Collectors.toList()));
+        exercisesForManagementOverview.addAll(fivePastExercises);
         return generateCourseManagementDTOs(exercisesForManagementOverview, amountOfStudentsInCourse, averageScoreById);
     }
 
