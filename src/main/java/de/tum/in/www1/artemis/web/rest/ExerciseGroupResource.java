@@ -22,6 +22,8 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.repository.ExamRepository;
+import de.tum.in.www1.artemis.repository.ExerciseGroupRepository;
+import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.exam.ExamAccessService;
@@ -42,7 +44,9 @@ public class ExerciseGroupResource {
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
-    private final ExerciseGroupService exerciseGroupService;
+    private final StudentParticipationRepository studentParticipationRepository;
+
+    private final ExerciseGroupRepository exerciseGroupRepository;
 
     private final ExamRepository examRepository;
 
@@ -54,9 +58,11 @@ public class ExerciseGroupResource {
 
     private final AuditEventRepository auditEventRepository;
 
-    public ExerciseGroupResource(ExerciseGroupService exerciseGroupService, ExamAccessService examAccessService, UserRepository userRepository, ExerciseService exerciseService,
-            AuditEventRepository auditEventRepository, ExamRepository examRepository) {
-        this.exerciseGroupService = exerciseGroupService;
+    public ExerciseGroupResource(StudentParticipationRepository studentParticipationRepository, ExerciseGroupRepository exerciseGroupRepository,
+            ExamAccessService examAccessService, UserRepository userRepository, ExerciseService exerciseService, AuditEventRepository auditEventRepository,
+            ExamRepository examRepository) {
+        this.studentParticipationRepository = studentParticipationRepository;
+        this.exerciseGroupRepository = exerciseGroupRepository;
         this.examRepository = examRepository;
         this.examAccessService = examAccessService;
         this.userRepository = userRepository;
@@ -133,7 +139,7 @@ public class ExerciseGroupResource {
             return accessFailure.get();
         }
 
-        ExerciseGroup result = exerciseGroupService.save(updatedExerciseGroup);
+        ExerciseGroup result = exerciseGroupRepository.save(updatedExerciseGroup);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, result.getTitle())).body(result);
     }
 
@@ -150,7 +156,7 @@ public class ExerciseGroupResource {
     public ResponseEntity<ExerciseGroup> getExerciseGroup(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long exerciseGroupId) {
         log.debug("REST request to get exercise group : {}", exerciseGroupId);
         Optional<ResponseEntity<ExerciseGroup>> accessFailure = examAccessService.checkCourseAndExamAndExerciseGroupAccess(courseId, examId, exerciseGroupId);
-        return accessFailure.orElseGet(() -> ResponseEntity.ok(exerciseGroupService.findOneWithExam(exerciseGroupId)));
+        return accessFailure.orElseGet(() -> ResponseEntity.ok(exerciseGroupRepository.findByIdElseThrow(exerciseGroupId)));
     }
 
     /**
@@ -166,10 +172,8 @@ public class ExerciseGroupResource {
         log.debug("REST request to get all exercise groups for exam : {}", examId);
         Optional<ResponseEntity<List<ExerciseGroup>>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccessForInstructor(courseId, examId);
 
-        List<ExerciseGroup> exerciseGroupList = exerciseGroupService.findAllWithExamAndExercises(examId);
-
-        exerciseGroupService.addNumberOfExamExerciseParticipations(exerciseGroupList);
-
+        List<ExerciseGroup> exerciseGroupList = exerciseGroupRepository.findWithExamAndExercisesByExamId(examId);
+        studentParticipationRepository.addNumberOfExamExerciseParticipations(exerciseGroupList);
         return courseAndExamAccessFailure.orElseGet(() -> ResponseEntity.ok(exerciseGroupList));
     }
 
@@ -193,7 +197,7 @@ public class ExerciseGroupResource {
             return accessFailure.get();
         }
 
-        ExerciseGroup exerciseGroup = exerciseGroupService.findOneWithExercises(exerciseGroupId);
+        ExerciseGroup exerciseGroup = exerciseGroupRepository.findByIdWithExercisesElseThrow(exerciseGroupId);
 
         User user = userRepository.getUser();
         AuditEvent auditEvent = new AuditEvent(user.getLogin(), Constants.DELETE_EXERCISE_GROUP, "exerciseGroup=" + exerciseGroup.getTitle());
@@ -209,7 +213,7 @@ public class ExerciseGroupResource {
         // receive null values for the gaps in exam.getExerciseGroups().
         Exam exam = examRepository.findByIdWithExerciseGroupsElseThrow(examId);
         List<ExerciseGroup> filteredExerciseGroups = exam.getExerciseGroups();
-        filteredExerciseGroups.removeIf(e -> e.getId().equals(exerciseGroupId));
+        filteredExerciseGroups.removeIf(exGroup -> exGroup.getId().equals(exerciseGroupId));
         exam.setExerciseGroups(filteredExerciseGroups);
         examRepository.save(exam);
 

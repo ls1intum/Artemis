@@ -18,6 +18,7 @@ import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.Submission;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
+import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -227,7 +228,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
      * If a student can have multiple submissions per exercise type, the latest submission (by id) will be returned.
      *
      * @param correctionRound the correction round the fetched results should belong to
-     * @param exerciseId the exercise id the participations should belong to
+     * @param exerciseId      the exercise id the participations should belong to
      * @return a list of participations including their submitted submissions that do not have a manual result
      */
     @Query("""
@@ -346,6 +347,18 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
                 AND p.exercise in :#{#exercises}
             """)
     List<StudentParticipation> findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(@Param("studentId") Long studentId,
+            @Param("exercises") List<Exercise> exercises);
+
+    @Query("""
+            SELECT DISTINCT p FROM StudentParticipation p
+            LEFT JOIN FETCH p.submissions s
+            LEFT JOIN FETCH s.results r
+            LEFT JOIN FETCH r.assessor
+            WHERE p.testRun = FALSE
+            AND p.student.id = :#{#studentId}
+            AND p.exercise in :#{#exercises}
+            """)
+    List<StudentParticipation> findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultAndAssessorIgnoreTestRuns(@Param("studentId") Long studentId,
             @Param("exercises") List<Exercise> exercises);
 
     @Query("""
@@ -551,14 +564,21 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
      * Distinguishes between student exams and test runs and only loads the respective participations
      *
      * @param studentExam studentExam with exercises loaded
+     * @param withAssessor (only for non test runs) if assessor should be loaded with the result
+     *
      * @return student's participations with submissions and results
      */
-    default List<StudentParticipation> findByStudentExamWithEagerSubmissionsResult(StudentExam studentExam) {
+    default List<StudentParticipation> findByStudentExamWithEagerSubmissionsResult(StudentExam studentExam, boolean withAssessor) {
         if (studentExam.isTestRun()) {
             return findTestRunParticipationsByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(studentExam.getUser().getId(), studentExam.getExercises());
         }
         else {
-            return findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(studentExam.getUser().getId(), studentExam.getExercises());
+            if (withAssessor) {
+                return findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultAndAssessorIgnoreTestRuns(studentExam.getUser().getId(), studentExam.getExercises());
+            }
+            else {
+                return findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(studentExam.getUser().getId(), studentExam.getExercises());
+            }
         }
     }
 
@@ -590,7 +610,6 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
      * @return map of participation id to submission count
      */
     private static Map<Long, Integer> convertListOfCountsIntoMap(List<long[]> participationIdAndSubmissionCountPairs) {
-
         return participationIdAndSubmissionCountPairs.stream().collect(Collectors.toMap(participationIdAndSubmissionCountPair -> participationIdAndSubmissionCountPair[0], // participationId
                 participationIdAndSubmissionCountPair -> Math.toIntExact(participationIdAndSubmissionCountPair[1]) // submissionCount
         ));
@@ -604,4 +623,16 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             """)
     Long countParticipationsIgnoreTestRunsByExerciseId(@Param("exerciseId") Long exerciseId);
 
+    /**
+     * Adds the transient property numberOfParticipations for each exercise to
+     * let instructors know which exercise has how many participations
+     *
+     * @param exerciseGroupList list of exercise groups
+     */
+    default void addNumberOfExamExerciseParticipations(List<ExerciseGroup> exerciseGroupList) {
+        exerciseGroupList.forEach((exerciseGroup -> exerciseGroup.getExercises().forEach(exercise -> {
+            Long numberOfParticipations = countParticipationsIgnoreTestRunsByExerciseId(exercise.getId());
+            exercise.setNumberOfParticipations(numberOfParticipations);
+        })));
+    }
 }

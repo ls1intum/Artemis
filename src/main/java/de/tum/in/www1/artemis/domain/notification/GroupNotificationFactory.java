@@ -5,6 +5,7 @@ import java.util.List;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.GroupNotificationType;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
+import de.tum.in.www1.artemis.domain.exam.Exam;
 
 public class GroupNotificationFactory {
 
@@ -82,6 +83,10 @@ public class GroupNotificationFactory {
             case DUPLICATE_TEST_CASE -> {
                 title = "Duplicate test case was found.";
                 text = "Exercise \"" + exercise.getTitle() + "\" has multiple test cases with the same name.";
+            }
+            case ILLEGAL_SUBMISSION -> {
+                title = "Illegal submission of a student.";
+                text = "Exercise \"" + exercise.getTitle() + "\" has illegal submissions of students.";
             }
 
             default -> throw new UnsupportedOperationException("Unsupported NotificationType: " + notificationType);
@@ -228,6 +233,44 @@ public class GroupNotificationFactory {
 
         GroupNotification notification = new GroupNotification(course, title, text, author, groupNotificationType);
         notification.setTarget(notification.getCourseTarget(course, "courseArchiveUpdated"));
+        return notification;
+    }
+
+    /**
+     * Creates an instance of GroupNotification based on the passed parameters.
+     *
+     * @param exam                the exam being archived
+     * @param author                of the notification
+     * @param groupNotificationType user group type the notification should target
+     * @param notificationType      type of the notification that should be created
+     * @param archiveErrors         a list of errors that occured during archiving
+     * @return an instance of GroupNotification
+     */
+    public static GroupNotification createNotification(Exam exam, User author, GroupNotificationType groupNotificationType, NotificationType notificationType,
+            List<String> archiveErrors) {
+        String title, text;
+        switch (notificationType) {
+            case EXAM_ARCHIVE_STARTED -> {
+                title = "Exam archival started";
+                text = "The exam \"" + exam.getTitle() + "\" is being archived.";
+            }
+            case EXAM_ARCHIVE_FINISHED -> {
+                title = "Exam archival finished";
+                text = "The exam \"" + exam.getTitle() + "\" has been archived.";
+
+                if (!archiveErrors.isEmpty()) {
+                    text += " Some exercises couldn't be included in the archive:<br/><br/>" + String.join("<br/><br/>", archiveErrors);
+                }
+            }
+            case EXAM_ARCHIVE_FAILED -> {
+                title = "Exam archival failed";
+                text = "The was a problem archiving exam \"" + exam.getTitle() + "\": <br/><br/>" + String.join("<br/><br/>", archiveErrors);
+            }
+            default -> throw new UnsupportedOperationException("Unsupported NotificationType: " + notificationType);
+        }
+
+        GroupNotification notification = new GroupNotification(exam.getCourse(), title, text, author, groupNotificationType);
+        notification.setTarget(notification.getCourseTarget(exam.getCourse(), "examArchiveUpdated"));
         return notification;
     }
 }

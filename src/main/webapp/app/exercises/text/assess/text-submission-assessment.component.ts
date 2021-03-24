@@ -20,7 +20,13 @@ import { TranslateService } from '@ngx-translate/core';
 import { NEW_ASSESSMENT_PATH } from 'app/exercises/text/assess/text-submission-assessment.route';
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
 import { assessmentNavigateBack } from 'app/exercises/shared/navigate-back.util';
-import { getLatestSubmissionResult, getSubmissionResultByCorrectionRound, setLatestSubmissionResult, setSubmissionResultByCorrectionRound } from 'app/entities/submission.model';
+import {
+    getLatestSubmissionResult,
+    getSubmissionResultByCorrectionRound,
+    getSubmissionResultById,
+    setLatestSubmissionResult,
+    setSubmissionResultByCorrectionRound,
+} from 'app/entities/submission.model';
 import { TextAssessmentBaseComponent } from 'app/exercises/text/assess/text-assessment-base.component';
 import { getExerciseDashboardLink, getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
 import { ExerciseType } from 'app/entities/exercise.model';
@@ -54,6 +60,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
     noNewSubmissions: boolean;
     hasAssessmentDueDatePassed: boolean;
     correctionRound: number;
+    resultId: number;
     loadingInitialSubmission = true;
 
     /*
@@ -134,8 +141,8 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
 
         this.activatedRoute.paramMap.subscribe((paramMap) => {
             this.exerciseId = Number(paramMap.get('exerciseId'));
+            this.resultId = Number(paramMap.get('resultId')) ?? 0;
             this.courseId = Number(paramMap.get('courseId'));
-
             if (paramMap.has('examId')) {
                 this.examId = Number(paramMap.get('examId'));
                 this.exerciseGroupId = Number(paramMap.get('exerciseGroupId'));
@@ -160,7 +167,13 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         this.submission = this.participation!.submissions![0] as TextSubmission;
         this.exercise = this.participation?.exercise as TextExercise;
         setLatestSubmissionResult(this.submission, getLatestSubmissionResult(this.submission));
-        this.result = getSubmissionResultByCorrectionRound(this.submission, this.correctionRound);
+
+        if (this.resultId > 0) {
+            this.result = getSubmissionResultById(this.submission, this.resultId);
+            this.correctionRound = this.submission.results?.findIndex((result) => result.id === this.resultId)!;
+        } else {
+            this.result = getSubmissionResultByCorrectionRound(this.submission, this.correctionRound);
+        }
 
         this.hasAssessmentDueDatePassed = !!this.exercise!.assessmentDueDate && moment(this.exercise!.assessmentDueDate).isBefore(now());
 

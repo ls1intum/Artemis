@@ -98,47 +98,6 @@ class UMLDiagramTest {
         assertThat(symmetricSimilarity).isEqualTo(similarity);
     }
 
-    @Test
-    void isUnassessed_true() {
-        boolean isUnassessed = umlDiagram.isUnassessed();
-        assertThat(isUnassessed).isTrue();
-    }
-
-    @Test
-    void isUnassessed_false() {
-        doReturn(spy(CompassResult.class)).when(umlDiagram).getLastAssessmentCompassResult();
-        boolean isUnassessed = umlDiagram.isUnassessed();
-        assertThat(isUnassessed).isFalse();
-    }
-
-    @Test
-    void getLastAssessmentConfidence() {
-        doReturn(compassResult).when(umlDiagram).getLastAssessmentCompassResult();
-        doReturn(0.456).when(compassResult).getConfidence();
-        double confidence = umlDiagram.getLastAssessmentConfidence();
-        assertThat(confidence).isEqualTo(0.456);
-    }
-
-    @Test
-    void getLastAssessmentConfidence_noCompassResult() {
-        double confidence = umlDiagram.getLastAssessmentConfidence();
-        assertThat(confidence).isEqualTo(-1);
-    }
-
-    @Test
-    void getLastAssessmentCoverage() {
-        doReturn(compassResult).when(umlDiagram).getLastAssessmentCompassResult();
-        doReturn(0.789).when(compassResult).getCoverage();
-        double confidence = umlDiagram.getLastAssessmentCoverage();
-        assertThat(confidence).isEqualTo(0.789);
-    }
-
-    @Test
-    void getLastAssessmentCoverage_noCompassResult() {
-        double confidence = umlDiagram.getLastAssessmentCoverage();
-        assertThat(confidence).isEqualTo(-1);
-    }
-
     private void verifyNoElementInteraction() {
         verify(umlElement1, Mockito.never()).similarity(any());
         verify(umlElement1, Mockito.never()).overallSimilarity(any());

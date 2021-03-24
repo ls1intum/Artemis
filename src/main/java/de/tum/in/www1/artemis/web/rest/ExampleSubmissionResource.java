@@ -15,6 +15,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.ExampleSubmission;
+import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ExampleSubmissionService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -38,10 +39,14 @@ public class ExampleSubmissionResource {
 
     private final ExampleSubmissionService exampleSubmissionService;
 
+    private final ExampleSubmissionRepository exampleSubmissionRepository;
+
     private final AuthorizationCheckService authCheckService;
 
-    public ExampleSubmissionResource(ExampleSubmissionService exampleSubmissionService, AuthorizationCheckService authCheckService) {
+    public ExampleSubmissionResource(ExampleSubmissionService exampleSubmissionService, ExampleSubmissionRepository exampleSubmissionRepository,
+            AuthorizationCheckService authCheckService) {
         this.exampleSubmissionService = exampleSubmissionService;
+        this.exampleSubmissionRepository = exampleSubmissionRepository;
         this.authCheckService = authCheckService;
     }
 
@@ -105,7 +110,7 @@ public class ExampleSubmissionResource {
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<ExampleSubmission> getExampleSubmission(@PathVariable Long id) {
         log.debug("REST request to get ExampleSubmission : {}", id);
-        Optional<ExampleSubmission> exampleSubmission = exampleSubmissionService.getWithEagerExercise(id);
+        Optional<ExampleSubmission> exampleSubmission = exampleSubmissionRepository.findWithSubmissionResultExerciseGradingCriteriaById(id);
 
         if (exampleSubmission.isPresent()) {
             if (!authCheckService.isAtLeastTeachingAssistantForExercise(exampleSubmission.get().getExercise())) {
@@ -126,7 +131,7 @@ public class ExampleSubmissionResource {
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Void> deleteExampleSubmission(@PathVariable Long id) {
         log.debug("REST request to delete ExampleSubmission : {}", id);
-        Optional<ExampleSubmission> exampleSubmission = exampleSubmissionService.getWithEagerExercise(id);
+        Optional<ExampleSubmission> exampleSubmission = exampleSubmissionRepository.findWithSubmissionResultExerciseGradingCriteriaById(id);
 
         if (exampleSubmission.isEmpty()) {
             throw new EntityNotFoundException("ExampleSubmission with " + id + " was not found!");

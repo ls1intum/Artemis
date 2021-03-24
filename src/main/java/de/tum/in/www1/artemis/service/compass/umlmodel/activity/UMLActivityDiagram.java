@@ -1,12 +1,13 @@
 package de.tum.in.www1.artemis.service.compass.umlmodel.activity;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLDiagram;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
 
-public class UMLActivityDiagram extends UMLDiagram {
+public class UMLActivityDiagram extends UMLDiagram implements Serializable {
 
     private List<UMLActivityNode> activityNodeList;
 

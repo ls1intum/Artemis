@@ -14,6 +14,7 @@ import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.leaderboard.tutor.TutorLeaderboardAssessments;
 import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
@@ -141,6 +142,20 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
             """)
     long countNumberOfFinishedAssessmentsForExercise(@Param("exerciseId") Long exerciseId);
 
+    /**
+     * Gets the number of assessments with a rated result set by an assessor for an exercise
+     *
+     * @param exerciseId the exercise to get the number for
+     * @return the number of assessments with a rated result set by an assessor
+     */
+    @Query("""
+            SELECT COUNT(DISTINCT p.id) FROM ParticipantScore p
+            WHERE p.exercise.id = :exerciseId
+                AND p.lastResult IS NOT NULL
+                AND p.lastResult.assessor IS NOT NULL
+            """)
+    long countNumberOfRatedResultsForExercise(@Param("exerciseId") Long exerciseId);
+
     @Query("""
             SELECT COUNT(DISTINCT p) FROM StudentParticipation p
             left join p.results r
@@ -171,6 +186,17 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
                 GROUP BY p.id
             """)
     List<Long> countNumberOfFinishedAssessmentsByExerciseIdIgnoreTestRuns(@Param("exerciseId") Long exerciseId);
+
+    @Query("""
+            SELECT r
+                FROM StudentParticipation p join p.submissions s join s.results r
+                WHERE p.exercise.id = :exerciseId
+                    AND p.testRun = FALSE
+                    AND s.submitted = TRUE
+                    AND r.completionDate IS NULL
+                    AND r.assessor.id <> :tutorId
+            """)
+    List<Result> countNumberOfLockedAssessmentsByOtherTutorsForExamExerciseForCorrectionRoundsIgnoreTestRuns(@Param("exerciseId") Long exerciseId, @Param("tutorId") Long tutorId);
 
     /**
      * count the number of finsished assessments of an exam with given examId
@@ -289,6 +315,30 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
         // the entry simply is the number of already created and submitted manual results, so the number is either 1 or 2
         List<Long> countlist = countNumberOfFinishedAssessmentsByExerciseIdIgnoreTestRuns(exercise.getId());
         return convertDatabaseResponseToDueDateStats(countlist, numberOfCorrectionRounds);
+    }
+
+    /**
+     * Use this method only for exams!
+     * Given an exerciseId and the number of correctionRounds, return the number of assessments that have been finished, for that exerciseId and each correctionRound
+     *
+     * @param exercise  - the exercise we are interested in
+     * @param numberOfCorrectionRounds - the correction round we want finished assessments for
+     * @param tutor tutor for which we want to coutnt the
+     * @return an array of the number of assessments for the exercise for a given correction round
+     */
+    default DueDateStat[] countNumberOfLockedAssessmentsByOtherTutorsForExamExerciseForCorrectionRounds(Exercise exercise, int numberOfCorrectionRounds, User tutor) {
+        if (exercise.isExamExercise()) {
+            DueDateStat[] correctionRoundsDataStats = new DueDateStat[numberOfCorrectionRounds];
+            var resultsLockedByOtherTutors = countNumberOfLockedAssessmentsByOtherTutorsForExamExerciseForCorrectionRoundsIgnoreTestRuns(exercise.getId(), tutor.getId());
+
+            correctionRoundsDataStats[0] = new DueDateStat(resultsLockedByOtherTutors.stream().filter(result -> result.isRated() == null).count(), 0L);
+            // so far the number of correctionRounds is limited to 2
+            if (numberOfCorrectionRounds == 2) {
+                correctionRoundsDataStats[1] = new DueDateStat(resultsLockedByOtherTutors.stream().filter(result -> result.isRated() != null).count(), 0L);
+            }
+            return correctionRoundsDataStats;
+        }
+        return null;
     }
 
     /**
