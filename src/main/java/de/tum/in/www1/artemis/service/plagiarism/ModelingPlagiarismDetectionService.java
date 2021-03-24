@@ -138,6 +138,7 @@ public class ModelingPlagiarismDetectionService {
 
                 PlagiarismComparison<ModelingSubmissionElement> comparison = new PlagiarismComparison<>();
 
+                comparison.setPlagiarismResult(result);
                 comparison.setSimilarity(similarity * 100);
                 comparison.setSubmissionA(submissionA);
                 comparison.setSubmissionB(submissionB);
