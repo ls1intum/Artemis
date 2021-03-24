@@ -294,7 +294,7 @@ public interface ContinuousIntegrationService {
             case HASKELL -> "tumfpv/fpv-stack:8.8.4";
             case VHDL -> "tizianleonhardt/era-artemis-vhdl:latest";
             case ASSEMBLER -> "tizianleonhardt/era-artemis-assembler:latest";
-            case SWIFT -> "norionomura/swiftlint:0.41.0_swift-5.3.1";
+            case SWIFT -> "norionomura/swiftlint:latest";
             case OCAML -> "ls1tum/artemis-ocaml-docker:latest";
         };
     }
