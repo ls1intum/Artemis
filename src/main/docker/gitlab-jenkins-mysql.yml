@@ -12,7 +12,8 @@ services:
         mem_limit: 3000m
         hostname: gitlab
         networks:
-            - artemis
+            artemis:
+                ipv4_address: 172.33.0.2
     jenkins:
         build: jenkins
         volumes:
@@ -26,7 +27,8 @@ services:
         environment:
             - CASC_JENKINS_CONFIG=/usr/share/jenkins/ref/jenkins-casc-config.yml
         networks:
-            - artemis
+            artemis:
+                ipv4_address: 172.33.0.3
     mysql:
         command: mysqld --lower_case_table_names=1 --skip-ssl --character_set_server=utf8mb4 --explicit_defaults_for_timestamp
         environment:
@@ -34,15 +36,20 @@ services:
             - MYSQL_ALLOW_EMPTY_PASSWORD=yes
             - MYSQL_DATABASE=Artemis
         image: mysql:8.0.23
-        networks:
-            - artemis
         ports:
             - 3306:3306
         volumes:
             - ./data/.db:/var/lib/mysql
+        networks:
+            artemis:
+                ipv4_address: 172.33.0.4
 networks:
     artemis:
-        driver: bridge
+        driver: "bridge"
+        ipam:
+            driver: default
+            config:
+                - subnet: 172.33.0.0/24
 volumes:
     artemis-gitlab-data:
     artemis-gitlab-logs:
