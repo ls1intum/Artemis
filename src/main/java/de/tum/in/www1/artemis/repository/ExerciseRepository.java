@@ -221,7 +221,7 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
     Optional<Exercise> findWithEagerStudentParticipationsStudentAndSubmissionsById(Long exerciseId);
 
     /**
-     * Fetches the active exercises for a course
+     * Fetches the exercises for a course
      *
      * @param courseId the course to get the exercises for
      * @return a set of exercises with categories
@@ -232,6 +232,37 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
             WHERE e.course.id = :courseId
             """)
     Set<Exercise> getExercisesForCourseManagementOverview(@Param("courseId") Long courseId);
+
+    /**
+     * Fetches the active exercises for a course
+     *
+     * @param courseId the course to get the exercises for
+     * @return a set of exercises
+     */
+    @Query("""
+            SELECT DISTINCT e
+            FROM Exercise e
+            WHERE e.course.id = :courseId
+                AND (e.assessmentDueDate IS NULL OR e.assessmentDueDate > :now)
+                AND (e.dueDate IS NULL OR e.dueDate > :now)
+            """)
+    Set<Exercise> getActiveExercisesForCourseManagementOverview(@Param("courseId") Long courseId, @Param("now") ZonedDateTime now);
+
+    /**
+     * Fetches the active exercises for a course
+     *
+     * @param courseId the course to get the exercises for
+     * @return a set of exercises
+     */
+    @Query("""
+            SELECT DISTINCT e
+            FROM Exercise e
+            WHERE e.course.id = :courseId
+                AND (e.assessmentDueDate IS NOT NULL AND e.assessmentDueDate < :now
+                OR e.dueDate IS NOT NULL AND e.dueDate < :now)
+            ORDER BY e.assessmentDueDate DESC, e.dueDate DESC
+            """)
+    Set<Exercise> getPastExercisesForCourseManagementOverviewSorted(@Param("courseId") Long courseId, @Param("now") ZonedDateTime now);
 
     /**
      * Fetches the amount of participations in the given exercise
@@ -291,6 +322,7 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
             WHERE e.course.id = :courseId
                 AND (e.assessmentDueDate IS NOT NULL AND e.assessmentDueDate < :now
                     OR e.assessmentDueDate IS NULL AND e.dueDate IS NOT NULL AND e.dueDate < :now)
+            ORDER BY e.assessmentDueDate DESC, e.dueDate DESC
             """)
     List<Long> findPastExerciseIds(@Param("courseId") Long courseId, @Param("now") ZonedDateTime now);
 
