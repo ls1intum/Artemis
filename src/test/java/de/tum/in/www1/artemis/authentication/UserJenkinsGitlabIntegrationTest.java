@@ -65,7 +65,7 @@ public class UserJenkinsGitlabIntegrationTest extends AbstractSpringIntegrationJ
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
-    public void createUserWithPseudonyms_isSuccessful() throws Exception {
+    public void createUserWithPseudonymsIsSuccessful() throws Exception {
         ReflectionTestUtils.setField(jenkinsUserManagementService, "usePseudonyms", true);
         ReflectionTestUtils.setField(gitLabUserManagementService, "usePseudonyms", true);
         userTestService.createUser_asAdmin_isSuccessful();
