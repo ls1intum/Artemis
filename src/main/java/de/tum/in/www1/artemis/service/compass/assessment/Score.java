@@ -1,8 +1,9 @@
 package de.tum.in.www1.artemis.service.compass.assessment;
 
+import java.io.Serializable;
 import java.util.List;
 
-public class Score {
+public class Score implements Serializable {
 
     private double points;
 

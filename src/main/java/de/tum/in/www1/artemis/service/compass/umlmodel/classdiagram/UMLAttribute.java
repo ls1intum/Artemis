@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram;
 
+import java.io.Serializable;
 import java.util.Objects;
 
 import de.tum.in.www1.artemis.service.compass.strategy.NameSimilarity;
@@ -7,7 +8,7 @@ import de.tum.in.www1.artemis.service.compass.umlmodel.Similarity;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
 import de.tum.in.www1.artemis.service.compass.utils.CompassConfiguration;
 
-public class UMLAttribute extends UMLElement {
+public class UMLAttribute extends UMLElement implements Serializable {
 
     public static final String UML_ATTRIBUTE_TYPE = "ClassAttribute";
 
