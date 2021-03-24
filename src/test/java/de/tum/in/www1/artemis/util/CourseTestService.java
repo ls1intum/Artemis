@@ -1430,4 +1430,43 @@ public class CourseTestService {
         assertThat(teamStatisticsDTO.getNoOfAssessmentsDoneInPercent()).isEqualTo(0.0);
         assertThat(teamStatisticsDTO.getNoOfSubmissionsInTime()).isEqualTo(0L);
     }
+
+    // Test
+    public void testGetExerciseStatsForCourseOverviewWithPastExercises() throws Exception {
+        // Add a single course with six past exercises, from which only five are returned
+        var instructorsCourse = database.createCourse();
+        var releaseDate = ZonedDateTime.now().minusDays(7);
+        var dueDate = ZonedDateTime.now().minusDays(4);
+        var olderDueDate = ZonedDateTime.now().minusDays(4);
+        var assessmentDueDate = ZonedDateTime.now().minusDays(2);
+        var olderAssessmentDueDate = ZonedDateTime.now().minusDays(3);
+
+        // Add five exercises with different combinations of due dates and assessment due dates
+        instructorsCourse.addExercises(exerciseRepo.save(ModelFactory.generateTextExercise(releaseDate, dueDate, assessmentDueDate, instructorsCourse)));
+        instructorsCourse.addExercises(exerciseRepo.save(ModelFactory.generateTextExercise(releaseDate, null, assessmentDueDate, instructorsCourse)));
+        instructorsCourse.addExercises(exerciseRepo.save(ModelFactory.generateTextExercise(releaseDate, olderDueDate, assessmentDueDate, instructorsCourse)));
+        instructorsCourse.addExercises(exerciseRepo.save(ModelFactory.generateTextExercise(releaseDate, olderDueDate, olderAssessmentDueDate, instructorsCourse)));
+        instructorsCourse.addExercises(exerciseRepo.save(ModelFactory.generateTextExercise(releaseDate, null, olderAssessmentDueDate, instructorsCourse)));
+
+        // Add one exercise which will be sorted last due to the 'null' assessment due date
+        var exerciseNotReturned = ModelFactory.generateTextExercise(releaseDate, dueDate, null, instructorsCourse);
+        exerciseNotReturned = exerciseRepo.save(exerciseNotReturned);
+        final var exerciseId = exerciseNotReturned.getId();
+        instructorsCourse.addExercises(exerciseNotReturned);
+        courseRepo.save(instructorsCourse);
+
+        // We only added one course, so expect one dto
+        var courseDtos = request.getList("/api/courses/stats-for-management-overview", HttpStatus.OK, CourseManagementOverviewStatisticsDTO.class);
+        assertThat(courseDtos.size()).isEqualTo(1);
+        var dto = courseDtos.get(0);
+        assertThat(dto.getCourseId()).isEqualTo(instructorsCourse.getId());
+
+        // Only five exercises should be returned
+        var exerciseDTOS = dto.getExerciseDTOS();
+        assertThat(exerciseDTOS.size()).isEqualTo(5);
+
+        // The one specific exercise should not be included
+        var statisticsOptional = exerciseDTOS.stream().filter(exercise -> exercise.getExerciseId().equals(exerciseId)).findFirst();
+        assertThat(statisticsOptional.isEmpty()).isTrue();
+    }
 }
