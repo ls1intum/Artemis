@@ -8,8 +8,11 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationJenkinsGitlabTest;
+import de.tum.in.www1.artemis.service.connectors.gitlab.GitLabUserManagementService;
+import de.tum.in.www1.artemis.service.connectors.jenkins.JenkinsUserManagementService;
 import de.tum.in.www1.artemis.util.UserTestService;
 import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
 
@@ -17,6 +20,12 @@ public class UserJenkinsGitlabIntegrationTest extends AbstractSpringIntegrationJ
 
     @Autowired
     UserTestService userTestService;
+
+    @Autowired
+    JenkinsUserManagementService jenkinsUserManagementService;
+
+    @Autowired
+    GitLabUserManagementService gitLabUserManagementService;
 
     @BeforeEach
     public void setUp() throws Exception {
@@ -52,6 +61,14 @@ public class UserJenkinsGitlabIntegrationTest extends AbstractSpringIntegrationJ
     @WithMockUser(value = "tutor1", roles = "TA")
     public void updateUser_asTutor_forbidden() throws Exception {
         request.put("/api/users", new ManagedUserVM(userTestService.getStudent()), HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    public void createUserWithPseudonyms_isSuccessful() throws Exception {
+        ReflectionTestUtils.setField(jenkinsUserManagementService, "usePseudonyms", true);
+        ReflectionTestUtils.setField(gitLabUserManagementService, "usePseudonyms", true);
+        userTestService.createUser_asAdmin_isSuccessful();
     }
 
     @Test
