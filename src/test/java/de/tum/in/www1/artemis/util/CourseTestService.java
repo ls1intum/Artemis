@@ -1414,7 +1414,7 @@ public class CourseTestService {
         assertThat(statisticsDTO.getNoOfAssessmentsDoneInPercent()).isEqualTo(0.0);
         assertThat(statisticsDTO.getNoOfSubmissionsInTime()).isEqualTo(1L);
 
-        //  Get the statistics of the team exercise
+        // Get the statistics of the team exercise
         var teamStatisticsOptional = exerciseDTOS.stream().filter(exercise -> exercise.getExerciseId().equals(teamExerciseId)).findFirst();
         assertThat(teamStatisticsOptional.isPresent()).isTrue();
 
