@@ -64,7 +64,7 @@ public interface ParticipantScoreRepository extends JpaRepository<ParticipantSco
     /**
      * Gets average score for each exercise
      *
-     * @param exerciseIds exerciseIds from all exercises to get the average score for
+     * @param exercises exercises to get the average score for
      * @return List<Map<String, Object>> with a map for every exercise containing exerciseId and the average Score
      */
     @Query("""
