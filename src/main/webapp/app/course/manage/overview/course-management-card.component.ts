@@ -74,7 +74,6 @@ export class CourseManagementCardComponent implements OnChanges {
      * @param exercises the exercises to sort into future, current, in assessment and past exercise categories
      */
     private sortExercises(exercises: Exercise[]): void {
-        this.exercisesSorted = false;
         this.exercisesSorted = true;
 
         const inSevenDays = moment().add(7, 'days').endOf('day');
