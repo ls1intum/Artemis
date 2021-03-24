@@ -1,12 +1,13 @@
 package de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLDiagram;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
 
-public class UMLClassDiagram extends UMLDiagram {
+public class UMLClassDiagram extends UMLDiagram implements Serializable {
 
     private final List<UMLClass> classList;
 

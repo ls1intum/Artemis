@@ -171,7 +171,6 @@ public class JenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
         }
         else if (programmingLanguage == ProgrammingLanguage.SWIFT) {
             StaticCodeAnalysisTool tool = StaticCodeAnalysisTool.getToolsForProgrammingLanguage(programmingLanguage).get(0);
-            script.append("echo \"---------- execute static code analysis ----------\"").append(lineEnding);
             // Copy swiftlint configuration into student's repository
             script.append("cp .swiftlint.yml assignment || true").append(lineEnding);
             // Execute swiftlint within the student's repository and save the report into the sca directory

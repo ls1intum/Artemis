@@ -156,10 +156,15 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         { inTime: 1, late: 1 },
         { inTime: 8, late: 0 },
     ];
+    const numberOfLockedAssessmentByOtherTutorsOfCorrectionRound = [
+        { inTime: 2, late: 0 },
+        { inTime: 7, late: 0 },
+    ];
     const stats = {
         numberOfSubmissions: { inTime: 12, late: 5 },
         totalNumberOfAssessments: { inTime: 9, late: 1 },
         numberOfAssessmentsOfCorrectionRounds,
+        numberOfLockedAssessmentByOtherTutorsOfCorrectionRound,
     } as StatsForDashboard;
     const lockLimitErrorResponse = new HttpErrorResponse({ error: { errorKey: 'lockedSubmissionsLimitReached' } });
     const router = new MockRouter();
@@ -308,6 +313,8 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         sinon.assert.calledWith(modelingSubmissionStubWithoutAssessment.getCall(1), modelingExercise.id, undefined, 1);
         expect(comp.numberOfAssessmentsOfCorrectionRounds[0].inTime).to.equal(1);
         expect(comp.numberOfAssessmentsOfCorrectionRounds[1].inTime).to.equal(8);
+        expect(comp.numberOfLockedAssessmentByOtherTutorsOfCorrectionRound[0].inTime).to.equal(2);
+        expect(comp.numberOfLockedAssessmentByOtherTutorsOfCorrectionRound[1].inTime).to.equal(7);
         expect(comp.totalAssessmentPercentage.inTime).to.equal(75);
         expect(comp.totalAssessmentPercentage.late).to.equal(20);
         expect(comp.submissionsByCorrectionRound?.get(1)!.length).to.equal(0);

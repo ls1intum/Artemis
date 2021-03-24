@@ -5,6 +5,7 @@ import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphTyp
 
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -89,6 +90,52 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
             where TYPE(e) = QuizExercise
             """)
     List<Course> findAllWithQuizExercisesWithEagerExercises();
+
+    /**
+     * Returns the student group name of a single course
+     *
+     * @param courseId the course id of the course to get the name for
+     * @return the student group name
+     */
+    @Query("""
+            SELECT c.studentGroupName
+            FROM Course c
+            WHERE c.id = :courseId
+            """)
+    String findStudentGroupName(@Param("courseId") long courseId);
+
+    /**
+     * Get active students in the timeframe from startDate to endDate for the exerciseIds
+     *
+     * @param exerciseIds exerciseIds from all exercises to get the statistics for
+     * @param startDate the starting date of the query
+     * @param endDate the end date for the query
+     * @return A list with a map for every submission containing date and the username
+     */
+    @Query("""
+            SELECT s.submissionDate AS day, p.student.login AS username
+            FROM StudentParticipation p JOIN p.submissions s
+            WHERE p.exercise.id IN :exerciseIds
+                AND s.submissionDate >= :#{#startDate}
+                AND s.submissionDate <= :#{#endDate}
+            """)
+    List<Map<String, Object>> getActiveStudents(@Param("exerciseIds") List<Long> exerciseIds, @Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate);
+
+    /**
+     * Fetches the courses to display for the management overview
+     *
+     * @param now ZonedDateTime of the current time. If an end date is set only courses before this time are returned. May be null to return all
+     * @param isAdmin whether the user to fetch the courses for is an admin (which gets all courses)
+     * @param userGroups the user groups of the user to fetch the courses for (ignored if the user is an admin)
+     * @return a list of courses for the overview
+     */
+    @Query("""
+            SELECT c
+            FROM Course c
+            WHERE (c.endDate IS NULL OR :#{#now} IS NULL OR c.endDate >= :#{#now})
+                AND (:isAdmin = TRUE OR c.teachingAssistantGroupName IN :userGroups OR c.instructorGroupName IN :userGroups)
+            """)
+    List<Course> getAllCoursesForManagementOverview(@Param("now") ZonedDateTime now, @Param("isAdmin") boolean isAdmin, @Param("userGroups") List<String> userGroups);
 
     @NotNull
     default Course findByIdElseThrow(Long courseId) throws EntityNotFoundException {
