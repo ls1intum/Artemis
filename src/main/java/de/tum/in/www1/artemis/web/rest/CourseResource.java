@@ -924,11 +924,11 @@ public class CourseResource {
             final var courseDTO = new CourseManagementOverviewStatisticsDTO();
             courseDTO.setCourseId(courseId);
 
-            ZonedDateTime sevenDaysAgo = ZonedDateTime.now().minusDays(7);
-            var exerciseIds = exerciseRepository.getActiveExerciseIdsByCourseId(courseId, sevenDaysAgo);
             var studentsGroup = courseRepository.findStudentGroupName(courseId);
             var amountOfStudentsInCourse = Math.toIntExact(userRepository.countUserInGroup(studentsGroup));
-            courseDTO.setExerciseDTOS(exerciseService.getStatisticsForCourseManagementOverview(courseId, amountOfStudentsInCourse, exerciseIds));
+            courseDTO.setExerciseDTOS(exerciseService.getStatisticsForCourseManagementOverview(courseId, amountOfStudentsInCourse));
+
+            var exerciseIds = exerciseRepository.getExerciseIdsByCourseId(courseId);
             courseDTO.setActiveStudents(courseService.getActiveStudents(exerciseIds));
             courseDTOs.add(courseDTO);
         }

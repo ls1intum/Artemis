@@ -266,20 +266,33 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
     Double getAverageScoreById(@Param("exerciseId") Long exerciseId);
 
     /**
-     * Fetches exercise ids of active exercises of a course
+     * Fetches exercise ids of exercises of a course
      *
      * @param courseId the id of the course the exercises are part of
-     * @param sevenDaysAgo a ZoneDateTime seven days in the past, exercises with an assessment due date (or due date if without assessment) older than that are filtered
      * @return a list of ids of exercises
      */
     @Query("""
             SELECT e.id
             FROM Exercise e
             WHERE e.course.id = :courseId
-                AND (e.assessmentDueDate IS NULL OR e.assessmentDueDate >= :sevenDaysAgo)
-                AND (e.assessmentDueDate IS NOT NULL OR e.dueDate IS NULL OR e.dueDate >= :sevenDaysAgo)
             """)
-    List<Long> getActiveExerciseIdsByCourseId(@Param("courseId") Long courseId, @Param("sevenDaysAgo") ZonedDateTime sevenDaysAgo);
+    List<Long> getExerciseIdsByCourseId(@Param("courseId") Long courseId);
+
+    /**
+     * Fetches exercise ids of exercises of a course with a past assessment due date,
+     * or a past due date if there is no assessment due date
+     *
+     * @param courseId the id of the course the exercises are part of
+     * @return a list of ids of past exercises sorted by assessment due date, then due date descending
+     */
+    @Query("""
+            SELECT e.id
+            FROM Exercise e
+            WHERE e.course.id = :courseId
+                AND (e.assessmentDueDate IS NOT NULL AND e.assessmentDueDate < :now
+                    OR e.assessmentDueDate IS NULL AND e.dueDate IS NOT NULL AND e.dueDate < :now)
+            """)
+    List<Long> findPastExerciseIds(@Param("courseId") Long courseId, @Param("now") ZonedDateTime now);
 
     @NotNull
     default Exercise findByIdElseThrow(Long exerciseId) throws EntityNotFoundException {
