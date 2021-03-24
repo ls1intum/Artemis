@@ -6,6 +6,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -17,6 +18,15 @@ import de.tum.in.www1.artemis.util.UserTestService;
 import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
 
 public class UserJenkinsGitlabIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
+
+    @Value("${artemis.continuous-integration.user}")
+    private String jenkinsAdminUsername;
+
+    @Value("${jenkins.use-pseudonyms:#{false}}")
+    private boolean usePseudonymsJenkins;
+
+    @Value("${gitlab.use-pseudonyms:#{false}}")
+    private boolean usePseudonymsGitlab;
 
     @Autowired
     UserTestService userTestService;
@@ -69,6 +79,33 @@ public class UserJenkinsGitlabIntegrationTest extends AbstractSpringIntegrationJ
         ReflectionTestUtils.setField(jenkinsUserManagementService, "usePseudonyms", true);
         ReflectionTestUtils.setField(gitLabUserManagementService, "usePseudonyms", true);
         userTestService.createUser_asAdmin_isSuccessful();
+        ReflectionTestUtils.setField(jenkinsUserManagementService, "usePseudonyms", usePseudonymsJenkins);
+        ReflectionTestUtils.setField(gitLabUserManagementService, "usePseudonyms", usePseudonymsGitlab);
+
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    public void createAdminUserSkippedInJenkins() throws Exception {
+        ReflectionTestUtils.setField(jenkinsUserManagementService, "jenkinsAdminUsername", "batman");
+        userTestService.createUser_asAdmin_isSuccessful();
+        ReflectionTestUtils.setField(jenkinsUserManagementService, "jenkinsAdminUsername", jenkinsAdminUsername);
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    public void deleteAdminUserSkippedInJenkins() throws Exception {
+        ReflectionTestUtils.setField(jenkinsUserManagementService, "jenkinsAdminUsername", "student1");
+        userTestService.deleteUser_isSuccessful();
+        ReflectionTestUtils.setField(jenkinsUserManagementService, "jenkinsAdminUsername", jenkinsAdminUsername);
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    public void updateAdminUserSkippedInJenkins() throws Exception {
+        ReflectionTestUtils.setField(jenkinsUserManagementService, "jenkinsAdminUsername", "student1");
+        userTestService.updateUser_asAdmin_isSuccessful();
+        ReflectionTestUtils.setField(jenkinsUserManagementService, "jenkinsAdminUsername", jenkinsAdminUsername);
     }
 
     @Test
