@@ -1,10 +1,10 @@
 <ng-container *ngIf="exercise">
-    <a *ngIf="exercise.isAtLeastInstructor" [routerLink]="getEditRoute()" class="btn btn-primary btn-sm mr-1">
-        <fa-icon [icon]="'pencil-alt'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.edit"> Edit</span>
+    <a *ngIf="exercise.isAtLeastInstructor" [routerLink]="getEditRoute()" class="btn btn-warning btn-sm mr-1">
+        <fa-icon [icon]="'wrench'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.edit"> Edit</span>
     </a>
 
     <a *ngIf="exercise.course" [routerLink]="['/course-management', courseId, 'exercises', exercise.id!, 'scores']" class="btn btn-info btn-sm mr-1">
-        <fa-icon [icon]="'eye'"></fa-icon>
+        <fa-icon [icon]="'table'"></fa-icon>
         <span class="d-none d-md-inline" jhiTranslate="entity.action.scores">Scores</span>
     </a>
 
@@ -40,5 +40,5 @@
         <fa-icon [icon]="'times'"></fa-icon>
     </button>
 
-    <!--<jhi-external-submission [exercise]="exercise"></jhi-external-submission> -->
+    <jhi-external-submission [exercise]="exercise"></jhi-external-submission>
 </ng-container>
