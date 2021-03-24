@@ -203,6 +203,28 @@ public class AssessmentServiceTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testRatedAfterSubmitResultAndDueDateEqualsSubmissionDateOfResult() {
+        TextExercise exercise = createTextExerciseWithSGI(course1);
+        Submission submissionWithoutResult = new TextSubmission();
+        submissionWithoutResult.setSubmissionDate(futureTimestamp);
+        submissionWithoutResult = database.addSubmission(exercise, submissionWithoutResult, "student1");
+        database.addSubmission((StudentParticipation) submissionWithoutResult.getParticipation(), submissionWithoutResult);
+
+        List<Feedback> feedbacks = createFeedback(exercise);
+        var result = new Result();
+        result.setSubmission(submissionWithoutResult);
+        result.setFeedbacks(feedbacks);
+        submissionWithoutResult.addResult(result);
+
+        var calculatedScore = assessmentService.calculateTotalPoints(feedbacks);
+        assessmentService.submitResult(result, exercise, calculatedScore);
+        resultRepository.save(result);
+
+        assertThat(result.isRated()).isTrue();
+    }
+
+    @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     public void testIsAllowedToCreateOrOverrideResult_withExamDueDateNotPassed() {
         ZonedDateTime visibleDate = ZonedDateTime.now().minusHours(2);
