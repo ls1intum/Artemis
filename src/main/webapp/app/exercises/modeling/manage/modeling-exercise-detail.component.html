@@ -33,8 +33,8 @@
                 <fa-icon [icon]="'wrench'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.edit"> Edit</span>
             </a>
 
-            <a class="btn btn-outline-primary" id="check-plagiarism-download" routerLink="plagiarism">
-                <span jhiTranslate="artemisApp.textExercise.checkPlagiarism">Check Plagiarism</span>
+            <a *ngIf="modelingExercise.isAtLeastInstructor" class="btn btn-outline-primary" id="check-plagiarism-download" routerLink="plagiarism">
+                <span jhiTranslate="artemisApp.programmingExercise.checkPlagiarism">Check Plagiarism</span>
             </a>
         </div>
     </div>
