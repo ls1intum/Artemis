@@ -160,13 +160,6 @@ public class ModelingSubmissionService extends SubmissionService {
 
         participation.addSubmission(modelingSubmission);
 
-        try {
-            notifyCompass(modelingSubmission, modelingExercise);
-        }
-        catch (Exception ex) {
-            log.warn("There was an exception when notifying Compass about a new modeling submission with error message: " + ex.getMessage()
-                    + ". Artemis will ignore this error and continue to save the modeling submission", ex);
-        }
         participation.setInitializationState(InitializationState.FINISHED);
 
         StudentParticipation savedParticipation = studentParticipationRepository.save(participation);
@@ -233,7 +226,7 @@ public class ModelingSubmissionService extends SubmissionService {
         }
         var studentParticipation = (StudentParticipation) modelingSubmission.getParticipation();
         long exerciseId = studentParticipation.getExercise().getId();
-        Result automaticResult = compassService.getResultWithFeedbackSuggestionsForSubmission(modelingSubmission.getId(), exerciseId);
+        Result automaticResult = compassService.getResultWithFeedbackSuggestionsForSubmission(modelingSubmission.getId());
         if (automaticResult != null) {
             automaticResult.setSubmission(null);
             automaticResult.setParticipation(modelingSubmission.getParticipation());

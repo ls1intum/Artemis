@@ -129,20 +129,6 @@
             "releaseDate": "Release",
             "dueDate": "Due",
             "assessmentDueDate": "Assessment Due",
-            "archive": {
-                "archiveCourse": "Archive Course",
-                "archiveCourseSuccess": "The course has been archived!",
-                "archiveCourseError": "Failed to archive the course",
-                "archiveDownloadError": "There was a problem downloading the archive",
-                "downloadCourseArchive": "Download Archive",
-                "popup": {
-                    "title": "Confirm Archive Course Operation",
-                    "question": "Are you sure you want to archive the course <strong>{{ title }}</strong>?",
-                    "statement1": "The process will compress all student code repositories, file upload exercises, modeling exercises, and text exercises in the course and in all its exams.",
-                    "statement2": "<strong class='text-danger'>This process can take several hours depending on the number of students and programming exercises and will take up many server resources. Please start this process only once when the server load is low (e.g. early in the morning)</strong>",
-                    "footerStatement": "You will receive a notification when the process is finished. Then you can download the archive as zip file on this page."
-                }
-            },
             "cleanup": {
                 "title": "Cleanup",
                 "question": "Are you sure you want to clean up the course <strong>{{ title }}</strong>? This will delete all student programming exercise repositories for course <strong>exercises</strong> and <strong>exams</strong>. This action can <strong class='text-danger'>NOT</strong> be undone!"
