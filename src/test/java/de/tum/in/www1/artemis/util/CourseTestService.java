@@ -1369,6 +1369,7 @@ public class CourseTestService {
         var statisticsOptional = exerciseDTOS.stream().findFirst();
         assertThat(statisticsOptional.isPresent()).isTrue();
 
+        // since the exercise is still "currently in progress", the participations are the only statistics we set
         var statisticsDTO = statisticsOptional.get();
         assertThat(statisticsDTO.getAverageScoreInPercent()).isEqualTo(0.0);
         assertThat(statisticsDTO.getExerciseMaxPoints()).isEqualTo(5.0);
@@ -1377,6 +1378,6 @@ public class CourseTestService {
         assertThat(statisticsDTO.getNoOfStudentsInCourse()).isEqualTo(8);
         assertThat(statisticsDTO.getNoOfRatedAssessments()).isEqualTo(0);
         assertThat(statisticsDTO.getNoOfAssessmentsDoneInPercent()).isEqualTo(0.0);
-        assertThat(statisticsDTO.getNoOfSubmissionsInTime()).isEqualTo(2L);
+        assertThat(statisticsDTO.getNoOfSubmissionsInTime()).isEqualTo(0L);
     }
 }
