@@ -56,7 +56,10 @@ public class AssessmentDashboardService {
      */
     public void generateStatisticsForExercisesForAssessmentDashboard(Set<Exercise> exercises, List<TutorParticipation> tutorParticipations, boolean examMode) {
         log.info("generateStatisticsForExercisesForAssessmentDashboard invoked");
+        // start measures performance of each individual query, start2 measures performance of one loop iteration
         long start = System.nanoTime();
+        long start2 = System.nanoTime();
+
         for (Exercise exercise : exercises) {
 
             DueDateStat numberOfSubmissions;
@@ -64,13 +67,22 @@ public class AssessmentDashboardService {
 
             if (exercise instanceof ProgrammingExercise) {
                 numberOfSubmissions = new DueDateStat(programmingExerciseRepository.countSubmissionsByExerciseIdSubmitted(exercise.getId(), examMode), 0L);
-                log.debug("StatsTimeLog: number of submitted submissions done in " + TimeLogUtil.formatDurationFrom(start) + " for programming exercise " + exercise.getId());
+                log.debug("Finished >> programmingExerciseRepository.countSubmissionsByExerciseIdSubmitted << call for exercise " + exercise.getId() + " in "
+                        + TimeLogUtil.formatDurationFrom(start));
+                start = System.nanoTime();
                 totalNumberOfAssessments = new DueDateStat(programmingExerciseRepository.countAssessmentsByExerciseIdSubmitted(exercise.getId(), examMode), 0L);
+                log.debug("Finished >> programmingExerciseRepository.countAssessmentsByExerciseIdSubmitted << call for exercise " + exercise.getId() + " in "
+                        + TimeLogUtil.formatDurationFrom(start));
+                start = System.nanoTime();
             }
             else {
                 numberOfSubmissions = submissionRepository.countSubmissionsForExercise(exercise.getId(), examMode);
-                log.debug("StatsTimeLog: number of submitted submissions done in " + TimeLogUtil.formatDurationFrom(start) + " for exercise " + exercise.getId());
+                log.debug("Finished >> submissionRepository.countSubmissionsForExercise << call for exercise " + exercise.getId() + " in " + TimeLogUtil.formatDurationFrom(start));
+                start = System.nanoTime();
                 totalNumberOfAssessments = resultRepository.countNumberOfFinishedAssessmentsForExercise(exercise.getId(), examMode);
+                log.debug("Finished >> resultRepository.countNumberOfFinishedAssessmentsForExercise << call for exercise " + exercise.getId() + " in "
+                        + TimeLogUtil.formatDurationFrom(start));
+                start = System.nanoTime();
             }
             exercise.setNumberOfSubmissions(numberOfSubmissions);
 
@@ -79,21 +91,26 @@ public class AssessmentDashboardService {
                 // set number of corrections specific to each correction round
                 int numberOfCorrectionRounds = exercise.getExerciseGroup().getExam().getNumberOfCorrectionRoundsInExam();
                 numberOfAssessmentsOfCorrectionRounds = resultRepository.countNumberOfFinishedAssessmentsForExamExerciseForCorrectionRounds(exercise, numberOfCorrectionRounds);
+                log.debug("Finished >> resultRepository.countNumberOfFinishedAssessmentsForExamExerciseForCorrectionRounds << call for exercise " + exercise.getId() + " in "
+                        + TimeLogUtil.formatDurationFrom(start));
+                start = System.nanoTime();
             }
             else {
                 // no examMode here, so correction rounds defaults to 1 and is the same as totalNumberOfAssessments
                 numberOfAssessmentsOfCorrectionRounds = new DueDateStat[] { totalNumberOfAssessments };
             }
-            log.debug("StatsTimeLog: number of assessments per correction round in " + TimeLogUtil.formatDurationFrom(start) + " for exercise " + exercise.getId());
 
             exercise.setNumberOfAssessmentsOfCorrectionRounds(numberOfAssessmentsOfCorrectionRounds);
             exercise.setTotalNumberOfAssessments(numberOfAssessmentsOfCorrectionRounds[0]);
 
             complaintService.calculateNrOfOpenComplaints(exercise, examMode);
-            log.debug("StatsTimeLog: number of open complaints done in " + TimeLogUtil.formatDurationFrom(start) + " for exercise " + exercise.getId());
+            log.debug("Finished >> complaintService.calculateNrOfOpenComplaints << call for exercise " + exercise.getId() + " in " + TimeLogUtil.formatDurationFrom(start));
+            start = System.nanoTime();
             Set<ExampleSubmission> exampleSubmissions = exampleSubmissionRepository.findAllWithResultByExerciseId(exercise.getId());
 
-            log.debug("StatsTimeLog: example submissions done in " + TimeLogUtil.formatDurationFrom(start) + " for exercise " + exercise.getId());
+            log.debug("Finished >> exampleSubmissionRepository.findAllWithResultByExerciseId << call for course " + exercise.getId() + " in "
+                    + TimeLogUtil.formatDurationFrom(start));
+            start = System.nanoTime();
 
             // Do not provide example submissions without any assessment
             exampleSubmissions.removeIf(exampleSubmission -> exampleSubmission.getSubmission() == null || exampleSubmission.getSubmission().getLatestResult() == null);
@@ -107,7 +124,8 @@ public class AssessmentDashboardService {
                     });
             exercise.setTutorParticipations(Collections.singleton(tutorParticipation));
 
-            log.debug("StatsTimeLog: tutor participations done in " + TimeLogUtil.formatDurationFrom(start) + " for exercise " + exercise.getId());
+            log.debug("Finished >> assessmentDashboardLoopIteration << call for exercise " + exercise.getId() + " in " + TimeLogUtil.formatDurationFrom(start2));
+            start2 = System.nanoTime();
         }
     }
 }

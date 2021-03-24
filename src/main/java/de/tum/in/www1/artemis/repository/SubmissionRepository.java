@@ -207,8 +207,6 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
     long countByCourseIdSubmittedAfterDueDate(@Param("courseId") long courseId);
 
     /**
-     *
-     * TODO: speed improvements!
      * @param exerciseId the exercise id we are interested in
      * @return the number of submissions belonging to the exercise id, which have the submitted flag set to true and the submission date before the exercise due date, or no
      *         exercise due date at all
