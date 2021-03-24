@@ -73,11 +73,11 @@ describe('CourseManagementCardComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(CourseManagementCardComponent);
                 component = fixture.componentInstance;
+                component.course = course;
             });
     });
 
     it('should initialize component', () => {
-        component.course = course;
         component.courseStatistics = courseStatisticsDTO;
         component.ngOnChanges();
         expect(component.statisticsPerExercise[exerciseDTO.exerciseId!]).to.deep.equal(exerciseDTO);
@@ -87,5 +87,19 @@ describe('CourseManagementCardComponent', () => {
         expect(component.futureExercises).to.deep.equal([futureExercise1, futureExercise2]);
         expect(component.currentExercises).to.deep.equal([currentExercise]);
         expect(component.pastExercises).to.deep.equal([pastExercise]);
+    });
+
+    it('should only display the latest five past exercises', () => {
+        const pastExercise2 = { assessmentDueDate: moment().subtract(2, 'days') } as Exercise;
+        const pastExercise3 = { dueDate: moment().subtract(5, 'days') } as Exercise;
+        const pastExercise4 = { dueDate: moment().subtract(7, 'days') } as Exercise;
+        const pastExercise5 = { assessmentDueDate: moment().subtract(3, 'days') } as Exercise;
+        const pastExercise6 = { assessmentDueDate: moment().subtract(8, 'days') } as Exercise;
+        component.courseWithExercises = {
+            exercises: [pastExercise, pastExercise2, pastExercise3, pastExercise4, pastExercise5, pastExercise6],
+        } as Course;
+
+        component.ngOnChanges();
+        expect(component.pastExercises).to.deep.equal([pastExercise, pastExercise2, pastExercise5, pastExercise6, pastExercise3]);
     });
 });
