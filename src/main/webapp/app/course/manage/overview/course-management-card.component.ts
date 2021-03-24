@@ -74,10 +74,10 @@ export class CourseManagementCardComponent implements OnChanges {
      * @param exercises the exercises to sort into future, current, in assessment and past exercise categories
      */
     private sortExercises(exercises: Exercise[]): void {
+        this.exercisesSorted = false;
         this.exercisesSorted = true;
 
         const inSevenDays = moment().add(7, 'days').endOf('day');
-        const sevenDaysAgo = moment().subtract(7, 'days').startOf('day');
 
         this.futureExercises = exercises
             .filter((exercise) => exercise.releaseDate && exercise.releaseDate > moment() && exercise.releaseDate <= inSevenDays)
@@ -96,10 +96,14 @@ export class CourseManagementCardComponent implements OnChanges {
             (exercise) => exercise.dueDate && exercise.dueDate <= moment() && exercise.assessmentDueDate && exercise.assessmentDueDate > moment(),
         );
 
-        this.pastExercises = exercises.filter(
-            (exercise) =>
-                (!exercise.assessmentDueDate && exercise.dueDate && exercise.dueDate <= moment() && exercise.dueDate >= sevenDaysAgo) ||
-                (exercise.assessmentDueDate && exercise.assessmentDueDate <= moment() && exercise.assessmentDueDate >= sevenDaysAgo),
-        );
+        this.pastExercises = exercises
+            .filter(
+                (exercise) =>
+                    (!exercise.assessmentDueDate && exercise.dueDate && exercise.dueDate <= moment()) || (exercise.assessmentDueDate && exercise.assessmentDueDate <= moment()),
+            )
+            .sort((exerciseA, exerciseB) => {
+                return (exerciseB.assessmentDueDate ?? exerciseB.dueDate)!.valueOf() - (exerciseA.assessmentDueDate ?? exerciseA.dueDate)!.valueOf();
+            })
+            .slice(0, 5);
     }
 }

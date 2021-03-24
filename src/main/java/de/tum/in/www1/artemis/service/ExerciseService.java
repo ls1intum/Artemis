@@ -555,15 +555,13 @@ public class ExerciseService {
      * @return A list of filled <code>CourseManagementOverviewExerciseStatisticsDTO</code>
      */
     public List<CourseManagementOverviewExerciseStatisticsDTO> getStatisticsForCourseManagementOverview(Long courseId, Integer amountOfStudentsInCourse, List<Long> exerciseIds) {
-        var sevenDaysAgo = ZonedDateTime.now().minusDays(7);
-
         var averageScore = participantScoreRepository.findAvgScoreForExercises(exerciseIds);
         Map<Long, Double> averageScoreById = new HashMap<>();
         for (var element : averageScore) {
             averageScoreById.put((Long) element.get("exerciseId"), (Double) element.get("averageScore"));
         }
 
-        var exercisesForManagementOverview = exerciseRepository.getExercisesForCourseManagementOverview(courseId, sevenDaysAgo);
+        var exercisesForManagementOverview = exerciseRepository.getExercisesForCourseManagementOverview(courseId);
         return generateCourseManagementDTOs(exercisesForManagementOverview, amountOfStudentsInCourse, averageScoreById);
     }
 
