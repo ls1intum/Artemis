@@ -10,7 +10,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.ComplaintResponse;
-import de.tum.in.www1.artemis.domain.assessmentDashboard.AssessmentDashboardExerciseMapEntry;
+import de.tum.in.www1.artemis.domain.assessmentDashboard.ExerciseMapEntry;
 import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
 
 /**
@@ -71,7 +71,7 @@ public interface ComplaintResponseRepository extends JpaRepository<ComplaintResp
      */
     @Query("""
                 SELECT
-                    new de.tum.in.www1.artemis.domain.assessmentDashboard.AssessmentDashboardExerciseMapEntry(
+                    new de.tum.in.www1.artemis.domain.assessmentDashboard.ExerciseMapEntry(
                         cr.complaint.result.participation.exercise.id,
                         count(DISTINCT cr)
                     )
@@ -82,7 +82,7 @@ public interface ComplaintResponseRepository extends JpaRepository<ComplaintResp
                     AND cr.complaint.result.participation.testRun = FALSE
                 GROUP BY cr.complaint.result.participation.exercise.id
             """)
-    List<AssessmentDashboardExerciseMapEntry> countComplaintsByExerciseIdsAndComplaintComplaintTypeIgnoreTestRuns(@Param("exerciseIds") Set<Long> exerciseIds,
+    List<ExerciseMapEntry> countComplaintsByExerciseIdsAndComplaintComplaintTypeIgnoreTestRuns(@Param("exerciseIds") Set<Long> exerciseIds,
             @Param("complaintType") ComplaintType complaintType);
 
     /**
@@ -94,7 +94,7 @@ public interface ComplaintResponseRepository extends JpaRepository<ComplaintResp
      */
     @Query("""
                 SELECT
-                    new de.tum.in.www1.artemis.domain.assessmentDashboard.AssessmentDashboardExerciseMapEntry(
+                    new de.tum.in.www1.artemis.domain.assessmentDashboard.ExerciseMapEntry(
                         cr.complaint.result.participation.exercise.id,
                         count(DISTINCT cr)
                     )
@@ -104,8 +104,7 @@ public interface ComplaintResponseRepository extends JpaRepository<ComplaintResp
                     AND cr.complaint.complaintType = :complaintType
                 GROUP BY cr.complaint.result.participation.exercise.id
             """)
-    List<AssessmentDashboardExerciseMapEntry> countComplaintsByExerciseIdsAndComplaintComplaintType(@Param("exerciseIds") Set<Long> exerciseIds,
-            @Param("complaintType") ComplaintType complaintType);
+    List<ExerciseMapEntry> countComplaintsByExerciseIdsAndComplaintComplaintType(@Param("exerciseIds") Set<Long> exerciseIds, @Param("complaintType") ComplaintType complaintType);
 
     /**
      * Delete all complaint responses that belong to complaints of submission results of a given participation

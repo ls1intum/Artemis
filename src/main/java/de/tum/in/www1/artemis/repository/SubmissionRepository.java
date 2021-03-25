@@ -15,7 +15,7 @@ import org.springframework.stereotype.Repository;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.Submission;
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.assessmentDashboard.AssessmentDashboardExerciseMapEntry;
+import de.tum.in.www1.artemis.domain.assessmentDashboard.ExerciseMapEntry;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
@@ -228,7 +228,7 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
      */
     @Query("""
              SELECT
-                 new de.tum.in.www1.artemis.domain.assessmentDashboard.AssessmentDashboardExerciseMapEntry(
+                 new de.tum.in.www1.artemis.domain.assessmentDashboard.ExerciseMapEntry(
                      p.exercise.id,
                      count(DISTINCT p)
                  )
@@ -238,7 +238,7 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
                  AND (p.exercise.dueDate IS NULL OR s.submissionDate <= p.exercise.dueDate)
              GROUP BY  p.exercise.id
              """)
-    List<AssessmentDashboardExerciseMapEntry> countByExerciseIdsSubmittedBeforeDueDate(@Param("exerciseIds") Set<Long> exerciseIds);
+    List<ExerciseMapEntry> countByExerciseIdsSubmittedBeforeDueDate(@Param("exerciseIds") Set<Long> exerciseIds);
 
     /**
      * Gets the number of unique submissions made for the given exercise
@@ -275,7 +275,7 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
      */
     @Query("""
             SELECT
-                new de.tum.in.www1.artemis.domain.assessmentDashboard.AssessmentDashboardExerciseMapEntry(
+                new de.tum.in.www1.artemis.domain.assessmentDashboard.ExerciseMapEntry(
                     p.exercise.id,
                     count(DISTINCT p)
                 )
@@ -285,7 +285,7 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
                 AND s.submitted = TRUE
                 AND (p.exercise.dueDate IS NULL OR s.submissionDate <= p.exercise.dueDate)
                 """)
-    List<AssessmentDashboardExerciseMapEntry> countByExerciseIdsSubmittedBeforeDueDateIgnoreTestRuns(@Param("exerciseIds") Set<Long> exerciseIds);
+    List<ExerciseMapEntry> countByExerciseIdsSubmittedBeforeDueDateIgnoreTestRuns(@Param("exerciseIds") Set<Long> exerciseIds);
 
     /**
      *
@@ -306,7 +306,7 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
      */
     @Query("""
              SELECT
-                 new de.tum.in.www1.artemis.domain.assessmentDashboard.AssessmentDashboardExerciseMapEntry(
+                 new de.tum.in.www1.artemis.domain.assessmentDashboard.ExerciseMapEntry(
                      p.exercise.id,
                      count(DISTINCT p)
                  )
@@ -316,7 +316,7 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
                  AND s.submissionDate > p.exercise.dueDate
              GROUP BY  p.exercise.id
              """)
-    List<AssessmentDashboardExerciseMapEntry> countByExerciseIdsSubmittedAfterDueDate(@Param("exerciseIds") Set<Long> exerciseIds);
+    List<ExerciseMapEntry> countByExerciseIdsSubmittedAfterDueDate(@Param("exerciseIds") Set<Long> exerciseIds);
 
     /**
      * Returns submissions for a exercise. Returns only a submission that has a result with a matching assessor. Since the results list may also contain

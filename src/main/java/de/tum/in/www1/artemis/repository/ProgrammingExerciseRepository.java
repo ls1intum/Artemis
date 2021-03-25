@@ -19,7 +19,7 @@ import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.assessmentDashboard.AssessmentDashboardExerciseMapEntry;
+import de.tum.in.www1.artemis.domain.assessmentDashboard.ExerciseMapEntry;
 import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -148,7 +148,7 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
 
     @Query("""
             SELECT
-                new de.tum.in.www1.artemis.domain.assessmentDashboard.AssessmentDashboardExerciseMapEntry(
+                new de.tum.in.www1.artemis.domain.assessmentDashboard.ExerciseMapEntry(
                 p.exercise.id,
                 count(DISTINCT p)
             )
@@ -157,7 +157,7 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
                 AND s.submitted = TRUE
             GROUP BY p.exercise.id
             """)
-    List<AssessmentDashboardExerciseMapEntry> countSubmissionsByExerciseIdsSubmitted(@Param("exerciseIds") Set<Long> exerciseIds);
+    List<ExerciseMapEntry> countSubmissionsByExerciseIdsSubmitted(@Param("exerciseIds") Set<Long> exerciseIds);
 
     /**
      * In distinction to other exercise types, students can have multiple submissions in a programming exercise.
@@ -185,7 +185,7 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
      */
     @Query("""
             SELECT
-                new de.tum.in.www1.artemis.domain.assessmentDashboard.AssessmentDashboardExerciseMapEntry(
+                new de.tum.in.www1.artemis.domain.assessmentDashboard.ExerciseMapEntry(
                 p.exercise.id,
                 count(DISTINCT p)
             )
@@ -195,7 +195,7 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
                 AND s.submitted = TRUE
             GROUP BY p.exercise.id
                 """)
-    List<AssessmentDashboardExerciseMapEntry> countSubmissionsByExerciseIdsSubmittedIgnoreTestRun(@Param("exerciseIds") Set<Long> exerciseIds);
+    List<ExerciseMapEntry> countSubmissionsByExerciseIdsSubmittedIgnoreTestRun(@Param("exerciseIds") Set<Long> exerciseIds);
 
     /** needs improvement
      * In distinction to other exercise types, students can have multiple submissions in a programming exercise.

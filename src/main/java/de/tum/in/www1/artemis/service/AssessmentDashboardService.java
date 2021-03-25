@@ -13,7 +13,7 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.domain.ExampleSubmission;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.assessmentDashboard.AssessmentDashboardExerciseMapEntry;
+import de.tum.in.www1.artemis.domain.assessmentDashboard.ExerciseMapEntry;
 import de.tum.in.www1.artemis.domain.enumeration.TutorParticipationStatus;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
@@ -136,41 +136,50 @@ public class AssessmentDashboardService {
         log.info("Finished >> generateStatisticsForExercisesForAssessmentDashboard << call in " + TimeLogUtil.formatDurationFrom(startComplete));
     }
 
+    /**
+     * This method fetches and stores the number of assessments for each exercise.
+     * // TODO: implement
+     * @param programmingExercises          - the programming-exercises, for which the number of submissions should be fetched
+     * @param nonProgrammingExercises       - the exercises, which are not programming-exercises, for which the number of submissions should be fetched
+     * @param examMode                      - if the exercises are part of an exam
+     */
     private void calculateNumberOfAssessments(Set<Exercise> programmingExercises, Set<Exercise> nonProgrammingExercises, boolean examMode) {
         return;
     }
 
-    // TODO add comment
+    /**
+     * This method fetches and stores the number of sumbissions for each exercise.
+     * @param programmingExercises          - the programming-exercises, for which the number of submissions should be fetched
+     * @param nonProgrammingExercises       - the exercises, which are not programming-exercises, for which the number of submissions should be fetched
+     * @param examMode                      - if the exercises are part of an exam
+     */
     private void calculateNumberOfSubmissions(Set<Exercise> programmingExercises, Set<Exercise> nonProgrammingExercises, boolean examMode) {
-        final List<AssessmentDashboardExerciseMapEntry> numberOfSubmissionsOfProgrammingExercises;
-        final List<AssessmentDashboardExerciseMapEntry> numberOfSubmissionsOfNonProgrammingExercises;
-        final List<AssessmentDashboardExerciseMapEntry> numberOfLateSubmissionsOfNonProgrammingExercises;
+        final List<ExerciseMapEntry> programmingSubmissionsCounts;
+        final List<ExerciseMapEntry> submissionCounts;
+        final List<ExerciseMapEntry> lateSubmissionCounts;
         Set<Long> programmingExerciseIds = programmingExercises.stream().map(exercise -> exercise.getId()).collect(Collectors.toSet());
         Set<Long> nonProgrammingExerciseIds = nonProgrammingExercises.stream().map(exercise -> exercise.getId()).collect(Collectors.toSet());
 
+        // for all programming exercises and all non-programmingexercises we fetch the number of submissions here. The returned value comes in form of a list,
+        // which has ExerciseMapEntries. With those for each individual exercise the number of submissions can be set.
         if (examMode) {
-            numberOfSubmissionsOfProgrammingExercises = programmingExerciseRepository.countSubmissionsByExerciseIdsSubmittedIgnoreTestRun(programmingExerciseIds);
-            numberOfSubmissionsOfNonProgrammingExercises = submissionRepository.countByExerciseIdsSubmittedBeforeDueDateIgnoreTestRuns(nonProgrammingExerciseIds);
-            numberOfLateSubmissionsOfNonProgrammingExercises = new ArrayList<>();
+            programmingSubmissionsCounts = programmingExerciseRepository.countSubmissionsByExerciseIdsSubmittedIgnoreTestRun(programmingExerciseIds);
+            submissionCounts = submissionRepository.countByExerciseIdsSubmittedBeforeDueDateIgnoreTestRuns(nonProgrammingExerciseIds);
+            lateSubmissionCounts = new ArrayList<>();
         }
         else {
-            numberOfSubmissionsOfProgrammingExercises = programmingExerciseRepository.countSubmissionsByExerciseIdsSubmitted(programmingExerciseIds);
-            numberOfSubmissionsOfNonProgrammingExercises = submissionRepository.countByExerciseIdsSubmittedBeforeDueDate(nonProgrammingExerciseIds);
-            numberOfLateSubmissionsOfNonProgrammingExercises = submissionRepository.countByExerciseIdsSubmittedAfterDueDate(nonProgrammingExerciseIds);
+            programmingSubmissionsCounts = programmingExerciseRepository.countSubmissionsByExerciseIdsSubmitted(programmingExerciseIds);
+            submissionCounts = submissionRepository.countByExerciseIdsSubmittedBeforeDueDate(nonProgrammingExerciseIds);
+            lateSubmissionCounts = submissionRepository.countByExerciseIdsSubmittedAfterDueDate(nonProgrammingExerciseIds);
         }
-        var numberOfSubmissionsOfProgrammingExercisesMap = numberOfSubmissionsOfProgrammingExercises.stream()
-                .collect(Collectors.toMap(AssessmentDashboardExerciseMapEntry::getKey, entry -> entry.getValue()));
-        var numberOfSubmissionsOfNonProgrammingExercisesMap = numberOfSubmissionsOfNonProgrammingExercises.stream()
-                .collect(Collectors.toMap(AssessmentDashboardExerciseMapEntry::getKey, entry -> entry.getValue()));
-        var numberOfLateSubmissionsOfNonProgrammingExercisesMap = numberOfLateSubmissionsOfNonProgrammingExercises.stream()
-                .collect(Collectors.toMap(AssessmentDashboardExerciseMapEntry::getKey, entry -> entry.getValue()));
+        // convert the data from the queries
+        var programmingSubmissionMap = programmingSubmissionsCounts.stream().collect(Collectors.toMap(ExerciseMapEntry::getKey, entry -> entry.getValue()));
+        var submissionMap = submissionCounts.stream().collect(Collectors.toMap(ExerciseMapEntry::getKey, entry -> entry.getValue()));
+        var lateSubmissionMap = lateSubmissionCounts.stream().collect(Collectors.toMap(ExerciseMapEntry::getKey, entry -> entry.getValue()));
 
-        programmingExercises.forEach(exercise -> {
-            exercise.setNumberOfSubmissions(new DueDateStat(numberOfSubmissionsOfProgrammingExercisesMap.getOrDefault(exercise.getId(), 0L), 0L));
-        });
-        nonProgrammingExercises.forEach(exercise -> {
-            exercise.setNumberOfSubmissions(new DueDateStat(numberOfSubmissionsOfNonProgrammingExercisesMap.getOrDefault(exercise.getId(), 0L),
-                    numberOfLateSubmissionsOfNonProgrammingExercisesMap.getOrDefault(exercise.getId(), 0L)));
-        });
+        // set the number of submissions for the exercises
+        programmingExercises.forEach(exercise -> exercise.setNumberOfSubmissions(new DueDateStat(programmingSubmissionMap.getOrDefault(exercise.getId(), 0L), 0L)));
+        nonProgrammingExercises.forEach(exercise -> exercise
+                .setNumberOfSubmissions(new DueDateStat(submissionMap.getOrDefault(exercise.getId(), 0L), lateSubmissionMap.getOrDefault(exercise.getId(), 0L))));
     }
 }

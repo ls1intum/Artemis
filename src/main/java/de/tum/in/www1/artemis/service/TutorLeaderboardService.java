@@ -40,8 +40,8 @@ public class TutorLeaderboardService {
 
     /**
      * Returns tutor leaderboards for the specified course.
-     *
-     * @param course course for which leaderboard is created
+     * @param exerciseIdsOfCourse - the ids of the exercises which belong to the course
+     * @param course              - course for which leaderboard is created
      * @return list of tutor leaderboard objects
      */
     public List<TutorLeaderboardDTO> getCourseLeaderboard(Course course, Set<Long> exerciseIdsOfCourse) {

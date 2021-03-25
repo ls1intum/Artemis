@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 // Custom object for sql query
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class AssessmentDashboardExerciseMapEntry {
+public class ExerciseMapEntry {
 
     private final long exerciseId;
 
@@ -18,7 +18,7 @@ public class AssessmentDashboardExerciseMapEntry {
         return value;
     }
 
-    public AssessmentDashboardExerciseMapEntry(long exerciseId, long value) {
+    public ExerciseMapEntry(long exerciseId, long value) {
         this.exerciseId = exerciseId;
         this.value = value;
     }

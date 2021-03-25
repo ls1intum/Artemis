@@ -13,7 +13,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.Complaint;
-import de.tum.in.www1.artemis.domain.assessmentDashboard.AssessmentDashboardExerciseMapEntry;
+import de.tum.in.www1.artemis.domain.assessmentDashboard.ExerciseMapEntry;
 import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
 import de.tum.in.www1.artemis.domain.leaderboard.tutor.TutorLeaderboardAnsweredMoreFeedbackRequests;
 import de.tum.in.www1.artemis.domain.leaderboard.tutor.TutorLeaderboardComplaintResponses;
@@ -110,7 +110,7 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
      */
     @Query("""
                 SELECT
-                    new de.tum.in.www1.artemis.domain.assessmentDashboard.AssessmentDashboardExerciseMapEntry(
+                    new de.tum.in.www1.artemis.domain.assessmentDashboard.ExerciseMapEntry(
                         c.result.participation.exercise.id,
                         count(DISTINCT c)
                     )
@@ -119,8 +119,7 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
                     AND c.complaintType = :complaintType
                 GROUP BY c.result.participation.exercise.id
             """)
-    List<AssessmentDashboardExerciseMapEntry> countComplaintsByExerciseIdsAndComplaintType(@Param("exerciseIds") Set<Long> exerciseIds,
-            @Param("complaintType") ComplaintType complaintType);
+    List<ExerciseMapEntry> countComplaintsByExerciseIdsAndComplaintType(@Param("exerciseIds") Set<Long> exerciseIds, @Param("complaintType") ComplaintType complaintType);
 
     /**
      * This method counts the number of complaints by complaint type associated to an exercise id
@@ -131,7 +130,7 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
      */
     @Query("""
                 SELECT
-                    new de.tum.in.www1.artemis.domain.assessmentDashboard.AssessmentDashboardExerciseMapEntry(
+                    new de.tum.in.www1.artemis.domain.assessmentDashboard.ExerciseMapEntry(
                         c.result.participation.exercise.id,
                         count(DISTINCT c)
                     )
@@ -141,7 +140,7 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
                     AND c.result.participation.testRun = FALSE
                 GROUP BY c.result.participation.exercise.id
             """)
-    List<AssessmentDashboardExerciseMapEntry> countComplaintsByExerciseIdsAndComplaintTypeIgnoreTestRuns(@Param("exerciseIds") Set<Long> exerciseIds,
+    List<ExerciseMapEntry> countComplaintsByExerciseIdsAndComplaintTypeIgnoreTestRuns(@Param("exerciseIds") Set<Long> exerciseIds,
             @Param("complaintType") ComplaintType complaintType);
 
     /**
