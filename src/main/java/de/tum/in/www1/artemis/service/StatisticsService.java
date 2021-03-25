@@ -31,7 +31,7 @@ public class StatisticsService {
      * @param graphType the type of graph the data should be fetched
      * @return an array, containing the values for each bar in the graph
      */
-    public Integer[] getChartData(SpanType span, Integer periodIndex, GraphType graphType) {
+    public Integer[] getChartData(SpanType span, Integer periodIndex, GraphType graphType, Long courseId) {
         ZonedDateTime startDate;
         ZonedDateTime endDate;
         List<Map<String, Object>> outcome;
@@ -43,17 +43,17 @@ public class StatisticsService {
             case DAY:
                 startDate = now.minusDays(-periodIndex).withHour(0).withMinute(0).withSecond(0).withNano(0);
                 endDate = now.minusDays(-periodIndex).withHour(23).withMinute(59).withSecond(59);
-                outcome = getDataFromDatabase(span, startDate, endDate, graphType);
+                outcome = getDataFromDatabase(span, startDate, endDate, graphType, courseId);
                 return createResultArrayForDay(outcome, result, endDate);
             case WEEK:
                 startDate = now.minusWeeks(-periodIndex).minusDays(6).withHour(0).withMinute(0).withSecond(0).withNano(0);
                 endDate = now.minusWeeks(-periodIndex).withHour(23).withMinute(59).withSecond(59);
-                outcome = getDataFromDatabase(span, startDate, endDate, graphType);
+                outcome = getDataFromDatabase(span, startDate, endDate, graphType, courseId);
                 return createResultArrayForWeek(outcome, result, endDate);
             case MONTH:
                 startDate = now.minusMonths(1 - periodIndex).plusDays(1).withHour(0).withMinute(0).withSecond(0).withNano(0);
                 endDate = now.minusMonths(-periodIndex).withHour(23).withMinute(59).withSecond(59);
-                outcome = getDataFromDatabase(span, startDate, endDate, graphType);
+                outcome = getDataFromDatabase(span, startDate, endDate, graphType, courseId);
                 return createResultArrayForMonth(outcome, result, endDate);
             case QUARTER:
                 LocalDateTime localStartDate = now.toLocalDateTime().with(DayOfWeek.MONDAY);
@@ -62,13 +62,13 @@ public class StatisticsService {
                 startDate = localStartDate.atZone(zone).minusWeeks(11 + (12 * (-periodIndex))).withHour(0).withMinute(0).withSecond(0).withNano(0);
                 endDate = periodIndex != 0 ? localEndDate.atZone(zone).minusWeeks(12 * (-periodIndex)).withHour(23).withMinute(59).withSecond(59)
                         : localEndDate.atZone(zone).withHour(23).withMinute(59).withSecond(59);
-                outcome = getDataFromDatabase(span, startDate, endDate, graphType);
+                outcome = getDataFromDatabase(span, startDate, endDate, graphType, courseId);
                 return createResultArrayForQuarter(outcome, result, endDate);
             case YEAR:
                 startDate = now.minusYears(1 - periodIndex).plusMonths(1).withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0).withNano(0);
                 lengthOfMonth = YearMonth.of(now.minusYears(-periodIndex).getYear(), now.minusYears(-periodIndex).getMonth()).lengthOfMonth();
                 endDate = now.minusYears(-periodIndex).withDayOfMonth(lengthOfMonth).withHour(23).withMinute(59).withSecond(59);
-                outcome = getDataFromDatabase(span, startDate, endDate, graphType);
+                outcome = getDataFromDatabase(span, startDate, endDate, graphType, courseId);
                 return createResultArrayForYear(outcome, result, endDate);
             default:
                 return null;
@@ -96,13 +96,15 @@ public class StatisticsService {
      * @param graphType the type of graph the data should be fetched for (see GraphType.java)
      * @return the return value of the database call
      */
-    private List<Map<String, Object>> getDataFromDatabase(SpanType span, ZonedDateTime startDate, ZonedDateTime endDate, GraphType graphType) {
+    private List<Map<String, Object>> getDataFromDatabase(SpanType span, ZonedDateTime startDate, ZonedDateTime endDate, GraphType graphType, Long courseId) {
         switch (graphType) {
             case SUBMISSIONS -> {
-                return this.statisticsRepository.getTotalSubmissions(startDate, endDate);
+                return courseId == null ? this.statisticsRepository.getTotalSubmissions(startDate, endDate)
+                        : this.statisticsRepository.getTotalSubmissionsForCourse(startDate, endDate, courseId);
             }
             case ACTIVE_USERS -> {
-                List<Map<String, Object>> result = this.statisticsRepository.getActiveUsers(startDate, endDate);
+                List<Map<String, Object>> result = courseId == null ? this.statisticsRepository.getActiveUsers(startDate, endDate)
+                        : this.statisticsRepository.getActiveUsersForCourse(startDate, endDate, courseId);
                 return convertMapList(span, result, startDate, graphType);
             }
             case LOGGED_IN_USERS -> {
@@ -112,29 +114,36 @@ public class StatisticsService {
                 return convertMapList(span, result, startDate, graphType);
             }
             case RELEASED_EXERCISES -> {
-                return this.statisticsRepository.getReleasedExercises(startDate, endDate);
+                return courseId == null ? this.statisticsRepository.getReleasedExercises(startDate, endDate)
+                        : this.statisticsRepository.getReleasedExercisesForCourse(startDate, endDate, courseId);
             }
             case EXERCISES_DUE -> {
-                return this.statisticsRepository.getExercisesDue(startDate, endDate);
+                return courseId == null ? this.statisticsRepository.getExercisesDue(startDate, endDate)
+                        : this.statisticsRepository.getExercisesDueForCourse(startDate, endDate, courseId);
             }
             case CONDUCTED_EXAMS -> {
-                return this.statisticsRepository.getConductedExams(startDate, endDate);
+                return courseId == null ? this.statisticsRepository.getConductedExams(startDate, endDate)
+                        : this.statisticsRepository.getConductedExamsForCourse(startDate, endDate, courseId);
             }
             case EXAM_PARTICIPATIONS -> {
-                return this.statisticsRepository.getExamParticipations(startDate, endDate);
+                return courseId == null ? this.statisticsRepository.getExamParticipations(startDate, endDate) : this.statisticsRepository.getExamParticipations(startDate, endDate);
             }
             case EXAM_REGISTRATIONS -> {
-                return this.statisticsRepository.getExamRegistrations(startDate, endDate);
+                return courseId == null ? this.statisticsRepository.getExamRegistrations(startDate, endDate)
+                        : this.statisticsRepository.getExamRegistrationsForCourse(startDate, endDate, courseId);
             }
             case ACTIVE_TUTORS -> {
-                List<Map<String, Object>> result = this.statisticsRepository.getActiveTutors(startDate, endDate);
+                List<Map<String, Object>> result = courseId == null ? this.statisticsRepository.getActiveTutors(startDate, endDate)
+                        : this.statisticsRepository.getActiveTutorsForCourse(startDate, endDate, courseId);
                 return convertMapList(span, result, startDate, graphType);
             }
             case CREATED_RESULTS -> {
-                return this.statisticsRepository.getCreatedResults(startDate, endDate);
+                return courseId == null ? this.statisticsRepository.getCreatedResults(startDate, endDate)
+                        : this.statisticsRepository.getCreatedResultsForCourse(startDate, endDate, courseId);
             }
             case CREATED_FEEDBACKS -> {
-                return this.statisticsRepository.getResultFeedbacks(startDate, endDate);
+                return courseId == null ? this.statisticsRepository.getResultFeedbacks(startDate, endDate)
+                        : this.statisticsRepository.getResultFeedbacksForCourse(startDate, endDate, courseId);
             }
             default -> {
                 return new ArrayList<>();

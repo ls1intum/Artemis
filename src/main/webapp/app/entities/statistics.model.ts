@@ -23,3 +23,8 @@ export enum Graphs {
     // Course overview
     ACTIVE_STUDENTS = 'ACTIVE_STUDENTS',
 }
+
+export enum StatisticsView {
+    ARTEMIS = 'ARTEMIS',
+    COURSE = 'COURSE',
+}

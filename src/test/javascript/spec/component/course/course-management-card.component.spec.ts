@@ -10,7 +10,7 @@ import { CourseManagementExerciseRowComponent } from 'app/course/manage/overview
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { MockRouterLinkDirective } from '../lecture-unit/lecture-unit-management.component.spec';
 import { CourseManagementCardComponent } from 'app/course/manage/overview/course-management-card.component';
-import { CourseManagementStatisticsComponent } from 'app/course/manage/overview/course-management-statistics.component';
+import { CourseManagementOverviewStatisticsComponent } from 'app/course/manage/overview/course-management-overview-statistics.component';
 import * as moment from 'moment';
 import { CourseManagementOverviewStatisticsDto } from 'app/course/manage/overview/course-management-overview-statistics-dto.model';
 import { CourseManagementOverviewExerciseStatisticsDTO } from 'app/course/manage/overview/course-management-overview-exercise-statistics-dto.model';
@@ -64,7 +64,7 @@ describe('CourseManagementCardComponent', () => {
                 MockDirective(NgbTooltip),
                 MockRouterLinkDirective,
                 MockComponent(CourseManagementExerciseRowComponent),
-                MockComponent(CourseManagementStatisticsComponent),
+                MockComponent(CourseManagementOverviewStatisticsComponent),
                 MockComponent(SecuredImageComponent),
             ],
             providers: [{ provide: LocalStorageService, useClass: MockSyncStorage }, { provide: SessionStorageService, useClass: MockSyncStorage }, MockProvider(TranslateService)],

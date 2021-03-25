@@ -143,12 +143,12 @@
             </div>
             <div class="col-4 section-card statistics-card align-center">
                 <div class="section-content align-center">
-                    <jhi-course-management-statistics
+                    <jhi-course-management-overview-statistics
                         [courseId]="course.id"
                         [initialStats]="courseStatistics?.activeStudents"
                         [amountOfStudentsInCourse]="!!courseWithUsers ? courseWithUsers.numberOfStudents : 0"
                     >
-                    </jhi-course-management-statistics>
+                    </jhi-course-management-overview-statistics>
                 </div>
             </div>
         </div>

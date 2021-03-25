@@ -13,7 +13,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe.ts
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { MomentModule } from 'ngx-moment';
 import { StatisticsComponent } from 'app/admin/statistics/statistics.component';
-import { StatisticsGraphComponent } from 'app/admin/statistics/statistics-graph.component';
+import { StatisticsGraphComponent } from 'app/shared/statistics-graph/statistics-graph.component';
 import { SpanType } from 'app/entities/statistics.model';
 
 chai.use(sinonChai);

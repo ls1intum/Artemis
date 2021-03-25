@@ -7,11 +7,11 @@ import { ChangeDetectionStrategy } from '@angular/core';
 import { DataSet } from 'app/exercises/quiz/manage/statistics/quiz-statistic/quiz-statistic.component';
 
 @Component({
-    selector: 'jhi-course-management-statistics',
-    templateUrl: './course-management-statistics.component.html',
+    selector: 'jhi-course-management-overview-statistics',
+    templateUrl: './course-management-overview-statistics.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class CourseManagementStatisticsComponent implements OnInit, OnChanges {
+export class CourseManagementOverviewStatisticsComponent implements OnInit, OnChanges {
     @Input()
     courseId: number;
 

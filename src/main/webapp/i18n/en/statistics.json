@@ -9,6 +9,7 @@
             "year": "Year"
         },
         "title": "User statistics",
+        "course_statistics_title": "Course statistics",
         "submissions": "Submissions",
         "active_users": "Active users",
         "logged_in_users": "Logged in users",

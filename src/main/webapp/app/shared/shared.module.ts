@@ -23,7 +23,8 @@ import { CustomMinDirective } from 'app/shared/validators/custom-min-validator.d
 import { AdditionalFeedbackComponent } from './additional-feedback/additional-feedback.component';
 import { ResizeableContainerComponent } from './resizeable-container/resizeable-container.component';
 import { TranslatePipe } from '@ngx-translate/core';
-import { StatisticsGraphComponent } from 'app/admin/statistics/statistics-graph.component';
+import { StatisticsGraphComponent } from 'app/shared/statistics-graph/statistics-graph.component';
+import { DoughnutChartComponent } from 'app/shared/statistics-graph/doughnut-chart.component';
 
 @NgModule({
     imports: [ArtemisSharedLibsModule, ArtemisSharedCommonModule, ArtemisSharedPipesModule],
@@ -46,6 +47,7 @@ import { StatisticsGraphComponent } from 'app/admin/statistics/statistics-graph.
         ArtemisTranslatePipe,
         ArtemisTimeAgoPipe,
         StatisticsGraphComponent,
+        DoughnutChartComponent,
     ],
     entryComponents: [DeleteDialogComponent],
     exports: [
@@ -73,6 +75,7 @@ import { StatisticsGraphComponent } from 'app/admin/statistics/statistics-graph.
         ArtemisTranslatePipe,
         ArtemisTimeAgoPipe,
         StatisticsGraphComponent,
+        DoughnutChartComponent,
     ],
     providers: [ArtemisDatePipe, TranslatePipe],
 })

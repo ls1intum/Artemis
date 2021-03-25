@@ -1,6 +1,6 @@
 <div>
     <div class="row mb-5">
-        <h2 class="col-md-2" id="statistics-page-heading" jhiTranslate="statistics.title">User statistics</h2>
+        <h2 class="col-md-2" id="statistics-page-heading" jhiTranslate="statistics.course_statistics_title">User statistics</h2>
         <div class="col-md-9 btn-group btn-group-toggle" data-toggle="buttons">
             <label class="btn btn-secondary" [class.active]="currentSpan === SpanType.DAY">
                 <input type="radio" name="options" id="option1" (click)="onTabChanged(SpanType.DAY)" />{{ 'statistics.span.day' | translate }}
@@ -21,6 +21,6 @@
     </div>
 
     <div *ngFor="let graph of graphTypes; let i = index" id="graph-{{ i }}" class="graph">
-        <jhi-statistics-graph [graphType]="graph" [currentSpan]="currentSpan"> </jhi-statistics-graph>
+        <jhi-statistics-graph [graphType]="graph" [currentSpan]="currentSpan" [statisticsView]="statisticsView" [courseId]="courseId"> </jhi-statistics-graph>
     </div>
 </div>

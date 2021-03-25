@@ -20,4 +20,16 @@ export class StatisticsService {
             .set('graphType', '' + graphType);
         return this.http.get<number[]>(`${this.resourceUrl}data`, { params });
     }
+
+    /**
+     * Sends a GET request to retrieve the data for a graph based on the graphType in the last *span* days, the given period and the courseId
+     */
+    getChartDataForCourse(span: SpanType, periodIndex: number, graphType: Graphs, courseId: number): Observable<number[]> {
+        const params = new HttpParams()
+            .set('span', '' + span)
+            .set('periodIndex', '' + periodIndex)
+            .set('graphType', '' + graphType)
+            .set('courseId', '' + courseId);
+        return this.http.get<number[]>(`${this.resourceUrl}data-for-course`, { params });
+    }
 }

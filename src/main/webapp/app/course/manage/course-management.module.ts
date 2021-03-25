@@ -41,12 +41,12 @@ import { ArtemisSharedPipesModule } from 'app/shared/pipes/shared-pipes.module';
 import { ArtemisLearningGoalsModule } from 'app/course/learning-goals/learning-goal.module';
 import { CourseManagementCardComponent } from 'app/course/manage/overview/course-management-card.component';
 import { CourseManagementExerciseRowComponent } from './overview/course-management-exercise-row.component';
-import { CourseManagementStatisticsComponent } from './overview/course-management-statistics.component';
+import { CourseManagementOverviewStatisticsComponent } from './overview/course-management-overview-statistics.component';
 import { ArtemisTutorParticipationGraphModule } from 'app/shared/dashboards/tutor-participation-graph/tutor-participation-graph.module';
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { ArtemisCourseParticipantScoresModule } from 'app/course/course-participant-scores/course-participant-scores.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
-import { CourseDetailStatisticsComponent } from 'app/course/manage/course-detail-statistics.component';
+import { CourseManagementStatisticsComponent } from 'app/course/manage/course-management-statistics.component';
 
 @NgModule({
     imports: [
@@ -94,11 +94,11 @@ import { CourseDetailStatisticsComponent } from 'app/course/manage/course-detail
         CourseUpdateComponent,
         CourseExerciseCardComponent,
         CourseManagementExercisesComponent,
-        CourseDetailStatisticsComponent,
+        CourseManagementStatisticsComponent,
         CourseGroupComponent,
         CourseManagementCardComponent,
         CourseManagementExerciseRowComponent,
-        CourseManagementStatisticsComponent,
+        CourseManagementOverviewStatisticsComponent,
     ],
 })
 export class ArtemisCourseManagementModule {}

@@ -1,0 +1,9 @@
+.doughnut-chart-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    .doughnut-chart-text {
+        position: absolute;
+    }
+}

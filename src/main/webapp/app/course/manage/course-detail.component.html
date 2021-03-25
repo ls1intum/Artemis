@@ -29,8 +29,8 @@
                 <a *ngIf="course.isAtLeastInstructor" [routerLink]="['/course-management', course.id, 'scores']" class="btn btn-info mr-1 mb-1">
                     <fa-icon [icon]="'table'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.scores">Scores</span>
                 </a>
-                <a *ngIf="course.isAtLeastInstructor" [routerLink]="['/course-management', course.id, 'course-statistics']" class="btn btn-info mr-1 mb-1">
-                    <b jhiTranslate="artemisApp.courseStatistics.statistics">Statistics</b>
+                <a *ngIf="course.isAtLeastTutor" [routerLink]="['/course-management', course.id, 'course-statistics']" class="btn btn-info mr-1 mb-1">
+                    <fa-icon [icon]="'chart-bar'"></fa-icon>&nbsp;<span jhiTranslate="artemisApp.courseStatistics.statistics">Statistics</span>
                 </a>
                 <a *ngIf="course.isAtLeastInstructor" type="button" [routerLink]="['/course-management', course.id, 'participant-scores']" class="btn btn-info mr-1 mb-1">
                     <fa-icon [icon]="'eye'"></fa-icon>

@@ -17,7 +17,7 @@ import { LearningGoalManagementComponent } from 'app/course/learning-goals/learn
 import { CreateLearningGoalComponent } from 'app/course/learning-goals/create-learning-goal/create-learning-goal.component';
 import { EditLearningGoalComponent } from 'app/course/learning-goals/edit-learning-goal/edit-learning-goal.component';
 import { CourseParticipantScoresComponent } from 'app/course/course-participant-scores/course-participant-scores.component';
-import { CourseDetailStatisticsComponent } from './course-detail-statistics.component';
+import { CourseManagementStatisticsComponent } from './course-management-statistics.component';
 
 @Injectable({ providedIn: 'root' })
 export class CourseResolve implements Resolve<Course> {
@@ -102,10 +102,10 @@ export const courseManagementState: Routes = [
             },
             {
                 path: 'course-statistics',
-                component: CourseDetailStatisticsComponent,
+                component: CourseManagementStatisticsComponent,
                 data: {
-                    authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
-                    pageTitle: 'artemisApp.course.statistics',
+                    authorities: [Authority.TA, Authority.INSTRUCTOR, Authority.ADMIN],
+                    pageTitle: 'artemisApp.courseStatistics.statistics',
                     breadcrumbLabelVariable: '',
                 },
                 canActivate: [UserRouteAccessService],
