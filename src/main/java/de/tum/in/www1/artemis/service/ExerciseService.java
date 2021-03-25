@@ -598,15 +598,34 @@ public class ExerciseService {
             exerciseStatisticsDTO.setExerciseId(exerciseId);
             exerciseStatisticsDTO.setExerciseMaxPoints(exercise.getMaxPoints());
 
-            var avgScore = averageScoreById.get(exerciseId) != null ? averageScoreById.get(exerciseId) : 0.0;
-            exerciseStatisticsDTO.setAverageScoreInPercent(avgScore);
-
+            setAverageScoreForStatisticsDTO(exerciseStatisticsDTO, averageScoreById, exercise);
             setStudentsAndParticipationsAmountForStatisticsDTO(exerciseStatisticsDTO, amountOfStudentsInCourse, exercise);
             setAssessmentsAndSubmissionsForStatisticsDTO(exerciseStatisticsDTO, exercise);
 
             statisticsDTOS.add(exerciseStatisticsDTO);
         }
         return statisticsDTOS;
+    }
+
+    /**
+     * Sets the average for the given <code>CourseManagementOverviewExerciseStatisticsDTO</code>
+     * using the value provided in averageScoreById
+     *
+     * Quiz Exercises are a special case: They don't have a due date set in the database,
+     * therefore it is hard to tell if they are over, so always calculate a score for them
+     *
+     * @param exerciseStatisticsDTO the <code>CourseManagementOverviewExerciseStatisticsDTO</code> to set the amounts for
+     * @param averageScoreById the average score for each exercise indexed by exerciseId
+     * @param exercise the exercise corresponding to the <code>CourseManagementOverviewExerciseStatisticsDTO</code>
+     */
+    private void setAverageScoreForStatisticsDTO(CourseManagementOverviewExerciseStatisticsDTO exerciseStatisticsDTO, Map<Long, Double> averageScoreById, Exercise exercise) {
+        if (exercise instanceof QuizExercise) {
+            var averageScore = participantScoreRepository.findAverageScoreForExercises(exercise.getId());
+            exerciseStatisticsDTO.setAverageScoreInPercent(averageScore != null ? averageScore : 0.0);
+        } else {
+            var averageScore = averageScoreById.get(exercise.getId());
+            exerciseStatisticsDTO.setAverageScoreInPercent(averageScore != null ? averageScore : 0.0);
+        }
     }
 
     /**
