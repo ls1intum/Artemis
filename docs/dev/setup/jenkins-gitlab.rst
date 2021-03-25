@@ -435,8 +435,7 @@ If you already have a Gitlab and Mysql instance running, you can comment out all
                 artemis-authentication-token-value: artemis_admin
                 secret-push-token: # generated in step 9
 
-
-
+10. You're done. You can now run Artemis with the Gitlab/Jenkins environment.
 
 Manual Jenkins Server Setup
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -559,6 +558,10 @@ Start Jenkins
 
 Required Jenkins Plugins
 ~~~~~~~~~~~~~~~~~~~~~~~~
+
+**Note:** The custom Jenkins dockerfile takes advantage of the `Plugin Installation Manager Tool for Jenkins <https://github.com/jenkinsci/plugin-installation-manager-tool>`__ to automatically
+install the plugins listed below. If you used the dockerfile, you can skip these steps and `Server Notification Plugin <#server-notification-plugin>`__. The list of plugins is maintained in ``src/main/docker/jenkins/plugins.yml``.
+
 
 You will need to install the following plugins (apart from the
 recommended ones that got installed during the setup process):
