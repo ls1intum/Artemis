@@ -134,26 +134,8 @@ public class RequestUtilService {
 
     public <T, R> R postWithResponseBody(String path, T body, Class<R> responseType, HttpStatus expectedStatus, @Nullable HttpHeaders httpHeaders,
             @Nullable Map<String, String> expectedResponseHeaders, @Nullable LinkedMultiValueMap<String, String> params) throws Exception {
-        String jsonBody = mapper.writeValueAsString(body);
-        var request = MockMvcRequestBuilders.post(new URI(path)).contentType(MediaType.APPLICATION_JSON).content(jsonBody);
-        if (httpHeaders != null) {
-            request = request.headers(httpHeaders);
-        }
-        if (params != null) {
-            request = request.params(params);
-        }
-        MvcResult res = mvc.perform(request).andExpect(status().is(expectedStatus.value())).andReturn();
-        restoreSecurityContext();
-        if (!expectedStatus.is2xxSuccessful()) {
-            assertThat(res.getResponse().containsHeader("location")).as("no location header on failed request").isFalse();
-            return null;
-        }
-        if (expectedResponseHeaders != null) {
-            for (String headerKey : expectedResponseHeaders.keySet()) {
-                assertThat(res.getResponse().getHeaderValues(headerKey).get(0)).isEqualTo(expectedResponseHeaders.get(headerKey));
-            }
-        }
-        return mapper.readValue(res.getResponse().getContentAsString(), responseType);
+        String res = postWithResponseBodyString(path, body, expectedStatus, httpHeaders, expectedResponseHeaders, params);
+        return mapper.readValue(res, responseType);
     }
 
     /**
@@ -165,11 +147,10 @@ public class RequestUtilService {
      * @param expectedResponseHeaders headers of response
      * @param params parameters for multi value
      * @param <T> Request type
-     * @param <R> Response type
      * @return Request content as string
      * @throws Exception
      */
-    public <T, R> String postWithResponseBodyString(String path, T body, HttpStatus expectedStatus, @Nullable HttpHeaders httpHeaders,
+    public <T> String postWithResponseBodyString(String path, T body, HttpStatus expectedStatus, @Nullable HttpHeaders httpHeaders,
             @Nullable Map<String, String> expectedResponseHeaders, @Nullable LinkedMultiValueMap<String, String> params) throws Exception {
         String jsonBody = mapper.writeValueAsString(body);
         var request = MockMvcRequestBuilders.post(new URI(path)).contentType(MediaType.APPLICATION_JSON).content(jsonBody);
