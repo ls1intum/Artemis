@@ -558,14 +558,14 @@ public class ExerciseService {
         // We only display the latest five past exercises in the client, only calculate statistics for those
         var pastExercises = exerciseRepository.getPastExercisesForCourseManagementOverview(courseId, ZonedDateTime.now());
         pastExercises.sort((exerciseA, exerciseB) -> {
-                var dueDateA = exerciseA.getAssessmentDueDate() != null ? exerciseA.getAssessmentDueDate() : exerciseA.getDueDate();
-                var dueDateB = exerciseB.getAssessmentDueDate() != null ? exerciseB.getAssessmentDueDate() : exerciseB.getDueDate();
-                if (dueDateA.equals(dueDateB)) {
-                    return 0;
-                }
+            var dueDateA = exerciseA.getAssessmentDueDate() != null ? exerciseA.getAssessmentDueDate() : exerciseA.getDueDate();
+            var dueDateB = exerciseB.getAssessmentDueDate() != null ? exerciseB.getAssessmentDueDate() : exerciseB.getDueDate();
+            if (dueDateA.equals(dueDateB)) {
+                return 0;
+            }
 
-                return dueDateA.isBefore(dueDateB) ? 1 : -1;
-            });
+            return dueDateA.isBefore(dueDateB) ? 1 : -1;
+        });
         var fivePastExercises = pastExercises.stream().limit(5).collect(Collectors.toList());
 
         // Calculate the average score for all five exercises at once
