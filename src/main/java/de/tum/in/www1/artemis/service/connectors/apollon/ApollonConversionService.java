@@ -28,17 +28,15 @@ public class ApollonConversionService {
     }
 
     /**
-     * Calls the remote Athene service to submit a Job for calculating automatic feedback
-     * Falls back to naive splitting for less than 10 submissions
-     * Note: See `TextSubmissionService:getTextSubmissionsByExerciseId` for selection of Submissions.
-     * @param model the exercise the automatic assessments should be calculated for
-     * @returns an input stream that is coming from apollon conversion server
+     * Calls the remote Apollon conversion service to convert given model to pdf
+     * @param model the model to convert to pdf
+     * @return an input stream that is coming from apollon conversion server
      */
     public InputStream convertDiagram(String model) {
 
         log.info("Calling Remote Service to convert for diagram.");
         ApollonConversionDTO apollonDTO = new ApollonConversionDTO();
-        apollonDTO.setDiagram(model);
+        apollonDTO.setModel(model);
         try {
             final ApollonConnector.RequestDTO request = new ApollonConnector.RequestDTO(model);
             InputStream response = connector.invoke(apollonConversionUrl + "/pdf", request);

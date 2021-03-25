@@ -7,14 +7,14 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class ApollonConversionDTO implements Serializable {
 
-    private String diagram;
+    private String model;
 
-    public void setDiagram(String diagram) {
-        this.diagram = diagram;
+    public void setModel(String model) {
+        this.model = model;
     }
 
-    public String getDiagram() {
-        return diagram;
+    public String getModel() {
+        return model;
     }
 
 }

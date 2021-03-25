@@ -31,9 +31,9 @@ public class ApollonConversionResource {
     }
 
     /**
-     * Saves automatic textAssessments of Athene
-     *
-     * @return 200 Ok if successful or 401 unauthorized if secret is wrong
+     * Converts given model to pdf
+     * @param dto the data transfer object that includes the model for conversion
+     * @return input stream for conversion
      */
     @PostMapping("/apollon-convert/pdf")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
@@ -41,7 +41,7 @@ public class ApollonConversionResource {
         log.debug("REST call to convert apollon model to pdf");
 
         // The apollonConversionService will manage the processing and database saving
-        InputStream inputStream = apollonConversionService.convertDiagram(dto.getDiagram());
+        InputStream inputStream = apollonConversionService.convertDiagram(dto.getModel());
         if (inputStream == null) {
             throw new RuntimeException();
         }

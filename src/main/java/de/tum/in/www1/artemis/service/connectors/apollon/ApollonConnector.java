@@ -23,12 +23,9 @@ class ApollonConnector {
 
     private final RestTemplate restTemplate;
 
-    private final Class<ResponseDTO> genericResponseType;
-
     ApollonConnector(Logger log, RestTemplate restTemplate) {
         this.log = log;
         this.restTemplate = restTemplate;
-        this.genericResponseType = ResponseDTO.class;
     }
 
     // region Request/Response DTOs
