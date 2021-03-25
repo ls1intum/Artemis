@@ -551,8 +551,8 @@ public class ExamService {
 
             log.debug("StatsTimeLog: number of complaints open done in " + TimeLogUtil.formatDurationFrom(start) + " for exercise " + exercise.getId());
             // number of complaints finished
-            numberOfComplaintResponsesByExercise.add(complaintResponseRepository
-                    .countByComplaint_Result_Participation_Exercise_Id_AndComplaint_ComplaintType_AndSubmittedTimeIsNotNull(exercise.getId(), ComplaintType.COMPLAINT));
+            numberOfComplaintResponsesByExercise
+                    .add(complaintResponseRepository.countComplaintResponseByExerciseIdAndComplaintTypeAndSubmittedTimeIsNotNull(exercise.getId(), ComplaintType.COMPLAINT));
 
             log.debug("StatsTimeLog: number of complaints finished done in " + TimeLogUtil.formatDurationFrom(start) + " for exercise " + exercise.getId());
             // number of assessments done

@@ -2,15 +2,15 @@ package de.tum.in.www1.artemis.service;
 
 import java.security.Principal;
 import java.time.ZonedDateTime;
-import java.util.List;
-import java.util.Optional;
-import java.util.OptionalLong;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.assessmentDashboard.AssessmentDashboardExerciseMapEntry;
 import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.participation.Participant;
@@ -150,11 +150,11 @@ public class ComplaintService {
     }
 
     public long countComplaintsByExerciseId(long exerciseId) {
-        return complaintRepository.countByResult_Participation_Exercise_IdAndComplaintType(exerciseId, ComplaintType.COMPLAINT);
+        return complaintRepository.countComplaintsByExerciseIdAndComplaintType(exerciseId, ComplaintType.COMPLAINT);
     }
 
     public long countMoreFeedbackRequestsByExerciseId(long exerciseId) {
-        return complaintRepository.countByResult_Participation_Exercise_IdAndComplaintType(exerciseId, ComplaintType.MORE_FEEDBACK);
+        return complaintRepository.countComplaintsByExerciseIdAndComplaintType(exerciseId, ComplaintType.MORE_FEEDBACK);
     }
 
     /**
@@ -176,18 +176,58 @@ public class ComplaintService {
             numberOfMoreFeedbackComplaintResponses = 0;
         }
         else {
-            numberOfComplaints = complaintRepository.countByResult_Participation_Exercise_IdAndComplaintType(exercise.getId(), ComplaintType.COMPLAINT);
-            numberOfComplaintResponses = complaintResponseRepository
-                    .countByComplaint_Result_Participation_Exercise_Id_AndComplaint_ComplaintType_AndSubmittedTimeIsNotNull(exercise.getId(), ComplaintType.COMPLAINT);
-            numberOfMoreFeedbackRequests = complaintRepository.countByResult_Participation_Exercise_IdAndComplaintType(exercise.getId(), ComplaintType.MORE_FEEDBACK);
-            numberOfMoreFeedbackComplaintResponses = complaintResponseRepository
-                    .countByComplaint_Result_Participation_Exercise_Id_AndComplaint_ComplaintType_AndSubmittedTimeIsNotNull(exercise.getId(), ComplaintType.MORE_FEEDBACK);
+            numberOfComplaints = complaintRepository.countComplaintsByExerciseIdAndComplaintType(exercise.getId(), ComplaintType.COMPLAINT);
+            numberOfComplaintResponses = complaintResponseRepository.countComplaintResponseByExerciseIdAndComplaintTypeAndSubmittedTimeIsNotNull(exercise.getId(),
+                    ComplaintType.COMPLAINT);
+            numberOfMoreFeedbackRequests = complaintRepository.countComplaintsByExerciseIdAndComplaintType(exercise.getId(), ComplaintType.MORE_FEEDBACK);
+            numberOfMoreFeedbackComplaintResponses = complaintResponseRepository.countComplaintResponseByExerciseIdAndComplaintTypeAndSubmittedTimeIsNotNull(exercise.getId(),
+                    ComplaintType.MORE_FEEDBACK);
         }
 
         exercise.setNumberOfOpenComplaints(numberOfComplaints - numberOfComplaintResponses);
         exercise.setNumberOfComplaints(numberOfComplaints);
         exercise.setNumberOfOpenMoreFeedbackRequests(numberOfMoreFeedbackRequests - numberOfMoreFeedbackComplaintResponses);
         exercise.setNumberOfMoreFeedbackRequests(numberOfMoreFeedbackRequests);
+    }
+
+    // TODO ADD comment
+    public void calculateNrOfOpenComplaints(Set<Exercise> exercises, boolean examMode) {
+        final List<AssessmentDashboardExerciseMapEntry> numberOfComplaintsOfExercise;
+        final List<AssessmentDashboardExerciseMapEntry> numberOfComplaintResponsesOfExercise;
+        final List<AssessmentDashboardExerciseMapEntry> numberOfMoreFeedbackRequestsOfExercise;
+        final List<AssessmentDashboardExerciseMapEntry> numberOfMoreFeedbackResponsesOfExercise;
+
+        Set<Long> exerciseIds = exercises.stream().map(exercise -> exercise.getId()).collect(Collectors.toSet());
+
+        if (examMode) {
+            numberOfComplaintsOfExercise = complaintRepository.countComplaintsByExerciseIdsAndComplaintTypeIgnoreTestRuns(exerciseIds, ComplaintType.COMPLAINT);
+            numberOfComplaintResponsesOfExercise = complaintResponseRepository.countComplaintsByExerciseIdsAndComplaintComplaintTypeIgnoreTestRuns(exerciseIds,
+                    ComplaintType.COMPLAINT);
+            numberOfMoreFeedbackRequestsOfExercise = new ArrayList<>();
+            numberOfMoreFeedbackResponsesOfExercise = new ArrayList<>();
+        }
+        else {
+            numberOfComplaintsOfExercise = complaintRepository.countComplaintsByExerciseIdsAndComplaintType(exerciseIds, ComplaintType.COMPLAINT);
+            numberOfComplaintResponsesOfExercise = complaintResponseRepository.countComplaintsByExerciseIdsAndComplaintComplaintType(exerciseIds, ComplaintType.COMPLAINT);
+
+            numberOfMoreFeedbackRequestsOfExercise = complaintRepository.countComplaintsByExerciseIdsAndComplaintType(exerciseIds, ComplaintType.MORE_FEEDBACK);
+            numberOfMoreFeedbackResponsesOfExercise = complaintResponseRepository.countComplaintsByExerciseIdsAndComplaintComplaintType(exerciseIds, ComplaintType.MORE_FEEDBACK);
+        }
+        var numberOfComplaintsMap = numberOfComplaintsOfExercise.stream().collect(Collectors.toMap(AssessmentDashboardExerciseMapEntry::getKey, entry -> entry.getValue()));
+        var numberOfComplaintResponsesMap = numberOfComplaintResponsesOfExercise.stream()
+                .collect(Collectors.toMap(AssessmentDashboardExerciseMapEntry::getKey, entry -> entry.getValue()));
+        var numberOfMoreFeedbackRequestsMap = numberOfMoreFeedbackRequestsOfExercise.stream()
+                .collect(Collectors.toMap(AssessmentDashboardExerciseMapEntry::getKey, entry -> entry.getValue()));
+        var numberOfMoreFeedbackResponsesMap = numberOfMoreFeedbackResponsesOfExercise.stream()
+                .collect(Collectors.toMap(AssessmentDashboardExerciseMapEntry::getKey, entry -> entry.getValue()));
+        exercises.forEach(exercise -> {
+            exercise.setNumberOfOpenComplaints(numberOfComplaintsMap.getOrDefault(exercise.getId(), 0L) - numberOfComplaintResponsesMap.getOrDefault(exercise.getId(), 0L));
+            exercise.setNumberOfComplaints(numberOfComplaintsMap.getOrDefault(exercise.getId(), 0L));
+
+            exercise.setNumberOfOpenMoreFeedbackRequests(
+                    numberOfMoreFeedbackRequestsMap.getOrDefault(exercise.getId(), 0L) - numberOfMoreFeedbackResponsesMap.getOrDefault(exercise.getId(), 0L));
+            exercise.setNumberOfMoreFeedbackRequests(numberOfMoreFeedbackRequestsMap.getOrDefault(exercise.getId(), 0L));
+        });
     }
 
     /**

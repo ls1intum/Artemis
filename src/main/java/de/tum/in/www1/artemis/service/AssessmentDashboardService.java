@@ -1,8 +1,10 @@
 package de.tum.in.www1.artemis.service;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,6 +13,7 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.domain.ExampleSubmission;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.assessmentDashboard.AssessmentDashboardExerciseMapEntry;
 import de.tum.in.www1.artemis.domain.enumeration.TutorParticipationStatus;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
@@ -49,7 +52,7 @@ public class AssessmentDashboardService {
 
     /**
      * Prepares the exercises for the assessment dashboard by setting the tutor participations and statistics
-     *
+     * This is very slow as each iteration takes about 2.5 s
      * @param exercises exercises to be prepared for the assessment dashboard
      * @param tutorParticipations participations of the tutors
      * @param examMode flag should be set for exam dashboard
@@ -59,32 +62,39 @@ public class AssessmentDashboardService {
         // start measures performance of each individual query, start2 measures performance of one loop iteration
         long start = System.nanoTime();
         long start2 = System.nanoTime();
+        long startComplete = System.nanoTime();
+        Set<Exercise> programmingExerciseIds = exercises.stream().filter(exercise -> exercise instanceof ProgrammingExercise).collect(Collectors.toSet());
+        Set<Exercise> nonProgrammingExerciseIds = exercises.stream().filter(exercise -> !(exercise instanceof ProgrammingExercise)).collect(Collectors.toSet());
 
+        complaintService.calculateNrOfOpenComplaints(exercises, examMode);
+        log.info("Finished >> complaintService.calculateNrOfOpenComplaints all << in " + TimeLogUtil.formatDurationFrom(start));
+        start = System.nanoTime();
+
+        calculateNumberOfSubmissions(programmingExerciseIds, nonProgrammingExerciseIds, examMode);
+        log.info("Finished >> assessmentDashboardService.calculateNumberOfSubmissions all << in " + TimeLogUtil.formatDurationFrom(start));
+        start = System.nanoTime();
+
+        // This method dos not yet fetch the assessment data
+        calculateNumberOfAssessments(programmingExerciseIds, nonProgrammingExerciseIds, examMode);
+        log.info("Finished >> assessmentDashboardService.calculateNumberOfAssessments all << in " + TimeLogUtil.formatDurationFrom(start));
+        start = System.nanoTime();
+
+        // parts of this loop can possibly still be extracted.
         for (Exercise exercise : exercises) {
-
-            DueDateStat numberOfSubmissions;
             DueDateStat totalNumberOfAssessments;
 
             if (exercise instanceof ProgrammingExercise) {
-                numberOfSubmissions = new DueDateStat(programmingExerciseRepository.countSubmissionsByExerciseIdSubmitted(exercise.getId(), examMode), 0L);
-                log.info("Finished >> programmingExerciseRepository.countSubmissionsByExerciseIdSubmitted << call for exercise " + exercise.getId() + " in "
-                        + TimeLogUtil.formatDurationFrom(start));
-                start = System.nanoTime();
                 totalNumberOfAssessments = new DueDateStat(programmingExerciseRepository.countAssessmentsByExerciseIdSubmitted(exercise.getId(), examMode), 0L);
                 log.info("Finished >> programmingExerciseRepository.countAssessmentsByExerciseIdSubmitted << call for exercise " + exercise.getId() + " in "
                         + TimeLogUtil.formatDurationFrom(start));
                 start = System.nanoTime();
             }
             else {
-                numberOfSubmissions = submissionRepository.countSubmissionsForExercise(exercise.getId(), examMode);
-                log.info("Finished >> submissionRepository.countSubmissionsForExercise << call for exercise " + exercise.getId() + " in " + TimeLogUtil.formatDurationFrom(start));
-                start = System.nanoTime();
                 totalNumberOfAssessments = resultRepository.countNumberOfFinishedAssessmentsForExercise(exercise.getId(), examMode);
                 log.info("Finished >> resultRepository.countNumberOfFinishedAssessmentsForExercise << call for exercise " + exercise.getId() + " in "
                         + TimeLogUtil.formatDurationFrom(start));
                 start = System.nanoTime();
             }
-            exercise.setNumberOfSubmissions(numberOfSubmissions);
 
             final DueDateStat[] numberOfAssessmentsOfCorrectionRounds;
             if (examMode) {
@@ -102,9 +112,6 @@ public class AssessmentDashboardService {
 
             exercise.setNumberOfAssessmentsOfCorrectionRounds(numberOfAssessmentsOfCorrectionRounds);
             exercise.setTotalNumberOfAssessments(numberOfAssessmentsOfCorrectionRounds[0]);
-
-            complaintService.calculateNrOfOpenComplaints(exercise, examMode);
-            log.info("Finished >> complaintService.calculateNrOfOpenComplaints << call for exercise " + exercise.getId() + " in " + TimeLogUtil.formatDurationFrom(start));
             start = System.nanoTime();
             Set<ExampleSubmission> exampleSubmissions = exampleSubmissionRepository.findAllWithResultByExerciseId(exercise.getId());
 
@@ -125,7 +132,45 @@ public class AssessmentDashboardService {
             exercise.setTutorParticipations(Collections.singleton(tutorParticipation));
 
             log.info("Finished >> assessmentDashboardLoopIteration << call for exercise " + exercise.getId() + " in " + TimeLogUtil.formatDurationFrom(start2));
-            start2 = System.nanoTime();
         }
+        log.info("Finished >> generateStatisticsForExercisesForAssessmentDashboard << call in " + TimeLogUtil.formatDurationFrom(startComplete));
+    }
+
+    private void calculateNumberOfAssessments(Set<Exercise> programmingExercises, Set<Exercise> nonProgrammingExercises, boolean examMode) {
+        return;
+    }
+
+    // TODO add comment
+    private void calculateNumberOfSubmissions(Set<Exercise> programmingExercises, Set<Exercise> nonProgrammingExercises, boolean examMode) {
+        final List<AssessmentDashboardExerciseMapEntry> numberOfSubmissionsOfProgrammingExercises;
+        final List<AssessmentDashboardExerciseMapEntry> numberOfSubmissionsOfNonProgrammingExercises;
+        final List<AssessmentDashboardExerciseMapEntry> numberOfLateSubmissionsOfNonProgrammingExercises;
+        Set<Long> programmingExerciseIds = programmingExercises.stream().map(exercise -> exercise.getId()).collect(Collectors.toSet());
+        Set<Long> nonProgrammingExerciseIds = nonProgrammingExercises.stream().map(exercise -> exercise.getId()).collect(Collectors.toSet());
+
+        if (examMode) {
+            numberOfSubmissionsOfProgrammingExercises = programmingExerciseRepository.countSubmissionsByExerciseIdsSubmittedIgnoreTestRun(programmingExerciseIds);
+            numberOfSubmissionsOfNonProgrammingExercises = submissionRepository.countByExerciseIdsSubmittedBeforeDueDateIgnoreTestRuns(nonProgrammingExerciseIds);
+            numberOfLateSubmissionsOfNonProgrammingExercises = new ArrayList<>();
+        }
+        else {
+            numberOfSubmissionsOfProgrammingExercises = programmingExerciseRepository.countSubmissionsByExerciseIdsSubmitted(programmingExerciseIds);
+            numberOfSubmissionsOfNonProgrammingExercises = submissionRepository.countByExerciseIdsSubmittedBeforeDueDate(nonProgrammingExerciseIds);
+            numberOfLateSubmissionsOfNonProgrammingExercises = submissionRepository.countByExerciseIdsSubmittedAfterDueDate(nonProgrammingExerciseIds);
+        }
+        var numberOfSubmissionsOfProgrammingExercisesMap = numberOfSubmissionsOfProgrammingExercises.stream()
+                .collect(Collectors.toMap(AssessmentDashboardExerciseMapEntry::getKey, entry -> entry.getValue()));
+        var numberOfSubmissionsOfNonProgrammingExercisesMap = numberOfSubmissionsOfNonProgrammingExercises.stream()
+                .collect(Collectors.toMap(AssessmentDashboardExerciseMapEntry::getKey, entry -> entry.getValue()));
+        var numberOfLateSubmissionsOfNonProgrammingExercisesMap = numberOfLateSubmissionsOfNonProgrammingExercises.stream()
+                .collect(Collectors.toMap(AssessmentDashboardExerciseMapEntry::getKey, entry -> entry.getValue()));
+
+        programmingExercises.forEach(exercise -> {
+            exercise.setNumberOfSubmissions(new DueDateStat(numberOfSubmissionsOfProgrammingExercisesMap.getOrDefault(exercise.getId(), 0L), 0L));
+        });
+        nonProgrammingExercises.forEach(exercise -> {
+            exercise.setNumberOfSubmissions(new DueDateStat(numberOfSubmissionsOfNonProgrammingExercisesMap.getOrDefault(exercise.getId(), 0L),
+                    numberOfLateSubmissionsOfNonProgrammingExercisesMap.getOrDefault(exercise.getId(), 0L)));
+        });
     }
 }

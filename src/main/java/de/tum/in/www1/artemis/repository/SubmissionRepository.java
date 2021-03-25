@@ -4,6 +4,7 @@ import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphTyp
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -14,6 +15,7 @@ import org.springframework.stereotype.Repository;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.Submission;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.assessmentDashboard.AssessmentDashboardExerciseMapEntry;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
@@ -220,6 +222,25 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
     long countByExerciseIdSubmittedBeforeDueDate(@Param("exerciseId") long exerciseId);
 
     /**
+     * @param exerciseIds the exercise ids we are interested in
+     * @return the numbers of submissions belonging to each exercise id, which have the submitted flag set to true and the submission date before the exercise due date, or no
+     *         exercise due date at all
+     */
+    @Query("""
+             SELECT
+                 new de.tum.in.www1.artemis.domain.assessmentDashboard.AssessmentDashboardExerciseMapEntry(
+                     p.exercise.id,
+                     count(DISTINCT p)
+                 )
+            FROM StudentParticipation p JOIN p.submissions s
+             WHERE p.exercise.id IN :exerciseIds
+                 AND s.submitted = TRUE
+                 AND (p.exercise.dueDate IS NULL OR s.submissionDate <= p.exercise.dueDate)
+             GROUP BY  p.exercise.id
+             """)
+    List<AssessmentDashboardExerciseMapEntry> countByExerciseIdsSubmittedBeforeDueDate(@Param("exerciseIds") Set<Long> exerciseIds);
+
+    /**
      * Gets the number of unique submissions made for the given exercise
      *
      * @param exerciseId the exercise id to get the number for
@@ -247,6 +268,26 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
     long countByExerciseIdSubmittedBeforeDueDateIgnoreTestRuns(@Param("exerciseId") long exerciseId);
 
     /**
+     * Should be used for exam dashboard to ignore test run submissions
+     * @param exerciseIds the exercise id we are interested in
+     * @return the number of submissions belonging to the exercise id, which have the submitted flag set to true and the submission date before the exercise due date, or no
+     *         exercise due date at all
+     */
+    @Query("""
+            SELECT
+                new de.tum.in.www1.artemis.domain.assessmentDashboard.AssessmentDashboardExerciseMapEntry(
+                    p.exercise.id,
+                    count(DISTINCT p)
+                )
+            FROM StudentParticipation p JOIN  p.submissions s
+            WHERE p.exercise.id IN :exerciseIds
+                AND p.testRun = FALSE
+                AND s.submitted = TRUE
+                AND (p.exercise.dueDate IS NULL OR s.submissionDate <= p.exercise.dueDate)
+                """)
+    List<AssessmentDashboardExerciseMapEntry> countByExerciseIdsSubmittedBeforeDueDateIgnoreTestRuns(@Param("exerciseIds") Set<Long> exerciseIds);
+
+    /**
      *
      * @param exerciseId the exercise id we are interested in
      * @return the number of submissions belonging to the exercise id, which have the submitted flag set to true and the submission date after the exercise due date
@@ -258,6 +299,24 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
                 AND s.submissionDate > p.exercise.dueDate
             """)
     long countByExerciseIdSubmittedAfterDueDate(@Param("exerciseId") long exerciseId);
+
+    /**
+     * @param exerciseIds the exercise ids we are interested in
+     * @return the numbers of submissions belonging to each exercise id, which have the submitted flag set to true and the submission date after the exercise due date
+     */
+    @Query("""
+             SELECT
+                 new de.tum.in.www1.artemis.domain.assessmentDashboard.AssessmentDashboardExerciseMapEntry(
+                     p.exercise.id,
+                     count(DISTINCT p)
+                 )
+            FROM StudentParticipation p JOIN p.submissions s
+             WHERE p.exercise.id IN :exerciseIds
+                 AND s.submitted = TRUE
+                 AND s.submissionDate > p.exercise.dueDate
+             GROUP BY  p.exercise.id
+             """)
+    List<AssessmentDashboardExerciseMapEntry> countByExerciseIdsSubmittedAfterDueDate(@Param("exerciseIds") Set<Long> exerciseIds);
 
     /**
      * Returns submissions for a exercise. Returns only a submission that has a result with a matching assessor. Since the results list may also contain

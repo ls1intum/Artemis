@@ -19,6 +19,7 @@ import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.assessmentDashboard.AssessmentDashboardExerciseMapEntry;
 import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -138,8 +139,25 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
      * @param exerciseId the exercise id we are interested in
      * @return the number of distinct submissions belonging to the exercise id
      */
-    @Query("SELECT COUNT (DISTINCT p) FROM ProgrammingExerciseStudentParticipation p WHERE p.exercise.id = :#{#exerciseId} AND EXISTS (SELECT s FROM ProgrammingSubmission s WHERE s.participation.id = p.id AND s.submitted = TRUE)")
+    @Query("""
+            SELECT COUNT (DISTINCT p) FROM ProgrammingExerciseStudentParticipation p join p.submissions s
+            WHERE p.exercise.id = :#{#exerciseId}
+            AND s.submitted = TRUE
+            """)
     long countSubmissionsByExerciseIdSubmitted(@Param("exerciseId") Long exerciseId);
+
+    @Query("""
+            SELECT
+                new de.tum.in.www1.artemis.domain.assessmentDashboard.AssessmentDashboardExerciseMapEntry(
+                p.exercise.id,
+                count(DISTINCT p)
+            )
+            FROM ProgrammingExerciseStudentParticipation p join p.submissions s
+            WHERE p.exercise.id IN :exerciseIds
+                AND s.submitted = TRUE
+            GROUP BY p.exercise.id
+            """)
+    List<AssessmentDashboardExerciseMapEntry> countSubmissionsByExerciseIdsSubmitted(@Param("exerciseIds") Set<Long> exerciseIds);
 
     /**
      * In distinction to other exercise types, students can have multiple submissions in a programming exercise.
@@ -150,14 +168,34 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
      * @return the number of distinct submissions belonging to the exercise id
      */
     @Query("""
-            SELECT COUNT (DISTINCT p) FROM ProgrammingExerciseStudentParticipation p
+            SELECT COUNT (DISTINCT p) FROM ProgrammingExerciseStudentParticipation p JOIN p.submissions s
             WHERE p.exercise.id = :#{#exerciseId}
             AND p.testRun = FALSE
-            AND EXISTS (SELECT s FROM ProgrammingSubmission s
-                WHERE s.participation.id = p.id
-                AND s.submitted = TRUE)
+            AND s.submitted = TRUE
             """)
     long countSubmissionsByExerciseIdSubmittedIgnoreTestRunSubmissions(@Param("exerciseId") Long exerciseId);
+
+    /**
+     * In distinction to other exercise types, students can have multiple submissions in a programming exercise.
+     * We therefore have to check here that a submission exists, that was submitted before the deadline.
+     * Should be used for exam dashboard to ignore test run submissions.
+     *
+     * @param exerciseIds the exercise ids we are interested in
+     * @return the number of distinct submissions belonging to the exercise id
+     */
+    @Query("""
+            SELECT
+                new de.tum.in.www1.artemis.domain.assessmentDashboard.AssessmentDashboardExerciseMapEntry(
+                p.exercise.id,
+                count(DISTINCT p)
+            )
+            FROM ProgrammingExerciseStudentParticipation p JOIN p.submissions s
+            WHERE p.exercise.id IN :exerciseIds
+                AND p.testRun = FALSE
+                AND s.submitted = TRUE
+            GROUP BY p.exercise.id
+                """)
+    List<AssessmentDashboardExerciseMapEntry> countSubmissionsByExerciseIdsSubmittedIgnoreTestRun(@Param("exerciseIds") Set<Long> exerciseIds);
 
     /** needs improvement
      * In distinction to other exercise types, students can have multiple submissions in a programming exercise.
