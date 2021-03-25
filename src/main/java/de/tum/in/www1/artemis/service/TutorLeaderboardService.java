@@ -50,6 +50,7 @@ public class TutorLeaderboardService {
         String groupName = course.getTeachingAssistantGroupName();
 
         long start = System.currentTimeMillis();
+        // this call is still taking about 3s for very big courses
         List<TutorLeaderboardAssessments> tutorLeaderboardAssessments = resultRepository.findTutorLeaderboardAssessmentByCourseId(exerciseIdsOfCourse);
         long end = System.currentTimeMillis();
         log.info("Finished >>resultRepository.findTutorLeaderboardAssessmentByCourseId<< call for course " + course.getId() + " in " + (end - start) + "ms");
