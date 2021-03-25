@@ -37,14 +37,11 @@ public class ApollonConversionResource {
      */
     @PostMapping("/apollon-convert/pdf")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity convertApollonDiagram(@RequestBody ApollonConversionDTO dto) {
+    public ResponseEntity convertApollonModel(@RequestBody ApollonConversionDTO dto) {
         log.debug("REST call to convert apollon model to pdf");
 
         // The apollonConversionService will manage the processing and database saving
-        InputStream inputStream = apollonConversionService.convertDiagram(dto.getModel());
-        if (inputStream == null) {
-            throw new RuntimeException();
-        }
+        InputStream inputStream = apollonConversionService.convertModel(dto.getModel());
 
         InputStreamResource inputStreamResource = new InputStreamResource(inputStream);
         log.debug("REST call for apollon model conversion to pdf finished");

@@ -32,15 +32,14 @@ public class ApollonConversionService {
      * @param model the model to convert to pdf
      * @return an input stream that is coming from apollon conversion server
      */
-    public InputStream convertDiagram(String model) {
+    public InputStream convertModel(String model) {
 
-        log.info("Calling Remote Service to convert for diagram.");
+        log.info("Calling Remote Service to convert for model.");
         ApollonConversionDTO apollonDTO = new ApollonConversionDTO();
         apollonDTO.setModel(model);
         try {
             final ApollonConnector.RequestDTO request = new ApollonConnector.RequestDTO(model);
-            InputStream response = connector.invoke(apollonConversionUrl + "/pdf", request);
-            return response;
+            return connector.invoke(apollonConversionUrl + "/pdf", request);
         }
         catch (NetworkingError networkingError) {
             log.error("Error while calling Remote Service: {}", networkingError.getMessage());
