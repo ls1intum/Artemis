@@ -156,6 +156,30 @@ public class RequestUtilService {
         return mapper.readValue(res.getResponse().getContentAsString(), responseType);
     }
 
+    public <T, R> String postWithResponseBodyString(String path, T body, HttpStatus expectedStatus, @Nullable HttpHeaders httpHeaders,
+            @Nullable Map<String, String> expectedResponseHeaders, @Nullable LinkedMultiValueMap<String, String> params) throws Exception {
+        String jsonBody = mapper.writeValueAsString(body);
+        var request = MockMvcRequestBuilders.post(new URI(path)).contentType(MediaType.APPLICATION_JSON).content(jsonBody);
+        if (httpHeaders != null) {
+            request = request.headers(httpHeaders);
+        }
+        if (params != null) {
+            request = request.params(params);
+        }
+        MvcResult res = mvc.perform(request).andExpect(status().is(expectedStatus.value())).andReturn();
+        restoreSecurityContext();
+        if (!expectedStatus.is2xxSuccessful()) {
+            assertThat(res.getResponse().containsHeader("location")).as("no location header on failed request").isFalse();
+            return null;
+        }
+        if (expectedResponseHeaders != null) {
+            for (String headerKey : expectedResponseHeaders.keySet()) {
+                assertThat(res.getResponse().getHeaderValues(headerKey).get(0)).isEqualTo(expectedResponseHeaders.get(headerKey));
+            }
+        }
+        return res.getResponse().getContentAsString();
+    }
+
     public <T, R> R postWithResponseBody(String path, T body, Class<R> responseType, HttpStatus expectedStatus, @Nullable HttpHeaders httpHeaders,
             @Nullable Map<String, String> expectedResponseHeaders) throws Exception {
         return postWithResponseBody(path, body, responseType, expectedStatus, httpHeaders, expectedResponseHeaders, new LinkedMultiValueMap<>());
@@ -163,6 +187,10 @@ public class RequestUtilService {
 
     public <T, R> R postWithResponseBody(String path, T body, Class<R> responseType, HttpStatus expectedStatus) throws Exception {
         return postWithResponseBody(path, body, responseType, expectedStatus, null, null);
+    }
+
+    public <T, R> String postWithResponseBodyString(String path, T body, HttpStatus expectedStatus) throws Exception {
+        return postWithResponseBodyString(path, body, expectedStatus, null, null, new LinkedMultiValueMap<>());
     }
 
     public <T, R> List<R> postListWithResponseBody(String path, T body, Class<R> responseType, HttpStatus expectedStatus) throws Exception {

@@ -48,6 +48,8 @@ public final class Constants {
 
     public static final String NEW_SUBMISSION_TOPIC = "/topic" + PROGRAMMING_SUBMISSION_TOPIC;
 
+    public static final String APOLLON_CONVERSION_API_PATH = "/api/apollon-convert/pdf";
+
     // short names should have at least 3 characters and must start with a letter
     public static final String SHORT_NAME_REGEX = "^[a-zA-Z][a-zA-Z0-9]{2,}";
 

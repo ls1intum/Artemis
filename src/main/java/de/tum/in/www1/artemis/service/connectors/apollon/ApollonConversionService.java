@@ -21,10 +21,14 @@ public class ApollonConversionService {
     @Value("${artemis.apollon.conversion-service-url}")
     private String apollonConversionUrl;
 
-    private final ApollonConnector connector;
+    private ApollonConnector connector;
 
     public ApollonConversionService(RestTemplate apollonRestTemplate) {
-        connector = new ApollonConnector(log, apollonRestTemplate);
+        setRestTemplate(apollonRestTemplate);
+    }
+
+    public void setRestTemplate(RestTemplate restTemplate) {
+        connector = new ApollonConnector(log, restTemplate);
     }
 
     /**

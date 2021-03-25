@@ -36,7 +36,7 @@ public class ApollonConversionResource {
      * @return input stream for conversion
      */
     @PostMapping("/apollon-convert/pdf")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity convertApollonModel(@RequestBody ApollonConversionDTO dto) {
         log.debug("REST call to convert apollon model to pdf");
 
