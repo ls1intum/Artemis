@@ -44,18 +44,40 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     @Query("select distinct course from Course course where course.teachingAssistantGroupName like :#{#name}")
     Course findCourseByTeachingAssistantGroupName(@Param("name") String name);
 
-    @Query("select distinct course from Course course where (course.startDate <= :#{#now} or course.startDate is null) and (course.endDate >= :#{#now} or course.endDate is null)")
+    @Query("""
+            SELECT DISTINCT c FROM Course c
+            WHERE (c.startDate <= :#{#now}
+            	OR c.startDate IS NULL)
+            AND (c.endDate >= :#{#now}
+            	OR c.endDate IS NULL)
+            """)
     List<Course> findAllActive(@Param("now") ZonedDateTime now);
 
     @EntityGraph(type = LOAD, attributePaths = { "lectures", "lectures.attachments", "exams" })
-    @Query("select distinct course from Course course where (course.startDate <= :#{#now} or course.startDate is null) and (course.endDate >= :#{#now} or course.endDate is null)")
+    @Query("""
+            SELECT DISTINCT c FROM Course c
+            WHERE (c.startDate <= :#{#now}
+            	OR c.startDate IS NULL)
+            AND (c.endDate >= :#{#now}
+            	OR c.endDate IS NULL)
+            """)
     List<Course> findAllActiveWithLecturesAndExams(@Param("now") ZonedDateTime now);
 
     @EntityGraph(type = LOAD, attributePaths = { "lectures", "lectures.attachments", "exams" })
     Optional<Course> findWithEagerLecturesAndExamsById(long courseId);
 
     // Note: this is currently only used for testing purposes
-    @Query("select distinct course from Course course left join fetch course.exercises exercises left join fetch course.lectures lectures left join fetch lectures.attachments left join fetch exercises.categories where (course.startDate <= :#{#now} or course.startDate is null) and (course.endDate >= :#{#now} or course.endDate is null)")
+    @Query("""
+            SELECT DISTINCT c FROM Course c
+            LEFT JOIN FETCH c.exercises exercises
+            LEFT JOIN FETCH c.lectures lectures
+            LEFT JOIN FETCH lectures.attachments
+            LEFT JOIN FETCH exercises.categories
+            WHERE (c.startDate <= :#{#now}
+            	OR c.startDate IS NULL)
+            AND (c.endDate >= :#{#now}
+            	OR c.endDate IS NULL)
+            """)
     List<Course> findAllActiveWithEagerExercisesAndLectures(@Param("now") ZonedDateTime now);
 
     @EntityGraph(type = LOAD, attributePaths = { "exercises", "exercises.categories", "exercises.teamAssignmentConfig" })
@@ -70,7 +92,15 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     @EntityGraph(type = LOAD, attributePaths = { "exercises", "lectures", "lectures.lectureUnits", "learningGoals" })
     Course findWithEagerExercisesAndLecturesAndLectureUnitsAndLearningGoalsById(long courseId);
 
-    @Query("select distinct course from Course course where (course.startDate is null or course.startDate <= :#{#now}) and (course.endDate is null or course.endDate >= :#{#now}) and course.onlineCourse = false and course.registrationEnabled = true")
+    @Query("""
+            SELECT DISTINCT c FROM Course c
+            WHERE (c.startDate IS NULL
+            	OR c.startDate <= :#{#now})
+            AND (c.endDate IS NULL
+            	OR c.endDate >= :#{#now})
+            AND c.onlineCourse = FALSE
+            AND c.registrationEnabled = TRUE
+            """)
     List<Course> findAllCurrentlyActiveNotOnlineAndRegistrationEnabled(@Param("now") ZonedDateTime now);
 
     List<Course> findAllByShortName(String shortName);

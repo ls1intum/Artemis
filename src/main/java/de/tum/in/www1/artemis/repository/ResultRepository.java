@@ -81,16 +81,33 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
     @EntityGraph(type = LOAD, attributePaths = "feedbacks")
     Optional<Result> findDistinctWithFeedbackBySubmissionId(Long submissionId);
 
-    @Query("select r from Result r left join fetch r.feedbacks where r.id = :resultId")
+    @Query("""
+            SELECT r FROM Result r
+            LEFT JOIN FETCH r.feedbacks
+            WHERE r.id = :resultId
+            """)
     Optional<Result> findByIdWithEagerFeedbacks(@Param("resultId") Long id);
 
-    @Query("select r from Result r left join fetch r.submission left join fetch r.feedbacks where r.id = :resultId")
+    @Query("""
+            SELECT r FROM Result r
+            LEFT JOIN FETCH r.submission
+            LEFT JOIN FETCH r.feedbacks
+            WHERE r.id = :resultId
+            """)
     Optional<Result> findByIdWithEagerSubmissionAndFeedbacks(@Param("resultId") Long id);
 
-    @Query("select r from Result r left join fetch r.feedbacks left join fetch r.assessor where r.id = :resultId")
+    @Query("""
+            SELECT r FROM Result r
+            LEFT JOIN FETCH r.feedbacks
+            LEFT JOIN FETCH r.assessor
+            WHERE r.id = :resultId
+            """)
     Optional<Result> findByIdWithEagerFeedbacksAndAssessor(@Param("resultId") Long id);
 
-    @Query("select r from Result r where r.participation.exercise.id = :exerciseId")
+    @Query("""
+            SELECT r FROM Result r
+            WHERE r.participation.exercise.id = :exerciseId
+            """)
     List<Result> findAllByExerciseId(@Param("exerciseId") Long exerciseId);
 
     /**
