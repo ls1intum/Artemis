@@ -622,7 +622,8 @@ public class ExerciseService {
         if (exercise instanceof QuizExercise) {
             var averageScore = participantScoreRepository.findAverageScoreForExercises(exercise.getId());
             exerciseStatisticsDTO.setAverageScoreInPercent(averageScore != null ? averageScore : 0.0);
-        } else {
+        }
+        else {
             var averageScore = averageScoreById.get(exercise.getId());
             exerciseStatisticsDTO.setAverageScoreInPercent(averageScore != null ? averageScore : 0.0);
         }
