@@ -356,8 +356,90 @@ You can also remove all old images using ``docker image prune -a``
 Jenkins
 -------
 
-Jenkins Server Setup
-~~~~~~~~~~~~~~~~~~~~
+Automated Jenkins Server Setup
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The following steps describe how to deploy a pre-configured version of the Jenkins server.
+This is ideal as a quickstart for developers. For a more detailed setup, see `Manual Jenkins Server Setup <#manual-jenkins-server-setup>`__.
+
+1. Open the dockerfile located at ``src/main/docker/jenkins/Dockerfile`` or ``src/main/docker/jenkins/swift/Dockerfile`` (in case you want to additionally install Swift/SwiftLint).
+
+2. Uncomment the line which installs the docker client. Jenkins uses build agents to build code. The automated setup configures a local agent running from within Jenkins container.
+
+3. Uncomment the line that disables the first-time setup wizard and save the dockerfile:
+
+::
+
+       ENV JAVA_OPTS -Djenkins.install.runSetupWizard=false
+
+4. Create a new access token in Gitlab named ``Jenkins`` and give it **api** and **read_repository** rights.
+
+5. Open the ``src/main/docker/jenkins/jenkins-casc-config.yml`` file with an editor and insert the generated token, the gitlab admin username, and password:
+
+.. code:: yaml
+
+   credentials:
+    system:
+        domainCredentials:
+            - credentials:
+                - gitLabApiTokenImpl:
+                    apiToken: your.api.token
+            - usernamePassword:
+                id: artemis_gitlab_admin_credentials
+                scope: GLOBAL
+                username: your.gitlab.admin.username
+                password: your.gitlab.admin.password
+
+
+6. Navigate to the bottom of the file set the url of your Gitlab instance. This is typically the ip address or hostname of the Gitlab container.
+
+.. code:: yaml
+
+    unclassified:
+      gitlabconnectionconfig:
+        connections:
+          - apiTokenId: artemis_gitlab_api_token
+            url: your.gitlab.url
+
+7. You can now deploy Jenkins. A ``src/main/docker/gitlab-jenkins-mysql.yml`` file is provided which deploys the Jenkins, Gitlab, and Mysql containers bound to static ip addresses. You can deploy them by running:
+
+::
+
+       docker-compose -f src/main/docker/gitlab-jenkins-mysql.yml up --build
+
+If you already have a Gitlab and Mysql instance running, you can comment out all services except for jenkins and then run the docker-compose file.
+
+8. You need to generate the `ci-token` and `secret-push-token`. Please follow the `Gitlab to Jenkins push notification token <##gitlab-to-jenkins-push-notification-token>`__. steps
+
+9. The `application-local.yml` must be adapted with the values configured in ``jenkins-casc-config.yml``:
+
+.. code:: yaml
+
+    artemis:
+        user-management:
+            use-external: false
+            internal-admin:
+                username: artemis_admin
+                password: artemis-admin
+            version-control:
+                url: http://172.33.0.2:8081
+                user: artemis_admin
+                password: artemis_admin
+                ci-token: # generated in step 9
+            continuous-integration:
+                url: http://172.33.0.3:8082
+                user: artemis_admin
+                password artemis_admin
+                vcs-credentials: artemis_gitlab_admin_credentials
+                artemis-authentication-token-key: artemis_notification_plugin_token
+                artemis-authentication-token-value: artemis_admin
+                secret-push-token: # generated in step 9
+
+
+
+
+Manual Jenkins Server Setup
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 1. Pull the latest Jenkins LTS Docker image
 
