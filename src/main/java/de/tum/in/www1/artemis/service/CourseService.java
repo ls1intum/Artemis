@@ -105,7 +105,7 @@ public class CourseService {
         course.setExercises(exerciseService.findAllForCourse(course, user));
         course.setLectures(lectureService.filterActiveAttachments(course.getLectures(), user));
         if (authCheckService.isOnlyStudentInCourse(course, user)) {
-            course.setExams(examService.filterVisibleExams(course.getExams()));
+            course.setExams(examRepository.filterVisibleExams(course.getExams()));
         }
         return course;
     }
@@ -136,7 +136,7 @@ public class CourseService {
                     course.setExercises(exerciseService.findAllForCourse(course, user));
                     course.setLectures(lectureService.filterActiveAttachments(course.getLectures(), user));
                     if (authCheckService.isOnlyStudentInCourse(course, user)) {
-                        course.setExams(examService.filterVisibleExams(course.getExams()));
+                        course.setExams(examRepository.filterVisibleExams(course.getExams()));
                     }
                 }).collect(Collectors.toList());
     }

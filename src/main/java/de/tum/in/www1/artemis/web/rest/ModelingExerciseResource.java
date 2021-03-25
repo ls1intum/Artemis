@@ -195,7 +195,7 @@ public class ModelingExerciseResource {
             return optionalScoreSettingsError.get();
         }
 
-        ModelingExercise modelingExerciseBeforeUpdate = modelingExerciseService.findOne(modelingExercise.getId());
+        ModelingExercise modelingExerciseBeforeUpdate = modelingExerciseRepository.findOne(modelingExercise.getId());
         ModelingExercise updatedModelingExercise = modelingExerciseRepository.save(modelingExercise);
 
         exerciseService.updatePointsInRelatedParticipantScores(modelingExerciseBeforeUpdate, updatedModelingExercise);
@@ -272,7 +272,7 @@ public class ModelingExerciseResource {
     @GetMapping("/modeling-exercises/{exerciseId}/print-statistic")
     @PreAuthorize("hasAnyRole('ADMIN')")
     public ResponseEntity<Void> printCompassStatisticForExercise(@PathVariable Long exerciseId) {
-        ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
+        ModelingExercise modelingExercise = modelingExerciseRepository.findOne(exerciseId);
         compassService.printStatistic(modelingExercise.getId());
         return ResponseEntity.ok().build();
     }

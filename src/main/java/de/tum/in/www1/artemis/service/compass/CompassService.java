@@ -351,7 +351,7 @@ public class CompassService {
      * @return the modeling submission with the given id, or null if no submission could be found
      */
     private ModelingSubmission findModelingSubmissionById(long submissionId) {
-        Optional<ModelingSubmission> optionalModelingSubmission = modelingSubmissionRepository.findWithEagerResultAndFeedbackAndAssessorAndParticipationResultsById(submissionId);
+        Optional<ModelingSubmission> optionalModelingSubmission = modelingSubmissionRepository.findWithResultsFeedbacksAssessorAndParticipationResultsById(submissionId);
         if (!optionalModelingSubmission.isPresent()) {
             log.error("Modeling submission with ID {} could not be found.", submissionId);
             return null;
