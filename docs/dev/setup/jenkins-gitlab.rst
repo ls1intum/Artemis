@@ -433,7 +433,7 @@ If you already have a Gitlab and Mysql instance running, you can comment out all
                 vcs-credentials: artemis_gitlab_admin_credentials
                 artemis-authentication-token-key: artemis_notification_plugin_token
                 artemis-authentication-token-value: artemis_admin
-                secret-push-token: # generated in step 9
+                secret-push-token: # generated in step 8
 
 10. You're done. You can now run Artemis with the Gitlab/Jenkins environment.
 
