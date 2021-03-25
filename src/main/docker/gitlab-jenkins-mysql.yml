@@ -32,7 +32,6 @@ services:
     mysql:
         command: mysqld --lower_case_table_names=1 --skip-ssl --character_set_server=utf8mb4 --explicit_defaults_for_timestamp
         environment:
-            - MYSQL_USER=root
             - MYSQL_ALLOW_EMPTY_PASSWORD=yes
             - MYSQL_DATABASE=Artemis
         image: mysql:8.0.23
