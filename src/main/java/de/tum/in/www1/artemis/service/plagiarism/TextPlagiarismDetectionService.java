@@ -83,7 +83,11 @@ public class TextPlagiarismDetectionService {
 
         if (textSubmissions.size() < 2) {
             log.info("Insufficient amount of submissions for plagiarism detection. Return empty result.");
-            return new TextPlagiarismResult();
+            TextPlagiarismResult textPlagiarismResult = new TextPlagiarismResult();
+            textPlagiarismResult.setExercise(textExercise);
+            textPlagiarismResult.setSimilarityDistribution(new int[0]);
+
+            return textPlagiarismResult;
         }
 
         textSubmissions.forEach(submission -> {

@@ -14,15 +14,26 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.util.LinkedMultiValueMap;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.ExampleSubmission;
+import de.tum.in.www1.artemis.domain.Team;
+import de.tum.in.www1.artemis.domain.TeamAssignmentConfig;
+import de.tum.in.www1.artemis.domain.TextCluster;
+import de.tum.in.www1.artemis.domain.TextExercise;
+import de.tum.in.www1.artemis.domain.TextSubmission;
 import de.tum.in.www1.artemis.domain.enumeration.DifficultyLevel;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
 import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
+import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.participation.Participation;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.domain.plagiarism.text.TextPlagiarismResult;
 import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
+import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.TextClusterRepository;
 import de.tum.in.www1.artemis.repository.TextExerciseRepository;
 import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
@@ -48,6 +59,9 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @Autowired
     TextSubmissionRepository textSubmissionRepository;
+
+    @Autowired
+    StudentParticipationRepository studentParticipationRepository;
 
     @Autowired
     ExampleSubmissionRepository exampleSubmissionRepo;
@@ -558,5 +572,34 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         assertEquals(course1.getId(), sourceExercise.getCourseViaExerciseGroupOrCourseMember().getId());
         assertEquals(ExerciseMode.TEAM, sourceExercise.getMode());
         assertEquals(1, teamService.findAllByExerciseIdWithEagerStudents(sourceExercise, null).size());
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testCheckPlagiarism() throws Exception {
+        final Course course = database.addCourseWithOneReleasedTextExercise();
+        TextExercise textExercise = textExerciseRepository.findByCourseId(course.getId()).get(0);
+
+        // Generate first submission + participation
+        TextSubmission textSubmission1 = ModelFactory.generateTextSubmission("Lorem Ipsum Foo Bar", Language.ENGLISH, true);
+        textSubmissionRepository.save(textSubmission1);
+        StudentParticipation studentParticipation1 = ModelFactory.generateStudentParticipation(InitializationState.INITIALIZED, textExercise, null);
+        studentParticipation1.addSubmission(textSubmission1);
+        studentParticipationRepository.save(studentParticipation1);
+
+        // Generate second submission + participation
+        TextSubmission textSubmission2 = ModelFactory.generateTextSubmission("Lorem Ipsum Foo Bar", Language.ENGLISH, true);
+        textSubmissionRepository.save(textSubmission2);
+        StudentParticipation studentParticipation2 = ModelFactory.generateStudentParticipation(InitializationState.INITIALIZED, textExercise, null);
+        studentParticipation2.addSubmission(textSubmission2);
+        studentParticipationRepository.save(studentParticipation2);
+
+        // Use default options for plagiarism detection
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("similarityThreshold", "50");
+        params.add("minimumScore", "0");
+        params.add("minimumSize", "0");
+
+        var result = request.get("/api/text-exercises/" + textExercise.getId() + "/check-plagiarism", HttpStatus.OK, TextPlagiarismResult.class, params);
     }
 }
