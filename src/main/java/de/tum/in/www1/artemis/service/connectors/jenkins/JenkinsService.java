@@ -65,23 +65,28 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
 
     private final JenkinsJobService jenkinsJobService;
 
+    private final JenkinsDockerUrlService jenkinsDockerUrlService;
+
     // Pattern of the DateTime that is included in the logs received from Jenkins
     private final DateTimeFormatter logDateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssX");
 
     public JenkinsService(@Qualifier("jenkinsRestTemplate") RestTemplate restTemplate, JenkinsServer jenkinsServer, ProgrammingSubmissionRepository programmingSubmissionRepository,
             ProgrammingExerciseRepository programmingExerciseRepository, FeedbackService feedbackService,
             @Qualifier("shortTimeoutJenkinsRestTemplate") RestTemplate shortTimeoutRestTemplate, BuildLogEntryService buildLogService,
-            JenkinsBuildPlanService jenkinsBuildPlanService, JenkinsJobService jenkinsJobService) {
+            JenkinsBuildPlanService jenkinsBuildPlanService, JenkinsJobService jenkinsJobService, JenkinsDockerUrlService jenkinsDockerUrlService) {
         super(programmingSubmissionRepository, feedbackService, buildLogService, restTemplate, shortTimeoutRestTemplate);
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.jenkinsServer = jenkinsServer;
         this.jenkinsBuildPlanService = jenkinsBuildPlanService;
         this.jenkinsJobService = jenkinsJobService;
+        this.jenkinsDockerUrlService = jenkinsDockerUrlService;
     }
 
     @Override
     public void createBuildPlanForExercise(ProgrammingExercise exercise, String planKey, VcsRepositoryUrl repositoryURL, VcsRepositoryUrl testRepositoryURL,
             VcsRepositoryUrl solutionRepositoryURL) {
+        repositoryURL = jenkinsDockerUrlService.toDockerVcsUrl(repositoryURL);
+        testRepositoryURL = jenkinsDockerUrlService.toDockerVcsUrl(testRepositoryURL);
         jenkinsBuildPlanService.createBuildPlanForExercise(exercise, planKey, repositoryURL, testRepositoryURL);
     }
 
@@ -302,7 +307,8 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
 
     @Override
     public Optional<String> getWebHookUrl(String projectKey, String buildPlanId) {
-        return Optional.of(serverUrl + "/project/" + projectKey + "/" + buildPlanId);
+        var urlString = serverUrl + "/project/" + projectKey + "/" + buildPlanId;
+        return Optional.of(jenkinsDockerUrlService.toDockerCiUrl(urlString));
     }
 
     @Override

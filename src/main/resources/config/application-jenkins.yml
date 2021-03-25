@@ -10,3 +10,11 @@ jenkins:
     # The default value for this parameter is true, so if it is not specified, crumb protection will be active.
     # If you experience problems using crumb, you can deactivate it here.
     use-crumb: true
+
+    # If you're running Jenkins and Gitlab on Docker containers on Mac or Windows, the Jenkins Pipeline cannot use
+    # localhost. It must use the container's real ip address.
+    # You can enter the real ip addresses of the containers here or leave blank if you're not using docker for Mac or
+    # Windows.
+    docker:
+        ci-url: # http://jenkins:8080
+        vcs-url: # http://gitlab:80
