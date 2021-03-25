@@ -8,7 +8,7 @@ services:
             - artemis-gitlab-config:/etc/gitlab
         ports:
             - "2222:22"
-            - "8082:80"
+            - "8081:80"
         mem_limit: 3000m
         hostname: gitlab
         networks:
@@ -22,7 +22,7 @@ services:
             - /usr/local/bin/docker:/usr/bin/docker
             - ./jenkins/jenkins-casc-config.yml:/usr/share/jenkins/ref/jenkins-casc-config.yml
         ports:
-            - "8083:8080"
+            - "8082:8080"
         hostname: jenkins
         environment:
             - CASC_JENKINS_CONFIG=/usr/share/jenkins/ref/jenkins-casc-config.yml

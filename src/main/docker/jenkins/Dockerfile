@@ -39,20 +39,16 @@ RUN rm -r -f Python3.8.6/ && rm -f Python-3.8.6.tgz
 # Install pytest for python exercises
 RUN pip3 install -U pytest
 
-# Uncomment this line if you want to use a local docker build agent
-# e.g for local development environment
-# Install docker client for local build agents
-# RUN curl https://download.docker.com/linux/static/stable/x86_64/docker-19.03.8.tgz | tar xvz --directory /tmp && mv -v /tmp/docker/docker /usr/local/bin/docker && chmod +x /usr/local/bin/docker && rm -rf /tmp/docker
-
 # Install third-party plugins required by Artemis
-RUN jenkins-plugin-cli --plugins  && \
-    workflow-aggregator \
-    && matrix-auth \
-    && docker-workflow \
-    && gitlab-plugin \
-    && pipeline-maven \
-    && timestamper \
-    && configuration-as-code \
-    && test-notifications::https://github.com/ls1intum/jenkins-server-notification-plugin/releases/latest/download/test-notifications.hpi
+COPY plugins.yml /usr/share/jenkins/ref/plugins.yml
+RUN jenkins-plugin-cli --plugin-file /usr/share/jenkins/ref/plugins.yml
+
+# Install docker client (if you want a local build agent)
+# (Uncomment this line if you want to use a local docker build agent e.g for development purposes)
+#RUN curl https://download.docker.com/linux/static/stable/x86_64/docker-19.03.8.tgz | tar xvz --directory /tmp && mv -v /tmp/docker/docker /usr/local/bin/docker && chmod +x /usr/local/bin/docker && rm -rf /tmp/docker
+
+# Disables the first-time setup wizard of Jenkins
+# (Uncomment this line if you're using jenknis-casc-config.yml for auto-configuration)
+#ENV JAVA_OPTS -Djenkins.install.runSetupWizard=false
 
 USER jenkins
