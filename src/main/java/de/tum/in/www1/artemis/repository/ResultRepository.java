@@ -4,6 +4,7 @@ import static java.util.Arrays.asList;
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
 import java.time.ZonedDateTime;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 
@@ -13,10 +14,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.Result;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.leaderboard.tutor.TutorLeaderboardAssessments;
 import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
@@ -484,7 +482,13 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
         return result;
     }
 
-    default Result submitResult(Result result, Exercise exercise, Double calculatedPoints) {
+    /**
+     * submit the result means it is saved with a calculated score, result string and a completion date.
+     * @param result the result which should be set to submitted
+     * @param exercise the exercises to which the result belongs, which is needed to get points and to determine if the result is rated or not
+     * @return the saved result
+     */
+    default Result submitResult(Result result, Exercise exercise) {
         double maxPoints = exercise.getMaxPoints();
         double bonusPoints = Optional.ofNullable(exercise.getBonusPoints()).orElse(0.0);
 
@@ -498,10 +502,11 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
 
         result.setCompletionDate(ZonedDateTime.now());
         // Take bonus points into account to achieve a result score > 100%
-        double totalScore = calculateTotalPoints(calculatedPoints, maxPoints + bonusPoints);
+        double calculatedPoints = calculateTotalPoints(result.getFeedbacks());
+        double totalPoints = constrainToRange(calculatedPoints, maxPoints + bonusPoints);
         // Set score and resultString according to maxPoints, to establish results with score > 100%
-        result.setScore(totalScore, maxPoints);
-        result.setResultString(totalScore, maxPoints);
+        result.setScore(totalPoints, maxPoints);
+        result.setResultString(totalPoints, maxPoints);
 
         // Workaround to prevent the assessor turning into a proxy object after saving
         var assessor = result.getAssessor();
@@ -510,9 +515,40 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
         return result;
     }
 
-    default double calculateTotalPoints(Double calculatedScore, Double maxScore) {
-        double totalScore = Math.max(0, calculatedScore);
-        return (maxScore == null) ? totalScore : Math.min(totalScore, maxScore);
+    /**
+     * make sure the points are between 0 and maxPoints
+     * @param calculatedPoints the points which have been calculated
+     * @param maxPoints the upper bound (potentially including bonus points)
+     * @return a value between [0, maxPoints]
+     */
+    default double constrainToRange(double calculatedPoints, double maxPoints) {
+        double totalPoints = Math.max(0, calculatedPoints);
+        return Math.min(totalPoints, maxPoints);
+    }
+
+    /**
+     * Helper function to calculate the total points of a feedback list. It loops through all assessed model elements and sums the credits up.
+     * The points of an assessment model is not summed up only in the case the usageCount limit is exceeded
+     * meaning the structured grading instruction was applied on the assessment model more often than allowed
+     *
+     * @param assessments the list of feedback items that are used to calculate the points
+     * @return the total points
+     */
+    default double calculateTotalPoints(List<Feedback> assessments) {
+        double totalPoints = 0.0;
+        var gradingInstructions = new HashMap<Long, Integer>(); // { instructionId: noOfEncounters }
+
+        for (Feedback feedback : assessments) {
+            if (feedback.getGradingInstruction() != null) {
+                totalPoints = feedback.computeTotalScore(totalPoints, gradingInstructions);
+            }
+            else {
+                // in case no structured grading instruction was applied on the assessment model we just sum the feedback credit
+                // TODO: what happens if getCredits is null?
+                totalPoints += feedback.getCredits();
+            }
+        }
+        return totalPoints;
     }
 
 }

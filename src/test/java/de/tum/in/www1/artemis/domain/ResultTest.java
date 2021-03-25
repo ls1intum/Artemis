@@ -48,8 +48,8 @@ public class ResultTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
         double maxPoints = 7.0;
         result.setFeedbacks(feedbackList);
 
-        Double calculatedPoints = assessmentService.calculateTotalPoints(feedbackList);
-        double totalPoints = resultRepository.calculateTotalPoints(calculatedPoints, maxPoints);
+        double calculatedPoints = resultRepository.calculateTotalPoints(feedbackList);
+        double totalPoints = resultRepository.constrainToRange(calculatedPoints, maxPoints);
         result.setScore(totalPoints, maxPoints);
         result.setResultString(totalPoints, maxPoints);
 
@@ -61,8 +61,8 @@ public class ResultTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
     public void evaluateFeedback_totalScoreGreaterMaxScore() {
         result.setFeedbacks(feedbackList);
 
-        Double calculatePoints = assessmentService.calculateTotalPoints(feedbackList);
-        double totalPoints = resultRepository.calculateTotalPoints(calculatePoints, 4.0);
+        double calculatePoints = resultRepository.calculateTotalPoints(feedbackList);
+        double totalPoints = resultRepository.constrainToRange(calculatePoints, 4.0);
         result.setScore(totalPoints, 4.0);
         result.setResultString(totalPoints, 4.0);
 
@@ -81,8 +81,8 @@ public class ResultTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
         feedbackList = Arrays.asList(feedback1, feedback2, feedback3);
         result.setFeedbacks(feedbackList);
 
-        Double calculatePoints = assessmentService.calculateTotalPoints(feedbackList);
-        double totalPoints = resultRepository.calculateTotalPoints(calculatePoints, 7.0);
+        double calculatePoints = resultRepository.calculateTotalPoints(feedbackList);
+        double totalPoints = resultRepository.constrainToRange(calculatePoints, 7.0);
         result.setScore(totalPoints, 7.0);
         result.setResultString(totalPoints, 7.0);
 

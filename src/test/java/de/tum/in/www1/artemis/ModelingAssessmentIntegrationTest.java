@@ -95,7 +95,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
 
     private Course course;
 
-    private Double offsetByTenThousandth = 0.0001;
+    private final double offsetByTenThousandth = 0.0001;
 
     @BeforeEach
     public void initTestCase() throws Exception {
@@ -123,7 +123,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
         Result result = request.get(API_MODELING_SUBMISSIONS + modelingSubmission.getId() + "/result", HttpStatus.OK, Result.class);
 
         checkAssessmentFinished(result, null);
-        checkFeedbackCorrectlyStored(feedback, result.getFeedbacks(), FeedbackType.MANUAL);
+        database.checkFeedbackCorrectlyStored(feedback, result.getFeedbacks(), FeedbackType.MANUAL);
     }
 
     @Test
@@ -198,7 +198,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
 
         ModelingSubmission storedSubmission = modelingSubmissionRepo.findWithEagerResultById(submission.getId()).get();
         Result storedResult = resultRepo.findByIdWithEagerFeedbacksAndAssessor(storedSubmission.getLatestResult().getId()).get();
-        checkFeedbackCorrectlyStored(feedbacks, storedResult.getFeedbacks(), FeedbackType.MANUAL);
+        database.checkFeedbackCorrectlyStored(feedbacks, storedResult.getFeedbacks(), FeedbackType.MANUAL);
         checkAssessmentNotFinished(storedResult, assessor);
         assertThat(storedResult.getParticipation()).isNotNull();
     }
@@ -225,7 +225,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
 
         ModelingSubmission storedSubmission = modelingSubmissionRepo.findWithEagerResultById(submission.getId()).get();
         Result storedResult = resultRepo.findByIdWithEagerFeedbacksAndAssessor(storedSubmission.getLatestResult().getId()).get();
-        checkFeedbackCorrectlyStored(feedbacks, storedResult.getFeedbacks(), FeedbackType.MANUAL);
+        database.checkFeedbackCorrectlyStored(feedbacks, storedResult.getFeedbacks(), FeedbackType.MANUAL);
         checkAssessmentFinished(storedResult, assessor);
         assertThat(storedResult.getParticipation()).isNotNull();
 
@@ -246,7 +246,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
 
         ModelingSubmission storedSubmission = modelingSubmissionRepo.findWithEagerResultById(submission.getId()).get();
         Result storedResult = resultRepo.findByIdWithEagerFeedbacksAndAssessor(storedSubmission.getLatestResult().getId()).get();
-        checkFeedbackCorrectlyStored(feedbacks, storedResult.getFeedbacks(), FeedbackType.MANUAL);
+        database.checkFeedbackCorrectlyStored(feedbacks, storedResult.getFeedbacks(), FeedbackType.MANUAL);
         checkAssessmentFinished(storedResult, assessor);
         assertThat(storedResult.getParticipation()).isNotNull();
     }
@@ -262,7 +262,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
 
         ModelingSubmission storedSubmission = modelingSubmissionRepo.findWithEagerResultById(submission.getId()).get();
         Result storedResult = resultRepo.findByIdWithEagerFeedbacksAndAssessor(storedSubmission.getLatestResult().getId()).get();
-        checkFeedbackCorrectlyStored(feedbacks, storedResult.getFeedbacks(), FeedbackType.MANUAL);
+        database.checkFeedbackCorrectlyStored(feedbacks, storedResult.getFeedbacks(), FeedbackType.MANUAL);
         checkAssessmentFinished(storedResult, assessor);
     }
 
@@ -277,7 +277,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
 
         ModelingSubmission storedSubmission = modelingSubmissionRepo.findWithEagerResultById(submission.getId()).get();
         Result storedResult = resultRepo.findByIdWithEagerFeedbacksAndAssessor(storedSubmission.getLatestResult().getId()).get();
-        checkFeedbackCorrectlyStored(feedbacks, storedResult.getFeedbacks(), FeedbackType.MANUAL);
+        database.checkFeedbackCorrectlyStored(feedbacks, storedResult.getFeedbacks(), FeedbackType.MANUAL);
         checkAssessmentFinished(storedResult, assessor);
         assertThat(storedResult.getParticipation()).isNotNull();
     }
@@ -293,7 +293,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
 
         ModelingSubmission storedSubmission = modelingSubmissionRepo.findWithEagerResultById(submission.getId()).get();
         Result storedResult = resultRepo.findByIdWithEagerFeedbacksAndAssessor(storedSubmission.getLatestResult().getId()).get();
-        checkFeedbackCorrectlyStored(feedbacks, storedResult.getFeedbacks(), FeedbackType.MANUAL);
+        database.checkFeedbackCorrectlyStored(feedbacks, storedResult.getFeedbacks(), FeedbackType.MANUAL);
         checkAssessmentNotFinished(storedResult, assessor);
 
         feedbacks = database.loadAssessmentFomResources("test-data/model-assessment/assessment.54727.v2.json");
@@ -301,7 +301,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
 
         storedSubmission = modelingSubmissionRepo.findWithEagerResultById(submission.getId()).get();
         storedResult = resultRepo.findByIdWithEagerFeedbacksAndAssessor(storedSubmission.getLatestResult().getId()).get();
-        checkFeedbackCorrectlyStored(feedbacks, storedResult.getFeedbacks(), FeedbackType.MANUAL);
+        database.checkFeedbackCorrectlyStored(feedbacks, storedResult.getFeedbacks(), FeedbackType.MANUAL);
         checkAssessmentFinished(storedResult, assessor);
         assertThat(storedResult.getParticipation()).isNotNull();
     }
@@ -633,7 +633,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
         Result storedResultOfSubmission2 = compassService.getResultWithFeedbackSuggestionsForSubmission(submission2.getId());
         assertThat(storedResultOfSubmission2).as("automatic result is created").isNotNull();
         checkAutomaticAssessment(storedResultOfSubmission2);
-        checkFeedbackCorrectlyStored(feedbacks, storedResultOfSubmission2.getFeedbacks(), FeedbackType.AUTOMATIC);
+        database.checkFeedbackCorrectlyStored(feedbacks, storedResultOfSubmission2.getFeedbacks(), FeedbackType.AUTOMATIC);
     }
 
     @Test
@@ -822,29 +822,6 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
         assertThat(storedResult.getAssessor()).as("Assessor has been set").isEqualTo(assessor);
         assertThat(storedResult.getResultString()).as("result string has been set").isNotNull().isNotEqualTo("");
         assertThat(storedResult.getCompletionDate()).as("completion date has been set").isNotNull();
-    }
-
-    private void checkFeedbackCorrectlyStored(List<Feedback> sentFeedback, List<Feedback> storedFeedback, FeedbackType feedbackType) {
-        assertThat(sentFeedback.size()).as("contains the same amount of feedback").isEqualTo(storedFeedback.size());
-        Result storedFeedbackResult = new Result();
-        Result sentFeedbackResult = new Result();
-        storedFeedbackResult.setFeedbacks(storedFeedback);
-        sentFeedbackResult.setFeedbacks(sentFeedback);
-
-        Double calculatedScore = assessmentService.calculateTotalPoints(storedFeedback);
-        double totalScore = resultRepo.calculateTotalPoints(calculatedScore, 20.0);
-        storedFeedbackResult.setScore(totalScore, 20.0);
-        storedFeedbackResult.setResultString(totalScore, 20.0);
-
-        Double calculatedScore2 = assessmentService.calculateTotalPoints(sentFeedback);
-        double totalScore2 = resultRepo.calculateTotalPoints(calculatedScore2, 20.0);
-        sentFeedbackResult.setScore(totalScore2, 20.0);
-        sentFeedbackResult.setResultString(totalScore2, 20.0);
-
-        assertThat(storedFeedbackResult.getScore()).as("stored feedback evaluates to the same score as sent feedback").isEqualTo(sentFeedbackResult.getScore());
-        storedFeedback.forEach(feedback -> {
-            assertThat(feedback.getType()).as("type has been set correctly").isEqualTo(feedbackType);
-        });
     }
 
     private void checkAutomaticAssessment(Result storedResult) {

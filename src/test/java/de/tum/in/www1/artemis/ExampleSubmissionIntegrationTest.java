@@ -186,7 +186,7 @@ public class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationB
         request.putWithResponseBody("/api/modeling-submissions/" + storedExampleSubmission.getId() + "/example-assessment", feedbacks, Result.class, HttpStatus.OK);
 
         Result storedResult = resultRepo.findDistinctWithFeedbackBySubmissionId(storedExampleSubmission.getSubmission().getId()).get();
-        checkFeedbackCorrectlyStored(feedbacks, storedResult.getFeedbacks(), FeedbackType.MANUAL);
+        database.checkFeedbackCorrectlyStored(feedbacks, storedResult.getFeedbacks(), FeedbackType.MANUAL);
         assertThat(storedResult.isExampleResult()).as("stored result is flagged as example result").isTrue();
     }
 
@@ -208,28 +208,7 @@ public class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationB
         dto.setFeedbacks(feedbacks);
         request.putWithResponseBody("/api/text-assessments/text-submissions/" + storedExampleSubmission.getId() + "/example-assessment", dto, Result.class, HttpStatus.OK);
         Result storedResult = resultRepo.findDistinctWithFeedbackBySubmissionId(storedExampleSubmission.getSubmission().getId()).get();
-        checkFeedbackCorrectlyStored(feedbacks, storedResult.getFeedbacks(), FeedbackType.MANUAL);
+        database.checkFeedbackCorrectlyStored(feedbacks, storedResult.getFeedbacks(), FeedbackType.MANUAL);
         assertThat(storedResult.isExampleResult()).as("stored result is flagged as example result").isTrue();
-    }
-
-    private void checkFeedbackCorrectlyStored(List<Feedback> sentFeedback, List<Feedback> storedFeedback, FeedbackType feedbackType) {
-        assertThat(sentFeedback.size()).as("contains the same amount of feedback").isEqualTo(storedFeedback.size());
-        Result storedFeedbackResult = new Result();
-        Result sentFeedbackResult = new Result();
-        storedFeedbackResult.setFeedbacks(storedFeedback);
-        sentFeedbackResult.setFeedbacks(sentFeedback);
-        Double calculatedScore = assessmentService.calculateTotalPoints(storedFeedback);
-        double totalScore = resultRepo.calculateTotalPoints(calculatedScore, 20.0);
-        storedFeedbackResult.setScore(totalScore, 20.0);
-        storedFeedbackResult.setResultString(totalScore, 20.0);
-
-        Double calculatedScore2 = assessmentService.calculateTotalPoints(sentFeedback);
-        double totalScore2 = resultRepo.calculateTotalPoints(calculatedScore2, 20.0);
-        sentFeedbackResult.setScore(totalScore2, 20.0);
-        sentFeedbackResult.setResultString(totalScore2, 20.0);
-        assertThat(storedFeedbackResult.getScore()).as("stored feedback evaluates to the same score as sent feedback").isEqualTo(sentFeedbackResult.getScore());
-        storedFeedback.forEach(feedback -> {
-            assertThat(feedback.getType()).as("type has been set to MANUAL").isEqualTo(feedbackType);
-        });
     }
 }

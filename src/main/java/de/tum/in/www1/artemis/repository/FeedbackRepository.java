@@ -50,6 +50,12 @@ public interface FeedbackRepository extends JpaRepository<Feedback, Long> {
      */
     void deleteByResult_Id(long resultId);
 
+    /**
+     * Save the given feedback elements to the database in case they are not yet connected to a result
+     *
+     * @param feedbackList the feedback items that should be saved
+     * @return all elements of the original list with the saved feedback items (i.e. the ones without result) having an id now.
+     */
     default List<Feedback> saveFeedbacks(List<Feedback> feedbackList) {
         List<Feedback> updatedFeedbackList = new ArrayList<>();
         for (var feedback : feedbackList) {

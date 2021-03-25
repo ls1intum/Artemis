@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
 import java.time.ZonedDateTime;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 
@@ -115,8 +114,7 @@ public class AssessmentService {
             return resultRepository.findByIdWithEagerAssessor(savedResult.getId()).get(); // to eagerly load assessor
         }
         else {
-            Double calculatedPoints = calculateTotalPoints(originalResult.getFeedbacks());
-            return resultRepository.submitResult(originalResult, exercise, calculatedPoints);
+            return resultRepository.submitResult(originalResult, exercise);
         }
     }
 
@@ -227,30 +225,6 @@ public class AssessmentService {
     }
 
     /**
-     * Helper function to calculate the total points of a feedback list. It loops through all assessed model elements and sums the credits up.
-     * The points of an assessment model is not summed up only in the case the usageCount limit is exceeded
-     * meaning the structured grading instruction was applied on the assessment model more often than allowed
-     *
-     * @param assessments the List of Feedback
-     * @return the total points
-     */
-    public Double calculateTotalPoints(List<Feedback> assessments) {
-        double totalPoints = 0.0;
-        var gradingInstructions = new HashMap<Long, Integer>(); // { instructionId: noOfEncounters }
-
-        for (Feedback feedback : assessments) {
-            if (feedback.getGradingInstruction() != null) {
-                totalPoints = feedback.computeTotalScore(totalPoints, gradingInstructions);
-            }
-            else {
-                // in case no structured grading instruction was applied on the assessment model we just sum the feedback credit
-                totalPoints += feedback.getCredits();
-            }
-        }
-        return totalPoints;
-    }
-
-    /**
      * Gets an example submission with the given submissionId and returns the result of the submission.
      *
      * @param submissionId the id of the example modeling submission
@@ -279,8 +253,7 @@ public class AssessmentService {
                 .orElseThrow(() -> new EntityNotFoundException("No result for the given resultId could be found"));
         result.setRatedIfNotExceeded(exercise.getDueDate(), submissionDate);
         result.setCompletionDate(ZonedDateTime.now());
-        Double calculatedPoints = calculateTotalPoints(result.getFeedbacks());
-        result = resultRepository.submitResult(result, exercise, calculatedPoints);
+        result = resultRepository.submitResult(result, exercise);
         // Note: we always need to report the result (independent of the assessment due date) over LTI, otherwise it might never become visible in the external system
         ltiService.onNewResult((StudentParticipation) result.getParticipation());
         return result;
