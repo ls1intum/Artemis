@@ -10,6 +10,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
 import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
@@ -38,8 +39,8 @@ public class ApollonHealthIndicator implements HealthIndicator {
             HttpStatus statusCode = response.getStatusCode();
             health = new ConnectorHealth(statusCode.is2xxSuccessful());
         }
-        catch (Exception emAll) {
-            health = new ConnectorHealth(emAll);
+        catch (RestClientException error) {
+            health = new ConnectorHealth(error);
         }
 
         health.setAdditionalInfo(Map.of("url", apollonConversionUrl));
