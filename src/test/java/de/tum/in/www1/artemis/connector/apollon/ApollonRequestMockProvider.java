@@ -9,7 +9,6 @@ import java.io.IOException;
 import java.net.SocketTimeoutException;
 
 import org.mockito.MockitoAnnotations;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
@@ -20,8 +19,6 @@ import org.springframework.test.web.client.ExpectedCount;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.test.web.client.ResponseActions;
 import org.springframework.web.client.RestTemplate;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Component
 @Profile("apollon")
@@ -38,9 +35,6 @@ public class ApollonRequestMockProvider {
     @Value("${artemis.apollon.conversion-service-url}")
     private String apollonConversionUrl;
 
-    @Autowired
-    private ObjectMapper mapper;
-
     public ApollonRequestMockProvider(@Qualifier("apollonRestTemplate") RestTemplate restTemplate,
             @Qualifier("shortTimeoutApollonRestTemplate") RestTemplate shortTimeoutRestTemplate) {
         this.restTemplate = restTemplate;
@@ -53,6 +47,9 @@ public class ApollonRequestMockProvider {
         MockitoAnnotations.openMocks(this);
     }
 
+    /**
+     * Resets the mock servers
+     */
     public void reset() {
         if (mockServer != null) {
             mockServer.reset();
@@ -64,7 +61,7 @@ public class ApollonRequestMockProvider {
     }
 
     /**
-     * Mocks /status api from Apollon used to retrieve meta data on processed jobs. Currently used as a health check endpoint.
+     * Mocks /status api from Apollon. Currently used as a health check endpoint.
      *
      * @param success Successful response or timeout.
      */
@@ -80,7 +77,7 @@ public class ApollonRequestMockProvider {
     }
 
     /**
-     * Mocks /pdf api from Apollon used to retrieve meta data on processed jobs. Currently used as a health check endpoint.
+     * Mocks /pdf api from Apollon used to convert model to pdf.
      *
      * @param success Successful response or timeout.
      * @param resource Resource that will be returned by the server

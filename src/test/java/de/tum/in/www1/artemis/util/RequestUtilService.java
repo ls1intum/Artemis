@@ -156,6 +156,19 @@ public class RequestUtilService {
         return mapper.readValue(res.getResponse().getContentAsString(), responseType);
     }
 
+    /**
+     * Mocks sending a request and returns response content as string
+     * @param path the url to send request to
+     * @param body the body of the request
+     * @param expectedStatus the status that the request will return
+     * @param httpHeaders headers of request
+     * @param expectedResponseHeaders headers of response
+     * @param params parameters for multi value
+     * @param <T> Request type
+     * @param <R> Response type
+     * @return Request content as string
+     * @throws Exception
+     */
     public <T, R> String postWithResponseBodyString(String path, T body, HttpStatus expectedStatus, @Nullable HttpHeaders httpHeaders,
             @Nullable Map<String, String> expectedResponseHeaders, @Nullable LinkedMultiValueMap<String, String> params) throws Exception {
         String jsonBody = mapper.writeValueAsString(body);
