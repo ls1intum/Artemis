@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.service.AssessmentService;
 
 public class ResultTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -23,6 +24,9 @@ public class ResultTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
 
     @Autowired
     AssessmentService assessmentService;
+
+    @Autowired
+    ResultRepository resultRepository;
 
     @BeforeEach
     public void setUp() throws Exception {
@@ -45,7 +49,7 @@ public class ResultTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
         result.setFeedbacks(feedbackList);
 
         Double calculatedPoints = assessmentService.calculateTotalPoints(feedbackList);
-        double totalPoints = assessmentService.calculateTotalPoints(calculatedPoints, maxPoints);
+        double totalPoints = resultRepository.calculateTotalPoints(calculatedPoints, maxPoints);
         result.setScore(totalPoints, maxPoints);
         result.setResultString(totalPoints, maxPoints);
 
@@ -58,7 +62,7 @@ public class ResultTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
         result.setFeedbacks(feedbackList);
 
         Double calculatePoints = assessmentService.calculateTotalPoints(feedbackList);
-        double totalPoints = assessmentService.calculateTotalPoints(calculatePoints, 4.0);
+        double totalPoints = resultRepository.calculateTotalPoints(calculatePoints, 4.0);
         result.setScore(totalPoints, 4.0);
         result.setResultString(totalPoints, 4.0);
 
@@ -78,7 +82,7 @@ public class ResultTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
         result.setFeedbacks(feedbackList);
 
         Double calculatePoints = assessmentService.calculateTotalPoints(feedbackList);
-        double totalPoints = assessmentService.calculateTotalPoints(calculatePoints, 7.0);
+        double totalPoints = resultRepository.calculateTotalPoints(calculatePoints, 7.0);
         result.setScore(totalPoints, 7.0);
         result.setResultString(totalPoints, 7.0);
 

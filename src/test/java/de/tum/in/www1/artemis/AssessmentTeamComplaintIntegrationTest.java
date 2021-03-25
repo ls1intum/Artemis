@@ -255,12 +255,12 @@ public class AssessmentTeamComplaintIntegrationTest extends AbstractSpringIntegr
         storedFeedbackResult.setFeedbacks(storedFeedback);
         sentFeedbackResult.setFeedbacks(sentFeedback);
         Double calculatedScore = assessmentService.calculateTotalPoints(storedFeedback);
-        double totalScore = assessmentService.calculateTotalPoints(calculatedScore, 20.0);
+        double totalScore = resultRepo.calculateTotalPoints(calculatedScore, 20.0);
         storedFeedbackResult.setScore(totalScore, 20.0);
         storedFeedbackResult.setResultString(totalScore, 20.0);
 
         Double calculatedScore2 = assessmentService.calculateTotalPoints(sentFeedback);
-        double totalScore2 = assessmentService.calculateTotalPoints(calculatedScore2, 20.0);
+        double totalScore2 = resultRepo.calculateTotalPoints(calculatedScore2, 20.0);
         sentFeedbackResult.setScore(totalScore2, 20.0);
         sentFeedbackResult.setResultString(totalScore2, 20.0);
         assertThat(storedFeedbackResult.getScore()).as("stored feedback evaluates to the same score as sent feedback").isEqualTo(sentFeedbackResult.getScore());

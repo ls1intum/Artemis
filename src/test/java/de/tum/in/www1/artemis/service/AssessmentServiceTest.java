@@ -152,7 +152,7 @@ public class AssessmentServiceTest extends AbstractSpringIntegrationBambooBitbuc
         submissionWithoutResult.addResult(result);
 
         var calculatedScore = assessmentService.calculateTotalPoints(feedbacks);
-        assessmentService.submitResult(result, exercise, calculatedScore);
+        resultRepository.submitResult(result, exercise, calculatedScore);
         resultRepository.save(result);
 
         assertThat(result.getResultString()).isEqualTo("6 of 7 points");
@@ -174,7 +174,7 @@ public class AssessmentServiceTest extends AbstractSpringIntegrationBambooBitbuc
         submissionWithoutResult.addResult(result);
 
         var calculatedScore = assessmentService.calculateTotalPoints(feedbacks);
-        assessmentService.submitResult(result, exercise, calculatedScore);
+        resultRepository.submitResult(result, exercise, calculatedScore);
         resultRepository.save(result);
 
         assertThat(result.getResultString()).isEqualTo("6 of 7 points");
@@ -196,7 +196,7 @@ public class AssessmentServiceTest extends AbstractSpringIntegrationBambooBitbuc
         submissionWithoutResult.addResult(result);
 
         var calculatedScore = assessmentService.calculateTotalPoints(feedbacks);
-        assessmentService.submitResult(result, exercise, calculatedScore);
+        resultRepository.submitResult(result, exercise, calculatedScore);
         resultRepository.save(result);
 
         assertThat(result.getResultString()).isEqualTo("6 of 7 points");

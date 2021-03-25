@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.repository;
 import static java.util.Arrays.asList;
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -13,11 +14,13 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.leaderboard.tutor.TutorLeaderboardAssessments;
 import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
  * Spring Data JPA repository for the Result entity.
@@ -466,5 +469,50 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
             GROUP BY a.id
             """)
     List<TutorLeaderboardAssessments> findTutorLeaderboardAssessmentByExamId(@Param("examId") long examId);
+
+    /**
+     * This function is used for submitting a manual assessment/result. It gets the result that belongs to the given resultId, updates the completion date.
+     * It saves the updated result in the database again.
+     *
+     * @param resultId the id of the result that should be submitted
+     * @return the ResponseEntity with result as body
+     */
+    default Result submitManualAssessment(long resultId) {
+        Result result = findWithEagerSubmissionAndFeedbackAndAssessorById(resultId).orElseThrow(() -> new EntityNotFoundException("Result", resultId));
+        result.setCompletionDate(ZonedDateTime.now());
+        save(result);
+        return result;
+    }
+
+    default Result submitResult(Result result, Exercise exercise, Double calculatedPoints) {
+        double maxPoints = exercise.getMaxPoints();
+        double bonusPoints = Optional.ofNullable(exercise.getBonusPoints()).orElse(0.0);
+
+        // Exam results and manual results of programming exercises are always to rated
+        if (exercise.isExamExercise() || exercise instanceof ProgrammingExercise) {
+            result.setRated(true);
+        }
+        else {
+            result.setRatedIfNotExceeded(exercise.getDueDate(), result.getSubmission().getSubmissionDate());
+        }
+
+        result.setCompletionDate(ZonedDateTime.now());
+        // Take bonus points into account to achieve a result score > 100%
+        double totalScore = calculateTotalPoints(calculatedPoints, maxPoints + bonusPoints);
+        // Set score and resultString according to maxPoints, to establish results with score > 100%
+        result.setScore(totalScore, maxPoints);
+        result.setResultString(totalScore, maxPoints);
+
+        // Workaround to prevent the assessor turning into a proxy object after saving
+        var assessor = result.getAssessor();
+        result = save(result);
+        result.setAssessor(assessor);
+        return result;
+    }
+
+    default double calculateTotalPoints(Double calculatedScore, Double maxScore) {
+        double totalScore = Math.max(0, calculatedScore);
+        return (maxScore == null) ? totalScore : Math.min(totalScore, maxScore);
+    }
 
 }

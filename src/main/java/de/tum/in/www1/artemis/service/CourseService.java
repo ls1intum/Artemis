@@ -48,7 +48,7 @@ public class CourseService {
 
     private final LectureService lectureService;
 
-    private final NotificationService notificationService;
+    private final GroupNotificationRepository groupNotificationRepository;
 
     private final UserService userService;
 
@@ -71,15 +71,15 @@ public class CourseService {
     private final LearningGoalRepository learningGoalRepository;
 
     public CourseService(CourseRepository courseRepository, ExerciseService exerciseService, AuthorizationCheckService authCheckService, UserRepository userRepository,
-            LectureService lectureService, NotificationService notificationService, ExerciseGroupRepository exerciseGroupRepository, AuditEventRepository auditEventRepository,
-            UserService userService, LearningGoalRepository learningGoalRepository, GroupNotificationService groupNotificationService, ExamService examService,
-            ExamRepository examRepository, CourseExamExportService courseExamExportService) {
+            LectureService lectureService, GroupNotificationRepository groupNotificationRepository, ExerciseGroupRepository exerciseGroupRepository,
+            AuditEventRepository auditEventRepository, UserService userService, LearningGoalRepository learningGoalRepository, GroupNotificationService groupNotificationService,
+            ExamService examService, ExamRepository examRepository, CourseExamExportService courseExamExportService) {
         this.courseRepository = courseRepository;
         this.exerciseService = exerciseService;
         this.authCheckService = authCheckService;
         this.userRepository = userRepository;
         this.lectureService = lectureService;
-        this.notificationService = notificationService;
+        this.groupNotificationRepository = groupNotificationRepository;
         this.exerciseGroupRepository = exerciseGroupRepository;
         this.auditEventRepository = auditEventRepository;
         this.userService = userService;
@@ -161,7 +161,7 @@ public class CourseService {
      *     <li>All Exercises including:
      *      submissions, participations, results, repositories and build plans, see {@link ExerciseService#delete}</li>
      *     <li>All Lectures and their Attachments, see {@link LectureService#delete}</li>
-     *     <li>All GroupNotifications of the course, see {@link NotificationService#deleteGroupNotification}</li>
+     *     <li>All GroupNotifications of the course, see {@link GroupNotificationRepository#delete}</li>
      *     <li>All default groups created by Artemis, see {@link UserService#deleteGroup}</li>
      *     <li>All Exams, see {@link ExamService#delete}</li>
      * </ul>
@@ -202,9 +202,9 @@ public class CourseService {
     }
 
     private void deleteNotificationsOfCourse(Course course) {
-        List<GroupNotification> notifications = notificationService.findAllGroupNotificationsForCourse(course);
+        List<GroupNotification> notifications = groupNotificationRepository.findAllByCourseId(course.getId());
         for (GroupNotification notification : notifications) {
-            notificationService.deleteGroupNotification(notification);
+            groupNotificationRepository.delete(notification);
         }
     }
 
