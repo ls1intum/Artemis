@@ -60,17 +60,11 @@ class ApollonConnector {
     InputStream invoke(@NotNull String url, @NotNull RequestDTO requestObject) throws NetworkingError {
         long start = System.currentTimeMillis();
         log.debug("Calling Remote Artemis Service.");
-        System.out.println("url");
-        System.out.println(url);
-        System.out.println("requestObject");
-        System.out.println(requestObject.model);
 
         var headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
 
         final HttpEntity<RequestDTO> httpRequestEntity = new HttpEntity<>(requestObject, headers);
-        System.out.println("requestBody");
-        System.out.println(httpRequestEntity.getBody().model);
         final ResponseEntity<Resource> response = restTemplate.exchange(url, HttpMethod.POST, httpRequestEntity, Resource.class);
 
         if (!response.getStatusCode().is2xxSuccessful() || !response.hasBody()) {

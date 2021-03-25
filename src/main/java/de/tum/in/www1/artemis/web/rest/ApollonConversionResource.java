@@ -4,9 +4,11 @@ import java.io.InputStream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.service.connectors.apollon.ApollonConversionService;
@@ -17,6 +19,7 @@ import de.tum.in.www1.artemis.web.rest.dto.ApollonConversionDTO;
  */
 @RestController
 @RequestMapping("/api")
+@Profile("apollon")
 public class ApollonConversionResource {
 
     private final Logger log = LoggerFactory.getLogger(ApollonConversionResource.class);
@@ -33,19 +36,20 @@ public class ApollonConversionResource {
      * @return 200 Ok if successful or 401 unauthorized if secret is wrong
      */
     @PostMapping("/apollon-convert/pdf")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity convertApollonDiagram(@RequestBody ApollonConversionDTO dto) {
-        log.debug("REST call to inform about new Athene results for exercise: {}");
+        log.debug("REST call to convert apollon model to pdf");
 
         // The apollonConversionService will manage the processing and database saving
         InputStream inputStream = apollonConversionService.convertDiagram(dto.getDiagram());
-        // String text = new BufferedReader(
-        // new InputStreamReader(inputStream, StandardCharsets.UTF_8))
-        // .lines()
-        // .collect(Collectors.joining("\n"));
-        // System.out.println(text);>
+        if (inputStream == null) {
+            throw new RuntimeException();
+        }
+
         InputStreamResource inputStreamResource = new InputStreamResource(inputStream);
-        log.debug("REST call for new Athene results for exercise {} finished");
+        log.debug("REST call for apollon model conversion to pdf finished");
 
         return ResponseEntity.ok().header(HttpHeaders.CONTENT_TYPE, "application/pdf").body(inputStreamResource);
+
     }
 }

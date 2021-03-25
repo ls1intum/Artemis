@@ -421,3 +421,32 @@ HTTP. We need to extend the configuration in the file
        token-validity-in-seconds: 10800
 
 .. _Athene: https://github.com/ls1intum/Athene
+
+Athene Service
+--------------
+
+The semi-automatic text assessment relies on the Athene_ service.
+To enable automatic text assessments, special configuration is required:
+
+Enable the ``apollon`` Spring profile:
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+::
+
+   --spring.profiles.active=dev,bamboo,bitbucket,jira,artemis,scheduling,apollon
+
+Configure API Endpoints:
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+The Apollon conversion service is running on a dedicated machine and is adressed via
+HTTP. We need to extend the configuration in the file
+``src/main/resources/config/application-artemis.yml`` like so:
+
+.. code:: yaml
+
+   apollon:
+      conversion-service-url: http://localhost:8080
+
+
+.. _Apollon Converter: https://github.com/ls1intum/Apollon_converter
+
