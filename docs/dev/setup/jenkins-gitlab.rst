@@ -427,7 +427,7 @@ If you already have a Gitlab and Mysql instance running, you can comment out all
                 password: artemis_admin
                 ci-token: # generated in step 9
             continuous-integration:
-                url: http://172.33.0.3:8082
+                url: http://172.33.0.3:8080
                 user: artemis_admin
                 password: artemis_admin
                 vcs-credentials: artemis_gitlab_admin_credentials
