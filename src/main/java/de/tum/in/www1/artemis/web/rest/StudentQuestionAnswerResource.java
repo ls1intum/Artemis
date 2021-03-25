@@ -50,9 +50,9 @@ public class StudentQuestionAnswerResource {
 
     private final UserRepository userRepository;
 
-    GroupNotificationService groupNotificationService;
+    private final GroupNotificationService groupNotificationService;
 
-    SingleUserNotificationService singleUserNotificationService;
+    private final SingleUserNotificationService singleUserNotificationService;
 
     public StudentQuestionAnswerResource(StudentQuestionAnswerRepository studentQuestionAnswerRepository, GroupNotificationService groupNotificationService,
             SingleUserNotificationService singleUserNotificationService, AuthorizationCheckService authorizationCheckService, UserRepository userRepository,
