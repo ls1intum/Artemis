@@ -556,7 +556,17 @@ public class ExerciseService {
      */
     public List<CourseManagementOverviewExerciseStatisticsDTO> getStatisticsForCourseManagementOverview(Long courseId, Integer amountOfStudentsInCourse) {
         // We only display the latest five past exercises in the client, only calculate statistics for those
-        var fivePastExercises = exerciseRepository.getPastExercisesForCourseManagementOverviewSorted(courseId, ZonedDateTime.now()).stream().limit(5).collect(Collectors.toList());
+        var pastExercises = exerciseRepository.getPastExercisesForCourseManagementOverview(courseId, ZonedDateTime.now());
+        pastExercises.sort((exerciseA, exerciseB) -> {
+                var dueDateA = exerciseA.getAssessmentDueDate() != null ? exerciseA.getAssessmentDueDate() : exerciseA.getDueDate();
+                var dueDateB = exerciseB.getAssessmentDueDate() != null ? exerciseB.getAssessmentDueDate() : exerciseB.getDueDate();
+                if (dueDateA.equals(dueDateB)) {
+                    return 0;
+                }
+
+                return dueDateA.isBefore(dueDateB) ? 1 : -1;
+            });
+        var fivePastExercises = pastExercises.stream().limit(5).collect(Collectors.toList());
 
         // Calculate the average score for all five exercises at once
         var averageScore = participantScoreRepository.findAverageScoreForExercises(fivePastExercises);

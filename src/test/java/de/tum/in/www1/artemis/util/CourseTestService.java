@@ -1440,6 +1440,7 @@ public class CourseTestService {
         var olderDueDate = ZonedDateTime.now().minusDays(4);
         var assessmentDueDate = ZonedDateTime.now().minusDays(2);
         var olderAssessmentDueDate = ZonedDateTime.now().minusDays(3);
+        var oldestAssessmentDueDate = ZonedDateTime.now().minusDays(6);
 
         // Add five exercises with different combinations of due dates and assessment due dates
         instructorsCourse.addExercises(exerciseRepo.save(ModelFactory.generateTextExercise(releaseDate, dueDate, assessmentDueDate, instructorsCourse)));
@@ -1448,8 +1449,8 @@ public class CourseTestService {
         instructorsCourse.addExercises(exerciseRepo.save(ModelFactory.generateTextExercise(releaseDate, olderDueDate, olderAssessmentDueDate, instructorsCourse)));
         instructorsCourse.addExercises(exerciseRepo.save(ModelFactory.generateTextExercise(releaseDate, null, olderAssessmentDueDate, instructorsCourse)));
 
-        // Add one exercise which will be sorted last due to the 'null' assessment due date
-        var exerciseNotReturned = ModelFactory.generateTextExercise(releaseDate, dueDate, null, instructorsCourse);
+        // Add one exercise which will be sorted last due to the oldest assessment due date
+        var exerciseNotReturned = ModelFactory.generateTextExercise(releaseDate, dueDate, oldestAssessmentDueDate, instructorsCourse);
         exerciseNotReturned = exerciseRepo.save(exerciseNotReturned);
         final var exerciseId = exerciseNotReturned.getId();
         instructorsCourse.addExercises(exerciseNotReturned);

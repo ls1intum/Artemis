@@ -101,22 +101,9 @@ export class CourseManagementCardComponent implements OnChanges {
                     (!exercise.assessmentDueDate && exercise.dueDate && exercise.dueDate <= moment()) || (exercise.assessmentDueDate && exercise.assessmentDueDate <= moment()),
             )
             .sort((exerciseA, exerciseB) => {
-                if (exerciseA.assessmentDueDate && exerciseB.assessmentDueDate) {
-                    return exerciseB.assessmentDueDate.valueOf() - exerciseA.assessmentDueDate.valueOf();
-                }
-
-                // Sort A first if it has an assessment due date but B has not
-                if (exerciseA.assessmentDueDate && !exerciseB.assessmentDueDate) {
-                    return -1;
-                }
-
-                // Sort B first if it has an assessment due date but A has not
-                if (!exerciseA.assessmentDueDate && exerciseB.assessmentDueDate) {
-                    return 1;
-                }
-
-                // If neither have an assessment due date, sort by due date
-                return exerciseB.dueDate!.valueOf() - exerciseA.dueDate!.valueOf();
+                // Sort by assessment due date (or due date if there is no assessment due date) descending
+                // Note: The server side statistic generation uses the same sorting
+                return (exerciseB.assessmentDueDate ?? exerciseB.dueDate)!.valueOf() - (exerciseA.assessmentDueDate ?? exerciseA.dueDate)!.valueOf();
             })
             .slice(0, 5);
     }

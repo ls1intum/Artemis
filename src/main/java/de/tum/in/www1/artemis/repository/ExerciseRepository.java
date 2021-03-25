@@ -254,7 +254,7 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
      *
      * @param courseId the course to get the exercises for
      * @param now the current date time
-     * @return a set of exercises ordered descending by assessment due date, then due date
+     * @return a set of exercises
      */
     @Query("""
             SELECT DISTINCT e
@@ -262,9 +262,8 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
             WHERE e.course.id = :courseId
                 AND (e.assessmentDueDate IS NOT NULL AND e.assessmentDueDate < :now
                 OR e.dueDate IS NOT NULL AND e.dueDate < :now)
-            ORDER BY e.assessmentDueDate DESC, e.dueDate DESC
             """)
-    Set<Exercise> getPastExercisesForCourseManagementOverviewSorted(@Param("courseId") Long courseId, @Param("now") ZonedDateTime now);
+    List<Exercise> getPastExercisesForCourseManagementOverview(@Param("courseId") Long courseId, @Param("now") ZonedDateTime now);
 
     /**
      * Fetches the amount of student participations in the given exercise

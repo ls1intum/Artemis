@@ -100,6 +100,6 @@ describe('CourseManagementCardComponent', () => {
         } as Course;
 
         component.ngOnChanges();
-        expect(component.pastExercises).to.deep.equal([pastExercise, pastExercise2, pastExercise5, pastExercise6, pastExercise3]);
+        expect(component.pastExercises).to.deep.equal([pastExercise, pastExercise2, pastExercise5, pastExercise3, pastExercise4]);
     });
 });
