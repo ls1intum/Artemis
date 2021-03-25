@@ -673,7 +673,7 @@ public class ExerciseService {
      * @param exercise the exercise corresponding to the <code>CourseManagementOverviewExerciseStatisticsDTO</code>
      */
     private void setAssessmentsAndSubmissionsForStatisticsDTO(CourseManagementOverviewExerciseStatisticsDTO exerciseStatisticsDTO, Exercise exercise) {
-        if (exercise.getAssessmentDueDate() != null && exercise.getAssessmentDueDate().isBefore(ZonedDateTime.now())) {
+        if (exercise.getAssessmentDueDate() != null && exercise.getAssessmentDueDate().isAfter(ZonedDateTime.now())) {
             long numberOfRatedAssessments = resultRepository.countNumberOfRatedResultsForExercise(exercise.getId());
             long noOfSubmissionsInTime = submissionRepository.countUniqueSubmissionsByExerciseId(exercise.getId());
             exerciseStatisticsDTO.setNoOfRatedAssessments(numberOfRatedAssessments);
