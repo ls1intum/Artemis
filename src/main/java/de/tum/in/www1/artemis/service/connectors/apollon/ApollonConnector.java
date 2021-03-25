@@ -73,7 +73,7 @@ class ApollonConnector {
             responseInputStream = response.getBody().getInputStream();
         }
         catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new NetworkingError("An Error occurred while calling Remote Artemis Service. Check Remote Logs for debugging information.");
         }
         log.debug("Finished remote call in " + (System.currentTimeMillis() - start) + "ms");
 
