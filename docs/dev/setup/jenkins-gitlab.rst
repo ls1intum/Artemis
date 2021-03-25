@@ -429,7 +429,7 @@ If you already have a Gitlab and Mysql instance running, you can comment out all
             continuous-integration:
                 url: http://172.33.0.3:8082
                 user: artemis_admin
-                password artemis_admin
+                password: artemis_admin
                 vcs-credentials: artemis_gitlab_admin_credentials
                 artemis-authentication-token-key: artemis_notification_plugin_token
                 artemis-authentication-token-value: artemis_admin
