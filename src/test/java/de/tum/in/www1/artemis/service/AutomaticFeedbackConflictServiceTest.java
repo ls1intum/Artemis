@@ -50,7 +50,6 @@ public class AutomaticFeedbackConflictServiceTest extends AbstractSpringIntegrat
     public void init() {
         database.addUsers(2, 1, 0);
         textExercise = (TextExercise) database.addCourseWithOneFinishedTextExercise().getExercises().iterator().next();
-
         atheneRequestMockProvider.enableMockingOfRequests();
     }
 
@@ -103,7 +102,6 @@ public class AutomaticFeedbackConflictServiceTest extends AbstractSpringIntegrat
         assertThat(feedbackConflictRepository.findAll(), hasSize(1));
         assertThat(feedbackConflictRepository.findAll().get(0).getFirstFeedback(), either(is(feedback1)).or(is(feedback2)));
         assertThat(feedbackConflictRepository.findAll().get(0).getSecondFeedback(), either(is(feedback1)).or(is(feedback2)));
-
     }
 
     /**

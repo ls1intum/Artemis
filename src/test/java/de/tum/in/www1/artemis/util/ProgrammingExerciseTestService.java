@@ -491,7 +491,7 @@ public class ProgrammingExerciseTestService {
     }
 
     // TEST
-    public void testImportProgrammingExercise_scaChange_deactivated() throws Exception {
+    public void testImportProgrammingExercise_scaChange() throws Exception {
         // Setup exercises for import
         ProgrammingExercise sourceExercise = database.addCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories();
         database.addTestCasesToProgrammingExercise(sourceExercise);
@@ -511,7 +511,7 @@ public class ProgrammingExerciseTestService {
                 ProgrammingExercise.class, params, HttpStatus.OK);
 
         // Assertions
-        assertThat(exerciseToBeImported.isStaticCodeAnalysisEnabled()).isFalse();
+        assertThat(exerciseToBeImported.isStaticCodeAnalysisEnabled()).isTrue();
         assertThat(exerciseToBeImported.getStaticCodeAnalysisCategories()).isEmpty();
         assertThat(exerciseToBeImported.getMaxStaticCodeAnalysisPenalty()).isNull();
     }
