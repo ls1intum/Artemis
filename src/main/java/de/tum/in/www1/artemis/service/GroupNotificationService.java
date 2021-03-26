@@ -110,7 +110,7 @@ public class GroupNotificationService {
     }
 
     /**
-     * Notify instructor groups about duplicate test cases.
+     * Notify instructor and tutor groups about duplicate test cases.
      *
      * @param exercise         that has been updated
      * @param notificationText that should be displayed
@@ -118,6 +118,17 @@ public class GroupNotificationService {
     public void notifyInstructorGroupAboutDuplicateTestCasesForExercise(Exercise exercise, String notificationText) {
         saveAndSend(createNotification(exercise, null, GroupNotificationType.TA, NotificationType.DUPLICATE_TEST_CASE, notificationText));
         saveAndSend(createNotification(exercise, null, GroupNotificationType.INSTRUCTOR, NotificationType.DUPLICATE_TEST_CASE, notificationText));
+    }
+
+    /**
+     * Notify instructor groups about illegal submissions. In case a student has submitted after the individual end date or exam end date,
+     * the submission is not valid and therefore marked as illegal. We notify the instructor about this cheating attempt.
+     *
+     * @param exercise         that has been affected
+     * @param notificationText that should be displayed
+     */
+    public void notifyInstructorGroupAboutIllegalSubmissionsForExercise(Exercise exercise, String notificationText) {
+        saveAndSend(createNotification(exercise, null, GroupNotificationType.INSTRUCTOR, NotificationType.ILLEGAL_SUBMISSION, notificationText));
     }
 
     /**

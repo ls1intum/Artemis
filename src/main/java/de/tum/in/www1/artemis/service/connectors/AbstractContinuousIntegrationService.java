@@ -22,9 +22,9 @@ import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.repository.FeedbackRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
 import de.tum.in.www1.artemis.service.BuildLogEntryService;
-import de.tum.in.www1.artemis.service.FeedbackService;
 import de.tum.in.www1.artemis.service.dto.AbstractBuildResultNotificationDTO;
 
 public abstract class AbstractContinuousIntegrationService implements ContinuousIntegrationService {
@@ -36,7 +36,7 @@ public abstract class AbstractContinuousIntegrationService implements Continuous
 
     protected final ProgrammingSubmissionRepository programmingSubmissionRepository;
 
-    protected final FeedbackService feedbackService;
+    protected final FeedbackRepository feedbackRepository;
 
     protected final BuildLogEntryService buildLogService;
 
@@ -44,10 +44,10 @@ public abstract class AbstractContinuousIntegrationService implements Continuous
 
     protected final RestTemplate shortTimeoutRestTemplate;
 
-    public AbstractContinuousIntegrationService(ProgrammingSubmissionRepository programmingSubmissionRepository, FeedbackService feedbackService,
+    public AbstractContinuousIntegrationService(ProgrammingSubmissionRepository programmingSubmissionRepository, FeedbackRepository feedbackRepository,
             BuildLogEntryService buildLogService, RestTemplate restTemplate, RestTemplate shortTimeoutRestTemplate) {
         this.programmingSubmissionRepository = programmingSubmissionRepository;
-        this.feedbackService = feedbackService;
+        this.feedbackRepository = feedbackRepository;
         this.restTemplate = restTemplate;
         this.shortTimeoutRestTemplate = shortTimeoutRestTemplate;
         this.buildLogService = buildLogService;
@@ -112,7 +112,7 @@ public abstract class AbstractContinuousIntegrationService implements Continuous
      * @return if the commit hash for the given submission type was found, otherwise empty.
      */
     protected Optional<String> getCommitHash(AbstractBuildResultNotificationDTO buildResult, SubmissionType submissionType) {
-        final var isAssignmentSubmission = List.of(SubmissionType.MANUAL, SubmissionType.INSTRUCTOR).contains(submissionType);
+        final var isAssignmentSubmission = List.of(SubmissionType.MANUAL, SubmissionType.INSTRUCTOR, SubmissionType.ILLEGAL).contains(submissionType);
         if (isAssignmentSubmission) {
             return buildResult.getCommitHashFromAssignmentRepo();
         }

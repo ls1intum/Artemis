@@ -17,7 +17,7 @@ import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 public class ProgrammingExerciseIntegrationJenkinsGitlabTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 
     @Autowired
-    ProgrammingExerciseIntegrationServiceTest programmingExerciseIntegrationServiceTest;
+    private ProgrammingExerciseIntegrationServiceTest programmingExerciseIntegrationServiceTest;
 
     @BeforeEach
     void initTestCase() throws Exception {
