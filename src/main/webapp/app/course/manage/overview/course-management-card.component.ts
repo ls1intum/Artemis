@@ -30,6 +30,7 @@ export class CourseManagementCardComponent implements OnChanges {
     currentExercises: Exercise[];
     exercisesInAssessment: Exercise[];
     pastExercises: Exercise[];
+    pastExerciseCount: number;
 
     showFutureExercises = false;
     showCurrentExercises = true;
@@ -95,7 +96,7 @@ export class CourseManagementCardComponent implements OnChanges {
             (exercise) => exercise.dueDate && exercise.dueDate <= moment() && exercise.assessmentDueDate && exercise.assessmentDueDate > moment(),
         );
 
-        this.pastExercises = exercises
+        const allPastExercises = exercises
             .filter(
                 (exercise) =>
                     (!exercise.assessmentDueDate && exercise.dueDate && exercise.dueDate <= moment()) || (exercise.assessmentDueDate && exercise.assessmentDueDate <= moment()),
@@ -104,7 +105,9 @@ export class CourseManagementCardComponent implements OnChanges {
                 // Sort by assessment due date (or due date if there is no assessment due date) descending
                 // Note: The server side statistic generation uses the same sorting
                 return (exerciseB.assessmentDueDate ?? exerciseB.dueDate)!.valueOf() - (exerciseA.assessmentDueDate ?? exerciseA.dueDate)!.valueOf();
-            })
-            .slice(0, 5);
+            });
+
+        this.pastExerciseCount = allPastExercises.length;
+        this.pastExercises = allPastExercises.slice(0, 5);
     }
 }

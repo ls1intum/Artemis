@@ -123,6 +123,7 @@
             "currentWorking": "Currently In Progress",
             "inAssessment": "Currently In Assessment",
             "pastExercises": "Past Exercises",
+            "pastExercisesOfTotal": "The 5 most recent of {{ total }} Past Exercises",
             "noExercises": "No active exercises to display",
             "assessmentProgress": "Assessments",
             "releaseDate": "Release",

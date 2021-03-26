@@ -1412,7 +1412,7 @@ public class CourseTestService {
         assertThat(statisticsDTO.getNoOfStudentsInCourse()).isEqualTo(8);
         assertThat(statisticsDTO.getNoOfRatedAssessments()).isEqualTo(0);
         assertThat(statisticsDTO.getNoOfAssessmentsDoneInPercent()).isEqualTo(0.0);
-        assertThat(statisticsDTO.getNoOfSubmissionsInTime()).isEqualTo(1L);
+        assertThat(statisticsDTO.getNoOfSubmissionsInTime()).isEqualTo(0L);
 
         // Get the statistics of the team exercise
         var teamStatisticsOptional = exerciseDTOS.stream().filter(exercise -> exercise.getExerciseId().equals(teamExerciseId)).findFirst();

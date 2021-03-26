@@ -123,6 +123,7 @@
             "currentWorking": "Derzeitig in Bearbeitung",
             "inAssessment": "Derzeitig in Bewertung",
             "pastExercises": "Vergangene Übungen",
+            "pastExercisesOfTotal": "Die 5 jüngsten der {{ total }} vergangenen Übungen",
             "noExercises": "Keine aktiven Übungen vorhanden",
             "assessmentProgress": "Bewertungen",
             "releaseDate": "Veröffentlichung",
