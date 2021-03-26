@@ -1387,6 +1387,20 @@ public class CourseTestService {
 
         instructorsCourse.addExercises(exerciseAssessmentDone);
 
+        // Create an exercise which is currently in assessment
+        var assessmentDueDate = ZonedDateTime.now().plusDays(2);
+        var exerciseInAssessment = ModelFactory.generateTextExercise(releaseDate, dueDate, assessmentDueDate, instructorsCourse);
+        exerciseInAssessment.setMaxPoints(15.0);
+        exerciseInAssessment = exerciseRepo.save(exerciseInAssessment);
+
+        // Add a single participation to that exercise
+        final var exerciseIdInAssessment = exerciseInAssessment.getId();
+        Result result1 = database.createParticipationSubmissionAndResult(exerciseIdInAssessment, student, 15.0, 0.0, 30, true);
+        result1.setAssessor(instructor);
+        resultRepo.saveAndFlush(result1);
+
+        instructorsCourse.addExercises(exerciseInAssessment);
+
         courseRepo.save(instructorsCourse);
 
         // We only added one course, so expect one dto
@@ -1395,9 +1409,9 @@ public class CourseTestService {
         var dto = courseDtos.get(0);
         assertThat(dto.getCourseId()).isEqualTo(instructorsCourse.getId());
 
-        // We have five default exercises and two custom ones, making for a total of seven
+        // We have five default exercises and three custom ones, making for a total of eight
         var exerciseDTOS = dto.getExerciseDTOS();
-        assertThat(exerciseDTOS.size()).isEqualTo(7);
+        assertThat(exerciseDTOS.size()).isEqualTo(8);
 
         // Get the statistics of the exercise with passed assessment due date
         var statisticsOptional = exerciseDTOS.stream().filter(exercise -> exercise.getExerciseId().equals(exerciseId)).findFirst();
@@ -1412,7 +1426,7 @@ public class CourseTestService {
         assertThat(statisticsDTO.getNoOfStudentsInCourse()).isEqualTo(8);
         assertThat(statisticsDTO.getNoOfRatedAssessments()).isEqualTo(0);
         assertThat(statisticsDTO.getNoOfAssessmentsDoneInPercent()).isEqualTo(0.0);
-        assertThat(statisticsDTO.getNoOfSubmissionsInTime()).isEqualTo(1L);
+        assertThat(statisticsDTO.getNoOfSubmissionsInTime()).isEqualTo(0L);
 
         // Get the statistics of the team exercise
         var teamStatisticsOptional = exerciseDTOS.stream().filter(exercise -> exercise.getExerciseId().equals(teamExerciseId)).findFirst();
@@ -1429,6 +1443,21 @@ public class CourseTestService {
         assertThat(teamStatisticsDTO.getNoOfRatedAssessments()).isEqualTo(0);
         assertThat(teamStatisticsDTO.getNoOfAssessmentsDoneInPercent()).isEqualTo(0.0);
         assertThat(teamStatisticsDTO.getNoOfSubmissionsInTime()).isEqualTo(0L);
+
+        // Get the statistics of the exercise is assessment
+        var exerciseInAssessmentStatisticsOptional = exerciseDTOS.stream().filter(exercise -> exercise.getExerciseId().equals(exerciseIdInAssessment)).findFirst();
+        assertThat(exerciseInAssessmentStatisticsOptional.isPresent()).isTrue();
+
+        // Since that exercise is "currently in assessment", we need the numberOfRatedAssessment, assessmentsDoneInPercent and the numberOfSubmissionsInTime
+        var exerciseInAssessmentStatisticsDTO = exerciseInAssessmentStatisticsOptional.get();
+        assertThat(exerciseInAssessmentStatisticsDTO.getAverageScoreInPercent()).isEqualTo(30.0);
+        assertThat(exerciseInAssessmentStatisticsDTO.getExerciseMaxPoints()).isEqualTo(15.0);
+        assertThat(exerciseInAssessmentStatisticsDTO.getNoOfParticipatingStudentsOrTeams()).isEqualTo(0);
+        assertThat(exerciseInAssessmentStatisticsDTO.getParticipationRateInPercent()).isEqualTo(0D);
+        assertThat(exerciseInAssessmentStatisticsDTO.getNoOfStudentsInCourse()).isEqualTo(8);
+        assertThat(exerciseInAssessmentStatisticsDTO.getNoOfRatedAssessments()).isEqualTo(1);
+        assertThat(exerciseInAssessmentStatisticsDTO.getNoOfAssessmentsDoneInPercent()).isEqualTo(100.0);
+        assertThat(exerciseInAssessmentStatisticsDTO.getNoOfSubmissionsInTime()).isEqualTo(1L);
     }
 
     // Test
