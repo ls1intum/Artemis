@@ -34,7 +34,6 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.service.FeedbackService;
 import de.tum.in.www1.artemis.service.ResultService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseGradingService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseTestCaseService;
@@ -46,7 +45,7 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
     ResultService resultService;
 
     @Autowired
-    FeedbackService feedbackService;
+    FeedbackRepository feedbackRepository;
 
     @Autowired
     ProgrammingExerciseTestCaseService programmingExerciseTestCaseService;
@@ -146,7 +145,7 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
                 issue.setFilePath(pathWithoutWorkingDir);
             }
         }
-        var staticCodeAnalysisFeedback1 = feedbackService
+        var staticCodeAnalysisFeedback1 = feedbackRepository
                 .createFeedbackFromStaticCodeAnalysisReports(resultNotification1.getBuild().getJobs().get(0).getStaticCodeAnalysisReports());
 
         for (var feedback : staticCodeAnalysisFeedback1) {
@@ -172,12 +171,12 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
                 }
             }
         }
-        final var staticCodeAnalysisFeedback2 = feedbackService
+        final var staticCodeAnalysisFeedback2 = feedbackRepository
                 .createFeedbackFromStaticCodeAnalysisReports(resultNotification2.getBuild().getJobs().get(0).getStaticCodeAnalysisReports());
 
         for (var feedback : staticCodeAnalysisFeedback2) {
             JSONObject issueJSON = new JSONObject(feedback.getDetailText());
-            assertThat(FeedbackService.DEFAULT_FILEPATH).isEqualTo(issueJSON.get("filePath"));
+            assertThat(FeedbackRepository.DEFAULT_FILEPATH).isEqualTo(issueJSON.get("filePath"));
         }
     }
 

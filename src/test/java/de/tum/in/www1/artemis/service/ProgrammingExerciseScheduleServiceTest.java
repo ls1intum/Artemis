@@ -32,16 +32,16 @@ import de.tum.in.www1.artemis.util.TimeService;
 class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
-    InstanceMessageReceiveService instanceMessageReceiveService;
+    private InstanceMessageReceiveService instanceMessageReceiveService;
 
     @Autowired
-    ProgrammingExerciseRepository programmingExerciseRepository;
+    private ProgrammingExerciseRepository programmingExerciseRepository;
 
     @Autowired
-    ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository;
+    private ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository;
 
     @Autowired
-    TimeService timeService;
+    private TimeService timeService;
 
     @Autowired
     private BitbucketRequestMockProvider bitbucketRequestMockProvider;

@@ -22,12 +22,8 @@ import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.participation.Participation;
-import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
-import de.tum.in.www1.artemis.repository.TextClusterRepository;
-import de.tum.in.www1.artemis.repository.TextExerciseRepository;
-import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.ExerciseService;
-import de.tum.in.www1.artemis.service.TeamService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.TextExerciseUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
@@ -35,10 +31,10 @@ import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
-    ExerciseService exerciseService;
+    private ExerciseService exerciseService;
 
     @Autowired
-    TextExerciseRepository textExerciseRepository;
+    private TextExerciseRepository textExerciseRepository;
 
     @Autowired
     private TextExerciseUtilService textExerciseUtilService;
@@ -47,13 +43,13 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     private TextClusterRepository textClusterRepository;
 
     @Autowired
-    TextSubmissionRepository textSubmissionRepository;
+    private TextSubmissionRepository textSubmissionRepository;
 
     @Autowired
-    ExampleSubmissionRepository exampleSubmissionRepo;
+    private ExampleSubmissionRepository exampleSubmissionRepo;
 
     @Autowired
-    TeamService teamService;
+    private TeamRepository teamRepository;
 
     @BeforeEach
     public void initTestCase() {
@@ -516,13 +512,13 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         assertEquals(ExerciseMode.TEAM, exerciseToBeImported.getMode());
         assertEquals(teamAssignmentConfig.getMinTeamSize(), exerciseToBeImported.getTeamAssignmentConfig().getMinTeamSize());
         assertEquals(teamAssignmentConfig.getMaxTeamSize(), exerciseToBeImported.getTeamAssignmentConfig().getMaxTeamSize());
-        assertEquals(0, teamService.findAllByExerciseIdWithEagerStudents(exerciseToBeImported, null).size());
+        assertEquals(0, teamRepository.findAllByExerciseIdWithEagerStudents(exerciseToBeImported, null).size());
 
         sourceExercise = textExerciseRepository.findById(sourceExercise.getId()).get();
         assertEquals(course1.getId(), sourceExercise.getCourseViaExerciseGroupOrCourseMember().getId());
         assertEquals(ExerciseMode.INDIVIDUAL, sourceExercise.getMode());
         assertNull(sourceExercise.getTeamAssignmentConfig());
-        assertEquals(0, teamService.findAllByExerciseIdWithEagerStudents(sourceExercise, null).size());
+        assertEquals(0, teamRepository.findAllByExerciseIdWithEagerStudents(sourceExercise, null).size());
     }
 
     @Test
@@ -541,7 +537,7 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         sourceExercise.setCourse(course1);
 
         sourceExercise = textExerciseRepository.save(sourceExercise);
-        teamService.save(sourceExercise, new Team());
+        teamRepository.save(sourceExercise, new Team());
 
         var exerciseToBeImported = new TextExercise();
         exerciseToBeImported.setMode(ExerciseMode.INDIVIDUAL);
@@ -552,11 +548,11 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         assertEquals(course2.getId(), exerciseToBeImported.getCourseViaExerciseGroupOrCourseMember().getId(), course2.getId());
         assertEquals(ExerciseMode.INDIVIDUAL, exerciseToBeImported.getMode());
         assertNull(exerciseToBeImported.getTeamAssignmentConfig());
-        assertEquals(0, teamService.findAllByExerciseIdWithEagerStudents(exerciseToBeImported, null).size());
+        assertEquals(0, teamRepository.findAllByExerciseIdWithEagerStudents(exerciseToBeImported, null).size());
 
         sourceExercise = textExerciseRepository.findById(sourceExercise.getId()).get();
         assertEquals(course1.getId(), sourceExercise.getCourseViaExerciseGroupOrCourseMember().getId());
         assertEquals(ExerciseMode.TEAM, sourceExercise.getMode());
-        assertEquals(1, teamService.findAllByExerciseIdWithEagerStudents(sourceExercise, null).size());
+        assertEquals(1, teamRepository.findAllByExerciseIdWithEagerStudents(sourceExercise, null).size());
     }
 }

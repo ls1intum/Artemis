@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.service;
 
-import java.time.Instant;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -13,18 +12,16 @@ import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Team;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.TeamImportStrategyType;
-import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.TeamRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.service.dto.TeamSearchUserDTO;
-import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
 import de.tum.in.www1.artemis.service.team.TeamImportStrategy;
 import de.tum.in.www1.artemis.service.team.strategies.CreateOnlyStrategy;
 import de.tum.in.www1.artemis.service.team.strategies.PurgeExistingStrategy;
 import de.tum.in.www1.artemis.web.rest.TeamResource;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
-import de.tum.in.www1.artemis.web.rest.errors.StudentsAlreadyAssignedException;
 import de.tum.in.www1.artemis.web.rest.errors.StudentsAppearMultipleTimesException;
 import de.tum.in.www1.artemis.web.rest.errors.StudentsNotFoundException;
 
@@ -35,74 +32,19 @@ public class TeamService {
 
     private final UserRepository userRepository;
 
-    private final AuthorizationCheckService authCheckService;
-
     private final Optional<VersionControlService> versionControlService;
 
-    private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
+    private final ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
 
     private final ParticipationService participationService;
 
-    public TeamService(TeamRepository teamRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
-            Optional<VersionControlService> versionControlService, ProgrammingExerciseParticipationService programmingExerciseParticipationService,
-            ParticipationService participationService) {
+    public TeamService(TeamRepository teamRepository, UserRepository userRepository, Optional<VersionControlService> versionControlService,
+            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ParticipationService participationService) {
         this.teamRepository = teamRepository;
         this.userRepository = userRepository;
-        this.authCheckService = authCheckService;
         this.versionControlService = versionControlService;
-        this.programmingExerciseParticipationService = programmingExerciseParticipationService;
+        this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
         this.participationService = participationService;
-    }
-
-    /**
-     * Finds the team of a given user for an exercise
-     *
-     * @param exercise Exercise for which to find the team
-     * @param user Student for which to find the team
-     * @return found team (or empty if student has not been assigned to a team yet for the exercise)
-     */
-    public Optional<Team> findOneByExerciseAndUser(Exercise exercise, User user) {
-        return teamRepository.findOneByExerciseIdAndUserId(exercise.getId(), user.getId());
-    }
-
-    /**
-     * Finds latest team instance (i.e. the exercise team that was created last) that a given user belongs to in a course
-     *
-     * @param course Course for which to find the team
-     * @param user Student for which to find the team
-     * @return latest team instance
-     */
-    public Optional<Team> findLatestTeamByCourseAndUser(Course course, User user) {
-        return teamRepository.findAllByCourseIdAndUserIdOrderByIdDesc(course.getId(), user.getId()).stream().findFirst();
-    }
-
-    /**
-     * Returns all teams for an exercise (optionally filtered for a specific tutor who owns the teams)
-     * @param exercise Exercise for which to return all teams
-     * @param teamOwnerId Optional user id by which to filter teams on their owner
-     * @return List of teams
-     */
-    public List<Team> findAllByExerciseIdWithEagerStudents(Exercise exercise, Long teamOwnerId) {
-        if (teamOwnerId != null) {
-            return teamRepository.findAllByExerciseIdAndTeamOwnerIdWithEagerStudents(exercise.getId(), teamOwnerId);
-        }
-        else {
-            return teamRepository.findAllByExerciseIdWithEagerStudents(exercise.getId());
-        }
-    }
-
-    /**
-     * Returns whether the student is already assigned to a team for a given exercise
-     *
-     * @param exercise Exercise for which to check
-     * @param user Student for which to check
-     * @return boolean flag whether the student has been assigned already or not yet
-     */
-    public Boolean isAssignedToTeam(Exercise exercise, User user) {
-        if (!exercise.isTeamMode()) {
-            return null;
-        }
-        return teamRepository.findOneByExerciseIdAndUserId(exercise.getId(), user.getId()).isPresent();
     }
 
     /**
@@ -140,8 +82,7 @@ public class TeamService {
      * @param updatedTeam New team after update
      */
     public void updateRepositoryMembersIfNeeded(Long exerciseId, Team existingTeam, Team updatedTeam) {
-        Optional<ProgrammingExerciseStudentParticipation> optionalParticipation = this.programmingExerciseParticipationService.findByExerciseIdAndTeamId(exerciseId,
-                existingTeam.getId());
+        var optionalParticipation = programmingExerciseStudentParticipationRepository.findByExerciseIdAndTeamId(exerciseId, existingTeam.getId());
 
         optionalParticipation.ifPresent(participation -> {
             // Users in the existing team that are no longer in the updated team need to be removed
@@ -154,46 +95,6 @@ public class TeamService {
             usersToAdd.removeAll(existingTeam.getStudents());
             usersToAdd.forEach(user -> versionControlService.get().addMemberToRepository(participation.getVcsRepositoryUrl(), user));
         });
-    }
-
-    /**
-     * Saves a team to the database (and verifies before that none of the students is already assigned to another team)
-     *
-     * @param exercise Exercise which the team belongs to
-     * @param team Team to be saved
-     * @return saved Team
-     */
-    public Team save(Exercise exercise, Team team) {
-        // verify that students are not assigned yet to another team for this exercise
-        List<Pair<User, Team>> conflicts = findStudentTeamConflicts(exercise, team);
-        if (!conflicts.isEmpty()) {
-            throw new StudentsAlreadyAssignedException(conflicts);
-        }
-        // audit information is normally updated automatically but since changes in the many-to-many relationships are not registered,
-        // we need to trigger the audit explicitly by modifying a column of the team entity itself
-        if (team.getId() != null) {
-            team.setLastModifiedDate(Instant.now());
-        }
-        team.setExercise(exercise);
-        return teamRepository.save(team);
-    }
-
-    /**
-     * Checks for each student in the given team whether they already belong to a different team
-     *
-     * @param exercise Exercise which the team belongs to
-     * @param team Team whose students should be checked for conflicts with other teams
-     * @return list of conflict pairs <student, team> where team is a different team than in the argument
-     */
-    private List<Pair<User, Team>> findStudentTeamConflicts(Exercise exercise, Team team) {
-        List<Pair<User, Team>> conflicts = new ArrayList<Pair<User, Team>>();
-        team.getStudents().forEach(student -> {
-            Optional<Team> assignedTeam = teamRepository.findOneByExerciseIdAndUserId(exercise.getId(), student.getId());
-            if (assignedTeam.isPresent() && !assignedTeam.get().equals(team)) {
-                conflicts.add(Pair.of(student, assignedTeam.get()));
-            }
-        });
-        return conflicts;
     }
 
     /**
@@ -242,14 +143,14 @@ public class TeamService {
         // Put all students from given team list into a list of users
         List<User> students = teams.stream().flatMap(team -> team.getStudents().stream()).collect(Collectors.toList());
         // Put logins of students which have login information into a list
-        List<String> logins = students.stream().filter(student -> student.getLogin() != null).map(User::getLogin).collect(Collectors.toList());
+        List<String> logins = students.stream().map(User::getLogin).filter(Objects::nonNull).collect(Collectors.toList());
         // Put registration numbers of students which have no login information but have registration number into a list
         // Visible registration number is used because that is what available for the consumers of the API
         List<String> registrationNumbers = students.stream().filter(student -> student.getLogin() == null && student.getVisibleRegistrationNumber() != null)
                 .map(User::getVisibleRegistrationNumber).collect(Collectors.toList());
         // If number of students is not same with number of logins and registration numbers combined throw BadRequestAlertException
         // In other words, if there is at least one student without any identifier throw an exception
-        if (students.stream().count() != logins.stream().count() + registrationNumbers.stream().count()) {
+        if (students.size() != logins.size() + registrationNumbers.size()) {
             throw new BadRequestAlertException("Students do not have an identifier", TeamResource.ENTITY_NAME, "studentIdentifierNotFound", true);
         }
 
@@ -401,7 +302,6 @@ public class TeamService {
         return switch (importStrategyType) {
             case PURGE_EXISTING -> new PurgeExistingStrategy(teamRepository, participationService);
             case CREATE_ONLY -> new CreateOnlyStrategy(teamRepository);
-            default -> throw new Error("Unknown team import strategy type: " + importStrategyType);
         };
     }
 }

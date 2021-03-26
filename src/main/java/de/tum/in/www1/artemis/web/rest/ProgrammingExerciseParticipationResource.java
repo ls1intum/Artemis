@@ -18,8 +18,10 @@ import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
+import de.tum.in.www1.artemis.repository.GradingCriterionRepository;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingSubmissionService;
@@ -35,6 +37,8 @@ public class ProgrammingExerciseParticipationResource {
 
     private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
 
+    private final ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
+
     private final ResultService resultService;
 
     private final ProgrammingSubmissionService submissionService;
@@ -43,18 +47,20 @@ public class ProgrammingExerciseParticipationResource {
 
     private final AuthorizationCheckService authCheckService;
 
-    private final GradingCriterionService gradingCriterionService;
+    private final GradingCriterionRepository gradingCriterionRepository;
 
     public ProgrammingExerciseParticipationResource(ProgrammingExerciseParticipationService programmingExerciseParticipationService,
-            ParticipationRepository participationRepository, ResultService resultService, ProgrammingSubmissionService submissionService,
-            ProgrammingExerciseRepository programmingExerciseRepository, AuthorizationCheckService authCheckService, GradingCriterionService gradingCriterionService) {
+            ParticipationRepository participationRepository, ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
+            ResultService resultService, ProgrammingSubmissionService submissionService, ProgrammingExerciseRepository programmingExerciseRepository,
+            AuthorizationCheckService authCheckService, GradingCriterionRepository gradingCriterionRepository) {
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.participationRepository = participationRepository;
+        this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
         this.resultService = resultService;
         this.submissionService = submissionService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.authCheckService = authCheckService;
-        this.gradingCriterionService = gradingCriterionService;
+        this.gradingCriterionRepository = gradingCriterionRepository;
     }
 
     /**
@@ -66,7 +72,7 @@ public class ProgrammingExerciseParticipationResource {
     @GetMapping("/programming-exercise-participations/{participationId}/student-participation-with-latest-result-and-feedbacks")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Participation> getParticipationWithLatestResultForStudentParticipation(@PathVariable Long participationId) {
-        Optional<ProgrammingExerciseStudentParticipation> participation = programmingExerciseParticipationService
+        Optional<ProgrammingExerciseStudentParticipation> participation = programmingExerciseStudentParticipationRepository
                 .findStudentParticipationWithLatestResultAndFeedbacksAndRelatedSubmissions(participationId);
         if (participation.isEmpty()) {
             return notFound();
@@ -98,8 +104,8 @@ public class ProgrammingExerciseParticipationResource {
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Participation> getParticipationWithManualResultByCorrectionRoundForStudentParticipation(@PathVariable Long participationId,
             @PathVariable int correctionRound) {
-        Optional<ProgrammingExerciseStudentParticipation> participation = programmingExerciseParticipationService
-                .findStudentParticipationWithAllManualOrSemiAutomaticResultsAndFeedbacksAndRelatedSubmissionAndAssessor(participationId);
+        Optional<ProgrammingExerciseStudentParticipation> participation = programmingExerciseStudentParticipationRepository
+                .findByIdWithAllManualOrSemiAutomaticResultsAndFeedbacksAndRelatedSubmissionAndAssessor(participationId);
         if (participation.isEmpty()) {
             return notFound();
         }
@@ -112,7 +118,7 @@ public class ProgrammingExerciseParticipationResource {
         exercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exercise.getId());
 
         // Fetch grading criterion into exercise of participation
-        List<GradingCriterion> gradingCriteria = gradingCriterionService.findByExerciseIdWithEagerGradingCriteria(exercise.getId());
+        List<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exercise.getId());
         exercise.setGradingCriteria(gradingCriteria);
 
         // Set exercise back to participation
