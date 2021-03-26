@@ -261,7 +261,7 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
      */
     @Query("""
              SELECT
-                 new de.tum.in.www1.artemis.domain.assessmentDashboard.ExerciseMapEntry(
+                 new de.tum.in.www1.artemis.domain.assessment.dashboard.ExerciseMapEntry(
                      p.exercise.id,
                      count(DISTINCT p)
                  )
@@ -308,7 +308,7 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
      */
     @Query("""
             SELECT
-                new de.tum.in.www1.artemis.domain.assessmentDashboard.ExerciseMapEntry(
+                new de.tum.in.www1.artemis.domain.assessment.dashboard.ExerciseMapEntry(
                     p.exercise.id,
                     count(DISTINCT p)
                 )
@@ -339,7 +339,7 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
      */
     @Query("""
              SELECT
-                 new de.tum.in.www1.artemis.domain.assessmentDashboard.ExerciseMapEntry(
+                 new de.tum.in.www1.artemis.domain.assessment.dashboard.ExerciseMapEntry(
                      p.exercise.id,
                      count(DISTINCT p)
                  )

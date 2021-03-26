@@ -148,7 +148,7 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
 
     @Query("""
             SELECT
-                new de.tum.in.www1.artemis.domain.assessmentDashboard.ExerciseMapEntry(
+                new de.tum.in.www1.artemis.domain.assessment.dashboard.ExerciseMapEntry(
                 p.exercise.id,
                 count(DISTINCT p)
             )
@@ -185,7 +185,7 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
      */
     @Query("""
             SELECT
-                new de.tum.in.www1.artemis.domain.assessmentDashboard.ExerciseMapEntry(
+                new de.tum.in.www1.artemis.domain.assessment.dashboard.ExerciseMapEntry(
                 p.exercise.id,
                 count(DISTINCT p)
             )

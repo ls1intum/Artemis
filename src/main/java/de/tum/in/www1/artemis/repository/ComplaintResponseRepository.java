@@ -71,7 +71,7 @@ public interface ComplaintResponseRepository extends JpaRepository<ComplaintResp
      */
     @Query("""
                 SELECT
-                    new de.tum.in.www1.artemis.domain.assessmentDashboard.ExerciseMapEntry(
+                    new de.tum.in.www1.artemis.domain.assessment.dashboard.ExerciseMapEntry(
                         cr.complaint.result.participation.exercise.id,
                         count(DISTINCT cr)
                     )
@@ -94,7 +94,7 @@ public interface ComplaintResponseRepository extends JpaRepository<ComplaintResp
      */
     @Query("""
                 SELECT
-                    new de.tum.in.www1.artemis.domain.assessmentDashboard.ExerciseMapEntry(
+                    new de.tum.in.www1.artemis.domain.assessment.dashboard.ExerciseMapEntry(
                         cr.complaint.result.participation.exercise.id,
                         count(DISTINCT cr)
                     )

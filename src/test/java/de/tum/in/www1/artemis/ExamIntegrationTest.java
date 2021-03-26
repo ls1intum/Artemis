@@ -1224,8 +1224,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         User user = userRepo.findOneByLogin("student1").get();
         // we need an exam from the past, otherwise the tutor won't have access
         Course course = database.createCourseWithExamAndExerciseGroupAndExercises(user, now().minusHours(3), now().minusHours(2), now().minusHours(1));
-        Exam receivedExam = request.get("/api/courses/" + course.getId() + "/exams/" + course.getExams().iterator().next().getId() + "/exam-for-assessment-dashboard",
-                HttpStatus.OK, Exam.class);
+        Exam receivedExam = request.get("/api/courses/" + course.getId() + "/exams/" + course.getExams().iterator().next().getId() + "/Fard", HttpStatus.OK, Exam.class);
 
         // Test that the received exam has two text exercises
         assertThat(receivedExam.getExerciseGroups().get(0).getExercises().size()).as("Two exercises are returned").isEqualTo(2);

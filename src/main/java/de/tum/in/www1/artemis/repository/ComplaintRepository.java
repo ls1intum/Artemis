@@ -110,7 +110,7 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
      */
     @Query("""
                 SELECT
-                    new de.tum.in.www1.artemis.domain.assessmentDashboard.ExerciseMapEntry(
+                    new de.tum.in.www1.artemis.domain.assessment.dashboard.ExerciseMapEntry(
                         c.result.participation.exercise.id,
                         count(DISTINCT c)
                     )
@@ -130,7 +130,7 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
      */
     @Query("""
                 SELECT
-                    new de.tum.in.www1.artemis.domain.assessmentDashboard.ExerciseMapEntry(
+                    new de.tum.in.www1.artemis.domain.assessment.dashboard.ExerciseMapEntry(
                         c.result.participation.exercise.id,
                         count(DISTINCT c)
                     )
