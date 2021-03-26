@@ -32,6 +32,14 @@ import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
 /**
  * This class describes a service for SAML2 authentication.
  * 
+ * The main method is {@link #handleAuthentication(Saml2AuthenticatedPrincipal)}. The service extracts the user information
+ * from the {@link Saml2AuthenticatedPrincipal} and creates the user, it it does not exist already. 
+ * 
+ * When the user gets created, the SAML2 attributes can be used to fill in user information. The configuration happens
+ * via patterns for every field in the SAML2 configuration.
+ * 
+ * The service creates a {@link UsernamePasswordAuthenticationToken} which can then be used by the client to authenticate.
+ * This is needed, since the client "does not know" that he is already authenticated via SAML2.
  */
 @Service
 @Profile("saml2")
@@ -55,9 +63,9 @@ public class SAML2Service {
     /**
      * Constructs a new instance.
      *
-     * @param      userRepository  The user repository
-     * @param      properties      The properties
-     * @param      userCreationService The user creation service
+     * @param userRepository The user repository
+     * @param properties The properties
+     * @param userCreationService The user creation service
      */
     public SAML2Service(final UserRepository userRepository, final SAML2Properties properties, final UserCreationService userCreationService, MailService mailService,
             UserService userService) {
@@ -73,7 +81,7 @@ public class SAML2Service {
      * 
      * Registers new users and returns a new {@link UsernamePasswordAuthenticationToken} matching the SAML2 user.
      *
-     * @param      principal  The principal
+     * @param principal the principal, containing the user information
      * @return a new {@link UsernamePasswordAuthenticationToken} matching the SAML2 user
      */
     public Authentication handleAuthentication(final Saml2AuthenticatedPrincipal principal) {
@@ -85,7 +93,7 @@ public class SAML2Service {
         final String username = substituteAttributes(properties.getUsernamePattern(), principal);
         Optional<User> user = userRepository.findOneWithGroupsAndAuthoritiesByLogin(username);
         if (user.isEmpty()) {
-            // create User
+            // create User if not exists
             user = Optional.of(createUser(username, principal));
 
             if (saml2EnablePassword.isPresent() && Boolean.TRUE.equals(saml2EnablePassword.get())) {
@@ -106,6 +114,7 @@ public class SAML2Service {
 
     private User createUser(String username, final Saml2AuthenticatedPrincipal principal) {
         ManagedUserVM newUser = new ManagedUserVM();
+        // Fill in User information using the patterns and the SAML2 attributes.
         newUser.setLogin(username);
         newUser.setFirstName(substituteAttributes(properties.getFirstNamePattern(), principal));
         newUser.setLastName(substituteAttributes(properties.getLastNamePattern(), principal));
@@ -118,7 +127,7 @@ public class SAML2Service {
         newUser.setAuthorities(new HashSet<>(Set.of(AuthoritiesConstants.USER)));
         newUser.setGroups(new HashSet<>());
 
-        // userService.createUser(ManagedUserVM) does create an activated User, else use userService.registerUser()
+        // userService.createUser(ManagedUserVM) does create an activated User
         // a random password is generated
         return userCreationService.createUser(newUser);
     }
