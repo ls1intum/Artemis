@@ -1,23 +1,32 @@
 package de.tum.in.www1.artemis.service;
 
+import static de.tum.in.www1.artemis.service.util.RoundingUtil.round;
+
 import java.time.*;
 import java.time.temporal.TemporalField;
 import java.time.temporal.WeekFields;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 
+import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.enumeration.GraphType;
 import de.tum.in.www1.artemis.domain.enumeration.SpanType;
+import de.tum.in.www1.artemis.repository.ParticipantScoreRepository;
 import de.tum.in.www1.artemis.repository.StatisticsRepository;
+import de.tum.in.www1.artemis.web.rest.dto.CourseManagementStatisticsDTO;
 
 @Service
 public class StatisticsService {
 
     private final StatisticsRepository statisticsRepository;
 
-    public StatisticsService(StatisticsRepository statisticsRepository) {
+    private final ParticipantScoreRepository participantScoreRepository;
+
+    public StatisticsService(StatisticsRepository statisticsRepository, ParticipantScoreRepository participantScoreRepository) {
         this.statisticsRepository = statisticsRepository;
+        this.participantScoreRepository = participantScoreRepository;
     }
 
     /**
@@ -363,5 +372,45 @@ public class StatisticsService {
         LocalDate localDate = date.toLocalDate();
         TemporalField woy = WeekFields.of(DayOfWeek.MONDAY, 4).weekOfWeekBasedYear();
         return localDate.get(woy);
+    }
+
+    /**
+     * A map to manage the spanTypes and the corresponding array length of the result
+     */
+    public CourseManagementStatisticsDTO getCourseStatistics(Long courseId) {
+        var dto = new CourseManagementStatisticsDTO();
+        var exercises = statisticsRepository.findExercisesByCourseId(courseId);
+        var courseMaxPoints = 0.0;
+        var exerciseIds = exercises.stream().map(Exercise::getId).collect(Collectors.toList());
+        var averagePointsForCourse = participantScoreRepository.findAvgPointsForExerciseIds(exerciseIds);
+        var averagePointsForExercises = participantScoreRepository.findAvgPointsForExercises(exerciseIds);
+        dto.setAveragePointsOfCourse(round(averagePointsForCourse));
+        var averagePointsByTitle = new HashMap<String, Double>();
+        for (var averagePointsMap : averagePointsForExercises) {
+            var exerciseId = (Long) averagePointsMap.get("exerciseId");
+            var exerciseOptional = exercises.stream().filter(exercise -> exercise.getId().equals(exerciseId)).findFirst();
+            if (exerciseOptional.isPresent()) {
+                var exerciseTitle = exerciseOptional.get().getTitle();
+                var averagePoints = (Double) averagePointsMap.get("averagePoints");
+                averagePointsByTitle.put(exerciseTitle, averagePoints);
+            }
+        }
+
+        var maxPoints = new HashMap<String, Double>();
+        for (var exercise : exercises) {
+            var exerciseTitle = exercise.getTitle();
+            maxPoints.put(exerciseTitle, exercise.getMaxPoints());
+            courseMaxPoints += exercise.getMaxPoints();
+
+            // If a exercise does not have averagePoints, set it here with 0.0
+            if (!averagePointsByTitle.containsKey(exerciseTitle)) {
+                averagePointsByTitle.put(exerciseTitle, 0.0);
+            }
+        }
+        dto.setExerciseNameToAveragePointsMap(averagePointsByTitle);
+        dto.setMaxPointsOfCourse(courseMaxPoints);
+        dto.setExerciseNameToMaxPointsMap(maxPoints);
+
+        return dto;
     }
 }

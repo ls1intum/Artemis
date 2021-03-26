@@ -9,13 +9,14 @@ import org.springframework.web.bind.annotation.*;
 import de.tum.in.www1.artemis.domain.enumeration.GraphType;
 import de.tum.in.www1.artemis.domain.enumeration.SpanType;
 import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.web.rest.dto.CourseManagementStatisticsDTO;
 
 /**
  * REST controller for managing user statistics.
  */
 @RestController
 @RequestMapping("/api")
-@PreAuthorize("hasRole('ADMIN')")
+@PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
 public class StatisticsResource {
 
     private final Logger log = LoggerFactory.getLogger(StatisticsResource.class);
@@ -55,5 +56,17 @@ public class StatisticsResource {
     public ResponseEntity<Integer[]> getChartData(@RequestParam SpanType span, @RequestParam Integer periodIndex, @RequestParam GraphType graphType, @RequestParam Long courseId) {
         return ResponseEntity.ok(this.service.getChartData(span, periodIndex, graphType, courseId));
 
+    }
+
+    /**
+     * GET management/statistics/data-for-course : get the graph data in the last "span" days in the given period for a specific course.
+     *
+     * @param courseId    the id of the course for which the data should be fetched
+     * @return the ResponseEntity with status 200 (OK) and the data in body, or status 404 (Not Found)
+     */
+    @GetMapping("management/statistics/course-statistics")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<CourseManagementStatisticsDTO> getCourseStatistics(@RequestParam Long courseId) {
+        return ResponseEntity.ok(this.service.getCourseStatistics(courseId));
     }
 }

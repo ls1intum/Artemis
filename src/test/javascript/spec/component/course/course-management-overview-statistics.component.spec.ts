@@ -16,7 +16,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 chai.use(sinonChai);
 const expect = chai.expect;
 
-describe('CourseManagementExerciseStatisticsComponent', () => {
+describe('CourseManagementOverviewStatisticsComponent', () => {
     let fixture: ComponentFixture<CourseManagementOverviewStatisticsComponent>;
     let component: CourseManagementOverviewStatisticsComponent;
 

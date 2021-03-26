@@ -3,21 +3,36 @@
         <h2 class="col-md-2" id="statistics-page-heading" jhiTranslate="statistics.course_statistics_title">User statistics</h2>
         <div class="col-md-9 btn-group btn-group-toggle" data-toggle="buttons">
             <label class="btn btn-secondary" [class.active]="currentSpan === SpanType.DAY">
-                <input type="radio" name="options" id="option1" (click)="onTabChanged(SpanType.DAY)" />{{ 'statistics.span.day' | translate }}
+                <input type="radio" name="options" id="option1" (click)="onTabChanged(SpanType.DAY)" />{{ 'statistics.span.day' | artemisTranslate }}
             </label>
             <label class="btn btn-secondary" [class.active]="currentSpan === SpanType.WEEK">
-                <input type="radio" name="options" id="option2" checked (click)="onTabChanged(SpanType.WEEK)" />{{ 'statistics.span.week' | translate }}
+                <input type="radio" name="options" id="option2" checked (click)="onTabChanged(SpanType.WEEK)" />{{ 'statistics.span.week' | artemisTranslate }}
             </label>
             <label class="btn btn-secondary" [class.active]="currentSpan === SpanType.MONTH">
-                <input type="radio" name="options" id="option3" (click)="onTabChanged(SpanType.MONTH)" />{{ 'statistics.span.month' | translate }}
+                <input type="radio" name="options" id="option3" (click)="onTabChanged(SpanType.MONTH)" />{{ 'statistics.span.month' | artemisTranslate }}
             </label>
             <label class="btn btn-secondary" [class.active]="currentSpan === SpanType.QUARTER">
-                <input type="radio" name="options" id="option4" (click)="onTabChanged(SpanType.QUARTER)" />{{ 'statistics.span.quarter' | translate }}
+                <input type="radio" name="options" id="option4" (click)="onTabChanged(SpanType.QUARTER)" />{{ 'statistics.span.quarter' | artemisTranslate }}
             </label>
             <label class="btn btn-secondary" [class.active]="currentSpan === SpanType.YEAR">
-                <input type="radio" name="options" id="option5" (click)="onTabChanged(SpanType.YEAR)" />{{ 'statistics.span.year' | translate }}
+                <input type="radio" name="options" id="option5" (click)="onTabChanged(SpanType.YEAR)" />{{ 'statistics.span.year' | artemisTranslate }}
             </label>
         </div>
+    </div>
+
+    <div class="col-md-2 mb-4">
+        <jhi-doughnut-chart
+            class="mb-4 d-inline-flex"
+            [doughnutChartTitle]="'artemisApp.course.averageScore' | artemisTranslate"
+            [currentPercentage]="currentAverageScore"
+            [currentAbsolute]="currentAbsolutePoints"
+            [currentMax]="currentMaxPoints"
+        >
+        </jhi-doughnut-chart>
+        <select class="form-control" [(ngModel)]="selectedValue" (ngModelChange)="onSelect()">
+            <option [ngValue]="defaultTitle">{{ 'artemisApp.courseStatistics.course' | artemisTranslate }}</option>
+            <option *ngFor="let exerciseId of exerciseTitles" [value]="exerciseId">{{ exerciseId }}</option>
+        </select>
     </div>
 
     <div *ngFor="let graph of graphTypes; let i = index" id="graph-{{ i }}" class="graph">

@@ -135,6 +135,7 @@
         },
         "courseStatistics": {
             "statistics": "Statistics",
+            "course": "Course",
             "amountOfStudents": "# of students",
             "activeStudents": "Active students"
         }

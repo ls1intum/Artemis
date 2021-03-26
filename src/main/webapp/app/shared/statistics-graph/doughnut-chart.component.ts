@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnChanges } from '@angular/core';
 import { CourseStatisticsDataSet } from 'app/overview/course-statistics/course-statistics.component';
 
 @Component({
@@ -6,7 +6,7 @@ import { CourseStatisticsDataSet } from 'app/overview/course-statistics/course-s
     templateUrl: './doughnut-chart.component.html',
     styleUrls: ['./doughnut-chart.component.scss'],
 })
-export class DoughnutChartComponent implements OnInit {
+export class DoughnutChartComponent implements OnChanges {
     @Input() doughnutChartTitle: string;
 
     @Input() currentPercentage: number;
@@ -40,7 +40,7 @@ export class DoughnutChartComponent implements OnInit {
         },
     ];
 
-    ngOnInit(): void {
+    ngOnChanges(): void {
         this.stats = [this.currentAbsolute, this.currentMax - this.currentAbsolute];
         this.doughnutChartData[0].data = this.stats;
         if (this.currentMax === 0) {

@@ -10,6 +10,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
 
 /**
@@ -209,4 +210,12 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
             order by r.completionDate
             """)
     List<Map<String, Object>> getResultFeedbacksForCourse(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate, @Param("courseId") Long courseId);
+
+    @Query("""
+            select e
+            from Exercise e
+            where e.course.id = :courseId
+            """)
+    List<Exercise> findExercisesByCourseId(@Param("courseId") Long courseId);
+
 }

@@ -3,6 +3,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs/Observable';
 import { SERVER_API_URL } from 'app/app.constants';
 import { Graphs, SpanType } from 'app/entities/statistics.model';
+import { CourseManagementStatisticsDTO } from 'app/course/manage/course-management-statistics-dto';
 
 @Injectable({ providedIn: 'root' })
 export class StatisticsService {
@@ -31,5 +32,13 @@ export class StatisticsService {
             .set('graphType', '' + graphType)
             .set('courseId', '' + courseId);
         return this.http.get<number[]>(`${this.resourceUrl}data-for-course`, { params });
+    }
+
+    /**
+     * Sends a GET request to retrieve the data for a graph based on the graphType in the last *span* days, the given period and the courseId
+     */
+    getCourseStatistics(courseId: number): Observable<CourseManagementStatisticsDTO> {
+        const params = new HttpParams().set('courseId', '' + courseId);
+        return this.http.get<CourseManagementStatisticsDTO>(`${this.resourceUrl}course-statistics`, { params });
     }
 }
