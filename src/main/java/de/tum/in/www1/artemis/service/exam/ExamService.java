@@ -774,7 +774,7 @@ public class ExamService {
         StatsForInstructorDashboardDTO stats = new StatsForInstructorDashboardDTO();
 
         final long numberOfSubmissions = submissionRepository.countByExamIdSubmittedSubmissionsIgnoreTestRuns(examId)
-                + programmingExerciseRepository.countSubmissionsByExamIdSubmitted(examId);
+                + programmingExerciseRepository.countLegalSubmissionsByExamIdSubmitted(examId);
         stats.setNumberOfSubmissions(new DueDateStat(numberOfSubmissions, 0));
 
         DueDateStat[] numberOfAssessmentsOfCorrectionRounds = resultRepository.countNumberOfFinishedAssessmentsForExamForCorrectionRounds(examId,

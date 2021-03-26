@@ -283,13 +283,14 @@ public class ScoreService {
         if (participantScore.getClass().equals(StudentScore.class)) {
             StudentScore studentScore = (StudentScore) participantScore;
             resultOrdered = resultRepository
-                    .getResultsOrderedByParticipationIdSubmissionIdResultIdDescForStudent(participantScore.getExercise().getId(), studentScore.getUser().getId()).stream()
+                    .getResultsOrderedByParticipationIdLegalSubmissionIdResultIdDescForStudent(participantScore.getExercise().getId(), studentScore.getUser().getId()).stream()
                     .filter(r -> !participantScore.getLastResult().equals(r)).collect(Collectors.toList());
         }
         else {
             TeamScore teamScore = (TeamScore) participantScore;
-            resultOrdered = resultRepository.getResultsOrderedByParticipationIdSubmissionIdResultIdDescForTeam(participantScore.getExercise().getId(), teamScore.getTeam().getId())
-                    .stream().filter(r -> !participantScore.getLastResult().equals(r)).collect(Collectors.toList());
+            resultOrdered = resultRepository
+                    .getResultsOrderedByParticipationIdLegalSubmissionIdResultIdDescForTeam(participantScore.getExercise().getId(), teamScore.getTeam().getId()).stream()
+                    .filter(r -> !participantScore.getLastResult().equals(r)).collect(Collectors.toList());
         }
         // the new last result (result with highest id of submission with highest id) will be at the beginning of the list
         return resultOrdered.isEmpty() ? Optional.empty() : Optional.of(resultOrdered.get(0));
@@ -307,13 +308,13 @@ public class ScoreService {
         if (participantScore.getClass().equals(StudentScore.class)) {
             StudentScore studentScore = (StudentScore) participantScore;
             ratedResultsOrdered = resultRepository
-                    .getRatedResultsOrderedByParticipationIdSubmissionIdResultIdDescForStudent(participantScore.getExercise().getId(), studentScore.getUser().getId()).stream()
+                    .getRatedResultsOrderedByParticipationIdLegalSubmissionIdResultIdDescForStudent(participantScore.getExercise().getId(), studentScore.getUser().getId()).stream()
                     .filter(r -> !participantScore.getLastRatedResult().equals(r)).collect(Collectors.toList());
         }
         else {
             TeamScore teamScore = (TeamScore) participantScore;
             ratedResultsOrdered = resultRepository
-                    .getRatedResultsOrderedByParticipationIdSubmissionIdResultIdDescForTeam(participantScore.getExercise().getId(), teamScore.getTeam().getId()).stream()
+                    .getRatedResultsOrderedByParticipationIdLegalSubmissionIdResultIdDescForTeam(participantScore.getExercise().getId(), teamScore.getTeam().getId()).stream()
                     .filter(r -> !participantScore.getLastRatedResult().equals(r)).collect(Collectors.toList());
         }
         // the new last rated result (rated result with highest id of submission with highest id) will be at the beginning of the list

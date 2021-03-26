@@ -146,7 +146,7 @@ public class ProgrammingExerciseParticipationService {
     }
 
     public Optional<ProgrammingExerciseStudentParticipation> findStudentParticipationWithLatestResultAndFeedbacksAndRelatedSubmissions(Long participationId) {
-        return studentParticipationRepository.findByIdWithLatestResultAndFeedbacksAndRelatedSubmissions(participationId, ZonedDateTime.now());
+        return studentParticipationRepository.findByIdWithLatestResultAndFeedbacksAndRelatedLegalSubmissions(participationId, ZonedDateTime.now());
     }
 
     /**
@@ -156,7 +156,7 @@ public class ProgrammingExerciseParticipationService {
      */
     public Optional<ProgrammingExerciseStudentParticipation> findStudentParticipationWithAllManualOrSemiAutomaticResultsAndFeedbacksAndRelatedSubmissionAndAssessor(
             Long participationId) {
-        return studentParticipationRepository.findByIdWithAllManualOrSemiAutomaticResultsAndFeedbacksAndRelatedSubmissionAndAssessor(participationId);
+        return studentParticipationRepository.findByIdWithAllManualOrSemiAutomaticResultsAndFeedbacksAndRelatedLegalSubmissionAndAssessor(participationId);
     }
 
     /**
@@ -167,7 +167,7 @@ public class ProgrammingExerciseParticipationService {
      * @throws EntityNotFoundException if the participation with the given id does not exist or is not a programming exercise participation.
      */
     public ProgrammingExerciseParticipation findProgrammingExerciseParticipationWithLatestSubmissionAndResult(Long participationId) throws EntityNotFoundException {
-        Optional<Participation> participation = participationRepository.findByIdWithLatestSubmissionAndResult(participationId);
+        Optional<Participation> participation = participationRepository.findByIdWithLatestLegalSubmissionAndResult(participationId);
         if (participation.isEmpty() || !(participation.get() instanceof ProgrammingExerciseParticipation)) {
             throw new EntityNotFoundException("No programming exercise participation found with id " + participationId);
         }

@@ -1,12 +1,9 @@
 package de.tum.in.www1.artemis.repository;
 
-import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
-
 import java.util.Optional;
 
 import javax.validation.constraints.NotNull;
 
-import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -24,16 +21,15 @@ public interface ParticipationRepository extends JpaRepository<Participation, Lo
     @Query("select distinct p from Participation p left join fetch p.submissions left join fetch p.results where p.id = :#{#participationId}")
     Participation getOneWithEagerSubmissionsAndResults(@Param("participationId") Long participationId);
 
-    // TODO: also filter here for ILLEGAL Submission results?
     @Query("select p from Participation p left join fetch p.submissions s left join fetch s.results r where p.id = :participationId and (s.id = (select max(ps.id) from p.submissions ps where ps.type not in ('ILLEGAL')) or s.id = null)")
-    Optional<Participation> findByIdWithLatestSubmissionAndResult(@Param("participationId") Long participationId);
+    Optional<Participation> findByIdWithLatestLegalSubmissionAndResult(@Param("participationId") Long participationId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "submissions" })
-    Optional<Participation> findWithEagerSubmissionsById(Long participationId);
+    @Query("select p from Participation p left join fetch p.submissions s where p.id = :#{#participationId} and s.type not in ('ILLEGAL')")
+    Optional<Participation> findWithEagerLegalSubmissionsById(Long participationId);
 
     @NotNull
-    default Participation findByIdWithSubmissionsElseThrow(long participationId) {
-        return findWithEagerSubmissionsById(participationId).orElseThrow(() -> new EntityNotFoundException("Participation", participationId));
+    default Participation findByIdWithLegalSubmissionsElseThrow(long participationId) {
+        return findWithEagerLegalSubmissionsById(participationId).orElseThrow(() -> new EntityNotFoundException("Participation", participationId));
     }
 
     @NotNull

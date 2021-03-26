@@ -63,7 +63,7 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
         database.addUsers(10, 2, 2);
         database.addCourseWithOneProgrammingExerciseAndTestCases();
 
-        exercise = programmingExerciseRepository.findAllWithEagerParticipationsAndSubmissions().get(0);
+        exercise = programmingExerciseRepository.findAllWithEagerParticipationsAndLegalSubmissions().get(0);
         database.addSolutionParticipationForProgrammingExercise(exercise);
         database.addTemplateParticipationForProgrammingExercise(exercise);
         database.addProgrammingParticipationWithResultForExercise(exercise, "student1");

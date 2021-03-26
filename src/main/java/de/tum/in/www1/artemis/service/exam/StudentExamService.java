@@ -184,7 +184,7 @@ public class StudentExamService {
             try {
                 if (exercise.getStudentParticipations() != null && exercise.getStudentParticipations().size() == 1) {
                     var studentParticipation = exercise.getStudentParticipations().iterator().next();
-                    var latestSubmission = programmingSubmissionRepository.findLatestSubmissionForParticipation(studentParticipation.getId(), PageRequest.of(0, 1)).stream()
+                    var latestSubmission = programmingSubmissionRepository.findLatestLegalSubmissionForParticipation(studentParticipation.getId(), PageRequest.of(0, 1)).stream()
                             .findFirst();
                     latestSubmission.ifPresent(programmingSubmission -> studentParticipation.setSubmissions(Set.of(programmingSubmission)));
                 }

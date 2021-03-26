@@ -2966,4 +2966,37 @@ public class DatabaseUtilService {
         return paramMap;
     }
 
+    public Course createCourseWithProgrammingExerciseAndIllegalAndLegalSubmissions() {
+        Course course = ModelFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "tumuser", "tutor", "instructor");
+        course = courseRepo.save(course);
+        ProgrammingExercise programmingExercise = ModelFactory.generateProgrammingExercise(null, null, course);
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+        var student1 = userRepo.findOneByLogin("student1").orElseThrow();
+        var student2 = userRepo.findOneByLogin("student2").orElseThrow();
+        ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation1 = ModelFactory
+                .generateProgrammingExerciseStudentParticipation(InitializationState.INITIALIZED, programmingExercise, student1);
+        ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation2 = ModelFactory
+                .generateProgrammingExerciseStudentParticipation(InitializationState.INITIALIZED, programmingExercise, student2);
+        programmingExerciseStudentParticipation1 = programmingExerciseStudentParticipationRepo.save(programmingExerciseStudentParticipation1);
+        programmingExerciseStudentParticipation2 = programmingExerciseStudentParticipationRepo.save(programmingExerciseStudentParticipation2);
+        ProgrammingSubmission programmingSubmission1 = ModelFactory.generateProgrammingSubmission(true);
+        programmingSubmissionRepo.save(programmingSubmission1);
+        programmingSubmission1.setType(SubmissionType.MANUAL);
+        ProgrammingSubmission programmingSubmission2 = ModelFactory.generateProgrammingSubmission(true);
+        programmingSubmission2.setType(SubmissionType.ILLEGAL);
+        programmingSubmissionRepo.save(programmingSubmission2);
+        programmingExerciseStudentParticipation1.addSubmission(programmingSubmission1);
+        programmingExerciseStudentParticipation2.addSubmission(programmingSubmission2);
+        programmingSubmission1.setParticipation(programmingExerciseStudentParticipation1);
+        programmingSubmission2.setParticipation(programmingExerciseStudentParticipation2);
+        programmingSubmissionRepo.save(programmingSubmission2);
+        programmingSubmissionRepo.save(programmingSubmission1);
+        programmingExerciseStudentParticipationRepo.save(programmingExerciseStudentParticipation1);
+        programmingExerciseStudentParticipationRepo.save(programmingExerciseStudentParticipation2);
+        return course;
+    }
+
+    public Optional<ProgrammingSubmission> findSubmissionByParticipationId(Long participationId) {
+        return programmingSubmissionRepo.findFirstByParticipationIdOrderByLegalSubmissionDateDesc(participationId);
+    }
 }

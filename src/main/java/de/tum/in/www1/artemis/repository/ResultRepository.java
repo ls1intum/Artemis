@@ -232,9 +232,10 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
                     WHERE e.id = :exerciseId
                     AND p.student.id = :studentId
                     AND r.score IS NOT NULL AND r.completionDate IS NOT NULL
+                    AND s.type <> ('ILLEGAL')
                     ORDER BY p.id DESC, s.id DESC, r.id DESC
             """)
-    List<Result> getResultsOrderedByParticipationIdSubmissionIdResultIdDescForStudent(@Param("exerciseId") Long exerciseId, @Param("studentId") Long studentId);
+    List<Result> getResultsOrderedByParticipationIdLegalSubmissionIdResultIdDescForStudent(@Param("exerciseId") Long exerciseId, @Param("studentId") Long studentId);
 
     @Query("""
                     SELECT r
@@ -242,9 +243,10 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
                     WHERE e.id = :exerciseId
                     AND p.team.id = :teamId
                     AND r.score IS NOT NULL AND r.completionDate IS NOT NULL
+                    AND s.type <> ('ILLEGAL')
                     ORDER BY p.id DESC, s.id DESC, r.id DESC
             """)
-    List<Result> getResultsOrderedByParticipationIdSubmissionIdResultIdDescForTeam(@Param("exerciseId") Long exerciseId, @Param("teamId") Long teamId);
+    List<Result> getResultsOrderedByParticipationIdLegalSubmissionIdResultIdDescForTeam(@Param("exerciseId") Long exerciseId, @Param("teamId") Long teamId);
 
     @Query("""
                     SELECT r
@@ -252,9 +254,10 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
                     WHERE e.id = :exerciseId
                     AND p.student.id = :studentId
                     AND r.score IS NOT NULL AND r.completionDate IS NOT NULL AND r.rated = true
+                    AND s.type <> ('ILLEGAL')
                     ORDER BY p.id DESC, s.id DESC, r.id DESC
             """)
-    List<Result> getRatedResultsOrderedByParticipationIdSubmissionIdResultIdDescForStudent(@Param("exerciseId") Long exerciseId, @Param("studentId") Long studentId);
+    List<Result> getRatedResultsOrderedByParticipationIdLegalSubmissionIdResultIdDescForStudent(@Param("exerciseId") Long exerciseId, @Param("studentId") Long studentId);
 
     @Query("""
                     SELECT r
@@ -262,9 +265,10 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
                     WHERE e.id = :exerciseId
                     AND p.team.id = :teamId
                     AND r.score IS NOT NULL AND r.completionDate IS NOT NULL AND r.rated = true
+                    AND s.type <> ('ILLEGAL')
                     ORDER BY p.id DESC, s.id DESC, r.id DESC
             """)
-    List<Result> getRatedResultsOrderedByParticipationIdSubmissionIdResultIdDescForTeam(@Param("exerciseId") Long exerciseId, @Param("teamId") Long teamId);
+    List<Result> getRatedResultsOrderedByParticipationIdLegalSubmissionIdResultIdDescForTeam(@Param("exerciseId") Long exerciseId, @Param("teamId") Long teamId);
 
     /**
      * Checks if a result for the given participation exists.

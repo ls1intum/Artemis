@@ -91,7 +91,7 @@ public class ProgrammingSubmissionResultSimulationService {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         Participant participant = user;
         ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation;
-        ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithStudentParticipationsAndSubmissionsElseThrow(exerciseId);
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithStudentParticipationsAndLegalSubmissionsElseThrow(exerciseId);
         Optional<StudentParticipation> optionalStudentParticipation = participationService.findOneByExerciseAndStudentLoginWithEagerSubmissionsAnyState(programmingExercise,
                 user.getLogin());
         if (optionalStudentParticipation.isEmpty()) {
@@ -120,7 +120,7 @@ public class ProgrammingSubmissionResultSimulationService {
      */
     public Result createResult(ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation) {
         Optional<ProgrammingSubmission> programmingSubmission = programmingSubmissionRepository
-                .findFirstByParticipationIdOrderBySubmissionDateDesc(programmingExerciseStudentParticipation.getId());
+                .findFirstByParticipationIdOrderByLegalSubmissionDateDesc(programmingExerciseStudentParticipation.getId());
         Result result = new Result();
         result.setSubmission(programmingSubmission.get());
         result.setParticipation(programmingExerciseStudentParticipation);

@@ -25,12 +25,11 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 @Repository
 public interface ProgrammingExerciseStudentParticipationRepository extends JpaRepository<ProgrammingExerciseStudentParticipation, Long> {
 
-    // TODO: also filter here for ILLEGAL Submission results?
     @Query("""
             select p from ProgrammingExerciseStudentParticipation p
             left join fetch p.results pr
             left join fetch pr.feedbacks
-            left join fetch pr.submission
+            left join fetch pr.submission s
             where p.id = :participationId
                 and (pr.id = (select max(prr.id) from p.results prr
                     where prr.assessmentType = 'AUTOMATIC'
@@ -38,8 +37,9 @@ public interface ProgrammingExerciseStudentParticipationRepository extends JpaRe
                             and (p.exercise.assessmentDueDate IS NULL
                             OR p.exercise.assessmentDueDate < :#{#dateTime})))
                 or pr.id IS NULL)
+                and s.type <> ('ILLEGAL')
             """)
-    Optional<ProgrammingExerciseStudentParticipation> findByIdWithLatestResultAndFeedbacksAndRelatedSubmissions(@Param("participationId") Long participationId,
+    Optional<ProgrammingExerciseStudentParticipation> findByIdWithLatestResultAndFeedbacksAndRelatedLegalSubmissions(@Param("participationId") Long participationId,
             @Param("dateTime") ZonedDateTime dateTime);
 
     /**
@@ -51,13 +51,14 @@ public interface ProgrammingExerciseStudentParticipationRepository extends JpaRe
             select p from ProgrammingExerciseStudentParticipation p
             left join fetch p.results pr
             left join fetch pr.feedbacks
-            left join fetch pr.submission
+            left join fetch pr.submission s
             left join fetch pr.assessor
             where p.id = :participationId
                 and pr.id in (select prr.id from p.results prr
                     where prr.assessmentType = 'MANUAL' or prr.assessmentType = 'SEMI_AUTOMATIC')
+                and s.type <> ('ILLEGAL')
             """)
-    Optional<ProgrammingExerciseStudentParticipation> findByIdWithAllManualOrSemiAutomaticResultsAndFeedbacksAndRelatedSubmissionAndAssessor(
+    Optional<ProgrammingExerciseStudentParticipation> findByIdWithAllManualOrSemiAutomaticResultsAndFeedbacksAndRelatedLegalSubmissionAndAssessor(
             @Param("participationId") Long participationId);
 
     @EntityGraph(type = LOAD, attributePaths = { "results", "exercise" })

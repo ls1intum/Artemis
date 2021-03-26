@@ -112,7 +112,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
      * @throws IllegalArgumentException it the Commit hash could not be parsed for submission from participation
      */
     public ProgrammingSubmission notifyPush(Long participationId, Object requestBody) throws EntityNotFoundException, IllegalStateException, IllegalArgumentException {
-        Participation participation = participationRepository.findByIdWithSubmissionsElseThrow(participationId);
+        Participation participation = participationRepository.findByIdWithLegalSubmissionsElseThrow(participationId);
         if (!(participation instanceof ProgrammingExerciseParticipation)) {
             throw new EntityNotFoundException("Programming Exercise Participation", participationId);
         }
@@ -235,7 +235,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
     private Optional<ProgrammingSubmission> findLatestPendingSubmissionForParticipation(final long participationId, final boolean isGraded) {
         final var optionalSubmission = isGraded
                 ? programmingSubmissionRepository.findGradedByParticipationIdOrderBySubmissionDateDesc(participationId, PageRequest.of(0, 1)).stream().findFirst()
-                : programmingSubmissionRepository.findFirstByParticipationIdOrderBySubmissionDateDesc(participationId);
+                : programmingSubmissionRepository.findFirstByParticipationIdOrderByLegalSubmissionDateDesc(participationId);
         if (optionalSubmission.isEmpty() || optionalSubmission.get().getLatestResult() != null) {
             // This is not an error case, it is very likely that there is no pending submission for a participation.
             return Optional.empty();

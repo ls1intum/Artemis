@@ -82,11 +82,11 @@ public class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends 
         database.addUsers(3, 2, 2);
         database.addCourseWithOneProgrammingExerciseAndTestCases();
 
-        exercise = programmingExerciseRepository.findAllWithEagerParticipationsAndSubmissions().get(0);
+        exercise = programmingExerciseRepository.findAllWithEagerParticipationsAndLegalSubmissions().get(0);
         database.addStudentParticipationForProgrammingExercise(exercise, "student1");
         database.addStudentParticipationForProgrammingExercise(exercise, "student2");
 
-        exercise = programmingExerciseRepository.findAllWithEagerParticipationsAndSubmissions().get(0);
+        exercise = programmingExerciseRepository.findAllWithEagerParticipationsAndLegalSubmissions().get(0);
     }
 
     @AfterEach
@@ -107,7 +107,7 @@ public class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends 
         // Precondition: Database has participation and a programming submission.
         String userLogin = "student1";
         database.addCourseWithOneProgrammingExercise(enableStaticCodeAnalysis, programmingLanguage);
-        ProgrammingExercise exercise = programmingExerciseRepository.findAllWithEagerParticipationsAndSubmissions().get(1);
+        ProgrammingExercise exercise = programmingExerciseRepository.findAllWithEagerParticipationsAndLegalSubmissions().get(1);
         var participation = database.addStudentParticipationForProgrammingExercise(exercise, userLogin);
         var submission = database.createProgrammingSubmission(participation, false);
 
@@ -129,7 +129,7 @@ public class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends 
         // Precondition: Database has participation without result and a programming
         String userLogin = "student1";
         database.addCourseWithOneProgrammingExercise(enableStaticCodeAnalysis, programmingLanguage);
-        ProgrammingExercise exercise = programmingExerciseRepository.findAllWithEagerParticipationsAndSubmissions().get(1);
+        ProgrammingExercise exercise = programmingExerciseRepository.findAllWithEagerParticipationsAndLegalSubmissions().get(1);
         var participation = database.addStudentParticipationForProgrammingExercise(exercise, userLogin);
 
         // Call programming-exercises/new-result which do not include build log entries yet
