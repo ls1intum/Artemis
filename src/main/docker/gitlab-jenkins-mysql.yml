@@ -38,7 +38,7 @@ services:
         ports:
             - 3306:3306
         volumes:
-            - ./data/.db:/var/lib/mysql
+            - artemis-mysql-data:/var/lib/mysql
         networks:
             artemis:
                 ipv4_address: 172.33.0.4
@@ -54,3 +54,4 @@ volumes:
     artemis-gitlab-logs:
     artemis-gitlab-config:
     artemis-jenkins-data:
+    artemis-mysql-data:
