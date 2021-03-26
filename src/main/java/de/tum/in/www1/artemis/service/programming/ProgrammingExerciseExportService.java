@@ -439,7 +439,11 @@ public class ProgrammingExerciseExportService {
 
         if (participations.size() < 2) {
             log.info("Insufficient amount of submissions for plagiarism detection. Return empty result.");
-            return new TextPlagiarismResult();
+            TextPlagiarismResult textPlagiarismResult = new TextPlagiarismResult();
+            textPlagiarismResult.setExercise(programmingExercise);
+            textPlagiarismResult.setSimilarityDistribution(new int[0]);
+
+            return textPlagiarismResult;
         }
 
         List<Repository> repositories = downloadRepositories(programmingExercise, participations, targetPath);
