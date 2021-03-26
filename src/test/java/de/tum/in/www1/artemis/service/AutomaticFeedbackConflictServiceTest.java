@@ -174,6 +174,8 @@ public class AutomaticFeedbackConflictServiceTest extends AbstractSpringIntegrat
         atheneRequestMockProvider.mockFeedbackConsistency(List.of());
         automaticTextAssessmentConflictService.asyncCheckFeedbackConsistency(Set.of(textBlock), new ArrayList<>(List.of(feedback1, feedback2)), textExercise.getId());
 
+        await().until(() -> feedbackConflictRepository.count() >= 0);
+
         assertThat(feedbackConflictRepository.findAll(), hasSize(1));
         assertThat(feedbackConflictRepository.findAll().get(0).getFirstFeedback(), is(feedback1));
         assertThat(feedbackConflictRepository.findAll().get(0).getSecondFeedback(), is(feedback2));
