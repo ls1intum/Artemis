@@ -6,6 +6,8 @@ import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.*;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
@@ -15,6 +17,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
@@ -42,6 +45,9 @@ import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.dto.*;
 
 public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+
+    @Value("${artemis.course-archives-path}")
+    private String examsArchivePath;
 
     @Autowired
     JiraRequestMockProvider jiraRequestMockProvider;
@@ -1741,6 +1747,70 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         exam = examRepository.save(exam);
 
         request.put("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/archive", null, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testDownloadExamArchiveAsStudent_forbidden() throws Exception {
+        request.get("/api/courses/" + 1 + "/exams/" + 1 + "/download-archive", HttpStatus.FORBIDDEN, String.class);
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testDownloadExamArchiveAsTutor_forbidden() throws Exception {
+        request.get("/api/courses/" + 1 + "/exams/" + 1 + "/download-archive", HttpStatus.FORBIDDEN, String.class);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testDownloadExamArchiveAsInstructor_not_found() throws Exception {
+        // Create an exam with no archive
+        Course course = database.createCourse();
+        course = courseRepo.save(course);
+
+        // Return not found if the exam doesn't exist
+        var downloadedArchive = request.get("/api/courses/" + course.getId() + "/exams/" + 12 + "/download-archive", HttpStatus.NOT_FOUND, String.class);
+        assertThat(downloadedArchive).isNull();
+
+        // Returns not found if there is no archive
+        var exam = database.addExam(course);
+        downloadedArchive = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/download-archive", HttpStatus.NOT_FOUND, String.class);
+        assertThat(downloadedArchive).isNull();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testDownloadExamArchiveAsInstructortNotInCourse_forbidden() throws Exception {
+        // Create an exam with no archive
+        Course course = database.createCourse();
+        course.setInstructorGroupName("some-group");
+        course = courseRepo.save(course);
+        var exam = database.addExam(course);
+
+        request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/download-archive", HttpStatus.FORBIDDEN, String.class);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testDownloadExamArchiveAsInstructor() throws Exception {
+        // Dummy exam archive
+        Path examArchivePath = Path.of(examsArchivePath, "some-exam-archive.zip");
+        if (!Files.exists(examArchivePath)) {
+            Files.createDirectories(Path.of(examsArchivePath));
+            Files.createFile(examArchivePath);
+        }
+
+        // Generate an exam that has an archive
+        Course course = database.createCourse();
+        course = courseRepo.save(course);
+        var exam = database.addExam(course);
+        exam.setExamArchivePath(examArchivePath.toString());
+        examRepository.save(exam);
+
+        var downloadedArchive = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/download-archive", HttpStatus.OK, String.class);
+        assertThat(downloadedArchive).isNotNull();
+
+        Files.delete(examArchivePath);
     }
 
     @Test
