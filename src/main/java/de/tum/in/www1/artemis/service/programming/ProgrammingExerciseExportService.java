@@ -635,7 +635,7 @@ public class ProgrammingExerciseExportService {
      * @return List containing the latest text submission for every participation
      */
     public List<ProgrammingExerciseParticipation> studentParticipationsForComparison(ProgrammingExercise programmingExercise, int minimumScore) {
-        var studentParticipations = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsByExerciseId(programmingExercise.getId());
+        var studentParticipations = studentParticipationRepository.findAllWithEagerLegalSubmissionsAndEagerResultsByExerciseId(programmingExercise.getId());
 
         return studentParticipations.parallelStream().filter(participation -> participation instanceof ProgrammingExerciseParticipation)
                 .map(participation -> (ProgrammingExerciseParticipation) participation).filter(participation -> participation.getVcsRepositoryUrl() != null)

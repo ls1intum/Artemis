@@ -139,7 +139,7 @@ public class ExamQuizService {
      */
     private Set<Result> evaluateSubmissions(@NotNull QuizExercise quizExercise) {
         Set<Result> createdResults = new HashSet<>();
-        List<StudentParticipation> studentParticipations = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsByExerciseId(quizExercise.getId());
+        List<StudentParticipation> studentParticipations = studentParticipationRepository.findAllWithEagerLegalSubmissionsAndEagerResultsByExerciseId(quizExercise.getId());
 
         for (var participation : studentParticipations) {
             if (!participation.isTestRun()) {

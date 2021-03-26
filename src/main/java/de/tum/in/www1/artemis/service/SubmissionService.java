@@ -174,14 +174,14 @@ public class SubmissionService {
         if (examMode) {
             // Get all participations of submissions that are submitted and do not already have a manual result or belong to test run submissions.
             // No manual result means that no user has started an assessment for the corresponding submission yet.
-            participations = studentParticipationRepository.findByExerciseIdWithLatestSubmissionWithoutManualResultsAndIgnoreTestRunParticipation(exercise.getId(),
+            participations = studentParticipationRepository.findByExerciseIdWithLatestLegalSubmissionWithoutManualResultsAndIgnoreTestRunParticipation(exercise.getId(),
                     correctionRound);
         }
         else {
             // Get all participations of submissions that are submitted and do not already have a manual result. No manual result means that no user has started an assessment for
             // the
             // corresponding submission yet.
-            participations = studentParticipationRepository.findByExerciseIdWithLatestSubmissionWithoutManualResults(exercise.getId());
+            participations = studentParticipationRepository.findByExerciseIdWithLatestLegalSubmissionWithoutManualResults(exercise.getId());
         }
 
         List<Submission> submissionsWithoutResult = participations.stream().map(StudentParticipation::findLatestSubmission).filter(Optional::isPresent).map(Optional::get)
@@ -332,7 +332,7 @@ public class SubmissionService {
 
     /**
      * Add a result to the last {@link Submission} of a {@link StudentParticipation} if it does not exist yet, see {@link StudentParticipation#findLatestSubmission()}, with a feedback of type {@link FeedbackType#AUTOMATIC}.
-     * The assessment is counted as {@link AssessmentType#SEMI_AUTOMATIC} to make sure it is not considered for manual assessment, see {@link StudentParticipationRepository#findByExerciseIdWithLatestSubmissionWithoutManualResultsAndIgnoreTestRunParticipation}.
+     * The assessment is counted as {@link AssessmentType#SEMI_AUTOMATIC} to make sure it is not considered for manual assessment, see {@link StudentParticipationRepository#findByExerciseIdWithLatestLegalSubmissionWithoutManualResultsAndIgnoreTestRunParticipation}.
      * Sets the feedback text and result score.
      *
      * @param studentParticipation the studentParticipation containing the latest result
@@ -514,10 +514,10 @@ public class SubmissionService {
     public <T extends Submission> List<T> getAllSubmissionsForExercise(Long exerciseId, boolean submittedOnly, boolean examMode) {
         List<StudentParticipation> participations;
         if (examMode) {
-            participations = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseIdIgnoreTestRuns(exerciseId);
+            participations = studentParticipationRepository.findAllWithEagerLegalSubmissionsAndEagerResultsAndEagerAssessorByExerciseIdIgnoreTestRuns(exerciseId);
         }
         else {
-            participations = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseId(exerciseId);
+            participations = studentParticipationRepository.findAllWithEagerLegalSubmissionsAndEagerResultsAndEagerAssessorByExerciseId(exerciseId);
         }
         List<T> submissions = new ArrayList<>();
         participations.stream().peek(participation -> participation.getExercise().setStudentParticipations(null)).map(StudentParticipation::findLatestSubmission)

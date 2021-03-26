@@ -306,7 +306,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
             // Get all participations of submissions that are submitted and do not already have a manual result. No manual result means that no user has started an assessment for
             // the
             // corresponding submission yet.
-            var participations = studentParticipationRepository.findByExerciseIdWithLatestSubmissionWithoutManualResults(modelingExercise.getId());
+            var participations = studentParticipationRepository.findByExerciseIdWithLatestLegalSubmissionWithoutManualResults(modelingExercise.getId());
             var submissionsWithoutResult = participations.stream().map(StudentParticipation::findLatestSubmission).filter(Optional::isPresent).map(Optional::get)
                     .collect(Collectors.toList());
 
@@ -347,7 +347,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
     @GetMapping("/participations/{participationId}/latest-modeling-submission")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<ModelingSubmission> getLatestSubmissionForModelingEditor(@PathVariable long participationId) {
-        StudentParticipation participation = studentParticipationRepository.findByIdWithSubmissionsResultsFeedbackElseThrow(participationId);
+        StudentParticipation participation = studentParticipationRepository.findByIdWithLegalSubmissionsResultsFeedbackElseThrow(participationId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         ModelingExercise modelingExercise;
 

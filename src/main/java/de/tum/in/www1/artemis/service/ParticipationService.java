@@ -241,7 +241,7 @@ public class ParticipationService {
         participation = studentParticipationRepository.saveAndFlush(participation);
 
         // Take the latest submission or initialize a new empty submission
-        var studentParticipation = studentParticipationRepository.findByIdWithSubmissionsElseThrow(participation.getId());
+        var studentParticipation = studentParticipationRepository.findByIdWithLegalSubmissionsElseThrow(participation.getId());
         var submission = studentParticipation.findLatestSubmission().orElseGet(() -> submissionRepository.initializeSubmission(studentParticipation, exercise, submissionType));
 
         // If the submission has not yet been submitted, submit it now
@@ -504,9 +504,9 @@ public class ParticipationService {
     public List<StudentParticipation> findByExerciseAndStudentIdWithEagerSubmissions(Exercise exercise, Long studentId) {
         if (exercise.isTeamMode()) {
             Optional<Team> optionalTeam = teamRepository.findOneByExerciseIdAndUserId(exercise.getId(), studentId);
-            return optionalTeam.map(team -> studentParticipationRepository.findByExerciseIdAndTeamIdWithEagerSubmissions(exercise.getId(), team.getId())).orElse(List.of());
+            return optionalTeam.map(team -> studentParticipationRepository.findByExerciseIdAndTeamIdWithEagerLegalSubmissions(exercise.getId(), team.getId())).orElse(List.of());
         }
-        return studentParticipationRepository.findByExerciseIdAndStudentIdWithEagerSubmissions(exercise.getId(), studentId);
+        return studentParticipationRepository.findByExerciseIdAndStudentIdWithEagerLegalSubmissions(exercise.getId(), studentId);
     }
 
     /**
@@ -519,10 +519,10 @@ public class ParticipationService {
     public List<StudentParticipation> findByExerciseAndStudentIdWithEagerResultsAndSubmissions(Exercise exercise, Long studentId) {
         if (exercise.isTeamMode()) {
             Optional<Team> optionalTeam = teamRepository.findOneByExerciseIdAndUserId(exercise.getId(), studentId);
-            return optionalTeam.map(team -> studentParticipationRepository.findByExerciseIdAndTeamIdWithEagerResultsAndSubmissions(exercise.getId(), team.getId()))
+            return optionalTeam.map(team -> studentParticipationRepository.findByExerciseIdAndTeamIdWithEagerResultsAndLegalSubmissions(exercise.getId(), team.getId()))
                     .orElse(List.of());
         }
-        return studentParticipationRepository.findByExerciseIdAndStudentIdWithEagerResultsAndSubmissions(exercise.getId(), studentId);
+        return studentParticipationRepository.findByExerciseIdAndStudentIdWithEagerResultsAndLegalSubmissions(exercise.getId(), studentId);
     }
 
     /**
@@ -568,7 +568,7 @@ public class ParticipationService {
      */
     @Transactional // ok
     public void delete(Long participationId, boolean deleteBuildPlan, boolean deleteRepository) {
-        StudentParticipation participation = studentParticipationRepository.findWithEagerSubmissionsResultsFeedbacksById(participationId).get();
+        StudentParticipation participation = studentParticipationRepository.findWithEagerLegalSubmissionsResultsFeedbacksById(participationId).get();
         log.info("Request to delete Participation : {}", participation);
 
         if (participation instanceof ProgrammingExerciseStudentParticipation) {
