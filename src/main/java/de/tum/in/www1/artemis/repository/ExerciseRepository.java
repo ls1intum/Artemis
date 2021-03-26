@@ -221,6 +221,19 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
     Optional<Exercise> findWithEagerStudentParticipationsStudentAndSubmissionsById(Long exerciseId);
 
     /**
+     * Returns the title of the exercise with the given id
+     *
+     * @param exerciseId the id of the exercise
+     * @return the name/title of the exercise or null if the exercise does not exist
+     */
+    @Query("""
+            SELECT e.title
+            FROM Exercise e
+            WHERE e.id = :exerciseId
+            """)
+    String getExerciseTitle(Long exerciseId);
+
+    /**
      * Fetches the exercises for a course
      *
      * @param courseId the course to get the exercises for

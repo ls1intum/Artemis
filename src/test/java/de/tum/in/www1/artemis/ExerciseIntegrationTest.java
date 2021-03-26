@@ -656,4 +656,42 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
         Exercise exercise = (Exercise) courseWithOneReleasedTextExercise.getExercises().toArray()[0];
         request.putWithResponseBody("/api/exercises/" + exercise.getId() + "/toggle-second-correction", null, Boolean.class, HttpStatus.FORBIDDEN);
     }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testGetExerciseTitleAsInstuctor() throws Exception {
+        // Only user and role matter, so we can re-use the logic
+        testGetExerciseTitle();
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testGetExerciseTitleAsTeachingAssistant() throws Exception {
+        // Only user and role matter, so we can re-use the logic
+        testGetExerciseTitle();
+    }
+
+    @Test
+    @WithMockUser(username = "user1", roles = "USER")
+    public void testGetExerciseTitleAsUser() throws Exception {
+        // Only user and role matter, so we can re-use the logic
+        testGetExerciseTitle();
+    }
+
+    private void testGetExerciseTitle() throws Exception {
+        Course courseWithOneReleasedTextExercise = database.addCourseWithOneReleasedTextExercise();
+        Exercise exercise = (Exercise) courseWithOneReleasedTextExercise.getExercises().toArray()[0];
+        exercise.setTitle("Test Exercise");
+        exerciseRepository.save(exercise);
+
+        final var title = request.get("/api/exercises/" + exercise.getId() + "/title", HttpStatus.OK, String.class);
+        assertThat(title).isEqualTo(exercise.getTitle());
+    }
+
+    @Test
+    @WithMockUser(username = "user1", roles = "USER")
+    public void testGetExerciseTitleForNonExistingExercise() throws Exception {
+        // No exercise with id 1 was created
+        request.get("/api/exercises/1/title", HttpStatus.NOT_FOUND, String.class);
+    }
 }

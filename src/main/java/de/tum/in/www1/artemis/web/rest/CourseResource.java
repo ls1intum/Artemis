@@ -1119,6 +1119,20 @@ public class CourseResource {
     }
 
     /**
+     * GET /courses/:courseId/title : Returns the title of the course with the given id
+     *
+     * @param courseId the id of the course
+     * @return the title of the course wrapped in an ResponseEntity or 404 Not Found if no course with that id exists
+     */
+    @GetMapping(value = "/courses/{courseId}/title")
+    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    @ResponseBody
+    public ResponseEntity<String> getCourseTitle(@PathVariable Long courseId) {
+        final var title = courseRepository.getCourseTitle(courseId);
+        return title == null ? ResponseEntity.notFound().build() : ResponseEntity.ok(title);
+    }
+
+    /**
      * Returns all users in a course that belong to the given group
      *
      * @param course    the course

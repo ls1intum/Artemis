@@ -208,4 +208,37 @@ public class ApollonDiagramResourceIntegrationTest extends AbstractSpringIntegra
         ApollonDiagram savedDiagram = apollonDiagramRepository.save(apollonDiagram);
         request.delete("/api/course/" + course1.getId() + "/apollon-diagrams/" + savedDiagram.getId(), HttpStatus.FORBIDDEN);
     }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testGetDiagramTitleAsInstructor() throws Exception {
+        testGetDiagramTitle();
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testGetDiagramTitleAsTeachingAssistant() throws Exception {
+        testGetDiagramTitle();
+    }
+
+    @Test
+    @WithMockUser(username = "user1", roles = "USER")
+    public void testGetDiagramTitleAsUser() throws Exception {
+        testGetDiagramTitle();
+    }
+
+    private void testGetDiagramTitle() throws Exception {
+        apollonDiagram.setCourseId(course1.getId());
+        ApollonDiagram savedDiagram = apollonDiagramRepository.save(apollonDiagram);
+
+        final var title = request.get("/api/apollon-diagrams/" + savedDiagram.getId() + "/title", HttpStatus.OK, String.class);
+        assertThat(title).isEqualTo(apollonDiagram.getTitle());
+    }
+
+    @Test
+    @WithMockUser(username = "user1", roles = "USER")
+    public void testGetDiagramTitleForNonExistingDiagram() throws Exception {
+        // No diagram with id 1 was created
+        request.get("/api/apollon-diagrams/1/title", HttpStatus.NOT_FOUND, String.class);
+    }
 }
