@@ -1345,9 +1345,8 @@ public class CourseTestService {
 
     // Test
     public void testGetExerciseStatsForCourseOverview() throws Exception {
-        // Add courses with existing exercises and set the instructor group name
-        var courses = database.createCoursesWithExercisesAndLectures(true);
-        var instructorsCourse = courses.get(0);
+        // Add a course and set the instructor group name
+        var instructorsCourse = database.createCourse();
         instructorsCourse.setInstructorGroupName("test-instructors");
 
         // Fetch and update an instructor
@@ -1363,7 +1362,9 @@ public class CourseTestService {
 
         // Add a team exercise which was just released but not due
         var releaseDate = ZonedDateTime.now().minusDays(4);
-        var teamExerciseNotEnded = database.createTeamTextExercise(instructorsCourse, releaseDate, null, null);
+        var futureDueDate = ZonedDateTime.now().plusDays(2);
+        var futureAssessmentDueDate = ZonedDateTime.now().plusDays(4);
+        var teamExerciseNotEnded = database.createTeamTextExercise(instructorsCourse, releaseDate, futureDueDate, futureAssessmentDueDate);
         teamExerciseNotEnded = exerciseRepo.save(teamExerciseNotEnded);
 
         // Add a team with a participation to the exercise
@@ -1377,7 +1378,8 @@ public class CourseTestService {
 
         // Create an exercise which has passed the due and assessment due date
         var dueDate = ZonedDateTime.now().minusDays(2);
-        var exerciseAssessmentDone = ModelFactory.generateTextExercise(releaseDate, dueDate, dueDate, instructorsCourse);
+        var passedAssessmentDueDate = ZonedDateTime.now().minusDays(1);
+        var exerciseAssessmentDone = ModelFactory.generateTextExercise(releaseDate, dueDate, passedAssessmentDueDate, instructorsCourse);
         exerciseAssessmentDone.setMaxPoints(5.0);
         exerciseAssessmentDone = exerciseRepo.save(exerciseAssessmentDone);
 
@@ -1388,8 +1390,7 @@ public class CourseTestService {
         instructorsCourse.addExercises(exerciseAssessmentDone);
 
         // Create an exercise which is currently in assessment
-        var assessmentDueDate = ZonedDateTime.now().plusDays(2);
-        var exerciseInAssessment = ModelFactory.generateTextExercise(releaseDate, dueDate, assessmentDueDate, instructorsCourse);
+        var exerciseInAssessment = ModelFactory.generateTextExercise(releaseDate, dueDate, futureAssessmentDueDate, instructorsCourse);
         exerciseInAssessment.setMaxPoints(15.0);
         exerciseInAssessment = exerciseRepo.save(exerciseInAssessment);
 
@@ -1409,11 +1410,11 @@ public class CourseTestService {
         var dto = courseDtos.get(0);
         assertThat(dto.getCourseId()).isEqualTo(instructorsCourse.getId());
 
-        // We have five default exercises and three custom ones, making for a total of eight
+        // Expect our three created exercises
         var exerciseDTOS = dto.getExerciseDTOS();
-        assertThat(exerciseDTOS.size()).isEqualTo(8);
+        assertThat(exerciseDTOS.size()).isEqualTo(3);
 
-        // Get the statistics of the exercise with passed assessment due date
+        // Get the statistics of the exercise with a passed assessment due date
         var statisticsOptional = exerciseDTOS.stream().filter(exercise -> exercise.getExerciseId().equals(exerciseId)).findFirst();
         assertThat(statisticsOptional.isPresent()).isTrue();
 
@@ -1442,9 +1443,9 @@ public class CourseTestService {
         assertThat(teamStatisticsDTO.getNoOfTeamsInCourse()).isEqualTo(1);
         assertThat(teamStatisticsDTO.getNoOfRatedAssessments()).isEqualTo(0);
         assertThat(teamStatisticsDTO.getNoOfAssessmentsDoneInPercent()).isEqualTo(0.0);
-        assertThat(teamStatisticsDTO.getNoOfSubmissionsInTime()).isEqualTo(0L);
+        assertThat(teamStatisticsDTO.getNoOfSubmissionsInTime()).isEqualTo(1L);
 
-        // Get the statistics of the exercise is assessment
+        // Get the statistics of the exercise in assessment
         var exerciseInAssessmentStatisticsOptional = exerciseDTOS.stream().filter(exercise -> exercise.getExerciseId().equals(exerciseIdInAssessment)).findFirst();
         assertThat(exerciseInAssessmentStatisticsOptional.isPresent()).isTrue();
 

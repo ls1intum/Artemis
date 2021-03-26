@@ -245,7 +245,7 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
             FROM Exercise e
             WHERE e.course.id = :courseId
                 AND (e.assessmentDueDate IS NULL OR e.assessmentDueDate > :now)
-                AND (e.dueDate IS NULL OR e.dueDate > :now)
+                AND (e.assessmentDueDate IS NOT NULL OR e.dueDate IS NULL OR e.dueDate > :now)
             """)
     Set<Exercise> getActiveExercisesForCourseManagementOverview(@Param("courseId") Long courseId, @Param("now") ZonedDateTime now);
 
@@ -261,7 +261,7 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
             FROM Exercise e
             WHERE e.course.id = :courseId
                 AND (e.assessmentDueDate IS NOT NULL AND e.assessmentDueDate < :now
-                OR e.dueDate IS NOT NULL AND e.dueDate < :now)
+                OR e.assessmentDueDate IS NULL AND e.dueDate IS NOT NULL AND e.dueDate < :now)
             """)
     List<Exercise> getPastExercisesForCourseManagementOverview(@Param("courseId") Long courseId, @Param("now") ZonedDateTime now);
 
