@@ -29,15 +29,15 @@ public interface ProgrammingExerciseStudentParticipationRepository extends JpaRe
             select p from ProgrammingExerciseStudentParticipation p
             left join fetch p.results pr
             left join fetch pr.feedbacks
-            left join fetch pr.submission s
+            left join fetch pr.submission
             where p.id = :participationId
                 and (pr.id = (select max(prr.id) from p.results prr
                     where prr.assessmentType = 'AUTOMATIC'
+                    and prr.submission.type <> ('ILLEGAL')
                         or (prr.completionDate IS NOT NULL
                             and (p.exercise.assessmentDueDate IS NULL
                             OR p.exercise.assessmentDueDate < :#{#dateTime})))
                 or pr.id IS NULL)
-                and s.type <> ('ILLEGAL')
             """)
     Optional<ProgrammingExerciseStudentParticipation> findByIdWithLatestResultAndFeedbacksAndRelatedLegalSubmissions(@Param("participationId") Long participationId,
             @Param("dateTime") ZonedDateTime dateTime);
@@ -51,12 +51,13 @@ public interface ProgrammingExerciseStudentParticipationRepository extends JpaRe
             select p from ProgrammingExerciseStudentParticipation p
             left join fetch p.results pr
             left join fetch pr.feedbacks
-            left join fetch pr.submission s
+            left join fetch pr.submission
             left join fetch pr.assessor
             where p.id = :participationId
                 and pr.id in (select prr.id from p.results prr
-                    where prr.assessmentType = 'MANUAL' or prr.assessmentType = 'SEMI_AUTOMATIC')
-                and s.type <> ('ILLEGAL')
+                    where prr.assessmentType = 'MANUAL'
+                        and prr.submission.type <> ('ILLEGAL')
+                        or prr.assessmentType = 'SEMI_AUTOMATIC')
             """)
     Optional<ProgrammingExerciseStudentParticipation> findByIdWithAllManualOrSemiAutomaticResultsAndFeedbacksAndRelatedLegalSubmissionAndAssessor(
             @Param("participationId") Long participationId);
