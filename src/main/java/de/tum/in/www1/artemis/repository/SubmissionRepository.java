@@ -15,7 +15,7 @@ import org.springframework.stereotype.Repository;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.Submission;
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.assessmentDashboard.ExerciseMapEntry;
+import de.tum.in.www1.artemis.domain.assessment.dashboard.ExerciseMapEntry;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
@@ -177,6 +177,23 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
     long countByCourseIdSubmittedBeforeDueDate(@Param("courseId") long courseId);
 
     /**
+     * Count number of in-time submissions for course. Only submissions for Text, Modeling and File Upload exercises are included.
+     *
+     * @param exerciseIds the exercise ids of the course we are interested in
+     * @return the number of submissions belonging to the exercise ids, which have the submitted flag set to true and the submission date before the exercise due date, or no exercise
+     *         due date at all
+     */
+    @Query("""
+            SELECT COUNT (DISTINCT s) FROM Submission s join s.participation p join p.exercise e
+                WHERE TYPE(s) IN (ModelingSubmission, TextSubmission, FileUploadSubmission)
+                AND e.id IN :exerciseIds
+                AND s.submitted = TRUE
+                AND (s.submissionDate <= e.dueDate
+                    OR e.dueDate IS NULL)
+            """)
+    long countAllByExerciseIdsSubmittedBeforeDueDate(@Param("exerciseIds") Set<Long> exerciseIds);
+
+    /**
      * Count the number of in-time submissions for an exam. Only submissions for Text, Modeling and File Upload exercises are included.
      *
      * @param examId -  the exam id we are interested in
@@ -207,6 +224,22 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
                 AND s.submissionDate > e.dueDate
             """)
     long countByCourseIdSubmittedAfterDueDate(@Param("courseId") long courseId);
+
+    /**
+     * Count number of late submissions for course. Only submissions for Text, Modeling and File Upload exercises are included.
+     *
+     * @param exerciseIds the ids of the exercises bolonging to the course we are interested in
+     * @return the number of submissions belonging to the course, which have the submitted flag set to true and the submission date after the exercise due date
+     */
+    @Query("""
+            SELECT COUNT (DISTINCT s) FROM Submission s join s.participation p join p.exercise e
+                WHERE TYPE(s) IN (ModelingSubmission, TextSubmission, FileUploadSubmission)
+                AND e.id IN :exerciseIds
+                AND s.submitted = TRUE
+                AND e.dueDate IS NOT NULL
+                AND s.submissionDate > e.dueDate
+            """)
+    long countAllByExerciseIdsSubmittedAfterDueDate(@Param("exerciseIds") Set<Long> exerciseIds);
 
     /**
      * @param exerciseId the exercise id we are interested in

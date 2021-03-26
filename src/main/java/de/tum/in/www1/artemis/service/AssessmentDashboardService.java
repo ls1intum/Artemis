@@ -13,7 +13,7 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.domain.ExampleSubmission;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.assessmentDashboard.ExerciseMapEntry;
+import de.tum.in.www1.artemis.domain.assessment.dashboard.ExerciseMapEntry;
 import de.tum.in.www1.artemis.domain.enumeration.TutorParticipationStatus;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
@@ -74,10 +74,11 @@ public class AssessmentDashboardService {
         log.info("Finished >> assessmentDashboardService.calculateNumberOfSubmissions all << in " + TimeLogUtil.formatDurationFrom(start));
         start = System.nanoTime();
 
+        // TODO implement
         // This method dos not yet fetch the assessment data
-        calculateNumberOfAssessments(programmingExerciseIds, nonProgrammingExerciseIds, examMode);
-        log.info("Finished >> assessmentDashboardService.calculateNumberOfAssessments all << in " + TimeLogUtil.formatDurationFrom(start));
-        start = System.nanoTime();
+        // calculateNumberOfAssessments(programmingExerciseIds, nonProgrammingExerciseIds, examMode);
+        // log.info("Finished >> assessmentDashboardService.calculateNumberOfAssessments all << in " + TimeLogUtil.formatDurationFrom(start));
+        // start = System.nanoTime();
 
         // parts of this loop can possibly still be extracted.
         for (Exercise exercise : exercises) {
@@ -136,16 +137,20 @@ public class AssessmentDashboardService {
         log.info("Finished >> generateStatisticsForExercisesForAssessmentDashboard << call in " + TimeLogUtil.formatDurationFrom(startComplete));
     }
 
-    /**
-     * This method fetches and stores the number of assessments for each exercise.
-     * // TODO: implement
-     * @param programmingExercises          - the programming-exercises, for which the number of submissions should be fetched
-     * @param nonProgrammingExercises       - the exercises, which are not programming-exercises, for which the number of submissions should be fetched
-     * @param examMode                      - if the exercises are part of an exam
-     */
-    private void calculateNumberOfAssessments(Set<Exercise> programmingExercises, Set<Exercise> nonProgrammingExercises, boolean examMode) {
-        return;
-    }
+    /// **
+    // * This method fetches and stores the number of assessments for each exercise.
+    // * // TODO: implement
+    // * @param programmingExercises - the programming-exercises, for which the number of submissions should be fetched
+    // * @param nonProgrammingExercises - the exercises, which are not programming-exercises, for which the number of submissions should be fetched
+    // * @param examMode - if the exercises are part of an exam
+    // */
+    // private void calculateNumberOfAssessments(Set<Exercise> programmingExercises, Set<Exercise> nonProgrammingExercises, boolean examMode) {
+    // if (examMode) {
+    //
+    // } else {
+    //
+    // }
+    // }
 
     /**
      * This method fetches and stores the number of sumbissions for each exercise.

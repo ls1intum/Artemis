@@ -612,17 +612,17 @@ public class CourseResource {
         }
         StatsForDashboardDTO stats = new StatsForDashboardDTO();
         start = System.currentTimeMillis();
-        long numberOfInTimeSubmissions = submissionRepository.countByCourseIdSubmittedBeforeDueDate(courseId);
+        long numberOfInTimeSubmissions = submissionRepository.countAllByExerciseIdsSubmittedBeforeDueDate(exerciseIdsOfCourse);
         end = System.currentTimeMillis();
         log.info("Finished >submissionRepository.countByCourseIdSubmittedBeforeDueDate< call for course " + course.getId() + " in " + (end - start) + "ms");
 
         start = System.currentTimeMillis();
-        numberOfInTimeSubmissions += programmingExerciseRepository.countSubmissionsByCourseIdSubmitted(courseId);
+        numberOfInTimeSubmissions += programmingExerciseRepository.countAllSubmissionsByExerciseIdsSubmitted(exerciseIdsOfCourse);
         end = System.currentTimeMillis();
         log.info("Finished >programmingExerciseRepository.countSubmissionsByCourseIdSubmitted< call for course " + course.getId() + " in " + (end - start) + "ms");
 
         start = System.currentTimeMillis();
-        final long numberOfLateSubmissions = submissionRepository.countByCourseIdSubmittedAfterDueDate(courseId);
+        final long numberOfLateSubmissions = submissionRepository.countAllByExerciseIdsSubmittedAfterDueDate(exerciseIdsOfCourse);
         end = System.currentTimeMillis();
         log.info("Finished > submissionRepository.countByCourseIdSubmittedAfterDueDate< call for course " + course.getId() + " in " + (end - start) + "ms");
 
@@ -648,18 +648,20 @@ public class CourseResource {
         start = System.currentTimeMillis();
         final long numberOfComplaints = complaintService.countComplaintsByCourseId(courseId);
         end = System.currentTimeMillis();
-        log.info("Finished >  complaintService.countMoreFeedbackRequestsByCourseId < call for course " + course.getId() + " in " + (end - start) + "ms");
+        log.info("Finished >  complaintService.countComplaintsByCourseId < call for course " + course.getId() + " in " + (end - start) + "ms");
 
         stats.setNumberOfComplaints(numberOfComplaints);
 
         start = System.currentTimeMillis();
+        // takes ~ 0.1 s
         final long numberOfAssessmentLocks = submissionRepository.countLockedSubmissionsByUserIdAndCourseId(userRepository.getUserWithGroupsAndAuthorities().getId(), courseId);
         end = System.currentTimeMillis();
-        log.info("Finished >  complaintService.countMoreFeedbackRequestsByCourseId < call for course " + course.getId() + " in " + (end - start) + "ms");
+        log.info("Finished > submissionRepository.countLockedSubmissionsByUserIdAndCourseId < call for course " + course.getId() + " in " + (end - start) + "ms");
 
         stats.setNumberOfAssessmentLocks(numberOfAssessmentLocks);
 
         start = System.currentTimeMillis();
+        // takes ~ 8s for pgdp
         List<TutorLeaderboardDTO> leaderboardEntries = tutorLeaderboardService.getCourseLeaderboard(course, exerciseIdsOfCourse);
         end = System.currentTimeMillis();
         log.info("Finished > tutorLeaderboardService.getCourseLeaderboard < call for course " + course.getId() + " in " + (end - start) + "ms");

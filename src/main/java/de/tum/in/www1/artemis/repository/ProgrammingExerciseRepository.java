@@ -19,7 +19,7 @@ import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.assessmentDashboard.ExerciseMapEntry;
+import de.tum.in.www1.artemis.domain.assessment.dashboard.ExerciseMapEntry;
 import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -265,6 +265,22 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
                 AND s.submitted = TRUE
             """)
     long countSubmissionsByCourseIdSubmitted(@Param("courseId") Long courseId);
+
+    /**
+     * In distinction to other exercise types, students can have multiple submissions in a programming exercise.
+     * We therefore have to check here if any submission of the student was submitted before the deadline.
+     *
+     * @param exerciseIds the course id we are interested in
+     * @return the number of submissions belonging to the course id, which have the submitted flag set to true and the submission date before the exercise due date, or no exercise
+     *         due date at all (only exercises with manual or semi automatic correction are considered)
+     */
+    @Query("""
+            SELECT COUNT (DISTINCT p) FROM ProgrammingExerciseStudentParticipation p join p.submissions s
+                WHERE p.exercise.assessmentType <> 'AUTOMATIC'
+                AND p.exercise.id IN :exerciseIds
+                AND s.submitted = TRUE
+            """)
+    long countAllSubmissionsByExerciseIdsSubmitted(@Param("exerciseIds") Set<Long> exerciseIds);
 
     List<ProgrammingExercise> findAllByCourse_InstructorGroupNameIn(Set<String> groupNames);
 
