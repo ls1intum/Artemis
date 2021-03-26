@@ -96,8 +96,7 @@ public class Result extends DomainObject {
     @JsonView(QuizView.Before.class)
     private Participation participation;
 
-    // TODO: this should actually be ManyToOne (however there is not mappedBy annotation used here, so this is unidirectional)
-    @OneToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn()
     private User assessor;
 
@@ -271,6 +270,9 @@ public class Result extends DomainObject {
     public void setRatedIfNotExceeded(ZonedDateTime exerciseDueDate, Submission submission) {
         if (submission.getType() == SubmissionType.INSTRUCTOR || submission.getType() == SubmissionType.TEST) {
             this.rated = true;
+        }
+        else if (submission.getType() == SubmissionType.ILLEGAL) {
+            this.rated = false;
         }
         else {
             setRatedIfNotExceeded(exerciseDueDate, submission.getSubmissionDate());

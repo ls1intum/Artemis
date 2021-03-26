@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service;
 
 import static de.tum.in.www1.artemis.service.util.RoundingUtil.round;
 
+import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -31,6 +32,7 @@ import de.tum.in.www1.artemis.domain.scores.ParticipantScore;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseService;
 import de.tum.in.www1.artemis.service.scheduled.quiz.QuizScheduleService;
+import de.tum.in.www1.artemis.web.rest.dto.CourseManagementOverviewExerciseStatisticsDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
@@ -78,6 +80,10 @@ public class ExerciseService {
 
     private final QuizExerciseRepository quizExerciseRepository;
 
+    private final SubmissionRepository submissionRepository;
+
+    private final ResultRepository resultRepository;
+
     private final LtiOutcomeUrlRepository ltiOutcomeUrlRepository;
 
     private final StudentParticipationRepository studentParticipationRepository;
@@ -89,8 +95,10 @@ public class ExerciseService {
             QuizScheduleService quizScheduleService, TutorParticipationRepository tutorParticipationRepository, ExampleSubmissionService exampleSubmissionService,
             AuditEventRepository auditEventRepository, TeamRepository teamRepository, StudentExamRepository studentExamRepository, ExamRepository examRepository,
             ProgrammingExerciseRepository programmingExerciseRepository, QuizExerciseRepository quizExerciseRepository, LtiOutcomeUrlRepository ltiOutcomeUrlRepository,
-            StudentParticipationRepository studentParticipationRepository, ParticipantScoreRepository participantScoreRepository, LectureUnitService lectureUnitService) {
+            StudentParticipationRepository studentParticipationRepository, ResultRepository resultRepository, SubmissionRepository submissionRepository,
+            ParticipantScoreRepository participantScoreRepository, LectureUnitService lectureUnitService) {
         this.exerciseRepository = exerciseRepository;
+        this.resultRepository = resultRepository;
         this.examRepository = examRepository;
         this.participationService = participationService;
         this.authCheckService = authCheckService;
@@ -98,12 +106,13 @@ public class ExerciseService {
         this.tutorParticipationRepository = tutorParticipationRepository;
         this.exampleSubmissionService = exampleSubmissionService;
         this.auditEventRepository = auditEventRepository;
-        this.teamRepository = teamRepository;
         this.quizExerciseService = quizExerciseService;
         this.quizScheduleService = quizScheduleService;
         this.studentExamRepository = studentExamRepository;
         this.exerciseUnitRepository = exerciseUnitRepository;
+        this.submissionRepository = submissionRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
+        this.teamRepository = teamRepository;
         this.participantScoreRepository = participantScoreRepository;
         this.quizExerciseRepository = quizExerciseRepository;
         this.ltiOutcomeUrlRepository = ltiOutcomeUrlRepository;
@@ -216,8 +225,7 @@ public class ExerciseService {
         List<StudentParticipation> teamParticipations = studentParticipationRepository.findByStudentIdAndTeamExercisesWithEagerSubmissionsResult(user.getId(), teamExercises);
 
         // 3rd: merge both into one list for further processing
-        List<StudentParticipation> participations = Stream.concat(individualParticipations.stream(), teamParticipations.stream()).collect(Collectors.toList());
-        return participations;
+        return Stream.concat(individualParticipations.stream(), teamParticipations.stream()).collect(Collectors.toList());
     }
 
     /**
@@ -535,6 +543,91 @@ public class ExerciseService {
             Optional<Team> team = teamRepository.findOneByExerciseIdAndUserId(exercise.getId(), user.getId());
             exercise.setStudentAssignedTeamId(team.map(Team::getId).orElse(null));
             exercise.setStudentAssignedTeamIdComputed(true);
+        }
+    }
+
+    /**
+     * Gets the exercise statistics by setting values for each field of the <code>CourseManagementOverviewExerciseStatisticsDTO</code>
+     *
+     * @param courseId the id of the course
+     * @param amountOfStudentsInCourse the amount of students in the course
+     * @param exerciseIds the ids of the exercises to get the statistics for
+     * @return A list of filled <code>CourseManagementOverviewExerciseStatisticsDTO</code>
+     */
+    public List<CourseManagementOverviewExerciseStatisticsDTO> getStatisticsForCourseManagementOverview(Long courseId, Integer amountOfStudentsInCourse, List<Long> exerciseIds) {
+        var sevenDaysAgo = ZonedDateTime.now().minusDays(7);
+
+        var averageScore = participantScoreRepository.findAvgScoreForExercises(exerciseIds);
+        Map<Long, Double> averageScoreById = new HashMap<>();
+        for (var element : averageScore) {
+            averageScoreById.put((Long) element.get("exerciseId"), (Double) element.get("averageScore"));
+        }
+
+        var exercisesForManagementOverview = exerciseRepository.getExercisesForCourseManagementOverview(courseId, sevenDaysAgo);
+        return generateCourseManagementDTOs(exercisesForManagementOverview, amountOfStudentsInCourse, averageScoreById);
+    }
+
+    /**
+     * Generates a <code>CourseManagementOverviewExerciseStatisticsDTO</code> for each given exercise
+     *
+     * @param exercisesForManagementOverview a set of exercises to generate the statistics for
+     * @param amountOfStudentsInCourse the amount of students in the course
+     * @param averageScoreById the average score for each exercise indexed by exerciseId
+     * @return A list of filled <code>CourseManagementOverviewExerciseStatisticsDTO</code>
+     */
+    private List<CourseManagementOverviewExerciseStatisticsDTO> generateCourseManagementDTOs(Set<Exercise> exercisesForManagementOverview, Integer amountOfStudentsInCourse,
+            Map<Long, Double> averageScoreById) {
+        List<CourseManagementOverviewExerciseStatisticsDTO> statisticsDTOS = new ArrayList<>();
+        for (var exercise : exercisesForManagementOverview) {
+            var exerciseId = exercise.getId();
+            var exerciseStatisticsDTO = new CourseManagementOverviewExerciseStatisticsDTO();
+            exerciseStatisticsDTO.setExerciseId(exerciseId);
+            exerciseStatisticsDTO.setExerciseMaxPoints(exercise.getMaxPoints());
+
+            var avgScore = averageScoreById.get(exerciseId) != null ? averageScoreById.get(exerciseId) : 0.0;
+            exerciseStatisticsDTO.setAverageScoreInPercent(avgScore);
+
+            setStudentsAndParticipationsAmountForStatisticsDTO(exerciseStatisticsDTO, amountOfStudentsInCourse, exercise);
+
+            long numberOfRatedAssessments = resultRepository.countNumberOfRatedResultsForExercise(exerciseId);
+            long noOfSubmissionsInTime = submissionRepository.countUniqueSubmissionsByExerciseId(exerciseId);
+            exerciseStatisticsDTO.setNoOfRatedAssessments(numberOfRatedAssessments);
+            exerciseStatisticsDTO.setNoOfSubmissionsInTime(noOfSubmissionsInTime);
+            exerciseStatisticsDTO.setNoOfAssessmentsDoneInPercent(noOfSubmissionsInTime == 0 ? 0 : Math.round(numberOfRatedAssessments * 1000.0 / noOfSubmissionsInTime) / 10.0);
+
+            statisticsDTOS.add(exerciseStatisticsDTO);
+        }
+        return statisticsDTOS;
+    }
+
+    /**
+     * Sets the amount of students, participations and teams for the given <code>CourseManagementOverviewExerciseStatisticsDTO</code>
+     *
+     * @param exerciseStatisticsDTO the <code>CourseManagementOverviewExerciseStatisticsDTO</code> to set the amounts for
+     * @param amountOfStudentsInCourse the amount of students in the course
+     * @param exercise the exercise corresponding to the <code>CourseManagementOverviewExerciseStatisticsDTO</code>
+     */
+    private void setStudentsAndParticipationsAmountForStatisticsDTO(CourseManagementOverviewExerciseStatisticsDTO exerciseStatisticsDTO, Integer amountOfStudentsInCourse,
+            Exercise exercise) {
+        exerciseStatisticsDTO.setNoOfStudentsInCourse(amountOfStudentsInCourse);
+
+        if (amountOfStudentsInCourse != null && amountOfStudentsInCourse != 0) {
+            Long rawParticipations = exerciseRepository.getParticipationCountById(exercise.getId());
+            var participations = rawParticipations == null ? 0 : Math.toIntExact(rawParticipations);
+            exerciseStatisticsDTO.setNoOfParticipatingStudentsOrTeams(participations);
+
+            if (exercise.getMode() == ExerciseMode.TEAM) {
+                Integer teams = teamRepository.getNumberOfTeamsForExercise(exercise.getId());
+                exerciseStatisticsDTO.setNoOfTeamsInCourse(teams);
+                exerciseStatisticsDTO.setParticipationRateInPercent(teams == null || teams == 0 ? 0.0 : Math.round(participations * 1000.0 / teams) / 10.0);
+            }
+            else {
+                exerciseStatisticsDTO.setParticipationRateInPercent(Math.round(participations * 1000.0 / amountOfStudentsInCourse) / 10.0);
+            }
+        }
+        else {
+            exerciseStatisticsDTO.setNoOfParticipatingStudentsOrTeams(0);
+            exerciseStatisticsDTO.setParticipationRateInPercent(0D);
         }
     }
 

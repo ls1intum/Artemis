@@ -295,6 +295,7 @@
     "pendingChanges": "WARNUNG: Du hast nicht gespeicherte Änderungen. Klicke Abbrechen, um zurück zu gehen und deine Änderungen zu speichern oder klicke OK, um die Änderungen zu verwerfen.",
     "overview": {
         "title": "Kursübersicht",
+        "aboutUs": "Über uns",
         "course": "Kursdetails",
         "exercise": "Aufgabendetails",
         "lectures": "Vorlesungen",

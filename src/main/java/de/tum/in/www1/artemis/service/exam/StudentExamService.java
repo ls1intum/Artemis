@@ -25,7 +25,6 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentPar
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.SubmissionService;
@@ -165,7 +164,7 @@ public class StudentExamService {
     }
 
     private void saveSubmissions(StudentExam studentExam, User currentUser) {
-        List<StudentParticipation> existingParticipations = studentParticipationRepository.findByStudentExamWithEagerSubmissionsResult(studentExam);
+        List<StudentParticipation> existingParticipations = studentParticipationRepository.findByStudentExamWithEagerSubmissionsResult(studentExam, false);
 
         for (Exercise exercise : studentExam.getExercises()) {
             // we do not apply the following checks for programming exercises or file upload exercises
@@ -196,7 +195,7 @@ public class StudentExamService {
             return;
         }
         if (exercise instanceof FileUploadExercise) {
-            // TODO: remove
+            // file upload submissions are only saved during submit in their respective submission page
             return;
         }
 
@@ -248,7 +247,6 @@ public class StudentExamService {
                         else if (exercise instanceof ModelingExercise) {
                             modelingSubmissionRepository.save((ModelingSubmission) submission);
                         }
-                        // TODO: handle file upload
 
                         // versioning of submission
                         try {
@@ -271,7 +269,7 @@ public class StudentExamService {
      * @return returns the set of unsubmitted StudentExams, the participations of which were assessed
      */
     public Set<StudentExam> assessUnsubmittedStudentExams(final Exam exam, final User assessor) {
-        // TODO: we should also do this for programming exercises with manual assessment
+        // TODO Simon Entholzer: we should also do this for programming exercises with manual assessment
         Set<StudentExam> unsubmittedStudentExams = findAllUnsubmittedStudentExams(exam.getId());
         Map<User, List<Exercise>> exercisesOfUser = unsubmittedStudentExams.stream()
                 .collect(Collectors.toMap(StudentExam::getUser,
@@ -304,7 +302,7 @@ public class StudentExamService {
      * @return returns the set of StudentExams of which the empty submissions were assessed
      */
     public Set<StudentExam> assessEmptySubmissionsOfStudentExams(final Exam exam, final User assessor, final Set<StudentExam> excludeStudentExams) {
-        // TODO: we should also do this for programming exercises with manual assessment
+        // TODO Simon Entholzer: we should also do this for programming exercises with manual assessment: when the participation does not have any submissions
         Set<StudentExam> studentExams = findAllWithExercisesByExamId(exam.getId());
         // remove student exams which should be excluded
         studentExams = studentExams.stream().filter(studentExam -> !excludeStudentExams.contains(studentExam)).collect(Collectors.toSet());

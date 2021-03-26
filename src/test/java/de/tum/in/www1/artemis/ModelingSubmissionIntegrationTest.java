@@ -16,6 +16,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
@@ -415,6 +416,34 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
     }
 
     @Test
+    @WithMockUser(value = "instructor1", roles = "TA")
+    public void getModelingSubmissionWithResultId() throws Exception {
+        User user = database.getUserByLogin("tutor1");
+        ModelingSubmission submission = ModelFactory.generateModelingSubmission(validModel, true);
+        submission = (ModelingSubmission) database.addSubmissionWithTwoFinishedResultsWithAssessor(classExercise, submission, "student1", "tutor1");
+        Result storedResult = submission.getResultForCorrectionRound(1);
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("resultId", String.valueOf(storedResult.getId()));
+        ModelingSubmission storedSubmission = request.get("/api/modeling-submissions/" + submission.getId(), HttpStatus.OK, ModelingSubmission.class, params);
+
+        assertThat(storedSubmission.getResults()).isNotNull();
+        assertThat(storedSubmission.getResults().contains(storedResult)).isEqualTo(true);
+        checkDetailsHidden(storedSubmission, false);
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void getModelingSubmissionWithResultIdAsTutor_badRequest() throws Exception {
+        User user = database.getUserByLogin("tutor1");
+        ModelingSubmission submission = ModelFactory.generateModelingSubmission(validModel, true);
+        submission = (ModelingSubmission) database.addModelingSubmissionWithFinishedResultAndAssessor(classExercise, submission, "student1", "tutor1");
+        Result storedResult = submission.getResultForCorrectionRound(0);
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("resultId", String.valueOf(storedResult.getId()));
+        request.get("/api/modeling-submissions/" + submission.getId(), HttpStatus.FORBIDDEN, ModelingSubmission.class, params);
+    }
+
+    @Test
     @WithMockUser(value = "tutor1", roles = "TA")
     public void getModelSubmissionWithoutAssessment() throws Exception {
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(validModel, true);
@@ -539,7 +568,7 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
     @WithMockUser(value = "student1")
     public void getModelSubmissionForModelingEditor() throws Exception {
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(validModel, true);
-        submission = database.addModelingSubmissionWithFinishedResultAndAssessor(classExercise, submission, "student1", "tutor1");
+        submission = (ModelingSubmission) database.addModelingSubmissionWithFinishedResultAndAssessor(classExercise, submission, "student1", "tutor1");
 
         ModelingSubmission receivedSubmission = request.get("/api/participations/" + submission.getParticipation().getId() + "/latest-modeling-submission", HttpStatus.OK,
                 ModelingSubmission.class);
