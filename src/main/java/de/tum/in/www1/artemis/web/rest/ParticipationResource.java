@@ -77,7 +77,7 @@ public class ParticipationResource {
 
     private final GuidedTourConfiguration guidedTourConfiguration;
 
-    private final TeamService teamService;
+    private final TeamRepository teamRepository;
 
     private final FeatureToggleService featureToggleService;
 
@@ -90,7 +90,7 @@ public class ParticipationResource {
     public ParticipationResource(ParticipationService participationService, ProgrammingExerciseParticipationService programmingExerciseParticipationService,
             CourseRepository courseRepository, QuizExerciseRepository quizExerciseRepository, ExerciseService exerciseService, AuthorizationCheckService authCheckService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, UserRepository userRepository, StudentParticipationRepository studentParticipationRepository,
-            AuditEventRepository auditEventRepository, GuidedTourConfiguration guidedTourConfiguration, TeamService teamService, FeatureToggleService featureToggleService,
+            AuditEventRepository auditEventRepository, GuidedTourConfiguration guidedTourConfiguration, TeamRepository teamRepository, FeatureToggleService featureToggleService,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, SubmissionRepository submissionRepository) {
         this.participationService = participationService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
@@ -102,7 +102,7 @@ public class ParticipationResource {
         this.userRepository = userRepository;
         this.auditEventRepository = auditEventRepository;
         this.guidedTourConfiguration = guidedTourConfiguration;
-        this.teamService = teamService;
+        this.teamRepository = teamRepository;
         this.featureToggleService = featureToggleService;
         this.studentParticipationRepository = studentParticipationRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
@@ -149,7 +149,7 @@ public class ParticipationResource {
 
         // if this is a team-based exercise, set the participant to the team that the user belongs to
         if (exercise.isTeamMode()) {
-            participant = teamService.findOneByExerciseAndUser(exercise, user)
+            participant = teamRepository.findOneByExerciseIdAndUserId(exercise.getId(), user.getId())
                     .orElseThrow(() -> new BadRequestAlertException("Team exercise cannot be started without assigned team.", "participation", "cannotStart"));
         }
 
