@@ -317,6 +317,7 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
                 AND p.testRun = FALSE
                 AND s.submitted = TRUE
                 AND (p.exercise.dueDate IS NULL OR s.submissionDate <= p.exercise.dueDate)
+            GROUP BY p.exercise.id
                 """)
     List<ExerciseMapEntry> countByExerciseIdsSubmittedBeforeDueDateIgnoreTestRuns(@Param("exerciseIds") Set<Long> exerciseIds);
 
