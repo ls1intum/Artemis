@@ -50,23 +50,26 @@ public class TutorLeaderboardService {
         String groupName = course.getTeachingAssistantGroupName();
 
         long start = System.currentTimeMillis();
-        // this call is still taking about 3s for very big courses
+        // 2.3s
         List<TutorLeaderboardAssessments> tutorLeaderboardAssessments = resultRepository.findTutorLeaderboardAssessmentByCourseId(exerciseIdsOfCourse);
         long end = System.currentTimeMillis();
         log.info("Finished >>resultRepository.findTutorLeaderboardAssessmentByCourseId<< call for course " + course.getId() + " in " + (end - start) + "ms");
 
         start = System.currentTimeMillis();
+        // 3.0s
         List<TutorLeaderboardComplaints> tutorLeaderboardComplaints = complaintRepository.findTutorLeaderboardComplaintsByCourseId(groupName, course.getId());
         end = System.currentTimeMillis();
         log.info("Finished >>complaintRepository.findTutorLeaderboardComplaintsByCourseId<< call for course " + course.getId() + " in " + (end - start) + "ms");
 
         start = System.currentTimeMillis();
+        // 0.6s
         List<TutorLeaderboardMoreFeedbackRequests> tutorLeaderboardMoreFeedbackRequests = complaintRepository.findTutorLeaderboardMoreFeedbackRequestsByCourseId(groupName,
                 course.getId());
         end = System.currentTimeMillis();
         log.info("Finished >>complaintRepository.findTutorLeaderboardMoreFeedbackRequestsByCourseId<< call for course " + course.getId() + " in " + (end - start) + "ms");
 
         start = System.currentTimeMillis();
+        // 2.3s
         List<TutorLeaderboardComplaintResponses> tutorLeaderboardComplaintResponses = complaintRepository.findTutorLeaderboardComplaintResponsesByCourseId(groupName,
                 course.getId());
         end = System.currentTimeMillis();
