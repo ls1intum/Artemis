@@ -24,11 +24,11 @@ public interface ProgrammingSubmissionRepository extends JpaRepository<Programmi
     ProgrammingSubmission findFirstByParticipationIdAndCommitHash(Long participationId, String commitHash);
 
     @Query("""
-            select s from ProgrammingSubmission s
-            left join fetch s.results
-            where s.type <> ('ILLEGAL')
-            and s.participation.id = :#{#participationId}
-            order by s.submissionDate desc
+            SELECT s FROM ProgrammingSubmission s
+            LEFT JOIN FETCH s.results
+            WHERE s.type <> 'ILLEGAL'
+            AND s.participation.id = :#{#participationId}
+            AND s.id = (SELECT max(s2.id) FROM ProgrammingSubmission s2 WHERE s2.participation.id = :#{#participationId} AND s2.type <> 'ILLEGAL')
             """)
     Optional<ProgrammingSubmission> findFirstByParticipationIdOrderByLegalSubmissionDateDesc(Long participationId);
 
