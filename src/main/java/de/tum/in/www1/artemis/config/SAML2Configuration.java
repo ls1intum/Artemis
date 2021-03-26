@@ -30,6 +30,9 @@ import org.springframework.security.saml2.provider.service.registration.RelyingP
 
 /**
  * This class describes the security configuration for SAML2.
+ * 
+ * Since this {@link WebSecurityConfigurerAdapter} is annotated with {@link Order} and {@link SecurityConfiguration}
+ * is not, this configuration is evaluated first when the SAML2 Profile is active.
  */
 // @formatter:off
 @Configuration
@@ -54,6 +57,10 @@ public class SAML2Configuration extends WebSecurityConfigurerAdapter {
 
     /**
      * Returns the RelyingPartyRegistrationRepository used by SAML2 configuration.
+     * 
+     * The relying parties are configured in the SAML2 properties. A helper method 
+     * {@link RelyingPartyRegistrations#fromMetadataLocation} extracts the needed information from the given
+     * XML metadata file. Optionally X509 Credentials can be supplied to enable encryption.
      *
      * @return the RelyingPartyRegistrationRepository used by SAML2 configuration.
      */
@@ -140,18 +147,28 @@ public class SAML2Configuration extends WebSecurityConfigurerAdapter {
         // @formatter:off
         http
             .requestMatchers()
-            .antMatchers("/api/saml2")
-            .antMatchers("/saml2/**")
-            .antMatchers("/login/**")
+                // This filter chain is only applied if the URL matches
+                // Else the request is filtered by {@link SecurityConfiguration}.
+                .antMatchers("/api/saml2")
+                .antMatchers("/saml2/**")
+                .antMatchers("/login/**")
             .and()
             .csrf()
-            .disable()
+                // Needed for SAML to work properly
+                .disable()
             .authorizeRequests()
-            .antMatchers("/api/saml2").permitAll()
-            .anyRequest().authenticated()
+                // The request to the api is permitted and checked directly
+                // This allows returning a 401 if the user is not logged in via SAML2
+                // to notify the client that a login is needed.
+                .antMatchers("/api/saml2").permitAll()
+                // Every other request must be authenticated. Any request triggers a SAML2
+                // authentication flow
+                .anyRequest().authenticated()
             .and()
+            // Processes the RelyingPartyRegistrationRepository Bean and installs the filters for SAML2
             .saml2Login()
-            .defaultSuccessUrl("/", true);
+                // Redirect back to the root
+                .defaultSuccessUrl("/", true);
     }
 
 }
