@@ -231,10 +231,10 @@ public class ResultResource {
 
         List<StudentParticipation> participations;
         if (examMode) {
-            participations = studentParticipationRepository.findByExerciseIdWithEagerSubmissionsResultAssessorIgnoreTestRuns(exerciseId);
+            participations = studentParticipationRepository.findByExerciseIdWithEagerLegalSubmissionsResultAssessorIgnoreTestRuns(exerciseId);
         }
         else {
-            participations = studentParticipationRepository.findByExerciseIdWithEagerSubmissionsResultAssessor(exerciseId);
+            participations = studentParticipationRepository.findByExerciseIdWithEagerLegalSubmissionsResultAssessor(exerciseId);
         }
         for (StudentParticipation participation : participations) {
             // Filter out participations without students / teams

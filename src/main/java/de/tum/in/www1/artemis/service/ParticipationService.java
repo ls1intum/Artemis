@@ -425,9 +425,9 @@ public class ParticipationService {
     public Optional<StudentParticipation> findOneByExerciseAndStudentLoginAnyState(Exercise exercise, String username) {
         if (exercise.isTeamMode()) {
             Optional<Team> optionalTeam = teamRepository.findOneByExerciseIdAndUserLogin(exercise.getId(), username);
-            return optionalTeam.flatMap(team -> studentParticipationRepository.findWithEagerSubmissionsByExerciseIdAndTeamId(exercise.getId(), team.getId()));
+            return optionalTeam.flatMap(team -> studentParticipationRepository.findWithEagerLegalSubmissionsByExerciseIdAndTeamId(exercise.getId(), team.getId()));
         }
-        return studentParticipationRepository.findWithEagerSubmissionsByExerciseIdAndStudentLogin(exercise.getId(), username);
+        return studentParticipationRepository.findWithEagerLegalSubmissionsByExerciseIdAndStudentLogin(exercise.getId(), username);
     }
 
     /**
@@ -442,7 +442,7 @@ public class ParticipationService {
             return findOneByExerciseAndStudentLoginAnyState(exercise, ((User) participant).getLogin());
         }
         else if (participant instanceof Team) {
-            return studentParticipationRepository.findWithEagerSubmissionsByExerciseIdAndTeamId(exercise.getId(), ((Team) participant).getId());
+            return studentParticipationRepository.findWithEagerLegalSubmissionsByExerciseIdAndTeamId(exercise.getId(), ((Team) participant).getId());
         }
         else {
             throw new Error("Unknown Participant type");
@@ -474,9 +474,9 @@ public class ParticipationService {
     public Optional<StudentParticipation> findOneByExerciseAndStudentLoginWithEagerSubmissionsAnyState(Exercise exercise, String username) {
         if (exercise.isTeamMode()) {
             Optional<Team> optionalTeam = teamRepository.findOneByExerciseIdAndUserLogin(exercise.getId(), username);
-            return optionalTeam.flatMap(team -> studentParticipationRepository.findWithEagerSubmissionsByExerciseIdAndTeamId(exercise.getId(), team.getId()));
+            return optionalTeam.flatMap(team -> studentParticipationRepository.findWithEagerLegalSubmissionsByExerciseIdAndTeamId(exercise.getId(), team.getId()));
         }
-        return studentParticipationRepository.findWithEagerSubmissionsByExerciseIdAndStudentLogin(exercise.getId(), username);
+        return studentParticipationRepository.findWithEagerLegalSubmissionsByExerciseIdAndStudentLogin(exercise.getId(), username);
     }
 
     /**

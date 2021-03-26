@@ -109,7 +109,7 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationBambo
         assertThat(participation.getExercise()).as("participated in correct exercise").isEqualTo(modelingExercise);
         assertThat(participation.getStudent()).as("Student got set").isNotNull();
         assertThat(participation.getParticipantIdentifier()).as("Correct student got set").isEqualTo("student1");
-        Participation storedParticipation = participationRepo.findWithEagerSubmissionsByExerciseIdAndStudentLogin(modelingExercise.getId(), "student1").get();
+        Participation storedParticipation = participationRepo.findWithEagerLegalSubmissionsByExerciseIdAndStudentLogin(modelingExercise.getId(), "student1").get();
         assertThat(storedParticipation.getSubmissions().size()).as("submission was initialized").isEqualTo(1);
         assertThat(storedParticipation.getSubmissions().iterator().next().getClass()).as("submission is of type modeling submission").isEqualTo(ModelingSubmission.class);
     }
@@ -123,7 +123,7 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationBambo
         assertThat(participation.getExercise()).as("participated in correct exercise").isEqualTo(textExercise);
         assertThat(participation.getStudent()).as("Student got set").isNotNull();
         assertThat(participation.getParticipantIdentifier()).as("Correct student got set").isEqualTo("student2");
-        Participation storedParticipation = participationRepo.findWithEagerSubmissionsByExerciseIdAndStudentLogin(textExercise.getId(), "student2").get();
+        Participation storedParticipation = participationRepo.findWithEagerLegalSubmissionsByExerciseIdAndStudentLogin(textExercise.getId(), "student2").get();
         assertThat(storedParticipation.getSubmissions().size()).as("submission was initialized").isEqualTo(1);
         assertThat(storedParticipation.getSubmissions().iterator().next().getClass()).as("submission is of type text submission").isEqualTo(TextSubmission.class);
     }

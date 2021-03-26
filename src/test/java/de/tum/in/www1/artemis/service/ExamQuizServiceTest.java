@@ -262,7 +262,7 @@ public class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucke
             request.put("/api/exercises/" + quizExercise.getId() + "/submissions/exam", quizSubmission, HttpStatus.OK);
 
             // add another submission manually to trigger multiple submission branch of evaluateQuizSubmission
-            final var studentParticipation = studentParticipationRepository.findWithEagerSubmissionsByExerciseIdAndStudentLogin(quizExercise.getId(), user.getLogin()).get();
+            final var studentParticipation = studentParticipationRepository.findWithEagerLegalSubmissionsByExerciseIdAndStudentLogin(quizExercise.getId(), user.getLogin()).get();
             QuizSubmission quizSubmission2 = database.generateSubmissionForThreeQuestions(quizExercise, i + 1, true, ZonedDateTime.now());
             quizSubmission2.setParticipation(studentParticipation);
             quizSubmissionRepository.save(quizSubmission2);

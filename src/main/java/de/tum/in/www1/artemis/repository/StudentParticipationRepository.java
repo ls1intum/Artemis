@@ -34,8 +34,13 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
     @Query("select distinct participation from StudentParticipation participation left join fetch participation.results r where participation.exercise.course.id = :#{#courseId} and (r.rated is null or r.rated = true)")
     List<StudentParticipation> findByCourseIdWithEagerRatedResults(@Param("courseId") Long courseId);
 
-    @Query("select distinct participation from StudentParticipation participation left join fetch participation.submissions s left join fetch s.results r where participation.testRun = false and participation.exercise.exerciseGroup.exam.id = :#{#examId} and r.rated = true")
-    List<StudentParticipation> findByExamIdWithEagerSubmissionsRatedResults(@Param("examId") Long examId);
+    @Query("""
+            select distinct participation from StudentParticipation participation
+            left join fetch participation.submissions s
+            left join fetch s.results r
+            where participation.testRun = false and participation.exercise.exerciseGroup.exam.id = :#{#examId} and r.rated = true and s.type <> ('ILLEGAL')
+            """)
+    List<StudentParticipation> findByExamIdWithEagerLegalSubmissionsRatedResults(@Param("examId") Long examId);
 
     @Query("select distinct participation from StudentParticipation participation where participation.exercise.course.id = :#{#courseId} and participation.team.shortName = :#{#teamShortName}")
     List<StudentParticipation> findAllByCourseIdAndTeamShortName(@Param("courseId") Long courseId, @Param("teamShortName") String teamShortName);
@@ -48,17 +53,35 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
     @EntityGraph(type = LOAD, attributePaths = "results")
     Optional<StudentParticipation> findWithEagerResultsByExerciseIdAndTeamId(Long exerciseId, Long teamId);
 
-    @EntityGraph(type = LOAD, attributePaths = "submissions")
-    Optional<StudentParticipation> findWithEagerSubmissionsByExerciseIdAndStudentLogin(Long exerciseId, String username);
+    @Query("""
+                    select distinct p from StudentParticipation p
+                    left join fetch p.submissions s
+                    where p.exercise.id = :#{#exerciseId} and p.student.login = :#{#username} and s.type <> 'ILLEGAL'
+            """)
+    Optional<StudentParticipation> findWithEagerLegalSubmissionsByExerciseIdAndStudentLogin(Long exerciseId, String username);
 
-    @EntityGraph(type = LOAD, attributePaths = "submissions")
-    Optional<StudentParticipation> findWithEagerSubmissionsByExerciseIdAndTeamId(Long exerciseId, Long teamId);
+    @Query("""
+                    select distinct p from StudentParticipation p
+                    left join fetch p.submissions s
+                    where p.exercise.id = :#{#exerciseId} and p.team.id = :#{#teamId} and s.type <> 'ILLEGAL'
+            """)
+    Optional<StudentParticipation> findWithEagerLegalSubmissionsByExerciseIdAndTeamId(Long exerciseId, Long teamId);
 
-    @Query("select distinct participation from StudentParticipation participation left join fetch participation.submissions s left join fetch s.results where participation.exercise.id = :#{#exerciseId}")
-    List<StudentParticipation> findByExerciseIdWithEagerSubmissionsResult(@Param("exerciseId") Long exerciseId);
+    @Query("""
+            select distinct participation from StudentParticipation participation
+            left join fetch participation.submissions s
+            left join fetch s.results
+            where participation.exercise.id = :#{#exerciseId} and s.type <> 'ILLEGAL'
+            """)
+    List<StudentParticipation> findByExerciseIdWithEagerLegalSubmissionsResult(@Param("exerciseId") Long exerciseId);
 
-    @Query("select distinct participation from StudentParticipation participation left join fetch participation.submissions s left join fetch s.results r left join fetch r.assessor where participation.exercise.id = :#{#exerciseId}")
-    List<StudentParticipation> findByExerciseIdWithEagerSubmissionsResultAssessor(@Param("exerciseId") Long exerciseId);
+    @Query("""
+               select distinct participation from StudentParticipation participation
+               left join fetch participation.submissions s
+               left join fetch s.results r
+               left join fetch r.assessor where participation.exercise.id = :#{#exerciseId} and s.type <> 'ILLEGAL'
+            """)
+    List<StudentParticipation> findByExerciseIdWithEagerLegalSubmissionsResultAssessor(@Param("exerciseId") Long exerciseId);
 
     @Query("""
             select distinct participation from StudentParticipation participation
@@ -67,8 +90,9 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             left join fetch r.assessor
             where participation.exercise.id = :#{#exerciseId}
             and participation.testRun = false
+            and s.type <> 'ILLEGAL'
             """)
-    List<StudentParticipation> findByExerciseIdWithEagerSubmissionsResultAssessorIgnoreTestRuns(@Param("exerciseId") Long exerciseId);
+    List<StudentParticipation> findByExerciseIdWithEagerLegalSubmissionsResultAssessorIgnoreTestRuns(@Param("exerciseId") Long exerciseId);
 
     /**
      * Get all participations for an exercise with each latest result (determined by id).
@@ -77,7 +101,6 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
      * @param exerciseId Exercise id.
      * @return participations for exercise.
      */
-    // TODO: also filter here for ILLEGAL Submission results?
     @Query("select distinct participation from StudentParticipation participation left join fetch participation.results result where participation.exercise.id = :#{#exerciseId} and (result.id = (select max(id) from participation.results) or result is null)")
     List<StudentParticipation> findByExerciseIdWithLatestResult(@Param("exerciseId") Long exerciseId);
 
@@ -344,7 +367,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
      * @return list of participations belonging to course
      */
     default List<StudentParticipation> findByExamIdWithSubmissionRelevantResult(Long examId) {
-        var participations = findByExamIdWithEagerSubmissionsRatedResults(examId); // without test run participations
+        var participations = findByExamIdWithEagerLegalSubmissionsRatedResults(examId); // without test run participations
         // filter out the participations of test runs which can only be made by instructors
         participations = participations.stream().filter(studentParticipation -> !studentParticipation.isTestRun()).collect(Collectors.toList());
         return filterParticipationsWithRelevantResults(participations, true);
