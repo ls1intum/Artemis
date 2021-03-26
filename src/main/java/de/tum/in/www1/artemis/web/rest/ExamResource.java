@@ -31,9 +31,11 @@ import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExamRepository;
+import de.tum.in.www1.artemis.repository.StudentExamRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.AssessmentDashboardService;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.SubmissionService;
 import de.tum.in.www1.artemis.service.TutorParticipationService;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
 import de.tum.in.www1.artemis.service.exam.ExamAccessService;
@@ -75,6 +77,8 @@ public class ExamResource {
 
     private final ExamAccessService examAccessService;
 
+    private final SubmissionService submissionService;
+
     private final InstanceMessageSendService instanceMessageSendService;
 
     private final AuthorizationCheckService authCheckService;
@@ -83,12 +87,16 @@ public class ExamResource {
 
     private final AssessmentDashboardService assessmentDashboardService;
 
+    private final StudentExamRepository studentExamRepository;
+
     public ExamResource(UserRepository userRepository, CourseRepository courseRepository, ExamService examService, ExamAccessService examAccessService,
-            InstanceMessageSendService instanceMessageSendService, ExamRepository examRepository, AuthorizationCheckService authCheckService, ExamDateService examDateService,
-            TutorParticipationService tutorParticipationService, AssessmentDashboardService assessmentDashboardService, ExamRegistrationService examRegistrationService) {
+            InstanceMessageSendService instanceMessageSendService, ExamRepository examRepository, SubmissionService submissionService, AuthorizationCheckService authCheckService,
+            ExamDateService examDateService, TutorParticipationService tutorParticipationService, AssessmentDashboardService assessmentDashboardService,
+            ExamRegistrationService examRegistrationService, StudentExamRepository studentExamRepository) {
         this.userRepository = userRepository;
         this.courseRepository = courseRepository;
         this.examService = examService;
+        this.submissionService = submissionService;
         this.examDateService = examDateService;
         this.examRegistrationService = examRegistrationService;
         this.examRepository = examRepository;
@@ -97,6 +105,7 @@ public class ExamResource {
         this.authCheckService = authCheckService;
         this.tutorParticipationService = tutorParticipationService;
         this.assessmentDashboardService = assessmentDashboardService;
+        this.studentExamRepository = studentExamRepository;
     }
 
     /**
@@ -230,7 +239,7 @@ public class ExamResource {
             return ResponseEntity.ok(examService.findByIdWithExerciseGroupsAndExercisesElseThrow(examId));
         }
         Exam exam = examRepository.findByIdWithRegisteredUsersElseThrow(examId);
-        examService.setNumberOfRegisteredUsersForExams(Collections.singletonList(exam));
+        examRepository.setNumberOfRegisteredUsersForExams(Collections.singletonList(exam));
 
         exam.getRegisteredUsers().forEach(user -> user.setVisibleRegistrationNumber(user.getRegistrationNumber()));
         return ResponseEntity.ok(exam);
@@ -286,7 +295,7 @@ public class ExamResource {
         if (courseAndExamAccessFailure.isPresent()) {
             return courseAndExamAccessFailure.get();
         }
-        ExamScoresDTO examScoresDTO = examService.getExamScore(examId);
+        ExamScoresDTO examScoresDTO = examService.calculateExamScores(examId);
         log.info("get scores for exam " + examId + " took " + (System.currentTimeMillis() - start) + "ms");
         return ResponseEntity.ok(examScoresDTO);
     }
@@ -398,7 +407,7 @@ public class ExamResource {
         Optional<ResponseEntity<List<Exam>>> courseAccessFailure = examAccessService.checkCourseAccessForTeachingAssistant(courseId);
         return courseAccessFailure.orElseGet(() -> {
             List<Exam> exams = examRepository.findByCourseId(courseId);
-            examService.setNumberOfRegisteredUsersForExams(exams);
+            examRepository.setNumberOfRegisteredUsersForExams(exams);
             return ResponseEntity.ok(exams);
         });
     }
@@ -522,7 +531,7 @@ public class ExamResource {
         // Validate settings of the exam
         examService.validateForStudentExamGeneration(exam);
 
-        List<StudentExam> studentExams = examService.generateStudentExams(exam);
+        List<StudentExam> studentExams = studentExamRepository.generateStudentExams(exam);
 
         // we need to break a cycle for the serialization
         for (StudentExam studentExam : studentExams) {
@@ -558,7 +567,7 @@ public class ExamResource {
         // Validate settings of the exam
         examService.validateForStudentExamGeneration(exam);
 
-        List<StudentExam> studentExams = examService.generateMissingStudentExams(exam);
+        List<StudentExam> studentExams = studentExamRepository.generateMissingStudentExams(exam);
 
         // we need to break a cycle for the serialization
         for (StudentExam studentExam : studentExams) {
@@ -843,7 +852,7 @@ public class ExamResource {
             throw new AccessForbiddenException("You are not allowed to access this resource");
         }
 
-        List<Submission> submissions = examService.getLockedSubmissions(examId, user);
+        List<Submission> submissions = submissionService.getLockedSubmissions(examId, user);
 
         long end = System.currentTimeMillis();
         log.debug("Finished /courses/" + courseId + "/submissions call in " + (end - start) + "ms");

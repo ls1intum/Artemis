@@ -24,10 +24,7 @@ import org.springframework.web.bind.annotation.*;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.plagiarism.modeling.ModelingPlagiarismResult;
-import de.tum.in.www1.artemis.repository.CourseRepository;
-import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
-import de.tum.in.www1.artemis.repository.ModelingExerciseRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.compass.CompassService;
 import de.tum.in.www1.artemis.service.plagiarism.ModelingPlagiarismDetectionService;
@@ -69,7 +66,7 @@ public class ModelingExerciseResource {
 
     private final CompassService compassService;
 
-    private final GradingCriterionService gradingCriterionService;
+    private final GradingCriterionRepository gradingCriterionRepository;
 
     private final ModelingPlagiarismDetectionService modelingPlagiarismDetectionService;
 
@@ -78,7 +75,7 @@ public class ModelingExerciseResource {
     public ModelingExerciseResource(ModelingExerciseRepository modelingExerciseRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
             CourseRepository courseRepository, ModelingExerciseService modelingExerciseService, ModelingExerciseImportService modelingExerciseImportService,
             SubmissionExportService modelingSubmissionExportService, GroupNotificationService groupNotificationService, CompassService compassService,
-            ExerciseService exerciseService, GradingCriterionService gradingCriterionService, ModelingPlagiarismDetectionService modelingPlagiarismDetectionService,
+            ExerciseService exerciseService, GradingCriterionRepository gradingCriterionRepository, ModelingPlagiarismDetectionService modelingPlagiarismDetectionService,
             ExampleSubmissionRepository exampleSubmissionRepository) {
         this.modelingExerciseRepository = modelingExerciseRepository;
         this.modelingExerciseService = modelingExerciseService;
@@ -90,7 +87,7 @@ public class ModelingExerciseResource {
         this.compassService = compassService;
         this.groupNotificationService = groupNotificationService;
         this.exerciseService = exerciseService;
-        this.gradingCriterionService = gradingCriterionService;
+        this.gradingCriterionRepository = gradingCriterionRepository;
         this.modelingPlagiarismDetectionService = modelingPlagiarismDetectionService;
         this.exampleSubmissionRepository = exampleSubmissionRepository;
     }
@@ -195,7 +192,7 @@ public class ModelingExerciseResource {
             return optionalScoreSettingsError.get();
         }
 
-        ModelingExercise modelingExerciseBeforeUpdate = modelingExerciseService.findOne(modelingExercise.getId());
+        ModelingExercise modelingExerciseBeforeUpdate = modelingExerciseRepository.findOne(modelingExercise.getId());
         ModelingExercise updatedModelingExercise = modelingExerciseRepository.save(modelingExercise);
 
         exerciseService.updatePointsInRelatedParticipantScores(modelingExerciseBeforeUpdate, updatedModelingExercise);
@@ -272,7 +269,7 @@ public class ModelingExerciseResource {
     @GetMapping("/modeling-exercises/{exerciseId}/print-statistic")
     @PreAuthorize("hasAnyRole('ADMIN')")
     public ResponseEntity<Void> printCompassStatisticForExercise(@PathVariable Long exerciseId) {
-        ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
+        ModelingExercise modelingExercise = modelingExerciseRepository.findOne(exerciseId);
         compassService.printStatistic(modelingExercise.getId());
         return ResponseEntity.ok().build();
     }
@@ -289,7 +286,7 @@ public class ModelingExerciseResource {
         log.debug("REST request to get ModelingExercise : {}", exerciseId);
         // TODO CZ: provide separate endpoint GET /modeling-exercises/{id}/withExampleSubmissions and load exercise without example submissions here
         Optional<ModelingExercise> modelingExercise = modelingExerciseRepository.findWithEagerExampleSubmissionsById(exerciseId);
-        List<GradingCriterion> gradingCriteria = gradingCriterionService.findByExerciseIdWithEagerGradingCriteria(exerciseId);
+        List<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exerciseId);
         modelingExercise.ifPresent(exercise -> exercise.setGradingCriteria(gradingCriteria));
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(modelingExercise)) {
             return forbidden();

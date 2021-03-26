@@ -4,10 +4,7 @@ import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphTyp
 
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.Collection;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
@@ -174,5 +171,39 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
 
     default Exam findWithExerciseGroupsAndExercisesByIdOrElseThrow(long examId) throws EntityNotFoundException {
         return findWithExerciseGroupsAndExercisesById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
+    }
+
+    /**
+     * Filters the visible exams (excluding the ones that are not visible yet)
+     *
+     * @param exams a set of exams (e.g. the ones of a course)
+     * @return only the visible exams
+     */
+    default Set<Exam> filterVisibleExams(Set<Exam> exams) {
+        return exams.stream().filter(exam -> Boolean.TRUE.equals(exam.isVisibleToStudents())).collect(Collectors.toSet());
+    }
+
+    /**
+     * Sets the transient attribute numberOfRegisteredUsers for all given exams
+     *
+     * @param exams Exams for which to compute and set the number of registered users
+     */
+    default void setNumberOfRegisteredUsersForExams(List<Exam> exams) {
+        List<Long> examIds = exams.stream().map(Exam::getId).collect(Collectors.toList());
+        List<long[]> examIdAndRegisteredUsersCountPairs = countRegisteredUsersByExamIds(examIds);
+        Map<Long, Integer> registeredUsersCountMap = convertListOfCountsIntoMap(examIdAndRegisteredUsersCountPairs);
+        exams.forEach(exam -> exam.setNumberOfRegisteredUsers(registeredUsersCountMap.get(exam.getId()).longValue()));
+    }
+
+    /**
+     * Converts List<[examId, registeredUsersCount]> into Map<examId -> registeredUsersCount>
+     *
+     * @param examIdAndRegisteredUsersCountPairs list of pairs (examId, registeredUsersCount)
+     * @return map of exam id to registered users count
+     */
+    private static Map<Long, Integer> convertListOfCountsIntoMap(List<long[]> examIdAndRegisteredUsersCountPairs) {
+        return examIdAndRegisteredUsersCountPairs.stream().collect(Collectors.toMap(examIdAndRegisteredUsersCountPair -> examIdAndRegisteredUsersCountPair[0], // examId
+                examIdAndRegisteredUsersCountPair -> Math.toIntExact(examIdAndRegisteredUsersCountPair[1]) // registeredUsersCount
+        ));
     }
 }

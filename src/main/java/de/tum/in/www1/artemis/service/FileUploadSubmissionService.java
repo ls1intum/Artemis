@@ -203,7 +203,7 @@ public class FileUploadSubmissionService extends SubmissionService {
      * @return the locked file upload submission
      */
     public FileUploadSubmission lockAndGetFileUploadSubmission(Long submissionId, FileUploadExercise fileUploadExercise, int correctionRound) {
-        FileUploadSubmission fileUploadSubmission = findOneWithEagerResultAndFeedbackAndAssessorAndParticipationResults(submissionId);
+        FileUploadSubmission fileUploadSubmission = fileUploadSubmissionRepository.findOneWithEagerResultAndFeedbackAndAssessorAndParticipationResults(submissionId);
 
         if (fileUploadSubmission.getLatestResult() == null || fileUploadSubmission.getLatestResult().getAssessor() == null) {
             checkSubmissionLockLimit(fileUploadExercise.getCourseViaExerciseGroupOrCourseMember().getId());
@@ -227,40 +227,5 @@ public class FileUploadSubmissionService extends SubmissionService {
                 .orElseThrow(() -> new EntityNotFoundException("File upload submission for exercise " + fileUploadExercise.getId() + " could not be found"));
         lockSubmission(fileUploadSubmission, correctionRound);
         return fileUploadSubmission;
-    }
-
-    /**
-     * Get the file upload submission with the given id from the database. The submission is loaded together with its result, the feedback of the result and the assessor of the
-     * result. Throws an EntityNotFoundException if no submission could be found for the given id.
-     *
-     * @param submissionId the id of the submission that should be loaded from the database
-     * @return the file upload submission with the given id
-     */
-    public FileUploadSubmission findOneWithEagerResultAndAssessorAndFeedback(Long submissionId) {
-        return fileUploadSubmissionRepository.findByIdWithEagerResultAndAssessorAndFeedback(submissionId)
-                .orElseThrow(() -> new EntityNotFoundException("File Upload submission with id \"" + submissionId + "\" does not exist"));
-    }
-
-    /**
-     * Get the file upload submission with the given id from the database. The submission is loaded together with its result, the feedback of the result, the assessor of the result,
-     * its participation and all results of the participation. Throws an EntityNotFoundException if no submission could be found for the given id.
-     *
-     * @param submissionId the id of the submission that should be loaded from the database
-     * @return the file upload submission with the given id
-     */
-    private FileUploadSubmission findOneWithEagerResultAndFeedbackAndAssessorAndParticipationResults(Long submissionId) {
-        return fileUploadSubmissionRepository.findWithEagerResultAndFeedbackAndAssessorAndParticipationResultsById(submissionId)
-                .orElseThrow(() -> new EntityNotFoundException("File Upload submission with id \"" + submissionId + "\" does not exist"));
-    }
-
-    /**
-     * Get the file upload submission with the given id from the database. Throws an EntityNotFoundException if no submission could be found for the given id.
-     *
-     * @param submissionId the id of the submission that should be loaded from the database
-     * @return the file upload submission with the given id
-     */
-    public FileUploadSubmission findOne(Long submissionId) {
-        return fileUploadSubmissionRepository.findById(submissionId)
-                .orElseThrow(() -> new EntityNotFoundException("File Upload submission with id \"" + submissionId + "\" does not exist"));
     }
 }

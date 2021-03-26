@@ -23,13 +23,13 @@ import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.*;
 class SimilarityDetectorTest {
 
     @Mock
-    UMLClassDiagram classDiagram;
+    private UMLClassDiagram classDiagram;
 
     @Mock
-    UMLActivityDiagram activityDiagram;
+    private UMLActivityDiagram activityDiagram;
 
     @Mock
-    ModelIndex modelIndex;
+    private ModelIndex modelIndex;
 
     @Test
     void analyzeSimilarity_ClassDiagram() {

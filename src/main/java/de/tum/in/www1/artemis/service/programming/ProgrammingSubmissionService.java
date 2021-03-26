@@ -677,18 +677,6 @@ public class ProgrammingSubmissionService extends SubmissionService {
     }
 
     /**
-     * Get the programming submission with the given id from the database. The submission is loaded together with exercise it belongs to, its result, the feedback of the result and the assessor of the
-     * result. Throws an EntityNotFoundException if no submission could be found for the given id.
-     *
-     * @param submissionId the id of the submission that should be loaded from the database
-     * @return the programming submission with the given id
-     */
-    public ProgrammingSubmission findByIdWithEagerResultsFeedbacksAssessor(long submissionId) {
-        return programmingSubmissionRepository.findWithEagerResultsFeedbacksAssessorById(submissionId)
-                .orElseThrow(() -> new EntityNotFoundException("Programming submission with id \"" + submissionId + "\" does not exist"));
-    }
-
-    /**
      * Get the programming submission with the given ID from the database and lock the submission to prevent other tutors from receiving and assessing it.
      *
      * @param submissionId the id of the programming submission

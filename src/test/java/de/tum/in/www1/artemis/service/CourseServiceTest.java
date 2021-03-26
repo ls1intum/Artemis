@@ -31,13 +31,13 @@ public class CourseServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
     private UserRepository userRepository;
 
     @Autowired
-    SubmissionRepository submissionRepository;
+    private SubmissionRepository submissionRepository;
 
     @Autowired
-    StudentParticipationRepository studentParticipationRepo;
+    private StudentParticipationRepository studentParticipationRepo;
 
     @Autowired
-    ExerciseRepository exerciseRepo;
+    private ExerciseRepository exerciseRepo;
 
     @AfterEach
     public void tearDown() {
