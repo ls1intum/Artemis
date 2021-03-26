@@ -27,6 +27,7 @@ public interface ProgrammingSubmissionRepository extends JpaRepository<Programmi
             select s from ProgrammingSubmission s
             left join fetch s.results
             where s.type <> ('ILLEGAL')
+            and s.participation.id = :#{#participationId}
             order by s.submissionDate desc
             """)
     Optional<ProgrammingSubmission> findFirstByParticipationIdOrderByLegalSubmissionDateDesc(Long participationId);
