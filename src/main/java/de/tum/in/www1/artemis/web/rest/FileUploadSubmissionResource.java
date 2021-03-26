@@ -21,10 +21,7 @@ import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.exception.EmptyFileException;
-import de.tum.in.www1.artemis.repository.ExerciseRepository;
-import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
-import de.tum.in.www1.artemis.repository.SubmissionRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.exam.ExamSubmissionService;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
@@ -45,20 +42,24 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
 
     private final FileUploadSubmissionService fileUploadSubmissionService;
 
-    private final FileUploadExerciseService fileUploadExerciseService;
+    private final FileUploadSubmissionRepository fileUploadSubmissionRepository;
 
-    private final GradingCriterionService gradingCriterionService;
+    private final FileUploadExerciseRepository fileUploadExerciseRepository;
+
+    private final GradingCriterionRepository gradingCriterionRepository;
 
     private final ExamSubmissionService examSubmissionService;
 
     public FileUploadSubmissionResource(SubmissionRepository submissionRepository, ResultService resultService, FileUploadSubmissionService fileUploadSubmissionService,
-            FileUploadExerciseService fileUploadExerciseService, AuthorizationCheckService authCheckService, UserRepository userRepository, ExerciseRepository exerciseRepository,
-            GradingCriterionService gradingCriterionService, ExamSubmissionService examSubmissionService, StudentParticipationRepository studentParticipationRepository) {
+            FileUploadExerciseRepository fileUploadExerciseRepository, AuthorizationCheckService authCheckService, UserRepository userRepository,
+            ExerciseRepository exerciseRepository, GradingCriterionRepository gradingCriterionRepository, ExamSubmissionService examSubmissionService,
+            StudentParticipationRepository studentParticipationRepository, FileUploadSubmissionRepository fileUploadSubmissionRepository) {
         super(submissionRepository, resultService, authCheckService, userRepository, exerciseRepository, fileUploadSubmissionService, studentParticipationRepository);
         this.fileUploadSubmissionService = fileUploadSubmissionService;
-        this.fileUploadExerciseService = fileUploadExerciseService;
-        this.gradingCriterionService = gradingCriterionService;
+        this.fileUploadExerciseRepository = fileUploadExerciseRepository;
+        this.gradingCriterionRepository = gradingCriterionRepository;
         this.examSubmissionService = examSubmissionService;
+        this.fileUploadSubmissionRepository = fileUploadSubmissionRepository;
     }
 
     /**
@@ -79,7 +80,7 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
         log.debug("REST request to submit new FileUploadSubmission : {}", fileUploadSubmission);
         long start = System.currentTimeMillis();
 
-        final var exercise = fileUploadExerciseService.findOne(exerciseId);
+        final var exercise = fileUploadExerciseRepository.findOne(exerciseId);
         final User user = userRepository.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastStudentForExercise(exercise, user)) {
             return forbidden();
@@ -157,7 +158,7 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
     public ResponseEntity<FileUploadSubmission> getFileUploadSubmission(@PathVariable Long submissionId,
             @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound, @RequestParam(value = "resultId", required = false) Long resultId) {
         log.debug("REST request to get FileUploadSubmission with id: {}", submissionId);
-        var fileUploadSubmission = fileUploadSubmissionService.findOne(submissionId);
+        var fileUploadSubmission = fileUploadSubmissionRepository.findOne(submissionId);
         var studentParticipation = (StudentParticipation) fileUploadSubmission.getParticipation();
         var fileUploadExercise = (FileUploadExercise) studentParticipation.getExercise();
 
@@ -185,13 +186,13 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
 
         // Make sure the exercise is connected to the participation in the json response
         studentParticipation.setExercise(fileUploadExercise);
-        var gradingCriteria = gradingCriterionService.findByExerciseIdWithEagerGradingCriteria(fileUploadExercise.getId());
+        var gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(fileUploadExercise.getId());
         fileUploadExercise.setGradingCriteria(gradingCriteria);
         fileUploadSubmission.getParticipation().getExercise().setGradingCriteria(gradingCriteria);
 
         // prepare fileUploadSubmission for response
-        this.fileUploadSubmissionService.hideDetails(fileUploadSubmission, user);
-        this.submissionService.removeNotNeededResults(fileUploadSubmission, correctionRound, resultId);
+        fileUploadSubmissionService.hideDetails(fileUploadSubmission, user);
+        fileUploadSubmission.removeNotNeededResults(correctionRound, resultId);
         return ResponseEntity.ok(fileUploadSubmission);
     }
 
@@ -229,7 +230,7 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
             @RequestParam(value = "lock", defaultValue = "false") boolean lockSubmission, @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound) {
         log.debug("REST request to get a file upload submission without assessment");
         final Exercise fileUploadExercise = exerciseRepository.findByIdElseThrow(exerciseId);
-        List<GradingCriterion> gradingCriteria = gradingCriterionService.findByExerciseIdWithEagerGradingCriteria(exerciseId);
+        List<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exerciseId);
         fileUploadExercise.setGradingCriteria(gradingCriteria);
         final User user = userRepository.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(fileUploadExercise, user)) {
