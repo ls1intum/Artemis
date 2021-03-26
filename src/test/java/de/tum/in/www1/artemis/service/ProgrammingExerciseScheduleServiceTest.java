@@ -131,7 +131,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
         // Lock student repository must be called once per participation.
         verifyLockStudentRepositoryOperation(false);
         verify(programmingSubmissionService, never()).triggerInstructorBuildForExercise(programmingExercise.getId());
-        // Update all scores should have been triggered.
+        // Update all scores should not have been triggered.
         verify(programmingExerciseGradingService, never()).updateAllResults(programmingExercise);
     }
 

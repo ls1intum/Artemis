@@ -186,11 +186,14 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
     }
 
     private void scheduleCourseExercise(ProgrammingExercise exercise) {
+        if (!SecurityUtils.isAuthenticated()) {
+            SecurityUtils.setAuthorizationObject();
+        }
+
         // For any course exercise that needsToBeScheduled (dueDate and/or manual assessment)
         if (exercise.getDueDate() != null && ZonedDateTime.now().isBefore(exercise.getDueDate())) {
             boolean updateScores;
             if (exercise.getBuildAndTestStudentSubmissionsAfterDueDate() == null) {
-                SecurityUtils.setAuthorizationObject();
                 // no rebuild date is set but test cases marked with AFTER_DUE_DATE exist: they have to become visible by recalculation of the scores
                 updateScores = programmingExerciseTestCaseRepository.countAfterDueDateByExerciseId(exercise.getId()) > 0;
             }
@@ -210,6 +213,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
         else {
             scheduleService.cancelScheduledTaskForLifecycle(exercise.getId(), ExerciseLifecycle.DUE);
         }
+
         // For exercises with buildAndTestAfterDueDate
         if (exercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null && ZonedDateTime.now().isBefore(exercise.getBuildAndTestStudentSubmissionsAfterDueDate())) {
             scheduleService.scheduleTask(exercise, ExerciseLifecycle.BUILD_AND_TEST_AFTER_DUE_DATE, buildAndTestRunnableForExercise(exercise));
