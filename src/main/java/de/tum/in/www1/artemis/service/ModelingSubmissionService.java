@@ -60,7 +60,7 @@ public class ModelingSubmissionService extends SubmissionService {
      * @return the locked modeling submission
      */
     public ModelingSubmission lockAndGetModelingSubmission(Long submissionId, ModelingExercise modelingExercise, int correctionRound) {
-        ModelingSubmission modelingSubmission = findOneWithEagerResultAndFeedbackAndAssessorAndParticipationResults(submissionId);
+        ModelingSubmission modelingSubmission = modelingSubmissionRepository.findOneWithEagerResultAndFeedbackAndAssessorAndParticipationResults(submissionId);
 
         if (modelingSubmission.getLatestResult() == null || modelingSubmission.getLatestResult().getAssessor() == null) {
             checkSubmissionLockLimit(modelingExercise.getCourseViaExerciseGroupOrCourseMember().getId());
@@ -95,7 +95,7 @@ public class ModelingSubmissionService extends SubmissionService {
             Collections.shuffle(modelsWaitingForAssessment);
 
             for (Long submissionId : modelsWaitingForAssessment) {
-                Optional<ModelingSubmission> submission = modelingSubmissionRepository.findWithEagerResultAndFeedbackAndAssessorAndParticipationResultsById(submissionId);
+                Optional<ModelingSubmission> submission = modelingSubmissionRepository.findWithResultsFeedbacksAssessorAndParticipationResultsById(submissionId);
                 if (submission.isPresent()) {
                     return submission;
                 }
@@ -240,52 +240,5 @@ public class ModelingSubmissionService extends SubmissionService {
         }
 
         return modelingSubmission;
-    }
-
-    /**
-     * Adds a model to compass service to include it in the automatic grading process.
-     *
-     * @param modelingSubmission the submission which contains the model
-     * @param modelingExercise   the exercise the submission belongs to
-     */
-    public void notifyCompass(ModelingSubmission modelingSubmission, ModelingExercise modelingExercise) {
-        if (compassService.isSupported(modelingExercise)) {
-            this.compassService.addModel(modelingExercise.getId(), modelingSubmission.getId(), modelingSubmission.getModel());
-        }
-    }
-
-    /**
-     * Get the modeling submission with the given id from the database. Throws an EntityNotFoundException if no submission could be found for the given id.
-     *
-     * @param submissionId the id of the submission that should be loaded from the database
-     * @return the modeling submission with the given id
-     */
-    public ModelingSubmission findOne(Long submissionId) {
-        return modelingSubmissionRepository.findById(submissionId)
-                .orElseThrow(() -> new EntityNotFoundException("Modeling submission with id \"" + submissionId + "\" does not exist"));
-    }
-
-    /**
-     * Get the modeling submission with the given id from the database. The submission is loaded together with its result, the feedback of the result and the assessor of the
-     * result. Throws an EntityNotFoundException if no submission could be found for the given id.
-     *
-     * @param submissionId the id of the submission that should be loaded from the database
-     * @return the modeling submission with the given id
-     */
-    public ModelingSubmission findOneWithEagerResultAndFeedback(Long submissionId) {
-        return modelingSubmissionRepository.findByIdWithEagerResultAndAssessorAndFeedback(submissionId)
-                .orElseThrow(() -> new EntityNotFoundException("Modeling submission with id \"" + submissionId + "\" does not exist"));
-    }
-
-    /**
-     * Get the modeling submission with the given id from the database. The submission is loaded together with its result, the feedback of the result, the assessor of the result,
-     * its participation and all results of the participation. Throws an EntityNotFoundException if no submission could be found for the given id.
-     *
-     * @param submissionId the id of the submission that should be loaded from the database
-     * @return the modeling submission with the given id
-     */
-    private ModelingSubmission findOneWithEagerResultAndFeedbackAndAssessorAndParticipationResults(Long submissionId) {
-        return modelingSubmissionRepository.findWithEagerResultAndFeedbackAndAssessorAndParticipationResultsById(submissionId)
-                .orElseThrow(() -> new EntityNotFoundException("Modeling submission with id \"" + submissionId + "\" does not exist"));
     }
 }

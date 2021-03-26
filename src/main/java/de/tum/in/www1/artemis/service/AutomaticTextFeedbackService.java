@@ -16,20 +16,21 @@ import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
+import de.tum.in.www1.artemis.repository.FeedbackRepository;
 import de.tum.in.www1.artemis.repository.TextBlockRepository;
 
 @Service
 @Profile("athene")
 public class AutomaticTextFeedbackService {
 
-    private final FeedbackService feedbackService;
+    private final FeedbackRepository feedbackRepository;
 
     private static final double DISTANCE_THRESHOLD = 1;
 
     private final TextBlockRepository textBlockRepository;
 
-    public AutomaticTextFeedbackService(FeedbackService feedbackService, TextBlockRepository textBlockRepository) {
-        this.feedbackService = feedbackService;
+    public AutomaticTextFeedbackService(FeedbackRepository feedbackRepository, TextBlockRepository textBlockRepository) {
+        this.feedbackRepository = feedbackRepository;
         this.textBlockRepository = textBlockRepository;
     }
 
@@ -54,7 +55,7 @@ public class AutomaticTextFeedbackService {
             if (cluster != null) {
                 // Find all Feedbacks for other Blocks in Cluster.
                 final List<TextBlock> allBlocksInCluster = cluster.getBlocks().parallelStream().filter(elem -> !elem.equals(block)).collect(toList());
-                final Map<String, Feedback> feedbackForTextExerciseInCluster = feedbackService.getFeedbackForTextExerciseInCluster(cluster);
+                final Map<String, Feedback> feedbackForTextExerciseInCluster = feedbackRepository.getFeedbackForTextExerciseInCluster(cluster);
 
                 if (feedbackForTextExerciseInCluster.size() != 0) {
                     final Optional<TextBlock> mostSimilarBlockInClusterWithFeedback = allBlocksInCluster.parallelStream()

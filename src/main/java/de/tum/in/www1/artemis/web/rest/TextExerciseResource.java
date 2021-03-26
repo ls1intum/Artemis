@@ -85,7 +85,7 @@ public class TextExerciseResource {
 
     private final GroupNotificationService groupNotificationService;
 
-    private final GradingCriterionService gradingCriterionService;
+    private final GradingCriterionRepository gradingCriterionRepository;
 
     private final ExerciseGroupRepository exerciseGroupRepository;
 
@@ -99,7 +99,7 @@ public class TextExerciseResource {
             UserRepository userRepository, AuthorizationCheckService authCheckService, CourseService courseService, StudentParticipationRepository studentParticipationRepository,
             ResultRepository resultRepository, PlagiarismService plagiarismService, GroupNotificationService groupNotificationService,
             TextExerciseImportService textExerciseImportService, TextSubmissionExportService textSubmissionExportService, ExampleSubmissionRepository exampleSubmissionRepository,
-            ExerciseService exerciseService, GradingCriterionService gradingCriterionService, TextBlockRepository textBlockRepository,
+            ExerciseService exerciseService, GradingCriterionRepository gradingCriterionRepository, TextBlockRepository textBlockRepository,
             ExerciseGroupRepository exerciseGroupRepository, InstanceMessageSendService instanceMessageSendService, TextPlagiarismDetectionService textPlagiarismDetectionService,
             CourseRepository courseRepository) {
         this.textAssessmentService = textAssessmentService;
@@ -117,7 +117,7 @@ public class TextExerciseResource {
         this.groupNotificationService = groupNotificationService;
         this.exampleSubmissionRepository = exampleSubmissionRepository;
         this.exerciseService = exerciseService;
-        this.gradingCriterionService = gradingCriterionService;
+        this.gradingCriterionRepository = gradingCriterionRepository;
         this.exerciseGroupRepository = exerciseGroupRepository;
         this.instanceMessageSendService = instanceMessageSendService;
         this.textPlagiarismDetectionService = textPlagiarismDetectionService;
@@ -260,7 +260,7 @@ public class TextExerciseResource {
             // not required in the returned json body
             exercise.setStudentParticipations(null);
             exercise.setCourse(null);
-            List<GradingCriterion> gradingCriteria = gradingCriterionService.findByExerciseIdWithEagerGradingCriteria(exercise.getId());
+            List<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exercise.getId());
             exercise.setGradingCriteria(gradingCriteria);
 
         }
@@ -304,7 +304,7 @@ public class TextExerciseResource {
         }
 
         Set<ExampleSubmission> exampleSubmissions = this.exampleSubmissionRepository.findAllWithResultByExerciseId(exerciseId);
-        List<GradingCriterion> gradingCriteria = gradingCriterionService.findByExerciseIdWithEagerGradingCriteria(exerciseId);
+        List<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exerciseId);
         textExercise.setGradingCriteria(gradingCriteria);
         textExercise.setExampleSubmissions(exampleSubmissions);
 

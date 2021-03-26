@@ -79,8 +79,6 @@ public class CourseResource {
 
     private final CourseService courseService;
 
-    private final StudentParticipationRepository studentParticipationRepository;
-
     private final AuthorizationCheckService authCheckService;
 
     private final ExerciseService exerciseService;
@@ -117,15 +115,14 @@ public class CourseResource {
 
     private final ResultRepository resultRepository;
 
-    public CourseResource(UserRepository userRepository, CourseService courseService, StudentParticipationRepository studentParticipationRepository,
-            CourseRepository courseRepository, ExerciseService exerciseService, AuthorizationCheckService authCheckService, TutorParticipationService tutorParticipationService,
-            Environment env, ArtemisAuthenticationProvider artemisAuthenticationProvider, ComplaintRepository complaintRepository,
-            ComplaintResponseRepository complaintResponseRepository, SubmissionService submissionService, ComplaintService complaintService,
-            TutorLeaderboardService tutorLeaderboardService, ProgrammingExerciseRepository programmingExerciseRepository, AuditEventRepository auditEventRepository,
+    public CourseResource(UserRepository userRepository, CourseService courseService, CourseRepository courseRepository, ExerciseService exerciseService,
+            AuthorizationCheckService authCheckService, TutorParticipationService tutorParticipationService, Environment env,
+            ArtemisAuthenticationProvider artemisAuthenticationProvider, ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository,
+            SubmissionService submissionService, ComplaintService complaintService, TutorLeaderboardService tutorLeaderboardService,
+            ProgrammingExerciseRepository programmingExerciseRepository, AuditEventRepository auditEventRepository,
             Optional<VcsUserManagementService> optionalVcsUserManagementService, AssessmentDashboardService assessmentDashboardService, ExerciseRepository exerciseRepository,
             SubmissionRepository submissionRepository, ResultRepository resultRepository, Optional<CIUserManagementService> optionalCiUserManagementService) {
         this.courseService = courseService;
-        this.studentParticipationRepository = studentParticipationRepository;
         this.courseRepository = courseRepository;
         this.exerciseService = exerciseService;
         this.authCheckService = authCheckService;
@@ -682,7 +679,7 @@ public class CourseResource {
             return forbidden();
         }
 
-        return ResponseUtil.wrapOrNotFound(Optional.ofNullable(course));
+        return ResponseUtil.wrapOrNotFound(Optional.of(course));
     }
 
     /**

@@ -103,7 +103,7 @@ public class ProgrammingExerciseResource {
 
     private final StaticCodeAnalysisService staticCodeAnalysisService;
 
-    private final GradingCriterionService gradingCriterionService;
+    private final GradingCriterionRepository gradingCriterionRepository;
 
     private final ProgrammingLanguageFeatureService programmingLanguageFeatureService;
 
@@ -132,7 +132,7 @@ public class ProgrammingExerciseResource {
             ExerciseService exerciseService, ProgrammingExerciseService programmingExerciseService, StudentParticipationRepository studentParticipationRepository,
             PlagiarismService plagiarismService, ProgrammingExerciseImportService programmingExerciseImportService,
             ProgrammingExerciseExportService programmingExerciseExportService, ExerciseGroupRepository exerciseGroupRepository, StaticCodeAnalysisService staticCodeAnalysisService,
-            GradingCriterionService gradingCriterionService, ProgrammingLanguageFeatureService programmingLanguageFeatureService, TemplateUpgradePolicy templateUpgradePolicy,
+            GradingCriterionRepository gradingCriterionRepository, ProgrammingLanguageFeatureService programmingLanguageFeatureService, TemplateUpgradePolicy templateUpgradePolicy,
             CourseRepository courseRepository) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.userRepository = userRepository;
@@ -148,7 +148,7 @@ public class ProgrammingExerciseResource {
         this.programmingExerciseExportService = programmingExerciseExportService;
         this.exerciseGroupRepository = exerciseGroupRepository;
         this.staticCodeAnalysisService = staticCodeAnalysisService;
-        this.gradingCriterionService = gradingCriterionService;
+        this.gradingCriterionRepository = gradingCriterionRepository;
         this.programmingLanguageFeatureService = programmingLanguageFeatureService;
         this.templateUpgradePolicy = templateUpgradePolicy;
         this.courseRepository = courseRepository;
@@ -797,7 +797,7 @@ public class ProgrammingExerciseResource {
         ProgrammingExercise programmingExercise = optionalProgrammingExercise.get();
 
         // Fetch grading criterion into exercise of participation
-        List<GradingCriterion> gradingCriteria = gradingCriterionService.findByExerciseIdWithEagerGradingCriteria(programmingExercise.getId());
+        List<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(programmingExercise.getId());
         programmingExercise.setGradingCriteria(gradingCriteria);
 
         // If the exercise belongs to an exam, only instructors and admins are allowed to access it, otherwise also TA have access
