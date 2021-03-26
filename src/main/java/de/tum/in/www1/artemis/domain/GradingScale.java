@@ -6,6 +6,7 @@ import javax.persistence.*;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
+import org.springframework.cloud.cloudfoundry.com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import org.springframework.cloud.cloudfoundry.com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.in.www1.artemis.domain.exam.Exam;
@@ -29,9 +30,9 @@ public class GradingScale extends DomainObject {
     @JoinColumn(name = "exam_id")
     private Exam exam;
 
-    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
+    @OneToMany(mappedBy = "gradingScale", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    @OrderBy("lowerBoundPercentage ASC")
+    @JsonIgnoreProperties("gradingScale")
     private Set<GradeStep> gradeSteps;
 
     public GradeType getGradeType() {

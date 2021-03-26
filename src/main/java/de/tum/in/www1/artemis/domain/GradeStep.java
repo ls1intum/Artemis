@@ -1,8 +1,6 @@
 package de.tum.in.www1.artemis.domain;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Table;
+import javax.persistence.*;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
@@ -13,6 +11,9 @@ import org.springframework.cloud.cloudfoundry.com.fasterxml.jackson.annotation.J
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class GradeStep extends DomainObject {
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    private GradingScale gradingScale;
 
     @Column(name = "lower_bound_percentage")
     private double lowerBoundPercentage;
@@ -31,6 +32,14 @@ public class GradeStep extends DomainObject {
 
     @Column(name = "is_passing_grade")
     private boolean isPassingGrade;
+
+    public GradingScale getGradingScale() {
+        return gradingScale;
+    }
+
+    public void setGradingScale(GradingScale gradingScale) {
+        this.gradingScale = gradingScale;
+    }
 
     public double getLowerBoundPercentage() {
         return lowerBoundPercentage;
