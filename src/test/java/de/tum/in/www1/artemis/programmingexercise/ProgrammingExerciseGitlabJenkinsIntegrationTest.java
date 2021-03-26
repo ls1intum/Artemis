@@ -120,7 +120,7 @@ class ProgrammingExerciseGitlabJenkinsIntegrationTest extends AbstractSpringInte
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void importExercise_sca_deactivated() throws Exception {
-        programmingExerciseTestService.testImportProgrammingExercise_scaChange_deactivated();
+        programmingExerciseTestService.testImportProgrammingExercise_scaChange();
     }
 
     @Test
