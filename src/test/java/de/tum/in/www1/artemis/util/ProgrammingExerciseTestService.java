@@ -43,9 +43,7 @@ import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.programmingexercise.MockDelegate;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.AuthoritiesConstants;
-import de.tum.in.www1.artemis.service.CourseService;
 import de.tum.in.www1.artemis.service.ParticipationService;
-import de.tum.in.www1.artemis.service.TeamService;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
@@ -74,9 +72,6 @@ public class ProgrammingExerciseTestService {
 
     @Autowired
     private ProgrammingExerciseRepository programmingExerciseRepository;
-
-    @Autowired
-    private TeamService teamService;
 
     @Autowired
     private TeamRepository teamRepository;
@@ -108,9 +103,6 @@ public class ProgrammingExerciseTestService {
 
     @Value("${artemis.lti.user-prefix-edx:#{null}}")
     private Optional<String> userPrefixEdx;
-
-    @Autowired
-    private CourseService courseService;
 
     public Course course;
 
@@ -146,9 +138,6 @@ public class ProgrammingExerciseTestService {
 
     private VersionControlService versionControlService;
 
-    // not needed right now but maybe in the future
-    private ContinuousIntegrationService continuousIntegrationService;
-
     private MockDelegate mockDelegate;
 
     public List<User> setupTestUsers(int numberOfStudents, int numberOfTutors, int numberOfInstructors) {
@@ -158,7 +147,6 @@ public class ProgrammingExerciseTestService {
     public void setup(MockDelegate mockDelegate, VersionControlService versionControlService, ContinuousIntegrationService continuousIntegrationService) throws Exception {
         this.mockDelegate = mockDelegate;
         this.versionControlService = versionControlService;
-        this.continuousIntegrationService = continuousIntegrationService;
 
         course = database.addEmptyCourse();
         ExerciseGroup exerciseGroup = database.addExerciseGroupWithExamAndCourse(true);
@@ -523,7 +511,7 @@ public class ProgrammingExerciseTestService {
                 ProgrammingExercise.class, params, HttpStatus.OK);
 
         // Assertions
-        assertThat(!exerciseToBeImported.isStaticCodeAnalysisEnabled());
+        assertThat(exerciseToBeImported.isStaticCodeAnalysisEnabled()).isFalse();
         assertThat(exerciseToBeImported.getStaticCodeAnalysisCategories()).isEmpty();
         assertThat(exerciseToBeImported.getMaxStaticCodeAnalysisPenalty()).isNull();
     }
@@ -551,7 +539,7 @@ public class ProgrammingExerciseTestService {
 
         // Assertions
         var staticCodeAnalysisCategories = staticCodeAnalysisCategoryRepository.findByExerciseId(exerciseToBeImported.getId());
-        assertThat(exerciseToBeImported.isStaticCodeAnalysisEnabled());
+        assertThat(exerciseToBeImported.isStaticCodeAnalysisEnabled()).isTrue();
         assertThat(staticCodeAnalysisCategories).usingRecursiveFieldByFieldElementComparator().usingElementComparatorOnFields("name", "state", "penalty", "maxPenalty")
                 .isEqualTo(staticCodeAnalysisDefaultConfigurations.get(exercise.getProgrammingLanguage()));
         assertThat(exerciseToBeImported.getMaxStaticCodeAnalysisPenalty()).isEqualTo(80);

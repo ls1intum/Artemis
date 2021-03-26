@@ -25,48 +25,37 @@ import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.service.exam.ExamQuizService;
-import de.tum.in.www1.artemis.service.exam.ExamService;
 import de.tum.in.www1.artemis.service.exam.StudentExamService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
 public class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
-    ExamQuizService examQuizService;
+    private StudentExamService studentExamService;
 
     @Autowired
-    ExamService examService;
+    private ExamRepository examRepository;
 
     @Autowired
-    QuizSubmissionService quizSubmissionService;
+    private StudentParticipationRepository studentParticipationRepository;
 
     @Autowired
-    StudentExamService studentExamService;
+    private QuizSubmissionRepository quizSubmissionRepository;
 
     @Autowired
-    ExamRepository examRepository;
+    private ExerciseGroupRepository exerciseGroupRepository;
 
     @Autowired
-    StudentParticipationRepository studentParticipationRepository;
+    private QuizExerciseService quizExerciseService;
 
     @Autowired
-    QuizSubmissionRepository quizSubmissionRepository;
+    private UserRepository userRepository;
 
     @Autowired
-    ExerciseGroupRepository exerciseGroupRepository;
+    private QuizExerciseRepository quizExerciseRepository;
 
     @Autowired
-    QuizExerciseService quizExerciseService;
-
-    @Autowired
-    UserRepository userRepository;
-
-    @Autowired
-    QuizExerciseRepository quizExerciseRepository;
-
-    @Autowired
-    StudentExamRepository studentExamRepository;
+    private StudentExamRepository studentExamRepository;
 
     private QuizExercise quizExercise;
 
