@@ -142,10 +142,10 @@ public class LectureResource {
 
         Set<Lecture> lectures;
         if (withLectureUnits) {
-            lectures = lectureService.findAllByCourseIdWithAttachmentsAndLectureUnits(courseId);
+            lectures = lectureRepository.findAllByCourseIdWithAttachmentsAndLectureUnits(courseId);
         }
         else {
-            lectures = lectureService.findAllByCourseIdWithAttachments(courseId);
+            lectures = lectureRepository.findAllByCourseIdWithAttachments(courseId);
         }
 
         return ResponseEntity.ok().body(lectures);
