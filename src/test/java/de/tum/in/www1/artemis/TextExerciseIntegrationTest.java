@@ -626,4 +626,24 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         assertThat(comparison.getStatus()).isEqualTo(PlagiarismStatus.NONE);
         assertThat(comparison.getMatches().size()).isEqualTo(1);
     }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testCheckPlagiarismIdenticalShortTexts() throws Exception {
+        final Course course = database.addCourseWithOneReleasedTextExercise();
+        TextExercise textExercise = textExerciseRepository.findByCourseId(course.getId()).get(0);
+
+        var shortText = "Lorem Ipsum Foo Bar";
+        database.createSubmissionForTextExercise(textExercise, database.getUserByLogin("student1"), shortText);
+        database.createSubmissionForTextExercise(textExercise, database.getUserByLogin("student2"), shortText);
+
+        // Use default options for plagiarism detection
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("similarityThreshold", "50");
+        params.add("minimumScore", "0");
+        params.add("minimumSize", "5");
+
+        TextPlagiarismResult result = request.get("/api/text-exercises/" + textExercise.getId() + "/check-plagiarism", HttpStatus.OK, TextPlagiarismResult.class, params);
+        assertThat(result.getComparisons()).hasSize(0);
+    }
 }
