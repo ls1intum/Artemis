@@ -21,10 +21,23 @@ public interface ParticipationRepository extends JpaRepository<Participation, Lo
     @Query("select distinct p from Participation p left join fetch p.submissions left join fetch p.results where p.id = :#{#participationId}")
     Participation getOneWithEagerSubmissionsAndResults(@Param("participationId") Long participationId);
 
-    @Query("select p from Participation p left join fetch p.submissions s left join fetch s.results r where p.id = :participationId and (s.id = (select max(ps.id) from p.submissions ps where ps.type not in ('ILLEGAL')) or s.id = null)")
+    @Query("""
+            SELECT p FROM Participation p
+            LEFT JOIN FETCH p.submissions s
+            LEFT JOIN FETCH s.results r
+            WHERE p.id = :participationId
+                AND (s.id = (SELECT max(ps.id) FROM p.submissions ps
+                    WHERE ps.type <> 'ILLEGAL')
+                OR s.id = NULL)
+            """)
     Optional<Participation> findByIdWithLatestLegalSubmissionAndResult(@Param("participationId") Long participationId);
 
-    @Query("select p from Participation p left join fetch p.submissions s where p.id = :#{#participationId} and s.type not in ('ILLEGAL')")
+    @Query("""
+            SELECT p FROM Participation p
+            LEFT JOIN FETCH p.submissions s
+            WHERE p.id = :#{#participationId}
+                AND s.type <> 'ILLEGAL'
+            """)
     Optional<Participation> findWithEagerLegalSubmissionsById(Long participationId);
 
     @NotNull

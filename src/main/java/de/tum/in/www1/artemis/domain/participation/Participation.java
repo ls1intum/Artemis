@@ -206,23 +206,23 @@ public abstract class Participation extends DomainObject implements Participatio
             return null;
         }
 
-        List<Result> sortedResultsWithCompletionDate = results.stream().filter(r -> r.getCompletionDate() != null)
+        // Filter out results that belong to an illegal submission (if the submission exists).
+        List<Result> legalResults = results.stream().filter(result -> result.getSubmission() == null || !result.getSubmission().getType().equals(SubmissionType.ILLEGAL))
+                .collect(Collectors.toList());
+
+        List<Result> sortedLegalResultsWithCompletionDate = legalResults.stream().filter(r -> r.getCompletionDate() != null)
                 .sorted((r1, r2) -> r2.getCompletionDate().compareTo(r1.getCompletionDate())).collect(Collectors.toList());
 
-        // Filter out results that belong to an illegal submission (if the submission exists).
-        List<Result> sortedLegalResults = sortedResultsWithCompletionDate.stream()
-                .filter(result -> result.getSubmission() == null || !result.getSubmission().getType().equals(SubmissionType.ILLEGAL)).collect(Collectors.toList());
-
-        if (sortedLegalResults.size() == 0) {
+        if (sortedLegalResultsWithCompletionDate.size() == 0) {
             return null;
         }
-        return sortedLegalResults.get(0);
+        return sortedLegalResultsWithCompletionDate.get(0);
     }
 
     // TODO: implement a method Result findLatestResultBeforeDueDate(ZonedDateTime dueDate)
 
     /**
-     * Finds the latest valid submission for the participation. Valid means that INVALID submissions (exam exercise submissions after the end date)
+     * Finds the latest legal submission for the participation. Legal means that ILLEGAL submissions (exam exercise submissions after the end date)
      * are not used. Checks if the participation has any submissions. If there are no submissions, return null. Otherwise sort the submissions
      * by submission date and return the first. WARNING: The submissions of the participation might not be loaded because of Hibernate and therefore, the function might return
      * null, although the participation has submissions. This might not be high-performance, so use it at your own risk.
@@ -236,8 +236,8 @@ public abstract class Participation extends DomainObject implements Participatio
             return Optional.empty();
         }
 
-        Set<Submission> validSubmissions = submissions.stream().filter(submission -> !SubmissionType.ILLEGAL.equals(submission.getType())).collect(Collectors.toSet());
-        return (Optional<T>) validSubmissions.stream().max((s1, s2) -> {
+        Set<Submission> legalSubmissions = submissions.stream().filter(submission -> !SubmissionType.ILLEGAL.equals(submission.getType())).collect(Collectors.toSet());
+        return (Optional<T>) legalSubmissions.stream().max((s1, s2) -> {
             if (s1.getSubmissionDate() == null || s2.getSubmissionDate() == null) {
                 // this case should not happen, but in the rare case we can compare the ids
                 // newer ids are typically later
