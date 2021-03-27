@@ -1,10 +1,7 @@
 package de.tum.in.www1.artemis.service.programming;
 
 import java.security.Principal;
-import java.time.ZonedDateTime;
-import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 import javax.validation.constraints.NotNull;
 
@@ -63,10 +60,6 @@ public class ProgrammingExerciseParticipationService {
         this.authCheckService = authCheckService;
         this.userRepository = userRepository;
         this.gitService = gitService;
-    }
-
-    public Participation findParticipation(Long participationId) throws EntityNotFoundException {
-        return participationRepository.findByIdElseThrow(participationId);
     }
 
     public Optional<ProgrammingExerciseStudentParticipation> findStudentParticipation(Long participationId) {
@@ -133,30 +126,6 @@ public class ProgrammingExerciseParticipationService {
             throw new EntityNotFoundException("participation could not be found by exerciseId " + exercise.getId() + " and user " + username);
         }
         return participation.get();
-    }
-
-    // TODO move as default methods into ProgrammingExerciseStudentParticipationRepository
-
-    public Optional<ProgrammingExerciseStudentParticipation> findByExerciseIdAndTeamId(Long exerciseId, Long teamId) {
-        return studentParticipationRepository.findByExerciseIdAndTeamId(exerciseId, teamId);
-    }
-
-    public List<ProgrammingExerciseStudentParticipation> findByExerciseAndParticipationIds(Long exerciseId, Set<Long> participationIds) {
-        return studentParticipationRepository.findByExerciseIdAndParticipationIds(exerciseId, participationIds);
-    }
-
-    public Optional<ProgrammingExerciseStudentParticipation> findStudentParticipationWithLatestResultAndFeedbacksAndRelatedSubmissions(Long participationId) {
-        return studentParticipationRepository.findByIdWithLatestResultAndFeedbacksAndRelatedLegalSubmissions(participationId, ZonedDateTime.now());
-    }
-
-    /**
-     *
-     * @param participationId the participation
-     * @return the participation with all its manual/semi-automatic results
-     */
-    public Optional<ProgrammingExerciseStudentParticipation> findStudentParticipationWithAllManualOrSemiAutomaticResultsAndFeedbacksAndRelatedSubmissionAndAssessor(
-            Long participationId) {
-        return studentParticipationRepository.findByIdWithAllManualOrSemiAutomaticResultsAndFeedbacksAndRelatedLegalSubmissionAndAssessor(participationId);
     }
 
     /**

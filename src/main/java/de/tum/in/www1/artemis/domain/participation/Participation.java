@@ -219,8 +219,6 @@ public abstract class Participation extends DomainObject implements Participatio
         return sortedLegalResultsWithCompletionDate.get(0);
     }
 
-    // TODO: implement a method Result findLatestResultBeforeDueDate(ZonedDateTime dueDate)
-
     /**
      * Finds the latest legal submission for the participation. Legal means that ILLEGAL submissions (exam exercise submissions after the end date)
      * are not used. Checks if the participation has any submissions. If there are no submissions, return null. Otherwise sort the submissions

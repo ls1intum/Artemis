@@ -102,9 +102,24 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
             SELECT COUNT (DISTINCT s) FROM Submission s left join s.results r
                 WHERE r.assessor.id IS NOT NULL
                 AND r.completionDate IS NULL
-                AND s.participation.exercise.exerciseGroup.exam.id= :examId
+                AND s.participation.exercise.exerciseGroup.exam.id = :examId
             """)
     long countLockedSubmissionsByExamId(@Param("examId") Long examId);
+
+    /**
+     * Get the number of currently locked submissions for a given exam. These are all submissions for which users started, but have not yet finished the
+     * assessments.
+     *
+     * @param exerciseId the id of the exam
+     * @return the number of currently locked submissions for a specific user in the given course
+     */
+    @Query("""
+            SELECT COUNT (DISTINCT s) FROM Submission s LEFT JOIN s.results r
+                WHERE r.assessor.id IS NOT NULL
+                AND r.completionDate IS NULL
+                AND s.participation.exercise.id = :exerciseId
+            """)
+    long countLockedSubmissionsByExerciseId(@Param("exerciseId") Long exerciseId);
 
     /**
      * Get currently locked submissions for a specific user in the given course.
@@ -352,5 +367,16 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
      */
     default Submission findOneWithEagerResultAndFeedback(long submissionId) {
         return this.findWithEagerResultAndFeedbackById(submissionId).orElseThrow(() -> new EntityNotFoundException("Submission with id \"" + submissionId + "\" does not exist"));
+    }
+
+    /**
+     * Get the submission with the given id from the database. The submission is loaded together with its results and the assessors. Throws an EntityNotFoundException if no
+     * submission could be found for the given id.
+     *
+     * @param submissionId the id of the submission that should be loaded from the database
+     * @return the submission with the given id
+     */
+    default Submission findByIdWithResultsElseThrow(long submissionId) {
+        return findWithEagerResultsAndAssessorById(submissionId).orElseThrow(() -> new EntityNotFoundException("Submission", +submissionId));
     }
 }

@@ -2,7 +2,11 @@ package de.tum.in.www1.artemis.web.rest;
 
 import static de.tum.in.www1.artemis.service.util.TimeLogUtil.formatDurationFrom;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
+import static java.time.ZonedDateTime.now;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
@@ -12,6 +16,9 @@ import java.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.InputStreamResource;
+import org.springframework.core.io.Resource;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -24,9 +31,11 @@ import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExamRepository;
+import de.tum.in.www1.artemis.repository.StudentExamRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.AssessmentDashboardService;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.SubmissionService;
 import de.tum.in.www1.artemis.service.TutorParticipationService;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
 import de.tum.in.www1.artemis.service.exam.ExamAccessService;
@@ -34,12 +43,10 @@ import de.tum.in.www1.artemis.service.exam.ExamDateService;
 import de.tum.in.www1.artemis.service.exam.ExamRegistrationService;
 import de.tum.in.www1.artemis.service.exam.ExamService;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
-import de.tum.in.www1.artemis.web.rest.dto.ExamChecklistDTO;
-import de.tum.in.www1.artemis.web.rest.dto.ExamInformationDTO;
-import de.tum.in.www1.artemis.web.rest.dto.ExamScoresDTO;
-import de.tum.in.www1.artemis.web.rest.dto.StatsForInstructorDashboardDTO;
+import de.tum.in.www1.artemis.web.rest.dto.*;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
 /**
@@ -70,6 +77,8 @@ public class ExamResource {
 
     private final ExamAccessService examAccessService;
 
+    private final SubmissionService submissionService;
+
     private final InstanceMessageSendService instanceMessageSendService;
 
     private final AuthorizationCheckService authCheckService;
@@ -78,12 +87,16 @@ public class ExamResource {
 
     private final AssessmentDashboardService assessmentDashboardService;
 
+    private final StudentExamRepository studentExamRepository;
+
     public ExamResource(UserRepository userRepository, CourseRepository courseRepository, ExamService examService, ExamAccessService examAccessService,
-            InstanceMessageSendService instanceMessageSendService, ExamRepository examRepository, AuthorizationCheckService authCheckService, ExamDateService examDateService,
-            TutorParticipationService tutorParticipationService, AssessmentDashboardService assessmentDashboardService, ExamRegistrationService examRegistrationService) {
+            InstanceMessageSendService instanceMessageSendService, ExamRepository examRepository, SubmissionService submissionService, AuthorizationCheckService authCheckService,
+            ExamDateService examDateService, TutorParticipationService tutorParticipationService, AssessmentDashboardService assessmentDashboardService,
+            ExamRegistrationService examRegistrationService, StudentExamRepository studentExamRepository) {
         this.userRepository = userRepository;
         this.courseRepository = courseRepository;
         this.examService = examService;
+        this.submissionService = submissionService;
         this.examDateService = examDateService;
         this.examRegistrationService = examRegistrationService;
         this.examRepository = examRepository;
@@ -92,6 +105,7 @@ public class ExamResource {
         this.authCheckService = authCheckService;
         this.tutorParticipationService = tutorParticipationService;
         this.assessmentDashboardService = assessmentDashboardService;
+        this.studentExamRepository = studentExamRepository;
     }
 
     /**
@@ -225,10 +239,23 @@ public class ExamResource {
             return ResponseEntity.ok(examService.findByIdWithExerciseGroupsAndExercisesElseThrow(examId));
         }
         Exam exam = examRepository.findByIdWithRegisteredUsersElseThrow(examId);
-        examService.setNumberOfRegisteredUsersForExams(Collections.singletonList(exam));
+        examRepository.setNumberOfRegisteredUsersForExams(Collections.singletonList(exam));
 
         exam.getRegisteredUsers().forEach(user -> user.setVisibleRegistrationNumber(user.getRegistrationNumber()));
         return ResponseEntity.ok(exam);
+    }
+
+    /**
+     * GET /exams/{examId}/title : Returns the title of the exam with the given id
+     *
+     * @param examId the id of the exam
+     * @return the title of the exam wrapped in an ResponseEntity or 404 Not Found if no exam with that id exists
+     */
+    @GetMapping(value = "/exams/{examId}/title")
+    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<String> getExamTitle(@PathVariable Long examId) {
+        final var title = examRepository.getExamTitle(examId);
+        return title == null ? ResponseEntity.notFound().build() : ResponseEntity.ok(title);
     }
 
     /**
@@ -268,7 +295,7 @@ public class ExamResource {
         if (courseAndExamAccessFailure.isPresent()) {
             return courseAndExamAccessFailure.get();
         }
-        ExamScoresDTO examScoresDTO = examService.getExamScore(examId);
+        ExamScoresDTO examScoresDTO = examService.calculateExamScores(examId);
         log.info("get scores for exam " + examId + " took " + (System.currentTimeMillis() - start) + "ms");
         return ResponseEntity.ok(examScoresDTO);
     }
@@ -356,7 +383,7 @@ public class ExamResource {
      */
     @GetMapping("/courses/{courseId}/exams/{examId}/stats-for-exam-assessment-dashboard")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<StatsForInstructorDashboardDTO> getStatsForExamAssessmentDashboard(@PathVariable Long courseId, @PathVariable Long examId) {
+    public ResponseEntity<StatsForDashboardDTO> getStatsForExamAssessmentDashboard(@PathVariable Long courseId, @PathVariable Long examId) {
         log.debug("REST request /courses/{courseId}/stats-for-exam-assessment-dashboard");
 
         Course course = courseRepository.findByIdElseThrow(courseId);
@@ -380,7 +407,7 @@ public class ExamResource {
         Optional<ResponseEntity<List<Exam>>> courseAccessFailure = examAccessService.checkCourseAccessForTeachingAssistant(courseId);
         return courseAccessFailure.orElseGet(() -> {
             List<Exam> exams = examRepository.findByCourseId(courseId);
-            examService.setNumberOfRegisteredUsersForExams(exams);
+            examRepository.setNumberOfRegisteredUsersForExams(exams);
             return ResponseEntity.ok(exams);
         });
     }
@@ -504,7 +531,7 @@ public class ExamResource {
         // Validate settings of the exam
         examService.validateForStudentExamGeneration(exam);
 
-        List<StudentExam> studentExams = examService.generateStudentExams(exam);
+        List<StudentExam> studentExams = studentExamRepository.generateStudentExams(exam);
 
         // we need to break a cycle for the serialization
         for (StudentExam studentExam : studentExams) {
@@ -540,7 +567,7 @@ public class ExamResource {
         // Validate settings of the exam
         examService.validateForStudentExamGeneration(exam);
 
-        List<StudentExam> studentExams = examService.generateMissingStudentExams(exam);
+        List<StudentExam> studentExams = studentExamRepository.generateMissingStudentExams(exam);
 
         // we need to break a cycle for the serialization
         for (StudentExam studentExam : studentExams) {
@@ -825,11 +852,73 @@ public class ExamResource {
             throw new AccessForbiddenException("You are not allowed to access this resource");
         }
 
-        List<Submission> submissions = examService.getLockedSubmissions(examId, user);
+        List<Submission> submissions = submissionService.getLockedSubmissions(examId, user);
 
         long end = System.currentTimeMillis();
         log.debug("Finished /courses/" + courseId + "/submissions call in " + (end - start) + "ms");
         return ResponseEntity.ok(submissions);
+    }
+
+    /**
+     * PUT /courses/{courseId}/exams/{examId}/archive : archive an existing exam asynchronously.
+     *
+     * This method starts the process of archiving all exam exercises and submissions.
+     * It immediately returns and runs this task asynchronously. When the task is done, the exam is marked as archived, which means the zip file can be downloaded.
+     *
+     * @param courseId the id of the course
+     * @param examId the id of the exam to archive
+     * @return empty
+     */
+    @PutMapping("/courses/{courseId}/exams/{examId}/archive")
+    @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR')")
+    public ResponseEntity<Void> archiveExam(@PathVariable Long courseId, @PathVariable Long examId) {
+        log.info("REST request to archive exam : {}", examId);
+
+        final Exam exam = examRepository.findOneWithEagerExercisesGroupsAndStudentExams(examId);
+        if (exam == null) {
+            return notFound();
+        }
+
+        Optional<ResponseEntity<Exam>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccessForInstructor(courseId, examId);
+        if (courseAndExamAccessFailure.isPresent()) {
+            return forbidden();
+        }
+
+        // Archiving an exam is only possible after the exam is over
+        if (now().isBefore(exam.getEndDate())) {
+            throw new BadRequestAlertException("You cannot archive an exam that is not over.", ENTITY_NAME, "examNotOver", true);
+        }
+
+        examService.archiveExam(exam);
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, examId.toString())).build();
+    }
+
+    /**
+     * Downloads the zip file of the archived exam if it exists. Throws a 404 if the exam doesn't exist.
+     *
+     * @param courseId The course id of the course
+     * @param examId The id of the archived exam
+     * @return ResponseEntity with status
+     */
+    @GetMapping("/courses/{courseId}/exams/{examId}/download-archive")
+    @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR')")
+    public ResponseEntity<Resource> downloadExamArchive(@PathVariable Long courseId, @PathVariable Long examId) throws FileNotFoundException, EntityNotFoundException {
+        log.info("REST request to download archive of exam : {}", examId);
+        final Exam exam = examRepository.findByIdElseThrow(examId);
+
+        Optional<ResponseEntity<Exam>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccessForInstructor(courseId, examId);
+        if (courseAndExamAccessFailure.isPresent()) {
+            return forbidden();
+        }
+
+        if (!exam.hasExamArchive()) {
+            return notFound();
+        }
+
+        // The path is stored in the course table
+        File zipFile = new File(exam.getExamArchivePath());
+        InputStreamResource resource = new InputStreamResource(new FileInputStream(zipFile));
+        return ResponseEntity.ok().contentLength(zipFile.length()).contentType(MediaType.APPLICATION_OCTET_STREAM).header("filename", zipFile.getName()).body(resource);
     }
 
 }

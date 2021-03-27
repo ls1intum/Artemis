@@ -37,6 +37,12 @@ public class ModelSelector {
      */
     private Set<Long> alreadyHandledModels = ConcurrentHashMap.newKeySet();
 
+    private AutomaticAssessmentController automaticAssessmentController;
+
+    public ModelSelector(AutomaticAssessmentController automaticAssessmentController) {
+        this.automaticAssessmentController = automaticAssessmentController;
+    }
+
     /**
      * Calculate the given number of models which would mean the biggest knowledge gain to support the automatic assessment process. The selected models are currently unassessed
      * and not queued for assessment (i.e. in alreadyHandledModels). Which models mean the biggest knowledge gain is decided based on the coverage and the mean similarity of the
@@ -59,13 +65,14 @@ public class ModelSelector {
         }
 
         List<UMLDiagram> candidates = unhandledModels;
-        candidates.sort(Comparator.comparingDouble(UMLDiagram::getLastAssessmentCoverage));
+        candidates.sort(Comparator.comparingDouble(model -> automaticAssessmentController.getLastAssessmentCoverage(model.getModelSubmissionId())));
         // Make sure that the candidate list is not too big
         if (!candidates.isEmpty()) {
-            double smallestCoverage = candidates.get(0).getLastAssessmentCoverage();
+            double smallestCoverage = automaticAssessmentController.getLastAssessmentCoverage(candidates.get(0).getModelSubmissionId());
 
             if (smallestCoverage < 1) {
-                while (maxCandidateListSize + 5 < candidates.size() && smallestCoverage > (candidates.get(maxCandidateListSize).getLastAssessmentCoverage() - threshold)
+                while (maxCandidateListSize + 5 < candidates.size()
+                        && smallestCoverage > (automaticAssessmentController.getLastAssessmentCoverage(candidates.get(maxCandidateListSize).getModelSubmissionId()) - threshold)
                         && maxCandidateListSize < MAX_CANDIDATE_LIST_SIZE) {
                     maxCandidateListSize += 5;
                 }
@@ -85,7 +92,7 @@ public class ModelSelector {
 
         // Fallback: if no optimal models could be determined by similarity, select any unassessed models
         for (UMLDiagram model : modelIndex.getModelCollection()) {
-            if (model.isUnassessed() && !alreadyHandledModels.contains(model.getModelSubmissionId())) {
+            if (automaticAssessmentController.isUnassessed(model.getModelSubmissionId()) && !alreadyHandledModels.contains(model.getModelSubmissionId())) {
                 alreadyHandledModels.add(model.getModelSubmissionId());
                 modelsWaitingForAssessment.add(model.getModelSubmissionId());
 

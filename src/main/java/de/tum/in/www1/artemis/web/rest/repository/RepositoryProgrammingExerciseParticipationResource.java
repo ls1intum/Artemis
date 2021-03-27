@@ -24,6 +24,7 @@ import org.springframework.web.server.ResponseStatusException;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.*;
+import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.*;
@@ -46,6 +47,8 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
 public class RepositoryProgrammingExerciseParticipationResource extends RepositoryResource {
 
+    private final ParticipationRepository participationRepository;
+
     private final ProgrammingExerciseParticipationService participationService;
 
     private final ExamSubmissionService examSubmissionService;
@@ -54,17 +57,18 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
 
     public RepositoryProgrammingExerciseParticipationResource(UserRepository userRepository, AuthorizationCheckService authCheckService, GitService gitService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService, RepositoryService repositoryService,
-            ProgrammingExerciseParticipationService participationService, ProgrammingExerciseRepository programmingExerciseRepository, ExamSubmissionService examSubmissionService,
-            BuildLogEntryService buildLogService) {
+            ProgrammingExerciseParticipationService participationService, ProgrammingExerciseRepository programmingExerciseRepository,
+            ParticipationRepository participationRepository, ExamSubmissionService examSubmissionService, BuildLogEntryService buildLogService) {
         super(userRepository, authCheckService, gitService, continuousIntegrationService, repositoryService, versionControlService, programmingExerciseRepository);
         this.participationService = participationService;
+        this.participationRepository = participationRepository;
         this.examSubmissionService = examSubmissionService;
         this.buildLogService = buildLogService;
     }
 
     @Override
     Repository getRepository(Long participationId, RepositoryActionType repositoryAction, boolean pullOnGet) throws InterruptedException, IllegalAccessException, GitAPIException {
-        Participation participation = participationService.findParticipation(participationId);
+        Participation participation = participationRepository.findByIdElseThrow(participationId);
         // Error case 1: The participation is not from a programming exercise.
         if (!(participation instanceof ProgrammingExerciseParticipation)) {
             throw new IllegalArgumentException();
@@ -118,7 +122,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
 
     @Override
     VcsRepositoryUrl getRepositoryUrl(Long participationId) throws IllegalArgumentException {
-        Participation participation = participationService.findParticipation(participationId);
+        Participation participation = participationRepository.findByIdElseThrow(participationId);
         if (!(participation instanceof ProgrammingExerciseParticipation)) {
             throw new IllegalArgumentException();
         }
@@ -127,7 +131,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
 
     @Override
     boolean canAccessRepository(Long participationId) throws IllegalArgumentException {
-        Participation participation = participationService.findParticipation(participationId);
+        Participation participation = participationRepository.findByIdElseThrow(participationId);
         if (!(participation instanceof ProgrammingExerciseParticipation)) {
             throw new IllegalArgumentException();
         }
@@ -155,7 +159,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
         return super.executeAndCheckForExceptions(() -> {
             // TODO: we need to fetch the commit which belongs to the last not ILLEGAL submission!
             Repository repository = getRepository(participationId, RepositoryActionType.READ, true);
-            var participation = participationService.findParticipation(participationId);
+            var participation = participationRepository.findByIdElseThrow(participationId);
             var exercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(participation.getExercise().getId());
 
             Repository templateRepository = getRepository(exercise.getTemplateParticipation().getId(), RepositoryActionType.READ, true);
@@ -242,7 +246,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
             @RequestParam(defaultValue = "false") boolean commit, Principal principal) {
         Participation participation;
         try {
-            participation = participationService.findParticipation(participationId);
+            participation = participationRepository.findByIdElseThrow(participationId);
         }
         catch (EntityNotFoundException ex) {
             FileSubmissionError error = new FileSubmissionError(participationId, "participationNotFound");

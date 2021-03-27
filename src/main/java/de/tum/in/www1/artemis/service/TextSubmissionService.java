@@ -14,13 +14,11 @@ import org.springframework.web.server.ResponseStatusException;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
-import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.exam.ExamDateService;
-import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Service
@@ -30,13 +28,11 @@ public class TextSubmissionService extends SubmissionService {
 
     private final TextSubmissionRepository textSubmissionRepository;
 
-    private final TextClusterRepository textClusterRepository;
-
     private final Optional<TextAssessmentQueueService> textAssessmentQueueService;
 
     private final SubmissionVersionService submissionVersionService;
 
-    public TextSubmissionService(TextSubmissionRepository textSubmissionRepository, TextClusterRepository textClusterRepository, SubmissionRepository submissionRepository,
+    public TextSubmissionService(TextSubmissionRepository textSubmissionRepository, SubmissionRepository submissionRepository,
             StudentParticipationRepository studentParticipationRepository, ParticipationService participationService, ResultRepository resultRepository,
             UserRepository userRepository, Optional<TextAssessmentQueueService> textAssessmentQueueService, AuthorizationCheckService authCheckService,
             SubmissionVersionService submissionVersionService, FeedbackRepository feedbackRepository, ExamDateService examDateService, CourseRepository courseRepository,
@@ -44,7 +40,6 @@ public class TextSubmissionService extends SubmissionService {
         super(submissionRepository, userRepository, authCheckService, resultRepository, studentParticipationRepository, participationService, feedbackRepository, examDateService,
                 courseRepository, participationRepository);
         this.textSubmissionRepository = textSubmissionRepository;
-        this.textClusterRepository = textClusterRepository;
         this.textAssessmentQueueService = textAssessmentQueueService;
         this.submissionVersionService = submissionVersionService;
     }
@@ -231,19 +226,6 @@ public class TextSubmissionService extends SubmissionService {
             textSubmissions.add((TextSubmission) optionalTextSubmission.get());
         }
         return textSubmissions;
-    }
-
-    public List<TextSubmission> getTextSubmissionsWithTextBlocksByExerciseId(Long exerciseId) {
-        return textSubmissionRepository.findByParticipation_ExerciseIdAndSubmittedIsTrue(exerciseId);
-    }
-
-    public TextSubmission getTextSubmissionWithResultAndTextBlocksAndFeedbackByResultId(Long resultId) {
-        return textSubmissionRepository.findWithEagerResultAndTextBlocksAndFeedbackByResults_Id(resultId)
-                .orElseThrow(() -> new BadRequestAlertException("No text submission found for the given result.", "textSubmission", "textSubmissionNotFound"));
-    }
-
-    public List<TextSubmission> getTextSubmissionsWithTextBlocksByExerciseIdAndLanguage(Long exerciseId, Language language) {
-        return textSubmissionRepository.findByParticipation_ExerciseIdAndSubmittedIsTrueAndLanguage(exerciseId, language);
     }
 
     /**

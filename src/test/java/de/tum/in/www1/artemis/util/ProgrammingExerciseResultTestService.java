@@ -64,9 +64,6 @@ public class ProgrammingExerciseResultTestService {
     private StaticCodeAnalysisService staticCodeAnalysisService;
 
     @Autowired
-    private FeedbackService feedbackService;
-
-    @Autowired
     private ProgrammingExerciseTestCaseService programmingExerciseTestCaseService;
 
     private ProgrammingExercise programmingExercise;

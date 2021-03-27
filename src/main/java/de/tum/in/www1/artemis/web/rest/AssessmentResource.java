@@ -32,8 +32,6 @@ public abstract class AssessmentResource {
 
     protected final ExerciseRepository exerciseRepository;
 
-    protected final SubmissionService submissionService;
-
     protected final AssessmentService assessmentService;
 
     protected final ResultRepository resultRepository;
@@ -44,15 +42,14 @@ public abstract class AssessmentResource {
 
     protected final ExampleSubmissionRepository exampleSubmissionRepository;
 
-    protected SubmissionRepository submissionRepository;
+    protected final SubmissionRepository submissionRepository;
 
-    public AssessmentResource(AuthorizationCheckService authCheckService, UserRepository userRepository, ExerciseRepository exerciseRepository, SubmissionService submissionService,
-            AssessmentService assessmentService, ResultRepository resultRepository, ExamService examService, WebsocketMessagingService messagingService,
-            ExampleSubmissionRepository exampleSubmissionRepository, SubmissionRepository submissionRepository) {
+    public AssessmentResource(AuthorizationCheckService authCheckService, UserRepository userRepository, ExerciseRepository exerciseRepository, AssessmentService assessmentService,
+            ResultRepository resultRepository, ExamService examService, WebsocketMessagingService messagingService, ExampleSubmissionRepository exampleSubmissionRepository,
+            SubmissionRepository submissionRepository) {
         this.authCheckService = authCheckService;
         this.userRepository = userRepository;
         this.exerciseRepository = exerciseRepository;
-        this.submissionService = submissionService;
         this.assessmentService = assessmentService;
         this.resultRepository = resultRepository;
         this.examService = examService;
@@ -200,7 +197,7 @@ public abstract class AssessmentResource {
 
     protected ResponseEntity<Void> cancelAssessment(long submissionId) { // TODO: Add correction round !
         log.debug("REST request to cancel assessment of submission: {}", submissionId);
-        Submission submission = submissionService.findOneWithEagerResults(submissionId);
+        Submission submission = submissionRepository.findByIdWithResultsElseThrow(submissionId);
         if (submission.getLatestResult() == null) {
             // if there is no result everything is fine
             return ResponseEntity.ok().build();
