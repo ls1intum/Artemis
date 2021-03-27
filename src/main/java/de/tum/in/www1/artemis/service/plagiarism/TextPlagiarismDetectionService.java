@@ -110,6 +110,7 @@ public class TextPlagiarismDetectionService {
         log.info("Saving text submissions done");
 
         JPlagOptions options = new JPlagOptions(submissionsFolderName, LanguageOption.TEXT);
+        options.setMinTokenMatch(minimumSize);
 
         // Important: for large courses with more than 1000 students, we might get more than one million results and 10 million files in the file system due to many 0% results,
         // therefore we limit the results to at least 50% or 0.5 similarity, the passed threshold is between 0 and 100%

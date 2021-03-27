@@ -8,6 +8,7 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
+import org.assertj.core.data.Offset;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -30,18 +31,13 @@ import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.participation.Participation;
-import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextPlagiarismResult;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.service.ExerciseService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.TextExerciseUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 
 public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
-
-    @Autowired
-    private ExerciseService exerciseService;
 
     @Autowired
     private TextExerciseRepository textExerciseRepository;
@@ -56,7 +52,7 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     private TextSubmissionRepository textSubmissionRepository;
 
     @Autowired
-    StudentParticipationRepository studentParticipationRepository;
+    private StudentParticipationRepository studentParticipationRepository;
 
     @Autowired
     private ExampleSubmissionRepository exampleSubmissionRepo;
@@ -66,7 +62,7 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @BeforeEach
     public void initTestCase() {
-        database.addUsers(1, 1, 1);
+        database.addUsers(2, 1, 1);
         database.addInstructor("other-instructors", "instructorother");
     }
 
@@ -578,7 +574,7 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         // Generate first submission + participation
         TextSubmission textSubmission1 = ModelFactory.generateTextSubmission("Lorem Ipsum Foo Bar", Language.ENGLISH, true);
         textSubmission1 = textSubmissionRepository.save(textSubmission1);
-        StudentParticipation studentParticipation1 = ModelFactory.generateStudentParticipation(InitializationState.INITIALIZED, textExercise, null);
+        var studentParticipation1 = ModelFactory.generateStudentParticipation(InitializationState.INITIALIZED, textExercise, database.getUserByLogin("student1"));
         studentParticipation1.addSubmission(textSubmission1);
         studentParticipationRepository.save(studentParticipation1);
         textSubmissionRepository.save(textSubmission1);
@@ -586,7 +582,7 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         // Generate second submission + participation
         TextSubmission textSubmission2 = ModelFactory.generateTextSubmission("Lorem Ipsum Foo Bar", Language.ENGLISH, true);
         textSubmission2 = textSubmissionRepository.save(textSubmission2);
-        StudentParticipation studentParticipation2 = ModelFactory.generateStudentParticipation(InitializationState.INITIALIZED, textExercise, null);
+        var studentParticipation2 = ModelFactory.generateStudentParticipation(InitializationState.INITIALIZED, textExercise, database.getUserByLogin("student2"));
         studentParticipation2.addSubmission(textSubmission2);
         studentParticipationRepository.save(studentParticipation2);
         textSubmissionRepository.save(textSubmission2);
@@ -599,6 +595,8 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
 
         var result = request.get("/api/text-exercises/" + textExercise.getId() + "/check-plagiarism", HttpStatus.OK, TextPlagiarismResult.class, params);
         // TODO: assert that the result and all its sub objects are correct
-        System.out.println(result.getComparisons());
+        assertThat(result.getComparisons()).hasSize(1);
+        var comparison = result.getComparisons().iterator().next();
+        assertThat(comparison.getSimilarity()).isEqualTo(100.0, Offset.offset(0.1));
     }
 }
