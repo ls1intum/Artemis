@@ -5,9 +5,19 @@
             <hr />
             <jhi-alert></jhi-alert>
             <jhi-alert-error></jhi-alert-error>
-            <div class="text-right">
-                <jhi-external-submission [exercise]="modelingExercise"></jhi-external-submission>
+            <div class="text-left">
+                <jhi-non-programming-exercise-detail-common-actions
+                    *ngIf="modelingExercise.course"
+                    [exercise]="modelingExercise"
+                    [courseId]="modelingExercise.course.id!"
+                    [isExamExercise]="false"
+                ></jhi-non-programming-exercise-detail-common-actions>
+
+                <a class="btn btn-primary btn-sm mr-1" id="check-plagiarism-download" routerLink="plagiarism">
+                    <span jhiTranslate="artemisApp.textExercise.checkPlagiarism">Check Plagiarism</span>
+                </a>
             </div>
+
             <dl class="row-md jh-entity-details markdown-preview">
                 <jhi-exercise-details [exercise]="modelingExercise"></jhi-exercise-details>
                 <dt><span jhiTranslate="artemisApp.modelingExercise.diagramType">Diagram Type</span></dt>
@@ -31,14 +41,6 @@
                     <span [innerHTML]="sampleSolution"></span>
                 </dd>
             </dl>
-
-            <a [routerLink]="['/course-management', modelingExercise.course?.id, 'modeling-exercises', modelingExercise.id, 'edit']" class="btn btn-warning">
-                <fa-icon [icon]="'wrench'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.edit"> Edit</span>
-            </a>
-
-            <a class="btn btn-outline-primary" id="check-plagiarism-download" routerLink="plagiarism">
-                <span jhiTranslate="artemisApp.textExercise.checkPlagiarism">Check Plagiarism</span>
-            </a>
         </div>
     </div>
 </div>

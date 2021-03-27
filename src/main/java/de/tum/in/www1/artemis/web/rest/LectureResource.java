@@ -179,6 +179,19 @@ public class LectureResource {
         return ResponseEntity.ok(lecture);
     }
 
+    /**
+     * GET /lectures/:lectureId/title : Returns the title of the lecture with the given id
+     *
+     * @param lectureId the id of the lecture
+     * @return the title of the lecture wrapped in an ResponseEntity or 404 Not Found if no lecture with that id exists
+     */
+    @GetMapping(value = "/lectures/{lectureId}/title")
+    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<String> getLectureTitle(@PathVariable Long lectureId) {
+        final var title = lectureRepository.getLectureTitle(lectureId);
+        return title == null ? ResponseEntity.notFound().build() : ResponseEntity.ok(title);
+    }
+
     private Lecture filterLectureContentForUser(Lecture lecture, User user) {
         lecture = lectureService.filterActiveAttachments(lecture, user);
 
