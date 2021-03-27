@@ -577,17 +577,19 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
 
         // Generate first submission + participation
         TextSubmission textSubmission1 = ModelFactory.generateTextSubmission("Lorem Ipsum Foo Bar", Language.ENGLISH, true);
-        textSubmissionRepository.save(textSubmission1);
+        textSubmission1 = textSubmissionRepository.save(textSubmission1);
         StudentParticipation studentParticipation1 = ModelFactory.generateStudentParticipation(InitializationState.INITIALIZED, textExercise, null);
         studentParticipation1.addSubmission(textSubmission1);
         studentParticipationRepository.save(studentParticipation1);
+        textSubmissionRepository.save(textSubmission1);
 
         // Generate second submission + participation
         TextSubmission textSubmission2 = ModelFactory.generateTextSubmission("Lorem Ipsum Foo Bar", Language.ENGLISH, true);
-        textSubmissionRepository.save(textSubmission2);
+        textSubmission2 = textSubmissionRepository.save(textSubmission2);
         StudentParticipation studentParticipation2 = ModelFactory.generateStudentParticipation(InitializationState.INITIALIZED, textExercise, null);
         studentParticipation2.addSubmission(textSubmission2);
         studentParticipationRepository.save(studentParticipation2);
+        textSubmissionRepository.save(textSubmission2);
 
         // Use default options for plagiarism detection
         var params = new LinkedMultiValueMap<String, String>();
@@ -596,5 +598,7 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         params.add("minimumSize", "0");
 
         var result = request.get("/api/text-exercises/" + textExercise.getId() + "/check-plagiarism", HttpStatus.OK, TextPlagiarismResult.class, params);
+        // TODO: assert that the result and all its sub objects are correct
+        System.out.println(result.getComparisons());
     }
 }
