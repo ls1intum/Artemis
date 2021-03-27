@@ -20,6 +20,7 @@ import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseTestCaseService;
 import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseTestCaseDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -40,6 +41,8 @@ public class ProgrammingExerciseTestCaseResource {
 
     private final ProgrammingExerciseTestCaseService programmingExerciseTestCaseService;
 
+    private final ProgrammingExerciseService programmingExerciseService;
+
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
     private final AuthorizationCheckService authCheckService;
@@ -47,10 +50,11 @@ public class ProgrammingExerciseTestCaseResource {
     private final UserRepository userRepository;
 
     public ProgrammingExerciseTestCaseResource(ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository,
-            ProgrammingExerciseTestCaseService programmingExerciseTestCaseService, ProgrammingExerciseRepository programmingExerciseRepository,
-            AuthorizationCheckService authCheckService, UserRepository userRepository) {
+            ProgrammingExerciseTestCaseService programmingExerciseTestCaseService, ProgrammingExerciseService programmingExerciseService,
+            ProgrammingExerciseRepository programmingExerciseRepository, AuthorizationCheckService authCheckService, UserRepository userRepository) {
         this.programmingExerciseTestCaseRepository = programmingExerciseTestCaseRepository;
         this.programmingExerciseTestCaseService = programmingExerciseTestCaseService;
+        this.programmingExerciseService = programmingExerciseService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.authCheckService = authCheckService;
         this.userRepository = userRepository;
@@ -102,10 +106,17 @@ public class ProgrammingExerciseTestCaseResource {
 
         try {
             Set<ProgrammingExerciseTestCase> updatedTests = programmingExerciseTestCaseService.update(exerciseId, testCaseProgrammingExerciseTestCaseDTOS);
+
+            // A test case is now marked as AFTER_DUE_DATE: a scheduled score update might be needed.
+            if (updatedTests.stream().anyMatch(ProgrammingExerciseTestCase::isAfterDueDate)) {
+                programmingExerciseService.scheduleOperations(programmingExercise.getId());
+            }
+
             // We don't need the linked exercise here.
             for (ProgrammingExerciseTestCase testCase : updatedTests) {
                 testCase.setExercise(null);
             }
+
             return ResponseEntity.ok(updatedTests);
         }
         catch (IllegalAccessException ex) {
