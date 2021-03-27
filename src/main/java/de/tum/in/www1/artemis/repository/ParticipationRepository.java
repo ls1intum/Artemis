@@ -27,7 +27,7 @@ public interface ParticipationRepository extends JpaRepository<Participation, Lo
             LEFT JOIN FETCH s.results r
             WHERE p.id = :participationId
                 AND (s.id = (SELECT max(ps.id) FROM p.submissions ps
-                    WHERE ps.type <> 'ILLEGAL')
+                    WHERE (ps.type <> 'ILLEGAL' or ps.type is null))
                 OR s.id = NULL)
             """)
     Optional<Participation> findByIdWithLatestLegalSubmissionAndResult(@Param("participationId") Long participationId);
@@ -36,7 +36,7 @@ public interface ParticipationRepository extends JpaRepository<Participation, Lo
             SELECT p FROM Participation p
             LEFT JOIN FETCH p.submissions s
             WHERE p.id = :#{#participationId}
-                AND s.type <> 'ILLEGAL'
+                AND (s.type <> 'ILLEGAL' or s.type is null)
             """)
     Optional<Participation> findWithEagerLegalSubmissionsById(Long participationId);
 

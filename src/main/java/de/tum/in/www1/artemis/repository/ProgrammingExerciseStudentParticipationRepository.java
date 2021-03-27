@@ -32,7 +32,7 @@ public interface ProgrammingExerciseStudentParticipationRepository extends JpaRe
             left join fetch pr.submission
             where p.id = :participationId
                 and (pr.id = (select max(prr.id) from p.results prr
-                    where prr.submission.type <> 'ILLEGAL'
+                    where (prr.submission.type <> 'ILLEGAL' or prr.submission.type is null)
                         and (prr.assessmentType = 'AUTOMATIC'
                             or (prr.completionDate IS NOT NULL
                                 and (p.exercise.assessmentDueDate IS NULL
@@ -55,7 +55,7 @@ public interface ProgrammingExerciseStudentParticipationRepository extends JpaRe
             left join fetch pr.assessor
             where p.id = :participationId
                 and pr.id in (select prr.id from p.results prr
-                    where prr.submission.type <> 'ILLEGAL'
+                    where (prr.submission.type <> 'ILLEGAL' or prr.submission.type is null)
                         and (prr.assessmentType = 'MANUAL'
                         or prr.assessmentType = 'SEMI_AUTOMATIC'))
             """)

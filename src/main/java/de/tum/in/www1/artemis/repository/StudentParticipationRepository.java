@@ -41,7 +41,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             where participation.testRun = false
                 and participation.exercise.exerciseGroup.exam.id = :#{#examId}
                 and r.rated = true
-                and s.type <> 'ILLEGAL'
+                and (s.type <> 'ILLEGAL' or s.type is null)
             """)
     List<StudentParticipation> findByExamIdWithEagerLegalSubmissionsRatedResults(@Param("examId") Long examId);
 
@@ -61,7 +61,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             left join fetch p.submissions s
             where p.exercise.id = :#{#exerciseId}
                 and p.student.login = :#{#username}
-                and s.type <> 'ILLEGAL'
+                and (s.type <> 'ILLEGAL' or s.type is null)
             """)
     Optional<StudentParticipation> findWithEagerLegalSubmissionsByExerciseIdAndStudentLogin(Long exerciseId, String username);
 
@@ -70,7 +70,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             left join fetch p.submissions s
             where p.exercise.id = :#{#exerciseId}
                 and p.team.id = :#{#teamId}
-                and s.type <> 'ILLEGAL'
+                and (s.type <> 'ILLEGAL' or s.type is null)
             """)
     Optional<StudentParticipation> findWithEagerLegalSubmissionsByExerciseIdAndTeamId(Long exerciseId, Long teamId);
 
@@ -78,7 +78,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             select distinct participation from StudentParticipation participation
             left join fetch participation.submissions s
             left join fetch s.results
-            where participation.exercise.id = :#{#exerciseId} and s.type <> 'ILLEGAL'
+            where participation.exercise.id = :#{#exerciseId} and (s.type <> 'ILLEGAL' or s.type is null)
             """)
     List<StudentParticipation> findByExerciseIdWithEagerLegalSubmissionsResult(@Param("exerciseId") Long exerciseId);
 
@@ -87,7 +87,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
                left join fetch participation.submissions s
                left join fetch s.results r
                left join fetch r.assessor
-               where participation.exercise.id = :#{#exerciseId} and s.type <> 'ILLEGAL'
+               where participation.exercise.id = :#{#exerciseId} and (s.type <> 'ILLEGAL' or s.type is null)
             """)
     List<StudentParticipation> findByExerciseIdWithEagerLegalSubmissionsResultAssessor(@Param("exerciseId") Long exerciseId);
 
@@ -98,7 +98,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             left join fetch r.assessor
             where participation.exercise.id = :#{#exerciseId}
                 and participation.testRun = false
-                and s.type <> 'ILLEGAL'
+                and (s.type <> 'ILLEGAL' or s.type is null)
             """)
     List<StudentParticipation> findByExerciseIdWithEagerLegalSubmissionsResultAssessorIgnoreTestRuns(@Param("exerciseId") Long exerciseId);
 
@@ -114,7 +114,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             left join fetch participation.results result
             left join fetch result.submission s
             where participation.exercise.id = :#{#exerciseId}
-                and (result.id = (select max(id) from participation.results where s.type <> 'ILLEGAL')
+                and (result.id = (select max(id) from participation.results where (s.type <> 'ILLEGAL' or s.type is null))
                 or result is null)
             """)
     List<StudentParticipation> findByExerciseIdWithLatestResult(@Param("exerciseId") Long exerciseId);
@@ -125,7 +125,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             left join fetch result.submission s
             where participation.exercise.id = :#{#exerciseId}
                 and participation.testRun = false
-                and (result.id = (select max(id) from participation.results where s.type <> 'ILLEGAL')
+                and (result.id = (select max(id) from participation.results where (s.type <> 'ILLEGAL' or s.type is null))
                 or result is null)
             """)
     List<StudentParticipation> findByExerciseIdWithLatestResultIgnoreTestRunSubmissions(@Param("exerciseId") Long exerciseId);
@@ -143,7 +143,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             left join fetch result.submission s
             where participation.exercise.id = :#{#exerciseId}
                 and (result.id = (select max(prs.id) from participation.results prs
-                    where prs.assessmentType = 'AUTOMATIC' and s.type <> 'ILLEGAL' ))
+                    where prs.assessmentType = 'AUTOMATIC' and (s.type <> 'ILLEGAL' or s.type is null) ))
             """)
     List<StudentParticipation> findByExerciseIdWithLatestAutomaticResultAndFeedbacks(@Param("exerciseId") Long exerciseId);
 
@@ -154,7 +154,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             left join fetch result.feedbacks
             left join fetch result.submission s
             where participation.exercise.id = :#{#exerciseId}
-                 and s.type <> 'ILLEGAL'
+                 and (s.type <> 'ILLEGAL' or s.type is null)
                  and (result.assessmentType = 'MANUAL' or result.assessmentType = 'SEMI_AUTOMATIC')
             """)
     List<StudentParticipation> findByExerciseIdWithManualResultAndFeedbacks(@Param("exerciseId") Long exerciseId);
@@ -164,7 +164,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             left join fetch participation.submissions s
             where participation.exercise.id = :#{#exerciseId}
                 and participation.student.id = :#{#studentId}
-                and s.type <> 'ILLEGAL'
+                and (s.type <> 'ILLEGAL' or s.type is null)
             """)
     List<StudentParticipation> findByExerciseIdAndStudentIdWithEagerLegalSubmissions(@Param("exerciseId") Long exerciseId, @Param("studentId") Long studentId);
 
@@ -181,7 +181,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             left join fetch participation.submissions s
             where participation.exercise.id = :#{#exerciseId}
                 and participation.student.id = :#{#studentId}
-                and s.type <> 'ILLEGAL'
+                and (s.type <> 'ILLEGAL' or s.type is null)
              """)
     List<StudentParticipation> findByExerciseIdAndStudentIdWithEagerResultsAndLegalSubmissions(@Param("exerciseId") Long exerciseId, @Param("studentId") Long studentId);
 
@@ -190,7 +190,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             left join fetch participation.submissions s
             where participation.exercise.id = :#{#exerciseId}
                 and participation.team.id = :#{#teamId}
-                and s.type <> 'ILLEGAL'
+                and (s.type <> 'ILLEGAL' or s.type is null)
             """)
     List<StudentParticipation> findByExerciseIdAndTeamIdWithEagerLegalSubmissions(@Param("exerciseId") Long exerciseId, @Param("teamId") Long teamId);
 
@@ -207,8 +207,8 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             left join fetch participation.submissions s
             where participation.exercise.id = :#{#exerciseId}
                 and participation.team.id = :#{#teamId}
-                and s.type <> 'ILLEGAL'
-                and r.submission.type <> 'ILLEGAL'
+                and (s.type <> 'ILLEGAL' or s.type is null)
+                and (r.submission.type <> 'ILLEGAL' or r.submission.type is null)
             """)
     List<StudentParticipation> findByExerciseIdAndTeamIdWithEagerResultsAndLegalSubmissions(@Param("exerciseId") Long exerciseId, @Param("teamId") Long teamId);
 
@@ -219,7 +219,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             left join fetch par.submission s
             where participation.exercise.id = :#{#exerciseId}
                 and participation.student.id = :#{#studentId}
-                and (par.id = (select max(id) from participation.results where s.type <> 'ILLEGAL') or par.id = null)
+                and (par.id = (select max(id) from participation.results where (s.type <> 'ILLEGAL' or s.type is null)) or par.id = null)
             """)
     Optional<StudentParticipation> findByExerciseIdAndStudentIdWithLatestResult(@Param("exerciseId") Long exerciseId, @Param("studentId") Long studentId);
 
@@ -230,7 +230,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             left join fetch par.submission s
             where participation.exercise.id = :#{#exerciseId}
                 and participation.team.id = :#{#teamId}
-                and (par.id = (select max(id) from participation.results where s.type <> 'ILLEGAL') or par.id = null)
+                and (par.id = (select max(id) from participation.results where (s.type <> 'ILLEGAL' or s.type is null)) or par.id = null)
             """)
     Optional<StudentParticipation> findByExerciseIdAndTeamIdWithLatestResult(@Param("exerciseId") Long exerciseId, @Param("teamId") Long teamId);
 
@@ -258,17 +258,17 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
                                  AND r2.submission = submission)
             AND
               :#{#correctionRound} = (SELECT COUNT(r)
-                 FROM Result r where r.assessor IS NOT NULL
-                     AND r.rated = TRUE
-                     AND r.submission = submission
-                     AND r.completionDate IS NOT NULL
-                     AND r.assessmentType IN ('MANUAL', 'SEMI_AUTOMATIC')
-                     AND (participation.exercise.dueDate IS NULL OR r.submission.submissionDate <= participation.exercise.dueDate))
+             FROM Result r where r.assessor IS NOT NULL
+                 AND r.rated = TRUE
+                 AND r.submission = submission
+                 AND r.completionDate IS NOT NULL
+                 AND r.assessmentType IN ('MANUAL', 'SEMI_AUTOMATIC')
+                 AND (participation.exercise.dueDate IS NULL OR r.submission.submissionDate <= participation.exercise.dueDate))
             AND :#{#correctionRound} = (SELECT COUNT (prs)
                     FROM participation.results prs
                     WHERE prs.assessmentType IN ('MANUAL', 'SEMI_AUTOMATIC'))
             AND submission.submitted = true
-            AND submission.id = (SELECT max(s.id) FROM participation.submissions s WHERE s.type <> 'ILLEGAL')
+            AND submission.id = (SELECT max(s.id) FROM participation.submissions s WHERE (s.type <> 'ILLEGAL' or s.type is null))
             """)
     List<StudentParticipation> findByExerciseIdWithLatestLegalSubmissionWithoutManualResultsAndIgnoreTestRunParticipation(@Param("exerciseId") Long exerciseId,
             @Param("correctionRound") long correctionRound);
@@ -291,21 +291,21 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
                 AND NOT EXISTS (SELECT prs FROM participation.results prs
                     WHERE prs.assessmentType in ('MANUAL', 'SEMI_AUTOMATIC'))
                 AND submission.submitted = true
-                AND submission.id = (SELECT max(s.id) FROM participation.submissions s WHERE s.type <> 'ILLEGAL')
+                AND submission.id = (SELECT max(s.id) FROM participation.submissions s WHERE (s.type <> 'ILLEGAL' or s.type is null))
             """)
     List<StudentParticipation> findByExerciseIdWithLatestLegalSubmissionWithoutManualResults(@Param("exerciseId") Long exerciseId);
 
     @Query("""
             select p from Participation p
             left join fetch p.submissions s
-            where p.id = :#{#participationId} and s.type <> 'ILLEGAL'
+            where p.id = :#{#participationId} and (s.type <> 'ILLEGAL' or s.type is null)
             """)
     Optional<StudentParticipation> findWithEagerLegalSubmissionsById(Long participationId);
 
     @Query("""
             select p from Participation p
             left join fetch p.results r
-            where p.id = :#{#participationId} and r.submission.type <> 'ILLEGAL'
+            where p.id = :#{#participationId} and (r.submission.type <> 'ILLEGAL' or r.submission.type is null)
             """)
     Optional<StudentParticipation> findWithEagerResultsById(@Param("participationId") Long participationId);
 
@@ -313,7 +313,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             select p from Participation p
             left join fetch p.results r
             left join fetch r.feedbacks
-            where p.id = :#{#participationId} and r.submission.type <> 'ILLEGAL'
+            where p.id = :#{#participationId} and (r.submission.type <> 'ILLEGAL' or r.submission.type is null)
             """)
     Optional<StudentParticipation> findWithEagerResultsAndFeedbackById(@Param("participationId") Long participationId);
 
@@ -331,8 +331,8 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             left join fetch s.results
             left join p.team.students
             where p.id = :#{#participationId}
-                and s.type <> 'ILLEGAL'
-                and r.submission.type <> 'ILLEGAL'
+                and (s.type <> 'ILLEGAL' or s.type is null)
+                and (r.submission.type <> 'ILLEGAL' or r.submission.type is null)
             """)
     Optional<StudentParticipation> findWithEagerLegalSubmissionsAndResultsById(Long participationId);
 
@@ -351,8 +351,8 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             left join fetch sr.feedbacks
             left join p.team.students
             where p.id = :#{#participationId}
-                and s.type <> 'ILLEGAL'
-                and r.submission.type <> 'ILLEGAL'
+                and (s.type <> 'ILLEGAL' or s.type is null)
+                and (r.submission.type <> 'ILLEGAL' or r.submission.type is null)
             """)
     Optional<StudentParticipation> findWithEagerLegalSubmissionsResultsFeedbacksById(Long participationId);
 
@@ -362,8 +362,8 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             left join fetch p.submissions s
             left join fetch r.assessor
             where p.id = :#{#participationId}
-                and s.type <> 'ILLEGAL'
-                and r.submission.type <> 'ILLEGAL'
+                and (s.type <> 'ILLEGAL' or s.type is null)
+                and (r.submission.type <> 'ILLEGAL' or r.submission.type is null)
             """)
     Optional<StudentParticipation> findWithEagerLegalSubmissionsAndResultsAssessorsById(Long participationId);
 
@@ -373,7 +373,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             left join fetch p.submissions s
             left join fetch s.results sr
             left join fetch sr.assessor
-            where p.exercise.id = :#{#exerciseId} and s.type <> 'ILLEGAL'
+            where p.exercise.id = :#{#exerciseId} and (s.type <> 'ILLEGAL' or s.type is null)
             """)
     List<StudentParticipation> findAllWithEagerLegalSubmissionsAndEagerResultsAndEagerAssessorByExerciseId(long exerciseId);
 
@@ -384,7 +384,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             LEFT JOIN FETCH r.assessor a
             WHERE p.exercise.id = :#{#exerciseId}
                 AND p.testRun = FALSE
-                AND s.type <> 'ILLEGAL'
+                AND (s.type <> 'ILLEGAL' or s.type is null)
             """)
     List<StudentParticipation> findAllWithEagerLegalSubmissionsAndEagerResultsAndEagerAssessorByExerciseIdIgnoreTestRuns(@Param("exerciseId") long exerciseId);
 
@@ -394,8 +394,8 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             LEFT JOIN FETCH p.submissions s
             LEFT JOIN FETCH s.results sr
             WHERE p.exercise.id = :#{#exerciseId}
-                AND s.type <> 'ILLEGAL'
-                AND r.submission.type <> 'ILLEGAL'
+                AND (s.type <> 'ILLEGAL' or s.type is null)
+                AND (r.submission.type <> 'ILLEGAL' or r.submission.type is null)
             """)
     List<StudentParticipation> findAllWithEagerLegalSubmissionsAndEagerResultsByExerciseId(long exerciseId);
 
@@ -409,7 +409,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             WHERE p.testRun = FALSE
                 AND p.student.id = :#{#studentId}
                 AND p.exercise in :#{#exercises}
-                AND s.type <> 'ILLEGAL'
+                AND (s.type <> 'ILLEGAL' or s.type is null)
             """)
     List<StudentParticipation> findByStudentIdAndIndividualExercisesWithEagerLegalSubmissionsResultIgnoreTestRuns(@Param("studentId") Long studentId,
             @Param("exercises") List<Exercise> exercises);
@@ -422,7 +422,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             WHERE p.testRun = FALSE
                 AND p.student.id = :#{#studentId}
                 AND p.exercise in :#{#exercises}
-                AND s.type <> 'ILLEGAL'
+                AND (s.type <> 'ILLEGAL' or s.type is null)
             """)
     List<StudentParticipation> findByStudentIdAndIndividualExercisesWithEagerLegalSubmissionsResultAndAssessorIgnoreTestRuns(@Param("studentId") Long studentId,
             @Param("exercises") List<Exercise> exercises);
@@ -434,7 +434,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             where p.testRun = true
                 and p.student.id = :#{#studentId}
                 and p.exercise in :#{#exercises}
-                and s.type <> 'ILLEGAL'
+                and (s.type <> 'ILLEGAL' or s.type is null)
             """)
     List<StudentParticipation> findTestRunParticipationsByStudentIdAndIndividualExercisesWithEagerLegalSubmissionsResult(@Param("studentId") Long studentId,
             @Param("exercises") List<Exercise> exercises);
@@ -447,7 +447,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             left join fetch t.students teamStudent
             where teamStudent.id = :#{#studentId}
                 and p.exercise in :#{#exercises}
-                and s.type <> 'ILLEGAL'
+                and (s.type <> 'ILLEGAL' or s.type is null)
             """)
     List<StudentParticipation> findByStudentIdAndTeamExercisesWithEagerLegalSubmissionsResult(@Param("studentId") Long studentId, @Param("exercises") List<Exercise> exercises);
 
@@ -458,7 +458,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             left join fetch p.team t
             where p.exercise.course.id = :#{#courseId}
                 and t.shortName = :#{#teamShortName}
-                and s.type <> 'ILLEGAL'
+                and (s.type <> 'ILLEGAL' or s.type is null)
             """)
     List<StudentParticipation> findAllByCourseIdAndTeamShortNameWithEagerLegalSubmissionsResult(@Param("courseId") Long courseId, @Param("teamShortName") String teamShortName);
 
@@ -472,7 +472,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             select participation.id, count(submissions) from StudentParticipation participation
             left join participation.submissions submissions
             where participation.exercise.id = :#{#exerciseId}
-                and submissions.type <> 'ILLEGAL'
+                and (submissions.type <> 'ILLEGAL' or submissions.type is null)
             group by participation.id
             """)
     List<long[]> countLegalSubmissionsPerParticipationByExerciseId(@Param("exerciseId") long exerciseId);
@@ -489,7 +489,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             left join participation.submissions submissions
             where participation.team.shortName = :#{#teamShortName}
                 and participation.exercise.course.id = :#{#courseId}
-                and submissions.type <> 'ILLEGAL'
+                and (submissions.type <> 'ILLEGAL' or submissions.type is null)
             group by participation.id
             """)
     List<long[]> countLegalSubmissionsPerParticipationByCourseIdAndTeamShortName(@Param("courseId") long courseId, @Param("teamShortName") String teamShortName);
@@ -500,7 +500,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             LEFT JOIN FETCH s.results r
             WHERE p.exercise.id = :#{#exerciseId}
                 AND p.testRun = FALSE
-                AND s.id = (SELECT max(ps.id) FROM p.submissions ps WHERE ps.type <> 'ILLEGAL')
+                AND s.id = (SELECT max(ps.id) FROM p.submissions ps WHERE (ps.type <> 'ILLEGAL' or ps.type is null))
                 AND EXISTS (SELECT s FROM Submission s
                     WHERE s.participation.id = p.id
                     AND s.submitted = TRUE

@@ -246,7 +246,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
                 AND p.student.id = :studentId
                 AND r.score IS NOT NULL
                 AND r.completionDate IS NOT NULL
-                AND s.type <> 'ILLEGAL'
+                AND (s.type <> 'ILLEGAL' or s.type is null)
             ORDER BY p.id DESC, s.id DESC, r.id DESC
             """)
     List<Result> getResultsOrderedByParticipationIdLegalSubmissionIdResultIdDescForStudent(@Param("exerciseId") Long exerciseId, @Param("studentId") Long studentId);
@@ -258,7 +258,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
                 AND p.team.id = :teamId
                 AND r.score IS NOT NULL
                 AND r.completionDate IS NOT NULL
-                AND s.type <> 'ILLEGAL'
+                AND (s.type <> 'ILLEGAL' or s.type is null)
             ORDER BY p.id DESC, s.id DESC, r.id DESC
             """)
     List<Result> getResultsOrderedByParticipationIdLegalSubmissionIdResultIdDescForTeam(@Param("exerciseId") Long exerciseId, @Param("teamId") Long teamId);
@@ -271,7 +271,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
                 AND r.score IS NOT NULL
                 AND r.completionDate IS NOT NULL
                 AND r.rated = true
-                AND s.type <> 'ILLEGAL'
+                AND (s.type <> 'ILLEGAL' or s.type is null)
             ORDER BY p.id DESC, s.id DESC, r.id DESC
             """)
     List<Result> getRatedResultsOrderedByParticipationIdLegalSubmissionIdResultIdDescForStudent(@Param("exerciseId") Long exerciseId, @Param("studentId") Long studentId);
@@ -284,7 +284,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
                 AND r.score IS NOT NULL
                 AND r.completionDate IS NOT NULL
                 AND r.rated = true
-                AND s.type <> 'ILLEGAL'
+                AND (s.type <> 'ILLEGAL' or s.type is null)
             ORDER BY p.id DESC, s.id DESC, r.id DESC
             """)
     List<Result> getRatedResultsOrderedByParticipationIdLegalSubmissionIdResultIdDescForTeam(@Param("exerciseId") Long exerciseId, @Param("teamId") Long teamId);
