@@ -53,7 +53,11 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
      * @return a list of the participation's submissions
      */
     @EntityGraph(type = LOAD, attributePaths = { "results", "results.assessor" })
-    List<Submission> findAllWithResultsAndAssessorByParticipationId(Long participationId);
+    @Query("""
+            select s from Submission s
+            where s.participation.id = :#{#participationId} and s.type <> 'ILLEGAL'
+            """)
+    List<Submission> findAllLegalWithResultsAndAssessorByParticipationId(Long participationId);
 
     /**
      * Get the number of currently locked submissions for a specific user in the given course. These are all submissions for which the user started, but has not yet finished the
@@ -207,6 +211,7 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
                 AND EXISTS (SELECT s FROM Submission s
                     WHERE s.participation.id = p.id
                     AND s.submitted = TRUE
+                    AND s.type <> 'ILLEGAL'
                     AND (p.exercise.dueDate IS NULL
                         OR s.submissionDate <= p.exercise.dueDate))
             """)
@@ -236,6 +241,7 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
             AND p.testRun = FALSE
             AND s.participation.id = p.id
             AND s.submitted = TRUE
+            AND s.type <> 'ILLEGAL'
             AND (p.exercise.dueDate IS NULL OR s.submissionDate <= p.exercise.dueDate)
             """)
     long countByExerciseIdSubmittedBeforeDueDateIgnoreTestRuns(@Param("exerciseId") long exerciseId);
@@ -251,6 +257,7 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
                 AND EXISTS (SELECT s FROM Submission s
                     WHERE s.participation.id = p.id
                     AND s.submitted = TRUE
+                    AND s.type <> 'ILLEGAL'
                     AND (p.exercise.dueDate IS NOT NULL
                     AND s.submissionDate > p.exercise.dueDate))
             """)
@@ -277,7 +284,10 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
      * @return the submission with its feedback and assessor
      */
     @Query("""
-            SELECT DISTINCT submission FROM Submission submission LEFT JOIN FETCH submission.results r LEFT JOIN FETCH r.feedbacks LEFT JOIN FETCH r.assessor
+            SELECT DISTINCT submission FROM Submission submission
+            LEFT JOIN FETCH submission.results r
+            LEFT JOIN FETCH r.feedbacks
+            LEFT JOIN FETCH r.assessor
             WHERE submission.id = :#{#submissionId}
             """)
     Optional<Submission> findWithEagerResultAndFeedbackById(@Param("submissionId") long submissionId);

@@ -202,7 +202,7 @@ public class TeamResource {
 
         savedTeam.filterSensitiveInformation();
         savedTeam.getStudents().forEach(student -> student.setVisibleRegistrationNumber(student.getRegistrationNumber()));
-        var participationsOfSavedTeam = studentParticipationRepository.findByExerciseIdAndTeamIdWithEagerResultsAndSubmissions(exercise.getId(), savedTeam.getId());
+        var participationsOfSavedTeam = studentParticipationRepository.findByExerciseIdAndTeamIdWithEagerResultsAndLegalSubmissions(exercise.getId(), savedTeam.getId());
         teamWebsocketService.sendTeamAssignmentUpdate(exercise, existingTeam.get(), savedTeam, participationsOfSavedTeam);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, team.getId().toString())).body(savedTeam);
     }
@@ -468,7 +468,7 @@ public class TeamResource {
         List<StudentParticipation> participations;
         if (authCheckService.isAtLeastInstructorInCourse(course, user) || teams.stream().map(Team::getOwner).allMatch(user::equals)) {
             // fetch including submissions and results for team tutor and instructors
-            participations = studentParticipationRepository.findAllByCourseIdAndTeamShortNameWithEagerSubmissionsResult(course.getId(), teamShortName);
+            participations = studentParticipationRepository.findAllByCourseIdAndTeamShortNameWithEagerLegalSubmissionsResult(course.getId(), teamShortName);
             submissionService.reduceParticipationSubmissionsToLatest(participations, false);
         }
         else {
@@ -478,7 +478,7 @@ public class TeamResource {
         }
 
         // Set the submission count for all participations
-        Map<Long, Integer> submissionCountMap = studentParticipationRepository.countSubmissionsPerParticipationByCourseIdAndTeamShortNameAsMap(courseId, teamShortName);
+        Map<Long, Integer> submissionCountMap = studentParticipationRepository.countLegalSubmissionsPerParticipationByCourseIdAndTeamShortNameAsMap(courseId, teamShortName);
         participations.forEach(participation -> participation.setSubmissionCount(submissionCountMap.get(participation.getId())));
 
         // Set studentParticipations on all exercises

@@ -219,10 +219,10 @@ public class ExerciseService {
 
         // 1st: fetch participations, submissions and results for individual exercises
         List<StudentParticipation> individualParticipations = studentParticipationRepository
-                .findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(user.getId(), individualExercises);
+                .findByStudentIdAndIndividualExercisesWithEagerLegalSubmissionsResultIgnoreTestRuns(user.getId(), individualExercises);
 
         // 2nd: fetch participations, submissions and results for team exercises
-        List<StudentParticipation> teamParticipations = studentParticipationRepository.findByStudentIdAndTeamExercisesWithEagerSubmissionsResult(user.getId(), teamExercises);
+        List<StudentParticipation> teamParticipations = studentParticipationRepository.findByStudentIdAndTeamExercisesWithEagerLegalSubmissionsResult(user.getId(), teamExercises);
 
         // 3rd: merge both into one list for further processing
         return Stream.concat(individualParticipations.stream(), teamParticipations.stream()).collect(Collectors.toList());

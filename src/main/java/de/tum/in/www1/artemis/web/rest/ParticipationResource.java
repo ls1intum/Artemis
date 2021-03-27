@@ -294,7 +294,7 @@ public class ParticipationResource {
         }
         participations = participations.stream().filter(participation -> participation.getParticipant() != null).collect(Collectors.toList());
 
-        Map<Long, Integer> submissionCountMap = studentParticipationRepository.countSubmissionsPerParticipationByExerciseIdAsMap(exerciseId);
+        Map<Long, Integer> submissionCountMap = studentParticipationRepository.countLegalSubmissionsPerParticipationByExerciseIdAsMap(exerciseId);
         participations.forEach(participation -> participation.setSubmissionCount(submissionCountMap.get(participation.getId())));
 
         return ResponseEntity.ok(participations);
@@ -637,7 +637,7 @@ public class ParticipationResource {
         StudentParticipation participation = studentParticipationRepository.findByIdElseThrow(participationId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         checkAccessPermissionAtLeastInstructor(participation, user);
-        List<Submission> submissions = submissionRepository.findAllWithResultsAndAssessorByParticipationId(participationId);
+        List<Submission> submissions = submissionRepository.findAllLegalWithResultsAndAssessorByParticipationId(participationId);
         return ResponseEntity.ok(submissions);
     }
 

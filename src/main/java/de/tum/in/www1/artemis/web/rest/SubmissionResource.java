@@ -111,7 +111,7 @@ public class SubmissionResource {
         }
         User user = userRepository.getUserWithGroupsAndAuthorities();
 
-        var testRunParticipations = studentParticipationRepository.findTestRunParticipationsByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(user.getId(),
+        var testRunParticipations = studentParticipationRepository.findTestRunParticipationsByStudentIdAndIndividualExercisesWithEagerLegalSubmissionsResult(user.getId(),
                 List.of(exercise));
         if (!testRunParticipations.isEmpty() && testRunParticipations.get(0).findLatestSubmission().isPresent()) {
             var latestSubmission = testRunParticipations.get(0).findLatestSubmission().get();

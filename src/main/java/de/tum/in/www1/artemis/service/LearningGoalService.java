@@ -193,10 +193,10 @@ public class LearningGoalService {
     private List<StudentParticipation> getStudentParticipationsWithSubmissionsAndResults(User user, List<Exercise> individualExercises, List<Exercise> teamExercises) {
         // 1st: fetch participations, submissions and results for individual exercises
         List<StudentParticipation> participationsOfIndividualExercises = studentParticipationRepository
-                .findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(user.getId(), individualExercises);
+                .findByStudentIdAndIndividualExercisesWithEagerLegalSubmissionsResultIgnoreTestRuns(user.getId(), individualExercises);
 
         // 2nd: fetch participations, submissions and results for team exercises
-        List<StudentParticipation> participationsOfTeamExercises = studentParticipationRepository.findByStudentIdAndTeamExercisesWithEagerSubmissionsResult(user.getId(),
+        List<StudentParticipation> participationsOfTeamExercises = studentParticipationRepository.findByStudentIdAndTeamExercisesWithEagerLegalSubmissionsResult(user.getId(),
                 teamExercises);
 
         // 3rd: merge both into one list for further processing

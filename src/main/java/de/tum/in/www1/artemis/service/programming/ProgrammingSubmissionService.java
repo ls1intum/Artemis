@@ -628,10 +628,10 @@ public class ProgrammingSubmissionService extends SubmissionService {
     public List<ProgrammingSubmission> getProgrammingSubmissions(long exerciseId, boolean submittedOnly, boolean examMode) {
         List<StudentParticipation> participations;
         if (examMode) {
-            participations = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseIdIgnoreTestRuns(exerciseId);
+            participations = studentParticipationRepository.findAllWithEagerLegalSubmissionsAndEagerResultsAndEagerAssessorByExerciseIdIgnoreTestRuns(exerciseId);
         }
         else {
-            participations = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseId(exerciseId);
+            participations = studentParticipationRepository.findAllWithEagerLegalSubmissionsAndEagerResultsAndEagerAssessorByExerciseId(exerciseId);
         }
         List<ProgrammingSubmission> submissions = new ArrayList<>();
         participations.stream().peek(participation -> participation.getExercise().setStudentParticipations(null)).map(StudentParticipation::findLatestSubmission)

@@ -117,7 +117,7 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
     public ResponseEntity<Result> saveProgrammingAssessment(@PathVariable Long participationId, @RequestParam(value = "submit", defaultValue = "false") boolean submit,
             @RequestBody Result newManualResult) {
         log.debug("REST request to save a new result : {}", newManualResult);
-        final var participation = studentParticipationRepository.findByIdWithSubmissionsResultsFeedbackElseThrow(participationId);
+        final var participation = studentParticipationRepository.findByIdWithLegalSubmissionsResultsFeedbackElseThrow(participationId);
 
         User user = userRepository.getUserWithGroupsAndAuthorities();
 
