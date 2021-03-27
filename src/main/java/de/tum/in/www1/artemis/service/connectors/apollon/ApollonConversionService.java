@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.connectors.apollon;
 
+import java.io.IOException;
 import java.io.InputStream;
 
 import org.slf4j.Logger;
@@ -46,13 +47,12 @@ public class ApollonConversionService {
 
             var response = restTemplate.postForEntity(apollonConversionUrl + "/pdf", request, Resource.class);
             assert response.getBody() != null;
-            InputStream responseInputStream = response.getBody().getInputStream();
-            return responseInputStream;
+            return response.getBody().getInputStream();
         }
         catch (HttpClientErrorException ex) {
             log.error("Error while calling Remote Service: {}", ex.getMessage());
         }
-        catch (Exception ex) {
+        catch (IOException ex) {
             log.error(ex.getMessage());
         }
         return null;
