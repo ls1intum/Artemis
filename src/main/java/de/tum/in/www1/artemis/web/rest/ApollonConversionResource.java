@@ -12,7 +12,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.service.connectors.apollon.ApollonConversionService;
-import de.tum.in.www1.artemis.web.rest.dto.ApollonConversionDTO;
+import de.tum.in.www1.artemis.service.connectors.apollon.dto.ApollonModelDTO;
 
 /**
  * REST controller for managing ApollonDiagram.
@@ -32,16 +32,16 @@ public class ApollonConversionResource {
 
     /**
      * Converts given model to pdf
-     * @param dto the data transfer object that includes the model for conversion
+     * @param request the model for conversion
      * @return input stream for conversion
      */
     @PostMapping("/apollon-convert/pdf")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity convertApollonModel(@RequestBody ApollonConversionDTO dto) {
+    public ResponseEntity convertApollonModel(@RequestBody ApollonModelDTO request) {
         log.debug("REST call to convert apollon model to pdf");
 
         // The apollonConversionService will manage the processing and database saving
-        InputStream inputStream = apollonConversionService.convertModel(dto.getModel());
+        InputStream inputStream = apollonConversionService.convertModel(request.getModel());
 
         InputStreamResource inputStreamResource = new InputStreamResource(inputStream);
         log.debug("REST call for apollon model conversion to pdf finished");

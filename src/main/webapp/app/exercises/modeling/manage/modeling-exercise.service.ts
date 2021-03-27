@@ -94,7 +94,7 @@ export class ModelingExerciseService {
 
     convertToPdf(model: string): Observable<any> {
         return this.http
-            .post(`${SERVER_API_URL}api/apollon-convert/pdf`, { diagram: model }, { observe: 'response', responseType: 'blob' })
+            .post(`${SERVER_API_URL}api/apollon-convert/pdf`, { model }, { observe: 'response', responseType: 'blob' })
             .pipe(map((response: HttpResponse<Blob>) => downloadStream(response.body, 'application/pdf')));
     }
 }

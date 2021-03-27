@@ -20,7 +20,7 @@ import org.springframework.web.client.RestTemplate;
 
 import de.tum.in.www1.artemis.connector.apollon.ApollonRequestMockProvider;
 import de.tum.in.www1.artemis.service.connectors.apollon.ApollonConversionService;
-import de.tum.in.www1.artemis.web.rest.dto.ApollonConversionDTO;
+import de.tum.in.www1.artemis.service.connectors.apollon.dto.ApollonModelDTO;
 
 public class ApollonConversionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -68,7 +68,7 @@ public class ApollonConversionIntegrationTest extends AbstractSpringIntegrationB
         apollonRequestMockProvider.mockConvertModel(true, mockResource);
 
         String model = "model";
-        final var requestBody = new ApollonConversionDTO();
+        final var requestBody = new ApollonModelDTO();
         requestBody.setModel(model);
 
         String response = request.postWithResponseBodyString(APOLLON_CONVERSION_API_PATH, requestBody, HttpStatus.OK);

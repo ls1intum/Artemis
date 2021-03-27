@@ -429,7 +429,7 @@ The semi-automatic text assessment relies on the Athene_ service.
 To enable automatic text assessments, special configuration is required:
 
 Enable the ``apollon`` Spring profile:
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 ::
 

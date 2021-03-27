@@ -60,7 +60,7 @@ export class ModelingExerciseDetailComponent implements OnInit, OnDestroy {
                 (response: HttpResponse<String>) => {
                     console.log(response);
                 },
-                (err: string) => {
+                () => {
                     this.jhiAlertService.error('artemisApp.modelingExercise.apollonConversion.error');
                 },
             );

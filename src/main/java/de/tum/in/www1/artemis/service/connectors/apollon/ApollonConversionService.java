@@ -6,11 +6,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
+import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
-import de.tum.in.www1.artemis.exception.NetworkingError;
-import de.tum.in.www1.artemis.web.rest.dto.ApollonConversionDTO;
+import de.tum.in.www1.artemis.service.connectors.apollon.dto.ApollonModelDTO;
 
 @Service
 @Profile("apollon")
@@ -21,14 +22,14 @@ public class ApollonConversionService {
     @Value("${artemis.apollon.conversion-service-url}")
     private String apollonConversionUrl;
 
-    private ApollonConnector connector;
+    private RestTemplate restTemplate;
 
     public ApollonConversionService(RestTemplate apollonRestTemplate) {
         setRestTemplate(apollonRestTemplate);
     }
 
     public void setRestTemplate(RestTemplate restTemplate) {
-        connector = new ApollonConnector(log, restTemplate);
+        this.restTemplate = restTemplate;
     }
 
     /**
@@ -39,14 +40,20 @@ public class ApollonConversionService {
     public InputStream convertModel(String model) {
 
         log.info("Calling Remote Service to convert for model.");
-        ApollonConversionDTO apollonDTO = new ApollonConversionDTO();
-        apollonDTO.setModel(model);
         try {
-            final ApollonConnector.RequestDTO request = new ApollonConnector.RequestDTO(model);
-            return connector.invoke(apollonConversionUrl + "/pdf", request);
+            ApollonModelDTO request = new ApollonModelDTO();
+            request.setModel(model);
+
+            var response = restTemplate.postForEntity(apollonConversionUrl + "/pdf", request, Resource.class);
+            assert response.getBody() != null;
+            InputStream responseInputStream = response.getBody().getInputStream();
+            return responseInputStream;
         }
-        catch (NetworkingError networkingError) {
-            log.error("Error while calling Remote Service: {}", networkingError.getMessage());
+        catch (HttpClientErrorException ex) {
+            log.error("Error while calling Remote Service: {}", ex.getMessage());
+        }
+        catch (Exception ex) {
+            log.error(ex.getMessage());
         }
         return null;
 
