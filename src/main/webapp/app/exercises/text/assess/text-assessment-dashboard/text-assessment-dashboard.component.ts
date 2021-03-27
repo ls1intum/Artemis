@@ -13,6 +13,7 @@ import { TextSubmission } from 'app/entities/text-submission.model';
 import { SortService } from 'app/shared/service/sort.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
+import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 
 @Component({
     templateUrl: './text-assessment-dashboard.component.html',
@@ -90,6 +91,7 @@ export class TextAssessmentDashboardComponent implements OnInit {
                         tmpResult!.participation = submission.participation;
                         submission.participation!.results = [tmpResult!];
                     }
+                    submission.participation = submission.participation as StudentParticipation;
 
                     return submission;
                 }),
@@ -144,5 +146,9 @@ export class TextAssessmentDashboardComponent implements OnInit {
      */
     getAssessmentLink(submissionId: number) {
         return getLinkToSubmissionAssessment(this.exercise.type!, this.courseId, this.exerciseId, submissionId, this.examId, this.exerciseGroupId);
+    }
+
+    getParticipantName(submission?: Submission) {
+        return (submission?.participation as StudentParticipation)?.participantName;
     }
 }
