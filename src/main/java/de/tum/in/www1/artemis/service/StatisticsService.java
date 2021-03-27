@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.enumeration.GraphType;
+import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
 import de.tum.in.www1.artemis.domain.enumeration.SpanType;
 import de.tum.in.www1.artemis.repository.ParticipantScoreRepository;
 import de.tum.in.www1.artemis.repository.StatisticsRepository;
@@ -386,21 +387,21 @@ public class StatisticsService {
      * Get the data for the doughnut graphs in the course statistics, stored in the CourseManagementStatisticsDTO.
      *
      * @param courseId    the id of the course for which the data should be fetched
-     * @return a custom course statistics DTO, which contains the relevant data
+     * @return a custom CourseManagementStatisticsDTO, which contains the relevant data
      */
     public CourseManagementStatisticsDTO getCourseStatistics(Long courseId) {
         var courseManagementStatisticsDTO = new CourseManagementStatisticsDTO();
         var exercises = statisticsRepository.findExercisesByCourseId(courseId);
+        var includedExercises = exercises.stream().filter(Exercise::isCourseExercise)
+                .filter(exercise -> !exercise.getIncludedInOverallScore().equals(IncludedInOverallScore.NOT_INCLUDED)).collect(Collectors.toSet());
         var courseMaxPoints = 0.0;
-        var exerciseIds = exercises.stream().map(Exercise::getId).collect(Collectors.toList());
-        var averagePointsForCourse = participantScoreRepository.findAvgPointsForExerciseIds(exerciseIds);
-        var averagePointsForExercises = participantScoreRepository.findAvgPointsForExercises(exerciseIds);
-        courseManagementStatisticsDTO.setAveragePointsOfCourse(round(averagePointsForCourse));
-        var averagePointsByTitle = createAverageScoreMap(averagePointsForExercises, exercises);
+        var averageScoreForCourse = participantScoreRepository.findAvgScore(includedExercises);
+        var averagePointsForExercises = participantScoreRepository.findAvgPointsForExercises(includedExercises);
+        var averagePointsByTitle = createAverageScoreMap(averagePointsForExercises, includedExercises);
 
         // Set the max points for each exercise
         var maxPoints = new HashMap<String, Double>();
-        for (var exercise : exercises) {
+        for (var exercise : includedExercises) {
             var exerciseTitle = exercise.getTitle();
             maxPoints.put(exerciseTitle, exercise.getMaxPoints());
             courseMaxPoints += exercise.getMaxPoints();
@@ -410,6 +411,7 @@ public class StatisticsService {
                 averagePointsByTitle.put(exerciseTitle, 0.0);
             }
         }
+        courseManagementStatisticsDTO.setAveragePointsOfCourse(round((averageScoreForCourse * courseMaxPoints) / 100.0));
         courseManagementStatisticsDTO.setExerciseNameToAveragePointsMap(averagePointsByTitle);
         courseManagementStatisticsDTO.setMaxPointsOfCourse(courseMaxPoints);
         courseManagementStatisticsDTO.setExerciseNameToMaxPointsMap(maxPoints);
@@ -420,7 +422,7 @@ public class StatisticsService {
     /**
      * Helper class which creates a map filled with the exerciseId mapped to the average score of the exercise
      */
-    private Map<String, Double> createAverageScoreMap(List<Map<String, Object>> averagePointsForExercises, List<Exercise> exercises) {
+    private Map<String, Double> createAverageScoreMap(List<Map<String, Object>> averagePointsForExercises, Set<Exercise> exercises) {
         var averagePointsByTitle = new HashMap<String, Double>();
         for (var averagePointsMap : averagePointsForExercises) {
             var exerciseId = (Long) averagePointsMap.get("exerciseId");
