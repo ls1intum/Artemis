@@ -122,7 +122,7 @@ public class AssessmentService {
 
     /**
      * With ordered collections (like result and feedback here),
-     * we have to be very careful with the way you persist the objects in the database.
+     * we have to be very careful with the way we persist the objects in the database.
      * We must first persist the child object without a relation to the parent object.
      * Then, we recreate the association and persist the parent object.
      */
