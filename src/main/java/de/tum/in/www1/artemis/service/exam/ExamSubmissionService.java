@@ -18,6 +18,7 @@ import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.ExamRepository;
+import de.tum.in.www1.artemis.repository.StudentExamRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -25,7 +26,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 @Service
 public class ExamSubmissionService {
 
-    private final StudentExamService studentExamService;
+    private final StudentExamRepository studentExamRepository;
 
     private final ParticipationService participationService;
 
@@ -33,9 +34,9 @@ public class ExamSubmissionService {
 
     private final ExamRepository examRepository;
 
-    public ExamSubmissionService(StudentExamService studentExamService, ExamRepository examRepository, ParticipationService participationService,
+    public ExamSubmissionService(StudentExamRepository studentExamRepository, ExamRepository examRepository, ParticipationService participationService,
             AuthorizationCheckService authorizationCheckService) {
-        this.studentExamService = studentExamService;
+        this.studentExamRepository = studentExamRepository;
         this.examRepository = examRepository;
         this.participationService = participationService;
         this.authorizationCheckService = authorizationCheckService;
@@ -71,7 +72,7 @@ public class ExamSubmissionService {
         if (isExamSubmission(exercise)) {
             // Get the student exam if it was not passed to the function
             Exam exam = exercise.getExerciseGroup().getExam();
-            Optional<StudentExam> optionalStudentExam = studentExamService.findOneWithExercisesByUserIdAndExamId(user.getId(), exam.getId());
+            Optional<StudentExam> optionalStudentExam = studentExamRepository.findWithExercisesByUserIdAndExamId(user.getId(), exam.getId());
             if (optionalStudentExam.isEmpty()) {
                 // We check for test exams here for performance issues as this will not be the case for all students who are participating in the exam
                 // isAllowedToSubmitDuringExam is called everytime an exercise is saved (e.g. autosave every 30 seconds for every student) therefore it is best to limit
@@ -110,7 +111,7 @@ public class ExamSubmissionService {
         // Check if user is an instructor or admin
         if (user.getGroups().contains(exam.getCourse().getInstructorGroupName()) || authorizationCheckService.isAdmin(user)) {
             // fetch all testRuns for the instructor
-            List<StudentExam> testRuns = studentExamService.findAllTestRunsWithExercisesForUser(exam.getId(), user.getId());
+            List<StudentExam> testRuns = studentExamRepository.findAllTestRunsWithExercisesByExamIdForUser(exam.getId(), user.getId());
             // if a test run contains the exercise, then the instructor is allowed to submit
             return testRuns.stream().anyMatch(testRun -> testRun.getExercises().contains(exercise));
         }

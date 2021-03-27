@@ -24,10 +24,7 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
-import de.tum.in.www1.artemis.repository.ExerciseRepository;
-import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
-import de.tum.in.www1.artemis.repository.SubmissionRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.compass.CompassService;
 import de.tum.in.www1.artemis.service.exam.ExamSubmissionService;
@@ -56,24 +53,27 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
 
     private final ModelingSubmissionService modelingSubmissionService;
 
-    private final ModelingExerciseService modelingExerciseService;
+    private final ModelingSubmissionRepository modelingSubmissionRepository;
+
+    private final ModelingExerciseRepository modelingExerciseRepository;
 
     private final CompassService compassService;
 
-    private final GradingCriterionService gradingCriterionService;
+    private final GradingCriterionRepository gradingCriterionRepository;
 
     private final ExamSubmissionService examSubmissionService;
 
     public ModelingSubmissionResource(SubmissionRepository submissionRepository, ResultService resultService, ModelingSubmissionService modelingSubmissionService,
-            ModelingExerciseService modelingExerciseService, AuthorizationCheckService authCheckService, CompassService compassService, UserRepository userRepository,
-            ExerciseRepository exerciseRepository, GradingCriterionService gradingCriterionService, ExamSubmissionService examSubmissionService,
-            StudentParticipationRepository studentParticipationRepository) {
+            ModelingExerciseRepository modelingExerciseRepository, AuthorizationCheckService authCheckService, CompassService compassService, UserRepository userRepository,
+            ExerciseRepository exerciseRepository, GradingCriterionRepository gradingCriterionRepository, ExamSubmissionService examSubmissionService,
+            StudentParticipationRepository studentParticipationRepository, ModelingSubmissionRepository modelingSubmissionRepository) {
         super(submissionRepository, resultService, authCheckService, userRepository, exerciseRepository, modelingSubmissionService, studentParticipationRepository);
         this.modelingSubmissionService = modelingSubmissionService;
-        this.modelingExerciseService = modelingExerciseService;
+        this.modelingExerciseRepository = modelingExerciseRepository;
         this.compassService = compassService;
-        this.gradingCriterionService = gradingCriterionService;
+        this.gradingCriterionRepository = gradingCriterionRepository;
         this.examSubmissionService = examSubmissionService;
+        this.modelingSubmissionRepository = modelingSubmissionRepository;
     }
 
     /**
@@ -122,7 +122,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
 
     @NotNull
     private ResponseEntity<ModelingSubmission> handleModelingSubmission(Long exerciseId, Principal principal, ModelingSubmission modelingSubmission) {
-        final ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
+        final ModelingExercise modelingExercise = modelingExerciseRepository.findOne(exerciseId);
         final User user = userRepository.getUserWithGroupsAndAuthorities();
 
         // Apply further checks if it is an exam submission
@@ -188,10 +188,10 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
             @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound, @RequestParam(value = "resultId", required = false) Long resultId) {
         log.debug("REST request to get ModelingSubmission with id: {}", submissionId);
         // TODO CZ: include exerciseId in path to get exercise for auth check more easily?
-        var modelingSubmission = modelingSubmissionService.findOne(submissionId);
+        var modelingSubmission = modelingSubmissionRepository.findOne(submissionId);
         var studentParticipation = (StudentParticipation) modelingSubmission.getParticipation();
         var modelingExercise = (ModelingExercise) studentParticipation.getExercise();
-        var gradingCriteria = gradingCriterionService.findByExerciseIdWithEagerGradingCriteria(modelingExercise.getId());
+        var gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(modelingExercise.getId());
         modelingExercise.setGradingCriteria(gradingCriteria);
 
         final User user = userRepository.getUserWithGroupsAndAuthorities();
@@ -220,8 +220,8 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
         modelingSubmission.getParticipation().getExercise().setGradingCriteria(gradingCriteria);
 
         // prepare fileUploadSubmission for response
-        this.modelingSubmissionService.hideDetails(modelingSubmission, user);
-        this.submissionService.removeNotNeededResults(modelingSubmission, correctionRound, resultId);
+        modelingSubmissionService.hideDetails(modelingSubmission, user);
+        modelingSubmission.removeNotNeededResults(correctionRound, resultId);
         return ResponseEntity.ok(modelingSubmission);
     }
 
@@ -246,6 +246,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
             return forbidden();
         }
+
         if (!(exercise instanceof ModelingExercise)) {
             return badRequest();
         }
@@ -262,7 +263,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
         var modelingSubmission = modelingSubmissionService.findRandomSubmissionWithoutExistingAssessment(lockSubmission, correctionRound, modelingExercise, isExamMode);
 
         // needed to show the grading criteria in the assessment view
-        List<GradingCriterion> gradingCriteria = gradingCriterionService.findByExerciseIdWithEagerGradingCriteria(exerciseId);
+        List<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exerciseId);
         modelingExercise.setGradingCriteria(gradingCriteria);
         // Make sure the exercise is connected to the participation in the json response
         modelingSubmission.getParticipation().setExercise(modelingExercise);
@@ -283,7 +284,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
     @GetMapping("/exercises/{exerciseId}/optimal-model-submissions")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Long[]> getNextOptimalModelSubmissions(@PathVariable Long exerciseId, @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound) {
-        final ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
+        final ModelingExercise modelingExercise = modelingExerciseRepository.findOne(exerciseId);
         final User user = userRepository.getUserWithGroupsAndAuthorities();
         checkAuthorization(modelingExercise, user);
         // Check if the limit of simultaneously locked submissions has been reached
@@ -329,7 +330,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
     @DeleteMapping("/exercises/{exerciseId}/optimal-model-submissions")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<String> resetOptimalModels(@PathVariable Long exerciseId) {
-        final ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
+        final ModelingExercise modelingExercise = modelingExerciseRepository.findOne(exerciseId);
         final User user = userRepository.getUserWithGroupsAndAuthorities();
         checkAuthorization(modelingExercise, user);
         if (compassService.isSupported(modelingExercise)) {

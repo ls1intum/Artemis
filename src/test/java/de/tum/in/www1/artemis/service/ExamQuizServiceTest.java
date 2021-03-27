@@ -25,48 +25,37 @@ import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.service.exam.ExamQuizService;
-import de.tum.in.www1.artemis.service.exam.ExamService;
 import de.tum.in.www1.artemis.service.exam.StudentExamService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
 public class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
-    ExamQuizService examQuizService;
+    private StudentExamService studentExamService;
 
     @Autowired
-    ExamService examService;
+    private ExamRepository examRepository;
 
     @Autowired
-    QuizSubmissionService quizSubmissionService;
+    private StudentParticipationRepository studentParticipationRepository;
 
     @Autowired
-    StudentExamService studentExamService;
+    private QuizSubmissionRepository quizSubmissionRepository;
 
     @Autowired
-    ExamRepository examRepository;
+    private ExerciseGroupRepository exerciseGroupRepository;
 
     @Autowired
-    StudentParticipationRepository studentParticipationRepository;
+    private QuizExerciseService quizExerciseService;
 
     @Autowired
-    QuizSubmissionRepository quizSubmissionRepository;
+    private UserRepository userRepository;
 
     @Autowired
-    ExerciseGroupRepository exerciseGroupRepository;
+    private QuizExerciseRepository quizExerciseRepository;
 
     @Autowired
-    QuizExerciseService quizExerciseService;
-
-    @Autowired
-    UserRepository userRepository;
-
-    @Autowired
-    QuizExerciseRepository quizExerciseRepository;
-
-    @Autowired
-    StudentExamRepository studentExamRepository;
+    private StudentExamRepository studentExamRepository;
 
     private QuizExercise quizExercise;
 
@@ -155,8 +144,8 @@ public class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucke
         quizExercise = quizExerciseService.save(quizExercise);
         exerciseGroup.setExercises(Set.of(quizExercise));
 
-        assertThat(examService.generateStudentExams(exam).size()).isEqualTo(numberOfParticipants);
-        assertThat(studentExamService.findAllByExamId(exam.getId()).size()).isEqualTo(numberOfParticipants);
+        assertThat(studentExamRepository.generateStudentExams(exam).size()).isEqualTo(numberOfParticipants);
+        assertThat(studentExamRepository.findByExamId(exam.getId()).size()).isEqualTo(numberOfParticipants);
         assertThat(studentExamService.startExercises(exam.getId())).isEqualTo(numberOfParticipants);
 
         for (int i = 0; i < numberOfParticipants; i++) {
@@ -167,7 +156,7 @@ public class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucke
 
         database.changeUser("instructor1");
         // All exams should be over before evaluation
-        for (StudentExam studentExam : studentExamService.findAllByExamId(exam.getId())) {
+        for (StudentExam studentExam : studentExamRepository.findByExamId(exam.getId())) {
             studentExam.setWorkingTime(0);
             studentExamRepository.save(studentExam);
         }
@@ -202,8 +191,8 @@ public class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucke
         quizExercise = quizExerciseService.save(quizExercise);
         exerciseGroup.setExercises(Set.of(quizExercise));
 
-        assertThat(examService.generateStudentExams(exam).size()).isEqualTo(numberOfParticipants);
-        assertThat(studentExamService.findAllByExamId(exam.getId()).size()).isEqualTo(numberOfParticipants);
+        assertThat(studentExamRepository.generateStudentExams(exam).size()).isEqualTo(numberOfParticipants);
+        assertThat(studentExamRepository.findByExamId(exam.getId()).size()).isEqualTo(numberOfParticipants);
 
         // add participations with no submissions
         for (int i = 0; i < numberOfParticipants; i++) {
@@ -218,7 +207,7 @@ public class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucke
 
         database.changeUser("instructor1");
         // All exams should be over before evaluation
-        for (StudentExam studentExam : studentExamService.findAllByExamId(exam.getId())) {
+        for (StudentExam studentExam : studentExamRepository.findByExamId(exam.getId())) {
             studentExam.setWorkingTime(0);
             studentExamRepository.save(studentExam);
         }
@@ -251,8 +240,8 @@ public class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucke
         quizExercise = quizExerciseService.save(quizExercise);
         exerciseGroup.setExercises(Set.of(quizExercise));
 
-        assertThat(examService.generateStudentExams(exam).size()).isEqualTo(numberOfParticipants);
-        assertThat(studentExamService.findAllByExamId(exam.getId()).size()).isEqualTo(numberOfParticipants);
+        assertThat(studentExamRepository.generateStudentExams(exam).size()).isEqualTo(numberOfParticipants);
+        assertThat(studentExamRepository.findByExamId(exam.getId()).size()).isEqualTo(numberOfParticipants);
         assertThat(studentExamService.startExercises(exam.getId())).isEqualTo(numberOfParticipants);
 
         for (int i = 0; i < numberOfParticipants; i++) {
@@ -270,7 +259,7 @@ public class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucke
 
         database.changeUser("instructor1");
         // All exams should be over before evaluation
-        for (StudentExam studentExam : studentExamService.findAllByExamId(exam.getId())) {
+        for (StudentExam studentExam : studentExamRepository.findByExamId(exam.getId())) {
             studentExam.setWorkingTime(0);
             studentExamRepository.save(studentExam);
         }
@@ -305,8 +294,8 @@ public class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucke
         quizExercise = quizExerciseService.save(quizExercise);
         exerciseGroup.setExercises(Set.of(quizExercise));
 
-        assertThat(examService.generateStudentExams(exam).size()).isEqualTo(numberOfParticipants);
-        assertThat(studentExamService.findAllByExamId(exam.getId()).size()).isEqualTo(numberOfParticipants);
+        assertThat(studentExamRepository.generateStudentExams(exam).size()).isEqualTo(numberOfParticipants);
+        assertThat(studentExamRepository.findByExamId(exam.getId()).size()).isEqualTo(numberOfParticipants);
         assertThat(studentExamService.startExercises(exam.getId())).isEqualTo(numberOfParticipants);
 
         for (int i = 0; i < numberOfParticipants; i++) {
@@ -317,7 +306,7 @@ public class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucke
 
         database.changeUser("instructor1");
         // All exams should be over before evaluation
-        for (StudentExam studentExam : studentExamService.findAllByExamId(exam.getId())) {
+        for (StudentExam studentExam : studentExamRepository.findByExamId(exam.getId())) {
             studentExam.setWorkingTime(0);
             studentExamRepository.save(studentExam);
         }

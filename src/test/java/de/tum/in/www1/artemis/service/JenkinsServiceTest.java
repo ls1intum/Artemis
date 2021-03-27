@@ -14,7 +14,7 @@ import de.tum.in.www1.artemis.ContinuousIntegrationTestService;
 public class JenkinsServiceTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 
     @Autowired
-    ContinuousIntegrationTestService continuousIntegrationTestService;
+    private ContinuousIntegrationTestService continuousIntegrationTestService;
 
     /**
      * This method initializes the test case by setting up a local repo
@@ -84,7 +84,6 @@ public class JenkinsServiceTest extends AbstractSpringIntegrationJenkinsGitlabTe
     @Test
     @WithMockUser(username = "student1")
     public void testHealthException() throws Exception {
-
         continuousIntegrationTestService.testHealthException();
     }
 }

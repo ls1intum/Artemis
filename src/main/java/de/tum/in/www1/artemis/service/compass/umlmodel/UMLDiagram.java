@@ -1,15 +1,11 @@
 package de.tum.in.www1.artemis.service.compass.umlmodel;
 
+import java.io.Serializable;
 import java.util.List;
 
-import de.tum.in.www1.artemis.service.compass.assessment.CompassResult;
-
-public abstract class UMLDiagram implements Similarity<UMLDiagram> {
+public abstract class UMLDiagram implements Similarity<UMLDiagram>, Serializable {
 
     private long modelSubmissionId;
-
-    @Deprecated(since = "4.2.3", forRemoval = true)
-    private CompassResult lastAssessmentCompassResult = null;
 
     /**
      * to make mockito happy
@@ -105,64 +101,6 @@ public abstract class UMLDiagram implements Similarity<UMLDiagram> {
      */
     public long getModelSubmissionId() {
         return modelSubmissionId;
-    }
-
-    /**
-     * Set the lastAssessmentCompassResult that represents the most recent automatic assessment calculated by Compass for this diagram.
-     *
-     * @param compassResult the most recent Compass result for this diagram
-     */
-    @Deprecated(since = "4.2.3", forRemoval = true)
-    public void setLastAssessmentCompassResult(CompassResult compassResult) {
-        lastAssessmentCompassResult = compassResult;
-    }
-
-    /**
-     * Returns the lastAssessmentCompassResult that represents the most recent automatic assessment calculated by Compass for this diagram.
-     * This method is deprecated because the UML Diagram should not store such information. This should rather be stored somewhere else!
-     * @return the most recent Compass result for this diagram
-     */
-    @Deprecated(since = "4.2.3", forRemoval = true)
-    public CompassResult getLastAssessmentCompassResult() {
-        return lastAssessmentCompassResult;
-    }
-
-    /**
-     * Indicates if this diagram already has an automatic assessment calculated by Compass or not.
-     *
-     * @return true if Compass has not already calculated an automatic assessment for this diagram, false otherwise
-     */
-    @Deprecated(since = "4.2.3", forRemoval = true)
-    public boolean isUnassessed() {
-        return getLastAssessmentCompassResult() == null;
-    }
-
-    /**
-     * Get the confidence of the last compass result, i.e. the most recent automatic assessment calculated by Compass for this diagram.
-     *
-     * @return The confidence of the last compass result, -1 if no compass result is available
-     */
-    @Deprecated(since = "4.2.3", forRemoval = true)
-    public double getLastAssessmentConfidence() {
-        if (isUnassessed()) {
-            return -1;
-        }
-
-        return getLastAssessmentCompassResult().getConfidence();
-    }
-
-    /**
-     * Get the coverage for the last assessed compass result, i.e. the most recent automatic assessment calculated by Compass for this diagram.
-     *
-     * @return The coverage of the last compass result, -1 if no compass result is available
-     */
-    @Deprecated(since = "4.2.3", forRemoval = true)
-    public double getLastAssessmentCoverage() {
-        if (isUnassessed()) {
-            return -1;
-        }
-
-        return getLastAssessmentCompassResult().getCoverage();
     }
 
     /**

@@ -47,7 +47,7 @@ import de.tum.in.www1.artemis.service.connectors.CIUserManagementService;
 import de.tum.in.www1.artemis.service.connectors.VcsUserManagementService;
 import de.tum.in.www1.artemis.web.rest.dto.*;
 import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
-import de.tum.in.www1.artemis.web.rest.dto.StatsForInstructorDashboardDTO;
+import de.tum.in.www1.artemis.web.rest.dto.StatsForDashboardDTO;
 import de.tum.in.www1.artemis.web.rest.dto.TutorLeaderboardDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -78,8 +78,6 @@ public class CourseResource {
     private final UserRepository userRepository;
 
     private final CourseService courseService;
-
-    private final StudentParticipationRepository studentParticipationRepository;
 
     private final AuthorizationCheckService authCheckService;
 
@@ -117,15 +115,14 @@ public class CourseResource {
 
     private final ResultRepository resultRepository;
 
-    public CourseResource(UserRepository userRepository, CourseService courseService, StudentParticipationRepository studentParticipationRepository,
-            CourseRepository courseRepository, ExerciseService exerciseService, AuthorizationCheckService authCheckService, TutorParticipationService tutorParticipationService,
-            Environment env, ArtemisAuthenticationProvider artemisAuthenticationProvider, ComplaintRepository complaintRepository,
-            ComplaintResponseRepository complaintResponseRepository, SubmissionService submissionService, ComplaintService complaintService,
-            TutorLeaderboardService tutorLeaderboardService, ProgrammingExerciseRepository programmingExerciseRepository, AuditEventRepository auditEventRepository,
+    public CourseResource(UserRepository userRepository, CourseService courseService, CourseRepository courseRepository, ExerciseService exerciseService,
+            AuthorizationCheckService authCheckService, TutorParticipationService tutorParticipationService, Environment env,
+            ArtemisAuthenticationProvider artemisAuthenticationProvider, ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository,
+            SubmissionService submissionService, ComplaintService complaintService, TutorLeaderboardService tutorLeaderboardService,
+            ProgrammingExerciseRepository programmingExerciseRepository, AuditEventRepository auditEventRepository,
             Optional<VcsUserManagementService> optionalVcsUserManagementService, AssessmentDashboardService assessmentDashboardService, ExerciseRepository exerciseRepository,
             SubmissionRepository submissionRepository, ResultRepository resultRepository, Optional<CIUserManagementService> optionalCiUserManagementService) {
         this.courseService = courseService;
-        this.studentParticipationRepository = studentParticipationRepository;
         this.courseRepository = courseRepository;
         this.exerciseService = exerciseService;
         this.authCheckService = authCheckService;
@@ -598,13 +595,13 @@ public class CourseResource {
      */
     @GetMapping("/courses/{courseId}/stats-for-assessment-dashboard")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<StatsForInstructorDashboardDTO> getStatsForAssessmentDashboard(@PathVariable long courseId) {
+    public ResponseEntity<StatsForDashboardDTO> getStatsForAssessmentDashboard(@PathVariable long courseId) {
         Course course = courseRepository.findByIdElseThrow(courseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
             return forbidden();
         }
-        StatsForInstructorDashboardDTO stats = new StatsForInstructorDashboardDTO();
+        StatsForDashboardDTO stats = new StatsForDashboardDTO();
         long start = System.currentTimeMillis();
         long numberOfInTimeSubmissions = submissionRepository.countByCourseIdSubmittedBeforeDueDate(courseId);
         long end = System.currentTimeMillis();
@@ -682,7 +679,7 @@ public class CourseResource {
             return forbidden();
         }
 
-        return ResponseUtil.wrapOrNotFound(Optional.ofNullable(course));
+        return ResponseUtil.wrapOrNotFound(Optional.of(course));
     }
 
     /**
@@ -794,7 +791,7 @@ public class CourseResource {
      */
     @GetMapping("/courses/{courseId}/stats-for-instructor-dashboard")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<StatsForInstructorDashboardDTO> getStatsForInstructorDashboard(@PathVariable Long courseId) throws AccessForbiddenException {
+    public ResponseEntity<StatsForDashboardDTO> getStatsForInstructorDashboard(@PathVariable Long courseId) throws AccessForbiddenException {
         log.debug("REST request /courses/{courseId}/stats-for-instructor-dashboard");
         final long start = System.currentTimeMillis();
         final Course course = courseRepository.findByIdElseThrow(courseId);
@@ -803,7 +800,7 @@ public class CourseResource {
             throw new AccessForbiddenException("You are not allowed to access this resource");
         }
 
-        StatsForInstructorDashboardDTO stats = new StatsForInstructorDashboardDTO();
+        StatsForDashboardDTO stats = new StatsForDashboardDTO();
         long start2 = System.currentTimeMillis();
         // this one is very slow TODO make faster
         DueDateStat totalNumberOfAssessments = resultRepository.countNumberOfAssessments(courseId);
@@ -1118,6 +1115,20 @@ public class CourseResource {
         log.debug("REST request to get all instructors in course : {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         return getAllUsersInGroup(course, course.getInstructorGroupName());
+    }
+
+    /**
+     * GET /courses/:courseId/title : Returns the title of the course with the given id
+     *
+     * @param courseId the id of the course
+     * @return the title of the course wrapped in an ResponseEntity or 404 Not Found if no course with that id exists
+     */
+    @GetMapping(value = "/courses/{courseId}/title")
+    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    @ResponseBody
+    public ResponseEntity<String> getCourseTitle(@PathVariable Long courseId) {
+        final var title = courseRepository.getCourseTitle(courseId);
+        return title == null ? ResponseEntity.notFound().build() : ResponseEntity.ok(title);
     }
 
     /**

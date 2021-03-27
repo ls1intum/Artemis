@@ -1026,9 +1026,9 @@ public class ModelFactory {
         // Create Submissions with id's 0 - count
         List<TextSubmission> textSubmissions = new ArrayList<>();
         for (int i = 0; i < count; i++) {
-            TextSubmission s = new TextSubmission((long) i).text(submissionTexts[i]);
-            s.setLanguage(Language.ENGLISH);
-            textSubmissions.add(s);
+            TextSubmission textSubmission = new TextSubmission((long) i).text(submissionTexts[i]);
+            textSubmission.setLanguage(Language.ENGLISH);
+            textSubmissions.add(textSubmission);
         }
 
         return textSubmissions;

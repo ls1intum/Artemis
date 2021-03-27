@@ -4,6 +4,8 @@ import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphTyp
 
 import java.util.Optional;
 
+import javax.validation.constraints.NotNull;
+
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -11,6 +13,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.FileUploadSubmission;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
  * Spring Data JPA repository for the FileUploadSubmission entity.
@@ -40,5 +43,40 @@ public interface FileUploadSubmissionRepository extends JpaRepository<FileUpload
      * @return the file upload submission with its result, the feedback list of the result, the assessor of the result, its participation and all results of the participation
      */
     @EntityGraph(type = LOAD, attributePaths = { "results", "results.feedbacks", "results.assessor", "participation", "participation.results" })
-    Optional<FileUploadSubmission> findWithEagerResultAndFeedbackAndAssessorAndParticipationResultsById(Long submissionId);
+    Optional<FileUploadSubmission> findWithResultsFeedbacksAssessorAndParticipationResultsById(Long submissionId);
+
+    /**
+     * Get the file upload submission with the given id from the database. The submission is loaded together with its result, the feedback of the result and the assessor of the
+     * result. Throws an EntityNotFoundException if no submission could be found for the given id.
+     *
+     * @param submissionId the id of the submission that should be loaded from the database
+     * @return the file upload submission with the given id
+     */
+    @NotNull
+    default FileUploadSubmission findOneWithEagerResultAndAssessorAndFeedback(Long submissionId) {
+        return findByIdWithEagerResultAndAssessorAndFeedback(submissionId).orElseThrow(() -> new EntityNotFoundException("File Upload Submission", submissionId));
+    }
+
+    /**
+     * Get the file upload submission with the given id from the database. The submission is loaded together with its result, the feedback of the result, the assessor of the result,
+     * its participation and all results of the participation. Throws an EntityNotFoundException if no submission could be found for the given id.
+     *
+     * @param submissionId the id of the submission that should be loaded from the database
+     * @return the file upload submission with the given id
+     */
+    @NotNull
+    default FileUploadSubmission findOneWithEagerResultAndFeedbackAndAssessorAndParticipationResults(Long submissionId) {
+        return findWithResultsFeedbacksAssessorAndParticipationResultsById(submissionId).orElseThrow(() -> new EntityNotFoundException("File Upload Submission", submissionId));
+    }
+
+    /**
+     * Get the file upload submission with the given id from the database. Throws an EntityNotFoundException if no submission could be found for the given id.
+     *
+     * @param submissionId the id of the submission that should be loaded from the database
+     * @return the file upload submission with the given id
+     */
+    @NotNull
+    default FileUploadSubmission findOne(Long submissionId) {
+        return findById(submissionId).orElseThrow(() -> new EntityNotFoundException("File Upload Submission", submissionId));
+    }
 }
