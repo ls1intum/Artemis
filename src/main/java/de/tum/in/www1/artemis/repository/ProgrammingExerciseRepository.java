@@ -128,9 +128,9 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
      * @return List<ProgrammingExercise> (can be empty)
      */
     @Query("""
-                select pe from ProgrammingExercise pe
+                select distinct pe from ProgrammingExercise pe left join pe.testCases tc
                 where pe.dueDate > :#{#dateTime} and pe.buildAndTestStudentSubmissionsAfterDueDate is null
-                    and exists (select tc from ProgrammingExerciseTestCase tc where tc.exercise = pe and tc.visibility = 'AFTER_DUE_DATE')
+                    and tc.visibility = 'AFTER_DUE_DATE'
             """)
     List<ProgrammingExercise> findAllByDueDateAfterDateWithTestsAfterDueDateWithoutBuildStudentSubmissionsDate(@Param("dateTime") ZonedDateTime dateTime);
 
