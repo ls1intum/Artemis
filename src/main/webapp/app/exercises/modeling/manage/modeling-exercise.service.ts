@@ -13,20 +13,6 @@ import { PlagiarismOptions } from 'app/exercises/shared/plagiarism/types/Plagiar
 
 export type EntityResponseType = HttpResponse<ModelingExercise>;
 export type EntityArrayResponseType = HttpResponse<ModelingExercise[]>;
-export type ModelingSubmissionComparisonDTO = {
-    element1: ModelingSubmissionComparisonElement;
-    element2: ModelingSubmissionComparisonElement;
-    confirmed?: boolean;
-    similarity: number;
-};
-
-export type ModelingSubmissionComparisonElement = {
-    submissionId: number;
-    size: number;
-    score: number;
-    studentLogin: string;
-    submissionLink: string;
-};
 
 @Injectable({ providedIn: 'root' })
 export class ModelingExerciseService {
