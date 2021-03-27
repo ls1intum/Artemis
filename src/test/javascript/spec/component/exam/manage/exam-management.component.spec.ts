@@ -17,7 +17,6 @@ import { Exam } from 'app/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { ExamInformationDTO } from 'app/entities/exam-information.model';
 
 chai.use(sinonChai);
 const expect = chai.expect;
