@@ -58,8 +58,10 @@
             <tbody>
                 <tr *ngFor="let submission of filteredSubmissions; let i = index" [ngStyle]="{ 'font-weight': 'bold' }">
                     <td>{{ i + 1 }}</td>
-                    <td *ngIf="exercise.isAtLeastInstructor && (submission?.participation | typeof) === 'StudentParticipation'">
-                        {{ getParticipantName(submission) }}
+                    <td>
+                        <span *ngIf="exercise.isAtLeastInstructor">
+                            {{ getParticipantName(submission) }}
+                        </span>
                     </td>
                     <td>{{ submission.submissionDate | artemisDate }}</td>
                     <td>
