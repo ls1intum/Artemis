@@ -38,34 +38,28 @@ import de.tum.in.www1.artemis.web.rest.dto.StatsForDashboardDTO;
 public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
-    UserRepository userRepository;
+    private UserRepository userRepository;
 
     @Autowired
-    CourseRepository courseRepository;
+    private ExerciseRepository exerciseRepository;
 
     @Autowired
-    ExerciseRepository exerciseRepository;
+    private ParticipationRepository participationRepository;
 
     @Autowired
-    ParticipationRepository participationRepository;
+    private SubmissionRepository submissionRepository;
 
     @Autowired
-    SubmissionRepository submissionRepository;
+    private ResultRepository resultRepository;
 
     @Autowired
-    ResultRepository resultRepository;
+    private ExampleSubmissionRepository exampleSubmissionRepo;
 
     @Autowired
-    ExampleSubmissionRepository exampleSubmissionRepo;
+    private TutorParticipationRepository tutorParticipationRepo;
 
     @Autowired
-    TutorParticipationRepository tutorParticipationRepo;
-
-    @Autowired
-    StudentParticipationRepository studentParticipationRepo;
-
-    @Autowired
-    ExerciseService exerciseService;
+    private ExerciseService exerciseService;
 
     @BeforeEach
     public void init() {
@@ -659,7 +653,7 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testGetExerciseTitleAsInstuctor() throws Exception {
+    public void testGetExerciseTitleAsInstructor() throws Exception {
         // Only user and role matter, so we can re-use the logic
         testGetExerciseTitle();
     }
