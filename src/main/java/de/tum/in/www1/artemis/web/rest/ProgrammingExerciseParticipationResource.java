@@ -73,7 +73,7 @@ public class ProgrammingExerciseParticipationResource {
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Participation> getParticipationWithLatestResultForStudentParticipation(@PathVariable Long participationId) {
         Optional<ProgrammingExerciseStudentParticipation> participation = programmingExerciseStudentParticipationRepository
-                .findStudentParticipationWithLatestResultAndFeedbacksAndRelatedSubmissions(participationId);
+                .findStudentParticipationWithLatestResultAndFeedbacksAndRelatedLegalSubmissions(participationId);
         if (participation.isEmpty()) {
             return notFound();
         }
@@ -99,7 +99,7 @@ public class ProgrammingExerciseParticipationResource {
     public ResponseEntity<Participation> getParticipationWithManualResultByCorrectionRoundForStudentParticipation(@PathVariable Long participationId,
             @PathVariable int correctionRound) {
         Optional<ProgrammingExerciseStudentParticipation> participation = programmingExerciseStudentParticipationRepository
-                .findByIdWithAllManualOrSemiAutomaticResultsAndFeedbacksAndRelatedSubmissionAndAssessor(participationId);
+                .findByIdWithAllManualOrSemiAutomaticResultsAndFeedbacksAndRelatedLegalSubmissionAndAssessor(participationId);
         if (participation.isEmpty()) {
             return notFound();
         }

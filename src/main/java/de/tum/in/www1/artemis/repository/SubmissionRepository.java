@@ -49,15 +49,12 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
 
     /**
      * Get all submissions of a participation and eagerly load results
+     *
      * @param participationId the id of the participation
      * @return a list of the participation's submissions
      */
     @EntityGraph(type = LOAD, attributePaths = { "results", "results.assessor" })
-    @Query("""
-            select s from Submission s
-            where s.participation.id = :#{#participationId} and s.type <> 'ILLEGAL'
-            """)
-    List<Submission> findAllLegalWithResultsAndAssessorByParticipationId(Long participationId);
+    List<Submission> findAllWithResultsAndAssessorByParticipationId(Long participationId);
 
     /**
      * Get the number of currently locked submissions for a specific user in the given course. These are all submissions for which the user started, but has not yet finished the

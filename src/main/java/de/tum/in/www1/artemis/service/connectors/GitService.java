@@ -1036,13 +1036,15 @@ public class GitService {
     public void checkoutOrCreateBranch(Repository repository, String branchName) throws GitAPIException {
         Git git = new Git(repository);
         var branchRef = "refs/heads/" + branchName;
-        var branchExists = git.branchList().call().stream().anyMatch(ref -> ref.getName().equals(branchRef));
-        if (branchExists) {
-            git.checkout().setName(branchName).call();
-        }
-        else {
-            git.checkout().setCreateBranch(true).setName(branchName).call();
-        }
+        // var branchExists = git.branchList().call().stream().anyMatch(ref -> ref.getName().equals(branchRef));
+        // if (branchExists) {
+        // git.checkout().setStartPoint(branchName).setName("master").call();
+        // }
+        // else {
+        // git.checkout().setStartPoint(branchName).setName("master").call();
+        // }
+        // Above did not work correctly. We need to further test this..
+        git.checkout().setStartPoint(branchName).setName("master").call();
         git.pull().call();
         git.close();
     }

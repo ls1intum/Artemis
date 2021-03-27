@@ -178,10 +178,11 @@ public class ProgrammingSubmissionService extends SubmissionService {
         programmingSubmission.setSubmitted(true);
         programmingSubmission.setSubmissionDate(ZonedDateTime.now());
         programmingSubmission.setType(SubmissionType.MANUAL);
-        programmingExerciseParticipation.addSubmission(programmingSubmission);
 
         // Students are not allowed to submit a programming exercise after the exam due date, if this happens we set the Submission to ILLEGAL
         checkForIllegalExamSubmission(programmingExerciseParticipation, programmingSubmission);
+
+        programmingExerciseParticipation.addSubmission(programmingSubmission);
 
         programmingSubmission = programmingSubmissionRepository.save(programmingSubmission);
         // NOTE: we don't need to save the participation here, this might lead to concurrency problems when doing the empty commit during resume exercise!

@@ -303,12 +303,12 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
      * @return the participation with eager submissions and results or an empty Optional
      */
     @Query("""
-                    select p from StudentParticipation p
-                    left join fetch p.results
-                    left join fetch p.submissions s
-                    left join fetch s.results
-                    left join fetch p.team.students
-                    where p.id = :#{#participationId} and s.type <> 'ILLEGAL'
+                select p from StudentParticipation p
+                left join fetch p.results
+                left join fetch p.submissions s
+                left join fetch s.results
+                left join p.team.students
+                where p.id = :#{#participationId} and s.type <> 'ILLEGAL'
             """)
     Optional<StudentParticipation> findWithEagerLegalSubmissionsAndResultsById(Long participationId);
 
@@ -320,22 +320,22 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
      * @return the participation with eager submissions, results, exercise and course or an empty Optional
      */
     @Query("""
-                    select p from StudentParticipation p
-                    left join fetch p.results
-                    left join fetch p.submissions s
-                    left join fetch s.results sr
-                    left join fetch sr.feedbacks
-                    left join fetch p.team.students
-                    where p.id = :#{#participationId} and s.type <> 'ILLEGAL'
+            select p from StudentParticipation p
+            left join fetch p.results
+            left join fetch p.submissions s
+            left join fetch s.results sr
+            left join fetch sr.feedbacks
+            left join p.team.students
+            where p.id = :#{#participationId} and s.type <> 'ILLEGAL'
             """)
     Optional<StudentParticipation> findWithEagerLegalSubmissionsResultsFeedbacksById(Long participationId);
 
     @Query("""
-                    select p from StudentParticipation p
-                    left join fetch p.results r
-                    left join fetch p.submissions s
-                    left join fetch r.assessor
-                    where p.id = :#{#participationId} and s.type <> 'ILLEGAL'
+            select p from StudentParticipation p
+            left join fetch p.results r
+            left join fetch p.submissions s
+            left join fetch r.assessor
+            where p.id = :#{#participationId} and s.type <> 'ILLEGAL'
             """)
     Optional<StudentParticipation> findWithEagerLegalSubmissionsAndResultsAssessorsById(Long participationId);
 

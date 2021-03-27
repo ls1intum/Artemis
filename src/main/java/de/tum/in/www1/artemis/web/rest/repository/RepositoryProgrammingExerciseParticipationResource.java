@@ -189,12 +189,17 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
         return super.executeAndCheckForExceptions(() -> {
             Repository repository = getRepository(participationId, RepositoryActionType.READ, true);
 
+            String masterOrCommitHash = "master";
             // Retrieve the last legal submission because we are getting the files for that commit.
             var participation = participationService.findProgrammingExerciseParticipationWithLatestSubmissionAndResult(participationId);
-            var legalSubmissions = participation.getSubmissions().stream().filter(submission -> !submission.getType().equals(SubmissionType.ILLEGAL)).collect(Collectors.toList());
-            var latestLegalSubmission = (ProgrammingSubmission) legalSubmissions.get(legalSubmissions.size() - 1);
+            if (participation instanceof ProgrammingExerciseStudentParticipation) {
+                var legalSubmissions = participation.getSubmissions().stream().filter(submission -> !submission.getType().equals(SubmissionType.ILLEGAL))
+                        .collect(Collectors.toList());
+                var latestLegalSubmission = (ProgrammingSubmission) legalSubmissions.get(legalSubmissions.size() - 1);
+                masterOrCommitHash = latestLegalSubmission.getCommitHash();
+            }
 
-            var filesWithContent = super.repositoryService.getFilesWithContentForCommitRef(repository, latestLegalSubmission.getCommitHash());
+            var filesWithContent = super.repositoryService.getFilesWithContentForCommitRef(repository, masterOrCommitHash);
             return new ResponseEntity<>(filesWithContent, HttpStatus.OK);
         });
     }

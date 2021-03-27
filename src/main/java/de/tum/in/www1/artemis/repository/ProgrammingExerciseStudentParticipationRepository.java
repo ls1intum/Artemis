@@ -93,7 +93,7 @@ public interface ProgrammingExerciseStudentParticipationRepository extends JpaRe
         return findById(participationId).orElseThrow(() -> new EntityNotFoundException("Programming Exercise Student Participation", participationId));
     }
 
-    default Optional<ProgrammingExerciseStudentParticipation> findStudentParticipationWithLatestResultAndFeedbacksAndRelatedSubmissions(Long participationId) {
-        return findByIdWithLatestResultAndFeedbacksAndRelatedSubmissions(participationId, ZonedDateTime.now());
+    default Optional<ProgrammingExerciseStudentParticipation> findStudentParticipationWithLatestResultAndFeedbacksAndRelatedLegalSubmissions(Long participationId) {
+        return findByIdWithLatestResultAndFeedbacksAndRelatedLegalSubmissions(participationId, ZonedDateTime.now());
     }
 }

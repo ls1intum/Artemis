@@ -637,7 +637,7 @@ public class ParticipationResource {
         StudentParticipation participation = studentParticipationRepository.findByIdElseThrow(participationId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         checkAccessPermissionAtLeastInstructor(participation, user);
-        List<Submission> submissions = submissionRepository.findAllLegalWithResultsAndAssessorByParticipationId(participationId);
+        List<Submission> submissions = submissionRepository.findAllWithResultsAndAssessorByParticipationId(participationId);
         return ResponseEntity.ok(submissions);
     }
 

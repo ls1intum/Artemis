@@ -653,7 +653,7 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
         assertThat(optionalFetchedExercise.isPresent()).isTrue();
         final var exerciseWithParticipation = optionalFetchedExercise.get();
         var submissionsOfParticipation = submissionRepository
-                .findAllLegalWithResultsAndAssessorByParticipationId(exerciseWithParticipation.getStudentParticipations().stream().iterator().next().getId());
+                .findAllWithResultsAndAssessorByParticipationId(exerciseWithParticipation.getStudentParticipations().stream().iterator().next().getId());
         assertThat(submissionsOfParticipation.size()).isEqualTo(3);
         for (final var submission : submissionsOfParticipation) {
             assertThat(submission.getResults()).isNotNull();
