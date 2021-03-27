@@ -114,7 +114,9 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             left join fetch participation.results result
             left join fetch result.submission s
             where participation.exercise.id = :#{#exerciseId}
-                and (result.id = (select max(id) from participation.results where (s.type <> 'ILLEGAL' or s.type is null))
+                and (result.id = (select max(pr.id) from participation.results pr
+                    left join pr.submission prs
+                    where (prs.type <> 'ILLEGAL' or prs.type is null))
                 or result is null)
             """)
     List<StudentParticipation> findByExerciseIdWithLatestResult(@Param("exerciseId") Long exerciseId);
@@ -125,7 +127,9 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             left join fetch result.submission s
             where participation.exercise.id = :#{#exerciseId}
                 and participation.testRun = false
-                and (result.id = (select max(id) from participation.results where (s.type <> 'ILLEGAL' or s.type is null))
+                and (result.id = (select max(pr.id) from participation.results pr
+                    left join pr.submission prs
+                    where (prs.type <> 'ILLEGAL' or prs.type is null))
                 or result is null)
             """)
     List<StudentParticipation> findByExerciseIdWithLatestResultIgnoreTestRunSubmissions(@Param("exerciseId") Long exerciseId);
@@ -142,8 +146,9 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             left join fetch result.feedbacks
             left join fetch result.submission s
             where participation.exercise.id = :#{#exerciseId}
-                and (result.id = (select max(prs.id) from participation.results prs
-                    where prs.assessmentType = 'AUTOMATIC' and (s.type <> 'ILLEGAL' or s.type is null) ))
+                and (result.id = (select max(pr.id) from participation.results pr
+                    left join pr.submission prs
+                    where pr.assessmentType = 'AUTOMATIC' and (prs.type <> 'ILLEGAL' or prs.type is null)))
             """)
     List<StudentParticipation> findByExerciseIdWithLatestAutomaticResultAndFeedbacks(@Param("exerciseId") Long exerciseId);
 
@@ -220,18 +225,24 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             left join fetch par.submission s
             where participation.exercise.id = :#{#exerciseId}
                 and participation.student.id = :#{#studentId}
-                and (par.id = (select max(id) from participation.results where (s.type <> 'ILLEGAL' or s.type is null)) or par.id = null)
+                and (par.id = (select max(pr.id) from participation.results pr
+                        left join pr.submission prs
+                        where (prs.type <> 'ILLEGAL' or prs.type is null))
+                    or par.id = null)
             """)
     Optional<StudentParticipation> findByExerciseIdAndStudentIdWithLatestResult(@Param("exerciseId") Long exerciseId, @Param("studentId") Long studentId);
 
     @Query("""
             select distinct participation from StudentParticipation participation
-            left join fetch participation.results as par
+            left join fetch participation.results par
             left join fetch par.feedbacks
             left join fetch par.submission s
             where participation.exercise.id = :#{#exerciseId}
                 and participation.team.id = :#{#teamId}
-                and (par.id = (select max(id) from participation.results where (s.type <> 'ILLEGAL' or s.type is null)) or par.id = null)
+                and (par.id = (select max(pr.id) from participation.results pr
+                        left join pr.submission prs
+                        where (prs.type <> 'ILLEGAL' or prs.type is null))
+                    or par.id = null)
             """)
     Optional<StudentParticipation> findByExerciseIdAndTeamIdWithLatestResult(@Param("exerciseId") Long exerciseId, @Param("teamId") Long teamId);
 
