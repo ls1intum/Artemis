@@ -206,6 +206,19 @@ public class ExerciseResource {
     }
 
     /**
+     * GET /exercises/:exerciseId/title : Returns the title of the exercise with the given id
+     *
+     * @param exerciseId the id of the exercise
+     * @return the title of the exercise wrapped in an ResponseEntity or 404 Not Found if no exercise with that id exists
+     */
+    @GetMapping(value = "/exercises/{exerciseId}/title")
+    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<String> getExerciseTitle(@PathVariable Long exerciseId) {
+        final var title = exerciseRepository.getExerciseTitle(exerciseId);
+        return title == null ? ResponseEntity.notFound().build() : ResponseEntity.ok(title);
+    }
+
+    /**
      * GET /exercises/:exerciseId/stats-for-assessment-dashboard A collection of useful statistics for the tutor exercise dashboard of the exercise with the given exerciseId
      *
      * @param exerciseId the exerciseId of the exercise to retrieve
