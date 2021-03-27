@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.service;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
-import de.tum.in.www1.artemis.repository.LearningGoalRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.LectureUnitRepository;
 import org.springframework.stereotype.Service;
@@ -19,16 +18,16 @@ public class LectureService {
 
     private final AuthorizationCheckService authCheckService;
 
-    private final LearningGoalRepository learningGoalRepository;
-
     private final LectureUnitRepository lectureUnitRepository;
 
-    public LectureService(LectureRepository lectureRepository, AuthorizationCheckService authCheckService, LearningGoalRepository learningGoalRepository,
-            LectureUnitRepository lectureUnitRepository) {
+    private final LectureUnitService lectureUnitService;
+
+    public LectureService(LectureRepository lectureRepository, AuthorizationCheckService authCheckService,
+                          LectureUnitRepository lectureUnitRepository, LectureUnitService lectureUnitService) {
         this.lectureRepository = lectureRepository;
         this.authCheckService = authCheckService;
-        this.learningGoalRepository = learningGoalRepository;
         this.lectureUnitRepository = lectureUnitRepository;
+        this.lectureUnitService = lectureUnitService;
     }
 
     /**
@@ -81,32 +80,20 @@ public class LectureService {
             return;
         }
         Lecture lectureToDelete = lectureToDeleteOptional.get();
-        // Hibernate sometimes adds null into the list of lecture units to keep the order, to prevent a NullPointerException we have to filter
-        List<LectureUnit> connectedLectureUnits = lectureToDelete.getLectureUnits().stream().filter(Objects::nonNull).collect(Collectors.toList());
+        // Hibernate sometimes adds null into the list of lecture units to keep the order, to prevent a NullPointerException we have to filter them
+        List<LectureUnit> lectureUnits = lectureToDelete.getLectureUnits().stream().filter(Objects::nonNull).collect(Collectors.toList());
         // update associated learning goals
-        for (LectureUnit lectureUnit : connectedLectureUnits) {
+        for (LectureUnit lectureUnit : lectureUnits) {
             Optional<LectureUnit> lectureUnitFromDbOptional = lectureUnitRepository.findByIdWithLearningGoalsBidirectional(lectureUnit.getId());
-
             if (lectureUnitFromDbOptional.isPresent()) {
                 LectureUnit lectureUnitFromDb = lectureUnitFromDbOptional.get();
                 Set<LearningGoal> associatedLearningGoals = new HashSet<>(lectureUnitFromDb.getLearningGoals());
                 for (LearningGoal learningGoal : associatedLearningGoals) {
-                    Optional<LearningGoal> learningGoalFromDbOptional = learningGoalRepository.findByIdWithLectureUnitsBidirectional(learningGoal.getId());
-                    if (learningGoalFromDbOptional.isPresent()) {
-                        LearningGoal learningGoalFromDb = learningGoalFromDbOptional.get();
-                        learningGoalFromDb.removeLectureUnit(lectureUnitFromDb);
-                        learningGoalRepository.save(learningGoalFromDb);
-                    }
-
+                    lectureUnitService.disconnectLectureUnitAndLearningGoal(lectureUnit, learningGoal);
                 }
             }
         }
-        Optional<Lecture> lectureToDeleteUpdatedOptional = lectureRepository.findByIdWithStudentQuestionsAndLectureUnitsAndLearningGoals(lecture.getId());
-        if (lectureToDeleteUpdatedOptional.isEmpty()) {
-            return;
-        }
-
-        lectureRepository.delete(lectureToDeleteUpdatedOptional.get());
+        lectureRepository.deleteById(lectureToDelete.getId());
     }
 
 }

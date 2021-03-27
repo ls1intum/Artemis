@@ -1,14 +1,15 @@
 package de.tum.in.www1.artemis.repository;
 
-import java.util.Optional;
-import java.util.Set;
-
+import de.tum.in.www1.artemis.domain.Lecture;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import de.tum.in.www1.artemis.domain.Lecture;
+import javax.validation.constraints.NotNull;
+import java.util.Optional;
+import java.util.Set;
 
 /**
  * Spring Data repository for the Lecture entity.
@@ -51,9 +52,14 @@ public interface LectureRepository extends JpaRepository<Lecture, Long> {
      * @return the name/title of the lecture or null if the lecture does not exist
      */
     @Query("""
-            SELECT l.title
-            FROM Lecture l
-            WHERE l.id = :lectureId
-            """)
+        SELECT l.title
+        FROM Lecture l
+        WHERE l.id = :lectureId
+        """)
     String getLectureTitle(Long lectureId);
+
+    @NotNull
+    default Lecture findByIdWithStudentQuestionsAndLectureUnitsAndLearningGoalsElseThrow(Long lectureId) {
+        return findByIdWithStudentQuestionsAndLectureUnitsAndLearningGoals(lectureId).orElseThrow(() -> new EntityNotFoundException("Lecture", lectureId));
+    }
 }
