@@ -65,6 +65,16 @@ export class ExamManagementService {
     }
 
     /**
+     * Fetches the title of the exam with the given id
+     *
+     * @param examId the id of the exam
+     * @return the title of the exam in an HttpResponse, or an HttpErrorResponse on error
+     */
+    getTitle(examId: number): Observable<HttpResponse<string>> {
+        return this.http.get(`api/exams/${examId}/title`, { observe: 'response', responseType: 'text' });
+    }
+
+    /**
      * Find all scores of an exam.
      * @param courseId The id of the course.
      * @param examId The id of the exam.
