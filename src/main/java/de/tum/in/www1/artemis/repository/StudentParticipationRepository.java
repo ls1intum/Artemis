@@ -204,17 +204,18 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
     @Query("""
             select distinct participation from StudentParticipation participation
             left join fetch participation.results r
+            left join fetch r.submission rs
             left join fetch participation.submissions s
             where participation.exercise.id = :#{#exerciseId}
                 and participation.team.id = :#{#teamId}
                 and (s.type <> 'ILLEGAL' or s.type is null)
-                and (r.submission.type <> 'ILLEGAL' or r.submission.type is null)
+                and (rs.type <> 'ILLEGAL' or rs.type is null)
             """)
     List<StudentParticipation> findByExerciseIdAndTeamIdWithEagerResultsAndLegalSubmissions(@Param("exerciseId") Long exerciseId, @Param("teamId") Long teamId);
 
     @Query("""
             select distinct participation from StudentParticipation participation
-            left join fetch participation.results as par
+            left join fetch participation.results par
             left join fetch par.feedbacks
             left join fetch par.submission s
             where participation.exercise.id = :#{#exerciseId}
@@ -305,15 +306,17 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
     @Query("""
             select p from Participation p
             left join fetch p.results r
-            where p.id = :#{#participationId} and (r.submission.type <> 'ILLEGAL' or r.submission.type is null)
+            left join fetch r.submission rs
+            where p.id = :#{#participationId} and (rs.type <> 'ILLEGAL' or rs.type is null)
             """)
     Optional<StudentParticipation> findWithEagerResultsById(@Param("participationId") Long participationId);
 
     @Query("""
             select p from Participation p
             left join fetch p.results r
+            left join fetch r.submission rs
             left join fetch r.feedbacks
-            where p.id = :#{#participationId} and (r.submission.type <> 'ILLEGAL' or r.submission.type is null)
+            where p.id = :#{#participationId} and (rs.type <> 'ILLEGAL' or rs.type is null)
             """)
     Optional<StudentParticipation> findWithEagerResultsAndFeedbackById(@Param("participationId") Long participationId);
 
@@ -327,12 +330,13 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
     @Query("""
             select p from StudentParticipation p
             left join fetch p.results r
+            left join fetch r.submission rs
             left join fetch p.submissions s
             left join fetch s.results
             left join p.team.students
             where p.id = :#{#participationId}
                 and (s.type <> 'ILLEGAL' or s.type is null)
-                and (r.submission.type <> 'ILLEGAL' or r.submission.type is null)
+                and (rs.type <> 'ILLEGAL' or rs.type is null)
             """)
     Optional<StudentParticipation> findWithEagerLegalSubmissionsAndResultsById(Long participationId);
 
@@ -346,24 +350,26 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
     @Query("""
             select p from StudentParticipation p
             left join fetch p.results r
+            left join fetch r.submission rs
             left join fetch p.submissions s
             left join fetch s.results sr
             left join fetch sr.feedbacks
             left join p.team.students
             where p.id = :#{#participationId}
                 and (s.type <> 'ILLEGAL' or s.type is null)
-                and (r.submission.type <> 'ILLEGAL' or r.submission.type is null)
+                and (rs.type <> 'ILLEGAL' or rs.type is null)
             """)
     Optional<StudentParticipation> findWithEagerLegalSubmissionsResultsFeedbacksById(Long participationId);
 
     @Query("""
             select p from StudentParticipation p
             left join fetch p.results r
+            left join fetch r.submission rs
             left join fetch p.submissions s
             left join fetch r.assessor
             where p.id = :#{#participationId}
                 and (s.type <> 'ILLEGAL' or s.type is null)
-                and (r.submission.type <> 'ILLEGAL' or r.submission.type is null)
+                and (rs.type <> 'ILLEGAL' or rs.type is null)
             """)
     Optional<StudentParticipation> findWithEagerLegalSubmissionsAndResultsAssessorsById(Long participationId);
 
@@ -391,11 +397,12 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
     @Query("""
             SELECT DISTINCT p FROM StudentParticipation p
             LEFT JOIN FETCH p.results r
+            LEFT JOIN FETCH r.submission rs
             LEFT JOIN FETCH p.submissions s
             LEFT JOIN FETCH s.results sr
             WHERE p.exercise.id = :#{#exerciseId}
                 AND (s.type <> 'ILLEGAL' or s.type is null)
-                AND (r.submission.type <> 'ILLEGAL' or r.submission.type is null)
+                AND (rs.type <> 'ILLEGAL' or rs.type is null)
             """)
     List<StudentParticipation> findAllWithEagerLegalSubmissionsAndEagerResultsByExerciseId(long exerciseId);
 
