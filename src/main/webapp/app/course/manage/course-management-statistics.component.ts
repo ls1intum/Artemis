@@ -17,12 +17,14 @@ export class CourseManagementStatisticsComponent implements OnInit {
         Graphs.ACTIVE_USERS,
         Graphs.RELEASED_EXERCISES,
         Graphs.EXERCISES_DUE,
-        Graphs.CONDUCTED_EXAMS,
-        Graphs.EXAM_PARTICIPATIONS,
-        Graphs.EXAM_REGISTRATIONS,
         Graphs.ACTIVE_TUTORS,
         Graphs.CREATED_RESULTS,
         Graphs.CREATED_FEEDBACKS,
+        Graphs.QUESTIONS_ASKED,
+        Graphs.QUESTIONS_ANSWERED,
+        Graphs.CONDUCTED_EXAMS,
+        Graphs.EXAM_PARTICIPATIONS,
+        Graphs.EXAM_REGISTRATIONS,
     ];
     currentSpan: SpanType = SpanType.WEEK;
     statisticsView: StatisticsView = StatisticsView.COURSE;

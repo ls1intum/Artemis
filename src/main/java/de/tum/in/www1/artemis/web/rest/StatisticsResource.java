@@ -12,7 +12,7 @@ import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.web.rest.dto.CourseManagementStatisticsDTO;
 
 /**
- * REST controller for managing user statistics.
+ * REST controller for managing statistics.
  */
 @RestController
 @RequestMapping("/api")
@@ -52,14 +52,14 @@ public class StatisticsResource {
      * @return the ResponseEntity with status 200 (OK) and the data in body, or status 404 (Not Found)
      */
     @GetMapping("management/statistics/data-for-course")
-    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Integer[]> getChartData(@RequestParam SpanType span, @RequestParam Integer periodIndex, @RequestParam GraphType graphType, @RequestParam Long courseId) {
         return ResponseEntity.ok(this.service.getChartData(span, periodIndex, graphType, courseId));
 
     }
 
     /**
-     * GET management/statistics/data-for-course : get the graph data in the last "span" days in the given period for a specific course.
+     * GET management/statistics/course-statistics : get the data for the doughnut graphs in the course statistics
      *
      * @param courseId    the id of the course for which the data should be fetched
      * @return the ResponseEntity with status 200 (OK) and the data in body, or status 404 (Not Found)

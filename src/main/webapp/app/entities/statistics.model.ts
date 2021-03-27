@@ -22,6 +22,10 @@ export enum Graphs {
 
     // Course overview
     ACTIVE_STUDENTS = 'ACTIVE_STUDENTS',
+
+    // Course Statistics
+    QUESTIONS_ASKED = 'QUESTIONS_ASKED',
+    QUESTIONS_ANSWERED = 'QUESTIONS_ANSWERED',
 }
 
 export enum StatisticsView {

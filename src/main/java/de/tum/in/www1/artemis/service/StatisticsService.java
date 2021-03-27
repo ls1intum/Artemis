@@ -106,14 +106,15 @@ public class StatisticsService {
      * @return the return value of the database call
      */
     private List<Map<String, Object>> getDataFromDatabase(SpanType span, ZonedDateTime startDate, ZonedDateTime endDate, GraphType graphType, Long courseId) {
+        var exerciseIds = courseId != null ? this.statisticsRepository.findExerciseIdsByCourseId(courseId) : null;
         switch (graphType) {
             case SUBMISSIONS -> {
                 return courseId == null ? this.statisticsRepository.getTotalSubmissions(startDate, endDate)
-                        : this.statisticsRepository.getTotalSubmissionsForCourse(startDate, endDate, courseId);
+                        : this.statisticsRepository.getTotalSubmissionsForCourse(startDate, endDate, exerciseIds);
             }
             case ACTIVE_USERS -> {
                 List<Map<String, Object>> result = courseId == null ? this.statisticsRepository.getActiveUsers(startDate, endDate)
-                        : this.statisticsRepository.getActiveUsersForCourse(startDate, endDate, courseId);
+                        : this.statisticsRepository.getActiveUsersForCourse(startDate, endDate, exerciseIds);
                 return convertMapList(span, result, startDate, graphType);
             }
             case LOGGED_IN_USERS -> {
@@ -124,18 +125,19 @@ public class StatisticsService {
             }
             case RELEASED_EXERCISES -> {
                 return courseId == null ? this.statisticsRepository.getReleasedExercises(startDate, endDate)
-                        : this.statisticsRepository.getReleasedExercisesForCourse(startDate, endDate, courseId);
+                        : this.statisticsRepository.getReleasedExercisesForCourse(startDate, endDate, exerciseIds);
             }
             case EXERCISES_DUE -> {
                 return courseId == null ? this.statisticsRepository.getExercisesDue(startDate, endDate)
-                        : this.statisticsRepository.getExercisesDueForCourse(startDate, endDate, courseId);
+                        : this.statisticsRepository.getExercisesDueForCourse(startDate, endDate, exerciseIds);
             }
             case CONDUCTED_EXAMS -> {
                 return courseId == null ? this.statisticsRepository.getConductedExams(startDate, endDate)
                         : this.statisticsRepository.getConductedExamsForCourse(startDate, endDate, courseId);
             }
             case EXAM_PARTICIPATIONS -> {
-                return courseId == null ? this.statisticsRepository.getExamParticipations(startDate, endDate) : this.statisticsRepository.getExamParticipations(startDate, endDate);
+                return courseId == null ? this.statisticsRepository.getExamParticipations(startDate, endDate)
+                        : this.statisticsRepository.getExamParticipationsForCourse(startDate, endDate, courseId);
             }
             case EXAM_REGISTRATIONS -> {
                 return courseId == null ? this.statisticsRepository.getExamRegistrations(startDate, endDate)
@@ -143,16 +145,22 @@ public class StatisticsService {
             }
             case ACTIVE_TUTORS -> {
                 List<Map<String, Object>> result = courseId == null ? this.statisticsRepository.getActiveTutors(startDate, endDate)
-                        : this.statisticsRepository.getActiveTutorsForCourse(startDate, endDate, courseId);
+                        : this.statisticsRepository.getActiveTutorsForCourse(startDate, endDate, exerciseIds);
                 return convertMapList(span, result, startDate, graphType);
             }
             case CREATED_RESULTS -> {
                 return courseId == null ? this.statisticsRepository.getCreatedResults(startDate, endDate)
-                        : this.statisticsRepository.getCreatedResultsForCourse(startDate, endDate, courseId);
+                        : this.statisticsRepository.getCreatedResultsForCourse(startDate, endDate, exerciseIds);
             }
             case CREATED_FEEDBACKS -> {
                 return courseId == null ? this.statisticsRepository.getResultFeedbacks(startDate, endDate)
-                        : this.statisticsRepository.getResultFeedbacksForCourse(startDate, endDate, courseId);
+                        : this.statisticsRepository.getResultFeedbacksForCourse(startDate, endDate, exerciseIds);
+            }
+            case QUESTIONS_ASKED -> {
+                return courseId != null ? this.statisticsRepository.getQuestionsAskedForCourse(startDate, endDate, courseId) : new ArrayList<>();
+            }
+            case QUESTIONS_ANSWERED -> {
+                return courseId != null ? this.statisticsRepository.getQuestionsAnsweredForCourse(startDate, endDate, courseId) : new ArrayList<>();
             }
             default -> {
                 return new ArrayList<>();
@@ -375,16 +383,44 @@ public class StatisticsService {
     }
 
     /**
-     * A map to manage the spanTypes and the corresponding array length of the result
+     * Get the data for the doughnut graphs in the course statistics, stored in the CourseManagementStatisticsDTO.
+     *
+     * @param courseId    the id of the course for which the data should be fetched
+     * @return a custom course statistics DTO, which contains the relevant data
      */
     public CourseManagementStatisticsDTO getCourseStatistics(Long courseId) {
-        var dto = new CourseManagementStatisticsDTO();
+        var courseManagementStatisticsDTO = new CourseManagementStatisticsDTO();
         var exercises = statisticsRepository.findExercisesByCourseId(courseId);
         var courseMaxPoints = 0.0;
         var exerciseIds = exercises.stream().map(Exercise::getId).collect(Collectors.toList());
         var averagePointsForCourse = participantScoreRepository.findAvgPointsForExerciseIds(exerciseIds);
         var averagePointsForExercises = participantScoreRepository.findAvgPointsForExercises(exerciseIds);
-        dto.setAveragePointsOfCourse(round(averagePointsForCourse));
+        courseManagementStatisticsDTO.setAveragePointsOfCourse(round(averagePointsForCourse));
+        var averagePointsByTitle = createAverageScoreMap(averagePointsForExercises, exercises);
+
+        // Set the max points for each exercise
+        var maxPoints = new HashMap<String, Double>();
+        for (var exercise : exercises) {
+            var exerciseTitle = exercise.getTitle();
+            maxPoints.put(exerciseTitle, exercise.getMaxPoints());
+            courseMaxPoints += exercise.getMaxPoints();
+
+            // If a exercise does not have averagePoints yet, set it here with 0.0
+            if (!averagePointsByTitle.containsKey(exerciseTitle)) {
+                averagePointsByTitle.put(exerciseTitle, 0.0);
+            }
+        }
+        courseManagementStatisticsDTO.setExerciseNameToAveragePointsMap(averagePointsByTitle);
+        courseManagementStatisticsDTO.setMaxPointsOfCourse(courseMaxPoints);
+        courseManagementStatisticsDTO.setExerciseNameToMaxPointsMap(maxPoints);
+
+        return courseManagementStatisticsDTO;
+    }
+
+    /**
+     * Helper class which creates a map filled with the exerciseId mapped to the average score of the exercise
+     */
+    private Map<String, Double> createAverageScoreMap(List<Map<String, Object>> averagePointsForExercises, List<Exercise> exercises) {
         var averagePointsByTitle = new HashMap<String, Double>();
         for (var averagePointsMap : averagePointsForExercises) {
             var exerciseId = (Long) averagePointsMap.get("exerciseId");
@@ -395,22 +431,6 @@ public class StatisticsService {
                 averagePointsByTitle.put(exerciseTitle, averagePoints);
             }
         }
-
-        var maxPoints = new HashMap<String, Double>();
-        for (var exercise : exercises) {
-            var exerciseTitle = exercise.getTitle();
-            maxPoints.put(exerciseTitle, exercise.getMaxPoints());
-            courseMaxPoints += exercise.getMaxPoints();
-
-            // If a exercise does not have averagePoints, set it here with 0.0
-            if (!averagePointsByTitle.containsKey(exerciseTitle)) {
-                averagePointsByTitle.put(exerciseTitle, 0.0);
-            }
-        }
-        dto.setExerciseNameToAveragePointsMap(averagePointsByTitle);
-        dto.setMaxPointsOfCourse(courseMaxPoints);
-        dto.setExerciseNameToMaxPointsMap(maxPoints);
-
-        return dto;
+        return averagePointsByTitle;
     }
 }

@@ -35,7 +35,7 @@ export class StatisticsService {
     }
 
     /**
-     * Sends a GET request to retrieve the data for a graph based on the graphType in the last *span* days, the given period and the courseId
+     * Sends a GET request to retrieve data needed for the course statistics
      */
     getCourseStatistics(courseId: number): Observable<CourseManagementStatisticsDTO> {
         const params = new HttpParams().set('courseId', '' + courseId);
