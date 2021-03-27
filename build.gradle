@@ -151,7 +151,7 @@ jacocoTestCoverageVerification {
             limit {
                 counter = "CLASS"
                 value = "MISSEDCOUNT"
-                // TODO: in the future the following value should become less than 50
+                // TODO: in the future the following value should become less than 20
                 maximum = 35
             }
         }
