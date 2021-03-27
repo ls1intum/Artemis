@@ -27,12 +27,19 @@ import de.tum.in.www1.artemis.domain.TextSubmission;
 import de.tum.in.www1.artemis.domain.enumeration.DifficultyLevel;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
 import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
-import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.participation.Participation;
+import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismComparison;
+import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismStatus;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextPlagiarismResult;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.domain.plagiarism.text.TextSubmissionElement;
+import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
+import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
+import de.tum.in.www1.artemis.repository.TeamRepository;
+import de.tum.in.www1.artemis.repository.TextClusterRepository;
+import de.tum.in.www1.artemis.repository.TextExerciseRepository;
+import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.TextExerciseUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
@@ -595,21 +602,9 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
                 Aenean congue vestibulum ligula, nec eleifend nulla vestibulum nec.
                 Praesent eu convallis neque. Nulla facilisi. Suspendisse mattis nisl ac.
                 """;
-        // Generate first submission + participation
-        TextSubmission textSubmission1 = ModelFactory.generateTextSubmission(longText, Language.ENGLISH, true);
-        textSubmission1 = textSubmissionRepository.save(textSubmission1);
-        var studentParticipation1 = ModelFactory.generateStudentParticipation(InitializationState.INITIALIZED, textExercise, database.getUserByLogin("student1"));
-        studentParticipation1.addSubmission(textSubmission1);
-        studentParticipationRepository.save(studentParticipation1);
-        textSubmissionRepository.save(textSubmission1);
 
-        // Generate second submission + participation
-        TextSubmission textSubmission2 = ModelFactory.generateTextSubmission(longText, Language.ENGLISH, true);
-        textSubmission2 = textSubmissionRepository.save(textSubmission2);
-        var studentParticipation2 = ModelFactory.generateStudentParticipation(InitializationState.INITIALIZED, textExercise, database.getUserByLogin("student2"));
-        studentParticipation2.addSubmission(textSubmission2);
-        studentParticipationRepository.save(studentParticipation2);
-        textSubmissionRepository.save(textSubmission2);
+        database.createSubmissionForTextExercise(textExercise, database.getUserByLogin("student1"), longText);
+        database.createSubmissionForTextExercise(textExercise, database.getUserByLogin("student2"), longText);
 
         // Use default options for plagiarism detection
         var params = new LinkedMultiValueMap<String, String>();
@@ -617,12 +612,18 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         params.add("minimumScore", "0");
         params.add("minimumSize", "0");
 
-        var result = request.get("/api/text-exercises/" + textExercise.getId() + "/check-plagiarism", HttpStatus.OK, TextPlagiarismResult.class, params);
-        // TODO: assert that the result and all its sub objects are correct
+        TextPlagiarismResult result = request.get("/api/text-exercises/" + textExercise.getId() + "/check-plagiarism", HttpStatus.OK, TextPlagiarismResult.class, params);
         assertThat(result.getComparisons()).hasSize(1);
-        var comparison = result.getComparisons().iterator().next();
-        // TODO: it seems that JPlag has a bug and always detects one length too less even for identical texts (e.g. 5 words ==> 80%, 100 words ==> 99%), therefore we use a rather
-        // high offset here to compensate this issue
+        assertThat(result.getExercise().getId()).isEqualTo(textExercise.getId());
+
+        PlagiarismComparison<TextSubmissionElement> comparison = result.getComparisons().iterator().next();
+        // Both submissions compared consist of 4 words (= 4 tokens). JPlag seems to be off by 1
+        // when counting the length of a match. This is why it calculates a similarity of 3/4 = 75%
+        // instead of 4/4 = 100% (5 words ==> 80%, 100 words ==> 99%, etc.). Therefore, we use a rather
+        // high offset here to compensate this issue.
+        // TODO: Reduce the offset once this issue is fixed in JPlag
         assertThat(comparison.getSimilarity()).isEqualTo(100.0, Offset.offset(1.0));
+        assertThat(comparison.getStatus()).isEqualTo(PlagiarismStatus.NONE);
+        assertThat(comparison.getMatches().size()).isEqualTo(1);
     }
 }
