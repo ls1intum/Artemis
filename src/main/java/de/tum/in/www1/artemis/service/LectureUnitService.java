@@ -9,7 +9,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 public class LectureUnitService {
@@ -39,16 +38,15 @@ public class LectureUnitService {
             disconnectLectureUnitAndLearningGoal(lectureUnit, learningGoal);
         }
         Lecture lecture = lectureRepository.findByIdWithStudentQuestionsAndLectureUnitsAndLearningGoalsElseThrow(lectureUnit.getLecture().getId());
-        // Hibernate sometimes adds null into the list of lecture units to keep the order, to prevent a NullPointerException we have to filter
-        List<LectureUnit> lectureUnits = lecture.getLectureUnits().stream().filter(Objects::nonNull).collect(Collectors.toList());
         // Creating a new list of lecture units without the one we want to remove
         List<LectureUnit> lectureUnitsUpdated = new ArrayList<>();
-        for (LectureUnit unit : lectureUnits) {
-            if (!unit.getId().equals(lectureUnit.getId())) {
+        for (LectureUnit unit : lecture.getLectureUnits()) {
+            if (Objects.nonNull(unit) && !unit.getId().equals(lectureUnit.getId())) {
                 lectureUnitsUpdated.add(unit);
             }
         }
-        lecture.setLectureUnits(lectureUnitsUpdated);
+        lecture.getLectureUnits().clear();
+        lecture.getLectureUnits().addAll(lectureUnitsUpdated);
         lectureRepository.save(lecture);
     }
 
