@@ -1,15 +1,16 @@
 package de.tum.in.www1.artemis.service;
 
+import java.time.ZonedDateTime;
+import java.util.*;
+import java.util.stream.Collectors;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.LectureUnitRepository;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.time.ZonedDateTime;
-import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 public class LectureService {
@@ -22,8 +23,8 @@ public class LectureService {
 
     private final LectureUnitService lectureUnitService;
 
-    public LectureService(LectureRepository lectureRepository, AuthorizationCheckService authCheckService,
-                          LectureUnitRepository lectureUnitRepository, LectureUnitService lectureUnitService) {
+    public LectureService(LectureRepository lectureRepository, AuthorizationCheckService authCheckService, LectureUnitRepository lectureUnitRepository,
+            LectureUnitService lectureUnitService) {
         this.lectureRepository = lectureRepository;
         this.authCheckService = authCheckService;
         this.lectureUnitRepository = lectureUnitRepository;
