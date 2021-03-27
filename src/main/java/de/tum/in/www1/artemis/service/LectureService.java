@@ -1,18 +1,16 @@
 package de.tum.in.www1.artemis.service;
 
-import java.time.ZonedDateTime;
-import java.util.HashSet;
-import java.util.Optional;
-import java.util.Set;
-
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.repository.LearningGoalRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.LectureUnitRepository;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.ZonedDateTime;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class LectureService {
@@ -83,9 +81,10 @@ public class LectureService {
             return;
         }
         Lecture lectureToDelete = lectureToDeleteOptional.get();
-
+        // Hibernate sometimes adds null into the list of lecture units to keep the order, to prevent a NullPointerException we have to filter
+        List<LectureUnit> connectedLectureUnits = lectureToDelete.getLectureUnits().stream().filter(Objects::nonNull).collect(Collectors.toList());
         // update associated learning goals
-        for (LectureUnit lectureUnit : lectureToDelete.getLectureUnits()) {
+        for (LectureUnit lectureUnit : connectedLectureUnits) {
             Optional<LectureUnit> lectureUnitFromDbOptional = lectureUnitRepository.findByIdWithLearningGoalsBidirectional(lectureUnit.getId());
 
             if (lectureUnitFromDbOptional.isPresent()) {
