@@ -604,7 +604,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         assertThat(illegalSubmission.getLatestResult().getId()).isEqualTo(createdResult.getId());
 
         // Check that the result belongs to the participation
-        Participation updatedParticipation = participationRepository.findWithEagerSubmissionsById(participation.getId()).get();
+        Participation updatedParticipation = participationRepository.findWithEagerLegalSubmissionsById(participation.getId()).get();
         assertThat(createdResult.getParticipation().getId()).isEqualTo(updatedParticipation.getId());
     }
 

@@ -51,7 +51,7 @@ public interface ProgrammingSubmissionRepository extends JpaRepository<Programmi
 
     @Query("""
             select s from ProgrammingSubmission s
-            where s.participation.id = :#{#participationId} and s.type <> ('ILLEGAL')
+            where s.participation.id = :#{#participationId} and s.type <> 'ILLEGAL'
             order by s.submissionDate desc
             """)
     List<ProgrammingSubmission> findLatestLegalSubmissionForParticipation(@Param("participationId") Long participationId, Pageable pageable);

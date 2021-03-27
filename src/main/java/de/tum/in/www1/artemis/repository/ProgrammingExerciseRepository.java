@@ -67,7 +67,7 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
             select distinct pe from ProgrammingExercise pe
             left join fetch pe.studentParticipations pep
             left join fetch pep.submissions s
-            where s.type <> ('ILLEGAL')
+            where s.type <> 'ILLEGAL'
             """)
     List<ProgrammingExercise> findAllWithEagerParticipationsAndLegalSubmissions();
 
@@ -82,7 +82,7 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
             select pe from ProgrammingExercise pe
             left join fetch pe.studentParticipations pep
             left join fetch pep.student
-            left join fetch pep.submissions s where s.type <> ('ILLEGAL')
+            left join fetch pep.submissions s where s.type <> 'ILLEGAL'
             """)
     Optional<ProgrammingExercise> findWithEagerStudentParticipationsStudentAndLegalSubmissionsById(Long exerciseId);
 
@@ -166,7 +166,8 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
             AND p.testRun = FALSE
             AND EXISTS (SELECT s FROM ProgrammingSubmission s
                 WHERE s.participation.id = p.id
-                AND s.submitted = TRUE AND s.type <> ('ILLEGAL'))
+                AND s.submitted = TRUE
+                AND s.type <> 'ILLEGAL')
             """)
     long countLegalSubmissionsByExerciseIdSubmittedIgnoreTestRunSubmissions(@Param("exerciseId") Long exerciseId);
 
@@ -183,7 +184,7 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
             AND EXISTS (SELECT s FROM ProgrammingSubmission s
                 WHERE s.participation.id = p.id
                 AND s.submitted = TRUE
-                AND s.type <> ('ILLEGAL')
+                AND s.type <> 'ILLEGAL'
                 AND EXISTS (SELECT r.assessor FROM s.results r
                     WHERE r.assessor IS NOT NULL
                     AND r.completionDate IS NOT NULL))
@@ -205,7 +206,7 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
             AND EXISTS (SELECT s FROM ProgrammingSubmission s
                 WHERE s.participation.id = p.id
                 AND s.submitted = TRUE
-                AND s.type <> ('ILLEGAL')
+                AND s.type <> 'ILLEGAL'
                 AND EXISTS (SELECT r.assessor FROM s.results r
                         WHERE r.assessor IS NOT NULL
                         AND r.completionDate IS NOT NULL))
@@ -222,11 +223,11 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
      */
     @Query("""
             SELECT COUNT (DISTINCT p) FROM ProgrammingExerciseStudentParticipation p
-                join p.submissions s
-                WHERE p.exercise.assessmentType <> 'AUTOMATIC'
+            JOIN p.submissions s
+            WHERE p.exercise.assessmentType <> 'AUTOMATIC'
                 AND p.exercise.exerciseGroup.exam.id = :#{#examId}
-                AND p.submissions IS NOT EMPTY
-                AND s.type <> ('ILLEGAL')
+                AND s IS NOT EMPTY
+                AND s.type <> 'ILLEGAL'
             """)
     long countLegalSubmissionsByExamIdSubmitted(@Param("examId") Long examId);
 
@@ -240,11 +241,11 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
      */
     @Query("""
             SELECT COUNT (DISTINCT p) FROM ProgrammingExerciseStudentParticipation p
-                join p.submissions s
-                WHERE p.exercise.assessmentType <> 'AUTOMATIC'
+            JOIN p.submissions s
+            WHERE p.exercise.assessmentType <> 'AUTOMATIC'
                 AND p.exercise.course.id = :#{#courseId}
                 AND s.submitted = TRUE
-                AND s.type <> ('ILLEGAL')
+                AND s.type <> 'ILLEGAL'
             """)
     long countLegalSubmissionsByCourseIdSubmitted(@Param("courseId") Long courseId);
 

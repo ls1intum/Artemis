@@ -240,46 +240,52 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
     long countByAssessor_IdAndParticipation_ExerciseIdAndRatedAndCompletionDateIsNotNull(Long tutorId, Long exerciseId, boolean rated);
 
     @Query("""
-                    SELECT r
-                    FROM Exercise e JOIN e.studentParticipations p JOIN p.submissions s JOIN s.results r
-                    WHERE e.id = :exerciseId
-                    AND p.student.id = :studentId
-                    AND r.score IS NOT NULL AND r.completionDate IS NOT NULL
-                    AND s.type <> ('ILLEGAL')
-                    ORDER BY p.id DESC, s.id DESC, r.id DESC
+            SELECT r
+            FROM Exercise e JOIN e.studentParticipations p JOIN p.submissions s JOIN s.results r
+            WHERE e.id = :exerciseId
+                AND p.student.id = :studentId
+                AND r.score IS NOT NULL
+                AND r.completionDate IS NOT NULL
+                AND s.type <> 'ILLEGAL'
+            ORDER BY p.id DESC, s.id DESC, r.id DESC
             """)
     List<Result> getResultsOrderedByParticipationIdLegalSubmissionIdResultIdDescForStudent(@Param("exerciseId") Long exerciseId, @Param("studentId") Long studentId);
 
     @Query("""
-                    SELECT r
-                    FROM Exercise e JOIN e.studentParticipations p JOIN p.submissions s JOIN s.results r
-                    WHERE e.id = :exerciseId
-                    AND p.team.id = :teamId
-                    AND r.score IS NOT NULL AND r.completionDate IS NOT NULL
-                    AND s.type <> ('ILLEGAL')
-                    ORDER BY p.id DESC, s.id DESC, r.id DESC
+            SELECT r
+            FROM Exercise e JOIN e.studentParticipations p JOIN p.submissions s JOIN s.results r
+            WHERE e.id = :exerciseId
+                AND p.team.id = :teamId
+                AND r.score IS NOT NULL
+                AND r.completionDate IS NOT NULL
+                AND s.type <> 'ILLEGAL'
+            ORDER BY p.id DESC, s.id DESC, r.id DESC
             """)
     List<Result> getResultsOrderedByParticipationIdLegalSubmissionIdResultIdDescForTeam(@Param("exerciseId") Long exerciseId, @Param("teamId") Long teamId);
 
     @Query("""
-                    SELECT r
-                    FROM Exercise e JOIN e.studentParticipations p JOIN p.submissions s JOIN s.results r
-                    WHERE e.id = :exerciseId
-                    AND p.student.id = :studentId
-                    AND r.score IS NOT NULL AND r.completionDate IS NOT NULL AND r.rated = true
-                    AND s.type <> ('ILLEGAL')
-                    ORDER BY p.id DESC, s.id DESC, r.id DESC
+            SELECT r
+            FROM Exercise e JOIN e.studentParticipations p JOIN p.submissions s JOIN s.results r
+            WHERE e.id = :exerciseId
+                AND p.student.id = :studentId
+                AND r.score IS NOT NULL
+                AND r.completionDate IS NOT NULL
+                AND r.rated = true
+                AND s.type <> 'ILLEGAL'
+            ORDER BY p.id DESC, s.id DESC, r.id DESC
             """)
     List<Result> getRatedResultsOrderedByParticipationIdLegalSubmissionIdResultIdDescForStudent(@Param("exerciseId") Long exerciseId, @Param("studentId") Long studentId);
 
     @Query("""
-                    SELECT r
-                    FROM Exercise e JOIN e.studentParticipations p JOIN p.submissions s JOIN s.results r
-                    WHERE e.id = :exerciseId
-                    AND p.team.id = :teamId
-                    AND r.score IS NOT NULL AND r.completionDate IS NOT NULL AND r.rated = true
-                    AND s.type <> ('ILLEGAL')
-                    ORDER BY p.id DESC, s.id DESC, r.id DESC
+            SELECT r
+            FROM Exercise e JOIN e.studentParticipations p JOIN p.submissions s JOIN s.results r
+            WHERE e.id = :exerciseId
+                AND p.team.id = :teamId
+                AND r.score IS NOT NULL
+                AND r.completionDate IS NOT NULL
+                AND r.rated = true
+                AND s.type <> 'ILLEGAL'
+            ORDER BY p.id DESC, s.id DESC, r.id DESC
             """)
     List<Result> getRatedResultsOrderedByParticipationIdLegalSubmissionIdResultIdDescForTeam(@Param("exerciseId") Long exerciseId, @Param("teamId") Long teamId);
 

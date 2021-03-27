@@ -55,9 +55,9 @@ public interface ProgrammingExerciseStudentParticipationRepository extends JpaRe
             left join fetch pr.assessor
             where p.id = :participationId
                 and pr.id in (select prr.id from p.results prr
-                    where prr.assessmentType = 'MANUAL'
-                        and prr.submission.type <> ('ILLEGAL')
-                        or prr.assessmentType = 'SEMI_AUTOMATIC')
+                    where prr.submission.type <> 'ILLEGAL'
+                        and (prr.assessmentType = 'MANUAL'
+                        or prr.assessmentType = 'SEMI_AUTOMATIC'))
             """)
     Optional<ProgrammingExerciseStudentParticipation> findByIdWithAllManualOrSemiAutomaticResultsAndFeedbacksAndRelatedLegalSubmissionAndAssessor(
             @Param("participationId") Long participationId);
