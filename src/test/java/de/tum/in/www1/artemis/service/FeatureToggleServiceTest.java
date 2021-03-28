@@ -16,11 +16,11 @@ import de.tum.in.www1.artemis.service.feature.FeatureToggleService;
 public class FeatureToggleServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
-    FeatureToggleService featureToggleService;
+    private FeatureToggleService featureToggleService;
 
     @AfterEach
     public void checkReset() {
-        // Verify that the test has resetted the state
+        // Verify that the test has reset the state
         // Must be extended if additional features are added
         assertTrue(featureToggleService.isFeatureEnabled(Feature.PROGRAMMING_EXERCISES));
     }

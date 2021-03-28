@@ -10,7 +10,8 @@ import { TextExercise } from 'app/entities/text-exercise.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
 import { TranslateService } from '@ngx-translate/core';
-import { MockProvider } from 'ng-mocks';
+import { MockComponent, MockProvider } from 'ng-mocks';
+import { NonProgrammingExerciseDetailCommonActionsComponent } from 'app/exercises/shared/exercise-detail-common-actions/non-programming-exercise-detail-common-actions.component';
 
 describe('TextExercise Management Detail Component', () => {
     let comp: TextExerciseDetailComponent;
@@ -20,7 +21,7 @@ describe('TextExercise Management Detail Component', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            declarations: [TextExerciseDetailComponent],
+            declarations: [TextExerciseDetailComponent, MockComponent(NonProgrammingExerciseDetailCommonActionsComponent)],
             providers: [{ provide: ActivatedRoute, useValue: new MockActivatedRoute() }, MockProvider(TranslateService)],
         })
             .overrideTemplate(TextExerciseDetailComponent, '')

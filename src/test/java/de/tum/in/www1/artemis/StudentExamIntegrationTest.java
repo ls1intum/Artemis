@@ -153,9 +153,9 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testFindOneWithExercisesByUserIdAndExamId() {
-        var studentExam = studentExamService.findOneWithExercisesByUserIdAndExamId(Long.MAX_VALUE, exam1.getId());
+        var studentExam = studentExamRepository.findWithExercisesByUserIdAndExamId(Long.MAX_VALUE, exam1.getId());
         assertThat(studentExam).isEmpty();
-        studentExam = studentExamService.findOneWithExercisesByUserIdAndExamId(users.get(0).getId(), exam1.getId());
+        studentExam = studentExamRepository.findWithExercisesByUserIdAndExamId(users.get(0).getId(), exam1.getId());
         assertThat(studentExam).isPresent();
         assertThat(studentExam.get()).isEqualTo(studentExam1);
     }
@@ -163,15 +163,15 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testFindAllDistinctWorkingTimesByExamId() {
-        assertThat(studentExamService.findAllDistinctWorkingTimesByExamId(Long.MAX_VALUE)).isEqualTo(Set.of());
-        assertThat(studentExamService.findAllDistinctWorkingTimesByExamId(exam1.getId())).isEqualTo(Set.of(studentExam1.getWorkingTime()));
+        assertThat(studentExamRepository.findAllDistinctWorkingTimesByExamId(Long.MAX_VALUE)).isEqualTo(Set.of());
+        assertThat(studentExamRepository.findAllDistinctWorkingTimesByExamId(exam1.getId())).isEqualTo(Set.of(studentExam1.getWorkingTime()));
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testFindMaxWorkingTimeById() {
-        assertThrows(EntityNotFoundException.class, () -> studentExamService.findMaxWorkingTimeByExamId(Long.MAX_VALUE));
-        assertThat(studentExamService.findMaxWorkingTimeByExamId(exam1.getId())).isEqualTo(studentExam1.getWorkingTime());
+        assertThrows(EntityNotFoundException.class, () -> studentExamRepository.findMaxWorkingTimeByExamIdElseThrow(Long.MAX_VALUE));
+        assertThat(studentExamRepository.findMaxWorkingTimeByExamIdElseThrow(exam1.getId())).isEqualTo(studentExam1.getWorkingTime());
     }
 
     private void deleteExam1WithInstructor() throws Exception {

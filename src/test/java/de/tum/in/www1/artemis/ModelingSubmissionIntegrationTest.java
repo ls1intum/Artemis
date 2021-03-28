@@ -27,8 +27,6 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.service.ParticipationService;
-import de.tum.in.www1.artemis.service.TeamService;
 import de.tum.in.www1.artemis.service.compass.CompassService;
 import de.tum.in.www1.artemis.util.FileUtils;
 import de.tum.in.www1.artemis.util.ModelFactory;
@@ -36,31 +34,25 @@ import de.tum.in.www1.artemis.util.ModelFactory;
 public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
-    CourseRepository courseRepo;
+    private CourseRepository courseRepo;
 
     @Autowired
-    ExerciseRepository exerciseRepo;
+    private ExerciseRepository exerciseRepo;
 
     @Autowired
-    UserRepository userRepo;
+    private UserRepository userRepo;
 
     @Autowired
-    TeamService teamService;
+    private TeamRepository teamRepository;
 
     @Autowired
-    StudentParticipationRepository studentParticipationRepository;
+    private StudentParticipationRepository studentParticipationRepository;
 
     @Autowired
-    ParticipationService participationService;
+    private ModelingSubmissionRepository modelingSubmissionRepo;
 
     @Autowired
-    ResultRepository resultRepo;
-
-    @Autowired
-    ModelingSubmissionRepository modelingSubmissionRepo;
-
-    @Autowired
-    SubmissionVersionRepository submissionVersionRepository;
+    private SubmissionVersionRepository submissionVersionRepository;
 
     @Autowired
     private ExerciseGroupRepository exerciseGroupRepository;
@@ -69,7 +61,7 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
     private ExamRepository examRepository;
 
     @Autowired
-    CompassService compassService;
+    private CompassService compassService;
 
     private ModelingExercise classExercise;
 
@@ -221,7 +213,7 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
         team.setExercise(useCaseExercise);
         team.addStudents(userRepo.findOneByLogin("student1").orElseThrow());
         team.addStudents(userRepo.findOneByLogin("student2").orElseThrow());
-        teamService.save(useCaseExercise, team);
+        teamRepository.save(useCaseExercise, team);
 
         database.addTeamParticipationForExercise(useCaseExercise, team.getId());
         String emptyUseCaseModel = FileUtils.loadFileFromResources("test-data/model-submission/empty-use-case-diagram.json");

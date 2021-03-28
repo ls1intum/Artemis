@@ -7,6 +7,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.in.www1.artemis.domain.enumeration.StaticCodeAnalysisTool;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class StaticCodeAnalysisReportDTO {
 
     private StaticCodeAnalysisTool tool;
