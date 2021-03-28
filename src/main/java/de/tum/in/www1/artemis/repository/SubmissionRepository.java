@@ -439,4 +439,15 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
     default Submission findOneWithEagerResultAndFeedback(long submissionId) {
         return this.findWithEagerResultAndFeedbackById(submissionId).orElseThrow(() -> new EntityNotFoundException("Submission with id \"" + submissionId + "\" does not exist"));
     }
+
+    /**
+     * Get the submission with the given id from the database. The submission is loaded together with its results and the assessors. Throws an EntityNotFoundException if no
+     * submission could be found for the given id.
+     *
+     * @param submissionId the id of the submission that should be loaded from the database
+     * @return the submission with the given id
+     */
+    default Submission findByIdWithResultsElseThrow(long submissionId) {
+        return findWithEagerResultsAndAssessorById(submissionId).orElseThrow(() -> new EntityNotFoundException("Submission", +submissionId));
+    }
 }

@@ -212,8 +212,6 @@ public abstract class Participation extends DomainObject implements Participatio
         return sortedResultsWithCompletionDate.get(0);
     }
 
-    // TODO: implement a method Result findLatestResultBeforeDueDate(ZonedDateTime dueDate)
-
     /**
      * Finds the latest submission for the participation. Checks if the participation has any submissions. If there are no submissions, return null. Otherwise sort the submissions
      * by submission date and return the first. WARNING: The submissions of the participation might not be loaded because of Hibernate and therefore, the function might return

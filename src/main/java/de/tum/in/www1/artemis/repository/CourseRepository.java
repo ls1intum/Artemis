@@ -107,6 +107,19 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
 
     Optional<Course> findById(long courseId);
 
+    /**
+     * Returns the title of the course with the given id
+     *
+     * @param courseId the id of the course
+     * @return the name/title of the course or null if the course does not exist
+     */
+    @Query("""
+            SELECT c.title
+            FROM Course c
+            WHERE c.id = :courseId
+            """)
+    String getCourseTitle(Long courseId);
+
     @Query("""
             select distinct c
             from Course c left join fetch c.exercises e

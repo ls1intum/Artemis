@@ -43,9 +43,7 @@ import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.programmingexercise.MockDelegate;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.AuthoritiesConstants;
-import de.tum.in.www1.artemis.service.CourseService;
 import de.tum.in.www1.artemis.service.ParticipationService;
-import de.tum.in.www1.artemis.service.TeamService;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
@@ -76,7 +74,7 @@ public class ProgrammingExerciseTestService {
     private ProgrammingExerciseRepository programmingExerciseRepository;
 
     @Autowired
-    private TeamService teamService;
+    private TeamRepository teamRepository;
 
     @Autowired
     private UserRepository userRepo;
@@ -105,9 +103,6 @@ public class ProgrammingExerciseTestService {
 
     @Value("${artemis.lti.user-prefix-edx:#{null}}")
     private Optional<String> userPrefixEdx;
-
-    @Autowired
-    private CourseService courseService;
 
     public Course course;
 
@@ -143,9 +138,6 @@ public class ProgrammingExerciseTestService {
 
     private VersionControlService versionControlService;
 
-    // not needed right now but maybe in the future
-    private ContinuousIntegrationService continuousIntegrationService;
-
     private MockDelegate mockDelegate;
 
     public List<User> setupTestUsers(int numberOfStudents, int numberOfTutors, int numberOfInstructors) {
@@ -155,7 +147,6 @@ public class ProgrammingExerciseTestService {
     public void setup(MockDelegate mockDelegate, VersionControlService versionControlService, ContinuousIntegrationService continuousIntegrationService) throws Exception {
         this.mockDelegate = mockDelegate;
         this.versionControlService = versionControlService;
-        this.continuousIntegrationService = continuousIntegrationService;
 
         course = database.addEmptyCourse();
         ExerciseGroup exerciseGroup = database.addExerciseGroupWithExamAndCourse(true);
@@ -452,12 +443,12 @@ public class ProgrammingExerciseTestService {
         assertEquals(TEAM, exerciseToBeImported.getMode());
         assertEquals(teamAssignmentConfig.getMinTeamSize(), exerciseToBeImported.getTeamAssignmentConfig().getMinTeamSize());
         assertEquals(teamAssignmentConfig.getMaxTeamSize(), exerciseToBeImported.getTeamAssignmentConfig().getMaxTeamSize());
-        assertEquals(0, teamService.findAllByExerciseIdWithEagerStudents(exerciseToBeImported, null).size());
+        assertEquals(0, teamRepository.findAllByExerciseIdWithEagerStudents(exerciseToBeImported, null).size());
 
         sourceExercise = database.loadProgrammingExerciseWithEagerReferences(sourceExercise);
         assertEquals(ExerciseMode.INDIVIDUAL, sourceExercise.getMode());
         assertNull(sourceExercise.getTeamAssignmentConfig());
-        assertEquals(0, teamService.findAllByExerciseIdWithEagerStudents(sourceExercise, null).size());
+        assertEquals(0, teamRepository.findAllByExerciseIdWithEagerStudents(sourceExercise, null).size());
     }
 
     // TEST
@@ -476,7 +467,7 @@ public class ProgrammingExerciseTestService {
         sourceExercise.setTeamAssignmentConfig(teamAssignmentConfig);
         sourceExercise.setCourse(sourceExercise.getCourseViaExerciseGroupOrCourseMember());
         programmingExerciseRepository.save(sourceExercise);
-        teamService.save(sourceExercise, new Team());
+        teamRepository.save(sourceExercise, new Team());
         database.loadProgrammingExerciseWithEagerReferences(sourceExercise);
 
         ProgrammingExercise exerciseToBeImported = ModelFactory.generateToBeImportedProgrammingExercise("ImportTitle", "imported", sourceExercise, database.addEmptyCourse());
@@ -492,15 +483,15 @@ public class ProgrammingExerciseTestService {
 
         assertEquals(ExerciseMode.INDIVIDUAL, exerciseToBeImported.getMode());
         assertNull(exerciseToBeImported.getTeamAssignmentConfig());
-        assertEquals(0, teamService.findAllByExerciseIdWithEagerStudents(exerciseToBeImported, null).size());
+        assertEquals(0, teamRepository.findAllByExerciseIdWithEagerStudents(exerciseToBeImported, null).size());
 
         sourceExercise = database.loadProgrammingExerciseWithEagerReferences(sourceExercise);
         assertEquals(TEAM, sourceExercise.getMode());
-        assertEquals(1, teamService.findAllByExerciseIdWithEagerStudents(sourceExercise, null).size());
+        assertEquals(1, teamRepository.findAllByExerciseIdWithEagerStudents(sourceExercise, null).size());
     }
 
     // TEST
-    public void testImportProgrammingExercise_scaChange_deactivated() throws Exception {
+    public void testImportProgrammingExercise_scaChange() throws Exception {
         // Setup exercises for import
         ProgrammingExercise sourceExercise = database.addCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories();
         database.addTestCasesToProgrammingExercise(sourceExercise);
@@ -520,7 +511,7 @@ public class ProgrammingExerciseTestService {
                 ProgrammingExercise.class, params, HttpStatus.OK);
 
         // Assertions
-        assertThat(!exerciseToBeImported.isStaticCodeAnalysisEnabled());
+        assertThat(exerciseToBeImported.isStaticCodeAnalysisEnabled()).isTrue();
         assertThat(exerciseToBeImported.getStaticCodeAnalysisCategories()).isEmpty();
         assertThat(exerciseToBeImported.getMaxStaticCodeAnalysisPenalty()).isNull();
     }
@@ -548,7 +539,7 @@ public class ProgrammingExerciseTestService {
 
         // Assertions
         var staticCodeAnalysisCategories = staticCodeAnalysisCategoryRepository.findByExerciseId(exerciseToBeImported.getId());
-        assertThat(exerciseToBeImported.isStaticCodeAnalysisEnabled());
+        assertThat(exerciseToBeImported.isStaticCodeAnalysisEnabled()).isTrue();
         assertThat(staticCodeAnalysisCategories).usingRecursiveFieldByFieldElementComparator().usingElementComparatorOnFields("name", "state", "penalty", "maxPenalty")
                 .isEqualTo(staticCodeAnalysisDefaultConfigurations.get(exercise.getProgrammingLanguage()));
         assertThat(exerciseToBeImported.getMaxStaticCodeAnalysisPenalty()).isEqualTo(80);
@@ -862,7 +853,7 @@ public class ProgrammingExerciseTestService {
         // create a team for the user (necessary condition before starting an exercise)
         Set<User> students = Set.of(user);
         Team team = new Team().name("Team 1").shortName(teamShortName).exercise(exercise).students(students);
-        team = teamService.save(exercise, team);
+        team = teamRepository.save(exercise, team);
         assertThat(team.getStudents()).as("Student was correctly added to team").hasSize(1);
         return team;
     }
@@ -930,7 +921,7 @@ public class ProgrammingExerciseTestService {
         // Create a team with students
         Set<User> students = new HashSet<>(userRepo.findAllInGroupWithAuthorities("tumuser"));
         Team team = new Team().name("Team 1").shortName(teamShortName).exercise(exercise).students(students);
-        team = teamService.save(exercise, team);
+        team = teamRepository.save(exercise, team);
 
         assertThat(team.getStudents()).as("Students were correctly added to team").hasSize(numberOfStudents);
 
@@ -963,7 +954,7 @@ public class ProgrammingExerciseTestService {
         // Create a team with students
         Set<User> students = new HashSet<>(userRepo.findAllInGroupWithAuthorities("tumuser"));
         Team team = new Team().name("Team 1").shortName(teamShortName).exercise(exercise).students(students);
-        team = teamService.save(exercise, team);
+        team = teamRepository.save(exercise, team);
 
         assertThat(team.getStudents()).as("Students were correctly added to team").hasSize(numberOfStudents);
 
@@ -1017,7 +1008,7 @@ public class ProgrammingExerciseTestService {
         // Create a team with students
         Set<User> students = new HashSet<>(userRepo.findAllInGroupWithAuthorities("tumuser"));
         Team team = new Team().name("Team 1").shortName(teamShortName).exercise(exercise).students(students);
-        team = teamService.save(exercise, team);
+        team = teamRepository.save(exercise, team);
 
         assertThat(team.getStudents()).as("Students were correctly added to team").hasSize(numberOfStudents);
 
@@ -1055,7 +1046,7 @@ public class ProgrammingExerciseTestService {
         // Create a team with students
         Set<User> students = new HashSet<>(userRepo.findAllInGroupWithAuthorities("tumuser"));
         Team team = new Team().name("Team 1").shortName(teamShortName).exercise(exercise).students(students);
-        team = teamService.save(exercise, team);
+        team = teamRepository.save(exercise, team);
 
         assertThat(team.getStudents()).as("Students were correctly added to team").hasSize(numberOfStudents);
 
@@ -1076,7 +1067,7 @@ public class ProgrammingExerciseTestService {
         // Create a team with students
         Set<User> students = new HashSet<>(userRepo.findAllInGroupWithAuthorities("tumuser"));
         Team team = new Team().name("Team 1").shortName(teamShortName).exercise(exercise).students(students);
-        team = teamService.save(exercise, team);
+        team = teamRepository.save(exercise, team);
 
         assertThat(team.getStudents()).as("Students were correctly added to team").hasSize(numberOfStudents);
 

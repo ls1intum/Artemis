@@ -79,8 +79,6 @@ public class CourseResource {
 
     private final CourseService courseService;
 
-    private final StudentParticipationRepository studentParticipationRepository;
-
     private final AuthorizationCheckService authCheckService;
 
     private final ExerciseService exerciseService;
@@ -117,15 +115,14 @@ public class CourseResource {
 
     private final ResultRepository resultRepository;
 
-    public CourseResource(UserRepository userRepository, CourseService courseService, StudentParticipationRepository studentParticipationRepository,
-            CourseRepository courseRepository, ExerciseService exerciseService, AuthorizationCheckService authCheckService, TutorParticipationService tutorParticipationService,
-            Environment env, ArtemisAuthenticationProvider artemisAuthenticationProvider, ComplaintRepository complaintRepository,
-            ComplaintResponseRepository complaintResponseRepository, SubmissionService submissionService, ComplaintService complaintService,
-            TutorLeaderboardService tutorLeaderboardService, ProgrammingExerciseRepository programmingExerciseRepository, AuditEventRepository auditEventRepository,
+    public CourseResource(UserRepository userRepository, CourseService courseService, CourseRepository courseRepository, ExerciseService exerciseService,
+            AuthorizationCheckService authCheckService, TutorParticipationService tutorParticipationService, Environment env,
+            ArtemisAuthenticationProvider artemisAuthenticationProvider, ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository,
+            SubmissionService submissionService, ComplaintService complaintService, TutorLeaderboardService tutorLeaderboardService,
+            ProgrammingExerciseRepository programmingExerciseRepository, AuditEventRepository auditEventRepository,
             Optional<VcsUserManagementService> optionalVcsUserManagementService, AssessmentDashboardService assessmentDashboardService, ExerciseRepository exerciseRepository,
             SubmissionRepository submissionRepository, ResultRepository resultRepository, Optional<CIUserManagementService> optionalCiUserManagementService) {
         this.courseService = courseService;
-        this.studentParticipationRepository = studentParticipationRepository;
         this.courseRepository = courseRepository;
         this.exerciseService = exerciseService;
         this.authCheckService = authCheckService;
@@ -699,7 +696,7 @@ public class CourseResource {
             return forbidden();
         }
 
-        return ResponseUtil.wrapOrNotFound(Optional.ofNullable(course));
+        return ResponseUtil.wrapOrNotFound(Optional.of(course));
     }
 
     /**
@@ -1138,6 +1135,20 @@ public class CourseResource {
         log.debug("REST request to get all instructors in course : {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         return getAllUsersInGroup(course, course.getInstructorGroupName());
+    }
+
+    /**
+     * GET /courses/:courseId/title : Returns the title of the course with the given id
+     *
+     * @param courseId the id of the course
+     * @return the title of the course wrapped in an ResponseEntity or 404 Not Found if no course with that id exists
+     */
+    @GetMapping(value = "/courses/{courseId}/title")
+    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    @ResponseBody
+    public ResponseEntity<String> getCourseTitle(@PathVariable Long courseId) {
+        final var title = courseRepository.getCourseTitle(courseId);
+        return title == null ? ResponseEntity.notFound().build() : ResponseEntity.ok(title);
     }
 
     /**

@@ -15,11 +15,7 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
-import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
-import de.tum.in.www1.artemis.repository.ExerciseRepository;
-import de.tum.in.www1.artemis.repository.ResultRepository;
-import de.tum.in.www1.artemis.repository.SubmissionRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.compass.CompassService;
 import de.tum.in.www1.artemis.service.exam.ExamService;
@@ -42,22 +38,22 @@ public class ModelingAssessmentResource extends AssessmentResource {
 
     private final CompassService compassService;
 
-    private final ModelingExerciseService modelingExerciseService;
+    private final ModelingExerciseRepository modelingExerciseRepository;
 
     private final AuthorizationCheckService authCheckService;
 
-    private final ModelingSubmissionService modelingSubmissionService;
+    private final ModelingSubmissionRepository modelingSubmissionRepository;
 
     public ModelingAssessmentResource(AuthorizationCheckService authCheckService, UserRepository userRepository, CompassService compassService,
-            ModelingExerciseService modelingExerciseService, AssessmentService assessmentService, ModelingSubmissionService modelingSubmissionService,
+            ModelingExerciseRepository modelingExerciseRepository, AssessmentService assessmentService, ModelingSubmissionRepository modelingSubmissionRepository,
             ExampleSubmissionRepository exampleSubmissionRepository, WebsocketMessagingService messagingService, ExerciseRepository exerciseRepository,
             ResultRepository resultRepository, ExamService examService, SubmissionRepository submissionRepository) {
-        super(authCheckService, userRepository, exerciseRepository, modelingSubmissionService, assessmentService, resultRepository, examService, messagingService,
-                exampleSubmissionRepository, submissionRepository);
+        super(authCheckService, userRepository, exerciseRepository, assessmentService, resultRepository, examService, messagingService, exampleSubmissionRepository,
+                submissionRepository);
         this.compassService = compassService;
-        this.modelingExerciseService = modelingExerciseService;
+        this.modelingExerciseRepository = modelingExerciseRepository;
         this.authCheckService = authCheckService;
-        this.modelingSubmissionService = modelingSubmissionService;
+        this.modelingSubmissionRepository = modelingSubmissionRepository;
     }
 
     /**
@@ -147,10 +143,10 @@ public class ModelingAssessmentResource extends AssessmentResource {
     public ResponseEntity<Result> updateModelingAssessmentAfterComplaint(@PathVariable Long submissionId, @RequestBody AssessmentUpdate assessmentUpdate) {
         log.debug("REST request to update the assessment of submission {} after complaint.", submissionId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        ModelingSubmission modelingSubmission = modelingSubmissionService.findOneWithEagerResultAndFeedback(submissionId);
+        ModelingSubmission modelingSubmission = modelingSubmissionRepository.findOneWithEagerResultAndFeedback(submissionId);
         StudentParticipation studentParticipation = (StudentParticipation) modelingSubmission.getParticipation();
         long exerciseId = studentParticipation.getExercise().getId();
-        ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
+        ModelingExercise modelingExercise = modelingExerciseRepository.findOne(exerciseId);
         checkAuthorization(modelingExercise, user);
 
         Result result = assessmentService.updateAssessmentAfterComplaint(modelingSubmission.getLatestResult(), modelingExercise, assessmentUpdate);

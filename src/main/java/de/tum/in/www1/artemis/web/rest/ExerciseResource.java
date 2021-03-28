@@ -68,7 +68,7 @@ public class ExerciseResource {
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
-    private final GradingCriterionService gradingCriterionService;
+    private final GradingCriterionRepository gradingCriterionRepository;
 
     private final ComplaintRepository complaintRepository;
 
@@ -81,8 +81,8 @@ public class ExerciseResource {
     public ExerciseResource(ExerciseService exerciseService, ParticipationService participationService, UserRepository userRepository, ExamDateService examDateService,
             AuthorizationCheckService authCheckService, TutorParticipationService tutorParticipationService, ExampleSubmissionRepository exampleSubmissionRepository,
             ComplaintRepository complaintRepository, SubmissionRepository submissionRepository, ResultService resultService, TutorLeaderboardService tutorLeaderboardService,
-            ComplaintResponseRepository complaintResponseRepository, ProgrammingExerciseRepository programmingExerciseRepository, GradingCriterionService gradingCriterionService,
-            ExerciseRepository exerciseRepository, ResultRepository resultRepository) {
+            ComplaintResponseRepository complaintResponseRepository, ProgrammingExerciseRepository programmingExerciseRepository,
+            GradingCriterionRepository gradingCriterionRepository, ExerciseRepository exerciseRepository, ResultRepository resultRepository) {
         this.exerciseService = exerciseService;
         this.participationService = participationService;
         this.userRepository = userRepository;
@@ -94,7 +94,7 @@ public class ExerciseResource {
         this.complaintResponseRepository = complaintResponseRepository;
         this.tutorLeaderboardService = tutorLeaderboardService;
         this.programmingExerciseRepository = programmingExerciseRepository;
-        this.gradingCriterionService = gradingCriterionService;
+        this.gradingCriterionRepository = gradingCriterionRepository;
         this.examDateService = examDateService;
         this.exerciseRepository = exerciseRepository;
         this.resultRepository = resultRepository;
@@ -145,7 +145,7 @@ public class ExerciseResource {
             }
         }
 
-        List<GradingCriterion> gradingCriteria = gradingCriterionService.findByExerciseIdWithEagerGradingCriteria(exerciseId);
+        List<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exerciseId);
         exercise.setGradingCriteria(gradingCriteria);
         return ResponseUtil.wrapOrNotFound(Optional.of(exercise));
     }
@@ -175,7 +175,7 @@ public class ExerciseResource {
         exampleSubmissions.removeIf(exampleSubmission -> exampleSubmission.getSubmission().getLatestResult() == null);
         exercise.setExampleSubmissions(exampleSubmissions);
 
-        List<GradingCriterion> gradingCriteria = gradingCriterionService.findByExerciseIdWithEagerGradingCriteria(exerciseId);
+        List<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exerciseId);
         exercise.setGradingCriteria(gradingCriteria);
 
         TutorParticipation tutorParticipation = tutorParticipationService.findByExerciseAndTutor(exercise, user);
@@ -203,6 +203,19 @@ public class ExerciseResource {
 
         Set<Exercise> upcomingExercises = exerciseRepository.findAllExercisesWithCurrentOrUpcomingDueDate();
         return ResponseEntity.ok(upcomingExercises);
+    }
+
+    /**
+     * GET /exercises/:exerciseId/title : Returns the title of the exercise with the given id
+     *
+     * @param exerciseId the id of the exercise
+     * @return the title of the exercise wrapped in an ResponseEntity or 404 Not Found if no exercise with that id exists
+     */
+    @GetMapping(value = "/exercises/{exerciseId}/title")
+    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<String> getExerciseTitle(@PathVariable Long exerciseId) {
+        final var title = exerciseRepository.getExerciseTitle(exerciseId);
+        return title == null ? ResponseEntity.notFound().build() : ResponseEntity.ok(title);
     }
 
     /**
