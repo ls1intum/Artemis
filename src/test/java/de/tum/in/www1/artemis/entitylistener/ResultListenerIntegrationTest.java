@@ -17,7 +17,6 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
@@ -117,7 +116,6 @@ public class ResultListenerIntegrationTest extends AbstractSpringIntegrationBamb
         database.changeUser("instructor1");
         request.put("/api/text-exercises", exercise, HttpStatus.OK);
         List<ParticipantScore> savedParticipantScores = participantScoreRepository.findAllEagerly();
-        SecurityContextHolder.getContext().setAuthentication(null);
         assertThat(savedParticipantScores).isNotEmpty();
         assertThat(savedParticipantScores).size().isEqualTo(1);
         ParticipantScore savedParticipantScore = savedParticipantScores.get(0);
@@ -389,14 +387,11 @@ public class ResultListenerIntegrationTest extends AbstractSpringIntegrationBamb
         else {
             studentParticipation = studentParticipationRepository.findByExerciseIdAndStudentId(idOfIndividualTextExercise, idOfStudent1).get(0);
         }
-        SecurityContextHolder.getContext().setAuthentication(null);
         return database.createSubmissionAndResult(studentParticipation, 100, isRated);
     }
 
     public ParticipantScore setupTestScenarioWithOneResultSaved(boolean isRatedResult, boolean isTeam) {
-        SecurityUtils.setAuthorizationObject();
         List<ParticipantScore> savedParticipantScores = participantScoreRepository.findAllEagerly();
-        SecurityContextHolder.getContext().setAuthentication(null);
         assertThat(savedParticipantScores).isEmpty();
 
         Long idOfExercise;
@@ -411,9 +406,7 @@ public class ResultListenerIntegrationTest extends AbstractSpringIntegrationBamb
         }
 
         Result persistedResult = database.createParticipationSubmissionAndResult(idOfExercise, participant, 10.0, 10.0, 200, isRatedResult);
-        SecurityUtils.setAuthorizationObject();
         savedParticipantScores = participantScoreRepository.findAllEagerly();
-        SecurityContextHolder.getContext().setAuthentication(null);
         assertThat(savedParticipantScores).isNotEmpty();
         assertThat(savedParticipantScores).size().isEqualTo(1);
         ParticipantScore savedParticipantScore = savedParticipantScores.get(0);
@@ -445,7 +438,6 @@ public class ResultListenerIntegrationTest extends AbstractSpringIntegrationBamb
         }
         SecurityUtils.setAuthorizationObject();
         List<ParticipantScore> savedParticipantScore = participantScoreRepository.findAllEagerly();
-        SecurityContextHolder.getContext().setAuthentication(null);
         assertThat(savedParticipantScore).isNotEmpty();
         assertThat(savedParticipantScore).size().isEqualTo(1);
         ParticipantScore updatedParticipantScore = savedParticipantScore.get(0);
