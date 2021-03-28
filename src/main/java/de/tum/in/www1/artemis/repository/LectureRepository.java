@@ -58,7 +58,7 @@ public interface LectureRepository extends JpaRepository<Lecture, Long> {
             FROM Lecture l
             WHERE l.id = :lectureId
             """)
-    String getLectureTitle(Long lectureId);
+    String getLectureTitle(@Param("lectureId") Long lectureId);
 
     @NotNull
     default Lecture findByIdWithStudentQuestionsAndLectureUnitsAndLearningGoalsElseThrow(Long lectureId) {

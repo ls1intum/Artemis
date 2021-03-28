@@ -522,6 +522,7 @@ public class BitbucketService extends AbstractVersionControlService {
      * @return A map of all ids of the WebHooks to the URL they notify.
      * @throws BitbucketException if the request to get the WebHooks failed
      */
+    @Nullable
     private List<BitbucketWebHookDTO> getExistingWebHooks(String projectKey, String repositorySlug) throws BitbucketException {
         String baseUrl = bitbucketServerUrl + "/rest/api/latest/projects/" + projectKey + "/repos/" + repositorySlug + "/webhooks";
         ResponseEntity<BitbucketSearchDTO<BitbucketWebHookDTO>> response;
@@ -544,7 +545,7 @@ public class BitbucketService extends AbstractVersionControlService {
 
     private boolean webHookExists(String projectKey, String repositorySlug) {
         List<BitbucketWebHookDTO> webHooks = getExistingWebHooks(projectKey, repositorySlug);
-        return !webHooks.isEmpty();
+        return webHooks != null && !webHooks.isEmpty();
     }
 
     private void createWebHook(String projectKey, String repositorySlug, String notificationUrl, String webHookName) {
