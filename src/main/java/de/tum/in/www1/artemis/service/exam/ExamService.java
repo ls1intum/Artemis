@@ -585,6 +585,21 @@ public class ExamService {
     }
 
     /**
+     *
+     * @param exam
+     */
+    public void setExamExerciseProperties(Exam exam) {
+        exam.getExerciseGroups().forEach((exerciseGroup -> {
+            exerciseGroup.getExercises().forEach((exercise -> {
+                // todo add comment NR IH
+                if (exercise instanceof QuizExercise) {
+                    exerciseService.checkTestRunsExist(exercise);
+                }
+            }));
+        }));
+    }
+
+    /**
      * Gets a collection of useful statistics for the tutor exam-assessment-dashboard, including: - number of submissions to the course - number of
      * assessments - number of assessments assessed by the tutor - number of complaints
      * @param course    - the couse of the exam

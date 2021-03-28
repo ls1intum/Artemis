@@ -22,7 +22,6 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.QuizExerciseRepository;
-import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.exam.ExamDateService;
@@ -66,12 +65,10 @@ public class QuizExerciseResource {
 
     private final GroupNotificationService groupNotificationService;
 
-    private final StudentParticipationRepository studentParticipationRepository;
-
     public QuizExerciseResource(QuizExerciseService quizExerciseService, QuizExerciseRepository quizExerciseRepository, CourseService courseService,
             QuizScheduleService quizScheduleService, QuizStatisticService quizStatisticService, AuthorizationCheckService authCheckService, CourseRepository courseRepository,
             GroupNotificationService groupNotificationService, ExerciseService exerciseService, UserRepository userRepository, ExamDateService examDateService,
-            QuizMessagingService quizMessagingService, StudentParticipationRepository studentParticipationRepository) {
+            QuizMessagingService quizMessagingService) {
         this.quizExerciseService = quizExerciseService;
         this.quizExerciseRepository = quizExerciseRepository;
         this.userRepository = userRepository;
@@ -84,7 +81,6 @@ public class QuizExerciseResource {
         this.examDateService = examDateService;
         this.courseRepository = courseRepository;
         this.quizMessagingService = quizMessagingService;
-        this.studentParticipationRepository = studentParticipationRepository;
     }
 
     /**
@@ -278,10 +274,7 @@ public class QuizExerciseResource {
             if (!authCheckService.isAtLeastInstructorInCourse(course, null)) {
                 return forbidden();
             }
-            Long containsTestRunParticipations = studentParticipationRepository.countParticipationsOnlyTestRunsByExerciseId(quizExerciseId);
-            if (containsTestRunParticipations != null && containsTestRunParticipations > 0) {
-                quizExercise.setTestRunParticipationsExist(Boolean.TRUE);
-            }
+            exerciseService.checkTestRunsExist(quizExercise);
         }
         else if (!authCheckService.isAllowedToSeeExercise(quizExercise, null)) {
             return forbidden();

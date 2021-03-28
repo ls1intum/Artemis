@@ -232,11 +232,16 @@ public class ExamResource {
         if (!withStudents && !withExerciseGroups) {
             return ResponseEntity.ok(examRepository.findByIdElseThrow(examId));
         }
-        if (withStudents && withExerciseGroups) {
-            return ResponseEntity.ok(examRepository.findByIdWithRegisteredUsersExerciseGroupsAndExercisesElseThrow(examId));
-        }
         if (withExerciseGroups) {
-            return ResponseEntity.ok(examService.findByIdWithExerciseGroupsAndExercisesElseThrow(examId));
+            Exam exam;
+            if (withStudents) {
+                exam = examRepository.findByIdWithRegisteredUsersExerciseGroupsAndExercisesElseThrow(examId);
+            }
+            else {
+                exam = examService.findByIdWithExerciseGroupsAndExercisesElseThrow(examId);
+            }
+            examService.setExamExerciseProperties(exam);
+            return ResponseEntity.ok(exam);
         }
         Exam exam = examRepository.findByIdWithRegisteredUsersElseThrow(examId);
         examRepository.setNumberOfRegisteredUsersForExams(Collections.singletonList(exam));

@@ -272,6 +272,17 @@ public class ExerciseService {
     }
 
     /**
+     *
+     * @param exercise
+     */
+    public void checkTestRunsExist(Exercise exercise) {
+        Long containsTestRunParticipations = studentParticipationRepository.countParticipationsOnlyTestRunsByExerciseId(exercise.getId());
+        if (containsTestRunParticipations != null && containsTestRunParticipations > 0) {
+            exercise.setTestRunParticipationsExist(Boolean.TRUE);
+        }
+    }
+
+    /**
      * Get one exercise by exerciseId with additional details such as quiz questions and statistics or template / solution participation
      * NOTE: prefer #ExerciseRepository.findByIdElseThrow() if you don't need these additional details
      * <p>
