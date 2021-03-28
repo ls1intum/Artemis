@@ -73,6 +73,9 @@ public class QuizExercise extends Exercise {
     @JsonView(QuizView.During.class)
     private List<QuizQuestion> quizQuestions = new ArrayList<>();
 
+    @Transient
+    private Boolean testRunParticipationsExistTransient;
+
     public Boolean isRandomizeQuestionOrder() {
         return randomizeQuestionOrder;
     }
@@ -137,6 +140,14 @@ public class QuizExercise extends Exercise {
 
     public void setQuizPointStatistic(QuizPointStatistic quizPointStatistic) {
         this.quizPointStatistic = quizPointStatistic;
+    }
+
+    public Boolean isTestRunParticipationsExist() {
+        return testRunParticipationsExistTransient;
+    }
+
+    public void setTestRunParticipationsExist(Boolean testRunParticipationsExistTransient) {
+        this.testRunParticipationsExistTransient = testRunParticipationsExistTransient;
     }
 
     @JsonView(QuizView.Before.class)

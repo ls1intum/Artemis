@@ -32,6 +32,7 @@ export class QuizExercise extends Exercise {
     public adjustedReleaseDate?: Moment;
     public ended?: boolean;
     public started?: boolean;
+    public testRunParticipationsExist?: boolean;
 
     public isActiveQuiz?: boolean;
     public isPracticeModeAvailable?: boolean;

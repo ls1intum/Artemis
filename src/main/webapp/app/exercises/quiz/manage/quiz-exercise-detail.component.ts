@@ -202,6 +202,10 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
             this.quizExerciseService.find(quizId).subscribe((response: HttpResponse<QuizExercise>) => {
                 this.quizExercise = response.body!;
                 this.init();
+                if (this.isExamMode && this.quizExercise.testRunParticipationsExist) {
+                    this.jhiAlertService.warning("You can't change the answer options unless you delete the test runs for this exercise!");
+                }
+                console.log(this.quizExercise.testRunParticipationsExist);
             });
         }
         // TODO: we should try to avoid calling this.init() above more than once
