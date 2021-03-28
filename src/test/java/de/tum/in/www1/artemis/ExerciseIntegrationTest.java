@@ -38,34 +38,28 @@ import de.tum.in.www1.artemis.web.rest.dto.StatsForDashboardDTO;
 public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
-    UserRepository userRepository;
+    private UserRepository userRepository;
 
     @Autowired
-    CourseRepository courseRepository;
+    private ExerciseRepository exerciseRepository;
 
     @Autowired
-    ExerciseRepository exerciseRepository;
+    private ParticipationRepository participationRepository;
 
     @Autowired
-    ParticipationRepository participationRepository;
+    private SubmissionRepository submissionRepository;
 
     @Autowired
-    SubmissionRepository submissionRepository;
+    private ResultRepository resultRepository;
 
     @Autowired
-    ResultRepository resultRepository;
+    private ExampleSubmissionRepository exampleSubmissionRepo;
 
     @Autowired
-    ExampleSubmissionRepository exampleSubmissionRepo;
+    private TutorParticipationRepository tutorParticipationRepo;
 
     @Autowired
-    TutorParticipationRepository tutorParticipationRepo;
-
-    @Autowired
-    StudentParticipationRepository studentParticipationRepo;
-
-    @Autowired
-    ExerciseService exerciseService;
+    private ExerciseService exerciseService;
 
     @BeforeEach
     public void init() {
@@ -502,7 +496,7 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
                 assertThat(stats.getTutorLeaderboardEntries().size()).as("Number of tutor leaderboard entries is correct").isEqualTo(tutors.size());
                 assertThat(stats.getNumberOfOpenComplaints()).as("Number of open complaints should be available to tutor").isNotNull();
                 assertThat(stats.getNumberOfOpenMoreFeedbackRequests()).as("Number of open more feedback requests should be available to tutor").isNotNull();
-                assertThat(stats.getNumberOfAssessmentLocks()).as("Number of assessment locks should be available to tutor").isNotNull();
+                assertThat(stats.getNumberOfAssessmentLocks()).as("Number of assessment locks are not available for exercises").isNull();
 
                 if (exercise instanceof FileUploadExercise) {
                     assertThat(stats.getNumberOfSubmissions().getInTime()).as("Number of in-time submissions for file upload exercise is correct").isEqualTo(0);
@@ -545,7 +539,7 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
                 assertThat(stats.getTutorLeaderboardEntries().size()).as("Number of tutor leaderboard entries is correct").isEqualTo(tutors.size());
                 assertThat(stats.getNumberOfOpenComplaints()).as("Number of open complaints is zero").isZero();
                 assertThat(stats.getNumberOfOpenMoreFeedbackRequests()).as("Number of open more feedback requests is zero").isZero();
-                assertThat(stats.getNumberOfAssessmentLocks()).as("Number of assessment locks should be available to instructor").isNotNull();
+                assertThat(stats.getNumberOfAssessmentLocks()).as("Number of assessment locks are not available for exercises").isNull();
 
                 if (exercise instanceof FileUploadExercise) {
                     assertThat(stats.getNumberOfSubmissions().getInTime()).as("Number of in-time submissions for file upload exercise is correct").isEqualTo(0);
@@ -655,5 +649,43 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
         Course courseWithOneReleasedTextExercise = database.addCourseWithOneReleasedTextExercise();
         Exercise exercise = (Exercise) courseWithOneReleasedTextExercise.getExercises().toArray()[0];
         request.putWithResponseBody("/api/exercises/" + exercise.getId() + "/toggle-second-correction", null, Boolean.class, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testGetExerciseTitleAsInstructor() throws Exception {
+        // Only user and role matter, so we can re-use the logic
+        testGetExerciseTitle();
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testGetExerciseTitleAsTeachingAssistant() throws Exception {
+        // Only user and role matter, so we can re-use the logic
+        testGetExerciseTitle();
+    }
+
+    @Test
+    @WithMockUser(username = "user1", roles = "USER")
+    public void testGetExerciseTitleAsUser() throws Exception {
+        // Only user and role matter, so we can re-use the logic
+        testGetExerciseTitle();
+    }
+
+    private void testGetExerciseTitle() throws Exception {
+        Course courseWithOneReleasedTextExercise = database.addCourseWithOneReleasedTextExercise();
+        Exercise exercise = (Exercise) courseWithOneReleasedTextExercise.getExercises().toArray()[0];
+        exercise.setTitle("Test Exercise");
+        exerciseRepository.save(exercise);
+
+        final var title = request.get("/api/exercises/" + exercise.getId() + "/title", HttpStatus.OK, String.class);
+        assertThat(title).isEqualTo(exercise.getTitle());
+    }
+
+    @Test
+    @WithMockUser(username = "user1", roles = "USER")
+    public void testGetExerciseTitleForNonExistingExercise() throws Exception {
+        // No exercise with id 1 was created
+        request.get("/api/exercises/1/title", HttpStatus.NOT_FOUND, String.class);
     }
 }

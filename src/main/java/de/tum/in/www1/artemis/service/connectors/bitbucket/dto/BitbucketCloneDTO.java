@@ -1,7 +1,9 @@
 package de.tum.in.www1.artemis.service.connectors.bitbucket.dto;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class BitbucketCloneDTO {
 
     private String name;
@@ -45,6 +47,7 @@ public class BitbucketCloneDTO {
         return "BitbucketCloneDTO{" + "name='" + name + '\'' + ", cloneDetails=" + cloneDetails.toString() + '}';
     }
 
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public static final class CloneDetailsDTO {
 
         private String key;
