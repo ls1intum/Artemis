@@ -2,10 +2,12 @@ package de.tum.in.www1.artemis.service.connectors.jenkins;
 
 import java.io.IOException;
 import java.net.URL;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -41,6 +43,9 @@ public class JenkinsUserManagementService implements CIUserManagementService {
     @Value("${artemis.continuous-integration.url}")
     private URL jenkinsServerUrl;
 
+    @Value("${artemis.continuous-integration.user}")
+    private String jenkinsAdminUsername;
+
     private final RestTemplate restTemplate;
 
     private final JenkinsJobPermissionsService jenkinsJobPermissionsService;
@@ -50,6 +55,9 @@ public class JenkinsUserManagementService implements CIUserManagementService {
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
     private final UserRepository userRepository;
+
+    @Value("${jenkins.use-pseudonyms:#{false}}")
+    private boolean usePseudonyms;
 
     public JenkinsUserManagementService(@Qualifier("jenkinsRestTemplate") RestTemplate restTemplate, JenkinsJobPermissionsService jenkinsJobPermissionsService,
             PasswordService passwordService, ProgrammingExerciseRepository programmingExerciseRepository, UserRepository userRepository) {
@@ -68,6 +76,10 @@ public class JenkinsUserManagementService implements CIUserManagementService {
      */
     @Override
     public void createUser(User user) throws ContinuousIntegrationException {
+        if (user.getLogin().equals(jenkinsAdminUsername)) {
+            log.debug("Jenkins createUser: Skipping jenkinsAdminUser: {}.", jenkinsAdminUsername);
+            return;
+        }
         // Only create a user if it doesn't already exist.
         if (getUser(user.getLogin()) != null) {
             throw new JenkinsException("Cannot create user: " + user.getLogin() + " because the login already exists");
@@ -84,7 +96,7 @@ public class JenkinsUserManagementService implements CIUserManagementService {
             restTemplate.exchange(uri, HttpMethod.POST, getCreateUserFormHttpEntity(user), Void.class);
 
             // Adds the user to groups of existing programming exercises
-            addUserToGroups(user.getLogin(), user.getGroups());
+            addUserToGroups(user.getLogin(), getUserWithGroups(user).getGroups());
         }
         catch (RestClientException e) {
             throw new JenkinsException("Cannot create user: " + user.getLogin(), e);
@@ -103,7 +115,12 @@ public class JenkinsUserManagementService implements CIUserManagementService {
         formData.add("username", user.getLogin());
         formData.add("password1", passwordService.decryptPassword(user));
         formData.add("password2", passwordService.decryptPassword(user));
-        formData.add("fullname", user.getName());
+        if (usePseudonyms) {
+            formData.add("fullname", String.format("User %s", user.getLogin()));
+        }
+        else {
+            formData.add("fullname", user.getName());
+        }
         formData.add("email", user.getEmail());
 
         var headers = new HttpHeaders();
@@ -114,6 +131,11 @@ public class JenkinsUserManagementService implements CIUserManagementService {
     @Override
     public void deleteUser(User user) throws ContinuousIntegrationException {
         var userLogin = user.getLogin();
+        if (userLogin.equals(jenkinsAdminUsername)) {
+            log.debug("Jenkins deleteUser: Skipping jenkinsAdminUser: {}.", jenkinsAdminUsername);
+            return;
+        }
+
         // Only delete a user if it exists.
         var jenkinsUser = getUser(userLogin);
         if (jenkinsUser == null) {
@@ -123,7 +145,7 @@ public class JenkinsUserManagementService implements CIUserManagementService {
         try {
             var uri = UriComponentsBuilder.fromHttpUrl(jenkinsServerUrl.toString()).pathSegment("user", userLogin, "doDelete").build().toUri();
             restTemplate.exchange(uri, HttpMethod.POST, null, Void.class);
-            removeUserFromGroups(userLogin, user.getGroups());
+            removeUserFromGroups(userLogin, getUserWithGroups(user).getGroups());
         }
         catch (RestClientException e) {
             throw new JenkinsException("Cannot delete user: " + userLogin, e);
@@ -140,15 +162,17 @@ public class JenkinsUserManagementService implements CIUserManagementService {
      */
     @Override
     public void updateUser(User user) throws ContinuousIntegrationException {
+        if (user.getLogin().equals(jenkinsAdminUsername)) {
+            log.debug("Jenkins updateUser: Skipping jenkinsAdminUser: {}.", jenkinsAdminUsername);
+            return;
+        }
+
         // Only update a user if it exists.
         var jenkinsUser = getUser(user.getLogin());
-        if (jenkinsUser == null) {
-            createUser(user);
-        }
-        else {
+        if (jenkinsUser != null) {
             deleteUser(user);
-            createUser(user);
         }
+        createUser(user);
     }
 
     /**
@@ -171,7 +195,7 @@ public class JenkinsUserManagementService implements CIUserManagementService {
         // the new one.
         var oldUser = new User();
         oldUser.setLogin(oldLogin);
-        oldUser.setGroups(user.getGroups());
+        oldUser.setGroups(getUserWithGroups(user).getGroups());
         deleteUser(oldUser);
 
         createUser(user);
@@ -362,5 +386,18 @@ public class JenkinsUserManagementService implements CIUserManagementService {
     private boolean isUserLoginLegal(User user) {
         String regex = "^[a-zA-Z0-9_-]*$";
         return user.getLogin().matches(regex);
+    }
+
+    private User getUserWithGroups(User user) throws JenkinsException {
+        if (Hibernate.isInitialized(user.getGroups())) {
+            return user;
+        }
+        log.debug("Groups of user were not initialized. Fetching groups from repository.");
+        Optional<User> userWithGroups = userRepository.findOneWithGroupsByLogin(user.getLogin());
+        if (userWithGroups.isEmpty()) {
+            throw new JenkinsException("Cannot find user in repository: " + user.getLogin());
+        }
+
+        return userWithGroups.get();
     }
 }

@@ -469,4 +469,49 @@ public class CourseBitbucketBambooJiraIntegrationTest extends AbstractSpringInte
     public void testCleanupCourseAsInstructor() throws Exception {
         courseTestService.testCleanupCourseAsInstructor();
     }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testGetCourseTitleAsInstructor() throws Exception {
+        // Only user and role matter, so we can re-use the logic
+        courseTestService.testGetCourseTitle();
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testGetCourseTitleAsTeachingAssistant() throws Exception {
+        // Only user and role matter, so we can re-use the logic
+        courseTestService.testGetCourseTitle();
+    }
+
+    @Test
+    @WithMockUser(username = "user1", roles = "USER")
+    public void testGetCourseTitleAsUser() throws Exception {
+        // Only user and role matter, so we can re-use the logic
+        courseTestService.testGetCourseTitle();
+    }
+
+    @Test
+    @WithMockUser(username = "user1", roles = "USER")
+    public void testGetCourseTitleForNonExistingCourse() throws Exception {
+        courseTestService.testGetCourseTitleForNonExistingCourse();
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testGetAllCoursesForManagementOverview() throws Exception {
+        courseTestService.testGetAllCoursesForManagementOverview();
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testGetExercisesForCourseOverview() throws Exception {
+        courseTestService.testGetExercisesForCourseOverview();
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testGetExerciseStatsForCourseOverview() throws Exception {
+        courseTestService.testGetExerciseStatsForCourseOverview();
+    }
 }

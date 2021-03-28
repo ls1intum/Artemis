@@ -7,8 +7,6 @@ import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 
-import javax.validation.constraints.NotNull;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.PageRequest;
@@ -25,7 +23,6 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentPar
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.SubmissionService;
@@ -94,31 +91,6 @@ public class StudentExamService {
     }
 
     /**
-     * Get one student exam by exam id and user.
-     *
-     * @param examId the id of the exam
-     * @param userId the id of the user
-     * @return the student exam with exercises
-     */
-    public Optional<StudentExam> findOneWithExercisesByUserIdAndExamId(Long userId, Long examId) {
-        log.debug("Request to get student exam by userId {} and examId {}", userId, examId);
-        return studentExamRepository.findWithExercisesByUserIdAndExamId(userId, examId);
-    }
-
-    /**
-     * Get one optional student exam by exam id and user.
-     *
-     * @param examId the id of the exam
-     * @param userId the id of the user
-     * @return the student exam with exercises
-     */
-    @NotNull
-    public Optional<StudentExam> findOneWithExercisesByUserIdAndExamIdOptional(Long userId, Long examId) {
-        log.debug("Request to get optional student exam by userId {} and examId {}", userId, examId);
-        return studentExamRepository.findWithExercisesByUserIdAndExamId(userId, examId);
-    }
-
-    /**
      * Submit StudentExam and uses submissions as final submissions if studentExam is not yet submitted
      * and if it was submitted after exam startDate and before individual endDate + gracePeriod
      *
@@ -165,7 +137,7 @@ public class StudentExamService {
     }
 
     private void saveSubmissions(StudentExam studentExam, User currentUser) {
-        List<StudentParticipation> existingParticipations = studentParticipationRepository.findByStudentExamWithEagerSubmissionsResult(studentExam);
+        List<StudentParticipation> existingParticipations = studentParticipationRepository.findByStudentExamWithEagerSubmissionsResult(studentExam, false);
 
         for (Exercise exercise : studentExam.getExercises()) {
             // we do not apply the following checks for programming exercises or file upload exercises
@@ -196,7 +168,7 @@ public class StudentExamService {
             return;
         }
         if (exercise instanceof FileUploadExercise) {
-            // TODO: remove
+            // file upload submissions are only saved during submit in their respective submission page
             return;
         }
 
@@ -248,7 +220,6 @@ public class StudentExamService {
                         else if (exercise instanceof ModelingExercise) {
                             modelingSubmissionRepository.save((ModelingSubmission) submission);
                         }
-                        // TODO: handle file upload
 
                         // versioning of submission
                         try {
@@ -271,8 +242,8 @@ public class StudentExamService {
      * @return returns the set of unsubmitted StudentExams, the participations of which were assessed
      */
     public Set<StudentExam> assessUnsubmittedStudentExams(final Exam exam, final User assessor) {
-        // TODO: we should also do this for programming exercises with manual assessment
-        Set<StudentExam> unsubmittedStudentExams = findAllUnsubmittedStudentExams(exam.getId());
+        // TODO Simon Entholzer: we should also do this for programming exercises with manual assessment
+        Set<StudentExam> unsubmittedStudentExams = studentExamRepository.findAllUnsubmittedWithExercisesByExamId(exam.getId());
         Map<User, List<Exercise>> exercisesOfUser = unsubmittedStudentExams.stream()
                 .collect(Collectors.toMap(StudentExam::getUser,
                         studentExam -> studentExam.getExercises().stream()
@@ -304,8 +275,8 @@ public class StudentExamService {
      * @return returns the set of StudentExams of which the empty submissions were assessed
      */
     public Set<StudentExam> assessEmptySubmissionsOfStudentExams(final Exam exam, final User assessor, final Set<StudentExam> excludeStudentExams) {
-        // TODO: we should also do this for programming exercises with manual assessment
-        Set<StudentExam> studentExams = findAllWithExercisesByExamId(exam.getId());
+        // TODO Simon Entholzer: we should also do this for programming exercises with manual assessment: when the participation does not have any submissions
+        Set<StudentExam> studentExams = studentExamRepository.findAllWithExercisesByExamId(exam.getId());
         // remove student exams which should be excluded
         studentExams = studentExams.stream().filter(studentExam -> !excludeStudentExams.contains(studentExam)).collect(Collectors.toSet());
         Map<User, List<Exercise>> exercisesOfUser = studentExams.stream()
@@ -348,76 +319,6 @@ public class StudentExamService {
                 }
             }
         }
-    }
-
-    /**
-     * Get one student exam by id with exercises.
-     *
-     * @param studentExamId the id of the student exam
-     * @return the student exam with exercises
-     */
-    @NotNull
-    public StudentExam findOneWithExercises(Long studentExamId) {
-        log.debug("Request to get student exam {} with exercises", studentExamId);
-        return studentExamRepository.findWithExercisesById(studentExamId)
-                .orElseThrow(() -> new EntityNotFoundException("Student exam with id \"" + studentExamId + "\" does not exist"));
-    }
-
-    /**
-     * Get all student exams for the given exam.
-     *
-     * @param examId the id of the exam
-     * @return the list of all student exams
-     */
-    public Set<StudentExam> findAllByExamId(Long examId) {
-        log.debug("Request to get all student exams for Exam: {}", examId);
-        return studentExamRepository.findByExamId(examId);
-    }
-
-    /**
-     * Get all student exams with exercises for the given exam.
-     *
-     * @param examId the id of the exam
-     * @return the list of all student exams
-     */
-    public Set<StudentExam> findAllWithExercisesByExamId(Long examId) {
-        log.debug("Request to get all student exams with exercises for Exam: {}", examId);
-        return studentExamRepository.findAllWithExercisesByExamId(examId);
-    }
-
-    /**
-     * Delete a student exam by the Id
-     *
-     * @param studentExamId the id of the student exam to be deleted
-     */
-    public void deleteStudentExam(Long studentExamId) {
-        log.debug("Request to delete the student exam with Id : {}", studentExamId);
-        studentExamRepository.deleteById(studentExamId);
-    }
-
-    /**
-     * Get the maximal working time of all student exams for the exam with the given id.
-     *
-     * @param examId the id of the exam
-     * @return the maximum of all student exam working times for the given exam
-     * @throws EntityNotFoundException if no student exams could be found
-     */
-    @NotNull
-    public Integer findMaxWorkingTimeByExamId(Long examId) {
-        log.debug("Request to get the maximum working time of all student exams for Exam : {}", examId);
-        return studentExamRepository.findMaxWorkingTimeByExamId(examId).orElseThrow(() -> new EntityNotFoundException("No student exams found for exam id " + examId));
-    }
-
-    /**
-     * Get all distinct student working times of one exam.
-     *
-     * @param examId the id of the exam
-     * @return a set of all distinct working time values among the student exams of an exam. May be empty if no student exams can be found.
-     */
-    @NotNull
-    public Set<Integer> findAllDistinctWorkingTimesByExamId(Long examId) {
-        log.debug("Request to find all distinct working times for Exam : {}", examId);
-        return studentExamRepository.findAllDistinctWorkingTimesByExamId(examId);
     }
 
     /**
@@ -537,22 +438,13 @@ public class StudentExamService {
     }
 
     /**
-     * Find all unsubmitted student exams (ignores test runs) with exercises.
-     * @param examId the exam id
-     * @return a set of student exams with {@link StudentExam#isSubmitted()} false
-     */
-    public Set<StudentExam> findAllUnsubmittedStudentExams(Long examId) {
-        return studentExamRepository.findAllUnsubmittedWithExercisesByExamId(examId);
-    }
-
-    /**
      * Deletes a test run.
      * In case the participation is not referenced by other test runs, the participation, submission, build plans and repositories are deleted as well.
      * @param testRunId the id of the test run
      * @return the deleted test run
      */
     public StudentExam deleteTestRun(Long testRunId) {
-        var testRun = findOneWithExercises(testRunId);
+        var testRun = studentExamRepository.findByIdWithExercisesElseThrow(testRunId);
         User instructor = testRun.getUser();
         var participations = studentParticipationRepository.findTestRunParticipationsByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(instructor.getId(),
                 testRun.getExercises());
@@ -566,7 +458,7 @@ public class StudentExamService {
             }
         });
 
-        List<StudentExam> otherTestRunsOfInstructor = findAllTestRunsWithExercisesForUser(testRun.getExam().getId(), instructor.getId()).stream()
+        List<StudentExam> otherTestRunsOfInstructor = studentExamRepository.findAllTestRunsWithExercisesByExamIdForUser(testRun.getExam().getId(), instructor.getId()).stream()
                 .filter(studentExam -> !studentExam.getId().equals(testRunId)).collect(Collectors.toList());
 
         // Delete the participations and submissions if no other test run references them
@@ -592,24 +484,5 @@ public class StudentExamService {
         // Delete the test run student exam
         studentExamRepository.deleteById(testRunId);
         return testRun;
-    }
-
-    /**
-     * Returns all test runs for a given exam
-     * @param examId the id of the exam in question
-     * @return a list of the test run student exams
-     */
-    public List<StudentExam> findAllTestRuns(Long examId) {
-        return studentExamRepository.findAllTestRunsByExamId(examId);
-    }
-
-    /**
-     * Returns all test runs for a given exam initiated by the given instructor
-     * @param examId the id of the exam in question
-     * @param userId the id of the user
-     * @return a list of the test run student exams
-     */
-    public List<StudentExam> findAllTestRunsWithExercisesForUser(Long examId, Long userId) {
-        return studentExamRepository.findAllTestRunsWithExercisesByExamIdForUser(examId, userId);
     }
 }

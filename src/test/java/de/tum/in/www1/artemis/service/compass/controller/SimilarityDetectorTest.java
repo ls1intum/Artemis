@@ -23,13 +23,13 @@ import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.*;
 class SimilarityDetectorTest {
 
     @Mock
-    UMLClassDiagram classDiagram;
+    private UMLClassDiagram classDiagram;
 
     @Mock
-    UMLActivityDiagram activityDiagram;
+    private UMLActivityDiagram activityDiagram;
 
     @Mock
-    ModelIndex modelIndex;
+    private ModelIndex modelIndex;
 
     @Test
     void analyzeSimilarity_ClassDiagram() {
@@ -89,7 +89,12 @@ class SimilarityDetectorTest {
     private void prepareModelIndex(List<UMLElement> elements) {
         int similarityId = 1;
         for (UMLElement element : elements) {
-            when(modelIndex.retrieveSimilarityId(element)).thenReturn(similarityId);
+            int finalSimilarityId = similarityId;
+            when(modelIndex.retrieveSimilarityId(element)).thenAnswer(invocation -> {
+                UMLElement argElement = invocation.getArgument(0);
+                argElement.setSimilarityID(finalSimilarityId);
+                return finalSimilarityId;
+            });
             similarityId++;
         }
     }

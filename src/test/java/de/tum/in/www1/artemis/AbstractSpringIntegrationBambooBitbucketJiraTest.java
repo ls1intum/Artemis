@@ -403,13 +403,13 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
     }
 
     @Override
-    public void mockDeleteRepository(String projectKey, String repostoryName) throws Exception {
-        bitbucketRequestMockProvider.mockDeleteRepository(projectKey, repostoryName);
+    public void mockDeleteRepository(String projectKey, String repostoryName, boolean shouldFail) throws Exception {
+        bitbucketRequestMockProvider.mockDeleteRepository(projectKey, repostoryName, shouldFail);
     }
 
     @Override
-    public void mockDeleteProjectInVcs(String projectKey) throws Exception {
-        bitbucketRequestMockProvider.mockDeleteProject(projectKey);
+    public void mockDeleteProjectInVcs(String projectKey, boolean shouldFail) throws Exception {
+        bitbucketRequestMockProvider.mockDeleteProject(projectKey, shouldFail);
     }
 
     @Override
@@ -419,7 +419,7 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
     }
 
     @Override
-    public void mockDeleteBuildPlanProject(String projectKey) throws Exception {
+    public void mockDeleteBuildPlanProject(String projectKey, boolean shouldFail) throws Exception {
         bambooRequestMockProvider.mockDeleteBambooBuildProject(projectKey);
     }
 

@@ -4,10 +4,7 @@ import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphTyp
 
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.Collection;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
@@ -21,7 +18,6 @@ import org.springframework.stereotype.Repository;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
-import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
@@ -30,35 +26,35 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 @Repository
 public interface ExamRepository extends JpaRepository<Exam, Long> {
 
-    List<Exam> findByCourseId(Long courseId);
+    List<Exam> findByCourseId(long courseId);
 
     @Query("""
             SELECT ex
             FROM Exam ex LEFT JOIN FETCH ex.exerciseGroups eg LEFT JOIN FETCH eg.exercises
             WHERE ex.course.id = :courseId
             """)
-    List<Exam> findByCourseIdWithExerciseGroupsAndExercises(@Param("courseId") Long courseId);
+    List<Exam> findByCourseIdWithExerciseGroupsAndExercises(@Param("courseId") long courseId);
 
     @Query("select exam from Exam exam where exam.course.testCourse = false and exam.endDate >= :#{#date} order by exam.startDate asc")
     List<Exam> findAllByEndDateGreaterThanEqual(@Param("date") ZonedDateTime date);
 
     @EntityGraph(type = LOAD, attributePaths = { "exerciseGroups" })
-    Optional<Exam> findWithExerciseGroupsById(Long examId);
+    Optional<Exam> findWithExerciseGroupsById(long examId);
 
     @EntityGraph(type = LOAD, attributePaths = { "exerciseGroups", "exerciseGroups.exercises" })
-    Optional<Exam> findWithExerciseGroupsAndExercisesById(Long examId);
+    Optional<Exam> findWithExerciseGroupsAndExercisesById(long examId);
 
     @EntityGraph(type = LOAD, attributePaths = { "registeredUsers" })
-    Optional<Exam> findWithRegisteredUsersById(Long examId);
+    Optional<Exam> findWithRegisteredUsersById(long examId);
 
     @EntityGraph(type = LOAD, attributePaths = { "registeredUsers", "exerciseGroups", "exerciseGroups.exercises" })
-    Optional<Exam> findWithRegisteredUsersAndExerciseGroupsAndExercisesById(Long examId);
+    Optional<Exam> findWithRegisteredUsersAndExerciseGroupsAndExercisesById(long examId);
 
     @EntityGraph(type = LOAD, attributePaths = { "studentExams" })
-    Optional<Exam> findWithStudentExamsById(Long examId);
+    Optional<Exam> findWithStudentExamsById(long examId);
 
     @EntityGraph(type = LOAD, attributePaths = { "studentExams", "studentExams.exercises" })
-    Optional<Exam> findWithStudentExamsExercisesById(Long id);
+    Optional<Exam> findWithStudentExamsExercisesById(long id);
 
     @Query("""
             select distinct e
@@ -95,10 +91,23 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
     List<long[]> countRegisteredUsersByExamIds(@Param("examIds") List<Long> examIds);
 
     @Query("select count(studentExam) from StudentExam studentExam where studentExam.testRun = FALSE AND studentExam.exam.id = :#{#examId}")
-    long countGeneratedStudentExamsByExamWithoutTestRuns(@Param("examId") Long examId);
+    long countGeneratedStudentExamsByExamWithoutTestRuns(@Param("examId") long examId);
+
+    /**
+     * Returns the title of the exam with the given id
+     *
+     * @param examId the id of the exam
+     * @return the name/title of the exam or null if the exam does not exist
+     */
+    @Query("""
+            SELECT e.title
+            FROM Exam e
+            WHERE e.id = :examId
+            """)
+    String getExamTitle(@Param("examId") Long examId);
 
     @NotNull
-    default Exam findByIdElseThrow(Long examId) throws EntityNotFoundException {
+    default Exam findByIdElseThrow(long examId) throws EntityNotFoundException {
         return findById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
     }
 
@@ -109,7 +118,7 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
      * @return the exam with exercise groups
      */
     @NotNull
-    default Exam findByIdWithExerciseGroupsElseThrow(Long examId) {
+    default Exam findByIdWithExerciseGroupsElseThrow(long examId) {
         return findWithExerciseGroupsById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
     }
 
@@ -125,7 +134,6 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
         if (exam.isEmpty()) {
             return Set.of();
         }
-
         return exam.get().getExerciseGroups().stream().map(ExerciseGroup::getExercises).flatMap(Collection::stream).collect(Collectors.toSet());
     }
 
@@ -136,7 +144,7 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
      * @return the exam with registered users
      */
     @NotNull
-    default Exam findByIdWithRegisteredUsersElseThrow(Long examId) {
+    default Exam findByIdWithRegisteredUsersElseThrow(long examId) {
         return findWithRegisteredUsersById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
     }
 
@@ -147,7 +155,7 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
      * @return the exam with registered users and exercise groups
      */
     @NotNull
-    default Exam findByIdWithRegisteredUsersExerciseGroupsAndExercisesElseThrow(Long examId) {
+    default Exam findByIdWithRegisteredUsersExerciseGroupsAndExercisesElseThrow(long examId) {
         return findWithRegisteredUsersAndExerciseGroupsAndExercisesById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
     }
 
@@ -161,21 +169,41 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
         return findAllByEndDateGreaterThanEqual(ZonedDateTime.now().truncatedTo(ChronoUnit.DAYS));
     }
 
-    /**
-     * Finds an exam based on the id with all student exams which are not marked as test runs.
-     *
-     * @param examId the id of the exam
-     * @return the exam with student exams loaded
-     */
-    @NotNull
-    default Exam findByIdWithStudentExamsElseThrow(long examId) {
-        Exam exam = findWithStudentExamsById(examId).orElseThrow(() -> new EntityNotFoundException("Exam with id " + examId + " does not exist"));
-        // drop all test runs and set the remaining student exams to the exam
-        exam.setStudentExams(exam.getStudentExams().stream().dropWhile(StudentExam::isTestRun).collect(Collectors.toSet()));
-        return exam;
+    default Exam findWithExerciseGroupsAndExercisesByIdOrElseThrow(long examId) throws EntityNotFoundException {
+        return findWithExerciseGroupsAndExercisesById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
     }
 
-    default Exam findWithExerciseGroupsAndExercisesByIdOrElseThrow(Long examId) throws EntityNotFoundException {
-        return findWithExerciseGroupsAndExercisesById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
+    /**
+     * Filters the visible exams (excluding the ones that are not visible yet)
+     *
+     * @param exams a set of exams (e.g. the ones of a course)
+     * @return only the visible exams
+     */
+    default Set<Exam> filterVisibleExams(Set<Exam> exams) {
+        return exams.stream().filter(exam -> Boolean.TRUE.equals(exam.isVisibleToStudents())).collect(Collectors.toSet());
+    }
+
+    /**
+     * Sets the transient attribute numberOfRegisteredUsers for all given exams
+     *
+     * @param exams Exams for which to compute and set the number of registered users
+     */
+    default void setNumberOfRegisteredUsersForExams(List<Exam> exams) {
+        List<Long> examIds = exams.stream().map(Exam::getId).collect(Collectors.toList());
+        List<long[]> examIdAndRegisteredUsersCountPairs = countRegisteredUsersByExamIds(examIds);
+        Map<Long, Integer> registeredUsersCountMap = convertListOfCountsIntoMap(examIdAndRegisteredUsersCountPairs);
+        exams.forEach(exam -> exam.setNumberOfRegisteredUsers(registeredUsersCountMap.get(exam.getId()).longValue()));
+    }
+
+    /**
+     * Converts List<[examId, registeredUsersCount]> into Map<examId -> registeredUsersCount>
+     *
+     * @param examIdAndRegisteredUsersCountPairs list of pairs (examId, registeredUsersCount)
+     * @return map of exam id to registered users count
+     */
+    private static Map<Long, Integer> convertListOfCountsIntoMap(List<long[]> examIdAndRegisteredUsersCountPairs) {
+        return examIdAndRegisteredUsersCountPairs.stream().collect(Collectors.toMap(examIdAndRegisteredUsersCountPair -> examIdAndRegisteredUsersCountPair[0], // examId
+                examIdAndRegisteredUsersCountPair -> Math.toIntExact(examIdAndRegisteredUsersCountPair[1]) // registeredUsersCount
+        ));
     }
 }

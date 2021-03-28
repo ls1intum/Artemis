@@ -2,28 +2,28 @@ package de.tum.in.www1.artemis.service.exam;
 
 import static de.tum.in.www1.artemis.service.util.RoundingUtil.round;
 
-import java.security.SecureRandom;
-import java.time.Duration;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import javax.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.boot.actuate.audit.AuditEventRepository;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
-import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
-import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
-import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
+import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
@@ -33,9 +33,8 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.service.ExerciseService;
-import de.tum.in.www1.artemis.service.SubmissionService;
-import de.tum.in.www1.artemis.service.TutorLeaderboardService;
+import de.tum.in.www1.artemis.security.SecurityUtils;
+import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 import de.tum.in.www1.artemis.web.rest.dto.*;
@@ -47,6 +46,9 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
  */
 @Service
 public class ExamService {
+
+    @Value("${artemis.course-archives-path}")
+    private String examArchivesDirPath;
 
     private final Logger log = LoggerFactory.getLogger(ExamService.class);
 
@@ -80,13 +82,16 @@ public class ExamService {
 
     private final TutorLeaderboardService tutorLeaderboardService;
 
-    private final SubmissionService submissionService;
+    private final CourseExamExportService courseExamExportService;
+
+    private final GroupNotificationService groupNotificationService;
 
     public ExamService(ExamRepository examRepository, StudentExamRepository studentExamRepository, ExamQuizService examQuizService, ExerciseService exerciseService,
             InstanceMessageSendService instanceMessageSendService, TutorLeaderboardService tutorLeaderboardService, AuditEventRepository auditEventRepository,
             StudentParticipationRepository studentParticipationRepository, ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository,
             UserRepository userRepository, ProgrammingExerciseRepository programmingExerciseRepository, QuizExerciseRepository quizExerciseRepository,
-            ResultRepository resultRepository, SubmissionRepository submissionRepository, SubmissionService submissionService) {
+            ResultRepository resultRepository, SubmissionRepository submissionRepository, CourseExamExportService courseExamExportService,
+            GroupNotificationService groupNotificationService) {
         this.examRepository = examRepository;
         this.studentExamRepository = studentExamRepository;
         this.userRepository = userRepository;
@@ -102,7 +107,8 @@ public class ExamService {
         this.resultRepository = resultRepository;
         this.submissionRepository = submissionRepository;
         this.tutorLeaderboardService = tutorLeaderboardService;
-        this.submissionService = submissionService;
+        this.courseExamExportService = courseExamExportService;
+        this.groupNotificationService = groupNotificationService;
     }
 
     /**
@@ -165,22 +171,12 @@ public class ExamService {
     }
 
     /**
-     * Filters the visible exams (excluding the ones that are not visible yet)
-     *
-     * @param exams a set of exams (e.g. the ones of a course)
-     * @return only the visible exams
-     */
-    public Set<Exam> filterVisibleExams(Set<Exam> exams) {
-        return exams.stream().filter(exam -> Boolean.TRUE.equals(exam.isVisibleToStudents())).collect(Collectors.toSet());
-    }
-
-    /**
      * Puts students, result and exerciseGroups together for ExamScoresDTO
      *
      * @param examId the id of the exam
      * @return return ExamScoresDTO with students, scores and exerciseGroups for exam
      */
-    public ExamScoresDTO getExamScore(Long examId) {
+    public ExamScoresDTO calculateExamScores(Long examId) {
         Exam exam = examRepository.findWithExerciseGroupsAndExercisesById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
 
         List<StudentParticipation> studentParticipations = studentParticipationRepository.findByExamIdWithSubmissionRelevantResult(examId); // without test run participations
@@ -315,52 +311,6 @@ public class ExamService {
     }
 
     /**
-     * Generates the student exams randomly based on the exam configuration and the exercise groups
-     *
-     * @param examWithRegisteredUsersAndExerciseGroupsAndExercises the exam with registered users, exerciseGroups and exercises loaded
-     * @return the list of student exams with their corresponding users
-     */
-    public List<StudentExam> generateStudentExams(final Exam examWithRegisteredUsersAndExerciseGroupsAndExercises) {
-        final var examWithExistingStudentExams = findWithStudentExams(examWithRegisteredUsersAndExerciseGroupsAndExercises.getId());
-        // https://jira.spring.io/browse/DATAJPA-1367 deleteInBatch does not work, because it does not cascade the deletion of existing exam sessions, therefore use deleteAll
-        studentExamRepository.deleteAll(examWithExistingStudentExams.getStudentExams());
-
-        List<ExerciseGroup> exerciseGroups = examWithRegisteredUsersAndExerciseGroupsAndExercises.getExerciseGroups();
-        long numberOfOptionalExercises = examWithRegisteredUsersAndExerciseGroupsAndExercises.getNumberOfExercisesInExam()
-                - exerciseGroups.stream().filter(ExerciseGroup::getIsMandatory).count();
-
-        // StudentExams are saved in the called method
-        return createRandomStudentExams(examWithRegisteredUsersAndExerciseGroupsAndExercises, examWithRegisteredUsersAndExerciseGroupsAndExercises.getRegisteredUsers(),
-                numberOfOptionalExercises);
-    }
-
-    /**
-     * Generates the missing student exams randomly based on the exam configuration and the exercise groups.
-     * The difference between all registered users and the users who already have an individual exam
-     * is the set of users for which student exams will be created.
-     *
-     * @param examWithRegisteredUsersAndExerciseGroupsAndExercises exam with registered users, exerciseGroups, and Exercises loaded
-     * @return the list of student exams with their corresponding users
-     */
-    public List<StudentExam> generateMissingStudentExams(Exam examWithRegisteredUsersAndExerciseGroupsAndExercises) {
-        long numberOfOptionalExercises = examWithRegisteredUsersAndExerciseGroupsAndExercises.getNumberOfExercisesInExam()
-                - examWithRegisteredUsersAndExerciseGroupsAndExercises.getExerciseGroups().stream().filter(ExerciseGroup::getIsMandatory).count();
-
-        // Get all users who already have an individual exam
-        Set<User> usersWithStudentExam = studentExamRepository.findUsersWithStudentExamsForExam(examWithRegisteredUsersAndExerciseGroupsAndExercises.getId());
-
-        // Get all registered users
-        Set<User> allRegisteredUsers = examWithRegisteredUsersAndExerciseGroupsAndExercises.getRegisteredUsers();
-
-        // Get all students who don't have an exam yet
-        Set<User> missingUsers = new HashSet<>(allRegisteredUsers);
-        missingUsers.removeAll(usersWithStudentExam);
-
-        // StudentExams are saved in the called method
-        return createRandomStudentExams(examWithRegisteredUsersAndExerciseGroupsAndExercises, missingUsers, numberOfOptionalExercises);
-    }
-
-    /**
      * Validates exercise settings.
      *
      * @param exam exam which is validated
@@ -446,72 +396,6 @@ public class ExamService {
             throw new BadRequestAlertException("Check that you set the exam max points correctly! The max points a student can earn in the exercise groups is too low", "Exam",
                     "artemisApp.exam.validation.tooFewMaxPoints");
         }
-    }
-
-    /**
-     * Generates random exams for each user in the given users set and saves them.
-     *
-     * @param exam                      exam for which the individual student exams will be generated
-     * @param users                     users for which the individual exams will be generated
-     * @param numberOfOptionalExercises number of optional exercises in the exam
-     * @return List of StudentExams generated for the given users
-     */
-    private List<StudentExam> createRandomStudentExams(Exam exam, Set<User> users, long numberOfOptionalExercises) {
-        List<StudentExam> studentExams = new ArrayList<>();
-        SecureRandom random = new SecureRandom();
-
-        // Determine the default working time by computing the duration between start and end date of the exam
-        Integer defaultWorkingTime = Math.toIntExact(Duration.between(exam.getStartDate(), exam.getEndDate()).toSeconds());
-
-        // Prepare indices of mandatory and optional exercise groups to preserve order of exercise groups
-        List<Integer> indicesOfMandatoryExerciseGroups = new ArrayList<>();
-        List<Integer> indicesOfOptionalExerciseGroups = new ArrayList<>();
-        for (int i = 0; i < exam.getExerciseGroups().size(); i++) {
-            if (Boolean.TRUE.equals(exam.getExerciseGroups().get(i).getIsMandatory())) {
-                indicesOfMandatoryExerciseGroups.add(i);
-            }
-            else {
-                indicesOfOptionalExerciseGroups.add(i);
-            }
-        }
-
-        for (User user : users) {
-            // Create one student exam per user
-            StudentExam studentExam = new StudentExam();
-            studentExam.setWorkingTime(defaultWorkingTime);
-            studentExam.setExam(exam);
-            studentExam.setUser(user);
-            studentExam.setSubmitted(false);
-            studentExam.setTestRun(false);
-
-            // Add a random exercise for each exercise group if the index of the exercise group is in assembledIndices
-            List<Integer> assembledIndices = assembleIndicesListWithRandomSelection(indicesOfMandatoryExerciseGroups, indicesOfOptionalExerciseGroups, numberOfOptionalExercises);
-            for (Integer index : assembledIndices) {
-                // We get one random exercise from all preselected exercise groups
-                studentExam.addExercise(selectRandomExercise(random, exam.getExerciseGroups().get(index)));
-            }
-
-            // Apply random exercise order
-            if (Boolean.TRUE.equals(exam.getRandomizeExerciseOrder())) {
-                Collections.shuffle(studentExam.getExercises());
-            }
-
-            studentExams.add(studentExam);
-        }
-        studentExams = studentExamRepository.saveAll(studentExams);
-        return studentExams;
-    }
-
-    /**
-     * Sets the transient attribute numberOfRegisteredUsers for all given exams
-     *
-     * @param exams Exams for which to compute and set the number of registered users
-     */
-    public void setNumberOfRegisteredUsersForExams(List<Exam> exams) {
-        List<Long> examIds = exams.stream().map(Exam::getId).collect(Collectors.toList());
-        List<long[]> examIdAndRegisteredUsersCountPairs = examRepository.countRegisteredUsersByExamIds(examIds);
-        Map<Long, Integer> registeredUsersCountMap = convertListOfCountsIntoMap(examIdAndRegisteredUsersCountPairs);
-        exams.forEach(exam -> exam.setNumberOfRegisteredUsers(registeredUsersCountMap.get(exam.getId()).longValue()));
     }
 
     /**
@@ -619,52 +503,6 @@ public class ExamService {
     }
 
     /**
-     * Finds an exam based on the id with all student exams which are not marked as test runs.
-     *
-     * @param examId the id of the exam
-     * @return the exam with student exams loaded
-     */
-    public Exam findWithStudentExams(long examId) {
-        Exam exam = examRepository.findWithStudentExamsById(examId).orElseThrow(() -> new EntityNotFoundException("Exam with id " + examId + " does not exist"));
-        // drop all test runs and set the remaining student exams to the exam
-        exam.setStudentExams(exam.getStudentExams().stream().dropWhile(StudentExam::isTestRun).collect(Collectors.toSet()));
-        return exam;
-    }
-
-    /**
-     * Converts List<[examId, registeredUsersCount]> into Map<examId -> registeredUsersCount>
-     *
-     * @param examIdAndRegisteredUsersCountPairs list of pairs (examId, registeredUsersCount)
-     * @return map of exam id to registered users count
-     */
-    private static Map<Long, Integer> convertListOfCountsIntoMap(List<long[]> examIdAndRegisteredUsersCountPairs) {
-        return examIdAndRegisteredUsersCountPairs.stream().collect(Collectors.toMap(examIdAndRegisteredUsersCountPair -> examIdAndRegisteredUsersCountPair[0], // examId
-                examIdAndRegisteredUsersCountPair -> Math.toIntExact(examIdAndRegisteredUsersCountPair[1]) // registeredUsersCount
-        ));
-    }
-
-    private List<Integer> assembleIndicesListWithRandomSelection(List<Integer> mandatoryIndices, List<Integer> optionalIndices, Long numberOfOptionalExercises) {
-        // Add all mandatory indices
-        List<Integer> indices = new ArrayList<>(mandatoryIndices);
-
-        // Add as many optional indices as numberOfOptionalExercises
-        if (numberOfOptionalExercises > 0) {
-            Collections.shuffle(optionalIndices);
-            indices = Stream.concat(indices.stream(), optionalIndices.stream().limit(numberOfOptionalExercises)).collect(Collectors.toList());
-        }
-
-        // Sort the indices to preserve the original order
-        Collections.sort(indices);
-        return indices;
-    }
-
-    private Exercise selectRandomExercise(SecureRandom random, ExerciseGroup exerciseGroup) {
-        List<Exercise> exercises = new ArrayList<>(exerciseGroup.getExercises());
-        int randomIndex = random.nextInt(exercises.size());
-        return exercises.get(randomIndex);
-    }
-
-    /**
      * Evaluates all the quiz exercises of an exam
      *
      * @param examId id of the exam for which the quiz exercises should be evaluated
@@ -747,31 +585,15 @@ public class ExamService {
     }
 
     /**
-     * Returns a set containing all exercises that are defined in the
-     * specified exam.
-     *
-     * @param examId The id of the exam
-     * @return A set containing the exercises
-     */
-    public Set<Exercise> getAllExercisesOfExam(long examId) {
-        var exam = examRepository.findWithExerciseGroupsAndExercisesById(examId);
-        if (exam.isEmpty()) {
-            return Set.of();
-        }
-
-        return exam.get().getExerciseGroups().stream().map(ExerciseGroup::getExercises).flatMap(Collection::stream).collect(Collectors.toSet());
-    }
-
-    /**
      * Gets a collection of useful statistics for the tutor exam-assessment-dashboard, including: - number of submissions to the course - number of
      * assessments - number of assessments assessed by the tutor - number of complaints
      * @param course    - the couse of the exam
      * @param examId    - the id of the exam to retrieve stats from
      * @return data about a exam including all exercises, plus some data for the tutor as tutor status for assessment
      */
-    public StatsForInstructorDashboardDTO getStatsForExamAssessmentDashboard(Course course, Long examId) {
+    public StatsForDashboardDTO getStatsForExamAssessmentDashboard(Course course, Long examId) {
         Exam exam = examRepository.findById(examId).orElseThrow();
-        StatsForInstructorDashboardDTO stats = new StatsForInstructorDashboardDTO();
+        StatsForDashboardDTO stats = new StatsForDashboardDTO();
 
         final long numberOfSubmissions = submissionRepository.countByExamIdSubmittedSubmissionsIgnoreTestRuns(examId)
                 + programmingExerciseRepository.countSubmissionsByExamIdSubmitted(examId);
@@ -796,19 +618,49 @@ public class ExamService {
     }
 
     /**
-     * Get all currently locked submissions for all users in the given exam.
-     * These are all submissions for which users started, but did not yet finish the assessment.
+     * Archives the exam by creating a zip file with student submissions for
+     * exercises of the exam.
      *
-     * @param examId  - the exam id
-     * @param user    - the user trying to access the locked submissions
-     * @return        - list of submissions that have locked results in the exam
+     * @param exam the exam to archive
      */
-    public List<Submission> getLockedSubmissions(Long examId, User user) {
-        List<Submission> submissions = submissionRepository.getLockedSubmissionsAndResultsByExamId(examId);
+    @Async
+    public void archiveExam(Exam exam) {
+        SecurityUtils.setAuthorizationObject();
 
-        for (Submission submission : submissions) {
-            submissionService.hideDetails(submission, user);
+        // Archiving a course is only possible after the exam is over
+        if (ZonedDateTime.now().isBefore(exam.getEndDate())) {
+            return;
         }
-        return submissions;
+
+        // This contains possible errors encountered during the archive process
+        ArrayList<String> exportErrors = new ArrayList<>();
+
+        groupNotificationService.notifyInstructorGroupAboutExamArchiveState(exam, NotificationType.EXAM_ARCHIVE_STARTED, exportErrors);
+
+        try {
+            // Create exam archives directory if it doesn't exist
+            Files.createDirectories(Path.of(examArchivesDirPath));
+            log.info("Created the exam archives directory at {} because it didn't exist.", examArchivesDirPath);
+
+            // Export the exam to the archives directory.
+            var archivedExamPath = courseExamExportService.exportExam(exam, examArchivesDirPath, exportErrors);
+
+            // Attach the path to the archive to the exam and save it in the database
+            if (archivedExamPath.isPresent()) {
+                exam.setExamArchivePath(archivedExamPath.get().toString());
+                examRepository.save(exam);
+            }
+            else {
+                groupNotificationService.notifyInstructorGroupAboutExamArchiveState(exam, NotificationType.EXAM_ARCHIVE_FAILED, exportErrors);
+                return;
+            }
+        }
+        catch (IOException e) {
+            var error = "Failed to create exam archives directory " + examArchivesDirPath + ": " + e.getMessage();
+            exportErrors.add(error);
+            log.info(error);
+        }
+
+        groupNotificationService.notifyInstructorGroupAboutExamArchiveState(exam, NotificationType.EXAM_ARCHIVE_FINISHED, exportErrors);
     }
 }

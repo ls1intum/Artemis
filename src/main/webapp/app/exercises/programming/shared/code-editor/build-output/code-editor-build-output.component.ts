@@ -3,7 +3,7 @@ import { AfterViewInit, Component, EventEmitter, Input, OnChanges, OnDestroy, On
 import { Observable, of, Subscription } from 'rxjs';
 import { catchError, filter, map, switchMap, tap } from 'rxjs/operators';
 import { BuildLogEntry, BuildLogEntryArray } from 'app/entities/build-log.model';
-import { Participation } from 'app/entities/participation/participation.model';
+import { getExercise, Participation } from 'app/entities/participation/participation.model';
 import { CodeEditorSubmissionService } from 'app/exercises/programming/shared/code-editor/service/code-editor-submission.service';
 import { CodeEditorBuildLogService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
 import { Feedback } from 'app/entities/feedback.model';
@@ -16,6 +16,7 @@ import { Annotation } from '../ace/code-editor-ace.component';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { findLatestResult } from 'app/shared/util/utils';
 import { StaticCodeAnalysisIssue } from 'app/entities/static-code-analysis-issue.model';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 
 @Component({
     selector: 'jhi-code-editor-build-output',
@@ -110,7 +111,8 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnInit, On
      * and emits them to the parent component
      */
     private extractAnnotations() {
-        const buildLogErrors = this.rawBuildLogs.extractErrors();
+        const exercise: ProgrammingExercise | undefined = getExercise(this.participation!);
+        const buildLogErrors = this.rawBuildLogs.extractErrors(exercise?.programmingLanguage);
         const codeAnalysisIssues = (this.result!.feedbacks || [])
             .filter(Feedback.isStaticCodeAnalysisFeedback)
             .map<StaticCodeAnalysisIssue>((feedback) => JSON.parse(feedback.detailText!));

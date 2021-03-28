@@ -54,7 +54,14 @@ class ProgrammingExerciseResultJenkinsIntegrationTest extends AbstractSpringInte
     @WithMockUser(value = "student1", roles = "USER")
     public void shouldUpdateTestCasesAndResultScoreFromSolutionParticipationResult() {
         var notification = ModelFactory.generateTestResultDTO(Constants.ASSIGNMENT_REPO_NAME, List.of("test1", "test2", "test4"), List.of(), ProgrammingLanguage.JAVA, true);
-        programmingExerciseResultTestService.shouldUpdateTestCasesAndResultScoreFromSolutionParticipationResult(notification);
+        programmingExerciseResultTestService.shouldUpdateTestCasesAndResultScoreFromSolutionParticipationResult(notification, false);
+    }
+
+    @Test
+    @WithMockUser(value = "student1", roles = "USER")
+    public void shouldUpdateTestCasesAndResultScoreFromSolutionParticipationResultWithFailedTests() {
+        var notification = ModelFactory.generateTestResultDTO(Constants.ASSIGNMENT_REPO_NAME, List.of("test1", "test2", "test4"), List.of("test3"), ProgrammingLanguage.JAVA, true);
+        programmingExerciseResultTestService.shouldUpdateTestCasesAndResultScoreFromSolutionParticipationResult(notification, true);
     }
 
     @ParameterizedTest

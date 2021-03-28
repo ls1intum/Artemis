@@ -3,10 +3,13 @@ package de.tum.in.www1.artemis.web.rest.dto;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 /**
  * This DTO contains the information for a students progress in achieving a learning goal
  * The learning goal progress is calculated from the performance in a subset of the connected lecture units
  */
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class IndividualLearningGoalProgress {
 
     public Long studentId;
