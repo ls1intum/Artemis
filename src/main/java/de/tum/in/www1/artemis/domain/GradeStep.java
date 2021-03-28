@@ -95,4 +95,16 @@ public class GradeStep extends DomainObject {
         return "GradeStep{" + "lowerBoundPercentage=" + lowerBoundPercentage + ", lowerBoundInclusive=" + lowerBoundInclusive + ", upperBoundPercentage=" + upperBoundPercentage
                 + ", upperBoundInclusive=" + upperBoundInclusive + ", gradeName='" + gradeName + '\'' + ", isPassingGrade=" + isPassingGrade + '}';
     }
+
+    public boolean matchingGradePercentage(int percentage) {
+        if (percentage == lowerBoundPercentage) {
+            return lowerBoundInclusive;
+        }
+        else if (percentage == upperBoundPercentage) {
+            return upperBoundInclusive;
+        }
+        else {
+            return percentage > lowerBoundPercentage && percentage < upperBoundPercentage;
+        }
+    }
 }
