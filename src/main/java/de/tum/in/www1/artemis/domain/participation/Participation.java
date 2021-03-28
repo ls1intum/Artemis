@@ -207,7 +207,7 @@ public abstract class Participation extends DomainObject implements Participatio
         }
 
         // Filter out results that belong to an illegal submission (if the submission exists).
-        List<Result> legalResults = results.stream().filter(result -> result.getSubmission() == null || !result.getSubmission().getType().equals(SubmissionType.ILLEGAL))
+        List<Result> legalResults = results.stream().filter(result -> result.getSubmission() == null || !SubmissionType.ILLEGAL.equals(result.getSubmission().getType()))
                 .collect(Collectors.toList());
 
         List<Result> sortedLegalResultsWithCompletionDate = legalResults.stream().filter(r -> r.getCompletionDate() != null)
