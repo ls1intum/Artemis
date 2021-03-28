@@ -198,11 +198,11 @@ public class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends 
         request.postWithoutLocation("/api" + NEW_RESULT_RESOURCE_PATH, alteredObj, HttpStatus.OK, httpHeaders);
     }
 
-    private TestResultsDTO createJenkinsNewResultNotification(String projectKey, String loginName, ProgrammingLanguage programmingLanguage, List<String> successfullTests) {
+    private TestResultsDTO createJenkinsNewResultNotification(String projectKey, String loginName, ProgrammingLanguage programmingLanguage, List<String> successfulTests) {
         var repoName = (projectKey + "-" + loginName).toUpperCase();
         // The full name is specified as <FOLDER NAME> » <JOB NAME> <Build Number>
         var fullName = exercise.getProjectKey() + " » " + repoName + " #3";
-        var notification = ModelFactory.generateTestResultDTO(repoName, successfullTests, List.of(), programmingLanguage, false);
+        var notification = ModelFactory.generateTestResultDTO(repoName, successfulTests, List.of(), programmingLanguage, false);
         notification.setFullName(fullName);
         return notification;
     }

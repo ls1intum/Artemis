@@ -31,6 +31,7 @@ public class AtheneDTO {
     }
 
     // Inner DTO
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public static class TextBlockDTO {
 
         private String id;

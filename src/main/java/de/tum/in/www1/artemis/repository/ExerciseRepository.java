@@ -281,7 +281,7 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
             FROM Exercise e
             WHERE e.id = :exerciseId
             """)
-    String getExerciseTitle(Long exerciseId);
+    String getExerciseTitle(@Param("exerciseId") Long exerciseId);
 
     /**
      * Fetches the active exercises for a course

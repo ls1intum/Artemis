@@ -259,7 +259,7 @@ public class ParticipationTeamWebsocketService {
      * @return list of principals / logins
      */
     private List<String> getSubscriberPrincipals(String destination, String exceptSessionID) {
-        return simpUserRegistry.findSubscriptions(s -> s.getDestination().equals(destination)).stream().map(SimpSubscription::getSession)
+        return simpUserRegistry.findSubscriptions(subscription -> subscription.getDestination().equals(destination)).stream().map(SimpSubscription::getSession)
                 .filter(simpSession -> !simpSession.getId().equals(exceptSessionID)).map(SimpSession::getUser).map(SimpUser::getName).distinct().collect(Collectors.toList());
     }
 

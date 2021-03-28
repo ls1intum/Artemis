@@ -118,7 +118,7 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
             FROM Course c
             WHERE c.id = :courseId
             """)
-    String getCourseTitle(Long courseId);
+    String getCourseTitle(@Param("courseId") Long courseId);
 
     @Query("""
             select distinct c
