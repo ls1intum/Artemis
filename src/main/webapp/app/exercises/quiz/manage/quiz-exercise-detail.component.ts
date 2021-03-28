@@ -205,7 +205,6 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
                 if (this.isExamMode && this.quizExercise.testRunParticipationsExist) {
                     this.jhiAlertService.warning(this.translateService.instant('artemisApp.quizExercise.edit.testRunSubmissionsExist'));
                 }
-                console.log(this.quizExercise.testRunParticipationsExist);
             });
         }
         // TODO: we should try to avoid calling this.init() above more than once

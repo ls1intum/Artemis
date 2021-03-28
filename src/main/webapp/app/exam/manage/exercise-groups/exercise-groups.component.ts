@@ -92,7 +92,6 @@ export class ExerciseGroupsComponent implements OnInit {
      * Load all exercise groups of the current exam.
      */
     loadExerciseGroups() {
-        console.log('test');
         return this.examManagementService.find(this.courseId, this.examId, false, true);
     }
 
