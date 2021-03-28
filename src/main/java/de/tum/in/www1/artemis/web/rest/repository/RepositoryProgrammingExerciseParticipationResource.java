@@ -7,7 +7,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -22,7 +21,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
@@ -193,10 +191,8 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
             // Retrieve the last legal submission because we are getting the files for that commit.
             var participation = participationService.findProgrammingExerciseParticipationWithLatestSubmissionAndResult(participationId);
             if (participation instanceof ProgrammingExerciseStudentParticipation) {
-                var legalSubmissions = participation.getSubmissions().stream().filter(submission -> !submission.getType().equals(SubmissionType.ILLEGAL))
-                        .collect(Collectors.toList());
-                var latestLegalSubmission = (ProgrammingSubmission) legalSubmissions.get(legalSubmissions.size() - 1);
-                masterOrCommitHash = latestLegalSubmission.getCommitHash();
+                Optional<ProgrammingSubmission> optLatestLegalSubmission = ((ProgrammingExerciseStudentParticipation) participation).findLatestSubmission();
+                masterOrCommitHash = optLatestLegalSubmission.isPresent() ? optLatestLegalSubmission.get().getCommitHash() : "master";
             }
 
             var filesWithContent = super.repositoryService.getFilesWithContentForCommitRef(repository, masterOrCommitHash);
