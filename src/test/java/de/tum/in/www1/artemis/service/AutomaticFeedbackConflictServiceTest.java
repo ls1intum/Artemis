@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
+import static org.awaitility.Awaitility.await;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 
@@ -17,45 +18,38 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackConflictType;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.service.connectors.athene.TextAssessmentConflictService;
 import de.tum.in.www1.artemis.service.dto.FeedbackConflictResponseDTO;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
 public class AutomaticFeedbackConflictServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
-    FeedbackConflictRepository feedbackConflictRepository;
+    private FeedbackConflictRepository feedbackConflictRepository;
 
     @Autowired
-    FeedbackRepository feedbackRepository;
+    private FeedbackRepository feedbackRepository;
 
     @Autowired
-    TextClusterRepository textClusterRepository;
+    private TextClusterRepository textClusterRepository;
 
     @Autowired
-    TextBlockRepository textBlockRepository;
+    private TextSubmissionRepository textSubmissionRepository;
 
     @Autowired
-    TextSubmissionRepository textSubmissionRepository;
-
-    @Autowired
-    ResultRepository resultRepository;
-
-    @Autowired
-    TextAssessmentConflictService textAssessmentConflictService;
+    private ResultRepository resultRepository;
 
     @Autowired
     private AtheneRequestMockProvider atheneRequestMockProvider;
 
-    AutomaticTextAssessmentConflictService automaticTextAssessmentConflictService;
+    @Autowired
+    private AutomaticTextAssessmentConflictService automaticTextAssessmentConflictService;
 
-    TextExercise textExercise;
+    private TextExercise textExercise;
 
     @BeforeEach
     public void init() {
         database.addUsers(2, 1, 0);
         textExercise = (TextExercise) database.addCourseWithOneFinishedTextExercise().getExercises().iterator().next();
-
         atheneRequestMockProvider.enableMockingOfRequests();
     }
 
@@ -101,16 +95,13 @@ public class AutomaticFeedbackConflictServiceTest extends AbstractSpringIntegrat
         feedback2 = textSubmission2.getLatestResult().getFeedbacks().get(0);
 
         atheneRequestMockProvider.mockFeedbackConsistency(createRemoteServiceResponse(feedback1, feedback2));
-
-        automaticTextAssessmentConflictService = new AutomaticTextAssessmentConflictService(feedbackConflictRepository, feedbackRepository, textBlockRepository,
-                textAssessmentConflictService);
-
         automaticTextAssessmentConflictService.asyncCheckFeedbackConsistency(Set.of(textBlock1), new ArrayList<>(Collections.singletonList(feedback1)), textExercise.getId());
+
+        await().until(() -> feedbackConflictRepository.count() >= 0);
 
         assertThat(feedbackConflictRepository.findAll(), hasSize(1));
         assertThat(feedbackConflictRepository.findAll().get(0).getFirstFeedback(), either(is(feedback1)).or(is(feedback2)));
         assertThat(feedbackConflictRepository.findAll().get(0).getSecondFeedback(), either(is(feedback1)).or(is(feedback2)));
-
     }
 
     /**
@@ -142,11 +133,9 @@ public class AutomaticFeedbackConflictServiceTest extends AbstractSpringIntegrat
         feedbackConflictRepository.save(feedbackConflict);
 
         atheneRequestMockProvider.mockFeedbackConsistency(createRemoteServiceResponse(feedback1, feedback2));
-
-        automaticTextAssessmentConflictService = new AutomaticTextAssessmentConflictService(feedbackConflictRepository, feedbackRepository, textBlockRepository,
-                textAssessmentConflictService);
-
         automaticTextAssessmentConflictService.asyncCheckFeedbackConsistency(Set.of(textBlock), new ArrayList<>(Collections.singletonList(feedback1)), textExercise.getId());
+
+        await().until(() -> feedbackConflictRepository.count() >= 0);
 
         assertThat(feedbackConflictRepository.findAll(), hasSize(1));
         assertThat(feedbackConflictRepository.findAll().get(0).getFirstFeedback(), is(feedback1));
@@ -183,11 +172,9 @@ public class AutomaticFeedbackConflictServiceTest extends AbstractSpringIntegrat
         feedbackConflictRepository.save(feedbackConflict);
 
         atheneRequestMockProvider.mockFeedbackConsistency(List.of());
-
-        automaticTextAssessmentConflictService = new AutomaticTextAssessmentConflictService(feedbackConflictRepository, feedbackRepository, textBlockRepository,
-                textAssessmentConflictService);
-
         automaticTextAssessmentConflictService.asyncCheckFeedbackConsistency(Set.of(textBlock), new ArrayList<>(List.of(feedback1, feedback2)), textExercise.getId());
+
+        await().until(() -> feedbackConflictRepository.count() >= 0);
 
         assertThat(feedbackConflictRepository.findAll(), hasSize(1));
         assertThat(feedbackConflictRepository.findAll().get(0).getFirstFeedback(), is(feedback1));
@@ -258,7 +245,6 @@ public class AutomaticFeedbackConflictServiceTest extends AbstractSpringIntegrat
         FeedbackConflict feedbackConflict = ModelFactory.generateFeedbackConflictBetweenFeedbacks(textSubmission.getLatestResult().getFeedbacks().get(0),
                 textSubmission.getLatestResult().getFeedbacks().get(1));
         feedbackConflictRepository.save(feedbackConflict);
-
         return textSubmission;
     }
 

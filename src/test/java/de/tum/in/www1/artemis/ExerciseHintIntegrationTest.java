@@ -164,4 +164,40 @@ public class ExerciseHintIntegrationTest extends AbstractSpringIntegrationBamboo
         List<ExerciseHint> exerciseHints = exerciseHintRepository.findAll();
         request.delete("/api/exercise-hints/" + exerciseHints.get(0).getId(), HttpStatus.NO_CONTENT);
     }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testGetHintTitleAsInstuctor() throws Exception {
+        // Only user and role matter, so we can re-use the logic
+        testGetHintTitle();
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testGetHintTitleAsTeachingAssistant() throws Exception {
+        // Only user and role matter, so we can re-use the logic
+        testGetHintTitle();
+    }
+
+    @Test
+    @WithMockUser(username = "user1", roles = "USER")
+    public void testGetHintTitleAsUser() throws Exception {
+        // Only user and role matter, so we can re-use the logic
+        testGetHintTitle();
+    }
+
+    private void testGetHintTitle() throws Exception {
+        final var hint = new ExerciseHint().title("Test Hint").exercise(exercise);
+        exerciseHintRepository.save(hint);
+
+        final var title = request.get("/api/exercise-hints/" + hint.getId() + "/title", HttpStatus.OK, String.class);
+        assertThat(title).isEqualTo(hint.getTitle());
+    }
+
+    @Test
+    @WithMockUser(username = "user1", roles = "USER")
+    public void testGetHintTitleForNonExistingHint() throws Exception {
+        // No hint with id 10 was created
+        request.get("/api/exercise-hints/10/title", HttpStatus.NOT_FOUND, String.class);
+    }
 }

@@ -46,7 +46,7 @@ public class FileServiceTest extends AbstractSpringIntegrationBambooBitbucketJir
             """;
 
     @Autowired
-    FileService fileService;
+    private FileService fileService;
 
     private void copyFile(String filePath, String destinationPath) {
         try {
@@ -68,7 +68,7 @@ public class FileServiceTest extends AbstractSpringIntegrationBambooBitbucketJir
 
     @AfterEach
     @BeforeEach
-    private void deleteFiles() throws IOException {
+    void deleteFiles() throws IOException {
         FileUtils.deleteDirectory(new File("./exportTest/"));
     }
 

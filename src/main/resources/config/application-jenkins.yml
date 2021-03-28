@@ -11,6 +11,11 @@ jenkins:
     # If you experience problems using crumb, you can deactivate it here.
     use-crumb: true
 
+    # The following (optional) parameter allows to enable the use of pseudonyms.
+    # If activated, the user's first and last name are not transferred to jenkins.
+    # Instead the user will be called "user <loginname>".
+    use-pseudonyms: false
+
     # If you're running Jenkins and Gitlab on Docker containers on Mac or Windows, the Jenkins Pipeline cannot use
     # localhost. It must use the container's real ip address.
     # You can enter the real ip addresses of the containers here or leave blank if you're not using docker for Mac or
