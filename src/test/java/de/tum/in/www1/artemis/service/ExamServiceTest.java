@@ -20,7 +20,11 @@ import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.ExamRepository;
+import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.service.exam.ExamService;
 import de.tum.in.www1.artemis.web.rest.dto.ExamChecklistDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -32,6 +36,12 @@ public class ExamServiceTest extends AbstractSpringIntegrationBambooBitbucketJir
 
     @Autowired
     private ExamRepository examRepository;
+
+    @Autowired
+    private StudentParticipationRepository studentParticipationRepository;
+
+    @Autowired
+    private ExerciseRepository exerciseRepository;
 
     private Exam exam1;
 
@@ -56,6 +66,23 @@ public class ExamServiceTest extends AbstractSpringIntegrationBambooBitbucketJir
         exam1.removeExerciseGroup(exerciseGroup1);
         examRepository.save(exam1);
         database.resetDatabase();
+    }
+
+    @Test
+    @WithMockUser(value = "admin", roles = "ADMIN")
+    public void testSetExamExerciseProperties() {
+        StudentParticipation studentParticipation = new StudentParticipation();
+        studentParticipation.setTestRun(true);
+        QuizExercise exercise = new QuizExercise();
+        exercise.setStudentParticipations(Set.of(studentParticipation));
+        studentParticipation.setExercise(exercise);
+        exerciseGroup1.addExercise(exercise);
+        exerciseRepository.save(exercise);
+        studentParticipationRepository.save(studentParticipation);
+
+        examService.setExamExerciseProperties(exam1);
+
+        assertThat(exercise.getTestRunParticipationsExist()).isEqualTo(true);
     }
 
     @Test
