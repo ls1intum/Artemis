@@ -484,6 +484,6 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
     List<TutorLeaderboardAssessments> findTutorLeaderboardAssessmentByExamId(@Param("examId") long examId);
 
     default Set<Long> mapExerciseToId(Set<Exercise> exercises) {
-        return exercises.stream().map(exercise -> exercise.getId()).collect(Collectors.toSet());
+        return exercises.stream().map(Exercise::getId).collect(Collectors.toSet());
     }
 }

@@ -75,26 +75,26 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
     @Query("""
             SELECT DISTINCT c FROM Exercise e JOIN e.categories c
             WHERE e.course.id = :#{#courseId}
-            """)
+                """)
     Set<String> findAllCategoryNames(@Param("courseId") Long courseId);
 
     @Query("""
             SELECT DISTINCT e FROM Exercise e
             LEFT JOIN FETCH e.studentParticipations
             WHERE e.id = :#{#exerciseId}
-            """)
+                """)
     Optional<Exercise> findByIdWithEagerParticipations(@Param("exerciseId") Long exerciseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "categories", "teamAssignmentConfig" })
     Optional<Exercise> findWithEagerCategoriesAndTeamAssignmentConfigById(Long exerciseId);
 
     @Query("""
-                  SELECT DISTINCT e from Exercise e
-                  LEFT JOIN FETCH e.exampleSubmissions examplesub
-                  LEFT JOIN FETCH examplesub.submission exsub
-                  LEFT JOIN FETCH exsub.results
-                  WHERE e.id = :#{#exerciseId}
-            """)
+            SELECT DISTINCT e from Exercise e
+            LEFT JOIN FETCH e.exampleSubmissions examplesub
+            LEFT JOIN FETCH examplesub.submission exsub
+            LEFT JOIN FETCH exsub.results
+            WHERE e.id = :#{#exerciseId}
+                """)
     Optional<Exercise> findByIdWithEagerExampleSubmissions(@Param("exerciseId") Long exerciseId);
 
     @Query("""
@@ -103,7 +103,7 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
             LEFT JOIN FETCH e.studentQuestions
             LEFT JOIN FETCH e.categories
             WHERE e.id = :#{#exerciseId}
-            """)
+                """)
     Optional<Exercise> findByIdWithDetailsForStudent(@Param("exerciseId") Long exerciseId);
 
     /**
@@ -112,9 +112,9 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
      * @return all exercise-ids which belong to the course
      */
     @Query("""
-                SELECT e.id FROM Exercise e LEFT JOIN e.course c
-                WHERE c.id = :courseId
-            """)
+            SELECT e.id FROM Exercise e LEFT JOIN e.course c
+            WHERE c.id = :courseId
+                """)
     Set<Long> findAllIdsByCourseId(@Param("courseId") Long courseId);
 
     /**

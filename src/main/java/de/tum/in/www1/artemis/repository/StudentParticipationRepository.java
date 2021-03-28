@@ -280,7 +280,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
                 (SELECT prs FROM p.results prs
                     WHERE prs.assessmentType IN ('MANUAL', 'SEMI_AUTOMATIC')) AND s.submitted = true
                     AND s.id = (SELECT max(id) FROM p.submissions)
-            """)
+                """)
     List<StudentParticipation> findByExerciseIdWithLatestSubmissionWithoutManualResults(@Param("exerciseId") Long exerciseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "submissions" })
@@ -293,7 +293,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
     Optional<StudentParticipation> findWithEagerResultsAndFeedbackById(@Param("participationId") Long participationId);
 
     /**
-     * Find the participation with the given id. Additionally, load all the submissions and results of the participation FROM the database. Returns an empty Optional if the
+     * Find the participation with the given id. Additionally, load all the submissions and results of the participation from the database. Returns an empty Optional if the
      * participation could not be found.
      *
      * @param participationId the id of the participation
@@ -303,7 +303,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
     Optional<StudentParticipation> findWithEagerSubmissionsAndResultsById(Long participationId);
 
     /**
-     * Find the participation with the given id. Additionally, load all the submissions and results of the participation FROM the database.
+     * Find the participation with the given id. Additionally, load all the submissions and results of the participation from the database.
      * Further, load the exercise and its course. Returns an empty Optional if the participation could not be found.
      *
      * @param participationId the id of the participation
@@ -324,8 +324,8 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             LEFT JOIN FETCH s.results r
             LEFT JOIN FETCH r.assessor a
             WHERE p.exercise.id = :#{#exerciseId}
-            AND p.testRun = FALSE
-            """)
+                AND p.testRun = FALSE
+                """)
     List<StudentParticipation> findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseIdIgnoreTestRuns(@Param("exerciseId") long exerciseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "submissions", "submissions.results", "results" })
@@ -333,19 +333,19 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
 
     @Query("""
             SELECT DISTINCT p FROM StudentParticipation p
-                WHERE p.student.id = :#{#studentId}
+            WHERE p.student.id = :#{#studentId}
                 AND p.exercise in :#{#exercises}
-            """)
+                """)
     List<StudentParticipation> findByStudentIdAndIndividualExercises(@Param("studentId") Long studentId, @Param("exercises") List<Exercise> exercises);
 
     @Query("""
             SELECT DISTINCT p FROM StudentParticipation p
             LEFT JOIN FETCH p.submissions s
             LEFT JOIN FETCH s.results r
-                WHERE p.testRun = FALSE
+            WHERE p.testRun = FALSE
                 AND p.student.id = :#{#studentId}
                 AND p.exercise in :#{#exercises}
-            """)
+                """)
     List<StudentParticipation> findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(@Param("studentId") Long studentId,
             @Param("exercises") List<Exercise> exercises);
 
@@ -355,20 +355,20 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             LEFT JOIN FETCH s.results r
             LEFT JOIN FETCH r.assessor
             WHERE p.testRun = FALSE
-            AND p.student.id = :#{#studentId}
-            AND p.exercise in :#{#exercises}
-            """)
+                AND p.student.id = :#{#studentId}
+                AND p.exercise in :#{#exercises}
+                """)
     List<StudentParticipation> findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultAndAssessorIgnoreTestRuns(@Param("studentId") Long studentId,
             @Param("exercises") List<Exercise> exercises);
 
     @Query("""
-                SELECT DISTINCT p FROM StudentParticipation p
-                LEFT JOIN FETCH p.submissions s
-                LEFT JOIN FETCH s.results r
-                    WHERE p.testRun = true
-                    AND p.student.id = :#{#studentId}
-                    AND p.exercise in :#{#exercises}
-            """)
+            SELECT DISTINCT p FROM StudentParticipation p
+            LEFT JOIN FETCH p.submissions s
+            LEFT JOIN FETCH s.results r
+            WHERE p.testRun = true
+                AND p.student.id = :#{#studentId}
+                AND p.exercise in :#{#exercises}
+                """)
     List<StudentParticipation> findTestRunParticipationsByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(@Param("studentId") Long studentId,
             @Param("exercises") List<Exercise> exercises);
 
@@ -448,7 +448,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             """)
     List<long[]> countSubmissionsPerParticipationByCourseIdAndTeamShortName(@Param("courseId") long courseId, @Param("teamShortName") String teamShortName);
 
-    // TODO SE Improve!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! // maybe leave out max id line
+    // TODO SE Improve - maybe leave out max id line?
     @Query("""
             SELECT DISTINCT p FROM StudentParticipation p
             LEFT JOIN FETCH p.submissions s

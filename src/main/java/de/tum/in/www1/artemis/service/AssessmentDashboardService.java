@@ -74,13 +74,10 @@ public class AssessmentDashboardService {
         log.info("Finished >> assessmentDashboardService.calculateNumberOfSubmissions all << in " + TimeLogUtil.formatDurationFrom(start));
         start = System.nanoTime();
 
-        // TODO implement
-        // This method dos not yet fetch the assessment data
-        // calculateNumberOfAssessments(programmingExerciseIds, nonProgrammingExerciseIds, examMode);
-        // log.info("Finished >> assessmentDashboardService.calculateNumberOfAssessments all << in " + TimeLogUtil.formatDurationFrom(start));
-        // start = System.nanoTime();
+        // NOTE: similar to calculateNumberOfSubmissions the number of assessments could be calculated outside of the loop for a performance boost.
+        // This won't be as straight forward as we have to consider correction rounds
 
-        // parts of this loop can possibly still be extracted.
+        // parts of this loop can possibly still be extracted
         for (Exercise exercise : exercises) {
             DueDateStat totalNumberOfAssessments;
 
@@ -137,21 +134,6 @@ public class AssessmentDashboardService {
         log.info("Finished >> generateStatisticsForExercisesForAssessmentDashboard << call in " + TimeLogUtil.formatDurationFrom(startComplete));
     }
 
-    /// **
-    // * This method fetches and stores the number of assessments for each exercise.
-    // * // TODO: implement
-    // * @param programmingExercises - the programming-exercises, for which the number of submissions should be fetched
-    // * @param nonProgrammingExercises - the exercises, which are not programming-exercises, for which the number of submissions should be fetched
-    // * @param examMode - if the exercises are part of an exam
-    // */
-    // private void calculateNumberOfAssessments(Set<Exercise> programmingExercises, Set<Exercise> nonProgrammingExercises, boolean examMode) {
-    // if (examMode) {
-    //
-    // } else {
-    //
-    // }
-    // }
-
     /**
      * This method fetches and stores the number of sumbissions for each exercise.
      * @param programmingExercises          - the programming-exercises, for which the number of submissions should be fetched
@@ -162,8 +144,8 @@ public class AssessmentDashboardService {
         final List<ExerciseMapEntry> programmingSubmissionsCounts;
         final List<ExerciseMapEntry> submissionCounts;
         final List<ExerciseMapEntry> lateSubmissionCounts;
-        Set<Long> programmingExerciseIds = programmingExercises.stream().map(exercise -> exercise.getId()).collect(Collectors.toSet());
-        Set<Long> nonProgrammingExerciseIds = nonProgrammingExercises.stream().map(exercise -> exercise.getId()).collect(Collectors.toSet());
+        Set<Long> programmingExerciseIds = programmingExercises.stream().map(Exercise::getId).collect(Collectors.toSet());
+        Set<Long> nonProgrammingExerciseIds = nonProgrammingExercises.stream().map(Exercise::getId).collect(Collectors.toSet());
 
         // for all programming exercises and all non-programmingexercises we fetch the number of submissions here. The returned value comes in form of a list,
         // which has ExerciseMapEntries. With those for each individual exercise the number of submissions can be set.
