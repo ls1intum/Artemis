@@ -18,6 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.*;
@@ -101,6 +102,7 @@ public class ResultListenerIntegrationTest extends AbstractSpringIntegrationBamb
 
     @ParameterizedTest
     @ValueSource(booleans = { true, false })
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void updateExercisePoints_ShouldUpdatePointsInParticipantScores(boolean isTeamTest) throws Exception {
         setupTestScenarioWithOneResultSaved(true, isTeamTest);
         Exercise exercise;
@@ -125,18 +127,21 @@ public class ResultListenerIntegrationTest extends AbstractSpringIntegrationBamb
 
     @ParameterizedTest
     @ValueSource(booleans = { true, false })
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void saveRatedResult_ShouldCreateStudentScore(boolean isTeamTest) {
         setupTestScenarioWithOneResultSaved(true, isTeamTest);
     }
 
     @ParameterizedTest
     @ValueSource(booleans = { true, false })
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void saveUnratedResult_ShouldCreateStudentScore(boolean isTeamTest) {
         setupTestScenarioWithOneResultSaved(false, isTeamTest);
     }
 
     @ParameterizedTest
     @ValueSource(booleans = { true, false })
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void saveRatedResult_then_saveAnotherRatedResult_ShouldUpdateOriginalStudentScore(boolean isTeamTest) {
         setupTestScenarioWithOneResultSaved(true, isTeamTest);
         // creating a new rated result should trigger the entity listener and update the student score
@@ -146,6 +151,7 @@ public class ResultListenerIntegrationTest extends AbstractSpringIntegrationBamb
 
     @ParameterizedTest
     @ValueSource(booleans = { true, false })
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void saveRatedResult_then_saveAnotherUnratedResult_ShouldUpdateOriginalStudentScore(boolean isTeamTest) {
         ParticipantScore originalStudentScore = setupTestScenarioWithOneResultSaved(true, isTeamTest);
         Result originalResult = originalStudentScore.getLastResult();
@@ -156,6 +162,7 @@ public class ResultListenerIntegrationTest extends AbstractSpringIntegrationBamb
 
     @ParameterizedTest
     @ValueSource(booleans = { true, false })
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void saveUnratedResult_then_saveAnotherUnratedResult_ShouldUpdateOriginalStudentScore(boolean isTeamTest) {
         setupTestScenarioWithOneResultSaved(false, isTeamTest);
         // creating a new rated result should trigger the entity listener and update the student score BUT only the not rated part
@@ -165,6 +172,7 @@ public class ResultListenerIntegrationTest extends AbstractSpringIntegrationBamb
 
     @ParameterizedTest
     @ValueSource(booleans = { true, false })
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void saveUnratedResult_then_saveAnotherRatedResult_ShouldUpdateOriginalStudentScore(boolean isTeamTest) {
         setupTestScenarioWithOneResultSaved(false, isTeamTest);
         // creating a new rated result should trigger the entity listener and update the student score
@@ -174,6 +182,7 @@ public class ResultListenerIntegrationTest extends AbstractSpringIntegrationBamb
 
     @ParameterizedTest
     @ValueSource(booleans = { true, false })
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void saveUnratedResult_then_saveAnotherUnratedResult_thenRemoveSecondResult_ShouldUpdateStudentScore(boolean isTeamTest) {
         ParticipantScore originalParticipantScore = setupTestScenarioWithOneResultSaved(false, isTeamTest);
         Result originalResult = originalParticipantScore.getLastResult();
@@ -188,6 +197,7 @@ public class ResultListenerIntegrationTest extends AbstractSpringIntegrationBamb
 
     @ParameterizedTest
     @ValueSource(booleans = { true, false })
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void saveUnratedResult_then_saveAnotherRatedResult_thenRemoveSecondResult_ShouldUpdateStudentScore(boolean isTeamTest) {
         ParticipantScore originalParticipantScore = setupTestScenarioWithOneResultSaved(false, isTeamTest);
         Result originalResult = originalParticipantScore.getLastResult();
@@ -202,6 +212,7 @@ public class ResultListenerIntegrationTest extends AbstractSpringIntegrationBamb
 
     @ParameterizedTest
     @ValueSource(booleans = { true, false })
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void saveRatedResult_then_saveAnotherUnratedResult_thenRemoveSecondResult_ShouldUpdateStudentScore(boolean isTeamTest) {
         ParticipantScore originalParticipantScore = setupTestScenarioWithOneResultSaved(true, isTeamTest);
         Result originalResult = originalParticipantScore.getLastResult();
@@ -216,6 +227,7 @@ public class ResultListenerIntegrationTest extends AbstractSpringIntegrationBamb
 
     @ParameterizedTest
     @ValueSource(booleans = { true, false })
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void saveRatedResult_then_saveAnotherRatedResult_thenRemoveSecondResult_ShouldUpdateStudentScore(boolean isTeamTest) {
         ParticipantScore originalParticipantScore = setupTestScenarioWithOneResultSaved(true, isTeamTest);
         Result originalResult = originalParticipantScore.getLastResult();
@@ -230,6 +242,7 @@ public class ResultListenerIntegrationTest extends AbstractSpringIntegrationBamb
 
     @ParameterizedTest
     @ValueSource(booleans = { true, false })
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void saveUnratedResult_then_changeScoreOfResult_ShouldUpdateOriginalStudentScore(boolean isTeamTest) {
         ParticipantScore originalParticipantScore = setupTestScenarioWithOneResultSaved(false, isTeamTest);
         Result originalResult = originalParticipantScore.getLastResult();
@@ -241,6 +254,7 @@ public class ResultListenerIntegrationTest extends AbstractSpringIntegrationBamb
 
     @ParameterizedTest
     @ValueSource(booleans = { true, false })
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void saveUnratedResult_then_makeResultRated_ShouldUpdateOriginalStudentScore(boolean isTeamTest) {
         ParticipantScore originalParticipantScore = setupTestScenarioWithOneResultSaved(false, isTeamTest);
         Result originalResult = originalParticipantScore.getLastResult();
@@ -252,6 +266,7 @@ public class ResultListenerIntegrationTest extends AbstractSpringIntegrationBamb
 
     @ParameterizedTest
     @ValueSource(booleans = { true, false })
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void saveRatedResult_then_changeScoreOfResult_ShouldUpdateOriginalStudentScore(boolean isTeamTest) {
         ParticipantScore originalParticipantScore = setupTestScenarioWithOneResultSaved(true, isTeamTest);
         Result originalResult = originalParticipantScore.getLastResult();
@@ -263,6 +278,7 @@ public class ResultListenerIntegrationTest extends AbstractSpringIntegrationBamb
 
     @ParameterizedTest
     @ValueSource(booleans = { true, false })
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void saveRatedResult_then_makeResultUnrated_ShouldUpdateOriginalStudentScore(boolean isTeamTest) {
         ParticipantScore originalParticipantScore = setupTestScenarioWithOneResultSaved(true, isTeamTest);
         Result originalResult = originalParticipantScore.getLastResult();
@@ -274,6 +290,7 @@ public class ResultListenerIntegrationTest extends AbstractSpringIntegrationBamb
 
     @ParameterizedTest
     @ValueSource(booleans = { true, false })
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void saveRatedResult_then_removeSavedResult_ShouldRemoveAssociatedStudentScore(boolean isTeamTest) {
         ParticipantScore originalParticipantScore = setupTestScenarioWithOneResultSaved(true, isTeamTest);
         Result persistedResult = originalParticipantScore.getLastResult();
@@ -288,6 +305,7 @@ public class ResultListenerIntegrationTest extends AbstractSpringIntegrationBamb
 
     @ParameterizedTest
     @ValueSource(booleans = { true, false })
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void saveUnratedResult_then_removeSavedResult_ShouldRemoveAssociatedStudentScore(boolean isTeamTest) {
         ParticipantScore originalParticipantScore = setupTestScenarioWithOneResultSaved(false, isTeamTest);
         Result persistedResult = originalParticipantScore.getLastResult();
@@ -302,6 +320,7 @@ public class ResultListenerIntegrationTest extends AbstractSpringIntegrationBamb
 
     @ParameterizedTest
     @ValueSource(booleans = { true, false })
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void saveRatedResult_then_saveAnotherUnratedResult_then_removeRatedResult_ShouldUpdateOriginalStudentScore(boolean isTeamTest) {
         ParticipantScore originalParticipantScore = setupTestScenarioWithOneResultSaved(true, isTeamTest);
         Result originalResult = originalParticipantScore.getLastResult();
@@ -316,6 +335,7 @@ public class ResultListenerIntegrationTest extends AbstractSpringIntegrationBamb
 
     @ParameterizedTest
     @ValueSource(booleans = { true, false })
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void saveRatedResult_then_saveAnotherUnratedResult_then_removeUnratedResult_ShouldUpdateOriginalStudentScore(boolean isTeamTest) {
         ParticipantScore originalParticipantScore = setupTestScenarioWithOneResultSaved(true, isTeamTest);
         Result originalResult = originalParticipantScore.getLastResult();

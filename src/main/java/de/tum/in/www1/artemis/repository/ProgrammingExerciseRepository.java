@@ -77,12 +77,13 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     @EntityGraph(type = LOAD, attributePaths = "studentParticipations")
     Optional<ProgrammingExercise> findWithEagerStudentParticipationsById(Long exerciseId);
 
-    // @EntityGraph(type = LOAD, attributePaths = { "studentParticipations", "studentParticipations.student", "studentParticipations.submissions" })
     @Query("""
             select pe from ProgrammingExercise pe
             left join fetch pe.studentParticipations pep
             left join fetch pep.student
-            left join fetch pep.submissions s where (s.type <> 'ILLEGAL' or s.type is null)
+            left join fetch pep.submissions s
+            where pe.id = :#{#exerciseId}
+                and (s.type <> 'ILLEGAL' or s.type is null)
             """)
     Optional<ProgrammingExercise> findWithEagerStudentParticipationsStudentAndLegalSubmissionsById(Long exerciseId);
 

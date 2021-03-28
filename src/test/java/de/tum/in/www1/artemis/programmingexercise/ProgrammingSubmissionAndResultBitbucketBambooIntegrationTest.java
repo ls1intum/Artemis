@@ -139,6 +139,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
      * However the participation id provided by the VCS on the request is invalid.
      */
     @Test
+    @WithMockUser(username = "student1", roles = "USER")
     void shouldNotCreateSubmissionOnNotifyPushForInvalidParticipationId() throws Exception {
         long fakeParticipationId = 9999L;
         JSONParser jsonParser = new JSONParser();
@@ -156,6 +157,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
      */
     @ParameterizedTest
     @EnumSource(IntegrationTestParticipationType.class)
+    @WithMockUser(username = "student1", roles = "USER")
     void shouldCreateSubmissionOnNotifyPushForSubmission(IntegrationTestParticipationType participationType) throws Exception {
         Long participationId = getParticipationIdByType(participationType, 0);
         // set the author name to "Artemis"
@@ -190,6 +192,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
      * After that the CI builds the code submission and notifies Artemis so it can create the result.
      */
     @Test
+    @WithMockUser(username = "student1", roles = "USER")
     void shouldHandleNewBuildResultCreatedByCommitWithSpecificTests() throws Exception {
         database.addCourseWithOneProgrammingExerciseAndSpecificTestCases();
         ProgrammingExercise exercise = programmingExerciseRepository.findAllWithEagerParticipationsAndLegalSubmissions().get(1);
@@ -231,6 +234,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
      */
     @ParameterizedTest
     @MethodSource("participationTypeAndAdditionalCommitProvider")
+    @WithMockUser(username = "student1", roles = "USER")
     void shouldHandleNewBuildResultCreatedByCommit(IntegrationTestParticipationType participationType, boolean additionalCommit) throws Exception {
         Long participationId = getParticipationIdByType(participationType, 0);
         ProgrammingSubmission submission = postSubmission(participationId, HttpStatus.OK);
@@ -270,6 +274,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
      */
     @ParameterizedTest
     @EnumSource(IntegrationTestParticipationType.class)
+    @WithMockUser(username = "student1", roles = "USER")
     void shouldNotLinkTwoResultsToTheSameSubmission(IntegrationTestParticipationType participationType) throws Exception {
         Long participationId = getParticipationIdByType(participationType, 0);
         // Create 1 submission.
@@ -308,6 +313,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
      */
     @ParameterizedTest
     @EnumSource(IntegrationTestParticipationType.class)
+    @WithMockUser(username = "student1", roles = "USER")
     void shouldNotCreateTwoSubmissionsForTwoIdenticalCommits(IntegrationTestParticipationType participationType) throws Exception {
         Long participationId = getParticipationIdByType(participationType, 0);
         // Post the same submission twice.
@@ -339,6 +345,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
      */
     @ParameterizedTest
     @EnumSource(IntegrationTestParticipationType.class)
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void shouldCreateSubmissionForManualBuildRun(IntegrationTestParticipationType participationType) throws Exception {
         Long participationId = getParticipationIdByType(participationType, 0);
         postResult(participationType, 0, HttpStatus.OK, false);
@@ -505,6 +512,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
 
     @ParameterizedTest
     @MethodSource("shouldSavebuildLogsOnStudentParticipationArguments")
+    @WithMockUser(username = "student1", roles = "USER")
     void shouldSaveBuildLogsOnStudentParticipationWithoutResult(ProgrammingLanguage programmingLanguage, boolean enableStaticCodeAnalysis) throws Exception {
         // Precondition: Database has participation and a programming submission but no result.
         String userLogin = "student1";
@@ -530,6 +538,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
 
     @ParameterizedTest
     @MethodSource("shouldSavebuildLogsOnStudentParticipationArguments")
+    @WithMockUser(username = "student1", roles = "USER")
     void shouldSaveBuildLogsOnStudentParticipationWithoutSubmissionNorResult(ProgrammingLanguage programmingLanguage, boolean enableStaticCodeAnalysis) throws Exception {
         // Precondition: Database has participation without result and a programming submission.
         String userLogin = "student1";
