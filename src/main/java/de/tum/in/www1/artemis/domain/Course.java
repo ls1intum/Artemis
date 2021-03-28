@@ -127,7 +127,6 @@ public class Course extends DomainObject {
     private String courseArchivePath;
 
     @OneToOne(mappedBy = "course", cascade = CascadeType.ALL)
-    @PrimaryKeyJoinColumn
     private GradingScale gradingScale;
 
     @OneToMany(mappedBy = "course", fetch = FetchType.LAZY)

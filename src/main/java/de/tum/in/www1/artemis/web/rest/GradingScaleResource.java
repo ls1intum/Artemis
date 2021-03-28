@@ -71,37 +71,37 @@ public class GradingScaleResource {
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, "")).build();
     }
 
-    @GetMapping("/grade-step")
+    @GetMapping("/grading-scale/{gradingScaleId}/grade-step")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    public List<GradeStep> getAllGradeSteps() {
-        return gradeStepService.findAllGradeSteps();
+    public List<GradeStep> getAllGradeSteps(@PathVariable Long gradingScaleId) {
+        return gradeStepService.findAllGradeStepsForGradingScaleById(gradingScaleId);
     }
 
-    @GetMapping("/grade-step/{gradeStepId}")
+    @GetMapping("/grading-scale/{gradingScaleId}/grade-step/{gradeStepId}")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<GradeStep> getGradeStepById(@PathVariable Long gradeStepId) {
-        GradeStep gradeStep = gradeStepService.findGradeStepById(gradeStepId);
+    public ResponseEntity<GradeStep> getGradeStepById(@PathVariable Long gradingScaleId, @PathVariable Long gradeStepId) {
+        GradeStep gradeStep = gradeStepService.findGradeStepByIdForGradingScaleByGradingScaleId(gradeStepId, gradingScaleId);
         return ResponseEntity.ok(gradeStep);
     }
 
-    @PostMapping("/grade-step")
+    @PostMapping("/grading-scale/{gradingScaleId}/grade-step")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<GradeStep> createGradeStep(@RequestBody GradeStep gradeStep) throws URISyntaxException {
-        gradeStep = gradeStepService.saveGradeStep(gradeStep);
+    public ResponseEntity<GradeStep> createGradeStep(@PathVariable Long gradingScaleId, @RequestBody GradeStep gradeStep) throws URISyntaxException {
+        gradeStep = gradeStepService.saveGradeStepForGradingScaleById(gradeStep, gradingScaleId);
         return ResponseEntity.created(new URI("/api/grade-step/" + gradeStep.getId())).headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, ""))
                 .body(gradeStep);
     }
 
-    @PutMapping("/grade-step")
+    @PutMapping("/grading-scale/{gradingScaleId}/grade-step")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<GradeStep> updateGradeStep(@RequestBody GradeStep gradeStep) {
-        gradeStep = gradeStepService.saveGradeStep(gradeStep);
+    public ResponseEntity<GradeStep> updateGradeStep(@PathVariable Long gradingScaleId, @RequestBody GradeStep gradeStep) {
+        gradeStep = gradeStepService.saveGradeStepForGradingScaleById(gradeStep, gradingScaleId);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, "")).body(gradeStep);
     }
 
-    @DeleteMapping("/grade-step/{gradeStepId}")
+    @DeleteMapping("/grading-scale/{gradingScaleId}/grade-step/{gradeStepId}")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Void> deleteGradeStepById(@PathVariable Long gradeStepId) {
+    public ResponseEntity<Void> deleteGradeStepById(@PathVariable Long gradingScaleId, @PathVariable Long gradeStepId) {
         gradeStepService.deleteGradeStepById(gradeStepId);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, "")).build();
     }

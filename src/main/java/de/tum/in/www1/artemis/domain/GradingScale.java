@@ -21,12 +21,10 @@ public class GradingScale extends DomainObject {
     private GradeType gradeType = GradeType.NONE; // default
 
     @OneToOne
-    @MapsId
     @JoinColumn(name = "course_id")
     private Course course;
 
     @OneToOne
-    @MapsId
     @JoinColumn(name = "exam_id")
     private Exam exam;
 

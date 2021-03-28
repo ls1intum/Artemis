@@ -13,6 +13,7 @@ import org.springframework.cloud.cloudfoundry.com.fasterxml.jackson.annotation.J
 public class GradeStep extends DomainObject {
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "grading_scale_id")
     private GradingScale gradingScale;
 
     @Column(name = "lower_bound_percentage")
