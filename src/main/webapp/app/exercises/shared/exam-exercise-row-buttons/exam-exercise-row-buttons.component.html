@@ -96,8 +96,18 @@
             <span class="d-none d-md-inline" jhiTranslate="entity.action.re-evaluate">Re-evaluate</span>
         </a>
         <!-- Only show the the edit button if the exam has not ended. Disable the button if the exam is running -->
-        <div *ngIf="!isExamOver()">
-            <fa-icon [icon]="'exclamation-triangle'" class="text-warning" *ngIf="exercise.testRunParticipationsExist" [ngbTooltip]="'test test test'"></fa-icon>
+        <div *ngIf="!isExamOver()" style="display: flex">
+            <!-- Display a warning next to the edit button if test run participations for this exercise exist -->
+            <fa-icon
+                style="margin: 0.3em"
+                [icon]="'exclamation-triangle'"
+                class="text-warning"
+                *ngIf="exercise.testRunParticipationsExist"
+                [ngbTooltip]="'artemisApp.quizExercise.edit.testRunSubmissionsExist' | artemisTranslate"
+                placement="auto"
+                container="body"
+            >
+            </fa-icon>
             <a
                 [class.disabled]="hasExamStarted()"
                 [routerLink]="['/course-management', course.id, 'exams', exam.id, 'exercise-groups', exerciseGroupId, exercise.type + '-exercises', exercise.id, 'edit']"

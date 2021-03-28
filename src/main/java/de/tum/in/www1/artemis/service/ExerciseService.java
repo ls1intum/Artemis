@@ -272,8 +272,8 @@ public class ExerciseService {
     }
 
     /**
-     *
-     * @param exercise
+     * Checks if the exercise has any test runs and sets the transient property if it does
+     * @param exercise - the exercise for which we check if test runs exist
      */
     public void checkTestRunsExist(Exercise exercise) {
         Long containsTestRunParticipations = studentParticipationRepository.countParticipationsOnlyTestRunsByExerciseId(exercise.getId());

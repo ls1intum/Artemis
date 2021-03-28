@@ -203,7 +203,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
                 this.quizExercise = response.body!;
                 this.init();
                 if (this.isExamMode && this.quizExercise.testRunParticipationsExist) {
-                    this.jhiAlertService.warning("You can't change the answer options unless you delete the test runs for this exercise!");
+                    this.jhiAlertService.warning(this.translateService.instant('artemisApp.quizExercise.edit.testRunSubmissionsExist'));
                 }
                 console.log(this.quizExercise.testRunParticipationsExist);
             });

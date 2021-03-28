@@ -585,13 +585,13 @@ public class ExamService {
     }
 
     /**
-     *
-     * @param exam
+     * Sets exam exercise transient properties for different exercise types
+     * @param exam - the exam for which we set the exercise properties
      */
     public void setExamExerciseProperties(Exam exam) {
         exam.getExerciseGroups().forEach((exerciseGroup -> {
             exerciseGroup.getExercises().forEach((exercise -> {
-                // todo add comment NR IH
+                // Set transient property for quiz exam exercise if test runs exist
                 if (exercise instanceof QuizExercise) {
                     exerciseService.checkTestRunsExist(exercise);
                 }
