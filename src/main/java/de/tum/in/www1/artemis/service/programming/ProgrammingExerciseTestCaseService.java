@@ -67,7 +67,7 @@ public class ProgrammingExerciseTestCaseService {
      * Update the updatable attributes of the provided test case dtos. Returns an entry in the set for each test case that could be updated.
      *
      * @param exerciseId            of exercise the test cases belong to.
-     * @param testCaseProgrammingExerciseTestCaseDTOS of the test cases to update the weights and afterDueDate flag of.
+     * @param testCaseProgrammingExerciseTestCaseDTOS of the test cases to update the weights and visibility of.
      * @return the updated test cases.
      * @throws EntityNotFoundException if the programming exercise could not be found.
      * @throws IllegalAccessException if the retriever does not have the permissions to fetch information related to the programming exercise.

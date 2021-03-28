@@ -5,7 +5,7 @@ import de.tum.in.www1.artemis.domain.enumeration.Visibility;
 
 /**
  * This is a dto for updating a programming exercise test case.
- * It is only allowed to alter the weight, bonus multiplier, bonus points and afterDueDate flag of a test case from an
+ * It is only allowed to alter the weight, bonus multiplier, bonus points and visibility flag of a test case from an
  * endpoint, the other attributes are generated automatically.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)

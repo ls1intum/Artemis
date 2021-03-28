@@ -84,11 +84,12 @@ public class ProgrammingExerciseTestCaseResource {
     }
 
     /**
-     * Update the changable fields of the provided test case dtos. We don't transfer the whole test case object here, because we need to make sure that only weights can be updated! Will
-     * only return test case objects in the response that could be updated.
+     * Update the changeable fields of the provided test case dtos.
+     * We don't transfer the whole test case object here, because we need to make sure that only weights and visibility can be updated!
+     * Will only return test case objects in the response that could be updated.
      *
      * @param exerciseId            of exercise the test cases belong to.
-     * @param testCaseProgrammingExerciseTestCaseDTOS of the test cases to update the weights and afterDueDate flag of.
+     * @param testCaseProgrammingExerciseTestCaseDTOS of the test cases to update the weights and visibility of.
      * @return the set of test cases for the given programming exercise.
      */
     @PatchMapping(Endpoints.UPDATE_TEST_CASES)
