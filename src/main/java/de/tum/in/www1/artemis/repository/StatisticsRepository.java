@@ -4,6 +4,7 @@ import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -244,5 +245,13 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
             where e.course.id = :courseId
             """)
     List<Long> findExerciseIdsByCourseId(@Param("courseId") Long courseId);
+
+    @Query("""
+            select avg(r.rating) as avgRating, a.firstName as tutor
+            from Rating r join r.result result join result.participation p join p.exercise e join result.assessor a
+            where r.result.participation.exercise in :exercises
+            group by a.firstName
+            """)
+    List<Map<String, Object>> getAvgRatingOfTutorsByExerciseIds(@Param("exercises") Set<Exercise> exercises);
 
 }

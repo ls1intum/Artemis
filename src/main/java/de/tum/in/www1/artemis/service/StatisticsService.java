@@ -396,8 +396,16 @@ public class StatisticsService {
                 .filter(exercise -> !exercise.getIncludedInOverallScore().equals(IncludedInOverallScore.NOT_INCLUDED)).collect(Collectors.toSet());
         var courseMaxPoints = 0.0;
         var averageScoreForCourse = participantScoreRepository.findAvgScore(includedExercises);
-        var averagePointsForExercises = participantScoreRepository.findAvgPointsForExercises(includedExercises);
-        var averagePointsByTitle = createAverageScoreMap(averagePointsForExercises, includedExercises);
+        var averagePointsByTitle = createAverageScoreMap(includedExercises);
+        var tutorRatings = createTutorRatingMap(includedExercises);
+
+        var sumOfRatings = 0.0;
+        var values = new ArrayList<>(tutorRatings.values());
+        for (var value : values) {
+            sumOfRatings += value;
+        }
+        courseManagementStatisticsDTO.setAverageRatingInCourse(sumOfRatings * 1.0 / tutorRatings.size());
+        courseManagementStatisticsDTO.setTutorToAverageRatingMap(tutorRatings);
 
         // Set the max points for each exercise
         var maxPoints = new HashMap<String, Double>();
@@ -422,7 +430,8 @@ public class StatisticsService {
     /**
      * Helper class which creates a map filled with the exerciseId mapped to the average score of the exercise
      */
-    private Map<String, Double> createAverageScoreMap(List<Map<String, Object>> averagePointsForExercises, Set<Exercise> exercises) {
+    private Map<String, Double> createAverageScoreMap(Set<Exercise> exercises) {
+        var averagePointsForExercises = participantScoreRepository.findAvgPointsForExercises(exercises);
         var averagePointsByTitle = new HashMap<String, Double>();
         for (var averagePointsMap : averagePointsForExercises) {
             var exerciseId = (Long) averagePointsMap.get("exerciseId");
@@ -434,5 +443,19 @@ public class StatisticsService {
             }
         }
         return averagePointsByTitle;
+    }
+
+    /**
+     * Helper class which creates a map filled with the tutor name mapped to the average rating he/she receives in assessments
+     */
+    private Map<String, Double> createTutorRatingMap(Set<Exercise> exercises) {
+        var ratingsByTutor = new HashMap<String, Double>();
+        var tutorRatings = statisticsRepository.getAvgRatingOfTutorsByExerciseIds(exercises);
+        for (var avgRatingMap : tutorRatings) {
+            var tutor = (String) avgRatingMap.get("tutor");
+            var rating = (Double) avgRatingMap.get("avgRating");
+            ratingsByTutor.put(tutor, rating);
+        }
+        return ratingsByTutor;
     }
 }

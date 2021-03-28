@@ -32,13 +32,20 @@ export class CourseManagementStatisticsComponent implements OnInit {
     courseId: number;
 
     defaultTitle = 'Course';
+    // Average Score
+    selectedValueAverageScore: string;
     currentAverageScore = 0;
     currentAbsolutePoints = 0;
     currentMaxPoints = 1;
-    courseStatistics: CourseManagementStatisticsDTO;
-
-    selectedValue: string;
     exerciseTitles: string[];
+
+    // Average Rating
+    selectedValueAverageRating: string;
+    currentAverageRating = 0;
+    currentAverageRatingInPercent = 0;
+    tutorNames: string[];
+
+    courseStatistics: CourseManagementStatisticsDTO;
 
     constructor(private service: StatisticsService, private route: ActivatedRoute) {}
 
@@ -48,11 +55,16 @@ export class CourseManagementStatisticsComponent implements OnInit {
         });
         this.service.getCourseStatistics(this.courseId).subscribe((res: CourseManagementStatisticsDTO) => {
             this.courseStatistics = res;
-            this.selectedValue = this.defaultTitle;
+            this.selectedValueAverageScore = this.defaultTitle;
             this.exerciseTitles = Object.keys(res.exerciseNameToMaxPointsMap);
             this.currentAbsolutePoints = this.courseStatistics.averagePointsOfCourse;
             this.currentMaxPoints = this.courseStatistics.maxPointsOfCourse;
             this.currentAverageScore = Math.round((this.courseStatistics.averagePointsOfCourse / this.courseStatistics.maxPointsOfCourse) * 100);
+
+            this.currentAverageRating = this.courseStatistics.averageRatingInCourse;
+            this.selectedValueAverageRating = this.defaultTitle;
+            this.tutorNames = Object.keys(res.tutorToAverageRatingMap);
+            this.currentAverageRatingInPercent = (this.currentAverageRating * 100) / 5;
         });
     }
 
@@ -60,11 +72,23 @@ export class CourseManagementStatisticsComponent implements OnInit {
         this.currentSpan = span;
     }
 
-    onSelect(): void {
+    onAverageScoreSelect(): void {
         this.currentAbsolutePoints =
-            this.selectedValue === this.defaultTitle ? this.courseStatistics.averagePointsOfCourse : this.courseStatistics.exerciseNameToAveragePointsMap[this.selectedValue];
+            this.selectedValueAverageScore === this.defaultTitle
+                ? this.courseStatistics.averagePointsOfCourse
+                : this.courseStatistics.exerciseNameToAveragePointsMap[this.selectedValueAverageScore];
         this.currentMaxPoints =
-            this.selectedValue === this.defaultTitle ? this.courseStatistics.maxPointsOfCourse : this.courseStatistics.exerciseNameToMaxPointsMap[this.selectedValue];
+            this.selectedValueAverageScore === this.defaultTitle
+                ? this.courseStatistics.maxPointsOfCourse
+                : this.courseStatistics.exerciseNameToMaxPointsMap[this.selectedValueAverageScore];
         this.currentAverageScore = Math.round((this.currentAbsolutePoints / this.currentMaxPoints) * 100);
+    }
+
+    onAverageRatingSelect(): void {
+        this.currentAverageRating =
+            this.selectedValueAverageRating === this.defaultTitle
+                ? this.courseStatistics.averageRatingInCourse
+                : this.courseStatistics.tutorToAverageRatingMap[this.selectedValueAverageRating];
+        this.currentAverageRatingInPercent = (this.currentAverageRating * 100) / 5;
     }
 }

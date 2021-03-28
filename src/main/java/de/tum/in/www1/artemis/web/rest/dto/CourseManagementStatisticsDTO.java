@@ -8,9 +8,13 @@ public class CourseManagementStatisticsDTO {
 
     private Double maxPointsOfCourse;
 
+    private Double averageRatingInCourse;
+
     private Map<String, Double> exerciseNameToAveragePointsMap;
 
     private Map<String, Double> exerciseNameToMaxPointsMap;
+
+    private Map<String, Double> tutorToAverageRatingMap;
 
     public Double getAveragePointsOfCourse() {
         return averagePointsOfCourse;
@@ -42,5 +46,21 @@ public class CourseManagementStatisticsDTO {
 
     public void setMaxPointsOfCourse(Double maxPointsOfCourse) {
         this.maxPointsOfCourse = maxPointsOfCourse;
+    }
+
+    public Double getAverageRatingInCourse() {
+        return averageRatingInCourse;
+    }
+
+    public void setAverageRatingInCourse(Double averageRatingInCourse) {
+        this.averageRatingInCourse = averageRatingInCourse;
+    }
+
+    public Map<String, Double> getTutorToAverageRatingMap() {
+        return tutorToAverageRatingMap;
+    }
+
+    public void setTutorToAverageRatingMap(Map<String, Double> tutorToAverageRatingMap) {
+        this.tutorToAverageRatingMap = tutorToAverageRatingMap;
     }
 }
