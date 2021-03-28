@@ -18,6 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.test.context.support.WithMockUser;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -103,6 +104,7 @@ public class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends 
 
     @ParameterizedTest
     @MethodSource("shouldSavebuildLogsOnStudentParticipationArguments")
+    @WithMockUser(username = "student1", roles = "USER")
     void shouldNotReceiveBuildLogsOnStudentParticipationWithoutResult(ProgrammingLanguage programmingLanguage, boolean enableStaticCodeAnalysis) throws Exception {
         // Precondition: Database has participation and a programming submission.
         String userLogin = "student1";
@@ -125,6 +127,7 @@ public class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends 
 
     @ParameterizedTest
     @MethodSource("shouldSavebuildLogsOnStudentParticipationArguments")
+    @WithMockUser(username = "student1", roles = "USER")
     void shouldNotReceiveBuildLogsOnStudentParticipationWithoutSubmissionNorResult(ProgrammingLanguage programmingLanguage, boolean enableStaticCodeAnalysis) throws Exception {
         // Precondition: Database has participation without result and a programming
         String userLogin = "student1";

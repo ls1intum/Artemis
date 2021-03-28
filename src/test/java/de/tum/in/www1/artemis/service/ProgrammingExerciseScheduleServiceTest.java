@@ -14,6 +14,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.connector.bitbucket.BitbucketRequestMockProvider;
@@ -84,6 +85,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
     }
 
     @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
     void shouldExecuteScheduledBuildAndTestAfterDueDate() throws Exception {
         mockStudentRepoLocks();
         long delayMS = 1000;
@@ -102,6 +104,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
     }
 
     @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
     void shouldNotExecuteScheduledIfBuildAndTestAfterDueDateHasPassed() throws Exception {
         programmingExercise.setDueDate(ZonedDateTime.now().minusHours(1L));
         programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().minusHours(1L));
@@ -116,6 +119,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
     }
 
     @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
     void shouldNotExecuteScheduledIfBuildAndTestAfterDueDateIsNull() throws Exception {
         instanceMessageReceiveService.processScheduleProgrammingExercise(programmingExercise.getId());
 
@@ -127,6 +131,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
     }
 
     @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
     void shouldNotExecuteScheduledTwiceIfSameExercise() throws Exception {
         mockStudentRepoLocks();
         long delayMS = 200; // 200 ms.
@@ -149,6 +154,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
     }
 
     @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
     void shouldNotExecuteScheduledIfBuildAndTestAfterDueDateChangesToNull() throws Exception {
         long delayMS = 200;
         // Setting it the first time.
@@ -166,6 +172,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
     }
 
     @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
     void shouldScheduleExercisesWithBuildAndTestDateInFuture() throws Exception {
         mockStudentRepoLocks();
         long delayMS = 200;
@@ -187,6 +194,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
     }
 
     @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
     void shouldScheduleExercisesWithManualAssessment() throws Exception {
         mockStudentRepoLocks();
         long delayMS = 200;
