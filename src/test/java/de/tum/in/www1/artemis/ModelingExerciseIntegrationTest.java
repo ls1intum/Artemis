@@ -417,8 +417,7 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBa
     public void testInstructorGetsOnlyResultsFromOwningCourses() throws Exception {
         final var search = database.configureSearch("");
         final var result = request.get("/api/modeling-exercises/", HttpStatus.OK, SearchResultPageDTO.class, database.exerciseSearchMapping(search));
-
-        assertThat(result.getResultsOnPage()).isEmpty();
+        assertThat(result.getResultsOnPage()).isNullOrEmpty();
     }
 
     @Test

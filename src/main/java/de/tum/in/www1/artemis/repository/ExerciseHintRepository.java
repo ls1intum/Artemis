@@ -9,6 +9,7 @@ import javax.validation.constraints.NotNull;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.Exercise;
@@ -70,5 +71,5 @@ public interface ExerciseHintRepository extends JpaRepository<ExerciseHint, Long
             FROM ExerciseHint h
             WHERE h.id = :hintId
             """)
-    String getHintTitle(Long hintId);
+    String getHintTitle(@Param("hintId") Long hintId);
 }

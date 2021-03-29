@@ -4,9 +4,11 @@ import java.time.ZonedDateTime;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class GitLabCommitDTO {
 
     @JsonProperty("id")
@@ -91,6 +93,7 @@ public class GitLabCommitDTO {
         this.removed = removed;
     }
 
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public static final class Author {
 
         private String name;
