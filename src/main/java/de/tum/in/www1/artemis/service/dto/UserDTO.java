@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service.dto;
 
 import java.time.Instant;
 import java.time.ZonedDateTime;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -55,11 +56,11 @@ public class UserDTO extends AuditingEntityDTO {
 
     private ZonedDateTime lastNotificationRead;
 
-    private Set<String> authorities;
+    private Set<String> authorities = new HashSet<>();
 
-    private Set<String> groups;
+    private Set<String> groups = new HashSet<>();
 
-    private Set<GuidedTourSetting> guidedTourSettings;
+    private Set<GuidedTourSetting> guidedTourSettings = new HashSet<>();
 
     public UserDTO() {
         // Empty constructor needed for Jackson.
