@@ -29,8 +29,12 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 @Repository
 public interface ProgrammingExerciseRepository extends JpaRepository<ProgrammingExercise, Long> {
 
-    // Does a max join on the result table for each participation by result id (the newer the result id, the newer the result). This makes sure that we only receive the latest
-    // result for the template and the solution participation if they exist.
+    /**
+     * Does a max join on the result table for each participation by result id (the newer the result id, the newer the result).
+     * This makes sure that we only receive the latest result for the template and the solution participation if they exist.
+     * @param courseId the course the returned programming exercises belong to.
+     * @return all exercises for the given course with only the latest results for solution and template each (if present).
+     */
     @Query("""
             SELECT pe FROM ProgrammingExercise pe LEFT JOIN FETCH pe.templateParticipation tp LEFT JOIN FETCH pe.solutionParticipation sp
             LEFT JOIN FETCH tp.results AS tpr LEFT JOIN FETCH sp.results AS spr
@@ -55,6 +59,8 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
 
     /**
      * Get a programmingExercise with template and solution participation, each with the latest result and feedbacks.
+     * @param exerciseId the id of the exercise that should be fetched.
+     * @return the exercise with the given ID, if found.
      */
     @Query("""
             SELECT DISTINCT pe FROM ProgrammingExercise pe LEFT JOIN FETCH pe.templateParticipation tp LEFT JOIN FETCH pe.solutionParticipation sp
