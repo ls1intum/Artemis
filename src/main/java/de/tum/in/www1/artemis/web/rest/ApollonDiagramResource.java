@@ -111,6 +111,19 @@ public class ApollonDiagramResource {
     }
 
     /**
+     * GET /apollon-diagrams/:diagramId/title : Returns the title of the diagram with the given id
+     *
+     * @param diagramId the id of the diagram
+     * @return the title of the diagram wrapped in an ResponseEntity or 404 Not Found if no diagram with that id exists
+     */
+    @GetMapping(value = "/apollon-diagrams/{diagramId}/title")
+    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<String> getExerciseTitle(@PathVariable Long diagramId) {
+        final var title = apollonDiagramRepository.getDiagramTitle(diagramId);
+        return title == null ? ResponseEntity.notFound().build() : ResponseEntity.ok(title);
+    }
+
+    /**
      * GET /apollon-diagrams : get all the apollonDiagrams.
      *
      * @return the ResponseEntity with status 200 (OK) and the list of apollonDiagrams in body

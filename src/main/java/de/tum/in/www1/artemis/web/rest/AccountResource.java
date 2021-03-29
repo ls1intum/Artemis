@@ -44,13 +44,6 @@ public class AccountResource {
     @Value("${artemis.user-management.registration.allowed-email-pattern:#{null}}")
     private Optional<Pattern> allowedEmailPattern;
 
-    private static class AccountResourceException extends RuntimeException {
-
-        private AccountResourceException(String message) {
-            super(message);
-        }
-    }
-
     private final Logger log = LoggerFactory.getLogger(AccountResource.class);
 
     private final UserRepository userRepository;
@@ -248,7 +241,7 @@ public class AccountResource {
         Optional<User> user = userService.completePasswordReset(keyAndPassword.getNewPassword(), keyAndPassword.getKey());
 
         if (user.isEmpty()) {
-            throw new AccountResourceException("No user was found for this reset key");
+            throw new AccessForbiddenException("No user was found for this reset key");
         }
     }
 

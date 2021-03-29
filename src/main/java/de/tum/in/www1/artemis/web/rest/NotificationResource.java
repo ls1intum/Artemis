@@ -23,7 +23,6 @@ import de.tum.in.www1.artemis.domain.notification.SystemNotification;
 import de.tum.in.www1.artemis.repository.NotificationRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.NotificationService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
@@ -47,16 +46,12 @@ public class NotificationResource {
 
     private final NotificationRepository notificationRepository;
 
-    private final NotificationService notificationService;
-
     private final UserRepository userRepository;
 
     private final AuthorizationCheckService authorizationCheckService;
 
-    public NotificationResource(NotificationRepository notificationRepository, NotificationService notificationService, UserRepository userRepository,
-            AuthorizationCheckService authorizationCheckService) {
+    public NotificationResource(NotificationRepository notificationRepository, UserRepository userRepository, AuthorizationCheckService authorizationCheckService) {
         this.notificationRepository = notificationRepository;
-        this.notificationService = notificationService;
         this.userRepository = userRepository;
         this.authorizationCheckService = authorizationCheckService;
     }
@@ -91,7 +86,7 @@ public class NotificationResource {
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<List<Notification>> getAllNotificationsForCurrentUser(@ApiParam Pageable pageable) {
         User currentUser = userRepository.getUserWithGroupsAndAuthorities();
-        final Page<Notification> page = notificationService.findAllExceptSystem(currentUser, pageable);
+        final Page<Notification> page = notificationRepository.findAllNotificationsForRecipientWithLogin(currentUser.getGroups(), currentUser.getLogin(), pageable);
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
         return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
     }

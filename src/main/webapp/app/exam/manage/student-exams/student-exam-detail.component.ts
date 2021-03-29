@@ -6,12 +6,12 @@ import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.s
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { User } from 'app/core/user/user.model';
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
 import { JhiAlertService } from 'ng-jhipster';
 import { round } from 'app/shared/util/utils';
 import * as moment from 'moment';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { getLatestSubmissionResult, setLatestSubmissionResult } from 'app/entities/submission.model';
 
 @Component({
     selector: 'jhi-student-exam-detail',
@@ -30,6 +30,8 @@ export class StudentExamDetailComponent implements OnInit {
     achievedTotalPoints = 0;
     bonusTotalPoints = 0;
     busy = false;
+
+    examId: number;
 
     constructor(
         private route: ActivatedRoute,
@@ -53,31 +55,13 @@ export class StudentExamDetailComponent implements OnInit {
      */
     loadStudentExam() {
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
+        this.examId = Number(this.route.snapshot.paramMap.get('examId'));
         this.route.data.subscribe(({ studentExam }) => this.setStudentExam(studentExam));
 
         this.courseService.find(this.courseId).subscribe((courseResponse) => {
             this.course = courseResponse.body!;
         });
         this.student = this.studentExam.user!;
-    }
-
-    /**
-     * Get an icon for the type of the given exercise.
-     * @param exercise {Exercise}
-     */
-    exerciseIcon(exercise: Exercise): string {
-        switch (exercise.type) {
-            case ExerciseType.QUIZ:
-                return 'check-double';
-            case ExerciseType.FILE_UPLOAD:
-                return 'file-upload';
-            case ExerciseType.MODELING:
-                return 'project-diagram';
-            case ExerciseType.PROGRAMMING:
-                return 'keyboard';
-            default:
-                return 'font';
-        }
     }
 
     /**
@@ -118,8 +102,13 @@ export class StudentExamDetailComponent implements OnInit {
                 exercise.studentParticipations?.length &&
                 exercise.studentParticipations.length > 0 &&
                 exercise.studentParticipations[0].results?.length &&
-                exercise.studentParticipations[0].results.length > 0
+                exercise.studentParticipations[0].results!.length > 0
             ) {
+                if (exercise!.studentParticipations[0].submissions && exercise!.studentParticipations[0].submissions!.length > 0) {
+                    exercise!.studentParticipations[0].submissions![0].results! = exercise.studentParticipations[0].results;
+                    setLatestSubmissionResult(exercise?.studentParticipations[0].submissions?.[0], getLatestSubmissionResult(exercise?.studentParticipations[0].submissions?.[0]));
+                }
+
                 this.achievedTotalPoints += this.rounding((exercise.studentParticipations[0].results[0].score! * exercise.maxPoints!) / 100);
             }
         });

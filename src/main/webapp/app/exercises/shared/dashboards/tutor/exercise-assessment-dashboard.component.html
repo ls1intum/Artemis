@@ -365,7 +365,21 @@
                             "
                         >
                             <div class="alert alert-info">
-                                {{ 'artemisApp.exerciseAssessmentDashboard.noSubmissionsBecauseOfOtherLockedSubmissions' | translate }}
+                                <span
+                                    jhiTranslate="artemisApp.exerciseAssessmentDashboard.noSubmissionsInfo"
+                                    [translateValues]="{
+                                        notYetAssessed: notYetAssessed[correctionRound],
+                                        lockedSubmissionsByOtherTutor: lockedSubmissionsByOtherTutor[correctionRound]
+                                    }"
+                                >
+                                </span>
+                                <ng-container *ngIf="correctionRound === 1">
+                                    <span
+                                        jhiTranslate="artemisApp.exerciseAssessmentDashboard.noSubmissionsInfoSecondCorrection"
+                                        [translateValues]="{ firstRoundAssessments: firstRoundAssessments }"
+                                    >
+                                    </span>
+                                </ng-container>
                             </div>
                         </ng-container>
                     </div>

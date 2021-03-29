@@ -28,15 +28,6 @@ export class NotificationPopupComponent implements OnInit {
     }
 
     /**
-     * Returns a string that can be interpreted as fontawesome icon based on the notification type of the given notification.
-     * @param notification {Notification}
-     */
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    notificationIcon(notification: Notification): string {
-        return 'check-double';
-    }
-
-    /**
      * Removes the notification at the specified index from the notifications array.
      * @param index {number}
      */

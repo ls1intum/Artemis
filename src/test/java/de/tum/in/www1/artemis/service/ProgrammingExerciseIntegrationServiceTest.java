@@ -61,52 +61,19 @@ import de.tum.in.www1.artemis.web.websocket.dto.ProgrammingExerciseTestCaseState
 public class ProgrammingExerciseIntegrationServiceTest {
 
     @Autowired
-    GitUtilService gitUtilService;
+    private GitUtilService gitUtilService;
 
     @Autowired
-    CourseRepository courseRepository;
+    private CourseRepository courseRepository;
 
     @Autowired
-    ProgrammingExerciseRepository programmingExerciseRepository;
+    private ProgrammingExerciseRepository programmingExerciseRepository;
 
     @Autowired
-    ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
+    private ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
 
     @Autowired
     private ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository;
-
-    @Autowired
-    NotificationRepository notificationRepository;
-
-    Course course;
-
-    ProgrammingExercise programmingExercise;
-
-    ProgrammingExercise programmingExerciseInExam;
-
-    ProgrammingExerciseStudentParticipation participation1;
-
-    ProgrammingExerciseStudentParticipation participation2;
-
-    File downloadedFile;
-
-    File localRepoFile;
-
-    File originRepoFile;
-
-    Git localGit;
-
-    Git remoteGit;
-
-    File localRepoFile2;
-
-    File originRepoFile2;
-
-    Git localGit2;
-
-    Git remoteGit2;
-
-    private List<GradingCriterion> gradingCriteria;
 
     @Autowired
     private DatabaseUtilService database;
@@ -117,9 +84,33 @@ public class ProgrammingExerciseIntegrationServiceTest {
     @Autowired
     private GitService gitService;
 
-    MockDelegate mockDelegate;
+    private Course course;
 
-    VersionControlService versionControlService;
+    private ProgrammingExercise programmingExercise;
+
+    private ProgrammingExercise programmingExerciseInExam;
+
+    private ProgrammingExerciseStudentParticipation participation1;
+
+    private ProgrammingExerciseStudentParticipation participation2;
+
+    private File downloadedFile;
+
+    private File localRepoFile;
+
+    private Git localGit;
+
+    private Git remoteGit;
+
+    private File localRepoFile2;
+
+    private Git localGit2;
+
+    private Git remoteGit2;
+
+    private MockDelegate mockDelegate;
+
+    private VersionControlService versionControlService;
 
     public void setup(MockDelegate mockDelegate, VersionControlService versionControlService) throws Exception {
         this.mockDelegate = mockDelegate;
@@ -140,7 +131,7 @@ public class ProgrammingExerciseIntegrationServiceTest {
 
         localRepoFile = Files.createTempDirectory("repo").toFile();
         localGit = Git.init().setDirectory(localRepoFile).call();
-        originRepoFile = Files.createTempDirectory("repoOrigin").toFile();
+        File originRepoFile = Files.createTempDirectory("repoOrigin").toFile();
         remoteGit = Git.init().setDirectory(originRepoFile).call();
         StoredConfig config = localGit.getRepository().getConfig();
         config.setString("remote", "origin", "url", originRepoFile.getAbsolutePath());
@@ -148,7 +139,7 @@ public class ProgrammingExerciseIntegrationServiceTest {
 
         localRepoFile2 = Files.createTempDirectory("repo2").toFile();
         localGit2 = Git.init().setDirectory(localRepoFile2).call();
-        originRepoFile2 = Files.createTempDirectory("repoOrigin").toFile();
+        File originRepoFile2 = Files.createTempDirectory("repoOrigin").toFile();
         remoteGit2 = Git.init().setDirectory(originRepoFile2).call();
         StoredConfig config2 = localGit2.getRepository().getConfig();
         config2.setString("remote", "origin", "url", originRepoFile2.getAbsolutePath());
@@ -179,6 +170,15 @@ public class ProgrammingExerciseIntegrationServiceTest {
         }
         if (localGit != null) {
             localGit.close();
+        }
+        if (remoteGit != null) {
+            remoteGit.close();
+        }
+        if (localGit2 != null) {
+            localGit2.close();
+        }
+        if (remoteGit2 != null) {
+            remoteGit2.close();
         }
     }
 
@@ -283,12 +283,12 @@ public class ProgrammingExerciseIntegrationServiceTest {
         for (final var planName : List.of("student1", "student2", TEMPLATE.getName(), SOLUTION.getName())) {
             mockDelegate.mockDeleteBuildPlan(projectKey, projectKey + "-" + planName.toUpperCase(), false);
         }
-        mockDelegate.mockDeleteBuildPlanProject(projectKey);
+        mockDelegate.mockDeleteBuildPlanProject(projectKey, false);
 
         for (final var repoName : List.of("student1", "student2", RepositoryType.TEMPLATE.getName(), RepositoryType.SOLUTION.getName(), RepositoryType.TESTS.getName())) {
-            mockDelegate.mockDeleteRepository(projectKey, (projectKey + "-" + repoName).toLowerCase());
+            mockDelegate.mockDeleteRepository(projectKey, (projectKey + "-" + repoName).toLowerCase(), false);
         }
-        mockDelegate.mockDeleteProjectInVcs(projectKey);
+        mockDelegate.mockDeleteProjectInVcs(projectKey, false);
 
         request.delete(path, HttpStatus.OK, params);
     }
@@ -303,12 +303,77 @@ public class ProgrammingExerciseIntegrationServiceTest {
         for (final var planName : List.of("student1", "student2", TEMPLATE.getName(), SOLUTION.getName())) {
             mockDelegate.mockDeleteBuildPlan(projectKey, projectKey + "-" + planName.toUpperCase(), true);
         }
-        mockDelegate.mockDeleteBuildPlanProject(projectKey);
+        mockDelegate.mockDeleteBuildPlanProject(projectKey, false);
+
+        request.delete(path, HttpStatus.INTERNAL_SERVER_ERROR, params);
+    }
+
+    public void testProgrammingExerciseDelete_buildPlanDoesntExist() throws Exception {
+        final var projectKey = programmingExercise.getProjectKey();
+        final var path = ROOT + PROGRAMMING_EXERCISE.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("deleteStudentReposBuildPlans", "true");
+        params.add("deleteBaseReposBuildPlans", "true");
+
+        for (final var planName : List.of("student1", "student2", TEMPLATE.getName(), SOLUTION.getName())) {
+            mockDelegate.mockDeleteBuildPlan(projectKey, projectKey + "-" + planName.toUpperCase(), false);
+        }
+        mockDelegate.mockDeleteBuildPlanProject(projectKey, false);
+
+        request.delete(path, HttpStatus.OK, params);
+    }
+
+    public void testProgrammingExerciseDelete_failToDeleteCiProject() throws Exception {
+        final var projectKey = programmingExercise.getProjectKey();
+        final var path = ROOT + PROGRAMMING_EXERCISE.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("deleteStudentReposBuildPlans", "true");
+        params.add("deleteBaseReposBuildPlans", "true");
+
+        for (final var planName : List.of("student1", "student2", TEMPLATE.getName(), SOLUTION.getName())) {
+            mockDelegate.mockDeleteBuildPlan(projectKey, projectKey + "-" + planName.toUpperCase(), false);
+        }
+        mockDelegate.mockDeleteBuildPlanProject(projectKey, true);
+
+        request.delete(path, HttpStatus.INTERNAL_SERVER_ERROR, params);
+    }
+
+    public void testProgrammingExerciseDelete_failToDeleteVcsProject() throws Exception {
+        final var projectKey = programmingExercise.getProjectKey();
+        final var path = ROOT + PROGRAMMING_EXERCISE.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("deleteStudentReposBuildPlans", "true");
+        params.add("deleteBaseReposBuildPlans", "true");
+
+        for (final var planName : List.of("student1", "student2", TEMPLATE.getName(), SOLUTION.getName())) {
+            mockDelegate.mockDeleteBuildPlan(projectKey, projectKey + "-" + planName.toUpperCase(), false);
+        }
+        mockDelegate.mockDeleteBuildPlanProject(projectKey, false);
 
         for (final var repoName : List.of("student1", "student2", RepositoryType.TEMPLATE.getName(), RepositoryType.SOLUTION.getName(), RepositoryType.TESTS.getName())) {
-            mockDelegate.mockDeleteRepository(projectKey, (projectKey + "-" + repoName).toLowerCase());
+            mockDelegate.mockDeleteRepository(projectKey, (projectKey + "-" + repoName).toLowerCase(), false);
         }
-        mockDelegate.mockDeleteProjectInVcs(projectKey);
+        mockDelegate.mockDeleteProjectInVcs(projectKey, true);
+
+        request.delete(path, HttpStatus.INTERNAL_SERVER_ERROR, params);
+    }
+
+    public void testProgrammingExerciseDelete_failToDeleteVcsRepositories() throws Exception {
+        final var projectKey = programmingExercise.getProjectKey();
+        final var path = ROOT + PROGRAMMING_EXERCISE.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("deleteStudentReposBuildPlans", "true");
+        params.add("deleteBaseReposBuildPlans", "true");
+
+        for (final var planName : List.of("student1", "student2", TEMPLATE.getName(), SOLUTION.getName())) {
+            mockDelegate.mockDeleteBuildPlan(projectKey, projectKey + "-" + planName.toUpperCase(), false);
+        }
+        mockDelegate.mockDeleteBuildPlanProject(projectKey, false);
+
+        for (final var repoName : List.of("student1", "student2", RepositoryType.TEMPLATE.getName(), RepositoryType.SOLUTION.getName(), RepositoryType.TESTS.getName())) {
+            mockDelegate.mockDeleteRepository(projectKey, (projectKey + "-" + repoName).toLowerCase(), true);
+        }
+        mockDelegate.mockDeleteProjectInVcs(projectKey, false);
 
         request.delete(path, HttpStatus.INTERNAL_SERVER_ERROR, params);
     }
@@ -337,7 +402,7 @@ public class ProgrammingExerciseIntegrationServiceTest {
         var programmingExerciseServer = request.get(path, HttpStatus.OK, ProgrammingExercise.class);
         assertThat(programmingExerciseServer.getTitle()).isEqualTo(programmingExercise.getTitle());
 
-        gradingCriteria = database.addGradingInstructionsToExercise(programmingExerciseServer);
+        List<GradingCriterion> gradingCriteria = database.addGradingInstructionsToExercise(programmingExerciseServer);
 
         assertThat(programmingExerciseServer.getGradingCriteria().get(0).getTitle()).isEqualTo(null);
         assertThat(programmingExerciseServer.getGradingCriteria().get(1).getTitle()).isEqualTo("test title");

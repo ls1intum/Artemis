@@ -80,10 +80,9 @@ public class TextSubmission extends Submission {
         return blocks;
     }
 
-    public TextSubmission addBlock(TextBlock textBlock) {
+    public void addBlock(TextBlock textBlock) {
         this.blocks.add(textBlock);
         textBlock.setSubmission(this);
-        return this;
     }
 
     public void setBlocks(Set<TextBlock> textBlocks) {

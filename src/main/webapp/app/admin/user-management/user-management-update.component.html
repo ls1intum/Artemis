@@ -94,6 +94,7 @@
                     <tag-input
                         name="groups"
                         [(ngModel)]="user.groups"
+                        [addOnBlur]="true"
                         [theme]="'bootstrap'"
                         [modelAsStrings]="true"
                         [placeholder]="'userManagement.addGroup' | artemisTranslate"

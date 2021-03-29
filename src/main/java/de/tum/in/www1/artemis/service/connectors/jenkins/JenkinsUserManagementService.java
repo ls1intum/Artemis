@@ -56,6 +56,9 @@ public class JenkinsUserManagementService implements CIUserManagementService {
 
     private final UserRepository userRepository;
 
+    @Value("${jenkins.use-pseudonyms:#{false}}")
+    private boolean usePseudonyms;
+
     public JenkinsUserManagementService(@Qualifier("jenkinsRestTemplate") RestTemplate restTemplate, JenkinsJobPermissionsService jenkinsJobPermissionsService,
             PasswordService passwordService, ProgrammingExerciseRepository programmingExerciseRepository, UserRepository userRepository) {
         this.restTemplate = restTemplate;
@@ -112,7 +115,12 @@ public class JenkinsUserManagementService implements CIUserManagementService {
         formData.add("username", user.getLogin());
         formData.add("password1", passwordService.decryptPassword(user));
         formData.add("password2", passwordService.decryptPassword(user));
-        formData.add("fullname", user.getName());
+        if (usePseudonyms) {
+            formData.add("fullname", String.format("User %s", user.getLogin()));
+        }
+        else {
+            formData.add("fullname", user.getName());
+        }
         formData.add("email", user.getEmail());
 
         var headers = new HttpHeaders();
@@ -161,13 +169,10 @@ public class JenkinsUserManagementService implements CIUserManagementService {
 
         // Only update a user if it exists.
         var jenkinsUser = getUser(user.getLogin());
-        if (jenkinsUser == null) {
-            createUser(user);
-        }
-        else {
+        if (jenkinsUser != null) {
             deleteUser(user);
-            createUser(user);
         }
+        createUser(user);
     }
 
     /**

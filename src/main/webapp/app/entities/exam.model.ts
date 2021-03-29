@@ -41,6 +41,10 @@ export class Exam implements BaseEntity {
     public visible?: boolean;
     public started?: boolean;
 
+    public examArchivePath?: string;
+
+    public latestIndividualEndDate?: Moment;
+
     constructor() {
         this.randomizeExerciseOrder = false; // default value (set by server)
         this.numberOfCorrectionRoundsInExam = 1; // default value
