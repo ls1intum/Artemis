@@ -24,10 +24,7 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.Participant;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
-import de.tum.in.www1.artemis.repository.ComplaintRepository;
-import de.tum.in.www1.artemis.repository.CourseRepository;
-import de.tum.in.www1.artemis.repository.ExerciseRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -55,7 +52,7 @@ public class ComplaintResource {
 
     private final UserRepository userRepository;
 
-    private final TeamService teamService;
+    private final TeamRepository teamRepository;
 
     private final ComplaintService complaintService;
 
@@ -63,12 +60,12 @@ public class ComplaintResource {
 
     private final CourseRepository courseRepository;
 
-    public ComplaintResource(AuthorizationCheckService authCheckService, ExerciseRepository exerciseRepository, UserRepository userRepository, TeamService teamService,
+    public ComplaintResource(AuthorizationCheckService authCheckService, ExerciseRepository exerciseRepository, UserRepository userRepository, TeamRepository teamRepository,
             ComplaintService complaintService, ComplaintRepository complaintRepository, CourseRepository courseRepository) {
         this.authCheckService = authCheckService;
         this.exerciseRepository = exerciseRepository;
         this.userRepository = userRepository;
-        this.teamService = teamService;
+        this.teamRepository = teamRepository;
         this.complaintService = complaintService;
         this.courseRepository = courseRepository;
         this.complaintRepository = complaintRepository;
@@ -207,7 +204,7 @@ public class ComplaintResource {
             throw new BadRequestAlertException("Complaints are disabled for this course", ENTITY_NAME, "complaintsDisabled");
         }
         if (teamMode) {
-            Optional<Team> team = teamService.findLatestTeamByCourseAndUser(course, user);
+            Optional<Team> team = teamRepository.findAllByCourseIdAndUserIdOrderByIdDesc(course.getId(), user.getId()).stream().findFirst();
             participant = team.orElseThrow(() -> new BadRequestAlertException("You do not belong to a team in this course.", ENTITY_NAME, "noAssignedTeamInCourse"));
         }
         long unacceptedComplaints = complaintService.countUnacceptedComplaintsByParticipantAndCourseId(participant, courseId);

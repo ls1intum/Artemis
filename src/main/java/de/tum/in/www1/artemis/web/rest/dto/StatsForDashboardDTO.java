@@ -2,7 +2,10 @@ package de.tum.in.www1.artemis.web.rest.dto;
 
 import java.util.List;
 
-public class StatsForInstructorDashboardDTO {
+import com.fasterxml.jackson.annotation.JsonInclude;
+
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
+public class StatsForDashboardDTO {
 
     private Long numberOfStudents;
 
@@ -13,6 +16,8 @@ public class StatsForInstructorDashboardDTO {
     private Long totalNumberOfAssessmentLocks;
 
     private DueDateStat[] numberOfAssessmentsOfCorrectionRounds;
+
+    private DueDateStat[] numberOfLockedAssessmentByOtherTutorsOfCorrectionRound;
 
     private DueDateStat numberOfAutomaticAssistedAssessments;
 
@@ -28,7 +33,10 @@ public class StatsForInstructorDashboardDTO {
 
     private List<TutorLeaderboardDTO> tutorLeaderboardEntries;
 
-    public StatsForInstructorDashboardDTO() {
+    /**
+     * Empty constructor is needed by Jackson
+     */
+    public StatsForDashboardDTO() {
     }
 
     public Long getNumberOfStudents() {
@@ -125,5 +133,13 @@ public class StatsForInstructorDashboardDTO {
 
     public void setTutorLeaderboardEntries(List<TutorLeaderboardDTO> tutorLeaderboardEntries) {
         this.tutorLeaderboardEntries = tutorLeaderboardEntries;
+    }
+
+    public DueDateStat[] getNumberOfLockedAssessmentByOtherTutorsOfCorrectionRound() {
+        return numberOfLockedAssessmentByOtherTutorsOfCorrectionRound;
+    }
+
+    public void setNumberOfLockedAssessmentByOtherTutorsOfCorrectionRound(DueDateStat[] numberOfLockedAssessmentByOtherTutorsOfCorrectionRound) {
+        this.numberOfLockedAssessmentByOtherTutorsOfCorrectionRound = numberOfLockedAssessmentByOtherTutorsOfCorrectionRound;
     }
 }

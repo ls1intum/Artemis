@@ -205,12 +205,12 @@ public class StudentQuestionResource {
     @GetMapping("courses/{courseId}/lectures/{lectureId}/student-questions")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<List<StudentQuestion>> getAllQuestionsForLecture(@PathVariable Long courseId, @PathVariable Long lectureId) {
-        final User user = userRepository.getUserWithGroupsAndAuthorities();
         Optional<Lecture> lecture = lectureRepository.findById(lectureId);
         if (lecture.isEmpty()) {
             throw new EntityNotFoundException("Lecture with lectureId " + lectureId + " does not exist!");
         }
         courseRepository.findByIdElseThrow(courseId);
+        final User user = userRepository.getUserWithGroupsAndAuthorities();
         if (!authorizationCheckService.isAtLeastStudentInCourse(lecture.get().getCourse(), user)) {
             return forbidden();
         }

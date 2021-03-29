@@ -5,13 +5,15 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
-import de.tum.in.www1.artemis.service.FeedbackService;
+import de.tum.in.www1.artemis.repository.FeedbackRepository;
 
-class FeedbackServiceTest {
+class FeedbackServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
-    private FeedbackService f = new FeedbackService(null);
+    @Autowired
+    FeedbackRepository feedbackRepository;
 
     @Test
     void createFeedbackFromTestCaseCombineMultiple() {
@@ -44,7 +46,7 @@ class FeedbackServiceTest {
                   expected:
                     []
                   to contain:
-                    ["Java"]""").isEqualTo(f.createFeedbackFromTestCase("test1", List.of(msg1, msg2, msg3), false, ProgrammingLanguage.JAVA).getDetailText());
+                    ["Java"]""").isEqualTo(feedbackRepository.createFeedbackFromTestCase("test1", List.of(msg1, msg2, msg3), false, ProgrammingLanguage.JAVA).getDetailText());
 
     }
 
@@ -63,14 +65,15 @@ class FeedbackServiceTest {
                 but was:
                     5
                 expected:
-                    something else""").isEqualTo(f.createFeedbackFromTestCase("test2", List.of(msgMatchMultiple), false, ProgrammingLanguage.KOTLIN).getDetailText());
+                    something else""")
+                .isEqualTo(feedbackRepository.createFeedbackFromTestCase("test2", List.of(msgMatchMultiple), false, ProgrammingLanguage.KOTLIN).getDetailText());
 
     }
 
     @Test
     void createFeedbackFromTestCaseUnchanged() {
         String msgUnchanged = "Should not be changed";
-        assertThat(msgUnchanged).isEqualTo(f.createFeedbackFromTestCase("test3", List.of(msgUnchanged), false, ProgrammingLanguage.JAVA).getDetailText());
+        assertThat(msgUnchanged).isEqualTo(feedbackRepository.createFeedbackFromTestCase("test3", List.of(msgUnchanged), false, ProgrammingLanguage.JAVA).getDetailText());
 
     }
 
@@ -82,7 +85,7 @@ class FeedbackServiceTest {
                 \tat test.MethodTest.testMethods(MethodTest.java:72)
                 \tat test.MethodTest.lambda$0(MethodTest.java:52)""";
         assertThat("the expected method 'getDates' of the class 'Context' with no parameters was not found or is named wrongly.")
-                .isEqualTo(f.createFeedbackFromTestCase("test1", List.of(msgWithStackTrace), false, ProgrammingLanguage.JAVA).getDetailText());
+                .isEqualTo(feedbackRepository.createFeedbackFromTestCase("test1", List.of(msgWithStackTrace), false, ProgrammingLanguage.JAVA).getDetailText());
     }
 
     @Test
@@ -103,7 +106,7 @@ class FeedbackServiceTest {
                 \tat org.hibernate.loader.plan.exec.process.internal.ResultSetProcessorImpl.extractResults(ResultSetProcessorImpl.java:94)""";
         assertThat(
                 "org.springframework.orm.jpa.JpaSystemException: org.springframework.orm.jpa.JpaSystemException: null index column for collection: de.tum.in.www1.artemis.domain.exam.Exam.exerciseGroups")
-                        .isEqualTo(f.createFeedbackFromTestCase("test1", List.of(msgWithStackTrace), false, ProgrammingLanguage.JAVA).getDetailText());
+                        .isEqualTo(feedbackRepository.createFeedbackFromTestCase("test1", List.of(msgWithStackTrace), false, ProgrammingLanguage.JAVA).getDetailText());
     }
 
     @Test
@@ -146,6 +149,6 @@ class FeedbackServiceTest {
                     5
                 expected:
                     something else">
-                but was not.""").isEqualTo(f.createFeedbackFromTestCase("test1", List.of(msgWithStackTrace), false, ProgrammingLanguage.JAVA).getDetailText());
+                but was not.""").isEqualTo(feedbackRepository.createFeedbackFromTestCase("test1", List.of(msgWithStackTrace), false, ProgrammingLanguage.JAVA).getDetailText());
     }
 }

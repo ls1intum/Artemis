@@ -33,37 +33,37 @@ class AutomaticAssessmentControllerTest {
     private List<Feedback> feedbacks;
 
     @Mock
-    ModelIndex modelIndex;
+    private ModelIndex modelIndex;
 
     @Mock(serializable = true)
-    UMLClassDiagram classDiagram;
+    private UMLClassDiagram classDiagram;
 
     @Mock(serializable = true)
-    UMLClass umlClass;
+    private UMLClass umlClass;
 
     @Mock(serializable = true)
-    UMLRelationship umlRelationship;
+    private UMLRelationship umlRelationship;
 
     @Mock
-    UMLActivityDiagram activityDiagram;
+    private UMLActivityDiagram activityDiagram;
 
     @Mock
-    UMLActivityElement umlActivityElement;
+    private UMLActivityElement umlActivityElement;
 
     @Mock
-    UMLControlFlow umlControlFlow;
+    private UMLControlFlow umlControlFlow;
 
     @Mock(serializable = true)
-    Feedback feedback1;
+    private Feedback feedback1;
 
     @Mock(serializable = true)
-    Feedback feedback2;
+    private Feedback feedback2;
 
     @Mock(serializable = true)
-    Feedback feedback3;
+    private Feedback feedback3;
 
     @Mock(serializable = true)
-    SimilaritySetAssessment similaritySetAssessment;
+    private SimilaritySetAssessment similaritySetAssessment;
 
     @BeforeEach
     void setUp() {
