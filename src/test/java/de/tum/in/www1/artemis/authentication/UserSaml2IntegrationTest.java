@@ -66,7 +66,7 @@ public class UserSaml2IntegrationTest extends AbstractSpringIntegrationSaml2Test
         // Test whether authorizeSAML2 generates a no token
         request.post("/api/saml2", Boolean.FALSE, HttpStatus.UNAUTHORIZED);
 
-        assertThat(this.database.getUserByLogin(STUDENT_NAME)).as("User shall not exist").isNull();
+        assertThatThrownBy(() -> this.database.getUserByLogin(STUDENT_NAME)).isInstanceOf(IllegalArgumentException.class).hasMessage("Provided login student1 does not exist in database");
     }
 
     @AfterEach
