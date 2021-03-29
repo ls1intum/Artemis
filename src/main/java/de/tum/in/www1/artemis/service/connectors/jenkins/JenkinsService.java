@@ -332,27 +332,29 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
         // Extract test case feedback
         for (final var job : jobs) {
             for (final var testCase : job.getTestCases()) {
-                List<String> errorList = new ArrayList<>();
-                if (!CollectionUtils.isEmpty(testCase.getErrors())) {
-                    errorList.add(testCase.getErrors().get(0).getMostInformativeMessage());
+                String errorMessage;
+                var hasErrors = !CollectionUtils.isEmpty(testCase.getErrors());
+                var hasFailures = !CollectionUtils.isEmpty(testCase.getFailures());
+                if (hasErrors && testCase.getErrors().get(0).getMostInformativeMessage() != null) {
+                    errorMessage = testCase.getErrors().get(0).getMostInformativeMessage();
                 }
-                else if (!CollectionUtils.isEmpty(testCase.getFailures())) {
-                    errorList.add(testCase.getFailures().get(0).getMostInformativeMessage());
+                else if (hasFailures && testCase.getFailures().get(0).getMostInformativeMessage() != null) {
+                    errorMessage = testCase.getFailures().get(0).getMostInformativeMessage();
+                }
+                else if (hasErrors && testCase.getErrors().get(0).getType() != null) {
+                    errorMessage = String.format("Unsuccessful due to an error of type: %s", testCase.getErrors().get(0).getType());
+                }
+                else if (hasFailures && testCase.getFailures().get(0).getType() != null) {
+                    errorMessage = String.format("Unsuccessful due to an error of type: %s", testCase.getFailures().get(0).getType());
+                }
+                else {
+                    // this is an edge case which typically does not happen
+                    errorMessage = "Unsuccessful due to an unknown error. Please contact your instructor!";
                 }
 
-                boolean successful = Optional.ofNullable(testCase.getErrors()).map(List::isEmpty).orElse(true)
-                        && Optional.ofNullable(testCase.getFailures()).map(List::isEmpty).orElse(true);
+                boolean successful = !hasErrors && !hasFailures;
 
-                if (!successful && errorList.isEmpty()) {
-                    if (!CollectionUtils.isEmpty(testCase.getErrors())) {
-                        errorList.add(String.format("Unsuccessful due to an error of type: %s", testCase.getErrors().get(0).getType()));
-                    }
-                    else if (!CollectionUtils.isEmpty(testCase.getFailures())) {
-                        errorList.add(String.format("Unsuccessful due to an error of type: %s", testCase.getFailures().get(0).getType()));
-                    }
-                }
-
-                result.addFeedback(feedbackRepository.createFeedbackFromTestCase(testCase.getName(), errorList, successful, programmingLanguage));
+                result.addFeedback(feedbackRepository.createFeedbackFromTestCase(testCase.getName(), List.of(errorMessage), successful, programmingLanguage));
             }
         }
 
