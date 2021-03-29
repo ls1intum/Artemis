@@ -54,7 +54,7 @@
             </div>
         </div>
     </div>
-    <div class="col-md-4">
+    <div *ngIf="complaintsEnabled || feedbackRequestEnabled || isExamMode || true" class="col-md-4">
         <div class="card">
             <div class="card-header bg-primary text-white" style="font-size: 1.3rem">
                 <h4 *ngIf="!isExamMode" class="card-title">{{ 'artemisApp.assessmentDashboard.informationAboutCourse' | translate }}</h4>
@@ -85,7 +85,16 @@
                             <b>{{ 'artemisApp.assessmentDashboard.totalLocks' | translate }}:</b> {{ totalNumberOfAssessmentLocks }}
                         </a>
                     </li>
-                    <li *ngIf="!isExamMode">
+                    <li *ngIf="!isExamMode && isAtLeastInstructor">
+                        <b>{{ 'artemisApp.assessmentDashboard.totalLocks' | translate }}:</b> {{ totalNumberOfAssessmentLocks }}
+                    </li>
+                    <!-- Complaints about all assessments: -->
+                    <li *ngIf="!isExamMode && complaintsEnabled">
+                        <a [routerLink]="['/course-management', courseId, 'complaints']">
+                            <b> {{ 'artemisApp.assessmentDashboard.totalComplaints' | translate }}:</b> {{ numberOfTutorComplaints }}
+                        </a>
+                    </li>
+                    <li *ngIf="!isExamMode && feedbackRequestEnabled">
                         <b>{{ 'artemisApp.assessmentDashboard.totalMoreFeedbackRequests' | translate }}:</b> {{ numberOfMoreFeedbackRequests }}
                     </li>
                 </ul>
