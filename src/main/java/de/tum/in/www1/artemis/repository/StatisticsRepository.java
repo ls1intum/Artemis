@@ -13,6 +13,7 @@ import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.statistics.CourseStatisticsAverageScore;
 
 /**
  * Spring Data JPA repository for the user statistics
@@ -233,13 +234,6 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
     List<Map<String, Object>> getQuestionsAnsweredForCourse(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate, @Param("courseId") Long courseId);
 
     @Query("""
-            select e
-            from Exercise e
-            where e.course.id = :courseId
-            """)
-    List<Exercise> findExercisesByCourseId(@Param("courseId") Long courseId);
-
-    @Query("""
             select e.id
             from Exercise e
             where e.course.id = :courseId
@@ -247,11 +241,16 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
     List<Long> findExerciseIdsByCourseId(@Param("courseId") Long courseId);
 
     @Query("""
-            select avg(r.rating) as avgRating, a.firstName as firstName, a.lastName as lastName
-            from Rating r join r.result result join result.participation p join p.exercise e join result.assessor a
-            where r.result.participation.exercise in :exercises
-            group by a.firstName, a.lastName
+            select
+            new de.tum.in.www1.artemis.domain.statistics.CourseStatisticsAverageScore(
+                p.exercise.id,
+                p.exercise.title,
+                avg(p.lastScore)
+                )
+            from ParticipantScore p
+            where p.exercise IN :exercises
+            group by p.exercise.id
             """)
-    List<Map<String, Object>> getAvgRatingOfTutorsByExerciseIds(@Param("exercises") Set<Exercise> exercises);
+    List<CourseStatisticsAverageScore> findAvgPointsForExercises(@Param("exercises") Set<Exercise> exercises);
 
 }

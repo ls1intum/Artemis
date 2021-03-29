@@ -1,0 +1,34 @@
+<div class="row mb-5">
+    <div class="col-md-2 d-flex">
+        <div class="row flex-grow-1">
+            <h3 class="col-md-8 d-flex">{{ 'artemisApp.course.averageScore' | artemisTranslate }}</h3>
+            <fa-icon
+                *ngIf="exerciseAverageScores.length > 10 && currentPeriod > 0"
+                [icon]="'arrow-left'"
+                size="3x"
+                class="col-md-4 d-flex justify-content-end align-items-center"
+                role="button"
+                (click)="switchTimeSpan(LEFT)"
+            ></fa-icon>
+        </div>
+    </div>
+    <canvas
+        class="col-md-9"
+        baseChart
+        height="250"
+        width="1500"
+        [datasets]="chartData"
+        [labels]="barChartLabels"
+        [options]="barChartOptions"
+        [legend]="barChartLegend"
+        [chartType]="barChartType"
+    ></canvas>
+    <fa-icon
+        *ngIf="exerciseAverageScores.length > 10 && exerciseAverageScores.slice((this.currentPeriod + 1) * 10, (this.currentPeriod + 2) * 10).length > 0"
+        [icon]="'arrow-right'"
+        size="3x"
+        class="col-md-1 d-flex justify-content-start align-items-center"
+        role="button"
+        (click)="switchTimeSpan(RIGHT)"
+    ></fa-icon>
+</div>

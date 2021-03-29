@@ -138,6 +138,7 @@
         "courseStatistics": {
             "statistics": "Statistiken",
             "course": "Kurs",
+            "courseAverage": "Kursdurchschnitt",
             "amountOfStudents": "# an Studenten",
             "activeStudents": "Aktive Studenten"
         }

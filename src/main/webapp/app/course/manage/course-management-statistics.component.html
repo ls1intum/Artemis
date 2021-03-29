@@ -20,37 +20,13 @@
         </div>
     </div>
 
-    <div class="row">
-        <div class="col-md-2 mb-4">
-            <jhi-doughnut-chart
-                class="mb-4 d-inline-flex"
-                [doughnutChartTitle]="'artemisApp.course.averageScore' | artemisTranslate"
-                [currentPercentage]="currentAverageScore"
-                [currentAbsolute]="currentAbsolutePoints"
-                [currentMax]="currentMaxPoints"
-            >
-            </jhi-doughnut-chart>
-            <select class="form-control" [(ngModel)]="selectedValueAverageScore" (ngModelChange)="onAverageScoreSelect()">
-                <option [ngValue]="defaultTitle">{{ 'artemisApp.courseStatistics.course' | artemisTranslate }}</option>
-                <option *ngFor="let exerciseId of exerciseTitles" [value]="exerciseId">{{ exerciseId }}</option>
-            </select>
-        </div>
-        <div class="col-md-2 mb-4">
-            <jhi-doughnut-chart
-                class="mb-4 d-inline-flex"
-                [doughnutChartTitle]="'artemisApp.course.tutorRating' | artemisTranslate"
-                [currentPercentage]="currentAverageRatingInPercent"
-                [currentAbsolute]="currentAverageRating"
-                [currentMax]="5"
-            >
-            </jhi-doughnut-chart>
-            <select class="form-control" [(ngModel)]="selectedValueAverageRating" (ngModelChange)="onAverageRatingSelect()">
-                <option [ngValue]="defaultTitle">{{ 'artemisApp.courseStatistics.course' | artemisTranslate }}</option>
-                <option *ngFor="let tutor of tutorNames" [value]="tutor">{{ tutor }}</option>
-            </select>
-        </div>
-    </div>
-
+    <jhi-statistics-average-score-graph
+        *ngIf="courseStatistics"
+        [graphType]="graph.AVERAGE_SCORE"
+        [exerciseAverageScores]="courseStatistics.averageScoresOfExercises"
+        [courseAverage]="courseStatistics.averageScoreOfCourse"
+    >
+    </jhi-statistics-average-score-graph>
     <div *ngFor="let graph of graphTypes; let i = index" id="graph-{{ i }}" class="graph">
         <jhi-statistics-graph [graphType]="graph" [currentSpan]="currentSpan" [statisticsView]="statisticsView" [courseId]="courseId"> </jhi-statistics-graph>
     </div>

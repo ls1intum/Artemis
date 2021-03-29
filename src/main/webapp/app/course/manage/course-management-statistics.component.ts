@@ -12,6 +12,7 @@ import { CourseManagementStatisticsDTO } from './course-management-statistics-dt
 export class CourseManagementStatisticsComponent implements OnInit {
     // html properties
     SpanType = SpanType;
+    graph = Graphs;
     graphTypes = [
         Graphs.SUBMISSIONS,
         Graphs.ACTIVE_USERS,
@@ -55,46 +56,10 @@ export class CourseManagementStatisticsComponent implements OnInit {
         });
         this.service.getCourseStatistics(this.courseId).subscribe((res: CourseManagementStatisticsDTO) => {
             this.courseStatistics = res;
-            this.selectedValueAverageScore = this.defaultTitle;
-            this.exerciseTitles = Object.keys(res.exerciseNameToMaxPointsMap);
-            this.currentAbsolutePoints = this.courseStatistics.averagePointsOfCourse;
-            this.currentMaxPoints = this.courseStatistics.maxPointsOfCourse;
-            this.currentAverageScore = Math.round((this.courseStatistics.averagePointsOfCourse / this.courseStatistics.maxPointsOfCourse) * 100);
-
-            this.currentAverageRating = this.courseStatistics.averageRatingInCourse;
-            this.selectedValueAverageRating = this.defaultTitle;
-            this.tutorNames = Object.keys(res.tutorToAverageRatingMap);
-            this.currentAverageRatingInPercent = (this.currentAverageRating * 100) / 5;
         });
     }
 
     onTabChanged(span: SpanType): void {
         this.currentSpan = span;
-    }
-
-    /**
-     * Callback function for when an user selected a Exercise or the course from the dropdown list below the average score doughnut chart
-     */
-    onAverageScoreSelect(): void {
-        this.currentAbsolutePoints =
-            this.selectedValueAverageScore === this.defaultTitle
-                ? this.courseStatistics.averagePointsOfCourse
-                : this.courseStatistics.exerciseNameToAveragePointsMap[this.selectedValueAverageScore];
-        this.currentMaxPoints =
-            this.selectedValueAverageScore === this.defaultTitle
-                ? this.courseStatistics.maxPointsOfCourse
-                : this.courseStatistics.exerciseNameToMaxPointsMap[this.selectedValueAverageScore];
-        this.currentAverageScore = Math.round((this.currentAbsolutePoints / this.currentMaxPoints) * 100);
-    }
-
-    /**
-     * Callback function for when an user selected a tutor or the course from the dropdown list below the tutor rating doughnut chart
-     */
-    onAverageRatingSelect(): void {
-        this.currentAverageRating =
-            this.selectedValueAverageRating === this.defaultTitle
-                ? this.courseStatistics.averageRatingInCourse
-                : this.courseStatistics.tutorToAverageRatingMap[this.selectedValueAverageRating];
-        this.currentAverageRatingInPercent = (this.currentAverageRating * 100) / 5;
     }
 }

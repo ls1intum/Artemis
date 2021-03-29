@@ -14,6 +14,7 @@ import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.enumeration.GraphType;
 import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
 import de.tum.in.www1.artemis.domain.enumeration.SpanType;
+import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.ParticipantScoreRepository;
 import de.tum.in.www1.artemis.repository.StatisticsRepository;
 import de.tum.in.www1.artemis.web.rest.dto.CourseManagementStatisticsDTO;
@@ -25,9 +26,12 @@ public class StatisticsService {
 
     private final ParticipantScoreRepository participantScoreRepository;
 
-    public StatisticsService(StatisticsRepository statisticsRepository, ParticipantScoreRepository participantScoreRepository) {
+    private final ExerciseRepository exerciseRepository;
+
+    public StatisticsService(StatisticsRepository statisticsRepository, ParticipantScoreRepository participantScoreRepository, ExerciseRepository exerciseRepository) {
         this.statisticsRepository = statisticsRepository;
         this.participantScoreRepository = participantScoreRepository;
+        this.exerciseRepository = exerciseRepository;
     }
 
     /**
@@ -385,93 +389,38 @@ public class StatisticsService {
     }
 
     /**
-     * Get the data for the doughnut graphs in the course statistics, stored in the CourseManagementStatisticsDTO.
+     * Get the average score of the course and all exercises for the course statistics
      *
      * @param courseId    the id of the course for which the data should be fetched
      * @return a custom CourseManagementStatisticsDTO, which contains the relevant data
      */
     public CourseManagementStatisticsDTO getCourseStatistics(Long courseId) {
         var courseManagementStatisticsDTO = new CourseManagementStatisticsDTO();
-        var exercises = statisticsRepository.findExercisesByCourseId(courseId);
+        var now = ZonedDateTime.now();
+        var exercises = exerciseRepository.getPastExercises(courseId, now);
         var includedExercises = exercises.stream().filter(Exercise::isCourseExercise)
                 .filter(exercise -> !exercise.getIncludedInOverallScore().equals(IncludedInOverallScore.NOT_INCLUDED)).collect(Collectors.toSet());
-        var courseMaxPoints = 0.0;
         var averageScoreForCourse = participantScoreRepository.findAvgScore(includedExercises);
-        var averagePointsByTitle = createAverageScoreMap(includedExercises);
-        var tutorRatings = createTutorRatingMap(includedExercises);
+        var averageScoreForExercises = statisticsRepository.findAvgPointsForExercises(includedExercises);
+        averageScoreForExercises.forEach(exercise -> {
+            var roundedAverageScore = round(exercise.getAverageScore());
+            exercise.setAverageScore(roundedAverageScore);
+        });
 
-        var sumOfRatings = 0.0;
-        var values = new ArrayList<>(tutorRatings.values());
-        for (var value : values) {
-            sumOfRatings += value;
-        }
-        if (tutorRatings.size() > 0) {
-            courseManagementStatisticsDTO.setAverageRatingInCourse(sumOfRatings * 1.0 / tutorRatings.size());
+        if (averageScoreForCourse != null && averageScoreForCourse > 0) {
+            courseManagementStatisticsDTO.setAverageScoreOfCourse(round(averageScoreForCourse));
         }
         else {
-            courseManagementStatisticsDTO.setAverageRatingInCourse(0.0);
+            courseManagementStatisticsDTO.setAverageScoreOfCourse(0.0);
         }
-        courseManagementStatisticsDTO.setTutorToAverageRatingMap(tutorRatings);
 
-        // Set the max points for each exercise
-        var maxPoints = new HashMap<String, Double>();
-        for (var exercise : includedExercises) {
-            var exerciseTitle = exercise.getTitle();
-            maxPoints.put(exerciseTitle, exercise.getMaxPoints());
-            courseMaxPoints += exercise.getMaxPoints();
-
-            // If a exercise does not have averagePoints yet, set it here with 0.0
-            if (!averagePointsByTitle.containsKey(exerciseTitle)) {
-                averagePointsByTitle.put(exerciseTitle, 0.0);
-            }
-        }
-        if (averageScoreForCourse > 0 && courseMaxPoints > 0) {
-            courseManagementStatisticsDTO.setAveragePointsOfCourse(round((averageScoreForCourse * courseMaxPoints) / 100.0));
+        if (averageScoreForExercises.size() > 0) {
+            courseManagementStatisticsDTO.setAverageScoresOfExercises(averageScoreForExercises);
         }
         else {
-            courseManagementStatisticsDTO.setAveragePointsOfCourse(0.0);
+            courseManagementStatisticsDTO.setAverageScoresOfExercises(new ArrayList<>());
         }
-
-        courseManagementStatisticsDTO.setExerciseNameToAveragePointsMap(averagePointsByTitle);
-        courseManagementStatisticsDTO.setMaxPointsOfCourse(courseMaxPoints);
-        courseManagementStatisticsDTO.setExerciseNameToMaxPointsMap(maxPoints);
 
         return courseManagementStatisticsDTO;
-    }
-
-    /**
-     * Helper class which creates a map filled with the exerciseId mapped to the average score of the exercise
-     *
-     * @param exercises the exercises for which the average score should be collected
-     */
-    private Map<String, Double> createAverageScoreMap(Set<Exercise> exercises) {
-        var averagePointsForExercises = participantScoreRepository.findAvgPointsForExercises(exercises);
-        var averagePointsByTitle = new HashMap<String, Double>();
-        for (var averagePointsMap : averagePointsForExercises) {
-            var exerciseId = (Long) averagePointsMap.get("exerciseId");
-            var exerciseOptional = exercises.stream().filter(exercise -> exercise.getId().equals(exerciseId)).findFirst();
-            if (exerciseOptional.isPresent()) {
-                var exerciseTitle = exerciseOptional.get().getTitle();
-                var averagePoints = (Double) averagePointsMap.get("averagePoints");
-                averagePointsByTitle.put(exerciseTitle, averagePoints);
-            }
-        }
-        return averagePointsByTitle;
-    }
-
-    /**
-     * Helper class which creates a map filled with the tutor name mapped to the average rating he/she receives in assessments
-     *
-     * @param exercises the exercises for which the tutor ratings should be collected
-     */
-    private Map<String, Double> createTutorRatingMap(Set<Exercise> exercises) {
-        var ratingsByTutor = new HashMap<String, Double>();
-        var tutorRatings = statisticsRepository.getAvgRatingOfTutorsByExerciseIds(exercises);
-        for (var avgRatingMap : tutorRatings) {
-            var tutor = (avgRatingMap.get("firstName") + " " + avgRatingMap.get("lastName"));
-            var rating = (Double) avgRatingMap.get("avgRating");
-            ratingsByTutor.put(tutor, rating);
-        }
-        return ratingsByTutor;
     }
 }
