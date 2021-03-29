@@ -2,13 +2,31 @@ package de.tum.in.www1.artemis.service;
 
 import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.SOLUTION;
 import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.TEMPLATE;
-import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource.Endpoints.*;
+import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource.Endpoints.EXPORT_SUBMISSIONS_BY_PARTICIPANTS;
+import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource.Endpoints.EXPORT_SUBMISSIONS_BY_PARTICIPATIONS;
+import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource.Endpoints.GENERATE_TESTS;
+import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource.Endpoints.GET_FOR_COURSE;
+import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource.Endpoints.IMPORT;
+import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource.Endpoints.PROGRAMMING_EXERCISE;
+import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource.Endpoints.PROGRAMMING_EXERCISES;
+import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource.Endpoints.PROGRAMMING_EXERCISE_WITH_PARTICIPATIONS;
+import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource.Endpoints.PROGRAMMING_EXERCISE_WITH_TEMPLATE_AND_SOLUTION_PARTICIPATION;
 import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource.Endpoints.ROOT;
-import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource.ErrorKeys.*;
+import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource.Endpoints.SETUP;
+import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource.Endpoints.TEST_CASE_STATE;
+import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource.Endpoints.TIMELINE;
+import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource.ErrorKeys.INVALID_SOLUTION_BUILD_PLAN_ID;
 import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource.ErrorKeys.INVALID_SOLUTION_REPOSITORY_URL;
+import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource.ErrorKeys.INVALID_TEMPLATE_BUILD_PLAN_ID;
+import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource.ErrorKeys.INVALID_TEMPLATE_REPOSITORY_URL;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 import java.io.File;
 import java.io.IOException;
@@ -36,7 +54,11 @@ import org.springframework.util.MultiValueMap;
 import com.fasterxml.jackson.core.type.TypeReference;
 
 import de.tum.in.www1.artemis.config.Constants;
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.GradingCriterion;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
+import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
 import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
@@ -44,8 +66,12 @@ import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.notification.Notification;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.domain.plagiarism.text.TextPlagiarismResult;
 import de.tum.in.www1.artemis.programmingexercise.MockDelegate;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
@@ -1200,5 +1226,29 @@ public class ProgrammingExerciseIntegrationServiceTest {
         assertThat(notifications).as("Intructor get notified that unlock operations were successful")
                 .anyMatch(n -> n.getText().contains(Constants.PROGRAMMING_EXERCISE_SUCCESSFUL_UNLOCK_OPERATION_NOTIFICATION))
                 .noneMatch(n -> n.getText().contains(Constants.PROGRAMMING_EXERCISE_FAILED_UNLOCK_OPERATIONS_NOTIFICATION));
+    }
+
+    public void testGetPlagiarismResult() throws Exception {
+        final Course course = database.addCourseWithOneProgrammingExercise();
+        ProgrammingExercise programmingExercise = this.programmingExerciseRepository.findAllWithEagerTemplateAndSolutionParticipations().get(0);
+
+        TextPlagiarismResult expectedResult = database.createTextPlagiarismResultForExercise(programmingExercise);
+
+        TextPlagiarismResult result = request.get("/api/programming-exercises/" + programmingExercise.getId() + "/plagiarism-result", HttpStatus.OK, TextPlagiarismResult.class);
+        assertThat(result.getId()).isEqualTo(expectedResult.getId());
+    }
+
+    public void testGetPlagiarismResultWithoutResult() throws Exception {
+        final Course course = database.addCourseWithOneProgrammingExercise();
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findAllWithEagerTemplateAndSolutionParticipations().get(0);
+
+        TextPlagiarismResult result = request.get("/api/programming-exercises/" + programmingExercise.getId() + "/plagiarism-result", HttpStatus.NOT_FOUND,
+                TextPlagiarismResult.class);
+        assertThat(result).isNull();
+    }
+
+    public void testGetPlagiarismResultWithoutExercise() throws Exception {
+        TextPlagiarismResult result = request.get("/api/programming-exercises/" + 1 + "/plagiarism-result", HttpStatus.NOT_FOUND, TextPlagiarismResult.class);
+        assertThat(result).isNull();
     }
 }
