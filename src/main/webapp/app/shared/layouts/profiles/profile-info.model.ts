@@ -1,6 +1,7 @@
 import { ActiveFeatureToggles } from 'app/shared/feature-toggle/feature-toggle.service';
 import { GuidedTourMapping } from 'app/guided-tour/guided-tour-setting.model';
 import { ProgrammingLanguageFeature } from 'app/exercises/programming/shared/service/programming-language-feature/programming-language-feature.service';
+import { Saml2 } from 'app/core/login/login.service';
 
 export class ProfileInfo {
     public activeProfiles: string[];
@@ -28,5 +29,5 @@ export class ProfileInfo {
     public accountName?: string;
     public versionControlUrl?: string;
     public programmingLanguageFeatures: ProgrammingLanguageFeature[];
-    public saml2?: { ['button-label']: string; ['enable-password']: boolean };
+    public saml2?: Saml2;
 }
