@@ -8,6 +8,7 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.http.client.HttpResponseException;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Element;
@@ -331,18 +332,23 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
         // Extract test case feedback
         for (final var job : jobs) {
             for (final var testCase : job.getTestCases()) {
-                var errorMessage = Optional.ofNullable(testCase.getErrors()).map((errors) -> errors.get(0).getMostInformativeMessage());
-                var failureMessage = Optional.ofNullable(testCase.getFailures()).map((failures) -> failures.get(0).getMostInformativeMessage());
-                var errorList = errorMessage.or(() -> failureMessage).map(List::of).orElse(Collections.emptyList());
+                List<String> errorList = new ArrayList<>();
+                if (!CollectionUtils.isEmpty(testCase.getErrors())) {
+                    errorList.add(testCase.getErrors().get(0).getMostInformativeMessage());
+                }
+                else if (!CollectionUtils.isEmpty(testCase.getFailures())) {
+                    errorList.add(testCase.getFailures().get(0).getMostInformativeMessage());
+                }
+
                 boolean successful = Optional.ofNullable(testCase.getErrors()).map(List::isEmpty).orElse(true)
                         && Optional.ofNullable(testCase.getFailures()).map(List::isEmpty).orElse(true);
 
                 if (!successful && errorList.isEmpty()) {
-                    var errorType = Optional.ofNullable(testCase.getErrors()).map((errors) -> errors.get(0).getType());
-                    var failureType = Optional.ofNullable(testCase.getFailures()).map((failures) -> failures.get(0).getType());
-                    var message = errorType.or(() -> failureType).map(t -> String.format("Unsuccessful due to an error of type: %s", t));
-                    if (message.isPresent()) {
-                        errorList = List.of(message.get());
+                    if (!CollectionUtils.isEmpty(testCase.getErrors())) {
+                        errorList.add(String.format("Unsuccessful due to an error of type: %s", testCase.getErrors().get(0).getType()));
+                    }
+                    else if (!CollectionUtils.isEmpty(testCase.getFailures())) {
+                        errorList.add(String.format("Unsuccessful due to an error of type: %s", testCase.getFailures().get(0).getType()));
                     }
                 }
 
