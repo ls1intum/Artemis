@@ -33,7 +33,7 @@ import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
  * This class describes a service for SAML2 authentication.
  * 
  * The main method is {@link #handleAuthentication(Saml2AuthenticatedPrincipal)}. The service extracts the user information
- * from the {@link Saml2AuthenticatedPrincipal} and creates the user, it it does not exist already. 
+ * from the {@link Saml2AuthenticatedPrincipal} and creates the user, if it does not exist already. 
  * 
  * When the user gets created, the SAML2 attributes can be used to fill in user information. The configuration happens
  * via patterns for every field in the SAML2 configuration.
