@@ -61,12 +61,12 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
             LEFT JOIN FETCH tp.results AS tpr LEFT JOIN FETCH sp.results AS spr LEFT JOIN FETCH tpr.feedbacks LEFT JOIN FETCH spr.feedbacks
             LEFT JOIN FETCH tpr.submission LEFT JOIN FETCH spr.submission
             WHERE pe.id = :#{#exerciseId}
-                AND (tpr.id = (SELECT MAX(id) from tp.results) OR tpr.id IS NULL)
+                AND (tpr.id = (SELECT MAX(id) FROM tp.results) OR tpr.id IS NULL)
                 AND (spr.id = (SELECT MAX(id) FROM sp.results) OR spr.id IS NULL)
             """)
     Optional<ProgrammingExercise> findWithTemplateAndSolutionParticipationLatestResultById(@Param("exerciseId") Long exerciseId);
 
-    @Query("select distinct pe from ProgrammingExercise pe LEFT JOIN FETCH pe.studentParticipations")
+    @Query("SELECT DISTINCT pe FROM ProgrammingExercise pe LEFT JOIN FETCH pe.studentParticipations")
     List<ProgrammingExercise> findAllWithEagerParticipations();
 
     @Query("SELECT DISTINCT pe FROM ProgrammingExercise pe WHERE pe.course.endDate BETWEEN :#{#endDate1} AND :#{#endDate2}")
