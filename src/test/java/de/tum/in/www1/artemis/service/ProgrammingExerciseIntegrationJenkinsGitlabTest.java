@@ -708,6 +708,12 @@ public class ProgrammingExerciseIntegrationJenkinsGitlabTest extends AbstractSpr
 
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testCheckPlagiarism() throws Exception {
+        programmingExerciseIntegrationServiceTest.testCheckPlagiarism();
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void testGetPlagiarismResult() throws Exception {
         programmingExerciseIntegrationServiceTest.testGetPlagiarismResult();
     }

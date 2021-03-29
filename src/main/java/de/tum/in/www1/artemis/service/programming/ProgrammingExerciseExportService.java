@@ -456,7 +456,9 @@ public class ProgrammingExerciseExportService {
         final var templateRepoName = urlService.getRepositorySlugFromRepositoryUrl(programmingExercise.getTemplateParticipation().getVcsRepositoryUrl());
 
         JPlagOptions options = new JPlagOptions(repoFolder, programmingLanguage);
-        options.setBaseCodeSubmissionName(templateRepoName);
+        if (templateRepoName != null) {
+            options.setBaseCodeSubmissionName(templateRepoName);
+        }
 
         // Important: for large courses with more than 1000 students, we might get more than one million results and 10 million files in the file system due to many 0% results,
         // therefore we limit the results to at least 50% or 0.5 similarity, the passed threshold is between 0 and 100%
@@ -520,7 +522,9 @@ public class ProgrammingExerciseExportService {
         final var templateRepoName = urlService.getRepositorySlugFromRepositoryUrl(programmingExercise.getTemplateParticipation().getVcsRepositoryUrl());
 
         JPlagOptions options = new JPlagOptions(repoFolder, programmingLanguage);
-        options.setBaseCodeSubmissionName(templateRepoName);
+        if (templateRepoName != null) {
+            options.setBaseCodeSubmissionName(templateRepoName);
+        }
 
         // Important: for large courses with more than 1000 students, we might get more than one million results and 10 million files in the file system due to many 0% results,
         // therefore we limit the results to at least 50% or 0.5 similarity, the passed threshold is between 0 and 100%
