@@ -41,6 +41,7 @@ import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
+import de.tum.in.www1.artemis.domain.enumeration.Visibility;
 import de.tum.in.www1.artemis.domain.notification.Notification;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
@@ -1041,7 +1042,7 @@ public class ProgrammingExerciseIntegrationServiceTest {
         final var updates = testCases.stream().map(testCase -> {
             final var testCaseUpdate = new ProgrammingExerciseTestCaseDTO();
             testCaseUpdate.setId(testCase.getId());
-            testCaseUpdate.setAfterDueDate(true);
+            testCaseUpdate.setVisibility(Visibility.AFTER_DUE_DATE);
             testCaseUpdate.setWeight(testCase.getId() + 42.0);
             testCaseUpdate.setBonusMultiplier(testCase.getId() + 1.0);
             testCaseUpdate.setBonusPoints(testCase.getId() + 2.0);
@@ -1072,7 +1073,7 @@ public class ProgrammingExerciseIntegrationServiceTest {
         final var updates = testCases.stream().map(testCase -> {
             final var testCaseUpdate = new ProgrammingExerciseTestCaseDTO();
             testCaseUpdate.setId(testCase.getId());
-            testCaseUpdate.setAfterDueDate(true);
+            testCaseUpdate.setVisibility(Visibility.AFTER_DUE_DATE);
             testCaseUpdate.setWeight(testCase.getId() + 42.0);
             testCaseUpdate.setBonusMultiplier(testCase.getId() + 1.0);
             testCaseUpdate.setBonusPoints(testCase.getId() + 2.0);
@@ -1105,7 +1106,7 @@ public class ProgrammingExerciseIntegrationServiceTest {
         final var updates = testCases.stream().map(testCase -> {
             final var testCaseUpdate = new ProgrammingExerciseTestCaseDTO();
             testCaseUpdate.setId(testCase.getId());
-            testCaseUpdate.setAfterDueDate(true);
+            testCaseUpdate.setVisibility(Visibility.AFTER_DUE_DATE);
             testCaseUpdate.setWeight(0D);
             testCaseUpdate.setBonusMultiplier(testCase.getId() + 1.0);
             testCaseUpdate.setBonusPoints(testCase.getId() + 2.0);

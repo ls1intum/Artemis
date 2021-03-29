@@ -123,7 +123,7 @@
                     <div *ngIf="pastExercises?.length > 0">
                         <div class="control-label" (click)="showPastExercises = !showPastExercises">
                             <fa-icon class="control-icon" [icon]="showPastExercises ? 'angle-down' : 'angle-up'"></fa-icon>
-                            <strong>{{ 'artemisApp.course.pastExercises' | artemisTranslate }}</strong>
+                            <strong>{{ 'artemisApp.course.pastExercises' | artemisTranslate: { amount: pastExercises.length, total: pastExerciseCount } }}</strong>
                         </div>
                         <div *ngIf="showPastExercises">
                             <jhi-course-management-exercise-row
