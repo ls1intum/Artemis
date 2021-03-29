@@ -38,6 +38,7 @@ import de.tum.in.www1.artemis.domain.lecture.*;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.*;
+import de.tum.in.www1.artemis.domain.plagiarism.modeling.ModelingPlagiarismResult;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextPlagiarismResult;
 import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.repository.*;
@@ -3031,6 +3032,15 @@ public class DatabaseUtilService {
 
     public TextPlagiarismResult createTextPlagiarismResultForExercise(Exercise exercise) {
         TextPlagiarismResult result = new TextPlagiarismResult();
+        result.setExercise(exercise);
+        result.setSimilarityDistribution(new int[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 });
+        result.setDuration(4);
+
+        return plagiarismResultRepo.save(result);
+    }
+
+    public ModelingPlagiarismResult createModelingPlagiarismResultForExercise(Exercise exercise) {
+        ModelingPlagiarismResult result = new ModelingPlagiarismResult();
         result.setExercise(exercise);
         result.setSimilarityDistribution(new int[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 });
         result.setDuration(4);
