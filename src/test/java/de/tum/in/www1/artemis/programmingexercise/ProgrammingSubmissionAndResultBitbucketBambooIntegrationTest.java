@@ -593,6 +593,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         final String slug = "test201904bprogrammingexercise6-exercise-testuser";
         final String hash = "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d";
         bitbucketRequestMockProvider.mockFetchCommitInfo(projectKey, slug, hash);
+        bitbucketRequestMockProvider.mockGetDefaultBranch("master", programmingExercise.getProjectKey());
         ProgrammingSubmission submission = postSubmission(participation.getId(), HttpStatus.OK, requestAsArtemisUser);
 
         // Mock result from bamboo
