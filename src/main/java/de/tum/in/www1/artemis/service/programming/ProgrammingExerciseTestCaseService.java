@@ -15,6 +15,7 @@ import de.tum.in.www1.artemis.domain.Feedback;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.enumeration.Visibility;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseTestCaseDTO;
@@ -66,7 +67,7 @@ public class ProgrammingExerciseTestCaseService {
      * Update the updatable attributes of the provided test case dtos. Returns an entry in the set for each test case that could be updated.
      *
      * @param exerciseId            of exercise the test cases belong to.
-     * @param testCaseProgrammingExerciseTestCaseDTOS of the test cases to update the weights and afterDueDate flag of.
+     * @param testCaseProgrammingExerciseTestCaseDTOS of the test cases to update the weights and visibility of.
      * @return the updated test cases.
      * @throws EntityNotFoundException if the programming exercise could not be found.
      * @throws IllegalAccessException if the retriever does not have the permissions to fetch information related to the programming exercise.
@@ -87,7 +88,7 @@ public class ProgrammingExerciseTestCaseService {
 
             ProgrammingExerciseTestCase matchingTestCase = matchingTestCaseOpt.get();
             matchingTestCase.setWeight(programmingExerciseTestCaseDTO.getWeight());
-            matchingTestCase.setAfterDueDate(programmingExerciseTestCaseDTO.isAfterDueDate());
+            matchingTestCase.setVisibility(programmingExerciseTestCaseDTO.getVisibility());
             matchingTestCase.setBonusMultiplier(programmingExerciseTestCaseDTO.getBonusMultiplier());
             matchingTestCase.setBonusPoints(programmingExerciseTestCaseDTO.getBonusPoints());
             updatedTests.add(matchingTestCase);
@@ -157,7 +158,8 @@ public class ProgrammingExerciseTestCaseService {
         // Filter out sca feedback and create test cases out of the feedbacks
         return feedbacks.stream().filter(feedback -> !feedback.isStaticCodeAnalysisFeedback())
                 // we use default values for weight, bonus multiplier and bonus points
-                .map(feedback -> new ProgrammingExerciseTestCase().testName(feedback.getText()).weight(1.0).bonusMultiplier(1.0).bonusPoints(0.0).exercise(exercise).active(true))
+                .map(feedback -> new ProgrammingExerciseTestCase().testName(feedback.getText()).weight(1.0).bonusMultiplier(1.0).bonusPoints(0.0).exercise(exercise).active(true)
+                        .visibility(Visibility.ALWAYS))
                 .collect(Collectors.toSet());
     }
 
