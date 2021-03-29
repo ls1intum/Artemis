@@ -1,7 +1,8 @@
 package de.tum.in.www1.artemis.util;
 
 import static com.google.gson.JsonParser.parseString;
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
 
 import java.net.URL;
 import java.time.Duration;
@@ -2468,6 +2469,19 @@ public class DatabaseUtilService {
     public List<Feedback> loadAssessmentFomResources(String path) throws Exception {
         String fileContent = FileUtils.loadFileFromResources(path);
         return mapper.readValue(fileContent, mapper.getTypeFactory().constructCollectionType(List.class, Feedback.class));
+    }
+
+    /**
+     * Gets a user from the database using the provided login but without the authorities.
+     * <p>
+     * Note: Jackson sometimes fails to deserialize the authorities leading to flaky server tests. The specific
+     * circumstances when this happens in still unknown.
+     *
+     * @param login login to find user with
+     * @return user with the provided logih
+     */
+    public User getUserByLoginWithoutAuthorities(String login) {
+        return userRepo.findOneByLogin(login).orElseThrow(() -> new IllegalArgumentException("Provided login " + login + " does not exist in database"));
     }
 
     public User getUserByLogin(String login) {
