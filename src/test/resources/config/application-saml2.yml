@@ -17,7 +17,7 @@ saml2:
     # curly brackets. E.g. username: '{user_attribute}'. Missing attributes get replaced with an empty string.
     # This enables definition of alternative attribute keys when using multiple IdPs. E.g. username: '{uid}{user_id}'.
     # User template pattern:
-    username-pattern: '{first_name}_{last_name}'
+    username-pattern: '{uid}'
     first-name-pattern: '{first_name}'
     last-name-pattern: '{last_name}'
     email-pattern: '{email}'
