@@ -468,7 +468,7 @@ public class StatisticsService {
         var ratingsByTutor = new HashMap<String, Double>();
         var tutorRatings = statisticsRepository.getAvgRatingOfTutorsByExerciseIds(exercises);
         for (var avgRatingMap : tutorRatings) {
-            var tutor = (String) avgRatingMap.get("tutor");
+            var tutor = (avgRatingMap.get("firstName") + " " + avgRatingMap.get("lastName"));
             var rating = (Double) avgRatingMap.get("avgRating");
             ratingsByTutor.put(tutor, rating);
         }

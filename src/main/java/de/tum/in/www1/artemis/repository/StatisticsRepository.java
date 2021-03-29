@@ -247,10 +247,10 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
     List<Long> findExerciseIdsByCourseId(@Param("courseId") Long courseId);
 
     @Query("""
-            select avg(r.rating) as avgRating, a.firstName as tutor
+            select avg(r.rating) as avgRating, a.firstName as firstName, a.lastName as lastName
             from Rating r join r.result result join result.participation p join p.exercise e join result.assessor a
             where r.result.participation.exercise in :exercises
-            group by a.firstName
+            group by a.firstName, a.lastName
             """)
     List<Map<String, Object>> getAvgRatingOfTutorsByExerciseIds(@Param("exercises") Set<Exercise> exercises);
 
