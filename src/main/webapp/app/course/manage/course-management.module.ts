@@ -7,6 +7,7 @@ import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-
 import { ArtemisColorSelectorModule } from 'app/shared/color-selector/color-selector.module';
 import { ImageCropperModule } from 'ngx-image-cropper';
 import { MomentModule } from 'ngx-moment';
+import { TagInputModule } from 'ngx-chips';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { CourseManagementExercisesComponent } from 'app/course/manage/course-management-exercises.component';
 import { CourseDetailComponent } from 'app/course/manage/course-detail.component';
@@ -57,6 +58,7 @@ import { CourseManagementStatisticsComponent } from 'app/course/manage/course-ma
         ImageCropperModule,
         OrionModule,
         MomentModule,
+        TagInputModule,
         ArtemisExerciseModule,
         ArtemisLectureModule,
         ArtemisCourseScoresModule,

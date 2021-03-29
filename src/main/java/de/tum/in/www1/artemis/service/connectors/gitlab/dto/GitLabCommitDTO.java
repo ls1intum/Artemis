@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service.connectors.gitlab.dto;
 
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -23,11 +24,11 @@ public class GitLabCommitDTO {
 
     private Author author;
 
-    private List<String> added;
+    private List<String> added = new ArrayList<>();
 
-    private List<String> modified;
+    private List<String> modified = new ArrayList<>();
 
-    private List<String> removed;
+    private List<String> removed = new ArrayList<>();
 
     public String getHash() {
         return hash;

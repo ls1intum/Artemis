@@ -60,4 +60,17 @@ describe('CourseManagementOverviewStatisticsComponent', () => {
         expect(component.barChartOptions.scales.yAxes[0].ticks.callback(44)).to.equal('44%');
         expect(component.barChartOptions.tooltips.callbacks.label({ index: 2 })).to.equal(' ' + initialStats[2]);
     });
+
+    it('should react to changes', () => {
+        // Provide the @Input data
+        component.courseId = courseId;
+        fixture.detectChanges();
+
+        component.initialStats = [];
+        component.amountOfStudentsInCourse = 0;
+        component.ngOnChanges();
+
+        expect(component.loading).to.be.false;
+        expect(component.dataForSpanType).to.deep.equal([0, 0, 0, 0]);
+    });
 });
