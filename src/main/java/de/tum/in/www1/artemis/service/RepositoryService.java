@@ -71,10 +71,7 @@ public class RepositoryService {
      * @param repository in which the requested files are located
      * @return Files with code or an exception is thrown
      */
-    public Map<String, String> getFilesWithContentForCommitRef(Repository repository, String commitRef) throws GitAPIException {
-        // Switch to a branch that has the files of a specific commit
-        gitService.checkoutOrCreateBranch(repository, commitRef);
-
+    public Map<String, String> getFilesWithContent(Repository repository) {
         var files = gitService.listFilesAndFolders(repository).entrySet().stream().filter(entry -> entry.getValue() == FileType.FILE).map(Map.Entry::getKey)
                 .collect(Collectors.toList());
         Map<String, String> fileListWithContent = new HashMap<>();
@@ -87,9 +84,6 @@ public class RepositoryService {
                 log.error("Content of file: " + file.toString() + " could not be loaded and throws the following error: " + e.getMessage());
             }
         });
-
-        // Go back to the master branch.
-        gitService.checkoutOrCreateBranch(repository, "master");
         return fileListWithContent;
     }
 
@@ -97,7 +91,7 @@ public class RepositoryService {
      * Get a single file/folder from repository.
      *
      * @param repository in which the requested file is located.
-     * @param filename of the file to be retrieved.
+     * @param filename   of the file to be retrieved.
      * @return The file if found or throw an exception.
      * @throws IOException if the file can't be found, is corrupt, etc.
      */

@@ -186,16 +186,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
     public ResponseEntity<Map<String, String>> getFilesWithContent(@PathVariable Long participationId) {
         return super.executeAndCheckForExceptions(() -> {
             Repository repository = getRepository(participationId, RepositoryActionType.READ, true);
-
-            String masterOrCommitHash = "master";
-            // Retrieve the last legal submission because we are getting the files for that commit.
-            var participation = participationService.findProgrammingExerciseParticipationWithLatestSubmissionAndResult(participationId);
-            if (participation instanceof ProgrammingExerciseStudentParticipation) {
-                Optional<ProgrammingSubmission> optLatestLegalSubmission = ((ProgrammingExerciseStudentParticipation) participation).findLatestSubmission();
-                masterOrCommitHash = optLatestLegalSubmission.isPresent() ? optLatestLegalSubmission.get().getCommitHash() : "master";
-            }
-
-            var filesWithContent = super.repositoryService.getFilesWithContentForCommitRef(repository, masterOrCommitHash);
+            var filesWithContent = super.repositoryService.getFilesWithContent(repository);
             return new ResponseEntity<>(filesWithContent, HttpStatus.OK);
         });
     }
