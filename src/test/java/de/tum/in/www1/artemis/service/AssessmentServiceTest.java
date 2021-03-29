@@ -214,8 +214,8 @@ public class AssessmentServiceTest extends AbstractSpringIntegrationBambooBitbuc
         result.setFeedbacks(feedbacks);
         submissionWithoutResult.addResult(result);
 
-        var calculatedScore = assessmentService.calculateTotalPoints(feedbacks);
-        assessmentService.submitResult(result, exercise, calculatedScore);
+        var calculatedScore = resultRepository.calculateTotalPoints(feedbacks);
+        resultRepository.submitResult(result, exercise);
         resultRepository.save(result);
 
         assertThat(result.isRated()).isTrue();
