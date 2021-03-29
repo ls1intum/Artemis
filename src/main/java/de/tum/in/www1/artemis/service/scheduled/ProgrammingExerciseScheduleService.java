@@ -18,16 +18,20 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseLifecycle;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
+import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.exam.ExamDateService;
+import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseGradingService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingSubmissionService;
 import de.tum.in.www1.artemis.service.util.Tuple;
@@ -46,9 +50,15 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
+    private final ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository;
+
+    private final ResultRepository resultRepository;
+
     private final ProgrammingSubmissionService programmingSubmissionService;
 
     private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
+
+    private final ProgrammingExerciseGradingService programmingExerciseGradingService;
 
     private final GroupNotificationService groupNotificationService;
 
@@ -58,16 +68,21 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
 
     private final GitService gitService;
 
-    public ProgrammingExerciseScheduleService(ScheduleService scheduleService, ProgrammingExerciseRepository programmingExerciseRepository, Environment env,
-            ProgrammingSubmissionService programmingSubmissionService, GroupNotificationService groupNotificationService, ExamDateService examDateService,
-            ProgrammingExerciseParticipationService programmingExerciseParticipationService, StudentExamRepository studentExamRepository, GitService gitService) {
+    public ProgrammingExerciseScheduleService(ScheduleService scheduleService, ProgrammingExerciseRepository programmingExerciseRepository,
+            ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository, ResultRepository resultRepository, Environment env,
+            ProgrammingSubmissionService programmingSubmissionService, ProgrammingExerciseGradingService programmingExerciseGradingService,
+            GroupNotificationService groupNotificationService, ExamDateService examDateService, ProgrammingExerciseParticipationService programmingExerciseParticipationService,
+            StudentExamRepository studentExamRepository, GitService gitService) {
         this.scheduleService = scheduleService;
         this.programmingExerciseRepository = programmingExerciseRepository;
+        this.programmingExerciseTestCaseRepository = programmingExerciseTestCaseRepository;
+        this.resultRepository = resultRepository;
         this.programmingSubmissionService = programmingSubmissionService;
         this.groupNotificationService = groupNotificationService;
         this.studentExamRepository = studentExamRepository;
         this.examDateService = examDateService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
+        this.programmingExerciseGradingService = programmingExerciseGradingService;
         this.env = env;
         this.gitService = gitService;
     }
@@ -87,11 +102,17 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
             List<ProgrammingExercise> exercisesToBeScheduled = programmingExerciseRepository.findAllToBeScheduled(ZonedDateTime.now());
             exercisesToBeScheduled.forEach(this::scheduleExercise);
 
+            List<ProgrammingExercise> programmingExercisesWithTestsAfterDueDateButNoRebuild = programmingExerciseRepository
+                    .findAllByDueDateAfterDateWithTestsAfterDueDateWithoutBuildStudentSubmissionsDate(ZonedDateTime.now());
+            programmingExercisesWithTestsAfterDueDateButNoRebuild.forEach(this::scheduleExercise);
+
             List<ProgrammingExercise> programmingExercisesWithExam = programmingExerciseRepository.findAllWithEagerExamByExamEndDateAfterDate(ZonedDateTime.now());
             programmingExercisesWithExam.forEach(this::scheduleExamExercise);
 
             log.info("Scheduled " + exercisesToBeScheduled.size() + " programming exercises.");
+            log.info("Scheduled " + programmingExercisesWithTestsAfterDueDateButNoRebuild.size() + "programming exercises for a score update after due date.");
             log.info("Scheduled " + programmingExercisesWithExam.size() + " exam programming exercises.");
+
         }
         catch (Exception e) {
             log.error("Failed to start ProgrammingExerciseScheduleService", e);
@@ -126,8 +147,13 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
         if (exercise.getReleaseDate() != null && ZonedDateTime.now().isBefore(exercise.getReleaseDate())) {
             return true;
         }
+        final ZonedDateTime now = ZonedDateTime.now();
         // If tests are run after due date and that due date lies in the future, we need to schedule that as well
-        return exercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null && ZonedDateTime.now().isBefore(exercise.getBuildAndTestStudentSubmissionsAfterDueDate());
+        if (exercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null && now.isBefore(exercise.getBuildAndTestStudentSubmissionsAfterDueDate())) {
+            return true;
+        }
+        // Has a regular due date in the future
+        return exercise.getDueDate() != null && now.isBefore(exercise.getDueDate());
     }
 
     private void cancelAllScheduledTasks(ProgrammingExercise exercise) {
@@ -164,6 +190,11 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
     }
 
     private void scheduleCourseExercise(ProgrammingExercise exercise) {
+        if (!SecurityUtils.isAuthenticated()) {
+            SecurityUtils.setAuthorizationObject();
+        }
+
+        // For any course exercise that needsToBeScheduled (dueDate and/or manual assessment)
 
         // For any course exercise with a valid release date
         if (exercise.getReleaseDate() != null && ZonedDateTime.now().isBefore(exercise.getReleaseDate())) {
@@ -179,7 +210,21 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
 
         // For any course exercise that needsToBeScheduled (buildAndTestAfterDueDate and/or manual assessment)
         if (exercise.getDueDate() != null && ZonedDateTime.now().isBefore(exercise.getDueDate())) {
-            scheduleService.scheduleTask(exercise, ExerciseLifecycle.DUE, lockAllStudentRepositories(exercise));
+            boolean updateScores;
+            if (exercise.getBuildAndTestStudentSubmissionsAfterDueDate() == null) {
+                // no rebuild date is set but test cases marked with AFTER_DUE_DATE exist: they have to become visible by recalculation of the scores
+                updateScores = programmingExerciseTestCaseRepository.countAfterDueDateByExerciseId(exercise.getId()) > 0;
+            }
+            else {
+                updateScores = false;
+            }
+
+            scheduleService.scheduleTask(exercise, ExerciseLifecycle.DUE, () -> {
+                lockAllStudentRepositories(exercise).run();
+                if (updateScores) {
+                    updateAllStudentScores(exercise).run();
+                }
+            });
             log.debug("Scheduled lock student repositories after due date for Programming Exercise \"" + exercise.getTitle() + "\" (#" + exercise.getId() + ") for "
                     + exercise.getDueDate() + ".");
         }
@@ -280,6 +325,30 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
     @NotNull
     public Runnable lockAllStudentRepositories(ProgrammingExercise exercise) {
         return lockStudentRepositories(exercise, participation -> true);
+    }
+
+    /**
+     * Returns a runnable, that, once executed, will update all results for the given exercise.
+     *
+     * This might be needed for an exercise that has test cases marked with
+     * {@link de.tum.in.www1.artemis.domain.enumeration.Visibility#AFTER_DUE_DATE}.
+     *
+     * Those test cases might already have been run in the continuous integration
+     * service and their feedbacks are therefore stored in the database.
+     * However, they are not included in the student score before the due date has passed.
+     * Updating the student score includes the feedbacks of those test cases into
+     * the result without having to trigger a new continuous integration job.
+     *
+     * @param exercise the exercise for which the results should be updated
+     * @return a Runnable that will update all results for the given exercise
+     */
+    @NotNull
+    public Runnable updateAllStudentScores(ProgrammingExercise exercise) {
+        return () -> {
+            SecurityUtils.setAuthorizationObject();
+            final List<Result> updatedResults = programmingExerciseGradingService.updateAllResults(exercise);
+            resultRepository.saveAll(updatedResults);
+        };
     }
 
     /**

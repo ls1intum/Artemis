@@ -41,6 +41,7 @@ import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
+import de.tum.in.www1.artemis.domain.enumeration.Visibility;
 import de.tum.in.www1.artemis.domain.notification.Notification;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
@@ -61,52 +62,19 @@ import de.tum.in.www1.artemis.web.websocket.dto.ProgrammingExerciseTestCaseState
 public class ProgrammingExerciseIntegrationServiceTest {
 
     @Autowired
-    GitUtilService gitUtilService;
+    private GitUtilService gitUtilService;
 
     @Autowired
-    CourseRepository courseRepository;
+    private CourseRepository courseRepository;
 
     @Autowired
-    ProgrammingExerciseRepository programmingExerciseRepository;
+    private ProgrammingExerciseRepository programmingExerciseRepository;
 
     @Autowired
-    ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
+    private ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
 
     @Autowired
     private ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository;
-
-    @Autowired
-    NotificationRepository notificationRepository;
-
-    Course course;
-
-    ProgrammingExercise programmingExercise;
-
-    ProgrammingExercise programmingExerciseInExam;
-
-    ProgrammingExerciseStudentParticipation participation1;
-
-    ProgrammingExerciseStudentParticipation participation2;
-
-    File downloadedFile;
-
-    File localRepoFile;
-
-    File originRepoFile;
-
-    Git localGit;
-
-    Git remoteGit;
-
-    File localRepoFile2;
-
-    File originRepoFile2;
-
-    Git localGit2;
-
-    Git remoteGit2;
-
-    private List<GradingCriterion> gradingCriteria;
 
     @Autowired
     private DatabaseUtilService database;
@@ -117,9 +85,33 @@ public class ProgrammingExerciseIntegrationServiceTest {
     @Autowired
     private GitService gitService;
 
-    MockDelegate mockDelegate;
+    private Course course;
 
-    VersionControlService versionControlService;
+    private ProgrammingExercise programmingExercise;
+
+    private ProgrammingExercise programmingExerciseInExam;
+
+    private ProgrammingExerciseStudentParticipation participation1;
+
+    private ProgrammingExerciseStudentParticipation participation2;
+
+    private File downloadedFile;
+
+    private File localRepoFile;
+
+    private Git localGit;
+
+    private Git remoteGit;
+
+    private File localRepoFile2;
+
+    private Git localGit2;
+
+    private Git remoteGit2;
+
+    private MockDelegate mockDelegate;
+
+    private VersionControlService versionControlService;
 
     public void setup(MockDelegate mockDelegate, VersionControlService versionControlService) throws Exception {
         this.mockDelegate = mockDelegate;
@@ -140,7 +132,7 @@ public class ProgrammingExerciseIntegrationServiceTest {
 
         localRepoFile = Files.createTempDirectory("repo").toFile();
         localGit = Git.init().setDirectory(localRepoFile).call();
-        originRepoFile = Files.createTempDirectory("repoOrigin").toFile();
+        File originRepoFile = Files.createTempDirectory("repoOrigin").toFile();
         remoteGit = Git.init().setDirectory(originRepoFile).call();
         StoredConfig config = localGit.getRepository().getConfig();
         config.setString("remote", "origin", "url", originRepoFile.getAbsolutePath());
@@ -148,7 +140,7 @@ public class ProgrammingExerciseIntegrationServiceTest {
 
         localRepoFile2 = Files.createTempDirectory("repo2").toFile();
         localGit2 = Git.init().setDirectory(localRepoFile2).call();
-        originRepoFile2 = Files.createTempDirectory("repoOrigin").toFile();
+        File originRepoFile2 = Files.createTempDirectory("repoOrigin").toFile();
         remoteGit2 = Git.init().setDirectory(originRepoFile2).call();
         StoredConfig config2 = localGit2.getRepository().getConfig();
         config2.setString("remote", "origin", "url", originRepoFile2.getAbsolutePath());
@@ -179,6 +171,15 @@ public class ProgrammingExerciseIntegrationServiceTest {
         }
         if (localGit != null) {
             localGit.close();
+        }
+        if (remoteGit != null) {
+            remoteGit.close();
+        }
+        if (localGit2 != null) {
+            localGit2.close();
+        }
+        if (remoteGit2 != null) {
+            remoteGit2.close();
         }
     }
 
@@ -402,7 +403,7 @@ public class ProgrammingExerciseIntegrationServiceTest {
         var programmingExerciseServer = request.get(path, HttpStatus.OK, ProgrammingExercise.class);
         assertThat(programmingExerciseServer.getTitle()).isEqualTo(programmingExercise.getTitle());
 
-        gradingCriteria = database.addGradingInstructionsToExercise(programmingExerciseServer);
+        List<GradingCriterion> gradingCriteria = database.addGradingInstructionsToExercise(programmingExerciseServer);
 
         assertThat(programmingExerciseServer.getGradingCriteria().get(0).getTitle()).isEqualTo(null);
         assertThat(programmingExerciseServer.getGradingCriteria().get(1).getTitle()).isEqualTo("test title");
@@ -1041,7 +1042,7 @@ public class ProgrammingExerciseIntegrationServiceTest {
         final var updates = testCases.stream().map(testCase -> {
             final var testCaseUpdate = new ProgrammingExerciseTestCaseDTO();
             testCaseUpdate.setId(testCase.getId());
-            testCaseUpdate.setAfterDueDate(true);
+            testCaseUpdate.setVisibility(Visibility.AFTER_DUE_DATE);
             testCaseUpdate.setWeight(testCase.getId() + 42.0);
             testCaseUpdate.setBonusMultiplier(testCase.getId() + 1.0);
             testCaseUpdate.setBonusPoints(testCase.getId() + 2.0);
@@ -1072,7 +1073,7 @@ public class ProgrammingExerciseIntegrationServiceTest {
         final var updates = testCases.stream().map(testCase -> {
             final var testCaseUpdate = new ProgrammingExerciseTestCaseDTO();
             testCaseUpdate.setId(testCase.getId());
-            testCaseUpdate.setAfterDueDate(true);
+            testCaseUpdate.setVisibility(Visibility.AFTER_DUE_DATE);
             testCaseUpdate.setWeight(testCase.getId() + 42.0);
             testCaseUpdate.setBonusMultiplier(testCase.getId() + 1.0);
             testCaseUpdate.setBonusPoints(testCase.getId() + 2.0);
@@ -1105,7 +1106,7 @@ public class ProgrammingExerciseIntegrationServiceTest {
         final var updates = testCases.stream().map(testCase -> {
             final var testCaseUpdate = new ProgrammingExerciseTestCaseDTO();
             testCaseUpdate.setId(testCase.getId());
-            testCaseUpdate.setAfterDueDate(true);
+            testCaseUpdate.setVisibility(Visibility.AFTER_DUE_DATE);
             testCaseUpdate.setWeight(0D);
             testCaseUpdate.setBonusMultiplier(testCase.getId() + 1.0);
             testCaseUpdate.setBonusPoints(testCase.getId() + 2.0);

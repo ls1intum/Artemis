@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.dto;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -7,11 +8,12 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.in.www1.artemis.domain.enumeration.StaticCodeAnalysisTool;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class StaticCodeAnalysisReportDTO {
 
     private StaticCodeAnalysisTool tool;
 
-    private List<StaticCodeAnalysisIssue> issues;
+    private List<StaticCodeAnalysisIssue> issues = new ArrayList<>();
 
     public StaticCodeAnalysisTool getTool() {
         return tool;

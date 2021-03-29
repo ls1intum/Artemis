@@ -1,0 +1,47 @@
+<div>
+    <div class="modal-header">
+        <h4 class="modal-title" jhiTranslate="organizationManagement.modalSelector.title">Organizations</h4>
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true" (click)="closeModal(undefined)">&times;</button>
+    </div>
+    <div class="modal-body">
+        <div class="justify-content-center p-1">
+            <jhi-alert></jhi-alert>
+            <jhi-alert-error></jhi-alert-error>
+            <div class="table-responsive p-1">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th></th>
+                            <th><span jhiTranslate="organizationManagement.name">Name</span></th>
+                            <th><span jhiTranslate="organizationManagement.shortName">Short Name</span></th>
+                            <th><span jhiTranslate="organizationManagement.emailPattern">Email Pattern</span></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr *ngFor="let organization of availableOrganizations">
+                            <td>
+                                <img
+                                    [height]="48"
+                                    src="{{ organization.logoUrl ? organization.logoUrl : '/content/images/image-placeholder.png' }}"
+                                    onerror="this.src='/content/images/image-placeholder.png'"
+                                />
+                            </td>
+                            <td>
+                                <ngb-highlight [result]="organization.name"></ngb-highlight>
+                            </td>
+                            <td>
+                                <ngb-highlight [result]="organization.shortName"></ngb-highlight>
+                            </td>
+                            <td>{{ organization.emailPattern }}</td>
+                            <td>
+                                <button type="button" class="btn ml-2 btn-primary" (click)="closeModal(organization)" jhiTranslate="organizationManagement.modalSelector.select">
+                                    Select
+                                </button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

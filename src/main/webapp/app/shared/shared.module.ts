@@ -20,6 +20,7 @@ import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 import { ArtemisSharedLibsModule } from 'app/shared/shared-libs.module';
 import { CustomMaxDirective } from 'app/shared/validators/custom-max-validator.directive';
 import { CustomMinDirective } from 'app/shared/validators/custom-min-validator.directive';
+import { OrganizationSelectorComponent } from './organization-selector/organization-selector.component';
 import { AdditionalFeedbackComponent } from './additional-feedback/additional-feedback.component';
 import { ResizeableContainerComponent } from './resizeable-container/resizeable-container.component';
 import { TranslatePipe } from '@ngx-translate/core';
@@ -40,6 +41,7 @@ import { TranslatePipe } from '@ngx-translate/core';
         SlideToggleComponent,
         JhiConnectionStatusComponent,
         ChartComponent,
+        OrganizationSelectorComponent,
         CustomMinDirective,
         CustomMaxDirective,
         ArtemisTranslatePipe,

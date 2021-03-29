@@ -1,8 +1,12 @@
 package de.tum.in.www1.artemis.web.rest.dto;
 
+import java.util.ArrayList;
 import java.util.List;
 
-public class StatsForInstructorDashboardDTO {
+import com.fasterxml.jackson.annotation.JsonInclude;
+
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
+public class StatsForDashboardDTO {
 
     private Long numberOfStudents;
 
@@ -12,7 +16,13 @@ public class StatsForInstructorDashboardDTO {
 
     private Long totalNumberOfAssessmentLocks;
 
+    private Boolean complaintsEnabled;
+
+    private Boolean feedbackRequestEnabled;
+
     private DueDateStat[] numberOfAssessmentsOfCorrectionRounds;
+
+    private DueDateStat[] numberOfLockedAssessmentByOtherTutorsOfCorrectionRound;
 
     private DueDateStat numberOfAutomaticAssistedAssessments;
 
@@ -26,9 +36,12 @@ public class StatsForInstructorDashboardDTO {
 
     private Long numberOfAssessmentLocks;
 
-    private List<TutorLeaderboardDTO> tutorLeaderboardEntries;
+    private List<TutorLeaderboardDTO> tutorLeaderboardEntries = new ArrayList<>();
 
-    public StatsForInstructorDashboardDTO() {
+    /**
+     * Empty constructor is needed by Jackson
+     */
+    public StatsForDashboardDTO() {
     }
 
     public Long getNumberOfStudents() {
@@ -125,5 +138,29 @@ public class StatsForInstructorDashboardDTO {
 
     public void setTutorLeaderboardEntries(List<TutorLeaderboardDTO> tutorLeaderboardEntries) {
         this.tutorLeaderboardEntries = tutorLeaderboardEntries;
+    }
+
+    public DueDateStat[] getNumberOfLockedAssessmentByOtherTutorsOfCorrectionRound() {
+        return numberOfLockedAssessmentByOtherTutorsOfCorrectionRound;
+    }
+
+    public void setNumberOfLockedAssessmentByOtherTutorsOfCorrectionRound(DueDateStat[] numberOfLockedAssessmentByOtherTutorsOfCorrectionRound) {
+        this.numberOfLockedAssessmentByOtherTutorsOfCorrectionRound = numberOfLockedAssessmentByOtherTutorsOfCorrectionRound;
+    }
+
+    public Boolean getComplaintsEnabled() {
+        return complaintsEnabled;
+    }
+
+    public void setComplaintsEnabled(Boolean complaintsEnabled) {
+        this.complaintsEnabled = complaintsEnabled;
+    }
+
+    public Boolean getFeedbackRequestEnabled() {
+        return feedbackRequestEnabled;
+    }
+
+    public void setFeedbackRequestEnabled(Boolean feedbackRequestEnabled) {
+        this.feedbackRequestEnabled = feedbackRequestEnabled;
     }
 }

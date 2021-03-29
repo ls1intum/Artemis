@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.service.programming;
 
-import java.time.ZonedDateTime;
 import java.util.*;
 
 import org.springframework.stereotype.Service;
@@ -16,17 +15,16 @@ import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.LtiService;
 import de.tum.in.www1.artemis.service.exam.ExamDateService;
-import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Service
 public class ProgrammingAssessmentService extends AssessmentService {
 
     public ProgrammingAssessmentService(ComplaintResponseService complaintResponseService, ComplaintRepository complaintRepository, FeedbackRepository feedbackRepository,
             ResultRepository resultRepository, StudentParticipationRepository studentParticipationRepository, ResultService resultService, SubmissionService submissionService,
-            SubmissionRepository submissionRepository, ExamDateService examDateService, UserRepository userRepository, GradingCriterionService gradingCriterionService,
+            SubmissionRepository submissionRepository, ExamDateService examDateService, UserRepository userRepository, GradingCriterionRepository gradingCriterionRepository,
             LtiService ltiService) {
         super(complaintResponseService, complaintRepository, feedbackRepository, resultRepository, studentParticipationRepository, resultService, submissionService,
-                submissionRepository, examDateService, gradingCriterionService, userRepository, ltiService);
+                submissionRepository, examDateService, gradingCriterionRepository, userRepository, ltiService);
     }
 
     /**
@@ -63,21 +61,6 @@ public class ProgrammingAssessmentService extends AssessmentService {
     }
 
     /**
-     * This function is used for submitting a manual assessment/result. It gets the result that belongs to the given resultId, updates the completion date.
-     * It saves the updated result in the database again.
-     *
-     * @param resultId the id of the result that should be submitted
-     * @return the ResponseEntity with result as body
-     */
-    public Result submitManualAssessment(long resultId) {
-        Result result = resultRepository.findWithEagerSubmissionAndFeedbackAndAssessorById(resultId)
-                .orElseThrow(() -> new EntityNotFoundException("No result for the given resultId could be found"));
-        result.setCompletionDate(ZonedDateTime.now());
-        resultRepository.save(result);
-        return result;
-    }
-
-    /**
      * Calculates the total score for programming exercises.
      * @param result with information about feedback and exercise
      * @return calculated totalScore
@@ -91,7 +74,7 @@ public class ProgrammingAssessmentService extends AssessmentService {
 
         for (Feedback feedback : assessments) {
             if (feedback.getGradingInstruction() != null) {
-                totalScore = gradingCriterionService.computeTotalScore(feedback, totalScore, gradingInstructions);
+                totalScore = feedback.computeTotalScore(totalScore, gradingInstructions);
             }
             else {
                 /*
@@ -106,8 +89,9 @@ public class ProgrammingAssessmentService extends AssessmentService {
                 }
             }
         }
-        /** Calculated score from automatic test feedbacks, is capped to max points + bonus points,
-        * see also see {@link ProgrammingExerciseGradingService#updateScore} */
+        /*
+         * Calculated score from automatic test feedbacks, is capped to max points + bonus points, see also see {@link ProgrammingExerciseGradingService#updateScore}
+         */
         double maxPoints = programmingExercise.getMaxPoints() + Optional.ofNullable(programmingExercise.getBonusPoints()).orElse(0.0);
         if (scoreAutomaticTests > maxPoints) {
             scoreAutomaticTests = maxPoints;

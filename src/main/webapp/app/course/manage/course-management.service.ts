@@ -73,6 +73,16 @@ export class CourseManagementService {
     }
 
     /**
+     * Fetches the title of the course with the given id
+     *
+     * @param courseId the id of the course
+     * @return the title of the course in an HttpResponse, or an HttpErrorResponse on error
+     */
+    getTitle(courseId: number): Observable<HttpResponse<string>> {
+        return this.http.get(`${this.resourceUrl}/${courseId}/title`, { observe: 'response', responseType: 'text' });
+    }
+
+    /**
      * finds the course with the provided unique identifier together with its exercises
      * @param courseId - the id of the course to be found
      */
@@ -89,6 +99,16 @@ export class CourseManagementService {
     findWithExercisesAndParticipations(courseId: number): Observable<EntityResponseType> {
         return this.http
             .get<Course>(`${this.resourceUrl}/${courseId}/with-exercises-and-relevant-participations`, { observe: 'response' })
+            .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
+    }
+
+    /**
+     * finds a course with the given id and eagerly loaded organizations
+     * @param courseId the id of the course to be found
+     */
+    findWithOrganizations(courseId: number): Observable<EntityResponseType> {
+        return this.http
+            .get<Course>(`${this.resourceUrl}/${courseId}/with-organizations`, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
     }
 

@@ -5,8 +5,13 @@
             <hr />
             <jhi-alert></jhi-alert>
             <jhi-alert-error></jhi-alert-error>
-            <div class="text-right">
-                <jhi-external-submission [exercise]="fileUploadExercise"></jhi-external-submission>
+            <div class="text-left">
+                <jhi-non-programming-exercise-detail-common-actions
+                    *ngIf="fileUploadExercise.course"
+                    [isExamExercise]="isExamExercise"
+                    [courseId]="fileUploadExercise.course.id!"
+                    [exercise]="fileUploadExercise"
+                ></jhi-non-programming-exercise-detail-common-actions>
             </div>
             <dl class="row-md jh-entity-details markdown-preview">
                 <jhi-exercise-details [exercise]="fileUploadExercise"></jhi-exercise-details>
@@ -17,8 +22,6 @@
                 <dt><span jhiTranslate="artemisApp.exercise.sampleSolution">Sample Solution</span></dt>
                 <dd class="editor-outline-background" [innerHTML]="fileUploadExercise.sampleSolution! | htmlForMarkdown"></dd>
             </dl>
-
-            <a [routerLink]="getEditRoute()" class="btn btn-warning"> <fa-icon [icon]="'wrench'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.edit"> Edit</span> </a>
         </div>
     </div>
 </div>

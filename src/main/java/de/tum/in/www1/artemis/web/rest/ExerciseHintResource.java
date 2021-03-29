@@ -116,6 +116,19 @@ public class ExerciseHintResource {
     }
 
     /**
+     * GET /exercise-hints/:hintId/title : Returns the title of the hint with the given id
+     *
+     * @param hintId the id of the hint
+     * @return the title of the hint wrapped in an ResponseEntity or 404 Not Found if no hint with that id exists
+     */
+    @GetMapping(value = "/exercise-hints/{hintId}/title")
+    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<String> getHintTitle(@PathVariable Long hintId) {
+        final var title = exerciseHintRepository.getHintTitle(hintId);
+        return title == null ? ResponseEntity.notFound().build() : ResponseEntity.ok(title);
+    }
+
+    /**
      * {@code GET  /exercise-hints/:id} : get the "id" exerciseHint.
      *
      * @param exerciseHintId the id of the exerciseHint to retrieve.

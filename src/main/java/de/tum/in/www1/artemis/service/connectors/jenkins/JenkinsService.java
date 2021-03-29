@@ -8,6 +8,7 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.http.client.HttpResponseException;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Element;
@@ -34,10 +35,10 @@ import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.exception.JenkinsException;
+import de.tum.in.www1.artemis.repository.FeedbackRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
 import de.tum.in.www1.artemis.service.BuildLogEntryService;
-import de.tum.in.www1.artemis.service.FeedbackService;
 import de.tum.in.www1.artemis.service.connectors.AbstractContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.CIPermission;
 import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
@@ -69,10 +70,10 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
     private final DateTimeFormatter logDateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssX");
 
     public JenkinsService(@Qualifier("jenkinsRestTemplate") RestTemplate restTemplate, JenkinsServer jenkinsServer, ProgrammingSubmissionRepository programmingSubmissionRepository,
-            ProgrammingExerciseRepository programmingExerciseRepository, FeedbackService feedbackService,
+            ProgrammingExerciseRepository programmingExerciseRepository, FeedbackRepository feedbackRepository,
             @Qualifier("shortTimeoutJenkinsRestTemplate") RestTemplate shortTimeoutRestTemplate, BuildLogEntryService buildLogService,
             JenkinsBuildPlanService jenkinsBuildPlanService, JenkinsJobService jenkinsJobService) {
-        super(programmingSubmissionRepository, feedbackService, buildLogService, restTemplate, shortTimeoutRestTemplate);
+        super(programmingSubmissionRepository, feedbackRepository, buildLogService, restTemplate, shortTimeoutRestTemplate);
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.jenkinsServer = jenkinsServer;
         this.jenkinsBuildPlanService = jenkinsBuildPlanService;
@@ -331,29 +332,36 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
         // Extract test case feedback
         for (final var job : jobs) {
             for (final var testCase : job.getTestCases()) {
-                var errorMessage = Optional.ofNullable(testCase.getErrors()).map((errors) -> errors.get(0).getMostInformativeMessage());
-                var failureMessage = Optional.ofNullable(testCase.getFailures()).map((failures) -> failures.get(0).getMostInformativeMessage());
-                var errorList = errorMessage.or(() -> failureMessage).map(List::of).orElse(Collections.emptyList());
-                boolean successful = Optional.ofNullable(testCase.getErrors()).map(List::isEmpty).orElse(true)
-                        && Optional.ofNullable(testCase.getFailures()).map(List::isEmpty).orElse(true);
-
-                if (!successful && errorList.isEmpty()) {
-                    var errorType = Optional.ofNullable(testCase.getErrors()).map((errors) -> errors.get(0).getType());
-                    var failureType = Optional.ofNullable(testCase.getFailures()).map((failures) -> failures.get(0).getType());
-                    var message = errorType.or(() -> failureType).map(t -> String.format("Unsuccessful due to an error of type: %s", t));
-                    if (message.isPresent()) {
-                        errorList = List.of(message.get());
-                    }
+                String errorMessage;
+                var hasErrors = !CollectionUtils.isEmpty(testCase.getErrors());
+                var hasFailures = !CollectionUtils.isEmpty(testCase.getFailures());
+                if (hasErrors && testCase.getErrors().get(0).getMostInformativeMessage() != null) {
+                    errorMessage = testCase.getErrors().get(0).getMostInformativeMessage();
+                }
+                else if (hasFailures && testCase.getFailures().get(0).getMostInformativeMessage() != null) {
+                    errorMessage = testCase.getFailures().get(0).getMostInformativeMessage();
+                }
+                else if (hasErrors && testCase.getErrors().get(0).getType() != null) {
+                    errorMessage = String.format("Unsuccessful due to an error of type: %s", testCase.getErrors().get(0).getType());
+                }
+                else if (hasFailures && testCase.getFailures().get(0).getType() != null) {
+                    errorMessage = String.format("Unsuccessful due to an error of type: %s", testCase.getFailures().get(0).getType());
+                }
+                else {
+                    // this is an edge case which typically does not happen
+                    errorMessage = "Unsuccessful due to an unknown error. Please contact your instructor!";
                 }
 
-                result.addFeedback(feedbackService.createFeedbackFromTestCase(testCase.getName(), errorList, successful, programmingLanguage));
+                boolean successful = !hasErrors && !hasFailures;
+
+                result.addFeedback(feedbackRepository.createFeedbackFromTestCase(testCase.getName(), List.of(errorMessage), successful, programmingLanguage));
             }
         }
 
         // Extract static code analysis feedback if option was enabled
         var staticCodeAnalysisReports = ((TestResultsDTO) buildResult).getStaticCodeAnalysisReports();
-        if (Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled()) && staticCodeAnalysisReports != null) {
-            var scaFeedback = feedbackService.createFeedbackFromStaticCodeAnalysisReports(staticCodeAnalysisReports);
+        if (Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled()) && staticCodeAnalysisReports != null && !staticCodeAnalysisReports.isEmpty()) {
+            var scaFeedback = feedbackRepository.createFeedbackFromStaticCodeAnalysisReports(staticCodeAnalysisReports);
             result.addFeedbacks(scaFeedback);
         }
 

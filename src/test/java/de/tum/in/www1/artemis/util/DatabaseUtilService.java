@@ -205,6 +205,9 @@ public class DatabaseUtilService {
     VideoUnitRepository videoUnitRepository;
 
     @Autowired
+    private OrganizationRepository organizationRepository;
+
+    @Autowired
     private DatabaseCleanupService databaseCleanupService;
 
     @Value("${info.guided-tour.course-group-students:#{null}}")
@@ -349,6 +352,19 @@ public class DatabaseUtilService {
     public Course createCourse() {
         Course course = ModelFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "tumuser", "tutor", "instructor");
         return courseRepo.save(course);
+    }
+
+    public Course createCourseWithOrganizations(String name, String shortName, String url, String description, String logoUrl, String emailPattern) {
+        Course course = createCourse();
+        Set<Organization> organizations = new HashSet<>();
+        Organization organization = createOrganization(name, shortName, url, description, logoUrl, emailPattern);
+        organizations.add(organization);
+        course.setOrganizations(organizations);
+        return courseRepo.save(course);
+    }
+
+    public Course createCourseWithOrganizations() {
+        return createCourseWithOrganizations("organization1", "org1", "org.org", "This is organization1", null, "^.*@matching.*$");
     }
 
     public TextExercise createIndividualTextExercise(Course course, ZonedDateTime pastTimestamp, ZonedDateTime futureTimestamp, ZonedDateTime futureFutureTimestamp) {
@@ -887,6 +903,15 @@ public class DatabaseUtilService {
         return courseSaved;
     }
 
+    public Organization createOrganization(String name, String shortName, String url, String description, String logoUrl, String emailPattern) {
+        Organization organization = ModelFactory.generateOrganization(name, shortName, url, description, logoUrl, emailPattern);
+        return organizationRepository.save(organization);
+    }
+
+    public Organization createOrganization() {
+        return createOrganization("organization1", "org1", "org.org", "This is organization1", null, "^.*@matching.*$");
+    }
+
     public StudentExam setupTestRunForExamWithExerciseGroupsForInstructor(Exam exam, User instructor, List<ExerciseGroup> exerciseGroupsWithExercises) {
         List<Exercise> exercises = new ArrayList<>();
         exerciseGroupsWithExercises.forEach(exerciseGroup -> exercises.add(exerciseGroup.getExercises().iterator().next()));
@@ -1321,6 +1346,18 @@ public class DatabaseUtilService {
         List<Feedback> feedbacks = new ArrayList<>();
         feedbacks.add(feedback1);
         feedbacks.add(feedback2);
+        result.addFeedbacks(feedbacks);
+        return resultRepo.save(result);
+    }
+
+    public Result addVariousVisibilityFeedbackToResults(Result result) {
+        Feedback feedback1 = feedbackRepo.save(new Feedback().detailText("afterDueDate1").visibility(Visibility.AFTER_DUE_DATE));
+        Feedback feedback2 = feedbackRepo.save(new Feedback().detailText("never1").visibility(Visibility.NEVER));
+        Feedback feedback3 = feedbackRepo.save(new Feedback().detailText("always1").visibility(Visibility.ALWAYS));
+        List<Feedback> feedbacks = new ArrayList<>();
+        feedbacks.add(feedback1);
+        feedbacks.add(feedback2);
+        feedbacks.add(feedback3);
         result.addFeedbacks(feedbacks);
         return resultRepo.save(result);
     }
@@ -1795,11 +1832,11 @@ public class DatabaseUtilService {
 
         List<ProgrammingExerciseTestCase> testCases = new ArrayList<>();
         testCases.add(new ProgrammingExerciseTestCase().testName("testClass[BubbleSort]").weight(1.0).active(true).exercise(programmingExercise).bonusMultiplier(1D).bonusPoints(0D)
-                .afterDueDate(false));
+                .visibility(Visibility.ALWAYS));
         testCases.add(new ProgrammingExerciseTestCase().testName("testMethods[Context]").weight(2.0).active(true).exercise(programmingExercise).bonusMultiplier(1D).bonusPoints(0D)
-                .afterDueDate(false));
+                .visibility(Visibility.ALWAYS));
         testCases.add(new ProgrammingExerciseTestCase().testName("testMethods[Policy]").weight(3.0).active(true).exercise(programmingExercise).bonusMultiplier(1D).bonusPoints(0D)
-                .afterDueDate(false));
+                .visibility(Visibility.ALWAYS));
         testCaseRepository.saveAll(testCases);
 
         List<ProgrammingExerciseTestCase> tests = new ArrayList<>(testCaseRepository.findByExerciseId(programmingExercise.getId()));
@@ -1855,12 +1892,12 @@ public class DatabaseUtilService {
 
     public void addTestCasesToProgrammingExercise(ProgrammingExercise programmingExercise) {
         List<ProgrammingExerciseTestCase> testCases = new ArrayList<>();
-        testCases.add(
-                new ProgrammingExerciseTestCase().testName("test1").weight(1.0).active(true).exercise(programmingExercise).afterDueDate(false).bonusMultiplier(1D).bonusPoints(0D));
-        testCases.add(new ProgrammingExerciseTestCase().testName("test2").weight(2.0).active(false).exercise(programmingExercise).afterDueDate(false).bonusMultiplier(1D)
+        testCases.add(new ProgrammingExerciseTestCase().testName("test1").weight(1.0).active(true).exercise(programmingExercise).visibility(Visibility.ALWAYS).bonusMultiplier(1D)
                 .bonusPoints(0D));
-        testCases.add(
-                new ProgrammingExerciseTestCase().testName("test3").weight(3.0).active(true).exercise(programmingExercise).afterDueDate(true).bonusMultiplier(1D).bonusPoints(0D));
+        testCases.add(new ProgrammingExerciseTestCase().testName("test2").weight(2.0).active(false).exercise(programmingExercise).visibility(Visibility.ALWAYS).bonusMultiplier(1D)
+                .bonusPoints(0D));
+        testCases.add(new ProgrammingExerciseTestCase().testName("test3").weight(3.0).active(true).exercise(programmingExercise).visibility(Visibility.AFTER_DUE_DATE)
+                .bonusMultiplier(1D).bonusPoints(0D));
         testCaseRepository.saveAll(testCases);
 
         List<ProgrammingExerciseTestCase> tests = new ArrayList<>(testCaseRepository.findByExerciseId(programmingExercise.getId()));
@@ -2966,4 +3003,26 @@ public class DatabaseUtilService {
         return paramMap;
     }
 
+    public void checkFeedbackCorrectlyStored(List<Feedback> sentFeedback, List<Feedback> storedFeedback, FeedbackType feedbackType) {
+        assertThat(sentFeedback.size()).as("contains the same amount of feedback").isEqualTo(storedFeedback.size());
+        Result storedFeedbackResult = new Result();
+        Result sentFeedbackResult = new Result();
+        storedFeedbackResult.setFeedbacks(storedFeedback);
+        sentFeedbackResult.setFeedbacks(sentFeedback);
+
+        double calculatedTotalPoints = resultRepo.calculateTotalPoints(storedFeedback);
+        double totalPoints = resultRepo.constrainToRange(calculatedTotalPoints, 20.0);
+        storedFeedbackResult.setScore(totalPoints, 20.0);
+        storedFeedbackResult.setResultString(totalPoints, 20.0);
+
+        double calculatedTotalPoints2 = resultRepo.calculateTotalPoints(sentFeedback);
+        double totalPoints2 = resultRepo.constrainToRange(calculatedTotalPoints2, 20.0);
+        sentFeedbackResult.setScore(totalPoints2, 20.0);
+        sentFeedbackResult.setResultString(totalPoints2, 20.0);
+
+        assertThat(storedFeedbackResult.getScore()).as("stored feedback evaluates to the same score as sent feedback").isEqualTo(sentFeedbackResult.getScore());
+        storedFeedback.forEach(feedback -> {
+            assertThat(feedback.getType()).as("type has been set correctly").isEqualTo(feedbackType);
+        });
+    }
 }

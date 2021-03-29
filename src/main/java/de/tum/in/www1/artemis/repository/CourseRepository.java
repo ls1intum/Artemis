@@ -73,9 +73,28 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     @Query("select distinct course from Course course where (course.startDate is null or course.startDate <= :#{#now}) and (course.endDate is null or course.endDate >= :#{#now}) and course.onlineCourse = false and course.registrationEnabled = true")
     List<Course> findAllCurrentlyActiveNotOnlineAndRegistrationEnabled(@Param("now") ZonedDateTime now);
 
+    @Query("select distinct course from Course course left join fetch course.organizations co where (course.startDate is null or course.startDate <= :#{#now}) and (course.endDate is null or course.endDate >= :#{#now}) and course.onlineCourse = false and course.registrationEnabled = true")
+    List<Course> findAllCurrentlyActiveNotOnlineAndRegistrationEnabledWithOrganizations(@Param("now") ZonedDateTime now);
+
+    @Query("select course from Course course left join fetch course.organizations co where course.id = :#{#courseId}")
+    Optional<Course> findWithEagerOrganizations(@Param("courseId") long courseId);
+
     List<Course> findAllByShortName(String shortName);
 
     Optional<Course> findById(long courseId);
+
+    /**
+     * Returns the title of the course with the given id
+     *
+     * @param courseId the id of the course
+     * @return the name/title of the course or null if the course does not exist
+     */
+    @Query("""
+            SELECT c.title
+            FROM Course c
+            WHERE c.id = :courseId
+            """)
+    String getCourseTitle(@Param("courseId") Long courseId);
 
     @Query("""
             select distinct c
@@ -146,6 +165,11 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
         return Optional.ofNullable(findWithEagerExercisesById(courseId)).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
     }
 
+    @NotNull
+    default Course findWithEagerOrganizationsElseThrow(Long courseId) throws EntityNotFoundException {
+        return findWithEagerOrganizations(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
+    }
+
     /**
      * filters the passed exercises for the relevant ones that need to be manually assessed. This excludes quizzes and automatic programming exercises
      *
@@ -176,6 +200,15 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     }
 
     /**
+     * Get all the courses to register with eagerly loaded organizations.
+     *
+     * @return the list of course entities
+     */
+    default List<Course> findAllCurrentlyActiveNotOnlineAndRegistrationEnabledWithOrganizations() {
+        return findAllCurrentlyActiveNotOnlineAndRegistrationEnabledWithOrganizations(ZonedDateTime.now());
+    }
+
+    /**
      * Get one course by id.
      *
      * @param courseId the id of the entity
@@ -184,5 +217,33 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     @NotNull
     default Course findByIdWithLecturesAndExamsElseThrow(Long courseId) {
         return findWithEagerLecturesAndExamsById(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
+    }
+
+    /**
+     * Add organization to course, if not contained already
+     * @param courseId the id of the course to add to the organization
+     * @param organization the organization to add to the course
+     */
+    @NotNull
+    default void addOrganizationToCourse(Long courseId, Organization organization) {
+        Course course = findWithEagerOrganizationsElseThrow(courseId);
+        if (!course.getOrganizations().contains(organization)) {
+            course.getOrganizations().add(organization);
+            save(course);
+        }
+    }
+
+    /**
+     * Remove organizaiton from course, if currently contained
+     * @param courseId the id of the course to remove from the organization
+     * @param organization the organization to remove from the course
+     */
+    @NotNull
+    default void removeOrganizationFromCourse(Long courseId, Organization organization) {
+        Course course = findWithEagerOrganizationsElseThrow(courseId);
+        if (course.getOrganizations().contains(organization)) {
+            course.getOrganizations().remove(organization);
+            save(course);
+        }
     }
 }

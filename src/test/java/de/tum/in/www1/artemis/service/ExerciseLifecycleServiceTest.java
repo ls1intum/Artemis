@@ -21,7 +21,7 @@ import de.tum.in.www1.artemis.domain.enumeration.ExerciseLifecycle;
 public class ExerciseLifecycleServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
-    ExerciseLifecycleService exerciseLifecycleService;
+    private ExerciseLifecycleService exerciseLifecycleService;
 
     @Test
     public void testScheduleExerciseOnReleaseTask() throws InterruptedException {
