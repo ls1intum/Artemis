@@ -18,6 +18,7 @@ public class TextAssessmentDTO {
     private List<Feedback> feedbacks = new ArrayList<>();
 
     public TextAssessmentDTO() {
+        // needed to make Jackson happy
     }
 
     public TextAssessmentDTO(List<Feedback> feedbacks) {

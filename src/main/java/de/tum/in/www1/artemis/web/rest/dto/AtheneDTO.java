@@ -12,7 +12,7 @@ public class AtheneDTO {
 
     private List<TextBlockDTO> blocks = new ArrayList<>();
 
-    private Map<Integer, TextCluster> clusters = new LinkedHashMap<>();
+    private Map<Integer, TextCluster> clusters = new HashMap<>();
 
     public List<TextBlockDTO> getBlocks() {
         return blocks;
@@ -93,7 +93,5 @@ public class AtheneDTO {
         public void setType(TextBlockType type) {
             this.type = type;
         }
-
     }
-
 }

@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.connectors.bitbucket.dto;
 
+import java.util.HashSet;
 import java.util.Set;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -11,7 +12,7 @@ public class BitbucketUserDTO {
 
     private String user;
 
-    private Set<String> groups;
+    private Set<String> groups = new HashSet<>();
 
     public String getUser() {
         return user;

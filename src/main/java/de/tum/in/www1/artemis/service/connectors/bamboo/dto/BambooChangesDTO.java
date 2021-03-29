@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.connectors.bamboo.dto;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -15,7 +16,7 @@ public class BambooChangesDTO {
     private String expand;
 
     @JsonProperty("change")
-    private List<BambooChangeDTO> changes;
+    private List<BambooChangeDTO> changes = new ArrayList<>();
 
     public int getSize() {
         return size;
