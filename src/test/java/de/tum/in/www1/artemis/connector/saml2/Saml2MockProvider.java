@@ -1,8 +1,7 @@
 package de.tum.in.www1.artemis.connector.saml2;
 
-import de.tum.in.www1.artemis.config.SAML2Configuration;
-import de.tum.in.www1.artemis.config.SAML2Properties;
-import de.tum.in.www1.artemis.service.connectors.SAML2Service;
+import static org.mockito.Mockito.doReturn;
+
 import org.mockito.InjectMocks;
 import org.mockito.Mockito;
 import org.springframework.boot.test.mock.mockito.SpyBean;
@@ -12,7 +11,8 @@ import org.springframework.security.saml2.provider.service.authentication.Saml2A
 import org.springframework.security.saml2.provider.service.registration.RelyingPartyRegistrationRepository;
 import org.springframework.stereotype.Component;
 
-import static org.mockito.Mockito.doReturn;
+import de.tum.in.www1.artemis.config.SAML2Properties;
+import de.tum.in.www1.artemis.service.connectors.SAML2Service;
 
 @Component
 @Profile("saml2")
