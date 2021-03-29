@@ -1,7 +1,11 @@
 package de.tum.in.www1.artemis.service.connectors.jenkins.dto;
 
+import java.util.ArrayList;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class TestCaseDTO {
 
     private String name;
@@ -10,9 +14,9 @@ public class TestCaseDTO {
 
     private double time;
 
-    private List<ErrorOrFailureDTO> failures;
+    private List<ErrorOrFailureDTO> failures = new ArrayList<>();
 
-    private List<ErrorOrFailureDTO> errors;
+    private List<ErrorOrFailureDTO> errors = new ArrayList<>();
 
     public String getName() {
         return name;

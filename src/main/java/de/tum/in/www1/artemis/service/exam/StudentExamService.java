@@ -461,22 +461,16 @@ public class StudentExamService {
         List<StudentExam> otherTestRunsOfInstructor = studentExamRepository.findAllTestRunsWithExercisesByExamIdForUser(testRun.getExam().getId(), instructor.getId()).stream()
                 .filter(studentExam -> !studentExam.getId().equals(testRunId)).collect(Collectors.toList());
 
-        // Delete the participations and submissions if no other test run references them
-        if (otherTestRunsOfInstructor.isEmpty()) {
-            // Delete participations and submissions
-            for (final Exercise exercise : testRun.getExercises()) {
-                participationService.delete(exercise.getStudentParticipations().iterator().next().getId(), true, true);
-            }
-        }
-        else {
-            // We cannot delete participations which are referenced by other test runs. (an instructor is free to create as many test runs as he likes)
-            var testRunExercises = testRun.getExercises();
-            // Collect all distinct exercises of other instructor test runs
-            var allInstructorTestRunExercises = otherTestRunsOfInstructor.stream().flatMap(tr -> tr.getExercises().stream()).distinct().collect(Collectors.toList());
-            // Collect exercises which are not referenced by other test runs. Their participations can be safely deleted
-            var exercisesToBeDeleted = testRunExercises.stream().filter(exercise -> !allInstructorTestRunExercises.contains(exercise)).collect(Collectors.toList());
+        // We cannot delete participations which are referenced by other test runs. (an instructor is free to create as many test runs as he likes)
+        var testRunExercises = testRun.getExercises();
+        // Collect all distinct exercises of other instructor test runs
+        var allInstructorTestRunExercises = otherTestRunsOfInstructor.stream().flatMap(tr -> tr.getExercises().stream()).distinct().collect(Collectors.toList());
+        // Collect exercises which are not referenced by other test runs. Their participations can be safely deleted
+        var exercisesToBeDeleted = testRunExercises.stream().filter(exercise -> !allInstructorTestRunExercises.contains(exercise)).collect(Collectors.toList());
 
-            for (final Exercise exercise : exercisesToBeDeleted) {
+        for (final Exercise exercise : exercisesToBeDeleted) {
+            // Only delete participations that exist (and were not deleted in some other way)
+            if (!exercise.getStudentParticipations().isEmpty()) {
                 participationService.delete(exercise.getStudentParticipations().iterator().next().getId(), true, true);
             }
         }
