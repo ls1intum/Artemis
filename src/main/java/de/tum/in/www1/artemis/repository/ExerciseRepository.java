@@ -279,10 +279,10 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
     List<Exercise> getPastExercisesForCourseManagementOverview(@Param("courseId") Long courseId, @Param("now") ZonedDateTime now);
 
     /**
-     * Fetches the amount of student participations in the given exercise
+     * Fetches the number of student participations in the given exercise
      *
      * @param exerciseId the id of the exercise to get the amount for
-     * @return The amount of participations as <code>Long</code>
+     * @return The number of participations as <code>Long</code>
      */
     @Query("""
             SELECT COUNT(DISTINCT p.student.id)
@@ -292,10 +292,10 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
     Long getStudentParticipationCountById(@Param("exerciseId") Long exerciseId);
 
     /**
-     * Fetches the amount of team participations in the given exercise
+     * Fetches the number of team participations in the given exercise
      *
      * @param exerciseId the id of the exercise to get the amount for
-     * @return The amount of participations as <code>Long</code>
+     * @return The number of participations as <code>Long</code>
      */
     @Query("""
             SELECT COUNT(DISTINCT p.team.id)
