@@ -41,6 +41,7 @@ import de.tum.in.www1.artemis.service.BuildLogEntryService;
 import de.tum.in.www1.artemis.service.connectors.AbstractContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.CIPermission;
 import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
+import de.tum.in.www1.artemis.service.connectors.jenkins.dto.TestCaseDetailMessageDTO;
 import de.tum.in.www1.artemis.service.connectors.jenkins.dto.TestResultsDTO;
 import de.tum.in.www1.artemis.service.connectors.jenkins.jobs.JenkinsJobService;
 import de.tum.in.www1.artemis.service.dto.AbstractBuildResultNotificationDTO;
@@ -331,9 +332,9 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
         // Extract test case feedback
         for (final var job : jobs) {
             for (final var testCase : job.getTestCases()) {
-                var errorMessage = Optional.ofNullable(testCase.getErrors()).map((errors) -> errors.get(0).getMostInformativeMessage());
-                var failureMessage = Optional.ofNullable(testCase.getFailures()).map((failures) -> failures.get(0).getMostInformativeMessage());
-                var successMessage = Optional.ofNullable(testCase.getSuccessInfos()).map((infos) -> infos.get(0).getMostInformativeMessage());
+                var errorMessage = testCase.getFirstErrorMessage().map(TestCaseDetailMessageDTO::getMostInformativeMessage);
+                var failureMessage = testCase.getFirstFailureMessage().map(TestCaseDetailMessageDTO::getMostInformativeMessage);
+                var successMessage = testCase.getFirstSuccessInfoMessage().map(TestCaseDetailMessageDTO::getMostInformativeMessage);
 
                 var feedbackMessageList = errorMessage.or(() -> failureMessage).map(List::of).orElse(Collections.emptyList());
                 boolean successful = Optional.ofNullable(testCase.getErrors()).map(List::isEmpty).orElse(true)
@@ -343,8 +344,8 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
                     feedbackMessageList = List.of(successMessage.get());
                 }
                 else if (!successful && feedbackMessageList.isEmpty()) {
-                    var errorType = Optional.ofNullable(testCase.getErrors()).map((errors) -> errors.get(0).getType());
-                    var failureType = Optional.ofNullable(testCase.getFailures()).map((failures) -> failures.get(0).getType());
+                    var errorType = testCase.getFirstErrorMessage().map(TestCaseDetailMessageDTO::getType);
+                    var failureType = testCase.getFirstErrorMessage().map(TestCaseDetailMessageDTO::getType);
                     var message = errorType.or(() -> failureType).map(t -> String.format("Unsuccessful due to an error of type: %s", t));
                     if (message.isPresent()) {
                         feedbackMessageList = List.of(message.get());
