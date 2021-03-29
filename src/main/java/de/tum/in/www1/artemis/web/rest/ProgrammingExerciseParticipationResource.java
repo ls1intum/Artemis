@@ -83,6 +83,12 @@ public class ProgrammingExerciseParticipationResource {
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(participation.get().getExercise())) {
             // hide details that should not be shown to the students
             participation.get().getExercise().filterSensitiveInformation();
+
+            final boolean isBeforeDueDate = participation.get().getExercise().isBeforeDueDate();
+            for (Result result : participation.get().getResults()) {
+                result.filterSensitiveInformation();
+                result.filterSensitiveFeedbacks(isBeforeDueDate);
+            }
         }
         return ResponseEntity.ok(participation.get());
     }
@@ -158,7 +164,14 @@ public class ProgrammingExerciseParticipationResource {
         if (!programmingExerciseParticipationService.canAccessParticipation(programmingParticipation)) {
             return forbidden();
         }
+
         Optional<Result> result = resultService.findLatestResultWithFeedbacksForParticipation(programmingParticipation.getId(), withSubmission);
+        if (result.isPresent() && !authCheckService.isAtLeastTeachingAssistantForExercise(participation.getExercise())) {
+            final boolean isBeforeDueDate = participation.getExercise().isBeforeDueDate();
+            result.get().filterSensitiveInformation();
+            result.get().filterSensitiveFeedbacks(isBeforeDueDate);
+        }
+
         return result.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.ok(null));
     }
 

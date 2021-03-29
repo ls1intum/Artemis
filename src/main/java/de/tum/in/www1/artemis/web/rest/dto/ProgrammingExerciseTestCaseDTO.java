@@ -1,10 +1,11 @@
 package de.tum.in.www1.artemis.web.rest.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import de.tum.in.www1.artemis.domain.enumeration.Visibility;
 
 /**
  * This is a dto for updating a programming exercise test case.
- * It is only allowed to alter the weight, bonus multiplier, bonus points and afterDueDate flag of a test case from an
+ * It is only allowed to alter the weight, bonus multiplier, bonus points and visibility flag of a test case from an
  * endpoint, the other attributes are generated automatically.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
@@ -18,7 +19,7 @@ public class ProgrammingExerciseTestCaseDTO {
 
     private Double bonusPoints;
 
-    private boolean afterDueDate;
+    private Visibility visibility;
 
     public Long getId() {
         return id;
@@ -36,12 +37,12 @@ public class ProgrammingExerciseTestCaseDTO {
         this.weight = weight;
     }
 
-    public boolean isAfterDueDate() {
-        return afterDueDate;
+    public Visibility getVisibility() {
+        return visibility;
     }
 
-    public void setAfterDueDate(boolean afterDueDate) {
-        this.afterDueDate = afterDueDate;
+    public void setVisibility(Visibility visibility) {
+        this.visibility = visibility;
     }
 
     public Double getBonusMultiplier() {

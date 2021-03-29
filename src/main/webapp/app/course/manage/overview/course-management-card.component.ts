@@ -30,6 +30,7 @@ export class CourseManagementCardComponent implements OnChanges {
     currentExercises: Exercise[];
     exercisesInAssessment: Exercise[];
     pastExercises: Exercise[];
+    pastExerciseCount: number;
 
     showFutureExercises = false;
     showCurrentExercises = true;
@@ -77,7 +78,6 @@ export class CourseManagementCardComponent implements OnChanges {
         this.exercisesSorted = true;
 
         const inSevenDays = moment().add(7, 'days').endOf('day');
-        const sevenDaysAgo = moment().subtract(7, 'days').startOf('day');
 
         this.futureExercises = exercises
             .filter((exercise) => exercise.releaseDate && exercise.releaseDate > moment() && exercise.releaseDate <= inSevenDays)
@@ -96,10 +96,18 @@ export class CourseManagementCardComponent implements OnChanges {
             (exercise) => exercise.dueDate && exercise.dueDate <= moment() && exercise.assessmentDueDate && exercise.assessmentDueDate > moment(),
         );
 
-        this.pastExercises = exercises.filter(
-            (exercise) =>
-                (!exercise.assessmentDueDate && exercise.dueDate && exercise.dueDate <= moment() && exercise.dueDate >= sevenDaysAgo) ||
-                (exercise.assessmentDueDate && exercise.assessmentDueDate <= moment() && exercise.assessmentDueDate >= sevenDaysAgo),
-        );
+        const allPastExercises = exercises
+            .filter(
+                (exercise) =>
+                    (!exercise.assessmentDueDate && exercise.dueDate && exercise.dueDate <= moment()) || (exercise.assessmentDueDate && exercise.assessmentDueDate <= moment()),
+            )
+            .sort((exerciseA, exerciseB) => {
+                // Sort by assessment due date (or due date if there is no assessment due date) descending
+                // Note: The server side statistic generation uses the same sorting
+                return (exerciseB.assessmentDueDate ?? exerciseB.dueDate)!.valueOf() - (exerciseA.assessmentDueDate ?? exerciseA.dueDate)!.valueOf();
+            });
+
+        this.pastExerciseCount = allPastExercises.length;
+        this.pastExercises = allPastExercises.slice(0, 5);
     }
 }
