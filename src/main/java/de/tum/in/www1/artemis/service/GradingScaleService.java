@@ -1,8 +1,11 @@
 package de.tum.in.www1.artemis.service;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,6 +20,7 @@ import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.GradeStepRepository;
 import de.tum.in.www1.artemis.repository.GradingScaleRepository;
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Service
@@ -25,7 +29,7 @@ public class GradingScaleService {
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
-    private final Logger log = LoggerFactory.getLogger(ExerciseService.class);
+    private final Logger log = LoggerFactory.getLogger(GradingScaleService.class);
 
     private final GradingScaleRepository gradingScaleRepository;
 
@@ -57,25 +61,18 @@ public class GradingScaleService {
         }
     }
 
-    public List<GradingScale> findAllGradingScales() {
-        return gradingScaleRepository.findAll();
-    }
-
-    public GradingScale findGradingScaleById(Long id) {
-        return gradingScaleRepository.findById(id).orElseThrow();
-    }
-
-    public GradingScale createGradingScale(GradingScale gradingScale) {
-        return gradingScaleRepository.saveAndFlush(gradingScale);
-    }
-
-    public GradingScale saveGradingScale(GradingScale gradingScale) {
-        Set<GradeStep> gradeSteps = gradingScale.getGradeSteps();
-
-        for (GradeStep gradeStep : gradeSteps) {
-            gradeStepRepository.saveAndFlush(gradeStep);
+    public GradingScale updateGradeStepsForGradingScale(Set<GradeStep> newGradeSteps, Long gradingScaleId) {
+        if (newGradeSteps.stream().allMatch(GradeStep::isValid)) {
+            throw new BadRequestAlertException("Not all grade steps are follow the correct format.", "gradeStep", "invalidFormat");
         }
-        return gradingScaleRepository.saveAndFlush(gradingScale);
+        if (!gradeStepSetMapsToValidGradingScale(newGradeSteps)) {
+            throw new BadRequestAlertException("Grade step set can't match to a valid grading scale.", "gradeStep", "invalidFormat");
+        }
+        gradeStepRepository.deleteAllGradeStepsForGradingScaleById(gradingScaleId);
+        for (GradeStep gradeStep : newGradeSteps) {
+            gradeStepService.saveGradeStepForGradingScaleById(gradeStep, gradingScaleId);
+        }
+        return gradingScaleRepository.findById(gradingScaleId).orElseThrow();
     }
 
     public GradingScale saveGradingScaleForCourse(GradingScale gradingScale, Long courseId) {
@@ -92,6 +89,14 @@ public class GradingScaleService {
 
     public void deleteGradingScaleById(Long id) {
         gradeStepRepository.deleteById(id);
+    }
+
+    private boolean gradeStepSetMapsToValidGradingScale(Set<GradeStep> gradeSteps) {
+        if (gradeSteps.stream().map(GradeStep::getGradeName).distinct().count() != gradeSteps.size()) {
+            return false;
+        }
+        List<GradeStep> sortedGradeSteps = gradeSteps.stream().sorted(Comparator.comparingDouble(GradeStep::getLowerBoundPercentage)).collect(Collectors.toList());
+        return IntStream.range(0, sortedGradeSteps.size() - 2).allMatch(i -> GradeStep.checkValidAdjacency(sortedGradeSteps.get(i), sortedGradeSteps.get(i + 1)));
     }
 
 }

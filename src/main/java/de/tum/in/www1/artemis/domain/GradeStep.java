@@ -107,4 +107,12 @@ public class GradeStep extends DomainObject {
             return percentage > lowerBoundPercentage && percentage < upperBoundPercentage;
         }
     }
+
+    public boolean isValid() {
+        return lowerBoundPercentage >= 0 && upperBoundPercentage > 0 && lowerBoundPercentage < upperBoundPercentage && lowerBoundPercentage < 100 && upperBoundPercentage <= 100;
+    }
+
+    public static boolean checkValidAdjacency(GradeStep lowerGradeStep, GradeStep upperGradeStep) {
+        return lowerGradeStep.upperBoundInclusive != upperGradeStep.lowerBoundInclusive && lowerGradeStep.upperBoundPercentage == upperGradeStep.lowerBoundPercentage;
+    }
 }

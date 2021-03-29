@@ -18,7 +18,7 @@ public class GradeStepService {
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
-    private final Logger log = LoggerFactory.getLogger(ExerciseService.class);
+    private final Logger log = LoggerFactory.getLogger(GradeStepService.class);
 
     private final GradeStepRepository gradeStepRepository;
 
