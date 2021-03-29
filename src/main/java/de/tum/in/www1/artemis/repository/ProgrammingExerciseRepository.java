@@ -31,7 +31,13 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
 
     // Does a max join on the result table for each participation by result id (the newer the result id, the newer the result). This makes sure that we only receive the latest
     // result for the template and the solution participation if they exist.
-    @Query("select distinct pe from ProgrammingExercise pe left join fetch pe.templateParticipation tp left join fetch pe.solutionParticipation sp left join fetch tp.results as tpr left join fetch sp.results as spr where pe.course.id = :#{#courseId} and (tpr.id = (select max(id) from tp.results) or tpr.id = null) and (spr.id = (select max(id) from sp.results) or spr.id = null)")
+    @Query("""
+            SELECT pe FROM ProgrammingExercise pe LEFT JOIN FETCH pe.templateParticipation tp LEFT JOIN FETCH pe.solutionParticipation sp
+            LEFT JOIN FETCH tp.results AS tpr LEFT JOIN FETCH sp.results AS spr
+            WHERE pe.course.id = :#{#courseId}
+                AND (tpr.id = (SELECT MAX(id) FROM tp.results) OR tpr.id IS NULL)
+                AND (spr.id = (SELECT MAX(id) FROM sp.results) OR spr.id IS NULL)
+            """)
     List<ProgrammingExercise> findByCourseIdWithLatestResultForTemplateSolutionParticipations(@Param("courseId") Long courseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation", "teamAssignmentConfig", "categories" })
@@ -47,26 +53,36 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     @EntityGraph(type = LOAD, attributePaths = "testCases")
     Optional<ProgrammingExercise> findWithTestCasesById(Long exerciseId);
 
-    // Get an a programmingExercise with template and solution participation, each with the latest result and feedbacks.
-    @Query("select distinct pe from ProgrammingExercise pe left join fetch pe.templateParticipation tp left join fetch pe.solutionParticipation sp "
-            + "left join fetch tp.results as tpr left join fetch sp.results as spr left join fetch tpr.feedbacks left join fetch spr.feedbacks "
-            + "left join fetch tpr.submission left join fetch spr.submission " + "where pe.id = :#{#exerciseId} and (tpr.id = (select max(id) from tp.results) or tpr.id = null) "
-            + "and (spr.id = (select max(id) from sp.results) or spr.id = null)")
+    /**
+     * Get a programmingExercise with template and solution participation, each with the latest result and feedbacks.
+     */
+    @Query("""
+            SELECT DISTINCT pe FROM ProgrammingExercise pe LEFT JOIN FETCH pe.templateParticipation tp LEFT JOIN FETCH pe.solutionParticipation sp
+            LEFT JOIN FETCH tp.results AS tpr LEFT JOIN FETCH sp.results AS spr LEFT JOIN FETCH tpr.feedbacks LEFT JOIN FETCH spr.feedbacks
+            LEFT JOIN FETCH tpr.submission LEFT JOIN FETCH spr.submission
+            WHERE pe.id = :#{#exerciseId}
+                AND (tpr.id = (SELECT MAX(id) from tp.results) OR tpr.id IS NULL)
+                AND (spr.id = (SELECT MAX(id) FROM sp.results) OR spr.id IS NULL)
+            """)
     Optional<ProgrammingExercise> findWithTemplateAndSolutionParticipationLatestResultById(@Param("exerciseId") Long exerciseId);
 
-    @Query("select distinct pe from ProgrammingExercise pe left join fetch pe.studentParticipations")
+    @Query("select distinct pe from ProgrammingExercise pe LEFT JOIN FETCH pe.studentParticipations")
     List<ProgrammingExercise> findAllWithEagerParticipations();
 
-    @Query("select distinct pe from ProgrammingExercise pe where pe.course.endDate between :#{#endDate1} and :#{#endDate2}")
+    @Query("SELECT DISTINCT pe FROM ProgrammingExercise pe WHERE pe.course.endDate BETWEEN :#{#endDate1} AND :#{#endDate2}")
     List<ProgrammingExercise> findAllByRecentCourseEndDate(@Param("endDate1") ZonedDateTime endDate1, @Param("endDate2") ZonedDateTime endDate2);
 
-    @Query("select distinct pe from ProgrammingExercise pe left join fetch pe.studentParticipations where pe.dueDate between :#{#endDate1} and :#{#endDate2} or pe.exerciseGroup.exam.endDate between :#{#endDate1} and :#{#endDate2}")
+    @Query("""
+            SELECT DISTINCT pe FROM ProgrammingExercise pe LEFT JOIN FETCH pe.studentParticipations
+            WHERE pe.dueDate BETWEEN :#{#endDate1} AND :#{#endDate2}
+                OR pe.exerciseGroup.exam.endDate BETWEEN :#{#endDate1} AND :#{#endDate2}
+            """)
     List<ProgrammingExercise> findAllWithStudentParticipationByRecentEndDate(@Param("endDate1") ZonedDateTime endDate1, @Param("endDate2") ZonedDateTime endDate2);
 
-    @Query("select distinct pe from ProgrammingExercise pe left join fetch pe.studentParticipations pep left join fetch pep.submissions")
+    @Query("SELECT DISTINCT pe FROM ProgrammingExercise pe LEFT JOIN FETCH pe.studentParticipations pep LEFT JOIN FETCH pep.submissions")
     List<ProgrammingExercise> findAllWithEagerParticipationsAndSubmissions();
 
-    @Query("select distinct pe from ProgrammingExercise pe left join fetch pe.templateParticipation left join fetch pe.solutionParticipation")
+    @Query("SELECT DISTINCT pe FROM ProgrammingExercise pe LEFT JOIN FETCH pe.templateParticipation LEFT JOIN FETCH pe.solutionParticipation")
     List<ProgrammingExercise> findAllWithEagerTemplateAndSolutionParticipations();
 
     @EntityGraph(type = LOAD, attributePaths = "studentParticipations")
@@ -92,14 +108,31 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
      * @param pageable Pageable
      * @return Page with search results
      */
-    @Query("select pe from ProgrammingExercise pe where pe.shortName is not null and (pe.id in (select coursePe.id from ProgrammingExercise coursePe where coursePe.course.instructorGroupName in :groups and (coursePe.title like %:partialTitle% or coursePe.course.title like %:partialCourseTitle%)) or pe.id in (select examPe.id from ProgrammingExercise examPe where examPe.exerciseGroup.exam.course.instructorGroupName in :groups and (examPe.title like %:partialTitle% or examPe.exerciseGroup.exam.course.title like %:partialCourseTitle%)))")
+    @Query("""
+            SELECT pe FROM ProgrammingExercise pe
+            WHERE pe.shortName IS NOT NULL AND (
+                pe.id IN (
+                    SELECT coursePe.id
+                    FROM ProgrammingExercise coursePe
+                    WHERE coursePe.course.instructorGroupName IN :groups AND (coursePe.title LIKE %:partialTitle% OR coursePe.course.title LIKE %:partialCourseTitle%)
+                ) OR pe.id IN (
+                    SELECT examPe.id
+                    FROM ProgrammingExercise examPe
+                    WHERE examPe.exerciseGroup.exam.course.instructorGroupName IN :groups AND (examPe.title LIKE %:partialTitle% OR examPe.exerciseGroup.exam.course.title LIKE %:partialCourseTitle%)
+                )
+            )
+            """)
     Page<ProgrammingExercise> findByTitleInExerciseOrCourseAndUserHasAccessToCourse(@Param("partialTitle") String partialTitle,
             @Param("partialCourseTitle") String partialCourseTitle, @Param("groups") Set<String> groups, Pageable pageable);
 
     Page<ProgrammingExercise> findByTitleIgnoreCaseContainingAndShortNameNotNullOrCourse_TitleIgnoreCaseContainingAndShortNameNotNull(String partialTitle,
             String partialCourseTitle, Pageable pageable);
 
-    @Query("select p from ProgrammingExercise p left join fetch p.testCases left join fetch p.staticCodeAnalysisCategories left join fetch p.exerciseHints left join fetch p.templateParticipation left join fetch p.solutionParticipation where p.id = :#{#exerciseId}")
+    @Query("""
+            SELECT p FROM ProgrammingExercise p
+            LEFT JOIN FETCH p.testCases LEFT JOIN FETCH p.staticCodeAnalysisCategories LEFT JOIN FETCH p.exerciseHints LEFT JOIN FETCH p.templateParticipation LEFT JOIN FETCH p.solutionParticipation
+            WHERE p.id = :#{#exerciseId}
+            """)
     Optional<ProgrammingExercise> findByIdWithEagerTestCasesStaticCodeAnalysisCategoriesHintsAndTemplateAndSolutionParticipations(@Param("exerciseId") Long exerciseId);
 
     /**
@@ -109,7 +142,7 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
      * @param dateTime ZonedDatetime object.
      * @return List<ProgrammingExercise> (can be empty)
      */
-    @Query("select pe from ProgrammingExercise pe where pe.buildAndTestStudentSubmissionsAfterDueDate > :#{#dateTime}")
+    @Query("SELECT pe FROM ProgrammingExercise pe WHERE pe.buildAndTestStudentSubmissionsAfterDueDate > :#{#dateTime}")
     List<ProgrammingExercise> findAllByBuildAndTestStudentSubmissionsAfterDueDateAfterDate(@Param("dateTime") ZonedDateTime dateTime);
 
     /**
@@ -118,7 +151,7 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
      * @param dateTime ZonedDateTime object.
      * @return List<ProgrammingExercise> (can be empty)
      */
-    @Query("select pe from ProgrammingExercise pe where pe.assessmentType <> 'AUTOMATIC' and pe.dueDate > :#{#dateTime}")
+    @Query("SELECT pe FROM ProgrammingExercise pe WHERE pe.assessmentType <> 'AUTOMATIC' AND pe.dueDate > :#{#dateTime}")
     List<ProgrammingExercise> findAllByManualAssessmentAndDueDateAfterDate(@Param("dateTime") ZonedDateTime dateTime);
 
     /**
@@ -128,9 +161,9 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
      * @return List<ProgrammingExercise> (can be empty)
      */
     @Query("""
-                SELECT DISTINCT pe FROM ProgrammingExercise pe LEFT JOIN pe.testCases tc
-                WHERE pe.dueDate > :#{#dateTime} AND pe.buildAndTestStudentSubmissionsAfterDueDate IS NULL
-                    AND tc.visibility = 'AFTER_DUE_DATE'
+            SELECT DISTINCT pe FROM ProgrammingExercise pe LEFT JOIN pe.testCases tc
+            WHERE pe.dueDate > :#{#dateTime} AND pe.buildAndTestStudentSubmissionsAfterDueDate IS NULL
+                AND tc.visibility = 'AFTER_DUE_DATE'
             """)
     List<ProgrammingExercise> findAllByDueDateAfterDateWithTestsAfterDueDateWithoutBuildStudentSubmissionsDate(@Param("dateTime") ZonedDateTime dateTime);
 
