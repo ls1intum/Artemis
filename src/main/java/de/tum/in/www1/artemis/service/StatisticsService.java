@@ -405,7 +405,12 @@ public class StatisticsService {
         for (var value : values) {
             sumOfRatings += value;
         }
-        courseManagementStatisticsDTO.setAverageRatingInCourse(sumOfRatings * 1.0 / tutorRatings.size());
+        if (tutorRatings.size() > 0) {
+            courseManagementStatisticsDTO.setAverageRatingInCourse(sumOfRatings * 1.0 / tutorRatings.size());
+        }
+        else {
+            courseManagementStatisticsDTO.setAverageRatingInCourse(0.0);
+        }
         courseManagementStatisticsDTO.setTutorToAverageRatingMap(tutorRatings);
 
         // Set the max points for each exercise
