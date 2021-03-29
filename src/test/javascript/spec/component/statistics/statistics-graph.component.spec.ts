@@ -6,7 +6,7 @@ import { RouterTestingModule } from '@angular/router/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { StatisticsGraphComponent } from 'app/shared/statistics-graph/statistics-graph.component';
 import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
-import { Graphs, SpanType } from 'app/entities/statistics.model';
+import { Graphs, SpanType, StatisticsView } from 'app/entities/statistics.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe.ts';
 import * as chai from 'chai';
 import * as moment from 'moment';
@@ -54,6 +54,7 @@ describe('StatisticsGraphComponent', () => {
     it('should initialize', () => {
         let graphData: number[] = [];
         component.graphType = Graphs.SUBMISSIONS;
+        component.statisticsView = StatisticsView.ARTEMIS;
         let arrayLength = 0;
         const spy = spyOn(service, 'getChartData');
 
@@ -95,6 +96,8 @@ describe('StatisticsGraphComponent', () => {
     it('should initialize after changes', () => {
         component.graphType = Graphs.SUBMISSIONS;
         component.currentSpan = SpanType.WEEK;
+        component.statisticsView = StatisticsView.COURSE;
+        component.courseId = 1;
         const changes = { currentSpan: { currentValue: SpanType.DAY } as SimpleChange };
         const graphData = [];
         for (let i = 0; i < 24; i++) {
@@ -112,6 +115,7 @@ describe('StatisticsGraphComponent', () => {
     it('should switch time span', () => {
         component.graphType = Graphs.SUBMISSIONS;
         component.currentSpan = SpanType.WEEK;
+        component.statisticsView = StatisticsView.ARTEMIS;
         const graphData = [1, 2, 3, 4, 5, 6, 8];
         spyOn(service, 'getChartData').and.returnValue(of(graphData));
 

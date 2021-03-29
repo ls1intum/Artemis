@@ -39,6 +39,7 @@ public class StatisticsService {
      * @param span DAY,WEEK,MONTH or YEAR depending on the active tab in the view
      * @param periodIndex an index indicating which time period, 0 is current week, -1 is one week in the past, -2 is two weeks in the past ...
      * @param graphType the type of graph the data should be fetched
+     * @param courseId the courseId. Only set if we fetch value for the course statistics
      * @return an array, containing the values for each bar in the graph
      */
     public Integer[] getChartData(SpanType span, Integer periodIndex, GraphType graphType, Long courseId) {
@@ -429,6 +430,8 @@ public class StatisticsService {
 
     /**
      * Helper class which creates a map filled with the exerciseId mapped to the average score of the exercise
+     *
+     * @param exercises the exercises for which the average score should be collected
      */
     private Map<String, Double> createAverageScoreMap(Set<Exercise> exercises) {
         var averagePointsForExercises = participantScoreRepository.findAvgPointsForExercises(exercises);
@@ -447,6 +450,8 @@ public class StatisticsService {
 
     /**
      * Helper class which creates a map filled with the tutor name mapped to the average rating he/she receives in assessments
+     *
+     * @param exercises the exercises for which the tutor ratings should be collected
      */
     private Map<String, Double> createTutorRatingMap(Set<Exercise> exercises) {
         var ratingsByTutor = new HashMap<String, Double>();
