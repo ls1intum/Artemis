@@ -109,6 +109,8 @@ public class BitbucketService extends AbstractVersionControlService {
             }
         }
 
+        var defaultBranch = getDefaultBranch(exercise.getVcsTemplateRepositoryUrl());
+        setDefaultBranch(repositoryUrl, defaultBranch);
         protectBranches(urlService.getProjectKeyFromRepositoryUrl(repositoryUrl), urlService.getRepositorySlugFromRepositoryUrl(repositoryUrl));
     }
 
@@ -368,6 +370,27 @@ public class BitbucketService extends AbstractVersionControlService {
         catch (HttpClientErrorException e) {
             log.error("Unable to get default branch for repository " + repositorySlug, e);
             throw new BitbucketException("Unable to get default branch for repository " + repositorySlug, e);
+        }
+    }
+
+    /**
+     * Set the default branch of the repository
+     *
+     * @param repositoryUrl The repository url to set the default branch for.
+     * @param branchName The name of the branch to set as default, e.g. 'main'
+     */
+    public void setDefaultBranch(VcsRepositoryUrl repositoryUrl, String branchName) throws BitbucketException {
+        var projectKey = urlService.getProjectKeyFromRepositoryUrl(repositoryUrl);
+        var repositorySlug = urlService.getRepositorySlugFromRepositoryUrl(repositoryUrl);
+        var getDefaultBranchUrl = bitbucketServerUrl + "/rest/api/latest/projects/" + projectKey + "/repos/" + repositorySlug.toLowerCase() + "/branches/default";
+
+        try {
+            var payload = new BitbucketDefaultBranchDTO("refs/heads/" + branchName);
+            restTemplate.exchange(getDefaultBranchUrl, HttpMethod.PUT, new HttpEntity<>(payload), Void.class);
+        }
+        catch (HttpClientErrorException e) {
+            log.error("Unable to set default branch for repository " + repositorySlug, e);
+            throw new BitbucketException("Unable to set default branch for repository " + repositorySlug, e);
         }
     }
 
