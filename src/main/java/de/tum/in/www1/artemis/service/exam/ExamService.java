@@ -99,7 +99,8 @@ public class ExamService {
             InstanceMessageSendService instanceMessageSendService, TutorLeaderboardService tutorLeaderboardService, AuditEventRepository auditEventRepository,
             StudentParticipationRepository studentParticipationRepository, ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository,
             UserRepository userRepository, ProgrammingExerciseRepository programmingExerciseRepository, QuizExerciseRepository quizExerciseRepository,
-                       ResultRepository resultRepository, SubmissionRepository submissionRepository, SubmissionService submissionService, CourseExamExportService courseExamExportService, GitService gitService, GroupNotificationService groupNotificationService) {
+            ResultRepository resultRepository, SubmissionRepository submissionRepository, SubmissionService submissionService, CourseExamExportService courseExamExportService,
+            GitService gitService, GroupNotificationService groupNotificationService) {
         this.examRepository = examRepository;
         this.studentExamRepository = studentExamRepository;
         this.userRepository = userRepository;
@@ -884,15 +885,16 @@ public class ExamService {
      */
     public void combineTemplateCommitsOfAllProgrammingExercisesInExam(Exam exam) {
         exam.getExerciseGroups().forEach(group -> group.getExercises().stream().filter(exercise -> exercise instanceof ProgrammingExercise)
-            .map(exercise -> (ProgrammingExercise) exercise).forEach(exercise -> {
-                try {
-                    ProgrammingExercise programmingExerciseWithTemplateParticipation = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exercise.getId());
-                    gitService.combineAllCommitsOfRepositoryIntoOne(programmingExerciseWithTemplateParticipation.getTemplateParticipation().getVcsRepositoryUrl());
-                    log.debug("Finished combination of template commits for programming exercise " + programmingExerciseWithTemplateParticipation.toString());
-                } catch (InterruptedException | GitAPIException e) {
-                    log.error("An error occurred when trying to combine template commits for exam " + exam.getId() + ".", e);
-                }
-            })
-        );
+                .map(exercise -> (ProgrammingExercise) exercise).forEach(exercise -> {
+                    try {
+                        ProgrammingExercise programmingExerciseWithTemplateParticipation = programmingExerciseRepository
+                                .findByIdWithTemplateAndSolutionParticipationElseThrow(exercise.getId());
+                        gitService.combineAllCommitsOfRepositoryIntoOne(programmingExerciseWithTemplateParticipation.getTemplateParticipation().getVcsRepositoryUrl());
+                        log.debug("Finished combination of template commits for programming exercise " + programmingExerciseWithTemplateParticipation.toString());
+                    }
+                    catch (InterruptedException | GitAPIException e) {
+                        log.error("An error occurred when trying to combine template commits for exam " + exam.getId() + ".", e);
+                    }
+                }));
     }
 }
