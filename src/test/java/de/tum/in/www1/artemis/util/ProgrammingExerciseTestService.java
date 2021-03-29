@@ -215,6 +215,7 @@ public class ProgrammingExerciseTestService {
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(solutionRepository.localRepoFile.toPath(), null)).when(gitService)
                 .getOrCheckoutRepository(solutionRepoTestUrl, true);
         doNothing().when(gitService).pushSourceToTargetRepo(any(), any());
+        doNothing().when(gitService).combineAllCommitsOfRepositoryIntoOne(any());
 
         // we need separate mocks with VcsRepositoryUrl here because MockFileRepositoryUrl and VcsRepositoryUrl do not seem to be compatible here
         mockDelegate.mockGetRepositorySlugFromRepositoryUrl(exerciseRepoName, exerciseRepoTestUrl);

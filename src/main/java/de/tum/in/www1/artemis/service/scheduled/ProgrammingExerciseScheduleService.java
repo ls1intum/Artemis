@@ -167,9 +167,9 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
 
         // For any course exercise with a valid release date
         if (exercise.getReleaseDate() != null && ZonedDateTime.now().isBefore(exercise.getReleaseDate())) {
-            scheduleService.scheduleTask(exercise, ExerciseLifecycle.RELEASE,
-                    Set.of(new Tuple<>(exercise.getReleaseDate().minusSeconds(Constants.SECONDS_BEFORE_RELEASE_DATE_FOR_COMBINING_TEMPLATE_COMMITS),
-                            combineTemplateCommitsForExercise(exercise))));
+            var scheduledRunnable = Set.of(new Tuple<>(exercise.getReleaseDate().minusSeconds(Constants.SECONDS_BEFORE_RELEASE_DATE_FOR_COMBINING_TEMPLATE_COMMITS),
+                    combineTemplateCommitsForExercise(exercise)));
+            scheduleService.scheduleTask(exercise, ExerciseLifecycle.RELEASE, scheduledRunnable);
             log.debug("Scheduled combining template commits before release date for Programming Exercise \"" + exercise.getTitle() + "\" (#" + exercise.getId() + ") for "
                     + exercise.getReleaseDate() + ".");
         }
@@ -219,8 +219,9 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
             // This is only a backup (e.g. a crash of this node and restart during the exam)
             // TODO: Christian Femers: this can lead to a weired edge case after the normal exam end date and before the last individual exam end date (in case of working time
             // extensions)
-            scheduleService.scheduleTask(exercise, ExerciseLifecycle.RELEASE, Set.of(
-                    new Tuple<>(ZonedDateTime.now().plusSeconds(Constants.SECONDS_AFTER_RELEASE_DATE_FOR_UNLOCKING_STUDENT_EXAM_REPOS), unlockAllStudentRepositories(exercise))));
+            var scheduledRunnable = Set.of(
+                    new Tuple<>(ZonedDateTime.now().plusSeconds(Constants.SECONDS_AFTER_RELEASE_DATE_FOR_UNLOCKING_STUDENT_EXAM_REPOS), unlockAllStudentRepositories(exercise)));
+            scheduleService.scheduleTask(exercise, ExerciseLifecycle.RELEASE, scheduledRunnable);
         }
         // NOTHING TO DO AFTER EXAM
 
