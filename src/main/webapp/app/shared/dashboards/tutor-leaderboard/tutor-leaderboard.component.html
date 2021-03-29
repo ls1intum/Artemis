@@ -47,12 +47,12 @@
                 <ng-template #atLeastInstructor>
                     <ng-container *ngIf="isExerciseDashboard && exercise && exercise.id && course && course.id">
                         <td>
-                            <a [routerLink]="['/course-management', course.id, 'exercises', exercise.id, 'complaints']" [queryParams]="{ tutorId: tutor.userId }">
+                            <a [routerLink]="['/course-management', course.id, exercise.type + '-exercises', exercise.id, 'complaints']" [queryParams]="{ tutorId: tutor.userId }">
                                 {{ tutor.numberOfAcceptedComplaints }}
                             </a>
                         </td>
                         <td *ngIf="!isExamMode">
-                            <a [routerLink]="['/course-management', course.id, 'exercises', exercise.id, 'more-feedback-requests']" [queryParams]="{ tutorId: tutor.userId }">
+                            <a [routerLink]="['/course-management', course.id, exercise.type + '-exercises', exercise.id, 'more-feedback-requests']" [queryParams]="{ tutorId: tutor.userId }">
                                 {{ tutor.numberOfNotAnsweredMoreFeedbackRequests }}
                             </a>
                         </td>

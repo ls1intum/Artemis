@@ -164,7 +164,7 @@ describe('TeamComponent', () => {
             comp.ngOnInit();
             const routerSpy = spy(router, 'navigate');
             comp.onTeamDelete();
-            expect(routerSpy).to.have.been.calledOnceWithExactly(['/course-management', mockExercise.course?.id, 'exercises', mockExercise.id, 'teams']);
+            expect(routerSpy).to.have.been.calledOnceWithExactly(['/course-management', mockExercise.course?.id, mockExercise.type + '-exercises', mockExercise.id, 'teams']);
         });
     });
 });

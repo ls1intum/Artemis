@@ -46,6 +46,7 @@ import { ModelingAssessmentEditorComponent } from 'app/exercises/modeling/assess
 import { ProgrammingAssessmentDashboardComponent } from 'app/exercises/programming/assess/programming-assessment-dashboard/programming-assessment-dashboard.component';
 import { CodeEditorTutorAssessmentContainerComponent } from 'app/exercises/programming/assess/code-editor-tutor-assessment-container.component';
 import { NewStudentParticipationResolver, StudentParticipationResolver } from 'app/exercises/programming/assess/programming-assessment.route';
+import { exerciseTypes } from 'app/entities/exercise.model';
 
 @Injectable({ providedIn: 'root' })
 export class ExamResolve implements Resolve<Exam> {
@@ -502,33 +503,39 @@ export const examManagementRoute: Routes = [
         },
         canActivate: [UserRouteAccessService],
     },
-    {
-        path: ':examId/exercise-groups/:exerciseGroupId/exercises/:exerciseId/scores',
-        component: ExerciseScoresComponent,
-        data: {
-            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.TA],
-            pageTitle: 'instructorDashboard.exerciseDashboard',
-        },
-        canActivate: [UserRouteAccessService],
-    },
-    {
-        path: ':examId/exercise-groups/:exerciseGroupId/exercises/:exerciseId/participations',
-        component: ParticipationComponent,
-        data: {
-            authorities: [Authority.TA, Authority.INSTRUCTOR, Authority.ADMIN],
-            pageTitle: 'artemisApp.participation.home.title',
-        },
-        canActivate: [UserRouteAccessService],
-    },
-    {
-        path: ':examId/exercise-groups/:exerciseGroupId/exercises/:exerciseId/participations/:participationId',
-        component: ParticipationSubmissionComponent,
-        data: {
-            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
-            pageTitle: 'artemisApp.participation.home.title',
-        },
-        canActivate: [UserRouteAccessService],
-    },
+    ...exerciseTypes.map((exerciseType) => {
+        return {
+            path: ':examId/exercise-groups/:exerciseGroupId/' + exerciseType + '-exercises/:exerciseId/scores',
+            component: ExerciseScoresComponent,
+            data: {
+                authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.TA],
+                pageTitle: 'instructorDashboard.exerciseDashboard',
+            },
+            canActivate: [UserRouteAccessService],
+        };
+    }),
+    ...exerciseTypes.map((exerciseType) => {
+        return {
+            path: ':examId/exercise-groups/:exerciseGroupId/' + exerciseType + '-exercises/:exerciseId/participations',
+            component: ParticipationComponent,
+            data: {
+                authorities: [Authority.TA, Authority.INSTRUCTOR, Authority.ADMIN],
+                pageTitle: 'artemisApp.participation.home.title',
+            },
+            canActivate: [UserRouteAccessService],
+        };
+    }),
+    ...exerciseTypes.map((exerciseType) => {
+        return {
+            path: ':examId/exercise-groups/:exerciseGroupId/' + exerciseType + '-exercises/:exerciseId/participations/:participationId',
+            component: ParticipationSubmissionComponent,
+            data: {
+                authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+                pageTitle: 'artemisApp.participation.home.title',
+            },
+            canActivate: [UserRouteAccessService],
+        };
+    }),
     {
         path: ':examId/exercise-groups/:exerciseGroupId/file-upload-exercises/:exerciseId/submissions/:submissionId/assessment',
         component: FileUploadAssessmentComponent,

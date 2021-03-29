@@ -67,7 +67,7 @@
                         <div class="btn-group flex-btn-group-container">
                             <a
                                 *ngIf="modelingExercise.isAtLeastTutor"
-                                [routerLink]="['/course-management', modelingExercise.course.id, 'exercises', modelingExercise.id, 'scores']"
+                                [routerLink]="['/course-management', modelingExercise.course.id, 'modeling-exercises', modelingExercise.id, 'scores']"
                                 class="btn btn-info btn-sm mr-1"
                             >
                                 <fa-icon [icon]="'table'"></fa-icon>
@@ -75,7 +75,7 @@
                             </a>
                             <a
                                 *ngIf="modelingExercise.isAtLeastTutor"
-                                [routerLink]="['/course-management', courseId, 'exercises', modelingExercise.id, 'participations']"
+                                [routerLink]="['/course-management', courseId, 'modeling-exercises', modelingExercise.id, 'participations']"
                                 class="btn btn-primary btn-sm mr-1"
                             >
                                 <fa-icon [icon]="['far', 'list-alt']"></fa-icon>
@@ -91,7 +91,7 @@
                             </a>
                             <a
                                 *ngIf="modelingExercise.teamMode && modelingExercise.isAtLeastTutor"
-                                [routerLink]="['/course-management', modelingExercise.course.id, 'exercises', modelingExercise.id, 'teams']"
+                                [routerLink]="['/course-management', modelingExercise.course.id, 'modeling-exercises', modelingExercise.id, 'teams']"
                                 class="btn btn-primary btn-sm mr-1"
                             >
                                 <fa-icon [icon]="'users'"></fa-icon>

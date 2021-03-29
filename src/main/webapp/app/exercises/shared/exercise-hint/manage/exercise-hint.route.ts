@@ -10,6 +10,7 @@ import { ExerciseHintDetailComponent } from './exercise-hint-detail.component';
 import { ExerciseHintUpdateComponent } from './exercise-hint-update.component';
 import { ExerciseHint } from 'app/entities/exercise-hint.model';
 import { Authority } from 'app/shared/constants/authority.constants';
+import { exerciseTypes } from 'app/entities/exercise.model';
 
 @Injectable({ providedIn: 'root' })
 export class ExerciseHintResolve implements Resolve<ExerciseHint | null> {
@@ -32,49 +33,57 @@ export class ExerciseHintResolve implements Resolve<ExerciseHint | null> {
 }
 
 export const exerciseHintRoute: Routes = [
-    {
-        path: ':courseId/exercises/:exerciseId/hints/new',
-        component: ExerciseHintUpdateComponent,
-        resolve: {
-            exerciseHint: ExerciseHintResolve,
-        },
-        data: {
-            authorities: [Authority.ADMIN],
-            pageTitle: 'artemisApp.exerciseHint.home.title',
-        },
-        canActivate: [UserRouteAccessService],
-    },
-    {
-        path: ':courseId/exercises/:exerciseId/hints/:hintId',
-        component: ExerciseHintDetailComponent,
-        resolve: {
-            exerciseHint: ExerciseHintResolve,
-        },
-        data: {
-            authorities: [Authority.ADMIN],
-            pageTitle: 'artemisApp.exerciseHint.home.title',
-        },
-        canActivate: [UserRouteAccessService],
-    },
-    {
-        path: ':courseId/exercises/:exerciseId/hints/:hintId/edit',
-        component: ExerciseHintUpdateComponent,
-        resolve: {
-            exerciseHint: ExerciseHintResolve,
-        },
-        data: {
-            authorities: [Authority.ADMIN],
-            pageTitle: 'artemisApp.exerciseHint.home.title',
-        },
-        canActivate: [UserRouteAccessService],
-    },
-    {
-        path: ':courseId/exercises/:exerciseId/hints',
-        component: ExerciseHintComponent,
-        data: {
-            authorities: [Authority.ADMIN],
-            pageTitle: 'artemisApp.exerciseHint.home.title',
-        },
-        canActivate: [UserRouteAccessService],
-    },
+    ...exerciseTypes.map((exerciseType) => {
+        return {
+            path: ':courseId/' + exerciseType + '-exercises/:exerciseId/hints/new',
+            component: ExerciseHintUpdateComponent,
+            resolve: {
+                exerciseHint: ExerciseHintResolve,
+            },
+            data: {
+                authorities: [Authority.ADMIN],
+                pageTitle: 'artemisApp.exerciseHint.home.title',
+            },
+            canActivate: [UserRouteAccessService],
+        };
+    }),
+    ...exerciseTypes.map((exerciseType) => {
+        return {
+            path: ':courseId/' + exerciseType + '-exercises/:exerciseId/hints/:hintId',
+            component: ExerciseHintDetailComponent,
+            resolve: {
+                exerciseHint: ExerciseHintResolve,
+            },
+            data: {
+                authorities: [Authority.ADMIN],
+                pageTitle: 'artemisApp.exerciseHint.home.title',
+            },
+            canActivate: [UserRouteAccessService],
+        };
+    }),
+    ...exerciseTypes.map((exerciseType) => {
+        return {
+            path: ':courseId/' + exerciseType + '-exercises/:exerciseId/hints/:hintId/edit',
+            component: ExerciseHintUpdateComponent,
+            resolve: {
+                exerciseHint: ExerciseHintResolve,
+            },
+            data: {
+                authorities: [Authority.ADMIN],
+                pageTitle: 'artemisApp.exerciseHint.home.title',
+            },
+            canActivate: [UserRouteAccessService],
+        };
+    }),
+    ...exerciseTypes.map((exerciseType) => {
+        return {
+            path: ':courseId/' + exerciseType + '-exercises/:exerciseId/hints',
+            component: ExerciseHintComponent,
+            data: {
+                authorities: [Authority.ADMIN],
+                pageTitle: 'artemisApp.exerciseHint.home.title',
+            },
+            canActivate: [UserRouteAccessService],
+        };
+    }),
 ];

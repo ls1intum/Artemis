@@ -80,7 +80,7 @@
                 <div class="row mb-1" *ngIf="complaintsEnabled">
                     <div class="col-8">{{ 'artemisApp.assessmentDashboard.complaintsAboutYourAssessments' | artemisTranslate }}</div>
                     <div class="col-4">
-                        <a [routerLink]="['/course-management', courseId, 'exercises', exercise.id, 'complaints']" [queryParams]="{ tutorId: tutor?.id }">{{
+                        <a [routerLink]="['/course-management', courseId, exercise.type + '-exercises', exercise.id, 'complaints']" [queryParams]="{ tutorId: tutor?.id }">{{
                             numberOfTutorComplaints
                         }}</a>
                     </div>
@@ -92,7 +92,7 @@
                 <div class="row mb-1" *ngIf="feedbackRequestEnabled">
                     <div class="col-8">{{ 'artemisApp.assessmentDashboard.moreFeedbackRequestsForYourAssessments' | artemisTranslate }}</div>
                     <div class="col-4">
-                        <a [routerLink]="['/course-management', courseId, 'exercises', exercise.id, 'more-feedback-requests']" [queryParams]="{ tutorId: tutor?.id }">{{
+                        <a [routerLink]="['/course-management', courseId, exercise.type + '-exercises', exercise.id, 'more-feedback-requests']" [queryParams]="{ tutorId: tutor?.id }">{{
                             numberOfTutorMoreFeedbackRequests
                         }}</a>
                     </div>

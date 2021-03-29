@@ -121,12 +121,12 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
                   this.exercise.exerciseGroup!.exam!.id!.toString(),
                   'exercise-groups',
                   this.exercise.exerciseGroup!.id!.toString(),
-                  'exercises',
+                  this.exercise.type + '-exercises',
                   this.exercise.id!.toString(),
                   'participations',
                   participationId.toString(),
               ]
-            : ['/course-management', this.course.id!.toString(), 'exercises', this.exercise.id!.toString(), 'participations', participationId.toString(), 'submissions'];
+            : ['/course-management', this.course.id!.toString(), this.exercise.type + '-exercises', this.exercise.id!.toString(), 'participations', participationId.toString(), 'submissions'];
     }
 
     /**
