@@ -3,9 +3,12 @@ package de.tum.in.www1.artemis.web.rest.dto;
 import java.util.Map;
 import java.util.Objects;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 /**
  * This is a dto for providing statistics for the programming exercise test cases & sca categories.
  */
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class ProgrammingExerciseGradingStatisticsDTO {
 
     // number of the participations with a result

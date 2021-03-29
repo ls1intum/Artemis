@@ -380,7 +380,12 @@ public class BambooRequestMockProvider {
 
         changes.setSize(0);
         changes.setExpand("change");
-        changes.setChanges(new LinkedList<>());
+        final var bambooChange = new BambooChangesDTO.BambooChangeDTO();
+        bambooChange.setAuthor("student1");
+        bambooChange.setFullName("Student1");
+        bambooChange.setUserName("student1");
+        bambooChange.setChangesetId("1350219605aede098aa5b44d7eff5c56e4eb9eca");
+        changes.setChanges(List.of(bambooChange));
         buildResult.setChanges(changes);
 
         buildLink.setLinkToArtifact(new URL(bambooServerUrl + "/download/"));
@@ -492,11 +497,6 @@ public class BambooRequestMockProvider {
     public void mockDeleteBambooBuildPlan(String planKey, boolean buildPlanExists) throws URISyntaxException, JsonProcessingException {
 
         mockGetBuildPlan(planKey, null, false);
-
-        if (!buildPlanExists) {
-            return;
-        }
-
         if (!buildPlanExists) {
             return;
         }

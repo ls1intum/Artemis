@@ -2,10 +2,12 @@ package de.tum.in.www1.artemis.repository;
 
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
+import java.security.SecureRandom;
+import java.time.Duration;
 import java.time.ZonedDateTime;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
@@ -18,6 +20,8 @@ import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.exam.Exam;
+import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -120,5 +124,147 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
             return studentExam.getExam().getStartDate().plusSeconds(studentExam.getWorkingTime());
         }
         return exercise.getDueDate();
+    }
+
+    /**
+     * Get one student exam by id with exercises.
+     *
+     * @param studentExamId the id of the student exam
+     * @return the student exam with exercises
+     */
+    @NotNull
+    default StudentExam findByIdWithExercisesElseThrow(Long studentExamId) {
+        return findWithExercisesById(studentExamId).orElseThrow(() -> new EntityNotFoundException("Student exam", studentExamId));
+    }
+
+    /**
+     * Get the maximal working time of all student exams for the exam with the given id.
+     *
+     * @param examId the id of the exam
+     * @return the maximum of all student exam working times for the given exam
+     * @throws EntityNotFoundException if no student exams could be found
+     */
+    @NotNull
+    default Integer findMaxWorkingTimeByExamIdElseThrow(Long examId) {
+        return findMaxWorkingTimeByExamId(examId).orElseThrow(() -> new EntityNotFoundException("No student exams found for exam id " + examId));
+    }
+
+    /**
+     * Generates random exams for each user in the given users set and saves them.
+     *
+     * @param exam                      exam for which the individual student exams will be generated
+     * @param users                     users for which the individual exams will be generated
+     * @param numberOfOptionalExercises number of optional exercises in the exam
+     * @return List of StudentExams generated for the given users
+     */
+    default List<StudentExam> createRandomStudentExams(Exam exam, Set<User> users, long numberOfOptionalExercises) {
+        List<StudentExam> studentExams = new ArrayList<>();
+        SecureRandom random = new SecureRandom();
+
+        // Determine the default working time by computing the duration between start and end date of the exam
+        Integer defaultWorkingTime = Math.toIntExact(Duration.between(exam.getStartDate(), exam.getEndDate()).toSeconds());
+
+        // Prepare indices of mandatory and optional exercise groups to preserve order of exercise groups
+        List<Integer> indicesOfMandatoryExerciseGroups = new ArrayList<>();
+        List<Integer> indicesOfOptionalExerciseGroups = new ArrayList<>();
+        for (int i = 0; i < exam.getExerciseGroups().size(); i++) {
+            if (Boolean.TRUE.equals(exam.getExerciseGroups().get(i).getIsMandatory())) {
+                indicesOfMandatoryExerciseGroups.add(i);
+            }
+            else {
+                indicesOfOptionalExerciseGroups.add(i);
+            }
+        }
+
+        for (User user : users) {
+            // Create one student exam per user
+            StudentExam studentExam = new StudentExam();
+            studentExam.setWorkingTime(defaultWorkingTime);
+            studentExam.setExam(exam);
+            studentExam.setUser(user);
+            studentExam.setSubmitted(false);
+            studentExam.setTestRun(false);
+
+            // Add a random exercise for each exercise group if the index of the exercise group is in assembledIndices
+            List<Integer> assembledIndices = assembleIndicesListWithRandomSelection(indicesOfMandatoryExerciseGroups, indicesOfOptionalExerciseGroups, numberOfOptionalExercises);
+            for (Integer index : assembledIndices) {
+                // We get one random exercise from all preselected exercise groups
+                studentExam.addExercise(selectRandomExercise(random, exam.getExerciseGroups().get(index)));
+            }
+
+            // Apply random exercise order
+            if (Boolean.TRUE.equals(exam.getRandomizeExerciseOrder())) {
+                Collections.shuffle(studentExam.getExercises());
+            }
+
+            studentExams.add(studentExam);
+        }
+        studentExams = saveAll(studentExams);
+        return studentExams;
+    }
+
+    private List<Integer> assembleIndicesListWithRandomSelection(List<Integer> mandatoryIndices, List<Integer> optionalIndices, Long numberOfOptionalExercises) {
+        // Add all mandatory indices
+        List<Integer> indices = new ArrayList<>(mandatoryIndices);
+
+        // Add as many optional indices as numberOfOptionalExercises
+        if (numberOfOptionalExercises > 0) {
+            Collections.shuffle(optionalIndices);
+            indices = Stream.concat(indices.stream(), optionalIndices.stream().limit(numberOfOptionalExercises)).collect(Collectors.toList());
+        }
+
+        // Sort the indices to preserve the original order
+        Collections.sort(indices);
+        return indices;
+    }
+
+    private Exercise selectRandomExercise(SecureRandom random, ExerciseGroup exerciseGroup) {
+        List<Exercise> exercises = new ArrayList<>(exerciseGroup.getExercises());
+        int randomIndex = random.nextInt(exercises.size());
+        return exercises.get(randomIndex);
+    }
+
+    /**
+     * Generates the student exams randomly based on the exam configuration and the exercise groups
+     * Important: the passed exams needs to include the registered users, exercise groups and exercises (eagerly loaded)
+     *
+     * @param exam with eagerly loaded registered users, exerciseGroups and exercises loaded
+     * @return the list of student exams with their corresponding users
+     */
+    default List<StudentExam> generateStudentExams(final Exam exam) {
+        final var existingStudentExams = findByExamId(exam.getId());
+        // https://jira.spring.io/browse/DATAJPA-1367 deleteInBatch does not work, because it does not cascade the deletion of existing exam sessions, therefore use deleteAll
+        deleteAll(existingStudentExams);
+
+        long numberOfOptionalExercises = exam.getNumberOfExercisesInExam() - exam.getExerciseGroups().stream().filter(ExerciseGroup::getIsMandatory).count();
+
+        // StudentExams are saved in the called method
+        return createRandomStudentExams(exam, exam.getRegisteredUsers(), numberOfOptionalExercises);
+    }
+
+    /**
+     * Generates the missing student exams randomly based on the exam configuration and the exercise groups.
+     * The difference between all registered users and the users who already have an individual exam is the set of users for which student exams will be created.
+     *
+     * Important: the passed exams needs to include the registered users, exercise groups and exercises (eagerly loaded)
+     *
+     * @param exam with eagerly loaded registered users, exerciseGroups and exercises loaded
+     * @return the list of student exams with their corresponding users
+     */
+    default List<StudentExam> generateMissingStudentExams(Exam exam) {
+        long numberOfOptionalExercises = exam.getNumberOfExercisesInExam() - exam.getExerciseGroups().stream().filter(ExerciseGroup::getIsMandatory).count();
+
+        // Get all users who already have an individual exam
+        Set<User> usersWithStudentExam = findUsersWithStudentExamsForExam(exam.getId());
+
+        // Get all registered users
+        Set<User> allRegisteredUsers = exam.getRegisteredUsers();
+
+        // Get all students who don't have an exam yet
+        Set<User> missingUsers = new HashSet<>(allRegisteredUsers);
+        missingUsers.removeAll(usersWithStudentExam);
+
+        // StudentExams are saved in the called method
+        return createRandomStudentExams(exam, missingUsers, numberOfOptionalExercises);
     }
 }

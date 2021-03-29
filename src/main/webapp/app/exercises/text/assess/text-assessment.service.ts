@@ -13,7 +13,8 @@ import { TextBlockRef } from 'app/entities/text-block-ref.model';
 import { cloneDeep } from 'lodash';
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { FeedbackConflict } from 'app/entities/feedback-conflict';
-import { getLatestSubmissionResult, getSubmissionResultByCorrectionRound, setLatestSubmissionResult } from 'app/entities/submission.model';
+import { getLatestSubmissionResult, getSubmissionResultByCorrectionRound, getSubmissionResultById, setLatestSubmissionResult, Submission } from 'app/entities/submission.model';
+import { Participation } from 'app/entities/participation/participation.model';
 
 type EntityResponseType = HttpResponse<Result>;
 type TextAssessmentDTO = { feedbacks: Feedback[]; textBlocks: TextBlock[] };
@@ -98,10 +99,17 @@ export class TextAssessmentService {
     /**
      * Get all feedback items for a submission.
      * @param submissionId id of the submission for which the feedback items should be retrieved of type {number}
+     * @param correctionRound
+     * @param resultId instructors can results by id
      */
-    public getFeedbackDataForExerciseSubmission(submissionId: number, correctionRound = 0): Observable<StudentParticipation> {
+    public getFeedbackDataForExerciseSubmission(submissionId: number, correctionRound = 0, resultId?: number): Observable<StudentParticipation> {
         let params = new HttpParams();
-        params = params.set('correction-round', correctionRound.toString());
+        if (resultId && resultId > 0) {
+            // in case resultId is set, we do not need the correction round
+            params = params.set('resultId', resultId!.toString());
+        } else {
+            params = params.set('correction-round', correctionRound.toString());
+        }
         return this.http
             .get<StudentParticipation>(`${this.resourceUrl}/submission/${submissionId}`, { observe: 'response', params })
             .pipe(
@@ -109,15 +117,13 @@ export class TextAssessmentService {
                 tap((response) => {
                     const participation = response.body!;
                     const submission = participation.submissions![0];
-                    setLatestSubmissionResult(submission, getLatestSubmissionResult(submission));
-                    submission.participation = participation;
-                    participation.results = submission.results!;
-                    const result = getSubmissionResultByCorrectionRound(submission, correctionRound)!;
-                    result.submission = submission;
-                    result.participation = participation;
-                    // Make sure Feedbacks Array is initialized
-                    result.feedbacks = result.feedbacks || [];
-                    TextAssessmentService.convertFeedbackConflictsFromServer(result.feedbacks);
+                    let result;
+                    if (resultId) {
+                        result = getSubmissionResultById(submission, resultId);
+                    } else {
+                        result = getSubmissionResultByCorrectionRound(submission, correctionRound)!;
+                    }
+                    TextAssessmentService.reconnectResultsParticipation(participation, submission, result!);
                     (submission as TextSubmission).atheneTextAssessmentTrackingToken = response.headers.get('x-athene-tracking-authorization') || undefined;
                 }),
                 map((response) => response.body!),
@@ -266,5 +272,23 @@ export class TextAssessmentService {
                 })
                 .subscribe();
         }
+    }
+
+    /**
+     * Connects the participation with the submission and result
+     *
+     *  @param participation
+     *  @param submission
+     *  @param result
+     */
+    private static reconnectResultsParticipation(participation: Participation, submission: Submission, result: Result) {
+        setLatestSubmissionResult(submission, getLatestSubmissionResult(submission));
+        submission.participation = participation;
+        participation.results = submission.results!;
+        result.submission = submission;
+        result.participation = participation;
+        // Make sure Feedbacks Array is initialized
+        result.feedbacks = result.feedbacks || [];
+        TextAssessmentService.convertFeedbackConflictsFromServer(result.feedbacks);
     }
 }

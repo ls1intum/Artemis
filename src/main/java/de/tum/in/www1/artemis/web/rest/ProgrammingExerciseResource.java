@@ -44,10 +44,7 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentPar
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextPlagiarismResult;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
-import de.tum.in.www1.artemis.repository.CourseRepository;
-import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
-import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
@@ -98,11 +95,11 @@ public class ProgrammingExerciseResource {
 
     private final StudentParticipationRepository studentParticipationRepository;
 
-    private final ExerciseGroupService exerciseGroupService;
+    private final ExerciseGroupRepository exerciseGroupRepository;
 
     private final StaticCodeAnalysisService staticCodeAnalysisService;
 
-    private final GradingCriterionService gradingCriterionService;
+    private final GradingCriterionRepository gradingCriterionRepository;
 
     private final ProgrammingLanguageFeatureService programmingLanguageFeatureService;
 
@@ -130,7 +127,7 @@ public class ProgrammingExerciseResource {
             CourseService courseService, Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService,
             ExerciseService exerciseService, ProgrammingExerciseService programmingExerciseService, StudentParticipationRepository studentParticipationRepository,
             ProgrammingExerciseImportService programmingExerciseImportService, ProgrammingExerciseExportService programmingExerciseExportService,
-            ExerciseGroupService exerciseGroupService, StaticCodeAnalysisService staticCodeAnalysisService, GradingCriterionService gradingCriterionService,
+            ExerciseGroupRepository exerciseGroupRepository, StaticCodeAnalysisService staticCodeAnalysisService, GradingCriterionRepository gradingCriterionRepository,
             ProgrammingLanguageFeatureService programmingLanguageFeatureService, TemplateUpgradePolicy templateUpgradePolicy, CourseRepository courseRepository) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.userRepository = userRepository;
@@ -143,9 +140,9 @@ public class ProgrammingExerciseResource {
         this.studentParticipationRepository = studentParticipationRepository;
         this.programmingExerciseImportService = programmingExerciseImportService;
         this.programmingExerciseExportService = programmingExerciseExportService;
-        this.exerciseGroupService = exerciseGroupService;
+        this.exerciseGroupRepository = exerciseGroupRepository;
         this.staticCodeAnalysisService = staticCodeAnalysisService;
-        this.gradingCriterionService = gradingCriterionService;
+        this.gradingCriterionRepository = gradingCriterionRepository;
         this.programmingLanguageFeatureService = programmingLanguageFeatureService;
         this.templateUpgradePolicy = templateUpgradePolicy;
         this.courseRepository = courseRepository;
@@ -794,13 +791,13 @@ public class ProgrammingExerciseResource {
         ProgrammingExercise programmingExercise = optionalProgrammingExercise.get();
 
         // Fetch grading criterion into exercise of participation
-        List<GradingCriterion> gradingCriteria = gradingCriterionService.findByExerciseIdWithEagerGradingCriteria(programmingExercise.getId());
+        List<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(programmingExercise.getId());
         programmingExercise.setGradingCriteria(gradingCriteria);
 
         // If the exercise belongs to an exam, only instructors and admins are allowed to access it, otherwise also TA have access
         if (programmingExercise.isExamExercise()) {
             // Get the course over the exercise group
-            ExerciseGroup exerciseGroup = exerciseGroupService.findOneWithExam(programmingExercise.getExerciseGroup().getId());
+            ExerciseGroup exerciseGroup = exerciseGroupRepository.findByIdElseThrow(programmingExercise.getExerciseGroup().getId());
             Course course = exerciseGroup.getExam().getCourse();
 
             if (!authCheckService.isAtLeastInstructorInCourse(course, null)) {
@@ -904,7 +901,7 @@ public class ProgrammingExerciseResource {
         // If the exercise belongs to an exam, the course must be retrieved over the exerciseGroup
         Course course;
         if (programmingExercise.isExamExercise()) {
-            course = exerciseGroupService.retrieveCourseOverExerciseGroup(programmingExercise.getExerciseGroup().getId());
+            course = exerciseGroupRepository.retrieveCourseOverExerciseGroup(programmingExercise.getExerciseGroup().getId());
         }
         else {
             course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();

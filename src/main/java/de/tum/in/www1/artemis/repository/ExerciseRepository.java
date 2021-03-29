@@ -220,6 +220,83 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
     @EntityGraph(type = LOAD, attributePaths = { "studentParticipations", "studentParticipations.student", "studentParticipations.submissions" })
     Optional<Exercise> findWithEagerStudentParticipationsStudentAndSubmissionsById(Long exerciseId);
 
+    /**
+     * Returns the title of the exercise with the given id
+     *
+     * @param exerciseId the id of the exercise
+     * @return the name/title of the exercise or null if the exercise does not exist
+     */
+    @Query("""
+            SELECT e.title
+            FROM Exercise e
+            WHERE e.id = :exerciseId
+            """)
+    String getExerciseTitle(@Param("exerciseId") Long exerciseId);
+
+    /**
+     * Fetches the active exercises for a course
+     *
+     * @param courseId the course to get the statistics for
+     * @param sevenDaysAgo a ZoneDateTime seven days in the past
+     * @return a set of exercises with categories, which have an assessment due date (or due date if without assessment) not older than sevenDaysAgo
+     */
+    @Query("""
+            SELECT DISTINCT e
+            FROM Exercise e LEFT JOIN FETCH e.categories
+            WHERE e.course.id = :courseId
+                AND (e.assessmentDueDate IS NULL OR e.assessmentDueDate >= :sevenDaysAgo)
+                AND (e.assessmentDueDate IS NOT NULL OR e.dueDate IS NULL OR e.dueDate >= :sevenDaysAgo)
+            """)
+    Set<Exercise> getExercisesForCourseManagementOverview(@Param("courseId") Long courseId, @Param("sevenDaysAgo") ZonedDateTime sevenDaysAgo);
+
+    /**
+     * Fetches the amount of participations in the given exercise
+     *
+     * @param exerciseId the id of the exercise to get the amount for
+     * @return The amount of participations as <code>Long</code>
+     */
+    @Query("""
+            SELECT COUNT(DISTINCT p.student.id)
+            FROM Exercise e JOIN e.studentParticipations p
+            WHERE e.id = :exerciseId
+            """)
+    Long getParticipationCountById(@Param("exerciseId") Long exerciseId);
+
+    /**
+     * Fetches the score of the given exercise
+     *
+     * @param exerciseId the id of the exercise to get the score for
+     * @return The average score as <code>Double</code>
+     */
+    @Query("""
+            SELECT AVG(r.score)
+            FROM Exercise e JOIN e.studentParticipations p JOIN p.submissions s JOIN s.results r
+            WHERE e.id = :exerciseId
+               AND s.id = (
+                   SELECT max(s2.id)
+                   FROM Submission s2 JOIN s2.results r2
+                   WHERE s2.participation.id = s.participation.id
+                       AND r2.score IS NOT NULL
+               )
+            """)
+    Double getAverageScoreById(@Param("exerciseId") Long exerciseId);
+
+    /**
+     * Fetches exercise ids of active exercises of a course
+     *
+     * @param courseId the id of the course the exercises are part of
+     * @param sevenDaysAgo a ZoneDateTime seven days in the past, exercises with an assessment due date (or due date if without assessment) older than that are filtered
+     * @return a list of ids of exercises
+     */
+    @Query("""
+            SELECT e.id
+            FROM Exercise e
+            WHERE e.course.id = :courseId
+                AND (e.assessmentDueDate IS NULL OR e.assessmentDueDate >= :sevenDaysAgo)
+                AND (e.assessmentDueDate IS NOT NULL OR e.dueDate IS NULL OR e.dueDate >= :sevenDaysAgo)
+            """)
+    List<Long> getActiveExerciseIdsByCourseId(@Param("courseId") Long courseId, @Param("sevenDaysAgo") ZonedDateTime sevenDaysAgo);
+
     @NotNull
     default Exercise findByIdElseThrow(Long exerciseId) throws EntityNotFoundException {
         return findById(exerciseId).orElseThrow(() -> new EntityNotFoundException("Exercise", exerciseId));

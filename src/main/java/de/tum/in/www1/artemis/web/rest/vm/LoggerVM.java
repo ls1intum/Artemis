@@ -2,9 +2,12 @@ package de.tum.in.www1.artemis.web.rest.vm;
 
 import ch.qos.logback.classic.Logger;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 /**
  * View Model object for storing a Logback logger.
  */
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class LoggerVM {
 
     private String name;

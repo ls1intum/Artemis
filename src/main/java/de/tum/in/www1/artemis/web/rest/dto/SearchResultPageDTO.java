@@ -2,6 +2,8 @@ package de.tum.in.www1.artemis.web.rest.dto;
 
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 /**
  * Wrapper for a search result which is paged <br>
  *
@@ -9,6 +11,7 @@ import java.util.List;
  * @see PageableSearchDTO
  * @param <T>
  */
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class SearchResultPageDTO<T> {
 
     /**

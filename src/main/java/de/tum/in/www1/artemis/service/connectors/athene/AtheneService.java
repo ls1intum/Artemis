@@ -8,7 +8,6 @@ import java.util.*;
 
 import javax.validation.constraints.NotNull;
 
-import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -23,8 +22,8 @@ import de.tum.in.www1.artemis.exception.NetworkingError;
 import de.tum.in.www1.artemis.repository.TextBlockRepository;
 import de.tum.in.www1.artemis.repository.TextClusterRepository;
 import de.tum.in.www1.artemis.repository.TextExerciseRepository;
+import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
 import de.tum.in.www1.artemis.service.TextAssessmentQueueService;
-import de.tum.in.www1.artemis.service.TextSubmissionService;
 import de.tum.in.www1.artemis.web.rest.dto.AtheneDTO;
 
 @Service
@@ -47,17 +46,17 @@ public class AtheneService {
 
     private final TextExerciseRepository textExerciseRepository;
 
-    private final TextSubmissionService textSubmissionService;
+    private final TextSubmissionRepository textSubmissionRepository;
 
     private final AtheneConnector<RequestDTO, ResponseDTO> connector;
 
     // Contains tasks submitted to Athene and currently processing
     private final List<Long> runningAtheneTasks = new ArrayList<>();
 
-    public AtheneService(TextSubmissionService textSubmissionService, TextBlockRepository textBlockRepository, TextClusterRepository textClusterRepository,
+    public AtheneService(TextSubmissionRepository textSubmissionRepository, TextBlockRepository textBlockRepository, TextClusterRepository textClusterRepository,
             TextExerciseRepository textExerciseRepository, TextAssessmentQueueService textAssessmentQueueService,
             @Qualifier("atheneRestTemplate") RestTemplate atheneRestTemplate) {
-        this.textSubmissionService = textSubmissionService;
+        this.textSubmissionRepository = textSubmissionRepository;
         this.textBlockRepository = textBlockRepository;
         this.textClusterRepository = textClusterRepository;
         this.textExerciseRepository = textExerciseRepository;
@@ -146,7 +145,7 @@ public class AtheneService {
 
         // Find all submissions for Exercise
         // We only support english languages so far, to prevent corruption of the clustering
-        List<TextSubmission> textSubmissions = textSubmissionService.getTextSubmissionsWithTextBlocksByExerciseIdAndLanguage(exercise.getId(), Language.ENGLISH);
+        List<TextSubmission> textSubmissions = textSubmissionRepository.getTextSubmissionsWithTextBlocksByExerciseIdAndLanguage(exercise.getId(), Language.ENGLISH);
 
         // Athene only works with 10 or more submissions
         if (textSubmissions.size() < 10) {
@@ -201,11 +200,11 @@ public class AtheneService {
      */
     public List<TextBlock> parseTextBlocks(List<AtheneDTO.TextBlockDTO> blocks, Long exerciseId) {
         // Create submissionsMap for lookup
-        List<TextSubmission> submissions = textSubmissionService.getTextSubmissionsWithTextBlocksByExerciseId(exerciseId);
+        List<TextSubmission> submissions = textSubmissionRepository.getTextSubmissionsWithTextBlocksByExerciseId(exerciseId);
         Map<Long, TextSubmission> submissionsMap = submissions.stream().collect(toMap(/* Key: */ Submission::getId, /* Value: */ submission -> submission));
 
         // Map textBlocks to submissions
-        List<TextBlock> textBlocks = new LinkedList();
+        List<TextBlock> textBlocks = new LinkedList<>();
         for (AtheneDTO.TextBlockDTO textBlockDTO : blocks) {
             // Convert DTO-TextBlock (including the submissionId) to TextBlock Entity
             TextBlock newBlock = new TextBlock();
@@ -217,7 +216,6 @@ public class AtheneService {
 
             // take the corresponding TextSubmission and add the text blocks.
             // The addBlocks method also sets the submission in the textBlock
-            Hibernate.initialize(submissionsMap.get(textBlockDTO.getSubmissionId()).addBlock(newBlock));
             submissionsMap.get(textBlockDTO.getSubmissionId()).addBlock(newBlock);
             textBlocks.add(newBlock);
         }

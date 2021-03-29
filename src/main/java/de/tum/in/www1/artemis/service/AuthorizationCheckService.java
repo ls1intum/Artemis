@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.service;
 
-import static de.tum.in.www1.artemis.security.AuthoritiesConstants.*;
-
 import java.security.Principal;
 import java.time.ZonedDateTime;
 import java.util.Optional;
@@ -410,5 +408,17 @@ public class AuthorizationCheckService {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         Course course = participation.getExercise().getCourseViaExerciseGroupOrCourseMember();
         return isAtLeastTeachingAssistantInCourse(course, user);
+    }
+
+    /**
+     * Tutors of an exercise are allowed to assess the submissions, but only instructors are allowed to assess with a specific result
+     *
+     * @param exercise Exercise of the submission
+     * @param user User the requests the assessment
+     * @param resultId Id of the result he wants to assess
+     * @return true if caller is allowed to assess submissions
+     */
+    public boolean isAllowedToAssesExercise(Exercise exercise, User user, Long resultId) {
+        return this.isAtLeastTeachingAssistantForExercise(exercise, user) && (resultId == null || isAtLeastInstructorForExercise(exercise, user));
     }
 }
