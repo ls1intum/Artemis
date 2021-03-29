@@ -169,13 +169,10 @@ public class JenkinsUserManagementService implements CIUserManagementService {
 
         // Only update a user if it exists.
         var jenkinsUser = getUser(user.getLogin());
-        if (jenkinsUser == null) {
-            createUser(user);
-        }
-        else {
+        if (jenkinsUser != null) {
             deleteUser(user);
-            createUser(user);
         }
+        createUser(user);
     }
 
     /**

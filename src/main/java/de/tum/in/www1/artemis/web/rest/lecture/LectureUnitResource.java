@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.web.rest.lecture;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 import org.slf4j.Logger;
@@ -122,9 +123,6 @@ public class LectureUnitResource {
         if (!authorizationCheckService.isAtLeastInstructorInCourse(lectureUnit.getLecture().getCourse(), null)) {
             return forbidden();
         }
-
-        lectureUnitService.removeLectureUnit(lectureUnit);
-
         String lectureUnitName;
 
         if (lectureUnit instanceof ExerciseUnit && ((ExerciseUnit) lectureUnit).getExercise() != null) {
@@ -136,6 +134,11 @@ public class LectureUnitResource {
         else {
             lectureUnitName = lectureUnit.getName();
         }
+        if (Objects.isNull(lectureUnitName)) {
+            lectureUnitName = "lectureUnitWithoutName";
+        }
+        lectureUnitService.removeLectureUnit(lectureUnit);
+
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, lectureUnitName)).build();
     }
 

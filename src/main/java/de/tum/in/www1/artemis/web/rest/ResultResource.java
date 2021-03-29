@@ -145,7 +145,7 @@ public class ResultResource {
         // Therefore a mock auth object has to be created.
         SecurityUtils.setAuthorizationObject();
 
-        // Retrieving the plan key can fail if e.g. the requestBody is malformated. In this case nothing else can be done.
+        // Retrieving the plan key can fail if e.g. the requestBody is malformed. In this case nothing else can be done.
         String planKey;
         try {
             planKey = continuousIntegrationService.get().getPlanKey(requestBody);
@@ -348,7 +348,17 @@ public class ResultResource {
             return forbidden();
         }
 
-        Exercise exercise = participation.getExercise();
+        final Exercise exercise = participation.getExercise();
+
+        // Filter feedbacks marked with visibility afterDueDate or never
+        Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        boolean filterForStudent = authCheckService.isStudentInCourse(course, user);
+        if (filterForStudent) {
+            result.filterSensitiveInformation();
+            result.filterSensitiveFeedbacks(exercise.isBeforeDueDate());
+        }
+
         List<Feedback> feedbacks;
         // A tutor is allowed to access all feedback, but filter for a student the manual feedback if the assessment due date is not over yet
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise) && result.getAssessmentType() != null && !AssessmentType.AUTOMATIC.equals(result.getAssessmentType())

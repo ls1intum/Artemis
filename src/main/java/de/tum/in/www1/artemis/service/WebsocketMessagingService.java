@@ -4,6 +4,7 @@ import static de.tum.in.www1.artemis.config.Constants.EXERCISE_TOPIC_ROOT;
 import static de.tum.in.www1.artemis.config.Constants.NEW_RESULT_TOPIC;
 
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -50,6 +51,9 @@ public class WebsocketMessagingService {
         var originalParticipation = result.getParticipation();
         result.setParticipation(originalParticipation.copyParticipationId());
 
+        final var originalAssessor = result.getAssessor();
+        final var originalFeedback = new ArrayList<>(result.getFeedbacks());
+
         // TODO: Are there other cases that must be handled here?
         if (participation instanceof StudentParticipation) {
             var exercise = participation.getExercise();
@@ -57,9 +61,17 @@ public class WebsocketMessagingService {
             if (AssessmentType.AUTOMATIC.equals(result.getAssessmentType()) || exercise.getAssessmentDueDate() == null
                     || ZonedDateTime.now().isAfter(exercise.getAssessmentDueDate())) {
                 StudentParticipation studentParticipation = (StudentParticipation) participation;
+
+                result.filterSensitiveInformation();
+                result.filterSensitiveFeedbacks(studentParticipation.getExercise().isBeforeDueDate());
+
                 studentParticipation.getStudents().forEach(user -> messagingTemplate.convertAndSendToUser(user.getLogin(), NEW_RESULT_TOPIC, result));
             }
         }
+
+        // Restore information that should not go to students but tutors, instructors, and admins should still see
+        result.setAssessor(originalAssessor);
+        result.setFeedbacks(originalFeedback);
 
         // Send to tutors, instructors and admins
         messagingTemplate.convertAndSend(getResultDestination(participation.getExercise().getId()), result);
