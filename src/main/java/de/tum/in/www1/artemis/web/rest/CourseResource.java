@@ -920,18 +920,17 @@ public class CourseResource {
     /**
      * GET /courses/exercises-for-management-overview
      *
-     * gets the exercise details for the courses of the user
+     * gets the courses with exercises for the user
      *
      * @param onlyActive if true, only active courses will be considered in the result
-     * @return ResponseEntity with status, containing a list of <code>CourseManagementOverviewDTO</code>
+     * @return ResponseEntity with status, containing a list of courses
      */
     @GetMapping("/courses/exercises-for-management-overview")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<List<Course>> getExercisesForCourseOverview(@RequestParam(defaultValue = "false") boolean onlyActive) {
-        var sevenDaysAgo = ZonedDateTime.now().minusDays(7);
         final List<Course> courses = new ArrayList<>();
         for (final var course : courseService.getAllCoursesForManagementOverview(onlyActive)) {
-            course.setExercises(exerciseRepository.getExercisesForCourseManagementOverview(course.getId(), sevenDaysAgo));
+            course.setExercises(exerciseRepository.getExercisesForCourseManagementOverview(course.getId()));
             courses.add(course);
         }
 
@@ -942,6 +941,8 @@ public class CourseResource {
      * GET /courses/stats-for-management-overview
      *
      * gets the statistics for the courses of the user
+     * statistics for exercises with an assessment due date (or due date if there is no assessment due date)
+     * in the past are limited to the five most recent
      *
      * @param onlyActive if true, only active courses will be considered in the result
      * @return ResponseEntity with status, containing a list of <code>CourseManagementOverviewStatisticsDTO</code>
@@ -955,11 +956,11 @@ public class CourseResource {
             final var courseDTO = new CourseManagementOverviewStatisticsDTO();
             courseDTO.setCourseId(courseId);
 
-            ZonedDateTime sevenDaysAgo = ZonedDateTime.now().minusDays(7);
-            var exerciseIds = exerciseRepository.getActiveExerciseIdsByCourseId(courseId, sevenDaysAgo);
             var studentsGroup = courseRepository.findStudentGroupName(courseId);
             var amountOfStudentsInCourse = Math.toIntExact(userRepository.countUserInGroup(studentsGroup));
-            courseDTO.setExerciseDTOS(exerciseService.getStatisticsForCourseManagementOverview(courseId, amountOfStudentsInCourse, exerciseIds));
+            courseDTO.setExerciseDTOS(exerciseService.getStatisticsForCourseManagementOverview(courseId, amountOfStudentsInCourse));
+
+            var exerciseIds = exerciseRepository.getExerciseIdsByCourseId(courseId);
             courseDTO.setActiveStudents(courseService.getActiveStudents(exerciseIds));
             courseDTOs.add(courseDTO);
         }

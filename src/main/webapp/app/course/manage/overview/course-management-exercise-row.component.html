@@ -16,7 +16,7 @@
                     <div class="item-title-container">
                         <span class="item-title">{{ details.title }}</span>
                     </div>
-                    <div class="item-category d-flex hide-categories" *ngIf="details.categories?.length > 0">
+                    <div class="item-category d-flex hide-categories" *ngIf="details.categories?.length > 0 && details.title?.length < 40">
                         <!-- We only support two categories -->
                         <h4 *ngFor="let category of details.categories">
                             <span class="badge text-white mr-1" [ngStyle]="{ backgroundColor: JSON.parse(category).color }">{{ JSON.parse(category).category }}</span>
