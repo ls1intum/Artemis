@@ -1,11 +1,14 @@
 version: "2"
 services:
     gitlab:
-        image: gitlab/gitlab-ce:latest
+        build: gitlab
         volumes:
             - artemis-gitlab-data:/var/opt/gitlab
             - artemis-gitlab-logs:/var/log/gitlab
             - artemis-gitlab-config:/etc/gitlab
+            - ./gitlab/gitlab-local-setup.sh:/gitlab-local-setup.sh
+        environment:
+            - GITLAB_OMNIBUS_CONFIG="./gitlab/gitlab-config.rb"
         ports:
             - "2222:22"
             - "8081:80"
