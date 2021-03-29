@@ -128,9 +128,9 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
      * @return List<ProgrammingExercise> (can be empty)
      */
     @Query("""
-                select distinct pe from ProgrammingExercise pe left join pe.testCases tc
-                where pe.dueDate > :#{#dateTime} and pe.buildAndTestStudentSubmissionsAfterDueDate is null
-                    and tc.visibility = 'AFTER_DUE_DATE'
+                SELECT DISTINCT pe FROM ProgrammingExercise pe LEFT JOIN pe.testCases tc
+                WHERE pe.dueDate > :#{#dateTime} AND pe.buildAndTestStudentSubmissionsAfterDueDate IS NULL
+                    AND tc.visibility = 'AFTER_DUE_DATE'
             """)
     List<ProgrammingExercise> findAllByDueDateAfterDateWithTestsAfterDueDateWithoutBuildStudentSubmissionsDate(@Param("dateTime") ZonedDateTime dateTime);
 
@@ -141,7 +141,7 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
      * @param dateTime ZonedDatetime object.
      * @return List<ProgrammingExercise> (can be empty)
      */
-    @Query("select pe from ProgrammingExercise pe left join fetch pe.exerciseGroup eg left join fetch eg.exam e where e.endDate > :#{#dateTime}")
+    @Query("SELECT pe FROM ProgrammingExercise pe LEFT JOIN FETCH pe.exerciseGroup eg LEFT JOIN FETCH eg.exam e WHERE e.endDate > :#{#dateTime}")
     List<ProgrammingExercise> findAllWithEagerExamByExamEndDateAfterDate(@Param("dateTime") ZonedDateTime dateTime);
 
     /**
