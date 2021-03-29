@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.connectors.jenkins.dto;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -15,11 +16,11 @@ public class TestCaseDTO {
 
     private double time;
 
-    private List<TestCaseDetailMessageDTO> failures;
+    private List<TestCaseDetailMessageDTO> failures = new ArrayList<>();
 
-    private List<TestCaseDetailMessageDTO> errors;
+    private List<TestCaseDetailMessageDTO> errors = new ArrayList<>();
 
-    private List<TestCaseDetailMessageDTO> successInfos;
+    private List<TestCaseDetailMessageDTO> successInfos = new ArrayList<>();
 
     public String getName() {
         return name;

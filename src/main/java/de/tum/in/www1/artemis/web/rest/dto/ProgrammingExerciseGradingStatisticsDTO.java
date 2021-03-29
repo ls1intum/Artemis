@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.web.rest.dto;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
@@ -15,10 +16,10 @@ public class ProgrammingExerciseGradingStatisticsDTO {
     private Integer numParticipations;
 
     // statistics for each test case
-    private Map<String, TestCaseStats> testCaseStatsMap;
+    private Map<String, TestCaseStats> testCaseStatsMap = new HashMap<>();
 
     // statistics for each category
-    private Map<String, Map<Integer, Integer>> categoryIssuesMap;
+    private Map<String, Map<Integer, Integer>> categoryIssuesMap = new HashMap<>();
 
     public void setNumParticipations(Integer numParticipations) {
         this.numParticipations = numParticipations;
@@ -44,6 +45,7 @@ public class ProgrammingExerciseGradingStatisticsDTO {
         return categoryIssuesMap;
     }
 
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public static class TestCaseStats {
 
         private Integer numPassed;
