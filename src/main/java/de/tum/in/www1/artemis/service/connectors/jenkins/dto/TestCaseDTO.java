@@ -2,7 +2,8 @@ package de.tum.in.www1.artemis.service.connectors.jenkins.dto;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
+
+import org.apache.commons.collections.CollectionUtils;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -73,26 +74,7 @@ public class TestCaseDTO {
     }
 
     @JsonIgnore
-    public Optional<TestCaseDetailMessageDTO> getFirstErrorMessage() {
-        return getFirstMessage(errors);
-    }
-
-    @JsonIgnore
-    public Optional<TestCaseDetailMessageDTO> getFirstFailureMessage() {
-        return getFirstMessage(failures);
-    }
-
-    @JsonIgnore
-    public Optional<TestCaseDetailMessageDTO> getFirstSuccessInfoMessage() {
-        return getFirstMessage(successInfos);
-    }
-
-    private Optional<TestCaseDetailMessageDTO> getFirstMessage(final List<TestCaseDetailMessageDTO> messageList) {
-        if (messageList == null || messageList.isEmpty()) {
-            return Optional.empty();
-        }
-        else {
-            return Optional.of(messageList.get(0));
-        }
+    public boolean isSuccessful() {
+        return CollectionUtils.isEmpty(errors) && CollectionUtils.isEmpty(failures);
     }
 }

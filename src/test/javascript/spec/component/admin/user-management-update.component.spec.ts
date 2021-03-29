@@ -9,6 +9,8 @@ import { User } from 'app/core/user/user.model';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { UserService } from 'app/core/user/user.service';
 import { Authority } from 'app/shared/constants/authority.constants';
+import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 
 describe('User Management Update Component', () => {
     let comp: UserManagementUpdateComponent;
@@ -29,6 +31,8 @@ describe('User Management Update Component', () => {
                     provide: ActivatedRoute,
                     useValue: route,
                 },
+                { provide: LocalStorageService, useClass: MockSyncStorage },
+                { provide: SessionStorageService, useClass: MockSyncStorage },
             ],
         })
             .overrideTemplate(UserManagementUpdateComponent, '')
