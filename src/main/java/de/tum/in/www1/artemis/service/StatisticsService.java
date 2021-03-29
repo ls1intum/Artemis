@@ -425,7 +425,13 @@ public class StatisticsService {
                 averagePointsByTitle.put(exerciseTitle, 0.0);
             }
         }
-        courseManagementStatisticsDTO.setAveragePointsOfCourse(round((averageScoreForCourse * courseMaxPoints) / 100.0));
+        if (averageScoreForCourse > 0 && courseMaxPoints > 0) {
+            courseManagementStatisticsDTO.setAveragePointsOfCourse(round((averageScoreForCourse * courseMaxPoints) / 100.0));
+        }
+        else {
+            courseManagementStatisticsDTO.setAveragePointsOfCourse(0.0);
+        }
+
         courseManagementStatisticsDTO.setExerciseNameToAveragePointsMap(averagePointsByTitle);
         courseManagementStatisticsDTO.setMaxPointsOfCourse(courseMaxPoints);
         courseManagementStatisticsDTO.setExerciseNameToMaxPointsMap(maxPoints);
