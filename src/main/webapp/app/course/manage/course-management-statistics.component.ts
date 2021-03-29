@@ -72,6 +72,9 @@ export class CourseManagementStatisticsComponent implements OnInit {
         this.currentSpan = span;
     }
 
+    /**
+     * Callback function for when an user selected a Exercise or the course from the dropdown list below the average score doughnut chart
+     */
     onAverageScoreSelect(): void {
         this.currentAbsolutePoints =
             this.selectedValueAverageScore === this.defaultTitle
@@ -84,6 +87,9 @@ export class CourseManagementStatisticsComponent implements OnInit {
         this.currentAverageScore = Math.round((this.currentAbsolutePoints / this.currentMaxPoints) * 100);
     }
 
+    /**
+     * Callback function for when an user selected a tutor or the course from the dropdown list below the tutor rating doughnut chart
+     */
     onAverageRatingSelect(): void {
         this.currentAverageRating =
             this.selectedValueAverageRating === this.defaultTitle
