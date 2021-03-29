@@ -81,6 +81,8 @@ public class CourseResource {
 
     private final AuthorizationCheckService authCheckService;
 
+    private final CourseRepository courseRepository;
+
     private final ExerciseService exerciseService;
 
     private final TutorParticipationService tutorParticipationService;
@@ -100,8 +102,6 @@ public class CourseResource {
     private final Optional<CIUserManagementService> optionalCiUserManagementService;
 
     private final Environment env;
-
-    private final CourseRepository courseRepository;
 
     private final ComplaintRepository complaintRepository;
 
@@ -369,8 +369,8 @@ public class CourseResource {
     @PostMapping("/courses/{courseId}/register")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<User> registerForCourse(@PathVariable Long courseId) {
-        Course course = courseRepository.findByIdElseThrow(courseId);
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        Course course = courseRepository.findWithEagerOrganizationsElseThrow(courseId);
+        User user = userRepository.getUserWithGroupsAndAuthoritiesAndOrganizations();
         log.debug("REST request to register {} for Course {}", user.getName(), course.getTitle());
         if (allowedCourseRegistrationUsernamePattern.isPresent() && !allowedCourseRegistrationUsernamePattern.get().matcher(user.getLogin()).matches()) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, false, ENTITY_NAME, "registrationNotAllowed",
@@ -390,6 +390,10 @@ public class CourseResource {
             return ResponseEntity.badRequest().headers(
                     HeaderUtil.createFailureAlert(applicationName, false, ENTITY_NAME, "registrationDisabled", "The course does not allow registration. Cannot register user"))
                     .body(null);
+        }
+        if (course.getOrganizations() != null && course.getOrganizations().size() > 0 && !checkIfUserIsMemberOfCourseOrganizations(user, course)) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, false, ENTITY_NAME, "registrationNotAllowed",
+                    "User is not member of any organization of this course. Cannot register user")).body(null);
         }
         courseService.registerUserForCourse(user, course);
         return ResponseEntity.ok(user);
@@ -477,7 +481,17 @@ public class CourseResource {
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public List<Course> getAllCoursesToRegister() {
         log.debug("REST request to get all currently active Courses that are not online courses");
-        return courseRepository.findAllCurrentlyActiveNotOnlineAndRegistrationEnabled();
+        User user = userRepository.getUserWithGroupsAndAuthoritiesAndOrganizations();
+
+        List<Course> allRegistrable = courseRepository.findAllCurrentlyActiveNotOnlineAndRegistrationEnabledWithOrganizations();
+        return allRegistrable.stream().filter(course -> {
+            if (course.getOrganizations() != null && course.getOrganizations().size() > 0) {
+                return checkIfUserIsMemberOfCourseOrganizations(user, course);
+            }
+            else {
+                return true;
+            }
+        }).collect(Collectors.toList());
     }
 
     /**
@@ -748,6 +762,25 @@ public class CourseResource {
         long end = System.currentTimeMillis();
         log.info("Finished /courses/" + courseId + "/with-exercises-and-relevant-participations call in " + (end - start) + "ms");
         return ResponseUtil.wrapOrNotFound(Optional.of(course));
+    }
+
+    /**
+     * GET /courses/:courseId/with-organizations Get a course by id with eagerly loaded organizations
+     * @param courseId the id of the course
+     * @return the course with eagerly loaded organizations
+     * @throws AccessForbiddenException
+     */
+    @GetMapping("/courses/{courseId}/with-organizations")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Course> getCourseWithOrganizations(@PathVariable Long courseId) throws AccessForbiddenException {
+        log.debug("REST request to get a course with its organizations : {}", courseId);
+        Course course = courseRepository.findWithEagerOrganizationsElseThrow(courseId);
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
+            return forbidden();
+        }
+
+        return ResponseUtil.wrapOrNotFound(Optional.ofNullable(course));
     }
 
     /**
@@ -1283,5 +1316,22 @@ public class CourseResource {
         else {
             return forbidden();
         }
+    }
+
+    /**
+     * Utility method used to check whether a user is member of at least one organization of a given course
+     * @param user the user to check
+     * @param course the course to check
+     * @return true if the user is member of at least one organization of the course. false otherwise
+     */
+    private boolean checkIfUserIsMemberOfCourseOrganizations(User user, Course course) {
+        boolean isMember = false;
+        for (Organization organization : courseRepository.findWithEagerOrganizationsElseThrow(course.getId()).getOrganizations()) {
+            if (user.getOrganizations().contains(organization)) {
+                isMember = true;
+                break;
+            }
+        }
+        return isMember;
     }
 }
