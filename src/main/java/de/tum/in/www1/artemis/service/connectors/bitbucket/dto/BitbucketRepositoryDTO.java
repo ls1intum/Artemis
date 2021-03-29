@@ -3,6 +3,9 @@ package de.tum.in.www1.artemis.service.connectors.bitbucket.dto;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class BitbucketRepositoryDTO {
 
     private String id;
@@ -152,6 +155,7 @@ public class BitbucketRepositoryDTO {
         return null;
     }
 
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public static class LinksDTO {
 
         private List<CloneDTO> clone = new ArrayList<>();
@@ -180,6 +184,7 @@ public class BitbucketRepositoryDTO {
             this.self = self;
         }
 
+        @JsonInclude(JsonInclude.Include.NON_EMPTY)
         public static class CloneDTO {
 
             private String href;

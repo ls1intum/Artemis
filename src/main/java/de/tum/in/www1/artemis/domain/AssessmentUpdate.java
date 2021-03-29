@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.domain;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -10,7 +11,7 @@ public class AssessmentUpdate {
     /**
      * The updated feedback list
      */
-    private List<Feedback> feedbacks;
+    private List<Feedback> feedbacks = new ArrayList<>();
 
     /**
      * The corresponding complaint response

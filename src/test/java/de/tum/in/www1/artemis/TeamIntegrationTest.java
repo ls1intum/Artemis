@@ -32,16 +32,16 @@ import de.tum.in.www1.artemis.util.ModelFactory;
 public class TeamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
-    CourseRepository courseRepo;
+    private CourseRepository courseRepo;
 
     @Autowired
-    ExerciseRepository exerciseRepo;
+    private ExerciseRepository exerciseRepo;
 
     @Autowired
-    TeamRepository teamRepo;
+    private TeamRepository teamRepo;
 
     @Autowired
-    UserRepository userRepo;
+    private UserRepository userRepo;
 
     private Course course;
 

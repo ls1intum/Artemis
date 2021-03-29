@@ -1,8 +1,11 @@
 package de.tum.in.www1.artemis.service.dto;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 /**
  * A DTO representing a text feedback to be sent to remote Athene service the check the feedback conflicts.
  */
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class TextFeedbackConflictRequestDTO {
 
     private final String textBlockId;

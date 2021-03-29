@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service.dto;
 
 import java.time.Instant;
 import java.time.ZonedDateTime;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -9,6 +10,8 @@ import javax.validation.constraints.Email;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.Authority;
@@ -18,6 +21,7 @@ import de.tum.in.www1.artemis.domain.User;
 /**
  * A DTO representing a user, with his authorities.
  */
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class UserDTO extends AuditingEntityDTO {
 
     private Long id;
@@ -52,11 +56,11 @@ public class UserDTO extends AuditingEntityDTO {
 
     private ZonedDateTime lastNotificationRead;
 
-    private Set<String> authorities;
+    private Set<String> authorities = new HashSet<>();
 
-    private Set<String> groups;
+    private Set<String> groups = new HashSet<>();
 
-    private Set<GuidedTourSetting> guidedTourSettings;
+    private Set<GuidedTourSetting> guidedTourSettings = new HashSet<>();
 
     public UserDTO() {
         // Empty constructor needed for Jackson.

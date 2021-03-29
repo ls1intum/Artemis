@@ -1,10 +1,12 @@
 package de.tum.in.www1.artemis.service.dto;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackConflictType;
 
 /**
  * A DTO representing feedback conflicts (e.g. retrieved from Athene)
  */
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class FeedbackConflictResponseDTO {
 
     private long firstFeedbackId;
