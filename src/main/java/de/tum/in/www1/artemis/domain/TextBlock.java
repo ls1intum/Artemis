@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.domain;
 
 import static org.apache.commons.codec.digest.DigestUtils.sha1Hex;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.Objects;
 
@@ -23,6 +24,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class TextBlock implements Serializable {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     @Id

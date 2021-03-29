@@ -40,11 +40,7 @@ public class ExamAccessServiceTest extends AbstractSpringIntegrationBambooBitbuc
     @Autowired
     private StudentExamRepository studentExamRepository;
 
-    private List<User> users;
-
     private Course course1;
-
-    private Course course2;
 
     private Exam exam1;
 
@@ -60,7 +56,7 @@ public class ExamAccessServiceTest extends AbstractSpringIntegrationBambooBitbuc
 
     @BeforeEach
     void init() {
-        users = database.addUsers(1, 1, 2);
+        List<User> users = database.addUsers(1, 1, 2);
         User instructor1 = users.get(2);
         User instructor2 = users.get(3);
         instructor1.setGroups(Collections.singleton("course1InstructorGroup"));
@@ -68,7 +64,7 @@ public class ExamAccessServiceTest extends AbstractSpringIntegrationBambooBitbuc
         userRepository.save(instructor1);
         userRepository.save(instructor2);
         course1 = database.addEmptyCourse();
-        course2 = database.addEmptyCourse();
+        Course course2 = database.addEmptyCourse();
         course1.setInstructorGroupName("course1InstructorGroup");
         course2.setInstructorGroupName("course2InstructorGroup");
         courseRepository.save(course1);

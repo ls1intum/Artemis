@@ -72,12 +72,15 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
     numberOfSubmissions = new DueDateStat();
     totalNumberOfAssessments = new DueDateStat();
     numberOfAssessmentsOfCorrectionRounds = [new DueDateStat()];
+    numberOfLockedAssessmentByOtherTutorsOfCorrectionRound = [new DueDateStat()];
     numberOfComplaints = 0;
     numberOfOpenComplaints = 0;
     numberOfTutorComplaints = 0;
     numberOfMoreFeedbackRequests = 0;
     numberOfOpenMoreFeedbackRequests = 0;
     numberOfTutorMoreFeedbackRequests = 0;
+    complaintsEnabled = false;
+    feedbackRequestEnabled = false;
     totalAssessmentPercentage = new DueDateStat();
     tutorAssessmentPercentage = 0;
     tutorParticipationStatus: TutorParticipationStatus;
@@ -100,6 +103,12 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
     formattedProblemStatement?: SafeHtml;
     formattedSampleSolution?: SafeHtml;
     getSubmissionResultByCorrectionRound = getSubmissionResultByCorrectionRound;
+
+    // helper variables to display information message about why no new assessments are possible anymore
+    remainingAssessments: number[] = [];
+    lockedSubmissionsByOtherTutor: number[] = [];
+    notYetAssessed: number[] = [];
+    firstRoundAssessments: number;
 
     readonly ExerciseType = ExerciseType;
 
@@ -126,6 +135,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
 
     constructor(
         private exerciseService: ExerciseService,
+        private courseManagementService: CourseManagementService,
         private jhiAlertService: JhiAlertService,
         private translateService: TranslateService,
         private accountService: AccountService,
@@ -160,7 +170,6 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
         }
 
         this.loadAll();
-
         this.accountService.identity().then((user: User) => (this.tutor = user));
     }
 
@@ -256,6 +265,8 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
                     this.numberOfSubmissions = this.statsForDashboard.numberOfSubmissions;
                     this.totalNumberOfAssessments = this.statsForDashboard.totalNumberOfAssessments;
                     this.numberOfAssessmentsOfCorrectionRounds = this.statsForDashboard.numberOfAssessmentsOfCorrectionRounds;
+                    this.numberOfLockedAssessmentByOtherTutorsOfCorrectionRound = this.statsForDashboard.numberOfLockedAssessmentByOtherTutorsOfCorrectionRound;
+
                     this.numberOfComplaints = this.statsForDashboard.numberOfComplaints;
                     this.numberOfOpenComplaints = this.statsForDashboard.numberOfOpenComplaints;
                     this.numberOfMoreFeedbackRequests = this.statsForDashboard.numberOfMoreFeedbackRequests;
@@ -287,6 +298,9 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
                     } else {
                         this.tutorAssessmentPercentage = 100;
                     }
+                    this.complaintsEnabled = this.statsForDashboard.complaintsEnabled;
+                    this.feedbackRequestEnabled = this.statsForDashboard.feedbackRequestEnabled;
+                    this.calculateAssessmentProgressInformation();
                 },
                 (response: string) => this.onError(response),
             );
@@ -373,7 +387,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
                     return submission;
                 });
 
-                this.submissionsByCorrectionRound!.set(correctionRound, sub); // todo NR
+                this.submissionsByCorrectionRound!.set(correctionRound, sub);
             });
     }
 
@@ -613,5 +627,24 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
 
     getSubmissionsLinkForExercise(exercise: Exercise): string[] {
         return getExerciseSubmissionsLink(exercise.type!, this.courseId, exercise.id!, this.examId, this.exerciseGroupId);
+    }
+
+    /**
+     * To correctly display why a tutor cannot assess any further submissions we need to calculate those values.
+     */
+    calculateAssessmentProgressInformation() {
+        if (this.exam) {
+            for (let i = 0; i < (this.exam.numberOfCorrectionRoundsInExam ?? 0); i++) {
+                this.lockedSubmissionsByOtherTutor[i] = this.numberOfLockedAssessmentByOtherTutorsOfCorrectionRound[i]?.inTime;
+
+                // number of submissions in the particular round that still need assessment and are not locked
+                this.notYetAssessed[i] = this.numberOfSubmissions.inTime - this.numberOfAssessmentsOfCorrectionRounds[i].inTime - this.lockedSubmissionsByOtherTutor[i];
+
+                // The number of assessments which are still open but cannot be assessed as they were already assessed in the first round.
+                // Since if this will be displayed the number of assessments the tutor can create is 0 we can simply get this number by subtracting the
+                // lock-count from the remaining unassessed submisssions of the current correction round.
+                this.firstRoundAssessments = this.notYetAssessed[i] - this.lockedSubmissionsByOtherTutor[i];
+            }
+        }
     }
 }

@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.compass.assessment;
 
+import java.io.Serializable;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -10,13 +11,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import de.tum.in.www1.artemis.service.compass.grade.Grade;
-import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
 
-public class CompassResult implements Grade {
+public class CompassResult implements Grade, Serializable {
 
     private final Logger log = LoggerFactory.getLogger(Grade.class);
 
-    private Map<UMLElement, Score> elementScoreMapping;
+    private Map<String, Score> elementScoreMapping;
 
     private Map<String, String> jsonIdCommentsMapping;
 
@@ -34,7 +34,7 @@ public class CompassResult implements Grade {
     public CompassResult() {
     }
 
-    public CompassResult(Map<UMLElement, Score> elementScoreMapping, double coverage) {
+    public CompassResult(Map<String, Score> elementScoreMapping, double coverage) {
         jsonIdCommentsMapping = new ConcurrentHashMap<>();
         jsonIdPointsMapping = new ConcurrentHashMap<>();
 
@@ -61,7 +61,7 @@ public class CompassResult implements Grade {
     }
 
     private void buildMapping() {
-        for (Map.Entry<UMLElement, Score> entry : elementScoreMapping.entrySet()) {
+        for (Map.Entry<String, Score> entry : elementScoreMapping.entrySet()) {
             if (entry.getValue() == null) {
                 log.error("This should never ever happen but for some reason score in CompassResult buildMapping is null");
                 continue;
@@ -74,8 +74,8 @@ public class CompassResult implements Grade {
                 elementFeedbackText = comments.stream().filter(Objects::nonNull).max(Comparator.comparingInt(String::length)).orElse("");
             }
 
-            jsonIdCommentsMapping.put(entry.getKey().getJSONElementID(), elementFeedbackText);
-            jsonIdPointsMapping.put(entry.getKey().getJSONElementID(), entry.getValue().getPoints());
+            jsonIdCommentsMapping.put(entry.getKey(), elementFeedbackText);
+            jsonIdPointsMapping.put(entry.getKey(), entry.getValue().getPoints());
         }
     }
 

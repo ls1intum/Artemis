@@ -31,10 +31,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
-import de.tum.in.www1.artemis.domain.Feedback;
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
-import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.Participation;
@@ -82,6 +79,15 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
 
     @Autowired
     ProgrammingExerciseRepository programmingExerciseRepository;
+
+    @Autowired
+    ExamRepository examRepository;
+
+    @Autowired
+    UserRepository userRepository;
+
+    @Autowired
+    StudentExamRepository studentExamRepository;
 
     @Autowired
     ResultRepository resultRepository;
@@ -554,6 +560,61 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         var submissions = submissionRepository.findAll();
         assertThat(submissions.size()).isEqualTo(1);
         assertThat(submissions.get(0).getId()).isEqualTo(submission.getId());
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    void shouldCreateIllegalSubmissionOnNotifyPushForExamProgrammingExerciseAfterDueDate() throws Exception {
+        var user = userRepository.findUserWithGroupsAndAuthoritiesByLogin("student1").get();
+
+        // Create an exam with programming exercise
+        // The exam has to be over
+        var course = database.addEmptyCourse();
+        var exam = database.addActiveExamWithRegisteredUser(course, user);
+        exam = database.addExerciseGroupsAndExercisesToExam(exam, true);
+        exam.setEndDate(ZonedDateTime.now().minusMinutes(1));
+        exam.addRegisteredUser(user);
+        exam = examRepository.save(exam);
+
+        // Get student exam and add a participation for the programming exercise
+        var studentExam = studentExamRepository.findWithExercisesByUserIdAndExamId(user.getId(), exam.getId()).get();
+        studentExam.setWorkingTime(0);
+        studentExam.setExercises(new ArrayList<>(exam.getExerciseGroups().get(6).getExercises()));
+        studentExam.setUser(user);
+        studentExam = studentExamRepository.save(studentExam);
+        ProgrammingExercise programmingExercise = (ProgrammingExercise) studentExam.getExercises().get(0);
+        var participation = database.addStudentParticipationForProgrammingExercise(programmingExercise, user.getLogin());
+
+        // set the author name to "Artemis"
+        final String requestAsArtemisUser = BITBUCKET_REQUEST.replace("\"name\": \"admin\"", "\"name\": \"Artemis\"").replace("\"displayName\": \"Admin\"",
+                "\"displayName\": \"Artemis\"");
+        // mock request for fetchCommitInfo()
+        final String projectKey = "test201904bprogrammingexercise6";
+        final String slug = "test201904bprogrammingexercise6-exercise-testuser";
+        final String hash = "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d";
+        bitbucketRequestMockProvider.mockFetchCommitInfo(projectKey, slug, hash);
+        ProgrammingSubmission submission = postSubmission(participation.getId(), HttpStatus.OK, requestAsArtemisUser);
+
+        // Mock result from bamboo
+        postResult(participation.getBuildPlanId(), HttpStatus.OK, false);
+
+        // Check that the result was created successfully and is linked to the participation and submission.
+        List<Result> results = resultRepository.findByParticipationIdOrderByCompletionDateDesc(participation.getId());
+        assertThat(results).hasSize(1);
+        Result createdResult = results.get(0);
+        createdResult = resultRepository.findByIdWithEagerFeedbacksAndAssessor(createdResult.getId()).get();
+
+        // Assert that the submission is illegal
+        assertThat(submission.getParticipation().getId()).isEqualTo(participation.getId());
+        var illegalSubmission = submissionRepository.findWithEagerResultsById(submission.getId()).get();
+        assertThat(illegalSubmission.getType()).isEqualTo(SubmissionType.ILLEGAL);
+        assertThat(illegalSubmission.isSubmitted()).isTrue();
+        assertThat(illegalSubmission.getLatestResult().isRated()).isFalse();
+        assertThat(illegalSubmission.getLatestResult().getId()).isEqualTo(createdResult.getId());
+
+        // Check that the result belongs to the participation
+        Participation updatedParticipation = participationRepository.findWithEagerSubmissionsById(participation.getId()).get();
+        assertThat(createdResult.getParticipation().getId()).isEqualTo(updatedParticipation.getId());
     }
 
     private Result assertBuildError(Long participationId, String userLogin, ProgrammingLanguage programmingLanguage) throws Exception {

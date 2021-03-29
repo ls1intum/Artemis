@@ -21,7 +21,6 @@ import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.LtiService;
 import de.tum.in.www1.artemis.service.exam.ExamService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingAssessmentService;
-import de.tum.in.www1.artemis.service.programming.ProgrammingSubmissionService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -36,20 +35,20 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
 
     private final ProgrammingAssessmentService programmingAssessmentService;
 
-    private final ProgrammingSubmissionService programmingSubmissionService;
+    private final ProgrammingSubmissionRepository programmingSubmissionRepository;
 
     private final LtiService ltiService;
 
     private final StudentParticipationRepository studentParticipationRepository;
 
     public ProgrammingAssessmentResource(AuthorizationCheckService authCheckService, UserRepository userRepository, ProgrammingAssessmentService programmingAssessmentService,
-            ProgrammingSubmissionService programmingSubmissionService, ExerciseRepository exerciseRepository, ResultRepository resultRepository, ExamService examService,
+            ProgrammingSubmissionRepository programmingSubmissionRepository, ExerciseRepository exerciseRepository, ResultRepository resultRepository, ExamService examService,
             WebsocketMessagingService messagingService, LtiService ltiService, StudentParticipationRepository studentParticipationRepository,
-            ExampleSubmissionRepository exampleSubmissionRepository) {
-        super(authCheckService, userRepository, exerciseRepository, programmingSubmissionService, programmingAssessmentService, resultRepository, examService, messagingService,
-                exampleSubmissionRepository);
+            ExampleSubmissionRepository exampleSubmissionRepository, SubmissionRepository submissionRepository) {
+        super(authCheckService, userRepository, exerciseRepository, programmingAssessmentService, resultRepository, examService, messagingService, exampleSubmissionRepository,
+                submissionRepository);
         this.programmingAssessmentService = programmingAssessmentService;
-        this.programmingSubmissionService = programmingSubmissionService;
+        this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.ltiService = ltiService;
         this.studentParticipationRepository = studentParticipationRepository;
     }
@@ -67,7 +66,7 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
     public ResponseEntity<Result> updateProgrammingManualResultAfterComplaint(@RequestBody AssessmentUpdate assessmentUpdate, @PathVariable long submissionId) {
         log.debug("REST request to update the assessment of manual result for submission {} after complaint.", submissionId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        ProgrammingSubmission programmingSubmission = programmingSubmissionService.findByIdWithEagerResultsFeedbacksAssessor(submissionId);
+        ProgrammingSubmission programmingSubmission = programmingSubmissionRepository.findByIdWithResultsFeedbacksAssessor(submissionId);
         ProgrammingExercise programmingExercise = (ProgrammingExercise) programmingSubmission.getParticipation().getExercise();
         checkAuthorization(programmingExercise, user);
         if (!programmingExercise.areManualResultsAllowed()) {
@@ -186,7 +185,7 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
         savedResult.setSubmission(submission);
 
         if (submit) {
-            newManualResult = programmingAssessmentService.submitManualAssessment(existingManualResult.getId());
+            newManualResult = resultRepository.submitManualAssessment(existingManualResult.getId());
         }
         // remove information about the student for tutors to ensure double-blind assessment
         if (!isAtLeastInstructor) {

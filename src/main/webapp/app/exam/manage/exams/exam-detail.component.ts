@@ -4,6 +4,7 @@ import { SafeHtml } from '@angular/platform-browser';
 import { Exam } from 'app/entities/exam.model';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { AccountService } from 'app/core/auth/account.service';
+import * as moment from 'moment';
 
 @Component({
     selector: 'jhi-exam-detail',
@@ -16,6 +17,7 @@ export class ExamDetailComponent implements OnInit {
     formattedEndText?: SafeHtml;
     formattedConfirmationEndText?: SafeHtml;
     isAtLeastInstructor = false;
+    isExamOver = true;
 
     constructor(private route: ActivatedRoute, private artemisMarkdown: ArtemisMarkdownService, private accountService: AccountService) {}
 
@@ -30,6 +32,7 @@ export class ExamDetailComponent implements OnInit {
             this.formattedConfirmationStartText = this.artemisMarkdown.safeHtmlForMarkdown(this.exam.confirmationStartText);
             this.formattedEndText = this.artemisMarkdown.safeHtmlForMarkdown(this.exam.endText);
             this.formattedConfirmationEndText = this.artemisMarkdown.safeHtmlForMarkdown(this.exam.confirmationEndText);
+            this.isExamOver = !!this.exam.endDate?.isBefore(moment());
         });
     }
 

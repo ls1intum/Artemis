@@ -197,7 +197,7 @@ describe('FileUploadAssessmentComponent', () => {
             expect(comp.result).to.equal(result);
             expect(comp.submission).to.equal(submission);
             expect(comp.complaint).to.equal(complaint);
-            expect(comp.result.feedbacks?.length === 0).to.equal(true);
+            expect(comp.result!.feedbacks?.length === 0).to.equal(true);
             expect(comp.busy).to.be.false;
         }));
 
@@ -214,7 +214,7 @@ describe('FileUploadAssessmentComponent', () => {
             fixture.detectChanges();
             expect(comp.result).to.not.equal(result);
             expect(comp.submission).to.equal(submission);
-            expect(comp.busy).to.be.true;
+            expect(comp.busy).to.be.false;
         });
 
         it('should get 404 error when loading optimal submission', () => {

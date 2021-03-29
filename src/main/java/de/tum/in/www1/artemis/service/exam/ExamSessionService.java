@@ -40,6 +40,7 @@ public class ExamSessionService {
      */
     public ExamSession startExamSession(StudentExam studentExam, @Nullable String fingerprint, @Nullable String userAgent, @Nullable String instanceId,
             @Nullable IPAddress ipAddress) {
+        log.debug("Exam session started");
         String sessionToken = generateSafeToken();
         ExamSession examSession = new ExamSession();
         examSession.setSessionToken(sessionToken);

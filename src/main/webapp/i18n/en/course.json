@@ -59,6 +59,7 @@
             "teachingAssistantGroupName": "Tutors",
             "instructorGroupName": "Instructors",
             "description": "Course Description",
+            "organizations": "Course Organizations",
             "startDate": "Start",
             "endDate": "End",
             "semester": "Semester",
@@ -86,6 +87,7 @@
             "uploading": "Uploading...",
             "fileUploadExercises": "File Upload Exercises",
             "students": "Students",
+            "participations": "Participations",
             "tutors": "Tutors",
             "instructors": "Instructors",
             "student": "Student",
@@ -97,6 +99,7 @@
                     "forbidden": "Short Name must start with a letter and cannot contain special characters."
                 }
             },
+            "courseDashboard": "Course Dashboard",
             "instructorDashboard": "Instructor Course Dashboard",
             "presentationScoreEnabled": {
                 "title": "Presentation Score",
@@ -116,24 +119,24 @@
                     "modalQuestion": "Are you sure you want to remove the user with login <strong>{{ title }}</strong> from this course group?"
                 }
             },
-            "archive": {
-                "archiveCourse": "Archive Course",
-                "archiveCourseSuccess": "The course has been archived!",
-                "archiveCourseError": "Failed to archive the course",
-                "archiveDownloadError": "There was a problem downloading the archive",
-                "downloadCourseArchive": "Download Archive",
-                "popup": {
-                    "title": "Confirm Archive Course Operation",
-                    "question": "Are you sure you want to archive the course <strong>{{ title }}</strong>?",
-                    "statement1": "The process will compress all student code repositories, file upload exercises, modeling exercises, and text exercises in the course and in all its exams.",
-                    "statement2": "<strong class='text-danger'>This process can take several hours depending on the number of students and programming exercises and will take up many server resources. Please start this process only once when the server load is low (e.g. early in the morning)</strong>",
-                    "footerStatement": "You will receive a notification when the process is finished. Then you can download the archive as zip file on this page."
-                }
-            },
+            "averageScore": "Average Score",
+            "releasedSoon": "Released Soon",
+            "currentWorking": "Currently In Progress",
+            "inAssessment": "Currently In Assessment",
+            "pastExercises": "Past Exercises ({{ amount }} of {{ total }})",
+            "noExercises": "No active exercises to display",
+            "assessmentProgress": "Assessments",
+            "releaseDate": "Release",
+            "dueDate": "Due",
+            "assessmentDueDate": "Assessment Due",
             "cleanup": {
                 "title": "Cleanup",
                 "question": "Are you sure you want to clean up the course <strong>{{ title }}</strong>? This will delete all student programming exercise repositories for course <strong>exercises</strong> and <strong>exams</strong>. This action can <strong class='text-danger'>NOT</strong> be undone!"
             }
+        },
+        "courseStatistics": {
+            "amountOfStudents": "# of students",
+            "activeStudents": "Active students"
         }
     }
 }

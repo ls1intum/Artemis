@@ -3,7 +3,10 @@ package de.tum.in.www1.artemis.service;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.*;
 import java.time.ZonedDateTime;
+import java.time.temporal.TemporalField;
+import java.time.temporal.WeekFields;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -45,13 +48,13 @@ public class CourseService {
 
     private final LectureService lectureService;
 
-    private final NotificationService notificationService;
+    private final GroupNotificationRepository groupNotificationRepository;
 
     private final UserService userService;
 
     private final ExerciseGroupRepository exerciseGroupRepository;
 
-    private final CourseExportService courseExportService;
+    private final CourseExamExportService courseExamExportService;
 
     private final ExamService examService;
 
@@ -68,15 +71,15 @@ public class CourseService {
     private final LearningGoalRepository learningGoalRepository;
 
     public CourseService(CourseRepository courseRepository, ExerciseService exerciseService, AuthorizationCheckService authCheckService, UserRepository userRepository,
-            LectureService lectureService, NotificationService notificationService, ExerciseGroupRepository exerciseGroupRepository, AuditEventRepository auditEventRepository,
-            UserService userService, LearningGoalRepository learningGoalRepository, GroupNotificationService groupNotificationService, ExamService examService,
-            ExamRepository examRepository, CourseExportService courseExportService) {
+            LectureService lectureService, GroupNotificationRepository groupNotificationRepository, ExerciseGroupRepository exerciseGroupRepository,
+            AuditEventRepository auditEventRepository, UserService userService, LearningGoalRepository learningGoalRepository, GroupNotificationService groupNotificationService,
+            ExamService examService, ExamRepository examRepository, CourseExamExportService courseExamExportService) {
         this.courseRepository = courseRepository;
         this.exerciseService = exerciseService;
         this.authCheckService = authCheckService;
         this.userRepository = userRepository;
         this.lectureService = lectureService;
-        this.notificationService = notificationService;
+        this.groupNotificationRepository = groupNotificationRepository;
         this.exerciseGroupRepository = exerciseGroupRepository;
         this.auditEventRepository = auditEventRepository;
         this.userService = userService;
@@ -84,7 +87,7 @@ public class CourseService {
         this.groupNotificationService = groupNotificationService;
         this.examService = examService;
         this.examRepository = examRepository;
-        this.courseExportService = courseExportService;
+        this.courseExamExportService = courseExamExportService;
     }
 
     /**
@@ -102,7 +105,7 @@ public class CourseService {
         course.setExercises(exerciseService.findAllForCourse(course, user));
         course.setLectures(lectureService.filterActiveAttachments(course.getLectures(), user));
         if (authCheckService.isOnlyStudentInCourse(course, user)) {
-            course.setExams(examService.filterVisibleExams(course.getExams()));
+            course.setExams(examRepository.filterVisibleExams(course.getExams()));
         }
         return course;
     }
@@ -133,7 +136,7 @@ public class CourseService {
                     course.setExercises(exerciseService.findAllForCourse(course, user));
                     course.setLectures(lectureService.filterActiveAttachments(course.getLectures(), user));
                     if (authCheckService.isOnlyStudentInCourse(course, user)) {
-                        course.setExams(examService.filterVisibleExams(course.getExams()));
+                        course.setExams(examRepository.filterVisibleExams(course.getExams()));
                     }
                 }).collect(Collectors.toList());
     }
@@ -158,7 +161,7 @@ public class CourseService {
      *     <li>All Exercises including:
      *      submissions, participations, results, repositories and build plans, see {@link ExerciseService#delete}</li>
      *     <li>All Lectures and their Attachments, see {@link LectureService#delete}</li>
-     *     <li>All GroupNotifications of the course, see {@link NotificationService#deleteGroupNotification}</li>
+     *     <li>All GroupNotifications of the course, see {@link GroupNotificationRepository#delete}</li>
      *     <li>All default groups created by Artemis, see {@link UserService#deleteGroup}</li>
      *     <li>All Exams, see {@link ExamService#delete}</li>
      * </ul>
@@ -199,9 +202,9 @@ public class CourseService {
     }
 
     private void deleteNotificationsOfCourse(Course course) {
-        List<GroupNotification> notifications = notificationService.findAllGroupNotificationsForCourse(course);
+        List<GroupNotification> notifications = groupNotificationRepository.findAllByCourseId(course.getId());
         for (GroupNotification notification : notifications) {
-            notificationService.deleteGroupNotification(notification);
+            groupNotificationRepository.delete(notification);
         }
     }
 
@@ -269,6 +272,115 @@ public class CourseService {
     }
 
     /**
+     * Fetches a list of Courses
+     *
+     * @param onlyActive Whether or not to include courses with a past endDate
+     * @return A list of Courses for the course management overview
+     */
+    public List<Course> getAllCoursesForManagementOverview(boolean onlyActive) {
+        var dateTimeNow = onlyActive ? ZonedDateTime.now() : null;
+        var user = userRepository.getUserWithGroupsAndAuthorities();
+        var userGroups = new ArrayList<>(user.getGroups());
+        return courseRepository.getAllCoursesForManagementOverview(dateTimeNow, authCheckService.isAdmin(user), userGroups);
+    }
+
+    /**
+     * Get the active students for these particular exercise ids
+     *
+     * @param exerciseIds the ids to get the active students for
+     * @return An Integer array containing active students for each index. An index corresponds to a week
+     */
+    public Integer[] getActiveStudents(List<Long> exerciseIds) {
+        ZonedDateTime now = ZonedDateTime.now();
+        LocalDateTime localStartDate = now.toLocalDateTime().with(DayOfWeek.MONDAY);
+        LocalDateTime localEndDate = now.toLocalDateTime().with(DayOfWeek.SUNDAY);
+        ZoneId zone = now.getZone();
+        ZonedDateTime startDate = localStartDate.atZone(zone).minusWeeks(3).withHour(0).withMinute(0).withSecond(0).withNano(0);
+        ZonedDateTime endDate = localEndDate.atZone(zone).withHour(23).withMinute(59).withSecond(59);
+
+        List<Map<String, Object>> outcome = courseRepository.getActiveStudents(exerciseIds, startDate, endDate);
+        List<Map<String, Object>> distinctOutcome = removeDuplicateActiveUserRows(outcome, startDate);
+        return sortUserIntoWeeks(distinctOutcome, endDate);
+    }
+
+    /**
+     * The List of maps contains duplicated entries. This method compares the values and returns a List<Map<String, Object>>
+     * without duplicated entries
+     *
+     * @param activeUserRows a list with a map for every submission of an user containing date and the username
+     * @param startDate the startDate of the period
+     * @return a List<Map<String, Object>> containing date and amount of active users in this period
+     */
+    private List<Map<String, Object>> removeDuplicateActiveUserRows(List<Map<String, Object>> activeUserRows, ZonedDateTime startDate) {
+        Map<Object, List<String>> usersByDate = new HashMap<>();
+        for (Map<String, Object> listElement : activeUserRows) {
+            ZonedDateTime date = (ZonedDateTime) listElement.get("day");
+            int index = getWeekOfDate(date);
+            String username = listElement.get("username").toString();
+            List<String> usersInSameSlot = usersByDate.get(index);
+            // if this index is not yet existing in users
+            if (usersInSameSlot == null) {
+                usersInSameSlot = new ArrayList<>();
+                usersInSameSlot.add(username);
+                usersByDate.put(index, usersInSameSlot);
+            }   // if the value of the map for this index does not contain this username
+            else if (!usersInSameSlot.contains(username)) {
+                usersInSameSlot.add(username);
+            }
+        }
+        List<Map<String, Object>> returnList = new ArrayList<>();
+        usersByDate.forEach((date, users) -> {
+            int year = (Integer) date < getWeekOfDate(startDate) ? startDate.getYear() + 1 : startDate.getYear();
+            ZonedDateTime firstDateOfYear = ZonedDateTime.of(year, 1, 1, 0, 0, 0, 0, startDate.getZone());
+            ZonedDateTime start = getWeekOfDate(firstDateOfYear) == 1 ? firstDateOfYear.plusWeeks(((Integer) date) - 1) : firstDateOfYear.plusWeeks((Integer) date);
+            Map<String, Object> listElement = new HashMap<>();
+            listElement.put("day", start);
+            listElement.put("amount", (long) users.size());
+            returnList.add(listElement);
+        });
+        return returnList;
+    }
+
+    /**
+     * Gets a list of maps as parameter, each map describing an entry in the database. The map has the two keys "day" and "amount",
+     * which map to the date and the amount of the findings. This Map-List is taken and converted into an Integer array,
+     * containing the values for each point of the graph. In the course management overview, we want to display the last
+     * 4 weeks, each week represented by one point in the graph. (Beginning with the current week.)
+     *
+     * @param outcome A List<Map<String, Object>>, containing the content which should be refactored into an array
+     * @param endDate the endDate
+     * @return an array, containing the amount of active users. One entry corresponds to one week
+     */
+    private Integer[] sortUserIntoWeeks(List<Map<String, Object>> outcome, ZonedDateTime endDate) {
+        Integer[] result = new Integer[4];
+        Arrays.fill(result, 0);
+        int week;
+        for (Map<String, Object> map : outcome) {
+            ZonedDateTime date = (ZonedDateTime) map.get("day");
+            int amount = map.get("amount") != null ? ((Long) map.get("amount")).intValue() : 0;
+            week = getWeekOfDate(date);
+            for (int i = 0; i < result.length; i++) {
+                if (week == getWeekOfDate(endDate.minusWeeks(i))) {
+                    result[result.length - 1 - i] += amount;
+                }
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Gets the week of the given date
+     *
+     * @param date the date to get the week for
+     * @return the calendar week of the given date
+     */
+    private Integer getWeekOfDate(ZonedDateTime date) {
+        LocalDate localDate = date.toLocalDate();
+        TemporalField weekOfYear = WeekFields.of(DayOfWeek.MONDAY, 4).weekOfWeekBasedYear();
+        return localDate.get(weekOfYear);
+    }
+
+    /**
      * Archives the course by creating a zip file will student submissions for
      * both the course exercises and exams.
      *
@@ -294,7 +406,7 @@ public class CourseService {
             log.info("Created the course archives directory at {} because it didn't exist.", courseArchivesDirPath);
 
             // Export the course to the archives directory.
-            var archivedCoursePath = courseExportService.exportCourse(course, courseArchivesDirPath, exportErrors);
+            var archivedCoursePath = courseExamExportService.exportCourse(course, courseArchivesDirPath, exportErrors);
 
             // Attach the path to the archive to the course and save it in the database
             if (archivedCoursePath.isPresent()) {

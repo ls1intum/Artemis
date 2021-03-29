@@ -16,10 +16,7 @@ import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
-import de.tum.in.www1.artemis.repository.ExerciseRepository;
-import de.tum.in.www1.artemis.repository.TextExerciseRepository;
-import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.jwt.AtheneTrackingTokenProvider;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.exam.ExamSubmissionService;
@@ -52,7 +49,7 @@ public class TextSubmissionResource {
 
     private final UserRepository userRepository;
 
-    private final GradingCriterionService gradingCriterionService;
+    private final GradingCriterionRepository gradingCriterionRepository;
 
     private final Optional<AtheneScheduleService> atheneScheduleService;
 
@@ -62,7 +59,7 @@ public class TextSubmissionResource {
 
     public TextSubmissionResource(TextSubmissionRepository textSubmissionRepository, ExerciseRepository exerciseRepository, TextExerciseRepository textExerciseRepository,
             AuthorizationCheckService authorizationCheckService, TextSubmissionService textSubmissionService, UserRepository userRepository,
-            GradingCriterionService gradingCriterionService, TextAssessmentService textAssessmentService, Optional<AtheneScheduleService> atheneScheduleService,
+            GradingCriterionRepository gradingCriterionRepository, TextAssessmentService textAssessmentService, Optional<AtheneScheduleService> atheneScheduleService,
             ExamSubmissionService examSubmissionService, Optional<AtheneTrackingTokenProvider> atheneTrackingTokenProvider) {
         this.textSubmissionRepository = textSubmissionRepository;
         this.exerciseRepository = exerciseRepository;
@@ -70,7 +67,7 @@ public class TextSubmissionResource {
         this.authorizationCheckService = authorizationCheckService;
         this.textSubmissionService = textSubmissionService;
         this.userRepository = userRepository;
-        this.gradingCriterionService = gradingCriterionService;
+        this.gradingCriterionRepository = gradingCriterionRepository;
         this.atheneScheduleService = atheneScheduleService;
         this.textAssessmentService = textAssessmentService;
         this.examSubmissionService = examSubmissionService;
@@ -272,7 +269,7 @@ public class TextSubmissionResource {
         final TextSubmission textSubmission;
         if (lockSubmission) {
             textSubmission = textSubmissionService.findAndLockTextSubmissionToBeAssessed((TextExercise) exercise, exercise.isExamExercise(), correctionRound);
-            textAssessmentService.prepareSubmissionForAssessment(textSubmission, correctionRound);
+            textAssessmentService.prepareSubmissionForAssessment(textSubmission, textSubmission.getResultForCorrectionRound(correctionRound));
         }
         else {
             Optional<TextSubmission> optionalTextSubmission;
@@ -290,7 +287,7 @@ public class TextSubmissionResource {
             textSubmission = optionalTextSubmission.get();
         }
 
-        List<GradingCriterion> gradingCriteria = gradingCriterionService.findByExerciseIdWithEagerGradingCriteria(exerciseId);
+        List<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exerciseId);
         exercise.setGradingCriteria(gradingCriteria);
 
         // Make sure the exercise is connected to the participation in the json response

@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { BehaviorSubject, Observable } from 'rxjs';
 import * as moment from 'moment';
 import { filter, map, tap } from 'rxjs/operators';
@@ -21,6 +21,7 @@ import { createRequestOption } from 'app/shared/util/request-util';
 import { getLatestSubmissionResult, setLatestSubmissionResult, Submission } from 'app/entities/submission.model';
 import { SubjectObservablePair } from 'app/utils/rxjs.utils';
 import { participationStatus } from 'app/exercises/shared/exercise/exercise-utils';
+import { CourseManagementOverviewStatisticsDto } from 'app/course/manage/overview/course-management-overview-statistics-dto.model';
 import { addUserIndependentRepositoryUrl } from 'app/overview/participation-utils';
 import { ParticipationType } from 'app/entities/participation/participation.model';
 
@@ -72,6 +73,16 @@ export class CourseManagementService {
     }
 
     /**
+     * Fetches the title of the course with the given id
+     *
+     * @param courseId the id of the course
+     * @return the title of the course in an HttpResponse, or an HttpErrorResponse on error
+     */
+    getTitle(courseId: number): Observable<HttpResponse<string>> {
+        return this.http.get(`${this.resourceUrl}/${courseId}/title`, { observe: 'response', responseType: 'text' });
+    }
+
+    /**
      * finds the course with the provided unique identifier together with its exercises
      * @param courseId - the id of the course to be found
      */
@@ -88,6 +99,16 @@ export class CourseManagementService {
     findWithExercisesAndParticipations(courseId: number): Observable<EntityResponseType> {
         return this.http
             .get<Course>(`${this.resourceUrl}/${courseId}/with-exercises-and-relevant-participations`, { observe: 'response' })
+            .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
+    }
+
+    /**
+     * finds a course with the given id and eagerly loaded organizations
+     * @param courseId the id of the course to be found
+     */
+    findWithOrganizations(courseId: number): Observable<EntityResponseType> {
+        return this.http
+            .get<Course>(`${this.resourceUrl}/${courseId}/with-organizations`, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
     }
 
@@ -230,6 +251,18 @@ export class CourseManagementService {
     }
 
     /**
+     * finds all courses for the overview using a GET request
+     * @param req a dictionary which is send as request option along the REST call
+     */
+    getCourseOverview(req?: any): Observable<HttpResponse<Course[]>> {
+        const options = createRequestOption(req);
+        this.fetchingCoursesForNotifications = true;
+        return this.http
+            .get<Course[]>(`${this.resourceUrl}/course-management-overview`, { params: options, observe: 'response' })
+            .pipe(tap((res: HttpResponse<Course[]>) => res.body!.forEach((course) => this.checkAndSetCourseRights(course))));
+    }
+
+    /**
      * deletes the course corresponding to the given unique identifier using a DELETE request
      * @param courseId - the id of the course to be deleted
      */
@@ -243,6 +276,28 @@ export class CourseManagementService {
      */
     getStatsForInstructors(courseId: number): Observable<HttpResponse<StatsForDashboard>> {
         return this.http.get<StatsForDashboard>(`${this.resourceUrl}/${courseId}/stats-for-instructor-dashboard`, { observe: 'response' });
+    }
+
+    /**
+     * returns the exercise details of the courses for the courses management dashboard
+     * @param onlyActive - if true, only active courses will be considered in the result
+     */
+    getExercisesForManagementOverview(onlyActive: boolean): Observable<HttpResponse<Course[]>> {
+        let httpParams = new HttpParams();
+        httpParams = httpParams.append('onlyActive', onlyActive.toString());
+        return this.http
+            .get<Course[]>(`${this.resourceUrl}/exercises-for-management-overview`, { params: httpParams, observe: 'response' })
+            .pipe(map((res: HttpResponse<Course[]>) => this.convertDateArrayFromServer(res)));
+    }
+
+    /**
+     * returns the stats of the courses for the courses management dashboard
+     * @param onlyActive - if true, only active courses will be considered in the result
+     */
+    getStatsForManagementOverview(onlyActive: boolean): Observable<HttpResponse<CourseManagementOverviewStatisticsDto[]>> {
+        let httpParams = new HttpParams();
+        httpParams = httpParams.append('onlyActive', onlyActive.toString());
+        return this.http.get<CourseManagementOverviewStatisticsDto[]>(`${this.resourceUrl}/stats-for-management-overview`, { params: httpParams, observe: 'response' });
     }
 
     /**
