@@ -209,6 +209,9 @@ public class DatabaseUtilService {
     VideoUnitRepository videoUnitRepository;
 
     @Autowired
+    private OrganizationRepository organizationRepository;
+
+    @Autowired
     private DatabaseCleanupService databaseCleanupService;
 
     @Value("${info.guided-tour.course-group-students:#{null}}")
@@ -353,6 +356,19 @@ public class DatabaseUtilService {
     public Course createCourse() {
         Course course = ModelFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "tumuser", "tutor", "instructor");
         return courseRepo.save(course);
+    }
+
+    public Course createCourseWithOrganizations(String name, String shortName, String url, String description, String logoUrl, String emailPattern) {
+        Course course = createCourse();
+        Set<Organization> organizations = new HashSet<>();
+        Organization organization = createOrganization(name, shortName, url, description, logoUrl, emailPattern);
+        organizations.add(organization);
+        course.setOrganizations(organizations);
+        return courseRepo.save(course);
+    }
+
+    public Course createCourseWithOrganizations() {
+        return createCourseWithOrganizations("organization1", "org1", "org.org", "This is organization1", null, "^.*@matching.*$");
     }
 
     public TextExercise createIndividualTextExercise(Course course, ZonedDateTime pastTimestamp, ZonedDateTime futureTimestamp, ZonedDateTime futureFutureTimestamp) {
@@ -889,6 +905,15 @@ public class DatabaseUtilService {
         studentParticipationRepo.save(participationProgramming);
 
         return courseSaved;
+    }
+
+    public Organization createOrganization(String name, String shortName, String url, String description, String logoUrl, String emailPattern) {
+        Organization organization = ModelFactory.generateOrganization(name, shortName, url, description, logoUrl, emailPattern);
+        return organizationRepository.save(organization);
+    }
+
+    public Organization createOrganization() {
+        return createOrganization("organization1", "org1", "org.org", "This is organization1", null, "^.*@matching.*$");
     }
 
     public StudentExam setupTestRunForExamWithExerciseGroupsForInstructor(Exam exam, User instructor, List<ExerciseGroup> exerciseGroupsWithExercises) {

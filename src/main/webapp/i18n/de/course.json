@@ -59,6 +59,7 @@
             "teachingAssistantGroupName": "Tutorengruppe",
             "instructorGroupName": "Dozentengruppe",
             "description": "Kursbeschreibung",
+            "organizations": "Kurs Organisationen",
             "startDate": "Start",
             "endDate": "Ende",
             "semester": "Semester",

@@ -465,7 +465,7 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         database.addCourseWithOneReleasedTextExercise();
         final var search = database.configureSearch("");
         final var result = request.get("/api/text-exercises/", HttpStatus.OK, SearchResultPageDTO.class, database.exerciseSearchMapping(search));
-        assertThat(result.getResultsOnPage()).isEmpty();
+        assertThat(result.getResultsOnPage()).isNullOrEmpty();
     }
 
     @Test
@@ -485,7 +485,7 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
 
         final var searchNon = database.configureSearch("Non");
         final var resultNon = request.get("/api/text-exercises/", HttpStatus.OK, SearchResultPageDTO.class, database.exerciseSearchMapping(searchNon));
-        assertThat(resultNon.getResultsOnPage()).isEmpty();
+        assertThat(resultNon.getResultsOnPage()).isNullOrEmpty();
     }
 
     @Test

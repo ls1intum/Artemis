@@ -830,7 +830,8 @@ public class ExamResource {
     public ResponseEntity<ExamInformationDTO> getLatestIndividualEndDateOfExam(@PathVariable Long courseId, @PathVariable Long examId) {
         log.debug("REST request to get latest individual end date of exam : {}", examId);
         Optional<ResponseEntity<ExamInformationDTO>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccessForTeachingAssistant(courseId, examId);
-        return courseAndExamAccessFailure.orElseGet(() -> ResponseEntity.ok().body(new ExamInformationDTO(examDateService.getLatestIndividualExamEndDate(examId))));
+        var examInformation = new ExamInformationDTO(examDateService.getLatestIndividualExamEndDate(examId));
+        return courseAndExamAccessFailure.orElseGet(() -> ResponseEntity.ok().body(examInformation));
     }
 
     /**

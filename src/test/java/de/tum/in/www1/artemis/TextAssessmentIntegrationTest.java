@@ -20,8 +20,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
@@ -40,25 +38,10 @@ import de.tum.in.www1.artemis.web.rest.dto.TextAssessmentUpdateDTO;
 public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
-    CourseRepository courseRepo;
+    private ExerciseRepository exerciseRepo;
 
     @Autowired
-    ExerciseRepository exerciseRepo;
-
-    @Autowired
-    FeedbackRepository feedbackRepository;
-
-    @Autowired
-    ComplaintRepository complaintRepo;
-
-    @Autowired
-    ComplaintResponseRepository complaintResponseRepository;
-
-    @Autowired
-    UserRepository userRepository;
-
-    @Autowired
-    ObjectMapper mapper;
+    private ComplaintRepository complaintRepo;
 
     @Autowired
     private TextClusterRepository textClusterRepository;
@@ -73,7 +56,7 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
     private TextSubmissionRepository textSubmissionRepository;
 
     @Autowired
-    ResultRepository resultRepo;
+    private ResultRepository resultRepo;
 
     @Autowired
     private StudentParticipationRepository studentParticipationRepository;
@@ -90,8 +73,6 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
     private TextExercise textExercise;
 
     private Course course;
-
-    private Double offsetByTenThousandth = 0.0001;
 
     @BeforeEach
     public void initTestCase() {
@@ -143,7 +124,6 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
     @Test
     @WithMockUser(value = "instructor1", roles = "TA")
     public void getTextSubmissionWithResultId() throws Exception {
-        User user = database.getUserByLogin("tutor1");
         TextSubmission submission = ModelFactory.generateTextSubmission("asdf", null, true);
         submission = (TextSubmission) database.addSubmissionWithTwoFinishedResultsWithAssessor(textExercise, submission, "student1", "tutor1");
         Result storedResult = submission.getResultForCorrectionRound(1);
@@ -158,7 +138,6 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
     public void getTextSubmissionWithResultIdAsTutor_badRequest() throws Exception {
-        User user = database.getUserByLogin("tutor1");
         TextSubmission submission = ModelFactory.generateTextSubmission("asdf", null, true);
         submission = (TextSubmission) database.addSubmissionWithTwoFinishedResultsWithAssessor(textExercise, submission, "student1", "tutor1");
         Result storedResult = submission.getResultForCorrectionRound(0);
@@ -735,7 +714,7 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
                 "/api/text-assessments/exercise/" + textExercise.getId() + "/result/" + submissionWithoutAssessment.getLatestResult().getId() + "/submit", textAssessmentDTO,
                 Result.class, HttpStatus.OK);
 
-        assertThat(response.getScore()).isEqualTo(110, Offset.offset(offsetByTenThousandth));
+        assertThat(response.getScore()).isEqualTo(110, Offset.offset(0.0001));
     }
 
     private void exerciseDueDatePassed() {
