@@ -152,4 +152,5 @@ The following universities are activly using Artemis or are currently evaluating
 
 ##### Karlsruhe Institute of Technology
 
-* Evaluating Artemis
+* https://artemis.praktomat.cs.kit.edu
+* Main contact person: [Dominik Fuchß](mailto:dominik.fuchss@kit.edu)

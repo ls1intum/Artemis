@@ -4,6 +4,7 @@ import static de.tum.in.www1.artemis.config.Constants.FEEDBACK_DETAIL_TEXT_MAX_C
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import javax.persistence.*;
@@ -15,7 +16,9 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
+import de.tum.in.www1.artemis.domain.enumeration.Visibility;
 
 /**
  * A Feedback.
@@ -57,6 +60,10 @@ public class Feedback extends DomainObject {
     @Enumerated(EnumType.STRING)
     @Column(name = "type")
     private FeedbackType type;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "visibility")
+    private Visibility visibility;
 
     @ManyToOne
     @JsonIgnoreProperties("feedbacks")
@@ -182,6 +189,29 @@ public class Feedback extends DomainObject {
         this.type = type;
     }
 
+    public Visibility getVisibility() {
+        return visibility;
+    }
+
+    @JsonIgnore
+    public boolean isAfterDueDate() {
+        return this.visibility == Visibility.AFTER_DUE_DATE;
+    }
+
+    @JsonIgnore
+    public boolean isInvisible() {
+        return this.visibility == Visibility.NEVER;
+    }
+
+    public Feedback visibility(Visibility visibility) {
+        this.visibility = visibility;
+        return this;
+    }
+
+    public void setVisibility(Visibility visibility) {
+        this.visibility = visibility;
+    }
+
     public Result getResult() {
         return result;
     }
@@ -265,12 +295,49 @@ public class Feedback extends DomainObject {
         feedback.setText(getText());
         feedback.setPositive(isPositive());
         feedback.setReference(getReference());
+        feedback.setVisibility(visibility);
         return feedback;
     }
 
     @Override
     public String toString() {
         return "Feedback{" + "id=" + getId() + ", text='" + getText() + "'" + ", detailText='" + getDetailText() + "'" + ", reference='" + getReference() + "'" + ", positive='"
-                + isPositive() + "'" + ", type='" + getType() + ", gradingInstruction='" + getGradingInstruction() + "'" + "}";
+                + isPositive() + "'" + ", type='" + getType() + ", visibility=" + getVisibility() + ", gradingInstruction='" + getGradingInstruction() + "'" + "}";
+    }
+
+    /**
+     * Calculates the score over all feedback elements that were set using structured grading instructions (SGI)
+     * @param inputScore totalScore which is summed up.
+     * @param gradingInstructions empty grading instruction Map to collect the used gradingInstructions
+     * @return calculated total score from feedback elements set by SGI
+     */
+    @JsonIgnore
+    public double computeTotalScore(double inputScore, Map<Long, Integer> gradingInstructions) {
+        double totalScore = inputScore;
+        if (gradingInstructions.get(getGradingInstruction().getId()) != null) {
+            // We Encountered this grading instruction before
+            var maxCount = getGradingInstruction().getUsageCount();
+            var encounters = gradingInstructions.get(getGradingInstruction().getId());
+            if (maxCount > 0) {
+                if (encounters >= maxCount) {
+                    // the structured grading instruction was applied on assessment models more often that the usageCount limit allows so we don't sum the feedback credit
+                    gradingInstructions.put(getGradingInstruction().getId(), encounters + 1);
+                }
+                else {
+                    // the usageCount limit was not exceeded yet so we add the credit and increase the nrOfEncounters counter
+                    gradingInstructions.put(getGradingInstruction().getId(), encounters + 1);
+                    totalScore += getGradingInstruction().getCredits();
+                }
+            }
+            else {
+                totalScore += getCredits();
+            }
+        }
+        else {
+            // First time encountering the grading instruction
+            gradingInstructions.put(getGradingInstruction().getId(), 1);
+            totalScore += getCredits();
+        }
+        return totalScore;
     }
 }

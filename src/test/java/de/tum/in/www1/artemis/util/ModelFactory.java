@@ -1026,11 +1026,33 @@ public class ModelFactory {
         // Create Submissions with id's 0 - count
         List<TextSubmission> textSubmissions = new ArrayList<>();
         for (int i = 0; i < count; i++) {
-            TextSubmission s = new TextSubmission((long) i).text(submissionTexts[i]);
-            s.setLanguage(Language.ENGLISH);
-            textSubmissions.add(s);
+            TextSubmission textSubmission = new TextSubmission((long) i).text(submissionTexts[i]);
+            textSubmission.setLanguage(Language.ENGLISH);
+            textSubmissions.add(textSubmission);
         }
 
         return textSubmissions;
+    }
+
+    /**
+     *
+     * Generate an example organization entity
+     * @param name of organization
+     * @param shortName of organization
+     * @param url of organization
+     * @param description of organization
+     * @param logoUrl of organization
+     * @param emailPattern of organization
+     * @return An organization entity
+     */
+    public static Organization generateOrganization(String name, String shortName, String url, String description, String logoUrl, String emailPattern) {
+        Organization organization = new Organization();
+        organization.setName(name);
+        organization.setShortName(shortName);
+        organization.setUrl(url);
+        organization.setDescription(description);
+        organization.setLogoUrl(logoUrl);
+        organization.setEmailPattern(emailPattern);
+        return organization;
     }
 }

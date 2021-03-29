@@ -22,7 +22,6 @@ import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.exam.ExamDateService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
-import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Service
 public class SubmissionService {
@@ -205,15 +204,20 @@ public class SubmissionService {
     }
 
     /**
-     * Get the submission with the given id from the database. The submission is loaded together with its results and the assessors. Throws an EntityNotFoundException if no
-     * submission could be found for the given id.
+     * Get all currently locked submissions for all users in the given exam.
+     * These are all submissions for which users started, but did not yet finish the assessment.
      *
-     * @param submissionId the id of the submission that should be loaded from the database
-     * @return the submission with the given id
+     * @param examId  - the exam id
+     * @param user    - the user trying to access the locked submissions
+     * @return        - list of submissions that have locked results in the exam
      */
-    public Submission findOneWithEagerResults(long submissionId) {
-        return submissionRepository.findWithEagerResultsAndAssessorById(submissionId)
-                .orElseThrow(() -> new EntityNotFoundException("Submission with id \"" + submissionId + "\" does not exist"));
+    public List<Submission> getLockedSubmissions(Long examId, User user) {
+        List<Submission> submissions = submissionRepository.getLockedSubmissionsAndResultsByExamId(examId);
+
+        for (Submission submission : submissions) {
+            hideDetails(submission, user);
+        }
+        return submissions;
     }
 
     /**
@@ -526,19 +530,4 @@ public class SubmissionService {
         return submissions;
     }
 
-    /**
-     * In case user calls for correctionRound 0, but more manual results already exists
-     * and he has not requested a specific result, remove any other results
-     *
-     * @param submission for which to remove results
-     * @param correctionRound for which not to remove results
-     * @param resultId specific resultId
-     */
-    public void removeNotNeededResults(Submission submission, int correctionRound, Long resultId) {
-        if (correctionRound == 0 && resultId == null && submission.getResults().size() >= 2) {
-            var resultList = new ArrayList<Result>();
-            resultList.add(submission.getFirstManualResult());
-            submission.setResults(resultList);
-        }
-    }
 }

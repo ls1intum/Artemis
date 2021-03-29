@@ -12,6 +12,8 @@ import org.eclipse.jgit.lib.ObjectId;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -19,22 +21,27 @@ import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.connector.bitbucket.BitbucketRequestMockProvider;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
+import de.tum.in.www1.artemis.domain.enumeration.Visibility;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageReceiveService;
 import de.tum.in.www1.artemis.util.TimeService;
 
 class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
-    InstanceMessageReceiveService instanceMessageReceiveService;
+    private InstanceMessageReceiveService instanceMessageReceiveService;
 
     @Autowired
-    ProgrammingExerciseRepository programmingExerciseRepository;
+    private ProgrammingExerciseRepository programmingExerciseRepository;
 
     @Autowired
-    TimeService timeService;
+    private ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository;
+
+    @Autowired
+    private TimeService timeService;
 
     @Autowired
     private BitbucketRequestMockProvider bitbucketRequestMockProvider;
@@ -51,7 +58,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
         doReturn(ObjectId.fromString("fffb09455885349da6e19d3ad7fd9c3404c5a0df")).when(gitService).getLastCommitHash(any());
 
         database.addUsers(2, 2, 2);
-        database.addCourseWithOneProgrammingExercise();
+        database.addCourseWithOneProgrammingExerciseAndTestCases();
         programmingExercise = programmingExerciseRepository.findAll().get(0);
 
         database.addStudentParticipationForProgrammingExercise(programmingExercise, "student1");
@@ -124,6 +131,8 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
         // Lock student repository must be called once per participation.
         verifyLockStudentRepositoryOperation(false);
         verify(programmingSubmissionService, never()).triggerInstructorBuildForExercise(programmingExercise.getId());
+        // Update all scores should not have been triggered.
+        verify(programmingExerciseGradingService, never()).updateAllResults(programmingExercise);
     }
 
     @Test
@@ -163,6 +172,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
 
         verifyLockStudentRepositoryOperation(false);
         verify(programmingSubmissionService, never()).triggerInstructorBuildForExercise(programmingExercise.getId());
+        verify(programmingExerciseGradingService, never()).updateAllResults(programmingExercise);
     }
 
     @Test
@@ -202,6 +212,80 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
         // Only lock participations
         verifyLockStudentRepositoryOperation(true);
         // but do not build all
-        verify(programmingSubmissionService, Mockito.times(0)).triggerInstructorBuildForExercise(programmingExercise.getId());
+        verify(programmingSubmissionService, never()).triggerInstructorBuildForExercise(programmingExercise.getId());
+    }
+
+    @Test
+    void shouldUpdateScoresIfHasTestsAfterDueDateAndNoBuildAfterDueDate() throws Exception {
+        mockStudentRepoLocks();
+        final var dueDateDelayMS = 200;
+        programmingExercise.setDueDate(ZonedDateTime.now().plus(dueDateDelayMS / 2, ChronoUnit.MILLIS));
+        programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(null);
+        programmingExerciseRepository.save(programmingExercise);
+        var testCases = programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId());
+        testCases.stream().findFirst().get().setVisibility(Visibility.AFTER_DUE_DATE);
+        programmingExerciseTestCaseRepository.saveAll(testCases);
+
+        instanceMessageReceiveService.processScheduleProgrammingExercise(programmingExercise.getId());
+
+        Thread.sleep(dueDateDelayMS + SCHEDULER_TASK_TRIGGER_DELAY_MS);
+
+        verifyLockStudentRepositoryOperation(true);
+        verify(programmingSubmissionService, never()).triggerInstructorBuildForExercise(programmingExercise.getId());
+        // has AFTER_DUE_DATE tests and no additional build after due date => update the scores to show those test cases in it
+        verify(programmingExerciseGradingService, Mockito.times(1)).updateAllResults(programmingExercise);
+    }
+
+    @Test
+    void shouldNotUpdateScoresIfHasTestsAfterDueDateAndBuildAfterDueDate() throws Exception {
+        mockStudentRepoLocks();
+        final var dueDateDelayMS = 200;
+        programmingExercise.setDueDate(ZonedDateTime.now().plus(dueDateDelayMS / 2, ChronoUnit.MILLIS));
+        programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().plusNanos(timeService.milliSecondsToNanoSeconds(dueDateDelayMS)));
+        programmingExerciseRepository.save(programmingExercise);
+        var testCases = programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId());
+        testCases.stream().findFirst().get().setVisibility(Visibility.AFTER_DUE_DATE);
+        programmingExerciseTestCaseRepository.saveAll(testCases);
+
+        instanceMessageReceiveService.processScheduleProgrammingExercise(programmingExercise.getId());
+
+        Thread.sleep(dueDateDelayMS + SCHEDULER_TASK_TRIGGER_DELAY_MS);
+
+        verifyLockStudentRepositoryOperation(true);
+        verify(programmingSubmissionService, Mockito.times(1)).triggerInstructorBuildForExercise(programmingExercise.getId());
+        // has AFTER_DUE_DATE tests, but also buildAfterDueDate => do not update results, but use the results created on additional build run
+        verify(programmingExerciseGradingService, never()).updateAllResults(programmingExercise);
+    }
+
+    @ParameterizedTest()
+    @ValueSource(booleans = { true, false })
+    void shouldNotUpdateScoresIfHasNoTestsAfterDueDate(boolean hasBuildAndTestAfterDueDate) throws Exception {
+        mockStudentRepoLocks();
+        final var dueDateDelayMS = 200;
+        programmingExercise.setDueDate(ZonedDateTime.now().plus(dueDateDelayMS / 2, ChronoUnit.MILLIS));
+        if (hasBuildAndTestAfterDueDate) {
+            programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().plusNanos(timeService.milliSecondsToNanoSeconds(dueDateDelayMS)));
+        }
+        else {
+            programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(null);
+        }
+        programmingExerciseRepository.save(programmingExercise);
+        var testCases = programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId());
+        testCases.forEach(testCase -> testCase.setVisibility(Visibility.ALWAYS));
+        programmingExerciseTestCaseRepository.saveAll(testCases);
+
+        instanceMessageReceiveService.processScheduleProgrammingExercise(programmingExercise.getId());
+
+        Thread.sleep(dueDateDelayMS + SCHEDULER_TASK_TRIGGER_DELAY_MS);
+
+        verifyLockStudentRepositoryOperation(true);
+        if (hasBuildAndTestAfterDueDate) {
+            verify(programmingSubmissionService, Mockito.times(1)).triggerInstructorBuildForExercise(programmingExercise.getId());
+        }
+        else {
+            verify(programmingSubmissionService, never()).triggerInstructorBuildForExercise(programmingExercise.getId());
+        }
+        // no tests marked as AFTER_DUE_DATE => do not update scores on due date
+        verify(programmingExerciseGradingService, never()).updateAllResults(programmingExercise);
     }
 }
