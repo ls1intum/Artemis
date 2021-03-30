@@ -6,9 +6,7 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import java.util.HashMap;
 import java.util.List;
 
-
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -35,7 +33,6 @@ public class UserSaml2IntegrationTest extends AbstractSpringIntegrationSaml2Test
     @Autowired
     TokenProvider tokenProvider;
 
-
     /**
      * This test checks the creation of a new SAML2 authenticated user.
      *
@@ -43,7 +40,8 @@ public class UserSaml2IntegrationTest extends AbstractSpringIntegrationSaml2Test
      */
     @Test
     public void testValidSaml2Login() throws Exception {
-        assertThatThrownBy(() -> this.database.getUserByLogin(STUDENT_NAME)).isInstanceOf(IllegalArgumentException.class).hasMessage("Provided login student1 does not exist in database");
+        assertThatThrownBy(() -> this.database.getUserByLogin(STUDENT_NAME)).isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Provided login student1 does not exist in database");
 
         // Mock existing SAML2 Auth
         Authentication authentication = new Saml2Authentication(createPrincipal(STUDENT_NAME), "Secret Credentials", null);
@@ -63,12 +61,14 @@ public class UserSaml2IntegrationTest extends AbstractSpringIntegrationSaml2Test
      */
     @Test
     public void testInvalidAuthenticationSaml2Login() throws Exception {
-        assertThatThrownBy(() -> this.database.getUserByLogin(STUDENT_NAME)).isInstanceOf(IllegalArgumentException.class).hasMessage("Provided login student1 does not exist in database");
+        assertThatThrownBy(() -> this.database.getUserByLogin(STUDENT_NAME)).isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Provided login student1 does not exist in database");
 
         // Test whether authorizeSAML2 generates a no token
         request.post("/api/saml2", Boolean.FALSE, HttpStatus.UNAUTHORIZED);
 
-        assertThatThrownBy(() -> this.database.getUserByLogin(STUDENT_NAME)).isInstanceOf(IllegalArgumentException.class).hasMessage("Provided login student1 does not exist in database");
+        assertThatThrownBy(() -> this.database.getUserByLogin(STUDENT_NAME)).isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Provided login student1 does not exist in database");
     }
 
     @AfterEach
@@ -77,14 +77,16 @@ public class UserSaml2IntegrationTest extends AbstractSpringIntegrationSaml2Test
         this.database.resetDatabase();
     }
 
-
     private Saml2AuthenticatedPrincipal createPrincipal(String username) {
-        Saml2AuthenticatedPrincipal principal = new DefaultSaml2AuthenticatedPrincipal(username, new HashMap<>() {{
-            put("uid", List.of(username));
-            put("first_name", List.of("FirstName"));
-            put("last_name", List.of("LastName"));
-            put("email", List.of(username + "@invalid"));
-        }});
+        Saml2AuthenticatedPrincipal principal = new DefaultSaml2AuthenticatedPrincipal(username, new HashMap<>() {
+
+            {
+                put("uid", List.of(username));
+                put("first_name", List.of("FirstName"));
+                put("last_name", List.of("LastName"));
+                put("email", List.of(username + "@invalid"));
+            }
+        });
         return principal;
     }
 }

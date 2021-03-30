@@ -5,14 +5,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doReturn;
 
-import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
-import de.tum.in.www1.artemis.service.connectors.SAML2Service;
-import de.tum.in.www1.artemis.service.programming.ProgrammingLanguageFeature;
-import de.tum.in.www1.artemis.service.programming.ProgrammingLanguageFeatureService;
-import de.tum.in.www1.artemis.util.DatabaseUtilService;
-import de.tum.in.www1.artemis.util.RequestUtilService;
-import de.tum.in.www1.artemis.util.UserTestService;
-import de.tum.in.www1.artemis.web.rest.UserJWTController;
+import java.util.Map;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.mockito.Mockito;
@@ -25,23 +19,28 @@ import org.springframework.security.saml2.provider.service.registration.RelyingP
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 
-import java.util.List;
-import java.util.Map;
+import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
+import de.tum.in.www1.artemis.service.connectors.SAML2Service;
+import de.tum.in.www1.artemis.service.programming.ProgrammingLanguageFeatureService;
+import de.tum.in.www1.artemis.util.DatabaseUtilService;
+import de.tum.in.www1.artemis.util.RequestUtilService;
+import de.tum.in.www1.artemis.util.UserTestService;
+import de.tum.in.www1.artemis.web.rest.UserJWTController;
 
 /**
  * Test base for {@link UserJWTController#authorizeSAML2(String)} and {@link SAML2Service}.
  *
  * @author Dominik Fuchss
  */
-@SpringBootTest(properties = {"artemis.athene.token-validity-in-seconds=10800",
-    "artemis.athene.base64-secret=YWVuaXF1YWRpNWNlaXJpNmFlbTZkb283dXphaVF1b29oM3J1MWNoYWlyNHRoZWUzb2huZ2FpM211bGVlM0VpcAo="})
+@SpringBootTest(properties = { "artemis.athene.token-validity-in-seconds=10800",
+        "artemis.athene.base64-secret=YWVuaXF1YWRpNWNlaXJpNmFlbTZkb283dXphaVF1b29oM3J1MWNoYWlyNHRoZWUzb2huZ2FpM211bGVlM0VpcAo=" })
 @AutoConfigureMockMvc
 @AutoConfigureTestDatabase
 // NOTE: we use a common set of active profiles to reduce the number of application launches during testing. This significantly saves time and memory!
 
-@ActiveProfiles({SPRING_PROFILE_TEST, "artemis", "saml2"})
-@TestPropertySource(properties = {"info.guided-tour.course-group-tutors=", "info.guided-tour.course-group-students=artemis-artemistutorial-students",
-    "info.guided-tour.course-group-instructors=artemis-artemistutorial-instructors", "artemis.user-management.use-external=false"})
+@ActiveProfiles({ SPRING_PROFILE_TEST, "artemis", "saml2" })
+@TestPropertySource(properties = { "info.guided-tour.course-group-tutors=", "info.guided-tour.course-group-students=artemis-artemistutorial-students",
+        "info.guided-tour.course-group-instructors=artemis-artemistutorial-instructors", "artemis.user-management.use-external=false" })
 public abstract class AbstractSpringIntegrationSaml2Test {
 
     @Autowired
@@ -61,7 +60,6 @@ public abstract class AbstractSpringIntegrationSaml2Test {
 
     @Autowired
     protected SAML2Service saml2Service;
-
 
     @BeforeEach
     public void setUp() throws Exception {
