@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
 import { ExportToCsv } from 'export-to-csv';
@@ -16,6 +16,7 @@ import { TextExercise } from 'app/entities/text-exercise.model';
 import { ArtemisPlagiarismModule } from 'app/exercises/shared/plagiarism/plagiarism.module';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
+import { TextPlagiarismResult } from 'app/exercises/shared/plagiarism/types/text/TextPlagiarismResult';
 
 jest.mock('app/shared/util/download.util', () => ({
     downloadFile: jest.fn(),
@@ -152,4 +153,52 @@ describe('Plagiarism Inspector Component', () => {
         expect(ExportToCsv).toHaveBeenCalled();
         expect(generateCsv).toHaveBeenCalled();
     });
+
+    it('should get the latest plagiarism result for modeling exercise', fakeAsync(() => {
+        comp.exercise = modelingExercise;
+
+        const mockResult = {} as ModelingPlagiarismResult;
+        spyOn(modelingExerciseService, 'getLatestPlagiarismResult').and.returnValue(of(mockResult));
+        spyOn(comp, 'handlePlagiarismResult');
+
+        comp.getLatestPlagiarismResult();
+        expect(comp.detectionInProgress).toBe(true);
+
+        tick();
+
+        expect(modelingExerciseService.getLatestPlagiarismResult).toHaveBeenCalledWith(modelingExercise.id);
+        expect(comp.handlePlagiarismResult).toHaveBeenCalledWith(mockResult);
+    }));
+
+    it('should get the latest plagiarism result for programming exercise', fakeAsync(() => {
+        comp.exercise = programmingExercise;
+
+        const mockResult = {} as TextPlagiarismResult;
+        spyOn(programmingExerciseService, 'getLatestPlagiarismResult').and.returnValue(of(mockResult));
+        spyOn(comp, 'handlePlagiarismResult');
+
+        comp.getLatestPlagiarismResult();
+        expect(comp.detectionInProgress).toBe(true);
+
+        tick();
+
+        expect(programmingExerciseService.getLatestPlagiarismResult).toHaveBeenCalledWith(programmingExercise.id);
+        expect(comp.handlePlagiarismResult).toHaveBeenCalledWith(mockResult);
+    }));
+
+    it('should get the latest plagiarism result for text exercise', fakeAsync(() => {
+        comp.exercise = textExercise;
+
+        const mockResult = {} as TextPlagiarismResult;
+        spyOn(textExerciseService, 'getLatestPlagiarismResult').and.returnValue(of(mockResult));
+        spyOn(comp, 'handlePlagiarismResult');
+
+        comp.getLatestPlagiarismResult();
+        expect(comp.detectionInProgress).toBe(true);
+
+        tick();
+
+        expect(textExerciseService.getLatestPlagiarismResult).toHaveBeenCalledWith(textExercise.id);
+        expect(comp.handlePlagiarismResult).toHaveBeenCalledWith(mockResult);
+    }));
 });

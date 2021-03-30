@@ -50,7 +50,7 @@ public class ModelingPlagiarismDetectionService {
 
         ModelingPlagiarismResult result = compareSubmissions(modelingSubmissions, minimumSimilarity, minimumModelSize, minimumScore);
 
-        result.setExerciseId(exerciseWithParticipationsSubmissionsResults.getId());
+        result.setExercise(exerciseWithParticipationsSubmissionsResults);
 
         return result;
     }
@@ -138,11 +138,12 @@ public class ModelingPlagiarismDetectionService {
 
                 PlagiarismComparison<ModelingSubmissionElement> comparison = new PlagiarismComparison<>();
 
+                comparison.setPlagiarismResult(result);
                 comparison.setSimilarity(similarity * 100);
                 comparison.setSubmissionA(submissionA);
                 comparison.setSubmissionB(submissionB);
                 // TODO: Add matches to highlight similar modeling elements
-                comparison.setMatches(new ArrayList<>());
+                comparison.setMatches(new HashSet<>());
 
                 comparisons.add(comparison);
             }
@@ -153,7 +154,7 @@ public class ModelingPlagiarismDetectionService {
         long durationInMillis = System.currentTimeMillis() - timeBeforeStartInMillis;
         int[] similarityDistribution = calculateSimilarityDistribution(comparisons);
 
-        result.setComparisons(comparisons);
+        result.setComparisons(new HashSet<>(comparisons));
         result.setDuration(durationInMillis);
         result.setSimilarityDistribution(similarityDistribution);
 
