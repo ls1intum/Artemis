@@ -280,9 +280,9 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
                     FROM participation.results prs
                     WHERE prs.assessmentType IN ('MANUAL', 'SEMI_AUTOMATIC'))
             AND submission.submitted = true
-            AND submission.id = (SELECT max(s.id) FROM participation.submissions s WHERE (s.type <> 'ILLEGAL' or s.type is null))
+            AND submission.id = (SELECT max(s.id) FROM participation.submissions s)
             """)
-    List<StudentParticipation> findByExerciseIdWithLatestLegalSubmissionWithoutManualResultsAndIgnoreTestRunParticipation(@Param("exerciseId") Long exerciseId,
+    List<StudentParticipation> findByExerciseIdWithLatestSubmissionWithoutManualResultsAndIgnoreTestRunParticipation(@Param("exerciseId") Long exerciseId,
             @Param("correctionRound") long correctionRound);
 
     /**
@@ -303,9 +303,9 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
                 AND NOT EXISTS (SELECT prs FROM participation.results prs
                     WHERE prs.assessmentType in ('MANUAL', 'SEMI_AUTOMATIC'))
                 AND submission.submitted = true
-                AND submission.id = (SELECT max(s.id) FROM participation.submissions s WHERE (s.type <> 'ILLEGAL' or s.type is null))
+                AND submission.id = (SELECT max(s.id) FROM participation.submissions s)
             """)
-    List<StudentParticipation> findByExerciseIdWithLatestLegalSubmissionWithoutManualResults(@Param("exerciseId") Long exerciseId);
+    List<StudentParticipation> findByExerciseIdWithLatestSubmissionWithoutManualResults(@Param("exerciseId") Long exerciseId);
 
     @Query("""
             select p from Participation p
@@ -317,8 +317,8 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
     @Query("""
             select p from Participation p
             left join fetch p.results r
-            left join fetch r.submission rs
-            where p.id = :#{#participationId} and (rs.type <> 'ILLEGAL' or rs.type is null)
+            left join fetch r.submission
+            where p.id = :#{#participationId}
             """)
     Optional<StudentParticipation> findWithEagerResultsById(@Param("participationId") Long participationId);
 

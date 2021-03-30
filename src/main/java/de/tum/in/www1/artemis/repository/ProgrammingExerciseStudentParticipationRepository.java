@@ -57,12 +57,9 @@ public interface ProgrammingExerciseStudentParticipationRepository extends JpaRe
             left join fetch pr.assessor
             where p.id = :participationId
                 and pr.id in (select prr.id from p.results prr
-                    left join prr.submission prrs
-                    where (prrs.type <> 'ILLEGAL' or prrs.type is null)
-                        and (prr.assessmentType = 'MANUAL'
-                        or prr.assessmentType = 'SEMI_AUTOMATIC'))
+                    where prr.assessmentType = 'MANUAL' or prr.assessmentType = 'SEMI_AUTOMATIC')
             """)
-    Optional<ProgrammingExerciseStudentParticipation> findByIdWithAllManualOrSemiAutomaticResultsAndFeedbacksAndRelatedLegalSubmissionAndAssessor(
+    Optional<ProgrammingExerciseStudentParticipation> findByIdWithAllManualOrSemiAutomaticResultsAndFeedbacksAndRelatedSubmissionAndAssessor(
             @Param("participationId") Long participationId);
 
     @EntityGraph(type = LOAD, attributePaths = { "results", "exercise" })

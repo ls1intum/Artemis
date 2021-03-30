@@ -307,7 +307,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
             // Get all participations of submissions that are submitted and do not already have a manual result. No manual result means that no user has started an assessment for
             // the
             // corresponding submission yet.
-            var participations = studentParticipationRepository.findByExerciseIdWithLatestLegalSubmissionWithoutManualResults(modelingExercise.getId());
+            var participations = studentParticipationRepository.findByExerciseIdWithLatestSubmissionWithoutManualResults(modelingExercise.getId());
             var submissionsWithoutResult = participations.stream().map(StudentParticipation::findLatestSubmission).filter(Optional::isPresent).map(Optional::get)
                     .collect(Collectors.toList());
 

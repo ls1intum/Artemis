@@ -406,7 +406,7 @@ public class ProgrammingSubmissionResource {
             programmingSubmissionService.checkSubmissionLockLimit(exercise.getCourseViaExerciseGroupOrCourseMember().getId());
 
             // As no manual result is present we need to lock the submission for assessment
-            Result latestAutomaticResult = participation.findLatestResult();
+            Result latestAutomaticResult = participation.findLatestResult(true);
             ProgrammingSubmission submission;
             if (latestAutomaticResult != null) {
                 submission = programmingSubmissionService.findByResultId(latestAutomaticResult.getId());
