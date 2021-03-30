@@ -1,11 +1,9 @@
 package de.tum.in.www1.artemis;
 
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-
-import java.time.ZonedDateTime;
-import java.util.List;
-import java.util.Set;
-
+import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.service.ParticipationService;
+import de.tum.in.www1.artemis.web.rest.dto.ExerciseScoresDTO;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -13,12 +11,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.service.ParticipationService;
-import de.tum.in.www1.artemis.web.rest.dto.ExerciseScoresDTO;
+import java.time.ZonedDateTime;
+import java.util.List;
+import java.util.Set;
 
-public class LearningAnalyticsIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+
+public class ExerciseScoresChartIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     Long idOfCourse;
 

@@ -2,7 +2,7 @@ import { AfterViewInit, Component, ElementRef, Input, OnDestroy, ViewChild } fro
 import * as Chart from 'chart.js';
 import { ChartDataSets, ChartOptions, ChartPoint, ChartType } from 'chart.js';
 import { BaseChartDirective, Color, Label } from 'ng2-charts';
-import { ExerciseScoresDTO, LearningAnalyticsService } from 'app/overview/learning-analytics/learning-analytics.service';
+import { ExerciseScoresChartService, ExerciseScoresDTO } from 'app/overview/visualizations/exercise-scores-chart.service';
 import { JhiAlertService } from 'ng-jhipster';
 import { onError } from 'app/shared/util/global.utils';
 import { finalize } from 'rxjs/operators';
@@ -168,7 +168,7 @@ export class ExerciseScoresChartComponent implements AfterViewInit, OnDestroy {
         private router: Router,
         private activatedRoute: ActivatedRoute,
         private alertService: JhiAlertService,
-        private learningAnalyticsService: LearningAnalyticsService,
+        private learningAnalyticsService: ExerciseScoresChartService,
         private translateService: TranslateService,
     ) {}
 

@@ -1,16 +1,16 @@
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import * as sinon from 'sinon';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ExerciseScoresChartComponent } from 'app/overview/learning-analytics/exercise-scores-chart/exercise-scores-chart.component';
-import { ChartsModule } from 'ng2-charts';
-import { RouterTestingModule } from '@angular/router/testing';
-import { MockPipe, MockProvider } from 'ng-mocks';
-import { TranslatePipe, TranslateService } from '@ngx-translate/core';
-import { JhiAlertService } from 'ng-jhipster';
-import { LearningAnalyticsService } from 'app/overview/learning-analytics/learning-analytics.service';
-import { ActivatedRoute } from '@angular/router';
-import { of } from 'rxjs';
+import {ComponentFixture, TestBed} from '@angular/core/testing';
+import {ExerciseScoresChartComponent} from 'app/overview/visualizations/exercise-scores-chart/exercise-scores-chart.component';
+import {ChartsModule} from 'ng2-charts';
+import {RouterTestingModule} from '@angular/router/testing';
+import {MockPipe, MockProvider} from 'ng-mocks';
+import {TranslatePipe, TranslateService} from '@ngx-translate/core';
+import {JhiAlertService} from 'ng-jhipster';
+import {ExerciseScoresChartService} from 'app/overview/visualizations/exercise-scores-chart.service';
+import {ActivatedRoute} from '@angular/router';
+import {of} from 'rxjs';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -25,7 +25,7 @@ describe('ExerciseScoresChartComponent', () => {
             providers: [
                 MockProvider(JhiAlertService),
                 MockProvider(TranslateService),
-                MockProvider(LearningAnalyticsService),
+                MockProvider(ExerciseScoresChartService),
                 {
                     provide: ActivatedRoute,
                     useValue: {

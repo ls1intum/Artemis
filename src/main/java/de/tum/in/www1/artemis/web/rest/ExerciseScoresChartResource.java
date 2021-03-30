@@ -1,13 +1,13 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.notFound;
-
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
-
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.ExerciseScoresChartService;
+import de.tum.in.www1.artemis.web.rest.dto.ExerciseScoresDTO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
@@ -17,22 +17,21 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.repository.CourseRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.LearningAnalyticsService;
-import de.tum.in.www1.artemis.web.rest.dto.ExerciseScoresDTO;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.notFound;
 
 @RestController
 @RequestMapping("/api")
-public class LearningAnalyticsResource {
+public class ExerciseScoresChartResource {
 
-    private final Logger log = LoggerFactory.getLogger(LearningAnalyticsResource.class);
+    private final Logger log = LoggerFactory.getLogger(ExerciseScoresChartResource.class);
 
-    private final LearningAnalyticsService learningAnalyticsService;
+    private final ExerciseScoresChartService exerciseScoresChartService;
 
     private final CourseRepository courseRepository;
 
@@ -40,16 +39,16 @@ public class LearningAnalyticsResource {
 
     private final AuthorizationCheckService authorizationCheckService;
 
-    public LearningAnalyticsResource(LearningAnalyticsService learningAnalyticsService, CourseRepository courseRepository, UserRepository userRepository,
-            AuthorizationCheckService authorizationCheckService) {
-        this.learningAnalyticsService = learningAnalyticsService;
+    public ExerciseScoresChartResource(ExerciseScoresChartService exerciseScoresChartService, CourseRepository courseRepository, UserRepository userRepository,
+                                       AuthorizationCheckService authorizationCheckService) {
+        this.exerciseScoresChartService = exerciseScoresChartService;
         this.courseRepository = courseRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.userRepository = userRepository;
     }
 
     /**
-     * GET /courses/:courseId/analytics/exercise-scores
+     * GET /courses/:courseId/charts/exercise-scores
      * <p>
      * This call returns the the information used for the exercise-scores-chart. It will get get the score of
      * the requesting user,the average score and the best score in course exercises
@@ -59,7 +58,7 @@ public class LearningAnalyticsResource {
      *
      * @return the ResponseEntity with status 200 (OK) and with the exercise scores in the body
      */
-    @GetMapping("/courses/{courseId}/analytics/exercise-scores")
+    @GetMapping("/courses/{courseId}/charts/exercise-scores")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<List<ExerciseScoresDTO>> getCourseExerciseScores(@PathVariable Long courseId) {
         log.debug("REST request to get exercise scores for course with id: {}", courseId);
@@ -74,8 +73,8 @@ public class LearningAnalyticsResource {
         }
         // we only consider exercises in which the student had a chance to earn a score (released and due date over)
         Set<Exercise> exercisesToConsider = course.getExercises().stream().filter(Exercise::isVisibleToStudents).filter(Exercise::isAssessmentDueDateOver)
-                .collect(Collectors.toSet());
-        List<ExerciseScoresDTO> exerciseScoresDTOList = learningAnalyticsService.getExerciseScores(exercisesToConsider, user);
+            .collect(Collectors.toSet());
+        List<ExerciseScoresDTO> exerciseScoresDTOList = exerciseScoresChartService.getExerciseScores(exercisesToConsider, user);
         return ResponseEntity.ok(exerciseScoresDTOList);
     }
 

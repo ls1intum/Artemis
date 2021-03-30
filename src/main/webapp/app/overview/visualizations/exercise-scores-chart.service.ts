@@ -5,10 +5,6 @@ import { Observable } from 'rxjs';
 import * as moment from 'moment';
 import { Moment } from 'moment';
 
-/**
- *  The server will always send all the properties and they are never null
- *
- */
 export class ExerciseScoresDTO {
     public exerciseId?: number;
     public exerciseTitle?: string;
@@ -20,14 +16,14 @@ export class ExerciseScoresDTO {
 }
 
 @Injectable({ providedIn: 'root' })
-export class LearningAnalyticsService {
+export class ExerciseScoresChartService {
     public resourceUrl = SERVER_API_URL + 'api';
 
     constructor(private http: HttpClient) {}
 
     getCourseExerciseScores(courseId: number): Observable<HttpResponse<ExerciseScoresDTO[]>> {
         return this.http
-            .get<ExerciseScoresDTO[]>(`${this.resourceUrl}/courses/${courseId}/analytics/exercise-scores`, { observe: 'response' })
+            .get<ExerciseScoresDTO[]>(`${this.resourceUrl}/courses/${courseId}/charts/exercise-scores`, { observe: 'response' })
             .map((response: HttpResponse<ExerciseScoresDTO[]>) => {
                 if (response.body) {
                     for (const exerciseScoreDTO of response.body) {

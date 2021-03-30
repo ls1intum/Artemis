@@ -30,11 +30,11 @@ import { ArtemisLearningGoalsModule } from 'app/course/learning-goals/learning-g
 import { ArtemisExerciseButtonsModule } from 'app/overview/exercise-details/exercise-buttons.module';
 import { ArtemisCourseExerciseRowModule } from 'app/overview/course-exercises/course-exercise-row.module';
 import { CourseExerciseDetailsModule } from 'app/overview/exercise-details/course-exercise-details.module';
-import { ArtemisLearningAnalyticsModule } from 'app/overview/learning-analytics/learning-analytics.module';
+import { ArtemisExerciseScoresChartModule } from 'app/overview/visualizations/exercise-scores-chart.module';
 
 @NgModule({
     imports: [
-        ArtemisLearningAnalyticsModule,
+        ArtemisExerciseScoresChartModule,
         ArtemisExerciseButtonsModule,
         ArtemisCourseExerciseRowModule,
         ArtemisSharedModule,
