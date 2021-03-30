@@ -524,4 +524,10 @@ public class CourseGitlabJenkinsIntegrationTest extends AbstractSpringIntegratio
     public void testGetExerciseStatsForCourseOverview() throws Exception {
         courseTestService.testGetExerciseStatsForCourseOverview();
     }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testGetExerciseStatsForCourseOverviewWithPastExercises() throws Exception {
+        courseTestService.testGetExerciseStatsForCourseOverviewWithPastExercises();
+    }
 }

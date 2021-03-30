@@ -2,17 +2,36 @@ package de.tum.in.www1.artemis.service;
 
 import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.SOLUTION;
 import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.TEMPLATE;
-import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource.Endpoints.*;
+import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource.Endpoints.EXPORT_SUBMISSIONS_BY_PARTICIPANTS;
+import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource.Endpoints.EXPORT_SUBMISSIONS_BY_PARTICIPATIONS;
+import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource.Endpoints.GENERATE_TESTS;
+import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource.Endpoints.GET_FOR_COURSE;
+import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource.Endpoints.IMPORT;
+import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource.Endpoints.PROGRAMMING_EXERCISE;
+import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource.Endpoints.PROGRAMMING_EXERCISES;
+import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource.Endpoints.PROGRAMMING_EXERCISE_WITH_PARTICIPATIONS;
+import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource.Endpoints.PROGRAMMING_EXERCISE_WITH_TEMPLATE_AND_SOLUTION_PARTICIPATION;
 import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource.Endpoints.ROOT;
-import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource.ErrorKeys.*;
+import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource.Endpoints.SETUP;
+import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource.Endpoints.TEST_CASE_STATE;
+import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource.Endpoints.TIMELINE;
+import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource.ErrorKeys.INVALID_SOLUTION_BUILD_PLAN_ID;
 import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource.ErrorKeys.INVALID_SOLUTION_REPOSITORY_URL;
+import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource.ErrorKeys.INVALID_TEMPLATE_BUILD_PLAN_ID;
+import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource.ErrorKeys.INVALID_TEMPLATE_REPOSITORY_URL;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -23,9 +42,12 @@ import java.util.stream.Collectors;
 import javax.validation.constraints.NotNull;
 
 import org.apache.commons.io.FileUtils;
+import org.assertj.core.data.Offset;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.lib.StoredConfig;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -36,16 +58,28 @@ import org.springframework.util.MultiValueMap;
 import com.fasterxml.jackson.core.type.TypeReference;
 
 import de.tum.in.www1.artemis.config.Constants;
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.GradingCriterion;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
+import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
 import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
+import de.tum.in.www1.artemis.domain.enumeration.Visibility;
 import de.tum.in.www1.artemis.domain.notification.Notification;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismComparison;
+import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismStatus;
+import de.tum.in.www1.artemis.domain.plagiarism.text.TextPlagiarismResult;
+import de.tum.in.www1.artemis.domain.plagiarism.text.TextSubmissionElement;
 import de.tum.in.www1.artemis.programmingexercise.MockDelegate;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
@@ -59,6 +93,15 @@ import de.tum.in.www1.artemis.web.websocket.dto.ProgrammingExerciseTestCaseState
 
 @Service
 public class ProgrammingExerciseIntegrationServiceTest {
+
+    @Value("${artemis.repo-download-clone-path}")
+    private String repoDownloadClonePath;
+
+    @SpyBean
+    private FileService fileService;
+
+    @Autowired
+    private UrlService urlService;
 
     @Autowired
     private GitUtilService gitUtilService;
@@ -167,6 +210,9 @@ public class ProgrammingExerciseIntegrationServiceTest {
         }
         if (localRepoFile != null && localRepoFile.exists()) {
             FileUtils.deleteDirectory(localRepoFile);
+        }
+        if (repoDownloadClonePath != null && Files.exists(Path.of(repoDownloadClonePath))) {
+            FileUtils.deleteDirectory(new File(repoDownloadClonePath));
         }
         if (localGit != null) {
             localGit.close();
@@ -1041,7 +1087,7 @@ public class ProgrammingExerciseIntegrationServiceTest {
         final var updates = testCases.stream().map(testCase -> {
             final var testCaseUpdate = new ProgrammingExerciseTestCaseDTO();
             testCaseUpdate.setId(testCase.getId());
-            testCaseUpdate.setAfterDueDate(true);
+            testCaseUpdate.setVisibility(Visibility.AFTER_DUE_DATE);
             testCaseUpdate.setWeight(testCase.getId() + 42.0);
             testCaseUpdate.setBonusMultiplier(testCase.getId() + 1.0);
             testCaseUpdate.setBonusPoints(testCase.getId() + 2.0);
@@ -1072,7 +1118,7 @@ public class ProgrammingExerciseIntegrationServiceTest {
         final var updates = testCases.stream().map(testCase -> {
             final var testCaseUpdate = new ProgrammingExerciseTestCaseDTO();
             testCaseUpdate.setId(testCase.getId());
-            testCaseUpdate.setAfterDueDate(true);
+            testCaseUpdate.setVisibility(Visibility.AFTER_DUE_DATE);
             testCaseUpdate.setWeight(testCase.getId() + 42.0);
             testCaseUpdate.setBonusMultiplier(testCase.getId() + 1.0);
             testCaseUpdate.setBonusPoints(testCase.getId() + 2.0);
@@ -1105,7 +1151,7 @@ public class ProgrammingExerciseIntegrationServiceTest {
         final var updates = testCases.stream().map(testCase -> {
             final var testCaseUpdate = new ProgrammingExerciseTestCaseDTO();
             testCaseUpdate.setId(testCase.getId());
-            testCaseUpdate.setAfterDueDate(true);
+            testCaseUpdate.setVisibility(Visibility.AFTER_DUE_DATE);
             testCaseUpdate.setWeight(0D);
             testCaseUpdate.setBonusMultiplier(testCase.getId() + 1.0);
             testCaseUpdate.setBonusPoints(testCase.getId() + 2.0);
@@ -1200,5 +1246,108 @@ public class ProgrammingExerciseIntegrationServiceTest {
         assertThat(notifications).as("Intructor get notified that unlock operations were successful")
                 .anyMatch(n -> n.getText().contains(Constants.PROGRAMMING_EXERCISE_SUCCESSFUL_UNLOCK_OPERATION_NOTIFICATION))
                 .noneMatch(n -> n.getText().contains(Constants.PROGRAMMING_EXERCISE_FAILED_UNLOCK_OPERATIONS_NOTIFICATION));
+    }
+
+    public void testCheckPlagiarism() throws Exception {
+        database.addCourseWithOneProgrammingExercise();
+        var programmingExercise = programmingExerciseRepository.findAllWithEagerTemplateAndSolutionParticipations().get(0);
+
+        database.addStudentParticipationForProgrammingExercise(programmingExercise, "student1");
+        database.addStudentParticipationForProgrammingExercise(programmingExercise, "student2");
+
+        var jPlagReposDir = Path.of(repoDownloadClonePath, "jplag-repos").toString();
+        var projectKey = programmingExercise.getProjectKey();
+
+        var exampleProgram = """
+                public class Main {
+
+                    /**
+                     * DO NOT EDIT!
+                     */
+                    public static void main(String[] args) {
+                        Main main = new Main();
+                        int magicNumber = main.calculateMagicNumber();
+
+                        System.out.println("Magic number: " + magicNumber);
+                    }
+
+                    /**
+                     * Calculate the magic number.
+                     *
+                     * @return the magic number.
+                     */
+                    private int calculateMagicNumber() {
+                        int a = 0;
+                        int b = 5;
+                        int magicNumber = 0;
+
+                        while (a < b) {
+                            magicNumber += b;
+                            a++;
+                        }
+
+                        return magicNumber;
+                    }
+                }
+                """;
+
+        Files.createDirectories(Path.of(jPlagReposDir, projectKey));
+        Path file1 = Files.createFile(Path.of(jPlagReposDir, projectKey, "Submission-1.java"));
+        Files.writeString(file1, exampleProgram);
+        Path file2 = Files.createFile(Path.of(jPlagReposDir, projectKey, "Submission-2.java"));
+        Files.writeString(file2, exampleProgram);
+
+        doReturn(jPlagReposDir).when(fileService).getUniquePathString(any());
+        doReturn(null).when(urlService).getRepositorySlugFromRepositoryUrl(any());
+
+        var repository1 = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepoFile.toPath(), null);
+        var repository2 = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepoFile2.toPath(), null);
+        doReturn(repository1).when(gitService).getOrCheckoutRepository(eq(participation1.getVcsRepositoryUrl()), anyString(), anyBoolean());
+        doReturn(repository2).when(gitService).getOrCheckoutRepository(eq(participation2.getVcsRepositoryUrl()), anyString(), anyBoolean());
+
+        // Use default options for plagiarism detection
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("similarityThreshold", "50");
+        params.add("minimumScore", "0");
+        params.add("minimumSize", "0");
+
+        TextPlagiarismResult result = request.get("/api/programming-exercises/" + programmingExercise.getId() + "/check-plagiarism", HttpStatus.OK, TextPlagiarismResult.class,
+                params);
+        assertThat(result.getComparisons()).hasSize(1);
+        assertThat(result.getExercise().getId()).isEqualTo(programmingExercise.getId());
+
+        PlagiarismComparison<TextSubmissionElement> comparison = result.getComparisons().iterator().next();
+        // Both submissions compared consist of 4 words (= 4 tokens). JPlag seems to be off by 1
+        // when counting the length of a match. This is why it calculates a similarity of 3/4 = 75%
+        // instead of 4/4 = 100% (5 words ==> 80%, 100 words ==> 99%, etc.). Therefore, we use a rather
+        // high offset here to compensate this issue.
+        // TODO: Reduce the offset once this issue is fixed in JPlag
+        assertThat(comparison.getSimilarity()).isEqualTo(100.0, Offset.offset(1.0));
+        assertThat(comparison.getStatus()).isEqualTo(PlagiarismStatus.NONE);
+        assertThat(comparison.getMatches().size()).isEqualTo(1);
+    }
+
+    public void testGetPlagiarismResult() throws Exception {
+        database.addCourseWithOneProgrammingExercise();
+        ProgrammingExercise programmingExercise = this.programmingExerciseRepository.findAllWithEagerTemplateAndSolutionParticipations().get(0);
+
+        TextPlagiarismResult expectedResult = database.createTextPlagiarismResultForExercise(programmingExercise);
+
+        TextPlagiarismResult result = request.get("/api/programming-exercises/" + programmingExercise.getId() + "/plagiarism-result", HttpStatus.OK, TextPlagiarismResult.class);
+        assertThat(result.getId()).isEqualTo(expectedResult.getId());
+    }
+
+    public void testGetPlagiarismResultWithoutResult() throws Exception {
+        database.addCourseWithOneProgrammingExercise();
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findAllWithEagerTemplateAndSolutionParticipations().get(0);
+
+        TextPlagiarismResult result = request.get("/api/programming-exercises/" + programmingExercise.getId() + "/plagiarism-result", HttpStatus.NOT_FOUND,
+                TextPlagiarismResult.class);
+        assertThat(result).isNull();
+    }
+
+    public void testGetPlagiarismResultWithoutExercise() throws Exception {
+        TextPlagiarismResult result = request.get("/api/programming-exercises/" + 1 + "/plagiarism-result", HttpStatus.NOT_FOUND, TextPlagiarismResult.class);
+        assertThat(result).isNull();
     }
 }

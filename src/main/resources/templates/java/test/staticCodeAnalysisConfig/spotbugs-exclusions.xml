@@ -8,6 +8,12 @@
     The examples below show some filter options.
     -->
 
+    <!-- In case of using Records from Java 16, the equals check should get disabled for that record
+    <Match>
+        <Class name="Package.NameOfRecord" />
+        <Bug code="EQ_UNUSUAL" />
+    </Match> -->
+
     <!-- Matches a whole class
     <Match>
         <Class name="com.foobar.ClassNotToBeAnalyzed" />

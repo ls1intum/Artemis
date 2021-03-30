@@ -559,22 +559,36 @@ public class ExerciseService {
 
     /**
      * Gets the exercise statistics by setting values for each field of the <code>CourseManagementOverviewExerciseStatisticsDTO</code>
+     * Exercises with an assessment due date (or due date if there is no assessment due date) in the past are limited to the five most recent
      *
      * @param courseId the id of the course
      * @param amountOfStudentsInCourse the amount of students in the course
-     * @param exerciseIds the ids of the exercises to get the statistics for
      * @return A list of filled <code>CourseManagementOverviewExerciseStatisticsDTO</code>
      */
-    public List<CourseManagementOverviewExerciseStatisticsDTO> getStatisticsForCourseManagementOverview(Long courseId, Integer amountOfStudentsInCourse, List<Long> exerciseIds) {
-        var sevenDaysAgo = ZonedDateTime.now().minusDays(7);
+    public List<CourseManagementOverviewExerciseStatisticsDTO> getStatisticsForCourseManagementOverview(Long courseId, Integer amountOfStudentsInCourse) {
+        // We only display the latest five past exercises in the client, only calculate statistics for those
+        var pastExercises = exerciseRepository.getPastExercisesForCourseManagementOverview(courseId, ZonedDateTime.now());
+        pastExercises.sort((exerciseA, exerciseB) -> {
+            var dueDateA = exerciseA.getAssessmentDueDate() != null ? exerciseA.getAssessmentDueDate() : exerciseA.getDueDate();
+            var dueDateB = exerciseB.getAssessmentDueDate() != null ? exerciseB.getAssessmentDueDate() : exerciseB.getDueDate();
+            if (dueDateA.equals(dueDateB)) {
+                return 0;
+            }
 
-        var averageScore = participantScoreRepository.findAvgScoreForExercises(exerciseIds);
+            return dueDateA.isBefore(dueDateB) ? 1 : -1;
+        });
+        var fivePastExercises = pastExercises.stream().limit(5).collect(Collectors.toList());
+
+        // Calculate the average score for all five exercises at once
+        var averageScore = participantScoreRepository.findAverageScoreForExercises(fivePastExercises);
         Map<Long, Double> averageScoreById = new HashMap<>();
         for (var element : averageScore) {
             averageScoreById.put((Long) element.get("exerciseId"), (Double) element.get("averageScore"));
         }
 
-        var exercisesForManagementOverview = exerciseRepository.getExercisesForCourseManagementOverview(courseId, sevenDaysAgo);
+        // Fill statistics for all exercises potentially displayed on the client
+        var exercisesForManagementOverview = exerciseRepository.getActiveExercisesForCourseManagementOverview(courseId, ZonedDateTime.now());
+        exercisesForManagementOverview.addAll(fivePastExercises);
         return generateCourseManagementDTOs(exercisesForManagementOverview, amountOfStudentsInCourse, averageScoreById);
     }
 
@@ -595,16 +609,9 @@ public class ExerciseService {
             exerciseStatisticsDTO.setExerciseId(exerciseId);
             exerciseStatisticsDTO.setExerciseMaxPoints(exercise.getMaxPoints());
 
-            var avgScore = averageScoreById.get(exerciseId) != null ? averageScoreById.get(exerciseId) : 0.0;
-            exerciseStatisticsDTO.setAverageScoreInPercent(avgScore);
-
+            setAverageScoreForStatisticsDTO(exerciseStatisticsDTO, averageScoreById, exercise);
             setStudentsAndParticipationsAmountForStatisticsDTO(exerciseStatisticsDTO, amountOfStudentsInCourse, exercise);
-
-            long numberOfRatedAssessments = resultRepository.countNumberOfRatedResultsForExercise(exerciseId);
-            long noOfSubmissionsInTime = submissionRepository.countUniqueSubmissionsByExerciseId(exerciseId);
-            exerciseStatisticsDTO.setNoOfRatedAssessments(numberOfRatedAssessments);
-            exerciseStatisticsDTO.setNoOfSubmissionsInTime(noOfSubmissionsInTime);
-            exerciseStatisticsDTO.setNoOfAssessmentsDoneInPercent(noOfSubmissionsInTime == 0 ? 0 : Math.round(numberOfRatedAssessments * 1000.0 / noOfSubmissionsInTime) / 10.0);
+            setAssessmentsAndSubmissionsForStatisticsDTO(exerciseStatisticsDTO, exercise);
 
             statisticsDTOS.add(exerciseStatisticsDTO);
         }
@@ -612,7 +619,30 @@ public class ExerciseService {
     }
 
     /**
+     * Sets the average for the given <code>CourseManagementOverviewExerciseStatisticsDTO</code>
+     * using the value provided in averageScoreById
+     *
+     * Quiz Exercises are a special case: They don't have a due date set in the database,
+     * therefore it is hard to tell if they are over, so always calculate a score for them
+     *
+     * @param exerciseStatisticsDTO the <code>CourseManagementOverviewExerciseStatisticsDTO</code> to set the amounts for
+     * @param averageScoreById the average score for each exercise indexed by exerciseId
+     * @param exercise the exercise corresponding to the <code>CourseManagementOverviewExerciseStatisticsDTO</code>
+     */
+    private void setAverageScoreForStatisticsDTO(CourseManagementOverviewExerciseStatisticsDTO exerciseStatisticsDTO, Map<Long, Double> averageScoreById, Exercise exercise) {
+        if (exercise instanceof QuizExercise) {
+            var averageScore = participantScoreRepository.findAverageScoreForExercises(exercise.getId());
+            exerciseStatisticsDTO.setAverageScoreInPercent(averageScore != null ? averageScore : 0.0);
+        }
+        else {
+            var averageScore = averageScoreById.get(exercise.getId());
+            exerciseStatisticsDTO.setAverageScoreInPercent(averageScore != null ? averageScore : 0.0);
+        }
+    }
+
+    /**
      * Sets the amount of students, participations and teams for the given <code>CourseManagementOverviewExerciseStatisticsDTO</code>
+     * Only the amount of students in the course is set if the exercise has ended, the rest is set to zero
      *
      * @param exerciseStatisticsDTO the <code>CourseManagementOverviewExerciseStatisticsDTO</code> to set the amounts for
      * @param amountOfStudentsInCourse the amount of students in the course
@@ -622,23 +652,49 @@ public class ExerciseService {
             Exercise exercise) {
         exerciseStatisticsDTO.setNoOfStudentsInCourse(amountOfStudentsInCourse);
 
-        if (amountOfStudentsInCourse != null && amountOfStudentsInCourse != 0) {
-            Long rawParticipations = exerciseRepository.getParticipationCountById(exercise.getId());
-            var participations = rawParticipations == null ? 0 : Math.toIntExact(rawParticipations);
-            exerciseStatisticsDTO.setNoOfParticipatingStudentsOrTeams(participations);
-
+        if (amountOfStudentsInCourse != null && amountOfStudentsInCourse != 0 && !exercise.isEnded()) {
             if (exercise.getMode() == ExerciseMode.TEAM) {
+                Long teamParticipations = exerciseRepository.getTeamParticipationCountById(exercise.getId());
+                var participations = teamParticipations == null ? 0 : Math.toIntExact(teamParticipations);
+                exerciseStatisticsDTO.setNoOfParticipatingStudentsOrTeams(participations);
+
                 Integer teams = teamRepository.getNumberOfTeamsForExercise(exercise.getId());
                 exerciseStatisticsDTO.setNoOfTeamsInCourse(teams);
                 exerciseStatisticsDTO.setParticipationRateInPercent(teams == null || teams == 0 ? 0.0 : Math.round(participations * 1000.0 / teams) / 10.0);
             }
             else {
+                Long studentParticipations = exerciseRepository.getStudentParticipationCountById(exercise.getId());
+                var participations = studentParticipations == null ? 0 : Math.toIntExact(studentParticipations);
+                exerciseStatisticsDTO.setNoOfParticipatingStudentsOrTeams(participations);
+
                 exerciseStatisticsDTO.setParticipationRateInPercent(Math.round(participations * 1000.0 / amountOfStudentsInCourse) / 10.0);
             }
         }
         else {
             exerciseStatisticsDTO.setNoOfParticipatingStudentsOrTeams(0);
             exerciseStatisticsDTO.setParticipationRateInPercent(0D);
+        }
+    }
+
+    /**
+     * Sets the amount of rated assessments and submissions done for the given <code>CourseManagementOverviewExerciseStatisticsDTO</code>
+     * The amounts are set to zero if the assessment due date has passed
+     *
+     * @param exerciseStatisticsDTO the <code>CourseManagementOverviewExerciseStatisticsDTO</code> to set the amounts for
+     * @param exercise the exercise corresponding to the <code>CourseManagementOverviewExerciseStatisticsDTO</code>
+     */
+    private void setAssessmentsAndSubmissionsForStatisticsDTO(CourseManagementOverviewExerciseStatisticsDTO exerciseStatisticsDTO, Exercise exercise) {
+        if (exercise.getAssessmentDueDate() != null && exercise.getAssessmentDueDate().isAfter(ZonedDateTime.now())) {
+            long numberOfRatedAssessments = resultRepository.countNumberOfRatedResultsForExercise(exercise.getId());
+            long noOfSubmissionsInTime = submissionRepository.countUniqueSubmissionsByExerciseId(exercise.getId());
+            exerciseStatisticsDTO.setNoOfRatedAssessments(numberOfRatedAssessments);
+            exerciseStatisticsDTO.setNoOfSubmissionsInTime(noOfSubmissionsInTime);
+            exerciseStatisticsDTO.setNoOfAssessmentsDoneInPercent(noOfSubmissionsInTime == 0 ? 0 : Math.round(numberOfRatedAssessments * 1000.0 / noOfSubmissionsInTime) / 10.0);
+        }
+        else {
+            exerciseStatisticsDTO.setNoOfRatedAssessments(0L);
+            exerciseStatisticsDTO.setNoOfSubmissionsInTime(0L);
+            exerciseStatisticsDTO.setNoOfAssessmentsDoneInPercent(0D);
         }
     }
 
