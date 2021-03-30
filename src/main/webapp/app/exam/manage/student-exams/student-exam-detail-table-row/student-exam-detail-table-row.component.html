@@ -31,7 +31,7 @@
     </ng-template>
 </td>
 <td>
-    <div *ngIf="course?.isAtLeastInstructor && exercise.type != ExerciseType.QUIZ">
+    <div *ngIf="course?.isAtLeastInstructor && exercise.type !== ExerciseType.QUIZ && studentExam.submitted">
         <div *ngIf="result && exercise.type != ExerciseType.PROGRAMMING">
             <!-- in case of existing result-->
             <a
