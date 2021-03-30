@@ -66,9 +66,15 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
      * @return the exercise with the given ID, if found.
      */
     @Query("""
-            SELECT DISTINCT pe FROM ProgrammingExercise pe LEFT JOIN FETCH pe.templateParticipation tp LEFT JOIN FETCH pe.solutionParticipation sp
-            LEFT JOIN FETCH tp.results AS tpr LEFT JOIN FETCH sp.results AS spr LEFT JOIN FETCH tpr.feedbacks LEFT JOIN FETCH spr.feedbacks
-            LEFT JOIN FETCH tpr.submission LEFT JOIN FETCH spr.submission
+            SELECT DISTINCT pe FROM ProgrammingExercise pe
+            LEFT JOIN FETCH pe.templateParticipation tp
+            LEFT JOIN FETCH pe.solutionParticipation sp
+            LEFT JOIN FETCH tp.results AS tpr
+            LEFT JOIN FETCH sp.results AS spr
+            LEFT JOIN FETCH tpr.feedbacks
+            LEFT JOIN FETCH spr.feedbacks
+            LEFT JOIN FETCH tpr.submission
+            LEFT JOIN FETCH spr.submission
             WHERE pe.id = :#{#exerciseId}
                 AND (tpr.id = (SELECT MAX(id) FROM tp.results) OR tpr.id IS NULL)
                 AND (spr.id = (SELECT MAX(id) FROM sp.results) OR spr.id IS NULL)
@@ -82,7 +88,8 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     List<ProgrammingExercise> findAllByRecentCourseEndDate(@Param("endDate1") ZonedDateTime endDate1, @Param("endDate2") ZonedDateTime endDate2);
 
     @Query("""
-            SELECT DISTINCT pe FROM ProgrammingExercise pe LEFT JOIN FETCH pe.studentParticipations
+            SELECT DISTINCT pe FROM ProgrammingExercise pe
+            LEFT JOIN FETCH pe.studentParticipations
             WHERE pe.dueDate BETWEEN :#{#endDate1} AND :#{#endDate2}
                 OR pe.exerciseGroup.exam.endDate BETWEEN :#{#endDate1} AND :#{#endDate2}
             """)
@@ -141,7 +148,11 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
 
     @Query("""
             SELECT p FROM ProgrammingExercise p
-            LEFT JOIN FETCH p.testCases LEFT JOIN FETCH p.staticCodeAnalysisCategories LEFT JOIN FETCH p.exerciseHints LEFT JOIN FETCH p.templateParticipation LEFT JOIN FETCH p.solutionParticipation
+            LEFT JOIN FETCH p.testCases
+            LEFT JOIN FETCH p.staticCodeAnalysisCategories
+            LEFT JOIN FETCH p.exerciseHints
+            LEFT JOIN FETCH p.templateParticipation
+            LEFT JOIN FETCH p.solutionParticipation
             WHERE p.id = :#{#exerciseId}
             """)
     Optional<ProgrammingExercise> findByIdWithEagerTestCasesStaticCodeAnalysisCategoriesHintsAndTemplateAndSolutionParticipations(@Param("exerciseId") Long exerciseId);
@@ -172,8 +183,10 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
      * @return List<ProgrammingExercise> (can be empty)
      */
     @Query("""
-            SELECT DISTINCT pe FROM ProgrammingExercise pe LEFT JOIN pe.testCases tc
-            WHERE pe.dueDate > :#{#dateTime} AND pe.buildAndTestStudentSubmissionsAfterDueDate IS NULL
+            SELECT DISTINCT pe FROM ProgrammingExercise pe
+            LEFT JOIN pe.testCases tc
+            WHERE pe.dueDate > :#{#dateTime}
+                AND pe.buildAndTestStudentSubmissionsAfterDueDate IS NULL
                 AND tc.visibility = 'AFTER_DUE_DATE'
             """)
     List<ProgrammingExercise> findAllByDueDateAfterDateWithTestsAfterDueDateWithoutBuildStudentSubmissionsDate(@Param("dateTime") ZonedDateTime dateTime);
@@ -195,7 +208,14 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
      * @param exerciseId the exercise id we are interested in
      * @return the number of distinct submissions belonging to the exercise id
      */
-    @Query("SELECT COUNT (DISTINCT p) FROM ProgrammingExerciseStudentParticipation p WHERE p.exercise.id = :#{#exerciseId} AND EXISTS (SELECT s FROM ProgrammingSubmission s WHERE s.participation.id = p.id AND s.submitted = TRUE)")
+    @Query("""
+            SELECT COUNT (DISTINCT p) FROM ProgrammingExerciseStudentParticipation p
+            WHERE p.exercise.id = :#{#exerciseId}
+                AND EXISTS (
+                    SELECT s FROM ProgrammingSubmission s
+                    WHERE s.participation.id = p.id AND s.submitted = TRUE
+                )
+            """)
     long countSubmissionsByExerciseIdSubmitted(@Param("exerciseId") Long exerciseId);
 
     /**
@@ -209,10 +229,11 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     @Query("""
             SELECT COUNT (DISTINCT p) FROM ProgrammingExerciseStudentParticipation p
             WHERE p.exercise.id = :#{#exerciseId}
-            AND p.testRun = FALSE
-            AND EXISTS (SELECT s FROM ProgrammingSubmission s
-                WHERE s.participation.id = p.id
-                AND s.submitted = TRUE)
+                AND p.testRun = FALSE
+                AND EXISTS (
+                    SELECT s FROM ProgrammingSubmission s
+                    WHERE s.participation.id = p.id AND s.submitted = TRUE
+                )
             """)
     long countSubmissionsByExerciseIdSubmittedIgnoreTestRunSubmissions(@Param("exerciseId") Long exerciseId);
 
@@ -226,12 +247,15 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     @Query("""
             SELECT COUNT (DISTINCT p) FROM ProgrammingExerciseStudentParticipation p
             WHERE p.exercise.id = :#{#exerciseId}
-            AND EXISTS (SELECT s FROM ProgrammingSubmission s
-                WHERE s.participation.id = p.id
-                AND s.submitted = TRUE
-                AND EXISTS (SELECT r.assessor FROM s.results r
-                    WHERE r.assessor IS NOT NULL
-                    AND r.completionDate IS NOT NULL))
+                AND EXISTS (
+                    SELECT s FROM ProgrammingSubmission s
+                    WHERE s.participation.id = p.id
+                        AND s.submitted = TRUE
+                        AND EXISTS (
+                            SELECT r.assessor FROM s.results r
+                            WHERE r.assessor IS NOT NULL AND r.completionDate IS NOT NULL
+                        )
+                )
             """)
     long countAssessmentsByExerciseIdSubmitted(@Param("exerciseId") Long exerciseId);
 
@@ -246,13 +270,16 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     @Query("""
             SELECT COUNT (DISTINCT p) FROM ProgrammingExerciseStudentParticipation p
             WHERE p.exercise.id = :#{#exerciseId}
-            AND p.testRun = FALSE
-            AND EXISTS (SELECT s FROM ProgrammingSubmission s
-                WHERE s.participation.id = p.id
-                AND s.submitted = TRUE
-                AND EXISTS (SELECT r.assessor FROM s.results r
-                        WHERE r.assessor IS NOT NULL
-                        AND r.completionDate IS NOT NULL))
+                AND p.testRun = FALSE
+                AND EXISTS (
+                    SELECT s FROM ProgrammingSubmission s
+                    WHERE s.participation.id = p.id
+                        AND s.submitted = TRUE
+                        AND EXISTS (
+                            SELECT r.assessor FROM s.results r
+                            WHERE r.assessor IS NOT NULL AND r.completionDate IS NOT NULL
+                        )
+                )
             """)
     long countAssessmentsByExerciseIdSubmittedIgnoreTestRunSubmissions(@Param("exerciseId") Long exerciseId);
 
@@ -266,7 +293,7 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
      */
     @Query("""
             SELECT COUNT (DISTINCT p) FROM ProgrammingExerciseStudentParticipation p
-                WHERE p.exercise.assessmentType <> 'AUTOMATIC'
+            WHERE p.exercise.assessmentType <> 'AUTOMATIC'
                 AND p.exercise.exerciseGroup.exam.id = :#{#examId}
                 AND p.submissions IS NOT EMPTY
             """)
@@ -281,8 +308,9 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
      *         due date at all (only exercises with manual or semi automatic correction are considered)
      */
     @Query("""
-            SELECT COUNT (DISTINCT p) FROM ProgrammingExerciseStudentParticipation p join p.submissions s
-                WHERE p.exercise.assessmentType <> 'AUTOMATIC'
+            SELECT COUNT (DISTINCT p) FROM ProgrammingExerciseStudentParticipation p
+            JOIN p.submissions s
+            WHERE p.exercise.assessmentType <> 'AUTOMATIC'
                 AND p.exercise.course.id = :#{#courseId}
                 AND s.submitted = TRUE
             """)
