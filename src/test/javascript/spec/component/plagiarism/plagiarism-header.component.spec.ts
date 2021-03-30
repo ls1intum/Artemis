@@ -1,6 +1,6 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
-import { Subject } from 'rxjs';
+import { Subject, of } from 'rxjs';
 import { PlagiarismHeaderComponent } from 'app/exercises/shared/plagiarism/plagiarism-header/plagiarism-header.component';
 import { ArtemisTestModule } from '../../test.module';
 import { MockTranslateService, TranslateTestingModule } from '../../helpers/mocks/service/mock-translate.service';
@@ -25,23 +25,34 @@ describe('Plagiarism Header Component', () => {
         comp.comparison = {
             submissionA: { studentLogin: 'studentA' },
             submissionB: { studentLogin: 'studentB' },
+            status: PlagiarismStatus.NONE,
         } as PlagiarismComparison<ModelingSubmissionElement>;
         comp.splitControlSubject = new Subject<string>();
     });
 
     it('should confirm a plagiarism', () => {
-        comp.comparison = { status: PlagiarismStatus.NONE } as PlagiarismComparison<ModelingSubmissionElement>;
+        spyOn(comp, 'updatePlagiarismStatus');
         comp.confirmPlagiarism();
 
-        expect(comp.comparison.status).toEqual(PlagiarismStatus.CONFIRMED);
+        expect(comp.updatePlagiarismStatus).toHaveBeenCalledWith(PlagiarismStatus.CONFIRMED);
     });
 
     it('should deny a plagiarism', () => {
-        comp.comparison = { status: PlagiarismStatus.NONE } as PlagiarismComparison<ModelingSubmissionElement>;
+        spyOn(comp, 'updatePlagiarismStatus');
         comp.denyPlagiarism();
 
-        expect(comp.comparison.status).toEqual(PlagiarismStatus.DENIED);
+        expect(comp.updatePlagiarismStatus).toHaveBeenCalledWith(PlagiarismStatus.DENIED);
     });
+
+    it('should update the plagiarism status', fakeAsync(() => {
+        spyOn(comp.http, 'put').and.returnValue(of({ response: {} }));
+        comp.updatePlagiarismStatus(PlagiarismStatus.CONFIRMED);
+
+        tick();
+
+        expect(comp.http.put).toHaveBeenCalled();
+        expect(comp.comparison.status).toEqual(PlagiarismStatus.CONFIRMED);
+    }));
 
     it('should emit when expanding left split view pane', () => {
         comp.splitControlSubject = new Subject<string>();

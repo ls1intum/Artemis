@@ -705,4 +705,28 @@ public class ProgrammingExerciseIntegrationJenkinsGitlabTest extends AbstractSpr
     public void unlockAllRepositories() throws Exception {
         programmingExerciseIntegrationServiceTest.unlockAllRepositories();
     }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testCheckPlagiarism() throws Exception {
+        programmingExerciseIntegrationServiceTest.testCheckPlagiarism();
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testGetPlagiarismResult() throws Exception {
+        programmingExerciseIntegrationServiceTest.testGetPlagiarismResult();
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testGetPlagiarismResultWithoutResult() throws Exception {
+        programmingExerciseIntegrationServiceTest.testGetPlagiarismResultWithoutResult();
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testGetPlagiarismResultWithoutExercise() throws Exception {
+        programmingExerciseIntegrationServiceTest.testGetPlagiarismResultWithoutExercise();
+    }
 }

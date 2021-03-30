@@ -5,19 +5,44 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+import javax.persistence.CascadeType;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.JoinColumn;
+import javax.persistence.JoinTable;
+import javax.persistence.OneToMany;
+import javax.persistence.Table;
+
 import jplag.Submission;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.plagiarism.modeling.ModelingSubmissionElement;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextSubmissionElement;
 
-public class PlagiarismSubmission<E extends PlagiarismSubmissionElement> {
+@Entity
+@Table(name = "plagiarism_submission")
+public class PlagiarismSubmission<E extends PlagiarismSubmissionElement> extends DomainObject {
 
     private static final Logger logger = LoggerFactory.getLogger(PlagiarismSubmission.class);
+
+    /**
+     * ID of the wrapped submission object.
+     * <p>
+     * We don't use a full relation to `Submission` here to decrease the overhead of creating and
+     * fetching `PlagiarismSubmission` objects. We get the submissionId for free, as JPlag
+     * uses it as an identifier of each submission during comparison. The ID is used in the client
+     * to fetch a submission's contents.
+     * <p>
+     * Note: For programming exercises, this field actually references the participation instead of
+     * a single submission of a student, since the participation ID is required to properly fetch the
+     * corresponding repository's contents.
+     */
+    private long submissionId;
 
     /**
      * Login of the student who created the submission.
@@ -27,12 +52,9 @@ public class PlagiarismSubmission<E extends PlagiarismSubmissionElement> {
     /**
      * List of elements the related submission consists of.
      */
+    @OneToMany(cascade = CascadeType.ALL, targetEntity = PlagiarismSubmissionElement.class, fetch = FetchType.EAGER)
+    @JoinTable(name = "plagiarism_submission_elements", joinColumns = @JoinColumn(name = "plagiarism_submission_id"), inverseJoinColumns = @JoinColumn(name = "plagiarism_submission_element_id"))
     private List<E> elements;
-
-    /**
-     * ID of the related submission.
-     */
-    private long submissionId;
 
     /**
      * Size of the related submission.
