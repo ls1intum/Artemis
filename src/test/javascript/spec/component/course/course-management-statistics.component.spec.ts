@@ -20,7 +20,6 @@ describe('CourseManagementExerciseStatisticsComponent', () => {
     let fixture: ComponentFixture<CourseManagementStatisticsComponent>;
     let component: CourseManagementStatisticsComponent;
 
-    const courseId = 1;
     const amountOfStudentsInCourse = 25;
     const initialStats = [0, 11, 9, 23];
 
