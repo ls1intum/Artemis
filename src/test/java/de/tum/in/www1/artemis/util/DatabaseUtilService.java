@@ -206,6 +206,9 @@ public class DatabaseUtilService {
     VideoUnitRepository videoUnitRepository;
 
     @Autowired
+    private OrganizationRepository organizationRepository;
+
+    @Autowired
     private DatabaseCleanupService databaseCleanupService;
 
     @Value("${info.guided-tour.course-group-students:#{null}}")
@@ -350,6 +353,19 @@ public class DatabaseUtilService {
     public Course createCourse() {
         Course course = ModelFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "tumuser", "tutor", "instructor");
         return courseRepo.save(course);
+    }
+
+    public Course createCourseWithOrganizations(String name, String shortName, String url, String description, String logoUrl, String emailPattern) {
+        Course course = createCourse();
+        Set<Organization> organizations = new HashSet<>();
+        Organization organization = createOrganization(name, shortName, url, description, logoUrl, emailPattern);
+        organizations.add(organization);
+        course.setOrganizations(organizations);
+        return courseRepo.save(course);
+    }
+
+    public Course createCourseWithOrganizations() {
+        return createCourseWithOrganizations("organization1", "org1", "org.org", "This is organization1", null, "^.*@matching.*$");
     }
 
     public TextExercise createIndividualTextExercise(Course course, ZonedDateTime pastTimestamp, ZonedDateTime futureTimestamp, ZonedDateTime futureFutureTimestamp) {
@@ -888,6 +904,15 @@ public class DatabaseUtilService {
         return courseSaved;
     }
 
+    public Organization createOrganization(String name, String shortName, String url, String description, String logoUrl, String emailPattern) {
+        Organization organization = ModelFactory.generateOrganization(name, shortName, url, description, logoUrl, emailPattern);
+        return organizationRepository.save(organization);
+    }
+
+    public Organization createOrganization() {
+        return createOrganization("organization1", "org1", "org.org", "This is organization1", null, "^.*@matching.*$");
+    }
+
     public StudentExam setupTestRunForExamWithExerciseGroupsForInstructor(Exam exam, User instructor, List<ExerciseGroup> exerciseGroupsWithExercises) {
         List<Exercise> exercises = new ArrayList<>();
         exerciseGroupsWithExercises.forEach(exerciseGroup -> exercises.add(exerciseGroup.getExercises().iterator().next()));
@@ -1322,6 +1347,18 @@ public class DatabaseUtilService {
         List<Feedback> feedbacks = new ArrayList<>();
         feedbacks.add(feedback1);
         feedbacks.add(feedback2);
+        result.addFeedbacks(feedbacks);
+        return resultRepo.save(result);
+    }
+
+    public Result addVariousVisibilityFeedbackToResults(Result result) {
+        Feedback feedback1 = feedbackRepo.save(new Feedback().detailText("afterDueDate1").visibility(Visibility.AFTER_DUE_DATE));
+        Feedback feedback2 = feedbackRepo.save(new Feedback().detailText("never1").visibility(Visibility.NEVER));
+        Feedback feedback3 = feedbackRepo.save(new Feedback().detailText("always1").visibility(Visibility.ALWAYS));
+        List<Feedback> feedbacks = new ArrayList<>();
+        feedbacks.add(feedback1);
+        feedbacks.add(feedback2);
+        feedbacks.add(feedback3);
         result.addFeedbacks(feedbacks);
         return resultRepo.save(result);
     }
@@ -1796,11 +1833,11 @@ public class DatabaseUtilService {
 
         List<ProgrammingExerciseTestCase> testCases = new ArrayList<>();
         testCases.add(new ProgrammingExerciseTestCase().testName("testClass[BubbleSort]").weight(1.0).active(true).exercise(programmingExercise).bonusMultiplier(1D).bonusPoints(0D)
-                .afterDueDate(false));
+                .visibility(Visibility.ALWAYS));
         testCases.add(new ProgrammingExerciseTestCase().testName("testMethods[Context]").weight(2.0).active(true).exercise(programmingExercise).bonusMultiplier(1D).bonusPoints(0D)
-                .afterDueDate(false));
+                .visibility(Visibility.ALWAYS));
         testCases.add(new ProgrammingExerciseTestCase().testName("testMethods[Policy]").weight(3.0).active(true).exercise(programmingExercise).bonusMultiplier(1D).bonusPoints(0D)
-                .afterDueDate(false));
+                .visibility(Visibility.ALWAYS));
         testCaseRepository.saveAll(testCases);
 
         List<ProgrammingExerciseTestCase> tests = new ArrayList<>(testCaseRepository.findByExerciseId(programmingExercise.getId()));
@@ -1856,12 +1893,12 @@ public class DatabaseUtilService {
 
     public void addTestCasesToProgrammingExercise(ProgrammingExercise programmingExercise) {
         List<ProgrammingExerciseTestCase> testCases = new ArrayList<>();
-        testCases.add(
-                new ProgrammingExerciseTestCase().testName("test1").weight(1.0).active(true).exercise(programmingExercise).afterDueDate(false).bonusMultiplier(1D).bonusPoints(0D));
-        testCases.add(new ProgrammingExerciseTestCase().testName("test2").weight(2.0).active(false).exercise(programmingExercise).afterDueDate(false).bonusMultiplier(1D)
+        testCases.add(new ProgrammingExerciseTestCase().testName("test1").weight(1.0).active(true).exercise(programmingExercise).visibility(Visibility.ALWAYS).bonusMultiplier(1D)
                 .bonusPoints(0D));
-        testCases.add(
-                new ProgrammingExerciseTestCase().testName("test3").weight(3.0).active(true).exercise(programmingExercise).afterDueDate(true).bonusMultiplier(1D).bonusPoints(0D));
+        testCases.add(new ProgrammingExerciseTestCase().testName("test2").weight(2.0).active(false).exercise(programmingExercise).visibility(Visibility.ALWAYS).bonusMultiplier(1D)
+                .bonusPoints(0D));
+        testCases.add(new ProgrammingExerciseTestCase().testName("test3").weight(3.0).active(true).exercise(programmingExercise).visibility(Visibility.AFTER_DUE_DATE)
+                .bonusMultiplier(1D).bonusPoints(0D));
         testCaseRepository.saveAll(testCases);
 
         List<ProgrammingExerciseTestCase> tests = new ArrayList<>(testCaseRepository.findByExerciseId(programmingExercise.getId()));
@@ -2207,10 +2244,22 @@ public class DatabaseUtilService {
         return submission;
     }
 
-    public ModelingSubmission addModelingSubmissionWithFinishedResultAndAssessor(ModelingExercise exercise, ModelingSubmission submission, String login, String assessorLogin) {
+    public Submission addModelingSubmissionWithFinishedResultAndAssessor(ModelingExercise exercise, ModelingSubmission submission, String login, String assessorLogin) {
         StudentParticipation participation = createAndSaveParticipationForExercise(exercise, login);
+        return addSubmissionWithFinishedResultsWithAssessor(participation, exercise, submission, login, assessorLogin);
+    }
+
+    public Submission addSubmissionWithTwoFinishedResultsWithAssessor(Exercise exercise, Submission submission, String login, String assessorLogin) {
+        StudentParticipation participation = createAndSaveParticipationForExercise(exercise, login);
+        submission = addSubmissionWithFinishedResultsWithAssessor(participation, exercise, submission, login, assessorLogin);
+        submission = addSubmissionWithFinishedResultsWithAssessor(participation, exercise, submission, login, assessorLogin);
+        return submission;
+    }
+
+    public Submission addSubmissionWithFinishedResultsWithAssessor(StudentParticipation participation, Exercise exercise, Submission submission, String login,
+            String assessorLogin) {
         participation.addSubmission(submission);
-        submission = modelingSubmissionRepo.save(submission);
+        submission = saveSubmissionToRepo(submission);
         Result result = new Result();
         result.setAssessor(getUserByLogin(assessorLogin));
         result.setCompletionDate(ZonedDateTime.now());
@@ -2219,10 +2268,23 @@ public class DatabaseUtilService {
         submission.setParticipation(participation);
         submission.addResult(result);
         submission.getParticipation().addResult(result);
-        submission = modelingSubmissionRepo.save(submission);
+        submission = saveSubmissionToRepo(submission);
         result = resultRepo.save(result);
         studentParticipationRepo.save(participation);
         return submission;
+    }
+
+    private Submission saveSubmissionToRepo(Submission submission) {
+        if (submission instanceof ModelingSubmission) {
+            return modelingSubmissionRepo.save((ModelingSubmission) submission);
+        }
+        else if (submission instanceof TextSubmission) {
+            return textSubmissionRepo.save((TextSubmission) submission);
+        }
+        else if (submission instanceof ProgrammingSubmission) {
+            return programmingSubmissionRepo.save((ProgrammingSubmission) submission);
+        }
+        return null;
     }
 
     public FileUploadSubmission addFileUploadSubmission(FileUploadExercise fileUploadExercise, FileUploadSubmission fileUploadSubmission, String login) {
@@ -2407,6 +2469,19 @@ public class DatabaseUtilService {
     public List<Feedback> loadAssessmentFomResources(String path) throws Exception {
         String fileContent = FileUtils.loadFileFromResources(path);
         return mapper.readValue(fileContent, mapper.getTypeFactory().constructCollectionType(List.class, Feedback.class));
+    }
+
+    /**
+     * Gets a user from the database using the provided login but without the authorities.
+     * <p>
+     * Note: Jackson sometimes fails to deserialize the authorities leading to flaky server tests. The specific
+     * circumstances when this happens in still unknown.
+     *
+     * @param login login to find user with
+     * @return user with the provided logih
+     */
+    public User getUserByLoginWithoutAuthorities(String login) {
+        return userRepo.findOneByLogin(login).orElseThrow(() -> new IllegalArgumentException("Provided login " + login + " does not exist in database"));
     }
 
     public User getUserByLogin(String login) {
@@ -2942,4 +3017,26 @@ public class DatabaseUtilService {
         return paramMap;
     }
 
+    public void checkFeedbackCorrectlyStored(List<Feedback> sentFeedback, List<Feedback> storedFeedback, FeedbackType feedbackType) {
+        assertThat(sentFeedback.size()).as("contains the same amount of feedback").isEqualTo(storedFeedback.size());
+        Result storedFeedbackResult = new Result();
+        Result sentFeedbackResult = new Result();
+        storedFeedbackResult.setFeedbacks(storedFeedback);
+        sentFeedbackResult.setFeedbacks(sentFeedback);
+
+        double calculatedTotalPoints = resultRepo.calculateTotalPoints(storedFeedback);
+        double totalPoints = resultRepo.constrainToRange(calculatedTotalPoints, 20.0);
+        storedFeedbackResult.setScore(totalPoints, 20.0);
+        storedFeedbackResult.setResultString(totalPoints, 20.0);
+
+        double calculatedTotalPoints2 = resultRepo.calculateTotalPoints(sentFeedback);
+        double totalPoints2 = resultRepo.constrainToRange(calculatedTotalPoints2, 20.0);
+        sentFeedbackResult.setScore(totalPoints2, 20.0);
+        sentFeedbackResult.setResultString(totalPoints2, 20.0);
+
+        assertThat(storedFeedbackResult.getScore()).as("stored feedback evaluates to the same score as sent feedback").isEqualTo(sentFeedbackResult.getScore());
+        storedFeedback.forEach(feedback -> {
+            assertThat(feedback.getType()).as("type has been set correctly").isEqualTo(feedbackType);
+        });
+    }
 }

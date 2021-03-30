@@ -142,10 +142,10 @@ public class LectureResource {
 
         Set<Lecture> lectures;
         if (withLectureUnits) {
-            lectures = lectureService.findAllByCourseIdWithAttachmentsAndLectureUnits(courseId);
+            lectures = lectureRepository.findAllByCourseIdWithAttachmentsAndLectureUnits(courseId);
         }
         else {
-            lectures = lectureService.findAllByCourseIdWithAttachments(courseId);
+            lectures = lectureRepository.findAllByCourseIdWithAttachments(courseId);
         }
 
         return ResponseEntity.ok().body(lectures);
@@ -177,6 +177,19 @@ public class LectureResource {
         lecture = filterLectureContentForUser(lecture, user);
 
         return ResponseEntity.ok(lecture);
+    }
+
+    /**
+     * GET /lectures/:lectureId/title : Returns the title of the lecture with the given id
+     *
+     * @param lectureId the id of the lecture
+     * @return the title of the lecture wrapped in an ResponseEntity or 404 Not Found if no lecture with that id exists
+     */
+    @GetMapping(value = "/lectures/{lectureId}/title")
+    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<String> getLectureTitle(@PathVariable Long lectureId) {
+        final var title = lectureRepository.getLectureTitle(lectureId);
+        return title == null ? ResponseEntity.notFound().build() : ResponseEntity.ok(title);
     }
 
     private Lecture filterLectureContentForUser(Lecture lecture, User user) {

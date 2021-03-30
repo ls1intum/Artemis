@@ -26,7 +26,8 @@ import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { Course } from 'app/entities/course.model';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
-import { MockPipe } from 'ng-mocks';
+import { MockPipe, MockComponent } from 'ng-mocks';
+import { NonProgrammingExerciseDetailCommonActionsComponent } from 'app/exercises/shared/exercise-detail-common-actions/non-programming-exercise-detail-common-actions.component';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -53,7 +54,7 @@ describe('FileUploadExercise Management Detail Component', () => {
                 AssessmentInstructionsModule,
                 ExerciseDetailsModule,
             ],
-            declarations: [FileUploadExerciseDetailComponent, MockPipe(HtmlForMarkdownPipe)],
+            declarations: [FileUploadExerciseDetailComponent, MockPipe(HtmlForMarkdownPipe), MockComponent(NonProgrammingExerciseDetailCommonActionsComponent)],
             providers: [
                 JhiLanguageHelper,
                 JhiAlertService,

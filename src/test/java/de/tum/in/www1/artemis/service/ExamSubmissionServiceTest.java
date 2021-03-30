@@ -26,9 +26,7 @@ import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
-import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.service.exam.ExamService;
 import de.tum.in.www1.artemis.service.exam.ExamSubmissionService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -36,26 +34,18 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 public class ExamSubmissionServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
-    ExamSubmissionService examSubmissionService;
+    private ExamSubmissionService examSubmissionService;
 
     @Autowired
-    ExamService examService;
+    private ExamRepository examRepository;
 
     @Autowired
-    ExamRepository examRepository;
+    private StudentExamRepository studentExamRepository;
 
     @Autowired
-    StudentExamRepository studentExamRepository;
-
-    @Autowired
-    StudentParticipationRepository studentParticipationRepository;
-
-    @Autowired
-    UserRepository userRepository;
+    private UserRepository userRepository;
 
     private User user;
-
-    private Course course;
 
     private Exam exam;
 
@@ -68,7 +58,7 @@ public class ExamSubmissionServiceTest extends AbstractSpringIntegrationBambooBi
         List<User> users = database.addUsers(1, 0, 1);
         user = users.get(0);
         exercise = database.addCourseExamExerciseGroupWithOneTextExercise();
-        course = exercise.getCourseViaExerciseGroupOrCourseMember();
+        Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
         exam = examRepository.findByCourseId(course.getId()).get(0);
         studentExam = database.addStudentExam(exam);
         studentExam.setWorkingTime(7200); // 2 hours

@@ -1,11 +1,12 @@
 package de.tum.in.www1.artemis.service.compass.umlmodel.activity;
 
+import java.io.Serializable;
 import java.util.Objects;
 
 import de.tum.in.www1.artemis.service.compass.umlmodel.Similarity;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
 
-public class UMLControlFlow extends UMLElement {
+public class UMLControlFlow extends UMLElement implements Serializable {
 
     public static final String UML_CONTROL_FLOW_TYPE = "ActivityControlFlow";
 

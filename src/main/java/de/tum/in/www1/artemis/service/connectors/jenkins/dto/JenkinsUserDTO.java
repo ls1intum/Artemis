@@ -1,32 +1,17 @@
 package de.tum.in.www1.artemis.service.connectors.jenkins.dto;
 
-import java.util.List;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class JenkinsUserDTO {
-
-    public String _class;
-
-    public String absoluteUrl;
 
     public Object description;
 
     public String fullName;
 
     public String id;
-
-    public List<Property> property;
-
-    public String getAbsoluteUrl() {
-        return absoluteUrl;
-    }
-
-    public void setAbsoluteUrl(String absoluteUrl) {
-        this.absoluteUrl = absoluteUrl;
-    }
-
-    public List<Property> getProperty() {
-        return property;
-    }
 
     public Object getDescription() {
         return description;
@@ -50,16 +35,5 @@ public class JenkinsUserDTO {
 
     public void setId(String id) {
         this.id = id;
-    }
-
-    public static class Property {
-
-        public String _class;
-
-        public List<Object> triggers;
-
-        public boolean insensitiveSearch;
-
-        public String address;
     }
 }

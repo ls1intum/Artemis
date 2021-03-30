@@ -27,10 +27,10 @@ public class TextAssessmentService extends AssessmentService {
     public TextAssessmentService(UserRepository userRepository, ComplaintResponseService complaintResponseService, ComplaintRepository complaintRepository,
             FeedbackRepository feedbackRepository, ResultRepository resultRepository, StudentParticipationRepository studentParticipationRepository, ResultService resultService,
             SubmissionRepository submissionRepository, TextBlockService textBlockService, Optional<AutomaticTextFeedbackService> automaticTextFeedbackService,
-            ExamDateService examDateService, FeedbackConflictRepository feedbackConflictRepository, GradingCriterionService gradingCriterionService,
+            ExamDateService examDateService, FeedbackConflictRepository feedbackConflictRepository, GradingCriterionRepository gradingCriterionRepository,
             SubmissionService submissionService, LtiService ltiService) {
         super(complaintResponseService, complaintRepository, feedbackRepository, resultRepository, studentParticipationRepository, resultService, submissionService,
-                submissionRepository, examDateService, gradingCriterionService, userRepository, ltiService);
+                submissionRepository, examDateService, gradingCriterionRepository, userRepository, ltiService);
         this.textBlockService = textBlockService;
         this.automaticTextFeedbackService = automaticTextFeedbackService;
         this.feedbackConflictRepository = feedbackConflictRepository;
@@ -48,12 +48,11 @@ public class TextAssessmentService extends AssessmentService {
      *   4. Compute Fallback Text Blocks if needed
      *
      * @param textSubmission Text Submission to be assessed
-     * @param correctionRound correction round for which we prepare the submission
+     * @param result for which we prepare the submission
      */
-    public void prepareSubmissionForAssessment(TextSubmission textSubmission, int correctionRound) {
+    public void prepareSubmissionForAssessment(TextSubmission textSubmission, Result result) {
         final Participation participation = textSubmission.getParticipation();
         final TextExercise exercise = (TextExercise) participation.getExercise();
-        Result result = textSubmission.getResultForCorrectionRound(correctionRound);
 
         final boolean computeFeedbackSuggestions = automaticTextFeedbackService.isPresent() && exercise.isAutomaticAssessmentEnabled();
 

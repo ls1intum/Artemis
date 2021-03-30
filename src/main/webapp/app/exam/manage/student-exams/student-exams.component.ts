@@ -330,6 +330,8 @@ export class StudentExamsComponent implements OnInit {
     searchResultFormatter = (studentExam: StudentExam) => {
         if (studentExam.user) {
             return `${studentExam.user.login} (${studentExam.user.name})`;
+        } else {
+            return '';
         }
     };
 
