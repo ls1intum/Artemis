@@ -16,7 +16,9 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
+import de.tum.in.www1.artemis.domain.enumeration.Visibility;
 
 /**
  * A Feedback.
@@ -58,6 +60,10 @@ public class Feedback extends DomainObject {
     @Enumerated(EnumType.STRING)
     @Column(name = "type")
     private FeedbackType type;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "visibility")
+    private Visibility visibility;
 
     @ManyToOne
     @JsonIgnoreProperties("feedbacks")
@@ -183,6 +189,29 @@ public class Feedback extends DomainObject {
         this.type = type;
     }
 
+    public Visibility getVisibility() {
+        return visibility;
+    }
+
+    @JsonIgnore
+    public boolean isAfterDueDate() {
+        return this.visibility == Visibility.AFTER_DUE_DATE;
+    }
+
+    @JsonIgnore
+    public boolean isInvisible() {
+        return this.visibility == Visibility.NEVER;
+    }
+
+    public Feedback visibility(Visibility visibility) {
+        this.visibility = visibility;
+        return this;
+    }
+
+    public void setVisibility(Visibility visibility) {
+        this.visibility = visibility;
+    }
+
     public Result getResult() {
         return result;
     }
@@ -266,13 +295,14 @@ public class Feedback extends DomainObject {
         feedback.setText(getText());
         feedback.setPositive(isPositive());
         feedback.setReference(getReference());
+        feedback.setVisibility(visibility);
         return feedback;
     }
 
     @Override
     public String toString() {
         return "Feedback{" + "id=" + getId() + ", text='" + getText() + "'" + ", detailText='" + getDetailText() + "'" + ", reference='" + getReference() + "'" + ", positive='"
-                + isPositive() + "'" + ", type='" + getType() + ", gradingInstruction='" + getGradingInstruction() + "'" + "}";
+                + isPositive() + "'" + ", type='" + getType() + ", visibility=" + getVisibility() + ", gradingInstruction='" + getGradingInstruction() + "'" + "}";
     }
 
     /**

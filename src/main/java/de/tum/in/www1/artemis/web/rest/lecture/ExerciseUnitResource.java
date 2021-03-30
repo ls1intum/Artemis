@@ -71,6 +71,10 @@ public class ExerciseUnitResource {
             return forbidden();
         }
 
+        // persist lecture unit before lecture to prevent "null index column for collection" error
+        exerciseUnit.setLecture(null);
+        exerciseUnit = exerciseUnitRepository.saveAndFlush(exerciseUnit);
+        exerciseUnit.setLecture(lecture);
         lecture.addLectureUnit(exerciseUnit);
         Lecture updatedLecture = lectureRepository.save(lecture);
         ExerciseUnit persistedExerciseUnit = (ExerciseUnit) updatedLecture.getLectureUnits().get(updatedLecture.getLectureUnits().size() - 1);

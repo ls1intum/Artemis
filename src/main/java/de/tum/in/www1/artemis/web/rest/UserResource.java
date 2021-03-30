@@ -152,7 +152,7 @@ public class UserResource {
             throw new EntityNotFoundException("Not all groups are available: " + managedUserVM.getGroups());
         }
 
-        var existingUser = userRepository.findByIdWithGroupsAndAuthoritiesElseThrow(managedUserVM.getId());
+        var existingUser = userRepository.findByIdWithGroupsAndAuthoritiesAndOrganizationsElseThrow(managedUserVM.getId());
         final var oldUserLogin = existingUser.getLogin();
         final var oldGroups = existingUser.getGroups();
         var updatedUser = userCreationService.updateInternalUser(existingUser, managedUserVM);

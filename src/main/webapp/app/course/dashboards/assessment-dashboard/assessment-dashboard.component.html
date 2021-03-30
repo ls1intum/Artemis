@@ -48,6 +48,8 @@
         <div class="container-fluid">
             <jhi-assessment-dashboard-information
                 [isExamMode]="isExamMode"
+                [feedbackRequestEnabled]="course.requestMoreFeedbackEnabled"
+                [complaintsEnabled]="course.complaintsEnabled"
                 [numberOfTutorAssessments]="numberOfTutorAssessments"
                 [courseId]="courseId"
                 [tutorId]="tutor.id"
