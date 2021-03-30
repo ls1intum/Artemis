@@ -523,8 +523,6 @@ public class ExamResource {
         log.info("REST request to generate student exams for exam {}", examId);
         final Exam exam = examRepository.findByIdWithRegisteredUsersExerciseGroupsAndExercisesElseThrow(examId);
 
-        exam.getExerciseGroups().forEach(e -> e.getExercises().forEach(System.out::println));
-
         Optional<ResponseEntity<List<StudentExam>>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccessForInstructor(courseId, exam);
         if (courseAndExamAccessFailure.isPresent()) {
             return courseAndExamAccessFailure.get();
