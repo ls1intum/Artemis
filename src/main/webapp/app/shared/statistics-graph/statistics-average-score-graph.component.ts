@@ -32,7 +32,7 @@ export class StatisticsAverageScoreGraphComponent implements OnInit {
     barChartOptions: ChartOptions = {};
     barChartType: ChartType = 'bar';
     lineChartType: ChartType = 'line';
-    amountOfStudents: string;
+    exerciseAverageLegend: string;
     courseAverageLegend: string;
     chartName: string;
     barChartLegend = true;
@@ -54,28 +54,34 @@ export class StatisticsAverageScoreGraphComponent implements OnInit {
      */
     ngOnInit(): void {
         this.chartName = this.translateService.instant(`artemisApp.course.averageScore`);
-        this.amountOfStudents = this.translateService.instant('artemisApp.courseStatistics.amountOfStudents');
+        this.exerciseAverageLegend = this.translateService.instant('artemisApp.courseStatistics.exerciseAverage');
         this.courseAverageLegend = this.translateService.instant('artemisApp.courseStatistics.courseAverage');
         this.initializeChart();
         this.createCharts();
     }
 
     private initializeChart(): void {
-        this.barChartLabels = this.exerciseAverageScores.slice(this.currentPeriod * 10, (this.currentPeriod + 1) * 10).map((exercise) => exercise.exerciseName);
+        this.barChartLabels = this.exerciseAverageScores.slice(this.currentPeriod, 10 + this.currentPeriod).map((exercise) => exercise.exerciseName);
         this.chartData = [
             {
+                // Average course score line
                 label: this.courseAverageLegend,
                 data: new Array(this.barChartLabels.length).fill(this.courseAverage),
-                backgroundColor: 'rgba(0, 0, 0, 0)',
-                type: 'line',
-                pointRadius: 0,
+                backgroundColor: 'rgba(93,138,201,1)',
+                fill: false,
+                pointBackgroundColor: 'rgba(93,138,201,0)',
+                pointBorderColor: 'rgba(93,138,201,0)',
+                pointHoverBackgroundColor: 'rgba(93,138,201,1)',
+                pointHoverBorderColor: 'rgba(93,138,201,0)',
                 borderColor: 'rgba(93,138,201,1)',
                 hoverBackgroundColor: 'rgba(93,138,201,1)',
                 hoverBorderColor: 'rgba(93,138,201,1)',
             },
             {
-                label: this.amountOfStudents,
-                data: this.exerciseAverageScores.slice(this.currentPeriod * 10, (this.currentPeriod + 1) * 10).map((exercise) => exercise.averageScore),
+                // Average exercise score bars
+                label: this.exerciseAverageLegend,
+                data: this.exerciseAverageScores.slice(this.currentPeriod, 10 + this.currentPeriod).map((exercise) => exercise.averageScore),
+                type: 'bar',
                 backgroundColor: 'rgba(53,61,71,1)',
                 borderColor: 'rgba(53,61,71,1)',
                 hoverBackgroundColor: 'rgba(53,61,71,1)',
@@ -93,7 +99,6 @@ export class StatisticsAverageScoreGraphComponent implements OnInit {
             responsive: true,
             hover: {
                 animationDuration: 0,
-                intersect: true,
             },
             animation: {
                 duration: 1,
@@ -124,8 +129,14 @@ export class StatisticsAverageScoreGraphComponent implements OnInit {
                 ],
                 xAxes: [
                     {
+                        gridLines: {
+                            offsetGridLines: false,
+                        },
                         ticks: {
-                            padding: 0,
+                            autoSkip: false,
+                            callback(title: string) {
+                                return title.length > 10 ? title.substr(0, 10) + '...' : title;
+                            },
                         },
                     },
                 ],

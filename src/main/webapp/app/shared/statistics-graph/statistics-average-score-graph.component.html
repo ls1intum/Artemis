@@ -21,10 +21,10 @@
         [labels]="barChartLabels"
         [options]="barChartOptions"
         [legend]="barChartLegend"
-        [chartType]="barChartType"
+        [chartType]="lineChartType"
     ></canvas>
     <fa-icon
-        *ngIf="exerciseAverageScores.length > 10 && exerciseAverageScores.slice((this.currentPeriod + 1) * 10, (this.currentPeriod + 2) * 10).length > 0"
+        *ngIf="exerciseAverageScores.length > 10 && exerciseAverageScores[10 + currentPeriod] != null"
         [icon]="'arrow-right'"
         size="3x"
         class="col-md-1 d-flex justify-content-start align-items-center"

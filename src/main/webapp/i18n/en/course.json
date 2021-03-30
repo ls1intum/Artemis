@@ -139,6 +139,7 @@
             "statistics": "Statistics",
             "course": "Course",
             "courseAverage": "course average",
+            "exerciseAverage": "exercise average",
             "amountOfStudents": "# of students",
             "activeStudents": "Active students"
         }
