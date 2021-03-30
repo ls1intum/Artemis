@@ -86,6 +86,7 @@ test {
     }
     testLogging.showStandardStreams = true
     reports.html.enabled = false
+    jvmArgs "--illegal-access=warn"
 }
 
 task integrationTest(type: Test) {
@@ -99,7 +100,7 @@ task integrationTest(type: Test) {
     }
 
     maxHeapSize = "1024m"
-    jvmArgs "-XX:MaxPermSize=512m"
+    jvmArgs "-XX:MaxPermSize=512m --illegal-access=warn"
     reports.html.enabled = false
 }
 
