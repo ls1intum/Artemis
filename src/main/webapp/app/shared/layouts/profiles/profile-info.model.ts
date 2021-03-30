@@ -30,4 +30,5 @@ export class ProfileInfo {
     public versionControlUrl?: string;
     public programmingLanguageFeatures: ProgrammingLanguageFeature[];
     public saml2?: Saml2;
+    public enabledMultipleOrganizations?: boolean;
 }

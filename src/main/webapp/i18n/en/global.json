@@ -84,6 +84,7 @@
                 "main": "Server Administration",
                 "upcomingExamsAndExercises": "Upcoming exams & exercises",
                 "userManagement": "User management",
+                "organizationManagement": "Organization management",
                 "systemNotifications": "System notifications",
                 "featureToggles": "Feature Toggles",
                 "statistics": "User statistics",

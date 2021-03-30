@@ -17,6 +17,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentMatchers;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -229,6 +230,59 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
         assertThat(feedbacks).isEqualTo(result.getFeedbacks());
     }
 
+    @ValueSource(booleans = { false, true })
+    @ParameterizedTest(name = "shouldReturnTheResultDetailsForAStudentParticipationWithSensitiveInformationFiltered [isAfterDueDate = {0}]")
+    @WithMockUser(value = "student2", roles = "USER")
+    public void shouldReturnTheResultDetailsForAStudentParticipationWithSensitiveInformationFiltered(boolean isAfterDueDate) throws Exception {
+        Result result = database.addResultToParticipation(null, null, studentParticipation);
+        result = database.addSampleFeedbackToResults(result);
+        result = database.addVariousVisibilityFeedbackToResults(result);
+
+        if (isAfterDueDate) {
+            database.updateExerciseDueDate(studentParticipation.getExercise().getId(), ZonedDateTime.now().minusHours(10));
+        }
+        else {
+            // Set programming exercise due date in future.
+            database.updateExerciseDueDate(studentParticipation.getExercise().getId(), ZonedDateTime.now().plusHours(10));
+        }
+
+        List<Feedback> feedbacks = request.getList("/api/results/" + result.getId() + "/details", HttpStatus.OK, Feedback.class);
+
+        assertThat(feedbacks.stream().filter(Feedback::isInvisible)).hasSize(0);
+
+        if (isAfterDueDate) {
+            assertThat(feedbacks.size()).isEqualTo(4);
+            assertThat(feedbacks.stream().filter(Feedback::isAfterDueDate)).hasSize(1);
+        }
+        else {
+            assertThat(feedbacks.size()).isEqualTo(3);
+            assertThat(feedbacks.stream().filter(Feedback::isAfterDueDate)).hasSize(0);
+        }
+    }
+
+    @ValueSource(booleans = { false, true })
+    @ParameterizedTest(name = "shouldReturnTheResultDetailsForAnInstructorWithoutSensitiveInformationFiltered [isAfterDueDate = {0}]")
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void shouldReturnTheResultDetailsForAnInstructorWithoutSensitiveInformationFiltered(boolean isAfterDueDate) throws Exception {
+        Result result = database.addResultToParticipation(null, null, studentParticipation);
+        result = database.addSampleFeedbackToResults(result);
+        result = database.addVariousVisibilityFeedbackToResults(result);
+
+        if (isAfterDueDate) {
+            database.updateExerciseDueDate(studentParticipation.getExercise().getId(), ZonedDateTime.now().minusHours(10));
+        }
+        else {
+            // Set programming exercise due date in future.
+            database.updateExerciseDueDate(studentParticipation.getExercise().getId(), ZonedDateTime.now().plusHours(10));
+        }
+
+        List<Feedback> feedbacks = request.getList("/api/results/" + result.getId() + "/details", HttpStatus.OK, Feedback.class);
+
+        assertThat(feedbacks.stream().filter(Feedback::isInvisible)).hasSize(1);
+        assertThat(feedbacks.size()).isEqualTo(5);
+        assertThat(feedbacks.stream().filter(Feedback::isAfterDueDate)).hasSize(1);
+    }
+
     @Test
     @WithMockUser(value = "student1", roles = "USER")
     public void shouldReturnTheResultDetailsForAStudentParticipation_studentForbidden() throws Exception {
@@ -252,6 +306,18 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
         Result result = database.addResultToParticipation(null, null, solutionParticipation);
         database.addSampleFeedbackToResults(result);
         request.getList("/api/results/" + 11667 + "/details", HttpStatus.NOT_FOUND, Feedback.class);
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void shouldNotFilterVisibilityNeverForInstructor() throws Exception {
+        Result result = database.addResultToParticipation(null, null, studentParticipation);
+        result = database.addSampleFeedbackToResults(result);
+        result = database.addVariousVisibilityFeedbackToResults(result);
+
+        List<Feedback> feedbacks = request.getList("/api/results/" + result.getId() + "/details", HttpStatus.OK, Feedback.class);
+        assertThat(feedbacks.stream().filter(f -> f.getVisibility() == Visibility.NEVER)).hasSize(1);
+        assertThat(feedbacks.stream().filter(f -> f.getVisibility() == Visibility.AFTER_DUE_DATE)).hasSize(1);
     }
 
     @ParameterizedTest
