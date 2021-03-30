@@ -45,7 +45,6 @@ describe('CourseManagementExerciseStatisticsComponent', () => {
 
     it('should initialize component and load values', () => {
         // Provide the @Input data
-        component.courseId = courseId;
         component.amountOfStudentsInCourse = amountOfStudentsInCourse;
         component.initialStats = initialStats;
 
@@ -62,8 +61,6 @@ describe('CourseManagementExerciseStatisticsComponent', () => {
     });
 
     it('should react to changes', () => {
-        // Provide the @Input data
-        component.courseId = courseId;
         fixture.detectChanges();
 
         component.initialStats = [];
