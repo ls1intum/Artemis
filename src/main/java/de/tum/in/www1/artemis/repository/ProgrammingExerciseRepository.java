@@ -36,8 +36,11 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
      * @return all exercises for the given course with only the latest results for solution and template each (if present).
      */
     @Query("""
-            SELECT pe FROM ProgrammingExercise pe LEFT JOIN FETCH pe.templateParticipation tp LEFT JOIN FETCH pe.solutionParticipation sp
-            LEFT JOIN FETCH tp.results AS tpr LEFT JOIN FETCH sp.results AS spr
+            SELECT pe FROM ProgrammingExercise pe
+            LEFT JOIN FETCH pe.templateParticipation tp
+            LEFT JOIN FETCH pe.solutionParticipation sp
+            LEFT JOIN FETCH tp.results tpr
+            LEFT JOIN FETCH sp.results spr
             WHERE pe.course.id = :#{#courseId}
                 AND (tpr.id = (SELECT MAX(id) FROM tp.results) OR tpr.id IS NULL)
                 AND (spr.id = (SELECT MAX(id) FROM sp.results) OR spr.id IS NULL)
@@ -120,11 +123,13 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
                 pe.id IN (
                     SELECT coursePe.id
                     FROM ProgrammingExercise coursePe
-                    WHERE coursePe.course.instructorGroupName IN :groups AND (coursePe.title LIKE %:partialTitle% OR coursePe.course.title LIKE %:partialCourseTitle%)
+                    WHERE coursePe.course.instructorGroupName IN :groups
+                        AND (coursePe.title LIKE %:partialTitle% OR coursePe.course.title LIKE %:partialCourseTitle%)
                 ) OR pe.id IN (
                     SELECT examPe.id
                     FROM ProgrammingExercise examPe
-                    WHERE examPe.exerciseGroup.exam.course.instructorGroupName IN :groups AND (examPe.title LIKE %:partialTitle% OR examPe.exerciseGroup.exam.course.title LIKE %:partialCourseTitle%)
+                    WHERE examPe.exerciseGroup.exam.course.instructorGroupName IN :groups
+                        AND (examPe.title LIKE %:partialTitle% OR examPe.exerciseGroup.exam.course.title LIKE %:partialCourseTitle%)
                 )
             )
             """)
