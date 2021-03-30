@@ -17,13 +17,18 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.GradingCriterion;
+import de.tum.in.www1.artemis.domain.GradingInstruction;
+import de.tum.in.www1.artemis.domain.Team;
+import de.tum.in.www1.artemis.domain.TeamAssignmentConfig;
 import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
 import de.tum.in.www1.artemis.domain.enumeration.DifficultyLevel;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
 import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
+import de.tum.in.www1.artemis.domain.plagiarism.modeling.ModelingPlagiarismResult;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.ModelingExerciseRepository;
 import de.tum.in.www1.artemis.repository.TeamRepository;
@@ -516,4 +521,33 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBa
         assertEquals(1, teamRepository.findAllByExerciseIdWithEagerStudents(sourceExercise, null).size());
     }
 
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testGetPlagiarismResult() throws Exception {
+        final Course course = database.addCourseWithOneModelingExercise();
+        ModelingExercise modelingExercise = modelingExerciseRepository.findByCourseId(course.getId()).get(0);
+
+        ModelingPlagiarismResult expectedResult = database.createModelingPlagiarismResultForExercise(modelingExercise);
+
+        ModelingPlagiarismResult result = request.get("/api/modeling-exercises/" + modelingExercise.getId() + "/plagiarism-result", HttpStatus.OK, ModelingPlagiarismResult.class);
+        assertThat(result.getId()).isEqualTo(expectedResult.getId());
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testGetPlagiarismResultWithoutResult() throws Exception {
+        final Course course = database.addCourseWithOneModelingExercise();
+        ModelingExercise modelingExercise = modelingExerciseRepository.findByCourseId(course.getId()).get(0);
+
+        ModelingPlagiarismResult result = request.get("/api/modeling-exercises/" + modelingExercise.getId() + "/plagiarism-result", HttpStatus.NOT_FOUND,
+                ModelingPlagiarismResult.class);
+        assertThat(result).isNull();
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testGetPlagiarismResultWithoutExercise() throws Exception {
+        ModelingPlagiarismResult result = request.get("/api/modeling-exercises/" + 1 + "/plagiarism-result", HttpStatus.NOT_FOUND, ModelingPlagiarismResult.class);
+        assertThat(result).isNull();
+    }
 }

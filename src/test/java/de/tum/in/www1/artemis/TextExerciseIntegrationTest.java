@@ -8,30 +8,42 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
+import org.assertj.core.data.Offset;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.util.LinkedMultiValueMap;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.ExampleSubmission;
+import de.tum.in.www1.artemis.domain.Team;
+import de.tum.in.www1.artemis.domain.TeamAssignmentConfig;
+import de.tum.in.www1.artemis.domain.TextCluster;
+import de.tum.in.www1.artemis.domain.TextExercise;
+import de.tum.in.www1.artemis.domain.TextSubmission;
 import de.tum.in.www1.artemis.domain.enumeration.DifficultyLevel;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
 import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.participation.Participation;
-import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.service.ExerciseService;
+import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismComparison;
+import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismStatus;
+import de.tum.in.www1.artemis.domain.plagiarism.text.TextPlagiarismResult;
+import de.tum.in.www1.artemis.domain.plagiarism.text.TextSubmissionElement;
+import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
+import de.tum.in.www1.artemis.repository.TeamRepository;
+import de.tum.in.www1.artemis.repository.TextClusterRepository;
+import de.tum.in.www1.artemis.repository.TextExerciseRepository;
+import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.TextExerciseUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 
 public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
-
-    @Autowired
-    private ExerciseService exerciseService;
 
     @Autowired
     private TextExerciseRepository textExerciseRepository;
@@ -53,7 +65,7 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @BeforeEach
     public void initTestCase() {
-        database.addUsers(1, 1, 1);
+        database.addUsers(2, 1, 1);
         database.addInstructor("other-instructors", "instructorother");
     }
 
@@ -554,5 +566,125 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         assertEquals(course1.getId(), sourceExercise.getCourseViaExerciseGroupOrCourseMember().getId());
         assertEquals(ExerciseMode.TEAM, sourceExercise.getMode());
         assertEquals(1, teamRepository.findAllByExerciseIdWithEagerStudents(sourceExercise, null).size());
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testCheckPlagiarismIdenticalLongTexts() throws Exception {
+        final Course course = database.addCourseWithOneReleasedTextExercise();
+        TextExercise textExercise = textExerciseRepository.findByCourseId(course.getId()).get(0);
+
+        var longText = """
+                Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+                Aenean vitae vestibulum metus.
+                Cras id fringilla tellus, sed maximus mi.
+                Class aptent taciti sociosqu ad litora torquent per conubia nostra, per inceptos himenaeos.
+                Aenean non nulla non ipsum posuere lacinia vel id magna.
+                Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia curae; Nulla facilisi.
+                Sed in urna vitae est tempus pulvinar.
+                Nulla vel lacinia purus, sollicitudin congue libero.
+                Nulla maximus finibus sapien vel venenatis.
+                Proin a lacus massa. Vivamus nulla libero, commodo nec nibh consectetur, aliquam gravida mauris.
+                Etiam condimentum sem id purus feugiat molestie.
+                Donec malesuada eu diam sed viverra.
+                Morbi interdum massa non purus consequat, quis aliquam quam lacinia.
+                Suspendisse sem risus, varius et fermentum sed, cursus in nunc.
+                Ut malesuada nulla quam, sed condimentum tellus laoreet vel.
+                Ut id leo lobortis velit sollicitudin laoreet.
+                Duis quis orci ac est placerat lacinia sit amet ut ipsum.
+                Quisque a sapien mollis, tempor est sit amet, volutpat est.
+                Cras molestie maximus nisi a porta. Nullam efficitur id odio at posuere.
+                Duis id feugiat massa. Duis vitae ultrices velit.
+                Aenean congue vestibulum ligula, nec eleifend nulla vestibulum nec.
+                Praesent eu convallis neque. Nulla facilisi. Suspendisse mattis nisl ac.
+                """;
+
+        database.createSubmissionForTextExercise(textExercise, database.getUserByLogin("student1"), longText);
+        database.createSubmissionForTextExercise(textExercise, database.getUserByLogin("student2"), longText);
+
+        // Use default options for plagiarism detection
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("similarityThreshold", "50");
+        params.add("minimumScore", "0");
+        params.add("minimumSize", "0");
+
+        TextPlagiarismResult result = request.get("/api/text-exercises/" + textExercise.getId() + "/check-plagiarism", HttpStatus.OK, TextPlagiarismResult.class, params);
+        assertThat(result.getComparisons()).hasSize(1);
+        assertThat(result.getExercise().getId()).isEqualTo(textExercise.getId());
+
+        PlagiarismComparison<TextSubmissionElement> comparison = result.getComparisons().iterator().next();
+        // Both submissions compared consist of 4 words (= 4 tokens). JPlag seems to be off by 1
+        // when counting the length of a match. This is why it calculates a similarity of 3/4 = 75%
+        // instead of 4/4 = 100% (5 words ==> 80%, 100 words ==> 99%, etc.). Therefore, we use a rather
+        // high offset here to compensate this issue.
+        // TODO: Reduce the offset once this issue is fixed in JPlag
+        assertThat(comparison.getSimilarity()).isEqualTo(100.0, Offset.offset(1.0));
+        assertThat(comparison.getStatus()).isEqualTo(PlagiarismStatus.NONE);
+        assertThat(comparison.getMatches().size()).isEqualTo(1);
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testCheckPlagiarismIdenticalShortTexts() throws Exception {
+        final Course course = database.addCourseWithOneReleasedTextExercise();
+        TextExercise textExercise = textExerciseRepository.findByCourseId(course.getId()).get(0);
+
+        var shortText = "Lorem Ipsum Foo Bar";
+        database.createSubmissionForTextExercise(textExercise, database.getUserByLogin("student1"), shortText);
+        database.createSubmissionForTextExercise(textExercise, database.getUserByLogin("student2"), shortText);
+
+        // Use default options for plagiarism detection
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("similarityThreshold", "50");
+        params.add("minimumScore", "0");
+        params.add("minimumSize", "5");
+
+        TextPlagiarismResult result = request.get("/api/text-exercises/" + textExercise.getId() + "/check-plagiarism", HttpStatus.OK, TextPlagiarismResult.class, params);
+        assertThat(result.getComparisons()).hasSize(0);
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testCheckPlagiarismNoSubmissions() throws Exception {
+        final Course course = database.addCourseWithOneReleasedTextExercise();
+        TextExercise textExercise = textExerciseRepository.findByCourseId(course.getId()).get(0);
+
+        // Use default options for plagiarism detection
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("similarityThreshold", "50");
+        params.add("minimumScore", "0");
+        params.add("minimumSize", "0");
+
+        TextPlagiarismResult result = request.get("/api/text-exercises/" + textExercise.getId() + "/check-plagiarism", HttpStatus.OK, TextPlagiarismResult.class, params);
+        assertThat(result.getComparisons()).hasSize(0);
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testGetPlagiarismResult() throws Exception {
+        final Course course = database.addCourseWithOneReleasedTextExercise();
+        TextExercise textExercise = textExerciseRepository.findByCourseId(course.getId()).get(0);
+
+        TextPlagiarismResult expectedResult = database.createTextPlagiarismResultForExercise(textExercise);
+
+        TextPlagiarismResult result = request.get("/api/text-exercises/" + textExercise.getId() + "/plagiarism-result", HttpStatus.OK, TextPlagiarismResult.class);
+        assertThat(result.getId()).isEqualTo(expectedResult.getId());
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testGetPlagiarismResultWithoutResult() throws Exception {
+        final Course course = database.addCourseWithOneReleasedTextExercise();
+        TextExercise textExercise = textExerciseRepository.findByCourseId(course.getId()).get(0);
+
+        TextPlagiarismResult result = request.get("/api/text-exercises/" + textExercise.getId() + "/plagiarism-result", HttpStatus.NOT_FOUND, TextPlagiarismResult.class);
+        assertThat(result).isNull();
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testGetPlagiarismResultWithoutExercise() throws Exception {
+        TextPlagiarismResult result = request.get("/api/text-exercises/" + 1 + "/plagiarism-result", HttpStatus.NOT_FOUND, TextPlagiarismResult.class);
+        assertThat(result).isNull();
     }
 }
