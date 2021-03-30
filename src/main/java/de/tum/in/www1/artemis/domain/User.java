@@ -22,6 +22,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.in.www1.artemis.config.Constants;
@@ -115,6 +116,13 @@ public class User extends AbstractAuditingEntity implements Participant {
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @BatchSize(size = 20)
     private Set<Authority> authorities = new HashSet<>();
+
+    @ManyToMany
+    @JoinTable(name = "user_organization", joinColumns = { @JoinColumn(name = "user_id", referencedColumnName = "id") }, inverseJoinColumns = {
+            @JoinColumn(name = "organization_id", referencedColumnName = "id") })
+    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+    @JsonIgnoreProperties("user")
+    private Set<Organization> organizations = new HashSet<>();
 
     public String getLogin() {
         return login;
@@ -263,6 +271,14 @@ public class User extends AbstractAuditingEntity implements Participant {
 
     public void setAuthorities(Set<Authority> authorities) {
         this.authorities = authorities;
+    }
+
+    public Set<Organization> getOrganizations() {
+        return organizations;
+    }
+
+    public void setOrganizations(Set<Organization> organizations) {
+        this.organizations = organizations;
     }
 
     public Set<GuidedTourSetting> getGuidedTourSettings() {

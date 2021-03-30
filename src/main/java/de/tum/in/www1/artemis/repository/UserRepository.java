@@ -21,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Organization;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.SortingOrder;
 import de.tum.in.www1.artemis.security.SecurityUtils;
@@ -61,6 +62,12 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities" })
     Optional<User> findOneWithGroupsAndAuthoritiesById(Long id);
+
+    @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities", "organizations" })
+    Optional<User> findOneWithGroupsAndAuthoritiesAndOrganizationsById(Long id);
+
+    @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities", "organizations" })
+    Optional<User> findOneWithGroupsAndAuthoritiesAndOrganizationsByLogin(String userLogin);
 
     @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities", "guidedTourSettings" })
     Optional<User> findOneWithGroupsAuthoritiesAndGuidedTourSettingsByLogin(String login);
@@ -183,6 +190,16 @@ public interface UserRepository extends JpaRepository<User, Long> {
     }
 
     /**
+     * Retrieve a user by its login, or else throw exception
+     * @param login the login of the user to search
+     * @return the user entity if it exists
+     */
+    @NotNull
+    default User getUserByLoginElseThrow(String login) {
+        return findOneByLogin(login).orElseThrow(() -> new EntityNotFoundException("User: " + login));
+    }
+
+    /**
      * Get user with user groups and authorities of currently logged in user
      *
      * @return currently logged in user
@@ -191,6 +208,18 @@ public interface UserRepository extends JpaRepository<User, Long> {
     default User getUserWithGroupsAndAuthorities() {
         String currentUserLogin = getCurrentUserLogin();
         Optional<User> user = findOneWithGroupsAndAuthoritiesByLogin(currentUserLogin);
+        return unwrapOptionalUser(user, currentUserLogin);
+    }
+
+    /**
+     * Get user with user groups, authorities and organizations of currently logged in user
+     *
+     * @return currently logged in user
+     */
+    @NotNull
+    default User getUserWithGroupsAndAuthoritiesAndOrganizations() {
+        String currentUserLogin = getCurrentUserLogin();
+        Optional<User> user = findOneWithGroupsAndAuthoritiesAndOrganizationsByLogin(currentUserLogin);
         return unwrapOptionalUser(user, currentUserLogin);
     }
 
@@ -264,6 +293,17 @@ public interface UserRepository extends JpaRepository<User, Long> {
     }
 
     /**
+     * Find user with eagerly loaded groups, authorities and organizations by its id
+     *
+     * @param userId the id of the user to find
+     * @return the user with groups, authorities and organizations if it exists, else throw exception
+     */
+    @NotNull
+    default User findByIdWithGroupsAndAuthoritiesAndOrganizationsElseThrow(long userId) {
+        return findOneWithGroupsAndAuthoritiesAndOrganizationsById(userId).orElseThrow(() -> new EntityNotFoundException("User", userId));
+    }
+
+    /**
      * Get students by given course
      *
      * @param course object
@@ -320,5 +360,39 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @Transactional // ok because of modifying query
     default void updateUserNotificationReadDate(long userId) {
         updateUserNotificationReadDate(userId, ZonedDateTime.now());
+    }
+
+    @Query("select user from User user left join fetch user.organizations where user.login like :#{#login}")
+    Optional<User> findOneWithOrganizations(@Param("login") String login);
+
+    @Query(value = "SELECT * from jhi_user u where u.email regexp ?1", nativeQuery = true)
+    List<User> findAllMatchingEmailPattern(@Param("emailPattern") String emailPattern);
+
+    /**
+     * Add organization to user, if not contained already
+     * @param userId the id of the user to add to the organization
+     * @param organization the organization to add to the user
+     */
+    @NotNull
+    default void addOrganizationToUser(Long userId, Organization organization) {
+        User user = findByIdWithGroupsAndAuthoritiesAndOrganizationsElseThrow(userId);
+        if (!user.getOrganizations().contains(organization)) {
+            user.getOrganizations().add(organization);
+            save(user);
+        }
+    }
+
+    /**
+     * Remove organization from user, if currently contained
+     * @param userId the id of the user to remove from the organization
+     * @param organization the organization to remove from the user
+     */
+    @NotNull
+    default void removeOrganizationFromUser(Long userId, Organization organization) {
+        User user = findByIdWithGroupsAndAuthoritiesAndOrganizationsElseThrow(userId);
+        if (user.getOrganizations().contains(organization)) {
+            user.getOrganizations().remove(organization);
+            save(user);
+        }
     }
 }
