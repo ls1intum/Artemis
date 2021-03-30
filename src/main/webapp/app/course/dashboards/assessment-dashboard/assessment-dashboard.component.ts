@@ -168,7 +168,6 @@ export class AssessmentDashboardComponent implements OnInit, AfterViewInit {
                 },
                 (response: string) => this.onError(response),
             );
-            // TODO: implement some tutor stats here similar to the ones below but based on the exam and not the course
         } else {
             this.courseService.getCourseWithInterestingExercisesForTutors(this.courseId).subscribe(
                 (res: HttpResponse<Course>) => {
