@@ -35,23 +35,20 @@ public class GradingScaleService {
 
     private final GradeStepRepository gradeStepRepository;
 
-    private final GradeStepService gradeStepService;
-
     private final CourseRepository courseRepository;
 
     private final ExamRepository examRepository;
 
-    public GradingScaleService(GradingScaleRepository gradingScaleRepository, GradeStepRepository gradeStepRepository, GradeStepService gradeStepService,
-            CourseRepository courseRepository, ExamRepository examRepository) {
+    public GradingScaleService(GradingScaleRepository gradingScaleRepository, GradeStepRepository gradeStepRepository, CourseRepository courseRepository,
+            ExamRepository examRepository) {
         this.gradeStepRepository = gradeStepRepository;
         this.gradingScaleRepository = gradingScaleRepository;
-        this.gradeStepService = gradeStepService;
         this.courseRepository = courseRepository;
         this.examRepository = examRepository;
     }
 
     public GradeStep matchGradeToGradeStep(int percentage, Long gradingScaleId) {
-        List<GradeStep> gradeSteps = gradeStepService.findAllGradeStepsForGradingScaleById(gradingScaleId);
+        List<GradeStep> gradeSteps = gradeStepRepository.findByGradingScale_Id(gradingScaleId);
         Optional<GradeStep> matchingGradeStep = gradeSteps.stream().filter(gradeStep -> gradeStep.matchingGradePercentage(percentage)).findFirst();
         if (matchingGradeStep.isPresent()) {
             return matchingGradeStep.get();
@@ -69,9 +66,12 @@ public class GradingScaleService {
             throw new BadRequestAlertException("Grade step set can't match to a valid grading scale.", "gradeStep", "invalidFormat");
         }
         gradeStepRepository.deleteAllGradeStepsForGradingScaleById(gradingScaleId);
+        GradingScale gradingScale = gradingScaleRepository.findById(gradingScaleId).orElseThrow();
         for (GradeStep gradeStep : newGradeSteps) {
-            gradeStepService.saveGradeStepForGradingScaleById(gradeStep, gradingScaleId);
+            gradeStep.setGradingScale(gradingScale);
+            gradeStepRepository.save(gradeStep);
         }
+        gradeStepRepository.flush();
         return gradingScaleRepository.findById(gradingScaleId).orElseThrow();
     }
 
@@ -85,10 +85,6 @@ public class GradingScaleService {
         Exam exam = examRepository.findById(examId).orElseThrow();
         gradingScale.setExam(exam);
         return gradingScaleRepository.saveAndFlush(gradingScale);
-    }
-
-    public void deleteGradingScaleById(Long id) {
-        gradeStepRepository.deleteById(id);
     }
 
     private boolean gradeStepSetMapsToValidGradingScale(Set<GradeStep> gradeSteps) {

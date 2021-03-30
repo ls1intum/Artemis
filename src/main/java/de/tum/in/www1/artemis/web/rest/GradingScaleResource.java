@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.badRequest;
+
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Optional;
@@ -13,11 +15,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.GradingScale;
-import de.tum.in.www1.artemis.domain.exam.Exam;
-import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.GradingScaleRepository;
 import de.tum.in.www1.artemis.service.GradingScaleService;
-import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
 @RestController
@@ -35,12 +34,9 @@ public class GradingScaleResource {
 
     private final GradingScaleRepository gradingScaleRepository;
 
-    private final ExamRepository examRepository;
-
-    public GradingScaleResource(GradingScaleService gradingScaleService, GradingScaleRepository gradingScaleRepository, ExamRepository examRepository) {
+    public GradingScaleResource(GradingScaleService gradingScaleService, GradingScaleRepository gradingScaleRepository) {
         this.gradingScaleService = gradingScaleService;
         this.gradingScaleRepository = gradingScaleRepository;
-        this.examRepository = examRepository;
     }
 
     @GetMapping("/courses/{courseId}/grading-scale/")
@@ -53,12 +49,8 @@ public class GradingScaleResource {
 
     @GetMapping("/courses/{courseId}/exams/{examId}/grading-scale/")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<GradingScale> getGradingScaleForExam(@PathVariable Long courseId, @PathVariable Long examId) {
+    public ResponseEntity<GradingScale> getGradingScaleForExam(@PathVariable Long examId) {
         log.debug("REST request to get grading scale for exam: {}", examId);
-        Exam exam = examRepository.findByIdElseThrow(examId);
-        if (!exam.getCourse().getId().equals(courseId)) {
-            throw new BadRequestAlertException("The requested exam is not part of the requested course", ENTITY_NAME, "relationConflict");
-        }
         Optional<GradingScale> gradingScale = gradingScaleRepository.findByExam_Id(examId);
         return gradingScale.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
     }
@@ -99,18 +91,26 @@ public class GradingScaleResource {
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<GradingScale> updateGradingScale(@PathVariable Long courseId, @RequestBody GradingScale gradingScale) {
         log.debug("REST request to create a grading scale for course: {}", courseId);
-        if (gradingScale.getGradeSteps() != null) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "gradingScaleBodyContainsGradeSteps",
-                    "Grading scales shouldn't contain grade steps on creation.")).body(null);
+        if (gradingScaleRepository.findByCourse_Id(courseId).isEmpty()) {
+            return badRequest(ENTITY_NAME, "gradingScaleExists", "Grading scale doesn't exist for the given course.");
         }
-        gradingScale = gradingScaleRepository.save(gradingScale);
+        gradingScale = gradingScaleService.updateGradeStepsForGradingScale(gradingScale.getGradeSteps(), gradingScale.getId());
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, "")).body(gradingScale);
     }
 
-    @DeleteMapping("/grading-scale/{gradingScaleId}")
+    @DeleteMapping("/courses/{courseId}/grading-scale/")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Void> deleteGradingScaleById(@PathVariable Long gradingScaleId) {
-        gradingScaleService.deleteGradingScaleById(gradingScaleId);
+    public ResponseEntity<Void> deleteGradingScaleForCourse(@PathVariable Long courseId) {
+        log.debug("REST request to delete the grading scale for course: {}", courseId);
+        gradingScaleRepository.deleteGradingScaleForCourse(courseId);
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, "")).build();
+    }
+
+    @DeleteMapping("/courses/{courseId}/exams/{examId}/grading-scale/")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Void> deleteGradingScaleForExam(@PathVariable Long examId) {
+        log.debug("REST request to delete the grading scale for exam: {}", examId);
+        gradingScaleRepository.deleteGradingScaleForExam(examId);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, "")).build();
     }
 
