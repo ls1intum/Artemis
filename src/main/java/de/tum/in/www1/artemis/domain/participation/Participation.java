@@ -217,13 +217,13 @@ public abstract class Participation extends DomainObject implements Participatio
                     .collect(Collectors.toSet());
         }
 
-        List<Result> sortedLegalResultsWithCompletionDate = results.stream().filter(r -> r.getCompletionDate() != null)
+        List<Result> sortedResultsWithCompletionDate = results.stream().filter(r -> r.getCompletionDate() != null)
                 .sorted((r1, r2) -> r2.getCompletionDate().compareTo(r1.getCompletionDate())).collect(Collectors.toList());
 
-        if (sortedLegalResultsWithCompletionDate.size() == 0) {
+        if (sortedResultsWithCompletionDate.size() == 0) {
             return null;
         }
-        return sortedLegalResultsWithCompletionDate.get(0);
+        return sortedResultsWithCompletionDate.get(0);
     }
 
     /**
