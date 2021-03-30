@@ -236,13 +236,20 @@ public abstract class Participation extends DomainObject implements Participatio
      * @return the latest submission or null
      */
     public <T extends Submission> Optional<T> findLatestSubmission() {
+        return findLatestSubmission(false);
+    }
+
+    public <T extends Submission> Optional<T> findLatestSubmission(boolean includeIllegalSubmissions) {
         Set<Submission> submissions = this.submissions;
         if (submissions == null || submissions.size() == 0) {
             return Optional.empty();
         }
 
-        Set<Submission> legalSubmissions = submissions.stream().filter(submission -> !SubmissionType.ILLEGAL.equals(submission.getType())).collect(Collectors.toSet());
-        return (Optional<T>) legalSubmissions.stream().max((s1, s2) -> {
+        if (!includeIllegalSubmissions) {
+            submissions = submissions.stream().filter(submission -> !SubmissionType.ILLEGAL.equals(submission.getType())).collect(Collectors.toSet());
+        }
+
+        return (Optional<T>) submissions.stream().max((s1, s2) -> {
             if (s1.getSubmissionDate() == null || s2.getSubmissionDate() == null) {
                 // this case should not happen, but in the rare case we can compare the ids
                 // newer ids are typically later

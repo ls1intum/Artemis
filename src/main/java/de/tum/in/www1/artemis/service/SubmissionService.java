@@ -183,8 +183,8 @@ public class SubmissionService {
             participations = studentParticipationRepository.findByExerciseIdWithLatestSubmissionWithoutManualResults(exercise.getId());
         }
 
-        List<Submission> submissionsWithoutResult = participations.stream().map(StudentParticipation::findLatestSubmission).filter(Optional::isPresent).map(Optional::get)
-                .collect(Collectors.toList());
+        List<Submission> submissionsWithoutResult = participations.stream().map(participation -> participation.findLatestSubmission(true)).filter(Optional::isPresent)
+                .map(Optional::get).collect(Collectors.toList());
 
         if (correctionRound > 0) {
             // remove submission if user already assessed first correction round
