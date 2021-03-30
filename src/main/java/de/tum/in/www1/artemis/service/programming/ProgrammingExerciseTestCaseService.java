@@ -15,6 +15,7 @@ import de.tum.in.www1.artemis.domain.Feedback;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.enumeration.Visibility;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseTestCaseDTO;
@@ -66,7 +67,7 @@ public class ProgrammingExerciseTestCaseService {
      * Update the updatable attributes of the provided test case dtos. Returns an entry in the set for each test case that could be updated.
      *
      * @param exerciseId            of exercise the test cases belong to.
-     * @param testCaseProgrammingExerciseTestCaseDTOS of the test cases to update the weights and afterDueDate flag of.
+     * @param testCaseProgrammingExerciseTestCaseDTOS of the test cases to update the weights and visibility of.
      * @return the updated test cases.
      * @throws EntityNotFoundException if the programming exercise could not be found.
      * @throws IllegalAccessException if the retriever does not have the permissions to fetch information related to the programming exercise.
@@ -87,7 +88,7 @@ public class ProgrammingExerciseTestCaseService {
 
             ProgrammingExerciseTestCase matchingTestCase = matchingTestCaseOpt.get();
             matchingTestCase.setWeight(programmingExerciseTestCaseDTO.getWeight());
-            matchingTestCase.setAfterDueDate(programmingExerciseTestCaseDTO.isAfterDueDate());
+            matchingTestCase.setVisibility(programmingExerciseTestCaseDTO.getVisibility());
             matchingTestCase.setBonusMultiplier(programmingExerciseTestCaseDTO.getBonusMultiplier());
             matchingTestCase.setBonusPoints(programmingExerciseTestCaseDTO.getBonusPoints());
             updatedTests.add(matchingTestCase);
@@ -135,19 +136,12 @@ public class ProgrammingExerciseTestCaseService {
     public boolean generateTestCasesFromFeedbacks(List<Feedback> feedbacks, ProgrammingExercise exercise) {
         Set<ProgrammingExerciseTestCase> existingTestCases = testCaseRepository.findByExerciseId(exercise.getId());
         // Do not generate test cases for static code analysis feedback
-        Set<ProgrammingExerciseTestCase> testCasesFromFeedbacks = feedbacks.stream().filter(feedback -> !feedback.isStaticCodeAnalysisFeedback())
-                // we use default values for weight, bonus multiplier and bonus points
-                .map(feedback -> new ProgrammingExerciseTestCase().testName(feedback.getText()).weight(1.0).bonusMultiplier(1.0).bonusPoints(0.0).exercise(exercise).active(true))
-                .collect(Collectors.toSet());
+        Set<ProgrammingExerciseTestCase> testCasesFromFeedbacks = getTestCasesFromFeedbacks(feedbacks, exercise);
         // Get test cases that are not already in database - those will be added as new entries.
         Set<ProgrammingExerciseTestCase> newTestCases = testCasesFromFeedbacks.stream().filter(testCase -> existingTestCases.stream().noneMatch(testCase::isSameTestCase))
                 .collect(Collectors.toSet());
         // Get test cases which activate state flag changed.
-        Set<ProgrammingExerciseTestCase> testCasesWithUpdatedActivation = existingTestCases.stream().filter(existing -> {
-            Optional<ProgrammingExerciseTestCase> matchingText = testCasesFromFeedbacks.stream().filter(existing::isSameTestCase).findFirst();
-            // Either the test case was active and is not part of the feedback anymore OR was not active before and is now part of the feedback again.
-            return matchingText.isEmpty() && existing.isActive() || matchingText.isPresent() && matchingText.get().isActive() && !existing.isActive();
-        }).map(existing -> existing.clone().active(!existing.isActive())).collect(Collectors.toSet());
+        Set<ProgrammingExerciseTestCase> testCasesWithUpdatedActivation = getTestCasesWithUpdatedActivation(existingTestCases, testCasesFromFeedbacks);
 
         Set<ProgrammingExerciseTestCase> testCasesToSave = new HashSet<>();
         testCasesToSave.addAll(newTestCases);
@@ -158,6 +152,25 @@ public class ProgrammingExerciseTestCaseService {
             return true;
         }
         return false;
+    }
+
+    private Set<ProgrammingExerciseTestCase> getTestCasesFromFeedbacks(List<Feedback> feedbacks, ProgrammingExercise exercise) {
+        // Filter out sca feedback and create test cases out of the feedbacks
+        return feedbacks.stream().filter(feedback -> !feedback.isStaticCodeAnalysisFeedback())
+                // we use default values for weight, bonus multiplier and bonus points
+                .map(feedback -> new ProgrammingExerciseTestCase().testName(feedback.getText()).weight(1.0).bonusMultiplier(1.0).bonusPoints(0.0).exercise(exercise).active(true)
+                        .visibility(Visibility.ALWAYS))
+                .collect(Collectors.toSet());
+    }
+
+    private Set<ProgrammingExerciseTestCase> getTestCasesWithUpdatedActivation(Set<ProgrammingExerciseTestCase> existingTestCases,
+            Set<ProgrammingExerciseTestCase> testCasesFromFeedbacks) {
+        // We compare the new generated test cases from feedback with the existing test cases from the database
+        return existingTestCases.stream().filter(existing -> {
+            Optional<ProgrammingExerciseTestCase> matchingTestCase = testCasesFromFeedbacks.stream().filter(existing::isSameTestCase).findFirst();
+            // Either the test case was active and is not part of the feedback anymore OR was not active before and is now part of the feedback again.
+            return matchingTestCase.isEmpty() && existing.isActive() || matchingTestCase.isPresent() && matchingTestCase.get().isActive() && !existing.isActive();
+        }).map(existing -> existing.clone().active(!existing.isActive())).collect(Collectors.toSet());
     }
 
     public void logTestCaseReset(User user, ProgrammingExercise exercise, Course course) {

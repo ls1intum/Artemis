@@ -22,7 +22,7 @@ export class ExamExerciseRowButtonsComponent {
     @Input() exercise: Exercise;
     @Input() exam: Exam;
     @Input() exerciseGroupId: number;
-    @Input() latestIndividualEndDate: moment.Moment | null;
+    @Input() latestIndividualEndDate: moment.Moment | undefined;
     @Output() onDeleteExercise = new EventEmitter<void>();
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();

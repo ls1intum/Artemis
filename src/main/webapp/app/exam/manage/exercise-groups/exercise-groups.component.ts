@@ -20,14 +20,16 @@ import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Exam } from 'app/entities/exam.model';
 import { Moment } from 'moment';
-import { ProgrammingExerciseSimulationUtils } from 'app/exercises/programming/shared/utils/programming-exercise-simulation-utils';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { ProgrammingExerciseParticipationType } from 'app/entities/programming-exercise-participation.model';
+import { IconProp } from '@fortawesome/fontawesome-svg-core';
 
 @Component({
     selector: 'jhi-exercise-groups',
     templateUrl: './exercise-groups.component.html',
 })
 export class ExerciseGroupsComponent implements OnInit {
+    participationType = ProgrammingExerciseParticipationType;
     courseId: number;
     course: Course;
     examId: number;
@@ -45,7 +47,6 @@ export class ExerciseGroupsComponent implements OnInit {
         public exerciseService: ExerciseService,
         private examManagementService: ExamManagementService,
         private courseManagementService: CourseManagementService,
-        private programmingExerciseSimulationUtils: ProgrammingExerciseSimulationUtils,
         private jhiEventManager: JhiEventManager,
         private alertService: JhiAlertService,
         private modalService: NgbModal,
@@ -135,7 +136,7 @@ export class ExerciseGroupsComponent implements OnInit {
      * Get an icon for the type of the given exercise.
      * @param exercise {Exercise}
      */
-    exerciseIcon(exercise: Exercise): string {
+    exerciseIcon(exercise: Exercise): IconProp {
         switch (exercise.type) {
             case ExerciseType.QUIZ:
                 return 'check-double';
@@ -250,18 +251,4 @@ export class ExerciseGroupsComponent implements OnInit {
             }
         }
     }
-
-    // ################## ONLY FOR LOCAL TESTING PURPOSE -- START ##################
-
-    /**
-     * Checks if the url includes the string "nolocalsetup', which is an indication
-     * that the particular programming exercise has no local setup
-     * This functionality is only for testing purposes (noVersionControlAndContinuousIntegrationAvailable)
-     * @param urlToCheck the url which will be check if it contains the substring
-     */
-    noVersionControlAndContinuousIntegrationAvailableCheck(urlToCheck: string): boolean {
-        return this.programmingExerciseSimulationUtils.noVersionControlAndContinuousIntegrationAvailableCheck(urlToCheck);
-    }
-
-    // ################## ONLY FOR LOCAL TESTING PURPOSE -- END ##################
 }

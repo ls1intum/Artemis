@@ -19,11 +19,14 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.Authority;
+import de.tum.in.www1.artemis.domain.Organization;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.AuthorityRepository;
 import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.OrganizationRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
+import de.tum.in.www1.artemis.service.connectors.CIUserManagementService;
 import de.tum.in.www1.artemis.service.connectors.VcsUserManagementService;
 import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
 import io.github.jhipster.security.RandomUtil;
@@ -53,18 +56,25 @@ public class UserCreationService {
 
     private final CourseRepository courseRepository;
 
+    private final OrganizationRepository organizationRepository;
+
     private final Optional<VcsUserManagementService> optionalVcsUserManagementService;
+
+    private final Optional<CIUserManagementService> optionalCIUserManagementService;
 
     private final CacheManager cacheManager;
 
     public UserCreationService(UserRepository userRepository, PasswordService passwordService, AuthorityRepository authorityRepository, CourseRepository courseRepository,
-            Optional<VcsUserManagementService> optionalVcsUserManagementService, CacheManager cacheManager) {
+            Optional<VcsUserManagementService> optionalVcsUserManagementService, Optional<CIUserManagementService> optionalCIUserManagementService, CacheManager cacheManager,
+            OrganizationRepository organizationRepository) {
         this.userRepository = userRepository;
         this.passwordService = passwordService;
         this.authorityRepository = authorityRepository;
         this.courseRepository = courseRepository;
         this.optionalVcsUserManagementService = optionalVcsUserManagementService;
+        this.optionalCIUserManagementService = optionalCIUserManagementService;
         this.cacheManager = cacheManager;
+        this.organizationRepository = organizationRepository;
     }
 
     /**
@@ -111,7 +121,8 @@ public class UserCreationService {
         // needs to be mutable --> new HashSet<>(Set.of(...))
         final var authorities = new HashSet<>(Set.of(authority));
         newUser.setAuthorities(authorities);
-
+        Set<Organization> matchingOrganizations = organizationRepository.getAllMatchingOrganizationsByUserEmail(email);
+        newUser.setOrganizations(matchingOrganizations);
         saveUser(newUser);
         log.debug("Created user: {}", newUser);
         return newUser;
@@ -149,11 +160,15 @@ public class UserCreationService {
         if (!useExternalUserManagement) {
             addTutorialGroups(userDTO); // Automatically add interactive tutorial course groups to the new created user if it has been specified
         }
+        Set<Organization> matchingOrganizations = organizationRepository.getAllMatchingOrganizationsByUserEmail(userDTO.getEmail());
+        user.setOrganizations(matchingOrganizations);
         user.setGroups(userDTO.getGroups());
         user.setActivated(true);
         saveUser(user);
 
         optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.createVcsUser(user));
+        optionalCIUserManagementService.ifPresent(ciUserManagementService -> ciUserManagementService.createUser(user));
+
         addUserToGroupsInternal(user, userDTO.getGroups());
 
         log.debug("Created Information for User: {}", user);
@@ -180,6 +195,7 @@ public class UserCreationService {
             saveUser(user);
             log.info("Changed Information for User: {}", user);
             optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.updateVcsUser(user.getLogin(), user, null, null, true));
+            optionalCIUserManagementService.ifPresent(ciUserManagementService -> ciUserManagementService.updateUser(user));
         });
     }
 
@@ -205,6 +221,7 @@ public class UserCreationService {
         if (updatedUserDTO.getPassword() != null) {
             user.setPassword(passwordService.encodePassword(updatedUserDTO.getPassword()));
         }
+        user.setOrganizations(updatedUserDTO.getOrganizations());
         Set<Authority> managedAuthorities = user.getAuthorities();
         managedAuthorities.clear();
         updatedUserDTO.getAuthorities().stream().map(authorityRepository::findById).filter(Optional::isPresent).map(Optional::get).forEach(managedAuthorities::add);

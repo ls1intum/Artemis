@@ -9,7 +9,6 @@ import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
 
-import org.apache.http.HttpException;
 import org.eclipse.jgit.lib.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,6 +25,7 @@ import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.*;
+import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
@@ -34,6 +34,7 @@ import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.service.exam.ExamDateService;
+import de.tum.in.www1.artemis.service.exam.ExamSubmissionService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.websocket.programmingSubmission.BuildTriggerWebsocketError;
@@ -57,6 +58,8 @@ public class ProgrammingSubmissionService extends SubmissionService {
 
     private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
 
+    private final ExamSubmissionService examSubmissionService;
+
     private final GroupNotificationService groupNotificationService;
 
     private final WebsocketMessagingService websocketMessagingService;
@@ -77,9 +80,10 @@ public class ProgrammingSubmissionService extends SubmissionService {
             GroupNotificationService groupNotificationService, SubmissionRepository submissionRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
             WebsocketMessagingService websocketMessagingService, Optional<VersionControlService> versionControlService, ResultRepository resultRepository,
             Optional<ContinuousIntegrationService> continuousIntegrationService, ParticipationService participationService, SimpMessageSendingOperations messagingTemplate,
-            ProgrammingExerciseParticipationService programmingExerciseParticipationService, GitService gitService, StudentParticipationRepository studentParticipationRepository,
-            FeedbackRepository feedbackRepository, AuditEventRepository auditEventRepository, ExamDateService examDateService, CourseRepository courseRepository,
-            ParticipationRepository participationRepository, ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository) {
+            ProgrammingExerciseParticipationService programmingExerciseParticipationService, ExamSubmissionService examSubmissionService, GitService gitService,
+            StudentParticipationRepository studentParticipationRepository, FeedbackRepository feedbackRepository, AuditEventRepository auditEventRepository,
+            ExamDateService examDateService, CourseRepository courseRepository, ParticipationRepository participationRepository,
+            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository) {
         super(submissionRepository, userRepository, authCheckService, resultRepository, studentParticipationRepository, participationService, feedbackRepository, examDateService,
                 courseRepository, participationRepository);
         this.programmingSubmissionRepository = programmingSubmissionRepository;
@@ -90,6 +94,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
         this.continuousIntegrationService = continuousIntegrationService;
         this.messagingTemplate = messagingTemplate;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
+        this.examSubmissionService = examSubmissionService;
         this.gitService = gitService;
         this.resultRepository = resultRepository;
         this.auditEventRepository = auditEventRepository;
@@ -147,12 +152,13 @@ public class ProgrammingSubmissionService extends SubmissionService {
             // as the VCS-server performs the request
             SecurityUtils.setAuthorizationObject();
 
+            // TODO: is this still allowed for an exam? what do we want to do here?
             participationService.resumeProgrammingExercise((ProgrammingExerciseStudentParticipation) programmingExerciseParticipation);
             // Note: in this case we do not need an empty commit: when we trigger the build manually (below), subsequent commits will work correctly
             try {
                 continuousIntegrationService.get().triggerBuild(programmingExerciseParticipation);
             }
-            catch (HttpException ex) {
+            catch (ContinuousIntegrationException ex) {
                 // TODO: This case is currently not handled. The correct handling would be creating the submission and informing the user that the build trigger failed.
             }
         }
@@ -165,13 +171,15 @@ public class ProgrammingSubmissionService extends SubmissionService {
 
         programmingSubmission = new ProgrammingSubmission();
         programmingSubmission.setCommitHash(commit.getCommitHash());
-        log.info("create new programmingSubmission with commitHash: " + commit.getCommitHash() + " for participation " + participationId);
+        log.info("Create new programmingSubmission with commitHash: " + commit.getCommitHash() + " for participation " + participationId);
 
         programmingSubmission.setSubmitted(true);
         programmingSubmission.setSubmissionDate(ZonedDateTime.now());
         programmingSubmission.setType(SubmissionType.MANUAL);
-
         programmingExerciseParticipation.addSubmission(programmingSubmission);
+
+        // Students are not allowed to submit a programming exercise after the exam due date, if this happens we set the Submission to ILLEGAL
+        checkForIllegalExamSubmission(programmingExerciseParticipation, programmingSubmission);
 
         programmingSubmission = programmingSubmissionRepository.save(programmingSubmission);
         // NOTE: we don't need to save the participation here, this might lead to concurrency problems when doing the empty commit during resume exercise!
@@ -179,12 +187,38 @@ public class ProgrammingSubmissionService extends SubmissionService {
     }
 
     /**
+     * We check if a submission for an exam programming exercise is after the individual end date and a student is not allowed to submit anymore.
+     * If this is the case, the submission is set to {@link SubmissionType#ILLEGAL}.
+     *
+     * @param programmingExerciseParticipation current participation of the exam exercise
+     * @param programmingSubmission            new created submission of the repository commit
+     */
+    private void checkForIllegalExamSubmission(ProgrammingExerciseParticipation programmingExerciseParticipation, ProgrammingSubmission programmingSubmission) {
+        ProgrammingExercise programmingExercise = programmingExerciseParticipation.getProgrammingExercise();
+        boolean isExamExercise = programmingExercise.isExamExercise();
+        // Students are not allowed to submit a programming exercise after the exam due date, if this happens we set the Submission to ILLEGAL
+        if (isExamExercise && programmingExerciseParticipation instanceof ProgrammingExerciseStudentParticipation) {
+            var optionalStudent = ((ProgrammingExerciseStudentParticipation) programmingExerciseParticipation).getStudent();
+            Optional<User> optionalStudentWithGroups = optionalStudent.isPresent() ? userRepository.findOneWithGroupsAndAuthoritiesByLogin(optionalStudent.get().getLogin())
+                    : Optional.empty();
+            if (optionalStudentWithGroups.isPresent() && !examSubmissionService.isAllowedToSubmitDuringExam(programmingExercise, optionalStudentWithGroups.get())) {
+                final String message = "The student " + optionalStudentWithGroups.get().getLogin()
+                        + " just illegally submitted code after the allowed individual due date (including the grace period) in the participation "
+                        + programmingExerciseParticipation.getId() + " for the exam programming exercise " + programmingExercise.getId();
+                programmingSubmission.setType(SubmissionType.ILLEGAL);
+                groupNotificationService.notifyInstructorGroupAboutIllegalSubmissionsForExercise(programmingExercise, message);
+                log.warn(message);
+            }
+        }
+    }
+
+    /**
      * A pending submission is one that does not have a result yet.
      *
      * @param participationId the id of the participation get the latest submission for
-     * @param filterGraded if true will not use the latest submission, but the latest graded submission.
+     * @param filterGraded    if true will not use the latest submission, but the latest graded submission.
      * @return the latest pending submission if exists or null.
-     * @throws EntityNotFoundException if the participation for the given id can't be found.
+     * @throws EntityNotFoundException  if the participation for the given id can't be found.
      * @throws IllegalArgumentException if the participation for the given id is not a programming exercise participation.
      */
     public Optional<ProgrammingSubmission> getLatestPendingSubmission(Long participationId, boolean filterGraded) throws EntityNotFoundException, IllegalArgumentException {
@@ -447,7 +481,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
             continuousIntegrationService.get().triggerBuild((ProgrammingExerciseParticipation) submission.getParticipation());
             notifyUserAboutSubmission(submission);
         }
-        catch (HttpException e) {
+        catch (Exception e) {
             BuildTriggerWebsocketError error = new BuildTriggerWebsocketError(e.getMessage(), submission.getParticipation().getId());
             notifyUserAboutSubmissionError(submission, error);
         }
@@ -468,7 +502,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
             continuousIntegrationService.get().triggerBuild(programmingExercise.getSolutionParticipation());
             continuousIntegrationService.get().triggerBuild(programmingExercise.getTemplateParticipation());
         }
-        catch (HttpException ex) {
+        catch (ContinuousIntegrationException ex) {
             log.error("Could not trigger build for solution repository after test case update for programming exercise with id " + programmingExerciseId);
         }
     }
@@ -640,18 +674,6 @@ public class ProgrammingSubmissionService extends SubmissionService {
             return Optional.of(programmingSubmission);
         }
         return Optional.empty();
-    }
-
-    /**
-     * Get the programming submission with the given id from the database. The submission is loaded together with exercise it belongs to, its result, the feedback of the result and the assessor of the
-     * result. Throws an EntityNotFoundException if no submission could be found for the given id.
-     *
-     * @param submissionId the id of the submission that should be loaded from the database
-     * @return the programming submission with the given id
-     */
-    public ProgrammingSubmission findByIdWithEagerResultsFeedbacksAssessor(long submissionId) {
-        return programmingSubmissionRepository.findWithEagerResultsFeedbacksAssessorById(submissionId)
-                .orElseThrow(() -> new EntityNotFoundException("Programming submission with id \"" + submissionId + "\" does not exist"));
     }
 
     /**

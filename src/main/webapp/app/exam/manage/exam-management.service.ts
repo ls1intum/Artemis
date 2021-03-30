@@ -65,6 +65,16 @@ export class ExamManagementService {
     }
 
     /**
+     * Fetches the title of the exam with the given id
+     *
+     * @param examId the id of the exam
+     * @return the title of the exam in an HttpResponse, or an HttpErrorResponse on error
+     */
+    getTitle(examId: number): Observable<HttpResponse<string>> {
+        return this.http.get(`api/exams/${examId}/title`, { observe: 'response', responseType: 'text' });
+    }
+
+    /**
      * Find all scores of an exam.
      * @param courseId The id of the course.
      * @param examId The id of the exam.
@@ -189,8 +199,9 @@ export class ExamManagementService {
     addAllStudentsOfCourseToExam(courseId: number, examId: number): Observable<HttpResponse<StudentDTO[]>> {
         return this.http.post<any>(`${this.resourceUrl}/${courseId}/exams/${examId}/register-course-students`, { observe: 'response' });
     }
+
     /**
-     * Remove a student to the registered users for an exam
+     * Remove a student from the registered users for an exam
      * @param courseId The course id
      * @param examId The id of the exam from which to remove the student
      * @param studentLogin Login of the student
@@ -199,6 +210,20 @@ export class ExamManagementService {
     removeStudentFromExam(courseId: number, examId: number, studentLogin: string, withParticipationsAndSubmission = false): Observable<HttpResponse<any>> {
         const options = createRequestOption({ withParticipationsAndSubmission });
         return this.http.delete<any>(`${this.resourceUrl}/${courseId}/exams/${examId}/students/${studentLogin}`, {
+            params: options,
+            observe: 'response',
+        });
+    }
+
+    /**
+     * Remove all students from an exam
+     * @param courseId The course id
+     * @param examId The id of the exam from which to remove the student
+     * @param withParticipationsAndSubmission if participations and Submissions should also be removed
+     */
+    removeAllStudentsFromExam(courseId: number, examId: number, withParticipationsAndSubmission = false) {
+        const options = createRequestOption({ withParticipationsAndSubmission });
+        return this.http.delete<any>(`${this.resourceUrl}/${courseId}/exams/${examId}/students`, {
             params: options,
             observe: 'response',
         });
@@ -369,5 +394,27 @@ export class ExamManagementService {
                     }),
                 ),
             );
+    }
+
+    /**
+     * Downloads the exam archive of the specified examId. Returns an error
+     * if the archive does not exist.
+     * @param courseId
+     * @param examId The id of the exam
+     */
+    downloadExamArchive(courseId: number, examId: number): Observable<HttpResponse<Blob>> {
+        return this.http.get(`${this.resourceUrl}/${courseId}/exams/${examId}/download-archive`, {
+            observe: 'response',
+            responseType: 'blob',
+        });
+    }
+
+    /**
+     * Archives the exam of the specified examId.
+     * @param courseId the id of the course of the exam
+     * @param examId The id of the exam to archive
+     */
+    archiveExam(courseId: number, examId: number): Observable<HttpResponse<any>> {
+        return this.http.put(`${this.resourceUrl}/${courseId}/exams/${examId}/archive`, {}, { observe: 'response' });
     }
 }

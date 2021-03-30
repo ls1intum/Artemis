@@ -2,10 +2,9 @@ package de.tum.in.www1.artemis.web.rest.lecture;
 
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 
-import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,15 +13,14 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import de.tum.in.www1.artemis.domain.LearningGoal;
 import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
 import de.tum.in.www1.artemis.domain.lecture.ExerciseUnit;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
-import de.tum.in.www1.artemis.repository.LearningGoalRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.LectureUnitRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.LectureUnitService;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
 @RestController
@@ -42,14 +40,14 @@ public class LectureUnitResource {
 
     private final LectureRepository lectureRepository;
 
-    private final LearningGoalRepository learningGoalRepository;
+    private final LectureUnitService lectureUnitService;
 
     public LectureUnitResource(AuthorizationCheckService authorizationCheckService, LectureRepository lectureRepository, LectureUnitRepository lectureUnitRepository,
-            LearningGoalRepository learningGoalRepository) {
+            LectureUnitService lectureUnitService) {
         this.authorizationCheckService = authorizationCheckService;
         this.lectureUnitRepository = lectureUnitRepository;
         this.lectureRepository = lectureRepository;
-        this.learningGoalRepository = learningGoalRepository;
+        this.lectureUnitService = lectureUnitService;
     }
 
     /**
@@ -125,30 +123,6 @@ public class LectureUnitResource {
         if (!authorizationCheckService.isAtLeastInstructorInCourse(lectureUnit.getLecture().getCourse(), null)) {
             return forbidden();
         }
-
-        // we have to get the lecture from the db so that that the lecture units are included
-        Optional<Lecture> lectureOptional = lectureRepository.findByIdWithStudentQuestionsAndLectureUnitsAndLearningGoals(lectureUnit.getLecture().getId());
-        if (lectureOptional.isEmpty()) {
-            return notFound();
-        }
-        Lecture lecture = lectureOptional.get();
-
-        // update associated learning goals
-        Set<LearningGoal> associatedLearningGoals = new HashSet<>(lectureUnit.getLearningGoals());
-        for (LearningGoal learningGoal : associatedLearningGoals) {
-            Optional<LearningGoal> learningGoalFromDbOptional = learningGoalRepository.findByIdWithLectureUnitsBidirectional(learningGoal.getId());
-            if (learningGoalFromDbOptional.isPresent()) {
-                LearningGoal learningGoalFromDb = learningGoalFromDbOptional.get();
-                learningGoalFromDb.removeLectureUnit(lectureUnit);
-                learningGoalRepository.save(learningGoalFromDb);
-            }
-        }
-
-        List<LectureUnit> filteredLectureUnits = lecture.getLectureUnits();
-        filteredLectureUnits.removeIf(lu -> lu.getId().equals(lectureUnitId));
-        lecture.setLectureUnits(filteredLectureUnits);
-        lectureRepository.save(lecture);
-
         String lectureUnitName;
 
         if (lectureUnit instanceof ExerciseUnit && ((ExerciseUnit) lectureUnit).getExercise() != null) {
@@ -160,6 +134,11 @@ public class LectureUnitResource {
         else {
             lectureUnitName = lectureUnit.getName();
         }
+        if (Objects.isNull(lectureUnitName)) {
+            lectureUnitName = "lectureUnitWithoutName";
+        }
+        lectureUnitService.removeLectureUnit(lectureUnit);
+
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, lectureUnitName)).build();
     }
 

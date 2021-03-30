@@ -6,6 +6,8 @@ import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.*;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
@@ -15,6 +17,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
@@ -42,6 +45,9 @@ import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.dto.*;
 
 public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+
+    @Value("${artemis.course-archives-path}")
+    private String examsArchivePath;
 
     @Autowired
     JiraRequestMockProvider jiraRequestMockProvider;
@@ -101,7 +107,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     private Exam exam2;
 
-    private int numberOfStudents = 10;
+    private final int numberOfStudents = 10;
 
     private User instructor;
 
@@ -130,7 +136,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testRegisterUserInExam_addedToCourseStudentsGroup() throws Exception {
         jiraRequestMockProvider.enableMockingOfRequests();
-        jiraRequestMockProvider.mockAddUserToGroup(course1.getStudentGroupName());
+        jiraRequestMockProvider.mockAddUserToGroup(course1.getStudentGroupName(), false);
 
         List<User> studentsInCourseBefore = userRepo.findAllInGroupWithAuthorities(course1.getStudentGroupName());
         request.postWithoutLocation("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/students/student42", null, HttpStatus.OK, null);
@@ -194,14 +200,14 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         doReturn(Optional.of(ldapUser100Dto)).when(ldapUserService).findByRegistrationNumber(registrationNumber100);
 
         // first and second mocked calls are expected to add student 5 and 99 to the course students
-        jiraRequestMockProvider.mockAddUserToGroup(course1.getStudentGroupName());
-        jiraRequestMockProvider.mockAddUserToGroup(course1.getStudentGroupName());
+        jiraRequestMockProvider.mockAddUserToGroup(course1.getStudentGroupName(), false);
+        jiraRequestMockProvider.mockAddUserToGroup(course1.getStudentGroupName(), false);
         // third mocked call expected to create student 100
         jiraRequestMockProvider.mockCreateUserInExternalUserManagement(ldapUser100Dto.getUsername(), ldapUser100Dto.getFirstName() + " " + ldapUser100Dto.getLastName(),
                 ldapUser100Dto.getEmail());
         // the last two mocked calls are expected to add students 100, 6, 7, 8, and 9 to the course student group
         for (int i = 0; i < 5; i++) {
-            jiraRequestMockProvider.mockAddUserToGroup(course1.getStudentGroupName());
+            jiraRequestMockProvider.mockAddUserToGroup(course1.getStudentGroupName(), false);
         }
 
         var student99 = ModelFactory.generateActivatedUser("student99");     // not registered for the course
@@ -489,6 +495,107 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
         // Make sure delete also works if so many objects have been created before
         request.delete("/api/courses/" + course1.getId() + "/exams/" + exam.getId(), HttpStatus.OK);
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    public void testRemovingAllStudents() throws Exception {
+        Exam exam = database.setupExamWithExerciseGroupsExercisesRegisteredStudents(course1);
+
+        // Generate student exams
+        List<StudentExam> studentExams = request.postListWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/generate-student-exams",
+                Optional.empty(), StudentExam.class, HttpStatus.OK);
+        assertThat(studentExams).hasSize(4);
+        assertThat(exam.getRegisteredUsers().size()).isEqualTo(4);
+
+        // /courses/{courseId}/exams/{examId}/student-exams/start-exercises
+        Integer numberOfGeneratedParticipations = request.postWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/student-exams/start-exercises",
+                Optional.empty(), Integer.class, HttpStatus.OK);
+
+        assertThat(numberOfGeneratedParticipations).isEqualTo(16);
+        // Fetch student exams
+        List<StudentExam> studentExamsDB = request.getList("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/student-exams", HttpStatus.OK, StudentExam.class);
+        assertThat(studentExamsDB).hasSize(4);
+        List<StudentParticipation> participationList = new ArrayList<>();
+        Exercise[] exercises = examRepository.findAllExercisesByExamId(exam.getId()).toArray(new Exercise[0]);
+        for (Exercise value : exercises) {
+            participationList.addAll(studentParticipationRepository.findByExerciseId(value.getId()));
+        }
+        assertThat(participationList).hasSize(16);
+
+        // todo es sollte welche gebe particpation aber keinen submissions leider
+        // remove all students
+        request.delete("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/students", HttpStatus.OK);
+
+        // Get the exam with all registered users
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("withStudents", "true");
+        Exam storedExam = request.get("/api/courses/" + course1.getId() + "/exams/" + exam.getId(), HttpStatus.OK, Exam.class, params);
+        assertThat(storedExam.getRegisteredUsers().size()).isEqualTo(0);
+
+        // Fetch student exams
+        studentExamsDB = request.getList("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/student-exams", HttpStatus.OK, StudentExam.class);
+        assertThat(studentExamsDB).hasSize(0);
+
+        // Fetch participations
+        exercises = examRepository.findAllExercisesByExamId(exam.getId()).toArray(new Exercise[0]);
+        participationList = new ArrayList<>();
+        for (Exercise exercise : exercises) {
+            participationList.addAll(studentParticipationRepository.findByExerciseId(exercise.getId()));
+        }
+        assertThat(participationList).hasSize(16);
+
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    public void testRemovingAllStudentsAndParticipations() throws Exception {
+        Exam exam = database.setupExamWithExerciseGroupsExercisesRegisteredStudents(course1);
+
+        // Generate student exams
+        List<StudentExam> studentExams = request.postListWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/generate-student-exams",
+                Optional.empty(), StudentExam.class, HttpStatus.OK);
+        assertThat(studentExams).hasSize(4);
+        assertThat(exam.getRegisteredUsers().size()).isEqualTo(4);
+
+        // /courses/{courseId}/exams/{examId}/student-exams/start-exercises
+        Integer numberOfGeneratedParticipations = request.postWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/student-exams/start-exercises",
+                Optional.empty(), Integer.class, HttpStatus.OK);
+
+        assertThat(numberOfGeneratedParticipations).isEqualTo(16);
+        // Fetch student exams
+        List<StudentExam> studentExamsDB = request.getList("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/student-exams", HttpStatus.OK, StudentExam.class);
+        assertThat(studentExamsDB).hasSize(4);
+        List<StudentParticipation> participationList = new ArrayList<>();
+        Exercise[] exercises = examRepository.findAllExercisesByExamId(exam.getId()).toArray(new Exercise[0]);
+        for (Exercise value : exercises) {
+            participationList.addAll(studentParticipationRepository.findByExerciseId(value.getId()));
+        }
+        assertThat(participationList).hasSize(16);
+
+        // todo es sollte welche gebe particpation aber keinen submissions leider
+        // remove all students
+        var paramsParticipations = new LinkedMultiValueMap<String, String>();
+        paramsParticipations.add("withParticipationsAndSubmission", "true");
+        request.delete("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/students", HttpStatus.OK, paramsParticipations);
+
+        // Get the exam with all registered users
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("withStudents", "true");
+        Exam storedExam = request.get("/api/courses/" + course1.getId() + "/exams/" + exam.getId(), HttpStatus.OK, Exam.class, params);
+        assertThat(storedExam.getRegisteredUsers().size()).isEqualTo(0);
+
+        // Fetch student exams
+        studentExamsDB = request.getList("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/student-exams", HttpStatus.OK, StudentExam.class);
+        assertThat(studentExamsDB).hasSize(0);
+
+        // Fetch participations
+        exercises = examRepository.findAllExercisesByExamId(exam.getId()).toArray(new Exercise[0]);
+        participationList = new ArrayList<>();
+        for (Exercise exercise : exercises) {
+            participationList.addAll(studentParticipationRepository.findByExerciseId(exercise.getId()));
+        }
+        assertThat(participationList).hasSize(0);
     }
 
     @Test
@@ -1587,19 +1694,152 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     }
 
     @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testArchiveExamAsInstructor() throws Exception {
+        Course course = courseRepo.save(database.addEmptyCourse());
+
+        ExerciseGroup exerciseGroup1 = new ExerciseGroup();
+
+        Exam exam = database.addExam(course);
+        exam.setEndDate(ZonedDateTime.now().minusMinutes(5));
+        exam.addExerciseGroup(exerciseGroup1);
+        exam = examRepository.save(exam);
+
+        Exam examWithExerciseGroups = examRepository.findWithExerciseGroupsAndExercisesById(exam.getId()).get();
+        exerciseGroup1 = examWithExerciseGroups.getExerciseGroups().get(0);
+
+        ProgrammingExercise programmingExercise = ModelFactory.generateProgrammingExerciseForExam(exerciseGroup1);
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+        exerciseGroup1.addExercise(programmingExercise);
+
+        exerciseGroupRepository.save(exerciseGroup1);
+
+        request.put("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/archive", null, HttpStatus.OK);
+
+        final var examId = exam.getId();
+        await().until(() -> examRepository.findById(examId).get().getExamArchivePath() != null);
+
+        var updatedExam = examRepository.findById(examId).get();
+        assertThat(updatedExam.getExamArchivePath()).isNotEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testArchiveExamAsStudent_forbidden() throws Exception {
+        Course course = database.addEmptyCourse();
+        course.setEndDate(ZonedDateTime.now().minusMinutes(5));
+        course = courseRepo.save(course);
+
+        Exam exam = database.addExam(course);
+        exam = examRepository.save(exam);
+
+        request.put("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/archive", null, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testArchiveExamBeforeEndDate_badRequest() throws Exception {
+        Course course = database.addEmptyCourse();
+        course.setEndDate(ZonedDateTime.now().plusMinutes(5));
+        course = courseRepo.save(course);
+
+        Exam exam = database.addExam(course);
+        exam = examRepository.save(exam);
+
+        request.put("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/archive", null, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testDownloadExamArchiveAsStudent_forbidden() throws Exception {
+        request.get("/api/courses/" + 1 + "/exams/" + 1 + "/download-archive", HttpStatus.FORBIDDEN, String.class);
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testDownloadExamArchiveAsTutor_forbidden() throws Exception {
+        request.get("/api/courses/" + 1 + "/exams/" + 1 + "/download-archive", HttpStatus.FORBIDDEN, String.class);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testDownloadExamArchiveAsInstructor_not_found() throws Exception {
+        // Create an exam with no archive
+        Course course = database.createCourse();
+        course = courseRepo.save(course);
+
+        // Return not found if the exam doesn't exist
+        var downloadedArchive = request.get("/api/courses/" + course.getId() + "/exams/" + 12 + "/download-archive", HttpStatus.NOT_FOUND, String.class);
+        assertThat(downloadedArchive).isNull();
+
+        // Returns not found if there is no archive
+        var exam = database.addExam(course);
+        downloadedArchive = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/download-archive", HttpStatus.NOT_FOUND, String.class);
+        assertThat(downloadedArchive).isNull();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testDownloadExamArchiveAsInstructortNotInCourse_forbidden() throws Exception {
+        // Create an exam with no archive
+        Course course = database.createCourse();
+        course.setInstructorGroupName("some-group");
+        course = courseRepo.save(course);
+        var exam = database.addExam(course);
+
+        request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/download-archive", HttpStatus.FORBIDDEN, String.class);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testDownloadExamArchiveAsInstructor() throws Exception {
+        // Dummy exam archive
+        Path examArchivePath = Path.of(examsArchivePath, "some-exam-archive.zip");
+        if (!Files.exists(examArchivePath)) {
+            Files.createDirectories(Path.of(examsArchivePath));
+            Files.createFile(examArchivePath);
+        }
+
+        // Generate an exam that has an archive
+        Course course = database.createCourse();
+        course = courseRepo.save(course);
+        var exam = database.addExam(course);
+        exam.setExamArchivePath(examArchivePath.toString());
+        examRepository.save(exam);
+
+        var downloadedArchive = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/download-archive", HttpStatus.OK, String.class);
+        assertThat(downloadedArchive).isNotNull();
+
+        Files.delete(examArchivePath);
+    }
+
+    @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
-    public void testGetStatsForExamAssessmentDashboard() throws Exception {
+    public void testGetStatsForExamAssessmentDashboardOneCorrectionRound() throws Exception {
+        testGetStatsForExamAssessmentDashboard(1);
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testGetStatsForExamAssessmentDashboardTwoCorrectionRounds() throws Exception {
+        testGetStatsForExamAssessmentDashboard(2);
+    }
+
+    public void testGetStatsForExamAssessmentDashboard(int numberOfCorrectionRounds) throws Exception {
         User examInstructor = userRepo.findOneByLogin("instructor1").get();
+        User examTutor1 = userRepo.findOneByLogin("tutor1").get();
+        User examTutor2 = userRepo.findOneByLogin("tutor2").get();
+
         var examVisibleDate = ZonedDateTime.now().minusMinutes(5);
         var examStartDate = ZonedDateTime.now().plusMinutes(5);
         var examEndDate = ZonedDateTime.now().plusMinutes(20);
         Course course = database.addEmptyCourse();
         Exam exam = database.addExam(course, examVisibleDate, examStartDate, examEndDate);
-
+        exam.setNumberOfCorrectionRoundsInExam(numberOfCorrectionRounds);
+        exam = examRepository.save(exam);
         exam = database.addExerciseGroupsAndExercisesToExam(exam, false);
 
-        var stats = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/stats-for-exam-assessment-dashboard", HttpStatus.OK,
-                StatsForInstructorDashboardDTO.class);
+        var stats = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/stats-for-exam-assessment-dashboard", HttpStatus.OK, StatsForDashboardDTO.class);
         assertThat(stats.getNumberOfSubmissions()).isInstanceOf(DueDateStat.class);
         assertThat(stats.getTutorLeaderboardEntries()).isInstanceOf(List.class);
         assertThat(stats.getNumberOfAssessmentsOfCorrectionRounds()).isInstanceOf(DueDateStat[].class);
@@ -1657,8 +1897,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         }
 
         // check the stats again - check the count of submitted submissions
-        stats = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/stats-for-exam-assessment-dashboard", HttpStatus.OK,
-                StatsForInstructorDashboardDTO.class);
+        stats = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/stats-for-exam-assessment-dashboard", HttpStatus.OK, StatsForDashboardDTO.class);
         assertThat(stats.getNumberOfAssessmentLocks()).isEqualTo(0L);
         // 75 = (15 users * 5 exercises); quiz submissions are not counted
         assertThat(stats.getNumberOfSubmissions().getInTime()).isEqualTo(75L);
@@ -1676,9 +1915,90 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
                 assertThat(participation.getSubmissions()).hasSize(1);
                 submission = participation.getSubmissions().iterator().next();
                 // Create results
-                var result = new Result().score(resultScore).rated(true).resultString("Good");
+                var result = new Result().score(resultScore).resultString("Good");
                 if (exercise instanceof QuizExercise) {
                     result.completionDate(ZonedDateTime.now().minusMinutes(4));
+                    result.setRated(true);
+                }
+                result.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+                result.setParticipation(participation);
+                result.setAssessor(examTutor1);
+                result = resultRepository.save(result);
+                result.setSubmission(submission);
+                submission.addResult(result);
+                submissionRepository.save(submission);
+            }
+        }
+        // check the stats again
+        database.changeUser("tutor1");
+        stats = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/stats-for-exam-assessment-dashboard", HttpStatus.OK, StatsForDashboardDTO.class);
+        assertThat(stats.getNumberOfAssessmentLocks()).isEqualTo(75L);
+        // 75 = (15 users * 5 exercises); quiz submissions are not counted
+        assertThat(stats.getNumberOfSubmissions().getInTime()).isEqualTo(75L);
+        // the 15 quiz submissions are already assessed
+        assertThat(stats.getNumberOfAssessmentsOfCorrectionRounds()[0].getInTime()).isEqualTo(15L);
+        assertThat(stats.getNumberOfComplaints()).isEqualTo(0L);
+        assertThat(stats.getTotalNumberOfAssessmentLocks()).isEqualTo(75L);
+
+        // test the query needed for assessment information
+        database.changeUser("tutor2");
+        exam.getExerciseGroups().forEach(group -> {
+            var locks = group.getExercises().stream().map(
+                    exercise -> resultRepository.countNumberOfLockedAssessmentsByOtherTutorsForExamExerciseForCorrectionRounds(exercise, numberOfCorrectionRounds, examTutor2)[0]
+                            .getInTime())
+                    .reduce((x, y) -> x + y).get();
+            if (group.getExercises().stream().filter(exercise -> !(exercise instanceof QuizExercise)).count() != 0)
+                assertThat(locks).isEqualTo(15L);
+        });
+
+        database.changeUser("instructor1");
+        lockedSubmissions = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/lockedSubmissions", HttpStatus.OK, List.class);
+        assertThat(lockedSubmissions.size()).isEqualTo(75);
+
+        // Finish assessment of all submissions
+        for (var exercise : exercisesInExam) {
+            for (var participation : exercise.getStudentParticipations()) {
+                Submission submission;
+                assertThat(participation.getSubmissions()).hasSize(1);
+                submission = participation.getSubmissions().iterator().next();
+                var result = submission.getLatestResult().completionDate(ZonedDateTime.now().minusMinutes(5));
+                result.setRated(true);
+                resultRepository.save(result);
+            }
+        }
+
+        // check the stats again
+        stats = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/stats-for-exam-assessment-dashboard", HttpStatus.OK, StatsForDashboardDTO.class);
+        assertThat(stats.getNumberOfAssessmentLocks()).isEqualTo(0L);
+        // 75 = (15 users * 5 exercises); quiz submissions are not counted
+        assertThat(stats.getNumberOfSubmissions().getInTime()).isEqualTo(75L);
+        // 75 + the 15 quiz submissions
+        assertThat(stats.getNumberOfAssessmentsOfCorrectionRounds()[0].getInTime()).isEqualTo(90L);
+        assertThat(stats.getNumberOfComplaints()).isEqualTo(0L);
+        assertThat(stats.getTotalNumberOfAssessmentLocks()).isEqualTo(0L);
+
+        lockedSubmissions = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/lockedSubmissions", HttpStatus.OK, List.class);
+        assertThat(lockedSubmissions.size()).isEqualTo(0);
+        if (numberOfCorrectionRounds == 2) {
+            lockAndAssessForSecondCorrection(exam, course, exercisesInExam, numberOfCorrectionRounds);
+        }
+    }
+
+    public void lockAndAssessForSecondCorrection(Exam exam, Course course, List<Exercise> exercisesInExam, int numberOfCorrectionRounds) throws Exception {
+        // Lock all submissions
+        User examInstructor = userRepo.findOneByLogin("instructor1").get();
+        User examTutor1 = userRepo.findOneByLogin("tutor1").get();
+        User examTutor2 = userRepo.findOneByLogin("tutor2").get();
+
+        for (var exercise : exercisesInExam) {
+            for (var participation : exercise.getStudentParticipations()) {
+                Submission submission;
+                assertThat(participation.getSubmissions()).hasSize(1);
+                submission = participation.getSubmissions().iterator().next();
+                // Create results
+                var result = new Result().score(50D).rated(true).resultString("Good");
+                if (exercise instanceof QuizExercise) {
+                    result.completionDate(ZonedDateTime.now().minusMinutes(3));
                 }
                 result.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
                 result.setParticipation(participation);
@@ -1690,34 +2010,53 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
             }
         }
         // check the stats again
-        stats = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/stats-for-exam-assessment-dashboard", HttpStatus.OK,
-                StatsForInstructorDashboardDTO.class);
+        database.changeUser("instructor1");
+        var stats = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/stats-for-exam-assessment-dashboard", HttpStatus.OK, StatsForDashboardDTO.class);
         assertThat(stats.getNumberOfAssessmentLocks()).isEqualTo(75L);
         // 75 = (15 users * 5 exercises); quiz submissions are not counted
         assertThat(stats.getNumberOfSubmissions().getInTime()).isEqualTo(75L);
-        // the 15 quiz submissions are already assessed
-        assertThat(stats.getNumberOfAssessmentsOfCorrectionRounds()[0].getInTime()).isEqualTo(15L);
+        // the 15 quiz submissions are already assessed - and all are assessed in the first correctionRound
+        assertThat(stats.getNumberOfAssessmentsOfCorrectionRounds()[0].getInTime()).isEqualTo(90L);
+        assertThat(stats.getNumberOfAssessmentsOfCorrectionRounds()[1].getInTime()).isEqualTo(15L);
         assertThat(stats.getNumberOfComplaints()).isEqualTo(0L);
         assertThat(stats.getTotalNumberOfAssessmentLocks()).isEqualTo(75L);
 
-        lockedSubmissions = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/lockedSubmissions", HttpStatus.OK, List.class);
+        // test the query needed for assessment information
+        database.changeUser("tutor2");
+        exam.getExerciseGroups().forEach(group -> {
+            var locksRound1 = group.getExercises().stream().map(
+                    exercise -> resultRepository.countNumberOfLockedAssessmentsByOtherTutorsForExamExerciseForCorrectionRounds(exercise, numberOfCorrectionRounds, examTutor2)[0]
+                            .getInTime())
+                    .reduce(Long::sum).get();
+            if (group.getExercises().stream().anyMatch(exercise -> !(exercise instanceof QuizExercise)))
+                assertThat(locksRound1).isEqualTo(0L);
+
+            var locksRound2 = group.getExercises().stream().map(
+                    exercise -> resultRepository.countNumberOfLockedAssessmentsByOtherTutorsForExamExerciseForCorrectionRounds(exercise, numberOfCorrectionRounds, examTutor2)[1]
+                            .getInTime())
+                    .reduce(Long::sum).get();
+            if (group.getExercises().stream().anyMatch(exercise -> !(exercise instanceof QuizExercise)))
+                assertThat(locksRound2).isEqualTo(15L);
+        });
+
+        database.changeUser("instructor1");
+        var lockedSubmissions = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/lockedSubmissions", HttpStatus.OK, List.class);
         assertThat(lockedSubmissions.size()).isEqualTo(75);
 
-        // Lock all submissions
+        // Finish assessment of all submissions
         for (var exercise : exercisesInExam) {
             for (var participation : exercise.getStudentParticipations()) {
                 Submission submission;
                 assertThat(participation.getSubmissions()).hasSize(1);
                 submission = participation.getSubmissions().iterator().next();
                 var result = submission.getLatestResult().completionDate(ZonedDateTime.now().minusMinutes(5));
+                result.setRated(true);
                 resultRepository.save(result);
-
             }
         }
 
         // check the stats again
-        stats = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/stats-for-exam-assessment-dashboard", HttpStatus.OK,
-                StatsForInstructorDashboardDTO.class);
+        stats = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/stats-for-exam-assessment-dashboard", HttpStatus.OK, StatsForDashboardDTO.class);
         assertThat(stats.getNumberOfAssessmentLocks()).isEqualTo(0L);
         // 75 = (15 users * 5 exercises); quiz submissions are not counted
         assertThat(stats.getNumberOfSubmissions().getInTime()).isEqualTo(75L);
@@ -1728,6 +2067,45 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
         lockedSubmissions = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/lockedSubmissions", HttpStatus.OK, List.class);
         assertThat(lockedSubmissions.size()).isEqualTo(0);
+    }
 
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testGetExamTitleAsInstuctor() throws Exception {
+        // Only user and role matter, so we can re-use the logic
+        testGetExamTitle();
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testGetExamTitleAsTeachingAssistant() throws Exception {
+        // Only user and role matter, so we can re-use the logic
+        testGetExamTitle();
+    }
+
+    @Test
+    @WithMockUser(username = "user1", roles = "USER")
+    public void testGetExamTitleAsUser() throws Exception {
+        // Only user and role matter, so we can re-use the logic
+        testGetExamTitle();
+    }
+
+    private void testGetExamTitle() throws Exception {
+        Course course = database.createCourse();
+        Exam exam = ModelFactory.generateExam(course);
+        exam.setTitle("Test Exam");
+        exam = examRepository.save(exam);
+        course.addExam(exam);
+        courseRepo.save(course);
+
+        final var title = request.get("/api/exams/" + exam.getId() + "/title", HttpStatus.OK, String.class);
+        assertThat(title).isEqualTo(exam.getTitle());
+    }
+
+    @Test
+    @WithMockUser(username = "user1", roles = "USER")
+    public void testGetExamTitleForNonExistingExam() throws Exception {
+        // No exam with id 10 was created
+        request.get("/api/exams/10/title", HttpStatus.NOT_FOUND, String.class);
     }
 }

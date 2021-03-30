@@ -1,6 +1,6 @@
 <div class="d-flex pb-3 border-bottom mb-2">
     <div class="d-flex flex-column justify-content-center">
-        <h4 class="mb-0">{{ 'artemisApp.examManagement.exerciseGroups' | translate }}</h4>
+        <h4 class="mb-0">{{ 'artemisApp.examManagement.exerciseGroups' | artemisTranslate }}</h4>
     </div>
     <div *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']" class="d-flex justify-content-end" style="flex: 1">
         <a *ngIf="course?.isAtLeastInstructor" class="btn btn-primary jh-create-entity create-course" [routerLink]="['new']">
@@ -26,7 +26,11 @@
         </div>
         <div class="d-flex flex-column justify-content-center ml-3">
             <span class="d-block rounded px-2 py-1" style="font-size: 0.85rem; background-color: #ffc107">
-                {{ (exerciseGroup.isMandatory ? 'artemisApp.examManagement.exerciseGroup.mandatory' : 'artemisApp.examManagement.exerciseGroup.optional') | translate | lowercase }}
+                {{
+                    (exerciseGroup.isMandatory ? 'artemisApp.examManagement.exerciseGroup.mandatory' : 'artemisApp.examManagement.exerciseGroup.optional')
+                        | artemisTranslate
+                        | lowercase
+                }}
             </span>
         </div>
         <div class="d-flex justify-content-end" style="flex: 1">
@@ -40,7 +44,7 @@
                             style="max-height: 44%"
                         >
                             <fa-icon [icon]="'plus'"></fa-icon>
-                            <span class="d-none d-md-inline">{{ 'artemisApp.examManagement.exerciseGroup.addQuizExercise' | translate }}</span>
+                            <span class="d-none d-md-inline">{{ 'artemisApp.examManagement.exerciseGroup.addQuizExercise' | artemisTranslate }}</span>
                         </a>
                     </div>
                     <div class="btn-group-vertical mr-1 mb-1" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']" style="justify-content: end">
@@ -51,44 +55,44 @@
                             style="max-height: 44%"
                         >
                             <fa-icon [icon]="'plus'"></fa-icon>
-                            <span class="d-none d-md-inline">{{ 'artemisApp.examManagement.exerciseGroup.addFileUploadExercise' | translate }}</span>
+                            <span class="d-none d-md-inline">{{ 'artemisApp.examManagement.exerciseGroup.addFileUploadExercise' | artemisTranslate }}</span>
                         </a>
                     </div>
                     <div class="btn-group-vertical mr-1 mb-1" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']">
                         <a *ngIf="course?.isAtLeastInstructor" (click)="openImportModal(exerciseGroup, exerciseType.TEXT)" class="btn btn-info btn-sm mr-1 mb-1">
                             <fa-icon [icon]="'plus'"></fa-icon>
-                            <span class="d-none d-md-inline">{{ 'artemisApp.textExercise.home.importLabel' | translate }}</span>
+                            <span class="d-none d-md-inline">{{ 'artemisApp.textExercise.home.importLabel' | artemisTranslate }}</span>
                         </a>
                         <a *ngIf="course?.isAtLeastInstructor" [routerLink]="[exerciseGroup.id, 'text-exercises', 'new']" class="btn btn-info btn-sm mr-1 mb-1">
                             <fa-icon [icon]="'plus'"></fa-icon>
-                            <span class="d-none d-md-inline">{{ 'artemisApp.examManagement.exerciseGroup.addTextExercise' | translate }}</span>
+                            <span class="d-none d-md-inline">{{ 'artemisApp.examManagement.exerciseGroup.addTextExercise' | artemisTranslate }}</span>
                         </a>
                     </div>
                     <div class="btn-group-vertical mr-1 mb-1" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']">
                         <a *ngIf="course?.isAtLeastInstructor" (click)="openImportModal(exerciseGroup, exerciseType.MODELING)" class="btn btn-info btn-sm mr-1 mb-1">
                             <fa-icon [icon]="'plus'"></fa-icon>
-                            <span class="d-none d-md-inline">{{ 'artemisApp.modelingExercise.home.importLabel' | translate }}</span>
+                            <span class="d-none d-md-inline">{{ 'artemisApp.modelingExercise.home.importLabel' | artemisTranslate }}</span>
                         </a>
                         <a *ngIf="course?.isAtLeastInstructor" [routerLink]="[exerciseGroup.id, 'modeling-exercises', 'new']" class="btn btn-info btn-sm mr-1 mb-1">
                             <fa-icon [icon]="'plus'"></fa-icon>
-                            <span class="d-none d-md-inline">{{ 'artemisApp.examManagement.exerciseGroup.addModelingExercise' | translate }}</span>
+                            <span class="d-none d-md-inline">{{ 'artemisApp.examManagement.exerciseGroup.addModelingExercise' | artemisTranslate }}</span>
                         </a>
                     </div>
                     <div class="btn-group-vertical mr-1 mb-1" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']">
                         <a *ngIf="course?.isAtLeastInstructor" (click)="openImportModal(exerciseGroup, exerciseType.PROGRAMMING)" class="btn btn-info btn-sm mr-1 mb-1">
                             <fa-icon [icon]="'plus'"></fa-icon>
-                            <span class="d-none d-md-inline">{{ 'artemisApp.programmingExercise.home.importLabel' | translate }}</span>
+                            <span class="d-none d-md-inline">{{ 'artemisApp.programmingExercise.home.importLabel' | artemisTranslate }}</span>
                         </a>
                         <a *ngIf="course?.isAtLeastInstructor" [routerLink]="[exerciseGroup.id, 'programming-exercises', 'new']" class="btn btn-info btn-sm mr-1 mb-1">
                             <fa-icon [icon]="'plus'"></fa-icon>
-                            <span class="d-none d-md-inline">{{ 'artemisApp.examManagement.exerciseGroup.addProgrammingExercise' | translate }}</span>
+                            <span class="d-none d-md-inline">{{ 'artemisApp.examManagement.exerciseGroup.addProgrammingExercise' | artemisTranslate }}</span>
                         </a>
                     </div>
                     <!-- TODO: currently deactivated because file upload is not yet supported in the exam-participation.component.html
                     <div class="btn-group-vertical mr-1 mb-1" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']">
                         <button *ngIf="course?.isAtLeastInstructor" [routerLink]="[exerciseGroup.id, 'file-upload-exercises', 'new']" class="btn btn-info btn-sm mr-1 mb-1">
                             <fa-icon [icon]="'plus'"></fa-icon>
-                            <span class="d-none d-md-inline">{{ 'artemisApp.examManagement.exerciseGroup.addFileUploadExercise' | translate }}</span>
+                            <span class="d-none d-md-inline">{{ 'artemisApp.examManagement.exerciseGroup.addFileUploadExercise' | artemisTranslate }}</span>
                         </button>
                     </div>
                     -->
@@ -96,15 +100,15 @@
                         <div class="d-flex flex-column mr-1 mb-1" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']">
                             <a *ngIf="course?.isAtLeastInstructor" [routerLink]="[exerciseGroup.id, 'edit']" class="btn btn-primary btn-sm mr-1 mb-1">
                                 <fa-icon [icon]="'pencil-alt'"></fa-icon>
-                                <span class="d-none d-md-inline">{{ 'entity.action.edit' | translate }}</span>
+                                <span class="d-none d-md-inline">{{ 'entity.action.edit' | artemisTranslate }}</span>
                             </a>
                             <button
                                 *ngIf="
-                                    course?.isAtLeastInstructor && exerciseGroupToExerciseTypesDict.get(exerciseGroup.id!)?.includes(exerciseType.PROGRAMMING);
+                                    exerciseGroup.id && course?.isAtLeastInstructor && exerciseGroupToExerciseTypesDict.get(exerciseGroup.id)?.includes(exerciseType.PROGRAMMING);
                                     else containsNoProgrammingExercise
                                 "
                                 jhiDeleteButton
-                                [entityTitle]="exerciseGroup.title"
+                                [entityTitle]="exerciseGroup.title || ''"
                                 deleteQuestion="artemisApp.examManagement.exerciseGroup.delete.question"
                                 deleteConfirmationText="artemisApp.examManagement.exerciseGroup.delete.typeNameToConfirm"
                                 [additionalChecks]="{
@@ -119,9 +123,9 @@
                             </button>
                             <ng-template #containsNoProgrammingExercise>
                                 <button
-                                    *ngIf="course?.isAtLeastInstructor"
+                                    *ngIf="exerciseGroup.id && course?.isAtLeastInstructor"
                                     jhiDeleteButton
-                                    [entityTitle]="exerciseGroup.title"
+                                    [entityTitle]="exerciseGroup.title || ''"
                                     deleteQuestion="artemisApp.examManagement.exerciseGroup.delete.question"
                                     deleteConfirmationText="artemisApp.examManagement.exerciseGroup.delete.typeNameToConfirm"
                                     (delete)="deleteExerciseGroup(exerciseGroup.id, $event)"
@@ -143,54 +147,55 @@
                 <thead>
                     <tr>
                         <th class="d-none d-md-table-cell">
-                            <span>{{ 'global.field.id' | translate }}</span>
+                            <span>{{ 'global.field.id' | artemisTranslate }}</span>
                         </th>
                         <th>
-                            <span>{{ 'artemisApp.examManagement.exerciseGroup.type' | translate }}</span>
+                            <span>{{ 'artemisApp.examManagement.exerciseGroup.type' | artemisTranslate }}</span>
                         </th>
                         <th>
-                            <span>{{ 'artemisApp.examManagement.exerciseGroup.title' | translate }}</span>
+                            <span>{{ 'artemisApp.examManagement.exerciseGroup.title' | artemisTranslate }}</span>
                         </th>
                         <th>
-                            <span>{{ 'artemisApp.examManagement.exerciseGroup.points' | translate }}</span>
+                            <span>{{ 'artemisApp.examManagement.exerciseGroup.points' | artemisTranslate }}</span>
                         </th>
                         <th>
-                            <span>{{ 'artemisApp.exercise.bonusPoints' | translate }}</span>
+                            <span>{{ 'artemisApp.exercise.bonusPoints' | artemisTranslate }}</span>
                         </th>
                         <th>
-                            <span>{{ 'artemisApp.exercise.includedInOverallScore' | translate }}</span>
+                            <span>{{ 'artemisApp.exercise.includedInOverallScore' | artemisTranslate }}</span>
                         </th>
-                        <ng-container *ngIf="exerciseGroupToExerciseTypesDict.get(exerciseGroup.id)?.includes(exerciseType.PROGRAMMING)">
+                        <ng-container *ngIf="exerciseGroup.id && exerciseGroupToExerciseTypesDict.get(exerciseGroup.id!)?.includes(exerciseType.PROGRAMMING)">
                             <th>
-                                <span>{{ 'artemisApp.exercise.shortName' | translate }}</span>
+                                <span>{{ 'artemisApp.exercise.shortName' | artemisTranslate }}</span>
                             </th>
                             <th>
-                                <span>{{ 'artemisApp.programmingExercise.repositories' | translate }}</span>
+                                <span>{{ 'artemisApp.programmingExercise.repositories' | artemisTranslate }}</span>
                             </th>
                             <th>
-                                <span>{{ 'artemisApp.programmingExercise.buildplans' | translate }}</span>
+                                <span>{{ 'artemisApp.programmingExercise.buildplans' | artemisTranslate }}</span>
                             </th>
                             <th>
-                                <span>{{ 'artemisApp.programmingExercise.participationMode' | translate }}</span>
+                                <span>{{ 'artemisApp.programmingExercise.participationMode' | artemisTranslate }}</span>
                             </th>
                         </ng-container>
-                        <th *ngIf="exerciseGroupToExerciseTypesDict.get(exerciseGroup.id)?.includes(exerciseType.QUIZ)">
-                            <span>{{ 'artemisApp.quizExercise.numberOfQuestions' | translate }}</span>
+                        <th *ngIf="exerciseGroup.id && exerciseGroupToExerciseTypesDict.get(exerciseGroup.id)?.includes(exerciseType.QUIZ)">
+                            <span>{{ 'artemisApp.quizExercise.numberOfQuestions' | artemisTranslate }}</span>
                         </th>
-                        <th *ngIf="exerciseGroupToExerciseTypesDict.get(exerciseGroup.id)?.includes(exerciseType.MODELING)">
-                            <span>{{ 'artemisApp.modelingExercise.diagramType' | translate }}</span>
+                        <th *ngIf="exerciseGroup.id && exerciseGroupToExerciseTypesDict.get(exerciseGroup.id)?.includes(exerciseType.MODELING)">
+                            <span>{{ 'artemisApp.modelingExercise.diagramType' | artemisTranslate }}</span>
                         </th>
-                        <th *ngIf="exerciseGroupToExerciseTypesDict.get(exerciseGroup.id)?.includes(exerciseType.FILE_UPLOAD)">
-                            <span>{{ 'artemisApp.fileUploadExercise.filePattern' | translate }}</span>
+                        <th *ngIf="exerciseGroup.id && exerciseGroupToExerciseTypesDict.get(exerciseGroup.id)?.includes(exerciseType.FILE_UPLOAD)">
+                            <span>{{ 'artemisApp.fileUploadExercise.filePattern' | artemisTranslate }}</span>
                         </th>
                         <th
                             *ngIf="
-                                exerciseGroupToExerciseTypesDict.get(exerciseGroup.id)?.includes(exerciseType.PROGRAMMING) ||
-                                exerciseGroupToExerciseTypesDict.get(exerciseGroup.id)?.includes(exerciseType.TEXT) ||
-                                exerciseGroupToExerciseTypesDict.get(exerciseGroup.id)?.includes(exerciseType.MODELING)
+                                exerciseGroup.id &&
+                                (exerciseGroupToExerciseTypesDict.get(exerciseGroup.id)?.includes(exerciseType.PROGRAMMING) ||
+                                    exerciseGroupToExerciseTypesDict.get(exerciseGroup.id)?.includes(exerciseType.TEXT) ||
+                                    exerciseGroupToExerciseTypesDict.get(exerciseGroup.id)?.includes(exerciseType.MODELING))
                             "
                         >
-                            <span>{{ 'artemisApp.assessmentMode' | translate }}</span>
+                            <span>{{ 'artemisApp.assessmentMode' | artemisTranslate }}</span>
                         </th>
                         <th></th>
                     </tr>
@@ -224,142 +229,39 @@
                         <td class="align-middle">{{ exercise.bonusPoints }}</td>
                         <td class="align-middle">{{ exerciseService.isIncludedInScore(exercise) }}</td>
                         <!-- Programming exercise specific cells -->
-                        <ng-container *ngIf="exerciseGroupToExerciseTypesDict.get(exerciseGroup.id)?.includes(exerciseType.PROGRAMMING)">
-                            <ng-container *ngIf="exercise.type === exerciseType.PROGRAMMING; else emptyProgrammingCells">
-                                <td class="align-middle">
-                                    {{ exercise.shortName }}
-                                </td>
-                                <td class="align-middle">
-                                    <div>
-                                        <span *ngIf="exercise.templateParticipation?.repositoryUrl">
-                                            <!--Checks if the programming exercise has a setup with VCS and CI, if this not the case
-                                            the links are disabled--->
-                                            <a
-                                                *ngIf="
-                                                    !noVersionControlAndContinuousIntegrationAvailableCheck(exercise.templateParticipation.repositoryUrl);
-                                                    else noVersionControlAndContinuousIntegrationAvailableTemplate
-                                                "
-                                                href="{{ exercise.templateParticipation.repositoryUrl }}"
-                                                target="_blank"
-                                                >Template</a
-                                            >
-                                        </span>
-                                        <ng-template #noVersionControlAndContinuousIntegrationAvailableTemplate>Template</ng-template>
-                                        <jhi-programming-exercise-instructor-status
-                                            *ngIf="exercise.templateParticipation?.results?.length"
-                                            [participationType]="'TEMPLATE'"
-                                            [participation]="exercise.templateParticipation"
-                                            [exercise]="exercise"
-                                        ></jhi-programming-exercise-instructor-status>
-                                    </div>
-                                    <div>
-                                        <span *ngIf="exercise.solutionParticipation?.repositoryUrl">
-                                            <a
-                                                *ngIf="
-                                                    !noVersionControlAndContinuousIntegrationAvailableCheck(exercise.solutionParticipation.repositoryUrl);
-                                                    else noVersionControlAndContinuousIntegrationAvailableSolution
-                                                "
-                                                href="{{ exercise.solutionParticipation.repositoryUrl }}"
-                                                target="_blank"
-                                                >Solution</a
-                                            >
-                                        </span>
-                                        <ng-template #noVersionControlAndContinuousIntegrationAvailableSolution>Solution</ng-template>
-                                        <jhi-programming-exercise-instructor-status
-                                            *ngIf="exercise.solutionParticipation?.results?.length"
-                                            [participationType]="'SOLUTION'"
-                                            [participation]="exercise.solutionParticipation"
-                                            [exercise]="exercise"
-                                        ></jhi-programming-exercise-instructor-status>
-                                    </div>
-                                    <div>
-                                        <span *ngIf="exercise.testRepositoryUrl">
-                                            <a
-                                                *ngIf="
-                                                    !noVersionControlAndContinuousIntegrationAvailableCheck(exercise.testRepositoryUrl);
-                                                    else noVersionControlAndContinuousIntegrationAvailableTest
-                                                "
-                                                href="{{ exercise.testRepositoryUrl }}"
-                                                target="_blank"
-                                                >Test</a
-                                            >
-                                        </span>
-                                        <ng-template #noVersionControlAndContinuousIntegrationAvailableTest>Test</ng-template>
-                                    </div>
-                                </td>
-                                <td class="align-middle">
-                                    <span *ngIf="exercise.templateParticipation?.buildPlanId"
-                                        ><a
-                                            *ngIf="
-                                                !noVersionControlAndContinuousIntegrationAvailableCheck(exercise.templateParticipation.repositoryUrl);
-                                                else noVersionControlAndContinuousIntegrationAvailableTemplate
-                                            "
-                                            jhiBuildPlanLink
-                                            [projectKey]="exercise.projectKey"
-                                            [buildPlanId]="exercise.templateParticipation.buildPlanId"
-                                            >Template</a
-                                        ></span
-                                    >
-                                    <ng-template #noVersionControlAndContinuousIntegrationAvailableTemplate>Template</ng-template> <br />
-                                    <span *ngIf="exercise.solutionParticipation?.buildPlanId"
-                                        ><a
-                                            *ngIf="
-                                                !noVersionControlAndContinuousIntegrationAvailableCheck(exercise.solutionParticipation.repositoryUrl);
-                                                else noVersionControlAndContinuousIntegrationAvailableSolution
-                                            "
-                                            jhiBuildPlanLink
-                                            [projectKey]="exercise.projectKey"
-                                            [buildPlanId]="exercise.solutionParticipation.buildPlanId"
-                                            >Solution</a
-                                        ></span
-                                    >
-                                    <ng-template #noVersionControlAndContinuousIntegrationAvailableSolution>Solution</ng-template><br />
-                                </td>
-                                <td class="align-middle d-none d-md-table-cell">
-                                    <div class="d-flex justify-content-between">{{ 'artemisApp.programmingExercise.offlineIde' | translate }}: {{ exercise.allowOfflineIde }}</div>
-                                    <div class="d-flex justify-content-between">
-                                        {{ 'artemisApp.programmingExercise.onlineEditor' | translate }}: {{ exercise.allowOnlineEditor }}
-                                    </div>
-                                </td>
-                            </ng-container>
+                        <ng-container *ngIf="exerciseGroup.id && exerciseGroupToExerciseTypesDict.get(exerciseGroup.id)?.includes(exerciseType.PROGRAMMING)">
+                            <jhi-programming-exercise-group-cell
+                                *ngIf="exercise.type === exerciseType.PROGRAMMING; else emptyProgrammingCells"
+                                [exercise]="exercise"
+                            ></jhi-programming-exercise-group-cell>
                         </ng-container>
-                        <ng-container *ngIf="exerciseGroupToExerciseTypesDict.get(exerciseGroup.id)?.includes(exerciseType.QUIZ)">
-                            <td class="align-middle">
-                                <ng-container *ngIf="exercise.type === exerciseType.QUIZ">
-                                    {{ exercise.quizQuestions.length }}
-                                </ng-container>
-                            </td>
+                        <ng-container *ngIf="exerciseGroup.id && exerciseGroupToExerciseTypesDict.get(exerciseGroup.id!)?.includes(exerciseType.QUIZ)">
+                            <jhi-quiz-exercise-group-cell [exercise]="exercise"></jhi-quiz-exercise-group-cell>
                         </ng-container>
-                        <ng-container *ngIf="exerciseGroupToExerciseTypesDict.get(exerciseGroup.id)?.includes(exerciseType.MODELING)">
-                            <td class="align-middle">
-                                <ng-container *ngIf="exercise.type === exerciseType.MODELING">
-                                    {{ 'artemisApp.DiagramType.' + exercise.diagramType | translate }}
-                                </ng-container>
-                            </td>
+                        <ng-container *ngIf="exerciseGroup.id && exerciseGroupToExerciseTypesDict.get(exerciseGroup.id!)?.includes(exerciseType.MODELING)">
+                            <jhi-modeling-exercise-group-cell [exercise]="exercise"></jhi-modeling-exercise-group-cell>
                         </ng-container>
-                        <ng-container *ngIf="exerciseGroupToExerciseTypesDict.get(exerciseGroup.id)?.includes(exerciseType.FILE_UPLOAD)">
-                            <td class="align-middle">
-                                <ng-container *ngIf="exercise.type === exerciseType.FILE_UPLOAD">
-                                    {{ exercise.filePattern }}
-                                </ng-container>
-                            </td>
+                        <ng-container *ngIf="exerciseGroup.id && exerciseGroupToExerciseTypesDict.get(exerciseGroup.id!)?.includes(exerciseType.FILE_UPLOAD)">
+                            <jhi-file-upload-exercise-group-cell [exercise]="exercise"></jhi-file-upload-exercise-group-cell>
                         </ng-container>
                         <ng-container
                             *ngIf="
-                                exerciseGroupToExerciseTypesDict.get(exerciseGroup.id)?.includes(exerciseType.PROGRAMMING) ||
-                                exerciseGroupToExerciseTypesDict.get(exerciseGroup.id)?.includes(exerciseType.TEXT) ||
-                                exerciseGroupToExerciseTypesDict.get(exerciseGroup.id)?.includes(exerciseType.MODELING)
+                                exerciseGroup.id &&
+                                (exerciseGroupToExerciseTypesDict.get(exerciseGroup.id!)?.includes(exerciseType.PROGRAMMING) ||
+                                    exerciseGroupToExerciseTypesDict.get(exerciseGroup.id!)?.includes(exerciseType.TEXT) ||
+                                    exerciseGroupToExerciseTypesDict.get(exerciseGroup.id!)?.includes(exerciseType.MODELING))
                             "
                         >
                             <td class="align-middle">
                                 <div *ngIf="exercise.type === exerciseType.PROGRAMMING || exercise.type === exerciseType.MODELING || exercise.type === exerciseType.TEXT">
-                                    {{ 'artemisApp.AssessmentType.' + exercise.assessmentType | translate }}
+                                    {{ 'artemisApp.AssessmentType.' + exercise.assessmentType | artemisTranslate }}
                                 </div>
                             </td>
                         </ng-container>
                         <td class="align-middle">
                             <jhi-exam-exercise-row-buttons
                                 class="d-flex justify-content-end"
+                                *ngIf="exercise.id && exerciseGroup.id"
                                 [course]="course"
                                 [exam]="exam"
                                 [exercise]="exercise"
@@ -379,7 +281,7 @@
             </table>
         </div>
         <div *ngIf="!exerciseGroup.exercises">
-            {{ 'artemisApp.examManagement.exerciseGroup.noExercises' | translate }}
+            {{ 'artemisApp.examManagement.exerciseGroup.noExercises' | artemisTranslate }}
         </div>
     </div>
 </div>

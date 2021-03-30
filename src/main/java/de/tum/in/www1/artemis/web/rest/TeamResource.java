@@ -128,7 +128,7 @@ public class TeamResource {
         if (!authCheckService.isAtLeastInstructorForExercise(exercise, user)) {
             team.setOwner(user);
         }
-        Team savedTeam = teamService.save(exercise, team);
+        Team savedTeam = teamRepository.save(exercise, team);
         savedTeam.filterSensitiveInformation();
         savedTeam.getStudents().forEach(student -> student.setVisibleRegistrationNumber(student.getRegistrationNumber()));
         teamWebsocketService.sendTeamAssignmentUpdate(exercise, null, savedTeam);
@@ -141,22 +141,21 @@ public class TeamResource {
      *
      * @param team       the team to update
      * @param exerciseId the id of the exercise that the team belongs to
-     * @param id         the id of the team which to update
+     * @param teamId     the id of the team which to update
      * @return the ResponseEntity with status 200 (OK) and with body the updated team, or with status 400 (Bad Request) if the team is not valid, or with status 500 (Internal
      * Server Error) if the team couldn't be updated
-     * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @PutMapping("/exercises/{exerciseId}/teams/{id}")
+    @PutMapping("/exercises/{exerciseId}/teams/{teamId}")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Team> updateTeam(@RequestBody Team team, @PathVariable long exerciseId, @PathVariable long id) throws URISyntaxException {
+    public ResponseEntity<Team> updateTeam(@RequestBody Team team, @PathVariable long exerciseId, @PathVariable long teamId) {
         log.debug("REST request to update Team : {}", team);
         if (team.getId() == null) {
             throw new BadRequestAlertException("Invalid id", ENTITY_NAME, "idnull");
         }
-        if (!team.getId().equals(id)) {
+        if (!team.getId().equals(teamId)) {
             throw new BadRequestAlertException("The team has an incorrect id.", ENTITY_NAME, "wrongId");
         }
-        Optional<Team> existingTeam = teamRepository.findById(id);
+        Optional<Team> existingTeam = teamRepository.findById(teamId);
         if (existingTeam.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
@@ -186,7 +185,7 @@ public class TeamResource {
         }
 
         // Save team (includes check for conflicts that no student is assigned to multiple teams for an exercise)
-        Team savedTeam = teamService.save(exercise, team);
+        Team savedTeam = teamRepository.save(exercise, team);
 
         // Propagate team owner change to other instances of this team in the course
         if (ownerWasChanged) {
@@ -211,14 +210,14 @@ public class TeamResource {
      * GET /exercises/:exerciseId/teams/:id : get the "id" team.
      *
      * @param exerciseId the id of the exercise that the team belongs to
-     * @param id         the id of the team to retrieve
+     * @param teamId         the id of the team to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the team, or with status 404 (Not Found)
      */
-    @GetMapping("/exercises/{exerciseId}/teams/{id}")
+    @GetMapping("/exercises/{exerciseId}/teams/{teamId}")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Team> getTeam(@PathVariable long exerciseId, @PathVariable long id) {
-        log.debug("REST request to get Team : {}", id);
-        Optional<Team> optionalTeam = teamRepository.findOneWithEagerStudents(id);
+    public ResponseEntity<Team> getTeam(@PathVariable long exerciseId, @PathVariable long teamId) {
+        log.debug("REST request to get Team : {}", teamId);
+        Optional<Team> optionalTeam = teamRepository.findOneWithEagerStudents(teamId);
         if (optionalTeam.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
@@ -251,7 +250,7 @@ public class TeamResource {
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
             return forbidden();
         }
-        List<Team> teams = teamService.findAllByExerciseIdWithEagerStudents(exercise, teamOwnerId);
+        List<Team> teams = teamRepository.findAllByExerciseIdWithEagerStudents(exercise, teamOwnerId);
         teams.forEach(Team::filterSensitiveInformation);
         teams.forEach(team -> team.getStudents().forEach(student -> student.setVisibleRegistrationNumber(student.getRegistrationNumber())));
         return ResponseEntity.ok().body(teams);
@@ -261,15 +260,15 @@ public class TeamResource {
      * DELETE /exercises/:exerciseId/teams/:id : delete the "id" team.
      *
      * @param exerciseId the id of the exercise that the team belongs to
-     * @param id         the id of the team to delete
+     * @param teamId     the id of the team to delete
      * @return the ResponseEntity with status 200 (OK)
      */
-    @DeleteMapping("/exercises/{exerciseId}/teams/{id}")
+    @DeleteMapping("/exercises/{exerciseId}/teams/{teamId}")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Void> deleteTeam(@PathVariable long exerciseId, @PathVariable long id) {
-        log.info("REST request to delete Team with id {} in exercise with id {}", id, exerciseId);
+    public ResponseEntity<Void> deleteTeam(@PathVariable long exerciseId, @PathVariable long teamId) {
+        log.info("REST request to delete Team with id {} in exercise with id {}", teamId, exerciseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        Optional<Team> optionalTeam = teamRepository.findById(id);
+        Optional<Team> optionalTeam = teamRepository.findById(teamId);
         if (optionalTeam.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
@@ -282,18 +281,18 @@ public class TeamResource {
             return forbidden();
         }
         // Create audit event for team delete action
-        var logMessage = "Delete Team with id " + id + " in exercise with id " + exerciseId;
+        var logMessage = "Delete Team with id " + teamId + " in exercise with id " + exerciseId;
         var auditEvent = new AuditEvent(user.getLogin(), Constants.DELETE_TEAM, logMessage);
         auditEventRepository.add(auditEvent);
         // Delete all participations of the team first and then the team itself
-        participationService.deleteAllByTeamId(id, false, false);
+        participationService.deleteAllByTeamId(teamId, false, false);
         // delete all team scores associated with the team
         teamScoreRepository.deleteAllByTeam(team);
 
         teamRepository.delete(team);
 
         teamWebsocketService.sendTeamAssignmentUpdate(exercise, team, null);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, Long.toString(id))).build();
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, Long.toString(teamId))).build();
     }
 
     /**

@@ -2,7 +2,7 @@
     <div class="row justify-content-between">
         <div class="col-8">
             <h2>
-                <span>{{ 'artemisApp.assessment.locks.title' + (showAll ? 'All' : '') | translate }}</span>
+                <span>{{ 'artemisApp.assessment.locks.title' + (showAll ? 'All' : '') | artemisTranslate }}</span>
             </h2>
         </div>
     </div>
@@ -29,7 +29,7 @@
                         <fa-icon
                             [icon]="getIcon(submission.participation.exercise.type)"
                             placement="right"
-                            [ngbTooltip]="getIconTooltip(submission.participation.exercise.type) | translate"
+                            [ngbTooltip]="getIconTooltip(submission.participation.exercise.type) | artemisTranslate"
                             container="body"
                         ></fa-icon>
                     </td>
@@ -53,12 +53,12 @@
                                 ]"
                                 class="btn btn-outline-secondary btn-sm mb-1"
                             >
-                                <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>&nbsp;{{ 'artemisApp.assessment.dashboard.actions.open' | translate }}
+                                <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>&nbsp;{{ 'artemisApp.assessment.dashboard.actions.open' | artemisTranslate }}
                             </a>
                         </span>
                         <span>
                             <button *ngIf="!submission.latestResult!.completionDate" (click)="cancelAssessment(submission)" class="btn btn-outline-secondary btn-sm mb-1">
-                                <fa-icon [icon]="'ban'" [fixedWidth]="true"></fa-icon>&nbsp;{{ 'artemisApp.assessment.dashboard.actions.cancel' | translate }}
+                                <fa-icon [icon]="'ban'" [fixedWidth]="true"></fa-icon>&nbsp;{{ 'artemisApp.assessment.dashboard.actions.cancel' | artemisTranslate }}
                             </button>
                         </span>
                     </td>

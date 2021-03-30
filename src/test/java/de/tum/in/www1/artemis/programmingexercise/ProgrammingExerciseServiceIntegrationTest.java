@@ -118,7 +118,7 @@ public class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringInt
         assertThat(imported.getExerciseHints()).allMatch(hint -> programmingExercise.getExerciseHints().stream().anyMatch(
                 oldHint -> oldHint.getContent().equals(hint.getContent()) && oldHint.getTitle().equals(hint.getTitle()) && hint.getExercise().getId().equals(imported.getId())));
         assertThat(imported.getTestCases()).allMatch(test -> programmingExercise.getTestCases().stream().anyMatch(oldTest -> test.getExercise().getId().equals(imported.getId())
-                && oldTest.getTestName().equals(test.getTestName()) && oldTest.getWeight().equals(test.getWeight())));
+                && oldTest.getTestName().equalsIgnoreCase(test.getTestName()) && oldTest.getWeight().equals(test.getWeight())));
     }
 
     @Test
@@ -140,7 +140,7 @@ public class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringInt
     public void testInstructorGetsResultsOnlyFromOwningCourses() throws Exception {
         final var search = database.configureSearch("");
         final var result = request.get(BASE_RESOURCE, HttpStatus.OK, SearchResultPageDTO.class, database.exerciseSearchMapping(search));
-        assertThat(result.getResultsOnPage()).isEmpty();
+        assertThat(result.getResultsOnPage()).isNullOrEmpty();
     }
 
     @Test
@@ -167,7 +167,7 @@ public class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringInt
 
         final var searchSwift = database.configureSearch("Swift");
         final var resultSwift = request.get(BASE_RESOURCE, HttpStatus.OK, SearchResultPageDTO.class, database.exerciseSearchMapping(searchSwift));
-        assertThat(resultSwift.getResultsOnPage()).isEmpty();
+        assertThat(resultSwift.getResultsOnPage()).isNullOrEmpty();
     }
 
     @Test

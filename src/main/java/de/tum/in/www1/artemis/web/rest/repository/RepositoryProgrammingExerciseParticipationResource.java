@@ -22,6 +22,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.*;
+import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.*;
@@ -44,6 +45,8 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
 public class RepositoryProgrammingExerciseParticipationResource extends RepositoryResource {
 
+    private final ParticipationRepository participationRepository;
+
     private final ProgrammingExerciseParticipationService participationService;
 
     private final ExamSubmissionService examSubmissionService;
@@ -52,17 +55,18 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
 
     public RepositoryProgrammingExerciseParticipationResource(UserRepository userRepository, AuthorizationCheckService authCheckService, GitService gitService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService, RepositoryService repositoryService,
-            ProgrammingExerciseParticipationService participationService, ProgrammingExerciseRepository programmingExerciseRepository, ExamSubmissionService examSubmissionService,
-            BuildLogEntryService buildLogService) {
+            ProgrammingExerciseParticipationService participationService, ProgrammingExerciseRepository programmingExerciseRepository,
+            ParticipationRepository participationRepository, ExamSubmissionService examSubmissionService, BuildLogEntryService buildLogService) {
         super(userRepository, authCheckService, gitService, continuousIntegrationService, repositoryService, versionControlService, programmingExerciseRepository);
         this.participationService = participationService;
+        this.participationRepository = participationRepository;
         this.examSubmissionService = examSubmissionService;
         this.buildLogService = buildLogService;
     }
 
     @Override
     Repository getRepository(Long participationId, RepositoryActionType repositoryAction, boolean pullOnGet) throws InterruptedException, IllegalAccessException, GitAPIException {
-        Participation participation = participationService.findParticipation(participationId);
+        Participation participation = participationRepository.findByIdElseThrow(participationId);
         // Error case 1: The participation is not from a programming exercise.
         if (!(participation instanceof ProgrammingExerciseParticipation)) {
             throw new IllegalArgumentException();
@@ -77,13 +81,37 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
         if (repositoryAction == RepositoryActionType.WRITE && programmingParticipation.isLocked()) {
             throw new IllegalAccessException();
         }
-        // Error case 4: The user is not (any longer) allowed to submit to the exam/exercise. This check is only relevant for students.
+
         User user = userRepository.getUserWithGroupsAndAuthorities();
         var programmingExercise = programmingParticipation.getProgrammingExercise();
+        boolean isStudent = !authCheckService.isAtLeastTeachingAssistantForExercise(programmingExercise);
+        // Error case 4: The student can reset the repository only before and a tutor/instructor only after the due date has passed
+        if (repositoryAction == RepositoryActionType.RESET) {
+            boolean isOwner = true; // true for Solution- and TemplateProgrammingExerciseParticipation
+            if (participation instanceof StudentParticipation) {
+                isOwner = authCheckService.isOwnerOfParticipation((StudentParticipation) participation);
+            }
+            if (isStudent && programmingParticipation.isLocked()) {
+                throw new IllegalAccessException();
+            }
+            // A tutor/instructor who is owner of the exercise should always be able to reset the repository
+            else if (!isStudent && !isOwner) {
+                // Check if a tutor is allowed to reset during the assessment
+                // Check for a regular course exercise
+                if (!programmingExercise.isExamExercise() && !programmingParticipation.isLocked()) {
+                    throw new IllegalAccessException();
+                }
+                // Check for an exam exercise, as it might not be locked but a student might still be allowed to submit
+                var optStudent = ((StudentParticipation) participation).getStudent();
+                if (optStudent.isPresent() && programmingExercise.isExamExercise() && examSubmissionService.isAllowedToSubmitDuringExam(programmingExercise, optStudent.get())) {
+                    throw new IllegalAccessException();
+                }
+            }
+        }
+        // Error case 5: The user is not (any longer) allowed to submit to the exam/exercise. This check is only relevant for students.
         // This must be a student participation as hasPermissions would have been false and an error already thrown
-        var isStudentParticipation = participation instanceof ProgrammingExerciseStudentParticipation;
-        if (isStudentParticipation && !authCheckService.isAtLeastTeachingAssistantForExercise(programmingExercise)
-                && !examSubmissionService.isAllowedToSubmitDuringExam(programmingExercise, user)) {
+        boolean isStudentParticipation = participation instanceof ProgrammingExerciseStudentParticipation;
+        if (isStudentParticipation && isStudent && !examSubmissionService.isAllowedToSubmitDuringExam(programmingExercise, user)) {
             throw new IllegalAccessException();
         }
         var repositoryUrl = programmingParticipation.getVcsRepositoryUrl();
@@ -92,7 +120,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
 
     @Override
     VcsRepositoryUrl getRepositoryUrl(Long participationId) throws IllegalArgumentException {
-        Participation participation = participationService.findParticipation(participationId);
+        Participation participation = participationRepository.findByIdElseThrow(participationId);
         if (!(participation instanceof ProgrammingExerciseParticipation)) {
             throw new IllegalArgumentException();
         }
@@ -101,7 +129,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
 
     @Override
     boolean canAccessRepository(Long participationId) throws IllegalArgumentException {
-        Participation participation = participationService.findParticipation(participationId);
+        Participation participation = participationRepository.findByIdElseThrow(participationId);
         if (!(participation instanceof ProgrammingExerciseParticipation)) {
             throw new IllegalArgumentException();
         }
@@ -127,7 +155,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
     public ResponseEntity<Map<String, Boolean>> getFilesWithInformationAboutChange(@PathVariable Long participationId) {
         return super.executeAndCheckForExceptions(() -> {
             Repository repository = getRepository(participationId, RepositoryActionType.READ, true);
-            var participation = participationService.findParticipation(participationId);
+            var participation = participationRepository.findByIdElseThrow(participationId);
             var exercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(participation.getExercise().getId());
 
             Repository templateRepository = getRepository(exercise.getTemplateParticipation().getId(), RepositoryActionType.READ, true);
@@ -207,7 +235,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
             @RequestParam(defaultValue = "false") boolean commit, Principal principal) {
         Participation participation;
         try {
-            participation = participationService.findParticipation(participationId);
+            participation = participationRepository.findByIdElseThrow(participationId);
         }
         catch (EntityNotFoundException ex) {
             FileSubmissionError error = new FileSubmissionError(participationId, "participationNotFound");

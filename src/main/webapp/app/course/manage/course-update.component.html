@@ -83,12 +83,27 @@
                     <label class="form-control-label" jhiTranslate="artemisApp.course.description" for="field_description">Course Description</label>
                     <input type="text" class="form-control" name="description" id="field_description" formControlName="description" />
                 </div>
+                <div class="form-group">
+                    <label class="form-control-label" jhiTranslate="artemisApp.course.organizations">Course organizations</label>
+                    <div class="btn-group d-flex flex-wrap">
+                        <div *ngFor="let organization of courseOrganizations">
+                            <h5>
+                                <span class="badge badge-primary font-weight-normal m-1 pl-3"
+                                    >{{ organization.name
+                                    }}<button type="button" class="btn text-light" (click)="removeOrganizationFromCourse(organization)">
+                                        <fa-icon [icon]="'times'"></fa-icon></button
+                                ></span>
+                            </h5>
+                        </div>
+                    </div>
+                    <button type="button" class="btn btn-outline-primary" (click)="openOrganizationsModal()">Add</button>
+                </div>
                 <div class="d-flex">
                     <div class="form-group flex-grow-1">
-                        <jhi-date-time-picker labelName="{{ 'artemisApp.course.startDate' | translate }}" formControlName="startDate"></jhi-date-time-picker>
+                        <jhi-date-time-picker labelName="{{ 'artemisApp.course.startDate' | artemisTranslate }}" formControlName="startDate"></jhi-date-time-picker>
                     </div>
                     <div class="form-group flex-grow-1 ml-3">
-                        <jhi-date-time-picker labelName="{{ 'artemisApp.course.endDate' | translate }}" formControlName="endDate"></jhi-date-time-picker>
+                        <jhi-date-time-picker labelName="{{ 'artemisApp.course.endDate' | artemisTranslate }}" formControlName="endDate"></jhi-date-time-picker>
                     </div>
                 </div>
                 <div class="form-check">
@@ -102,7 +117,12 @@
                         (change)="changeTestCourseEnabled()"
                     />
                     <label class="form-control-label" jhiTranslate="artemisApp.course.testCourse.title" for="field_testCourse"></label>
-                    <fa-icon [icon]="'question-circle'" class="text-secondary" placement="top" ngbTooltip="{{ 'artemisApp.course.testCourse.description' | translate }}"></fa-icon>
+                    <fa-icon
+                        [icon]="'question-circle'"
+                        class="text-secondary"
+                        placement="top"
+                        ngbTooltip="{{ 'artemisApp.course.testCourse.description' | artemisTranslate }}"
+                    ></fa-icon>
                 </div>
                 <div class="form-group">
                     <label jhiTranslate="artemisApp.course.semester"></label>
@@ -129,7 +149,7 @@
                             [icon]="'question-circle'"
                             class="text-secondary"
                             placement="top"
-                            ngbTooltip="{{ 'artemisApp.course.customizeGroupNames.description' | translate }}"
+                            ngbTooltip="{{ 'artemisApp.course.customizeGroupNames.description' | artemisTranslate }}"
                         ></fa-icon>
                     </div>
                     <div *ngIf="customizeGroupNames">
@@ -171,7 +191,7 @@
                         [icon]="'question-circle'"
                         class="text-secondary"
                         placement="top"
-                        ngbTooltip="{{ 'artemisApp.course.complaintsEnabled.description' | translate }}"
+                        ngbTooltip="{{ 'artemisApp.course.complaintsEnabled.description' | artemisTranslate }}"
                     ></fa-icon>
                 </div>
                 <div class="form-group" *ngIf="complaintsEnabled">
@@ -182,7 +202,7 @@
                         [icon]="'question-circle'"
                         class="text-secondary"
                         placement="top"
-                        ngbTooltip="{{ 'artemisApp.course.maxComplaints.description' | translate }}"
+                        ngbTooltip="{{ 'artemisApp.course.maxComplaints.description' | artemisTranslate }}"
                     ></fa-icon>
                     <input required type="number" class="form-control" name="maxComplaints" id="field_maxComplaints" formControlName="maxComplaints" />
                 </div>
@@ -194,7 +214,7 @@
                         [icon]="'question-circle'"
                         class="text-secondary"
                         placement="top"
-                        ngbTooltip="{{ 'artemisApp.course.maxTeamComplaints.description' | translate }}"
+                        ngbTooltip="{{ 'artemisApp.course.maxTeamComplaints.description' | artemisTranslate }}"
                     ></fa-icon>
                     <input required type="number" class="form-control" name="maxTeamComplaints" id="field_maxTeamComplaints" formControlName="maxTeamComplaints" />
                 </div>
@@ -206,7 +226,7 @@
                         [icon]="'question-circle'"
                         class="text-secondary"
                         placement="top"
-                        ngbTooltip="{{ 'artemisApp.course.maxComplaintTimeDays.description' | translate }}"
+                        ngbTooltip="{{ 'artemisApp.course.maxComplaintTimeDays.description' | artemisTranslate }}"
                     ></fa-icon>
                     <input required type="number" class="form-control" name="maxComplaintTimeDays" id="field_maxComplaintTimeDays" formControlName="maxComplaintTimeDays" />
                 </div>
@@ -227,7 +247,7 @@
                         [icon]="'question-circle'"
                         class="text-secondary"
                         placement="top"
-                        ngbTooltip="{{ 'artemisApp.course.requestMoreFeedbackEnabled.description' | translate }}"
+                        ngbTooltip="{{ 'artemisApp.course.requestMoreFeedbackEnabled.description' | artemisTranslate }}"
                     ></fa-icon>
                 </div>
                 <div class="form-group" *ngIf="requestMoreFeedbackEnabled">
@@ -238,7 +258,7 @@
                         [icon]="'question-circle'"
                         class="text-secondary"
                         placement="top"
-                        ngbTooltip="{{ 'artemisApp.course.maxRequestMoreFeedbackTimeDays.description' | translate }}"
+                        ngbTooltip="{{ 'artemisApp.course.maxRequestMoreFeedbackTimeDays.description' | artemisTranslate }}"
                     ></fa-icon>
                     <input
                         required
@@ -258,7 +278,7 @@
                         [icon]="'question-circle'"
                         class="text-secondary"
                         placement="top"
-                        ngbTooltip="{{ 'artemisApp.course.studentQuestionsEnabled.description' | translate }}"
+                        ngbTooltip="{{ 'artemisApp.course.studentQuestionsEnabled.description' | artemisTranslate }}"
                     ></fa-icon>
                 </div>
                 <div class="form-check" *ngIf="!this.course.registrationEnabled">
@@ -276,7 +296,7 @@
                         [icon]="'question-circle'"
                         class="text-secondary"
                         placement="top"
-                        ngbTooltip="{{ 'artemisApp.course.onlineCourse.description' | translate }}"
+                        ngbTooltip="{{ 'artemisApp.course.onlineCourse.description' | artemisTranslate }}"
                     ></fa-icon>
                 </div>
                 <div class="form-check" *ngIf="!this.course.onlineCourse">
@@ -293,7 +313,7 @@
                         [icon]="'question-circle'"
                         class="text-secondary"
                         placement="top"
-                        ngbTooltip="{{ 'artemisApp.course.registrationEnabled.description' | translate }}"
+                        ngbTooltip="{{ 'artemisApp.course.registrationEnabled.description' | artemisTranslate }}"
                     ></fa-icon>
                 </div>
                 <div class="form-group" *ngIf="course.registrationEnabled">
@@ -315,7 +335,7 @@
                         [icon]="'question-circle'"
                         class="text-secondary"
                         placement="top"
-                        ngbTooltip="{{ 'artemisApp.course.presentationScoreEnabled.description' | translate }}"
+                        ngbTooltip="{{ 'artemisApp.course.presentationScoreEnabled.description' | artemisTranslate }}"
                     ></fa-icon>
                 </div>
                 <div class="form-group" *ngIf="presentationScoreEnabled">

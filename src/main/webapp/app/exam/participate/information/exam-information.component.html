@@ -1,53 +1,53 @@
 <div class="mt-3 mb-4 text-center">
     <div class="mb-2">
         <span class="mx-2" *ngIf="exam && exam.startDate">
-            <strong class="font-weight-bold">{{ 'artemisApp.exam.date' | translate }}:</strong>
+            <strong class="font-weight-bold">{{ 'artemisApp.exam.date' | artemisTranslate }}:</strong>
             {{ exam.startDate | artemisDate: 'long-date' }}
         </span>
         <span class="mx-2" *ngIf="exam">
-            <strong class="font-weight-bold">{{ 'artemisApp.exam.time' | translate }}:</strong>
+            <strong class="font-weight-bold">{{ 'artemisApp.exam.time' | artemisTranslate }}:</strong>
             {{ exam.startDate | artemisDate: 'time' }}
             -
             {{ endTime() | artemisDate: 'time' }}
         </span>
         <span class="mx-2" *ngIf="studentExam && studentExam.workingTime">
-            <strong class="font-weight-bold">{{ 'artemisApp.exam.durationWithFormat' | translate }}:</strong>
-            {{ studentExam.workingTime | artemisDurationFromSeconds }}
+            <strong class="font-weight-bold">{{ 'artemisApp.exam.durationWithFormat' | artemisTranslate }}:</strong>
+            {{ studentExam.workingTime || 0 | artemisDurationFromSeconds }}
         </span>
     </div>
     <div class="mb-2">
         <span class="mx-2" *ngIf="exam && exam.examStudentReviewStart && studentExam.ended">
-            <strong class="font-weight-bold">{{ 'artemisApp.exam.examStudentReviewStart' | translate }}:</strong>
+            <strong class="font-weight-bold">{{ 'artemisApp.exam.examStudentReviewStart' | artemisTranslate }}:</strong>
             {{ exam.examStudentReviewStart | artemisDate }}
         </span>
     </div>
     <div class="mb-2">
         <span class="mx-2" *ngIf="exam && exam.examStudentReviewEnd && studentExam.ended">
-            <strong class="font-weight-bold">{{ 'artemisApp.exam.examStudentReviewEnd' | translate }}:</strong>
+            <strong class="font-weight-bold">{{ 'artemisApp.exam.examStudentReviewEnd' | artemisTranslate }}:</strong>
             {{ exam.examStudentReviewEnd | artemisDate }}
         </span>
     </div>
     <div class="mb-2" *ngIf="exam && (exam.examiner || exam.moduleNumber || exam.courseName)">
         <span class="mx-2" *ngIf="exam.examiner">
-            <strong class="font-weight-bold">{{ 'artemisApp.examManagement.examiner' | translate }}:</strong>
+            <strong class="font-weight-bold">{{ 'artemisApp.examManagement.examiner' | artemisTranslate }}:</strong>
             {{ exam.examiner }}
         </span>
         <span class="mx-2" *ngIf="exam.moduleNumber">
-            <strong class="font-weight-bold">{{ 'artemisApp.examManagement.moduleNumber' | translate }}:</strong>
+            <strong class="font-weight-bold">{{ 'artemisApp.examManagement.moduleNumber' | artemisTranslate }}:</strong>
             {{ exam.moduleNumber }}
         </span>
         <span class="mx-2" *ngIf="exam.courseName">
-            <strong class="font-weight-bold">{{ 'artemisApp.exam.course' | translate }}:</strong>
+            <strong class="font-weight-bold">{{ 'artemisApp.exam.course' | artemisTranslate }}:</strong>
             {{ exam.courseName }}
         </span>
     </div>
     <div *ngIf="exam && (exam.numberOfExercisesInExam || exam.maxPoints || exam.numberOfCorrectionRoundsInExam)">
         <span class="mx-2" *ngIf="exam.numberOfExercisesInExam">
-            <strong class="font-weight-bold">{{ 'artemisApp.exam.exercises' | translate }}:</strong>
+            <strong class="font-weight-bold">{{ 'artemisApp.exam.exercises' | artemisTranslate }}:</strong>
             {{ exam.numberOfExercisesInExam }}
         </span>
         <span class="mx-2" *ngIf="exam.maxPoints">
-            <strong class="font-weight-bold">{{ 'artemisApp.exam.points' | translate }}:</strong>
+            <strong class="font-weight-bold">{{ 'artemisApp.exam.points' | artemisTranslate }}:</strong>
             {{ exam.maxPoints }}
         </span>
     </div>

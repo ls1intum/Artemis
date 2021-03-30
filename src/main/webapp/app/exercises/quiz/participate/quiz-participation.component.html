@@ -97,8 +97,8 @@
                         >
                             <b class="fa">SA</b>
                         </span>
-                        <ng-template #tooltipExplanationTranslate>{{ 'artemisApp.quizExercise.explanationAnswered' | translate }}</ng-template>
-                        <ng-template #tooltipNotExplanationTranslate>{{ 'artemisApp.quizExercise.explanationNotAnswered' | translate }}</ng-template>
+                        <ng-template #tooltipExplanationTranslate>{{ 'artemisApp.quizExercise.explanationAnswered' | artemisTranslate }}</ng-template>
+                        <ng-template #tooltipNotExplanationTranslate>{{ 'artemisApp.quizExercise.explanationNotAnswered' | artemisTranslate }}</ng-template>
                     </div>
                 </div>
                 <div *ngIf="quizExercise.quizQuestions && !this.isMobile()" class="align-text hide-mobile">

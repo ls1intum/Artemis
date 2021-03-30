@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.hazelcast.core.HazelcastInstance;
 
 import de.tum.in.www1.artemis.domain.Feedback;
 import de.tum.in.www1.artemis.domain.Result;
@@ -30,13 +31,11 @@ import de.tum.in.www1.artemis.service.compass.umlmodel.UMLDiagram;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
 import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.*;
 
-public class CompassCalculationEngine implements CalculationEngine {
+public class CompassCalculationEngine {
 
     private final Logger log = LoggerFactory.getLogger(CompassCalculationEngine.class);
 
     private ModelIndex modelIndex;
-
-    private AssessmentIndex assessmentIndex;
 
     private AutomaticAssessmentController automaticAssessmentController;
 
@@ -44,12 +43,11 @@ public class CompassCalculationEngine implements CalculationEngine {
 
     private LocalDateTime lastUsed;
 
-    CompassCalculationEngine(Set<ModelingSubmission> modelingSubmissions) {
+    CompassCalculationEngine(Long exerciseId, Set<ModelingSubmission> modelingSubmissions, HazelcastInstance hazelcastInstance) {
         lastUsed = LocalDateTime.now();
-        modelIndex = new ModelIndex();
-        assessmentIndex = new AssessmentIndex();
-        automaticAssessmentController = new AutomaticAssessmentController();
-        modelSelector = new ModelSelector();
+        modelIndex = new ModelIndex(exerciseId, hazelcastInstance);
+        automaticAssessmentController = new AutomaticAssessmentController(exerciseId, hazelcastInstance);
+        modelSelector = new ModelSelector(automaticAssessmentController);
 
         for (Submission submission : modelingSubmissions) {
             // We have to unproxy here as sometimes the Submission is a Hibernate proxy resulting in a cast exception
@@ -149,16 +147,27 @@ public class CompassCalculationEngine implements CalculationEngine {
     }
 
     private void assessModelsAutomatically() {
-        automaticAssessmentController.assessModelsAutomatically(modelIndex, assessmentIndex);
+        automaticAssessmentController.assessModelsAutomatically(modelIndex);
     }
 
-    @Override
+    /**
+     * Get the given number of ids of the next optimal modeling submissions. Optimal means that an assessment for this model results in the biggest knowledge gain for Compass which
+     * can be used for automatic assessments.
+     *
+     * @param numberOfModels the number of next optimal models to load
+     * @return the ids of the next optimal modeling submissions, or an empty list if there are no unhandled submissions
+     */
     public List<Long> getNextOptimalModels(int numberOfModels) {
         lastUsed = LocalDateTime.now();
         return modelSelector.selectNextModels(modelIndex, numberOfModels);
     }
 
-    @Override
+    /**
+     * Get the assessment result for a model. If no assessment is saved for the given model, it tries to create a new one automatically with the existing information of the engine.
+     *
+     * @param modelSubmissionId the id of the model
+     * @return the assessment result for the model
+     */
     public Grade getGradeForModel(long modelSubmissionId) {
         lastUsed = LocalDateTime.now();
         if (!modelIndex.getModelMap().containsKey(modelSubmissionId)) {
@@ -166,20 +175,24 @@ public class CompassCalculationEngine implements CalculationEngine {
         }
 
         UMLDiagram model = modelIndex.getModelMap().get(modelSubmissionId);
-        CompassResult compassResult = model.getLastAssessmentCompassResult();
+        CompassResult compassResult = automaticAssessmentController.getLastAssessmentCompassResult(modelSubmissionId);
 
         if (compassResult == null) {
-            return automaticAssessmentController.assessModelAutomatically(model, assessmentIndex);
+            return automaticAssessmentController.assessModelAutomatically(model);
         }
         return compassResult;
     }
 
-    @Override
     public Collection<Long> getModelIds() {
         return modelIndex.getModelMap().keySet();
     }
 
-    @Override
+    /**
+     * Update the engine with a new manual assessment.
+     *
+     * @param modelingAssessment the new assessment as list of individual Feedback objects
+     * @param assessedModelSubmissionId  the id of the corresponding model
+     */
     public void notifyNewAssessment(List<Feedback> modelingAssessment, long assessedModelSubmissionId) {
         lastUsed = LocalDateTime.now();
         modelSelector.addAlreadyHandledModel(assessedModelSubmissionId);
@@ -193,7 +206,12 @@ public class CompassCalculationEngine implements CalculationEngine {
         assessModelsAutomatically();
     }
 
-    @Override
+    /**
+     * Add a new model
+     *
+     * @param model   the new model as raw sting
+     * @param modelId the id of the new model
+     */
     public void notifyNewModel(String model, long modelId) {
         lastUsed = LocalDateTime.now();
         // Do not add models that might already exist
@@ -208,17 +226,42 @@ public class CompassCalculationEngine implements CalculationEngine {
         }
     }
 
-    @Override
+    /**
+     * Add a new model
+     *
+     * @param submissions the list of submissions to get models and ids from
+     */
+    public void notifyNewModels(List<ModelingSubmission> submissions) {
+        lastUsed = LocalDateTime.now();
+        for (ModelingSubmission submission : submissions) {
+            notifyNewModel(submission.getModel(), submission.getId());
+        }
+    }
+
+    /**
+     * @return the time when the engine has been used last
+     */
     public LocalDateTime getLastUsedAt() {
         return lastUsed;
     }
 
-    @Override
+    /**
+     * Get the list of model IDs which have been selected for the next manual assessments. Typically these models are the ones where Compass learns the most, when they are
+     * assessed. All returned models do not have a complete assessment.
+     *
+     * @return a list of modelIds that should be assessed next
+     */
     public List<Long> getModelsWaitingForAssessment() {
         return modelSelector.getModelsWaitingForAssessment();
     }
 
-    @Override
+    /**
+     * Removes the model with the given id from the list of models that should be assessed next. The isAssessed flag indicates if the corresponding model still needs an assessment
+     * or not, i.e. if the flag is true, the model will no longer be considered for assessment by Compass.
+     *
+     * @param modelSubmissionId    the id of the model
+     * @param isAssessed a flag indicating if the model still needs an assessment or not
+     */
     public void removeModelWaitingForAssessment(long modelSubmissionId, boolean isAssessed) {
         modelSelector.removeModelWaitingForAssessment(modelSubmissionId);
         if (isAssessed) {
@@ -229,12 +272,24 @@ public class CompassCalculationEngine implements CalculationEngine {
         }
     }
 
-    @Override
+    /**
+     * Mark a model as unassessed, i.e. that it (still) needs to be assessed. By that it is not locked anymore and can be returned for assessment by Compass again.
+     *
+     * @param modelSubmissionId the id of the model that should be marked as unassessed
+     */
     public void markModelAsUnassessed(long modelSubmissionId) {
         modelSelector.removeAlreadyHandledModel(modelSubmissionId);
     }
 
-    @Override
+    /**
+     * Generate a Feedback list from the given Grade for the given model. The Grade was generated by Compass earlier in the automatic assessment process. It basically contains the
+     * Compass internal representation of the automatic assessment for the given model.
+     *
+     * @param grade   the Grade generated by Compass from which the Feedback list should be generated from
+     * @param modelId the id of the corresponding model
+     * @param result  the corresponding result that will be linked to the newly created feedback items
+     * @return the list of Feedback items generated from the Grade
+     */
     public List<Feedback> convertToFeedback(Grade grade, long modelId, Result result) {
         UMLDiagram model = this.modelIndex.getModelMap().get(modelId);
 
@@ -294,7 +349,6 @@ public class CompassCalculationEngine implements CalculationEngine {
      * @return statistics about the UML model
      */
     // TODO: I don't think we should expose JSONObject to this internal server class. It would be better to return Java objects here
-    @Override
     public JsonObject getStatistics() {
         JsonObject jsonObject = new JsonObject();
 
@@ -321,8 +375,8 @@ public class CompassCalculationEngine implements CalculationEngine {
         JsonObject models = new JsonObject();
         for (Map.Entry<Long, UMLDiagram> modelEntry : getModelMap().entrySet()) {
             JsonObject model = new JsonObject();
-            model.addProperty("coverage", modelEntry.getValue().getLastAssessmentCoverage());
-            model.addProperty("confidence", modelEntry.getValue().getLastAssessmentConfidence());
+            model.addProperty("coverage", automaticAssessmentController.getLastAssessmentCoverage(modelEntry.getValue().getModelSubmissionId()));
+            model.addProperty("confidence", automaticAssessmentController.getLastAssessmentConfidence(modelEntry.getValue().getModelSubmissionId()));
             int numberOfModelConflicts = 0;
             List<UMLElement> elements = new ArrayList<>(modelEntry.getValue().getAllModelElements());
             for (UMLElement element : elements) {
@@ -344,7 +398,14 @@ public class CompassCalculationEngine implements CalculationEngine {
         return jsonObject;
     }
 
-    @Override
+    /**
+     * Get the confidence for a specific model element with the given id. The confidence is the percentage indicating how certain Compass is about the assessment of the given model
+     * element. If it is smaller than a configured threshold, the element with the given id will not be assessed automatically.
+     *
+     * @param elementId    the id of the model element
+     * @param submissionId the id of the submission that contains the corresponding model
+     * @return the confidence for the model element with the given id
+     */
     public double getConfidenceForElement(String elementId, long submissionId) {
         UMLDiagram model = modelIndex.getModel(submissionId);
         UMLElement element = model.getElementByJSONID(elementId);
@@ -352,7 +413,7 @@ public class CompassCalculationEngine implements CalculationEngine {
             return 0.0;
         }
 
-        Optional<SimilaritySetAssessment> optionalAssessment = assessmentIndex.getAssessmentForSimilaritySet(element.getSimilarityID());
+        Optional<SimilaritySetAssessment> optionalAssessment = automaticAssessmentController.getAssessmentForSimilaritySet(element.getSimilarityID());
         return optionalAssessment.map(assessment -> assessment.getScore().getConfidence()).orElse(0.0);
     }
 
@@ -364,29 +425,11 @@ public class CompassCalculationEngine implements CalculationEngine {
      * @param model              the corresponding model
      */
     private void addNewManualAssessment(List<Feedback> modelingAssessment, UMLDiagram model) {
-        Map<String, Feedback> feedbackMapping = createElementIdFeedbackMapping(modelingAssessment);
-        automaticAssessmentController.addFeedbackToSimilaritySet(assessmentIndex, feedbackMapping, model);
-    }
-
-    /**
-     * Create a jsonModelId to Feedback mapping generated from the feedback list of a submission.
-     *
-     * @param feedbackList the feedbackList
-     * @return a map of elementIds to scores
-     */
-    private Map<String, Feedback> createElementIdFeedbackMapping(List<Feedback> feedbackList) {
-        Map<String, Feedback> elementIdFeedbackMap = new HashMap<>();
-        feedbackList.forEach(feedback -> {
-            String jsonElementId = feedback.getReferenceElementId();
-            if (jsonElementId != null) {
-                elementIdFeedbackMap.put(jsonElementId, feedback);
-            }
-        });
-        return elementIdFeedbackMap;
+        automaticAssessmentController.addFeedbacksToSimilaritySet(modelingAssessment, model);
     }
 
     private boolean hasConflict(int elementId) {
-        Optional<SimilaritySetAssessment> optionalAssessment = assessmentIndex.getAssessmentForSimilaritySet(elementId);
+        Optional<SimilaritySetAssessment> optionalAssessment = automaticAssessmentController.getAssessmentForSimilaritySet(elementId);
 
         if (optionalAssessment.isEmpty() || optionalAssessment.get().getFeedbackList() == null || optionalAssessment.get().getFeedbackList().isEmpty()) {
             return false;
@@ -397,7 +440,12 @@ public class CompassCalculationEngine implements CalculationEngine {
         return !feedbackList.stream().allMatch(feedback -> feedback.getCredits().equals(feedbackList.get(0).getCredits()));
     }
 
-    @Override
+    /**
+     * Used for internal analysis of modeling data. Do not remove, usage is commented out due to performance reasons.
+     *
+     * @param exerciseId the id of the modeling exercise that is analyzed
+     * @param finishedResults the list of finished results, i.e. results for which assessor and completion date is not null
+     */
     public void printStatistic(long exerciseId, List<Result> finishedResults) {
         log.info("Statistics for exercise " + exerciseId + "\n\n\n");
 
@@ -467,7 +515,7 @@ public class CompassCalculationEngine implements CalculationEngine {
         }
 
         long numberOfModels = modelIndex.getModelCollection().size();
-        Map<UMLElement, Integer> modelElementMapping = modelIndex.getModelElementMapping();
+        Map<UMLElement, Integer> modelElementMapping = modelIndex.getElementSimilarityMap();
         long numberOfModelElements = modelElementMapping.size();
         long numberOfClasses = 0;
         long numberOfAttrbutes = 0;
@@ -544,13 +592,13 @@ public class CompassCalculationEngine implements CalculationEngine {
 
         // Note, that these two value refer to all similarity sets that have an assessment, i.e. it is not the total number as it excludes the sets without assessments. This might
         // distort the analysis values below.
-        long numberOfSimilaritySets = assessmentIndex.getAssessmentMap().size();
+        long numberOfSimilaritySets = automaticAssessmentController.getAssessmentMap().size();
         long numberOfElementsInSimilaritySets = 0;
 
         long numberOfSimilaritySetsPositiveScore = 0;
         long numberOfSimilaritySetsPositiveScoreRegardingConfidence = 0;
 
-        for (SimilaritySetAssessment similaritySetAssessment : assessmentIndex.getAssessmentMap().values()) {
+        for (SimilaritySetAssessment similaritySetAssessment : automaticAssessmentController.getAssessmentMap().values()) {
             numberOfElementsInSimilaritySets += similaritySetAssessment.getFeedbackList().size();
 
             Score score = similaritySetAssessment.getScore();

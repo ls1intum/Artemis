@@ -4,7 +4,7 @@ import * as sinon from 'sinon';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTestModule } from '../../test.module';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { TranslatePipe } from '@ngx-translate/core';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe.ts';
 import { FormsModule } from '@angular/forms';
 import { NgbCollapse, NgbModal, NgbPopoverModule } from '@ng-bootstrap/ng-bootstrap';
 import { ShortAnswerQuestion } from 'app/entities/quiz/short-answer-question.model';
@@ -60,7 +60,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
             imports: [ArtemisTestModule, FormsModule, AceEditorModule, DndModule, NgbPopoverModule],
             declarations: [
                 ShortAnswerQuestionEditComponent,
-                MockPipe(TranslatePipe),
+                MockPipe(ArtemisTranslatePipe),
                 MockComponent(QuizScoringInfoModalComponent),
                 MockComponent(MatchPercentageInfoModalComponent),
                 MockDirective(NgbCollapse),
@@ -84,8 +84,169 @@ describe('ShortAnswerQuestionEditComponent', () => {
         sinon.restore();
     });
 
-    it('should initialize', () => {
-        expect(component).to.be.ok;
+    it('should initialize with different question texts', () => {
+        // test spots concatenated to other words
+        component.question.text = 'This is a[-spot 12]regarding this question.\nAnother [-spot 8] is in the line above';
+        component.ngOnInit();
+
+        let expectedTextParts = [
+            ['This', 'is', 'a', '[-spot 12]', 'regarding', 'this', 'question.'],
+            ['Another', '[-spot 8]', 'is', 'in', 'the', 'line', 'above'],
+        ];
+        expect(component.textParts).to.deep.equal(expectedTextParts);
+
+        // test a long method with multiple indentations and concatenated words
+        component.question.text =
+            'Enter your long question if needed\n\n' +
+            'Select a part of the[-spot 6]and click on Add Spot to automatically [-spot 9]an input field and the corresponding[-spot 16]\n\n' +
+            'You can define a input field like this: This [-spot 1] an [-spot 2] field.\n' +
+            'Code snippets should be correctly indented:\n' +
+            '[-spot 5] method testIndentation() {\n' +
+            "    System.out.[-spot 3]('Print this');\n" +
+            '    const [-spot 4] Array = [\n' +
+            '    first element = ({\n' +
+            '        firstAttribute : (\n' +
+            '            we need more attributes\n' +
+            '            )\n' +
+            '    });\n' +
+            '    ]\n' +
+            '}\n' +
+            '\n' +
+            'To define the solution for the input fields you need to create a mapping (multiple mapping also possible):';
+
+        component.ngOnInit();
+
+        expectedTextParts = [
+            ['Enter', 'your', 'long', 'question', 'if', 'needed'],
+            [
+                'Select',
+                'a',
+                'part',
+                'of',
+                'the',
+                '[-spot 6]',
+                'and',
+                'click',
+                'on',
+                'Add',
+                'Spot',
+                'to',
+                'automatically',
+                '[-spot 9]',
+                'an',
+                'input',
+                'field',
+                'and',
+                'the',
+                'corresponding',
+                '[-spot 16]',
+            ],
+            ['You', 'can', 'define', 'a', 'input', 'field', 'like', 'this:', 'This', '[-spot 1]', 'an', '[-spot 2]', 'field.'],
+            ['Code', 'snippets', 'should', 'be', 'correctly', 'indented:'],
+            ['[-spot 5]', 'method', 'testIndentation()', '{'],
+            ['    System.out.', '[-spot 3]', "('Print", "this');"],
+            ['    const', '[-spot 4]', 'Array', '=', '['],
+            ['    first', 'element', '=', '({'],
+            ['        firstAttribute', ':', '('],
+            ['            we', 'need', 'more', 'attributes'],
+            ['            )'],
+            ['    });'],
+            ['    ]'],
+            ['}'],
+            ['To', 'define', 'the', 'solution', 'for', 'the', 'input', 'fields', 'you', 'need', 'to', 'create', 'a', 'mapping', '(multiple', 'mapping', 'also', 'possible):'],
+        ];
+        expect(component.textParts).to.deep.equal(expectedTextParts);
+
+        // tests simple indentation
+        component.question.text =
+            '[-spot 5]\n' + '    [-spot 6]\n' + '        [-spot 7]\n' + '            [-spot 8]\n' + '                [-spot 9]\n' + '                    [-spot 10]';
+
+        component.ngOnInit();
+
+        expectedTextParts = [['[-spot 5]'], ['    [-spot 6]'], ['        [-spot 7]'], ['            [-spot 8]'], ['                [-spot 9]'], ['                    [-spot 10]']];
+        expect(component.textParts).to.deep.equal(expectedTextParts);
+
+        // classic java main method test
+        component.question.text =
+            '[-spot 1] class [-spot 2] {\n' +
+            '    public static void main([-spot 3][] args){\n' +
+            '        System.out.println("This is the [-spot 4] method");\n' +
+            '    }\n' +
+            '}';
+
+        component.ngOnInit();
+
+        expectedTextParts = [
+            ['[-spot 1]', 'class', '[-spot 2]', '{'],
+            ['    public', 'static', 'void', 'main(', '[-spot 3]', '[]', 'args){'],
+            ['        System.out.println("This', 'is', 'the', '[-spot 4]', 'method");'],
+            ['    }'],
+            ['}'],
+        ];
+        expect(component.textParts).to.deep.equal(expectedTextParts);
+
+        // test multiple line parameter for method header
+        component.question.text =
+            'private[-spot 1] methodCallWithMultipleLineParameter (\n' +
+            '    int number,\n' +
+            '    [-spot 2] secondNumber,\n' +
+            '    [-spot 3] thirdString,\n' +
+            '    boolean doesWork) {\n' +
+            '        System.out.[-spot 4]("[-spot 5]");\n' +
+            '}';
+
+        component.ngOnInit();
+
+        expectedTextParts = [
+            ['private', '[-spot 1]', 'methodCallWithMultipleLineParameter', '('],
+            ['    int', 'number,'],
+            ['    [-spot 2]', 'secondNumber,'],
+            ['    [-spot 3]', 'thirdString,'],
+            ['    boolean', 'doesWork)', '{'],
+            ['        System.out.', '[-spot 4]', '("', '[-spot 5]', '");'],
+            ['}'],
+        ];
+        expect(component.textParts).to.deep.equal(expectedTextParts);
+
+        // test nested arrays
+        component.question.text =
+            'const manyArrayFields = [\n' + "    ['test1'],\n" + "    ['test2'],\n" + "    ['[-spot 1]'],\n" + "    ['middleField'],\n" + "    ['[-spot 2]'],\n" + '];';
+
+        component.ngOnInit();
+
+        expectedTextParts = [
+            ['const', 'manyArrayFields', '=', '['],
+            ["    ['test1'],"],
+            ["    ['test2'],"],
+            ["    ['", '[-spot 1]', "'],"],
+            ["    ['middleField'],"],
+            ["    ['", '[-spot 2]', "'],"],
+            ['];'],
+        ];
+        expect(component.textParts).to.deep.equal(expectedTextParts);
+
+        // test textual enumeration
+        component.question.text =
+            'If we want a enumeration, we can also [-spot 1] this:\n' +
+            '- first major point\n' +
+            '    - first not so major point\n' +
+            '    - second not so major point\n' +
+            '- second major point\n' +
+            '- third major point\n' +
+            '        - first very not major point, super indented';
+
+        component.ngOnInit();
+
+        expectedTextParts = [
+            ['If', 'we', 'want', 'a', 'enumeration,', 'we', 'can', 'also', '[-spot 1]', 'this:'],
+            ['-', 'first', 'major', 'point'],
+            ['    -', 'first', 'not', 'so', 'major', 'point'],
+            ['    -', 'second', 'not', 'so', 'major', 'point'],
+            ['-', 'second', 'major', 'point'],
+            ['-', 'third', 'major', 'point'],
+            ['        -', 'first', 'very', 'not', 'major', 'point,', 'super', 'indented'],
+        ];
+        expect(component.textParts).to.deep.equal(expectedTextParts);
     });
 
     it('should invoke ngOnChanges', () => {

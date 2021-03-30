@@ -28,10 +28,12 @@ import org.springframework.web.bind.annotation.*;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismResult;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextPlagiarismResult;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
+import de.tum.in.www1.artemis.service.plagiarism.PlagiarismService;
 import de.tum.in.www1.artemis.service.plagiarism.TextPlagiarismDetectionService;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
@@ -61,6 +63,8 @@ public class TextExerciseResource {
 
     private final ExerciseService exerciseService;
 
+    private final PlagiarismService plagiarismService;
+
     private final TextExerciseRepository textExerciseRepository;
 
     private final TextExerciseImportService textExerciseImportService;
@@ -81,9 +85,9 @@ public class TextExerciseResource {
 
     private final GroupNotificationService groupNotificationService;
 
-    private final GradingCriterionService gradingCriterionService;
+    private final GradingCriterionRepository gradingCriterionRepository;
 
-    private final ExerciseGroupService exerciseGroupService;
+    private final ExerciseGroupRepository exerciseGroupRepository;
 
     private final InstanceMessageSendService instanceMessageSendService;
 
@@ -93,10 +97,11 @@ public class TextExerciseResource {
 
     public TextExerciseResource(TextExerciseRepository textExerciseRepository, TextExerciseService textExerciseService, TextAssessmentService textAssessmentService,
             UserRepository userRepository, AuthorizationCheckService authCheckService, CourseService courseService, StudentParticipationRepository studentParticipationRepository,
-            ResultRepository resultRepository, GroupNotificationService groupNotificationService, TextExerciseImportService textExerciseImportService,
-            TextSubmissionExportService textSubmissionExportService, ExampleSubmissionRepository exampleSubmissionRepository, ExerciseService exerciseService,
-            GradingCriterionService gradingCriterionService, TextBlockRepository textBlockRepository, ExerciseGroupService exerciseGroupService,
-            InstanceMessageSendService instanceMessageSendService, TextPlagiarismDetectionService textPlagiarismDetectionService, CourseRepository courseRepository) {
+            ResultRepository resultRepository, PlagiarismService plagiarismService, GroupNotificationService groupNotificationService,
+            TextExerciseImportService textExerciseImportService, TextSubmissionExportService textSubmissionExportService, ExampleSubmissionRepository exampleSubmissionRepository,
+            ExerciseService exerciseService, GradingCriterionRepository gradingCriterionRepository, TextBlockRepository textBlockRepository,
+            ExerciseGroupRepository exerciseGroupRepository, InstanceMessageSendService instanceMessageSendService, TextPlagiarismDetectionService textPlagiarismDetectionService,
+            CourseRepository courseRepository) {
         this.textAssessmentService = textAssessmentService;
         this.textBlockRepository = textBlockRepository;
         this.textExerciseService = textExerciseService;
@@ -106,13 +111,14 @@ public class TextExerciseResource {
         this.authCheckService = authCheckService;
         this.studentParticipationRepository = studentParticipationRepository;
         this.resultRepository = resultRepository;
+        this.plagiarismService = plagiarismService;
         this.textExerciseImportService = textExerciseImportService;
         this.textSubmissionExportService = textSubmissionExportService;
         this.groupNotificationService = groupNotificationService;
         this.exampleSubmissionRepository = exampleSubmissionRepository;
         this.exerciseService = exerciseService;
-        this.gradingCriterionService = gradingCriterionService;
-        this.exerciseGroupService = exerciseGroupService;
+        this.gradingCriterionRepository = gradingCriterionRepository;
+        this.exerciseGroupRepository = exerciseGroupRepository;
         this.instanceMessageSendService = instanceMessageSendService;
         this.textPlagiarismDetectionService = textPlagiarismDetectionService;
         this.courseRepository = courseRepository;
@@ -221,7 +227,7 @@ public class TextExerciseResource {
 
         // Avoid recursions
         if (textExercise.getExampleSubmissions().size() != 0) {
-            Set<ExampleSubmission> exampleSubmissionsWithResults = exampleSubmissionRepository.findAllWithEagerResultByExerciseId(textExercise.getId());
+            Set<ExampleSubmission> exampleSubmissionsWithResults = exampleSubmissionRepository.findAllWithResultByExerciseId(textExercise.getId());
             result.setExampleSubmissions(exampleSubmissionsWithResults);
             result.getExampleSubmissions().forEach(exampleSubmission -> exampleSubmission.setExercise(null));
             result.getExampleSubmissions().forEach(exampleSubmission -> exampleSubmission.setTutorParticipations(null));
@@ -254,7 +260,7 @@ public class TextExerciseResource {
             // not required in the returned json body
             exercise.setStudentParticipations(null);
             exercise.setCourse(null);
-            List<GradingCriterion> gradingCriteria = gradingCriterionService.findByExerciseIdWithEagerGradingCriteria(exercise.getId());
+            List<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exercise.getId());
             exercise.setGradingCriteria(gradingCriteria);
 
         }
@@ -284,7 +290,7 @@ public class TextExerciseResource {
         // If the exercise belongs to an exam, only instructors and admins are allowed to access it
         if (textExercise.isExamExercise()) {
             // Get the course over the exercise group
-            ExerciseGroup exerciseGroup = exerciseGroupService.findOneWithExam(textExercise.getExerciseGroup().getId());
+            ExerciseGroup exerciseGroup = exerciseGroupRepository.findByIdElseThrow(textExercise.getExerciseGroup().getId());
             Course course = exerciseGroup.getExam().getCourse();
 
             if (!authCheckService.isAtLeastInstructorInCourse(course, null)) {
@@ -297,8 +303,8 @@ public class TextExerciseResource {
             return forbidden();
         }
 
-        Set<ExampleSubmission> exampleSubmissions = this.exampleSubmissionRepository.findAllWithEagerResultByExerciseId(exerciseId);
-        List<GradingCriterion> gradingCriteria = gradingCriterionService.findByExerciseIdWithEagerGradingCriteria(exerciseId);
+        Set<ExampleSubmission> exampleSubmissions = this.exampleSubmissionRepository.findAllWithResultByExerciseId(exerciseId);
+        List<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exerciseId);
         textExercise.setGradingCriteria(gradingCriteria);
         textExercise.setExampleSubmissions(exampleSubmissions);
 
@@ -324,7 +330,7 @@ public class TextExerciseResource {
         // If the exercise belongs to an exam, the course must be retrieved over the exerciseGroup
         Course course;
         if (textExercise.isExamExercise()) {
-            course = exerciseGroupService.retrieveCourseOverExerciseGroup(textExercise.getExerciseGroup().getId());
+            course = exerciseGroupRepository.retrieveCourseOverExerciseGroup(textExercise.getExerciseGroup().getId());
         }
         else {
             course = textExercise.getCourseViaExerciseGroupOrCourseMember();
@@ -541,12 +547,52 @@ public class TextExerciseResource {
     }
 
     /**
-     * GET /check-plagiarism : Use JPlag to detect plagiarism in text exercises
+     * GET /text-exercises/{exerciseId}/plagiarism-result
+     * <p>
+     * Return the latest plagiarism result or null, if no plagiarism was detected for this exercise
+     * yet.
      *
-     * @param exerciseId ID of the exercise for which to detect plagiarism
+     * @param exerciseId ID of the text exercise for which the plagiarism result should be returned
+     * @return The ResponseEntity with status 200 (Ok) or with status 400 (Bad Request) if the
+     * parameters are invalid
+     */
+    @GetMapping("/text-exercises/{exerciseId}/plagiarism-result")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<PlagiarismResult> getPlagiarismResult(@PathVariable long exerciseId) {
+        log.debug("REST request to get the latest plagiarism result for the text exercise with id: {}", exerciseId);
+
+        Optional<TextExercise> optionalTextExercise = textExerciseRepository.findWithStudentParticipationsAndSubmissionsById(exerciseId);
+
+        if (optionalTextExercise.isEmpty()) {
+            return notFound();
+        }
+
+        TextExercise textExercise = optionalTextExercise.get();
+
+        if (!authCheckService.isAtLeastInstructorForExercise(textExercise)) {
+            return forbidden();
+        }
+
+        Optional<PlagiarismResult> optionalResult = plagiarismService.getPlagiarismResult(textExercise);
+
+        if (optionalResult.isEmpty()) {
+            return notFound();
+        }
+
+        return ResponseEntity.ok(optionalResult.get());
+    }
+
+    /**
+     * GET /text-exercises/{exerciseId}/check-plagiarism
+     * <p>
+     * Start the automated plagiarism detection for the given exercise and return its result.
+     *
+     * @param exerciseId          ID of the exercise for which to detect plagiarism
      * @param similarityThreshold ignore comparisons whose similarity is below this threshold (%)
-     * @param minimumScore consider only submissions whose score is greater or equal to this value
-     * @param minimumSize consider only submissions whose size is greater or equal to this value
+     * @param minimumScore        consider only submissions whose score is greater or equal to this
+     *                            value
+     * @param minimumSize         consider only submissions whose size is greater or equal to this
+     *                            value
      * @return the result of the JPlag plagiarism detection
      */
     @GetMapping("/text-exercises/{exerciseId}/check-plagiarism")
@@ -560,6 +606,9 @@ public class TextExerciseResource {
         }
 
         TextPlagiarismResult result = textPlagiarismDetectionService.checkPlagiarism(textExercise, similarityThreshold, minimumScore, minimumSize);
+
+        plagiarismService.savePlagiarismResultAndRemovePrevious(result);
+
         return ResponseEntity.ok(result);
     }
 

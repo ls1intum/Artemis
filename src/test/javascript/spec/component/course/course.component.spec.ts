@@ -1,38 +1,39 @@
-import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
-import * as sinon from 'sinon';
-import { stub } from 'sinon';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { ArtemisTestModule } from '../../test.module';
-import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { of } from 'rxjs/internal/observable/of';
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Course } from 'app/entities/course.model';
-import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
-import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { RouterTestingModule } from '@angular/router/testing';
-import { MockHasAnyAuthorityDirective } from '../../helpers/mocks/directive/mock-has-any-authority.directive';
-import { JhiAlertService, JhiSortByDirective, JhiSortDirective } from 'ng-jhipster';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { MomentModule } from 'ngx-moment';
-import { CoursesComponent } from 'app/overview/courses.component';
-import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
-import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { TranslateService } from '@ngx-translate/core';
+import { DueDateStat } from 'app/course/dashboards/instructor-course-dashboard/due-date-stat.model';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { Course } from 'app/entities/course.model';
+import { Exercise } from 'app/entities/exercise.model';
+import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
+import { CourseCardComponent } from 'app/overview/course-card.component';
 import { CourseExerciseRowComponent } from 'app/overview/course-exercises/course-exercise-row.component';
 import { CourseExercisesComponent } from 'app/overview/course-exercises/course-exercises.component';
 import { CourseRegistrationSelectorComponent } from 'app/overview/course-registration-selector/course-registration-selector.component';
-import { CourseCardComponent } from 'app/overview/course-card.component';
 import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
-import * as moment from 'moment';
+import { CoursesComponent } from 'app/overview/courses.component';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
-import { MockAlertService } from '../../helpers/mocks/service/mock-alert.service';
-import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { Exercise } from 'app/entities/exercise.model';
-import { DueDateStat } from 'app/course/dashboards/instructor-course-dashboard/due-date-stat.model';
+import * as chai from 'chai';
+import * as moment from 'moment';
+import { JhiAlertService, JhiSortByDirective, JhiSortDirective } from 'ng-jhipster';
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
+import { MomentModule } from 'ngx-moment';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { of } from 'rxjs/internal/observable/of';
+import * as sinon from 'sinon';
+import { stub } from 'sinon';
+import * as sinonChai from 'sinon-chai';
+import { MockHasAnyAuthorityDirective } from '../../helpers/mocks/directive/mock-has-any-authority.directive';
 import { MockRouter } from '../../helpers/mocks/mock-router';
+import { MockAlertService } from '../../helpers/mocks/service/mock-alert.service';
+import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { ArtemisTestModule } from '../../test.module';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe.ts';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -82,7 +83,7 @@ describe('CoursesComponent', () => {
             declarations: [
                 CoursesComponent,
                 MockDirective(MockHasAnyAuthorityDirective),
-                MockPipe(TranslatePipe),
+                MockPipe(ArtemisTranslatePipe),
                 MockDirective(JhiSortDirective),
                 MockDirective(JhiSortByDirective),
                 MockPipe(ArtemisDatePipe),
@@ -179,10 +180,7 @@ describe('CoursesComponent', () => {
     it('Should load next relevant exam', () => {
         const navigateSpy = sinon.spy(router, 'navigate');
         component.nextRelevantCourseForExam = course1;
-        component.nextRelevantExams = exams;
-        const findAllForDashboardStub = stub(courseService, 'findAllForDashboard');
-        findAllForDashboardStub.returns(of(new HttpResponse({ body: courses, headers: new HttpHeaders() })));
-
+        component.nextRelevantExams = [exam1];
         component.openExam();
 
         expect(navigateSpy).to.have.been.calledWith(['courses', 1, 'exams', 3]);

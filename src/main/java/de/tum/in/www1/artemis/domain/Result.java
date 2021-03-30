@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.domain;
 
-import static de.tum.in.www1.artemis.service.util.RoundingUtil.round;
+import static de.tum.in.www1.artemis.service.util.RoundingUtil.*;
 
 import java.text.DecimalFormat;
 import java.time.ZonedDateTime;
@@ -96,7 +96,7 @@ public class Result extends DomainObject {
     @JsonView(QuizView.Before.class)
     private Participation participation;
 
-    @OneToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn()
     private User assessor;
 
@@ -130,7 +130,7 @@ public class Result extends DomainObject {
      * @param totalPoints total amount of points between 0 and maxPoints
      * @param maxPoints   maximum points reachable at corresponding exercise
      */
-    public void setResultString(Double totalPoints, Double maxPoints) {
+    public void setResultString(double totalPoints, double maxPoints) {
         resultString = createResultString(totalPoints, maxPoints);
     }
 
@@ -141,8 +141,8 @@ public class Result extends DomainObject {
      * @param maxPoints   maximum score reachable at corresponding exercise
      * @return String with result string in this format "2 of 13 points"
      */
-    public String createResultString(Double totalPoints, Double maxPoints) {
-        Double pointsRounded = round(totalPoints);
+    public String createResultString(double totalPoints, double maxPoints) {
+        double pointsRounded = round(totalPoints);
         DecimalFormat formatter = new DecimalFormat("#.#");
         return formatter.format(pointsRounded) + " of " + formatter.format(maxPoints) + " points";
     }
@@ -218,14 +218,17 @@ public class Result extends DomainObject {
     }
 
     /**
-     * 1. set score 2. set successful = true, if score >= 100 or false if not
+     * 1. set score and round it to 4 decimal places
+     * 2. set successful = true, if score >= 100 or false if not
      *
      * @param score new score
      */
     public void setScore(Double score) {
         if (score != null) {
-            this.score = score;
-            this.successful = score >= 100.0;
+            // We need to round the score to four decimal places to have a score of 99.999999 to be rounded to 100.0.
+            // Otherwise a result would not be successful.
+            this.score = roundToNDecimalPlaces(score, 4);
+            this.successful = this.score >= 100.0;
         }
     }
 
@@ -235,7 +238,7 @@ public class Result extends DomainObject {
      * @param totalPoints total amount of points between 0 and maxPoints
      * @param maxPoints   maximum points reachable at corresponding exercise
      */
-    public void setScore(Double totalPoints, Double maxPoints) {
+    public void setScore(double totalPoints, double maxPoints) {
         setScore(totalPoints / maxPoints * 100);
     }
 
@@ -267,6 +270,9 @@ public class Result extends DomainObject {
     public void setRatedIfNotExceeded(ZonedDateTime exerciseDueDate, Submission submission) {
         if (submission.getType() == SubmissionType.INSTRUCTOR || submission.getType() == SubmissionType.TEST) {
             this.rated = true;
+        }
+        else if (submission.getType() == SubmissionType.ILLEGAL) {
+            this.rated = false;
         }
         else {
             setRatedIfNotExceeded(exerciseDueDate, submission.getSubmissionDate());
@@ -468,9 +474,23 @@ public class Result extends DomainObject {
     /**
      * Removes the assessor from the result, can be invoked to make sure that sensitive information is not sent to the client. E.g. students should not see information about
      * their assessor.
+     *
+     * Does not filter feedbacks.
      */
     public void filterSensitiveInformation() {
         setAssessor(null);
+    }
+
+    /**
+     * Remove all feedbacks marked with visibility never.
+     * @param isBeforeDueDate if feedbacks marked with visibility 'after due date' should also be removed.
+     */
+    public void filterSensitiveFeedbacks(boolean isBeforeDueDate) {
+        feedbacks.removeIf(Feedback::isInvisible);
+
+        if (isBeforeDueDate) {
+            feedbacks.removeIf(Feedback::isAfterDueDate);
+        }
     }
 
     /**

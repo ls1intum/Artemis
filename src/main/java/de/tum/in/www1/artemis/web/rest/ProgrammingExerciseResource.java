@@ -20,7 +20,6 @@ import javax.validation.constraints.NotNull;
 
 import jplag.ExitException;
 
-import org.apache.http.HttpException;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,16 +42,16 @@ import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismResult;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextPlagiarismResult;
-import de.tum.in.www1.artemis.repository.CourseRepository;
-import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
-import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
+import de.tum.in.www1.artemis.service.plagiarism.PlagiarismService;
 import de.tum.in.www1.artemis.service.programming.*;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.RepositoryExportOptionsDTO;
@@ -90,6 +89,8 @@ public class ProgrammingExerciseResource {
 
     private final ExerciseService exerciseService;
 
+    private final PlagiarismService plagiarismService;
+
     private final ProgrammingExerciseService programmingExerciseService;
 
     private final ProgrammingExerciseImportService programmingExerciseImportService;
@@ -98,11 +99,11 @@ public class ProgrammingExerciseResource {
 
     private final StudentParticipationRepository studentParticipationRepository;
 
-    private final ExerciseGroupService exerciseGroupService;
+    private final ExerciseGroupRepository exerciseGroupRepository;
 
     private final StaticCodeAnalysisService staticCodeAnalysisService;
 
-    private final GradingCriterionService gradingCriterionService;
+    private final GradingCriterionRepository gradingCriterionRepository;
 
     private final ProgrammingLanguageFeatureService programmingLanguageFeatureService;
 
@@ -129,9 +130,10 @@ public class ProgrammingExerciseResource {
     public ProgrammingExerciseResource(ProgrammingExerciseRepository programmingExerciseRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
             CourseService courseService, Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService,
             ExerciseService exerciseService, ProgrammingExerciseService programmingExerciseService, StudentParticipationRepository studentParticipationRepository,
-            ProgrammingExerciseImportService programmingExerciseImportService, ProgrammingExerciseExportService programmingExerciseExportService,
-            ExerciseGroupService exerciseGroupService, StaticCodeAnalysisService staticCodeAnalysisService, GradingCriterionService gradingCriterionService,
-            ProgrammingLanguageFeatureService programmingLanguageFeatureService, TemplateUpgradePolicy templateUpgradePolicy, CourseRepository courseRepository) {
+            PlagiarismService plagiarismService, ProgrammingExerciseImportService programmingExerciseImportService,
+            ProgrammingExerciseExportService programmingExerciseExportService, ExerciseGroupRepository exerciseGroupRepository, StaticCodeAnalysisService staticCodeAnalysisService,
+            GradingCriterionRepository gradingCriterionRepository, ProgrammingLanguageFeatureService programmingLanguageFeatureService, TemplateUpgradePolicy templateUpgradePolicy,
+            CourseRepository courseRepository) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.userRepository = userRepository;
         this.courseService = courseService;
@@ -139,13 +141,14 @@ public class ProgrammingExerciseResource {
         this.continuousIntegrationService = continuousIntegrationService;
         this.versionControlService = versionControlService;
         this.exerciseService = exerciseService;
+        this.plagiarismService = plagiarismService;
         this.programmingExerciseService = programmingExerciseService;
         this.studentParticipationRepository = studentParticipationRepository;
         this.programmingExerciseImportService = programmingExerciseImportService;
         this.programmingExerciseExportService = programmingExerciseExportService;
-        this.exerciseGroupService = exerciseGroupService;
+        this.exerciseGroupRepository = exerciseGroupRepository;
         this.staticCodeAnalysisService = staticCodeAnalysisService;
-        this.gradingCriterionService = gradingCriterionService;
+        this.gradingCriterionRepository = gradingCriterionRepository;
         this.programmingLanguageFeatureService = programmingLanguageFeatureService;
         this.templateUpgradePolicy = templateUpgradePolicy;
         this.courseRepository = courseRepository;
@@ -462,7 +465,7 @@ public class ProgrammingExerciseResource {
             return ResponseEntity.created(new URI("/api/programming-exercises" + newProgrammingExercise.getId()))
                     .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, newProgrammingExercise.getTitle())).body(newProgrammingExercise);
         }
-        catch (IOException | URISyntaxException | InterruptedException | GitAPIException e) {
+        catch (IOException | URISyntaxException | InterruptedException | GitAPIException | ContinuousIntegrationException e) {
             log.error("Error while setting up programming exercise", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .headers(HeaderUtil.createAlert(applicationName, "An error occurred while setting up the exercise: " + e.getMessage(), "errorProgrammingExercise")).body(null);
@@ -604,7 +607,7 @@ public class ProgrammingExerciseResource {
             }
             responseHeaders = HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, importedProgrammingExercise.getTitle());
         }
-        catch (HttpException e) {
+        catch (Exception e) {
             responseHeaders = HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "importExerciseTriggerPlanFail", "Unable to trigger imported build plans");
         }
 
@@ -794,13 +797,13 @@ public class ProgrammingExerciseResource {
         ProgrammingExercise programmingExercise = optionalProgrammingExercise.get();
 
         // Fetch grading criterion into exercise of participation
-        List<GradingCriterion> gradingCriteria = gradingCriterionService.findByExerciseIdWithEagerGradingCriteria(programmingExercise.getId());
+        List<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(programmingExercise.getId());
         programmingExercise.setGradingCriteria(gradingCriteria);
 
         // If the exercise belongs to an exam, only instructors and admins are allowed to access it, otherwise also TA have access
         if (programmingExercise.isExamExercise()) {
             // Get the course over the exercise group
-            ExerciseGroup exerciseGroup = exerciseGroupService.findOneWithExam(programmingExercise.getExerciseGroup().getId());
+            ExerciseGroup exerciseGroup = exerciseGroupRepository.findByIdElseThrow(programmingExercise.getExerciseGroup().getId());
             Course course = exerciseGroup.getExam().getCourse();
 
             if (!authCheckService.isAtLeastInstructorInCourse(course, null)) {
@@ -904,7 +907,7 @@ public class ProgrammingExerciseResource {
         // If the exercise belongs to an exam, the course must be retrieved over the exerciseGroup
         Course course;
         if (programmingExercise.isExamExercise()) {
-            course = exerciseGroupService.retrieveCourseOverExerciseGroup(programmingExercise.getExerciseGroup().getId());
+            course = exerciseGroupRepository.retrieveCourseOverExerciseGroup(programmingExercise.getExerciseGroup().getId());
         }
         else {
             course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
@@ -1200,13 +1203,53 @@ public class ProgrammingExerciseResource {
     }
 
     /**
-     * GET /programming-exercises/{exerciseId}/plagiarism-check : Uses JPlag to check for plagiarism
-     * and returns the generated output as zip file
+     * GET /programming-exercises/{exerciseId}/plagiarism-result
+     * <p>
+     * Return the latest plagiarism result or null, if no plagiarism was detected for this exercise
+     * yet.
      *
-     * @param exerciseId          The ID of the programming exercise for which the plagiarism check should be
-     *                            executed
+     * @param exerciseId ID of the programming exercise for which the plagiarism result should be
+     *                   returned
+     * @return The ResponseEntity with status 200 (Ok) or with status 400 (Bad Request) if the
+     * parameters are invalid
+     */
+    @GetMapping(Endpoints.PLAGIARISM_RESULT)
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
+    public ResponseEntity<PlagiarismResult> getPlagiarismResult(@PathVariable long exerciseId) {
+        log.debug("REST request to get the latest plagiarism result for the programming exercise with id: {}", exerciseId);
+
+        Optional<ProgrammingExercise> optionalProgrammingExercise = programmingExerciseRepository.findById(exerciseId);
+
+        if (optionalProgrammingExercise.isEmpty()) {
+            return notFound();
+        }
+
+        ProgrammingExercise programmingExercise = optionalProgrammingExercise.get();
+
+        if (!authCheckService.isAtLeastInstructorForExercise(programmingExercise)) {
+            return forbidden();
+        }
+
+        Optional<PlagiarismResult> optionalResult = plagiarismService.getPlagiarismResult(programmingExercise);
+
+        if (optionalResult.isEmpty()) {
+            return notFound();
+        }
+
+        return ResponseEntity.ok(optionalResult.get());
+    }
+
+    /**
+     * GET /programming-exercises/{exerciseId}/check-plagiarism
+     * <p>
+     * Start the automated plagiarism detection for the given exercise and return its result.
+     *
+     * @param exerciseId          The ID of the programming exercise for which the plagiarism check
+     *                            should be executed
      * @param similarityThreshold ignore comparisons whose similarity is below this threshold (%)
-     * @param minimumScore        consider only submissions whose score is greater or equal to this value
+     * @param minimumScore        consider only submissions whose score is greater or equal to this
+     *                            value
      * @return The ResponseEntity with status 201 (Created) or with status 400 (Bad Request) if the
      * parameters are invalid
      * @throws ExitException is thrown if JPlag exits unexpectedly
@@ -1218,17 +1261,20 @@ public class ProgrammingExerciseResource {
     public ResponseEntity<TextPlagiarismResult> checkPlagiarism(@PathVariable long exerciseId, @RequestParam float similarityThreshold, @RequestParam int minimumScore)
             throws ExitException, IOException {
         log.debug("REST request to check plagiarism for ProgrammingExercise with id: {}", exerciseId);
-        long start = System.nanoTime();
 
-        Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository.findById(exerciseId);
-        if (programmingExercise.isEmpty()) {
+        Optional<ProgrammingExercise> optionalProgrammingExercise = programmingExerciseRepository.findById(exerciseId);
+
+        if (optionalProgrammingExercise.isEmpty()) {
             return notFound();
         }
-        if (!authCheckService.isAtLeastInstructorForExercise(programmingExercise.get())) {
+
+        ProgrammingExercise programmingExercise = optionalProgrammingExercise.get();
+
+        if (!authCheckService.isAtLeastInstructorForExercise(programmingExercise)) {
             return forbidden();
         }
 
-        var language = programmingExercise.get().getProgrammingLanguage();
+        ProgrammingLanguage language = programmingExercise.getProgrammingLanguage();
         ProgrammingLanguageFeature programmingLanguageFeature = programmingLanguageFeatureService.getProgrammingLanguageFeatures(language);
 
         if (!programmingLanguageFeature.isPlagiarismCheckSupported()) {
@@ -1238,8 +1284,7 @@ public class ProgrammingExerciseResource {
 
         TextPlagiarismResult result = programmingExerciseExportService.checkPlagiarism(exerciseId, similarityThreshold, minimumScore);
 
-        log.info("Check plagiarism of programming exercise {} with title '{}' was successful in {}.", programmingExercise.get().getId(), programmingExercise.get().getTitle(),
-                formatDurationFrom(start));
+        plagiarismService.savePlagiarismResultAndRemovePrevious(result);
 
         return ResponseEntity.ok(result);
     }
@@ -1382,6 +1427,8 @@ public class ProgrammingExerciseResource {
         public static final String GENERATE_TESTS = PROGRAMMING_EXERCISE + "/generate-tests";
 
         public static final String CHECK_PLAGIARISM = PROGRAMMING_EXERCISE + "/check-plagiarism";
+
+        public static final String PLAGIARISM_RESULT = PROGRAMMING_EXERCISE + "/plagiarism-result";
 
         public static final String CHECK_PLAGIARISM_JPLAG_REPORT = PROGRAMMING_EXERCISE + "/check-plagiarism-jplag-report";
 

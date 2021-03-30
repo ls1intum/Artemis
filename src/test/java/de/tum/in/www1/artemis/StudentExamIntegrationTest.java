@@ -41,6 +41,7 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentPar
 import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.SecurityUtils;
+import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.exam.ExamQuizService;
 import de.tum.in.www1.artemis.service.exam.StudentExamService;
 import de.tum.in.www1.artemis.util.LocalRepository;
@@ -90,6 +91,9 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
 
     @Autowired
     QuizSubmissionRepository quizSubmissionRepository;
+
+    @Autowired
+    ParticipationService participationService;
 
     @Autowired
     ObjectMapper objectMapper;
@@ -149,9 +153,9 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testFindOneWithExercisesByUserIdAndExamId() {
-        var studentExam = studentExamService.findOneWithExercisesByUserIdAndExamId(Long.MAX_VALUE, exam1.getId());
+        var studentExam = studentExamRepository.findWithExercisesByUserIdAndExamId(Long.MAX_VALUE, exam1.getId());
         assertThat(studentExam).isEmpty();
-        studentExam = studentExamService.findOneWithExercisesByUserIdAndExamId(users.get(0).getId(), exam1.getId());
+        studentExam = studentExamRepository.findWithExercisesByUserIdAndExamId(users.get(0).getId(), exam1.getId());
         assertThat(studentExam).isPresent();
         assertThat(studentExam.get()).isEqualTo(studentExam1);
     }
@@ -159,15 +163,15 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testFindAllDistinctWorkingTimesByExamId() {
-        assertThat(studentExamService.findAllDistinctWorkingTimesByExamId(Long.MAX_VALUE)).isEqualTo(Set.of());
-        assertThat(studentExamService.findAllDistinctWorkingTimesByExamId(exam1.getId())).isEqualTo(Set.of(studentExam1.getWorkingTime()));
+        assertThat(studentExamRepository.findAllDistinctWorkingTimesByExamId(Long.MAX_VALUE)).isEqualTo(Set.of());
+        assertThat(studentExamRepository.findAllDistinctWorkingTimesByExamId(exam1.getId())).isEqualTo(Set.of(studentExam1.getWorkingTime()));
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testFindMaxWorkingTimeById() {
-        assertThrows(EntityNotFoundException.class, () -> studentExamService.findMaxWorkingTimeByExamId(Long.MAX_VALUE));
-        assertThat(studentExamService.findMaxWorkingTimeByExamId(exam1.getId())).isEqualTo(studentExam1.getWorkingTime());
+        assertThrows(EntityNotFoundException.class, () -> studentExamRepository.findMaxWorkingTimeByExamIdElseThrow(Long.MAX_VALUE));
+        assertThat(studentExamRepository.findMaxWorkingTimeByExamIdElseThrow(exam1.getId())).isEqualTo(studentExam1.getWorkingTime());
     }
 
     private void deleteExam1WithInstructor() throws Exception {
@@ -1375,18 +1379,18 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         planNames.add(TEMPLATE.getName());
         planNames.add(SOLUTION.getName());
         for (final String planName : planNames) {
-            bambooRequestMockProvider.mockDeleteBambooBuildPlan(projectKey + "-" + planName.toUpperCase());
+            bambooRequestMockProvider.mockDeleteBambooBuildPlan(projectKey + "-" + planName.toUpperCase(), false);
         }
         List<String> repoNames = new ArrayList<>(studentLogins);
 
         for (final var repoType : RepositoryType.values()) {
-            bitbucketRequestMockProvider.mockDeleteRepository(projectKey, programmingExercise.generateRepositoryName(repoType));
+            bitbucketRequestMockProvider.mockDeleteRepository(projectKey, programmingExercise.generateRepositoryName(repoType), false);
         }
 
         for (final var repoName : repoNames) {
-            bitbucketRequestMockProvider.mockDeleteRepository(projectKey, (projectKey + "-" + repoName).toLowerCase());
+            bitbucketRequestMockProvider.mockDeleteRepository(projectKey, (projectKey + "-" + repoName).toLowerCase(), false);
         }
-        bitbucketRequestMockProvider.mockDeleteProject(projectKey);
+        bitbucketRequestMockProvider.mockDeleteProject(projectKey, false);
         request.delete("/api/courses/" + exam2.getCourse().getId() + "/exams/" + exam2.getId(), HttpStatus.OK);
         assertThat(examRepository.findById(exam2.getId())).as("Exam was deleted").isEmpty();
 
@@ -1441,6 +1445,19 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         var testRunList = studentExamRepository.findAllTestRunsWithExercisesParticipationsSubmissionsResultsByExamId(exam.getId());
         assertThat(testRunList.size()).isEqualTo(1);
         testRunList.get(0).getExercises().forEach(exercise -> assertThat(exercise.getStudentParticipations()).isNotEmpty());
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testDeleteTestRunWithMissingParticipation() throws Exception {
+        var instructor = database.getUserByLogin("instructor1");
+        var exam = database.addExam(course1);
+        exam = database.addTextModelingProgrammingExercisesToExam(exam, false, false);
+        var testRun = database.setupTestRunForExamWithExerciseGroupsForInstructor(exam, instructor, exam.getExerciseGroups());
+        var participations = studentParticipationRepository.findByExerciseIdAndStudentIdWithEagerSubmissions(testRun.getExercises().get(0).getId(), instructor.getId());
+        assertThat(participations).isNotEmpty();
+        participationService.delete(participations.get(0).getId(), false, false);
+        request.delete("/api/courses/" + exam.getCourse().getId() + "/exams/" + exam.getId() + "/test-run/" + testRun.getId(), HttpStatus.OK);
     }
 
     @Test

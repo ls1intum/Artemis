@@ -37,8 +37,11 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
+import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.participation.*;
+import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.in.www1.artemis.repository.StudentExamRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
 import de.tum.in.www1.artemis.util.*;
@@ -55,6 +58,12 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
 
     @Autowired
     StudentParticipationRepository studentParticipationRepository;
+
+    @Autowired
+    ExamRepository examRepository;
+
+    @Autowired
+    StudentExamRepository studentExamRepository;
 
     @Autowired
     ProgrammingExerciseParticipationService programmingExerciseParticipationService;
@@ -568,15 +577,24 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
         testCommitChanges();
     }
 
-    @Test
-    @WithMockUser(username = "student1", roles = "USER")
-    public void testCommitChangesNotAllowedForBuildAndTestAfterDueDate() throws Exception {
+    private void setBuildAndTestForProgrammingExercise() {
         programmingExercise.setReleaseDate(ZonedDateTime.now().minusHours(2));
         programmingExercise.setDueDate(ZonedDateTime.now().minusHours(1));
         programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().plusHours(1));
         programmingExercise.setAssessmentType(AssessmentType.AUTOMATIC);
         programmingExerciseRepository.save(programmingExercise);
+    }
 
+    private void setManualAssessmentForProgrammingExercise() {
+        programmingExercise.setReleaseDate(ZonedDateTime.now().minusHours(2));
+        programmingExercise.setDueDate(ZonedDateTime.now().minusHours(1));
+        programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(null);
+        programmingExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+        programmingExerciseRepository.save(programmingExercise);
+    }
+
+    private void assertUnchangedRepositoryStatusForForbiddenCommit() throws Exception {
+        // Committing is not allowed
         var receivedStatusBeforeCommit = request.get(studentRepoBaseUrl + participation.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
         assertThat(receivedStatusBeforeCommit.repositoryStatus.toString()).isEqualTo("UNCOMMITTED_CHANGES");
         request.postWithoutLocation(studentRepoBaseUrl + participation.getId() + "/commit", null, HttpStatus.FORBIDDEN, null);
@@ -585,17 +603,71 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testCommitChangesNotAllowedForManuallyAssessedAfterDueDate() throws Exception {
-        programmingExercise.setReleaseDate(ZonedDateTime.now().minusHours(2));
-        programmingExercise.setDueDate(ZonedDateTime.now().minusHours(1));
-        programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(null);
-        programmingExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
-        programmingExerciseRepository.save(programmingExercise);
+    public void testCommitChangesNotAllowedForBuildAndTestAfterDueDate() throws Exception {
+        setBuildAndTestForProgrammingExercise();
+        assertUnchangedRepositoryStatusForForbiddenCommit();
+    }
 
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testCommitChangesNotAllowedForManuallyAssessedAfterDueDate() throws Exception {
+        setManualAssessmentForProgrammingExercise();
+        assertUnchangedRepositoryStatusForForbiddenCommit();
+    }
+
+    private void assertUnchangedRepositoryStatusForForbiddenReset() throws Exception {
+        // Reset the repo is not allowed
         var receivedStatusBeforeCommit = request.get(studentRepoBaseUrl + participation.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
         assertThat(receivedStatusBeforeCommit.repositoryStatus.toString()).isEqualTo("UNCOMMITTED_CHANGES");
-        request.postWithoutLocation(studentRepoBaseUrl + participation.getId() + "/commit", null, HttpStatus.FORBIDDEN, null);
+        request.postWithoutLocation(studentRepoBaseUrl + participation.getId() + "/reset", null, HttpStatus.FORBIDDEN, null);
         assertThat(receivedStatusBeforeCommit.repositoryStatus.toString()).isEqualTo("UNCOMMITTED_CHANGES");
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testResetNotAllowedForBuildAndTestAfterDueDate() throws Exception {
+        setBuildAndTestForProgrammingExercise();
+        assertUnchangedRepositoryStatusForForbiddenReset();
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testResetNotAllowedForManuallyAssessedAfterDueDate() throws Exception {
+        setManualAssessmentForProgrammingExercise();
+        assertUnchangedRepositoryStatusForForbiddenReset();
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testResetNotAllowedBeforeDueDate() throws Exception {
+        programmingExercise.setReleaseDate(ZonedDateTime.now().minusHours(2));
+        programmingExercise.setDueDate(ZonedDateTime.now().plusHours(1));
+        programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(null);
+        programmingExercise.setAssessmentType(AssessmentType.AUTOMATIC);
+        programmingExerciseRepository.save(programmingExercise);
+
+        assertUnchangedRepositoryStatusForForbiddenReset();
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testResetNotAllowedForExamBeforeDueDate() throws Exception {
+        // Create an exam programming exercise
+        programmingExercise = database.addCourseExamExerciseGroupWithOneProgrammingExerciseAndTestCases();
+        programmingExerciseRepository.save(programmingExercise);
+        participation.setExercise(programmingExercise);
+        studentParticipationRepository.save(participation);
+        // Create an exam which has already started
+        Exam exam = examRepository.findByIdElseThrow(programmingExercise.getExerciseGroup().getExam().getId());
+        exam.setStartDate(ZonedDateTime.now().minusHours(1));
+        examRepository.save(exam);
+        var studentExam = database.addStudentExam(exam);
+        studentExam.setWorkingTime(7200); // 2 hours
+        studentExam.setUser(participation.getStudent().get());
+        studentExam.addExercise(programmingExercise);
+        studentExamRepository.save(studentExam);
+        // A tutor is not allowed to reset the repository during the exam time
+        assertUnchangedRepositoryStatusForForbiddenReset();
     }
 
     @Test

@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.regex.Pattern;
 
-import org.apache.http.HttpException;
 import org.springframework.http.ResponseEntity;
 
 import de.tum.in.www1.artemis.config.Constants;
@@ -78,9 +77,9 @@ public interface ContinuousIntegrationService {
      * triggers a build for the build plan in the given participation
      *
      * @param participation the participation with the id of the build plan that should be triggered
-     * @throws HttpException if the request to the CI failed.
+     * @throws ContinuousIntegrationException if the request to the CI failed.
      */
-    void triggerBuild(ProgrammingExerciseParticipation participation) throws HttpException;
+    void triggerBuild(ProgrammingExerciseParticipation participation) throws ContinuousIntegrationException;
 
     /**
      * Delete project with given identifier from CI system.
@@ -163,15 +162,6 @@ public interface ContinuousIntegrationService {
     String checkIfProjectExists(String projectKey, String projectName);
 
     /**
-     * Checks if a given build plan is deactivated, or enabled
-     *
-     * @param planId The ID of the build plan
-     * @param projectKey The key of the project for which to check the build plan
-     * @return True, if the plan is enabled, false otherwise
-     */
-    boolean isBuildPlanEnabled(final String projectKey, final String planId);
-
-    /**
      * Enables the given build plan.
      *
      * @param projectKey The key of the project for which to enable the plan
@@ -230,7 +220,7 @@ public interface ContinuousIntegrationService {
      *
      * @param programmingExercise for which a project should be created
      */
-    void createProjectForExercise(ProgrammingExercise programmingExercise);
+    void createProjectForExercise(ProgrammingExercise programmingExercise) throws ContinuousIntegrationException;
 
     /**
      * Get the webhook URL to call if one wants to trigger the build plan or notify the plan about an event that should
@@ -252,7 +242,7 @@ public interface ContinuousIntegrationService {
             @Override
             public String forProgrammingLanguage(ProgrammingLanguage language) {
                 return switch (language) {
-                    case JAVA, PYTHON, C, HASKELL, KOTLIN, VHDL, ASSEMBLER, SWIFT -> Constants.ASSIGNMENT_CHECKOUT_PATH;
+                    case JAVA, PYTHON, C, HASKELL, KOTLIN, VHDL, ASSEMBLER, SWIFT, OCAML -> Constants.ASSIGNMENT_CHECKOUT_PATH;
                 };
             }
         },
@@ -261,7 +251,7 @@ public interface ContinuousIntegrationService {
             @Override
             public String forProgrammingLanguage(ProgrammingLanguage language) {
                 return switch (language) {
-                    case JAVA, PYTHON, HASKELL, KOTLIN, SWIFT -> "";
+                    case JAVA, PYTHON, HASKELL, KOTLIN, SWIFT, OCAML -> "";
                     case C, VHDL, ASSEMBLER -> Constants.TESTS_CHECKOUT_PATH;
                 };
             }
@@ -298,13 +288,14 @@ public interface ContinuousIntegrationService {
      */
     static String getDockerImageName(ProgrammingLanguage language) {
         return switch (language) {
-            case JAVA, KOTLIN -> "ls1tum/artemis-maven-template:java15-5";
+            case JAVA, KOTLIN -> "ls1tum/artemis-maven-template:java16-1";
             case PYTHON -> "ls1tum/artemis-python-docker:latest";
             case C -> "ls1tum/artemis-c-docker:latest";
             case HASKELL -> "tumfpv/fpv-stack:8.8.4";
             case VHDL -> "tizianleonhardt/era-artemis-vhdl:latest";
             case ASSEMBLER -> "tizianleonhardt/era-artemis-assembler:latest";
-            case SWIFT -> "norionomura/swiftlint:0.41.0_swift-5.3.1";
+            case SWIFT -> "norionomura/swiftlint:latest";
+            case OCAML -> "ls1tum/artemis-ocaml-docker:latest";
         };
     }
 }

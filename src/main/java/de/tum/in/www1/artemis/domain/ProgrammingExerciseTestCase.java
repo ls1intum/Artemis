@@ -6,8 +6,10 @@ import javax.persistence.*;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import de.tum.in.www1.artemis.domain.enumeration.Visibility;
 
 /**
  * A ProgrammingExerciseTestCase.
@@ -27,8 +29,9 @@ public class ProgrammingExerciseTestCase extends DomainObject {
     @Column(name = "active")
     private Boolean active;
 
-    @Column(name = "after_due_date")
-    private Boolean afterDueDate;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "visibility")
+    private Visibility visibility;
 
     @Column(name = "bonus_multiplier")
     private Double bonusMultiplier;
@@ -125,19 +128,26 @@ public class ProgrammingExerciseTestCase extends DomainObject {
         this.exercise = exercise;
     }
 
-    public Boolean isAfterDueDate() {
-        if (afterDueDate == null) {
-            return false;
-        }
-        return afterDueDate;
+    @JsonIgnore
+    public boolean isAfterDueDate() {
+        return visibility == Visibility.AFTER_DUE_DATE;
     }
 
-    public void setAfterDueDate(Boolean afterDueDate) {
-        this.afterDueDate = afterDueDate;
+    @JsonIgnore
+    public boolean isInvisible() {
+        return visibility == Visibility.NEVER;
     }
 
-    public ProgrammingExerciseTestCase afterDueDate(Boolean afterDueDate) {
-        this.afterDueDate = afterDueDate;
+    public Visibility getVisibility() {
+        return visibility;
+    }
+
+    public void setVisibility(Visibility visibility) {
+        this.visibility = visibility;
+    }
+
+    public ProgrammingExerciseTestCase visibility(Visibility visibility) {
+        this.visibility = visibility;
         return this;
     }
 
@@ -148,7 +158,7 @@ public class ProgrammingExerciseTestCase extends DomainObject {
      */
     public ProgrammingExerciseTestCase clone() {
         ProgrammingExerciseTestCase clone = new ProgrammingExerciseTestCase().testName(this.getTestName()).weight(this.getWeight()).active(this.isActive())
-                .bonusPoints(this.getBonusPoints()).bonusMultiplier(this.getBonusMultiplier()).afterDueDate(afterDueDate).exercise(this.exercise);
+                .bonusPoints(this.getBonusPoints()).bonusMultiplier(this.getBonusMultiplier()).visibility(visibility).exercise(this.exercise);
         clone.setId(this.getId());
         return clone;
     }
@@ -159,12 +169,12 @@ public class ProgrammingExerciseTestCase extends DomainObject {
      * @return whether this and the other test case are the same based on name and exercise
      */
     public boolean isSameTestCase(ProgrammingExerciseTestCase testCase) {
-        return testCase.getTestName().equals(this.getTestName()) && this.getExercise().getId().equals(testCase.getExercise().getId());
+        return testCase.getTestName().equalsIgnoreCase(this.getTestName()) && this.getExercise().getId().equals(testCase.getExercise().getId());
     }
 
     @Override
     public String toString() {
-        return "ProgrammingExerciseTestCase{" + "id=" + getId() + ", testName='" + testName + '\'' + ", weight=" + weight + ", active=" + active + ", afterDueDate=" + afterDueDate
+        return "ProgrammingExerciseTestCase{" + "id=" + getId() + ", testName='" + testName + '\'' + ", weight=" + weight + ", active=" + active + ", visibility=" + visibility
                 + ", bonusMultiplier=" + bonusMultiplier + ", bonusPoints=" + bonusPoints + '}';
     }
 }

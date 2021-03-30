@@ -156,10 +156,15 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         { inTime: 1, late: 1 },
         { inTime: 8, late: 0 },
     ];
+    const numberOfLockedAssessmentByOtherTutorsOfCorrectionRound = [
+        { inTime: 2, late: 0 },
+        { inTime: 7, late: 0 },
+    ];
     const stats = {
         numberOfSubmissions: { inTime: 12, late: 5 },
         totalNumberOfAssessments: { inTime: 9, late: 1 },
         numberOfAssessmentsOfCorrectionRounds,
+        numberOfLockedAssessmentByOtherTutorsOfCorrectionRound,
     } as StatsForDashboard;
     const lockLimitErrorResponse = new HttpErrorResponse({ error: { errorKey: 'lockedSubmissionsLimitReached' } });
     const router = new MockRouter();
@@ -308,6 +313,8 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         sinon.assert.calledWith(modelingSubmissionStubWithoutAssessment.getCall(1), modelingExercise.id, undefined, 1);
         expect(comp.numberOfAssessmentsOfCorrectionRounds[0].inTime).to.equal(1);
         expect(comp.numberOfAssessmentsOfCorrectionRounds[1].inTime).to.equal(8);
+        expect(comp.numberOfLockedAssessmentByOtherTutorsOfCorrectionRound[0].inTime).to.equal(2);
+        expect(comp.numberOfLockedAssessmentByOtherTutorsOfCorrectionRound[1].inTime).to.equal(7);
         expect(comp.totalAssessmentPercentage.inTime).to.equal(75);
         expect(comp.totalAssessmentPercentage.late).to.equal(20);
         expect(comp.submissionsByCorrectionRound?.get(1)!.length).to.equal(0);
@@ -413,33 +420,6 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         expect(castedExercise).to.be.equal(exercise as ProgrammingExercise);
     });
 
-    describe('test navigate back', () => {
-        const courseId = 4;
-
-        it('should navigate back when not in exammode', () => {
-            comp.courseId = 4;
-            comp.back();
-            expect(navigateSpy).to.have.been.calledWith([`/course-management/${courseId}/assessment-dashboard`]);
-        });
-
-        it('should navigate back in exammode and not testRun', () => {
-            comp.courseId = 4;
-            comp.isExamMode = true;
-            comp.isTestRun = true;
-            comp.exercise = exercise;
-            comp.back();
-            expect(navigateSpy).to.have.been.calledWith([`/course-management/${courseId}/exams/${exercise!.exerciseGroup!.exam!.id}/test-runs/assess`]);
-        });
-
-        it('should navigate back in exammode and testRun', () => {
-            comp.courseId = 4;
-            comp.isExamMode = true;
-            comp.exercise = exercise;
-            comp.back();
-            expect(navigateSpy).to.have.been.calledWith([`/course-management/${courseId}/exams/${exercise!.exerciseGroup!.exam!.id}/assessment-dashboard`]);
-        });
-    });
-
     describe('openExampleSubmission', () => {
         const courseId = 4;
 
@@ -462,7 +442,6 @@ describe('ExerciseAssessmentDashboardComponent', () => {
     });
 
     describe('openAssessmentEditor', () => {
-        const courseId = 4;
         it('should not openExampleSubmission', () => {
             navigateSpy.resetHistory();
             const submission = { id: 8 };
@@ -475,27 +454,44 @@ describe('ExerciseAssessmentDashboardComponent', () => {
             comp.exercise.type = ExerciseType.MODELING;
             comp.courseId = 4;
             comp.exercise = exercise;
+            comp.exerciseId = exercise.id!;
             const submission = { id: 8 };
             comp.openAssessmentEditor(submission);
 
-            expect(navigateSpy).to.have.been.calledWith([`/course-management/${courseId}/${exercise.type}-exercises/${exercise.id}/submissions/${submission.id}/assessment`], {
-                queryParams: { 'correction-round': 0 },
-            });
+            const expectedUrl = [
+                '/course-management',
+                comp.courseId.toString(),
+                'modeling-exercises',
+                exercise.id!.toString(),
+                'submissions',
+                submission.id.toString(),
+                'assessment',
+            ];
+            expect(navigateSpy).to.have.been.calledWith(expectedUrl, { queryParams: { 'correction-round': 0 } });
         });
 
         it('should openExampleSubmission with programmingExercise', () => {
             comp.exercise = exercise;
             comp.exercise.type = ExerciseType.PROGRAMMING;
             comp.courseId = 4;
-            comp.exercise = exercise;
+            comp.exerciseId = exercise.id!;
             const participationId = 3;
             const submission = { id: 8, participation: { id: participationId } };
 
+            const expectedUrl = [
+                '/course-management',
+                comp.courseId.toString(),
+                'programming-exercises',
+                exercise.id!.toString(),
+                'code-editor',
+                participationId.toString(),
+                'assessment',
+            ];
             comp.openAssessmentEditor(submission);
-            expect(navigateSpy).to.have.been.calledWith([`/course-management/${courseId}/${exercise.type}-exercises/${exercise.id}/code-editor/${participationId}/assessment`]);
+            expect(navigateSpy).to.have.been.calledWith(expectedUrl);
             comp.isTestRun = true;
             comp.openAssessmentEditor(submission);
-            expect(navigateSpy).to.have.been.calledWith([`/course-management/${courseId}/${exercise.type}-exercises/${exercise.id}/code-editor/${participationId}/assessment`]);
+            expect(navigateSpy).to.have.been.calledWith(expectedUrl);
         });
     });
 });

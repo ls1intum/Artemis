@@ -68,19 +68,36 @@
                     <td>
                         <ng-container *ngIf="submission.participation.submissions">
                             <a
-                                *ngIf="exercise.isAtLeastInstructor"
+                                *ngIf="exercise.isAtLeastInstructor && !examId"
                                 [routerLink]="['/course-management', courseId, 'exercises', exercise.id, 'participations', submission.participation.id, 'submissions']"
+                            >
+                                {{ submission.participation.submissions.length }}
+                            </a>
+                            <a
+                                *ngIf="exercise.isAtLeastInstructor && !!examId"
+                                [routerLink]="[
+                                    '/course-management',
+                                    courseId,
+                                    'exams',
+                                    examId,
+                                    'exercise-groups',
+                                    exerciseGroupId,
+                                    'exercises',
+                                    exercise.id,
+                                    'participations',
+                                    submission.participation.id
+                                ]"
                             >
                                 {{ submission.participation.submissions.length }}
                             </a>
                         </ng-container>
                     </td>
-                    <td>{{ 'artemisApp.exerciseAssessmentDashboard.languages.' + (submission.language || 'UNKNOWN') | translate }}</td>
+                    <td>{{ 'artemisApp.exerciseAssessmentDashboard.languages.' + (submission.language || 'UNKNOWN') | artemisTranslate }}</td>
                     <td>
                         {{ submission.durationInMinutes }}
-                        {{ 'artemisApp.assessment.dashboard.minutes' | translate }}
+                        {{ 'artemisApp.assessment.dashboard.minutes' | artemisTranslate }}
                     </td>
-                    <td>{{ assessmentTypeTranslationKey(submission.latestResult) | translate }}</td>
+                    <td>{{ assessmentTypeTranslationKey(submission.latestResult) | artemisTranslate }}</td>
                     <td>
                         <div *ngIf="submission.results?.length > 1 && submission.results[0].assessor">{{ submission.results[0].assessor!.name }}</div>
                         <div *ngIf="submission.latestResult && submission.latestResult!.assessor">{{ submission.latestResult!.assessor!.name }}</div>
@@ -90,11 +107,11 @@
                             <!-- exercise without exam-->
                             <span *ngIf="exercise.type === ExerciseType.TEXT && exercise.course && submission">
                                 <a *ngIf="!submission.latestResult" [class.disabled]="busy" [routerLink]="getAssessmentLink(submission.id)" class="btn btn-success btn-sm mb-1">
-                                    <fa-icon [fixedWidth]="true" [icon]="'folder-open'"></fa-icon>&nbsp;{{ 'artemisApp.assessment.dashboard.actions.assess' | translate }}
+                                    <fa-icon [fixedWidth]="true" [icon]="'folder-open'"></fa-icon>&nbsp;{{ 'artemisApp.assessment.dashboard.actions.assess' | artemisTranslate }}
                                 </a>
 
                                 <a *ngIf="submission.latestResult" [class.disabled]="busy" [routerLink]="getAssessmentLink(submission.id)" class="btn btn-primary btn-sm mb-1">
-                                    <fa-icon [fixedWidth]="true" [icon]="'folder-open'"></fa-icon>&nbsp;{{ 'artemisApp.assessment.dashboard.actions.open' | translate }}
+                                    <fa-icon [fixedWidth]="true" [icon]="'folder-open'"></fa-icon>&nbsp;{{ 'artemisApp.assessment.dashboard.actions.open' | artemisTranslate }}
                                 </a>
                             </span>
                             <!-- start-->
@@ -111,7 +128,7 @@
                                     >
                                         <fa-icon [fixedWidth]="true" [icon]="'folder-open'"></fa-icon>&nbsp;
                                         <span>
-                                            {{ 'artemisApp.assessment.dashboard.actions.open' | translate }}
+                                            {{ 'artemisApp.assessment.dashboard.actions.open' | artemisTranslate }}
                                         </span>
                                     </a>
                                     <!-- button for existing result with lock-->
@@ -125,7 +142,7 @@
                                             >
                                                 <fa-icon [fixedWidth]="true" [icon]="'edit'"></fa-icon>&nbsp;
                                                 <span>
-                                                    {{ 'artemisApp.assessment.dashboard.actions.continue' | translate }}
+                                                    {{ 'artemisApp.assessment.dashboard.actions.continue' | artemisTranslate }}
                                                 </span>
                                             </a>
                                             <!-- button to cancel result -->
@@ -135,7 +152,9 @@
                                                 [disabled]="busy"
                                                 class="btn btn-danger btn-sm mb-1"
                                             >
-                                                <fa-icon [fixedWidth]="true" [icon]="'ban'"></fa-icon>&nbsp;{{ 'artemisApp.assessment.dashboard.actions.cancel' | translate }}
+                                                <fa-icon [fixedWidth]="true" [icon]="'ban'"></fa-icon>&nbsp;{{
+                                                    'artemisApp.assessment.dashboard.actions.cancel' | artemisTranslate
+                                                }}
                                             </button>
                                         </div>
                                     </span>
@@ -152,7 +171,7 @@
                                     class="btn btn-success btn-sm mb-1"
                                 >
                                     <fa-icon [fixedWidth]="true" [icon]="'folder-open'"></fa-icon>
-                                    {{ 'artemisApp.assessment.dashboard.actions.assess' | translate }}
+                                    {{ 'artemisApp.assessment.dashboard.actions.assess' | artemisTranslate }}
                                 </a>
                             </span>
                             <!-- end -->

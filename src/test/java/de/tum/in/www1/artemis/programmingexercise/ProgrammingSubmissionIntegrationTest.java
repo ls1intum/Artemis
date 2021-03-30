@@ -286,9 +286,9 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
         final var participation = programmingExerciseStudentParticipationRepository.findById(submission.getParticipation().getId()).get();
         bambooRequestMockProvider.enableMockingOfRequests();
         var buildPlan = new BambooBuildPlanDTO(true, false);
-        bambooRequestMockProvider.mockGetBuildPlan(participation.getBuildPlanId(), buildPlan);
+        bambooRequestMockProvider.mockGetBuildPlan(participation.getBuildPlanId(), buildPlan, false);
         // Mock again because we call the trigger request two times
-        bambooRequestMockProvider.mockGetBuildPlan(participation.getBuildPlanId(), buildPlan);
+        bambooRequestMockProvider.mockGetBuildPlan(participation.getBuildPlanId(), buildPlan, false);
 
         var url = "/api" + Constants.PROGRAMMING_SUBMISSION_RESOURCE_PATH + participation.getId() + "/trigger-failed-build";
         request.postWithoutLocation(url, null, HttpStatus.OK, null);

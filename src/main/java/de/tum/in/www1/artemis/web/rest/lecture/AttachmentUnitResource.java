@@ -135,8 +135,13 @@ public class AttachmentUnitResource {
             return forbidden();
         }
 
+        // persist lecture unit before lecture to prevent "null index column for collection" error
+        attachmentUnit.setLecture(null);
+        attachmentUnit = attachmentUnitRepository.saveAndFlush(attachmentUnit);
+        attachmentUnit.setLecture(lecture);
         lecture.addLectureUnit(attachmentUnit);
         Lecture updatedLecture = lectureRepository.save(lecture);
+
         AttachmentUnit persistedAttachmentUnit = (AttachmentUnit) updatedLecture.getLectureUnits().get(updatedLecture.getLectureUnits().size() - 1);
 
         return ResponseEntity.created(new URI("/api/attachment-units/" + persistedAttachmentUnit.getId()))

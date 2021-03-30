@@ -29,7 +29,7 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.exam.*;
 import de.tum.in.www1.artemis.service.util.HttpRequestUtils;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -103,13 +103,13 @@ public class StudentExamResource {
             return accessFailure.get();
         }
 
-        StudentExam studentExam = studentExamService.findOneWithExercises(studentExamId);
+        StudentExam studentExam = studentExamRepository.findByIdWithExercisesElseThrow(studentExamId);
 
         loadExercisesForStudentExam(studentExam);
 
         // fetch participations, submissions and results for these exercises, note: exams only contain individual exercises for now
         // fetching all participations at once is more effective
-        List<StudentParticipation> participations = studentParticipationRepository.findByStudentExamWithEagerSubmissionsResult(studentExam);
+        List<StudentParticipation> participations = studentParticipationRepository.findByStudentExamWithEagerSubmissionsResult(studentExam, true);
 
         // connect the exercises and student participations correctly and make sure all relevant associations are available
         for (Exercise exercise : studentExam.getExercises()) {
@@ -133,7 +133,7 @@ public class StudentExamResource {
     public ResponseEntity<Set<StudentExam>> getStudentExamsForExam(@PathVariable Long courseId, @PathVariable Long examId) {
         log.debug("REST request to get all student exams for exam : {}", examId);
         Optional<ResponseEntity<Set<StudentExam>>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccessForInstructor(courseId, examId);
-        return courseAndExamAccessFailure.orElseGet(() -> ResponseEntity.ok(studentExamService.findAllByExamId(examId)));
+        return courseAndExamAccessFailure.orElseGet(() -> ResponseEntity.ok(studentExamRepository.findByExamId(examId)));
     }
 
     /**
@@ -157,7 +157,7 @@ public class StudentExamResource {
         if (workingTime <= 0) {
             return badRequest();
         }
-        StudentExam studentExam = studentExamService.findOneWithExercises(studentExamId);
+        StudentExam studentExam = studentExamRepository.findByIdWithExercisesElseThrow(studentExamId);
         if (!studentExam.isTestRun()) {
             Exam exam = examRepository.findById(examId).get();
             // when the exam is already visible, the working time cannot be changed, due to permission issues with unlock and lock operations for programming exercises
@@ -193,7 +193,7 @@ public class StudentExamResource {
             return accessFailure.get();
         }
 
-        StudentExam existingStudentExam = studentExamService.findOneWithExercises(studentExam.getId());
+        StudentExam existingStudentExam = studentExamRepository.findByIdWithExercisesElseThrow(studentExam.getId());
         if (Boolean.TRUE.equals(studentExam.isSubmitted()) || Boolean.TRUE.equals(existingStudentExam.isSubmitted())) {
             log.error("Student exam with id {} for user {} is already submitted.", studentExam.getId(), currentUser.getLogin());
             return conflict("studentExam", "alreadySubmitted", "You have already submitted.");
@@ -351,7 +351,7 @@ public class StudentExamResource {
             return courseAndExamAccessFailure.get();
         }
 
-        List<StudentExam> testRuns = studentExamService.findAllTestRuns(examId);
+        List<StudentExam> testRuns = studentExamRepository.findAllTestRunsByExamId(examId);
         return ResponseEntity.ok(testRuns);
     }
 
@@ -410,7 +410,7 @@ public class StudentExamResource {
         }
 
         // delete all test runs if the instructor forgot to delete them
-        List<StudentExam> testRuns = studentExamService.findAllTestRuns(examId);
+        List<StudentExam> testRuns = studentExamRepository.findAllTestRunsByExamId(examId);
         for (final var testRun : testRuns) {
             studentExamService.deleteTestRun(testRun.getId());
         }
@@ -514,7 +514,7 @@ public class StudentExamResource {
     private void fetchParticipationsSubmissionsAndResultsForStudentExam(StudentExam studentExam, User currentUser) {
         // fetch participations, submissions and results for these exercises, note: exams only contain individual exercises for now
         // fetching all participations at once is more effective
-        List<StudentParticipation> participations = studentParticipationRepository.findByStudentExamWithEagerSubmissionsResult(studentExam);
+        List<StudentParticipation> participations = studentParticipationRepository.findByStudentExamWithEagerSubmissionsResult(studentExam, false);
 
         boolean isAtLeastInstructor = authorizationCheckService.isAtLeastInstructorInCourse(studentExam.getExam().getCourse(), currentUser);
 
@@ -538,7 +538,10 @@ public class StudentExamResource {
     private void filterParticipation(StudentExam studentExam, Exercise exercise, List<StudentParticipation> participations, boolean isAtLeastInstructor) {
         // remove the unnecessary inner course attribute
         exercise.setCourse(null);
-        exercise.setExerciseGroup(null);
+
+        if (!isAtLeastInstructor) {
+            exercise.setExerciseGroup(null);
+        }
 
         if (exercise instanceof ProgrammingExercise) {
             ((ProgrammingExercise) exercise).setTestRepositoryUrl(null);

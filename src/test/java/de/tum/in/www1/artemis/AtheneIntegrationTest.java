@@ -26,7 +26,7 @@ import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.repository.TextClusterRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.TextBlockService;
-import de.tum.in.www1.artemis.service.connectors.AtheneService;
+import de.tum.in.www1.artemis.service.connectors.athene.AtheneService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.AtheneResource;
 import de.tum.in.www1.artemis.web.rest.dto.AtheneDTO;
@@ -101,7 +101,7 @@ public class AtheneIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
             cluster.setDistanceMatrix(matrix);
             cluster.setProbabilities(probabilities);
             return cluster;
-        }).collect(Collectors.toMap(c -> c.getId().intValue(), c -> c));
+        }).collect(Collectors.toMap(cluster -> cluster.getId().intValue(), cluster -> cluster));
         clusterDTOs.forEach((key, value) -> value.setId(null));
 
         requestBody.setClusters(clusterDTOs);

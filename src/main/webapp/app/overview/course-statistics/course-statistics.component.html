@@ -1,7 +1,7 @@
 <div *ngIf="course">
     <div class="row" *ngIf="course.exercises && course.exercises.length > 0 && groupedExercises.length > 0; else noStatistics">
         <div class="co-12 col-md-4 statistic-summary">
-            <h2 class="text-center">{{ 'artemisApp.courseOverview.statistics.totalScore' | translate }}</h2>
+            <h2 class="text-center">{{ 'artemisApp.courseOverview.statistics.totalScore' | artemisTranslate }}</h2>
             <div class="chart-container" style="margin-bottom: 20px">
                 <div class="chart-text">
                     <h2 class="text-center">{{ currentRelativeScore }} %</h2>
@@ -20,22 +20,27 @@
                     [chartType]="doughnutChartType"
                 ></canvas>
             </div>
-            <h4 class="text-center" id="absolute-course-score">{{ 'artemisApp.courseOverview.statistics.yourPoints' | translate: { number: overallPoints } }}</h4>
+            <h4 class="text-center" id="absolute-course-score">{{ 'artemisApp.courseOverview.statistics.yourPoints' | artemisTranslate: { number: overallPoints } }}</h4>
             <h4 class="text-center" id="reachable-course-score">
                 <span>
-                    {{ 'artemisApp.courseOverview.statistics.reachablePoints' | translate: { number: reachablePoints, relative: currentRelativeScore } }}
+                    {{ 'artemisApp.courseOverview.statistics.reachablePoints' | artemisTranslate: { number: reachablePoints, relative: currentRelativeScore } }}
                 </span>
-                <fa-icon id="reachable-help" class="mr-1" [icon]="'question-circle'" ngbTooltip="{{ 'artemisApp.courseOverview.statistics.reachableHelp' | translate }}"></fa-icon>
+                <fa-icon
+                    id="reachable-help"
+                    class="mr-1"
+                    [icon]="'question-circle'"
+                    ngbTooltip="{{ 'artemisApp.courseOverview.statistics.reachableHelp' | artemisTranslate }}"
+                ></fa-icon>
             </h4>
             <h4 class="text-center mb-5" id="max-course-score">
                 <span>
-                    {{ 'artemisApp.courseOverview.statistics.totalPoints' | translate: { number: overallMaxPoints, relative: totalRelativeScore } }}
+                    {{ 'artemisApp.courseOverview.statistics.totalPoints' | artemisTranslate: { number: overallMaxPoints, relative: totalRelativeScore } }}
                 </span>
-                <fa-icon id="total-help" class="mr-1" [icon]="'question-circle'" ngbTooltip="{{ 'artemisApp.courseOverview.statistics.totalHelp' | translate }}"></fa-icon>
+                <fa-icon id="total-help" class="mr-1" [icon]="'question-circle'" ngbTooltip="{{ 'artemisApp.courseOverview.statistics.totalHelp' | artemisTranslate }}"></fa-icon>
             </h4>
             <div *ngIf="course.presentationScore !== 0">
-                <h2 class="text-center">{{ 'artemisApp.courseOverview.statistics.totalPresentationScore' | translate: { number: overallPresentationScore } }}</h2>
-                <h2 class="text-center">{{ 'artemisApp.courseOverview.statistics.presentationScoreBonus' | translate: { number: course.presentationScore } }}</h2>
+                <h2 class="text-center">{{ 'artemisApp.courseOverview.statistics.totalPresentationScore' | artemisTranslate: { number: overallPresentationScore } }}</h2>
+                <h2 class="text-center">{{ 'artemisApp.courseOverview.statistics.presentationScoreBonus' | artemisTranslate: { number: course.presentationScore } }}</h2>
             </div>
         </div>
         <div class="col-12 col-md-8">
@@ -44,7 +49,8 @@
                     <div class="color-indicator" [style.background]="exerciseTitles[exerciseGroup.type].color"></div>
                     <h2>
                         {{
-                            'artemisApp.courseOverview.statistics.exerciseCount' | translate: { number: exerciseGroup.names.length, type: exerciseTitles[exerciseGroup.type].name }
+                            'artemisApp.courseOverview.statistics.exerciseCount'
+                                | artemisTranslate: { number: exerciseGroup.names.length, type: exerciseTitles[exerciseGroup.type].name }
                         }}
                     </h2>
                 </div>
@@ -60,34 +66,37 @@
                     ></canvas>
                 </div>
                 <div class="col-12 col-md-4 align-self-center" *ngIf="exerciseGroup">
-                    <h4 id="absolute-score">{{ 'artemisApp.courseOverview.statistics.yourPoints' | translate: { number: exerciseGroup.absoluteScore } }}</h4>
+                    <h4 id="absolute-score">{{ 'artemisApp.courseOverview.statistics.yourPoints' | artemisTranslate: { number: exerciseGroup.absoluteScore } }}</h4>
                     <h4 id="reachable-score">
                         <span>
                             {{
                                 'artemisApp.courseOverview.statistics.reachablePoints'
-                                    | translate: { number: exerciseGroup.reachableScore, relative: exerciseGroup.currentRelativeScore }
+                                    | artemisTranslate: { number: exerciseGroup.reachableScore, relative: exerciseGroup.currentRelativeScore }
                             }}
                         </span>
                         <fa-icon
                             id="reachable-help"
                             class="mr-1"
                             [icon]="'question-circle'"
-                            ngbTooltip="{{ 'artemisApp.courseOverview.statistics.reachableHelpExerciseGroup' | translate }}"
+                            ngbTooltip="{{ 'artemisApp.courseOverview.statistics.reachableHelpExerciseGroup' | artemisTranslate }}"
                         ></fa-icon>
                     </h4>
                     <h4 id="max-score">
                         <span>
-                            {{ 'artemisApp.courseOverview.statistics.totalPoints' | translate: { number: exerciseGroup.overallMaxPoints, relative: exerciseGroup.relativeScore } }}
+                            {{
+                                'artemisApp.courseOverview.statistics.totalPoints'
+                                    | artemisTranslate: { number: exerciseGroup.overallMaxPoints, relative: exerciseGroup.relativeScore }
+                            }}
                         </span>
                         <fa-icon
                             id="total-help"
                             class="mr-1"
                             [icon]="'question-circle'"
-                            ngbTooltip="{{ 'artemisApp.courseOverview.statistics.totalHelpExerciseGroup' | translate }}"
+                            ngbTooltip="{{ 'artemisApp.courseOverview.statistics.totalHelpExerciseGroup' | artemisTranslate }}"
                         ></fa-icon>
                     </h4>
                     <h4 *ngIf="exerciseGroup.presentationScoreEnabled && course.presentationScore !== 0" id="presentation-score">
-                        {{ 'artemisApp.courseOverview.statistics.presentationScore' | translate: { number: exerciseGroup.presentationScore } }}
+                        {{ 'artemisApp.courseOverview.statistics.presentationScore' | artemisTranslate: { number: exerciseGroup.presentationScore } }}
                     </h4>
                 </div>
             </div>
@@ -100,7 +109,7 @@
     <ng-template #noStatistics>
         <div class="row">
             <div class="col mt-3">
-                {{ 'artemisApp.courseOverview.statistics.noStatistics' | translate }}
+                {{ 'artemisApp.courseOverview.statistics.noStatistics' | artemisTranslate }}
             </div>
         </div>
     </ng-template>

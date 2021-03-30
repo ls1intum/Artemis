@@ -33,6 +33,7 @@ public class ExamScoresDTO {
     public List<StudentResult> studentResults = new ArrayList<>();
 
     // Inner DTO
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public static class ExerciseGroup {
 
         public Long id;
@@ -55,6 +56,7 @@ public class ExamScoresDTO {
             this.maxPoints = maxPoints;
         }
 
+        @JsonInclude(JsonInclude.Include.NON_EMPTY)
         public static class ExerciseInfo {
 
             public Long exerciseId;
@@ -79,6 +81,7 @@ public class ExamScoresDTO {
     }
 
     // Inner DTO
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public static class StudentResult {
 
         public Long userId;
@@ -114,6 +117,7 @@ public class ExamScoresDTO {
     }
 
     // Inner DTO
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public static class ExerciseResult {
 
         public Long exerciseId;

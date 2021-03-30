@@ -28,10 +28,10 @@ import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 public class ExamServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
-    ExamService examService;
+    private ExamService examService;
 
     @Autowired
-    ExamRepository examRepository;
+    private ExamRepository examRepository;
 
     private Exam exam1;
 

@@ -1,8 +1,11 @@
 package de.tum.in.www1.artemis.web.rest.vm;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 /**
  * View Model object for storing the user's key and password.
  */
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class KeyAndPasswordVM {
 
     private String key;

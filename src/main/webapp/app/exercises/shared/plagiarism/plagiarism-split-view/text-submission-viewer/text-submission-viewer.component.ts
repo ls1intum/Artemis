@@ -82,7 +82,7 @@ export class TextSubmissionViewerComponent implements OnChanges {
                 this.textSubmissionService.getTextSubmission(currentPlagiarismSubmission.submissionId).subscribe(
                     (submission: TextSubmission) => {
                         this.loading = false;
-                        this.fileContent = this.parseFileRows(submission.text || '');
+                        this.fileContent = this.insertMatchTokens(submission.text || '');
                     },
                     () => {
                         this.loading = false;
@@ -104,7 +104,7 @@ export class TextSubmissionViewerComponent implements OnChanges {
         this.repositoryService.getFile(file).subscribe(
             ({ fileContent }) => {
                 this.loading = false;
-                this.fileContent = this.parseFileRows(fileContent);
+                this.fileContent = this.insertMatchTokens(fileContent);
             },
             () => {
                 this.loading = false;
@@ -120,7 +120,7 @@ export class TextSubmissionViewerComponent implements OnChanges {
         return [text.slice(0, position), token, text.slice(position)].join('');
     }
 
-    parseFileRows(fileContent: string) {
+    insertMatchTokens(fileContent: string) {
         const rows = fileContent.split('\n');
         const matches = this.getMatchesForCurrentFile();
         const offsets = new Array(rows.length).fill(0);

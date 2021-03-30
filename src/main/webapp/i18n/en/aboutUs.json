@@ -12,6 +12,24 @@
                 "uploadExercises": "File upload exercises with manual assessment"
             }
         },
+        "exam": {
+            "title": "Artemis supports the following features for exams",
+            "detail": {
+                "supportedExerciseTypes": "All exercises from above are also available for exams",
+                "randomSelectionOfVariants": "Multiple variants per exercise can be created and randomly selected for every student",
+
+                "fullFeatureOverview": {
+                    "description": "Complete overview of all features:",
+                    "studentLink": "Overview for students",
+                    "instructorLink": "Overview for instructors"
+                },
+                "instructions": {
+                    "description": "Guide for the exam feature:",
+                    "studentLink": "Instructions for students",
+                    "instructorLink": "Instructions for instructors"
+                }
+            }
+        },
         "getInTouch": "Get in touch",
         "contributors": "Individual contributors"
     }

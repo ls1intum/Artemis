@@ -6,7 +6,7 @@
         </div>
         <div class="ml-auto">
             <div class="d-flex mb-1">
-                <div [ngbTooltip]="'artemisApp.examManagement.testRun.createTestRunDisabled' | translate" [disableTooltip]="examContainsExercises">
+                <div [ngbTooltip]="'artemisApp.examManagement.testRun.createTestRunDisabled' | artemisTranslate" [disableTooltip]="examContainsExercises">
                     <button
                         id="createTestRunButton"
                         class="btn btn-primary btn-sm mr-1 mb-1"
@@ -20,7 +20,7 @@
                     </button>
                 </div>
 
-                <div [ngbTooltip]="'artemisApp.examManagement.testRun.assessTestRunDisabled' | translate" [disableTooltip]="testRunCanBeAssessed">
+                <div [ngbTooltip]="'artemisApp.examManagement.testRun.assessTestRunDisabled' | artemisTranslate" [disableTooltip]="testRunCanBeAssessed">
                     <a
                         class="btn btn-primary btn-sm mr-1 mb-1"
                         style="height: 40px; display: inline-flex; align-items: center"
@@ -46,7 +46,7 @@
             <thead>
                 <tr jhiSort [(predicate)]="predicate" [(ascending)]="ascending" [callback]="sortRows.bind(this)">
                     <th class="d-none d-md-table-cell" jhiSortBy="id">
-                        <span>{{ 'global.field.id' | translate }}</span>
+                        <span>{{ 'global.field.id' | artemisTranslate }}</span>
                         <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
                     <th class="d-none d-md-table-cell" jhiSortBy="id">
@@ -78,16 +78,16 @@
                         <a [routerLink]="[testRun.id]">{{ testRun.id }}</a>
                     </td>
                     <td>
-                        <a> {{ testRun.user.name }}</a>
+                        <a> {{ testRun.user?.name || '--' }}</a>
                     </td>
-                    <td>{{ testRun.workingTime | artemisDurationFromSeconds }}</td>
-                    <td>{{ (testRun.started ? 'global.generic.yes' : 'global.generic.no') | translate }}</td>
-                    <td>{{ (testRun.submitted ? 'global.generic.yes' : 'global.generic.no') | translate }}</td>
+                    <td>{{ testRun.workingTime || 0 | artemisDurationFromSeconds }}</td>
+                    <td>{{ (testRun.started ? 'global.generic.yes' : 'global.generic.no') | artemisTranslate }}</td>
+                    <td>{{ (testRun.submitted ? 'global.generic.yes' : 'global.generic.no') | artemisTranslate }}</td>
                     <td>{{ testRun.submissionDate | artemisDate }}</td>
                     <td [width]="350">
                         <div class="w-100 text-right">
                             <div class="btn-group" *ngIf="course?.isAtLeastInstructor">
-                                <ng-container *ngIf="testRun.user.id == instructor.id; else notOwnerOfTestRun">
+                                <ng-container *ngIf="testRun.user && testRun.user.id == instructor.id; else notOwnerOfTestRun">
                                     <ng-container *ngIf="!testRun.submitted; else submitted">
                                         <a class="btn btn-primary btn-sm mr-1 mb-1" [routerLink]="['../test-runs/' + testRun.id + '/conduction']">
                                             <span *ngIf="!testRun.started" jhiTranslate="artemisApp.course.startDate">Start</span>
@@ -113,8 +113,9 @@
                                     <span jhiTranslate="artemisApp.examManagement.testRun.manage">Manage Working Time</span>
                                 </a>
                                 <button
+                                    *ngIf="testRun.id"
                                     jhiDeleteButton
-                                    [entityTitle]="'artemisApp.examManagement.testRun.testRun' | translate"
+                                    [entityTitle]="'artemisApp.examManagement.testRun.testRun' | artemisTranslate"
                                     deleteQuestion="artemisApp.examManagement.testRun.delete.question"
                                     deleteConfirmationText="artemisApp.examManagement.testRun.delete.typeNameToConfirm"
                                     (delete)="deleteTestRun(testRun.id)"

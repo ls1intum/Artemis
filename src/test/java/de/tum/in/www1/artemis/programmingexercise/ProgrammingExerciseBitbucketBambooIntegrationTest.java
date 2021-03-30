@@ -102,8 +102,20 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void importExercise_enablePlanFails() throws Exception {
+        programmingExerciseTestService.importExercise_enablePlanFails();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void importExercise_planDoesntExist() throws Exception {
+        programmingExerciseTestService.importExercise_planDoesntExist();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void importExercise_sca_deactivated() throws Exception {
-        programmingExerciseTestService.testImportProgrammingExercise_scaChange_deactivated();
+        programmingExerciseTestService.testImportProgrammingExercise_scaChange();
     }
 
     @Test
