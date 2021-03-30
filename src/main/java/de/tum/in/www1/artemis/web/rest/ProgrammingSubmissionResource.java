@@ -186,7 +186,7 @@ public class ProgrammingSubmissionResource {
         if (!programmingExerciseParticipationService.canAccessParticipation(programmingExerciseParticipation)) {
             return forbidden();
         }
-        Optional<ProgrammingSubmission> submission = programmingSubmissionService.getLatestPendingSubmission(participationId, lastGraded);
+        Optional<ProgrammingSubmission> submission = programmingSubmissionService.getLatestPendingSubmission(participationId, lastGraded, false);
         if (submission.isEmpty()) {
             return badRequest();
         }
@@ -414,7 +414,7 @@ public class ProgrammingSubmissionResource {
             else {
                 // if the participation does not have a result we want to create a new result for the submission of the participation.
                 // If there isn't a submission either, we should not create any result.
-                submission = programmingSubmissionService.getLatestPendingSubmission(participation.getId(), false).orElseThrow();
+                submission = programmingSubmissionService.getLatestPendingSubmission(participation.getId(), false, true).orElseThrow();
             }
             submission = programmingSubmissionService.lockAndGetProgrammingSubmission(submission.getId(), correctionRound);
             return ResponseEntity.ok(submission.getParticipation());

@@ -35,6 +35,9 @@ public interface ProgrammingSubmissionRepository extends JpaRepository<Programmi
             """)
     Optional<ProgrammingSubmission> findFirstByParticipationIdOrderByLegalSubmissionDateDesc(Long participationId);
 
+    @EntityGraph(type = LOAD, attributePaths = "results")
+    Optional<ProgrammingSubmission> findFirstByParticipationIdOrderBySubmissionDateDesc(Long participationId);
+
     /**
      * Provide a list of graded submissions. To be graded a submission must:
      * - be of type 'INSTRUCTOR' or 'TEST'

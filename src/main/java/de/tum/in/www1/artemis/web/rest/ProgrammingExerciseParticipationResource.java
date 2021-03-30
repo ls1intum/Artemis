@@ -188,7 +188,7 @@ public class ProgrammingExerciseParticipationResource {
     public ResponseEntity<ProgrammingSubmission> getLatestPendingSubmission(@PathVariable Long participationId, @RequestParam(defaultValue = "false") boolean lastGraded) {
         Optional<ProgrammingSubmission> submissionOpt;
         try {
-            submissionOpt = submissionService.getLatestPendingSubmission(participationId, lastGraded);
+            submissionOpt = submissionService.getLatestPendingSubmission(participationId, lastGraded, false);
         }
         catch (EntityNotFoundException | IllegalArgumentException ex) {
             return notFound();
