@@ -1,10 +1,14 @@
 package de.tum.in.www1.artemis;
 
 import static io.github.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doReturn;
 
+import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.service.connectors.SAML2Service;
+import de.tum.in.www1.artemis.service.programming.ProgrammingLanguageFeature;
+import de.tum.in.www1.artemis.service.programming.ProgrammingLanguageFeatureService;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 import de.tum.in.www1.artemis.util.UserTestService;
@@ -21,6 +25,9 @@ import org.springframework.security.saml2.provider.service.registration.RelyingP
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 
+import java.util.List;
+import java.util.Map;
+
 /**
  * Test base for {@link UserJWTController#authorizeSAML2(String)} and {@link SAML2Service}.
  *
@@ -32,7 +39,7 @@ import org.springframework.test.context.TestPropertySource;
 @AutoConfigureTestDatabase
 // NOTE: we use a common set of active profiles to reduce the number of application launches during testing. This significantly saves time and memory!
 
-@ActiveProfiles({SPRING_PROFILE_TEST, "artemis", "gitlab", "jenkins", "athene", "scheduling", "saml2"})
+@ActiveProfiles({SPRING_PROFILE_TEST, "artemis", "saml2"})
 @TestPropertySource(properties = {"info.guided-tour.course-group-tutors=", "info.guided-tour.course-group-students=artemis-artemistutorial-students",
     "info.guided-tour.course-group-instructors=artemis-artemistutorial-instructors", "artemis.user-management.use-external=false"})
 public abstract class AbstractSpringIntegrationSaml2Test {
@@ -46,6 +53,9 @@ public abstract class AbstractSpringIntegrationSaml2Test {
     @MockBean
     protected RelyingPartyRegistrationRepository relyingPartyRegistrationRepository;
 
+    @MockBean
+    protected ProgrammingLanguageFeatureService programmingMock;
+
     @Autowired
     protected RequestUtilService request;
 
@@ -55,6 +65,8 @@ public abstract class AbstractSpringIntegrationSaml2Test {
 
     @BeforeEach
     public void setUp() throws Exception {
+        doReturn(Map.of()).when(programmingMock).getProgrammingLanguageFeatures();
+        doReturn(null).when(programmingMock).getProgrammingLanguageFeatures(any(ProgrammingLanguage.class));
         doReturn(null).when(relyingPartyRegistrationRepository).findByRegistrationId(anyString());
     }
 

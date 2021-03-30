@@ -8,6 +8,7 @@ import java.util.List;
 
 
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -33,6 +34,7 @@ public class UserSaml2IntegrationTest extends AbstractSpringIntegrationSaml2Test
 
     @Autowired
     TokenProvider tokenProvider;
+
 
     /**
      * This test checks the creation of a new SAML2 authenticated user.
