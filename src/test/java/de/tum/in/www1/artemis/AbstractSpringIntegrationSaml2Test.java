@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis;
 import static io.github.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 
 import java.util.Map;
@@ -19,7 +20,9 @@ import org.springframework.security.saml2.provider.service.registration.RelyingP
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
+import de.tum.in.www1.artemis.service.MailService;
 import de.tum.in.www1.artemis.service.connectors.SAML2Service;
 import de.tum.in.www1.artemis.service.programming.ProgrammingLanguageFeatureService;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
@@ -55,6 +58,9 @@ public abstract class AbstractSpringIntegrationSaml2Test {
     @MockBean
     protected ProgrammingLanguageFeatureService programmingMock;
 
+    @MockBean
+    protected MailService mailService;
+
     @Autowired
     protected RequestUtilService request;
 
@@ -66,6 +72,7 @@ public abstract class AbstractSpringIntegrationSaml2Test {
         doReturn(Map.of()).when(programmingMock).getProgrammingLanguageFeatures();
         doReturn(null).when(programmingMock).getProgrammingLanguageFeatures(any(ProgrammingLanguage.class));
         doReturn(null).when(relyingPartyRegistrationRepository).findByRegistrationId(anyString());
+        doNothing().when(mailService).sendSAML2SetPasswordMail(any(User.class));
     }
 
     @AfterEach
