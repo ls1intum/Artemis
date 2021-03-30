@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.service;
 import static de.tum.in.www1.artemis.service.util.RoundingUtil.round;
 
 import java.time.*;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -12,7 +13,6 @@ import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.enumeration.GraphType;
 import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
 import de.tum.in.www1.artemis.domain.enumeration.SpanType;
-import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.ParticipantScoreRepository;
 import de.tum.in.www1.artemis.repository.StatisticsRepository;
 import de.tum.in.www1.artemis.web.rest.dto.CourseManagementStatisticsDTO;
@@ -24,12 +24,9 @@ public class StatisticsService {
 
     private final ParticipantScoreRepository participantScoreRepository;
 
-    private final ExerciseRepository exerciseRepository;
-
-    public StatisticsService(StatisticsRepository statisticsRepository, ParticipantScoreRepository participantScoreRepository, ExerciseRepository exerciseRepository) {
+    public StatisticsService(StatisticsRepository statisticsRepository, ParticipantScoreRepository participantScoreRepository) {
         this.statisticsRepository = statisticsRepository;
         this.participantScoreRepository = participantScoreRepository;
-        this.exerciseRepository = exerciseRepository;
     }
 
     /**
@@ -48,10 +45,13 @@ public class StatisticsService {
         ZonedDateTime startDate;
         ZonedDateTime endDate;
         List<Map<String, Object>> outcome;
+        Integer[] result = new Integer[0];
         ZonedDateTime now = ZonedDateTime.now();
-        int lengthOfMonth = YearMonth.of(now.getYear(), now.minusMonths(1 - periodIndex).plusDays(1).getMonth()).lengthOfMonth();
-        Integer[] result = new Integer[createSpanMap(lengthOfMonth).get(span)];
-        Arrays.fill(result, 0);
+        int lengthOfMonth;
+        if (span != SpanType.MONTH) {
+            result = new Integer[createSpanMap().get(span)];
+            Arrays.fill(result, 0);
+        }
         switch (span) {
             case DAY:
                 startDate = now.minusDays(-periodIndex).withHour(0).withMinute(0).withSecond(0).withNano(0);
@@ -64,9 +64,11 @@ public class StatisticsService {
                 outcome = this.statisticsRepository.getDataFromDatabase(span, startDate, endDate, graphType, courseId);
                 return this.statisticsRepository.createResultArrayForWeek(outcome, result, endDate);
             case MONTH:
-                startDate = now.minusMonths(1 - periodIndex).plusDays(1).withHour(0).withMinute(0).withSecond(0).withNano(0);
+                startDate = now.minusMonths(1 - periodIndex).withHour(0).withMinute(0).withSecond(0).withNano(0);
                 endDate = now.minusMonths(-periodIndex).withHour(23).withMinute(59).withSecond(59);
-                outcome = this.statisticsRepository.getDataFromDatabase(span, startDate, endDate, graphType, courseId);
+                result = new Integer[(int) ChronoUnit.DAYS.between(startDate, endDate)];
+                Arrays.fill(result, 0);
+                outcome = this.statisticsRepository.getDataFromDatabase(span, startDate.plusDays(1), endDate, graphType, courseId);
                 return this.statisticsRepository.createResultArrayForMonth(outcome, result, endDate);
             case QUARTER:
                 LocalDateTime localStartDate = now.toLocalDateTime().with(DayOfWeek.MONDAY);
@@ -91,11 +93,10 @@ public class StatisticsService {
     /**
      * A map to manage the spanTypes and the corresponding array length of the result
      */
-    private Map<SpanType, Integer> createSpanMap(Integer lengthOfMonth) {
+    private Map<SpanType, Integer> createSpanMap() {
         Map<SpanType, Integer> spanMap = new HashMap<>();
         spanMap.put(SpanType.DAY, 24);
         spanMap.put(SpanType.WEEK, 7);
-        spanMap.put(SpanType.MONTH, lengthOfMonth);
         spanMap.put(SpanType.QUARTER, 12);
         spanMap.put(SpanType.YEAR, 12);
         return spanMap;
