@@ -1,35 +1,9 @@
 package de.tum.in.www1.artemis.util;
 
-import static com.google.gson.JsonParser.parseString;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.fail;
-
-import java.net.URL;
-import java.time.Duration;
-import java.time.ZonedDateTime;
-import java.util.*;
-import java.util.concurrent.ThreadLocalRandom;
-import java.util.stream.Collectors;
-
-import javax.validation.constraints.NotNull;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.context.SecurityContext;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.test.context.TestSecurityContextHolder;
-import org.springframework.stereotype.Service;
-import org.springframework.util.LinkedMultiValueMap;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
-
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.exam.Exam;
@@ -48,6 +22,29 @@ import de.tum.in.www1.artemis.service.AssessmentService;
 import de.tum.in.www1.artemis.service.ModelingSubmissionService;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.test.context.TestSecurityContextHolder;
+import org.springframework.stereotype.Service;
+import org.springframework.util.LinkedMultiValueMap;
+
+import javax.validation.constraints.NotNull;
+import java.net.URL;
+import java.time.Duration;
+import java.time.ZonedDateTime;
+import java.util.*;
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.stream.Collectors;
+
+import static com.google.gson.JsonParser.parseString;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
 
 /** Service responsible for initializing the database with specific testdata for a testscenario */
 @Service
@@ -713,7 +710,7 @@ public class DatabaseUtilService {
         studentQuestion1.setExercise(textExercise);
         studentQuestion1.setQuestionText("Test Student Question 1");
         studentQuestion1.setVisibleForStudents(true);
-        studentQuestion1.setAuthor(getUserByLogin("student1"));
+        studentQuestion1.setAuthor(getUserByLoginWithoutAuthorities("student1"));
         studentQuestionRepository.save(studentQuestion1);
         studentQuestions.add(studentQuestion1);
 
@@ -721,7 +718,7 @@ public class DatabaseUtilService {
         studentQuestion2.setExercise(textExercise);
         studentQuestion2.setQuestionText("Test Student Question 2");
         studentQuestion2.setVisibleForStudents(true);
-        studentQuestion2.setAuthor(getUserByLogin("student2"));
+        studentQuestion2.setAuthor(getUserByLoginWithoutAuthorities("student2"));
         studentQuestionRepository.save(studentQuestion2);
         studentQuestions.add(studentQuestion2);
 
@@ -729,7 +726,7 @@ public class DatabaseUtilService {
         studentQuestion3.setLecture(lecture);
         studentQuestion3.setQuestionText("Test Student Question 3");
         studentQuestion3.setVisibleForStudents(true);
-        studentQuestion3.setAuthor(getUserByLogin("student1"));
+        studentQuestion3.setAuthor(getUserByLoginWithoutAuthorities("student1"));
         studentQuestionRepository.save(studentQuestion3);
         studentQuestions.add(studentQuestion3);
 
@@ -737,7 +734,7 @@ public class DatabaseUtilService {
         studentQuestion4.setLecture(lecture);
         studentQuestion4.setQuestionText("Test Student Question 4");
         studentQuestion4.setVisibleForStudents(true);
-        studentQuestion4.setAuthor(getUserByLogin("student2"));
+        studentQuestion4.setAuthor(getUserByLoginWithoutAuthorities("student2"));
         studentQuestionRepository.save(studentQuestion4);
         studentQuestions.add(studentQuestion2);
 
