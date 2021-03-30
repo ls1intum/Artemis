@@ -13,7 +13,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.StudentQuestion;
+import de.tum.in.www1.artemis.domain.StudentQuestionAnswer;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.StudentQuestionAnswerRepository;
@@ -49,7 +50,7 @@ public class StudentQuestionAnswerIntegrationTest extends AbstractSpringIntegrat
         StudentQuestion studentQuestion = database.createCourseWithExerciseAndStudentQuestions().get(0);
 
         StudentQuestionAnswer studentQuestionAnswer = new StudentQuestionAnswer();
-        studentQuestionAnswer.setAuthor(database.getUserByLogin("instructor1"));
+        studentQuestionAnswer.setAuthor(database.getUserByLoginWithoutAuthorities("instructor1"));
         studentQuestionAnswer.setAnswerText("Test Answer");
         studentQuestionAnswer.setAnswerDate(ZonedDateTime.now());
         studentQuestionAnswer.setQuestion(studentQuestion);
@@ -69,7 +70,7 @@ public class StudentQuestionAnswerIntegrationTest extends AbstractSpringIntegrat
         StudentQuestion studentQuestion = database.createCourseWithExerciseAndStudentQuestions().get(0);
 
         StudentQuestionAnswer studentQuestionAnswer = new StudentQuestionAnswer();
-        studentQuestionAnswer.setAuthor(database.getUserByLogin("tutor1"));
+        studentQuestionAnswer.setAuthor(database.getUserByLoginWithoutAuthorities("tutor1"));
         studentQuestionAnswer.setAnswerText("Test Answer");
         studentQuestionAnswer.setAnswerDate(ZonedDateTime.now());
         studentQuestionAnswer.setQuestion(studentQuestion);
@@ -86,7 +87,7 @@ public class StudentQuestionAnswerIntegrationTest extends AbstractSpringIntegrat
         StudentQuestion studentQuestion = database.createCourseWithExerciseAndStudentQuestions().get(0);
 
         StudentQuestionAnswer studentQuestionAnswer = new StudentQuestionAnswer();
-        studentQuestionAnswer.setAuthor(database.getUserByLogin("student1"));
+        studentQuestionAnswer.setAuthor(database.getUserByLoginWithoutAuthorities("student1"));
         studentQuestionAnswer.setAnswerText("Test Answer");
         studentQuestionAnswer.setAnswerDate(ZonedDateTime.now());
         studentQuestionAnswer.setQuestion(studentQuestion);
@@ -102,7 +103,7 @@ public class StudentQuestionAnswerIntegrationTest extends AbstractSpringIntegrat
     public void editStudentQuestionAnswer_asInstructor() throws Exception {
         StudentQuestionAnswer studentQuestionAnswer = createStudentQuestionAnswersOnServer().get(0);
 
-        studentQuestionAnswer.setAuthor(database.getUserByLogin("tutor2"));
+        studentQuestionAnswer.setAuthor(database.getUserByLoginWithoutAuthorities("tutor2"));
         studentQuestionAnswer.setAnswerText("New Answer Text");
         studentQuestionAnswer.setAnswerDate(ZonedDateTime.now().minusHours(1));
         StudentQuestionAnswer updatedStudentQuestionAnswerServer = request.putWithResponseBody(
@@ -271,7 +272,7 @@ public class StudentQuestionAnswerIntegrationTest extends AbstractSpringIntegrat
         List<StudentQuestionAnswer> answers = new ArrayList<>();
 
         StudentQuestionAnswer studentQuestionAnswer = new StudentQuestionAnswer();
-        studentQuestionAnswer.setAuthor(database.getUserByLogin("tutor1"));
+        studentQuestionAnswer.setAuthor(database.getUserByLoginWithoutAuthorities("tutor1"));
         studentQuestionAnswer.setAnswerText("Test Answer");
         studentQuestionAnswer.setAnswerDate(ZonedDateTime.now());
         studentQuestionAnswer.setQuestion(studentQuestion);
@@ -279,7 +280,7 @@ public class StudentQuestionAnswerIntegrationTest extends AbstractSpringIntegrat
         answers.add(studentQuestionAnswer);
 
         StudentQuestionAnswer studentQuestionAnswer1 = new StudentQuestionAnswer();
-        studentQuestionAnswer1.setAuthor(database.getUserByLogin("tutor2"));
+        studentQuestionAnswer1.setAuthor(database.getUserByLoginWithoutAuthorities("tutor2"));
         studentQuestionAnswer1.setAnswerText("Test Answer");
         studentQuestionAnswer1.setAnswerDate(ZonedDateTime.now());
         studentQuestionAnswer1.setQuestion(studentQuestion);
@@ -287,7 +288,7 @@ public class StudentQuestionAnswerIntegrationTest extends AbstractSpringIntegrat
         answers.add(studentQuestionAnswer1);
 
         StudentQuestionAnswer studentQuestionAnswer2 = new StudentQuestionAnswer();
-        studentQuestionAnswer2.setAuthor(database.getUserByLogin("student1"));
+        studentQuestionAnswer2.setAuthor(database.getUserByLoginWithoutAuthorities("student1"));
         studentQuestionAnswer2.setAnswerText("Test Answer");
         studentQuestionAnswer2.setAnswerDate(ZonedDateTime.now());
         studentQuestionAnswer2.setQuestion(studentQuestion);
@@ -295,7 +296,7 @@ public class StudentQuestionAnswerIntegrationTest extends AbstractSpringIntegrat
         answers.add(studentQuestionAnswer2);
 
         StudentQuestionAnswer studentQuestionAnswer3 = new StudentQuestionAnswer();
-        studentQuestionAnswer3.setAuthor(database.getUserByLogin("student2"));
+        studentQuestionAnswer3.setAuthor(database.getUserByLoginWithoutAuthorities("student2"));
         studentQuestionAnswer3.setAnswerText("Test Answer");
         studentQuestionAnswer3.setAnswerDate(ZonedDateTime.now());
         studentQuestionAnswer3.setQuestion(studentQuestion);

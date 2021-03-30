@@ -16,6 +16,10 @@ public class StatsForDashboardDTO {
 
     private Long totalNumberOfAssessmentLocks;
 
+    private Boolean complaintsEnabled;
+
+    private Boolean feedbackRequestEnabled;
+
     private DueDateStat[] numberOfAssessmentsOfCorrectionRounds;
 
     private DueDateStat[] numberOfLockedAssessmentByOtherTutorsOfCorrectionRound;
@@ -142,5 +146,21 @@ public class StatsForDashboardDTO {
 
     public void setNumberOfLockedAssessmentByOtherTutorsOfCorrectionRound(DueDateStat[] numberOfLockedAssessmentByOtherTutorsOfCorrectionRound) {
         this.numberOfLockedAssessmentByOtherTutorsOfCorrectionRound = numberOfLockedAssessmentByOtherTutorsOfCorrectionRound;
+    }
+
+    public Boolean getComplaintsEnabled() {
+        return complaintsEnabled;
+    }
+
+    public void setComplaintsEnabled(Boolean complaintsEnabled) {
+        this.complaintsEnabled = complaintsEnabled;
+    }
+
+    public Boolean getFeedbackRequestEnabled() {
+        return feedbackRequestEnabled;
+    }
+
+    public void setFeedbackRequestEnabled(Boolean feedbackRequestEnabled) {
+        this.feedbackRequestEnabled = feedbackRequestEnabled;
     }
 }

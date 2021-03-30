@@ -21,10 +21,7 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
-import de.tum.in.www1.artemis.domain.Result;
-import de.tum.in.www1.artemis.domain.Submission;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.repository.*;
@@ -99,8 +96,14 @@ public class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpr
         addStudentParticipationWithResult(assessmentType, completionDate);
         StudentParticipation participation = studentParticipationRepository.findAll().get(0);
         var expectedStatus = expectLastCreatedResult ? HttpStatus.OK : HttpStatus.NOT_FOUND;
-        request.get(participationsBaseUrl + participation.getId() + "/student-participation-with-latest-result-and-feedbacks", expectedStatus,
+        var requestedParticipation = request.get(participationsBaseUrl + participation.getId() + "/student-participation-with-latest-result-and-feedbacks", expectedStatus,
                 ProgrammingExerciseStudentParticipation.class);
+
+        if (expectedStatus == HttpStatus.OK) {
+            assertThat(requestedParticipation.getResults()).hasSize(1);
+            var requestedResult = requestedParticipation.getResults().iterator().next();
+            assertThat(requestedResult.getFeedbacks()).noneMatch(Feedback::isInvisible);
+        }
     }
 
     @ParameterizedTest
@@ -122,11 +125,19 @@ public class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpr
 
         assertThat(requestedParticipation.getResults()).hasSize(1);
         var requestedResult = requestedParticipation.getResults().iterator().next();
+
+        assertThat(requestedResult.getFeedbacks()).noneMatch(Feedback::isInvisible);
+        assertThat(requestedResult.getFeedbacks()).noneMatch(Feedback::isAfterDueDate);
+
         // Depending on the parameters we expect to get the first or the second created result from the server
         if (expectLastCreatedResult) {
+            secondResult.filterSensitiveInformation();
+            secondResult.filterSensitiveFeedbacks(true);
             assertThat(requestedResult).isEqualTo(secondResult);
         }
         else {
+            firstResult.filterSensitiveInformation();
+            firstResult.filterSensitiveFeedbacks(true);
             assertThat(requestedResult).isEqualTo(firstResult);
         }
     }
@@ -145,7 +156,9 @@ public class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpr
     public void testGetLatestResultWithFeedbacksAsStudent() throws Exception {
         addStudentParticipationWithResult(null, null);
         StudentParticipation participation = studentParticipationRepository.findAll().get(0);
-        request.get(participationsBaseUrl + participation.getId() + "/latest-result-with-feedbacks", HttpStatus.OK, Result.class);
+        var requestedResult = request.get(participationsBaseUrl + participation.getId() + "/latest-result-with-feedbacks", HttpStatus.OK, Result.class);
+
+        assertThat(requestedResult.getFeedbacks()).noneMatch(Feedback::isInvisible);
     }
 
     @Test
@@ -161,7 +174,9 @@ public class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpr
     public void testGetLatestResultWithFeedbacksForTemplateParticipationAsTutor() throws Exception {
         addTemplateParticipationWithResult();
         TemplateProgrammingExerciseParticipation participation = templateProgrammingExerciseParticipationRepository.findAll().get(0);
-        request.get(participationsBaseUrl + participation.getId() + "/latest-result-with-feedbacks", HttpStatus.OK, Result.class);
+        var requestedResult = request.get(participationsBaseUrl + participation.getId() + "/latest-result-with-feedbacks", HttpStatus.OK, Result.class);
+
+        assertThat(requestedResult.getFeedbacks().stream().filter(Feedback::isInvisible)).hasSize(1);
     }
 
     @Test
@@ -169,7 +184,9 @@ public class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpr
     public void testGetLatestResultWithFeedbacksForTemplateParticipationAsInstructor() throws Exception {
         addTemplateParticipationWithResult();
         TemplateProgrammingExerciseParticipation participation = templateProgrammingExerciseParticipationRepository.findAll().get(0);
-        request.get(participationsBaseUrl + participation.getId() + "/latest-result-with-feedbacks", HttpStatus.OK, Result.class);
+        var requestedResult = request.get(participationsBaseUrl + participation.getId() + "/latest-result-with-feedbacks", HttpStatus.OK, Result.class);
+
+        assertThat(requestedResult.getFeedbacks().stream().filter(Feedback::isInvisible)).hasSize(1);
     }
 
     @Test
@@ -185,7 +202,9 @@ public class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpr
     public void testGetLatestResultWithFeedbacksForSolutionParticipationAsTutor() throws Exception {
         addSolutionParticipationWithResult();
         SolutionProgrammingExerciseParticipation participation = solutionProgrammingExerciseParticipationRepository.findAll().get(0);
-        request.get(participationsBaseUrl + participation.getId() + "/latest-result-with-feedbacks", HttpStatus.OK, Result.class);
+        var requestedResult = request.get(participationsBaseUrl + participation.getId() + "/latest-result-with-feedbacks", HttpStatus.OK, Result.class);
+
+        assertThat(requestedResult.getFeedbacks().stream().filter(Feedback::isInvisible)).hasSize(1);
     }
 
     @Test
@@ -193,7 +212,9 @@ public class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpr
     public void testGetLatestResultWithFeedbacksForSolutionParticipationAsInstructor() throws Exception {
         addSolutionParticipationWithResult();
         SolutionProgrammingExerciseParticipation participation = solutionProgrammingExerciseParticipationRepository.findAll().get(0);
-        request.get(participationsBaseUrl + participation.getId() + "/latest-result-with-feedbacks", HttpStatus.OK, Result.class);
+        var requestedResult = request.get(participationsBaseUrl + participation.getId() + "/latest-result-with-feedbacks", HttpStatus.OK, Result.class);
+
+        assertThat(requestedResult.getFeedbacks().stream().filter(Feedback::isInvisible)).hasSize(1);
     }
 
     @ParameterizedTest
@@ -210,7 +231,12 @@ public class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpr
         var resultResponse = request.get(participationsBaseUrl + programmingExerciseParticipation.getId() + "/latest-result-with-feedbacks", HttpStatus.OK, Result.class,
                 parameters);
 
+        result.filterSensitiveInformation();
+        result.filterSensitiveFeedbacks(true);
+        assertThat(resultResponse.getFeedbacks()).noneMatch(Feedback::isInvisible);
+        assertThat(resultResponse.getFeedbacks()).noneMatch(Feedback::isAfterDueDate);
         assertThat(resultResponse.getFeedbacks()).containsExactlyInAnyOrderElementsOf(result.getFeedbacks());
+
         assertThat(result).usingRecursiveComparison().ignoringFields("submission", "feedbacks", "participation").isEqualTo(resultResponse);
         if (withSubmission) {
             assertThat(submission).isEqualTo(resultResponse.getSubmission());
@@ -361,17 +387,20 @@ public class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpr
 
     private Result addStudentParticipationWithResult(AssessmentType assessmentType, ZonedDateTime completionDate) {
         programmingExerciseParticipation = database.addStudentParticipationForProgrammingExercise(programmingExercise, "student1");
-        return database.addResultToParticipation(assessmentType, completionDate, programmingExerciseParticipation);
+        Result r = database.addResultToParticipation(assessmentType, completionDate, programmingExerciseParticipation);
+        return database.addVariousVisibilityFeedbackToResults(r);
     }
 
     private void addTemplateParticipationWithResult() {
         programmingExerciseParticipation = database.addTemplateParticipationForProgrammingExercise(programmingExercise).getTemplateParticipation();
-        database.addResultToParticipation(AssessmentType.AUTOMATIC, null, programmingExerciseParticipation);
+        Result r = database.addResultToParticipation(AssessmentType.AUTOMATIC, null, programmingExerciseParticipation);
+        database.addVariousVisibilityFeedbackToResults(r);
     }
 
     private void addSolutionParticipationWithResult() {
         programmingExerciseParticipation = database.addSolutionParticipationForProgrammingExercise(programmingExercise).getSolutionParticipation();
-        database.addResultToParticipation(AssessmentType.AUTOMATIC, null, programmingExerciseParticipation);
+        Result r = database.addResultToParticipation(AssessmentType.AUTOMATIC, null, programmingExerciseParticipation);
+        database.addVariousVisibilityFeedbackToResults(r);
     }
 
 }

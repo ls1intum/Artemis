@@ -15,10 +15,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
-import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
-import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
-import de.tum.in.www1.artemis.domain.enumeration.StaticCodeAnalysisTool;
+import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.repository.*;
@@ -166,7 +163,8 @@ public class ProgrammingExerciseResultTestService {
     }
 
     private ProgrammingExerciseTestCase createTest(String testName, long testId) {
-        return new ProgrammingExerciseTestCase().exercise(programmingExercise).testName(testName).active(true).weight(1.0).id(testId).bonusMultiplier(1D).bonusPoints(0D);
+        return new ProgrammingExerciseTestCase().exercise(programmingExercise).testName(testName).active(true).weight(1.0).id(testId).bonusMultiplier(1D).bonusPoints(0D)
+                .visibility(Visibility.ALWAYS);
     }
 
     // Test
@@ -193,7 +191,7 @@ public class ProgrammingExerciseResultTestService {
             assertThat(optionalResult.get().getScore()).isEqualTo(100L);
         }
 
-        // Call again and shouln't re-create new submission.
+        // Call again and shouldn't re-create new submission.
         gradingService.processNewProgrammingExerciseResult(solutionParticipation, resultNotification);
         var latestSubmissions = programmingSubmissionRepository.findAll();
         // One submission from the student participation and the other from solution participation
