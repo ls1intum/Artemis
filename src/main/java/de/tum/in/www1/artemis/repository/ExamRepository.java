@@ -104,7 +104,7 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
             FROM Exam e
             WHERE e.id = :examId
             """)
-    String getExamTitle(Long examId);
+    String getExamTitle(@Param("examId") Long examId);
 
     @NotNull
     default Exam findByIdElseThrow(long examId) throws EntityNotFoundException {

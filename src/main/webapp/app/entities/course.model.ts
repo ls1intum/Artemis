@@ -7,6 +7,7 @@ import { DueDateStat } from 'app/course/dashboards/instructor-course-dashboard/d
 import { Exam } from 'app/entities/exam.model';
 import { Language } from 'app/entities/tutor-group.model';
 import { LearningGoal } from 'app/entities/learningGoal.model';
+import { Organization } from 'app/entities/organization.model';
 
 export class Course implements BaseEntity {
     public id?: number;
@@ -45,6 +46,7 @@ export class Course implements BaseEntity {
     public learningGoals?: LearningGoal[];
     public exams?: Exam[];
     public tutorGroups?: TutorGroup[];
+    public organizations?: Organization[];
 
     // helper attributes
     public isAtLeastTutor?: boolean;

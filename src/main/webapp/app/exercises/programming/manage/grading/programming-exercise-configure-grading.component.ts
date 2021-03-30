@@ -5,7 +5,7 @@ import { of, Subscription, zip } from 'rxjs';
 import { catchError, distinctUntilChanged, map, take, tap } from 'rxjs/operators';
 import { differenceBy as _differenceBy, differenceWith as _differenceWith, intersectionWith as _intersectionWith, unionBy as _unionBy } from 'lodash';
 import { JhiAlertService } from 'ng-jhipster';
-import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise-test-case.model';
+import { ProgrammingExerciseTestCase, Visibility } from 'app/entities/programming-exercise-test-case.model';
 import { ProgrammingExerciseWebsocketService } from 'app/exercises/programming/manage/services/programming-exercise-websocket.service';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
@@ -27,6 +27,7 @@ export enum EditableField {
     WEIGHT = 'weight',
     BONUS_MULTIPLIER = 'bonusMultiplier',
     BONUS_POINTS = 'bonusPoints',
+    VISIBILITY = 'visibility',
     PENALTY = 'penalty',
     MAX_PENALTY = 'maxPenalty',
     STATE = 'state',
@@ -49,6 +50,7 @@ const DefaultFieldValues = {
 export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
     EditableField = EditableField;
     CategoryState = StaticCodeAnalysisCategoryState;
+    Visibility = Visibility;
 
     courseId: number;
     exercise: ProgrammingExercise;
@@ -76,6 +78,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
     maxIssuesPerCategory = 0;
 
     categoryStateList = Object.entries(StaticCodeAnalysisCategoryState).map(([name, value]) => ({ value, name }));
+    testCaseVisibilityList = Object.entries(Visibility).map(([name, value]) => ({ value, name }));
 
     testCaseColors = {};
     categoryColors = {};
@@ -401,16 +404,6 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
     }
 
     /**
-     * Toggle the after due date of the test case related to the provided row of the datatable.
-     * @param rowIndex
-     */
-    toggleAfterDueDate(rowIndex: number) {
-        const testCase = this.filteredTestCases[rowIndex];
-        this.changedTestCaseIds = this.changedTestCaseIds.includes(testCase.id!) ? this.changedTestCaseIds : [...this.changedTestCaseIds, testCase.id!];
-        this.testCases = this.testCases.map((t) => (t.id === testCase.id ? { ...t, afterDueDate: !t.afterDueDate } : t));
-    }
-
-    /**
      * Reset all test cases.
      */
     resetTestCases() {
@@ -455,7 +448,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
     }
 
     /**
-     * Executes filtering on all availabile test cases with the specified params.
+     * Executes filtering on all available test cases with the specified params.
      */
     updateTestCaseFilter = () => {
         this.filteredTestCases = !this.showInactiveValue && this.testCases ? this.testCases.filter(({ active }) => active) : this.testCases;
