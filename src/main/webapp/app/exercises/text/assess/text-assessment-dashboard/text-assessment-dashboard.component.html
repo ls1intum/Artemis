@@ -60,7 +60,7 @@
                     <td>{{ i + 1 }}</td>
                     <td>
                         <span *ngIf="exercise.isAtLeastInstructor">
-                            {{ getParticipantName(submission) }}
+                            {{ submission.participation?.participantName }}
                         </span>
                     </td>
                     <td>{{ submission.submissionDate | artemisDate }}</td>

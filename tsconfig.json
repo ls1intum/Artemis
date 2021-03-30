@@ -31,7 +31,7 @@
         "genDir": "build/resources/main/aot",
         "skipMetadataEmit" : true,
         "fullTemplateTypeCheck": true,
-        "strictTemplates": false,
+        "strictTemplates": true,
         "preserveWhitespaces": true
     },
     "include": [
