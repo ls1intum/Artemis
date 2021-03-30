@@ -242,6 +242,13 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
     List<Long> findExerciseIdsByCourseId(@Param("courseId") Long courseId);
 
     @Query("""
+            select e
+            from Exercise e
+            where e.course.id = :courseId
+            """)
+    Set<Exercise> findExercisesByCourseId(@Param("courseId") Long courseId);
+
+    @Query("""
             select
             new de.tum.in.www1.artemis.domain.statistics.CourseStatisticsAverageScore(
                 p.exercise.id,

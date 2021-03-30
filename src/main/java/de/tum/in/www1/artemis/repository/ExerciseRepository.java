@@ -276,7 +276,7 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
                 AND (e.assessmentDueDate IS NOT NULL AND e.assessmentDueDate < :now
                 OR e.assessmentDueDate IS NULL AND e.dueDate IS NOT NULL AND e.dueDate < :now)
             """)
-    List<Exercise> getPastExercises(@Param("courseId") Long courseId, @Param("now") ZonedDateTime now);
+    List<Exercise> getPastExercisesForCourseManagementOverview(@Param("courseId") Long courseId, @Param("now") ZonedDateTime now);
 
     /**
      * Fetches the number of student participations in the given exercise

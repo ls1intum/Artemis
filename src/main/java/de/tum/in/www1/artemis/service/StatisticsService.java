@@ -109,8 +109,7 @@ public class StatisticsService {
      */
     public CourseManagementStatisticsDTO getCourseStatistics(Long courseId) {
         var courseManagementStatisticsDTO = new CourseManagementStatisticsDTO();
-        var now = ZonedDateTime.now();
-        var exercises = exerciseRepository.getPastExercises(courseId, now);
+        var exercises = statisticsRepository.findExercisesByCourseId(courseId);
         var includedExercises = exercises.stream().filter(Exercise::isCourseExercise)
                 .filter(exercise -> !exercise.getIncludedInOverallScore().equals(IncludedInOverallScore.NOT_INCLUDED)).collect(Collectors.toSet());
         var averageScoreForCourse = participantScoreRepository.findAvgScore(includedExercises);
