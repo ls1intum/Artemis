@@ -101,7 +101,7 @@ public class AtheneIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
             cluster.setDistanceMatrix(matrix);
             cluster.setProbabilities(probabilities);
             return cluster;
-        }).collect(Collectors.toMap(c -> c.getId().intValue(), c -> c));
+        }).collect(Collectors.toMap(cluster -> cluster.getId().intValue(), cluster -> cluster));
         clusterDTOs.forEach((key, value) -> value.setId(null));
 
         requestBody.setClusters(clusterDTOs);

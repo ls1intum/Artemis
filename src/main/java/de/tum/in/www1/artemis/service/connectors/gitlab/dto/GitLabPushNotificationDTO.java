@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.connectors.gitlab.dto;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -48,7 +49,7 @@ public class GitLabPushNotificationDTO {
 
     private GitLabProjectDTO project;
 
-    private List<GitLabCommitDTO> commits;
+    private List<GitLabCommitDTO> commits = new ArrayList<>();
 
     @JsonProperty("total_commits_count")
     private int totalCommitsCount;

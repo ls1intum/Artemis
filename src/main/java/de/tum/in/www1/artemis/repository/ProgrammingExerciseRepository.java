@@ -123,6 +123,19 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     List<ProgrammingExercise> findAllByManualAssessmentAndDueDateAfterDate(@Param("dateTime") ZonedDateTime dateTime);
 
     /**
+     * Returns all programming exercises that have a due date after {@code dateTime} and have tests marked with
+     * {@link de.tum.in.www1.artemis.domain.enumeration.Visibility#AFTER_DUE_DATE} but no buildAndTestStudentSubmissionsAfterDueDate.
+     * @param dateTime the time after which the due date of the exercise has to be
+     * @return List<ProgrammingExercise> (can be empty)
+     */
+    @Query("""
+                select distinct pe from ProgrammingExercise pe left join pe.testCases tc
+                where pe.dueDate > :#{#dateTime} and pe.buildAndTestStudentSubmissionsAfterDueDate is null
+                    and tc.visibility = 'AFTER_DUE_DATE'
+            """)
+    List<ProgrammingExercise> findAllByDueDateAfterDateWithTestsAfterDueDateWithoutBuildStudentSubmissionsDate(@Param("dateTime") ZonedDateTime dateTime);
+
+    /**
      * Returns the programming exercises that are part of an exam with an end date after than the provided date.
      * This method also fetches the exercise group and exam.
      *

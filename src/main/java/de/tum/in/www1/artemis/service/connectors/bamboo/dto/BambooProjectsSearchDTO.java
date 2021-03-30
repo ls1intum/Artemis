@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.connectors.bamboo.dto;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -11,7 +12,7 @@ public class BambooProjectsSearchDTO {
 
     private int size;
 
-    private List<SearchResultDTO> searchResults;
+    private List<SearchResultDTO> searchResults = new ArrayList<>();
 
     public int getSize() {
         return size;

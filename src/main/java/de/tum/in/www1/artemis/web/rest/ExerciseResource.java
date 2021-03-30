@@ -251,6 +251,8 @@ public class ExerciseResource {
         final Long exerciseId = exercise.getId();
         StatsForDashboardDTO stats = new StatsForDashboardDTO();
 
+        Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
+
         DueDateStat numberOfSubmissions;
         DueDateStat totalNumberOfAssessments;
 
@@ -314,6 +316,9 @@ public class ExerciseResource {
         stats.setTutorLeaderboardEntries(leaderboardEntries);
         final long totalNumberOfAssessmentLocks = submissionRepository.countLockedSubmissionsByExerciseId(exerciseId);
         stats.setTotalNumberOfAssessmentLocks(totalNumberOfAssessmentLocks);
+
+        stats.setFeedbackRequestEnabled(course.getComplaintsEnabled());
+        stats.setFeedbackRequestEnabled(course.getRequestMoreFeedbackEnabled());
 
         return stats;
     }

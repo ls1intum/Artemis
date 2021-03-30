@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.web.rest.dto;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -14,6 +15,10 @@ public class StatsForDashboardDTO {
     private DueDateStat totalNumberOfAssessments;
 
     private Long totalNumberOfAssessmentLocks;
+
+    private Boolean complaintsEnabled;
+
+    private Boolean feedbackRequestEnabled;
 
     private DueDateStat[] numberOfAssessmentsOfCorrectionRounds;
 
@@ -31,7 +36,7 @@ public class StatsForDashboardDTO {
 
     private Long numberOfAssessmentLocks;
 
-    private List<TutorLeaderboardDTO> tutorLeaderboardEntries;
+    private List<TutorLeaderboardDTO> tutorLeaderboardEntries = new ArrayList<>();
 
     /**
      * Empty constructor is needed by Jackson
@@ -141,5 +146,21 @@ public class StatsForDashboardDTO {
 
     public void setNumberOfLockedAssessmentByOtherTutorsOfCorrectionRound(DueDateStat[] numberOfLockedAssessmentByOtherTutorsOfCorrectionRound) {
         this.numberOfLockedAssessmentByOtherTutorsOfCorrectionRound = numberOfLockedAssessmentByOtherTutorsOfCorrectionRound;
+    }
+
+    public Boolean getComplaintsEnabled() {
+        return complaintsEnabled;
+    }
+
+    public void setComplaintsEnabled(Boolean complaintsEnabled) {
+        this.complaintsEnabled = complaintsEnabled;
+    }
+
+    public Boolean getFeedbackRequestEnabled() {
+        return feedbackRequestEnabled;
+    }
+
+    public void setFeedbackRequestEnabled(Boolean feedbackRequestEnabled) {
+        this.feedbackRequestEnabled = feedbackRequestEnabled;
     }
 }

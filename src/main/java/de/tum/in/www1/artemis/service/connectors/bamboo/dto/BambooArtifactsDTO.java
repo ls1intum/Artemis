@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service.connectors.bamboo.dto;
 
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -12,7 +13,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 public class BambooArtifactsDTO {
 
     @JsonProperty("artifact")
-    private List<BambooArtifactDTO> artifacts;
+    private List<BambooArtifactDTO> artifacts = new ArrayList<>();
 
     public List<BambooArtifactDTO> getArtifacts() {
         return artifacts;

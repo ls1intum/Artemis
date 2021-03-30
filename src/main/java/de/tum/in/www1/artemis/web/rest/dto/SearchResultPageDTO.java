@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.web.rest.dto;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -17,7 +18,7 @@ public class SearchResultPageDTO<T> {
     /**
      * The search result
      */
-    private List<T> resultsOnPage;
+    private List<T> resultsOnPage = new ArrayList<>();
 
     /**
      * The total number of available pages for the given search
