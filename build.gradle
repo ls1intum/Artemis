@@ -22,7 +22,7 @@ plugins {
     id "org.springframework.boot" version "${spring_boot_version}"
     id "com.google.cloud.tools.jib" version "2.8.0"
     id "com.github.node-gradle.node" version "3.0.1"
-    id "com.diffplug.spotless" version "5.11.0"
+    id "com.diffplug.spotless" version "5.11.1"
     // this allows us to find outdated dependencies via ./gradlew dependencyUpdates
     id "com.github.ben-manes.versions" version "0.38.0"
 }
@@ -339,7 +339,7 @@ tasks.withType(Test) {
 }
 
 wrapper {
-    gradleVersion = "6.8.3"
+    gradleVersion = "7.0-rc-1"
 }
 
 task stage(dependsOn: "bootWar") {
