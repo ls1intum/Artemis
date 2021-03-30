@@ -83,7 +83,11 @@ public class TextPlagiarismDetectionService {
 
         if (textSubmissions.size() < 2) {
             log.info("Insufficient amount of submissions for plagiarism detection. Return empty result.");
-            return new TextPlagiarismResult();
+            TextPlagiarismResult textPlagiarismResult = new TextPlagiarismResult();
+            textPlagiarismResult.setExercise(textExercise);
+            textPlagiarismResult.setSimilarityDistribution(new int[0]);
+
+            return textPlagiarismResult;
         }
 
         textSubmissions.forEach(submission -> {
@@ -106,6 +110,7 @@ public class TextPlagiarismDetectionService {
         log.info("Saving text submissions done");
 
         JPlagOptions options = new JPlagOptions(submissionsFolderName, LanguageOption.TEXT);
+        options.setMinTokenMatch(minimumSize);
 
         // Important: for large courses with more than 1000 students, we might get more than one million results and 10 million files in the file system due to many 0% results,
         // therefore we limit the results to at least 50% or 0.5 similarity, the passed threshold is between 0 and 100%
@@ -122,7 +127,7 @@ public class TextPlagiarismDetectionService {
         }
 
         TextPlagiarismResult textPlagiarismResult = new TextPlagiarismResult(jPlagResult);
-        textPlagiarismResult.setExerciseId(textExercise.getId());
+        textPlagiarismResult.setExercise(textExercise);
 
         log.info("JPlag text comparison for " + submissionsSize + " submissions done in " + TimeLogUtil.formatDurationFrom(start));
 

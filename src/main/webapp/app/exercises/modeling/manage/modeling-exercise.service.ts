@@ -14,20 +14,6 @@ import { downloadStream } from 'app/shared/util/download.util';
 
 export type EntityResponseType = HttpResponse<ModelingExercise>;
 export type EntityArrayResponseType = HttpResponse<ModelingExercise[]>;
-export type ModelingSubmissionComparisonDTO = {
-    element1: ModelingSubmissionComparisonElement;
-    element2: ModelingSubmissionComparisonElement;
-    confirmed?: boolean;
-    similarity: number;
-};
-
-export type ModelingSubmissionComparisonElement = {
-    submissionId: number;
-    size: number;
-    score: number;
-    studentLogin: string;
-    submissionLink: string;
-};
 
 @Injectable({ providedIn: 'root' })
 export class ModelingExerciseService {
@@ -96,5 +82,18 @@ export class ModelingExerciseService {
         return this.http
             .post(`${SERVER_API_URL}api/apollon-convert/pdf`, { model }, { observe: 'response', responseType: 'blob' })
             .pipe(map((response: HttpResponse<Blob>) => downloadStream(response.body, 'application/pdf')));
+    }
+
+    /**
+     * Get the latest plagiarism result for the exercise with the given ID.
+     *
+     * @param exerciseId
+     */
+    getLatestPlagiarismResult(exerciseId: number): Observable<ModelingPlagiarismResult> {
+        return this.http
+            .get<ModelingPlagiarismResult>(`${this.resourceUrl}/${exerciseId}/plagiarism-result`, {
+                observe: 'response',
+            })
+            .pipe(map((response: HttpResponse<ModelingPlagiarismResult>) => response.body!));
     }
 }
