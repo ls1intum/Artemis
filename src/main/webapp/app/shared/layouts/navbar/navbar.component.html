@@ -197,7 +197,7 @@
                             <span jhiTranslate="global.menu.account.settings">Settings</span>
                         </a>
                     </li>
-                    <li *ngIf="isRegistrationEnabled">
+                    <li *ngIf="passwortResetEnabled">
                         <a class="dropdown-item" routerLink="account/password" routerLinkActive="active" (click)="collapseNavbar()">
                             <fa-icon icon="lock" [fixedWidth]="true"></fa-icon>
                             <span jhiTranslate="global.menu.account.password">Password</span>

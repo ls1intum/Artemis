@@ -44,6 +44,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     version: string;
     currAccount?: User;
     isRegistrationEnabled = false;
+    passwortResetEnabled = false;
     breadcrumbs: Breadcrumb[];
 
     private authStateSubscription: Subscription;
@@ -89,6 +90,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
                 this.inProduction = profileInfo.inProduction;
                 this.openApiEnabled = profileInfo.openApiEnabled;
                 this.isRegistrationEnabled = profileInfo.registrationEnabled || false;
+                this.passwortResetEnabled = this.isRegistrationEnabled || profileInfo.saml2?.['enable-password'] || false;
             }
         });
 

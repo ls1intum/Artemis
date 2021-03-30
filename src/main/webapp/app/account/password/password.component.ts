@@ -20,14 +20,15 @@ export class PasswordComponent implements OnInit {
         newPassword: ['', [Validators.required, Validators.minLength(8), Validators.maxLength(100)]],
         confirmPassword: ['', [Validators.required, Validators.minLength(8), Validators.maxLength(100)]],
     });
-    isRegistrationEnabled = false;
+    passwortResetEnabled = false;
 
     constructor(private passwordService: PasswordService, private accountService: AccountService, private profileService: ProfileService, private fb: FormBuilder) {}
 
     ngOnInit() {
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
             if (profileInfo) {
-                this.isRegistrationEnabled = profileInfo.registrationEnabled || false;
+                this.passwortResetEnabled = profileInfo.registrationEnabled || false;
+                this.passwortResetEnabled ||= profileInfo.saml2?.['enable-password'] || false;
             }
         });
 
