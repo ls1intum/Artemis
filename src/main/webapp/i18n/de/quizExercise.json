@@ -26,7 +26,7 @@
                 "saving": "Speichern...",
                 "saved": "Gespeichert!",
                 "quizHasStarted": "Das Quiz hat angefangen. Es sind keine Änderungen mehr möglich.<br><br>Nachträgliche Korrekturen können vorgenommen werden, sobald das Quiz beendet wurde. Gehe zurück zur Übersicht und klicke auf \"Re-evaluate\", sobald das Quiz beendet wurde. (\"Re-evaluate\" ist nicht für TAs verfügbar.)",
-                "testRunSubmissionsExist": "Dieses Quiz enthält Eingaben in einem der Testläufe für diese Prüfung. Lösche den Testlauf, um die Antwortoptionen zu bearbeiten."
+                "testRunSubmissionsExist": "Dieses Quiz enthält Abgaben für einen der Testläufe der Klausur. Lösche den Testlauf, um die Antwortoptionen zu bearbeiten."
             },
             "saveError": "Beim Speichern ist ein Fehler ist aufgetreten. Bitte überprüfe deine Eingabe und versuche es später noch einmal.",
             "new": {

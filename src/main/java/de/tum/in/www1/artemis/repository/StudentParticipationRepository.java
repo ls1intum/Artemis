@@ -484,10 +484,18 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
         ));
     }
 
-    @Query("select count(sp) from StudentParticipation sp left join sp.exercise exercise where exercise.id = :#{#exerciseId} and sp.testRun = false group by exercise.id")
+    @Query("""
+                SELECT COUNT(sp) from StudentParticipation sp LEFT JOIN sp.exercise exercise
+                WHERE exercise.id = :#{#exerciseId} AND sp.testRun = FALSE
+                GROUP BY exercise.id
+            """)
     Long countParticipationsIgnoreTestRunsByExerciseId(@Param("exerciseId") Long exerciseId);
 
-    @Query("select count(sp) from StudentParticipation sp left join sp.exercise exercise where exercise.id = :#{#exerciseId} and sp.testRun = true group by exercise.id")
+    @Query("""
+                SELECT COUNT(sp) from StudentParticipation sp LEFT JOIN sp.exercise exercise
+                WHERE exercise.id = :#{#exerciseId} AND sp.testRun = TRUE
+                GROUP BY exercise.id
+            """)
     Long countParticipationsOnlyTestRunsByExerciseId(@Param("exerciseId") Long exerciseId);
 
     /**

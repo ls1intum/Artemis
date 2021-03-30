@@ -710,12 +710,15 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
 
         const maxPointsReachableInQuiz = this.quizExercise.quizQuestions?.map((quizQuestion) => quizQuestion.points ?? 0).reduce((a, b) => a + b, 0);
 
+        const noTestRunExists = !this.isExamMode || !this.quizExercise.testRunParticipationsExist;
+
         return (
             isGenerallyValid &&
             areAllQuestionsValid === true &&
             this.isEmpty(this.invalidFlaggedQuestions) &&
             maxPointsReachableInQuiz !== undefined &&
-            maxPointsReachableInQuiz > 0
+            maxPointsReachableInQuiz > 0 &&
+            noTestRunExists
         );
     }
 
@@ -847,6 +850,12 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
         if (!this.quizExercise.quizQuestions || this.quizExercise.quizQuestions.length === 0) {
             invalidReasons.push({
                 translateKey: 'artemisApp.quizExercise.invalidReasons.noQuestion',
+                translateValues: {},
+            });
+        }
+        if (this.isExamMode && this.quizExercise.testRunParticipationsExist) {
+            invalidReasons.push({
+                translateKey: 'artemisApp.quizExercise.edit.testRunSubmissionsExist',
                 translateValues: {},
             });
         }
