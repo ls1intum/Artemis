@@ -40,7 +40,7 @@ describe('Component Tests', () => {
         beforeEach(() => {
             fixture = TestBed.createComponent(PasswordResetFinishComponent);
             comp = fixture.componentInstance;
-            comp.isRegistrationEnabled = true;
+            comp.passwortResetEnabled = true;
             comp.ngOnInit();
         });
 

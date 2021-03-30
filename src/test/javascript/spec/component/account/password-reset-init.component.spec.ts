@@ -30,7 +30,7 @@ describe('Component Tests', () => {
                 .overrideTemplate(PasswordResetInitComponent, '')
                 .createComponent(PasswordResetInitComponent);
             comp = fixture.componentInstance;
-            comp.isRegistrationEnabled = true;
+            comp.passwortResetEnabled = true;
         });
 
         it('sets focus after the view has been initialized', () => {
