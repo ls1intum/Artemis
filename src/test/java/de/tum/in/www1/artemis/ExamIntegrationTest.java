@@ -36,7 +36,6 @@ import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
 import de.tum.in.www1.artemis.service.exam.ExamDateService;
 import de.tum.in.www1.artemis.service.exam.ExamRegistrationService;
@@ -2074,15 +2073,15 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void testGenerateStudentExamsTemplateCombine() throws Exception {
-        GitService gitServiceSpy = spy(gitService);
-        doNothing().when(gitServiceSpy).combineAllCommitsOfRepositoryIntoOne(any());
         Exam examWithProgramming = database.addExerciseGroupsAndExercisesToExam(exam1, true);
+
+        doNothing().when(gitService).combineAllCommitsOfRepositoryIntoOne(any());
 
         // invoke generate student exams
         List<StudentExam> studentExams = request.postListWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + examWithProgramming.getId() + "/generate-student-exams",
                 Optional.empty(), StudentExam.class, HttpStatus.OK);
 
-        verify(gitServiceSpy, times(1)).combineAllCommitsOfRepositoryIntoOne(any());
+        verify(gitService, times(1)).combineAllCommitsOfRepositoryIntoOne(any());
     }
 
     @Test
