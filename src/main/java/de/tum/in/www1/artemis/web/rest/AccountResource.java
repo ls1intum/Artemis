@@ -78,9 +78,9 @@ public class AccountResource {
     }
 
     /**
-     * Returns true if saml2 app passwort is disabled, false otherwis.
+     * Returns true if saml2 app password is disabled, false otherwise.
      *
-     * @return true if saml2 app passwort is disabled, false otherwise
+     * @return true if saml2 app password is disabled, false otherwise
      */
     private boolean isSAML2Disabled() {
         return !(saml2EnablePassword.isPresent() && Boolean.TRUE.equals(saml2EnablePassword.get()));

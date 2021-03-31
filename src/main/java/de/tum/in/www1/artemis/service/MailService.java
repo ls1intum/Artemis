@@ -117,7 +117,7 @@ public class MailService {
 
     @Async
     public void sendSAML2SetPasswordMail(User user) {
-        log.debug("Sending SAML2 set passwort email to '{}'", user.getEmail());
+        log.debug("Sending SAML2 set password email to '{}'", user.getEmail());
         sendEmailFromTemplate(user, "mail/samlSetPasswordEmail", "email.saml.title");
     }
 }

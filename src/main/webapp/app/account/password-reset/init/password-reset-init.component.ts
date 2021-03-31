@@ -15,15 +15,15 @@ export class PasswordResetInitComponent implements OnInit, AfterViewInit {
     resetRequestForm = this.fb.group({
         email: ['', [Validators.required, Validators.minLength(5), Validators.maxLength(100), Validators.email]],
     });
-    passwortResetEnabled = false;
+    passwordResetEnabled = false;
 
     constructor(private passwordResetInitService: PasswordResetInitService, private fb: FormBuilder, private profileService: ProfileService) {}
 
     ngOnInit() {
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
             if (profileInfo) {
-                this.passwortResetEnabled = profileInfo.registrationEnabled || false;
-                this.passwortResetEnabled ||= profileInfo.saml2?.['enable-password'] || false;
+                this.passwordResetEnabled = profileInfo.registrationEnabled || false;
+                this.passwordResetEnabled ||= profileInfo.saml2?.enablePassword || false;
             }
         });
     }
