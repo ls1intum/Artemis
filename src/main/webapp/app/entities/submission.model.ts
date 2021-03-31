@@ -9,6 +9,7 @@ export const enum SubmissionType {
     INSTRUCTOR = 'INSTRUCTOR',
     EXTERNAL = 'EXTERNAL',
     TEST = 'TEST',
+    ILLEGAL = 'ILLEGAL',
 }
 
 // IMPORTANT NOTICE: The following strings have to be consistent with the ones defined in Submission.java
