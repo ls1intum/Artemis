@@ -5,6 +5,7 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -35,6 +36,8 @@ public class UserSaml2IntegrationTest extends AbstractSpringIntegrationSaml2Test
 
     private static final String STUDENT_NAME = "student1";
 
+    private static final String STUDENT_PASSWORD = "test123";
+
     @Autowired
     TokenProvider tokenProvider;
 
@@ -51,18 +54,15 @@ public class UserSaml2IntegrationTest extends AbstractSpringIntegrationSaml2Test
      */
     @Test
     public void testValidSaml2Registration() throws Exception {
-        assertThatThrownBy(() -> this.database.getUserByLogin(STUDENT_NAME)).isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("Provided login student1 does not exist in database");
+        assertStudentNotExists();
 
         // Mock existing SAML2 Auth
-        Authentication authentication = new Saml2Authentication(createPrincipal(STUDENT_NAME), "Secret Credentials", null);
-        TestSecurityContextHolder.setAuthentication(authentication);
-
+        mockSAMLAuthentication();
         // Test whether authorizeSAML2 generates a valid token
         UserJWTController.JWTToken result = request.postWithResponseBody("/api/saml2", Boolean.FALSE, UserJWTController.JWTToken.class, HttpStatus.OK);
 
-        assertThat(this.tokenProvider.validateToken(result.getIdToken())).as("JWT Token is Valid").isTrue();
-        assertThat(this.database.getUserByLogin(STUDENT_NAME)).as("User shall exist").isNotNull();
+        assertValidToken(result);
+        assertStudentExists();
     }
 
     /**
@@ -72,30 +72,22 @@ public class UserSaml2IntegrationTest extends AbstractSpringIntegrationSaml2Test
      */
     @Test
     public void testValidSaml2Login() throws Exception {
-        assertThatThrownBy(() -> this.database.getUserByLogin(STUDENT_NAME)).isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("Provided login student1 does not exist in database");
+        assertStudentNotExists();
 
         // Other mail than in #createPrincipal for identification of user
         String identifyingEmail = STUDENT_NAME + "@other.domain.invalid";
 
         // Create User
-        User user = new User();
-        user.setLogin(STUDENT_NAME);
-        user.setActivated(true);
-        user.setEmail(identifyingEmail);
-        userRepository.save(user);
-
-        assertThat(this.database.getUserByLogin(STUDENT_NAME)).as("User shall exist").isNotNull();
+        createUser(identifyingEmail);
+        assertStudentExists();
 
         // Mock existing SAML2 Auth
-        Authentication authentication = new Saml2Authentication(createPrincipal(STUDENT_NAME), "Secret Credentials", null);
-        TestSecurityContextHolder.setAuthentication(authentication);
-
+        mockSAMLAuthentication();
         // Test whether authorizeSAML2 generates a valid token
         UserJWTController.JWTToken result = request.postWithResponseBody("/api/saml2", Boolean.FALSE, UserJWTController.JWTToken.class, HttpStatus.OK);
 
-        assertThat(this.tokenProvider.validateToken(result.getIdToken())).as("JWT Token is Valid").isTrue();
-        assertThat(this.database.getUserByLogin(STUDENT_NAME)).as("User shall exist").isNotNull();
+        assertValidToken(result);
+        assertStudentExists();
         assertThat(this.database.getUserByLogin(STUDENT_NAME).getEmail()).as("Email identifies already created user").isEqualTo(identifyingEmail);
     }
 
@@ -106,44 +98,35 @@ public class UserSaml2IntegrationTest extends AbstractSpringIntegrationSaml2Test
      */
     @Test
     public void testPasswordLoginAfterShibbolethRegistration() throws Exception {
-        assertThatThrownBy(() -> this.database.getUserByLogin(STUDENT_NAME)).isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("Provided login student1 does not exist in database");
+        assertStudentNotExists();
 
         // Create user
-        Authentication authentication = new Saml2Authentication(createPrincipal(STUDENT_NAME), "Secret Credentials", null);
-        TestSecurityContextHolder.setAuthentication(authentication);
+        mockSAMLAuthentication();
         request.postWithResponseBody("/api/saml2", Boolean.FALSE, UserJWTController.JWTToken.class, HttpStatus.OK);
-        assertThat(this.database.getUserByLogin(STUDENT_NAME)).as("User shall exist").isNotNull();
+        assertStudentExists();
 
         // Change Password
-        String password = "test123";
         User student = userRepository.findUserWithGroupsAndAuthoritiesByLogin(STUDENT_NAME).get();
-        student.setPassword(passwordService.encryptPassword(password));
+        student.setPassword(passwordService.encryptPassword(STUDENT_PASSWORD));
         userRepository.saveAndFlush(student);
 
         // Try to login ..
         TestSecurityContextHolder.clearContext();
-        LoginVM user = new LoginVM();
-        user.setUsername(STUDENT_NAME);
-        user.setPassword(password);
-        user.setRememberMe(true);
-
         HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.add("User-Agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36");
 
         // Test whether authorize generates a valid token
-        UserJWTController.JWTToken result = request.postWithResponseBody("/api/authenticate", user, UserJWTController.JWTToken.class, HttpStatus.OK, httpHeaders);
-        assertThat(this.tokenProvider.validateToken(result.getIdToken())).as("JWT Token is Valid").isTrue();
+        UserJWTController.JWTToken result = request.postWithResponseBody("/api/authenticate", createLoginVM(), UserJWTController.JWTToken.class, HttpStatus.OK, httpHeaders);
+        assertValidToken(result);
 
         // Check SAML Login afterwards ..
 
         TestSecurityContextHolder.clearContext();
         // Mock existing SAML2 Auth
-        authentication = new Saml2Authentication(createPrincipal(STUDENT_NAME), "Secret Credentials", null);
-        TestSecurityContextHolder.setAuthentication(authentication);
+        mockSAMLAuthentication();
         // Test whether authorizeSAML2 generates a valid token
         result = request.postWithResponseBody("/api/saml2", Boolean.FALSE, UserJWTController.JWTToken.class, HttpStatus.OK);
-        assertThat(this.tokenProvider.validateToken(result.getIdToken())).as("JWT Token is Valid").isTrue();
+        assertValidToken(result);
     }
 
     /**
@@ -153,32 +136,59 @@ public class UserSaml2IntegrationTest extends AbstractSpringIntegrationSaml2Test
      */
     @Test
     public void testInvalidAuthenticationSaml2Login() throws Exception {
-        assertThatThrownBy(() -> this.database.getUserByLogin(STUDENT_NAME)).isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("Provided login student1 does not exist in database");
-
+        assertStudentNotExists();
         // Test whether authorizeSAML2 generates a no token
         request.post("/api/saml2", Boolean.FALSE, HttpStatus.UNAUTHORIZED);
-
-        assertThatThrownBy(() -> this.database.getUserByLogin(STUDENT_NAME)).isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("Provided login student1 does not exist in database");
+        assertStudentNotExists();
     }
 
     @AfterEach
-    public void clearAuth() {
+    public void clearAuthentication() {
         TestSecurityContextHolder.clearContext();
         this.database.resetDatabase();
     }
 
-    private Saml2AuthenticatedPrincipal createPrincipal(String username) {
-        Saml2AuthenticatedPrincipal principal = new DefaultSaml2AuthenticatedPrincipal(username, new HashMap<>() {
+    private void mockSAMLAuthentication() {
+        Authentication authentication = new Saml2Authentication(createPrincipal(), "Secret Credentials", null);
+        TestSecurityContextHolder.setAuthentication(authentication);
+    }
 
-            {
-                put("uid", List.of(username));
-                put("first_name", List.of("FirstName"));
-                put("last_name", List.of("LastName"));
-                put("email", List.of(username + "@invalid"));
-            }
-        });
-        return principal;
+    private LoginVM createLoginVM() {
+        LoginVM user = new LoginVM();
+        user.setUsername(STUDENT_NAME);
+        user.setPassword(STUDENT_PASSWORD);
+        user.setRememberMe(true);
+        return user;
+    }
+
+    private void createUser(String identifyingEmail) {
+        User user = new User();
+        user.setLogin(STUDENT_NAME);
+        user.setActivated(true);
+        user.setEmail(identifyingEmail);
+        userRepository.save(user);
+    }
+
+    private Saml2AuthenticatedPrincipal createPrincipal() {
+        Map<String, List<Object>> attributes = new HashMap<>();
+        attributes.put("uid", List.of(STUDENT_NAME));
+        attributes.put("first_name", List.of("FirstName"));
+        attributes.put("last_name", List.of("LastName"));
+        attributes.put("email", List.of(STUDENT_NAME + "@invalid"));
+
+        return new DefaultSaml2AuthenticatedPrincipal(STUDENT_NAME, attributes);
+    }
+
+    private void assertStudentNotExists() {
+        assertThatThrownBy(() -> this.database.getUserByLogin(STUDENT_NAME)).isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Provided login student1 does not exist in database");
+    }
+
+    private void assertStudentExists() {
+        assertThat(this.database.getUserByLogin(STUDENT_NAME)).as("User shall exist").isNotNull();
+    }
+
+    private void assertValidToken(UserJWTController.JWTToken token) {
+        assertThat(this.tokenProvider.validateToken(token.getIdToken())).as("JWT Token is Valid").isTrue();
     }
 }
