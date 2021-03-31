@@ -30,7 +30,7 @@ export class LoginService {
      * @param callback The callback function to use (optional)
      */
     login(credentials: Credentials, callback?: any) {
-        const cb = callback || function () {};
+        const callbackOrEmptyFunction = callback || function () {};
 
         return new Promise((resolve, reject) => {
             this.authServerProvider.login(credentials).subscribe(
@@ -38,12 +38,12 @@ export class LoginService {
                     this.accountService.identity(true).then(() => {
                         resolve(data);
                     });
-                    return cb();
+                    return callbackOrEmptyFunction();
                 },
                 (err) => {
                     this.logout(false);
                     reject(err);
-                    return cb(err);
+                    return callbackOrEmptyFunction(err);
                 },
             );
         });
@@ -51,10 +51,11 @@ export class LoginService {
 
     /**
      * Login the user with SAML2.
+     * @param rememberMe whether or not to remember the user
      * @param callback The callback function to use (optional)
      */
     loginSAML2(rememberMe: boolean, callback?: any) {
-        const cb = callback || function () {};
+        const callbackOrEmptyFunction = callback || function () {};
 
         return new Promise((resolve, reject) => {
             this.authServerProvider.loginSAML2(rememberMe).subscribe(
@@ -62,12 +63,12 @@ export class LoginService {
                     this.accountService.identity(true).then(() => {
                         resolve(data);
                     });
-                    return cb();
+                    return callbackOrEmptyFunction();
                 },
                 (err) => {
                     this.logout(false);
                     reject(err);
-                    return cb(err);
+                    return callbackOrEmptyFunction(err);
                 },
             );
         });
