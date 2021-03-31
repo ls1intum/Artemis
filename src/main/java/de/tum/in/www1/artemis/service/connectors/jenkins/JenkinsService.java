@@ -361,33 +361,29 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
         var hasSuccessInfos = !CollectionUtils.isEmpty(testCase.getSuccessInfos());
         boolean successful = testCase.isSuccessful();
 
-        String feedbackMessage;
-
         if (successful && hasSuccessInfos && testCase.getSuccessInfos().get(0).getMostInformativeMessage() != null) {
-            feedbackMessage = testCase.getSuccessInfos().get(0).getMostInformativeMessage();
+            return Optional.of(testCase.getSuccessInfos().get(0).getMostInformativeMessage());
         }
         else if (hasErrors && testCase.getErrors().get(0).getMostInformativeMessage() != null) {
-            feedbackMessage = testCase.getErrors().get(0).getMostInformativeMessage();
+            return Optional.of(testCase.getErrors().get(0).getMostInformativeMessage());
         }
         else if (hasFailures && testCase.getFailures().get(0).getMostInformativeMessage() != null) {
-            feedbackMessage = testCase.getFailures().get(0).getMostInformativeMessage();
+            return Optional.of(testCase.getFailures().get(0).getMostInformativeMessage());
         }
         else if (hasErrors && testCase.getErrors().get(0).getType() != null) {
-            feedbackMessage = String.format("Unsuccessful due to an error of type: %s", testCase.getErrors().get(0).getType());
+            return Optional.of(String.format("Unsuccessful due to an error of type: %s", testCase.getErrors().get(0).getType()));
         }
         else if (hasFailures && testCase.getFailures().get(0).getType() != null) {
-            feedbackMessage = String.format("Unsuccessful due to an error of type: %s", testCase.getFailures().get(0).getType());
+            return Optional.of(String.format("Unsuccessful due to an error of type: %s", testCase.getFailures().get(0).getType()));
         }
         else if (!successful) {
             // this is an edge case which typically does not happen
-            feedbackMessage = "Unsuccessful due to an unknown error. Please contact your instructor!";
+            return Optional.of("Unsuccessful due to an unknown error. Please contact your instructor!");
         }
         else {
             // successful and no message available => do not generate one
             return Optional.empty();
         }
-
-        return Optional.of(feedbackMessage);
     }
 
     @Override
