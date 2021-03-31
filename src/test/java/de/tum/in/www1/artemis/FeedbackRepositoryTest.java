@@ -10,7 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.repository.FeedbackRepository;
 
-class FeedbackServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class FeedbackRepositoryTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     FeedbackRepository feedbackRepository;
@@ -150,5 +150,16 @@ class FeedbackServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
                 expected:
                     something else">
                 but was not.""").isEqualTo(feedbackRepository.createFeedbackFromTestCase("test1", List.of(msgWithStackTrace), false, ProgrammingLanguage.JAVA).getDetailText());
+    }
+
+    @Test
+    void createFeedbackFromTestCaseSuccessfulWithMessage() {
+        String msg = "success\nmessage";
+        assertThat(feedbackRepository.createFeedbackFromTestCase("test1", List.of(msg), true, ProgrammingLanguage.JAVA).getDetailText()).isEqualTo("success\nmessage");
+    }
+
+    @Test
+    void createFeedbackFromTestCaseSuccessfulNoMessage() {
+        assertThat(feedbackRepository.createFeedbackFromTestCase("test1", List.of(), true, ProgrammingLanguage.JAVA).getDetailText()).isEqualTo(null);
     }
 }
