@@ -19,9 +19,6 @@ export class StatisticsAverageScoreGraphComponent implements OnInit {
     @Input()
     courseAverage: number;
 
-    exerciseTitles: string[];
-    averagePoints: number[] = [];
-
     // Html properties
     LEFT = false;
     RIGHT = true;
@@ -36,7 +33,7 @@ export class StatisticsAverageScoreGraphComponent implements OnInit {
     courseAverageLegend: string;
     chartName: string;
     barChartLegend = true;
-    chartTime: any;
+
     // Data
     barChartLabels: Label[] = [];
     chartData: ChartDataSets[] = [];
@@ -49,9 +46,6 @@ export class StatisticsAverageScoreGraphComponent implements OnInit {
 
     constructor(private service: StatisticsService, private translateService: TranslateService) {}
 
-    /**
-     * Life cycle hook to indicate component changes
-     */
     ngOnInit(): void {
         this.chartName = this.translateService.instant(`artemisApp.course.averageScore`);
         this.exerciseAverageLegend = this.translateService.instant('artemisApp.courseStatistics.exerciseAverage');
@@ -144,6 +138,7 @@ export class StatisticsAverageScoreGraphComponent implements OnInit {
         };
     }
 
+    // handles arrow clicks and updates the exercises which are shwon
     public switchTimeSpan(index: boolean): void {
         // eslint-disable-next-line chai-friendly/no-unused-expressions
         index ? (this.currentPeriod += 1) : (this.currentPeriod -= 1);
