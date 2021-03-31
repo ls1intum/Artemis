@@ -85,7 +85,8 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     @Query("SELECT DISTINCT pe FROM ProgrammingExercise pe LEFT JOIN FETCH pe.studentParticipations")
     List<ProgrammingExercise> findAllWithEagerParticipations();
 
-    /** Get all programming exercises that need to be scheduled: Those must satisfy one of the following requirements:
+    /**
+     * Get all programming exercises that need to be scheduled: Those must satisfy one of the following requirements:
      * <ol>
      * <li>The release date is in the future --> Schedule combine template commits</li>
      * <li>The build and test student submissions after deadline date is in the future</li>
