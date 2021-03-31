@@ -201,8 +201,8 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
             var scheduledRunnable = Set.of(new Tuple<>(exercise.getReleaseDate().minusSeconds(Constants.SECONDS_BEFORE_RELEASE_DATE_FOR_COMBINING_TEMPLATE_COMMITS),
                     combineTemplateCommitsForExercise(exercise)));
             scheduleService.scheduleTask(exercise, ExerciseLifecycle.RELEASE, scheduledRunnable);
-            log.debug("Scheduled combining template commits before release date for Programming Exercise \"" + exercise.getTitle() + "\" (#" + exercise.getId() + ") for "
-                    + exercise.getReleaseDate() + ".");
+            log.debug("Scheduled combining template commits before release date for Programming Exercise \"{}\" (#{}) for {}.", exercise.getTitle(), exercise.getId(),
+                    exercise.getReleaseDate());
         }
         else {
             scheduleService.cancelScheduledTaskForLifecycle(exercise.getId(), ExerciseLifecycle.RELEASE);

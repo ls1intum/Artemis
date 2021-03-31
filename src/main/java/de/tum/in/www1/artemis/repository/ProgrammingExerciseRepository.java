@@ -58,10 +58,15 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     @Query("select distinct pe from ProgrammingExercise pe left join fetch pe.studentParticipations")
     List<ProgrammingExercise> findAllWithEagerParticipations();
 
-    // Get all programming exercises that need to be scheduled: Those must satisfy one of the following requirements:
-    // 1. The release date is in the future --> Schedule combine template commits
-    // 2. The build and test student submissions after deadline date is in the future
-    // 3. Manual assessment is enabled and the due date is in the future
+    /** Get all programming exercises that need to be scheduled: Those must satisfy one of the following requirements:
+     * <ol>
+     * <li>The release date is in the future --> Schedule combine template commits</li>
+     * <li>The build and test student submissions after deadline date is in the future</li>
+     * <li>Manual assessment is enabled and the due date is in the future</li>
+     * </ol>
+     * @param now the current time
+     * @return List of the exercises that should be scheduled
+     */
     @Query("""
             select distinct pe from ProgrammingExercise pe
             where pe.releaseDate > :#{#now}
