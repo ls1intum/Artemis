@@ -24,6 +24,7 @@
     [isTestRun]="isTestRun"
     [exerciseDashboardLink]="exerciseDashboardLink"
     [isAtLeastInstructor]="isAtLeastInstructor"
+    [isIllegalSubmission]="submission && submission.type === 'ILLEGAL'"
     [canOverride]="canOverride"
     [result]="manualResult"
     [assessmentsAreValid]="assessmentsAreValid"

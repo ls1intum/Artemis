@@ -2,6 +2,7 @@
     "artemisApp": {
         "assessment": {
             "assessment": "Assessment",
+            "assessmentIllegalSubmission": "Warning: You are viewing an illegal submission.",
             "testRunAssessment": "Test Run Assessment",
             "additionalFeedback": "Additional feedback",
             "feedback": "Feedback",
