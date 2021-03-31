@@ -1,11 +1,12 @@
 package de.tum.in.www1.artemis.service.connectors.jenkins.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class ErrorOrFailureDTO {
+public class TestCaseDetailMessageDTO {
 
     private String message;
 
@@ -37,9 +38,11 @@ public class ErrorOrFailureDTO {
         this.messageWithStackTrace = messageWithStackTrace;
     }
 
+    @JsonIgnore
     public String getMostInformativeMessage() {
-        if (messageWithStackTrace != null && !messageWithStackTrace.isBlank())
+        if (messageWithStackTrace != null && !messageWithStackTrace.isBlank()) {
             return messageWithStackTrace;
+        }
         return message;
     }
 }
