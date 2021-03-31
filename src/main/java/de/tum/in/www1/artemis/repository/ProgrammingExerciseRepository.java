@@ -210,19 +210,20 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
      * @return the number of distinct submissions belonging to the exercise id
      */
     @Query("""
-            SELECT COUNT (DISTINCT p) FROM ProgrammingExerciseStudentParticipation p join p.submissions s
+            SELECT COUNT (DISTINCT p) FROM ProgrammingExerciseStudentParticipation p
+            JOIN p.submissions s
             WHERE p.exercise.id = :#{#exerciseId}
-            AND s.submitted = TRUE
+                AND s.submitted = TRUE
             """)
     long countSubmissionsByExerciseIdSubmitted(@Param("exerciseId") Long exerciseId);
 
     @Query("""
-            SELECT
-                new de.tum.in.www1.artemis.domain.assessment.dashboard.ExerciseMapEntry(
+            SELECT new de.tum.in.www1.artemis.domain.assessment.dashboard.ExerciseMapEntry(
                 p.exercise.id,
                 count(DISTINCT p)
             )
-            FROM ProgrammingExerciseStudentParticipation p join p.submissions s
+            FROM ProgrammingExerciseStudentParticipation p
+            JOIN p.submissions s
             WHERE p.exercise.id IN :exerciseIds
                 AND s.submitted = TRUE
             GROUP BY p.exercise.id
@@ -238,10 +239,11 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
      * @return the number of distinct submissions belonging to the exercise id
      */
     @Query("""
-            SELECT COUNT (DISTINCT p) FROM ProgrammingExerciseStudentParticipation p JOIN p.submissions s
+            SELECT COUNT (DISTINCT p) FROM ProgrammingExerciseStudentParticipation p
+            JOIN p.submissions s
             WHERE p.exercise.id = :#{#exerciseId}
-            AND p.testRun = FALSE
-            AND s.submitted = TRUE
+                AND p.testRun = FALSE
+                AND s.submitted = TRUE
             """)
     long countSubmissionsByExerciseIdSubmittedIgnoreTestRunSubmissions(@Param("exerciseId") Long exerciseId);
 
@@ -254,17 +256,17 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
      * @return the number of distinct submissions belonging to the exercise id
      */
     @Query("""
-            SELECT
-                new de.tum.in.www1.artemis.domain.assessment.dashboard.ExerciseMapEntry(
+            SELECT new de.tum.in.www1.artemis.domain.assessment.dashboard.ExerciseMapEntry(
                 p.exercise.id,
                 count(DISTINCT p)
             )
-            FROM ProgrammingExerciseStudentParticipation p JOIN p.submissions s
+            FROM ProgrammingExerciseStudentParticipation p
+            JOIN p.submissions s
             WHERE p.exercise.id IN :exerciseIds
                 AND p.testRun = FALSE
                 AND s.submitted = TRUE
             GROUP BY p.exercise.id
-                """)
+            """)
     List<ExerciseMapEntry> countSubmissionsByExerciseIdsSubmittedIgnoreTestRun(@Param("exerciseIds") Set<Long> exerciseIds);
 
     /** needs improvement
@@ -275,11 +277,12 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
      * @return the number of distinct submissions belonging to the exercise id that are assessed
      */
     @Query("""
-            SELECT COUNT (DISTINCT p) FROM ProgrammingExerciseStudentParticipation p LEFT JOIN p.results r
+            SELECT COUNT (DISTINCT p) FROM ProgrammingExerciseStudentParticipation p
+            LEFT JOIN p.results r
             WHERE p.exercise.id = :#{#exerciseId}
-            AND r.submission.submitted = TRUE
-            AND r.assessor IS NOT NULL
-            AND r.completionDate IS NOT NULL
+                AND r.submission.submitted = TRUE
+                AND r.assessor IS NOT NULL
+                AND r.completionDate IS NOT NULL
             """)
     long countAssessmentsByExerciseIdSubmitted(@Param("exerciseId") Long exerciseId);
 
@@ -342,8 +345,9 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
      * @return the number of submissions belonging to the course id, which have the submitted flag set to true (only exercises with manual or semi automatic correction are considered)
      */
     @Query("""
-            SELECT COUNT (DISTINCT p) FROM ProgrammingExerciseStudentParticipation p join p.submissions s
-                WHERE p.exercise.assessmentType <> 'AUTOMATIC'
+            SELECT COUNT (DISTINCT p) FROM ProgrammingExerciseStudentParticipation p
+            JOIN p.submissions s
+            WHERE p.exercise.assessmentType <> 'AUTOMATIC'
                 AND p.exercise.id IN :exerciseIds
                 AND s.submitted = TRUE
             """)
