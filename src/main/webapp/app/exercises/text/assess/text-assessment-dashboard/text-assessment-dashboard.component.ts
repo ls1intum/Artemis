@@ -147,8 +147,4 @@ export class TextAssessmentDashboardComponent implements OnInit {
     getAssessmentLink(submissionId: number) {
         return getLinkToSubmissionAssessment(this.exercise.type!, this.courseId, this.exerciseId, submissionId, this.examId, this.exerciseGroupId);
     }
-
-    getParticipantName(submission?: Submission) {
-        return (submission?.participation as StudentParticipation)?.participantName;
-    }
 }
