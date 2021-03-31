@@ -50,7 +50,7 @@
                 <div class="col-6">
                     <h5>
                         {{ exercise.type | exerciseTypeLabel }}
-                        <fa-icon [icon]="getIcon(exercise.type)" placement="right"></fa-icon>
+                        <fa-icon *ngIf="icon" [icon]="icon" placement="right"></fa-icon>
                     </h5>
                 </div>
             </div>
