@@ -197,6 +197,48 @@ Another approach is moving objects into the domain classes, but be aware that yo
         return false;
     }
 
+17. Proper annotation of SQL query parameters
+=============================================
+
+Query parameters for SQL must be annotated with ``@Param("variable")``!
+
+Do **not** write
+
+.. code-block:: java
+
+    @Query("""
+            SELECT r FROM Result r
+            LEFT JOIN FETCH r.feedbacks
+            WHERE r.id = :resultId
+            """)
+    Optional<Result> findByIdWithEagerFeedbacks(Long resultId);
+
+but instead annotate the parameter with @Param:
+
+.. code-block:: java
+
+    @Query("""
+            SELECT r FROM Result r
+            LEFT JOIN FETCH r.feedbacks
+            WHERE r.id = :resultId
+            """)
+    Optional<Result> findByIdWithEagerFeedbacks(@Param("resultId") Long resultId);
+
+The string name inside must match the name of the variable exactly!
+
+18. SQL statement formatting
+============================
+
+We prefer to write SQL statements all in upper case. Split queries onto multiple lines using the triple quotation mark notation:
+
+.. code-block:: java
+
+    @Query("""
+            SELECT r FROM Result r
+            LEFT JOIN FETCH r.feedbacks
+            WHERE r.id = :resultId
+            """)
+    Optional<Result> findByIdWithEagerFeedbacks(@Param("resultId") Long resultId);
 
 
 Some parts of these guidelines are adapted from https://medium.com/@madhupathy/ultimate-clean-code-guide-for-java-spring-based-applications-4d4c9095cc2a
