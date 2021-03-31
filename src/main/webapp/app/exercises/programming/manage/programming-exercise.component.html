@@ -219,7 +219,7 @@
                                     class="btn btn-success btn-sm mr-1 mb-1"
                                 >
                                     <fa-icon [icon]="'book'"></fa-icon>
-                                    <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.submissions">Submissions</span>
+                                    <span class="d-md-inline" jhiTranslate="artemisApp.exercise.submissions">Submissions</span>
                                 </a>
                                 <a
                                     *ngIf="programmingExercise.isAtLeastTutor"
@@ -227,15 +227,15 @@
                                     class="btn btn-info btn-sm mr-1 mb-1"
                                 >
                                     <fa-icon [icon]="'table'"></fa-icon>
-                                    <span class="d-none d-md-inline" jhiTranslate="entity.action.scores">Scores</span>
+                                    <span class="d-md-inline" jhiTranslate="entity.action.scores">Scores</span>
                                 </a>
                                 <a
-                                    *ngIf="programmingExercise.teamMode && programmingExercise.isAtLeastTutor"
+                                    *ngIf="!programmingExercise.teamMode && programmingExercise.isAtLeastTutor"
                                     [routerLink]="['/course-management', courseId, 'exercises', programmingExercise.id, 'teams']"
                                     class="btn btn-primary btn-sm mr-1 mb-1"
                                 >
                                     <fa-icon [icon]="'users'"></fa-icon>
-                                    <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.teams">Teams</span>
+                                    <span class="d-md-inline" jhiTranslate="artemisApp.exercise.teams">Teams</span>
                                 </a>
                             </div>
                             <div class="btn-group-vertical mr-1 mb-1">
@@ -243,18 +243,24 @@
                                     *ngIf="programmingExercise.isAtLeastTutor"
                                     [routerLink]="['/course-management', courseId, 'exercises', programmingExercise.id, 'participations']"
                                     class="btn btn-primary btn-sm mr-1 mb-1"
+                                    style="display: flex; justify-content: center; align-items: center"
                                 >
-                                    <fa-icon [icon]="'list-alt'"></fa-icon>
-                                    <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.participations">Participations</span>
+                                    <div>
+                                        <fa-icon [icon]="'list-alt'"></fa-icon>
+                                        <span class="d-md-inline" jhiTranslate="artemisApp.exercise.participations">Participations</span>
+                                    </div>
                                 </a>
                                 <a
                                     [jhiFeatureToggleLink]="FeatureToggle.PROGRAMMING_EXERCISES"
                                     *ngIf="programmingExercise.isAtLeastInstructor"
                                     [routerLink]="['/course-management', courseId, 'programming-exercises', programmingExercise.id, 'grading', 'test-cases']"
                                     class="btn btn-info btn-sm mr-1 mb-1"
+                                    style="display: flex; justify-content: center; align-items: center"
                                 >
-                                    <fa-icon [icon]="'file-signature'"></fa-icon>
-                                    <span class="d-none d-md-inline" jhiTranslate="artemisApp.programmingExercise.configureGrading.shortTitle">Grading</span>
+                                    <div>
+                                        <fa-icon [icon]="'file-signature'"></fa-icon>
+                                        <span class="d-md-inline" jhiTranslate="artemisApp.programmingExercise.configureGrading.shortTitle">Grading</span>
+                                    </div>
                                 </a>
                             </div>
                             <div class="btn-group-vertical mr-1 mb-1">
@@ -273,17 +279,23 @@
                                         programmingExercise.templateParticipation.id
                                     ]"
                                     class="btn btn-warning btn-sm mr-1 mb-1"
+                                    style="display: flex; justify-content: center; align-items: center"
                                 >
-                                    <fa-icon [icon]="'pencil-alt'"></fa-icon>
-                                    <span class="d-none d-md-inline" jhiTranslate="entity.action.editInEditor">Edit in Editor</span>
+                                    <div>
+                                        <fa-icon [icon]="'pencil-alt'"></fa-icon>
+                                        <span class="d-none d-md-inline" jhiTranslate="entity.action.editInEditor">Edit in Editor</span>
+                                    </div>
                                 </a>
                                 <a
                                     *ngIf="programmingExercise.isAtLeastInstructor"
                                     [routerLink]="['/course-management', programmingExercise.course.id, 'programming-exercises', programmingExercise.id, 'edit']"
                                     class="btn btn-warning btn-sm mr-1 mb-1"
+                                    style="display: flex; justify-content: center; align-items: center"
                                 >
-                                    <fa-icon [icon]="'wrench'"></fa-icon>
-                                    <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
+                                    <div>
+                                        <fa-icon [icon]="'wrench'"></fa-icon>
+                                        <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
+                                    </div>
                                 </a>
                             </div>
                             <div class="btn-group-vertical mr-1 mb-1">
