@@ -529,9 +529,11 @@ public class CompassService {
      */
     public List<Long> getCalculationEngineModelsWaitingForAssessment(Long exerciseId) {
         List<ModelingSubmission> modelingSubmissions = modelingSubmissionRepository.findSubmittedByExerciseIdWithEagerResultsAndFeedback(exerciseId);
-        assessAllAutomatically(modelingSubmissions.stream().map(Submission::getId).collect(Collectors.toList()), exerciseId);
+
         CompassCalculationEngine engine = compassCalculationEngines.get(exerciseId);
         engine.notifyNewModels(modelingSubmissions);
+
+        assessAllAutomatically(modelingSubmissions.stream().map(Submission::getId).collect(Collectors.toList()), exerciseId);
 
         return engine.getModelsWaitingForAssessment();
     }
