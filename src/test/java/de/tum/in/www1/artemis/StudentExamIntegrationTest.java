@@ -43,7 +43,6 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.exam.ExamQuizService;
-import de.tum.in.www1.artemis.service.exam.StudentExamService;
 import de.tum.in.www1.artemis.util.LocalRepository;
 import de.tum.in.www1.artemis.util.ProgrammingExerciseTestService;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -51,52 +50,43 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
-    ProgrammingExerciseTestService programmingExerciseTestService;
+    private ProgrammingExerciseTestService programmingExerciseTestService;
 
     @Autowired
-    ExamRepository examRepository;
+    private ExamRepository examRepository;
 
     @Autowired
-    ResultRepository resultRepository;
+    private ResultRepository resultRepository;
 
     @Autowired
-    SubmissionRepository submissionRepository;
+    private SubmissionRepository submissionRepository;
 
     @Autowired
-    StudentExamRepository studentExamRepository;
+    private StudentExamRepository studentExamRepository;
 
     @Autowired
-    ExamSessionRepository examSessionRepository;
+    private ExamSessionRepository examSessionRepository;
 
     @Autowired
-    ProgrammingSubmissionRepository programmingSubmissionRepository;
+    private ProgrammingSubmissionRepository programmingSubmissionRepository;
 
     @Autowired
-    ExerciseRepository exerciseRepository;
+    private StudentParticipationRepository studentParticipationRepository;
 
     @Autowired
-    StudentParticipationRepository studentParticipationRepository;
+    private SubmissionVersionRepository submissionVersionRepository;
 
     @Autowired
-    StudentExamService studentExamService;
+    private ExamQuizService examQuizService;
 
     @Autowired
-    SubmissionVersionRepository submissionVersionRepository;
+    private QuizSubmissionRepository quizSubmissionRepository;
 
     @Autowired
-    QuizExerciseRepository quizExerciseRepository;
+    private ParticipationService participationService;
 
     @Autowired
-    ExamQuizService examQuizService;
-
-    @Autowired
-    QuizSubmissionRepository quizSubmissionRepository;
-
-    @Autowired
-    ParticipationService participationService;
-
-    @Autowired
-    ObjectMapper objectMapper;
+    private ObjectMapper objectMapper;
 
     private List<User> users;
 
