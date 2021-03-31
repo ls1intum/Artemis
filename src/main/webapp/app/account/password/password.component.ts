@@ -28,7 +28,7 @@ export class PasswordComponent implements OnInit {
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
             if (profileInfo) {
                 this.passwortResetEnabled = profileInfo.registrationEnabled || false;
-                this.passwortResetEnabled ||= profileInfo.saml2?.['enable-password'] || false;
+                this.passwortResetEnabled ||= profileInfo.saml2?.enablePassword || false;
             }
         });
 
