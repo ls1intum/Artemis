@@ -224,8 +224,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
      * @throws EntityNotFoundException  if the participation for the given id can't be found.
      * @throws IllegalArgumentException if the participation for the given id is not a programming exercise participation.
      */
-    public Optional<ProgrammingSubmission> getLatestPendingSubmission(Long participationId, boolean filterGraded, boolean includeIllegalSubmissions)
-            throws EntityNotFoundException, IllegalArgumentException {
+    public Optional<ProgrammingSubmission> getLatestPendingSubmission(Long participationId, boolean filterGraded) throws EntityNotFoundException, IllegalArgumentException {
         Participation participation = participationRepository.findByIdElseThrow(participationId);
         if (!(participation instanceof ProgrammingExerciseParticipation)) {
             throw new IllegalArgumentException("Participation with id " + participationId + " is not a programming exercise participation!");
@@ -234,7 +233,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
             throw new AccessForbiddenException("Participation with id " + participationId + " can't be accessed by user " + SecurityUtils.getCurrentUserLogin());
         }
 
-        return findLatestPendingSubmissionForParticipation(participationId, filterGraded, includeIllegalSubmissions);
+        return findLatestPendingSubmissionForParticipation(participationId, filterGraded);
     }
 
     /**
@@ -245,23 +244,20 @@ public class ProgrammingSubmissionService extends SubmissionService {
      */
     public Map<Long, Optional<ProgrammingSubmission>> getLatestPendingSubmissionsForProgrammingExercise(Long programmingExerciseId) {
         List<ProgrammingExerciseStudentParticipation> participations = programmingExerciseStudentParticipationRepository.findByExerciseId(programmingExerciseId);
-        return participations.stream().collect(Collectors.toMap(Participation::getId, p -> findLatestPendingSubmissionForParticipation(p.getId(), false)));
+        return participations.stream().collect(Collectors.toMap(Participation::getId, p -> findLatestPendingSubmissionForParticipation(p.getId())));
     }
 
-    private Optional<ProgrammingSubmission> findLatestPendingSubmissionForParticipation(final long participationId, boolean includeIllegalSubmissions) {
-        return findLatestPendingSubmissionForParticipation(participationId, false, includeIllegalSubmissions);
+    private Optional<ProgrammingSubmission> findLatestPendingSubmissionForParticipation(final long participationId) {
+        return findLatestPendingSubmissionForParticipation(participationId, false);
     }
 
-    private Optional<ProgrammingSubmission> findLatestPendingSubmissionForParticipation(final long participationId, final boolean isGraded, boolean includeIllegalSubmissions) {
+    private Optional<ProgrammingSubmission> findLatestPendingSubmissionForParticipation(final long participationId, final boolean isGraded) {
         Optional<ProgrammingSubmission> optionalSubmission;
         if (isGraded) {
             optionalSubmission = programmingSubmissionRepository.findGradedByParticipationIdOrderBySubmissionDateDesc(participationId, PageRequest.of(0, 1)).stream().findFirst();
         }
-        else if (includeIllegalSubmissions) {
-            optionalSubmission = programmingSubmissionRepository.findFirstByParticipationIdOrderBySubmissionDateDesc(participationId);
-        }
         else {
-            optionalSubmission = programmingSubmissionRepository.findFirstByParticipationIdOrderByLegalSubmissionDateDesc(participationId);
+            optionalSubmission = programmingSubmissionRepository.findFirstByParticipationIdOrderBySubmissionDateDesc(participationId);
         }
 
         if (optionalSubmission.isEmpty() || optionalSubmission.get().getLatestResult() != null) {
