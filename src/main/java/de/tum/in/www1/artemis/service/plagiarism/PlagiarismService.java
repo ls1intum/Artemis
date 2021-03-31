@@ -52,6 +52,7 @@ public class PlagiarismService {
      * @param comparison Plagiarism comparison to update.
      * @param status The new status of the plagiarism comparison.
      */
+    // TODO: move to Repository
     @Transactional // ok because of modifying query
     public void updateStatusOfComparison(PlagiarismComparison<?> comparison, PlagiarismStatus status) {
         plagiarismComparisonRepository.updatePlagiarismComparisonStatus(comparison.getId(), status);

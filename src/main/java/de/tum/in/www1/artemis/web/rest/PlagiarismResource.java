@@ -45,10 +45,10 @@ public class PlagiarismResource {
     @PutMapping("/plagiarism-comparisons/{comparisonId}/status")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Void> updatePlagiarismComparisonStatus(@PathVariable long comparisonId, @RequestBody PlagiarismComparisonStatusDTO statusDTO) {
-        // TODO: check that the instructor has access to the corresponding course (add the courseId to the URL)
+        // TODO: check that the instructor has access to the corresponding course (add the exerciseId to the URL)
         log.debug("REST request to update the status of the plagiarism comparison with id: {}", comparisonId);
         var comparison = plagiarismComparisonRepository.findByIdElseThrow(comparisonId);
-        plagiarismService.updateStatusOfComparison(comparison, statusDTO.status);
+        plagiarismService.updateStatusOfComparison(comparison, statusDTO.getStatus());
         return ResponseEntity.ok().body(null);
     }
 }
