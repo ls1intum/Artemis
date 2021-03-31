@@ -76,8 +76,8 @@ public abstract class AbstractSpringIntegrationSaml2Test {
     }
 
     @AfterEach
-    public void resetSpyBeans() {
-        Mockito.reset(relyingPartyRegistrationRepository);
+    public void resetMockBeans() {
+        Mockito.reset(relyingPartyRegistrationRepository, programmingMock, mailService);
     }
 
 }
