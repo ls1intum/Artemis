@@ -10,7 +10,6 @@ import { TruncatePipe } from 'app/shared/pipes/truncate.pipe';
 import { SanitizeHtmlPipe } from 'app/shared/pipes/sanitize-html.pipe';
 import { ExerciseTypePipe } from 'app/shared/pipes/exercise-type.pipe';
 import { ExerciseCourseTitlePipe } from 'app/shared/pipes/exercise-course-title.pipe';
-import { TypeOfPipe } from 'app/shared/pipes/type-of.pipe';
 
 @NgModule({
     declarations: [
@@ -25,7 +24,6 @@ import { TypeOfPipe } from 'app/shared/pipes/type-of.pipe';
         TruncatePipe,
         SanitizeHtmlPipe,
         AverageByPipe,
-        TypeOfPipe,
     ],
     exports: [
         SafeHtmlPipe,
@@ -39,7 +37,6 @@ import { TypeOfPipe } from 'app/shared/pipes/type-of.pipe';
         SanitizeHtmlPipe,
         SafeResourceUrlPipe,
         AverageByPipe,
-        TypeOfPipe,
     ],
     providers: [SafeResourceUrlPipe],
 })
