@@ -57,11 +57,11 @@ public class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIn
 
     private ProgrammingExercise exercise;
 
-    LocalRepository exerciseRepo = new LocalRepository();
+    private final LocalRepository exerciseRepo = new LocalRepository();
 
-    LocalRepository testRepo = new LocalRepository();
+    private final LocalRepository testRepo = new LocalRepository();
 
-    LocalRepository solutionRepo = new LocalRepository();
+    private final LocalRepository solutionRepo = new LocalRepository();
 
     @BeforeAll
     public static void detectMavenHome() {
@@ -214,12 +214,15 @@ public class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIn
         SUCCESSFUL, FAILED, ERROR, SKIPPED;
 
         static TestResult of(ReportTestCase testCase) {
-            if (testCase.hasError())
+            if (testCase.hasError()) {
                 return TestResult.ERROR;
-            if (testCase.hasFailure())
+            }
+            if (testCase.hasFailure()) {
                 return TestResult.FAILED;
-            if (testCase.hasSkipped())
+            }
+            if (testCase.hasSkipped()) {
                 return TestResult.SKIPPED;
+            }
             return TestResult.SUCCESSFUL;
         }
     }

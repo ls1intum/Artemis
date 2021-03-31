@@ -14,7 +14,7 @@
             </div>
             <div class="plagiarism-header-top-right">
                 <button class="check-plagiarism btn btn-primary" (click)="checkPlagiarism()" [disabled]="detectionInProgress">
-                    <span jhiTranslate="artemisApp.textExercise.checkPlagiarism">Check Plagiarism</span>
+                    <span>{{ plagiarismResult ? ('artemisApp.plagiarism.rerun' | artemisTranslate) : ('artemisApp.plagiarism.detect' | artemisTranslate) }}</span>
                 </button>
 
                 <div ngbDropdown *ngIf="plagiarismResult">
