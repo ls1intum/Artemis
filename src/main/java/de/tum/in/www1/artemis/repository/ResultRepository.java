@@ -86,7 +86,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
             LEFT JOIN FETCH r.feedbacks
             WHERE r.id = :resultId
             """)
-    Optional<Result> findByIdWithEagerFeedbacks(@Param("resultId") Long id);
+    Optional<Result> findByIdWithEagerFeedbacks(@Param("resultId") Long resultId);
 
     @Query("""
             SELECT r FROM Result r
@@ -94,7 +94,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
             LEFT JOIN FETCH r.feedbacks
             WHERE r.id = :resultId
             """)
-    Optional<Result> findByIdWithEagerSubmissionAndFeedbacks(@Param("resultId") Long id);
+    Optional<Result> findByIdWithEagerSubmissionAndFeedbacks(@Param("resultId") Long resultId);
 
     @Query("""
             SELECT r FROM Result r
@@ -102,7 +102,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
             LEFT JOIN FETCH r.assessor
             WHERE r.id = :resultId
             """)
-    Optional<Result> findByIdWithEagerFeedbacksAndAssessor(@Param("resultId") Long id);
+    Optional<Result> findByIdWithEagerFeedbacksAndAssessor(@Param("resultId") Long resultId);
 
     @Query("""
             SELECT r FROM Result r
@@ -137,7 +137,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
                 and r.rated = :rated
                 and e.id IN :exerciseIds
             """)
-    Long countAssessmentsByCourseIdAndRated(@Param("exerciseIds") Set<Long> exerciseIds, boolean rated);
+    Long countAssessmentsByCourseIdAndRated(@Param("exerciseIds") Set<Long> exerciseIds, @Param("rated") boolean rated);
 
     List<Result> findAllByParticipation_Exercise_CourseId(Long courseId);
 
@@ -330,7 +330,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
      */
     default DueDateStat[] countNumberOfFinishedAssessmentsForExamExerciseForCorrectionRounds(Exercise exercise, int numberOfCorrectionRounds) {
 
-        // here we receive a list which contains an entry for each studentparticipation of the exercise.
+        // here we receive a list which contains an entry for each student participation of the exercise.
         // the entry simply is the number of already created and submitted manual results, so the number is either 1 or 2
         List<Long> countlist = countNumberOfFinishedAssessmentsByExerciseIdIgnoreTestRuns(exercise.getId());
         return convertDatabaseResponseToDueDateStats(countlist, numberOfCorrectionRounds);

@@ -304,6 +304,25 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
     }
 
     @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void getComplaintsForAssessmentDashboard_testRun() throws Exception {
+        complaint.setParticipant(database.getUserByLogin("instructor1"));
+        complaintRepo.save(complaint);
+
+        final var params = new LinkedMultiValueMap<String, String>();
+        params.add("complaintType", ComplaintType.COMPLAINT.name());
+        final var complaints = request.getList("/api/exercises/" + modelingExercise.getId() + "/complaints-for-test-run-dashboard", HttpStatus.OK, Complaint.class, params);
+
+        complaints.forEach(compl -> {
+            final var participation = (StudentParticipation) compl.getResult().getParticipation();
+            assertThat(participation.getStudent()).as("No student information").isNull();
+            assertThat(compl.getParticipant()).as("No student information").isNull();
+            assertThat(participation.getExercise()).as("No additional exercise information").isNull();
+            assertThat(compl.getResultBeforeComplaint()).as("No old result information").isNull();
+        });
+    }
+
+    @Test
     @WithMockUser(username = "student1")
     public void getComplaintResponseByComplaintId_reviewerHiddenForStudent() throws Exception {
         complaint.setParticipant(database.getUserByLogin("student1"));
