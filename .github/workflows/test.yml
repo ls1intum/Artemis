@@ -22,7 +22,6 @@ env:
   CI: true
   node: 15.x
   java: 16
-  java_15: 15
 
 jobs:
 
@@ -63,7 +62,7 @@ jobs:
     - name: Setup Java
       uses: actions/setup-java@v1
       with:
-        java-version: '${{ env.java_15 }}'  #spotless does not yet seem to support JDK16
+        java-version: '${{ env.java }}'  #spotless does not yet seem to support JDK16
     - uses: actions/checkout@v2
     - name: Cache Gradle dependencies
       uses: actions/cache@v2
