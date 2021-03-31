@@ -1292,15 +1292,8 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
     public void testCheckPlagiarismIdenticalLongTexts() throws Exception {
         database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.json", "student1");
         database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.json", "student2");
-
-        // Use default options for plagiarism detection
-        var params = new LinkedMultiValueMap<String, String>();
-        params.add("similarityThreshold", "50");
-        params.add("minimumScore", "0");
-        params.add("minimumSize", "0");
-
-        ModelingPlagiarismResult result = request.get("/api/modeling-exercises/" + classExercise.getId() + "/check-plagiarism", HttpStatus.OK, ModelingPlagiarismResult.class,
-                params);
+        var path = "/api/modeling-exercises/" + classExercise.getId() + "/check-plagiarism";
+        var result = request.get(path, HttpStatus.OK, ModelingPlagiarismResult.class, database.getDefaultPlagiarismOptions());
         assertThat(result.getComparisons()).hasSize(1);
         assertThat(result.getExercise().getId()).isEqualTo(classExercise.getId());
 

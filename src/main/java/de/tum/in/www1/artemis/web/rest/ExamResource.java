@@ -526,7 +526,7 @@ public class ExamResource {
     public ResponseEntity<List<StudentExam>> generateStudentExams(@PathVariable Long courseId, @PathVariable Long examId) {
         long start = System.nanoTime();
         log.info("REST request to generate student exams for exam {}", examId);
-        final var exam = examRepository.findByIdWithRegisteredUsersExerciseGroupsAndExercisesElseThrow(examId);
+        final Exam exam = examRepository.findByIdWithRegisteredUsersExerciseGroupsAndExercisesElseThrow(examId);
 
         Optional<ResponseEntity<List<StudentExam>>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccessForInstructor(courseId, exam);
         if (courseAndExamAccessFailure.isPresent()) {
@@ -535,6 +535,8 @@ public class ExamResource {
 
         // Validate settings of the exam
         examService.validateForStudentExamGeneration(exam);
+
+        examService.combineTemplateCommitsOfAllProgrammingExercisesInExam(exam);
 
         List<StudentExam> studentExams = studentExamRepository.generateStudentExams(exam);
 
@@ -562,7 +564,7 @@ public class ExamResource {
     public ResponseEntity<List<StudentExam>> generateMissingStudentExams(@PathVariable Long courseId, @PathVariable Long examId) {
         log.info("REST request to generate missing student exams for exam {}", examId);
 
-        final var exam = examRepository.findByIdWithRegisteredUsersExerciseGroupsAndExercisesElseThrow(examId);
+        final Exam exam = examRepository.findByIdWithRegisteredUsersExerciseGroupsAndExercisesElseThrow(examId);
 
         Optional<ResponseEntity<List<StudentExam>>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccessForInstructor(courseId, examId);
         if (courseAndExamAccessFailure.isPresent()) {

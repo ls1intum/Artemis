@@ -13,9 +13,6 @@ import { DataSet } from 'app/exercises/quiz/manage/statistics/quiz-statistic/qui
 })
 export class CourseManagementStatisticsComponent implements OnInit, OnChanges {
     @Input()
-    courseId: number;
-
-    @Input()
     amountOfStudentsInCourse: number;
 
     @Input()

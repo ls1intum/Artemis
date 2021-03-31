@@ -11,6 +11,7 @@ import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
 
+import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -35,6 +36,7 @@ import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 import de.tum.in.www1.artemis.web.rest.dto.*;
@@ -82,6 +84,8 @@ public class ExamService {
 
     private final TutorLeaderboardService tutorLeaderboardService;
 
+    private final GitService gitService;
+
     private final CourseExamExportService courseExamExportService;
 
     private final GroupNotificationService groupNotificationService;
@@ -90,7 +94,7 @@ public class ExamService {
             InstanceMessageSendService instanceMessageSendService, TutorLeaderboardService tutorLeaderboardService, AuditEventRepository auditEventRepository,
             StudentParticipationRepository studentParticipationRepository, ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository,
             UserRepository userRepository, ProgrammingExerciseRepository programmingExerciseRepository, QuizExerciseRepository quizExerciseRepository,
-            ResultRepository resultRepository, SubmissionRepository submissionRepository, CourseExamExportService courseExamExportService,
+            ResultRepository resultRepository, SubmissionRepository submissionRepository, CourseExamExportService courseExamExportService, GitService gitService,
             GroupNotificationService groupNotificationService) {
         this.examRepository = examRepository;
         this.studentExamRepository = studentExamRepository;
@@ -109,6 +113,7 @@ public class ExamService {
         this.tutorLeaderboardService = tutorLeaderboardService;
         this.courseExamExportService = courseExamExportService;
         this.groupNotificationService = groupNotificationService;
+        this.gitService = gitService;
     }
 
     /**
@@ -423,8 +428,8 @@ public class ExamService {
 
             log.debug("StatsTimeLog: number of complaints open done in " + TimeLogUtil.formatDurationFrom(start) + " for exercise " + exercise.getId());
             // number of complaints finished
-            numberOfComplaintResponsesByExercise.add(complaintResponseRepository
-                    .countByComplaint_Result_Participation_Exercise_Id_AndComplaint_ComplaintType_AndSubmittedTimeIsNotNull(exercise.getId(), ComplaintType.COMPLAINT));
+            numberOfComplaintResponsesByExercise
+                    .add(complaintResponseRepository.countComplaintResponseByExerciseIdAndComplaintTypeAndSubmittedTimeIsNotNull(exercise.getId(), ComplaintType.COMPLAINT));
 
             log.debug("StatsTimeLog: number of complaints finished done in " + TimeLogUtil.formatDurationFrom(start) + " for exercise " + exercise.getId());
             // number of assessments done
@@ -602,8 +607,9 @@ public class ExamService {
     /**
      * Gets a collection of useful statistics for the tutor exam-assessment-dashboard, including: - number of submissions to the course - number of
      * assessments - number of assessments assessed by the tutor - number of complaints
-     * @param course    - the couse of the exam
-     * @param examId    - the id of the exam to retrieve stats from
+     *
+     * @param course - the couse of the exam
+     * @param examId - the id of the exam to retrieve stats from
      * @return data about a exam including all exercises, plus some data for the tutor as tutor status for assessment
      */
     public StatsForDashboardDTO getStatsForExamAssessmentDashboard(Course course, Long examId) {
@@ -677,5 +683,25 @@ public class ExamService {
         }
 
         groupNotificationService.notifyInstructorGroupAboutExamArchiveState(exam, NotificationType.EXAM_ARCHIVE_FINISHED, exportErrors);
+    }
+
+    /**
+     * Combines the template commits of all programming exercises in the exam.
+     * This is executed before the individual student exams are generated.
+     *
+     * @param exam - the exam which template commits should be combined
+     */
+    public void combineTemplateCommitsOfAllProgrammingExercisesInExam(Exam exam) {
+        exam.getExerciseGroups().forEach(group -> group.getExercises().stream().filter(exercise -> exercise instanceof ProgrammingExercise).forEach(exercise -> {
+            try {
+                ProgrammingExercise programmingExerciseWithTemplateParticipation = programmingExerciseRepository
+                        .findByIdWithTemplateAndSolutionParticipationElseThrow(exercise.getId());
+                gitService.combineAllCommitsOfRepositoryIntoOne(programmingExerciseWithTemplateParticipation.getTemplateParticipation().getVcsRepositoryUrl());
+                log.debug("Finished combination of template commits for programming exercise " + programmingExerciseWithTemplateParticipation.toString());
+            }
+            catch (InterruptedException | GitAPIException e) {
+                log.error("An error occurred when trying to combine template commits for exam " + exam.getId() + ".", e);
+            }
+        }));
     }
 }

@@ -103,5 +103,4 @@ public class ExerciseLifecycleServiceTest extends AbstractSpringIntegrationBambo
     private void assertEqual(MutableBoolean testBoolean, boolean expected) {
         assertThat(testBoolean.toBoolean(), is(equalTo(expected)));
     }
-
 }

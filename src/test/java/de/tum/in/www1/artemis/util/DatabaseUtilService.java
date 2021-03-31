@@ -76,112 +76,106 @@ public class DatabaseUtilService {
     private static final Set<Authority> adminAuthorities = Set.of(userAuthority, tutorAuthority, instructorAuthority, adminAuthority);
 
     @Autowired
-    CourseRepository courseRepo;
+    private CourseRepository courseRepo;
 
     @Autowired
-    LectureRepository lectureRepo;
+    private LectureRepository lectureRepo;
 
     @Autowired
-    ExerciseRepository exerciseRepo;
+    private ExerciseRepository exerciseRepo;
 
     @Autowired
-    AttachmentRepository attachmentRepo;
+    private AttachmentRepository attachmentRepo;
 
     @Autowired
-    ProgrammingExerciseTestCaseRepository testCaseRepository;
+    private ProgrammingExerciseTestCaseRepository testCaseRepository;
 
     @Autowired
-    StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository;
+    private StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository;
 
     @Autowired
-    ProgrammingExerciseRepository programmingExerciseRepository;
+    private ProgrammingExerciseRepository programmingExerciseRepository;
 
     @Autowired
-    ExerciseHintRepository exerciseHintRepository;
+    private ExerciseHintRepository exerciseHintRepository;
 
     @Autowired
-    UserRepository userRepo;
+    private UserRepository userRepo;
 
     @Autowired
-    TeamRepository teamRepo;
+    private TeamRepository teamRepo;
 
     @Autowired
-    ResultRepository resultRepo;
+    private ResultRepository resultRepo;
 
     @Autowired
-    StudentParticipationRepository studentParticipationRepo;
+    private StudentParticipationRepository studentParticipationRepo;
 
     @Autowired
-    PlagiarismResultRepository plagiarismResultRepo;
+    private PlagiarismResultRepository plagiarismResultRepo;
 
     @Autowired
-    ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepo;
+    private ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepo;
 
     @Autowired
-    TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepo;
+    private TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepo;
 
     @Autowired
-    SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepo;
+    private SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepo;
 
     @Autowired
-    ModelingSubmissionRepository modelingSubmissionRepo;
+    private ModelingSubmissionRepository modelingSubmissionRepo;
 
     @Autowired
-    TextSubmissionRepository textSubmissionRepo;
+    private TextSubmissionRepository textSubmissionRepo;
 
     @Autowired
-    ParticipationService participationService;
+    private ParticipationService participationService;
 
     @Autowired
-    TextBlockRepository textBlockRepo;
+    private TextBlockRepository textBlockRepo;
 
     @Autowired
-    FileUploadSubmissionRepository fileUploadSubmissionRepo;
+    private FileUploadSubmissionRepository fileUploadSubmissionRepo;
 
     @Autowired
-    SubmissionRepository submissionRepository;
+    private SubmissionRepository submissionRepository;
 
     @Autowired
-    SubmissionVersionRepository submissionVersionRepository;
+    private ProgrammingSubmissionRepository programmingSubmissionRepo;
 
     @Autowired
-    ProgrammingSubmissionRepository programmingSubmissionRepo;
+    private FeedbackRepository feedbackRepo;
 
     @Autowired
-    FeedbackRepository feedbackRepo;
+    private ComplaintRepository complaintRepo;
 
     @Autowired
-    ComplaintRepository complaintRepo;
+    private ComplaintResponseRepository complaintResponseRepo;
 
     @Autowired
-    ComplaintResponseRepository complaintResponseRepo;
+    private ExampleSubmissionRepository exampleSubmissionRepo;
 
     @Autowired
-    ExampleSubmissionRepository exampleSubmissionRepo;
+    private TutorParticipationRepository tutorParticipationRepo;
 
     @Autowired
-    TutorParticipationRepository tutorParticipationRepo;
+    private StudentQuestionRepository studentQuestionRepository;
 
     @Autowired
-    StudentQuestionRepository studentQuestionRepository;
+    private ModelingSubmissionService modelSubmissionService;
 
     @Autowired
-    ModelingSubmissionService modelSubmissionService;
+    private AssessmentService assessmentService;
 
     @Autowired
-    AssessmentService assessmentService;
-
-    @Autowired
-    ProgrammingExerciseTestRepository programmingExerciseTestRepository;
+    private ProgrammingExerciseTestRepository programmingExerciseTestRepository;
 
     @Autowired
     private AuthorityRepository authorityRepository;
 
     @Autowired
-    ObjectMapper mapper;
-
-    @Autowired
-    GroupNotificationRepository groupNotificationRepository;
+    private ObjectMapper mapper;
 
     @Autowired
     private ExerciseGroupRepository exerciseGroupRepository;
@@ -196,19 +190,19 @@ public class DatabaseUtilService {
     private TextExerciseRepository textExerciseRepository;
 
     @Autowired
-    AttachmentUnitRepository attachmentUnitRepository;
+    private AttachmentUnitRepository attachmentUnitRepository;
 
     @Autowired
-    AttachmentRepository attachmentRepository;
+    private AttachmentRepository attachmentRepository;
 
     @Autowired
-    ExerciseUnitRepository exerciseUnitRepository;
+    private ExerciseUnitRepository exerciseUnitRepository;
 
     @Autowired
-    TextUnitRepository textUnitRepository;
+    private TextUnitRepository textUnitRepository;
 
     @Autowired
-    VideoUnitRepository videoUnitRepository;
+    private VideoUnitRepository videoUnitRepository;
 
     @Autowired
     private OrganizationRepository organizationRepository;
@@ -672,7 +666,7 @@ public class DatabaseUtilService {
         studentQuestion1.setExercise(textExercise);
         studentQuestion1.setQuestionText("Test Student Question 1");
         studentQuestion1.setVisibleForStudents(true);
-        studentQuestion1.setAuthor(getUserByLogin("student1"));
+        studentQuestion1.setAuthor(getUserByLoginWithoutAuthorities("student1"));
         studentQuestionRepository.save(studentQuestion1);
         studentQuestions.add(studentQuestion1);
 
@@ -680,7 +674,7 @@ public class DatabaseUtilService {
         studentQuestion2.setExercise(textExercise);
         studentQuestion2.setQuestionText("Test Student Question 2");
         studentQuestion2.setVisibleForStudents(true);
-        studentQuestion2.setAuthor(getUserByLogin("student2"));
+        studentQuestion2.setAuthor(getUserByLoginWithoutAuthorities("student2"));
         studentQuestionRepository.save(studentQuestion2);
         studentQuestions.add(studentQuestion2);
 
@@ -713,7 +707,7 @@ public class DatabaseUtilService {
         studentQuestion1.setExercise(textExercise);
         studentQuestion1.setQuestionText("Test Student Question 1");
         studentQuestion1.setVisibleForStudents(true);
-        studentQuestion1.setAuthor(getUserByLogin("student1"));
+        studentQuestion1.setAuthor(getUserByLoginWithoutAuthorities("student1"));
         studentQuestionRepository.save(studentQuestion1);
         studentQuestions.add(studentQuestion1);
 
@@ -721,7 +715,7 @@ public class DatabaseUtilService {
         studentQuestion2.setExercise(textExercise);
         studentQuestion2.setQuestionText("Test Student Question 2");
         studentQuestion2.setVisibleForStudents(true);
-        studentQuestion2.setAuthor(getUserByLogin("student2"));
+        studentQuestion2.setAuthor(getUserByLoginWithoutAuthorities("student2"));
         studentQuestionRepository.save(studentQuestion2);
         studentQuestions.add(studentQuestion2);
 
@@ -729,7 +723,7 @@ public class DatabaseUtilService {
         studentQuestion3.setLecture(lecture);
         studentQuestion3.setQuestionText("Test Student Question 3");
         studentQuestion3.setVisibleForStudents(true);
-        studentQuestion3.setAuthor(getUserByLogin("student1"));
+        studentQuestion3.setAuthor(getUserByLoginWithoutAuthorities("student1"));
         studentQuestionRepository.save(studentQuestion3);
         studentQuestions.add(studentQuestion3);
 
@@ -737,7 +731,7 @@ public class DatabaseUtilService {
         studentQuestion4.setLecture(lecture);
         studentQuestion4.setQuestionText("Test Student Question 4");
         studentQuestion4.setVisibleForStudents(true);
-        studentQuestion4.setAuthor(getUserByLogin("student2"));
+        studentQuestion4.setAuthor(getUserByLoginWithoutAuthorities("student2"));
         studentQuestionRepository.save(studentQuestion4);
         studentQuestions.add(studentQuestion2);
 
@@ -3061,7 +3055,6 @@ public class DatabaseUtilService {
         result.setExercise(exercise);
         result.setSimilarityDistribution(new int[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 });
         result.setDuration(4);
-
         return plagiarismResultRepo.save(result);
     }
 
@@ -3070,7 +3063,21 @@ public class DatabaseUtilService {
         result.setExercise(exercise);
         result.setSimilarityDistribution(new int[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 });
         result.setDuration(4);
-
         return plagiarismResultRepo.save(result);
+    }
+
+    @NotNull
+    public LinkedMultiValueMap<String, String> getDefaultPlagiarismOptions() {
+        return getPlagiarismOptions(50D, 0, 0);
+    }
+
+    @NotNull
+    public LinkedMultiValueMap<String, String> getPlagiarismOptions(double similarityThreshold, int minimumScore, int minimumSize) {
+        // Use default options for plagiarism detection
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("similarityThreshold", String.valueOf(similarityThreshold));
+        params.add("minimumScore", String.valueOf(minimumScore));
+        params.add("minimumSize", String.valueOf(minimumSize));
+        return params;
     }
 }

@@ -9,7 +9,7 @@ import { Subscription } from 'rxjs';
     styles: [],
 })
 export class IncludedInScoreBadgeComponent implements OnInit, OnDestroy {
-    @Input() includedInOverallScore: IncludedInOverallScore;
+    @Input() includedInOverallScore: IncludedInOverallScore | undefined;
     public translatedEnum = '';
     public translatedTooltip = '';
     public badgeClass: string;
