@@ -24,10 +24,7 @@ import de.tum.in.www1.artemis.domain.TeamAssignmentConfig;
 import de.tum.in.www1.artemis.domain.TextCluster;
 import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.TextSubmission;
-import de.tum.in.www1.artemis.domain.enumeration.DifficultyLevel;
-import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
-import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
-import de.tum.in.www1.artemis.domain.enumeration.Language;
+import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismComparison;
@@ -319,6 +316,22 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         textExerciseRepository.save(textExercise);
         textExercise.setCourse(course2);
 
+        request.postWithResponseBody("/api/text-exercises/import/" + textExercise.getId(), textExercise, TextExercise.class, HttpStatus.CREATED);
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void importTextExerciseWithExampleSubmissionFromCourseToCourse() throws Exception {
+        var now = ZonedDateTime.now();
+        Course course1 = database.addEmptyCourse();
+        TextExercise textExercise = ModelFactory.generateTextExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1), course1);
+        textExerciseRepository.save(textExercise);
+
+        // Create example submission
+        var exampleSubmission = database.generateExampleSubmission("text", textExercise, true);
+        exampleSubmission = database.addExampleSubmission(exampleSubmission);
+
+        database.addResultToSubmission(exampleSubmission.getSubmission(), AssessmentType.MANUAL);
         request.postWithResponseBody("/api/text-exercises/import/" + textExercise.getId(), textExercise, TextExercise.class, HttpStatus.CREATED);
     }
 
