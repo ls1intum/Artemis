@@ -354,7 +354,7 @@ node {
 
 // Command to execute the JavaDoc checkstyle verification ./gradlew checkstyleMain
 checkstyle {
-    toolVersion "8.41"
+    toolVersion "8.41.1"
     configFile file("${rootDir}/checkstyle.xml")
     checkstyleTest.enabled = false
     maxErrors = 0
