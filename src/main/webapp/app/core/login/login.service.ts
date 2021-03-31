@@ -9,8 +9,6 @@ import { AccountService } from 'app/core/auth/account.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { NotificationService } from 'app/shared/notification/notification.service';
 
-export type Saml2 = { ['button-label']: string; ['enable-password']: boolean };
-
 @Injectable({ providedIn: 'root' })
 export class LoginService {
     logoutWasForceful = false;
@@ -27,23 +25,18 @@ export class LoginService {
     /**
      * Login the user with the given credentials.
      * @param credentials {Credentials} Credentials of the user to login.
-     * @param callback The callback function to use (optional)
      */
-    login(credentials: Credentials, callback?: any) {
-        const cb = callback || function () {};
-
-        return new Promise((resolve, reject) => {
+    login(credentials: Credentials) {
+        return new Promise<void>((resolve, reject) => {
             this.authServerProvider.login(credentials).subscribe(
-                (data) => {
+                () => {
                     this.accountService.identity(true).then(() => {
-                        resolve(data);
+                        resolve();
                     });
-                    return cb();
                 },
                 (err) => {
                     this.logout(false);
                     reject(err);
-                    return cb(err);
                 },
             );
         });
@@ -51,23 +44,19 @@ export class LoginService {
 
     /**
      * Login the user with SAML2.
-     * @param callback The callback function to use (optional)
+     * @param rememberMe whether or not to remember the user
      */
-    loginSAML2(rememberMe: boolean, callback?: any) {
-        const cb = callback || function () {};
-
-        return new Promise((resolve, reject) => {
+    loginSAML2(rememberMe: boolean) {
+        return new Promise<void>((resolve, reject) => {
             this.authServerProvider.loginSAML2(rememberMe).subscribe(
-                (data) => {
+                () => {
                     this.accountService.identity(true).then(() => {
-                        resolve(data);
+                        resolve();
                     });
-                    return cb();
                 },
                 (err) => {
                     this.logout(false);
                     reject(err);
-                    return cb(err);
                 },
             );
         });
