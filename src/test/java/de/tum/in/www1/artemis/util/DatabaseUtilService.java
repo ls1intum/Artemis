@@ -39,6 +39,8 @@ import de.tum.in.www1.artemis.domain.lecture.*;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.*;
+import de.tum.in.www1.artemis.domain.plagiarism.modeling.ModelingPlagiarismResult;
+import de.tum.in.www1.artemis.domain.plagiarism.text.TextPlagiarismResult;
 import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.AuthoritiesConstants;
@@ -108,6 +110,9 @@ public class DatabaseUtilService {
 
     @Autowired
     StudentParticipationRepository studentParticipationRepo;
+
+    @Autowired
+    PlagiarismResultRepository plagiarismResultRepo;
 
     @Autowired
     ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepo;
@@ -667,7 +672,7 @@ public class DatabaseUtilService {
         studentQuestion1.setExercise(textExercise);
         studentQuestion1.setQuestionText("Test Student Question 1");
         studentQuestion1.setVisibleForStudents(true);
-        studentQuestion1.setAuthor(getUserByLogin("student1"));
+        studentQuestion1.setAuthor(getUserByLoginWithoutAuthorities("student1"));
         studentQuestionRepository.save(studentQuestion1);
         studentQuestions.add(studentQuestion1);
 
@@ -675,7 +680,7 @@ public class DatabaseUtilService {
         studentQuestion2.setExercise(textExercise);
         studentQuestion2.setQuestionText("Test Student Question 2");
         studentQuestion2.setVisibleForStudents(true);
-        studentQuestion2.setAuthor(getUserByLogin("student2"));
+        studentQuestion2.setAuthor(getUserByLoginWithoutAuthorities("student2"));
         studentQuestionRepository.save(studentQuestion2);
         studentQuestions.add(studentQuestion2);
 
@@ -708,7 +713,7 @@ public class DatabaseUtilService {
         studentQuestion1.setExercise(textExercise);
         studentQuestion1.setQuestionText("Test Student Question 1");
         studentQuestion1.setVisibleForStudents(true);
-        studentQuestion1.setAuthor(getUserByLogin("student1"));
+        studentQuestion1.setAuthor(getUserByLoginWithoutAuthorities("student1"));
         studentQuestionRepository.save(studentQuestion1);
         studentQuestions.add(studentQuestion1);
 
@@ -716,7 +721,7 @@ public class DatabaseUtilService {
         studentQuestion2.setExercise(textExercise);
         studentQuestion2.setQuestionText("Test Student Question 2");
         studentQuestion2.setVisibleForStudents(true);
-        studentQuestion2.setAuthor(getUserByLogin("student2"));
+        studentQuestion2.setAuthor(getUserByLoginWithoutAuthorities("student2"));
         studentQuestionRepository.save(studentQuestion2);
         studentQuestions.add(studentQuestion2);
 
@@ -724,7 +729,7 @@ public class DatabaseUtilService {
         studentQuestion3.setLecture(lecture);
         studentQuestion3.setQuestionText("Test Student Question 3");
         studentQuestion3.setVisibleForStudents(true);
-        studentQuestion3.setAuthor(getUserByLogin("student1"));
+        studentQuestion3.setAuthor(getUserByLoginWithoutAuthorities("student1"));
         studentQuestionRepository.save(studentQuestion3);
         studentQuestions.add(studentQuestion3);
 
@@ -732,7 +737,7 @@ public class DatabaseUtilService {
         studentQuestion4.setLecture(lecture);
         studentQuestion4.setQuestionText("Test Student Question 4");
         studentQuestion4.setVisibleForStudents(true);
-        studentQuestion4.setAuthor(getUserByLogin("student2"));
+        studentQuestion4.setAuthor(getUserByLoginWithoutAuthorities("student2"));
         studentQuestionRepository.save(studentQuestion4);
         studentQuestions.add(studentQuestion2);
 
@@ -3038,5 +3043,34 @@ public class DatabaseUtilService {
         storedFeedback.forEach(feedback -> {
             assertThat(feedback.getType()).as("type has been set correctly").isEqualTo(feedbackType);
         });
+    }
+
+    public void createSubmissionForTextExercise(TextExercise textExercise, User user, String text) {
+        TextSubmission textSubmission = ModelFactory.generateTextSubmission(text, Language.ENGLISH, true);
+        textSubmission = textSubmissionRepo.save(textSubmission);
+
+        var studentParticipation = ModelFactory.generateStudentParticipation(InitializationState.INITIALIZED, textExercise, user);
+        studentParticipation.addSubmission(textSubmission);
+
+        studentParticipationRepo.save(studentParticipation);
+        textSubmissionRepo.save(textSubmission);
+    }
+
+    public TextPlagiarismResult createTextPlagiarismResultForExercise(Exercise exercise) {
+        TextPlagiarismResult result = new TextPlagiarismResult();
+        result.setExercise(exercise);
+        result.setSimilarityDistribution(new int[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 });
+        result.setDuration(4);
+
+        return plagiarismResultRepo.save(result);
+    }
+
+    public ModelingPlagiarismResult createModelingPlagiarismResultForExercise(Exercise exercise) {
+        ModelingPlagiarismResult result = new ModelingPlagiarismResult();
+        result.setExercise(exercise);
+        result.setSimilarityDistribution(new int[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 });
+        result.setDuration(4);
+
+        return plagiarismResultRepo.save(result);
     }
 }
