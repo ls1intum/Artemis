@@ -351,6 +351,6 @@ public class LectureIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     @WithMockUser(username = "user1", roles = "USER")
     public void testGetLectureTitleForNonExistingLecture() throws Exception {
         // No lecture with id 10 was created
-        request.get("/api/lectures/10/title", HttpStatus.NOT_FOUND, String.class);
+        request.get("/api/lectures/1337/title", HttpStatus.NOT_FOUND, String.class);
     }
 }
