@@ -229,7 +229,7 @@ The string name inside must match the name of the variable exactly!
 18. SQL statement formatting
 ============================
 
-We prefer to write SQL statements all in upper case. Split queries onto multiple lines using the triple quotation mark notation:
+We prefer to write SQL statements all in upper case. Split queries onto multiple lines using the Java Text Blocks notation (triple quotation mark):
 
 .. code-block:: java
 
@@ -240,5 +240,36 @@ We prefer to write SQL statements all in upper case. Split queries onto multiple
             """)
     Optional<Result> findByIdWithEagerFeedbacks(@Param("resultId") Long resultId);
 
+19. Avoid the usage of Sub-queries
+==================================
+
+SQL statements which do not contain sub-queries are preferable as they are more readable and have a better performance.
+So instead of:
+
+.. code-block:: java
+
+    @Query("""
+            SELECT COUNT (DISTINCT p) FROM StudentParticipation p
+                WHERE p.exercise.id = :#{#exerciseId}
+                AND EXISTS (SELECT s FROM Submission s
+                    WHERE s.participation.id = p.id
+                    AND s.submitted = TRUE
+            """)
+    long countByExerciseIdSubmitted(@Param("exerciseId") long exerciseId);
+
+
+you should use:
+
+.. code-block:: java
+
+    @Query("""
+            SELECT COUNT (DISTINCT p) FROM StudentParticipation p JOIN p.submissions s
+                WHERE p.exercise.id = :#{#exerciseId}
+                AND s.submitted = TRUE
+            """)
+    long countByExerciseIdSubmitted(@Param("exerciseId") long exerciseId);
+
+
+Functionally both queries extract the same result set, but the first one is less efficient as the sub-query is calculated for each StudentParticipation.
 
 Some parts of these guidelines are adapted from https://medium.com/@madhupathy/ultimate-clean-code-guide-for-java-spring-based-applications-4d4c9095cc2a
