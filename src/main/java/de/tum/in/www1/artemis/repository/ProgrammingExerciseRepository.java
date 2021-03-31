@@ -64,7 +64,7 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     // 3. Manual assessment is enabled and the due date is in the future
     @Query("""
             select distinct pe from ProgrammingExercise pe
-            where pe.releaseDate > :#{#now} 
+            where pe.releaseDate > :#{#now}
                 or pe.buildAndTestStudentSubmissionsAfterDueDate > :#{#now}
                 or (pe.assessmentType <> 'AUTOMATIC' and pe.dueDate > :#{#now})
             """)

@@ -677,17 +677,16 @@ public class ExamService {
      * @param exam - the exam which template commits should be combined
      */
     public void combineTemplateCommitsOfAllProgrammingExercisesInExam(Exam exam) {
-        exam.getExerciseGroups().forEach(group -> group.getExercises().stream().filter(exercise -> exercise instanceof ProgrammingExercise)
-                .forEach(exercise -> {
-                    try {
-                        ProgrammingExercise programmingExerciseWithTemplateParticipation = programmingExerciseRepository
-                                .findByIdWithTemplateAndSolutionParticipationElseThrow(exercise.getId());
-                        gitService.combineAllCommitsOfRepositoryIntoOne(programmingExerciseWithTemplateParticipation.getTemplateParticipation().getVcsRepositoryUrl());
-                        log.debug("Finished combination of template commits for programming exercise " + programmingExerciseWithTemplateParticipation.toString());
-                    }
-                    catch (InterruptedException | GitAPIException e) {
-                        log.error("An error occurred when trying to combine template commits for exam " + exam.getId() + ".", e);
-                    }
-                }));
+        exam.getExerciseGroups().forEach(group -> group.getExercises().stream().filter(exercise -> exercise instanceof ProgrammingExercise).forEach(exercise -> {
+            try {
+                ProgrammingExercise programmingExerciseWithTemplateParticipation = programmingExerciseRepository
+                        .findByIdWithTemplateAndSolutionParticipationElseThrow(exercise.getId());
+                gitService.combineAllCommitsOfRepositoryIntoOne(programmingExerciseWithTemplateParticipation.getTemplateParticipation().getVcsRepositoryUrl());
+                log.debug("Finished combination of template commits for programming exercise " + programmingExerciseWithTemplateParticipation.toString());
+            }
+            catch (InterruptedException | GitAPIException e) {
+                log.error("An error occurred when trying to combine template commits for exam " + exam.getId() + ".", e);
+            }
+        }));
     }
 }
