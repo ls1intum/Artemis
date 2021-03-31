@@ -16,7 +16,7 @@
                     <div class="item-title-container">
                         <span class="item-title">{{ details.title }}</span>
                     </div>
-                    <div class="item-category d-flex hide-categories" *ngIf="details.categories?.length > 0 && details.title?.length < 40">
+                    <div class="item-category d-flex hide-categories" *ngIf="(details.categories?.length || 0) > 0 && (details.title?.length || 0) < 40">
                         <!-- We only support two categories -->
                         <h4 *ngFor="let category of details.categories">
                             <span class="badge text-white mr-1" [ngStyle]="{ backgroundColor: JSON.parse(category).color }">{{ JSON.parse(category).category }}</span>
@@ -94,9 +94,9 @@
                         <span>{{ 'artemisApp.course.participations' | artemisTranslate }}</span>
                         <jhi-progress-bar
                             [tooltip]="'artemisApp.course.participations' | artemisTranslate"
-                            [percentage]="statistic.participationRateInPercent"
-                            [numerator]="statistic.noOfParticipatingStudentsOrTeams"
-                            [denominator]="details.teamMode ? statistic.noOfTeamsInCourse : statistic.noOfStudentsInCourse"
+                            [percentage]="statistic.participationRateInPercent || 0"
+                            [numerator]="statistic.noOfParticipatingStudentsOrTeams || 0"
+                            [denominator]="(details.teamMode ? statistic.noOfTeamsInCourse : statistic.noOfStudentsInCourse) || 0"
                         >
                         </jhi-progress-bar>
                     </div>
@@ -104,9 +104,9 @@
                         <span>{{ 'artemisApp.course.assessmentProgress' | artemisTranslate }}</span>
                         <jhi-progress-bar
                             [tooltip]="'artemisApp.course.assessmentProgress' | artemisTranslate"
-                            [percentage]="statistic.noOfAssessmentsDoneInPercent"
-                            [numerator]="statistic.noOfRatedAssessments"
-                            [denominator]="statistic.noOfSubmissionsInTime"
+                            [percentage]="statistic.noOfAssessmentsDoneInPercent || 0"
+                            [numerator]="statistic.noOfRatedAssessments || 0"
+                            [denominator]="statistic.noOfSubmissionsInTime || 0"
                         >
                         </jhi-progress-bar>
                     </div>
@@ -114,9 +114,9 @@
                         <span>{{ 'artemisApp.course.averageScore' | artemisTranslate }}</span>
                         <jhi-progress-bar
                             [tooltip]="'artemisApp.course.averageScore' | artemisTranslate"
-                            [percentage]="statistic.averageScoreInPercent"
+                            [percentage]="statistic.averageScoreInPercent || 0"
                             [numerator]="averageScoreNumerator"
-                            [denominator]="statistic.exerciseMaxPoints"
+                            [denominator]="statistic.exerciseMaxPoints || 0"
                         >
                         </jhi-progress-bar>
                     </div>
