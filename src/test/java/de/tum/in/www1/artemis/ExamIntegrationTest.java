@@ -761,29 +761,26 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testGetExam_asInstructorWithTestRunQuizExerciseSubmissions() throws Exception {
+    public void testGetExam_asInstructor_WithTestRunQuizExerciseSubmissions() throws Exception {
+        Course course = database.addEmptyCourse();
+        Exam exam = database.addExamWithExerciseGroup(course, true);
+        ExerciseGroup exerciseGroup = exam.getExerciseGroups().get(0);
+        examRepository.save(exam);
+
         StudentParticipation studentParticipation = new StudentParticipation();
         studentParticipation.setTestRun(true);
 
-        QuizExercise quizExercise = new QuizExercise();
+        QuizExercise quizExercise = database.createQuizForExam(exerciseGroup);
         quizExercise.setStudentParticipations(Set.of(studentParticipation));
         studentParticipation.setExercise(quizExercise);
 
-        ExerciseGroup exerciseGroup = new ExerciseGroup();
-        exerciseGroup.addExercise(quizExercise);
-        quizExercise.setExerciseGroup(exerciseGroup);
-        exerciseGroup.setExam(exam1);
-        exam1.setExerciseGroups(List.of(exerciseGroup));
-
-        examRepository.save(exam1);
-        exerciseGroupRepository.save(exerciseGroup);
         exerciseRepo.save(quizExercise);
         studentParticipationRepository.save(studentParticipation);
 
-        Exam exam = request.get("/api/courses/" + course1.getId() + "/exams/" + exam1.getId(), HttpStatus.OK, Exam.class);
+        Exam returnedExam = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "?withExerciseGroups=true", HttpStatus.OK, Exam.class);
 
-        assertThat(exam.getExerciseGroups()).anyMatch(groups -> groups.getExercises().stream().anyMatch(Exercise::getTestRunParticipationsExist));
-        verify(examAccessService, times(1)).checkCourseAndExamAccessForInstructor(course1.getId(), exam1.getId());
+        assertThat(returnedExam.getExerciseGroups()).anyMatch(groups -> groups.getExercises().stream().anyMatch(Exercise::getTestRunParticipationsExist));
+        verify(examAccessService, times(1)).checkCourseAndExamAccessForInstructor(course.getId(), exam.getId());
     }
 
     @Test
