@@ -47,7 +47,7 @@ export class HomeComponent implements OnInit, AfterViewChecked {
     isSubmittingLogin = false;
 
     profileInfo: ProfileInfo | undefined = undefined;
-    saml2PasswordEnabled = false;
+    showResetPasswordLink = false;
 
     constructor(
         private router: Router,
@@ -83,7 +83,7 @@ export class HomeComponent implements OnInit, AfterViewChecked {
                     this.errorMessageUsername = 'home.errors.tumWarning';
                 }
                 this.isRegistrationEnabled = profileInfo.registrationEnabled || false;
-                this.saml2PasswordEnabled = profileInfo.saml2?.['enable-password'] || false;
+                this.showResetPasswordLink = this.isRegistrationEnabled || profileInfo.saml2?.enablePassword || false;
             }
         });
         this.accountService.identity().then((user) => {

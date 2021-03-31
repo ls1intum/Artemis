@@ -1,7 +1,8 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
-import { LoginService, Saml2 } from 'app/core/login/login.service';
+import { LoginService } from 'app/core/login/login.service';
 import { JhiEventManager } from 'ng-jhipster';
+import { Saml2ConfigModel } from 'app/home/saml2-login/saml2-config.model';
 
 @Component({
     selector: 'jhi-saml2-login',
@@ -14,7 +15,7 @@ export class Saml2LoginComponent implements OnInit {
     @Input()
     acceptTerms = false;
     @Input()
-    saml2Profile: Saml2 | undefined;
+    saml2Profile: Saml2ConfigModel;
 
     constructor(private loginService: LoginService, private eventManager: JhiEventManager) {}
 

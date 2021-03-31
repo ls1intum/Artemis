@@ -9,8 +9,6 @@ import { AccountService } from 'app/core/auth/account.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { NotificationService } from 'app/shared/notification/notification.service';
 
-export type Saml2 = { ['button-label']: string; ['enable-password']: boolean };
-
 @Injectable({ providedIn: 'root' })
 export class LoginService {
     logoutWasForceful = false;
