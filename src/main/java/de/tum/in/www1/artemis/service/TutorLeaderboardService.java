@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
@@ -39,32 +40,36 @@ public class TutorLeaderboardService {
 
     /**
      * Returns tutor leaderboards for the specified course.
-     *
-     * @param course course for which leaderboard is created
+     * @param exerciseIdsOfCourse - the ids of the exercises which belong to the course
+     * @param course              - course for which leaderboard is created
      * @return list of tutor leaderboard objects
      */
-    public List<TutorLeaderboardDTO> getCourseLeaderboard(Course course) {
+    public List<TutorLeaderboardDTO> getCourseLeaderboard(Course course, Set<Long> exerciseIdsOfCourse) {
 
         List<User> tutors = userRepository.getTutors(course);
         String groupName = course.getTeachingAssistantGroupName();
 
         long start = System.currentTimeMillis();
-        List<TutorLeaderboardAssessments> tutorLeaderboardAssessments = resultRepository.findTutorLeaderboardAssessmentByCourseId(course.getId());
+        // 2.3s
+        List<TutorLeaderboardAssessments> tutorLeaderboardAssessments = resultRepository.findTutorLeaderboardAssessmentByCourseId(exerciseIdsOfCourse);
         long end = System.currentTimeMillis();
         log.info("Finished >>resultRepository.findTutorLeaderboardAssessmentByCourseId<< call for course " + course.getId() + " in " + (end - start) + "ms");
 
         start = System.currentTimeMillis();
+        // 3.0s
         List<TutorLeaderboardComplaints> tutorLeaderboardComplaints = complaintRepository.findTutorLeaderboardComplaintsByCourseId(groupName, course.getId());
         end = System.currentTimeMillis();
         log.info("Finished >>complaintRepository.findTutorLeaderboardComplaintsByCourseId<< call for course " + course.getId() + " in " + (end - start) + "ms");
 
         start = System.currentTimeMillis();
+        // 0.6s
         List<TutorLeaderboardMoreFeedbackRequests> tutorLeaderboardMoreFeedbackRequests = complaintRepository.findTutorLeaderboardMoreFeedbackRequestsByCourseId(groupName,
                 course.getId());
         end = System.currentTimeMillis();
         log.info("Finished >>complaintRepository.findTutorLeaderboardMoreFeedbackRequestsByCourseId<< call for course " + course.getId() + " in " + (end - start) + "ms");
 
         start = System.currentTimeMillis();
+        // 2.3s
         List<TutorLeaderboardComplaintResponses> tutorLeaderboardComplaintResponses = complaintRepository.findTutorLeaderboardComplaintResponsesByCourseId(groupName,
                 course.getId());
         end = System.currentTimeMillis();
