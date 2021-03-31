@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import org.assertj.core.data.Offset;
 import org.junit.jupiter.api.AfterEach;
@@ -330,6 +331,13 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         // Create example submission
         var exampleSubmission = database.generateExampleSubmission("text", textExercise, true);
         exampleSubmission = database.addExampleSubmission(exampleSubmission);
+
+        var textBlock = ModelFactory.generateTextBlock(0, 1, "test");
+        textBlock.setCluster(null);
+        textBlock.setAddedDistance(0);
+        textBlock.setStartIndex(0);
+        textBlock.setEndIndex(0);
+        database.addAndSaveTextBlocksToTextSubmission(Set.of(textBlock), (TextSubmission) exampleSubmission.getSubmission());
 
         database.addResultToSubmission(exampleSubmission.getSubmission(), AssessmentType.MANUAL);
         request.postWithResponseBody("/api/text-exercises/import/" + textExercise.getId(), textExercise, TextExercise.class, HttpStatus.CREATED);
