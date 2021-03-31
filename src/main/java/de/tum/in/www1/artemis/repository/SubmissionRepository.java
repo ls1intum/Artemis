@@ -322,7 +322,7 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
     List<ExerciseMapEntry> countByExerciseIdsSubmittedBeforeDueDateIgnoreTestRuns(@Param("exerciseIds") Set<Long> exerciseIds);
 
     /**
-     *
+     * Calculate the number of submitted submissions for the given exercise after the exercise due date. This query uses the participations to make sure that each student is only counted once
      * @param exerciseId the exercise id we are interested in
      * @return the number of submissions belonging to the exercise id, which have the submitted flag set to true and the submission date after the exercise due date
      */
@@ -333,6 +333,18 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
                 AND s.submissionDate > p.exercise.dueDate
             """)
     long countByExerciseIdSubmittedAfterDueDate(@Param("exerciseId") long exerciseId);
+
+    /**
+     * Calculate the number of submitted submissions for the given exercise. This query uses the participations to make sure that each student is only counted once
+     * @param exerciseId the exercise id we are interested in
+     * @return the number of submissions belonging to the exercise id, which have the submitted flag set to true
+     */
+    @Query("""
+            SELECT COUNT (DISTINCT p) FROM StudentParticipation p join p.submissions s
+                WHERE p.exercise.id = :#{#exerciseId}
+                AND s.submitted = TRUE
+            """)
+    long countByExerciseIdSubmitted(@Param("exerciseId") long exerciseId);
 
     /**
      * @param exerciseIds the exercise ids we are interested in
