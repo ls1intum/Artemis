@@ -678,7 +678,7 @@ public class ExamService {
      */
     public void combineTemplateCommitsOfAllProgrammingExercisesInExam(Exam exam) {
         exam.getExerciseGroups().forEach(group -> group.getExercises().stream().filter(exercise -> exercise instanceof ProgrammingExercise)
-                .map(exercise -> (ProgrammingExercise) exercise).forEach(exercise -> {
+                .forEach(exercise -> {
                     try {
                         ProgrammingExercise programmingExerciseWithTemplateParticipation = programmingExerciseRepository
                                 .findByIdWithTemplateAndSolutionParticipationElseThrow(exercise.getId());
