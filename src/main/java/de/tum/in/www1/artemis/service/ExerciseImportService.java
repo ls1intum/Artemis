@@ -83,9 +83,13 @@ public abstract class ExerciseImportService {
         newResult.setHasFeedback(originalResult.getHasFeedback());
         newResult.setScore(originalResult.getScore());
         newResult.setFeedbacks(copyFeedback(originalResult.getFeedbacks(), newResult));
-        newResult.setSubmission(newSubmission);
+        // Cut relationship to parent because result is an ordered collection
+        newResult.setSubmission(null);
 
-        resultRepository.save(newResult);
+        newResult = resultRepository.save(newResult);
+
+        // Restore relationship to parent.
+        newResult.setSubmission(newSubmission);
 
         return newResult;
     }
