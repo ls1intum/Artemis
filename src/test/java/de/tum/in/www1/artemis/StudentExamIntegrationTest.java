@@ -862,7 +862,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         // assert that all repositories of programming exercises have been locked
         assert exercisesToBeLocked.size() == studentProgrammingParticipations.size();
         for (int i = 0; i < exercisesToBeLocked.size(); i++) {
-            verify(programmingExerciseParticipationServiceSpy, atLeastOnce()).lockStudentRepository(exercisesToBeLocked.get(i), studentProgrammingParticipations.get(i));
+            verify(programmingExerciseParticipationService, atLeastOnce()).lockStudentRepository(exercisesToBeLocked.get(i), studentProgrammingParticipations.get(i));
         }
         deleteExam1WithInstructor();
     }
@@ -1006,7 +1006,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
             assertThat(studentExamFinished.getSubmissionDate()).isNotNull();
         }
         // The method lockStudentRepository will only be called if the student hands in early (see separate test)
-        verify(programmingExerciseParticipationServiceSpy, never()).lockStudentRepository(any(), any());
+        verify(programmingExerciseParticipationService, never()).lockStudentRepository(any(), any());
         assertThat(studentExamsAfterFinish).hasSize(studentExamsAfterStart.size());
 
         deleteExam1WithInstructor();

@@ -649,7 +649,7 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         database.createSubmissionForTextExercise(textExercise, database.getUserByLogin("student2"), shortText);
 
         var path = "/api/text-exercises/" + textExercise.getId() + "/check-plagiarism";
-        var result = request.get(path, HttpStatus.OK, TextPlagiarismResult.class, database.getDefaultPlagiarismOptions());
+        var result = request.get(path, HttpStatus.OK, TextPlagiarismResult.class, database.getPlagiarismOptions(50D, 0, 5));
         assertThat(result.getComparisons()).hasSize(0);
     }
 
