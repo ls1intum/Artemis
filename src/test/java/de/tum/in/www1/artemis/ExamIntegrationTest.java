@@ -1809,7 +1809,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
         var downloadedArchive = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/download-archive", HttpStatus.OK, String.class);
         assertThat(downloadedArchive).isNotNull();
-
+        // TODO: we should try to add some additional tests here, e.g. unzip the zip file and check the content, see e.g. assertZipContains in SubmissionExportIntegrationTest
         Files.delete(examArchivePath);
     }
 

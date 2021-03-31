@@ -16,7 +16,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ExampleSubmission;
@@ -623,13 +622,8 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         database.createSubmissionForTextExercise(textExercise, database.getUserByLogin("student1"), longText);
         database.createSubmissionForTextExercise(textExercise, database.getUserByLogin("student2"), longText);
 
-        // Use default options for plagiarism detection
-        var params = new LinkedMultiValueMap<String, String>();
-        params.add("similarityThreshold", "50");
-        params.add("minimumScore", "0");
-        params.add("minimumSize", "0");
-
-        TextPlagiarismResult result = request.get("/api/text-exercises/" + textExercise.getId() + "/check-plagiarism", HttpStatus.OK, TextPlagiarismResult.class, params);
+        var path = "/api/text-exercises/" + textExercise.getId() + "/check-plagiarism";
+        var result = request.get(path, HttpStatus.OK, TextPlagiarismResult.class, database.getDefaultPlagiarismOptions());
         assertThat(result.getComparisons()).hasSize(1);
         assertThat(result.getExercise().getId()).isEqualTo(textExercise.getId());
 
@@ -654,13 +648,8 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         database.createSubmissionForTextExercise(textExercise, database.getUserByLogin("student1"), shortText);
         database.createSubmissionForTextExercise(textExercise, database.getUserByLogin("student2"), shortText);
 
-        // Use default options for plagiarism detection
-        var params = new LinkedMultiValueMap<String, String>();
-        params.add("similarityThreshold", "50");
-        params.add("minimumScore", "0");
-        params.add("minimumSize", "5");
-
-        TextPlagiarismResult result = request.get("/api/text-exercises/" + textExercise.getId() + "/check-plagiarism", HttpStatus.OK, TextPlagiarismResult.class, params);
+        var path = "/api/text-exercises/" + textExercise.getId() + "/check-plagiarism";
+        var result = request.get(path, HttpStatus.OK, TextPlagiarismResult.class, database.getDefaultPlagiarismOptions());
         assertThat(result.getComparisons()).hasSize(0);
     }
 
@@ -670,13 +659,8 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         final Course course = database.addCourseWithOneReleasedTextExercise();
         TextExercise textExercise = textExerciseRepository.findByCourseId(course.getId()).get(0);
 
-        // Use default options for plagiarism detection
-        var params = new LinkedMultiValueMap<String, String>();
-        params.add("similarityThreshold", "50");
-        params.add("minimumScore", "0");
-        params.add("minimumSize", "0");
-
-        TextPlagiarismResult result = request.get("/api/text-exercises/" + textExercise.getId() + "/check-plagiarism", HttpStatus.OK, TextPlagiarismResult.class, params);
+        var path = "/api/text-exercises/" + textExercise.getId() + "/check-plagiarism";
+        var result = request.get(path, HttpStatus.OK, TextPlagiarismResult.class, database.getDefaultPlagiarismOptions());
         assertThat(result.getComparisons()).hasSize(0);
     }
 

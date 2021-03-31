@@ -95,6 +95,9 @@ public class ProgrammingExerciseTestService {
     private ParticipationRepository participationRepository;
 
     @Autowired
+    private SubmissionRepository submissionRepository;
+
+    @Autowired
     @Qualifier("staticCodeAnalysisConfiguration")
     private Map<ProgrammingLanguage, List<StaticCodeAnalysisDefaultCategory>> staticCodeAnalysisDefaultConfigurations;
 
@@ -678,7 +681,7 @@ public class ProgrammingExerciseTestService {
 
         // Trigger the build again and make sure no new submission is created
         request.postWithoutLocation(url, null, HttpStatus.OK, new HttpHeaders());
-        var submissions = database.submissionRepository.findAll();
+        var submissions = submissionRepository.findAll();
         assertThat(submissions.size()).isEqualTo(1);
     }
 
@@ -714,7 +717,7 @@ public class ProgrammingExerciseTestService {
 
         // Trigger the build again and make sure no new submission is created
         request.postWithoutLocation(url, null, HttpStatus.OK, new HttpHeaders());
-        var submissions = database.submissionRepository.findAll();
+        var submissions = submissionRepository.findAll();
         assertThat(submissions.size()).isEqualTo(1);
     }
 
@@ -745,7 +748,7 @@ public class ProgrammingExerciseTestService {
 
         // Trigger the build again and make sure no new submission is created
         request.postWithoutLocation(url, null, HttpStatus.OK, new HttpHeaders());
-        var submissions = database.submissionRepository.findAll();
+        var submissions = submissionRepository.findAll();
         assertThat(submissions.size()).isEqualTo(1);
     }
 

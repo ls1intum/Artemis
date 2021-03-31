@@ -325,6 +325,18 @@ public class RequestUtilService {
         return get(path, expectedStatus, responseType, params, new HttpHeaders());
     }
 
+    public File getFile(String path, HttpStatus expectedStatus, MultiValueMap<String, String> params) throws Exception {
+        MvcResult res = mvc.perform(MockMvcRequestBuilders.get(new URI(path)).params(params).headers(new HttpHeaders())).andExpect(status().is(expectedStatus.value())).andReturn();
+        restoreSecurityContext();
+        if (!expectedStatus.is2xxSuccessful()) {
+            assertThat(res.getResponse().containsHeader("location")).as("no location header on failed request").isFalse();
+            return null;
+        }
+        final var tmpFile = File.createTempFile(res.getResponse().getHeader("filename"), null);
+        Files.write(tmpFile.toPath(), res.getResponse().getContentAsByteArray());
+        return tmpFile;
+    }
+
     @SuppressWarnings("unchecked")
     public <T> T get(String path, HttpStatus expectedStatus, Class<T> responseType, MultiValueMap<String, String> params, HttpHeaders httpHeaders) throws Exception {
         MvcResult res = mvc.perform(MockMvcRequestBuilders.get(new URI(path)).params(params).headers(httpHeaders)).andExpect(status().is(expectedStatus.value())).andReturn();
