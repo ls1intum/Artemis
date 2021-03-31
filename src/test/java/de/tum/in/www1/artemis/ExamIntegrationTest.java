@@ -2067,6 +2067,21 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
         lockedSubmissions = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/lockedSubmissions", HttpStatus.OK, List.class);
         assertThat(lockedSubmissions.size()).isEqualTo(0);
+
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testGenerateStudentExamsTemplateCombine() throws Exception {
+        Exam examWithProgramming = database.addExerciseGroupsAndExercisesToExam(exam1, true);
+
+        doNothing().when(gitService).combineAllCommitsOfRepositoryIntoOne(any());
+
+        // invoke generate student exams
+        List<StudentExam> studentExams = request.postListWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + examWithProgramming.getId() + "/generate-student-exams",
+                Optional.empty(), StudentExam.class, HttpStatus.OK);
+
+        verify(gitService, times(1)).combineAllCommitsOfRepositoryIntoOne(any());
     }
 
     @Test

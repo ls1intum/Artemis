@@ -48,6 +48,7 @@ import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
+import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
@@ -111,6 +112,8 @@ public class ProgrammingExerciseResource {
 
     private final CourseRepository courseRepository;
 
+    private final GitService gitService;
+
     /**
      * Java package name Regex according to Java 14 JLS (https://docs.oracle.com/javase/specs/jls/se14/html/jls-7.html#jls-7.4.1),
      * with the restriction to a-z,A-Z,_ as "Java letter" and 0-9 as digits due to JavaScript/Browser Unicode character class limitations
@@ -133,7 +136,7 @@ public class ProgrammingExerciseResource {
             PlagiarismService plagiarismService, ProgrammingExerciseImportService programmingExerciseImportService,
             ProgrammingExerciseExportService programmingExerciseExportService, ExerciseGroupRepository exerciseGroupRepository, StaticCodeAnalysisService staticCodeAnalysisService,
             GradingCriterionRepository gradingCriterionRepository, ProgrammingLanguageFeatureService programmingLanguageFeatureService, TemplateUpgradePolicy templateUpgradePolicy,
-            CourseRepository courseRepository) {
+            CourseRepository courseRepository, GitService gitService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.userRepository = userRepository;
         this.courseService = courseService;
@@ -152,6 +155,7 @@ public class ProgrammingExerciseResource {
         this.programmingLanguageFeatureService = programmingLanguageFeatureService;
         this.templateUpgradePolicy = templateUpgradePolicy;
         this.courseRepository = courseRepository;
+        this.gitService = gitService;
     }
 
     /**
@@ -953,7 +957,7 @@ public class ProgrammingExerciseResource {
 
         try {
             var exerciseRepoURL = programmingExercise.getVcsTemplateRepositoryUrl();
-            programmingExerciseService.combineAllCommitsOfRepositoryIntoOne(exerciseRepoURL);
+            gitService.combineAllCommitsOfRepositoryIntoOne(exerciseRepoURL);
             return new ResponseEntity<>(HttpStatus.OK);
         }
         catch (IllegalStateException | InterruptedException | GitAPIException ex) {

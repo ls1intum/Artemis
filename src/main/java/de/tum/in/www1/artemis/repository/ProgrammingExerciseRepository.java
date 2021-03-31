@@ -85,6 +85,24 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     @Query("SELECT DISTINCT pe FROM ProgrammingExercise pe LEFT JOIN FETCH pe.studentParticipations")
     List<ProgrammingExercise> findAllWithEagerParticipations();
 
+    /**
+     * Get all programming exercises that need to be scheduled: Those must satisfy one of the following requirements:
+     * <ol>
+     * <li>The release date is in the future --> Schedule combine template commits</li>
+     * <li>The build and test student submissions after deadline date is in the future</li>
+     * <li>Manual assessment is enabled and the due date is in the future</li>
+     * </ol>
+     * @param now the current time
+     * @return List of the exercises that should be scheduled
+     */
+    @Query("""
+            select distinct pe from ProgrammingExercise pe
+            where pe.releaseDate > :#{#now}
+                or pe.buildAndTestStudentSubmissionsAfterDueDate > :#{#now}
+                or (pe.assessmentType <> 'AUTOMATIC' and pe.dueDate > :#{#now})
+            """)
+    List<ProgrammingExercise> findAllToBeScheduled(@Param("now") ZonedDateTime now);
+
     @Query("SELECT DISTINCT pe FROM ProgrammingExercise pe WHERE pe.course.endDate BETWEEN :#{#endDate1} AND :#{#endDate2}")
     List<ProgrammingExercise> findAllByRecentCourseEndDate(@Param("endDate1") ZonedDateTime endDate1, @Param("endDate2") ZonedDateTime endDate2);
 
@@ -178,19 +196,19 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     List<ProgrammingExercise> findAllByManualAssessmentAndDueDateAfterDate(@Param("dateTime") ZonedDateTime dateTime);
 
     /**
-     * Returns all programming exercises that have a due date after {@code dateTime} and have tests marked with
+     * Returns all programming exercises that have a due date after {@code now} and have tests marked with
      * {@link de.tum.in.www1.artemis.domain.enumeration.Visibility#AFTER_DUE_DATE} but no buildAndTestStudentSubmissionsAfterDueDate.
-     * @param dateTime the time after which the due date of the exercise has to be
+     * @param now the time after which the due date of the exercise has to be
      * @return List<ProgrammingExercise> (can be empty)
      */
     @Query("""
             SELECT DISTINCT pe FROM ProgrammingExercise pe
             LEFT JOIN pe.testCases tc
-            WHERE pe.dueDate > :#{#dateTime}
+            WHERE pe.dueDate > :#{#now}
                 AND pe.buildAndTestStudentSubmissionsAfterDueDate IS NULL
                 AND tc.visibility = 'AFTER_DUE_DATE'
             """)
-    List<ProgrammingExercise> findAllByDueDateAfterDateWithTestsAfterDueDateWithoutBuildStudentSubmissionsDate(@Param("dateTime") ZonedDateTime dateTime);
+    List<ProgrammingExercise> findAllByDueDateAfterDateWithTestsAfterDueDateWithoutBuildStudentSubmissionsDate(@Param("now") ZonedDateTime now);
 
     /**
      * Returns the programming exercises that are part of an exam with an end date after than the provided date.
