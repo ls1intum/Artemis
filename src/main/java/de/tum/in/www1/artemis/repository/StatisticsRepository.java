@@ -262,11 +262,13 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
     List<CourseStatisticsAverageScore> findAvgPointsForExercises(@Param("exercises") Set<Exercise> exercises);
 
     /**
-     * Handles the Repository calls depending on the graphType for the span "day"
+     * Handles the Repository calls depending on the graphType
      *
+     * @param span the spanType for which the call is executed
      * @param startDate The startDate of which the data should be fetched
      * @param endDate The endDate of which the data should be fetched
      * @param graphType the type of graph the data should be fetched for (see GraphType.java)
+     * @param courseId the courseId which is null for a user statistics call and contains the courseId for the course statistics
      * @return the return value of the database call
      */
     default List<Map<String, Object>> getDataFromDatabase(SpanType span, ZonedDateTime startDate, ZonedDateTime endDate, GraphType graphType, Long courseId) {
@@ -323,13 +325,14 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
     }
 
     /**
-     * This method handles the duplicity of usernames in the active user call. It gets a List<Map<String, Object>> analogue to previous methods, but instead of numbers in an amount key,
+     * This method handles the duplicity of usernames. It gets a List<Map<String, Object>> analogue to previous methods, but instead of numbers in an amount key,
      * it contains a username key with the actual username as value. It then handles all the usernames and returns a List<Map<String, Object>>, but now with the the key "amount"
      * and value the number of users in this interval
      *
      * @param span DAY,WEEK,MONTH or YEAR
      * @param result the result given by the Repository call
      * @param startDate the startDate of the period
+     * @param graphType the graphType for which the List should be converted
      * @return A List<Map<String, Object>> analogue to other database calls
      */
     private List<Map<String, Object>> convertMapList(SpanType span, List<Map<String, Object>> result, ZonedDateTime startDate, GraphType graphType) {
@@ -374,6 +377,11 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
     /**
      * Helper class for the ConvertMapList method, which takes the users in the same timeslot as well as some attributed needed
      * for calculation to convert these into a Map List which is then returned
+     *
+     * @param users the List of Maps each containing the date and a list of users
+     * @param span the spanType for which we created the users List
+     * @param startDate the startDate which we need for mapping into timeslots
+     * @return A List<Map<String, Object>> with no duplicated user per timeslot
      */
     private List<Map<String, Object>> fillMapList(Map<Object, List<String>> users, SpanType span, ZonedDateTime startDate) {
         List<Map<String, Object>> returnList = new ArrayList<>();
