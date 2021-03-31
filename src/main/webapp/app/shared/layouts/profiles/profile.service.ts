@@ -7,6 +7,7 @@ import { BehaviorSubject } from 'rxjs';
 import { map } from 'rxjs/operators';
 import * as _ from 'lodash';
 import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
+import { Saml2Config } from 'app/home/saml2-login/saml2.config';
 
 @Injectable({ providedIn: 'root' })
 export class ProfileService {
@@ -30,6 +31,7 @@ export class ProfileService {
                         this.mapGuidedTourConfig(data, profileInfo);
                         this.mapAllowedOrionVersions(data, profileInfo);
                         this.mapTestServer(data, profileInfo);
+                        ProfileService.mapSaml2Config(data, profileInfo);
 
                         if (profileInfo.activeProfiles) {
                             const ribbonProfiles = displayRibbonOnProfiles.filter((profile: string) => profileInfo.activeProfiles.includes(profile));
@@ -57,7 +59,6 @@ export class ProfileService {
                         profileInfo.accountName = data.accountName;
                         profileInfo.versionControlUrl = data.versionControlUrl;
                         profileInfo.programmingLanguageFeatures = data.programmingLanguageFeatures;
-                        profileInfo.saml2 = data.saml2;
                         profileInfo.enabledMultipleOrganizations = data.enabledMultipleOrganizations;
 
                         return profileInfo;
@@ -86,6 +87,14 @@ export class ProfileService {
         if (guidedTourMapping) {
             guidedTourMapping.tours = _.reduce(guidedTourMapping.tours, _.extend);
             profileInfo.guidedTourMapping = guidedTourMapping;
+        }
+    }
+
+    private static mapSaml2Config(data: any, profileInfo: ProfileInfo) {
+        if (data.saml2) {
+            profileInfo.saml2 = new Saml2Config();
+            profileInfo.saml2.buttonLabel = data.saml2['button-label'] || 'SAML2 Login';
+            profileInfo.saml2.enablePassword = data.saml2['enable-password'] || false;
         }
     }
 }

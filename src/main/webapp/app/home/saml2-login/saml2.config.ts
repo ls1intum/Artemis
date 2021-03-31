@@ -1,4 +1,4 @@
-export class Saml2ConfigModel {
+export class Saml2Config {
     public buttonLabel?: string;
     public enablePassword?: boolean;
 }
