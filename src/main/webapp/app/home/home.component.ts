@@ -13,6 +13,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { LoginService } from 'app/core/login/login.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { StateStorageService } from 'app/core/auth/state-storage.service';
+import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 
 @Component({
     selector: 'jhi-home',
@@ -43,11 +44,9 @@ export class HomeComponent implements OnInit, AfterViewChecked {
     externalUserManagementUrl: string;
     externalUserManagementName: string;
 
-    saml2Enabled = false;
-    saml2PasswordEnabled = false;
-    saml2ButtonLabel: string;
-
     isSubmittingLogin = false;
+
+    profileInfo: ProfileInfo | undefined = undefined;
 
     constructor(
         private router: Router,
@@ -67,6 +66,7 @@ export class HomeComponent implements OnInit, AfterViewChecked {
     ngOnInit() {
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
             if (profileInfo) {
+                this.profileInfo = profileInfo;
                 if (profileInfo.activeProfiles.includes('jira')) {
                     this.externalUserManagementUrl = profileInfo.externalUserManagementURL;
                     this.externalUserManagementName = profileInfo.externalUserManagementName;
@@ -81,12 +81,7 @@ export class HomeComponent implements OnInit, AfterViewChecked {
                 if (this.accountName === 'TUM') {
                     this.errorMessageUsername = 'home.errors.tumWarning';
                 }
-                this.isRegistrationEnabled = profileInfo.registrationEnabled || false;
-                if (profileInfo.activeProfiles.includes('saml2')) {
-                    this.saml2Enabled = true;
-                    this.saml2ButtonLabel = profileInfo.saml2?.['button-label'] || 'SAML2 Login';
-                    this.saml2PasswordEnabled = profileInfo.saml2?.['enable-password'] || false;
-                }
+                this.isRegistrationEnabled = profileInfo.registrationEnabled || profileInfo.saml2?.['enable-password'] || false;
             }
         });
         this.accountService.identity().then((user) => {
@@ -98,13 +93,6 @@ export class HomeComponent implements OnInit, AfterViewChecked {
             }
         });
         this.registerAuthenticationSuccess();
-
-        // If SAML2 flow was started, retry login.
-        if (document.cookie.indexOf('SAML2flow=') >= 0) {
-            // remove cookie
-            document.cookie = 'SAML2flow=; expires=Thu, 01 Jan 1970 00:00:00 UTC; ; SameSite=Lax;';
-            this.loginSAML2();
-        }
     }
 
     registerAuthenticationSuccess() {
@@ -177,30 +165,6 @@ export class HomeComponent implements OnInit, AfterViewChecked {
                 this.captchaRequired = error.headers.get('X-artemisApp-error') === 'CAPTCHA required';
                 this.authenticationError = true;
                 this.authenticationAttempts++;
-            })
-            .finally(() => (this.isSubmittingLogin = false));
-    }
-
-    loginSAML2() {
-        this.isSubmittingLogin = true;
-        this.loginService
-            .loginSAML2(this.rememberMe)
-            .then(() => {
-                this.authenticationError = false;
-                this.authenticationAttempts = 0;
-                this.captchaRequired = false;
-
-                this.eventManager.broadcast({
-                    name: 'authenticationSuccess',
-                    content: 'Sending Authentication Success',
-                });
-            })
-            .catch((error: HttpErrorResponse) => {
-                if (error.status === 401) {
-                    // (re)set cookie
-                    document.cookie = 'SAML2flow=true; max-age=120; SameSite=Lax;';
-                    window.location.replace('/saml2/authenticate'); // arbitrary by SAML2 HTTP Filter Chain secured URL
-                }
             })
             .finally(() => (this.isSubmittingLogin = false));
     }

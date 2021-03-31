@@ -81,18 +81,14 @@
                                 <span *ngIf="isSubmittingLogin" class="mr-1"><fa-icon [icon]="'circle-notch'" [spin]="true"></fa-icon></span>
                                 <span jhiTranslate="login.form.button"> Sign in </span>
                             </button>
-                            <div *ngIf="saml2Enabled">
-                                <button type="button" [disabled]="!acceptTerms" class="btn btn-primary" (click)="loginSAML2()">
-                                    <span>{{ saml2ButtonLabel }}</span>
-                                </button>
-                            </div>
+                            <jhi-saml2-login [acceptTerms]="acceptTerms" [rememberMe]="rememberMe" [saml2Profile]="profileInfo?.saml2"> </jhi-saml2-login>
                         </div>
                     </form>
                 </div>
             </div>
         </div>
     </div>
-    <div *ngIf="isRegistrationEnabled || saml2PasswordEnabled">
+    <div *ngIf="isRegistrationEnabled">
         <br /><br />
         <div *ngIf="isRegistrationEnabled">
             <div class="d-flex justify-content-center">

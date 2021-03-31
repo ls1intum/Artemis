@@ -1,0 +1,5 @@
+<div *ngIf="saml2Profile">
+    <button type="button" [disabled]="!acceptTerms" class="btn btn-primary" (click)="loginSAML2()">
+        <span>{{ saml2Profile['button-label'] || 'SAML2 Login' }}</span>
+    </button>
+</div>
