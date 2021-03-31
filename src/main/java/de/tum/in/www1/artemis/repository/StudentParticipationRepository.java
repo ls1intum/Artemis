@@ -623,6 +623,14 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             """)
     Long countParticipationsIgnoreTestRunsByExerciseId(@Param("exerciseId") Long exerciseId);
 
+    @Query("""
+            SELECT COUNT(p) FROM StudentParticipation p
+                LEFT JOIN p.exercise exercise WHERE exercise.id = :#{#exerciseId}
+            AND p.testRun = true
+            GROUP BY exercise.id
+            """)
+    Long countParticipationsOnlyTestRunsByExerciseId(@Param("exerciseId") Long exerciseId);
+
     /**
      * Adds the transient property numberOfParticipations for each exercise to
      * let instructors know which exercise has how many participations
