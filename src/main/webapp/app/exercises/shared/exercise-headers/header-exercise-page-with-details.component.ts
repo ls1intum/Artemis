@@ -3,6 +3,7 @@ import * as moment from 'moment';
 import { Exercise, ExerciseCategory, getIcon, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { Exam } from 'app/entities/exam.model';
+import { IconProp } from '@fortawesome/fontawesome-svg-core';
 
 @Component({
     selector: 'jhi-header-exercise-page-with-details',
@@ -10,17 +11,19 @@ import { Exam } from 'app/entities/exam.model';
 })
 export class HeaderExercisePageWithDetailsComponent implements OnInit, OnChanges {
     readonly IncludedInOverallScore = IncludedInOverallScore;
+
     @Input() public exercise: Exercise;
     @Input() public onBackClick: () => void; // TODO: This can be removed once we are happy with the breadcrumb navigation
     @Input() public title: string;
     @Input() public exam: Exam | null;
     @Input() public isTestRun = false;
     @Input() public displayBackButton = true; // TODO: This can be removed once we are happy with the breadcrumb navigation
+
     public exerciseStatusBadge = 'badge-success';
     public exerciseCategories: ExerciseCategory[];
     public isExamMode = false;
 
-    getIcon = getIcon;
+    icon: IconProp;
 
     constructor(private exerciseService: ExerciseService) {}
 
@@ -30,6 +33,7 @@ export class HeaderExercisePageWithDetailsComponent implements OnInit, OnChanges
     ngOnInit(): void {
         this.setExerciseStatusBadge();
         this.exerciseCategories = this.exerciseService.convertExerciseCategoriesFromServer(this.exercise);
+        this.icon = getIcon(this.exercise?.type) as IconProp;
     }
 
     /**
@@ -38,6 +42,7 @@ export class HeaderExercisePageWithDetailsComponent implements OnInit, OnChanges
     ngOnChanges(): void {
         this.setExerciseStatusBadge();
         this.exerciseCategories = this.exerciseService.convertExerciseCategoriesFromServer(this.exercise);
+        this.icon = getIcon(this.exercise?.type) as IconProp;
 
         if (this.exam) {
             this.isExamMode = true;
