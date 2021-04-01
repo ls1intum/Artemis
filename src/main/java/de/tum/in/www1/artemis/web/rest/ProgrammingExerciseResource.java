@@ -42,7 +42,6 @@ import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
-import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismResult;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextPlagiarismResult;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.repository.*;
@@ -92,6 +91,8 @@ public class ProgrammingExerciseResource {
 
     private final PlagiarismService plagiarismService;
 
+    private final PlagiarismResultRepository plagiarismResultRepository;
+
     private final ProgrammingExerciseService programmingExerciseService;
 
     private final ProgrammingExerciseImportService programmingExerciseImportService;
@@ -133,7 +134,7 @@ public class ProgrammingExerciseResource {
     public ProgrammingExerciseResource(ProgrammingExerciseRepository programmingExerciseRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
             CourseService courseService, Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService,
             ExerciseService exerciseService, ProgrammingExerciseService programmingExerciseService, StudentParticipationRepository studentParticipationRepository,
-            PlagiarismService plagiarismService, ProgrammingExerciseImportService programmingExerciseImportService,
+            PlagiarismService plagiarismService, PlagiarismResultRepository plagiarismResultRepository, ProgrammingExerciseImportService programmingExerciseImportService,
             ProgrammingExerciseExportService programmingExerciseExportService, ExerciseGroupRepository exerciseGroupRepository, StaticCodeAnalysisService staticCodeAnalysisService,
             GradingCriterionRepository gradingCriterionRepository, ProgrammingLanguageFeatureService programmingLanguageFeatureService, TemplateUpgradePolicy templateUpgradePolicy,
             CourseRepository courseRepository, GitService gitService) {
@@ -147,6 +148,7 @@ public class ProgrammingExerciseResource {
         this.plagiarismService = plagiarismService;
         this.programmingExerciseService = programmingExerciseService;
         this.studentParticipationRepository = studentParticipationRepository;
+        this.plagiarismResultRepository = plagiarismResultRepository;
         this.programmingExerciseImportService = programmingExerciseImportService;
         this.programmingExerciseExportService = programmingExerciseExportService;
         this.exerciseGroupRepository = exerciseGroupRepository;
@@ -246,11 +248,7 @@ public class ProgrammingExerciseResource {
         }
 
         // Validate course and exercise short name
-        Optional<ResponseEntity<ProgrammingExercise>> optionalShortNameValidationError = validateCourseAndExerciseShortName(programmingExercise, course);
-        if (optionalShortNameValidationError.isPresent()) {
-            return optionalShortNameValidationError;
-        }
-        return Optional.empty();
+        return validateCourseAndExerciseShortName(programmingExercise, course);
     }
 
     /**
@@ -1220,28 +1218,14 @@ public class ProgrammingExerciseResource {
     @GetMapping(Endpoints.PLAGIARISM_RESULT)
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
-    public ResponseEntity<PlagiarismResult> getPlagiarismResult(@PathVariable long exerciseId) {
+    public ResponseEntity<TextPlagiarismResult> getPlagiarismResult(@PathVariable long exerciseId) {
         log.debug("REST request to get the latest plagiarism result for the programming exercise with id: {}", exerciseId);
-
-        Optional<ProgrammingExercise> optionalProgrammingExercise = programmingExerciseRepository.findById(exerciseId);
-
-        if (optionalProgrammingExercise.isEmpty()) {
-            return notFound();
-        }
-
-        ProgrammingExercise programmingExercise = optionalProgrammingExercise.get();
-
+        var programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         if (!authCheckService.isAtLeastInstructorForExercise(programmingExercise)) {
             return forbidden();
         }
-
-        Optional<PlagiarismResult> optionalResult = plagiarismService.getPlagiarismResult(programmingExercise);
-
-        if (optionalResult.isEmpty()) {
-            return notFound();
-        }
-
-        return ResponseEntity.ok(optionalResult.get());
+        var plagiarismResult = plagiarismResultRepository.findFirstByExerciseIdOrderByLastModifiedDateDescElseThrow(programmingExercise.getId());
+        return ResponseEntity.ok((TextPlagiarismResult) plagiarismResult);
     }
 
     /**
@@ -1265,15 +1249,7 @@ public class ProgrammingExerciseResource {
     public ResponseEntity<TextPlagiarismResult> checkPlagiarism(@PathVariable long exerciseId, @RequestParam float similarityThreshold, @RequestParam int minimumScore)
             throws ExitException, IOException {
         log.debug("REST request to check plagiarism for ProgrammingExercise with id: {}", exerciseId);
-
-        Optional<ProgrammingExercise> optionalProgrammingExercise = programmingExerciseRepository.findById(exerciseId);
-
-        if (optionalProgrammingExercise.isEmpty()) {
-            return notFound();
-        }
-
-        ProgrammingExercise programmingExercise = optionalProgrammingExercise.get();
-
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         if (!authCheckService.isAtLeastInstructorForExercise(programmingExercise)) {
             return forbidden();
         }
@@ -1287,9 +1263,7 @@ public class ProgrammingExerciseResource {
         }
 
         TextPlagiarismResult result = programmingExerciseExportService.checkPlagiarism(exerciseId, similarityThreshold, minimumScore);
-
         plagiarismService.savePlagiarismResultAndRemovePrevious(result);
-
         return ResponseEntity.ok(result);
     }
 
@@ -1314,17 +1288,12 @@ public class ProgrammingExerciseResource {
         log.debug("REST request to check plagiarism for ProgrammingExercise with id: {}", exerciseId);
         long start = System.nanoTime();
 
-        Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository.findById(exerciseId);
-
-        if (programmingExercise.isEmpty()) {
-            return notFound();
-        }
-
-        if (!authCheckService.isAtLeastInstructorForExercise(programmingExercise.get())) {
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
+        if (!authCheckService.isAtLeastInstructorForExercise(programmingExercise)) {
             return forbidden();
         }
 
-        var language = programmingExercise.get().getProgrammingLanguage();
+        var language = programmingExercise.getProgrammingLanguage();
         ProgrammingLanguageFeature programmingLanguageFeature = programmingLanguageFeatureService.getProgrammingLanguageFeatures(language);
 
         if (!programmingLanguageFeature.isPlagiarismCheckSupported()) {
@@ -1342,7 +1311,7 @@ public class ProgrammingExerciseResource {
 
         InputStreamResource resource = new InputStreamResource(new FileInputStream(zipFile));
 
-        log.info("Check plagiarism of programming exercise {} with title '{}' was successful in {}.", programmingExercise.get().getId(), programmingExercise.get().getTitle(),
+        log.info("Check plagiarism of programming exercise {} with title '{}' was successful in {}.", programmingExercise.getId(), programmingExercise.getTitle(),
                 formatDurationFrom(start));
 
         return ResponseEntity.ok().contentLength(zipFile.length()).contentType(MediaType.APPLICATION_OCTET_STREAM).header("filename", zipFile.getName()).body(resource);

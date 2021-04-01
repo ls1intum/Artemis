@@ -24,32 +24,25 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.service.AssessmentService;
 import de.tum.in.www1.artemis.util.FileUtils;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
 public class AssessmentTeamComplaintIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
-    ExerciseRepository exerciseRepo;
+    private ExerciseRepository exerciseRepo;
 
     @Autowired
-    CourseRepository courseRepository;
+    private ResultRepository resultRepo;
 
     @Autowired
-    ResultRepository resultRepo;
+    private ComplaintRepository complaintRepo;
 
     @Autowired
-    ComplaintRepository complaintRepo;
+    private ComplaintResponseRepository complaintResponseRepo;
 
     @Autowired
-    ComplaintResponseRepository complaintResponseRepo;
-
-    @Autowired
-    ObjectMapper mapper;
-
-    @Autowired
-    AssessmentService assessmentService;
+    private ObjectMapper mapper;
 
     private ModelingExercise modelingExercise;
 
@@ -170,7 +163,12 @@ public class AssessmentTeamComplaintIntegrationTest extends AbstractSpringIntegr
         assertThat(storedComplaint.isAccepted()).as("complaint is not accepted").isFalse();
         Result storedResult = resultRepo.findWithEagerSubmissionAndFeedbackAndAssessorById(modelingAssessment.getId()).get();
         database.checkFeedbackCorrectlyStored(modelingAssessment.getFeedbacks(), storedResult.getFeedbacks(), FeedbackType.MANUAL);
-        assertThat(storedResult).as("only feedbacks are changed in the result").isEqualToIgnoringGivenFields(modelingAssessment, "feedbacks");
+        assertThat(storedResult.getSubmission()).isEqualTo(modelingAssessment.getSubmission());
+        assertThat(storedResult.getAssessor()).isEqualTo(modelingAssessment.getAssessor());
+        assertThat(storedResult.getParticipation()).isEqualTo(modelingAssessment.getParticipation());
+        assertThat(storedResult.getFeedbacks()).containsExactlyInAnyOrderElementsOf(modelingAssessment.getFeedbacks());
+        final String[] ignoringFields = { "feedbacks", "submission", "participation", "assessor" };
+        assertThat(storedResult).as("only feedbacks are changed in the result").usingRecursiveComparison().ignoringFields(ignoringFields).isEqualTo(modelingAssessment);
     }
 
     @Test
@@ -204,7 +202,10 @@ public class AssessmentTeamComplaintIntegrationTest extends AbstractSpringIntegr
         // set dates to UTC and round to milliseconds for comparison
         resultBeforeComplaint.setCompletionDate(ZonedDateTime.ofInstant(resultBeforeComplaint.getCompletionDate().truncatedTo(ChronoUnit.MILLIS).toInstant(), ZoneId.of("UTC")));
         modelingAssessment.setCompletionDate(ZonedDateTime.ofInstant(modelingAssessment.getCompletionDate().truncatedTo(ChronoUnit.MILLIS).toInstant(), ZoneId.of("UTC")));
-        assertThat(resultBeforeComplaint).as("result before complaint is correctly stored").isEqualToIgnoringGivenFields(modelingAssessment, "participation", "submission");
+        assertThat(resultBeforeComplaint.getAssessor()).isEqualTo(modelingAssessment.getAssessor());
+        assertThat(resultBeforeComplaint.getFeedbacks()).containsExactlyInAnyOrderElementsOf(modelingAssessment.getFeedbacks());
+        String[] ignoringFields = { "participation", "submission", "feedbacks", "assessor" };
+        assertThat(resultBeforeComplaint).as("result before complaint is correctly stored").usingRecursiveComparison().ignoringFields(ignoringFields).isEqualTo(modelingAssessment);
         Result storedResult = resultRepo.findByIdWithEagerFeedbacksAndAssessor(modelingAssessment.getId()).get();
         database.checkFeedbackCorrectlyStored(feedback, storedResult.getFeedbacks(), FeedbackType.MANUAL);
         assertThat(storedResult.getAssessor()).as("assessor is still the original one").isEqualTo(modelingAssessment.getAssessor());

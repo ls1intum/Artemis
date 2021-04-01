@@ -24,9 +24,8 @@ public class TextPlagiarismResult extends PlagiarismResult<TextSubmissionElement
     }
 
     public TextPlagiarismResult(JPlagResult result) {
-        this.comparisons = result.getComparisons().stream().map(PlagiarismComparison::fromJPlagComparison).map(comparison -> {
+        this.comparisons = result.getComparisons().stream().map(PlagiarismComparison::fromJPlagComparison).peek(comparison -> {
             comparison.setPlagiarismResult(this);
-            return comparison;
         }).collect(Collectors.toSet());
         this.duration = result.getDuration();
 

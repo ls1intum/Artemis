@@ -15,24 +15,16 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.domain.StudentQuestion;
 import de.tum.in.www1.artemis.domain.StudentQuestionAnswer;
-import de.tum.in.www1.artemis.repository.CourseRepository;
-import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.StudentQuestionAnswerRepository;
 import de.tum.in.www1.artemis.repository.StudentQuestionRepository;
 
 public class StudentQuestionAnswerIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
-    CourseRepository courseRepo;
+    private StudentQuestionRepository studentQuestionRepository;
 
     @Autowired
-    ExerciseRepository exerciseRepo;
-
-    @Autowired
-    StudentQuestionRepository studentQuestionRepository;
-
-    @Autowired
-    StudentQuestionAnswerRepository studentQuestionAnswerRepository;
+    private StudentQuestionAnswerRepository studentQuestionAnswerRepository;
 
     @BeforeEach
     public void initTestCase() {

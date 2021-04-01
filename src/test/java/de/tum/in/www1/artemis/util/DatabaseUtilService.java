@@ -76,112 +76,106 @@ public class DatabaseUtilService {
     private static final Set<Authority> adminAuthorities = Set.of(userAuthority, tutorAuthority, instructorAuthority, adminAuthority);
 
     @Autowired
-    CourseRepository courseRepo;
+    private CourseRepository courseRepo;
 
     @Autowired
-    LectureRepository lectureRepo;
+    private LectureRepository lectureRepo;
 
     @Autowired
-    ExerciseRepository exerciseRepo;
+    private ExerciseRepository exerciseRepo;
 
     @Autowired
-    AttachmentRepository attachmentRepo;
+    private AttachmentRepository attachmentRepo;
 
     @Autowired
-    ProgrammingExerciseTestCaseRepository testCaseRepository;
+    private ProgrammingExerciseTestCaseRepository testCaseRepository;
 
     @Autowired
-    StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository;
+    private StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository;
 
     @Autowired
-    ProgrammingExerciseRepository programmingExerciseRepository;
+    private ProgrammingExerciseRepository programmingExerciseRepository;
 
     @Autowired
-    ExerciseHintRepository exerciseHintRepository;
+    private ExerciseHintRepository exerciseHintRepository;
 
     @Autowired
-    UserRepository userRepo;
+    private UserRepository userRepo;
 
     @Autowired
-    TeamRepository teamRepo;
+    private TeamRepository teamRepo;
 
     @Autowired
-    ResultRepository resultRepo;
+    private ResultRepository resultRepo;
 
     @Autowired
-    StudentParticipationRepository studentParticipationRepo;
+    private StudentParticipationRepository studentParticipationRepo;
 
     @Autowired
-    PlagiarismResultRepository plagiarismResultRepo;
+    private PlagiarismResultRepository plagiarismResultRepo;
 
     @Autowired
-    ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepo;
+    private ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepo;
 
     @Autowired
-    TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepo;
+    private TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepo;
 
     @Autowired
-    SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepo;
+    private SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepo;
 
     @Autowired
-    ModelingSubmissionRepository modelingSubmissionRepo;
+    private ModelingSubmissionRepository modelingSubmissionRepo;
 
     @Autowired
-    TextSubmissionRepository textSubmissionRepo;
+    private TextSubmissionRepository textSubmissionRepo;
 
     @Autowired
-    ParticipationService participationService;
+    private ParticipationService participationService;
 
     @Autowired
-    TextBlockRepository textBlockRepo;
+    private TextBlockRepository textBlockRepo;
 
     @Autowired
-    FileUploadSubmissionRepository fileUploadSubmissionRepo;
+    private FileUploadSubmissionRepository fileUploadSubmissionRepo;
 
     @Autowired
-    SubmissionRepository submissionRepository;
+    private SubmissionRepository submissionRepository;
 
     @Autowired
-    SubmissionVersionRepository submissionVersionRepository;
+    private ProgrammingSubmissionRepository programmingSubmissionRepo;
 
     @Autowired
-    ProgrammingSubmissionRepository programmingSubmissionRepo;
+    private FeedbackRepository feedbackRepo;
 
     @Autowired
-    FeedbackRepository feedbackRepo;
+    private ComplaintRepository complaintRepo;
 
     @Autowired
-    ComplaintRepository complaintRepo;
+    private ComplaintResponseRepository complaintResponseRepo;
 
     @Autowired
-    ComplaintResponseRepository complaintResponseRepo;
+    private ExampleSubmissionRepository exampleSubmissionRepo;
 
     @Autowired
-    ExampleSubmissionRepository exampleSubmissionRepo;
+    private TutorParticipationRepository tutorParticipationRepo;
 
     @Autowired
-    TutorParticipationRepository tutorParticipationRepo;
+    private StudentQuestionRepository studentQuestionRepository;
 
     @Autowired
-    StudentQuestionRepository studentQuestionRepository;
+    private ModelingSubmissionService modelSubmissionService;
 
     @Autowired
-    ModelingSubmissionService modelSubmissionService;
+    private AssessmentService assessmentService;
 
     @Autowired
-    AssessmentService assessmentService;
-
-    @Autowired
-    ProgrammingExerciseTestRepository programmingExerciseTestRepository;
+    private ProgrammingExerciseTestRepository programmingExerciseTestRepository;
 
     @Autowired
     private AuthorityRepository authorityRepository;
 
     @Autowired
-    ObjectMapper mapper;
-
-    @Autowired
-    GroupNotificationRepository groupNotificationRepository;
+    private ObjectMapper mapper;
 
     @Autowired
     private ExerciseGroupRepository exerciseGroupRepository;
@@ -196,19 +190,19 @@ public class DatabaseUtilService {
     private TextExerciseRepository textExerciseRepository;
 
     @Autowired
-    AttachmentUnitRepository attachmentUnitRepository;
+    private AttachmentUnitRepository attachmentUnitRepository;
 
     @Autowired
-    AttachmentRepository attachmentRepository;
+    private AttachmentRepository attachmentRepository;
 
     @Autowired
-    ExerciseUnitRepository exerciseUnitRepository;
+    private ExerciseUnitRepository exerciseUnitRepository;
 
     @Autowired
-    TextUnitRepository textUnitRepository;
+    private TextUnitRepository textUnitRepository;
 
     @Autowired
-    VideoUnitRepository videoUnitRepository;
+    private VideoUnitRepository videoUnitRepository;
 
     @Autowired
     private OrganizationRepository organizationRepository;
@@ -3061,7 +3055,6 @@ public class DatabaseUtilService {
         result.setExercise(exercise);
         result.setSimilarityDistribution(new int[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 });
         result.setDuration(4);
-
         return plagiarismResultRepo.save(result);
     }
 
@@ -3070,7 +3063,21 @@ public class DatabaseUtilService {
         result.setExercise(exercise);
         result.setSimilarityDistribution(new int[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 });
         result.setDuration(4);
-
         return plagiarismResultRepo.save(result);
+    }
+
+    @NotNull
+    public LinkedMultiValueMap<String, String> getDefaultPlagiarismOptions() {
+        return getPlagiarismOptions(50D, 0, 0);
+    }
+
+    @NotNull
+    public LinkedMultiValueMap<String, String> getPlagiarismOptions(double similarityThreshold, int minimumScore, int minimumSize) {
+        // Use default options for plagiarism detection
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("similarityThreshold", String.valueOf(similarityThreshold));
+        params.add("minimumScore", String.valueOf(minimumScore));
+        params.add("minimumSize", String.valueOf(minimumSize));
+        return params;
     }
 }

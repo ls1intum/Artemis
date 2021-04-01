@@ -25,7 +25,7 @@ import de.tum.in.www1.artemis.web.rest.dto.CourseManagementStatisticsDTO;
 public class StatisticsIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
-    TextExerciseRepository textExerciseRepository;
+    private TextExerciseRepository textExerciseRepository;
 
     @Autowired
     UserRepository userRepository;
