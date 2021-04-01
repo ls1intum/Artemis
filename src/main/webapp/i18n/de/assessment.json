@@ -2,7 +2,7 @@
     "artemisApp": {
         "assessment": {
             "assessment": "Bewertung",
-            "assessmentIllegalSubmission": "Warnung: Sie sehen eine illegale Submission.",
+            "assessmentIllegalSubmission": "Achtung: Es handelt sich um eine illegale Submission.",
             "testRunAssessment": "Bewertungstestlauf",
             "additionalFeedback": "Zusätzliches Feedback",
             "feedback": "Feedback",
