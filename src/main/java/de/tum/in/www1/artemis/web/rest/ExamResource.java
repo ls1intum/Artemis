@@ -858,7 +858,7 @@ public class ExamResource {
         List<Submission> submissions = submissionService.getLockedSubmissions(examId, user);
 
         long end = System.currentTimeMillis();
-        log.debug("Finished /courses/" + courseId + "/submissions call in " + (end - start) + "ms");
+        log.debug("Finished /courses/{}/submissions call in {}ms", courseId, end - start);
         return ResponseEntity.ok(submissions);
     }
 

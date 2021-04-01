@@ -447,7 +447,7 @@ public class CourseResource {
     @GetMapping("/courses/with-user-stats")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public List<Course> getAllCoursesWithUserStats(@RequestParam(defaultValue = "false") boolean onlyActive) {
-        log.debug("get courses with user stats, only active: " + onlyActive);
+        log.debug("get courses with user stats, only active: {}", onlyActive);
         long start = System.currentTimeMillis();
         List<Course> courses = getAllCourses(onlyActive);
         for (Course course : courses) {
@@ -456,7 +456,7 @@ public class CourseResource {
             course.setNumberOfStudents(userRepository.countUserInGroup(course.getStudentGroupName()));
         }
         long end = System.currentTimeMillis();
-        log.debug("getAllCoursesWithUserStats took " + (end - start) + "ms for " + courses.size() + " courses");
+        log.debug("getAllCoursesWithUserStats took {}ms for {} courses", end - start, courses.size());
         return courses;
     }
 
@@ -825,7 +825,7 @@ public class CourseResource {
         }
 
         long end = System.currentTimeMillis();
-        log.debug("Finished /courses/" + courseId + "/submissions call in " + (end - start) + "ms");
+        log.debug("Finished /courses/{}/submissions call in {}ms", courseId, end - start);
         return ResponseEntity.ok(submissions);
     }
 

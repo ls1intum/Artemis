@@ -399,7 +399,7 @@ public class ExerciseResource {
     public ResponseEntity<Exercise> getExerciseDetails(@PathVariable Long exerciseId) {
         long start = System.currentTimeMillis();
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        log.debug(user.getLogin() + " requested access for exercise with exerciseId " + exerciseId, exerciseId);
+        log.debug("{} requested access for exercise with exerciseId {}", user.getLogin(), exerciseId);
 
         Exercise exercise = exerciseService.findOneWithDetailsForStudents(exerciseId, user);
 
@@ -436,7 +436,7 @@ public class ExerciseResource {
             exercise.filterSensitiveInformation();
         }
 
-        log.debug("getResultsForCurrentUser took " + (System.currentTimeMillis() - start) + "ms");
+        log.debug("getResultsForCurrentUser took {}ms", System.currentTimeMillis() - start);
 
         return ResponseUtil.wrapOrNotFound(Optional.of(exercise));
     }
@@ -450,7 +450,7 @@ public class ExerciseResource {
     @PutMapping(value = "/exercises/{exerciseId}/toggle-second-correction")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Boolean> toggleSecondCorrectionEnabled(@PathVariable Long exerciseId) {
-        log.debug("toggleSecondCorrectionEnabled for exercise with id:" + exerciseId);
+        log.debug("toggleSecondCorrectionEnabled for exercise with id: {}", exerciseId);
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         if (exercise == null) {
             throw new EntityNotFoundException("Exercise not found with id " + exerciseId);

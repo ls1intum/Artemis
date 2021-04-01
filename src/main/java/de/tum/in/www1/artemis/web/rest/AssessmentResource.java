@@ -110,7 +110,7 @@ public abstract class AssessmentResource {
 
         final var isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(exercise, user);
         if (!assessmentService.isAllowedToCreateOrOverrideResult(submission.getLatestResult(), exercise, studentParticipation, user, isAtLeastInstructor)) {
-            log.debug("The user " + user.getLogin() + " is not allowed to override the assessment for the submission " + submission.getId());
+            log.debug("The user {} is not allowed to override the assessment for the submission {}", user.getLogin(), submission.getId());
             return forbidden("assessment", "assessmentSaveNotAllowed", "The user is not allowed to override the assessment");
         }
 
@@ -183,7 +183,7 @@ public abstract class AssessmentResource {
     void checkAuthorization(Exercise exercise, User user) throws AccessForbiddenException, BadRequestAlertException {
         validateExercise(exercise);
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
-            log.debug("Insufficient permission for course: " + exercise.getCourseViaExerciseGroupOrCourseMember().getTitle());
+            log.debug("Insufficient permission for course: {}", exercise.getCourseViaExerciseGroupOrCourseMember().getTitle());
             throw new AccessForbiddenException("Insufficient permission for course: " + exercise.getCourseViaExerciseGroupOrCourseMember().getTitle());
         }
     }
