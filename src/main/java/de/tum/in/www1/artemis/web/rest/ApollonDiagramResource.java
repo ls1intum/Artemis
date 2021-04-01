@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException.NOT_ALLOWED;
+
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
@@ -70,7 +72,7 @@ public class ApollonDiagramResource {
         Course course = courseRepository.findByIdElseThrow(courseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
-            throw new AccessForbiddenException("You are not allowed to access this resource");
+            throw new AccessForbiddenException(NOT_ALLOWED);
         }
 
         if (apollonDiagram.getId() != null) {
@@ -99,7 +101,7 @@ public class ApollonDiagramResource {
         Course course = courseRepository.findByIdElseThrow(courseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
-            throw new AccessForbiddenException("You are not allowed to access this resource");
+            throw new AccessForbiddenException(NOT_ALLOWED);
         }
 
         if (apollonDiagram.getId() == null) {
@@ -149,7 +151,7 @@ public class ApollonDiagramResource {
         Course course = courseRepository.findByIdElseThrow(courseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
-            throw new AccessForbiddenException("You are not allowed to access this resource");
+            throw new AccessForbiddenException(NOT_ALLOWED);
         }
 
         return apollonDiagramRepository.findDiagramsByCourseId(courseId);
@@ -172,7 +174,7 @@ public class ApollonDiagramResource {
             Course course = courseRepository.findByIdElseThrow(courseId);
             User user = userRepository.getUserWithGroupsAndAuthorities();
             if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
-                throw new AccessForbiddenException("You are not allowed to access this resource");
+                throw new AccessForbiddenException(NOT_ALLOWED);
             }
         }
 
@@ -196,7 +198,7 @@ public class ApollonDiagramResource {
         Course course = courseRepository.findByIdElseThrow(courseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
-            throw new AccessForbiddenException("You are not allowed to access this resource");
+            throw new AccessForbiddenException(NOT_ALLOWED);
         }
 
         apollonDiagramRepository.deleteById(id);

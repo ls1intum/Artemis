@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException.NOT_ALLOWED;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 
 import java.security.Principal;
@@ -199,11 +200,11 @@ public class TextSubmissionResource {
         Exercise exercise = textExerciseRepository.findByIdElseThrow(exerciseId);
         if (assessedByTutor) {
             if (!authorizationCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
-                throw new AccessForbiddenException("You are not allowed to access this resource");
+                throw new AccessForbiddenException(NOT_ALLOWED);
             }
         }
         else if (!authorizationCheckService.isAtLeastInstructorForExercise(exercise)) {
-            throw new AccessForbiddenException("You are not allowed to access this resource");
+            throw new AccessForbiddenException(NOT_ALLOWED);
         }
 
         List<TextSubmission> textSubmissions;

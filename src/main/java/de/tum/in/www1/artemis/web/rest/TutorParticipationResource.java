@@ -72,10 +72,7 @@ public class TutorParticipationResource {
         log.debug("REST request to start tutor participation : {}", exerciseId);
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
-
-        if (!authorizationCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
-            return forbidden();
-        }
+        authorizationCheckService.checkIsAtLeastTeachingAssistantForExerciseElseThrow(exercise, user);
 
         if (tutorParticipationService.existsByAssessedExerciseIdAndTutorId(exerciseId, user.getId())) {
             // tutorParticipation already exists
@@ -130,15 +127,11 @@ public class TutorParticipationResource {
         log.debug("REST request to remove tutor participation of the example submission for exercise id : {}", exerciseId);
         Exercise exercise = this.exerciseRepository.findByIdElseThrow(exerciseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
-
         // Allow all tutors to delete their own participation if it's for a tutorial
-        if (!authorizationCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
-            throw new AccessForbiddenException("You are not allowed to access this resource");
-        }
+        authorizationCheckService.checkIsAtLeastTeachingAssistantForExerciseElseThrow(exercise, user);
         if (!guidedTourConfiguration.isExerciseForTutorial(exercise)) {
             throw new AccessForbiddenException("This exercise is not part of a tutorial. Current tutorials: " + guidedTourConfiguration.getTours());
         }
-
         tutorParticipationService.removeTutorParticipations(exercise, user);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, exerciseId.toString())).build();
     }

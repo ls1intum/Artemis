@@ -4,6 +4,7 @@ import java.security.Principal;
 import java.time.ZonedDateTime;
 import java.util.Optional;
 
+import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
 
 import org.springframework.stereotype.Service;
@@ -15,6 +16,7 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.AuthoritiesConstants;
 import de.tum.in.www1.artemis.security.SecurityUtils;
+import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 
 /**
  * Service used to check whether user is authorized to perform actions on the entity.
@@ -54,6 +56,20 @@ public class AuthorizationCheckService {
     }
 
     /**
+     * Checks if the currently logged in user is at least a teaching assistant in the course of the given exercise.
+     * The course is identified from either {@link Exercise#course(Course)} or {@link Exam#getCourse()}
+     * Throws an AccessForbiddenException if the user has no access which returns a 403
+     *
+     * @param exercise belongs to a course that will be checked for permission rights
+     * @param user the user whose permissions should be checked
+     */
+    public void checkIsAtLeastTeachingAssistantForExerciseElseThrow(@NotNull Exercise exercise, @Nullable User user) {
+        if (!isAtLeastTeachingAssistantInCourse(exercise.getCourseViaExerciseGroupOrCourseMember(), user)) {
+            throw new AccessForbiddenException("Exercise", exercise.getId());
+        }
+    }
+
+    /**
      * checks if the passed user is at least a teaching assistant in the course of the given exercise
      * The course is identified from {@link Exercise#getCourseViaExerciseGroupOrCourseMember()}
      *
@@ -83,7 +99,7 @@ public class AuthorizationCheckService {
      * checks if the currently logged in user is at least a student in the course of the given exercise.
      *
      * @param exercise belongs to a course that will be checked for permission rights
-     @param user the user whose permissions should be checked
+     * @param user the user whose permissions should be checked
      * @return true if the currently logged in user is at least a student (also if the user is teaching assistant, instructor or admin), false otherwise
      */
     public boolean isAtLeastStudentForExercise(Exercise exercise, User user) {
@@ -145,6 +161,19 @@ public class AuthorizationCheckService {
      */
     public boolean isAtLeastInstructorForExercise(Exercise exercise) {
         return isAtLeastInstructorForExercise(exercise, null);
+    }
+
+    /**
+     * checks if the currently logged in user is at least an instructor in the course of the given exercise.
+     * Throws an AccessForbiddenException if the user has no access which returns a 403
+     *
+     * @param exercise belongs to a course that will be checked for permission rights
+     * @param user the user whose permissions should be checked (can be null)
+     */
+    public void checkIsAtLeastInstructorForExerciseElseThrow(@NotNull Exercise exercise, @Nullable User user) {
+        if (!isAtLeastInstructorForExercise(exercise, user)) {
+            throw new AccessForbiddenException("Exercise", exercise.getId());
+        }
     }
 
     /**
