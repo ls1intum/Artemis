@@ -167,12 +167,12 @@
                             </div>
                             <div class="d-flex flex-column mr-1 mb-1" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']">
                                 <button
-                                    *ngIf="isAtLeastInstructor"
+                                    *ngIf="isAtLeastInstructor && exam"
                                     jhiDeleteButton
-                                    [entityTitle]="exam.title"
+                                    [entityTitle]="exam.title || ''"
                                     deleteQuestion="artemisApp.examManagement.delete.question"
                                     deleteConfirmationText="artemisApp.examManagement.delete.typeNameToConfirm"
-                                    (delete)="deleteExam(exam.id)"
+                                    (delete)="deleteExam(exam.id!)"
                                     [dialogError]="dialogError$"
                                 >
                                     <fa-icon [icon]="'times'"></fa-icon>
