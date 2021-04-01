@@ -13,7 +13,6 @@ import java.util.zip.ZipFile;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
@@ -22,18 +21,10 @@ import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
-import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.dto.SubmissionExportOptionsDTO;
 
 public class SubmissionExportIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
-
-    @Autowired
-    ExerciseRepository exerciseRepository;
-
-    private List<User> users;
-
-    private Course course1;
 
     private ModelingExercise modelingExercise;
 
@@ -63,9 +54,9 @@ public class SubmissionExportIntegrationTest extends AbstractSpringIntegrationBa
 
     @BeforeEach
     public void initTestCase() {
-        users = database.addUsers(3, 1, 1);
+        List<User> users = database.addUsers(3, 1, 1);
         users.remove(database.getUserByLogin("admin"));
-        course1 = database.addCourseWithModelingAndTextAndFileUploadExercise();
+        Course course1 = database.addCourseWithModelingAndTextAndFileUploadExercise();
         course1.getExercises().forEach(exercise -> {
             database.createAndSaveParticipationForExercise(exercise, "student1");
             database.createAndSaveParticipationForExercise(exercise, "student2");

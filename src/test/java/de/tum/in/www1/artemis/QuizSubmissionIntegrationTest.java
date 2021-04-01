@@ -68,7 +68,7 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
     @Autowired
     private ResultRepository resultRepository;
 
-    private final int multiplier = 100;
+    private final int multiplier = 10;
 
     @BeforeEach
     public void init() {
@@ -90,7 +90,7 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         List<Course> courses = database.createCoursesWithExercisesAndLectures(true);
         Course course = courses.get(0);
         QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now(), null);
-        quizExercise.duration(60);
+        quizExercise.duration(240);
         quizExercise.setIsPlannedToStart(true);
         quizExercise.setIsVisibleBeforeStart(true);
         quizExercise = quizExerciseService.save(quizExercise);
@@ -104,8 +104,6 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
             final Principal principal = () -> username;
             // save
             quizSubmissionWebsocketService.saveSubmission(quizExercise.getId(), quizSubmission, principal);
-            // NOTE: the communication back to the client is currently deactivated
-            // verify(messagingTemplate, times(1)).convertAndSendToUser(username, "/topic/quizExercise/" + quizExercise.getId() + "/submission", quizSubmission);
         }
 
         // only half of the students submit manually
@@ -115,8 +113,6 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
             final Principal principal = () -> username;
             // submit
             quizSubmissionWebsocketService.saveSubmission(quizExercise.getId(), quizSubmission, principal);
-            // NOTE: the communication back to the client is currently deactivated
-            // verify(messagingTemplate, times(1)).convertAndSendToUser(username, "/topic/quizExercise/" + quizExercise.getId() + "/submission", quizSubmission);
         }
 
         // before the quiz submissions are processed, none of them ends up in the database

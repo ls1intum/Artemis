@@ -16,7 +16,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ExampleSubmission;
@@ -32,13 +31,10 @@ import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismComparison;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismStatus;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextPlagiarismResult;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextSubmissionElement;
-import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
-import de.tum.in.www1.artemis.repository.TeamRepository;
-import de.tum.in.www1.artemis.repository.TextClusterRepository;
-import de.tum.in.www1.artemis.repository.TextExerciseRepository;
-import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.TextExerciseUtilService;
+import de.tum.in.www1.artemis.web.rest.dto.PlagiarismComparisonStatusDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 
 public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -60,6 +56,9 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @Autowired
     private TeamRepository teamRepository;
+
+    @Autowired
+    private PlagiarismComparisonRepository plagiarismComparisonRepository;
 
     @BeforeEach
     public void initTestCase() {
@@ -112,7 +111,7 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         TextExercise textExercise = database.addCourseExamExerciseGroupWithOneTextExercise();
 
         request.delete("/api/text-exercises/" + textExercise.getId(), HttpStatus.OK);
-        assertThat(textExerciseRepository.findAll().isEmpty());
+        assertThat(textExerciseRepository.findAll()).isEmpty();
     }
 
     @Test
@@ -623,13 +622,8 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         database.createSubmissionForTextExercise(textExercise, database.getUserByLogin("student1"), longText);
         database.createSubmissionForTextExercise(textExercise, database.getUserByLogin("student2"), longText);
 
-        // Use default options for plagiarism detection
-        var params = new LinkedMultiValueMap<String, String>();
-        params.add("similarityThreshold", "50");
-        params.add("minimumScore", "0");
-        params.add("minimumSize", "0");
-
-        TextPlagiarismResult result = request.get("/api/text-exercises/" + textExercise.getId() + "/check-plagiarism", HttpStatus.OK, TextPlagiarismResult.class, params);
+        var path = "/api/text-exercises/" + textExercise.getId() + "/check-plagiarism";
+        var result = request.get(path, HttpStatus.OK, TextPlagiarismResult.class, database.getDefaultPlagiarismOptions());
         assertThat(result.getComparisons()).hasSize(1);
         assertThat(result.getExercise().getId()).isEqualTo(textExercise.getId());
 
@@ -642,6 +636,19 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         assertThat(comparison.getSimilarity()).isEqualTo(100.0, Offset.offset(1.0));
         assertThat(comparison.getStatus()).isEqualTo(PlagiarismStatus.NONE);
         assertThat(comparison.getMatches().size()).isEqualTo(1);
+
+        var plagiarismStatusDto = new PlagiarismComparisonStatusDTO();
+        plagiarismStatusDto.setStatus(PlagiarismStatus.CONFIRMED);
+        request.put("/api/plagiarism-comparisons/" + comparison.getId() + "/status", plagiarismStatusDto, HttpStatus.OK);
+        assertThat(plagiarismComparisonRepository.findByIdElseThrow(comparison.getId()).getStatus()).isEqualTo(PlagiarismStatus.CONFIRMED);
+
+        plagiarismStatusDto.setStatus(PlagiarismStatus.DENIED);
+        request.put("/api/plagiarism-comparisons/" + comparison.getId() + "/status", plagiarismStatusDto, HttpStatus.OK);
+        assertThat(plagiarismComparisonRepository.findByIdElseThrow(comparison.getId()).getStatus()).isEqualTo(PlagiarismStatus.DENIED);
+
+        plagiarismStatusDto.setStatus(PlagiarismStatus.NONE);
+        request.put("/api/plagiarism-comparisons/" + comparison.getId() + "/status", plagiarismStatusDto, HttpStatus.OK);
+        assertThat(plagiarismComparisonRepository.findByIdElseThrow(comparison.getId()).getStatus()).isEqualTo(PlagiarismStatus.NONE);
     }
 
     @Test
@@ -654,13 +661,8 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         database.createSubmissionForTextExercise(textExercise, database.getUserByLogin("student1"), shortText);
         database.createSubmissionForTextExercise(textExercise, database.getUserByLogin("student2"), shortText);
 
-        // Use default options for plagiarism detection
-        var params = new LinkedMultiValueMap<String, String>();
-        params.add("similarityThreshold", "50");
-        params.add("minimumScore", "0");
-        params.add("minimumSize", "5");
-
-        TextPlagiarismResult result = request.get("/api/text-exercises/" + textExercise.getId() + "/check-plagiarism", HttpStatus.OK, TextPlagiarismResult.class, params);
+        var path = "/api/text-exercises/" + textExercise.getId() + "/check-plagiarism";
+        var result = request.get(path, HttpStatus.OK, TextPlagiarismResult.class, database.getPlagiarismOptions(50D, 0, 5));
         assertThat(result.getComparisons()).hasSize(0);
     }
 
@@ -670,13 +672,8 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         final Course course = database.addCourseWithOneReleasedTextExercise();
         TextExercise textExercise = textExerciseRepository.findByCourseId(course.getId()).get(0);
 
-        // Use default options for plagiarism detection
-        var params = new LinkedMultiValueMap<String, String>();
-        params.add("similarityThreshold", "50");
-        params.add("minimumScore", "0");
-        params.add("minimumSize", "0");
-
-        TextPlagiarismResult result = request.get("/api/text-exercises/" + textExercise.getId() + "/check-plagiarism", HttpStatus.OK, TextPlagiarismResult.class, params);
+        var path = "/api/text-exercises/" + textExercise.getId() + "/check-plagiarism";
+        var result = request.get(path, HttpStatus.OK, TextPlagiarismResult.class, database.getDefaultPlagiarismOptions());
         assertThat(result.getComparisons()).hasSize(0);
     }
 

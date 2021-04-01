@@ -37,10 +37,10 @@ import de.tum.in.www1.artemis.web.rest.repository.FileSubmission;
 
 public class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
-    private final String testRepoBaseUrl = "/api/test-repository/";
-
     @Autowired
-    ProgrammingExerciseRepository programmingExerciseRepository;
+    private ProgrammingExerciseRepository programmingExerciseRepository;
+
+    private final String testRepoBaseUrl = "/api/test-repository/";
 
     private ProgrammingExercise programmingExercise;
 
@@ -50,7 +50,7 @@ public class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegra
 
     private final String currentLocalFolderName = "currentFolderName";
 
-    LocalRepository testRepo = new LocalRepository();
+    private final LocalRepository testRepo = new LocalRepository();
 
     @BeforeEach
     public void setup() throws Exception {
