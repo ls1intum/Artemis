@@ -205,7 +205,7 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
                     authorities.add(new SimpleGrantedAuthority(AuthoritiesConstants.ANONYMOUS));
                     principal = new AnonymousAuthenticationToken("WebsocketConfiguration", "anonymous", authorities);
                 }
-                log.debug("determineUser: " + principal);
+                log.debug("determineUser: {}", principal);
                 return principal;
             }
         };

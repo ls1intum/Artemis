@@ -109,7 +109,7 @@ public class QuizStatisticService {
     public void updateStatistics(Set<Result> results, QuizExercise quiz) {
 
         if (results != null && quiz != null && quiz.getQuizQuestions() != null) {
-            log.debug("update statistics with " + results.size() + " new results");
+            log.debug("update statistics with {} new results", results.size());
 
             for (Result result : results) {
                 // check if the result is rated
@@ -186,7 +186,7 @@ public class QuizStatisticService {
     private void removeResultFromAllStatistics(QuizExercise quizExercise, Result result) {
         // update QuizPointStatistic with the result
         if (result != null) {
-            log.debug("remove result from all statistics " + result);
+            log.debug("remove result from all statistics {}", result);
             // check if result contains a quizSubmission if true -> a it's not necessary to fetch it from the database
             QuizSubmission quizSubmission = (QuizSubmission) result.getSubmission();
             quizExercise.getQuizPointStatistic().removeOldResult(result.getScore(), result.isRated());

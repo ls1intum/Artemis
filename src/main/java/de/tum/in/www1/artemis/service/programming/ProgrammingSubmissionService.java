@@ -753,7 +753,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
         var assessor = newResult.getAssessor();
         newResult = resultRepository.save(newResult);
         newResult.setAssessor(assessor);
-        log.debug("Assessment locked with result id: " + newResult.getId() + " for assessor: " + newResult.getAssessor().getName());
+        log.debug("Assessment locked with result id: {} for assessor: {}", newResult.getId(), newResult.getAssessor().getName());
         // Make sure that submission is set back after saving
         newResult.setSubmission(existingSubmission);
         return newResult;

@@ -50,7 +50,7 @@ public class UrlService {
             // ... cut out the ending ".git", i.e. the last 4 characters
             repositorySlug = repositorySlug.substring(0, repositorySlug.length() - 4);
         }
-        log.debug("getRepositorySlugFromUrl " + url + " --> " + repositorySlug);
+        log.debug("getRepositorySlugFromUrl {} --> {}", url, repositorySlug);
         return repositorySlug;
     }
 
@@ -80,7 +80,7 @@ public class UrlService {
             throw new VersionControlException("No project key could be found for " + url.toString());
         }
         var projectKey = urlParts[2];
-        log.debug("getProjectKeyFromUrl " + url + " --> " + projectKey);
+        log.debug("getProjectKeyFromUrl {} --> {}", url, projectKey);
         return projectKey;
     }
 }

@@ -225,8 +225,8 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
                     updateAllStudentScores(exercise).run();
                 }
             });
-            log.debug("Scheduled lock student repositories after due date for Programming Exercise \"" + exercise.getTitle() + "\" (#" + exercise.getId() + ") for "
-                    + exercise.getDueDate() + ".");
+            log.debug("Scheduled lock student repositories after due date for Programming Exercise '{}' (#{}) for {}.", exercise.getTitle(), exercise.getId(),
+                    exercise.getDueDate());
         }
         else {
             scheduleService.cancelScheduledTaskForLifecycle(exercise.getId(), ExerciseLifecycle.DUE);
@@ -235,8 +235,8 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
         // For exercises with buildAndTestAfterDueDate
         if (exercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null && ZonedDateTime.now().isBefore(exercise.getBuildAndTestStudentSubmissionsAfterDueDate())) {
             scheduleService.scheduleTask(exercise, ExerciseLifecycle.BUILD_AND_TEST_AFTER_DUE_DATE, buildAndTestRunnableForExercise(exercise));
-            log.debug("Scheduled build and test for student submissions after due date for Programming Exercise \"" + exercise.getTitle() + "\" (#" + exercise.getId() + ") for "
-                    + exercise.getBuildAndTestStudentSubmissionsAfterDueDate() + ".");
+            log.debug("Scheduled build and test for student submissions after due date for Programming Exercise '{}' (#{}) for {}.", exercise.getTitle(), exercise.getId(),
+                    exercise.getBuildAndTestStudentSubmissionsAfterDueDate());
         }
         else {
             scheduleService.cancelScheduledTaskForLifecycle(exercise.getId(), ExerciseLifecycle.BUILD_AND_TEST_AFTER_DUE_DATE);
@@ -276,7 +276,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
         else {
             scheduleService.cancelScheduledTaskForLifecycle(exercise.getId(), ExerciseLifecycle.BUILD_AND_TEST_AFTER_DUE_DATE);
         }
-        log.debug("Scheduled Exam Programming Exercise \"" + exercise.getTitle() + "\" (#" + exercise.getId() + ").");
+        log.debug("Scheduled Exam Programming Exercise '{}' (#{}).", exercise.getTitle(), exercise.getId());
     }
 
     @NotNull
@@ -287,7 +287,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
                 ProgrammingExercise programmingExerciseWithTemplateParticipation = programmingExerciseRepository
                         .findByIdWithTemplateAndSolutionParticipationElseThrow(exercise.getId());
                 gitService.combineAllCommitsOfRepositoryIntoOne(programmingExerciseWithTemplateParticipation.getTemplateParticipation().getVcsRepositoryUrl());
-                log.debug("Combined template repository commits of programming exercise " + programmingExerciseWithTemplateParticipation.getId() + ".");
+                log.debug("Combined template repository commits of programming exercise {}.", programmingExerciseWithTemplateParticipation.getId());
                 groupNotificationService.notifyInstructorGroupAboutExerciseUpdate(programmingExerciseWithTemplateParticipation,
                         Constants.PROGRAMMING_EXERCISE_SUCCESSFUL_COMBINE_OF_TEMPLATE_COMMITS);
             }

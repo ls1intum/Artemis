@@ -188,7 +188,7 @@ public class UserService {
      */
     public User saveUser(User user) {
         clearUserCaches(user);
-        log.debug("Save user " + user);
+        log.debug("Save user {}", user);
         return userRepository.save(user);
     }
 
@@ -488,7 +488,7 @@ public class UserService {
      * @param group the group
      */
     private void addUserToGroupInternal(User user, String group) {
-        log.debug("Add user " + user.getLogin() + " to group " + group);
+        log.debug("Add user {} to group {}", user.getLogin(), group);
         if (!user.getGroups().contains(group)) {
             user.getGroups().add(group);
             user.setAuthorities(authorityService.buildAuthorities(user));

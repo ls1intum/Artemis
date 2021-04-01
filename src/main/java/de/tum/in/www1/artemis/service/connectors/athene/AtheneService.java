@@ -141,7 +141,7 @@ public class AtheneService {
      * @param maxRetries number of retries before the request will be canceled
      */
     public void submitJob(TextExercise exercise, int maxRetries) {
-        log.debug("Start Athene Service for Text Exercise \"" + exercise.getTitle() + "\" (#" + exercise.getId() + ").");
+        log.debug("Start Athene Service for Text Exercise '{}' (#{}).", exercise.getTitle(), exercise.getId());
 
         // Find all submissions for Exercise
         // We only support english languages so far, to prevent corruption of the clustering

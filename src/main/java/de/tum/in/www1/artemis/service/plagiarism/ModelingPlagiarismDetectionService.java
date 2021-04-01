@@ -116,7 +116,7 @@ public class ModelingPlagiarismDetectionService {
                 UMLDiagram model2 = nonEmptyDiagrams.get(j);
 
                 final double similarity = model1.similarity(model2);
-                log.debug("Compare result " + i + " with " + j + ": " + similarity);
+                log.debug("Compare result {} with {}: {}", i, j, similarity);
 
                 if (similarity < minimumSimilarity) {
                     // ignore comparison results with too small similarity

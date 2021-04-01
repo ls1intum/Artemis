@@ -80,7 +80,7 @@ public class ScheduleService {
         Tuple<Long, ExerciseLifecycle> taskId = new Tuple<>(exerciseId, lifecycle);
         Set<ScheduledFuture<?>> futures = scheduledTasks.get(taskId);
         if (futures != null) {
-            log.debug("Cancelling scheduled task " + lifecycle + " for Exercise (#" + exerciseId + ").");
+            log.debug("Cancelling scheduled task {} for Exercise (#{}).", lifecycle, exerciseId);
             futures.forEach(future -> future.cancel(false));
             removeScheduledTask(exerciseId, lifecycle);
         }

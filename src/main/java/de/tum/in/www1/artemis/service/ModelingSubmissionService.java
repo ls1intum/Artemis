@@ -170,7 +170,7 @@ public class ModelingSubmissionService extends SubmissionService {
             }
         }
 
-        log.debug("return model: " + modelingSubmission.getModel());
+        log.debug("return model: {}", modelingSubmission.getModel());
         return modelingSubmission;
     }
 

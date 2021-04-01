@@ -68,7 +68,7 @@ public class StaticCodeAnalysisService {
         // Retrieve the default configuration for a specific programming language
         List<StaticCodeAnalysisDefaultCategory> defaultConfiguration = staticCodeAnalysisDefaultConfigurations.get(programmingExercise.getProgrammingLanguage());
         if (defaultConfiguration == null) {
-            log.debug("Could not create default static code analysis categories for exercise " + programmingExercise.getId() + ". Default configuration not available.");
+            log.debug("Could not create default static code analysis categories for exercise {}. Default configuration not available.", programmingExercise.getId());
             return;
         }
 
@@ -131,7 +131,7 @@ public class StaticCodeAnalysisService {
         Set<StaticCodeAnalysisCategory> categories = findByExerciseId(exercise.getId());
         List<StaticCodeAnalysisDefaultCategory> defaultCategories = staticCodeAnalysisDefaultConfigurations.get(exercise.getProgrammingLanguage());
         if (defaultCategories == null) {
-            log.debug("Could not reset static code analysis categories for exercise " + exercise.getId() + ". Default configuration not available.");
+            log.debug("Could not reset static code analysis categories for exercise {}. Default configuration not available.", exercise.getId());
             return categories;
         }
 
@@ -222,7 +222,7 @@ public class StaticCodeAnalysisService {
                 }
             }
             catch (JsonProcessingException exception) {
-                log.debug("Error occurred parsing feedback " + feedback + " to static code analysis issue: " + exception.getMessage());
+                log.debug("Error occurred parsing feedback {} to static code analysis issue: {}", feedback, exception.getMessage());
             }
 
             if (category.isEmpty() || category.get().getState().equals(CategoryState.INACTIVE)) {

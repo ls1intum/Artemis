@@ -94,7 +94,7 @@ public class QuizSubmissionService {
 
         // add result to statistics
         quizScheduleService.addResultForStatisticUpdate(quizExercise.getId(), result);
-        log.debug("submit practice quiz finished: " + quizSubmission);
+        log.debug("submit practice quiz finished: {}", quizSubmission);
         return result;
     }
 
@@ -123,7 +123,7 @@ public class QuizSubmissionService {
             log.info("Quiz not in QuizScheduleService cache, fetching from DB");
             quizExercise = quizExerciseRepository.findByIdElseThrow(exerciseId);
         }
-        log.debug(logText + "Received quiz exercise for user {} in quiz {} in {} µs.", username, exerciseId, (System.nanoTime() - start) / 1000);
+        log.debug("{}: Received quiz exercise for user {} in quiz {} in {} µs.", logText, username, exerciseId, (System.nanoTime() - start) / 1000);
         if (!quizExercise.isSubmissionAllowed()) {
             throw new QuizSubmissionException("The quiz is not active");
         }
