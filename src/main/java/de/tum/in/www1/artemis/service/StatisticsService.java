@@ -13,6 +13,7 @@ import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.enumeration.GraphType;
 import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
 import de.tum.in.www1.artemis.domain.enumeration.SpanType;
+import de.tum.in.www1.artemis.domain.statistics.StatisticsEntry;
 import de.tum.in.www1.artemis.repository.ParticipantScoreRepository;
 import de.tum.in.www1.artemis.repository.StatisticsRepository;
 import de.tum.in.www1.artemis.web.rest.dto.CourseManagementStatisticsDTO;
@@ -44,7 +45,7 @@ public class StatisticsService {
     public Integer[] getChartData(SpanType span, Integer periodIndex, GraphType graphType, Long courseId) {
         ZonedDateTime startDate;
         ZonedDateTime endDate;
-        List<Map<String, Object>> outcome;
+        List<StatisticsEntry> outcome;
         Integer[] result = new Integer[0];
         ZonedDateTime now = ZonedDateTime.now();
         int lengthOfMonth;
@@ -56,20 +57,20 @@ public class StatisticsService {
             case DAY:
                 startDate = now.minusDays(-periodIndex).withHour(0).withMinute(0).withSecond(0).withNano(0);
                 endDate = now.minusDays(-periodIndex).withHour(23).withMinute(59).withSecond(59);
-                outcome = this.statisticsRepository.getDataFromDatabase(span, startDate, endDate, graphType, courseId);
-                return this.statisticsRepository.createResultArrayForDay(outcome, result, endDate);
+                outcome = this.statisticsRepository.getNumberOfEntriesPerTimeSlot(span, startDate, endDate, graphType, courseId);
+                return this.statisticsRepository.mergeResultsIntoArrayForDay(outcome, result);
             case WEEK:
                 startDate = now.minusWeeks(-periodIndex).minusDays(6).withHour(0).withMinute(0).withSecond(0).withNano(0);
                 endDate = now.minusWeeks(-periodIndex).withHour(23).withMinute(59).withSecond(59);
-                outcome = this.statisticsRepository.getDataFromDatabase(span, startDate, endDate, graphType, courseId);
-                return this.statisticsRepository.createResultArrayForWeek(outcome, result, endDate);
+                outcome = this.statisticsRepository.getNumberOfEntriesPerTimeSlot(span, startDate, endDate, graphType, courseId);
+                return this.statisticsRepository.mergeResultsIntoArrayForWeek(outcome, result, startDate);
             case MONTH:
                 startDate = now.minusMonths(1 - periodIndex).withHour(0).withMinute(0).withSecond(0).withNano(0);
                 endDate = now.minusMonths(-periodIndex).withHour(23).withMinute(59).withSecond(59);
                 result = new Integer[(int) ChronoUnit.DAYS.between(startDate, endDate)];
                 Arrays.fill(result, 0);
-                outcome = this.statisticsRepository.getDataFromDatabase(span, startDate.plusDays(1), endDate, graphType, courseId);
-                return this.statisticsRepository.createResultArrayForMonth(outcome, result, endDate);
+                outcome = this.statisticsRepository.getNumberOfEntriesPerTimeSlot(span, startDate.plusDays(1), endDate, graphType, courseId);
+                return this.statisticsRepository.mergeResultsIntoArrayForMonth(outcome, result, startDate.plusDays(1));
             case QUARTER:
                 LocalDateTime localStartDate = now.toLocalDateTime().with(DayOfWeek.MONDAY);
                 LocalDateTime localEndDate = now.toLocalDateTime().with(DayOfWeek.SUNDAY);
@@ -77,14 +78,14 @@ public class StatisticsService {
                 startDate = localStartDate.atZone(zone).minusWeeks(11 + (12 * (-periodIndex))).withHour(0).withMinute(0).withSecond(0).withNano(0);
                 endDate = periodIndex != 0 ? localEndDate.atZone(zone).minusWeeks(12 * (-periodIndex)).withHour(23).withMinute(59).withSecond(59)
                         : localEndDate.atZone(zone).withHour(23).withMinute(59).withSecond(59);
-                outcome = this.statisticsRepository.getDataFromDatabase(span, startDate, endDate, graphType, courseId);
-                return this.statisticsRepository.createResultArrayForQuarter(outcome, result, endDate);
+                outcome = this.statisticsRepository.getNumberOfEntriesPerTimeSlot(span, startDate, endDate, graphType, courseId);
+                return this.statisticsRepository.mergeResultsIntoArrayForQuarter(outcome, result, startDate);
             case YEAR:
                 startDate = now.minusYears(1 - periodIndex).plusMonths(1).withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0).withNano(0);
                 lengthOfMonth = YearMonth.of(now.minusYears(-periodIndex).getYear(), now.minusYears(-periodIndex).getMonth()).lengthOfMonth();
                 endDate = now.minusYears(-periodIndex).withDayOfMonth(lengthOfMonth).withHour(23).withMinute(59).withSecond(59);
-                outcome = this.statisticsRepository.getDataFromDatabase(span, startDate, endDate, graphType, courseId);
-                return this.statisticsRepository.createResultArrayForYear(outcome, result, endDate);
+                outcome = this.statisticsRepository.getNumberOfEntriesPerTimeSlot(span, startDate, endDate, graphType, courseId);
+                return this.statisticsRepository.mergeResultsIntoArrayForYear(outcome, result, startDate);
             default:
                 return null;
         }
