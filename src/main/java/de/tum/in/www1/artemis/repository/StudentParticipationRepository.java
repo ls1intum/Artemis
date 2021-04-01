@@ -123,10 +123,11 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             LEFT JOIN FETCH p.results r
             LEFT JOIN FETCH r.submission s
             WHERE p.exercise.id = :#{#exerciseId}
-                AND (r.id = (SELECT max(pr.id) FROM p.results pr
-                    LEFT JOIN pr.submission prs
-                    WHERE (prs.type <> 'ILLEGAL' OR prs.type IS NULL))
-                OR r IS NULL)
+                AND (r.id = (
+                    SELECT max(pr.id) FROM p.results pr
+                        LEFT JOIN pr.submission prs
+                        WHERE (prs.type <> 'ILLEGAL' OR prs.type IS NULL))
+                    OR r IS NULL)
             """)
     List<StudentParticipation> findByExerciseIdWithLatestResult(@Param("exerciseId") Long exerciseId);
 
@@ -136,10 +137,11 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             LEFT JOIN FETCH r.submission s
             WHERE p.exercise.id = :#{#exerciseId}
                 AND p.testRun = false
-                AND (r.id = (SELECT max(pr.id) FROM p.results pr
-                    LEFT JOIN pr.submission prs
-                    WHERE (prs.type <> 'ILLEGAL' OR prs.type IS NULL)
-                OR r IS NULL)
+                AND (r.id = (
+                    SELECT max(pr.id) FROM p.results pr
+                        LEFT JOIN pr.submission prs
+                        WHERE (prs.type <> 'ILLEGAL' OR prs.type IS NULL))
+                    OR r IS NULL)
             """)
     List<StudentParticipation> findByExerciseIdWithLatestResultIgnoreTestRunSubmissions(@Param("exerciseId") Long exerciseId);
 
