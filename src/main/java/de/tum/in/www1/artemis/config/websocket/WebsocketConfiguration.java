@@ -101,7 +101,7 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
         // If tcpClient is null, there is no valid address specified in the config. This could be due to a development setup or a mistake in the config.
         TcpOperations<byte[]> tcpClient = createTcpClient();
         if (tcpClient != null) {
-            log.info("Enabling StompBrokerRelay for WebSocket messages using " + String.join(", ", brokerAddresses));
+            log.info("Enabling StompBrokerRelay for WebSocket messages using {}", String.join(", ", brokerAddresses));
             config
                     // Enable the relay for "/topic"
                     .enableStompBrokerRelay("/topic")
@@ -188,7 +188,7 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
             @Override
             public void afterHandshake(ServerHttpRequest request, ServerHttpResponse response, WebSocketHandler wsHandler, Exception exception) {
                 if (exception != null) {
-                    log.warn("Exception occurred in WS.afterHandshake: " + exception.getMessage());
+                    log.warn("Exception occurred in WS.afterHandshake", exception);
                 }
             }
         };
@@ -272,10 +272,10 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
 
         private void logUnauthorizedDestinationAccess(Principal principal, String destination) {
             if (principal == null) {
-                log.warn("Anonymous user tried to access the protected topic: " + destination);
+                log.warn("Anonymous user tried to access the protected topic: {}", destination);
             }
             else {
-                log.warn("User with login '" + principal.getName() + "' tried to access the protected topic: " + destination);
+                log.warn("User with login '{}' tried to access the protected topic: {}", principal.getName(), destination);
             }
         }
     }

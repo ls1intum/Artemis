@@ -593,7 +593,7 @@ public class GitService {
             }
         }
         catch (Exception e) {
-            log.warn("Cannot set the remote url due to the following exception: " + e.getMessage(), e);
+            log.warn("Cannot set the remote url", e);
         }
     }
 

@@ -76,7 +76,7 @@ public class MetricsBean {
                 final var connectedUsers = userRegistry.getUsers();
                 final var subscriptionCount = connectedUsers.stream().flatMap(simpUser -> simpUser.getSessions().stream()).map(simpSession -> simpSession.getSubscriptions().size())
                         .reduce(0, Integer::sum);
-                log.info("Currently connect users " + connectedUsers.size() + " with active websocket subscriptions: " + subscriptionCount);
+                log.info("Currently connect users {} with active websocket subscriptions: {}", connectedUsers.size(), subscriptionCount);
             }, LOGGING_DELAY_SECONDS * 1000);
         }
     }

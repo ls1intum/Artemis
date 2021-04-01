@@ -435,7 +435,7 @@ public class ProgrammingExercise extends Exercise {
             return new VcsRepositoryUrl(testRepositoryUrl);
         }
         catch (MalformedURLException e) {
-            log.warn("Cannot create URL for testRepositoryUrl: " + testRepositoryUrl + " due to the following error: " + e.getMessage());
+            log.warn("Cannot create URL for testRepositoryUrl: {} due to the following error: {}", testRepositoryUrl, e.getMessage());
         }
         return null;
     }

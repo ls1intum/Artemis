@@ -42,7 +42,7 @@ public class SentryConfiguration {
 
         try {
             final String dsn = sentryDsn.get() + "?stacktrace.app.packages=de.tum.in.www1.artemis";
-            log.info("Sentry DSN: " + dsn);
+            log.info("Sentry DSN: {}", dsn);
 
             Sentry.init(options -> {
                 options.setDsn(dsn);
