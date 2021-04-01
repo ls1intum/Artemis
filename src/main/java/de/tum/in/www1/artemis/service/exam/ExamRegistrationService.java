@@ -118,7 +118,7 @@ public class ExamRegistrationService {
                 log.warn("User with registration number '{}' and login '{}' not found in Artemis user database nor found in (TUM) LDAP", registrationNumber, login);
             }
             catch (Exception ex) {
-                log.warn("Error while processing user with registration number " + registrationNumber + ": " + ex.getMessage(), ex);
+                log.warn("Error while processing user with registration number " + registrationNumber, ex);
             }
 
             notFoundStudentsDTOs.add(studentDto);
