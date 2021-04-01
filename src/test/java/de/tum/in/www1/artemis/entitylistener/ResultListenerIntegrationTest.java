@@ -15,7 +15,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
@@ -28,53 +27,37 @@ import de.tum.in.www1.artemis.domain.scores.StudentScore;
 import de.tum.in.www1.artemis.domain.scores.TeamScore;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.SecurityUtils;
-import de.tum.in.www1.artemis.service.ParticipationService;
-import de.tum.in.www1.artemis.service.ScoreService;
 
 public class ResultListenerIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
-    Long idOfCourse;
+    private Long idOfIndividualTextExercise;
 
-    Long idOfIndividualTextExercise;
+    private Long idOfTeamTextExercise;
 
-    Long idOfTeamTextExercise;
+    private Long idOfTeam1;
 
-    Long idOfTeam1;
-
-    Long idOfStudent1;
+    private Long idOfStudent1;
 
     @Autowired
-    CourseRepository courseRepository;
+    private ExerciseRepository exerciseRepository;
 
     @Autowired
-    ExerciseRepository exerciseRepository;
+    private ResultRepository resultRepository;
 
     @Autowired
-    SubmissionRepository submissionRepository;
+    private StudentParticipationRepository studentParticipationRepository;
 
     @Autowired
-    ResultRepository resultRepository;
+    private StudentScoreRepository studentScoreRepository;
 
     @Autowired
-    ParticipationService participationService;
+    private ParticipantScoreRepository participantScoreRepository;
 
     @Autowired
-    StudentParticipationRepository studentParticipationRepository;
+    private TeamRepository teamRepository;
 
     @Autowired
-    StudentScoreRepository studentScoreRepository;
-
-    @Autowired
-    ParticipantScoreRepository participantScoreRepository;
-
-    @Autowired
-    TeamRepository teamRepository;
-
-    @Autowired
-    UserRepository userRepository;
-
-    @SpyBean
-    private ScoreService scoreService;
+    private UserRepository userRepository;
 
     @AfterEach
     public void resetDatabase() {
@@ -90,7 +73,7 @@ public class ResultListenerIntegrationTest extends AbstractSpringIntegrationBamb
         idOfStudent1 = student1.getId();
         // creating course
         Course course = this.database.createCourse();
-        idOfCourse = course.getId();
+        Long idOfCourse = course.getId();
         TextExercise textExercise = database.createIndividualTextExercise(course, pastTimestamp, pastTimestamp, pastTimestamp);
         idOfIndividualTextExercise = textExercise.getId();
         Exercise teamExercise = database.createTeamTextExercise(course, pastTimestamp, pastTimestamp, pastTimestamp);
@@ -298,7 +281,7 @@ public class ResultListenerIntegrationTest extends AbstractSpringIntegrationBamb
         List<Result> savedResults = resultRepository.findAll();
         assertThat(savedStudentScores).isEmpty();
         assertThat(savedResults).isEmpty();
-        verify(this.scoreService, times(1)).removeOrUpdateAssociatedParticipantScore(any(Result.class));
+        verify(scoreService, times(1)).removeOrUpdateAssociatedParticipantScore(any(Result.class));
     }
 
     @ParameterizedTest
@@ -313,7 +296,7 @@ public class ResultListenerIntegrationTest extends AbstractSpringIntegrationBamb
         List<Result> savedResults = resultRepository.findAll();
         assertThat(savedStudentScores).isEmpty();
         assertThat(savedResults).isEmpty();
-        verify(this.scoreService, times(1)).removeOrUpdateAssociatedParticipantScore(any(Result.class));
+        verify(scoreService, times(1)).removeOrUpdateAssociatedParticipantScore(any(Result.class));
     }
 
     @ParameterizedTest

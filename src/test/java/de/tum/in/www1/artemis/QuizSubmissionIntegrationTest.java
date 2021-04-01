@@ -39,36 +39,36 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
     private final Logger log = LoggerFactory.getLogger(getClass());
 
     @Autowired
-    CourseRepository courseRepository;
+    private CourseRepository courseRepository;
 
     @Autowired
-    ExerciseRepository exerciseRepository;
+    private ExerciseRepository exerciseRepository;
 
     @Autowired
-    QuizExerciseService quizExerciseService;
+    private QuizExerciseService quizExerciseService;
 
     @Autowired
-    QuizExerciseRepository quizExerciseRepository;
+    private QuizExerciseRepository quizExerciseRepository;
 
     @Autowired
-    QuizScheduleService quizScheduleService;
+    private QuizScheduleService quizScheduleService;
 
     @Autowired
-    QuizSubmissionWebsocketService quizSubmissionWebsocketService;
+    private QuizSubmissionWebsocketService quizSubmissionWebsocketService;
 
     @Autowired
-    QuizSubmissionRepository quizSubmissionRepository;
+    private QuizSubmissionRepository quizSubmissionRepository;
 
     @Autowired
-    ParticipationRepository participationRepository;
+    private ParticipationRepository participationRepository;
 
     @Autowired
-    SubmissionRepository submissionRepository;
+    private SubmissionRepository submissionRepository;
 
     @Autowired
-    ResultRepository resultRepository;
+    private ResultRepository resultRepository;
 
-    int multiplier = 100;
+    private final int multiplier = 10;
 
     @BeforeEach
     public void init() {
@@ -90,7 +90,7 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         List<Course> courses = database.createCoursesWithExercisesAndLectures(true);
         Course course = courses.get(0);
         QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now(), null);
-        quizExercise.duration(60);
+        quizExercise.duration(240);
         quizExercise.setIsPlannedToStart(true);
         quizExercise.setIsVisibleBeforeStart(true);
         quizExercise = quizExerciseService.save(quizExercise);
@@ -104,8 +104,6 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
             final Principal principal = () -> username;
             // save
             quizSubmissionWebsocketService.saveSubmission(quizExercise.getId(), quizSubmission, principal);
-            // NOTE: the communication back to the client is currently deactivated
-            // verify(messagingTemplate, times(1)).convertAndSendToUser(username, "/topic/quizExercise/" + quizExercise.getId() + "/submission", quizSubmission);
         }
 
         // only half of the students submit manually
@@ -115,29 +113,29 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
             final Principal principal = () -> username;
             // submit
             quizSubmissionWebsocketService.saveSubmission(quizExercise.getId(), quizSubmission, principal);
-            // NOTE: the communication back to the client is currently deactivated
-            // verify(messagingTemplate, times(1)).convertAndSendToUser(username, "/topic/quizExercise/" + quizExercise.getId() + "/submission", quizSubmission);
         }
 
         // before the quiz submissions are processed, none of them ends up in the database
-        assertThat(quizSubmissionRepository.count()).isEqualTo(0);
+        assertThat(submissionRepository.countByExerciseIdSubmitted(quizExercise.getId())).isEqualTo(0);
 
         // process first half of the submissions
         quizScheduleService.processCachedQuizSubmissions();
-        assertThat(quizSubmissionRepository.count()).isEqualTo(numberOfParticipants / 2);
+        assertThat(submissionRepository.countByExerciseIdSubmitted(quizExercise.getId())).isEqualTo(numberOfParticipants / 2);
 
         // End the quiz right now so that results can be processed
         quizExercise = quizExerciseRepository.findOneWithQuestionsAndStatistics(quizExercise.getId());
-        quizExercise.setDuration((int) Duration.between(quizExercise.getReleaseDate(), ZonedDateTime.now()).getSeconds() - Constants.QUIZ_GRACE_PERIOD_IN_SECONDS);
+        assertThat(quizExercise).isNotNull();
+        quizExercise.setDuration((int) (Duration.between(quizExercise.getReleaseDate(), ZonedDateTime.now()).getSeconds() - Constants.QUIZ_GRACE_PERIOD_IN_SECONDS));
         exerciseRepository.saveAndFlush(quizExercise);
 
         quizScheduleService.processCachedQuizSubmissions();
 
         // after the quiz submissions have been processed, all submission are saved to the database
-        assertThat(quizSubmissionRepository.count()).isEqualTo(numberOfParticipants);
+        assertThat(submissionRepository.countByExerciseIdSubmitted(quizExercise.getId())).isEqualTo(numberOfParticipants);
 
         // Test the statistics directly from the database
         QuizExercise quizExerciseWithStatistic = quizExerciseRepository.findOneWithQuestionsAndStatistics(quizExercise.getId());
+        assertThat(quizExerciseWithStatistic).isNotNull();
         assertThat(quizExerciseWithStatistic.getQuizPointStatistic().getParticipantsUnrated()).isEqualTo(0);
         assertThat(quizExerciseWithStatistic.getQuizPointStatistic().getParticipantsRated()).isEqualTo(numberOfParticipants);
         int questionScore = quizExerciseWithStatistic.getQuizQuestions().stream().map(QuizQuestion::getPoints).reduce(0, Integer::sum);
@@ -181,7 +179,7 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         // execute the scheduler again, this should remove the quiz exercise from the cache
         quizScheduleService.processCachedQuizSubmissions();
         // but of course keep all submissions
-        assertThat(quizSubmissionRepository.count()).isEqualTo(numberOfParticipants);
+        assertThat(submissionRepository.countByExerciseIdSubmitted(quizExercise.getId())).isEqualTo(numberOfParticipants);
     }
 
     @Test
@@ -219,6 +217,7 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
 
         // Test the statistics directly from the database
         QuizExercise quizExerciseWithStatistic = quizExerciseRepository.findOneWithQuestionsAndStatistics(quizExercise.getId());
+        assertThat(quizExerciseWithStatistic).isNotNull();
         assertThat(quizExerciseWithStatistic.getQuizPointStatistic().getParticipantsRated()).isEqualTo(0);
         assertThat(quizExerciseWithStatistic.getQuizPointStatistic().getParticipantsUnrated()).isEqualTo(numberOfParticipants);
         int questionScore = quizExerciseWithStatistic.getQuizQuestions().stream().map(QuizQuestion::getPoints).reduce(0, Integer::sum);
@@ -389,6 +388,7 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         // all stats must be 0 because we have a preview here
         // Test the statistics directly from the database
         QuizExercise quizExerciseWithStatistic = quizExerciseRepository.findOneWithQuestionsAndStatistics(quizExercise.getId());
+        assertThat(quizExerciseWithStatistic).isNotNull();
         assertThat(quizExerciseWithStatistic.getQuizPointStatistic().getParticipantsRated()).isEqualTo(0);
         assertThat(quizExerciseWithStatistic.getQuizPointStatistic().getParticipantsUnrated()).isEqualTo(0);
         int questionScore = quizExerciseWithStatistic.getQuizQuestions().stream().map(QuizQuestion::getPoints).reduce(0, Integer::sum);
@@ -460,7 +460,7 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         quizSubmissionWebsocketService.saveSubmission(quizExercise.getId(), quizSubmission, () -> "student1");
 
         quizScheduleService.processCachedQuizSubmissions();
-        assertThat(quizSubmissionRepository.count()).isZero();
+        assertThat(submissionRepository.countByExerciseIdSubmitted(quizExercise.getId())).isZero();
 
         // wait for the new release date to pass
         sleep(2500);
@@ -486,11 +486,12 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         quizScheduleService.processCachedQuizSubmissions();
 
         // before the quiz submissions are submitted, none of them ends up in the database
-        assertThat(quizSubmissionRepository.count()).isZero();
+        assertThat(submissionRepository.countByExerciseIdSubmitted(quizExercise.getId())).isZero();
 
         // set the quiz end to now and ...
         log.debug("// End the quiz and delete it");
         quizExercise = quizExerciseRepository.findOneWithQuestionsAndStatistics(quizExercise.getId());
+        assertThat(quizExercise).isNotNull();
         quizExercise.setDuration((int) Duration.between(quizExercise.getReleaseDate(), ZonedDateTime.now()).getSeconds() - Constants.QUIZ_GRACE_PERIOD_IN_SECONDS);
         quizExercise = exerciseRepository.saveAndFlush(quizExercise);
         quizScheduleService.updateQuizExercise(quizExercise);
@@ -505,7 +506,7 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         // quiz is not cached anymore
         assertThat(quizScheduleService.getQuizExercise(quizExercise.getId())).isNull();
         // no submissions were marked as submitted and saved
-        assertThat(quizSubmissionRepository.count()).isZero();
+        assertThat(submissionRepository.countByExerciseIdSubmitted(quizExercise.getId())).isZero();
     }
 
     @Test
@@ -529,6 +530,7 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
 
         // End the quiz right now so that results can be processed
         quizExercise = quizExerciseRepository.findOneWithQuestionsAndStatistics(quizExercise.getId());
+        assertThat(quizExercise).isNotNull();
         quizExercise.setDuration((int) Duration.between(quizExercise.getReleaseDate(), ZonedDateTime.now()).getSeconds() - Constants.QUIZ_GRACE_PERIOD_IN_SECONDS);
         exerciseRepository.saveAndFlush(quizExercise);
 
@@ -586,7 +588,7 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
 
         quizScheduleService.processCachedQuizSubmissions();
 
-        assertThat(quizSubmissionRepository.count()).isEqualTo(1);
+        assertThat(submissionRepository.countByExerciseIdSubmitted(quizExercise.getId())).isEqualTo(1);
 
         List<Result> results = resultRepository.findByParticipationExerciseIdOrderByCompletionDateAsc(quizExercise.getId());
         assertThat(results.size()).isEqualTo(1);

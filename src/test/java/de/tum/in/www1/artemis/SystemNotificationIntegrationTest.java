@@ -17,16 +17,12 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.domain.notification.SystemNotification;
 import de.tum.in.www1.artemis.repository.SystemNotificationRepository;
-import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
 public class SystemNotificationIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
-    DatabaseUtilService database;
-
-    @Autowired
-    SystemNotificationRepository systemNotificationRepo;
+    private SystemNotificationRepository systemNotificationRepo;
 
     private SystemNotification systemNotification;
 
@@ -143,7 +139,7 @@ public class SystemNotificationIntegrationTest extends AbstractSpringIntegration
     @Test
     @WithMockUser(username = "admin1", roles = "ADMIN")
     public void testGetAllSystemNotifications() throws Exception {
-        List<SystemNotification> response = request.get("/api/system-notifications", HttpStatus.OK, List.class);
+        List<SystemNotification> response = request.getList("/api/system-notifications", HttpStatus.OK, SystemNotification.class);
         assertThat(response.isEmpty()).as("system notification are present").isFalse();
     }
 

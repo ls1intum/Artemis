@@ -71,7 +71,7 @@
                                     </span>
                                 </ng-template>
                                 <ng-template ngx-datatable-cell-template let-value="value">
-                                    <fa-icon [icon]="'square'" [styles]="{ color: testCaseColors[value] || 'white' }" class="mr-2"></fa-icon>
+                                    <fa-icon [icon]="'square'" [styles]="{ color: testCaseColors[value] || 'transparent' }" class="mr-2"></fa-icon>
                                     {{ value }}
                                 </ng-template>
                             </ngx-datatable-column>
@@ -141,34 +141,25 @@
                                     ></jhi-table-editable-field>
                                 </ng-template>
                             </ngx-datatable-column>
-                            <ngx-datatable-column name="After Due Date" prop="afterDueDate" sortable="false">
-                                <ng-template ngx-datatable-header-template>
-                                    <span class="datatable-header-cell-wrapper">
-                                        <span class="datatable-header-cell-label bold">After Due Date</span>
-                                        <fa-icon
-                                            *ngIf="buildAfterDueDateActive === false"
-                                            [icon]="'question-circle'"
-                                            class="text-secondary ml-2"
-                                            [ngbPopover]="popoverContent"
-                                            placement="bottom"
-                                            container="body"
-                                        ></fa-icon>
-                                        <ng-template #popoverContent>
-                                            <div class="d-flex flex-column run-after-due-date-disabled">
-                                                <pre jhiTranslate="artemisApp.programmingExercise.configureGrading.testCases.runAfterDueDateDisabled"></pre>
-                                                <a [routerLink]="['/course-management/', this.courseId, 'programming-exercises', this.exercise.id!, 'edit']" class="ml-auto">
-                                                    <jhi-button [icon]="'arrow-right'" placement="top" ngbTooltip="{{ 'entity.action.edit' | artemisTranslate }}"></jhi-button>
-                                                </a>
-                                            </div>
-                                        </ng-template>
+                            <ngx-datatable-column name="Visibility" prop="visibility" sortable="false">
+                                <ng-template ngx-datatable-header-template let-sortFn="sortFn">
+                                    <span class="datatable-header-cell-wrapper" (click)="sortFn()">
+                                        <span class="datatable-header-cell-label bold sortable">Visibility</span>
+                                        <fa-icon [icon]="iconForSortPropField('testCases', 'visibility')"></fa-icon>
+                                        <fa-icon [icon]="'question-circle'" class="text-secondary ml-2" [ngbPopover]="popoverContent" placement="bottom" container="body"></fa-icon>
                                     </span>
+                                    <ng-template #popoverContent>
+                                        <div class="d-flex flex-column run-after-due-date-disabled">
+                                            <pre jhiTranslate="artemisApp.programmingExercise.configureGrading.help.visibility"></pre>
+                                        </div>
+                                    </ng-template>
                                 </ng-template>
-                                <ng-template ngx-datatable-cell-template let-rowIndex="rowIndex" let-value="value" let-row="row">
-                                    <jhi-table-editable-checkbox
-                                        [value]="value"
-                                        [disabled]="!buildAfterDueDateActive"
-                                        (onValueUpdate)="toggleAfterDueDate(filteredTestCases.indexOf(row))"
-                                    ></jhi-table-editable-checkbox>
+                                <ng-template ngx-datatable-cell-template let-value="value" let-row="row">
+                                    <select [ngModel]="value" class="p-1 form-control" (change)="updateEditedField(row, EditableField.VISIBILITY)($event.target.value)">
+                                        <option *ngFor="let s of testCaseVisibilityList" [value]="s.value">
+                                            {{ 'artemisApp.programmingExerciseTestCase.visibility.' + s.name | artemisTranslate }}
+                                        </option>
+                                    </select>
                                 </ng-template>
                             </ngx-datatable-column>
                             <ngx-datatable-column name="Is Active" prop="active" [sortable]="false">
@@ -276,7 +267,7 @@
                                     <select
                                         [id]="row.id + '-state'"
                                         [ngModel]="value"
-                                        class="p-1"
+                                        class="p-1 form-control"
                                         (change)="updateEditedCategoryField(row, EditableField.STATE)($event.target.value)"
                                     >
                                         <option *ngFor="let s of categoryStateList" [value]="s.value">{{ s.name }}</option>

@@ -14,6 +14,8 @@ import org.assertj.core.data.Offset;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -27,6 +29,7 @@ import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
+import de.tum.in.www1.artemis.domain.enumeration.Visibility;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
@@ -121,9 +124,9 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
         // Adjust existing test cases to our need
         var testCases = testCaseService.findByExerciseId(programmingExercise.getId()).stream()
                 .collect(Collectors.toMap(ProgrammingExerciseTestCase::getTestName, Function.identity()));
-        testCases.get("test1").active(true).afterDueDate(false);
-        testCases.get("test2").active(true).afterDueDate(false);
-        testCases.get("test3").active(true).afterDueDate(false);
+        testCases.get("test1").active(true).visibility(Visibility.ALWAYS);
+        testCases.get("test2").active(true).visibility(Visibility.ALWAYS);
+        testCases.get("test3").active(true).visibility(Visibility.ALWAYS);
         testCaseRepository.saveAll(testCases.values());
 
         // Create feedback with duplicate content for test1 and test3
@@ -207,9 +210,9 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
         // Set up test cases with bonus
         var testCases = testCaseService.findByExerciseId(programmingExercise.getId()).stream()
                 .collect(Collectors.toMap(ProgrammingExerciseTestCase::getTestName, Function.identity()));
-        testCases.get("test1").active(true).afterDueDate(false).weight(5.).bonusMultiplier(1D).setBonusPoints(7D);
-        testCases.get("test2").active(true).afterDueDate(false).weight(2.).bonusMultiplier(2D).setBonusPoints(0D);
-        testCases.get("test3").active(true).afterDueDate(false).weight(3.).bonusMultiplier(1D).setBonusPoints(10.5D);
+        testCases.get("test1").active(true).visibility(Visibility.ALWAYS).weight(5.).bonusMultiplier(1D).setBonusPoints(7D);
+        testCases.get("test2").active(true).visibility(Visibility.ALWAYS).weight(2.).bonusMultiplier(2D).setBonusPoints(0D);
+        testCases.get("test3").active(true).visibility(Visibility.ALWAYS).weight(3.).bonusMultiplier(1D).setBonusPoints(10.5D);
         testCaseRepository.saveAll(testCases.values());
 
         var result1 = new Result();
@@ -305,9 +308,9 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
         // Set up test cases with bonus
         var testCases = testCaseService.findByExerciseId(programmingExercise.getId()).stream()
                 .collect(Collectors.toMap(ProgrammingExerciseTestCase::getTestName, Function.identity()));
-        testCases.get("test1").active(true).afterDueDate(false).weight(4.).bonusMultiplier(1D).setBonusPoints(0D);
-        testCases.get("test2").active(true).afterDueDate(false).weight(3.).bonusMultiplier(3D).setBonusPoints(21D);
-        testCases.get("test3").active(true).afterDueDate(false).weight(3.).bonusMultiplier(2D).setBonusPoints(14D);
+        testCases.get("test1").active(true).visibility(Visibility.ALWAYS).weight(4.).bonusMultiplier(1D).setBonusPoints(0D);
+        testCases.get("test2").active(true).visibility(Visibility.ALWAYS).weight(3.).bonusMultiplier(3D).setBonusPoints(21D);
+        testCases.get("test3").active(true).visibility(Visibility.ALWAYS).weight(3.).bonusMultiplier(2D).setBonusPoints(14D);
         testCaseRepository.saveAll(testCases.values());
 
         // Score should be capped at 200%
@@ -359,7 +362,7 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void shouldRemoveTestsWithAfterDueDateFlagIfDueDateHasNotPassed() {
         // Set programming exercise due date in future.
-        programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().plusHours(10));
+        programmingExercise.setDueDate(ZonedDateTime.now().plusHours(10));
 
         List<Feedback> feedbacks = new ArrayList<>();
         feedbacks.add(new Feedback().text("test1").positive(true).type(FeedbackType.AUTOMATIC));
@@ -379,15 +382,15 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
         assertThat(result.getScore()).isEqualTo(expectedScore);
         assertThat(result.getResultString()).isEqualTo("1 of 1 passed");
         assertThat(result.isSuccessful()).isFalse();
-        // The feedback of the after due date test case must be removed.
-        assertThat(result.getFeedbacks().stream().noneMatch(feedback -> feedback.getText().equals("test3"))).isEqualTo(true);
+        // The feedback of the after due date test case must still be there but have its visibility set to AFTER_DUE_DATE.
+        assertThat(result.getFeedbacks().stream().filter(feedback -> feedback.getVisibility() == Visibility.AFTER_DUE_DATE).map(Feedback::getText)).containsExactly("test3");
     }
 
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
-    public void shouldNotRemoveTestsWithAfterDueDateFlagIfDueDateHasNotPassedForNonStudentParticipation() {
+    public void shouldNotIncludeTestsInResultWithAfterDueDateFlagIfDueDateHasNotPassedForNonStudentParticipation() {
         // Set programming exercise due date in future.
-        programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().plusHours(10));
+        programmingExercise.setDueDate(ZonedDateTime.now().plusHours(10));
 
         List<Feedback> feedbacks = new ArrayList<>();
         feedbacks.add(new Feedback().text("test1").positive(true).type(FeedbackType.AUTOMATIC));
@@ -407,14 +410,15 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
         assertThat(result.getResultString()).isEqualTo("1 of 2 passed");
         assertThat(result.getScore()).isEqualTo(expectedScore);
         assertThat(result.isSuccessful()).isFalse();
-        assertThat(result.getFeedbacks()).hasSize(2);
+        assertThat(result.getFeedbacks().stream().filter(f -> f.getVisibility() == Visibility.ALWAYS)).hasSize(1);
+        assertThat(result.getFeedbacks().stream().filter(f -> f.getVisibility() == Visibility.AFTER_DUE_DATE)).hasSize(1);
     }
 
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void shouldKeepTestsWithAfterDueDateFlagIfDueDateHasPassed() {
         // Set programming exercise due date in past.
-        programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().minusHours(10));
+        programmingExercise.setDueDate(ZonedDateTime.now().minusHours(10));
 
         List<Feedback> feedbacks = new ArrayList<>();
         feedbacks.add(new Feedback().text("test1").positive(true).type(FeedbackType.AUTOMATIC));
@@ -440,13 +444,13 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
 
     private void testAndAssertZeroScoreIfThereAreNoTestCasesBeforeDueDate(ProgrammingExercise programmingExercise, String expectedResultString, int expectedFeedbackSize) {
         // Set programming exercise due date in future.
-        programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().plusHours(10));
+        programmingExercise.setDueDate(ZonedDateTime.now().plusHours(10));
         Double scoreBeforeUpdate = result.getScore();
 
         // Set all test cases of the programming exercise to be executed after due date.
         Set<ProgrammingExerciseTestCase> testCases = testCaseRepository.findByExerciseId(programmingExercise.getId());
         for (ProgrammingExerciseTestCase testCase : testCases) {
-            testCase.setAfterDueDate(true);
+            testCase.visibility(Visibility.AFTER_DUE_DATE);
         }
         testCaseRepository.saveAll(testCases);
 
@@ -466,7 +470,6 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void shouldReEvaluateScoreOfTheCorrectResults() throws Exception {
-
         programmingExercise = (ProgrammingExercise) database.addMaxScoreAndBonusPointsToExercise(programmingExercise);
         programmingExercise = database.addTemplateParticipationForProgrammingExercise(programmingExercise);
         programmingExercise = database.addSolutionParticipationForProgrammingExercise(programmingExercise);
@@ -474,9 +477,9 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
 
         var testCases = testCaseService.findByExerciseId(programmingExercise.getId()).stream()
                 .collect(Collectors.toMap(ProgrammingExerciseTestCase::getTestName, Function.identity()));
-        testCases.get("test1").active(true).afterDueDate(false).setWeight(1.);
-        testCases.get("test2").active(true).afterDueDate(false).setWeight(1.);
-        testCases.get("test3").active(true).afterDueDate(false).setWeight(2.);
+        testCases.get("test1").active(true).visibility(Visibility.ALWAYS).setWeight(1.);
+        testCases.get("test2").active(true).visibility(Visibility.ALWAYS).setWeight(1.);
+        testCases.get("test3").active(true).visibility(Visibility.ALWAYS).setWeight(2.);
         testCaseRepository.saveAll(testCases.values());
 
         var testParticipations = createTestParticipations();
@@ -518,6 +521,83 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
             assertThat(singleResult).isEqualTo(participation.findLatestResult());
         }
 
+        verifyStudentScoreCalculations(testParticipations);
+    }
+
+    @ValueSource(booleans = { false, true })
+    @ParameterizedTest(name = "shouldNotIncludeTestsMarkedAsNeverVisibleInScoreCalculation [isAfterDueDate = {0}]")
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void shouldNotIncludeTestsMarkedAsNeverVisibleInScoreCalculation(boolean isAfterDueDate) throws Exception {
+        // test case marked as never should not affect score for students neither before nor after due date
+        if (isAfterDueDate) {
+            programmingExercise.setDueDate(ZonedDateTime.now().minusHours(10));
+        }
+        else {
+            // Set programming exercise due date in future.
+            programmingExercise.setDueDate(ZonedDateTime.now().plusHours(10));
+        }
+
+        var invisibleTestCase = new ProgrammingExerciseTestCase().testName("test4").exercise(programmingExercise);
+        testCaseRepository.save(invisibleTestCase);
+
+        programmingExercise = (ProgrammingExercise) database.addMaxScoreAndBonusPointsToExercise(programmingExercise);
+        programmingExercise = database.addTemplateParticipationForProgrammingExercise(programmingExercise);
+        programmingExercise = database.addSolutionParticipationForProgrammingExercise(programmingExercise);
+        programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationWithResultsElseThrow(programmingExercise.getId());
+
+        var testCases = testCaseService.findByExerciseId(programmingExercise.getId()).stream()
+                .collect(Collectors.toMap(ProgrammingExerciseTestCase::getTestName, Function.identity()));
+        testCases.get("test1").active(true).visibility(Visibility.ALWAYS).setWeight(1.);
+        testCases.get("test2").active(true).visibility(Visibility.ALWAYS).setWeight(1.);
+        testCases.get("test3").active(true).visibility(Visibility.ALWAYS).setWeight(2.);
+        testCases.get("test4").active(true).visibility(Visibility.NEVER).setWeight(1.);
+        testCaseRepository.saveAll(testCases.values());
+
+        var testParticipations = createTestParticipations();
+
+        // change test case weights
+        testCases.get("test1").setWeight(0.);
+        testCases.get("test2").setWeight(1.);
+        testCases.get("test3").setWeight(3.);
+        testCaseRepository.saveAll(testCases.values());
+
+        // re-evaluate
+        final var endpoint = ProgrammingExerciseGradingResource.RE_EVALUATE.replace("{exerciseId}", programmingExercise.getId().toString());
+        final var response = request.putWithResponseBody(ROOT + endpoint, "{}", Integer.class, HttpStatus.OK);
+        assertThat(response).isEqualTo(7);
+
+        // this fixes an issue with the authentication context after a mock request
+        SecurityContextHolder.setContext(TestSecurityContextHolder.getContext());
+
+        // Tests
+        programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationWithResultsElseThrow(programmingExercise.getId());
+
+        // the invisible test case should however be visible for the template and solution repos
+
+        // template 0 %
+        {
+            var participation = programmingExercise.getTemplateParticipation();
+            var results = participation.getResults();
+            assertThat(results).hasSize(1);
+            var singleResult = results.iterator().next();
+            testParticipationResult(singleResult, 0D, "0 of 4 passed", true, 4, AssessmentType.AUTOMATIC);
+            assertThat(singleResult).isEqualTo(participation.findLatestResult());
+        }
+
+        // solution 100 %
+        {
+            var participation = programmingExercise.getSolutionParticipation();
+            var results = participation.getResults();
+            assertThat(results).hasSize(1);
+            var singleResult = results.iterator().next();
+            testParticipationResult(singleResult, 100D, "2 of 4 passed", true, 4, AssessmentType.AUTOMATIC);
+            assertThat(singleResult).isEqualTo(participation.findLatestResult());
+        }
+
+        verifyStudentScoreCalculations(testParticipations);
+    }
+
+    private void verifyStudentScoreCalculations(final Participation[] testParticipations) {
         // student1 25 %
         {
             var participation = studentParticipationRepository.findWithEagerResultsAndFeedbackById(testParticipations[0].getId()).get();
@@ -789,7 +869,7 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
 
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
-    public void shouldCalculateScoreWithStaticCodeAnalysisPenaltiesWithBonus() throws Exception {
+    public void shouldCalculateScoreWithStaticCodeAnalysisPenaltiesWithBonus() {
         activateAllTestCases(true);
 
         // Set bonus points for exercise
@@ -910,6 +990,16 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
         testCaseStatsMap.put("test2", new ProgrammingExerciseGradingStatisticsDTO.TestCaseStats(2, 3));
         testCaseStatsMap.put("test3", new ProgrammingExerciseGradingStatisticsDTO.TestCaseStats(2, 3));
 
+        // check some additional methods to increase test coverage
+        var test1 = testCaseStatsMap.get("test1");
+        var test2 = testCaseStatsMap.get("test2");
+        assertThat(test1.getNumFailed()).isEqualTo(0);
+        assertThat(test1.getNumPassed()).isEqualTo(5);
+        assertThat(test1.hashCode()).isNotEqualTo(test2.hashCode());
+        assertThat(test1).isNotEqualTo(test2);
+        assertThat(test1).isNotEqualTo(null);
+        assertThat(test1).isEqualTo(test1);
+
         assertThat(statistics.getTestCaseStatsMap()).containsExactlyInAnyOrderEntriesOf(testCaseStatsMap);
 
         var categoryIssuesMap = new HashMap<String, Map<Integer, Integer>>();
@@ -922,13 +1012,30 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
 
     }
 
+    @Test
+    public void shouldGetCorrectLatestAutomaticResults() {
+        createTestParticipationsWithResults();
+        var results = resultRepository.findLatestAutomaticResultsWithEagerFeedbacksForExercise(programmingExerciseSCAEnabled.getId());
+        assertThat(results.size()).isEqualTo(5);
+    }
+
+    @Test
+    public void shouldGetCorrectLatestAutomaticResultsWithMultipleResults() {
+        createTestParticipationsWithMultipleResults();
+        // this method is tested. It should probably be improved as there is an inner query
+        var results = resultRepository.findLatestAutomaticResultsWithEagerFeedbacksForExercise(programmingExerciseSCAEnabled.getId());
+        var allResults = resultRepository.findAllByExerciseId(programmingExerciseSCAEnabled.getId());
+        assertThat(results.size()).isEqualTo(5);
+        assertThat(allResults.size()).isEqualTo(6);
+    }
+
     private void activateAllTestCases(boolean withBonus) {
         var testCases = new ArrayList<>(testCaseService.findByExerciseId(programmingExerciseSCAEnabled.getId()));
         var bonusMultiplier = withBonus ? 2D : null;
         var bonusPoints = withBonus ? 4D : null;
-        testCases.get(0).active(true).afterDueDate(false).bonusMultiplier(bonusMultiplier).bonusPoints(bonusPoints);
-        testCases.get(1).active(true).afterDueDate(false).bonusMultiplier(bonusMultiplier).bonusPoints(bonusPoints);
-        testCases.get(2).active(true).afterDueDate(false).bonusMultiplier(bonusMultiplier).bonusPoints(bonusPoints);
+        testCases.get(0).active(true).visibility(Visibility.ALWAYS).bonusMultiplier(bonusMultiplier).bonusPoints(bonusPoints);
+        testCases.get(1).active(true).visibility(Visibility.ALWAYS).bonusMultiplier(bonusMultiplier).bonusPoints(bonusPoints);
+        testCases.get(2).active(true).visibility(Visibility.ALWAYS).bonusMultiplier(bonusMultiplier).bonusPoints(bonusPoints);
         testCaseRepository.saveAll(testCases);
     }
 
@@ -974,6 +1081,50 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
         return List.of(participation1, participation2, participation3, participation4, participation5);
     }
 
+    private List<Participation> createTestParticipationsWithMultipleResults() {
+
+        // create results
+        var participation1 = database.addStudentParticipationForProgrammingExercise(programmingExerciseSCAEnabled, "student1");
+        {
+            // Testcases: 1/6 * 42 = 7; Penalty: min(5, 0.2 * 42) = 5; Score: (int) ((7-5) / 42) = 4
+            var result11 = new Result().participation(participation1);
+            var result1 = new Result().participation(participation1);
+            participation1.setResults(Set.of(result11, result1));
+            updateAndSaveAutomaticResult(result11, false, false, false, 0, 1, ZonedDateTime.now().minusMinutes(1));
+            updateAndSaveAutomaticResult(result1, true, false, false, 0, 1);
+        }
+        var participation2 = database.addStudentParticipationForProgrammingExercise(programmingExerciseSCAEnabled, "student2");
+        {
+            // Testcases: 4/6 * 42 = 28; Penalty: 11; Score: (int) ((28-11) / 42)) = 40
+            var result2 = new Result().participation(participation2);
+            participation2.setResults(Set.of(result2));
+            updateAndSaveAutomaticResult(result2, true, false, true, 2, 1);
+        }
+        var participation3 = database.addStudentParticipationForProgrammingExercise(programmingExerciseSCAEnabled, "student3");
+        {
+            // Points capped at zero, score can't be negative
+            var result3 = new Result().participation(participation3);
+            participation3.setResults(Set.of(result3));
+            updateAndSaveAutomaticResult(result3, true, false, false, 5, 1);
+        }
+        var participation4 = database.addStudentParticipationForProgrammingExercise(programmingExerciseSCAEnabled, "student4");
+        {
+            // Run into category cap of 10: -> Testcases: 3/6 * 42 = 21; Penalty: 10; Score: (int) ((21-10) / 42)) = 26
+            var result4 = new Result().participation(participation4);
+            participation4.setResults(Set.of(result4));
+            updateAndSaveAutomaticResult(result4, true, true, false, 5, 0);
+        }
+        var participation5 = database.addStudentParticipationForProgrammingExercise(programmingExerciseSCAEnabled, "student5");
+        {
+            // Run into max exercise penalty cap of 40 percent and all test cases pass -> score 60 percent
+            var result5 = new Result().participation(participation5);
+            participation5.setResults(Set.of(result5));
+            updateAndSaveAutomaticResult(result5, true, true, true, 5, 5);
+        }
+
+        return List.of(participation1, participation2, participation3, participation4, participation5);
+    }
+
     private void testParticipationResult(Result result, Double score, String resultString, boolean hasFeedback, int feedbackSize, AssessmentType assessmentType) {
         assertThat(result.getScore()).isEqualTo(score, Offset.offset(offsetByTenThousandth));
         assertThat(result.getResultString()).isEqualTo(resultString);
@@ -983,6 +1134,11 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
     }
 
     private void updateAndSaveAutomaticResult(Result result, boolean test1Passes, boolean test2Passes, boolean test3Passes, int issuesCategory1, int issuesCategory2) {
+        updateAndSaveAutomaticResult(result, test1Passes, test2Passes, test3Passes, issuesCategory1, issuesCategory2, ZonedDateTime.now());
+    }
+
+    private void updateAndSaveAutomaticResult(Result result, boolean test1Passes, boolean test2Passes, boolean test3Passes, int issuesCategory1, int issuesCategory2,
+            ZonedDateTime completionDate) {
         result.addFeedback(new Feedback().result(result).text("test1").positive(test1Passes).type(FeedbackType.AUTOMATIC));
         result.addFeedback(new Feedback().result(result).text("test2").positive(test2Passes).type(FeedbackType.AUTOMATIC));
         result.addFeedback(new Feedback().result(result).text("test3").positive(test3Passes).type(FeedbackType.AUTOMATIC));
@@ -1005,7 +1161,7 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
         result.rated(true) //
                 .hasFeedback(true) //
                 .successful(test1Passes && test2Passes && test3Passes) //
-                .completionDate(ZonedDateTime.now()) //
+                .completionDate(completionDate) //
                 .assessmentType(AssessmentType.AUTOMATIC);
 
         gradingService.calculateScoreForResult(result, programmingExerciseSCAEnabled, true);

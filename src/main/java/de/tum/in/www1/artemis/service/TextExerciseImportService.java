@@ -77,7 +77,7 @@ public class TextExerciseImportService extends ExerciseImportService {
             newTextBlock.setStartIndex(originalTextBlock.getStartIndex());
             newTextBlock.setSubmission(newSubmission);
             newTextBlock.setText(originalTextBlock.getText());
-
+            newTextBlock.computeId();
             textBlockRepository.save(newTextBlock);
             newTextBlocks.add(newTextBlock);
         }
@@ -128,8 +128,8 @@ public class TextExerciseImportService extends ExerciseImportService {
             newSubmission.setType(originalSubmission.getType());
             newSubmission.setParticipation(originalSubmission.getParticipation());
             newSubmission.setText(((TextSubmission) originalSubmission).getText());
-            newSubmission.setBlocks(copyTextBlocks(((TextSubmission) originalSubmission).getBlocks(), newSubmission));
             newSubmission = submissionRepository.saveAndFlush(newSubmission);
+            newSubmission.setBlocks(copyTextBlocks(((TextSubmission) originalSubmission).getBlocks(), newSubmission));
             newSubmission.addResult(copyExampleResult(originalSubmission.getLatestResult(), newSubmission));
             newSubmission = submissionRepository.saveAndFlush(newSubmission);
         }

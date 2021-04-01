@@ -1,9 +1,13 @@
 <div
     class="sa-question"
-    [ngClass]="{ disabled: clickDisabled && !showResult, result: showResult && !forceSampleSolution, incorrect: (score || 0) < question.points! && !forceSampleSolution }"
+    [ngClass]="{
+        disabled: clickDisabled && !showResult,
+        result: showResult && !forceSampleSolution,
+        incorrect: (score || 0) < shortAnswerQuestion.points! && !forceSampleSolution
+    }"
 >
     <h4 class="question-title-display">
-        <span>{{ questionIndex }})</span> {{ question.title }}
+        <span>{{ questionIndex }})</span> {{ shortAnswerQuestion.title }}
     </h4>
     <div *ngIf="!showResult">
         <div class="short-answer-question-display" *ngFor="let textPart of textParts; let i = index">
@@ -15,7 +19,7 @@
                         type="text"
                         [disabled]="clickDisabled"
                         value="{{ getSubmittedTextForSpotAsString(element) }}"
-                        id="solution-{{ i }}-{{ j }}-{{ question.id }}"
+                        id="solution-{{ i }}-{{ j }}-{{ shortAnswerQuestion.id }}"
                         (change)="setSubmittedText()"
                     />
                 </div>
@@ -33,7 +37,7 @@
                     *ngIf="
                         shortAnswerQuestionUtil.isInputField(element) &&
                         !showingSampleSolution &&
-                        !shortAnswerQuestionUtil.getSpot(shortAnswerQuestionUtil.getSpotNr(element), question).invalid
+                        !shortAnswerQuestionUtil.getSpot(shortAnswerQuestionUtil.getSpotNr(element), shortAnswerQuestion).invalid
                     "
                 >
                     <input
@@ -44,7 +48,7 @@
                         size="{{ getSubmittedTextSizeForSpot(element) }}"
                     />
                     <div
-                        *ngIf="shortAnswerQuestionUtil.getSpot(shortAnswerQuestionUtil.getSpotNr(element), question).invalid"
+                        *ngIf="shortAnswerQuestionUtil.getSpot(shortAnswerQuestionUtil.getSpotNr(element), shortAnswerQuestion).invalid"
                         [ngbTooltip]="'artemisApp.shortAnswerSpot.invalidSpot' | artemisTranslate"
                     >
                         <input
@@ -70,12 +74,12 @@
             <br />
         </div>
     </div>
-    <span style="color: red" *ngIf="question.invalid" jhiTranslate="artemisApp.quizQuestion.invalidText"></span>
-    <div class="hint" *ngIf="question.hint || (question.explanation && showResult)">
+    <span style="color: red" *ngIf="shortAnswerQuestion.invalid" jhiTranslate="artemisApp.quizQuestion.invalidText"></span>
+    <div class="hint" *ngIf="shortAnswerQuestion.hint || (shortAnswerQuestion.explanation && showResult)">
         <ng-template #renderedHint>
             <div [innerHTML]="renderedQuestion.hint"></div>
         </ng-template>
-        <span class="label label-info" [ngbPopover]="renderedHint" placement="right" triggers="mouseenter:mouseleave" *ngIf="question.hint">
+        <span class="label label-info" [ngbPopover]="renderedHint" placement="right" triggers="mouseenter:mouseleave" *ngIf="shortAnswerQuestion.hint">
             <fa-icon [icon]="['far', 'question-circle']"></fa-icon>
             <span jhiTranslate="artemisApp.quizQuestion.hint"></span>
         </span>
@@ -83,22 +87,28 @@
         <ng-template #renderedExplanation>
             <div [innerHTML]="renderedQuestion.explanation"></div>
         </ng-template>
-        <span class="label label-primary" [ngbPopover]="renderedExplanation" placement="right" triggers="mouseenter:mouseleave" *ngIf="question.explanation && showResult">
+        <span
+            class="label label-primary"
+            [ngbPopover]="renderedExplanation"
+            placement="right"
+            triggers="mouseenter:mouseleave"
+            *ngIf="shortAnswerQuestion.explanation && showResult"
+        >
             <fa-icon [icon]="'exclamation-circle'"></fa-icon>
             <span jhiTranslate="artemisApp.quizQuestion.explanation"></span>
         </span>
     </div>
     <div class="question-score" *ngIf="!showResult || forceSampleSolution">
         <span jhiTranslate="artemisApp.quizQuestion.score" class="colon-suffix"></span>
-        <span>{{ question.points }}</span>
+        <span>{{ shortAnswerQuestion.points }}</span>
     </div>
-    <div class="question-score result" *ngIf="showResult && !forceSampleSolution" [ngClass]="{ incorrect: (score || 0) < question.points! }">
+    <div class="question-score result" *ngIf="showResult && !forceSampleSolution" [ngClass]="{ incorrect: (score || 0) < shortAnswerQuestion.points! }">
         <span jhiTranslate="artemisApp.quizQuestion.yourScore" class="colon-suffix"></span>
-        <span class="show-explanation">{{ score || 0 }}/{{ question.points }}</span>
+        <span class="show-explanation">{{ score || 0 }}/{{ shortAnswerQuestion.points }}</span>
         <span class="show-explanation">
             <jhi-quiz-scoring-infostudent-modal
                 [score]="score"
-                [question]="question"
+                [question]="shortAnswerQuestion"
                 [shortAnswerText]="submittedTexts"
                 [questionIndex]="questionIndex"
             ></jhi-quiz-scoring-infostudent-modal>

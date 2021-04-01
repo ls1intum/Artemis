@@ -26,32 +26,22 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.service.AssessmentService;
 import de.tum.in.www1.artemis.util.FileUtils;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
 public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
-    ExerciseRepository exerciseRepo;
+    private ResultRepository resultRepo;
 
     @Autowired
-    CourseRepository courseRepository;
+    private ComplaintRepository complaintRepo;
 
     @Autowired
-    ResultRepository resultRepo;
+    private ComplaintResponseRepository complaintResponseRepo;
 
     @Autowired
-    ComplaintRepository complaintRepo;
-
-    @Autowired
-    ComplaintResponseRepository complaintResponseRepo;
-
-    @Autowired
-    ObjectMapper mapper;
-
-    @Autowired
-    AssessmentService assessmentService;
+    private ObjectMapper mapper;
 
     private ModelingExercise modelingExercise;
 
@@ -293,6 +283,25 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
         final var params = new LinkedMultiValueMap<String, String>();
         params.add("complaintType", ComplaintType.COMPLAINT.name());
         final var complaints = request.getList("/api/exercises/" + modelingExercise.getId() + "/complaints-for-assessment-dashboard", HttpStatus.OK, Complaint.class, params);
+
+        complaints.forEach(compl -> {
+            final var participation = (StudentParticipation) compl.getResult().getParticipation();
+            assertThat(participation.getStudent()).as("No student information").isNull();
+            assertThat(compl.getParticipant()).as("No student information").isNull();
+            assertThat(participation.getExercise()).as("No additional exercise information").isNull();
+            assertThat(compl.getResultBeforeComplaint()).as("No old result information").isNull();
+        });
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void getComplaintsForAssessmentDashboard_testRun() throws Exception {
+        complaint.setParticipant(database.getUserByLogin("instructor1"));
+        complaintRepo.save(complaint);
+
+        final var params = new LinkedMultiValueMap<String, String>();
+        params.add("complaintType", ComplaintType.COMPLAINT.name());
+        final var complaints = request.getList("/api/exercises/" + modelingExercise.getId() + "/complaints-for-test-run-dashboard", HttpStatus.OK, Complaint.class, params);
 
         complaints.forEach(compl -> {
             final var participation = (StudentParticipation) compl.getResult().getParticipation();

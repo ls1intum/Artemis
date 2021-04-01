@@ -256,7 +256,7 @@ public class Result extends DomainObject {
     }
 
     public void setRatedIfNotExceeded(@Nullable ZonedDateTime exerciseDueDate, ZonedDateTime submissionDate) {
-        this.rated = exerciseDueDate == null || submissionDate.isBefore(exerciseDueDate);
+        this.rated = exerciseDueDate == null || submissionDate.isBefore(exerciseDueDate) || submissionDate.isEqual(exerciseDueDate);
     }
 
     /**
@@ -474,9 +474,23 @@ public class Result extends DomainObject {
     /**
      * Removes the assessor from the result, can be invoked to make sure that sensitive information is not sent to the client. E.g. students should not see information about
      * their assessor.
+     *
+     * Does not filter feedbacks.
      */
     public void filterSensitiveInformation() {
         setAssessor(null);
+    }
+
+    /**
+     * Remove all feedbacks marked with visibility never.
+     * @param isBeforeDueDate if feedbacks marked with visibility 'after due date' should also be removed.
+     */
+    public void filterSensitiveFeedbacks(boolean isBeforeDueDate) {
+        feedbacks.removeIf(Feedback::isInvisible);
+
+        if (isBeforeDueDate) {
+            feedbacks.removeIf(Feedback::isAfterDueDate);
+        }
     }
 
     /**

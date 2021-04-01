@@ -1,0 +1,65 @@
+<div>
+    <h2>
+        <span id="organization-management-page-heading" jhiTranslate="organizationManagement.title">Organization management</span>
+        <button class="btn btn-primary float-right jh-create-entity" [routerLink]="['./new']">
+            <fa-icon [icon]="'plus'"></fa-icon> <span jhiTranslate="organizationManagement.addLabel">Add organization</span>
+        </button>
+    </h2>
+    <jhi-alert-error></jhi-alert-error>
+    <jhi-alert></jhi-alert>
+    <div class="table-responsive">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th><span jhiTranslate="global.field.id">ID</span></th>
+                    <th><span jhiTranslate="organizationManagement.name">Name</span></th>
+                    <th><span jhiTranslate="organizationManagement.shortName">Short Name</span></th>
+                    <th><span jhiTranslate="organizationManagement.url">Url</span></th>
+                    <th><span jhiTranslate="organizationManagement.description">Description</span></th>
+                    <th><span jhiTranslate="organizationManagement.users">Users</span></th>
+                    <th><span jhiTranslate="organizationManagement.courses">Courses</span></th>
+                    <th><span jhiTranslate="organizationManagement.emailPattern">Email Pattern</span></th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr *ngFor="let organization of organizations; trackBy: trackIdentity">
+                    <td>
+                        <ngb-highlight [result]="organization.id"></ngb-highlight>
+                    </td>
+                    <td>
+                        <ngb-highlight [result]="organization.name"></ngb-highlight>
+                    </td>
+                    <td>
+                        <ngb-highlight [result]="organization.shortName"></ngb-highlight>
+                    </td>
+                    <td>{{ organization.url }}</td>
+                    <td>{{ organization.description }}</td>
+                    <td>{{ organization.numberOfUsers }}</td>
+                    <td>{{ organization.numberOfCourses }}</td>
+                    <td>{{ organization.emailPattern }}</td>
+                    <td class="text-right">
+                        <div class="btn-group flex-btn-group-container">
+                            <button type="submit" [routerLink]="['./', organization.id]" class="btn btn-info btn-sm">
+                                <fa-icon [icon]="'eye'"></fa-icon>
+                                <span class="d-none d-md-inline" jhiTranslate="entity.action.view">View</span>
+                            </button>
+                            <button type="submit" [routerLink]="['./', organization.id, 'edit']" queryParamsHandling="merge" class="btn btn-primary btn-sm">
+                                <fa-icon [icon]="'pencil-alt'"></fa-icon>
+                                <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
+                            </button>
+                            <button
+                                jhiDeleteButton
+                                [entityTitle]="organization.name"
+                                deleteQuestion="organizationManagement.delete.question"
+                                (delete)="deleteOrganization(organization.id)"
+                                [dialogError]="dialogError$"
+                            >
+                                <fa-icon [icon]="'times'"></fa-icon>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>

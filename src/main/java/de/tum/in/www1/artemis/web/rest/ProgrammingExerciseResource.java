@@ -47,9 +47,11 @@ import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
+import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
+import de.tum.in.www1.artemis.service.plagiarism.PlagiarismService;
 import de.tum.in.www1.artemis.service.programming.*;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.RepositoryExportOptionsDTO;
@@ -87,6 +89,10 @@ public class ProgrammingExerciseResource {
 
     private final ExerciseService exerciseService;
 
+    private final PlagiarismService plagiarismService;
+
+    private final PlagiarismResultRepository plagiarismResultRepository;
+
     private final ProgrammingExerciseService programmingExerciseService;
 
     private final ProgrammingExerciseImportService programmingExerciseImportService;
@@ -107,6 +113,8 @@ public class ProgrammingExerciseResource {
 
     private final CourseRepository courseRepository;
 
+    private final GitService gitService;
+
     /**
      * Java package name Regex according to Java 14 JLS (https://docs.oracle.com/javase/specs/jls/se14/html/jls-7.html#jls-7.4.1),
      * with the restriction to a-z,A-Z,_ as "Java letter" and 0-9 as digits due to JavaScript/Browser Unicode character class limitations
@@ -126,9 +134,10 @@ public class ProgrammingExerciseResource {
     public ProgrammingExerciseResource(ProgrammingExerciseRepository programmingExerciseRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
             CourseService courseService, Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService,
             ExerciseService exerciseService, ProgrammingExerciseService programmingExerciseService, StudentParticipationRepository studentParticipationRepository,
-            ProgrammingExerciseImportService programmingExerciseImportService, ProgrammingExerciseExportService programmingExerciseExportService,
-            ExerciseGroupRepository exerciseGroupRepository, StaticCodeAnalysisService staticCodeAnalysisService, GradingCriterionRepository gradingCriterionRepository,
-            ProgrammingLanguageFeatureService programmingLanguageFeatureService, TemplateUpgradePolicy templateUpgradePolicy, CourseRepository courseRepository) {
+            PlagiarismService plagiarismService, PlagiarismResultRepository plagiarismResultRepository, ProgrammingExerciseImportService programmingExerciseImportService,
+            ProgrammingExerciseExportService programmingExerciseExportService, ExerciseGroupRepository exerciseGroupRepository, StaticCodeAnalysisService staticCodeAnalysisService,
+            GradingCriterionRepository gradingCriterionRepository, ProgrammingLanguageFeatureService programmingLanguageFeatureService, TemplateUpgradePolicy templateUpgradePolicy,
+            CourseRepository courseRepository, GitService gitService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.userRepository = userRepository;
         this.courseService = courseService;
@@ -136,8 +145,10 @@ public class ProgrammingExerciseResource {
         this.continuousIntegrationService = continuousIntegrationService;
         this.versionControlService = versionControlService;
         this.exerciseService = exerciseService;
+        this.plagiarismService = plagiarismService;
         this.programmingExerciseService = programmingExerciseService;
         this.studentParticipationRepository = studentParticipationRepository;
+        this.plagiarismResultRepository = plagiarismResultRepository;
         this.programmingExerciseImportService = programmingExerciseImportService;
         this.programmingExerciseExportService = programmingExerciseExportService;
         this.exerciseGroupRepository = exerciseGroupRepository;
@@ -146,6 +157,7 @@ public class ProgrammingExerciseResource {
         this.programmingLanguageFeatureService = programmingLanguageFeatureService;
         this.templateUpgradePolicy = templateUpgradePolicy;
         this.courseRepository = courseRepository;
+        this.gitService = gitService;
     }
 
     /**
@@ -236,11 +248,7 @@ public class ProgrammingExerciseResource {
         }
 
         // Validate course and exercise short name
-        Optional<ResponseEntity<ProgrammingExercise>> optionalShortNameValidationError = validateCourseAndExerciseShortName(programmingExercise, course);
-        if (optionalShortNameValidationError.isPresent()) {
-            return optionalShortNameValidationError;
-        }
-        return Optional.empty();
+        return validateCourseAndExerciseShortName(programmingExercise, course);
     }
 
     /**
@@ -947,7 +955,7 @@ public class ProgrammingExerciseResource {
 
         try {
             var exerciseRepoURL = programmingExercise.getVcsTemplateRepositoryUrl();
-            programmingExerciseService.combineAllCommitsOfRepositoryIntoOne(exerciseRepoURL);
+            gitService.combineAllCommitsOfRepositoryIntoOne(exerciseRepoURL);
             return new ResponseEntity<>(HttpStatus.OK);
         }
         catch (IllegalStateException | InterruptedException | GitAPIException ex) {
@@ -1197,13 +1205,39 @@ public class ProgrammingExerciseResource {
     }
 
     /**
-     * GET /programming-exercises/{exerciseId}/plagiarism-check : Uses JPlag to check for plagiarism
-     * and returns the generated output as zip file
+     * GET /programming-exercises/{exerciseId}/plagiarism-result
+     * <p>
+     * Return the latest plagiarism result or null, if no plagiarism was detected for this exercise
+     * yet.
      *
-     * @param exerciseId          The ID of the programming exercise for which the plagiarism check should be
-     *                            executed
+     * @param exerciseId ID of the programming exercise for which the plagiarism result should be
+     *                   returned
+     * @return The ResponseEntity with status 200 (Ok) or with status 400 (Bad Request) if the
+     * parameters are invalid
+     */
+    @GetMapping(Endpoints.PLAGIARISM_RESULT)
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
+    public ResponseEntity<TextPlagiarismResult> getPlagiarismResult(@PathVariable long exerciseId) {
+        log.debug("REST request to get the latest plagiarism result for the programming exercise with id: {}", exerciseId);
+        var programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
+        if (!authCheckService.isAtLeastInstructorForExercise(programmingExercise)) {
+            return forbidden();
+        }
+        var plagiarismResult = plagiarismResultRepository.findFirstByExerciseIdOrderByLastModifiedDateDescElseThrow(programmingExercise.getId());
+        return ResponseEntity.ok((TextPlagiarismResult) plagiarismResult);
+    }
+
+    /**
+     * GET /programming-exercises/{exerciseId}/check-plagiarism
+     * <p>
+     * Start the automated plagiarism detection for the given exercise and return its result.
+     *
+     * @param exerciseId          The ID of the programming exercise for which the plagiarism check
+     *                            should be executed
      * @param similarityThreshold ignore comparisons whose similarity is below this threshold (%)
-     * @param minimumScore        consider only submissions whose score is greater or equal to this value
+     * @param minimumScore        consider only submissions whose score is greater or equal to this
+     *                            value
      * @return The ResponseEntity with status 201 (Created) or with status 400 (Bad Request) if the
      * parameters are invalid
      * @throws ExitException is thrown if JPlag exits unexpectedly
@@ -1215,17 +1249,12 @@ public class ProgrammingExerciseResource {
     public ResponseEntity<TextPlagiarismResult> checkPlagiarism(@PathVariable long exerciseId, @RequestParam float similarityThreshold, @RequestParam int minimumScore)
             throws ExitException, IOException {
         log.debug("REST request to check plagiarism for ProgrammingExercise with id: {}", exerciseId);
-        long start = System.nanoTime();
-
-        Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository.findById(exerciseId);
-        if (programmingExercise.isEmpty()) {
-            return notFound();
-        }
-        if (!authCheckService.isAtLeastInstructorForExercise(programmingExercise.get())) {
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
+        if (!authCheckService.isAtLeastInstructorForExercise(programmingExercise)) {
             return forbidden();
         }
 
-        var language = programmingExercise.get().getProgrammingLanguage();
+        ProgrammingLanguage language = programmingExercise.getProgrammingLanguage();
         ProgrammingLanguageFeature programmingLanguageFeature = programmingLanguageFeatureService.getProgrammingLanguageFeatures(language);
 
         if (!programmingLanguageFeature.isPlagiarismCheckSupported()) {
@@ -1234,10 +1263,7 @@ public class ProgrammingExerciseResource {
         }
 
         TextPlagiarismResult result = programmingExerciseExportService.checkPlagiarism(exerciseId, similarityThreshold, minimumScore);
-
-        log.info("Check plagiarism of programming exercise {} with title '{}' was successful in {}.", programmingExercise.get().getId(), programmingExercise.get().getTitle(),
-                formatDurationFrom(start));
-
+        plagiarismService.savePlagiarismResultAndRemovePrevious(result);
         return ResponseEntity.ok(result);
     }
 
@@ -1262,17 +1288,12 @@ public class ProgrammingExerciseResource {
         log.debug("REST request to check plagiarism for ProgrammingExercise with id: {}", exerciseId);
         long start = System.nanoTime();
 
-        Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository.findById(exerciseId);
-
-        if (programmingExercise.isEmpty()) {
-            return notFound();
-        }
-
-        if (!authCheckService.isAtLeastInstructorForExercise(programmingExercise.get())) {
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
+        if (!authCheckService.isAtLeastInstructorForExercise(programmingExercise)) {
             return forbidden();
         }
 
-        var language = programmingExercise.get().getProgrammingLanguage();
+        var language = programmingExercise.getProgrammingLanguage();
         ProgrammingLanguageFeature programmingLanguageFeature = programmingLanguageFeatureService.getProgrammingLanguageFeatures(language);
 
         if (!programmingLanguageFeature.isPlagiarismCheckSupported()) {
@@ -1290,7 +1311,7 @@ public class ProgrammingExerciseResource {
 
         InputStreamResource resource = new InputStreamResource(new FileInputStream(zipFile));
 
-        log.info("Check plagiarism of programming exercise {} with title '{}' was successful in {}.", programmingExercise.get().getId(), programmingExercise.get().getTitle(),
+        log.info("Check plagiarism of programming exercise {} with title '{}' was successful in {}.", programmingExercise.getId(), programmingExercise.getTitle(),
                 formatDurationFrom(start));
 
         return ResponseEntity.ok().contentLength(zipFile.length()).contentType(MediaType.APPLICATION_OCTET_STREAM).header("filename", zipFile.getName()).body(resource);
@@ -1379,6 +1400,8 @@ public class ProgrammingExerciseResource {
         public static final String GENERATE_TESTS = PROGRAMMING_EXERCISE + "/generate-tests";
 
         public static final String CHECK_PLAGIARISM = PROGRAMMING_EXERCISE + "/check-plagiarism";
+
+        public static final String PLAGIARISM_RESULT = PROGRAMMING_EXERCISE + "/plagiarism-result";
 
         public static final String CHECK_PLAGIARISM_JPLAG_REPORT = PROGRAMMING_EXERCISE + "/check-plagiarism-jplag-report";
 

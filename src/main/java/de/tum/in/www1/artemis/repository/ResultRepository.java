@@ -7,6 +7,7 @@ import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -42,8 +43,12 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
     @EntityGraph(type = LOAD, attributePaths = "submission")
     List<Result> findByParticipationExerciseIdOrderByCompletionDateAsc(Long exerciseId);
 
-    // TODO: cleanup unused queries
-
+    /**
+     * Get the latest results for each participation in an exercise from the database together with the list of feedback items.
+     *
+     * @param exerciseId the id of the exercise to load from the database
+     * @return a list of results.
+     */
     @Query("""
             select distinct r from Result r left join fetch r.feedbacks
             where r.completionDate =
@@ -76,14 +81,34 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
     @EntityGraph(type = LOAD, attributePaths = "feedbacks")
     Optional<Result> findDistinctWithFeedbackBySubmissionId(Long submissionId);
 
-    @Query("select r from Result r left join fetch r.feedbacks where r.id = :resultId")
-    Optional<Result> findByIdWithEagerFeedbacks(@Param("resultId") Long id);
+    @Query("""
+            SELECT r FROM Result r
+            LEFT JOIN FETCH r.feedbacks
+            WHERE r.id = :resultId
+            """)
+    Optional<Result> findByIdWithEagerFeedbacks(@Param("resultId") Long resultId);
 
-    @Query("select r from Result r left join fetch r.submission left join fetch r.feedbacks where r.id = :resultId")
-    Optional<Result> findByIdWithEagerSubmissionAndFeedbacks(@Param("resultId") Long id);
+    @Query("""
+            SELECT r FROM Result r
+            LEFT JOIN FETCH r.submission
+            LEFT JOIN FETCH r.feedbacks
+            WHERE r.id = :resultId
+            """)
+    Optional<Result> findByIdWithEagerSubmissionAndFeedbacks(@Param("resultId") Long resultId);
 
-    @Query("select r from Result r left join fetch r.feedbacks left join fetch r.assessor where r.id = :resultId")
-    Optional<Result> findByIdWithEagerFeedbacksAndAssessor(@Param("resultId") Long id);
+    @Query("""
+            SELECT r FROM Result r
+            LEFT JOIN FETCH r.feedbacks
+            LEFT JOIN FETCH r.assessor
+            WHERE r.id = :resultId
+            """)
+    Optional<Result> findByIdWithEagerFeedbacksAndAssessor(@Param("resultId") Long resultId);
+
+    @Query("""
+            SELECT r FROM Result r
+            WHERE r.participation.exercise.id = :exerciseId
+            """)
+    List<Result> findAllByExerciseId(@Param("exerciseId") Long exerciseId);
 
     /**
      * Load a result from the database by its id together with the associated submission, the list of feedback items and the assessor.
@@ -97,7 +122,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
     /**
      * counts the number of assessments of a course, which are either rated or not rated
      *
-     * @param courseId  - the id of the course
+     * @param exerciseIds - the exercises of the course
      * @param rated     - only counts assessments which are either rated or not rated
      * @return count of rated/unrated assessments of a course
      */
@@ -105,14 +130,14 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
             SELECT
                 count(r)
             FROM
-                Result r join r.participation p join p.exercise e join e.course c
+                Result r join r.participation p join p.exercise e
             WHERE
                 r.completionDate is not null
                 and r.assessor is not null
-                and r.rated = :#{#rated}
-                and c.id = :#{#courseId}
+                and r.rated = :rated
+                and e.id IN :exerciseIds
             """)
-    Long countAssessmentsByCourseIdAndRated(long courseId, boolean rated);
+    Long countAssessmentsByCourseIdAndRated(@Param("exerciseIds") Set<Long> exerciseIds, @Param("rated") boolean rated);
 
     List<Result> findAllByParticipation_Exercise_CourseId(Long courseId);
 
@@ -315,7 +340,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
      */
     default DueDateStat[] countNumberOfFinishedAssessmentsForExamExerciseForCorrectionRounds(Exercise exercise, int numberOfCorrectionRounds) {
 
-        // here we receive a list which contains an entry for each studentparticipation of the exercise.
+        // here we receive a list which contains an entry for each student participation of the exercise.
         // the entry simply is the number of already created and submitted manual results, so the number is either 1 or 2
         List<Long> countlist = countNumberOfFinishedAssessmentsByExerciseIdIgnoreTestRuns(exercise.getId());
         return convertDatabaseResponseToDueDateStats(countlist, numberOfCorrectionRounds);
@@ -411,21 +436,11 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
      *
      * !! this is very slow - 3787 ms TODO improve
      *
-     * @param courseId - the course we are interested in
+     * @param exerciseIds - the exercise ids of the course we are interested in
      * @return a number of assessments for the course
      */
-    default DueDateStat countNumberOfAssessments(Long courseId) {
-        return new DueDateStat(countAssessmentsByCourseIdAndRated(courseId, true), countAssessmentsByCourseIdAndRated(courseId, false));
-    }
-
-    /**
-     * Given a courseId, return the number of assessments for that course that have been completed (e.g. no draft!)
-     *
-     * @param courseId - the course we are interested in
-     * @return a number of assessments for the course
-     */
-    default DueDateStat countNumberOfAssessmentsOfExam(Long courseId) {
-        return new DueDateStat(countAssessmentsByCourseIdAndRated(courseId, true), 0);
+    default DueDateStat countNumberOfAssessments(Set<Long> exerciseIds) {
+        return new DueDateStat(countAssessmentsByCourseIdAndRated(exerciseIds, true), countAssessmentsByCourseIdAndRated(exerciseIds, false));
     }
 
     @Query("""
@@ -436,13 +451,13 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
                 sum(e.maxPoints)
                 )
             FROM
-                Result r join r.participation p join p.exercise e join e.course c join r.assessor a
+                Result r join r.participation p join p.exercise e join r.assessor a
             WHERE
                 r.completionDate is not null
-                and c.id = :#{#courseId}
+                and e.id IN :exerciseIds
             GROUP BY a.id
             """)
-    List<TutorLeaderboardAssessments> findTutorLeaderboardAssessmentByCourseId(@Param("courseId") long courseId);
+    List<TutorLeaderboardAssessments> findTutorLeaderboardAssessmentByCourseId(@Param("exerciseIds") Set<Long> exerciseIds);
 
     // Alternative which might be faster, in particular for complaints in the other repositories
 
@@ -560,5 +575,4 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
         }
         return totalPoints;
     }
-
 }

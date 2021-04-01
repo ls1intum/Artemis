@@ -79,6 +79,8 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
     numberOfMoreFeedbackRequests = 0;
     numberOfOpenMoreFeedbackRequests = 0;
     numberOfTutorMoreFeedbackRequests = 0;
+    complaintsEnabled = false;
+    feedbackRequestEnabled = false;
     totalAssessmentPercentage = new DueDateStat();
     tutorAssessmentPercentage = 0;
     tutorParticipationStatus: TutorParticipationStatus;
@@ -133,6 +135,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
 
     constructor(
         private exerciseService: ExerciseService,
+        private courseManagementService: CourseManagementService,
         private jhiAlertService: JhiAlertService,
         private translateService: TranslateService,
         private accountService: AccountService,
@@ -295,6 +298,8 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
                     } else {
                         this.tutorAssessmentPercentage = 100;
                     }
+                    this.complaintsEnabled = this.statsForDashboard.complaintsEnabled;
+                    this.feedbackRequestEnabled = this.statsForDashboard.feedbackRequestEnabled;
                     this.calculateAssessmentProgressInformation();
                 },
                 (response: string) => this.onError(response),

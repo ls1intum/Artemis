@@ -439,7 +439,11 @@ public class ProgrammingExerciseExportService {
 
         if (participations.size() < 2) {
             log.info("Insufficient amount of submissions for plagiarism detection. Return empty result.");
-            return new TextPlagiarismResult();
+            TextPlagiarismResult textPlagiarismResult = new TextPlagiarismResult();
+            textPlagiarismResult.setExercise(programmingExercise);
+            textPlagiarismResult.setSimilarityDistribution(new int[0]);
+
+            return textPlagiarismResult;
         }
 
         List<Repository> repositories = downloadRepositories(programmingExercise, participations, targetPath);
@@ -452,7 +456,9 @@ public class ProgrammingExerciseExportService {
         final var templateRepoName = urlService.getRepositorySlugFromRepositoryUrl(programmingExercise.getTemplateParticipation().getVcsRepositoryUrl());
 
         JPlagOptions options = new JPlagOptions(repoFolder, programmingLanguage);
-        options.setBaseCodeSubmissionName(templateRepoName);
+        if (templateRepoName != null) {
+            options.setBaseCodeSubmissionName(templateRepoName);
+        }
 
         // Important: for large courses with more than 1000 students, we might get more than one million results and 10 million files in the file system due to many 0% results,
         // therefore we limit the results to at least 50% or 0.5 similarity, the passed threshold is between 0 and 100%
@@ -468,7 +474,7 @@ public class ProgrammingExerciseExportService {
         cleanupResourcesAsync(programmingExercise, repositories, targetPath);
 
         TextPlagiarismResult textPlagiarismResult = new TextPlagiarismResult(result);
-        textPlagiarismResult.setExerciseId(programmingExercise.getId());
+        textPlagiarismResult.setExercise(programmingExercise);
 
         log.info("JPlag programming comparison for " + numberOfParticipations + " participations done in " + TimeLogUtil.formatDurationFrom(start));
 
@@ -516,7 +522,9 @@ public class ProgrammingExerciseExportService {
         final var templateRepoName = urlService.getRepositorySlugFromRepositoryUrl(programmingExercise.getTemplateParticipation().getVcsRepositoryUrl());
 
         JPlagOptions options = new JPlagOptions(repoFolder, programmingLanguage);
-        options.setBaseCodeSubmissionName(templateRepoName);
+        if (templateRepoName != null) {
+            options.setBaseCodeSubmissionName(templateRepoName);
+        }
 
         // Important: for large courses with more than 1000 students, we might get more than one million results and 10 million files in the file system due to many 0% results,
         // therefore we limit the results to at least 50% or 0.5 similarity, the passed threshold is between 0 and 100%

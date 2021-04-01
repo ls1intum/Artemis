@@ -26,10 +26,10 @@ import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
 public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
-    UserRepository userRepo;
+    private UserRepository userRepo;
 
     @Autowired
-    UserCreationService userCreationService;
+    private UserCreationService userCreationService;
 
     @Autowired
     private PasswordService passwordService;
@@ -97,8 +97,7 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
     public void getAccount() throws Exception {
         // create user in repo
         User user = ModelFactory.generateActivatedUser("authenticateduser");
-        user = userRepo.save(user);
-
+        userRepo.save(user);
         UserDTO account = request.get("/api/account", HttpStatus.OK, UserDTO.class);
         assertThat(account).isNotNull();
     }

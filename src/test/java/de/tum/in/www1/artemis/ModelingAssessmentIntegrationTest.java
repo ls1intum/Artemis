@@ -3,7 +3,11 @@ package de.tum.in.www1.artemis;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.assertj.core.data.Offset;
@@ -15,14 +19,41 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
-import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.*;
+import de.tum.in.www1.artemis.domain.AssessmentUpdate;
+import de.tum.in.www1.artemis.domain.Complaint;
+import de.tum.in.www1.artemis.domain.ComplaintResponse;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.ExampleSubmission;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.Feedback;
+import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
+import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
+import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
+import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
+import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
+import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismComparison;
+import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismStatus;
+import de.tum.in.www1.artemis.domain.plagiarism.modeling.ModelingPlagiarismResult;
+import de.tum.in.www1.artemis.domain.plagiarism.modeling.ModelingSubmissionElement;
+import de.tum.in.www1.artemis.repository.ComplaintRepository;
+import de.tum.in.www1.artemis.repository.ComplaintResponseRepository;
+import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.ExamRepository;
+import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
+import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.repository.ModelingSubmissionRepository;
+import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
+import de.tum.in.www1.artemis.repository.SubmissionRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.AssessmentService;
 import de.tum.in.www1.artemis.service.ModelingSubmissionService;
 import de.tum.in.www1.artemis.service.ParticipationService;
@@ -1255,6 +1286,22 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
         assertThat(savedSubmission.getLatestResult().getScore()).isEqualTo(40L);
         assertThat(savedSubmission.getLatestResult().hasComplaint()).isEqualTo(true);
 
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testCheckPlagiarismIdenticalLongTexts() throws Exception {
+        database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.json", "student1");
+        database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.json", "student2");
+        var path = "/api/modeling-exercises/" + classExercise.getId() + "/check-plagiarism";
+        var result = request.get(path, HttpStatus.OK, ModelingPlagiarismResult.class, database.getDefaultPlagiarismOptions());
+        assertThat(result.getComparisons()).hasSize(1);
+        assertThat(result.getExercise().getId()).isEqualTo(classExercise.getId());
+
+        PlagiarismComparison<ModelingSubmissionElement> comparison = result.getComparisons().iterator().next();
+
+        assertThat(comparison.getSimilarity()).isEqualTo(100.0, Offset.offset(0.1));
+        assertThat(comparison.getStatus()).isEqualTo(PlagiarismStatus.NONE);
     }
 
 }
