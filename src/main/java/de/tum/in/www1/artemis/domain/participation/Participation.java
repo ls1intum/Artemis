@@ -204,6 +204,12 @@ public abstract class Participation extends DomainObject implements Participatio
         return findLatestResult(false);
     }
 
+    /**
+     * Like findLatestResult() but with the possibility to include illegal submissions,
+     *
+     * @param includeIllegalResults should illegal submissions be included in the search
+     * @return the latest result or null
+     */
     @Nullable
     public Result findLatestResult(boolean includeIllegalResults) {
         Set<Result> results = this.results;
@@ -239,6 +245,13 @@ public abstract class Participation extends DomainObject implements Participatio
         return findLatestSubmission(false);
     }
 
+    /**
+     * Like findLatestSubmission() but with the possibility to include illegal submissions,
+     *
+     * @param <T> submission type
+     * @param includeIllegalSubmissions should the function include illegal submission
+     * @return the latest submission or null
+     */
     public <T extends Submission> Optional<T> findLatestSubmission(boolean includeIllegalSubmissions) {
         Set<Submission> submissions = this.submissions;
         if (submissions == null || submissions.size() == 0) {
