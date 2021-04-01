@@ -101,7 +101,7 @@ public class ModelingPlagiarismDetectionService {
                     }
                 });
 
-        log.info(String.format("Found %d modeling submissions with at least %d elements to compare", models.size(), minimumModelSize));
+        log.info("Found {} modeling submissions with at least {} elements to compare", models.size(), minimumModelSize);
 
         List<PlagiarismComparison<ModelingSubmissionElement>> comparisons = new ArrayList<>();
         List<UMLDiagram> nonEmptyDiagrams = new ArrayList<>(models.keySet());
@@ -149,7 +149,7 @@ public class ModelingPlagiarismDetectionService {
             }
         }
 
-        log.info(String.format("Found %d similar modeling submission combinations (>%f)", comparisons.size(), minimumSimilarity));
+        log.info("Found {} similar modeling submission combinations (>{})", comparisons.size(), minimumSimilarity);
 
         long durationInMillis = System.currentTimeMillis() - timeBeforeStartInMillis;
         int[] similarityDistribution = calculateSimilarityDistribution(comparisons);

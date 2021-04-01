@@ -526,7 +526,7 @@ public class BambooService extends AbstractContinuousIntegrationService {
             return newResult;
         }
         catch (Exception e) {
-            log.error("Error when creating build result from Bamboo notification: " + e.getMessage(), e);
+            log.error("Error when creating build result from Bamboo notification", e);
             throw new BambooException("Could not create build result from Bamboo notification", e);
         }
     }
@@ -685,7 +685,7 @@ public class BambooService extends AbstractContinuousIntegrationService {
             }
         }
         catch (Exception e) {
-            log.error("HttpError while retrieving build result logs from Bamboo: " + e.getMessage(), e);
+            log.error("HttpError while retrieving build result logs from Bamboo", e);
         }
         return logs;
     }

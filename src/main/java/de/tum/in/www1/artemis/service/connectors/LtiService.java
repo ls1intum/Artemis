@@ -463,7 +463,7 @@ public class LtiService {
                     log.info("Response from LTI consumer: {}", responseString);
                 }
                 catch (Exception ex) {
-                    log.error("Reporting to LTI consumer failed: " + ex.getMessage(), ex);
+                    log.error("Reporting to LTI consumer failed", ex);
                 }
             }));
         }

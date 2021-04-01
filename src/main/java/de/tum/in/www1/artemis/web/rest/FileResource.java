@@ -444,7 +444,7 @@ public class FileResource {
             return ResponseEntity.ok().headers(headers).contentType(MediaType.parseMediaType(mimeType)).header("filename", filename).body(file);
         }
         catch (IOException ex) {
-            log.error("Download of file: " + filename + "on path: " + path + " let to the following exception", ex);
+            log.error("Failed to download file: " + filename + "on path: " + path, ex);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }

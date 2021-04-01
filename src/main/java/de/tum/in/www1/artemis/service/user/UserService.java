@@ -141,7 +141,7 @@ public class UserService {
             }
         }
         catch (Exception ex) {
-            log.error("An error occurred after application startup when creating or updating the admin user or in the LDAP search: " + ex.getMessage(), ex);
+            log.error("An error occurred after application startup when creating or updating the admin user or in the LDAP search", ex);
         }
     }
 

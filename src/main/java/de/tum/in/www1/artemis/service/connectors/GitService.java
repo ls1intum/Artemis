@@ -940,7 +940,7 @@ public class GitService {
             FileUtils.deleteDirectory(folderPath.toFile());
         }
         catch (IOException ex) {
-            log.error("Exception during deleteLocalProgrammingExerciseReposFolder " + ex.getMessage(), ex);
+            log.error("Exception during deleteLocalProgrammingExerciseReposFolder", ex);
             // cleanup the folder to avoid problems in the future.
             // 'deleteQuietly' is the same as 'deleteDirectory' but is not throwing an exception, thus we avoid a try-catch block.
             FileUtils.deleteQuietly(folderPath.toFile());

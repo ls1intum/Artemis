@@ -61,13 +61,13 @@ public class AutomaticProgrammingExerciseCleanupService {
             cleanupBuildPlansOnContinuousIntegrationServer();
         }
         catch (Exception ex) {
-            log.error("Exception occurred during cleanupBuildPlansOnContinuousIntegrationServer " + ex.getMessage(), ex);
+            log.error("Exception occurred during cleanupBuildPlansOnContinuousIntegrationServer", ex);
         }
         try {
             cleanupGitRepositoriesOnArtemisServer();
         }
         catch (Exception ex) {
-            log.error("Exception occurred during cleanupGitRepositoriesOnArtemisServer " + ex.getMessage(), ex);
+            log.error("Exception occurred during cleanupGitRepositoriesOnArtemisServer", ex);
         }
     }
 

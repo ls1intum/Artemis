@@ -103,7 +103,7 @@ public class GitLabUserManagementService implements VcsUserManagementService {
                         // if user is already member of group in GitLab, ignore the exception to synchronize the "membership" with artemis
                         // ignore other errors
                         if (!"Member already exists".equalsIgnoreCase(ex.getMessage())) {
-                            log.error("Gitlab Exception when adding a user " + gitlabUser.getId() + " to a group " + exercise.getProjectKey() + ": " + ex.getMessage(), ex);
+                            log.error("Gitlab Exception when adding a user " + gitlabUser.getId() + " to a group " + exercise.getProjectKey(), ex);
                         }
                     }
                 }
@@ -131,7 +131,7 @@ public class GitLabUserManagementService implements VcsUserManagementService {
                             // If user membership to group is missing on Gitlab, ignore the exception
                             // and let artemis synchronize with GitLab groups
                             if (ex.getHttpStatus() != 404) {
-                                log.error("Gitlab Exception when removing a user " + gitlabUser.getId() + " to a group " + exercise.getProjectKey() + ": " + ex.getMessage(), ex);
+                                log.error("Gitlab Exception when removing a user " + gitlabUser.getId() + " to a group " + exercise.getProjectKey(), ex);
                             }
                         }
                     }

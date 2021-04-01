@@ -226,7 +226,7 @@ public class StudentExamService {
                             submissionVersionService.saveVersionForIndividual(submission, currentUser.getLogin());
                         }
                         catch (Exception ex) {
-                            log.error("Submission version could not be saved: " + ex);
+                            log.error("Submission version could not be saved", ex);
                         }
                     }
                 }

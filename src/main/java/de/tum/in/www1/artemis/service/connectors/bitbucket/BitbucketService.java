@@ -270,7 +270,7 @@ public class BitbucketService extends AbstractVersionControlService {
             restTemplate.exchange(bitbucketServerUrl + "/rest/api/latest/admin/users/add-groups", HttpMethod.POST, entity, Void.class);
         }
         catch (HttpClientErrorException e) {
-            log.error(String.format("Could not add Bitbucket user %s to groups %s", username, groups), e);
+            log.error("Could not add Bitbucket user " + username + " to groups" + groups, e);
             throw new BitbucketException("Error while adding Bitbucket user to groups");
         }
     }
@@ -365,7 +365,7 @@ public class BitbucketService extends AbstractVersionControlService {
             restTemplate.exchange(url, HttpMethod.PUT, null, Void.class);
         }
         catch (Exception e) {
-            log.error(String.format("Could not give %s permissions using %s", repositoryPermission, url), e);
+            log.error("Could not give " + repositoryPermission + " permissions using " + url, e);
             throw new BitbucketException("Error while giving repository permissions", e);
         }
     }
@@ -624,7 +624,7 @@ public class BitbucketService extends AbstractVersionControlService {
         }
         catch (Exception e) {
             // silently fail because this step is not absolutely necessary
-            log.error("Error when getting hash of last commit. Will continue, but the following error happened: " + e.getMessage(), e);
+            log.error("Error when getting hash of last commit. Able to continue.", e);
         }
         return commit;
     }

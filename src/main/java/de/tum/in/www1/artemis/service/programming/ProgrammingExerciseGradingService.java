@@ -106,7 +106,7 @@ public class ProgrammingExerciseGradingService {
             // NOTE: the result is not saved yet, but is connected to the submission, the submission is not completely saved yet
         }
         catch (ContinuousIntegrationException ex) {
-            log.error(String.format("Result for participation %d could not be created", participation.getId()), ex);
+            log.error("Result for participation " + participation.getId() + " could not be created", ex);
             return Optional.empty();
         }
 
