@@ -246,11 +246,11 @@ public class LtiService {
                 log.error(message);
                 throw new InternalAuthenticationServiceException(message);
             }
-            log.info("Created new user " + newUser);
+            log.info("Created new user {}", newUser);
             return newUser;
         });
 
-        log.info("createNewUserFromLaunchRequest: " + user);
+        log.info("createNewUserFromLaunchRequest: {}", user);
 
         // Make sure the user is activated
         if (!user.getActivated()) {
@@ -383,9 +383,9 @@ public class LtiService {
             LtiVerificationResult ltiResult = ltiVerifier.verify(request, this.OAUTH_SECRET.get());
             if (!ltiResult.getSuccess()) {
                 String requestString = httpServletRequestToString(request);
-                log.error("LTI signature verification failed with message: " + ltiResult.getMessage() + "; error: " + ltiResult.getError() + ", launch result: "
-                        + ltiResult.getLtiLaunchResult());
-                log.error("Request: " + requestString);
+                log.error("LTI signature verification failed with message: {}; error: {}, launch result: {}", ltiResult.getMessage(), ltiResult.getError(),
+                        ltiResult.getLtiLaunchResult());
+                log.error("Request: {}", requestString);
                 return "Lti signature verification failed with message: " + ltiResult.getMessage() + "; error: " + ltiResult.getError();
             }
         }

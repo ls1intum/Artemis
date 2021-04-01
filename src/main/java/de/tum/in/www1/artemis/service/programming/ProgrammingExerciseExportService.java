@@ -170,8 +170,7 @@ public class ProgrammingExerciseExportService {
         }
 
         var exercise = exerciseOrEmpty.get();
-        log.info("Request to export instructor repository of type " + repositoryType.getName() + " of programming exercise " + exercise + " with title '" + exercise.getTitle()
-                + "'");
+        log.info("Request to export instructor repository of type {} of programming exercise {} with title '{}'", repositoryType.getName(), exercise, exercise.getTitle());
 
         // Construct the name of the zip file
         String courseShortName = exercise.getCourseViaExerciseGroupOrCourseMember().getShortName();
@@ -312,7 +311,7 @@ public class ProgrammingExerciseExportService {
      */
     private File createZipWithAllRepositories(ProgrammingExercise programmingExercise, List<Path> pathsToZippedRepos) {
         if (pathsToZippedRepos.isEmpty()) {
-            log.warn("The zip file could not be created. Ignoring the request to export repositories for exercise " + programmingExercise.getTitle());
+            log.warn("The zip file could not be created. Ignoring the request to export repositories for exercise {}", programmingExercise.getTitle());
             return null;
         }
 
@@ -348,7 +347,7 @@ public class ProgrammingExerciseExportService {
     private Path createZipForRepositoryWithParticipation(final ProgrammingExercise programmingExercise, final ProgrammingExerciseStudentParticipation participation,
             final RepositoryExportOptionsDTO repositoryExportOptions) throws IOException, GitAPIException, InterruptedException {
         if (participation.getVcsRepositoryUrl() == null) {
-            log.warn("Ignore participation " + participation.getId() + " for export, because its repository URL is null");
+            log.warn("Ignore participation {} for export, because its repository URL is null", participation.getId());
             return null;
         }
         final var targetPath = fileService.getUniquePathString(repoDownloadClonePath);
@@ -379,11 +378,11 @@ public class ProgrammingExerciseExportService {
                     fileService.convertToUTF8Directory(repository.getLocalPath().toString());
                 }
                 catch (Exception ex) {
-                    log.warn("Cannot normalize code style in the repository " + repository.getLocalPath() + " due to the following exception: " + ex.getMessage());
+                    log.warn("Cannot normalize code style in the repository {} due to the following exception: {}", repository.getLocalPath(), ex.getMessage());
                 }
             }
 
-            log.debug("Create temporary zip file for repository " + repository.getLocalPath().toString());
+            log.debug("Create temporary zip file for repository {}", repository.getLocalPath().toString());
             Path zippedRepoFile = gitService.zipRepositoryWithParticipation(repository, targetPath, repositoryExportOptions.isHideStudentNameInZippedFolder());
 
             // if repository is not closed, it causes weird IO issues when trying to delete the repository again
@@ -411,7 +410,7 @@ public class ProgrammingExerciseExportService {
                 Files.delete(zippedRepoFile);
             }
             catch (Exception ex) {
-                log.warn("Could not delete file " + zippedRepoFile + ". Error message: " + ex.getMessage());
+                log.warn("Could not delete file {}. Error message: {}", zippedRepoFile, ex.getMessage());
             }
         }
     }
@@ -432,7 +431,7 @@ public class ProgrammingExerciseExportService {
         final var programmingExercise = programmingExerciseRepository.findWithAllParticipationsById(programmingExerciseId).get();
 
         final var numberOfParticipations = programmingExercise.getStudentParticipations().size();
-        log.info("Download repositories for JPlag programming comparison with " + numberOfParticipations + " participations");
+        log.info("Download repositories for JPlag programming comparison with {} participations", numberOfParticipations);
 
         final var targetPath = fileService.getUniquePathString(repoDownloadClonePath);
         List<ProgrammingExerciseParticipation> participations = studentParticipationsForComparison(programmingExercise, minimumScore);
@@ -469,14 +468,14 @@ public class ProgrammingExerciseExportService {
         JPlag jplag = new JPlag(options);
         JPlagResult result = jplag.run();
 
-        log.info("JPlag programming comparison finished with " + result.getComparisons().size() + " comparisons");
+        log.info("JPlag programming comparison finished with {} comparisons", result.getComparisons().size());
 
         cleanupResourcesAsync(programmingExercise, repositories, targetPath);
 
         TextPlagiarismResult textPlagiarismResult = new TextPlagiarismResult(result);
         textPlagiarismResult.setExercise(programmingExercise);
 
-        log.info("JPlag programming comparison for " + numberOfParticipations + " participations done in " + TimeLogUtil.formatDurationFrom(start));
+        log.info("JPlag programming comparison for {} participations done in {}", numberOfParticipations, TimeLogUtil.formatDurationFrom(start));
 
         return textPlagiarismResult;
     }
@@ -497,7 +496,7 @@ public class ProgrammingExerciseExportService {
         final var programmingExercise = programmingExerciseRepository.findWithAllParticipationsById(programmingExerciseId).get();
         final var numberOfParticipations = programmingExercise.getStudentParticipations().size();
 
-        log.info("Download repositories for JPlag programming comparison with " + numberOfParticipations + " participations");
+        log.info("Download repositories for JPlag programming comparison with {} participations", numberOfParticipations);
         final var targetPath = fileService.getUniquePathString(repoDownloadClonePath);
         List<ProgrammingExerciseParticipation> participations = studentParticipationsForComparison(programmingExercise, minimumScore);
 
@@ -533,7 +532,7 @@ public class ProgrammingExerciseExportService {
         log.info("Start JPlag programming comparison");
         JPlag jplag = new JPlag(options);
         JPlagResult result = jplag.run();
-        log.info("JPlag programming comparison finished with " + result.getComparisons().size() + " comparisons");
+        log.info("JPlag programming comparison finished with {} comparisons", result.getComparisons().size());
 
         log.info("Write JPlag report to file system");
         Report jplagReport = new Report(outputFolderFile);
@@ -557,7 +556,7 @@ public class ProgrammingExerciseExportService {
         log.info("Schedule deletion of zip file in 1 minute");
         fileService.scheduleForDeletion(zipFilePath, 1);
 
-        log.info("JPlag programming report for " + numberOfParticipations + " participations done in " + TimeLogUtil.formatDurationFrom(start));
+        log.info("JPlag programming report for {} participations done in {}", numberOfParticipations, TimeLogUtil.formatDurationFrom(start));
 
         return new File(zipFilePath.toString());
     }
@@ -589,7 +588,7 @@ public class ProgrammingExerciseExportService {
                 deleteTempLocalRepository(repository);
             }
             catch (GitException ex) {
-                log.error("delete repository " + localPath + " did not work as expected: " + ex.getMessage());
+                log.error("Delete repository {} did not work as expected: {}", localPath, ex.getMessage());
             }
         });
     }
@@ -598,7 +597,7 @@ public class ProgrammingExerciseExportService {
         final String projectDirName = programmingExercise.getProjectKey();
         Path projectPath = Paths.get(targetPath, projectDirName);
         try {
-            log.info("Delete project root directory " + projectPath.toFile());
+            log.info("Delete project root directory {}", projectPath.toFile());
             FileUtils.deleteDirectory(projectPath.toFile());
         }
         catch (IOException ex) {
@@ -616,8 +615,8 @@ public class ProgrammingExerciseExportService {
                 downloadedRepositories.add(repo);
             }
             catch (GitException | GitAPIException | InterruptedException ex) {
-                log.error("clone student repository " + participation.getVcsRepositoryUrl() + " in exercise '" + programmingExercise.getTitle() + "' did not work as expected: "
-                        + ex.getMessage());
+                log.error("Clone student repository {} in exercise '{}' did not work as expected: {}", participation.getVcsRepositoryUrl(), programmingExercise.getTitle(),
+                        ex.getMessage());
             }
         });
 
@@ -628,8 +627,8 @@ public class ProgrammingExerciseExportService {
             downloadedRepositories.add(templateRepo);
         }
         catch (GitException | GitAPIException | InterruptedException ex) {
-            log.error("clone template repository " + programmingExercise.getTemplateParticipation().getVcsRepositoryUrl() + " in exercise '" + programmingExercise.getTitle()
-                    + "' did not work as expected: " + ex.getMessage());
+            log.error("Clone template repository {} in exercise '{}' did not work as expected: {}", programmingExercise.getTemplateParticipation().getVcsRepositoryUrl(),
+                    programmingExercise.getTitle(), ex.getMessage());
         }
 
         return downloadedRepositories;
@@ -667,7 +666,7 @@ public class ProgrammingExerciseExportService {
                 gitService.deleteLocalRepository(repository);
             }
             catch (Exception ex) {
-                log.warn("Could not delete temporary repository " + repository.getLocalPath().toString() + ": " + ex.getMessage());
+                log.warn("Could not delete temporary repository {}: {}", repository.getLocalPath().toString(), ex.getMessage());
             }
         }
         else {
@@ -728,7 +727,7 @@ public class ProgrammingExerciseExportService {
             repository.close();
         }
         catch (GitAPIException ex) {
-            log.error("Cannot stage or commit to the repository " + repository.getLocalPath() + " due to the following exception: " + ex);
+            log.error("Cannot stage or commit to the repository " + repository.getLocalPath(), ex);
         }
     }
 
@@ -764,7 +763,7 @@ public class ProgrammingExerciseExportService {
 
         }
         catch (SAXException | IOException | ParserConfigurationException | TransformerException | XPathException ex) {
-            log.error("Cannot rename pom.xml file in " + repo.getLocalPath() + " due to the following exception: " + ex);
+            log.error("Cannot rename pom.xml file in " + repo.getLocalPath(), ex);
         }
     }
 
@@ -795,7 +794,7 @@ public class ProgrammingExerciseExportService {
 
         }
         catch (SAXException | IOException | ParserConfigurationException | TransformerException | XPathException ex) {
-            log.error("Cannot rename .project file in " + repo.getLocalPath() + " due to the following exception: " + ex);
+            log.error("Cannot rename .project file in " + repo.getLocalPath(), ex);
         }
     }
 

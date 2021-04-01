@@ -83,8 +83,8 @@ public class AutomaticProgrammingExerciseCleanupService {
 
         // Cleanup all student repos in the REPOS folder (based on the student participations) 8 weeks after the exercise due date
         var programmingExercises = programmingExerciseRepository.findAllWithStudentParticipationByRecentEndDate(endDate1, endDate2);
-        log.info("Found " + programmingExercises.size() + " programming exercise to clean local student repositories: "
-                + programmingExercises.stream().map(ProgrammingExercise::getProjectKey).collect(Collectors.joining(", ")));
+        log.info("Found {} programming exercise to clean local student repositories: {}", programmingExercises.size(),
+                programmingExercises.stream().map(ProgrammingExercise::getProjectKey).collect(Collectors.joining(", ")));
         for (var programmingExercise : programmingExercises) {
             for (var studentParticipation : programmingExercise.getStudentParticipations()) {
                 var programmingExerciseParticipation = (ProgrammingExerciseStudentParticipation) studentParticipation;
@@ -94,8 +94,8 @@ public class AutomaticProgrammingExerciseCleanupService {
 
         // Cleanup template, tests and solution repos in the REPOS folder 8 weeks after the course is over
         programmingExercises = programmingExerciseRepository.findAllByRecentCourseEndDate(endDate1, endDate2);
-        log.info("Found " + programmingExercises.size() + " programming exercise to clean local template, test and solution: "
-                + programmingExercises.stream().map(ProgrammingExercise::getProjectKey).collect(Collectors.joining(", ")));
+        log.info("Found {} programming exercise to clean local template, test and solution: {}", programmingExercises.size(),
+                programmingExercises.stream().map(ProgrammingExercise::getProjectKey).collect(Collectors.joining(", ")));
         for (var programmingExercise : programmingExercises) {
             gitService.deleteLocalRepository(programmingExercise.getVcsTemplateRepositoryUrl());
             gitService.deleteLocalRepository(programmingExercise.getVcsSolutionRepositoryUrl());
@@ -195,17 +195,17 @@ public class AutomaticProgrammingExerciseCleanupService {
             }
         }
 
-        log.info("Found " + allParticipationsWithBuildPlanId.size() + " participations with build plans in " + (System.currentTimeMillis() - start) + " ms execution time");
-        log.info("Found " + participationsWithBuildPlanToDelete.size() + " old build plans to delete");
-        log.info("  Found " + countAfter1DayAfterBuildAndTestStudentSubmissionsAfterDueDate + " build plans at least 1 day older than 'build and test submissions after due date");
-        log.info("  Found " + countNoResultAfter3Days + " build plans without results 3 days after initialization");
-        log.info("  Found " + countSuccessfulLatestResultAfter1Days + " build plans with successful latest result is older than 1 day");
-        log.info("  Found " + countUnsuccessfulLatestResultAfter5Days + " build plans with unsuccessful latest result is older than 5 days");
+        log.info("Found {} participations with build plans in {}ms execution time", allParticipationsWithBuildPlanId.size(), System.currentTimeMillis() - start);
+        log.info("Found {} old build plans to delete", participationsWithBuildPlanToDelete.size());
+        log.info("  Found {} build plans at least 1 day older than 'build and test submissions after due date", countAfter1DayAfterBuildAndTestStudentSubmissionsAfterDueDate);
+        log.info("  Found {} build plans without results 3 days after initialization", countNoResultAfter3Days);
+        log.info("  Found {} build plans with successful latest result is older than 1 day", countSuccessfulLatestResultAfter1Days);
+        log.info("  Found {} build plans with unsuccessful latest result is older than 5 days", countUnsuccessfulLatestResultAfter5Days);
 
         // Limit to 5000 deletions per night
         List<ProgrammingExerciseStudentParticipation> actualParticipationsToClean = participationsWithBuildPlanToDelete.stream().limit(5000).collect(Collectors.toList());
         List<String> buildPlanIds = actualParticipationsToClean.stream().map(ProgrammingExerciseStudentParticipation::getBuildPlanId).collect(Collectors.toList());
-        log.info("Build plans to cleanup: " + buildPlanIds);
+        log.info("Build plans to cleanup: {}", buildPlanIds);
 
         int index = 0;
         for (ProgrammingExerciseStudentParticipation participation : actualParticipationsToClean) {
@@ -228,6 +228,6 @@ public class AutomaticProgrammingExerciseCleanupService {
 
             index++;
         }
-        log.info(actualParticipationsToClean.size() + " build plans have been cleaned");
+        log.info("{} build plans have been cleaned", actualParticipationsToClean.size());
     }
 }

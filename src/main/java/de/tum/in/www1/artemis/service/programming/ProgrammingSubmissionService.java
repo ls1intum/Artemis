@@ -126,8 +126,8 @@ public class ProgrammingSubmissionService extends SubmissionService {
             // we can find this out by looking into the requestBody, e.g. changes=[{ref={id=refs/heads/BitbucketStationSupplies, displayId=BitbucketStationSupplies, type=BRANCH}
             // if the branch is different than master, throw an IllegalArgumentException, but make sure the REST call still returns 200 to Bitbucket
             commit = versionControlService.get().getLastCommitDetails(requestBody);
-            log.info("NotifyPush invoked due to the commit " + commit.getCommitHash() + " by " + commit.getAuthorName() + " with " + commit.getAuthorEmail() + " in branch "
-                    + commit.getBranch());
+            log.info("NotifyPush invoked due to the commit {} by {} with {} in branch {}", commit.getCommitHash(), commit.getAuthorName(), commit.getAuthorEmail(),
+                    commit.getBranch());
         }
         catch (Exception ex) {
             log.error("Commit could not be parsed for submission from participation " + programmingExerciseParticipation, ex);
@@ -171,7 +171,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
 
         programmingSubmission = new ProgrammingSubmission();
         programmingSubmission.setCommitHash(commit.getCommitHash());
-        log.info("Create new programmingSubmission with commitHash: " + commit.getCommitHash() + " for participation " + participationId);
+        log.info("Create new programmingSubmission with commitHash: {} for participation {}", commit.getCommitHash(), participationId);
 
         programmingSubmission.setSubmitted(true);
         programmingSubmission.setSubmissionDate(ZonedDateTime.now());
@@ -309,7 +309,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
     public void logTriggerInstructorBuild(User user, Exercise exercise, Course course) {
         var auditEvent = new AuditEvent(user.getLogin(), TRIGGER_INSTRUCTOR_BUILD, "exercise=" + exercise.getTitle(), "course=" + course.getTitle());
         auditEventRepository.add(auditEvent);
-        log.info("User " + user.getLogin() + " triggered an instructor build for all participations in exercise {} with id {}", exercise.getTitle(), exercise.getId());
+        log.info("User {} triggered an instructor build for all participations in exercise {} with id {}", user.getLogin(), exercise.getTitle(), exercise.getId());
     }
 
     private void notifyInstructorAboutStartedExerciseBuildRun(ProgrammingExercise programmingExercise) {
@@ -446,7 +446,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
             notifyUserAboutSubmission(submission);
         }
         catch (Exception e) {
-            log.error("Trigger build failed for " + programmingExerciseParticipation.getBuildPlanId() + " with the exception " + e.getMessage());
+            log.error("Trigger build failed for {} with the exception {}", programmingExerciseParticipation.getBuildPlanId(), e.getMessage());
             BuildTriggerWebsocketError error = new BuildTriggerWebsocketError(e.getMessage(), submission.getParticipation().getId());
             notifyUserAboutSubmissionError(submission, error);
         }
@@ -503,7 +503,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
             continuousIntegrationService.get().triggerBuild(programmingExercise.getTemplateParticipation());
         }
         catch (ContinuousIntegrationException ex) {
-            log.error("Could not trigger build for solution repository after test case update for programming exercise with id " + programmingExerciseId);
+            log.error("Could not trigger build for solution repository after test case update for programming exercise with id {}", programmingExerciseId);
         }
     }
 

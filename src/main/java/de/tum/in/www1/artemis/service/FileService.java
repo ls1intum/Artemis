@@ -72,7 +72,7 @@ public class FileService implements DisposableBean {
 
     @CacheEvict(value = "files", key = "#path")
     public void resetOnPath(String path) {
-        log.info("Invalidate files cache for " + path);
+        log.info("Invalidate files cache for {}", path);
         // Intentionally blank
     }
 
@@ -671,7 +671,7 @@ public class FileService implements DisposableBean {
         ScheduledFuture<?> future = executor.schedule(() -> {
             try {
                 if (Files.exists(path)) {
-                    log.info("Delete file " + path);
+                    log.info("Delete file {}", path);
                     Files.delete(path);
                 }
                 futures.remove(path);
@@ -694,7 +694,7 @@ public class FileService implements DisposableBean {
         ScheduledFuture<?> future = executor.schedule(() -> {
             try {
                 if (Files.exists(path) && Files.isDirectory(path)) {
-                    log.info("Delete directory  " + path);
+                    log.info("Delete directory {}", path);
                     FileUtils.deleteDirectory(path.toFile());
                 }
                 futures.remove(path);
@@ -732,7 +732,7 @@ public class FileService implements DisposableBean {
                 Files.createDirectories(uniquePath);
             }
             catch (IOException e) {
-                log.warn("could not create the directories for the path " + uniquePath);
+                log.warn("could not create the directories for the path {}", uniquePath);
             }
         }
         return uniquePath;

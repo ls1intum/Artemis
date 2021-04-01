@@ -54,7 +54,7 @@ public class TextPlagiarismDetectionService {
                         || submission.getLatestResult() != null && submission.getLatestResult().getScore() != null && submission.getLatestResult().getScore() >= minimumScore)
                 .collect(toList());
 
-        log.info("Found " + textSubmissions.size() + " text submissions in exercise " + exerciseWithParticipationsAndSubmissions.getId());
+        log.info("Found {} text submissions in exercise {}", textSubmissions.size(), exerciseWithParticipationsAndSubmissions.getId());
 
         return textSubmissions.parallelStream().filter(textSubmission -> !textSubmission.isEmpty()).collect(toUnmodifiableList());
     }
@@ -79,7 +79,7 @@ public class TextPlagiarismDetectionService {
 
         final List<TextSubmission> textSubmissions = textSubmissionsForComparison(textExercise, minimumScore, minimumSize);
         final var submissionsSize = textSubmissions.size();
-        log.info("Save text submissions for JPlag text comparison with " + submissionsSize + " submissions");
+        log.info("Save text submissions for JPlag text comparison with {} submissions", submissionsSize);
 
         if (textSubmissions.size() < 2) {
             log.info("Insufficient amount of submissions for plagiarism detection. Return empty result.");
@@ -119,7 +119,7 @@ public class TextPlagiarismDetectionService {
         log.info("Start JPlag Text comparison");
         JPlag jplag = new JPlag(options);
         JPlagResult jPlagResult = jplag.run();
-        log.info("JPlag Text comparison finished with " + jPlagResult.getComparisons().size() + " comparisons");
+        log.info("JPlag Text comparison finished with {} comparisons", jPlagResult.getComparisons().size());
 
         log.info("Delete submission folder");
         if (submissionFolderFile.exists()) {
@@ -129,7 +129,7 @@ public class TextPlagiarismDetectionService {
         TextPlagiarismResult textPlagiarismResult = new TextPlagiarismResult(jPlagResult);
         textPlagiarismResult.setExercise(textExercise);
 
-        log.info("JPlag text comparison for " + submissionsSize + " submissions done in " + TimeLogUtil.formatDurationFrom(start));
+        log.info("JPlag text comparison for {} submissions done in {}", submissionsSize, TimeLogUtil.formatDurationFrom(start));
 
         return textPlagiarismResult;
     }

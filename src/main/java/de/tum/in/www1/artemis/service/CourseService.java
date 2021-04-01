@@ -268,7 +268,7 @@ public class CourseService {
         userService.addUserToGroup(user, course.getStudentGroupName());
         final var auditEvent = new AuditEvent(user.getLogin(), Constants.REGISTER_FOR_COURSE, "course=" + course.getTitle());
         auditEventRepository.add(auditEvent);
-        log.info("User " + user.getLogin() + " has successfully registered for course " + course.getTitle());
+        log.info("User {} has successfully registered for course {}", user.getLogin(), course.getTitle());
     }
 
     /**

@@ -107,7 +107,7 @@ public class TextSubmissionService extends SubmissionService {
             }
         }
         catch (Exception ex) {
-            log.error("Text submission version could not be saved: " + ex);
+            log.error("Text submission version could not be saved", ex);
         }
 
         participation.addSubmission(textSubmission);

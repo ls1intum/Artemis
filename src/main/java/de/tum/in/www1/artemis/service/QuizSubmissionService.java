@@ -133,7 +133,7 @@ public class QuizSubmissionService {
 
         // check if user already submitted for this quiz
         Participation participation = participationService.participationForQuizWithResult(quizExercise, username);
-        log.debug(logText + "Received participation for user {} in quiz {} in {} µs.", username, exerciseId, (System.nanoTime() - start) / 1000);
+        log.debug("{} Received participation for user {} in quiz {} in {} µs.", logText, username, exerciseId, (System.nanoTime() - start) / 1000);
         if (!participation.getResults().isEmpty()) {
             log.debug("Participation for user {} in quiz {} has results", username, exerciseId);
             // NOTE: At this point, there can only be one Result because we already checked
@@ -155,7 +155,7 @@ public class QuizSubmissionService {
         // save submission to HashMap
         quizScheduleService.updateSubmission(exerciseId, username, quizSubmission);
 
-        log.info(logText + "Saved quiz submission for user {} in quiz {} after {} µs ", username, exerciseId, (System.nanoTime() - start) / 1000);
+        log.info("{} Saved quiz submission for user {} in quiz {} after {} µs ", logText, username, exerciseId, (System.nanoTime() - start) / 1000);
         return quizSubmission;
     }
 
@@ -192,10 +192,10 @@ public class QuizSubmissionService {
             submissionVersionService.saveVersionForIndividual(quizSubmission, user);
         }
         catch (Exception ex) {
-            log.error("Quiz submission version could not be saved: " + ex);
+            log.error("Quiz submission version could not be saved", ex);
         }
 
-        log.debug("submit exam quiz finished: " + quizSubmission);
+        log.debug("submit exam quiz finished: {}", quizSubmission);
         return quizSubmission;
     }
 }

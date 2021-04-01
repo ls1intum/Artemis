@@ -69,7 +69,7 @@ public class BitbucketBambooUpdateService implements ContinuousIntegrationUpdate
     public void updatePlanRepository(String bambooProjectKey, String buildPlanKey, String bambooRepositoryName, String bitbucketProjectKey, String bitbucketRepositoryName,
             Optional<List<String>> optionalTriggeredByRepositories) {
         try {
-            log.debug("Update plan repository for build plan " + buildPlanKey);
+            log.debug("Update plan repository for build plan {}", buildPlanKey);
             BambooRepositoryDTO bambooRepository = findBambooRepository(bambooRepositoryName, OLD_ASSIGNMENT_REPO_NAME, buildPlanKey);
             if (bambooRepository == null) {
                 throw new BambooException("Something went wrong while updating the template repository of the build plan " + buildPlanKey
@@ -86,7 +86,7 @@ public class BitbucketBambooUpdateService implements ContinuousIntegrationUpdate
             }
             optionalTriggeredByRepositories.ifPresent(triggeredByRepositories -> overwriteTriggers(buildPlanKey, triggeredByRepositories));
 
-            log.info("Update plan repository for build plan " + buildPlanKey + " was successful");
+            log.info("Update plan repository for build plan {} was successful", buildPlanKey);
         }
         catch (Exception e) {
             throw new BambooException(

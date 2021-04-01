@@ -124,7 +124,7 @@ public abstract class AbstractVersionControlService implements VersionControlSer
             }
             catch (IOException ex) {
                 // ignore
-                log.error("Could not delete directory of the failed cloned repository in: " + localPath);
+                log.error("Could not delete directory of the failed cloned repository in: {}", localPath);
             }
             throw new VersionControlException("Could not copy repository " + sourceRepositoryName + " to the target repository " + targetRepositoryName, e);
         }

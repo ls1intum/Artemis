@@ -61,7 +61,7 @@ public class ExamQuizService {
      */
     public void evaluateQuizAndUpdateStatistics(@NotNull Long quizExerciseId) {
         long start = System.nanoTime();
-        log.info("Starting quiz evaluation for quiz " + quizExerciseId);
+        log.info("Starting quiz evaluation for quiz {}", quizExerciseId);
         // We have to load the questions and statistics so that we can evaluate and update and we also need the participations and submissions that exist for this exercise so that
         // they can be evaluated
         var quizExercise = quizExerciseRepository.findOneWithQuestionsAndStatistics(quizExerciseId);

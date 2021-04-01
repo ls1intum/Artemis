@@ -115,7 +115,7 @@ public class ExamRegistrationService {
                     continue;
                 }
 
-                log.warn("User with registration number '" + registrationNumber + "' and login '" + login + "' not found in Artemis user database nor found in (TUM) LDAP");
+                log.warn("User with registration number '{}' and login '{}' not found in Artemis user database nor found in (TUM) LDAP", registrationNumber, login);
             }
             catch (Exception ex) {
                 log.warn("Error while processing user with registration number " + registrationNumber + ": " + ex.getMessage(), ex);
@@ -135,7 +135,7 @@ public class ExamRegistrationService {
             }
             AuditEvent auditEvent = new AuditEvent(currentUser.getLogin(), Constants.ADD_USER_TO_EXAM, userData);
             auditEventRepository.add(auditEvent);
-            log.info("User " + currentUser.getLogin() + " has added multiple users " + studentDTOs + " to the exam " + exam.getTitle() + " with id " + exam.getId());
+            log.info("User {} has added multiple users {} to the exam {} with id {}", currentUser.getLogin(), studentDTOs, exam.getTitle(), exam.getId());
         }
         catch (Exception ex) {
             log.warn("Could not add audit event to audit log", ex);
@@ -184,7 +184,7 @@ public class ExamRegistrationService {
         User currentUser = userRepository.getUserWithGroupsAndAuthorities();
         AuditEvent auditEvent = new AuditEvent(currentUser.getLogin(), Constants.ADD_USER_TO_EXAM, "exam=" + exam.getTitle(), "student=" + student.getLogin());
         auditEventRepository.add(auditEvent);
-        log.info("User " + currentUser.getLogin() + " has added user " + student.getLogin() + " to the exam " + exam.getTitle() + " with id " + exam.getId());
+        log.info("User {} has added user {} to the exam {} with id {}", currentUser.getLogin(), student.getLogin(), exam.getTitle(), exam.getId());
     }
 
     /**
@@ -208,8 +208,8 @@ public class ExamRegistrationService {
         User currentUser = userRepository.getUserWithGroupsAndAuthorities();
         AuditEvent auditEvent = new AuditEvent(currentUser.getLogin(), Constants.REMOVE_USER_FROM_EXAM, "exam=" + exam.getTitle(), "user=" + student.getLogin());
         auditEventRepository.add(auditEvent);
-        log.info("User " + currentUser.getLogin() + " has removed user " + student.getLogin() + " from the exam " + exam.getTitle() + " with id " + exam.getId()
-                + ". This also deleted a potentially existing student exam with all its participations and submissions.");
+        log.info("User {} has removed user {} from the exam {} with id {}. This also deleted a potentially existing student exam with all its participations and submissions.",
+                currentUser.getLogin(), student.getLogin(), exam.getTitle(), exam.getId());
     }
 
     private void removeStudentExam(StudentExam studentExam, boolean deleteParticipationsAndSubmission) {
@@ -249,8 +249,8 @@ public class ExamRegistrationService {
         User currentUser = userRepository.getUserWithGroupsAndAuthorities();
         AuditEvent auditEvent = new AuditEvent(currentUser.getLogin(), Constants.REMOVE_ALL_USERS_FROM_EXAM, "exam=" + exam.getTitle());
         auditEventRepository.add(auditEvent);
-        log.info("User " + currentUser.getLogin() + " has removed all users from the exam " + exam.getTitle() + " with id " + exam.getId()
-                + ". This also deleted potentially existing student exams with all its participations and submissions.");
+        log.info("User {} has removed all users from the exam {} with id {}. This also deleted potentially existing student exams with all its participations and submissions.",
+                currentUser.getLogin(), exam.getTitle(), exam.getId());
     }
 
     /**

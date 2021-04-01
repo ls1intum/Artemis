@@ -210,7 +210,7 @@ public class QuizExerciseService {
         // save the updated submissions and results
         quizSubmissionRepository.saveAll(submissions);
         resultRepository.saveAll(results);
-        log.info(results.size() + " results have been updated successfully for quiz re-evaluate");
+        log.info("{} results have been updated successfully for quiz re-evaluate", results.size());
     }
 
     /**

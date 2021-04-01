@@ -371,7 +371,7 @@ public class JenkinsUserManagementService implements CIUserManagementService {
             }
 
             var errorMessage = "Could not get user " + userLogin;
-            log.error(errorMessage + ": " + e);
+            log.error(errorMessage, e);
             throw new JenkinsException(errorMessage, e);
         }
     }

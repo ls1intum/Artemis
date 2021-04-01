@@ -40,7 +40,7 @@ public class ExerciseLifecycleService {
     public ScheduledFuture<?> scheduleTask(Exercise exercise, ExerciseLifecycle lifecycle, Runnable task) {
         final ZonedDateTime lifecycleDate = lifecycle.getDateFromExercise(exercise);
         final ScheduledFuture<?> future = scheduler.schedule(task, lifecycleDate.toInstant());
-        log.debug("Scheduled Task for Exercise \"" + exercise.getTitle() + "\" (#" + exercise.getId() + ") to trigger on " + lifecycle.toString() + ".");
+        log.debug("Scheduled Task for Exercise \"{}\" (#{}) to trigger on {}.", exercise.getTitle(), exercise.getId(), lifecycle.toString());
         return future;
     }
 
@@ -61,7 +61,7 @@ public class ExerciseLifecycleService {
             var future = scheduler.schedule(task.y, task.x.toInstant());
             futures.add(future);
         }
-        log.debug("Scheduled " + tasks.size() + " Tasks for Exercise \"" + exercise.getTitle() + "\" (#" + exercise.getId() + ") to trigger on " + lifecycle.toString() + ".");
+        log.debug("Scheduled {} Tasks for Exercise \"{}\" (#{}) to trigger on {}.", tasks.size(), exercise.getTitle(), exercise.getId(), lifecycle.toString());
         return futures;
     }
 }

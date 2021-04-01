@@ -109,9 +109,9 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
             List<ProgrammingExercise> programmingExercisesWithExam = programmingExerciseRepository.findAllWithEagerExamByExamEndDateAfterDate(ZonedDateTime.now());
             programmingExercisesWithExam.forEach(this::scheduleExamExercise);
 
-            log.info("Scheduled " + exercisesToBeScheduled.size() + " programming exercises.");
-            log.info("Scheduled " + programmingExercisesWithTestsAfterDueDateButNoRebuild.size() + "programming exercises for a score update after due date.");
-            log.info("Scheduled " + programmingExercisesWithExam.size() + " exam programming exercises.");
+            log.info("Scheduled {} programming exercises.", exercisesToBeScheduled.size());
+            log.info("Scheduled {} programming exercises for a score update after due date.", programmingExercisesWithTestsAfterDueDateButNoRebuild.size());
+            log.info("Scheduled {} exam programming exercises.", programmingExercisesWithExam.size());
 
         }
         catch (Exception e) {
@@ -305,11 +305,11 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
         return () -> {
             SecurityUtils.setAuthorizationObject();
             try {
-                log.info("Invoking scheduled task programming exercise with id " + exercise.getId() + ".");
+                log.info("Invoking scheduled task programming exercise with id {}.", exercise.getId());
                 programmingSubmissionService.triggerInstructorBuildForExercise(exercise.getId());
             }
             catch (EntityNotFoundException ex) {
-                log.error("Programming exercise with id " + exercise.getId() + " is no longer available in database for use in scheduled task.");
+                log.error("Programming exercise with id {} is no longer available in database for use in scheduled task.", exercise.getId());
             }
         };
     }
@@ -402,7 +402,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
                 }
             }
             catch (EntityNotFoundException ex) {
-                log.error("Programming exercise with id " + programmingExerciseId + " is no longer available in database for use in scheduled task.");
+                log.error("Programming exercise with id {} is no longer available in database for use in scheduled task.", programmingExerciseId);
             }
         };
     }
@@ -461,7 +461,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
                 }
             }
             catch (EntityNotFoundException ex) {
-                log.error("Programming exercise with id " + programmingExerciseId + " is no longer available in database for use in scheduled task.");
+                log.error("Programming exercise with id {} is no longer available in database for use in scheduled task.", programmingExerciseId);
             }
         };
     }
@@ -517,7 +517,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
     private List<ProgrammingExerciseStudentParticipation> invokeOperationOnAllParticipationsThatSatisfy(Long programmingExerciseId,
             BiConsumer<ProgrammingExercise, ProgrammingExerciseStudentParticipation> operation, Predicate<ProgrammingExerciseStudentParticipation> condition,
             String operationName) {
-        log.info("Invoking (scheduled) task '" + operationName + "' for programming exercise with id " + programmingExerciseId + ".");
+        log.info("Invoking (scheduled) task '{}' for programming exercise with id {}.", operationName, programmingExerciseId);
 
         Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(programmingExerciseId);
         if (programmingExercise.isEmpty()) {
@@ -541,8 +541,8 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
                 operation.accept(programmingExercise.get(), programmingExerciseStudentParticipation);
             }
             catch (Exception e) {
-                log.error("'" + operationName + "' failed for programming exercise with id " + programmingExerciseId + " for student repository with participation id "
-                        + studentParticipation.getId(), e);
+                log.error(String.format("'%s' failed for programming exercise with id %d for student repository with participation id %d", operationName, programmingExerciseId,
+                        studentParticipation.getId()), e);
                 failedOperations.add(programmingExerciseStudentParticipation);
             }
         }

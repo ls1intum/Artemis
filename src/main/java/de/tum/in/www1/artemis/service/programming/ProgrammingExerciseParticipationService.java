@@ -276,7 +276,7 @@ public class ProgrammingExerciseParticipationService {
             versionControlService.get().setRepositoryPermissionsToReadOnly(participation.getVcsRepositoryUrl(), programmingExercise.getProjectKey(), participation.getStudents());
         }
         else {
-            log.warn("Cannot lock student repository for participation " + participation.getId() + " because the repository was not copied yet!");
+            log.warn("Cannot lock student repository for participation {} because the repository was not copied yet!", participation.getId());
         }
     }
 
@@ -292,7 +292,7 @@ public class ProgrammingExerciseParticipationService {
             versionControlService.get().configureRepository(programmingExercise, participation.getVcsRepositoryUrl(), participation.getStudents(), true);
         }
         else {
-            log.warn("Cannot unlock student repository for participation " + participation.getId() + " because the repository was not copied yet!");
+            log.warn("Cannot unlock student repository for participation {} because the repository was not copied yet!", participation.getId());
         }
     }
 
@@ -310,12 +310,12 @@ public class ProgrammingExerciseParticipationService {
                 gitService.stashChanges(repo);
             }
             catch (InterruptedException | GitAPIException e) {
-                log.error("Stashing student repository for participation " + participation.getId() + " in exercise '" + programmingExercise.getTitle()
-                        + "' did not work as expected: " + e.getMessage());
+                log.error("Stashing student repository for participation {} in exercise '{}' did not work as expected: {}", participation.getId(), programmingExercise.getTitle(),
+                        e.getMessage());
             }
         }
         else {
-            log.warn("Cannot stash student repository for participation " + participation.getId() + " because the repository was not copied yet!");
+            log.warn("Cannot stash student repository for participation {} because the repository was not copied yet!", participation.getId());
         }
     }
 }

@@ -81,7 +81,7 @@ public class RepositoryService {
                 fileListWithContent.put(file.toString(), FileUtils.readFileToString(file, StandardCharsets.UTF_8));
             }
             catch (IOException e) {
-                log.error("Content of file: " + file.toString() + " could not be loaded and throws the following error: " + e.getMessage());
+                log.error("Content of file: {} could not be loaded and throws the following error: {}", file.toString(), e.getMessage());
             }
         });
         return fileListWithContent;
@@ -140,7 +140,7 @@ public class RepositoryService {
                     }
                 }
                 catch (IOException e) {
-                    log.error("Comparing file1 " + fileName + " with file2 " + templateFile.toString() + " throws in following error: " + e.getMessage());
+                    log.error("Comparing files '{}' with '{}' failed: {}", fileName, templateFile.toString(), e.getMessage());
                 }
             }
         });

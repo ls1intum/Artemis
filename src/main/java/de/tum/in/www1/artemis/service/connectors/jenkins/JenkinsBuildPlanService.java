@@ -192,7 +192,7 @@ public class JenkinsBuildPlanService {
             return isJobBuilding ? ContinuousIntegrationService.BuildStatus.BUILDING : ContinuousIntegrationService.BuildStatus.INACTIVE;
         }
         catch (NullPointerException | HttpClientErrorException e) {
-            log.error("Error while trying to fetch build status from Jenkins for " + planKey + ":" + e.getMessage());
+            log.error("Error while trying to fetch build status from Jenkins for {}: {}", planKey, e.getMessage());
             return ContinuousIntegrationService.BuildStatus.INACTIVE;
         }
     }

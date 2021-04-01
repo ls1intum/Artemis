@@ -57,15 +57,15 @@ public class LdapUserService {
             Optional<LdapUserDto> ldapUserOptional = findByUsername(login);
             if (ldapUserOptional.isPresent()) {
                 LdapUserDto ldapUser = ldapUserOptional.get();
-                log.info("Ldap User " + ldapUser.getUsername() + " has registration number: " + ldapUser.getRegistrationNumber());
+                log.info("Ldap User {} has registration number: {}", ldapUser.getUsername(), ldapUser.getRegistrationNumber());
                 return ldapUserOptional.get();
             }
             else {
-                log.warn("Ldap User " + login + " not found");
+                log.warn("Ldap User {} not found", login);
             }
         }
         catch (Exception ex) {
-            log.error("Error in LDAP Search " + ex.getMessage());
+            log.error("Error in LDAP Search: " + ex.getMessage(), ex);
         }
         return null;
     }

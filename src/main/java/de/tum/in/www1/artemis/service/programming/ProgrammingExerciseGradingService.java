@@ -98,7 +98,7 @@ public class ProgrammingExerciseGradingService {
      * @return result after compilation
      */
     public Optional<Result> processNewProgrammingExerciseResult(@NotNull ProgrammingExerciseParticipation participation, @NotNull Object requestBody) {
-        log.debug("Received new build result (NEW) for participation " + participation.getId());
+        log.debug("Received new build result (NEW) for participation {}", participation.getId());
 
         Result newResult;
         try {
@@ -106,7 +106,7 @@ public class ProgrammingExerciseGradingService {
             // NOTE: the result is not saved yet, but is connected to the submission, the submission is not completely saved yet
         }
         catch (ContinuousIntegrationException ex) {
-            log.error("Result for participation " + participation.getId() + " could not be created due to the following exception: " + ex, ex);
+            log.error(String.format("Result for participation %d could not be created", participation.getId()), ex);
             return Optional.empty();
         }
 
@@ -206,8 +206,9 @@ public class ProgrammingExerciseGradingService {
         }
         catch (EntityNotFoundException ex) {
             // If for some reason the programming exercise does not have a template participation, we can only log and abort.
-            log.error("Could not trigger the build of the template repository for the programming exercise id " + programmingExerciseId
-                    + " because no template participation could be found for the given exercise");
+            log.error(
+                    "Could not trigger the build of the template repository for the programming exercise id {} because no template participation could be found for the given exercise",
+                    programmingExerciseId);
         }
     }
 
@@ -307,7 +308,7 @@ public class ProgrammingExerciseGradingService {
         var auditEvent = new AuditEvent(user.getLogin(), Constants.RE_EVALUATE_RESULTS, "exercise=" + exercise.getTitle(), "course=" + course.getTitle(),
                 "results=" + results.size());
         auditEventRepository.add(auditEvent);
-        log.info("User " + user.getLogin() + " triggered a re-evaluation of {} results for exercise {} with id {}", results.size(), exercise.getTitle(), exercise.getId());
+        log.info("User {} triggered a re-evaluation of {} results for exercise {} with id {}", user.getLogin(), results.size(), exercise.getTitle(), exercise.getId());
     }
 
     /**

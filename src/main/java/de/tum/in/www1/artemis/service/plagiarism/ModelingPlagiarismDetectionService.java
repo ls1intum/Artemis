@@ -46,7 +46,7 @@ public class ModelingPlagiarismDetectionService {
             int minimumScore) {
         final List<ModelingSubmission> modelingSubmissions = modelingSubmissionsForComparison(exerciseWithParticipationsSubmissionsResults);
 
-        log.info("Found " + modelingSubmissions.size() + " modeling submissions in exercise " + exerciseWithParticipationsSubmissionsResults.getId());
+        log.info("Found {} modeling submissions in exercise {}", modelingSubmissions.size(), exerciseWithParticipationsSubmissionsResults.getId());
 
         ModelingPlagiarismResult result = compareSubmissions(modelingSubmissions, minimumSimilarity, minimumModelSize, minimumScore);
 
@@ -126,7 +126,7 @@ public class ModelingPlagiarismDetectionService {
                 ModelingSubmission modelingSubmissionA = models.get(model1);
                 ModelingSubmission modelingSubmissionB = models.get(model2);
 
-                log.info("Found similar models " + i + " with " + j + ": " + similarity);
+                log.info("Found similar models {} with {}: {}", i, j, similarity);
 
                 PlagiarismSubmission<ModelingSubmissionElement> submissionA = PlagiarismSubmission.fromModelingSubmission(modelingSubmissionA);
                 submissionA.setSize(model1.getAllModelElements().size());

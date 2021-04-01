@@ -47,13 +47,13 @@ public class JenkinsJobService {
      */
     public JobWithDetails getJobInFolder(String folderJobName, String jobName) {
         if (folderJobName == null || jobName == null) {
-            log.warn("Cannot get the job, because projectKey " + folderJobName + " or jobName " + jobName + " is null");
+            log.warn("Cannot get the job, because projectKey {} or jobName {} is null", folderJobName, jobName);
             return null;
         }
 
         final var folder = getFolderJob(folderJobName);
         if (folder == null) {
-            log.warn("Cannot get the job" + jobName + " in folder " + folderJobName + " because it doesn't exist.");
+            log.warn("Cannot get the job {} in folder {} because it doesn't exist.", jobName, folderJobName);
             return null;
         }
 

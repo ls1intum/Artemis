@@ -72,7 +72,7 @@ public class GitLabUserManagementService implements VcsUserManagementService {
             final var gitlabUser = userApi.getUser(vcsLogin);
             if (gitlabUser == null) {
                 // in case the user does not exist in Gitlab, we cannot update it
-                log.warn("User " + user.getLogin() + " does not exist in Gitlab and cannot be updated!");
+                log.warn("User {} does not exist in Gitlab and cannot be updated!", user.getLogin());
                 return;
             }
 
@@ -294,7 +294,7 @@ public class GitLabUserManagementService implements VcsUserManagementService {
             }
             catch (GitLabApiException e) {
                 if (e.getMessage().equals("Member already exists")) {
-                    log.warn("Member already exists for group " + exercise.getProjectKey());
+                    log.warn("Member already exists for group {}", exercise.getProjectKey());
                     return;
                 }
                 throw new GitLabException(String.format("Error adding new user [%d] to group [%s]", userId, exercise.toString()), e);

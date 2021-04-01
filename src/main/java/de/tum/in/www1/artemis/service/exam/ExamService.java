@@ -161,7 +161,7 @@ public class ExamService {
     public void delete(@NotNull long examId) {
         User user = userRepository.getUser();
         Exam exam = examRepository.findOneWithEagerExercisesGroupsAndStudentExams(examId);
-        log.info("User " + user.getLogin() + " has requested to delete the exam {}", exam.getTitle());
+        log.info("User {} has requested to delete the exam {}", user.getLogin(), exam.getTitle());
         AuditEvent auditEvent = new AuditEvent(user.getLogin(), Constants.DELETE_EXAM, "exam=" + exam.getTitle());
         auditEventRepository.add(auditEvent);
 
@@ -410,7 +410,7 @@ public class ExamService {
      * @return a examStatisticsDTO filled with all statistics regarding the exam
      */
     public ExamChecklistDTO getStatsForChecklist(Exam exam) {
-        log.info("getStatsForChecklist invoked for exam " + exam.getId());
+        log.info("getStatsForChecklist invoked for exam {}", exam.getId());
         int numberOfCorrectionRoundsInExam = exam.getNumberOfCorrectionRoundsInExam();
         long start = System.nanoTime();
         ExamChecklistDTO examChecklistDTO = new ExamChecklistDTO();
