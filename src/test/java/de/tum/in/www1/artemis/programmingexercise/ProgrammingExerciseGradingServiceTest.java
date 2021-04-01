@@ -988,7 +988,7 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
         assertThat(test1.hashCode()).isNotEqualTo(test2.hashCode());
         assertThat(test1).isNotEqualTo(test2);
         assertThat(test1).isNotEqualTo(null);
-        assertThat(test1).isNotEqualTo(test1);
+        assertThat(test1).isEqualTo(test1);
 
         assertThat(statistics.getTestCaseStatsMap()).containsExactlyInAnyOrderEntriesOf(testCaseStatsMap);
 
