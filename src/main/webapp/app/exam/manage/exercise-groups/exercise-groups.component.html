@@ -205,7 +205,7 @@
                         <td class="align-middle">
                             <a
                                 *ngIf="course.isAtLeastInstructor && exercise.type !== exerciseType.QUIZ"
-                                [routerLink]="['/course-management', course.id, exercise.type + '-exercises', exercise.id]"
+                                [routerLink]="['/course-management', course.id, 'exams', examId, 'exercise-groups', exerciseGroup.id, exercise.type + '-exercises', exercise.id]"
                             >
                                 <span>{{ exercise.id }}</span>
                             </a>
@@ -217,7 +217,7 @@
                         <td class="align-middle">
                             <a
                                 *ngIf="course.isAtLeastInstructor && exercise.type !== exerciseType.QUIZ"
-                                [routerLink]="['/course-management', course.id, exercise.type + '-exercises', exercise.id]"
+                                [routerLink]="['/course-management', course.id, 'exams', examId, 'exercise-groups', exerciseGroup.id, exercise.type + '-exercises', exercise.id]"
                             >
                                 <span>{{ exercise.title }}</span>
                             </a>

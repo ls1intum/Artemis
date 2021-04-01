@@ -18,7 +18,7 @@ export class ProgrammingExerciseResolve implements Resolve<ProgrammingExercise> 
     constructor(private service: ProgrammingExerciseService) {}
 
     resolve(route: ActivatedRouteSnapshot) {
-        const id = route.params['id'] ? route.params['id'] : undefined;
+        const id = route.params['exerciseId'] ? route.params['exerciseId'] : undefined;
         if (id) {
             return this.service.find(id).pipe(map((programmingExercise: HttpResponse<ProgrammingExercise>) => programmingExercise.body!));
         }
@@ -40,7 +40,7 @@ export const routes: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: ':courseId/programming-exercises/:id/edit',
+        path: ':courseId/programming-exercises/:exerciseId/edit',
         component: ProgrammingExerciseUpdateComponent,
         resolve: {
             programmingExercise: ProgrammingExerciseResolve,
@@ -52,7 +52,7 @@ export const routes: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: ':courseId/programming-exercises/import/:id',
+        path: ':courseId/programming-exercises/import/:exerciseId',
         component: ProgrammingExerciseUpdateComponent,
         resolve: {
             programmingExercise: ProgrammingExerciseResolve,
@@ -64,7 +64,7 @@ export const routes: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: ':courseId/programming-exercises/:id',
+        path: ':courseId/programming-exercises/:exerciseId',
         component: ProgrammingExerciseDetailComponent,
         resolve: {
             programmingExercise: ProgrammingExerciseResolve,
@@ -76,7 +76,7 @@ export const routes: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: ':courseId/programming-exercises/:id/plagiarism',
+        path: ':courseId/programming-exercises/:exerciseId/plagiarism',
         component: PlagiarismInspectorComponent,
         resolve: {
             exercise: ProgrammingExerciseResolve,

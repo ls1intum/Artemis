@@ -47,6 +47,11 @@ import { ProgrammingAssessmentDashboardComponent } from 'app/exercises/programmi
 import { CodeEditorTutorAssessmentContainerComponent } from 'app/exercises/programming/assess/code-editor-tutor-assessment-container.component';
 import { NewStudentParticipationResolver, StudentParticipationResolver } from 'app/exercises/programming/assess/programming-assessment.route';
 import { exerciseTypes } from 'app/entities/exercise.model';
+import { FileUploadExerciseDetailComponent } from 'app/exercises/file-upload/manage/file-upload-exercise-detail.component';
+import { ModelingExerciseDetailComponent } from 'app/exercises/modeling/manage/modeling-exercise-detail.component';
+import { ProgrammingExerciseDetailComponent } from 'app/exercises/programming/manage/programming-exercise-detail.component';
+import { TextExerciseDetailComponent } from 'app/exercises/text/manage/text-exercise/text-exercise-detail.component';
+import { PlagiarismInspectorComponent } from 'app/exercises/shared/plagiarism/plagiarism-inspector/plagiarism-inspector.component';
 
 @Injectable({ providedIn: 'root' })
 export class ExamResolve implements Resolve<Exam> {
@@ -473,6 +478,81 @@ export const examManagementRoute: Routes = [
         data: {
             authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.programmingExercise.home.title',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
+        path: ':examId/exercise-groups/:exerciseGroupId/text-exercises/:exerciseId',
+        component: TextExerciseDetailComponent,
+        data: {
+            authorities: [Authority.TA, Authority.INSTRUCTOR, Authority.ADMIN],
+            pageTitle: 'artemisApp.textExercise.home.title',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
+        path: ':examId/exercise-groups/:exerciseGroupId/file-upload-exercises/:exerciseId',
+        component: FileUploadExerciseDetailComponent,
+        data: {
+            authorities: [Authority.TA, Authority.INSTRUCTOR, Authority.ADMIN],
+            pageTitle: 'artemisApp.fileUploadExercise.home.title',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
+        path: ':examId/exercise-groups/:exerciseGroupId/modeling-exercises/:exerciseId',
+        component: ModelingExerciseDetailComponent,
+        data: {
+            authorities: [Authority.TA, Authority.INSTRUCTOR, Authority.ADMIN],
+            pageTitle: 'artemisApp.modelingExercise.home.title',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
+        path: ':examId/exercise-groups/:exerciseGroupId/programming-exercises/:exerciseId',
+        component: ProgrammingExerciseDetailComponent,
+        resolve: {
+            programmingExercise: ProgrammingExerciseResolve,
+        },
+        data: {
+            authorities: [Authority.TA, Authority.INSTRUCTOR, Authority.ADMIN],
+            pageTitle: 'artemisApp.programmingExercise.home.title',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
+        path: ':examId/exercise-groups/:exerciseGroupId/modeling-exercises/:exerciseId/plagiarism',
+        component: PlagiarismInspectorComponent,
+        resolve: {
+            exercise: ModelingExerciseResolver,
+        },
+        data: {
+            authorities: [Authority.TA, Authority.INSTRUCTOR, Authority.ADMIN],
+            pageTitle: 'artemisApp.plagiarism.plagiarism-detection',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
+        path: ':examId/exercise-groups/:exerciseGroupId/text-exercises/:exerciseId/plagiarism',
+        component: PlagiarismInspectorComponent,
+        resolve: {
+            exercise: TextExerciseResolver,
+        },
+        data: {
+            authorities: [Authority.TA, Authority.INSTRUCTOR, Authority.ADMIN],
+            pageTitle: 'artemisApp.plagiarism.plagiarism-detection',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
+        path: ':examId/exercise-groups/:exerciseGroupId/programming-exercises/:exerciseId/plagiarism',
+        component: PlagiarismInspectorComponent,
+        resolve: {
+            exercise: ProgrammingExerciseResolve,
+        },
+        data: {
+            authorities: [Authority.TA, Authority.INSTRUCTOR, Authority.ADMIN],
+            pageTitle: 'artemisApp.plagiarism.plagiarism-detection',
         },
         canActivate: [UserRouteAccessService],
     },

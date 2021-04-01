@@ -126,7 +126,15 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
                   'participations',
                   participationId.toString(),
               ]
-            : ['/course-management', this.course.id!.toString(), this.exercise.type + '-exercises', this.exercise.id!.toString(), 'participations', participationId.toString(), 'submissions'];
+            : [
+                  '/course-management',
+                  this.course.id!.toString(),
+                  this.exercise.type + '-exercises',
+                  this.exercise.id!.toString(),
+                  'participations',
+                  participationId.toString(),
+                  'submissions',
+              ];
     }
 
     /**

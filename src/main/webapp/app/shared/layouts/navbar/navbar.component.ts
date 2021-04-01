@@ -234,9 +234,8 @@ export class NavbarComponent implements OnInit, OnDestroy {
                     this.addBreadcrumbForNumberSegment(currentPath, segment);
                 } else {
                     this.addBreadcrumbForUrlSegment(currentPath, segment);
+                    this.lastRouteUrlSegment = segment;
                 }
-
-                this.lastRouteUrlSegment = segment;
             }
         } catch (e) {}
     }
@@ -352,6 +351,9 @@ export class NavbarComponent implements OnInit, OnDestroy {
                     break;
                 } else if (this.lastRouteUrlSegment === 'programming-exercises' && segment === 'import') {
                     // - This route is bogus an needs to be replaced in the future, display no crumb
+                    break;
+                } else if (this.lastRouteUrlSegment === 'exercise-groups') {
+                    // - Don't display '<type>-exercises' because it has no associated route
                     break;
                 }
 
