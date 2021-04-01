@@ -95,6 +95,9 @@ public class ProgrammingExerciseTestService {
     private ParticipationRepository participationRepository;
 
     @Autowired
+    private SubmissionRepository submissionRepository;
+
+    @Autowired
     @Qualifier("staticCodeAnalysisConfiguration")
     private Map<ProgrammingLanguage, List<StaticCodeAnalysisDefaultCategory>> staticCodeAnalysisDefaultConfigurations;
 
@@ -206,6 +209,7 @@ public class ProgrammingExerciseTestService {
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(solutionRepository.localRepoFile.toPath(), null)).when(gitService)
                 .getOrCheckoutRepository(solutionRepoTestUrl, true);
         doNothing().when(gitService).pushSourceToTargetRepo(any(), any());
+        doNothing().when(gitService).combineAllCommitsOfRepositoryIntoOne(any());
 
         // we need separate mocks with VcsRepositoryUrl here because MockFileRepositoryUrl and VcsRepositoryUrl do not seem to be compatible here
         mockDelegate.mockGetRepositorySlugFromRepositoryUrl(exerciseRepoName, exerciseRepoTestUrl);
@@ -677,7 +681,7 @@ public class ProgrammingExerciseTestService {
 
         // Trigger the build again and make sure no new submission is created
         request.postWithoutLocation(url, null, HttpStatus.OK, new HttpHeaders());
-        var submissions = database.submissionRepository.findAll();
+        var submissions = submissionRepository.findAll();
         assertThat(submissions.size()).isEqualTo(1);
     }
 
@@ -713,7 +717,7 @@ public class ProgrammingExerciseTestService {
 
         // Trigger the build again and make sure no new submission is created
         request.postWithoutLocation(url, null, HttpStatus.OK, new HttpHeaders());
-        var submissions = database.submissionRepository.findAll();
+        var submissions = submissionRepository.findAll();
         assertThat(submissions.size()).isEqualTo(1);
     }
 
@@ -744,7 +748,7 @@ public class ProgrammingExerciseTestService {
 
         // Trigger the build again and make sure no new submission is created
         request.postWithoutLocation(url, null, HttpStatus.OK, new HttpHeaders());
-        var submissions = database.submissionRepository.findAll();
+        var submissions = submissionRepository.findAll();
         assertThat(submissions.size()).isEqualTo(1);
     }
 

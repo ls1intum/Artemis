@@ -1,4 +1,4 @@
-import { Component, OnChanges, Input } from '@angular/core';
+import { Component, Input, OnChanges } from '@angular/core';
 import { Exercise, ExerciseType, getIcon } from 'app/entities/exercise.model';
 import { Submission } from 'app/entities/submission.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
@@ -6,6 +6,7 @@ import { getExerciseSubmissionsLink, getLinkToSubmissionAssessment } from 'app/u
 import { round } from 'app/shared/util/utils';
 import { Course } from 'app/entities/course.model';
 import { Result } from 'app/entities/result.model';
+import { StudentExam } from 'app/entities/student-exam.model';
 
 @Component({
     /* tslint:disable-next-line component-selector */
@@ -19,6 +20,7 @@ export class StudentExamDetailTableRowComponent implements OnChanges {
     @Input() isTestRun: boolean;
     @Input() course: Course;
     @Input() busy: boolean;
+    @Input() studentExam: StudentExam;
 
     courseId: number;
     studentParticipation: StudentParticipation;

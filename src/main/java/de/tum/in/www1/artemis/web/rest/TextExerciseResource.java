@@ -28,7 +28,6 @@ import org.springframework.web.bind.annotation.*;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
-import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismResult;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextPlagiarismResult;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.*;
@@ -65,6 +64,8 @@ public class TextExerciseResource {
 
     private final PlagiarismService plagiarismService;
 
+    private final PlagiarismResultRepository plagiarismResultRepository;
+
     private final TextExerciseRepository textExerciseRepository;
 
     private final TextExerciseImportService textExerciseImportService;
@@ -96,13 +97,14 @@ public class TextExerciseResource {
     private final CourseRepository courseRepository;
 
     public TextExerciseResource(TextExerciseRepository textExerciseRepository, TextExerciseService textExerciseService, TextAssessmentService textAssessmentService,
-            UserRepository userRepository, AuthorizationCheckService authCheckService, CourseService courseService, StudentParticipationRepository studentParticipationRepository,
-            ResultRepository resultRepository, PlagiarismService plagiarismService, GroupNotificationService groupNotificationService,
-            TextExerciseImportService textExerciseImportService, TextSubmissionExportService textSubmissionExportService, ExampleSubmissionRepository exampleSubmissionRepository,
-            ExerciseService exerciseService, GradingCriterionRepository gradingCriterionRepository, TextBlockRepository textBlockRepository,
-            ExerciseGroupRepository exerciseGroupRepository, InstanceMessageSendService instanceMessageSendService, TextPlagiarismDetectionService textPlagiarismDetectionService,
-            CourseRepository courseRepository) {
+            PlagiarismResultRepository plagiarismResultRepository, UserRepository userRepository, AuthorizationCheckService authCheckService, CourseService courseService,
+            StudentParticipationRepository studentParticipationRepository, ResultRepository resultRepository, PlagiarismService plagiarismService,
+            GroupNotificationService groupNotificationService, TextExerciseImportService textExerciseImportService, TextSubmissionExportService textSubmissionExportService,
+            ExampleSubmissionRepository exampleSubmissionRepository, ExerciseService exerciseService, GradingCriterionRepository gradingCriterionRepository,
+            TextBlockRepository textBlockRepository, ExerciseGroupRepository exerciseGroupRepository, InstanceMessageSendService instanceMessageSendService,
+            TextPlagiarismDetectionService textPlagiarismDetectionService, CourseRepository courseRepository) {
         this.textAssessmentService = textAssessmentService;
+        this.plagiarismResultRepository = plagiarismResultRepository;
         this.textBlockRepository = textBlockRepository;
         this.textExerciseService = textExerciseService;
         this.textExerciseRepository = textExerciseRepository;
@@ -500,9 +502,9 @@ public class TextExerciseResource {
         }
 
         final var newTextExercise = textExerciseImportService.importTextExercise(originalTextExercise, importedExercise);
-        textExerciseRepository.save((TextExercise) newTextExercise);
+        textExerciseRepository.save(newTextExercise);
         return ResponseEntity.created(new URI("/api/text-exercises/" + newTextExercise.getId()))
-                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, newTextExercise.getId().toString())).body((TextExercise) newTextExercise);
+                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, newTextExercise.getId().toString())).body(newTextExercise);
     }
 
     /**
@@ -558,28 +560,14 @@ public class TextExerciseResource {
      */
     @GetMapping("/text-exercises/{exerciseId}/plagiarism-result")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<PlagiarismResult> getPlagiarismResult(@PathVariable long exerciseId) {
+    public ResponseEntity<TextPlagiarismResult> getPlagiarismResult(@PathVariable long exerciseId) {
         log.debug("REST request to get the latest plagiarism result for the text exercise with id: {}", exerciseId);
-
-        Optional<TextExercise> optionalTextExercise = textExerciseRepository.findWithStudentParticipationsAndSubmissionsById(exerciseId);
-
-        if (optionalTextExercise.isEmpty()) {
-            return notFound();
-        }
-
-        TextExercise textExercise = optionalTextExercise.get();
-
+        TextExercise textExercise = textExerciseRepository.findByIdWithStudentParticipationsAndSubmissionsElseThrow(exerciseId);
         if (!authCheckService.isAtLeastInstructorForExercise(textExercise)) {
             return forbidden();
         }
-
-        Optional<PlagiarismResult> optionalResult = plagiarismService.getPlagiarismResult(textExercise);
-
-        if (optionalResult.isEmpty()) {
-            return notFound();
-        }
-
-        return ResponseEntity.ok(optionalResult.get());
+        var plagiarismResult = plagiarismResultRepository.findFirstByExerciseIdOrderByLastModifiedDateDescElseThrow(textExercise.getId());
+        return ResponseEntity.ok((TextPlagiarismResult) plagiarismResult);
     }
 
     /**
@@ -600,16 +588,11 @@ public class TextExerciseResource {
     public ResponseEntity<TextPlagiarismResult> checkPlagiarism(@PathVariable long exerciseId, @RequestParam float similarityThreshold, @RequestParam int minimumScore,
             @RequestParam int minimumSize) throws ExitException {
         TextExercise textExercise = textExerciseRepository.findByIdWithStudentParticipationsAndSubmissionsElseThrow(exerciseId);
-
         if (!authCheckService.isAtLeastInstructorForExercise(textExercise)) {
             return forbidden();
         }
-
         TextPlagiarismResult result = textPlagiarismDetectionService.checkPlagiarism(textExercise, similarityThreshold, minimumScore, minimumSize);
-
         plagiarismService.savePlagiarismResultAndRemovePrevious(result);
-
         return ResponseEntity.ok(result);
     }
-
 }

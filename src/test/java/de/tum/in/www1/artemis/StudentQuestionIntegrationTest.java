@@ -23,19 +23,16 @@ import de.tum.in.www1.artemis.util.ModelFactory;
 public class StudentQuestionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
-    CourseRepository courseRepo;
+    private CourseRepository courseRepo;
 
     @Autowired
-    ExerciseRepository exerciseRepo;
+    private LectureRepository lectureRepo;
 
     @Autowired
-    LectureRepository lectureRepo;
+    private AttachmentRepository attachmentRepo;
 
     @Autowired
-    AttachmentRepository attachmentRepo;
-
-    @Autowired
-    StudentQuestionRepository studentQuestionRepository;
+    private StudentQuestionRepository studentQuestionRepository;
 
     @BeforeEach
     public void initTestCase() {
@@ -80,7 +77,7 @@ public class StudentQuestionIntegrationTest extends AbstractSpringIntegrationBam
 
         StudentQuestion updatedStudentQuestion = request.putWithResponseBody("/api/courses/" + studentQuestion.getCourse().getId() + "/student-questions", studentQuestion,
                 StudentQuestion.class, HttpStatus.OK);
-        assertThat(updatedStudentQuestion.getQuestionText().equals("New Test Student Question"));
+        assertThat(updatedStudentQuestion.getQuestionText()).isEqualTo("New Test Student Question");
         assertThat(updatedStudentQuestion.isVisibleForStudents()).isFalse();
     }
 
@@ -94,7 +91,7 @@ public class StudentQuestionIntegrationTest extends AbstractSpringIntegrationBam
 
         StudentQuestion updatedStudentQuestion = request.putWithResponseBody("/api/courses/" + studentQuestion.getCourse().getId() + "/student-questions", studentQuestion,
                 StudentQuestion.class, HttpStatus.OK);
-        assertThat(updatedStudentQuestion.getQuestionText().equals("New Test Student Question"));
+        assertThat(updatedStudentQuestion.getQuestionText()).isEqualTo("New Test Student Question");
         assertThat(updatedStudentQuestion.isVisibleForStudents()).isFalse();
     }
 
@@ -110,7 +107,7 @@ public class StudentQuestionIntegrationTest extends AbstractSpringIntegrationBam
         studentQuestion_student1.setQuestionText("New Test Student Question");
         StudentQuestion updatedStudentQuestion1 = request.putWithResponseBody("/api/courses/" + studentQuestion_student1.getCourse().getId() + "/student-questions",
                 studentQuestion_student1, StudentQuestion.class, HttpStatus.OK);
-        assertThat(updatedStudentQuestion1.getQuestionText().equals("New Test Student Question"));
+        assertThat(updatedStudentQuestion1.getQuestionText()).isEqualTo("New Test Student Question");
         assertThat(updatedStudentQuestion1.isVisibleForStudents()).isFalse();
 
         // update question from another student --> forbidden
@@ -219,7 +216,7 @@ public class StudentQuestionIntegrationTest extends AbstractSpringIntegrationBam
 
         StudentQuestion updatedStudentQuestion = request.putWithResponseBody(
                 "/api/courses/" + studentQuestion.getCourse().getId() + "/student-questions/" + studentQuestion.getId() + "/votes", 1, StudentQuestion.class, HttpStatus.OK);
-        assertThat(updatedStudentQuestion.getVotes().equals(1));
+        assertThat(updatedStudentQuestion.getVotes()).isEqualTo(1);
     }
 
     @Test
@@ -229,7 +226,7 @@ public class StudentQuestionIntegrationTest extends AbstractSpringIntegrationBam
 
         StudentQuestion updatedStudentQuestion = request.putWithResponseBody(
                 "/api/courses/" + studentQuestion.getCourse().getId() + "/student-questions/" + studentQuestion.getId() + "/votes", -1, StudentQuestion.class, HttpStatus.OK);
-        assertThat(updatedStudentQuestion.getVotes().equals(-1));
+        assertThat(updatedStudentQuestion.getVotes()).isEqualTo(-1);
     }
 
     @Test
@@ -240,7 +237,7 @@ public class StudentQuestionIntegrationTest extends AbstractSpringIntegrationBam
 
         StudentQuestion updatedStudentQuestion = request.putWithResponseBody(
                 "/api/courses/" + studentQuestion.getCourse().getId() + "/student-questions/" + studentQuestion.getId() + "/votes", 2, StudentQuestion.class, HttpStatus.OK);
-        assertThat(updatedStudentQuestion.getVotes().equals(2));
+        assertThat(updatedStudentQuestion.getVotes()).isEqualTo(2);
     }
 
     @Test

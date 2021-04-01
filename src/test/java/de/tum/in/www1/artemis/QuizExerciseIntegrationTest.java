@@ -35,28 +35,28 @@ import de.tum.in.www1.artemis.web.websocket.QuizSubmissionWebsocketService;
 public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
-    QuizScheduleService quizScheduleService;
+    private QuizScheduleService quizScheduleService;
 
     @Autowired
-    QuizExerciseService quizExerciseService;
+    private QuizExerciseService quizExerciseService;
 
     @Autowired
-    StudentParticipationRepository studentParticipationRepository;
+    private StudentParticipationRepository studentParticipationRepository;
 
     @Autowired
-    ResultRepository resultRepository;
+    private ResultRepository resultRepository;
 
     @Autowired
-    QuizExerciseRepository quizExerciseRepository;
+    private QuizExerciseRepository quizExerciseRepository;
 
     @Autowired
-    QuizSubmissionWebsocketService quizSubmissionWebsocketService;
+    private QuizSubmissionWebsocketService quizSubmissionWebsocketService;
 
     @Autowired
-    QuizSubmissionRepository quizSubmissionRepository;
+    private QuizSubmissionRepository quizSubmissionRepository;
 
     @Autowired
-    SubmittedAnswerRepository submittedAnswerRepository;
+    private SubmittedAnswerRepository submittedAnswerRepository;
 
     private QuizExercise quizExercise;
 

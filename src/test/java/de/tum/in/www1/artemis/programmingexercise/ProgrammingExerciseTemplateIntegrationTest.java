@@ -183,6 +183,7 @@ public class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIn
         InvocationRequest mvnRequest = new DefaultInvocationRequest();
         mvnRequest.setPomFile(testRepo.localRepoFile);
         mvnRequest.setGoals(List.of("clean", "test"));
+        mvnRequest.setShowVersion(true);
 
         Invoker mvnInvoker = new DefaultInvoker();
         InvocationResult result = mvnInvoker.execute(mvnRequest);

@@ -203,12 +203,12 @@ public class OrganizationResource {
     }
 
     /**
-     * GET /organizations/allCount : Get the number of users and courses currently mapped to each organization
+     * GET /organizations/count-all : Get the number of users and courses currently mapped to each organization
      *
      * @return ResponseEntity containing a map containing the organizations' id as key and an inner map
      * containing their relative numbers of users and courses
      */
-    @GetMapping("/organizations/allCount")
+    @GetMapping("/organizations/count-all")
     @PreAuthorize("hasAnyRole('ADMIN')")
     public ResponseEntity<Map<Long, Map<String, Long>>> getNumberOfUsersAndCoursesOfAllOrganizations() {
         log.debug("REST request to get number of users and courses of all organizations");
