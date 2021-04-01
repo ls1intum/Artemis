@@ -442,7 +442,7 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
                 usersInSameSlot.add(username);
             }
         }
-        return setNumberOfUsers(users, span, startDate);
+        return mergeUsersPerTimeslotIntoList(users, span, startDate);
     }
 
     /**
@@ -454,7 +454,7 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
      * @param startDate the startDate which we need for mapping into timeslots
      * @return A List<StatisticsData> with no duplicated user per timeslot
      */
-    private List<StatisticsEntry> setNumberOfUsers(Map<Object, List<String>> users, SpanType span, ZonedDateTime startDate) {
+    private List<StatisticsEntry> mergeUsersPerTimeslotIntoList(Map<Object, List<String>> users, SpanType span, ZonedDateTime startDate) {
         List<StatisticsEntry> returnList = new ArrayList<>();
         users.forEach((timeslot, userList) -> {
             ZonedDateTime start;
