@@ -164,6 +164,7 @@ public class UserCreationService {
         user.setOrganizations(matchingOrganizations);
         user.setGroups(userDTO.getGroups());
         user.setActivated(true);
+        user.setRegistrationNumber(userDTO.getVisibleRegistrationNumber());
         saveUser(user);
 
         optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.createVcsUser(user));

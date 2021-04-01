@@ -65,7 +65,7 @@ public class LdapUserService {
             }
         }
         catch (Exception ex) {
-            log.error("Error in LDAP Search: " + ex.getMessage(), ex);
+            log.error("Error in LDAP Search", ex);
         }
         return null;
     }
