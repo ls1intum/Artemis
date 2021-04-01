@@ -230,7 +230,7 @@
                                     <span class="d-md-inline" jhiTranslate="entity.action.scores">Scores</span>
                                 </a>
                                 <a
-                                    *ngIf="!programmingExercise.teamMode && programmingExercise.isAtLeastTutor"
+                                    *ngIf="programmingExercise.teamMode && programmingExercise.isAtLeastTutor"
                                     [routerLink]="['/course-management', courseId, 'exercises', programmingExercise.id, 'teams']"
                                     class="btn btn-primary btn-sm mr-1 mb-1"
                                 >
