@@ -226,6 +226,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
     }
 
     @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
     void shouldUpdateScoresIfHasTestsAfterDueDateAndNoBuildAfterDueDate() throws Exception {
         mockStudentRepoLocks();
         final var dueDateDelayMS = 200;
@@ -247,6 +248,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
     }
 
     @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
     void shouldNotUpdateScoresIfHasTestsAfterDueDateAndBuildAfterDueDate() throws Exception {
         mockStudentRepoLocks();
         final var dueDateDelayMS = 200;
@@ -269,6 +271,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
 
     @ParameterizedTest()
     @ValueSource(booleans = { true, false })
+    @WithMockUser(username = "admin", roles = "ADMIN")
     void shouldNotUpdateScoresIfHasNoTestsAfterDueDate(boolean hasBuildAndTestAfterDueDate) throws Exception {
         mockStudentRepoLocks();
         final var dueDateDelayMS = 200;
@@ -300,6 +303,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
     }
 
     @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
     public void testCombineTemplateBeforeRelease() throws Exception {
         ProgrammingExercise programmingExerciseWithTemplate = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(programmingExercise.getId());
         VcsRepositoryUrl repositoryUrl = programmingExerciseWithTemplate.getVcsTemplateRepositoryUrl();
