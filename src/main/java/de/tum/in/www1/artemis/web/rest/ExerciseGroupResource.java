@@ -202,7 +202,7 @@ public class ExerciseGroupResource {
         User user = userRepository.getUser();
         AuditEvent auditEvent = new AuditEvent(user.getLogin(), Constants.DELETE_EXERCISE_GROUP, "exerciseGroup=" + exerciseGroup.getTitle());
         auditEventRepository.add(auditEvent);
-        log.info("User " + user.getLogin() + " has requested to delete the exercise group {}", exerciseGroup.getTitle());
+        log.info("User {} has requested to delete the exercise group {}", user.getLogin(), exerciseGroup.getTitle());
 
         for (Exercise exercise : exerciseGroup.getExercises()) {
             exerciseService.delete(exercise.getId(), deleteStudentReposBuildPlans, deleteBaseReposBuildPlans);

@@ -134,7 +134,7 @@ public class ParticipationTeamWebsocketService {
     public void updateModelingSubmission(@DestinationVariable Long participationId, @Payload ModelingSubmission modelingSubmission, Principal principal) {
         long start = System.currentTimeMillis();
         updateSubmission(participationId, modelingSubmission, principal, "/modeling-submissions");
-        log.info("Websocket endpoint updateModelingSubmission took " + (System.currentTimeMillis() - start) + "ms for submission with id " + modelingSubmission.getId());
+        log.info("Websocket endpoint updateModelingSubmission took {}ms for submission with id {}", System.currentTimeMillis() - start, modelingSubmission.getId());
     }
 
     /**
@@ -148,7 +148,7 @@ public class ParticipationTeamWebsocketService {
     public void updateTextSubmission(@DestinationVariable Long participationId, @Payload TextSubmission textSubmission, Principal principal) {
         long start = System.currentTimeMillis();
         updateSubmission(participationId, textSubmission, principal, "/text-submissions");
-        log.info("Websocket endpoint updateTextSubmission took " + (System.currentTimeMillis() - start) + "ms for submission with id " + textSubmission.getId());
+        log.info("Websocket endpoint updateTextSubmission took {}ms for submission with id {}", System.currentTimeMillis() - start, textSubmission.getId());
     }
 
     /**

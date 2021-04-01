@@ -277,7 +277,7 @@ public class StudentQuestionResource {
             return ResponseEntity.badRequest().build();
         }
         if (mayUpdateOrDeleteStudentQuestion(studentQuestion, user)) {
-            log.info("StudentQuestion deleted by " + user.getLogin() + ". Question: " + studentQuestion.getQuestionText() + " for " + entity, user.getLogin());
+            log.info("StudentQuestion deleted by {}. Question: {} for {}", user.getLogin(), studentQuestion.getQuestionText(), entity);
             studentQuestionRepository.deleteById(studentQuestionId);
             return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, studentQuestionId.toString())).build();
         }

@@ -95,7 +95,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
         }
         ResponseEntity<ModelingSubmission> response = handleModelingSubmission(exerciseId, principal, modelingSubmission);
         long end = System.currentTimeMillis();
-        log.info("createModelingSubmission took " + (end - start) + "ms for exercise " + exerciseId + " and user " + principal.getName());
+        log.info("createModelingSubmission took {}ms for exercise {} and user {}", end - start, exerciseId, principal.getName());
         return response;
     }
 
@@ -116,7 +116,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
         log.debug("REST request to update ModelingSubmission : {}", modelingSubmission.getModel());
         ResponseEntity<ModelingSubmission> response = handleModelingSubmission(exerciseId, principal, modelingSubmission);
         long end = System.currentTimeMillis();
-        log.info("updateModelingSubmission took " + (end - start) + "ms for exercise " + exerciseId + " and user " + principal.getName());
+        log.info("updateModelingSubmission took {}ms for exercise {} and user {}", end - start, exerciseId, principal.getName());
         return response;
     }
 

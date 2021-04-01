@@ -254,7 +254,7 @@ public class ResultResource {
             results.add(relevantSubmissionWithResult.getLatestResult());
         }
 
-        log.info("getResultsForExercise took " + (System.currentTimeMillis() - start) + "ms for " + results.size() + " results.");
+        log.info("getResultsForExercise took {}ms for {} results.", System.currentTimeMillis() - start, results.size());
 
         if (withSubmissions) {
             results = results.stream().filter(result -> result.getSubmission() != null && result.getSubmission().isSubmitted()).collect(Collectors.toList());

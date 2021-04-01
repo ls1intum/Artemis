@@ -241,8 +241,7 @@ public class StudentExamResource {
 
         prepareStudentExamForConduction(request, user, studentExam);
 
-        log.info("getStudentExamForConduction done in " + (System.currentTimeMillis() - start) + "ms for " + studentExam.getExercises().size() + " exercises for user "
-                + user.getLogin());
+        log.info("getStudentExamForConduction done in {}ms for {} exercises for user {}", System.currentTimeMillis() - start, studentExam.getExercises().size(), user.getLogin());
         return ResponseEntity.ok(studentExam);
     }
 
@@ -284,8 +283,7 @@ public class StudentExamResource {
 
         prepareStudentExamForConduction(request, currentUser, testRun);
 
-        log.info("getTestRunForConduction done in " + (System.currentTimeMillis() - start) + "ms for " + testRun.getExercises().size() + " exercises for user "
-                + currentUser.getLogin());
+        log.info("getTestRunForConduction done in {}ms for {} exercises for user {}", System.currentTimeMillis() - start, testRun.getExercises().size(), currentUser.getLogin());
         return ResponseEntity.ok(testRun);
     }
 
@@ -330,8 +328,7 @@ public class StudentExamResource {
         // not needed
         studentExam.getExam().setCourse(null);
 
-        log.info("getStudentExamForSummary done in " + (System.currentTimeMillis() - start) + "ms for " + studentExam.getExercises().size() + " exercises for user "
-                + user.getLogin());
+        log.info("getStudentExamForSummary done in {}ms for {} exercises for user {}", System.currentTimeMillis() - start, studentExam.getExercises().size(), user.getLogin());
         return ResponseEntity.ok(studentExam);
     }
 

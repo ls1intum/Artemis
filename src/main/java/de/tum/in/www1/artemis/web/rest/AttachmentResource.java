@@ -174,7 +174,7 @@ public class AttachmentResource {
         }
         boolean hasCourseInstructorAccess = authorizationCheckService.isAtLeastInstructorInCourse(course, user);
         if (hasCourseInstructorAccess) {
-            log.info(user.getLogin() + " deleted attachment with id " + id + " for " + relatedEntity, id);
+            log.info("{} deleted attachment with id {} for {}", user.getLogin(), id, relatedEntity);
             attachmentRepository.deleteById(id);
             return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, id.toString())).build();
         }

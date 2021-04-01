@@ -201,7 +201,7 @@ public class StudentQuestionAnswerResource {
             return forbidden();
         }
         if (mayUpdateOrDeleteStudentQuestionAnswer(studentQuestionAnswer, user)) {
-            log.info("StudentQuestionAnswer deleted by " + user.getLogin() + ". Answer: " + studentQuestionAnswer.getAnswerText() + " for " + entity, user.getLogin());
+            log.info("StudentQuestionAnswer deleted by {}. Answer: {} for {}", user.getLogin(), studentQuestionAnswer.getAnswerText(), entity);
             studentQuestionAnswerRepository.deleteById(id);
             return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, id.toString())).build();
         }

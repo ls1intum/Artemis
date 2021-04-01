@@ -143,7 +143,7 @@ public class AccountResource {
         long start = System.currentTimeMillis();
         User user = userRepository.getUserWithGroupsAuthoritiesAndGuidedTourSettings();
         UserDTO userDTO = new UserDTO(user);
-        log.info("GET /account " + user.getLogin() + " took " + (System.currentTimeMillis() - start) + "ms");
+        log.info("GET /account {} took {}ms", user.getLogin(), System.currentTimeMillis() - start);
         return userDTO;
     }
 

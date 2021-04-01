@@ -143,7 +143,7 @@ public class TextSubmissionResource {
 
         this.textSubmissionService.hideDetails(textSubmission, user);
         long end = System.currentTimeMillis();
-        log.info("handleTextSubmission took " + (end - start) + "ms for exercise " + exerciseId + " and user " + principal.getName());
+        log.info("handleTextSubmission took {}ms for exercise {} and user {}", end - start, exerciseId, principal.getName());
 
         return ResponseEntity.ok(textSubmission);
     }

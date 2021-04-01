@@ -139,7 +139,7 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
 
         this.fileUploadSubmissionService.hideDetails(submission, user);
         long end = System.currentTimeMillis();
-        log.info("submitFileUploadExercise took " + (end - start) + "ms for exercise " + exerciseId + " and user " + user.getLogin());
+        log.info("submitFileUploadExercise took {}ms for exercise {} and user {}", end - start, exerciseId, user.getLogin());
         return ResponseEntity.ok(submission);
     }
 

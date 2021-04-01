@@ -296,7 +296,7 @@ public class ExamResource {
             return courseAndExamAccessFailure.get();
         }
         ExamScoresDTO examScoresDTO = examService.calculateExamScores(examId);
-        log.info("get scores for exam " + examId + " took " + (System.currentTimeMillis() - start) + "ms");
+        log.info("get scores for exam {} took {}ms", examId, System.currentTimeMillis() - start);
         return ResponseEntity.ok(examScoresDTO);
     }
 
