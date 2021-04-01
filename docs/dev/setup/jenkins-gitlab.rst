@@ -124,8 +124,46 @@ Starting the Artemis server should now succeed.
 GitLab
 ------
 
-Gitlab Server Setup
-~~~~~~~~~~~~~~~~~~~
+Gitlab Server Quickstart
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The following steps describes how to set up the Gitlab server in a semi-automated way.
+This is ideal as a quickstart for developers. For a more detailed setup, see `Manual Gitlab Server Setup <#gitlab-server-setup>`__.
+
+1. Start the Gitlab container defined in `src/main/docker/gitlab-jenkins-mysql.yml` by running
+
+   ::
+
+        docker-compose -f src/main/docker/gitlab-jenkins-mysql.yml up --build
+
+   The Gitlab service loads the configuration file ``src/main/docker/gitlab/gitlab-config.rb`` which configures Gitlab after the container is started.
+   It disables prometheus monitoring, sets the ssh port to ``2222``, and adjusts the monitoring endpoint whitelist by default.
+
+2. Wait a couple of minutes since Gitlab can take some time to set up. Open the instance in your browser and set a first admin password of your choosing.
+   You can then login using the username ``root`` and your password.
+
+3. Open the Artemis configuration ``application-local.yml`` file and insert the Gitlab admin account:
+
+   .. code:: yaml
+
+       artemis:
+           version-control:
+               user: root
+               password: your.gitlab.admin.password
+
+4. You now need to generate an admin access token. Navigate to ``http://localhost:8081/-/profile/personal_access_tokens`` and generate a token with all scopes.
+   Copy this token into the ``ADMIN_PERSONAL_ACCESS_TOKEN`` field in the ``src/main/docker/gitlab/gitlab-local-setup.sh`` file.
+
+5. Run the following command and copy the generated access tokens into the Artemis configuration ``application-local.yml`` file.
+
+   ::
+
+        docker exec -it gitlab /bin/sh -c "sh gitlab-local-setup.sh"
+
+6. You're done! Follow the `Automated Jenkins Server Setup Setup <#automated-jenkins-server-setup>`__ section for configuring Jenkins.
+
+Manual Gitlab Server Setup
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 GitLab provides no possibility to set a users password via API without forcing the user to change it afterwards (see `Issue 19141 <https://gitlab.com/gitlab-org/gitlab/-/issues/19141>`__).
 Therefore, you may want to patch the official gitlab docker image.
