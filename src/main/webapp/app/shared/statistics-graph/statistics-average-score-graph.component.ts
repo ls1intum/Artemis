@@ -13,8 +13,6 @@ import { CourseManagementStatisticsModel } from 'app/entities/quiz/course-manage
 })
 export class StatisticsAverageScoreGraphComponent implements OnInit {
     @Input()
-    graphType: Graphs;
-    @Input()
     exerciseAverageScores: CourseManagementStatisticsModel[];
     @Input()
     courseAverage: number;

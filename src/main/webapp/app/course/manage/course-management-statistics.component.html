@@ -22,7 +22,6 @@
 
     <jhi-statistics-average-score-graph
         *ngIf="courseStatistics"
-        [graphType]="graph.AVERAGE_SCORE"
         [exerciseAverageScores]="courseStatistics.averageScoresOfExercises"
         [courseAverage]="courseStatistics.averageScoreOfCourse"
     >
