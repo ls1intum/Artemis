@@ -13,32 +13,46 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
-import de.tum.in.www1.artemis.domain.TextExercise;
-import de.tum.in.www1.artemis.domain.TextSubmission;
+import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.GraphType;
 import de.tum.in.www1.artemis.domain.enumeration.SpanType;
 import de.tum.in.www1.artemis.repository.TextExerciseRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.util.ModelFactory;
+import de.tum.in.www1.artemis.web.rest.dto.CourseManagementStatisticsDTO;
 
-public class UserStatisticsIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+public class StatisticsIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     TextExerciseRepository textExerciseRepository;
 
+    @Autowired
+    UserRepository userRepository;
+
+    Course course;
+
     @BeforeEach
     public void initTestCase() {
-        database.addUsers(12, 0, 0);
+        database.addUsers(12, 10, 10);
 
-        var course = database.addCourseWithOneModelingExercise();
+        course = database.addCourseWithOneModelingExercise();
         var now = ZonedDateTime.now();
         TextExercise textExercise = ModelFactory.generateTextExercise(now.minusDays(1), now.minusHours(2), now.plusHours(1), course);
         course.addExercises(textExercise);
         textExerciseRepository.save(textExercise);
 
-        for (int i = 1; i <= 12; i++) {
-            TextSubmission textSubmission = new TextSubmission();
+        // one submission today
+        TextSubmission textSubmission = new TextSubmission();
+        textSubmission.submissionDate(ZonedDateTime.now().minusSeconds(1));
+        var submission = database.addSubmission(textExercise, textSubmission, "student1");
+        database.addResultToSubmission(submission, AssessmentType.MANUAL);
+
+        for (int i = 2; i <= 12; i++) {
+            textSubmission = new TextSubmission();
             textSubmission.submissionDate(ZonedDateTime.now().minusMonths(i - 1).withDayOfMonth(10));
-            database.addSubmission(textExercise, textSubmission, "student" + i);
+            submission = database.addSubmission(textExercise, textSubmission, "student" + i);
+            database.addResultToSubmission(submission, AssessmentType.MANUAL);
         }
     }
 
@@ -98,7 +112,6 @@ public class UserStatisticsIntegrationTest extends AbstractSpringIntegrationBamb
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     public void testDataForQuarterEachGraph() throws Exception {
-        ZonedDateTime now = ZonedDateTime.now();
         SpanType span = SpanType.QUARTER;
         for (GraphType graph : GraphType.values()) {
             int periodIndex = 0;
@@ -125,5 +138,62 @@ public class UserStatisticsIntegrationTest extends AbstractSpringIntegrationBamb
             Integer[] result = request.get("/api/management/statistics/data", HttpStatus.OK, Integer[].class, parameters);
             assertThat(result.length).isEqualTo(12);
         }
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testGetChartDataForCourse() throws Exception {
+        var courseId = course.getId();
+        SpanType span = SpanType.WEEK;
+        int periodIndex = 0;
+        var graph = GraphType.SUBMISSIONS;
+        LinkedMultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
+        parameters.add("span", "" + span);
+        parameters.add("periodIndex", "" + periodIndex);
+        parameters.add("graphType", "" + graph);
+        parameters.add("courseId", "" + courseId);
+        Integer[] result = request.get("/api/management/statistics/data-for-course", HttpStatus.OK, Integer[].class, parameters);
+        assertThat(result.length).isEqualTo(7);
+        // one submission was manually added right before the request
+        assertThat(result[6]).isEqualTo(1);
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testGetCourseStatistics() throws Exception {
+        ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
+        TextExercise firstTextExercise = database.createIndividualTextExercise(course, pastTimestamp, pastTimestamp, pastTimestamp);
+        TextExercise secondTextExercise = database.createIndividualTextExercise(course, pastTimestamp.minusDays(1), pastTimestamp.minusDays(1), pastTimestamp.minusDays(1));
+
+        var firstTextExerciseId = firstTextExercise.getId();
+        var secondTextExerciseId = secondTextExercise.getId();
+        User student1 = userRepository.findOneByLogin("student1").orElseThrow();
+        User student2 = userRepository.findOneByLogin("student2").orElseThrow();
+
+        // Creating result for student1 and student2 for firstExercise
+        database.createParticipationSubmissionAndResult(firstTextExerciseId, student1, 10.0, 0.0, 50, true);
+        database.createParticipationSubmissionAndResult(firstTextExerciseId, student2, 10.0, 0.0, 100, true);
+
+        // Creating result for student1 and student2 for secondExercise
+        database.createParticipationSubmissionAndResult(secondTextExerciseId, student1, 10.0, 0.0, 0, true);
+        database.createParticipationSubmissionAndResult(secondTextExerciseId, student2, 10.0, 0.0, 80, true);
+
+        Long courseId = course.getId();
+        LinkedMultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
+        parameters.add("courseId", "" + courseId);
+        CourseManagementStatisticsDTO result = request.get("/api/management/statistics/course-statistics", HttpStatus.OK, CourseManagementStatisticsDTO.class, parameters);
+
+        assertThat(result.getAverageScoreOfCourse()).isEqualTo(57.5);
+        assertThat(result.getAverageScoresOfExercises().size()).isEqualTo(2);
+
+        var firstTextExerciseStatistics = result.getAverageScoresOfExercises().get(0);
+        assertThat(firstTextExerciseStatistics.getAverageScore()).isEqualTo(75.0);
+        assertThat(firstTextExerciseStatistics.getExerciseId()).isEqualTo(firstTextExerciseId);
+        assertThat(firstTextExerciseStatistics.getExerciseName()).isEqualTo(firstTextExercise.getTitle());
+
+        var secondTextExerciseStatistics = result.getAverageScoresOfExercises().get(1);
+        assertThat(secondTextExerciseStatistics.getAverageScore()).isEqualTo(40.0);
+        assertThat(secondTextExerciseStatistics.getExerciseId()).isEqualTo(secondTextExerciseId);
+        assertThat(secondTextExerciseStatistics.getExerciseName()).isEqualTo(secondTextExercise.getTitle());
     }
 }

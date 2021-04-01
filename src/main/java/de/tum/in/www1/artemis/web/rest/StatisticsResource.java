@@ -55,7 +55,6 @@ public class StatisticsResource {
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Integer[]> getChartData(@RequestParam SpanType span, @RequestParam Integer periodIndex, @RequestParam GraphType graphType, @RequestParam Long courseId) {
         return ResponseEntity.ok(this.service.getChartData(span, periodIndex, graphType, courseId));
-
     }
 
     /**
