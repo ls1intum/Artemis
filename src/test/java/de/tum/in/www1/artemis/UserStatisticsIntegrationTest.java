@@ -23,7 +23,7 @@ import de.tum.in.www1.artemis.util.ModelFactory;
 public class UserStatisticsIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
-    TextExerciseRepository textExerciseRepository;
+    private TextExerciseRepository textExerciseRepository;
 
     @BeforeEach
     public void initTestCase() {
@@ -98,7 +98,6 @@ public class UserStatisticsIntegrationTest extends AbstractSpringIntegrationBamb
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     public void testDataForQuarterEachGraph() throws Exception {
-        ZonedDateTime now = ZonedDateTime.now();
         SpanType span = SpanType.QUARTER;
         for (GraphType graph : GraphType.values()) {
             int periodIndex = 0;
