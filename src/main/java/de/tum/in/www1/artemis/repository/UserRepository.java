@@ -357,6 +357,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
      *
      * @param userId the user for which the notification read date should be updated
      */
+    // TODO: move to Repository
     @Transactional // ok because of modifying query
     default void updateUserNotificationReadDate(long userId) {
         updateUserNotificationReadDate(userId, ZonedDateTime.now());

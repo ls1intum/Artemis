@@ -43,7 +43,7 @@ describe('ShortAnswerQuestionComponent', () => {
         component.showResult = true;
         component.questionIndex = 0;
         component.score = 0;
-        component._question = question;
+        component.shortAnswerQuestion = question;
     });
 
     afterEach(function () {
@@ -63,7 +63,7 @@ describe('ShortAnswerQuestionComponent', () => {
         component.question = alternativeQuestion;
 
         expect(component.textParts).to.deep.equal([[`<p>${text}</p>`]]);
-        expect(component._question).to.deep.equal(alternativeQuestion);
+        expect(component.shortAnswerQuestion).to.deep.equal(alternativeQuestion);
         expect(component.renderedQuestion.text['changingThisBreaksApplicationSecurity']).to.equal(`<p>${text}</p>`);
         expect(component.renderedQuestion.hint['changingThisBreaksApplicationSecurity']).to.equal(`<p>${hint}</p>`);
         expect(component.renderedQuestion.explanation['changingThisBreaksApplicationSecurity']).to.equal(`<p>${explanation}</p>`);
@@ -107,7 +107,7 @@ describe('ShortAnswerQuestionComponent', () => {
         const mapping = new ShortAnswerMapping(spot, solution);
         alternativeQuestion.correctMappings = [mapping];
 
-        component.question = alternativeQuestion;
+        component.shortAnswerQuestion = alternativeQuestion;
         component.showSampleSolution();
 
         expect(component.sampleSolutions.length).to.equal(1);
@@ -118,7 +118,7 @@ describe('ShortAnswerQuestionComponent', () => {
     it('should toggle show sample solution', () => {
         const alternativeQuestion = new ShortAnswerQuestion();
         alternativeQuestion.spots = [];
-        component._question = alternativeQuestion;
+        component.shortAnswerQuestion = alternativeQuestion;
         component.showResult = true;
         component.showingSampleSolution = true;
         component.forceSampleSolution = true;
@@ -147,7 +147,7 @@ describe('ShortAnswerQuestionComponent', () => {
         const spot = new ShortAnswerSpot();
         spot.spotNr = 1;
         alternativeQuestion.spots = [new ShortAnswerSpot(), spot];
-        component._question = alternativeQuestion;
+        component.shortAnswerQuestion = alternativeQuestion;
 
         const solution = new ShortAnswerSolution();
         solution.text = 'expectedReturnText';
@@ -177,9 +177,9 @@ describe('ShortAnswerQuestionComponent', () => {
         const mapping = new ShortAnswerMapping(spot, solution);
         alternativeQuestion.correctMappings = [mapping];
 
-        component._question = alternativeQuestion;
+        component.shortAnswerQuestion = alternativeQuestion;
         expect(component.getBackgroundColourForInputField(tag)).to.equal('lightgreen');
-        component._question.correctMappings = [];
+        component.shortAnswerQuestion.correctMappings = [];
         expect(component.getBackgroundColourForInputField(tag)).to.equal('yellow');
         component.submittedTexts = [];
         expect(component.getBackgroundColourForInputField(tag)).to.equal('red');
