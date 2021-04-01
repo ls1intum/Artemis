@@ -242,7 +242,7 @@ public interface ContinuousIntegrationService {
             @Override
             public String forProgrammingLanguage(ProgrammingLanguage language) {
                 return switch (language) {
-                    case JAVA, PYTHON, C, HASKELL, KOTLIN, VHDL, ASSEMBLER, SWIFT -> Constants.ASSIGNMENT_CHECKOUT_PATH;
+                    case JAVA, PYTHON, C, HASKELL, KOTLIN, VHDL, ASSEMBLER, SWIFT, OCAML -> Constants.ASSIGNMENT_CHECKOUT_PATH;
                 };
             }
         },
@@ -251,7 +251,7 @@ public interface ContinuousIntegrationService {
             @Override
             public String forProgrammingLanguage(ProgrammingLanguage language) {
                 return switch (language) {
-                    case JAVA, PYTHON, HASKELL, KOTLIN, SWIFT -> "";
+                    case JAVA, PYTHON, HASKELL, KOTLIN, SWIFT, OCAML -> "";
                     case C, VHDL, ASSEMBLER -> Constants.TESTS_CHECKOUT_PATH;
                 };
             }
@@ -288,13 +288,14 @@ public interface ContinuousIntegrationService {
      */
     static String getDockerImageName(ProgrammingLanguage language) {
         return switch (language) {
-            case JAVA, KOTLIN -> "ls1tum/artemis-maven-template:java15-5";
+            case JAVA, KOTLIN -> "ls1tum/artemis-maven-template:java16-1";
             case PYTHON -> "ls1tum/artemis-python-docker:latest";
             case C -> "ls1tum/artemis-c-docker:latest";
             case HASKELL -> "tumfpv/fpv-stack:8.8.4";
             case VHDL -> "tizianleonhardt/era-artemis-vhdl:latest";
             case ASSEMBLER -> "tizianleonhardt/era-artemis-assembler:latest";
-            case SWIFT -> "norionomura/swiftlint:0.41.0_swift-5.3.1";
+            case SWIFT -> "norionomura/swiftlint:latest";
+            case OCAML -> "ls1tum/artemis-ocaml-docker:latest";
         };
     }
 }

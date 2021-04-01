@@ -27,7 +27,11 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 @Repository
 public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
 
-    @Query("select e from Exercise e left join fetch e.categories where e.course.id = :#{#courseId}")
+    @Query("""
+            SELECT e FROM Exercise e
+            LEFT JOIN FETCH e.categories
+            WHERE e.course.id = :#{#courseId}
+            """)
     Set<Exercise> findByCourseIdWithCategories(@Param("courseId") Long courseId);
 
     @Query("""
@@ -37,10 +41,19 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
             """)
     Set<Exercise> findByExerciseIdWithCategories(@Param("exerciseIds") Set<Long> exerciseIds);
 
-    @Query("select e from Exercise e where e.course.id = :#{#courseId} and e.mode = 'TEAM'")
+    @Query("""
+            SELECT e FROM Exercise e
+            WHERE e.course.id = :#{#courseId}
+            	AND e.mode = 'TEAM'
+            """)
     Set<Exercise> findAllTeamExercisesByCourseId(@Param("courseId") Long courseId);
 
-    @Query("select e from Exercise e where e.course.testCourse = false and e.dueDate >= :#{#now} order by e.dueDate asc")
+    @Query("""
+            SELECT e FROM Exercise e
+            WHERE e.course.testCourse = FALSE
+            	AND e.dueDate >= :#{#now}
+            ORDER BY e.dueDate ASC
+            """)
     Set<Exercise> findAllExercisesWithCurrentOrUpcomingDueDate(@Param("now") ZonedDateTime now);
 
     /**
@@ -49,23 +62,60 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
      * @param login the login of the corresponding user
      * @return list of exercises
      */
-    @Query("select e from Exercise e where e.course.id = :#{#courseId} and exists (select l from LtiOutcomeUrl l where e = l.exercise and l.user.login = :#{#login})")
+    @Query("""
+            SELECT e FROM Exercise e
+            WHERE e.course.id = :#{#courseId}
+            AND EXISTS (
+            	SELECT l FROM LtiOutcomeUrl l
+            	WHERE e = l.exercise
+            	AND l.user.login = :#{#login})
+            """)
     Set<Exercise> findByCourseIdWhereLtiOutcomeUrlExists(@Param("courseId") Long courseId, @Param("login") String login);
 
-    @Query("select distinct c from Exercise e join e.categories c where e.course.id = :#{#courseId}")
+    @Query("""
+            SELECT DISTINCT c FROM Exercise e JOIN e.categories c
+            WHERE e.course.id = :#{#courseId}
+                """)
     Set<String> findAllCategoryNames(@Param("courseId") Long courseId);
 
-    @Query("select distinct exercise from Exercise exercise left join fetch exercise.studentParticipations where exercise.id = :#{#exerciseId}")
+    @Query("""
+            SELECT DISTINCT e FROM Exercise e
+            LEFT JOIN FETCH e.studentParticipations
+            WHERE e.id = :#{#exerciseId}
+                """)
     Optional<Exercise> findByIdWithEagerParticipations(@Param("exerciseId") Long exerciseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "categories", "teamAssignmentConfig" })
     Optional<Exercise> findWithEagerCategoriesAndTeamAssignmentConfigById(Long exerciseId);
 
-    @Query("select distinct exercise from Exercise exercise left join fetch exercise.exampleSubmissions examplesub left join fetch examplesub.submission exsub left join fetch exsub.results where exercise.id = :#{#exerciseId}")
+    @Query("""
+            SELECT DISTINCT e from Exercise e
+            LEFT JOIN FETCH e.exampleSubmissions examplesub
+            LEFT JOIN FETCH examplesub.submission exsub
+            LEFT JOIN FETCH exsub.results
+            WHERE e.id = :#{#exerciseId}
+                """)
     Optional<Exercise> findByIdWithEagerExampleSubmissions(@Param("exerciseId") Long exerciseId);
 
-    @Query("select distinct exercise from Exercise exercise left join fetch exercise.exerciseHints left join fetch exercise.studentQuestions left join fetch exercise.categories where exercise.id = :#{#exerciseId}")
+    @Query("""
+            SELECT DISTINCT e from Exercise e
+            LEFT JOIN FETCH e.exerciseHints
+            LEFT JOIN FETCH e.studentQuestions
+            LEFT JOIN FETCH e.categories
+            WHERE e.id = :#{#exerciseId}
+                """)
     Optional<Exercise> findByIdWithDetailsForStudent(@Param("exerciseId") Long exerciseId);
+
+    /**
+     *
+     * @param courseId - course id of the exercises we want to fetch
+     * @return all exercise-ids which belong to the course
+     */
+    @Query("""
+            SELECT e.id FROM Exercise e LEFT JOIN e.course c
+            WHERE c.id = :courseId
+                """)
+    Set<Long> findAllIdsByCourseId(@Param("courseId") Long courseId);
 
     /**
      * calculates the average score and the participation rate of students for each given individual course exercise
@@ -219,6 +269,103 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
 
     @EntityGraph(type = LOAD, attributePaths = { "studentParticipations", "studentParticipations.student", "studentParticipations.submissions" })
     Optional<Exercise> findWithEagerStudentParticipationsStudentAndSubmissionsById(Long exerciseId);
+
+    /**
+     * Returns the title of the exercise with the given id
+     *
+     * @param exerciseId the id of the exercise
+     * @return the name/title of the exercise or null if the exercise does not exist
+     */
+    @Query("""
+            SELECT e.title
+            FROM Exercise e
+            WHERE e.id = :exerciseId
+            """)
+    String getExerciseTitle(@Param("exerciseId") Long exerciseId);
+
+    /**
+     * Fetches the exercises for a course
+     *
+     * @param courseId the course to get the exercises for
+     * @return a set of exercises with categories
+     */
+    @Query("""
+            SELECT DISTINCT e
+            FROM Exercise e LEFT JOIN FETCH e.categories
+            WHERE e.course.id = :courseId
+            """)
+    Set<Exercise> getExercisesForCourseManagementOverview(@Param("courseId") Long courseId);
+
+    /**
+     * Fetches the exercises for a course with an assessment due date (or due date if without assessment due date) in the future
+     *
+     * @param courseId the course to get the exercises for
+     * @param now the current date time
+     * @return a set of exercises
+     */
+    @Query("""
+            SELECT DISTINCT e
+            FROM Exercise e
+            WHERE e.course.id = :courseId
+                AND (e.assessmentDueDate IS NULL OR e.assessmentDueDate > :now)
+                AND (e.assessmentDueDate IS NOT NULL OR e.dueDate IS NULL OR e.dueDate > :now)
+            """)
+    Set<Exercise> getActiveExercisesForCourseManagementOverview(@Param("courseId") Long courseId, @Param("now") ZonedDateTime now);
+
+    /**
+     * Fetches the exercises for a course with a passed assessment due date (or due date if without assessment due date)
+     *
+     * @param courseId the course to get the exercises for
+     * @param now the current date time
+     * @return a set of exercises
+     */
+    @Query("""
+            SELECT DISTINCT e
+            FROM Exercise e
+            WHERE e.course.id = :courseId
+                AND (e.assessmentDueDate IS NOT NULL AND e.assessmentDueDate < :now
+                OR e.assessmentDueDate IS NULL AND e.dueDate IS NOT NULL AND e.dueDate < :now)
+            """)
+    List<Exercise> getPastExercisesForCourseManagementOverview(@Param("courseId") Long courseId, @Param("now") ZonedDateTime now);
+
+    /**
+     * Fetches the number of student participations in the given exercise
+     *
+     * @param exerciseId the id of the exercise to get the amount for
+     * @return The number of participations as <code>Long</code>
+     */
+    @Query("""
+            SELECT COUNT(DISTINCT p.student.id)
+            FROM Exercise e JOIN e.studentParticipations p
+            WHERE e.id = :exerciseId
+            """)
+    Long getStudentParticipationCountById(@Param("exerciseId") Long exerciseId);
+
+    /**
+     * Fetches the number of team participations in the given exercise
+     *
+     * @param exerciseId the id of the exercise to get the amount for
+     * @return The number of participations as <code>Long</code>
+     */
+    @Query("""
+            SELECT COUNT(DISTINCT p.team.id)
+            FROM Exercise e JOIN e.studentParticipations p
+            WHERE e.id = :exerciseId
+            """)
+    Long getTeamParticipationCountById(@Param("exerciseId") Long exerciseId);
+
+    /**
+     * Fetches exercise ids of exercises of a course
+     *
+     * @param courseId the id of the course the exercises are part of
+     * @return a list of ids of exercises
+     */
+    @Query("""
+            SELECT e.id
+            FROM Exercise e
+            WHERE e.course.id = :courseId
+            """)
+    List<Long> getExerciseIdsByCourseId(@Param("courseId") Long courseId);
 
     @NotNull
     default Exercise findByIdElseThrow(Long exerciseId) throws EntityNotFoundException {

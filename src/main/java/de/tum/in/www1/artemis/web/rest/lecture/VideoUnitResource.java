@@ -130,6 +130,10 @@ public class VideoUnitResource {
             return forbidden();
         }
 
+        // persist lecture unit before lecture to prevent "null index column for collection" error
+        videoUnit.setLecture(null);
+        videoUnit = videoUnitRepository.saveAndFlush(videoUnit);
+        videoUnit.setLecture(lecture);
         lecture.addLectureUnit(videoUnit);
         Lecture updatedLecture = lectureRepository.save(lecture);
         VideoUnit persistedVideoUnit = (VideoUnit) updatedLecture.getLectureUnits().get(updatedLecture.getLectureUnits().size() - 1);

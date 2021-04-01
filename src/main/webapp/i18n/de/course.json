@@ -59,6 +59,7 @@
             "teachingAssistantGroupName": "Tutorengruppe",
             "instructorGroupName": "Dozentengruppe",
             "description": "Kursbeschreibung",
+            "organizations": "Kurs Organisationen",
             "startDate": "Start",
             "endDate": "Ende",
             "semester": "Semester",
@@ -86,6 +87,7 @@
             "uploading": "Lade hoch...",
             "fileUploadExercises": "Dateiupload-Aufgabe",
             "students": "Studierende",
+            "participations": "Teilnahmen",
             "tutors": "Tutoren",
             "instructors": "Dozenten",
             "student": "Student",
@@ -97,6 +99,7 @@
                     "forbidden": "Der Kurzname muss mit einem Buchstaben beginnen und darf keine Sonderzeichen beinhalten."
                 }
             },
+            "courseDashboard": "Kurs Dashboard",
             "instructorDashboard": "Dozenten-Kursdashboard",
             "presentationScoreEnabled": {
                 "title": "Präsentationsbewertung aktiviert",
@@ -116,24 +119,24 @@
                     "modalQuestion": "Soll der Nutzer mit dem Login <strong>{{ title }}</strong> wirklich aus dieser Kursgruppe entfernt werden?"
                 }
             },
-            "archive": {
-                "archiveCourse": "Kurs archivieren",
-                "archiveCourseSuccess": "Der Kurs wurde archiviert!",
-                "archiveCourseError": "Der Kurs konnte nicht archiviert werden",
-                "archiveDownloadError": "Beim Herunterladen des Archivs ist ein Problem aufgetreten",
-                "downloadCourseArchive": "Kursarchiv herunterladen",
-                "popup": {
-                    "title": "Kurs Archivieren",
-                    "question": "Möchtest du den Kurs <strong>{{title}}</strong> wirklich archivieren?",
-                    "statement1": "Der Prozess komprimiert alle Repositories, Übungen zum Hochladen von Dateien, Modellierungsübungen und Textübungen im Kursen und in allen Prüfungen.",
-                    "statement2": "<strong class='text-danger'>Dieser Vorgang kann je nach Anzahl der Studenten und Programmierübungen mehrere Stunden dauern und beansprucht viele Serverressourcen. Bitte starte diesen Vorgang nur einmal, wenn die Serverlast niedrig ist (z.B. am frühen Morgen).</strong>",
-                    "footerStatement": "Du erhältst eine Benachrichtigung, wenn der Vorgang abgeschlossen ist. Anschließend kannst du das Archiv als Zip-Datei auf dieser Seite herunterladen."
-                }
-            },
+            "averageScore": "Punkte im Schnitt",
+            "releasedSoon": "Bald veröffentlicht",
+            "currentWorking": "Derzeitig in Bearbeitung",
+            "inAssessment": "Derzeitig in Bewertung",
+            "pastExercises": "Vergangene Übungen ({{ amount }} von {{ total }})",
+            "noExercises": "Keine aktiven Übungen vorhanden",
+            "assessmentProgress": "Bewertungen",
+            "releaseDate": "Veröffentlichung",
+            "dueDate": "Einreichungsfrist",
+            "assessmentDueDate": "Bewertungsfrist",
             "cleanup": {
                 "title": "Aufräumen",
                 "question": "Möchtest du den Kurs <strong>{{title}}</strong> wirklich bereinigen? Dadurch werden alle Studenten-Repositories für <strong>Übungen</strong> und <strong>Prüfungen</strong> gelöscht. Diese Aktion kann <strong class='text-danger'>NICHT</strong> rückgängig gemacht werden!"
             }
+        },
+        "courseStatistics": {
+            "amountOfStudents": "# an Studenten",
+            "activeStudents": "Aktive Studenten"
         }
     }
 }

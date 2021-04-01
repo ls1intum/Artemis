@@ -17,17 +17,22 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.GradingCriterion;
+import de.tum.in.www1.artemis.domain.GradingInstruction;
+import de.tum.in.www1.artemis.domain.Team;
+import de.tum.in.www1.artemis.domain.TeamAssignmentConfig;
 import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
 import de.tum.in.www1.artemis.domain.enumeration.DifficultyLevel;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
 import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
+import de.tum.in.www1.artemis.domain.plagiarism.modeling.ModelingPlagiarismResult;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.ModelingExerciseRepository;
+import de.tum.in.www1.artemis.repository.TeamRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.service.TeamService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.ModelingExerciseUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
@@ -35,19 +40,19 @@ import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
-    ExerciseRepository exerciseRepo;
+    private ExerciseRepository exerciseRepo;
 
     @Autowired
-    ModelingExerciseUtilService modelingExerciseUtilService;
+    private ModelingExerciseUtilService modelingExerciseUtilService;
 
     @Autowired
-    ModelingExerciseRepository modelingExerciseRepository;
+    private ModelingExerciseRepository modelingExerciseRepository;
 
     @Autowired
-    UserRepository userRepo;
+    private UserRepository userRepo;
 
     @Autowired
-    private TeamService teamService;
+    private TeamRepository teamRepository;
 
     private ModelingExercise classExercise;
 
@@ -417,8 +422,7 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBa
     public void testInstructorGetsOnlyResultsFromOwningCourses() throws Exception {
         final var search = database.configureSearch("");
         final var result = request.get("/api/modeling-exercises/", HttpStatus.OK, SearchResultPageDTO.class, database.exerciseSearchMapping(search));
-
-        assertThat(result.getResultsOnPage()).isEmpty();
+        assertThat(result.getResultsOnPage()).isNullOrEmpty();
     }
 
     @Test
@@ -473,12 +477,12 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBa
         assertEquals(ExerciseMode.TEAM, exerciseToBeImported.getMode());
         assertEquals(teamAssignmentConfig.getMinTeamSize(), exerciseToBeImported.getTeamAssignmentConfig().getMinTeamSize());
         assertEquals(teamAssignmentConfig.getMaxTeamSize(), exerciseToBeImported.getTeamAssignmentConfig().getMaxTeamSize());
-        assertEquals(0, teamService.findAllByExerciseIdWithEagerStudents(exerciseToBeImported, null).size());
+        assertEquals(0, teamRepository.findAllByExerciseIdWithEagerStudents(exerciseToBeImported, null).size());
 
         sourceExercise = modelingExerciseRepository.findById(sourceExercise.getId()).get();
         assertEquals(course1.getId(), sourceExercise.getCourseViaExerciseGroupOrCourseMember().getId());
         assertEquals(ExerciseMode.INDIVIDUAL, sourceExercise.getMode());
-        assertEquals(0, teamService.findAllByExerciseIdWithEagerStudents(sourceExercise, null).size());
+        assertEquals(0, teamRepository.findAllByExerciseIdWithEagerStudents(sourceExercise, null).size());
     }
 
     @Test
@@ -497,7 +501,7 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBa
         sourceExercise.setCourse(course1);
 
         sourceExercise = modelingExerciseRepository.save(sourceExercise);
-        teamService.save(sourceExercise, new Team());
+        teamRepository.save(sourceExercise, new Team());
 
         var exerciseToBeImported = ModelFactory.generateModelingExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1), DiagramType.ClassDiagram, course2);
         exerciseToBeImported.setMode(ExerciseMode.INDIVIDUAL);
@@ -509,12 +513,41 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBa
         assertEquals(course2.getId(), exerciseToBeImported.getCourseViaExerciseGroupOrCourseMember().getId(), course2.getId());
         assertEquals(ExerciseMode.INDIVIDUAL, exerciseToBeImported.getMode());
         assertNull(exerciseToBeImported.getTeamAssignmentConfig());
-        assertEquals(0, teamService.findAllByExerciseIdWithEagerStudents(exerciseToBeImported, null).size());
+        assertEquals(0, teamRepository.findAllByExerciseIdWithEagerStudents(exerciseToBeImported, null).size());
 
         sourceExercise = modelingExerciseRepository.findById(sourceExercise.getId()).get();
         assertEquals(course1.getId(), sourceExercise.getCourseViaExerciseGroupOrCourseMember().getId());
         assertEquals(ExerciseMode.TEAM, sourceExercise.getMode());
-        assertEquals(1, teamService.findAllByExerciseIdWithEagerStudents(sourceExercise, null).size());
+        assertEquals(1, teamRepository.findAllByExerciseIdWithEagerStudents(sourceExercise, null).size());
     }
 
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testGetPlagiarismResult() throws Exception {
+        final Course course = database.addCourseWithOneModelingExercise();
+        ModelingExercise modelingExercise = modelingExerciseRepository.findByCourseId(course.getId()).get(0);
+
+        ModelingPlagiarismResult expectedResult = database.createModelingPlagiarismResultForExercise(modelingExercise);
+
+        ModelingPlagiarismResult result = request.get("/api/modeling-exercises/" + modelingExercise.getId() + "/plagiarism-result", HttpStatus.OK, ModelingPlagiarismResult.class);
+        assertThat(result.getId()).isEqualTo(expectedResult.getId());
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testGetPlagiarismResultWithoutResult() throws Exception {
+        final Course course = database.addCourseWithOneModelingExercise();
+        ModelingExercise modelingExercise = modelingExerciseRepository.findByCourseId(course.getId()).get(0);
+
+        ModelingPlagiarismResult result = request.get("/api/modeling-exercises/" + modelingExercise.getId() + "/plagiarism-result", HttpStatus.NOT_FOUND,
+                ModelingPlagiarismResult.class);
+        assertThat(result).isNull();
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testGetPlagiarismResultWithoutExercise() throws Exception {
+        ModelingPlagiarismResult result = request.get("/api/modeling-exercises/" + 1 + "/plagiarism-result", HttpStatus.NOT_FOUND, ModelingPlagiarismResult.class);
+        assertThat(result).isNull();
+    }
 }

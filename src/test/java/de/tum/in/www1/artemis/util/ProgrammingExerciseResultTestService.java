@@ -15,10 +15,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
-import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
-import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
-import de.tum.in.www1.artemis.domain.enumeration.StaticCodeAnalysisTool;
+import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.repository.*;
@@ -64,10 +61,19 @@ public class ProgrammingExerciseResultTestService {
     private StaticCodeAnalysisService staticCodeAnalysisService;
 
     @Autowired
-    private FeedbackService feedbackService;
+    private ProgrammingExerciseTestCaseService programmingExerciseTestCaseService;
 
     @Autowired
-    private ProgrammingExerciseTestCaseService programmingExerciseTestCaseService;
+    private FeedbackRepository feedbackRepository;
+
+    @Autowired
+    private ProgrammingExerciseStudentParticipationRepository participationRepository;
+
+    @Autowired
+    private ResultRepository resultRepository;
+
+    @Autowired
+    private RequestUtilService request;
 
     private ProgrammingExercise programmingExercise;
 
@@ -76,15 +82,6 @@ public class ProgrammingExerciseResultTestService {
     private ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation;
 
     private ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipationStaticCodeAnalysis;
-
-    @Autowired
-    ProgrammingExerciseStudentParticipationRepository participationRepository;
-
-    @Autowired
-    ResultRepository resultRepository;
-
-    @Autowired
-    protected RequestUtilService request;
 
     public void setup() {
         database.addUsers(10, 2, 2);
@@ -168,29 +165,39 @@ public class ProgrammingExerciseResultTestService {
         request.postWithoutLocation("/api" + NEW_RESULT_RESOURCE_PATH, alteredObj, HttpStatus.OK, httpHeaders);
     }
 
+    private ProgrammingExerciseTestCase createTest(String testName, long testId) {
+        return new ProgrammingExerciseTestCase().exercise(programmingExercise).testName(testName).active(true).weight(1.0).id(testId).bonusMultiplier(1D).bonusPoints(0D)
+                .visibility(Visibility.ALWAYS);
+    }
+
     // Test
-    public void shouldUpdateTestCasesAndResultScoreFromSolutionParticipationResult(Object resultNotification) {
+    public void shouldUpdateTestCasesAndResultScoreFromSolutionParticipationResult(Object resultNotification, boolean withFailedTest) {
         database.createProgrammingSubmission(programmingExerciseStudentParticipation, false);
 
         Set<ProgrammingExerciseTestCase> expectedTestCases = new HashSet<>();
-        expectedTestCases
-                .add(new ProgrammingExerciseTestCase().exercise(programmingExercise).testName("test1").active(true).weight(1.0).id(1L).bonusMultiplier(1D).bonusPoints(0D));
-        expectedTestCases
-                .add(new ProgrammingExerciseTestCase().exercise(programmingExercise).testName("test2").active(true).weight(1.0).id(2L).bonusMultiplier(1D).bonusPoints(0D));
-        expectedTestCases
-                .add(new ProgrammingExerciseTestCase().exercise(programmingExercise).testName("test4").active(true).weight(1.0).id(3L).bonusMultiplier(1D).bonusPoints(0D));
+        expectedTestCases.add(createTest("test1", 1L));
+        expectedTestCases.add(createTest("test2", 2L));
+        expectedTestCases.add(createTest("test4", 4L));
+        if (withFailedTest) {
+            expectedTestCases.add(createTest("test3", 3L));
+        }
 
         final var optionalResult = gradingService.processNewProgrammingExerciseResult(solutionParticipation, resultNotification);
 
         Set<ProgrammingExerciseTestCase> testCases = programmingExerciseTestCaseService.findByExerciseId(programmingExercise.getId());
-        assertThat(testCases).usingElementComparatorIgnoringFields("exercise", "id").isEqualTo(expectedTestCases);
+        assertThat(testCases).usingElementComparatorIgnoringFields("exercise", "id").containsExactlyInAnyOrderElementsOf(expectedTestCases);
         assertThat(optionalResult).isPresent();
-        assertThat(optionalResult.get().getScore()).isEqualTo(100L);
+        if (withFailedTest) {
+            assertThat(optionalResult.get().getScore()).isEqualTo(75L);
+        }
+        else {
+            assertThat(optionalResult.get().getScore()).isEqualTo(100L);
+        }
 
-        // Call again and shouln't re-create new submission.
+        // Call again and shouldn't re-create new submission.
         gradingService.processNewProgrammingExerciseResult(solutionParticipation, resultNotification);
         var latestSubmissions = programmingSubmissionRepository.findAll();
-        // One submission from the student participation andd the other from solution participation
+        // One submission from the student participation and the other from solution participation
         assertThat(latestSubmissions.size()).isEqualTo(2);
     }
 
@@ -263,9 +270,9 @@ public class ProgrammingExerciseResultTestService {
                 AssessmentType.SEMI_AUTOMATIC, true);
 
         List<Feedback> feedback = ModelFactory.generateManualFeedback();
-        feedback = database.feedbackRepo.saveAll(feedback);
+        feedback = feedbackRepository.saveAll(feedback);
         programmingSubmission.getFirstResult().addFeedbacks(feedback);
-        database.resultRepo.save(programmingSubmission.getFirstResult());
+        resultRepository.save(programmingSubmission.getFirstResult());
 
         final var optionalResult = gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipation, resultNotification);
 

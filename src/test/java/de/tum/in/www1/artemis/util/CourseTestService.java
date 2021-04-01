@@ -21,22 +21,20 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.Language;
-import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
-import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
-import de.tum.in.www1.artemis.domain.enumeration.TutorParticipationStatus;
-import de.tum.in.www1.artemis.domain.leaderboard.tutor.*;
+import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
+import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.programmingexercise.MockDelegate;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.GroupNotificationService;
 import de.tum.in.www1.artemis.service.user.UserService;
-import de.tum.in.www1.artemis.web.rest.dto.StatsForInstructorDashboardDTO;
+import de.tum.in.www1.artemis.web.rest.dto.CourseManagementOverviewStatisticsDTO;
+import de.tum.in.www1.artemis.web.rest.dto.StatsForDashboardDTO;
 
 @Service
 public class CourseTestService {
@@ -567,6 +565,14 @@ public class CourseTestService {
     }
 
     // Test
+    public void testGetCourseWithOrganizations() throws Exception {
+        Course courseWithOrganization = database.createCourseWithOrganizations();
+        Course course = request.get("/api/courses/" + courseWithOrganization.getId() + "/with-organizations", HttpStatus.OK, Course.class);
+        assertThat(course.getOrganizations() == courseWithOrganization.getOrganizations());
+        assertThat(course.getOrganizations().size() > 0);
+    }
+
+    // Test
     public void testGetAllCoursesWithUserStats() throws Exception {
         List<Course> testCourses = database.createCoursesWithExercisesAndLectures(true);
         List<Course> receivedCourse = request.getList("/api/courses/with-user-stats", HttpStatus.OK, Course.class);
@@ -630,8 +636,7 @@ public class CourseTestService {
                 }
             }
 
-            StatsForInstructorDashboardDTO stats = request.get("/api/courses/" + testCourse.getId() + "/stats-for-assessment-dashboard", HttpStatus.OK,
-                    StatsForInstructorDashboardDTO.class);
+            StatsForDashboardDTO stats = request.get("/api/courses/" + testCourse.getId() + "/stats-for-assessment-dashboard", HttpStatus.OK, StatsForDashboardDTO.class);
             long numberOfInTimeSubmissions = course.getId().equals(testCourses.get(0).getId()) ? 3 : 0; // course 1 has 3 submissions, course 2 has 0 submissions
             assertThat(stats.getNumberOfSubmissions().getInTime()).as("Number of in-time submissions is correct").isEqualTo(numberOfInTimeSubmissions);
             assertThat(stats.getNumberOfSubmissions().getLate()).as("Number of latte submissions is correct").isEqualTo(0);
@@ -641,8 +646,8 @@ public class CourseTestService {
             assertThat(stats.getNumberOfAssessmentsOfCorrectionRounds()[0].getInTime()).isEqualTo(0L);
             assertThat(stats.getTutorLeaderboardEntries().size()).as("Number of tutor leaderboard entries is correct").isEqualTo(5);
 
-            StatsForInstructorDashboardDTO stats2 = request.get("/api/courses/" + testCourse.getId() + "/stats-for-instructor-dashboard",
-                    isInstructor ? HttpStatus.OK : HttpStatus.FORBIDDEN, StatsForInstructorDashboardDTO.class);
+            StatsForDashboardDTO stats2 = request.get("/api/courses/" + testCourse.getId() + "/stats-for-instructor-dashboard", isInstructor ? HttpStatus.OK : HttpStatus.FORBIDDEN,
+                    StatsForDashboardDTO.class);
 
             if (!isInstructor) {
                 assertThat(stats2).as("Stats for instructor are not available to tutor").isNull();
@@ -670,14 +675,14 @@ public class CourseTestService {
     public void testGetCourseForInstructorDashboardWithStats_instructorNotInCourse() throws Exception {
         List<Course> testCourses = database.createCoursesWithExercisesAndLectures(true);
         request.get("/api/courses/" + testCourses.get(0).getId() + "/for-assessment-dashboard", HttpStatus.FORBIDDEN, Course.class);
-        request.get("/api/courses/" + testCourses.get(0).getId() + "/stats-for-instructor-dashboard", HttpStatus.FORBIDDEN, StatsForInstructorDashboardDTO.class);
+        request.get("/api/courses/" + testCourses.get(0).getId() + "/stats-for-instructor-dashboard", HttpStatus.FORBIDDEN, StatsForDashboardDTO.class);
     }
 
     // Test
     public void testGetCourseForAssessmentDashboardWithStats_tutorNotInCourse() throws Exception {
         List<Course> testCourses = database.createCoursesWithExercisesAndLectures(true);
         request.get("/api/courses/" + testCourses.get(0).getId() + "/for-assessment-dashboard", HttpStatus.FORBIDDEN, Course.class);
-        request.get("/api/courses/" + testCourses.get(0).getId() + "/stats-for-assessment-dashboard", HttpStatus.FORBIDDEN, StatsForInstructorDashboardDTO.class);
+        request.get("/api/courses/" + testCourses.get(0).getId() + "/stats-for-assessment-dashboard", HttpStatus.FORBIDDEN, StatsForDashboardDTO.class);
     }
 
     // Test
@@ -686,8 +691,7 @@ public class CourseTestService {
         // create 6 * 4 = 24 submissions
         Course testCourse = database.addCourseWithExercisesAndSubmissions(6, 4, 0, 0, true, 0, validModel);
 
-        StatsForInstructorDashboardDTO stats = request.get("/api/courses/" + testCourse.getId() + "/stats-for-assessment-dashboard", HttpStatus.OK,
-                StatsForInstructorDashboardDTO.class);
+        StatsForDashboardDTO stats = request.get("/api/courses/" + testCourse.getId() + "/stats-for-assessment-dashboard", HttpStatus.OK, StatsForDashboardDTO.class);
 
         var currentTutorLeaderboard = stats.getTutorLeaderboardEntries().get(0);
         assertThat(currentTutorLeaderboard.getNumberOfTutorComplaints()).isEqualTo(0);
@@ -704,8 +708,7 @@ public class CourseTestService {
     public void testGetAssessmentDashboardStats_withAssessments() throws Exception {
         String validModel = FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
         Course testCourse = database.addCourseWithExercisesAndSubmissions(6, 4, 2, 0, true, 0, validModel);
-        StatsForInstructorDashboardDTO stats = request.get("/api/courses/" + testCourse.getId() + "/stats-for-assessment-dashboard", HttpStatus.OK,
-                StatsForInstructorDashboardDTO.class);
+        StatsForDashboardDTO stats = request.get("/api/courses/" + testCourse.getId() + "/stats-for-assessment-dashboard", HttpStatus.OK, StatsForDashboardDTO.class);
         // the first two tutors did assess 2 submissions in 2 exercises. The second two only 2 in one exercise.
         assertThat(stats.getTutorLeaderboardEntries().get(0).getNumberOfAssessments()).isEqualTo(4);
         assertThat(stats.getTutorLeaderboardEntries().get(1).getNumberOfAssessments()).isEqualTo(4);
@@ -717,8 +720,7 @@ public class CourseTestService {
     public void testGetAssessmentDashboardStats_withAssessmentsAndComplaints() throws Exception {
         String validModel = FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
         Course testCourse = database.addCourseWithExercisesAndSubmissions(6, 4, 4, 2, true, 0, validModel);
-        StatsForInstructorDashboardDTO stats = request.get("/api/courses/" + testCourse.getId() + "/stats-for-assessment-dashboard", HttpStatus.OK,
-                StatsForInstructorDashboardDTO.class);
+        StatsForDashboardDTO stats = request.get("/api/courses/" + testCourse.getId() + "/stats-for-assessment-dashboard", HttpStatus.OK, StatsForDashboardDTO.class);
         // the first two tutors did assess 2 submissions in 2 exercises. The second two only 2 in one exercise.
         assertThat(stats.getTutorLeaderboardEntries().get(0).getNumberOfAssessments()).isEqualTo(8);
         assertThat(stats.getTutorLeaderboardEntries().get(1).getNumberOfAssessments()).isEqualTo(8);
@@ -740,8 +742,7 @@ public class CourseTestService {
     public void testGetAssessmentDashboardStats_withAssessmentsAndFeedbackRequests() throws Exception {
         String validModel = FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
         Course testCourse = database.addCourseWithExercisesAndSubmissions(6, 4, 4, 2, false, 0, validModel);
-        StatsForInstructorDashboardDTO stats = request.get("/api/courses/" + testCourse.getId() + "/stats-for-assessment-dashboard", HttpStatus.OK,
-                StatsForInstructorDashboardDTO.class);
+        StatsForDashboardDTO stats = request.get("/api/courses/" + testCourse.getId() + "/stats-for-assessment-dashboard", HttpStatus.OK, StatsForDashboardDTO.class);
         // the first two tutors did assess 2 submissions in 2 exercises. The second two only 2 in one exercise.
         assertThat(stats.getTutorLeaderboardEntries().get(0).getNumberOfAssessments()).isEqualTo(8);
         assertThat(stats.getTutorLeaderboardEntries().get(1).getNumberOfAssessments()).isEqualTo(8);
@@ -763,8 +764,7 @@ public class CourseTestService {
     public void testGetAssessmentDashboardStats_withAssessmentsAndComplaintsAndResponses() throws Exception {
         String validModel = FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
         Course testCourse = database.addCourseWithExercisesAndSubmissions(6, 4, 4, 2, true, 1, validModel);
-        StatsForInstructorDashboardDTO stats = request.get("/api/courses/" + testCourse.getId() + "/stats-for-assessment-dashboard", HttpStatus.OK,
-                StatsForInstructorDashboardDTO.class);
+        StatsForDashboardDTO stats = request.get("/api/courses/" + testCourse.getId() + "/stats-for-assessment-dashboard", HttpStatus.OK, StatsForDashboardDTO.class);
         // the first two tutors did assess 2 submissions in 2 exercises. The second two only 2 in one exercise.
         assertThat(stats.getTutorLeaderboardEntries().get(0).getNumberOfAssessments()).isEqualTo(8);
         assertThat(stats.getTutorLeaderboardEntries().get(1).getNumberOfAssessments()).isEqualTo(8);
@@ -795,8 +795,7 @@ public class CourseTestService {
     public void testGetAssessmentDashboardStats_withAssessmentsAndFeedBackRequestsAndResponses() throws Exception {
         String validModel = FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
         Course testCourse = database.addCourseWithExercisesAndSubmissions(6, 4, 4, 2, false, 1, validModel);
-        StatsForInstructorDashboardDTO stats = request.get("/api/courses/" + testCourse.getId() + "/stats-for-assessment-dashboard", HttpStatus.OK,
-                StatsForInstructorDashboardDTO.class);
+        StatsForDashboardDTO stats = request.get("/api/courses/" + testCourse.getId() + "/stats-for-assessment-dashboard", HttpStatus.OK, StatsForDashboardDTO.class);
         // the first two tutors did assess 2 submissions in 2 exercises. The second two only 2 in one exercise.
         assertThat(stats.getTutorLeaderboardEntries().get(0).getNumberOfAssessments()).isEqualTo(8);
         assertThat(stats.getTutorLeaderboardEntries().get(1).getNumberOfAssessments()).isEqualTo(8);
@@ -827,8 +826,7 @@ public class CourseTestService {
     public void testGetAssessmentDashboardStats_withAssessmentsAndComplaintsAndResponses_Large() throws Exception {
         String validModel = FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
         Course testCourse = database.addCourseWithExercisesAndSubmissions(9, 8, 8, 5, true, 5, validModel);
-        StatsForInstructorDashboardDTO stats = request.get("/api/courses/" + testCourse.getId() + "/stats-for-assessment-dashboard", HttpStatus.OK,
-                StatsForInstructorDashboardDTO.class);
+        StatsForDashboardDTO stats = request.get("/api/courses/" + testCourse.getId() + "/stats-for-assessment-dashboard", HttpStatus.OK, StatsForDashboardDTO.class);
         // the first two tutors did assess 8 submissions of 3 exercises. The rest two only 8 of two exercises.
         assertThat(stats.getTutorLeaderboardEntries().get(0).getNumberOfAssessments()).isEqualTo(3 * 8);
         assertThat(stats.getTutorLeaderboardEntries().get(1).getNumberOfAssessments()).isEqualTo(2 * 8);
@@ -1289,5 +1287,241 @@ public class CourseTestService {
 
             // TODO: Assert the other exercises after it's implemented
         });
+    }
+
+    // Test
+    public void testGetCourseTitle() throws Exception {
+        Course course = database.createCourse();
+        course.setTitle("Test Course");
+        course = courseRepo.save(course);
+
+        final var title = request.get("/api/courses/" + course.getId() + "/title", HttpStatus.OK, String.class);
+        assertThat(title).isEqualTo(course.getTitle());
+    }
+
+    // Test
+    public void testGetCourseTitleForNonExistingCourse() throws Exception {
+        // No course with id 10 was created
+        request.get("/api/courses/10/title", HttpStatus.NOT_FOUND, String.class);
+    }
+
+    // Test
+    public void testGetAllCoursesForManagementOverview() throws Exception {
+        // Add two courses, containing one not belonging to the instructor
+        var testCourses = database.createCoursesWithExercisesAndLectures(true);
+        var instructorsCourse = testCourses.get(0);
+        instructorsCourse.setInstructorGroupName("test-instructors");
+        courseRepo.save(instructorsCourse);
+
+        var instructor = database.getUserByLogin("instructor1");
+        var groups = new HashSet<String>();
+        groups.add("test-instructors");
+        instructor.setGroups(groups);
+        userRepo.save(instructor);
+
+        var courses = request.getList("/api/courses/course-management-overview", HttpStatus.OK, Course.class);
+        assertThat(courses.size()).isEqualTo(1);
+
+        var course = courses.get(0);
+        assertThat(course.getId()).isEqualTo(instructorsCourse.getId());
+    }
+
+    // Test
+    public void testGetExercisesForCourseOverview() throws Exception {
+        // Add two courses, containing one not belonging to the instructor
+        var testCourses = database.createCoursesWithExercisesAndLectures(true);
+        var instructorsCourse = testCourses.get(0);
+        instructorsCourse.setInstructorGroupName("test-instructors");
+        courseRepo.save(instructorsCourse);
+
+        var instructor = database.getUserByLogin("instructor1");
+        var groups = new HashSet<String>();
+        groups.add("test-instructors");
+        instructor.setGroups(groups);
+        userRepo.save(instructor);
+
+        var courses = request.getList("/api/courses/exercises-for-management-overview", HttpStatus.OK, Course.class);
+        assertThat(courses.size()).isEqualTo(1);
+
+        var course = courses.get(0);
+        assertThat(course.getId()).isEqualTo(instructorsCourse.getId());
+
+        var exerciseDetails = course.getExercises();
+        assertThat(exerciseDetails).isNotNull();
+        assertThat(exerciseDetails.size()).isEqualTo(5);
+
+        var quizDetailsOptional = exerciseDetails.stream().filter(e -> e instanceof QuizExercise).findFirst();
+        assertThat(quizDetailsOptional.isPresent()).isTrue();
+
+        var quizExerciseOptional = instructorsCourse.getExercises().stream().filter(e -> e instanceof QuizExercise).findFirst();
+        assertThat(quizExerciseOptional.isPresent()).isTrue();
+
+        var quizDetails = quizDetailsOptional.get();
+        var quizExercise = quizExerciseOptional.get();
+        assertThat(quizDetails.getCategories().size()).isEqualTo(quizExercise.getCategories().size());
+
+        var detailsCategories = quizDetails.getCategories().stream().findFirst();
+        var exerciseCategories = quizExercise.getCategories().stream().findFirst();
+        assertThat(detailsCategories.isPresent()).isTrue();
+        assertThat(exerciseCategories.isPresent()).isTrue();
+        assertThat(detailsCategories.get()).isEqualTo(exerciseCategories.get());
+    }
+
+    // Test
+    public void testGetExerciseStatsForCourseOverview() throws Exception {
+        // Add a course and set the instructor group name
+        var instructorsCourse = database.createCourse();
+        instructorsCourse.setInstructorGroupName("test-instructors");
+
+        // Fetch and update an instructor
+        var instructor = database.getUserByLogin("instructor1");
+        var groups = new HashSet<String>();
+        groups.add("test-instructors");
+        instructor.setGroups(groups);
+        userRepo.save(instructor);
+
+        // Get a student
+        var student = ModelFactory.generateActivatedUser("user1");
+        userRepo.save(student);
+
+        // Add a team exercise which was just released but not due
+        var releaseDate = ZonedDateTime.now().minusDays(4);
+        var futureDueDate = ZonedDateTime.now().plusDays(2);
+        var futureAssessmentDueDate = ZonedDateTime.now().plusDays(4);
+        var teamExerciseNotEnded = database.createTeamTextExercise(instructorsCourse, releaseDate, futureDueDate, futureAssessmentDueDate);
+        teamExerciseNotEnded = exerciseRepo.save(teamExerciseNotEnded);
+
+        // Add a team with a participation to the exercise
+        final var teamExerciseId = teamExerciseNotEnded.getId();
+        var teamStudents = new HashSet<User>();
+        teamStudents.add(student);
+        var team = database.createTeam(teamStudents, instructor, teamExerciseNotEnded);
+        database.addTeamParticipationForExercise(teamExerciseNotEnded, team.getId());
+
+        instructorsCourse.addExercises(teamExerciseNotEnded);
+
+        // Create an exercise which has passed the due and assessment due date
+        var dueDate = ZonedDateTime.now().minusDays(2);
+        var passedAssessmentDueDate = ZonedDateTime.now().minusDays(1);
+        var exerciseAssessmentDone = ModelFactory.generateTextExercise(releaseDate, dueDate, passedAssessmentDueDate, instructorsCourse);
+        exerciseAssessmentDone.setMaxPoints(5.0);
+        exerciseAssessmentDone = exerciseRepo.save(exerciseAssessmentDone);
+
+        // Add a single participation to that exercise
+        final var exerciseId = exerciseAssessmentDone.getId();
+        database.createParticipationSubmissionAndResult(exerciseId, student, 5.0, 0.0, 60, true);
+
+        instructorsCourse.addExercises(exerciseAssessmentDone);
+
+        // Create an exercise which is currently in assessment
+        var exerciseInAssessment = ModelFactory.generateTextExercise(releaseDate, dueDate, futureAssessmentDueDate, instructorsCourse);
+        exerciseInAssessment.setMaxPoints(15.0);
+        exerciseInAssessment = exerciseRepo.save(exerciseInAssessment);
+
+        // Add a single participation to that exercise
+        final var exerciseIdInAssessment = exerciseInAssessment.getId();
+        var resultToSetAssessorFor = database.createParticipationSubmissionAndResult(exerciseIdInAssessment, student, 15.0, 0.0, 30, true);
+        resultToSetAssessorFor.setAssessor(instructor);
+        resultRepo.saveAndFlush(resultToSetAssessorFor);
+
+        instructorsCourse.addExercises(exerciseInAssessment);
+
+        courseRepo.save(instructorsCourse);
+
+        // We only added one course, so expect one dto
+        var courseDtos = request.getList("/api/courses/stats-for-management-overview", HttpStatus.OK, CourseManagementOverviewStatisticsDTO.class);
+        assertThat(courseDtos.size()).isEqualTo(1);
+        var dto = courseDtos.get(0);
+        assertThat(dto.getCourseId()).isEqualTo(instructorsCourse.getId());
+
+        // Expect our three created exercises
+        var exerciseDTOS = dto.getExerciseDTOS();
+        assertThat(exerciseDTOS.size()).isEqualTo(3);
+
+        // Get the statistics of the exercise with a passed assessment due date
+        var statisticsOptional = exerciseDTOS.stream().filter(exercise -> exercise.getExerciseId().equals(exerciseId)).findFirst();
+        assertThat(statisticsOptional.isPresent()).isTrue();
+
+        // Since the exercise is a "past exercise", the average score are the only statistics we set
+        var statisticsDTO = statisticsOptional.get();
+        assertThat(statisticsDTO.getAverageScoreInPercent()).isEqualTo(60.0);
+        assertThat(statisticsDTO.getExerciseMaxPoints()).isEqualTo(5.0);
+        assertThat(statisticsDTO.getNoOfParticipatingStudentsOrTeams()).isEqualTo(0);
+        assertThat(statisticsDTO.getParticipationRateInPercent()).isEqualTo(0.0);
+        assertThat(statisticsDTO.getNoOfStudentsInCourse()).isEqualTo(8);
+        assertThat(statisticsDTO.getNoOfRatedAssessments()).isEqualTo(0);
+        assertThat(statisticsDTO.getNoOfAssessmentsDoneInPercent()).isEqualTo(0.0);
+        assertThat(statisticsDTO.getNoOfSubmissionsInTime()).isEqualTo(0L);
+
+        // Get the statistics of the team exercise
+        var teamStatisticsOptional = exerciseDTOS.stream().filter(exercise -> exercise.getExerciseId().equals(teamExerciseId)).findFirst();
+        assertThat(teamStatisticsOptional.isPresent()).isTrue();
+
+        // Since that exercise is still "currently in progress", the participations are the only statistics we set
+        var teamStatisticsDTO = teamStatisticsOptional.get();
+        assertThat(teamStatisticsDTO.getAverageScoreInPercent()).isEqualTo(0.0);
+        assertThat(teamStatisticsDTO.getExerciseMaxPoints()).isEqualTo(10.0);
+        assertThat(teamStatisticsDTO.getNoOfParticipatingStudentsOrTeams()).isEqualTo(1);
+        assertThat(teamStatisticsDTO.getParticipationRateInPercent()).isEqualTo(100D);
+        assertThat(teamStatisticsDTO.getNoOfStudentsInCourse()).isEqualTo(8);
+        assertThat(teamStatisticsDTO.getNoOfTeamsInCourse()).isEqualTo(1);
+        assertThat(teamStatisticsDTO.getNoOfRatedAssessments()).isEqualTo(0);
+        assertThat(teamStatisticsDTO.getNoOfAssessmentsDoneInPercent()).isEqualTo(0.0);
+        assertThat(teamStatisticsDTO.getNoOfSubmissionsInTime()).isEqualTo(1L);
+
+        // Get the statistics of the exercise in assessment
+        var exerciseInAssessmentStatisticsOptional = exerciseDTOS.stream().filter(exercise -> exercise.getExerciseId().equals(exerciseIdInAssessment)).findFirst();
+        assertThat(exerciseInAssessmentStatisticsOptional.isPresent()).isTrue();
+
+        // Since that exercise is "currently in assessment", we need the numberOfRatedAssessment, assessmentsDoneInPercent and the numberOfSubmissionsInTime
+        var exerciseInAssessmentStatisticsDTO = exerciseInAssessmentStatisticsOptional.get();
+        assertThat(exerciseInAssessmentStatisticsDTO.getAverageScoreInPercent()).isEqualTo(0.0);
+        assertThat(exerciseInAssessmentStatisticsDTO.getExerciseMaxPoints()).isEqualTo(15.0);
+        assertThat(exerciseInAssessmentStatisticsDTO.getNoOfParticipatingStudentsOrTeams()).isEqualTo(0);
+        assertThat(exerciseInAssessmentStatisticsDTO.getParticipationRateInPercent()).isEqualTo(0D);
+        assertThat(exerciseInAssessmentStatisticsDTO.getNoOfStudentsInCourse()).isEqualTo(8);
+        assertThat(exerciseInAssessmentStatisticsDTO.getNoOfRatedAssessments()).isEqualTo(1);
+        assertThat(exerciseInAssessmentStatisticsDTO.getNoOfAssessmentsDoneInPercent()).isEqualTo(100.0);
+        assertThat(exerciseInAssessmentStatisticsDTO.getNoOfSubmissionsInTime()).isEqualTo(1L);
+    }
+
+    // Test
+    public void testGetExerciseStatsForCourseOverviewWithPastExercises() throws Exception {
+        // Add a single course with six past exercises, from which only five are returned
+        var instructorsCourse = database.createCourse();
+        var releaseDate = ZonedDateTime.now().minusDays(7);
+        var dueDate = ZonedDateTime.now().minusDays(4);
+        var olderDueDate = ZonedDateTime.now().minusDays(4);
+        var assessmentDueDate = ZonedDateTime.now().minusDays(2);
+        var olderAssessmentDueDate = ZonedDateTime.now().minusDays(3);
+        var oldestAssessmentDueDate = ZonedDateTime.now().minusDays(6);
+
+        // Add five exercises with different combinations of due dates and assessment due dates
+        instructorsCourse.addExercises(exerciseRepo.save(ModelFactory.generateTextExercise(releaseDate, dueDate, assessmentDueDate, instructorsCourse)));
+        instructorsCourse.addExercises(exerciseRepo.save(ModelFactory.generateTextExercise(releaseDate, null, assessmentDueDate, instructorsCourse)));
+        instructorsCourse.addExercises(exerciseRepo.save(ModelFactory.generateTextExercise(releaseDate, olderDueDate, assessmentDueDate, instructorsCourse)));
+        instructorsCourse.addExercises(exerciseRepo.save(ModelFactory.generateTextExercise(releaseDate, olderDueDate, olderAssessmentDueDate, instructorsCourse)));
+        instructorsCourse.addExercises(exerciseRepo.save(ModelFactory.generateTextExercise(releaseDate, null, olderAssessmentDueDate, instructorsCourse)));
+
+        // Add one exercise which will be sorted last due to the oldest assessment due date
+        var exerciseNotReturned = ModelFactory.generateTextExercise(releaseDate, dueDate, oldestAssessmentDueDate, instructorsCourse);
+        exerciseNotReturned = exerciseRepo.save(exerciseNotReturned);
+        final var exerciseId = exerciseNotReturned.getId();
+        instructorsCourse.addExercises(exerciseNotReturned);
+        courseRepo.save(instructorsCourse);
+
+        // We only added one course, so expect one dto
+        var courseDtos = request.getList("/api/courses/stats-for-management-overview", HttpStatus.OK, CourseManagementOverviewStatisticsDTO.class);
+        assertThat(courseDtos.size()).isEqualTo(1);
+        var dto = courseDtos.get(0);
+        assertThat(dto.getCourseId()).isEqualTo(instructorsCourse.getId());
+
+        // Only five exercises should be returned
+        var exerciseDTOS = dto.getExerciseDTOS();
+        assertThat(exerciseDTOS.size()).isEqualTo(5);
+
+        // The one specific exercise should not be included
+        var statisticsOptional = exerciseDTOS.stream().filter(exercise -> exercise.getExerciseId().equals(exerciseId)).findFirst();
+        assertThat(statisticsOptional.isEmpty()).isTrue();
     }
 }

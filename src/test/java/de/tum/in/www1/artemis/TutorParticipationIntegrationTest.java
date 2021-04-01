@@ -20,10 +20,10 @@ import de.tum.in.www1.artemis.util.FileUtils;
 public class TutorParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
-    ExerciseRepository exerciseRepo;
+    private ExerciseRepository exerciseRepo;
 
     @Autowired
-    ExampleSubmissionService exampleSubmissionService;
+    private ExampleSubmissionService exampleSubmissionService;
 
     private ModelingExercise modelingExercise;
 

@@ -14,6 +14,7 @@ import { TemplateProgrammingExerciseParticipation } from 'app/entities/participa
 import { SolutionProgrammingExerciseParticipation } from 'app/entities/participation/solution-programming-exercise-participation.model';
 import { TextPlagiarismResult } from 'app/exercises/shared/plagiarism/types/text/TextPlagiarismResult';
 import { PlagiarismOptions } from 'app/exercises/shared/plagiarism/types/PlagiarismOptions';
+import { Submission } from 'app/entities/submission.model';
 
 export type EntityResponseType = HttpResponse<ProgrammingExercise>;
 export type EntityArrayResponseType = HttpResponse<ProgrammingExercise[]>;
@@ -83,6 +84,19 @@ export class ProgrammingExerciseService {
                 ...options?.toParams(),
             },
         });
+    }
+
+    /**
+     * Get the latest plagiarism result for the exercise with the given ID.
+     *
+     * @param exerciseId
+     */
+    getLatestPlagiarismResult(exerciseId: number): Observable<TextPlagiarismResult> {
+        return this.http
+            .get<TextPlagiarismResult>(`${this.resourceUrl}/${exerciseId}/plagiarism-result`, {
+                observe: 'response',
+            })
+            .pipe(map((response: HttpResponse<TextPlagiarismResult>) => response.body!));
     }
 
     /**
@@ -178,13 +192,43 @@ export class ProgrammingExerciseService {
     /**
      * Finds the programming exercise for the given exerciseId with the template and solution participation
      * @param programmingExerciseId of the programming exercise to retrieve
+     * @param withSubmissionResults get results attached to submissions
      */
     findWithTemplateAndSolutionParticipation(programmingExerciseId: number, withSubmissionResults = false): Observable<EntityResponseType> {
         let params = new HttpParams();
         params = params.set('withSubmissionResults', withSubmissionResults.toString());
         return this.http
             .get<ProgrammingExercise>(`${this.resourceUrl}/${programmingExerciseId}/with-template-and-solution-participation`, { params, observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
+            .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)))
+            .pipe(
+                map((res: EntityResponseType) => {
+                    if (res.body && withSubmissionResults) {
+                        // We need to reconnect the submissions with the results. They got removed because of the circular dependency
+                        const templateSubmissions = res.body.templateParticipation?.submissions;
+                        this.reconnectSubmissionAndResult(templateSubmissions);
+                        const solutionSubmissions = res.body.solutionParticipation?.submissions;
+                        this.reconnectSubmissionAndResult(solutionSubmissions);
+                    }
+                    return res;
+                }),
+            );
+    }
+
+    /**
+     * Reconnecting the missing submission of a submission's result
+     *
+     * @param submissions where the results have no reference to its submission
+     */
+    private reconnectSubmissionAndResult(submissions: Submission[] | undefined) {
+        if (submissions) {
+            submissions.forEach((submission) => {
+                if (submission.results) {
+                    submission.results.forEach((result) => {
+                        result.submission = submission;
+                    });
+                }
+            });
+        }
     }
 
     /**

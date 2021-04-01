@@ -8,6 +8,7 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.http.client.HttpResponseException;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Element;
@@ -34,13 +35,14 @@ import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.exception.JenkinsException;
+import de.tum.in.www1.artemis.repository.FeedbackRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
 import de.tum.in.www1.artemis.service.BuildLogEntryService;
-import de.tum.in.www1.artemis.service.FeedbackService;
 import de.tum.in.www1.artemis.service.connectors.AbstractContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.CIPermission;
 import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
+import de.tum.in.www1.artemis.service.connectors.jenkins.dto.TestCaseDTO;
 import de.tum.in.www1.artemis.service.connectors.jenkins.dto.TestResultsDTO;
 import de.tum.in.www1.artemis.service.connectors.jenkins.jobs.JenkinsJobService;
 import de.tum.in.www1.artemis.service.dto.AbstractBuildResultNotificationDTO;
@@ -69,10 +71,10 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
     private final DateTimeFormatter logDateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssX");
 
     public JenkinsService(@Qualifier("jenkinsRestTemplate") RestTemplate restTemplate, JenkinsServer jenkinsServer, ProgrammingSubmissionRepository programmingSubmissionRepository,
-            ProgrammingExerciseRepository programmingExerciseRepository, FeedbackService feedbackService,
+            ProgrammingExerciseRepository programmingExerciseRepository, FeedbackRepository feedbackRepository,
             @Qualifier("shortTimeoutJenkinsRestTemplate") RestTemplate shortTimeoutRestTemplate, BuildLogEntryService buildLogService,
             JenkinsBuildPlanService jenkinsBuildPlanService, JenkinsJobService jenkinsJobService) {
-        super(programmingSubmissionRepository, feedbackService, buildLogService, restTemplate, shortTimeoutRestTemplate);
+        super(programmingSubmissionRepository, feedbackRepository, buildLogService, restTemplate, shortTimeoutRestTemplate);
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.jenkinsServer = jenkinsServer;
         this.jenkinsBuildPlanService = jenkinsBuildPlanService;
@@ -331,34 +333,57 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
         // Extract test case feedback
         for (final var job : jobs) {
             for (final var testCase : job.getTestCases()) {
-                var errorMessage = Optional.ofNullable(testCase.getErrors()).map((errors) -> errors.get(0).getMostInformativeMessage());
-                var failureMessage = Optional.ofNullable(testCase.getFailures()).map((failures) -> failures.get(0).getMostInformativeMessage());
-                var errorList = errorMessage.or(() -> failureMessage).map(List::of).orElse(Collections.emptyList());
-                boolean successful = Optional.ofNullable(testCase.getErrors()).map(List::isEmpty).orElse(true)
-                        && Optional.ofNullable(testCase.getFailures()).map(List::isEmpty).orElse(true);
-
-                if (!successful && errorList.isEmpty()) {
-                    var errorType = Optional.ofNullable(testCase.getErrors()).map((errors) -> errors.get(0).getType());
-                    var failureType = Optional.ofNullable(testCase.getFailures()).map((failures) -> failures.get(0).getType());
-                    var message = errorType.or(() -> failureType).map(t -> String.format("Unsuccessful due to an error of type: %s", t));
-                    if (message.isPresent()) {
-                        errorList = List.of(message.get());
-                    }
-                }
-
-                result.addFeedback(feedbackService.createFeedbackFromTestCase(testCase.getName(), errorList, successful, programmingLanguage));
+                var feedbackMessages = extractMessageFromTestCase(testCase).map(List::of).orElse(List.of());
+                var feedback = feedbackRepository.createFeedbackFromTestCase(testCase.getName(), feedbackMessages, testCase.isSuccessful(), programmingLanguage);
+                result.addFeedback(feedback);
             }
         }
 
         // Extract static code analysis feedback if option was enabled
         var staticCodeAnalysisReports = ((TestResultsDTO) buildResult).getStaticCodeAnalysisReports();
-        if (Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled()) && staticCodeAnalysisReports != null) {
-            var scaFeedback = feedbackService.createFeedbackFromStaticCodeAnalysisReports(staticCodeAnalysisReports);
+        if (Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled()) && staticCodeAnalysisReports != null && !staticCodeAnalysisReports.isEmpty()) {
+            var scaFeedback = feedbackRepository.createFeedbackFromStaticCodeAnalysisReports(staticCodeAnalysisReports);
             result.addFeedbacks(scaFeedback);
         }
 
-        // Relevant feedback is negative
-        result.setHasFeedback(result.getFeedbacks().stream().anyMatch(fb -> !fb.isPositive()));
+        // Relevant feedback is negative, or positive with a message
+        result.setHasFeedback(result.getFeedbacks().stream().anyMatch(fb -> !fb.isPositive() || fb.getDetailText() != null));
+    }
+
+    /**
+     * Extracts the most helpful message from the given test case.
+     * @param testCase the test case information as received from Jenkins.
+     * @return the most helpful message that can be added to an automatic {@link Feedback}.
+     */
+    private Optional<String> extractMessageFromTestCase(final TestCaseDTO testCase) {
+        var hasErrors = !CollectionUtils.isEmpty(testCase.getErrors());
+        var hasFailures = !CollectionUtils.isEmpty(testCase.getFailures());
+        var hasSuccessInfos = !CollectionUtils.isEmpty(testCase.getSuccessInfos());
+        boolean successful = testCase.isSuccessful();
+
+        if (successful && hasSuccessInfos && testCase.getSuccessInfos().get(0).getMostInformativeMessage() != null) {
+            return Optional.of(testCase.getSuccessInfos().get(0).getMostInformativeMessage());
+        }
+        else if (hasErrors && testCase.getErrors().get(0).getMostInformativeMessage() != null) {
+            return Optional.of(testCase.getErrors().get(0).getMostInformativeMessage());
+        }
+        else if (hasFailures && testCase.getFailures().get(0).getMostInformativeMessage() != null) {
+            return Optional.of(testCase.getFailures().get(0).getMostInformativeMessage());
+        }
+        else if (hasErrors && testCase.getErrors().get(0).getType() != null) {
+            return Optional.of(String.format("Unsuccessful due to an error of type: %s", testCase.getErrors().get(0).getType()));
+        }
+        else if (hasFailures && testCase.getFailures().get(0).getType() != null) {
+            return Optional.of(String.format("Unsuccessful due to an error of type: %s", testCase.getFailures().get(0).getType()));
+        }
+        else if (!successful) {
+            // this is an edge case which typically does not happen
+            return Optional.of("Unsuccessful due to an unknown error. Please contact your instructor!");
+        }
+        else {
+            // successful and no message available => do not generate one
+            return Optional.empty();
+        }
     }
 
     @Override

@@ -5,7 +5,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Optional;
 
@@ -27,32 +26,22 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.service.AssessmentService;
 import de.tum.in.www1.artemis.util.FileUtils;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
 public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
-    ExerciseRepository exerciseRepo;
+    private ResultRepository resultRepo;
 
     @Autowired
-    CourseRepository courseRepository;
+    private ComplaintRepository complaintRepo;
 
     @Autowired
-    ResultRepository resultRepo;
+    private ComplaintResponseRepository complaintResponseRepo;
 
     @Autowired
-    ComplaintRepository complaintRepo;
-
-    @Autowired
-    ComplaintResponseRepository complaintResponseRepo;
-
-    @Autowired
-    ObjectMapper mapper;
-
-    @Autowired
-    AssessmentService assessmentService;
+    private ObjectMapper mapper;
 
     private ModelingExercise modelingExercise;
 
@@ -185,7 +174,7 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
         Complaint storedComplaint = complaintRepo.findByResult_Id(modelingAssessment.getId()).get();
         assertThat(storedComplaint.isAccepted()).as("complaint is not accepted").isFalse();
         Result storedResult = resultRepo.findWithEagerSubmissionAndFeedbackAndAssessorById(modelingAssessment.getId()).get();
-        checkFeedbackCorrectlyStored(modelingAssessment.getFeedbacks(), storedResult.getFeedbacks());
+        database.checkFeedbackCorrectlyStored(modelingAssessment.getFeedbacks(), storedResult.getFeedbacks(), FeedbackType.MANUAL);
         assertThat(storedResult).as("only feedbacks are changed in the result").isEqualToIgnoringGivenFields(modelingAssessment, "feedbacks");
     }
 
@@ -212,7 +201,7 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
         modelingAssessment.setCompletionDate(ZonedDateTime.ofInstant(modelingAssessment.getCompletionDate().truncatedTo(ChronoUnit.MILLIS).toInstant(), ZoneId.of("UTC")));
         assertThat(resultBeforeComplaint).as("result before complaint is correctly stored").isEqualToIgnoringGivenFields(modelingAssessment, "participation", "submission");
         Result storedResult = resultRepo.findByIdWithEagerFeedbacksAndAssessor(modelingAssessment.getId()).get();
-        checkFeedbackCorrectlyStored(feedback, storedResult.getFeedbacks());
+        database.checkFeedbackCorrectlyStored(feedback, storedResult.getFeedbacks(), FeedbackType.MANUAL);
         assertThat(storedResult.getAssessor()).as("assessor is still the original one").isEqualTo(modelingAssessment.getAssessor());
     }
 
@@ -294,6 +283,25 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
         final var params = new LinkedMultiValueMap<String, String>();
         params.add("complaintType", ComplaintType.COMPLAINT.name());
         final var complaints = request.getList("/api/exercises/" + modelingExercise.getId() + "/complaints-for-assessment-dashboard", HttpStatus.OK, Complaint.class, params);
+
+        complaints.forEach(compl -> {
+            final var participation = (StudentParticipation) compl.getResult().getParticipation();
+            assertThat(participation.getStudent()).as("No student information").isNull();
+            assertThat(compl.getParticipant()).as("No student information").isNull();
+            assertThat(participation.getExercise()).as("No additional exercise information").isNull();
+            assertThat(compl.getResultBeforeComplaint()).as("No old result information").isNull();
+        });
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void getComplaintsForAssessmentDashboard_testRun() throws Exception {
+        complaint.setParticipant(database.getUserByLogin("instructor1"));
+        complaintRepo.save(complaint);
+
+        final var params = new LinkedMultiValueMap<String, String>();
+        params.add("complaintType", ComplaintType.COMPLAINT.name());
+        final var complaints = request.getList("/api/exercises/" + modelingExercise.getId() + "/complaints-for-test-run-dashboard", HttpStatus.OK, Complaint.class, params);
 
         complaints.forEach(compl -> {
             final var participation = (StudentParticipation) compl.getResult().getParticipation();
@@ -408,27 +416,6 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
         params.add("exerciseId", modelingExercise.getId().toString());
 
         request.getList("/api/complaints", HttpStatus.FORBIDDEN, ComplaintResponse.class, params);
-    }
-
-    private void checkFeedbackCorrectlyStored(List<Feedback> sentFeedback, List<Feedback> storedFeedback) {
-        assertThat(sentFeedback.size()).as("contains the same amount of feedback").isEqualTo(storedFeedback.size());
-        Result storedFeedbackResult = new Result();
-        Result sentFeedbackResult = new Result();
-        storedFeedbackResult.setFeedbacks(storedFeedback);
-        sentFeedbackResult.setFeedbacks(sentFeedback);
-        Double calculatedScore = assessmentService.calculateTotalPoints(storedFeedback);
-        double totalScore = assessmentService.calculateTotalPoints(calculatedScore, 20.0);
-        storedFeedbackResult.setScore(totalScore, 20.0);
-        storedFeedbackResult.setResultString(totalScore, 20.0);
-
-        Double calculatedScore2 = assessmentService.calculateTotalPoints(sentFeedback);
-        double totalScore2 = assessmentService.calculateTotalPoints(calculatedScore2, 20.0);
-        sentFeedbackResult.setScore(totalScore2, 20.0);
-        sentFeedbackResult.setResultString(totalScore2, 20.0);
-        assertThat(storedFeedbackResult.getScore()).as("stored feedback evaluates to the same score as sent feedback").isEqualTo(sentFeedbackResult.getScore());
-        storedFeedback.forEach(feedback -> {
-            assertThat(feedback.getType()).as("type has been set to MANUAL").isEqualTo(FeedbackType.MANUAL);
-        });
     }
 
     private void saveModelingSubmissionAndAssessment() throws Exception {
@@ -585,7 +572,7 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
     public void testGetComplaintsByCourseIdAndExamId() throws Exception {
         final TextExercise examExercise = database.addCourseExamWithReviewDatesExerciseGroupWithOneTextExercise();
         final long examId = examExercise.getExerciseGroup().getExam().getId();
-        final long couseId = examExercise.getExerciseGroup().getExam().getCourse().getId();
+        final long courseId = examExercise.getExerciseGroup().getExam().getCourse().getId();
         final TextSubmission textSubmission = ModelFactory.generateTextSubmission("This is my submission", Language.ENGLISH, true);
         database.saveTextSubmissionWithResultAndAssessor(examExercise, textSubmission, "student1", "tutor1");
         final var examExerciseComplaint = new Complaint().result(textSubmission.getLatestResult()).complaintText("This is not fair").complaintType(ComplaintType.COMPLAINT);
@@ -593,12 +580,12 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
         request.post(url, examExerciseComplaint, HttpStatus.CREATED);
 
         Optional<Complaint> storedComplaint = complaintRepo.findByResult_Id(textSubmission.getLatestResult().getId());
-        request.get("/api/courses/" + couseId + "/exams/" + examId + "/complaints", HttpStatus.FORBIDDEN, List.class);
+        request.get("/api/courses/" + courseId + "/exams/" + examId + "/complaints", HttpStatus.FORBIDDEN, List.class);
         database.changeUser("tutor1");
-        request.get("/api/courses/" + couseId + "/exams/" + examId + "/complaints", HttpStatus.FORBIDDEN, List.class);
+        request.get("/api/courses/" + courseId + "/exams/" + examId + "/complaints", HttpStatus.FORBIDDEN, List.class);
         database.changeUser("instructor1");
-        var fetchedComplaints = request.get("/api/courses/" + couseId + "/exams/" + examId + "/complaints", HttpStatus.OK, List.class);
-        assertThat(((LinkedHashMap) fetchedComplaints.get(0)).get("id")).isEqualTo(storedComplaint.get().getId().intValue());
-        assertThat(((LinkedHashMap) fetchedComplaints.get(0)).get("complaintText")).isEqualTo(storedComplaint.get().getComplaintText());
+        var fetchedComplaints = request.getList("/api/courses/" + courseId + "/exams/" + examId + "/complaints", HttpStatus.OK, Complaint.class);
+        assertThat(fetchedComplaints.get(0).getId()).isEqualTo(storedComplaint.get().getId().intValue());
+        assertThat(fetchedComplaints.get(0).getComplaintText()).isEqualTo(storedComplaint.get().getComplaintText());
     }
 }

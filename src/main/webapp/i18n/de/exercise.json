@@ -170,7 +170,8 @@
                     "pattern": "Der maximale prozentuale Punktabzug muss zwischen 0 und 100 liegen!"
                 }
             },
-            "exam": "Klausur"
+            "exam": "Klausur",
+            "isTeamExercise": "Diese Aufgabe ist eine Teamaufgabe."
         },
         "exerciseLtiConfiguration": {
             "lti": "LTI",

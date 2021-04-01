@@ -22,16 +22,13 @@ plugins {
     id "org.springframework.boot" version "${spring_boot_version}"
     id "com.google.cloud.tools.jib" version "2.8.0"
     id "com.github.node-gradle.node" version "3.0.1"
-    id "net.ltgt.apt-eclipse"
-    id "net.ltgt.apt-idea"
-    id "net.ltgt.apt"
-    id "com.diffplug.spotless" version "5.11.0"
+    id "com.diffplug.spotless" version "5.11.1"
     // this allows us to find outdated dependencies via ./gradlew dependencyUpdates
     id "com.github.ben-manes.versions" version "0.38.0"
 }
 
 group = "de.tum.in.www1.artemis"
-version = "4.11.1"
+version = "4.11.2"
 description = "Interactive Learning with Individual Feedback"
 
 sourceCompatibility=15
@@ -85,10 +82,11 @@ test {
     useJUnitPlatform()
     exclude "**/*IT*", "**/*IntTest*"
     testLogging {
-        events 'FAILED', 'SKIPPED'
+        events "FAILED", "SKIPPED"
     }
     testLogging.showStandardStreams = true
     reports.html.enabled = false
+    jvmArgs "--illegal-access=warn"
 }
 
 task integrationTest(type: Test) {
@@ -98,11 +96,11 @@ task integrationTest(type: Test) {
     include "**/*IT*", "**/*IntTest*"
 
     testLogging {
-        events 'FAILED', 'SKIPPED'
+        events "FAILED", "SKIPPED"
     }
 
     maxHeapSize = "1024m"
-    jvmArgs "-XX:MaxPermSize=512m"
+    jvmArgs "-XX:MaxPermSize=512m --illegal-access=warn"
     reports.html.enabled = false
 }
 
@@ -122,9 +120,23 @@ jacoco {
     toolVersion = "0.8.6"
 }
 
+private excludedClassFilesForReport(classDirectories) {
+    classDirectories.setFrom(files(classDirectories.files.collect {
+        fileTree(dir: it,
+            exclude: [
+                "**/de/tum/in/www1/artemis/domain/**/*_*",
+            ]
+        )
+    }))
+}
+
 jacocoTestReport {
     reports {
         xml.enabled true
+    }
+    // we want to ignore some generated files in the domain folders
+    afterEvaluate {
+        excludedClassFilesForReport(classDirectories)
     }
 }
 
@@ -135,15 +147,19 @@ jacocoTestCoverageVerification {
                 counter = "INSTRUCTION"
                 value = "COVEREDRATIO"
                 // TODO: in the future the following value should become at least 0.90
-                minimum = 0.85
+                minimum = 0.868
             }
             limit {
                 counter = "CLASS"
                 value = "MISSEDCOUNT"
-                // TODO: in the future the following value should become less than 50
-                maximum = 140
+                // TODO: in the future the following value should become less than 20
+                maximum = 30
             }
         }
+    }
+    // we want to ignore some generated files in the domain folders
+    afterEvaluate {
+        excludedClassFilesForReport(classDirectories)
     }
 }
 check.dependsOn jacocoTestCoverageVerification
@@ -172,7 +188,7 @@ dependencies {
     implementation "org.imsglobal:basiclti-util:1.2.0"
     implementation "org.jasypt:jasypt:1.9.3"
     implementation "me.xdrop:fuzzywuzzy:1.3.1"
-    implementation "com.atlassian.bamboo:bamboo-specs:7.1.2"
+    implementation "com.atlassian.bamboo:bamboo-specs:7.2.3"
     implementation "com.thoughtworks.qdox:qdox:2.0.0"
     implementation "io.sentry:sentry-spring-boot-starter:4.3.0"
     implementation "io.sentry:sentry-logback:4.3.0"
@@ -203,7 +219,7 @@ dependencies {
     implementation "org.hibernate:hibernate-jcache:${hibernate_version}"
     implementation "org.hibernate:hibernate-entitymanager:${hibernate_version}"
     implementation "org.hibernate.validator:hibernate-validator:6.2.0.Final"
-    implementation "org.liquibase:liquibase-core:4.3.1"
+    implementation "org.liquibase:liquibase-core:4.3.2"
     implementation "org.springframework.boot:spring-boot-loader-tools:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-starter-mail:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-starter-logging:${spring_boot_version}"
@@ -225,7 +241,7 @@ dependencies {
     implementation "org.springframework.cloud:spring-cloud-starter-config:3.0.3"
     implementation "org.springframework.boot:spring-boot-starter-cloud-connectors:2.2.13.RELEASE"
 
-    implementation "io.netty:netty-all:4.1.60.Final"
+    implementation "io.netty:netty-all:4.1.62.Final"
     implementation "io.projectreactor.netty:reactor-netty:1.0.5"
     implementation "org.springframework:spring-messaging:5.3.5"
 
@@ -234,7 +250,7 @@ dependencies {
     implementation "org.springframework.security:spring-security-web:${spring_security_version}"
     implementation "org.springframework.security:spring-security-messaging:${spring_security_version}"
     implementation "org.springframework.security:spring-security-ldap:${spring_security_version}"
-    implementation "org.xmlbeam:xmlprojector:1.4.18"
+    implementation "org.xmlbeam:xmlprojector:1.4.19"
     implementation "io.jsonwebtoken:jjwt-api:0.11.2"
     runtimeOnly "io.jsonwebtoken:jjwt-impl:0.11.2"
     runtimeOnly "io.jsonwebtoken:jjwt-jackson:0.11.2"
@@ -273,9 +289,9 @@ dependencies {
     testImplementation "com.h2database:h2:1.4.200"
     testImplementation "org.awaitility:awaitility:4.0.3"
     testImplementation "org.apache.maven.shared:maven-invoker:3.1.0"
-    testImplementation "org.apache.maven.surefire:surefire-report-parser:2.22.2"
+    testImplementation "org.apache.maven.surefire:surefire-report-parser:3.0.0-M5"
 
-    // Java's lightweight JSON library needed for the internals of the MockRestServiceServer
+    // Lightweight JSON library needed for the internals of the MockRestServiceServer
     testImplementation "org.json:json:20210307"
 }
 
@@ -324,7 +340,7 @@ tasks.withType(Test) {
 }
 
 wrapper {
-    gradleVersion = "6.8.3"
+    gradleVersion = "7.0-rc-1"
 }
 
 task stage(dependsOn: "bootWar") {
@@ -338,7 +354,7 @@ node {
 
 // Command to execute the JavaDoc checkstyle verification ./gradlew checkstyleMain
 checkstyle {
-    toolVersion "8.41"
+    toolVersion "8.41.1"
     configFile file("${rootDir}/checkstyle.xml")
     checkstyleTest.enabled = false
     maxErrors = 0
@@ -353,7 +369,7 @@ task buildJarForDocker (type: Exec) {
 }
 
 def isNonStable = { String version ->
-    def stableKeyword = ['RELEASE', 'FINAL', 'GA'].any { it -> version.toUpperCase().contains(it) }
+    def stableKeyword = ["RELEASE", "FINAL", "GA"].any { it -> version.toUpperCase().contains(it) }
     def regex = /^[0-9,.v-]+(-r)?$/
     return !stableKeyword && !(version ==~ regex)
 }
@@ -371,7 +387,7 @@ tasks.named("dependencyUpdates").configure {
         componentSelection {
             all {
                 if (isNonStable(it.candidate.version) && !isNonStable(it.currentVersion)) {
-                    reject('Release candidate')
+                    reject("Release candidate")
                 }
             }
         }
