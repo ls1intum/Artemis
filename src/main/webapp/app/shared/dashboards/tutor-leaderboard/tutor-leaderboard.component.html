@@ -52,7 +52,10 @@
                             </a>
                         </td>
                         <td *ngIf="!isExamMode">
-                            <a [routerLink]="['/course-management', course.id, exercise.type + '-exercises', exercise.id, 'more-feedback-requests']" [queryParams]="{ tutorId: tutor.userId }">
+                            <a
+                                [routerLink]="['/course-management', course.id, exercise.type + '-exercises', exercise.id, 'more-feedback-requests']"
+                                [queryParams]="{ tutorId: tutor.userId }"
+                            >
                                 {{ tutor.numberOfNotAnsweredMoreFeedbackRequests }}
                             </a>
                         </td>
