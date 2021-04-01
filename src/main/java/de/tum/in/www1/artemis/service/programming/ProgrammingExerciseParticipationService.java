@@ -130,13 +130,14 @@ public class ProgrammingExerciseParticipationService {
 
     /**
      * Try to find a programming exercise participation for the given id.
+     * It contains the last submission which might be illegal!
      *
      * @param participationId ProgrammingExerciseParticipation id
      * @return the casted participation
      * @throws EntityNotFoundException if the participation with the given id does not exist or is not a programming exercise participation.
      */
     public ProgrammingExerciseParticipation findProgrammingExerciseParticipationWithLatestSubmissionAndResult(Long participationId) throws EntityNotFoundException {
-        Optional<Participation> participation = participationRepository.findByIdWithLatestLegalSubmissionAndResult(participationId);
+        Optional<Participation> participation = participationRepository.findByIdWithLatestSubmissionAndResult(participationId);
         if (participation.isEmpty() || !(participation.get() instanceof ProgrammingExerciseParticipation)) {
             throw new EntityNotFoundException("No programming exercise participation found with id " + participationId);
         }

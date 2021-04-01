@@ -31,11 +31,9 @@ public interface ParticipationRepository extends JpaRepository<Participation, Lo
             LEFT JOIN FETCH p.submissions s
             LEFT JOIN FETCH s.results r
             WHERE p.id = :participationId
-                AND (s.id = (SELECT max(ps.id) FROM p.submissions ps
-                    WHERE (ps.type <> 'ILLEGAL' or ps.type is null))
-                OR s.id = NULL)
+                AND (s.id = (SELECT max(id) FROM p.submissions) OR s.id = NULL)
             """)
-    Optional<Participation> findByIdWithLatestLegalSubmissionAndResult(@Param("participationId") Long participationId);
+    Optional<Participation> findByIdWithLatestSubmissionAndResult(@Param("participationId") Long participationId);
 
     @Query("""
             SELECT p FROM Participation p
