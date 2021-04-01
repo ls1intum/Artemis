@@ -100,7 +100,7 @@ describe('Exercise detail common actions Component', () => {
         modelingExercise.id = 6;
 
         comp.exercise = modelingExercise;
-        expect(comp.getEditRoute().join('/')).to.equal('/course-management/1/modeling-exercises/6/edit');
+        expect(comp.getEditRoute().join('/')).to.equal('/course-management/1/exams/2/exercise-groups/3/modeling-exercises/6/edit');
     });
 
     it('should call event manager on delete exercises', function () {
