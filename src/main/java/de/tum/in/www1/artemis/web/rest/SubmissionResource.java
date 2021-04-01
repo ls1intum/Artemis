@@ -76,7 +76,7 @@ public class SubmissionResource {
         Optional<Submission> submission = submissionRepository.findWithEagerResultsAndAssessorById(id);
 
         if (submission.isEmpty()) {
-            log.error("Submission with id: " + id + " cannot be deleted");
+            log.error("Submission with id: {} cannot be deleted", id);
             return ResponseEntity.notFound().build();
         }
 

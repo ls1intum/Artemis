@@ -61,7 +61,7 @@ public class UserJWTController {
             return new ResponseEntity<>(new JWTToken(jwt), httpHeaders, HttpStatus.OK);
         }
         catch (CaptchaRequiredException ex) {
-            log.warn("CAPTCHA required in JIRA during login for user " + loginVM.getUsername());
+            log.warn("CAPTCHA required in JIRA during login for user {}", loginVM.getUsername());
             return ResponseEntity.status(HttpStatus.FORBIDDEN).header("X-artemisApp-error", ex.getMessage()).build();
         }
     }

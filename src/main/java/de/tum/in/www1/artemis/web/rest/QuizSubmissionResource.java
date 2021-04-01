@@ -92,7 +92,7 @@ public class QuizSubmissionResource {
             return ResponseEntity.ok(updatedQuizSubmission);
         }
         catch (QuizSubmissionException e) {
-            log.warn("QuizSubmissionException :" + e.getMessage() + " for user " + principal.getName() + " in quiz " + exerciseId);
+            log.warn("QuizSubmissionException: {} for user {} in quiz {}", e.getMessage(), principal.getName(), exerciseId);
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "quizSubmissionError", e.getMessage())).body(null);
         }
     }
