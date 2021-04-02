@@ -184,7 +184,7 @@ public class SubmissionService {
         }
 
         List<Submission> submissionsWithoutResult = participations.stream().map(participation -> participation.findLatestSubmission(true)).filter(Optional::isPresent)
-                .map(Optional::get).collect(Collectors.toList());
+                .map(Optional::get).collect(toList());
 
         if (correctionRound > 0) {
             // remove submission if user already assessed first correction round
