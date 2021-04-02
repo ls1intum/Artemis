@@ -21,19 +21,16 @@ import de.tum.in.www1.artemis.repository.*;
 public class AttachmentResourceIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
-    CourseRepository courseRepo;
+    private CourseRepository courseRepo;
 
     @Autowired
-    ExerciseRepository exerciseRepository;
+    private ExerciseRepository exerciseRepository;
 
     @Autowired
-    AttachmentRepository attachmentRepository;
+    private AttachmentRepository attachmentRepository;
 
     @Autowired
-    UserRepository userRepo;
-
-    @Autowired
-    LectureRepository lectureRepository;
+    private LectureRepository lectureRepository;
 
     private Attachment attachment;
 
@@ -86,7 +83,8 @@ public class AttachmentResourceIntegrationTest extends AbstractSpringIntegration
         var actualAttachment = request.putWithResponseBodyAndParams("/api/attachments", attachment, Attachment.class, HttpStatus.OK, params);
         var expectedAttachment = attachmentRepository.findById(actualAttachment.getId()).get();
         assertThat(actualAttachment.getName()).isEqualTo("new name");
-        assertThat(actualAttachment).isEqualToIgnoringGivenFields(expectedAttachment, "name", "fileService", "prevLink");
+        var ignoringFields = new String[] { "name", "fileService", "prevLink", "lecture.lectureUnits", "lecture.studentQuestions", "lecture.course", "lecture.attachments" };
+        assertThat(actualAttachment).usingRecursiveComparison().ignoringFields(ignoringFields).isEqualTo(expectedAttachment);
         verify(groupNotificationService).notifyStudentGroupAboutAttachmentChange(actualAttachment, notificationText);
     }
 

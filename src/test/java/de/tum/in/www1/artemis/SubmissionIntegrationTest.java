@@ -12,10 +12,10 @@ import de.tum.in.www1.artemis.repository.*;
 public class SubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
-    SubmissionRepository submissionRepository;
+    private SubmissionRepository submissionRepository;
 
     @Autowired
-    ResultRepository resultRepository;
+    private ResultRepository resultRepository;
 
     @Test
     public void addMultipleResultsToOneSubmission() {

@@ -660,7 +660,7 @@ public class ProgrammingExerciseGradingService {
     public ProgrammingExerciseGradingStatisticsDTO generateGradingStatistics(Long exerciseId) {
         var statistics = new ProgrammingExerciseGradingStatisticsDTO();
 
-        var results = resultService.findLatestAutomaticResultsWithFeedbacksForExercise(exerciseId);
+        var results = resultRepository.findLatestAutomaticResultsWithEagerFeedbacksForExercise(exerciseId);
 
         statistics.setNumParticipations(results.size());
 

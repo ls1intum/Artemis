@@ -109,6 +109,9 @@ spring:
             addresses: ""
     hazelcast:
         interface: "127.0.0.1"
+    test:
+      database:
+          replace: none
 
 server:
     port: 8080

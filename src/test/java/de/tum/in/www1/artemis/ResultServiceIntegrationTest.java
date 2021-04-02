@@ -34,60 +34,42 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.service.ResultService;
-import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseGradingService;
-import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseTestCaseService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
 public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
-    ResultService resultService;
+    private FeedbackRepository feedbackRepository;
 
     @Autowired
-    FeedbackRepository feedbackRepository;
+    private ProgrammingExerciseRepository programmingExerciseRepository;
 
     @Autowired
-    ProgrammingExerciseTestCaseService programmingExerciseTestCaseService;
+    private SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseRepository;
 
     @Autowired
-    ProgrammingExerciseRepository programmingExerciseRepository;
+    private ModelingExerciseRepository modelingExerciseRepository;
 
     @Autowired
-    SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseRepository;
+    private QuizExerciseRepository quizExerciseRepository;
 
     @Autowired
-    ModelingExerciseRepository modelingExerciseRepository;
+    private FileUploadExerciseRepository fileUploadExerciseRepository;
 
     @Autowired
-    QuizExerciseRepository quizExerciseRepository;
+    private TextExerciseRepository textExerciseRepository;
 
     @Autowired
-    FileUploadExerciseRepository fileUploadExerciseRepository;
+    private ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
 
     @Autowired
-    TextExerciseRepository textExerciseRepository;
+    private StudentParticipationRepository studentParticipationRepository;
 
     @Autowired
-    ProgrammingSubmissionRepository programmingSubmissionRepository;
+    private ResultRepository resultRepository;
 
     @Autowired
-    ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
-
-    @Autowired
-    StudentParticipationRepository studentParticipationRepository;
-
-    @Autowired
-    UserRepository userRepo;
-
-    @Autowired
-    ResultRepository resultRepository;
-
-    @Autowired
-    SubmissionRepository submissionRepository;
-
-    @Autowired
-    ProgrammingExerciseGradingService gradingService;
+    private SubmissionRepository submissionRepository;
 
     private Course course;
 

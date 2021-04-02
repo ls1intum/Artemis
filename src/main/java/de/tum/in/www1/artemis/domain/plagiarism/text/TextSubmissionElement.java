@@ -1,16 +1,22 @@
 package de.tum.in.www1.artemis.domain.plagiarism.text;
 
+import javax.persistence.Column;
+import javax.persistence.Entity;
+
 import jplag.Token;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismSubmissionElement;
 
+@Entity
 public class TextSubmissionElement extends PlagiarismSubmissionElement {
 
+    @Column(name = "file_column")
     private int column;
 
     private int line;
 
     private String file;
 
+    @Column(name = "token_type")
     private int type;
 
     private int length;

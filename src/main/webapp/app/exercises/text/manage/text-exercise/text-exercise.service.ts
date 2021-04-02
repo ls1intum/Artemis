@@ -103,4 +103,17 @@ export class TextExerciseService {
             })
             .pipe(map((response: HttpResponse<TextPlagiarismResult>) => response.body!));
     }
+
+    /**
+     * Get the latest plagiarism result for the exercise with the given ID.
+     *
+     * @param exerciseId
+     */
+    getLatestPlagiarismResult(exerciseId: number): Observable<TextPlagiarismResult> {
+        return this.http
+            .get<TextPlagiarismResult>(`${this.resourceUrl}/${exerciseId}/plagiarism-result`, {
+                observe: 'response',
+            })
+            .pipe(map((response: HttpResponse<TextPlagiarismResult>) => response.body!));
+    }
 }
