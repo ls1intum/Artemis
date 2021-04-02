@@ -677,29 +677,29 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         request.postWithoutLocation(TEST_CASE_CHANGED_API_PATH + exerciseId, obj, HttpStatus.OK, new HttpHeaders());
     }
 
-    private String getBuildPlanIdByParticipationType(IntegrationTestParticipationType participationType, int participationNumber) {
+    private String getBuildPlanIdByParticipationType(IntegrationTestParticipationType participationType, int participationIndex) {
         return switch (participationType) {
             case TEMPLATE -> "BASE";
             case SOLUTION -> "SOLUTION";
-            default -> getStudentLoginFromParticipation(participationNumber);
+            default -> getStudentLoginFromParticipation(participationIndex);
         };
     }
 
-    private void triggerBuild(IntegrationTestParticipationType participationType, int participationNumber) throws Exception {
-        Long id = getParticipationIdByType(participationType, participationNumber);
+    private void triggerBuild(IntegrationTestParticipationType participationType, int participationIndex) throws Exception {
+        Long id = getParticipationIdByType(participationType, participationIndex);
         request.postWithoutLocation("/api/programming-submissions/" + id + "/trigger-build", null, HttpStatus.OK, new HttpHeaders());
     }
 
-    private void triggerInstructorBuild(IntegrationTestParticipationType participationType, int participationNumber) throws Exception {
-        Long id = getParticipationIdByType(participationType, participationNumber);
+    private void triggerInstructorBuild(IntegrationTestParticipationType participationType, int participationIndex) throws Exception {
+        Long id = getParticipationIdByType(participationType, participationIndex);
         request.postWithoutLocation("/api/programming-submissions/" + id + "/trigger-build?submissionType=INSTRUCTOR", null, HttpStatus.OK, new HttpHeaders());
     }
 
     /**
      * This is the simulated request from the CI to Artemis on a new build result.
      */
-    private void postResult(IntegrationTestParticipationType participationType, int participationNumber, HttpStatus expectedStatus, boolean additionalCommit) throws Exception {
-        String buildPlanStudentId = getBuildPlanIdByParticipationType(participationType, participationNumber);
+    private void postResult(IntegrationTestParticipationType participationType, int participationIndex, HttpStatus expectedStatus, boolean additionalCommit) throws Exception {
+        String buildPlanStudentId = getBuildPlanIdByParticipationType(participationType, participationIndex);
         postResult(exercise.getProjectKey().toUpperCase() + "-" + buildPlanStudentId, expectedStatus, additionalCommit);
     }
 
@@ -740,16 +740,16 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         return mapper.convertValue(obj, BambooBuildResultNotificationDTO.class);
     }
 
-    private String getStudentLoginFromParticipation(int participationNumber) {
-        StudentParticipation participation = studentParticipationRepository.findWithStudentById(participationIds.get(participationNumber)).get();
+    private String getStudentLoginFromParticipation(int participationIndex) {
+        StudentParticipation participation = studentParticipationRepository.findWithStudentById(participationIds.get(participationIndex)).get();
         return participation.getParticipantIdentifier();
     }
 
-    private Long getParticipationIdByType(IntegrationTestParticipationType participationType, int participationNumber) {
+    private Long getParticipationIdByType(IntegrationTestParticipationType participationType, int participationIndex) {
         return switch (participationType) {
             case SOLUTION -> solutionParticipationId;
             case TEMPLATE -> templateParticipationId;
-            default -> participationIds.get(participationNumber);
+            default -> participationIds.get(participationIndex);
         };
     }
 

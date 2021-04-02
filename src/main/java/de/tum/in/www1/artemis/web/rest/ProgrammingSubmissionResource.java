@@ -142,6 +142,7 @@ public class ProgrammingSubmissionResource {
     @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
     public ResponseEntity<Void> triggerBuild(@PathVariable Long participationId, @RequestParam(defaultValue = "MANUAL") SubmissionType submissionType) {
         Participation participation = participationRepository.findByIdElseThrow(participationId);
+        // this call supports TemplateProgrammingExerciseParticipation, SolutionProgrammingExerciseParticipation and ProgrammingExerciseStudentParticipation
         if (!(participation instanceof ProgrammingExerciseParticipation)) {
             return notFound();
         }
@@ -152,8 +153,7 @@ public class ProgrammingSubmissionResource {
         }
 
         try {
-            ProgrammingSubmission submission = programmingSubmissionService.getOrCreateSubmissionWithLastCommitHashForParticipation(programmingExerciseParticipation,
-                    submissionType);
+            var submission = programmingSubmissionService.getOrCreateSubmissionWithLastCommitHashForParticipation(programmingExerciseParticipation, submissionType);
             programmingSubmissionService.triggerBuildAndNotifyUser(submission);
         }
         catch (IllegalStateException ex) {
