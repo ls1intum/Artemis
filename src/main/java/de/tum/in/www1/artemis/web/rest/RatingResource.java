@@ -5,7 +5,6 @@ import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 import java.net.*;
 import java.util.*;
 
-import javax.validation.Valid;
 import javax.validation.constraints.*;
 
 import org.slf4j.*;
@@ -18,6 +17,7 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 /**
  * REST controller for managing Rating.
@@ -77,15 +77,20 @@ public class RatingResource {
      */
     @PostMapping("/results/{resultId}/rating/{ratingValue}")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Rating> createRatingForResult(@PathVariable Long resultId,
-            @Valid @PathVariable @Min(value = 1, message = "rating has to be between 1 and 5") @Max(value = 5, message = "rating has to be between 1 and 5") Integer ratingValue)
-            throws URISyntaxException {
+    public ResponseEntity<Rating> createRatingForResult(@PathVariable long resultId, @PathVariable int ratingValue) throws URISyntaxException {
+        checkRating(ratingValue);
         if (!checkIfUserIsOwnerOfSubmission(resultId)) {
             return forbidden();
         }
 
         Rating savedRating = ratingService.saveRating(resultId, ratingValue);
         return ResponseEntity.created(new URI("/api/results/" + savedRating.getId() + "/rating")).body(savedRating);
+    }
+
+    private void checkRating(int ratingValue) {
+        if (ratingValue < 1 || ratingValue > 5) {
+            throw new BadRequestAlertException("rating has to be between 1 and 5", ENTITY_NAME, "ratingValue.invalid", false);
+        }
     }
 
     /**
@@ -97,8 +102,8 @@ public class RatingResource {
      */
     @PutMapping("/results/{resultId}/rating/{ratingValue}")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Rating> updateRatingForResult(@PathVariable Long resultId,
-            @Valid @PathVariable @Min(value = 1, message = "rating has to be between 1 and 5") @Max(value = 5, message = "rating has to be between 1 and 5") Integer ratingValue) {
+    public ResponseEntity<Rating> updateRatingForResult(@PathVariable long resultId, @PathVariable int ratingValue) {
+        checkRating(ratingValue);
         if (!checkIfUserIsOwnerOfSubmission(resultId)) {
             return forbidden();
         }
