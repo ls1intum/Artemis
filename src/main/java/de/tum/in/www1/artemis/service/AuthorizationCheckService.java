@@ -111,13 +111,26 @@ public class AuthorizationCheckService {
     }
 
     /**
-     * checks if the passed user is at least a teaching assistant in the given course
+     * Checks if the passed user is at least a teaching assistant in the given course.
+     * Throws an AccessForbiddenException if the user has no access which returns a 403
+     *
+     * @param course the course that needs to be checked
+     * @param user the user whose permissions should be checked
+     */
+    public void checkIsAtLeastTeachingAssistantInCourseElseThrow(@NotNull Course course, @Nullable User user) {
+        if (!isAtLeastTeachingAssistantInCourse(course, user)) {
+            throw new AccessForbiddenException("Course", course.getId());
+        }
+    }
+
+    /**
+     * Checks if the passed user is at least a teaching assistant in the given course.
      *
      * @param course the course that needs to be checked
      * @param user the user whose permissions should be checked
      * @return true if the passed user is at least a teaching assistant in the course (also if the user is instructor or admin), false otherwise
      */
-    public boolean isAtLeastTeachingAssistantInCourse(Course course, User user) {
+    public boolean isAtLeastTeachingAssistantInCourse(@NotNull Course course, @Nullable User user) {
         if (user == null || user.getGroups() == null) {
             // only retrieve the user and the groups if the user is null or the groups are missing (to save performance)
             user = userRepository.getUserWithGroupsAndAuthorities();
@@ -132,7 +145,7 @@ public class AuthorizationCheckService {
      * @param user the user whose permissions should be checked
      * @return true if the passed user is at least a teaching assistant in the course (also if the user is instructor or admin), false otherwise
      */
-    public boolean isAtLeastStudentInCourse(Course course, User user) {
+    public boolean isAtLeastStudentInCourse(@NotNull Course course, @Nullable User user) {
         if (user == null || user.getGroups() == null) {
             // only retrieve the user and the groups if the user is null or the groups are missing (to save performance)
             user = userRepository.getUserWithGroupsAndAuthorities();
@@ -149,7 +162,7 @@ public class AuthorizationCheckService {
      * @param user the user whose permissions should be checked
      * @return true if the currently logged in user is at least an instructor (or admin), false otherwise
      */
-    public boolean isAtLeastInstructorForExercise(Exercise exercise, User user) {
+    public boolean isAtLeastInstructorForExercise(@NotNull Exercise exercise, @Nullable User user) {
         return isAtLeastInstructorInCourse(exercise.getCourseViaExerciseGroupOrCourseMember(), user);
     }
 
@@ -159,7 +172,7 @@ public class AuthorizationCheckService {
      * @param exercise belongs to a course that will be checked for permission rights
      * @return true if the currently logged in user is at least an instructor (or admin), false otherwise
      */
-    public boolean isAtLeastInstructorForExercise(Exercise exercise) {
+    public boolean isAtLeastInstructorForExercise(@NotNull Exercise exercise) {
         return isAtLeastInstructorForExercise(exercise, null);
     }
 
@@ -177,13 +190,26 @@ public class AuthorizationCheckService {
     }
 
     /**
+     * Checks if the passed user is at least instructor in the given course.
+     * Throws an AccessForbiddenException if the user has no access which returns a 403
+     *
+     * @param course the course that needs to be checked
+     * @param user the user whose permissions should be checked
+     */
+    public void checkIsAtLeastInstructorInCourseElseThrow(@NotNull Course course, @Nullable User user) {
+        if (!isAtLeastInstructorInCourse(course, user)) {
+            throw new AccessForbiddenException("Course", course.getId());
+        }
+    }
+
+    /**
      * checks if the passed user is at least instructor in the given course
      *
      * @param course the course that needs to be checked
      * @param user the user whose permissions should be checked
      * @return true if the passed user is at least instructor in the course (also if the user is admin), false otherwise
      */
-    public boolean isAtLeastInstructorInCourse(Course course, User user) {
+    public boolean isAtLeastInstructorInCourse(@NotNull Course course, @Nullable User user) {
         if (user == null || user.getGroups() == null) {
             // only retrieve the user and the groups if the user is null or the groups are missing (to save performance)
             user = userRepository.getUserWithGroupsAndAuthorities();
@@ -198,7 +224,7 @@ public class AuthorizationCheckService {
      * @param user the user whose permissions should be checked
      * @return true, if user is instructor of this course, otherwise false
      */
-    public boolean isInstructorInCourse(Course course, User user) {
+    public boolean isInstructorInCourse(@NotNull Course course, @Nullable User user) {
         if (user == null || user.getGroups() == null) {
             // only retrieve the user and the groups if the user is null or the groups are missing (to save performance)
             user = userRepository.getUserWithGroupsAndAuthorities();
@@ -213,7 +239,7 @@ public class AuthorizationCheckService {
      * @param user the user whose permissions should be checked
      * @return true, if user is teaching assistant of this course, otherwise false
      */
-    public boolean isTeachingAssistantInCourse(Course course, User user) {
+    public boolean isTeachingAssistantInCourse(@NotNull Course course, @Nullable User user) {
         if (user == null || user.getGroups() == null) {
             // only retrieve the user and the groups if the user is null or the groups are missing (to save performance)
             user = userRepository.getUserWithGroupsAndAuthorities();
@@ -228,7 +254,7 @@ public class AuthorizationCheckService {
      * @param user the user whose permissions should be checked
      * @return true, if user is only student of this course, otherwise false
      */
-    public boolean isOnlyStudentInCourse(Course course, User user) {
+    public boolean isOnlyStudentInCourse(@NotNull Course course, @Nullable User user) {
         if (user == null || user.getGroups() == null) {
             // only retrieve the user and the groups if the user is null or the groups are missing (to save performance)
             user = userRepository.getUserWithGroupsAndAuthorities();
@@ -243,7 +269,7 @@ public class AuthorizationCheckService {
      * @param user the user whose permissions should be checked
      * @return true, if user is student of this course, otherwise false
      */
-    public boolean isStudentInCourse(Course course, User user) {
+    public boolean isStudentInCourse(@NotNull Course course, @Nullable User user) {
         if (user == null || user.getGroups() == null) {
             // only retrieve the user and the groups if the user is null or the groups are missing (to save performance)
             user = userRepository.getUserWithGroupsAndAuthorities();
@@ -257,7 +283,7 @@ public class AuthorizationCheckService {
      * @param participation the participation that needs to be checked
      * @return true, if user is student is owner of this participation, otherwise false
      */
-    public boolean isOwnerOfParticipation(StudentParticipation participation) {
+    public boolean isOwnerOfParticipation(@NotNull StudentParticipation participation) {
         if (participation.getParticipant() == null) {
             return false;
         }
@@ -273,7 +299,7 @@ public class AuthorizationCheckService {
      * @param user the user whose permissions should be checked
      * @return true, if user is student is owner of this participation, otherwise false
      */
-    public boolean isOwnerOfParticipation(StudentParticipation participation, User user) {
+    public boolean isOwnerOfParticipation(@NotNull StudentParticipation participation, @Nullable User user) {
         if (user == null || user.getGroups() == null) {
             // only retrieve the user and the groups if the user is null or the groups are missing (to save performance)
             user = userRepository.getUserWithGroupsAndAuthorities();
@@ -293,7 +319,7 @@ public class AuthorizationCheckService {
      * @param user the user whose permissions should be checked
      * @return true if user is owner of this team, otherwise false
      */
-    public boolean isOwnerOfTeam(Team team, User user) {
+    public boolean isOwnerOfTeam(@NotNull Team team, @NotNull User user) {
         return user.equals(team.getOwner());
     }
 
@@ -305,7 +331,7 @@ public class AuthorizationCheckService {
      * @param user the user whose permissions should be checked
      * @return true, if user is student is owner of this team, otherwise false
      */
-    public boolean isStudentInTeam(Course course, String teamShortName, User user) {
+    public boolean isStudentInTeam(@NotNull Course course, String teamShortName, @NotNull User user) {
         return userRepository.findAllInTeam(course.getId(), teamShortName).contains(user);
     }
 
@@ -316,7 +342,7 @@ public class AuthorizationCheckService {
      * @param principal     a representation of the currently logged in user
      * @return true, if user is student is owner of this participation, otherwise false
      */
-    public boolean isOwnerOfParticipation(StudentParticipation participation, Principal principal) {
+    public boolean isOwnerOfParticipation(@NotNull StudentParticipation participation, @NotNull Principal principal) {
         return participation.getParticipant() != null && participation.isOwnedBy(principal.getName());
     }
 
@@ -327,7 +353,7 @@ public class AuthorizationCheckService {
      * @param user the user whose permissions should be checked
      * @return true, if user is allowed to see this exercise, otherwise false
      */
-    public boolean isAllowedToSeeExercise(Exercise exercise, User user) {
+    public boolean isAllowedToSeeExercise(@NotNull Exercise exercise, @Nullable User user) {
         if (user == null || user.getGroups() == null) {
             user = userRepository.getUserWithGroupsAndAuthorities();
         }
@@ -345,7 +371,7 @@ public class AuthorizationCheckService {
      * @param user        the user for which to check permission
      * @return true if the user is allowed, false otherwise
      */
-    public boolean isAllowedToSeeLectureUnit(LectureUnit lectureUnit, User user) {
+    public boolean isAllowedToSeeLectureUnit(@NotNull LectureUnit lectureUnit, @Nullable User user) {
         if (user == null || user.getGroups() == null) {
             user = userRepository.getUserWithGroupsAndAuthorities();
         }

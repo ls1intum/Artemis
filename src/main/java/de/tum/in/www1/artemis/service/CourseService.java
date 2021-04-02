@@ -437,7 +437,7 @@ public class CourseService {
      */
     public void cleanupCourse(Long courseId) {
         // Get the course with all exercises
-        var course = courseRepository.findWithEagerExercisesAndLecturesById(courseId);
+        var course = courseRepository.findByIdWithExercisesAndLecturesElseThrow(courseId);
         if (!course.hasCourseArchive()) {
             log.info("Cannot clean up course {} because it hasn't been archived.", courseId);
             return;

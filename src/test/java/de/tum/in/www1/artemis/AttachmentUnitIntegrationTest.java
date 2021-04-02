@@ -22,22 +22,22 @@ import de.tum.in.www1.artemis.util.ModelFactory;
 public class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
-    AttachmentRepository attachmentRepository;
+    private AttachmentRepository attachmentRepository;
 
     @Autowired
-    AttachmentUnitRepository attachmentUnitRepository;
+    private AttachmentUnitRepository attachmentUnitRepository;
 
     @Autowired
-    UserRepository userRepository;
+    private UserRepository userRepository;
 
     @Autowired
-    LectureRepository lectureRepository;
+    private LectureRepository lectureRepository;
 
-    Lecture lecture1;
+    private Lecture lecture1;
 
-    Attachment attachment;
+    private Attachment attachment;
 
-    AttachmentUnit attachmentUnit;
+    private AttachmentUnit attachmentUnit;
 
     @BeforeEach
     public void initTestCase() throws Exception {

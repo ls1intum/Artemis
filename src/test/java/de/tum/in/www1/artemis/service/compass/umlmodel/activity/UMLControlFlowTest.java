@@ -11,24 +11,24 @@ import org.mockito.MockitoAnnotations;
 
 import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLRelationship;
 
-class UMLControlFlowTest {
+public class UMLControlFlowTest {
 
     private UMLControlFlow umlControlFlow;
 
     @Mock
-    UMLControlFlow referenceControlFlow;
+    private UMLControlFlow referenceControlFlow;
 
     @Mock
-    UMLActivityElement sourceElement1;
+    private UMLActivityElement sourceElement1;
 
     @Mock
-    UMLActivityElement sourceElement2;
+    private UMLActivityElement sourceElement2;
 
     @Mock
-    UMLActivityElement targetElement1;
+    private UMLActivityElement targetElement1;
 
     @Mock
-    UMLActivityElement targetElement2;
+    private UMLActivityElement targetElement2;
 
     @BeforeEach
     void setUp() {

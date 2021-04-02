@@ -15,18 +15,18 @@ import org.mockito.MockitoAnnotations;
 
 import de.tum.in.www1.artemis.service.compass.utils.CompassConfiguration;
 
-class UMLMethodTest {
+public class UMLMethodTest {
 
     private UMLMethod method;
 
     @Mock
-    UMLClass parentClass;
+    private UMLClass parentClass;
 
     @Mock
-    UMLMethod referenceMethod;
+    private UMLMethod referenceMethod;
 
     @Mock
-    UMLClass referenceParentClass;
+    private UMLClass referenceParentClass;
 
     @BeforeEach
     void setUp() {

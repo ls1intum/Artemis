@@ -27,34 +27,18 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.exception.FilePathParsingException;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.FileService;
-import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
 public class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
-    CourseRepository courseRepo;
+    private FileService fileService;
 
     @Autowired
-    ExerciseRepository exerciseRepo;
+    private FileUploadSubmissionRepository fileUploadSubmissionRepository;
 
     @Autowired
-    UserRepository userRepo;
-
-    @Autowired
-    ParticipationService participationService;
-
-    @Autowired
-    FileService fileService;
-
-    @Autowired
-    ResultRepository resultRepo;
-
-    @Autowired
-    FileUploadSubmissionRepository fileUploadSubmissionRepository;
-
-    @Autowired
-    ParticipationRepository participationRepository;
+    private ParticipationRepository participationRepository;
 
     private FileUploadExercise releasedFileUploadExercise;
 

@@ -3,8 +3,7 @@ package de.tum.in.www1.artemis.config;
 import java.nio.file.Paths;
 
 import org.springframework.context.annotation.Configuration;
-import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
-import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+import org.springframework.web.servlet.config.annotation.*;
 
 @Configuration
 public class PublicResourcesConfiguration implements WebMvcConfigurer {

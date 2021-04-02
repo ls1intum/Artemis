@@ -22,7 +22,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
-import de.tum.in.www1.artemis.connector.jira.JiraRequestMockProvider;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
@@ -50,52 +49,49 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     private String examsArchivePath;
 
     @Autowired
-    JiraRequestMockProvider jiraRequestMockProvider;
+    private CourseRepository courseRepo;
 
     @Autowired
-    CourseRepository courseRepo;
+    private ExerciseRepository exerciseRepo;
 
     @Autowired
-    ExerciseRepository exerciseRepo;
+    private UserRepository userRepo;
 
     @Autowired
-    UserRepository userRepo;
+    private ExamRepository examRepository;
 
     @Autowired
-    ExamRepository examRepository;
+    private ExamService examService;
 
     @Autowired
-    ExamService examService;
+    private ExamDateService examDateService;
 
     @Autowired
-    ExamDateService examDateService;
+    private ExamRegistrationService examRegistrationService;
 
     @Autowired
-    ExamRegistrationService examRegistrationService;
+    private ExerciseGroupRepository exerciseGroupRepository;
 
     @Autowired
-    ExerciseGroupRepository exerciseGroupRepository;
+    private StudentExamRepository studentExamRepository;
 
     @Autowired
-    StudentExamRepository studentExamRepository;
+    private TextExerciseRepository textExerciseRepository;
 
     @Autowired
-    TextExerciseRepository textExerciseRepository;
+    private ProgrammingExerciseRepository programmingExerciseRepository;
 
     @Autowired
-    ProgrammingExerciseRepository programmingExerciseRepository;
+    private StudentParticipationRepository studentParticipationRepository;
 
     @Autowired
-    StudentParticipationRepository studentParticipationRepository;
+    private SubmissionRepository submissionRepository;
 
     @Autowired
-    SubmissionRepository submissionRepository;
+    private ResultRepository resultRepository;
 
     @Autowired
-    ResultRepository resultRepository;
-
-    @Autowired
-    ParticipationTestRepository participationTestRepository;
+    private ParticipationTestRepository participationTestRepository;
 
     private List<User> users;
 
@@ -1472,7 +1468,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
             // Calculate overall points achieved
 
             var calculatedOverallPoints = studentExamOfUser.getExercises().stream()
-                    .filter(exercise -> !exercise.getIncludedInOverallScore().equals(IncludedInOverallScore.NOT_INCLUDED)).map(exercise -> exercise.getMaxPoints())
+                    .filter(exercise -> !exercise.getIncludedInOverallScore().equals(IncludedInOverallScore.NOT_INCLUDED)).map(Exercise::getMaxPoints)
                     .reduce(0.0, (total, maxScore) -> (Math.round((total + maxScore * resultScore / 100) * 10) / 10.0));
 
             assertEquals(studentResult.overallPointsAchieved, calculatedOverallPoints, EPSILON);
@@ -1826,7 +1822,6 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     }
 
     public void testGetStatsForExamAssessmentDashboard(int numberOfCorrectionRounds) throws Exception {
-        User examInstructor = userRepo.findOneByLogin("instructor1").get();
         User examTutor1 = userRepo.findOneByLogin("tutor1").get();
         User examTutor2 = userRepo.findOneByLogin("tutor2").get();
 
@@ -1946,8 +1941,8 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
             var locks = group.getExercises().stream().map(
                     exercise -> resultRepository.countNumberOfLockedAssessmentsByOtherTutorsForExamExerciseForCorrectionRounds(exercise, numberOfCorrectionRounds, examTutor2)[0]
                             .getInTime())
-                    .reduce((x, y) -> x + y).get();
-            if (group.getExercises().stream().filter(exercise -> !(exercise instanceof QuizExercise)).count() != 0)
+                    .reduce(Long::sum).get();
+            if (group.getExercises().stream().anyMatch(exercise -> !(exercise instanceof QuizExercise)))
                 assertThat(locks).isEqualTo(15L);
         });
 
@@ -1987,7 +1982,6 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     public void lockAndAssessForSecondCorrection(Exam exam, Course course, List<Exercise> exercisesInExam, int numberOfCorrectionRounds) throws Exception {
         // Lock all submissions
         User examInstructor = userRepo.findOneByLogin("instructor1").get();
-        User examTutor1 = userRepo.findOneByLogin("tutor1").get();
         User examTutor2 = userRepo.findOneByLogin("tutor2").get();
 
         for (var exercise : exercisesInExam) {
@@ -2080,6 +2074,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         // invoke generate student exams
         List<StudentExam> studentExams = request.postListWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + examWithProgramming.getId() + "/generate-student-exams",
                 Optional.empty(), StudentExam.class, HttpStatus.OK);
+        assertThat(studentExams).isNotEmpty();
 
         verify(gitService, times(1)).combineAllCommitsOfRepositoryIntoOne(any());
     }

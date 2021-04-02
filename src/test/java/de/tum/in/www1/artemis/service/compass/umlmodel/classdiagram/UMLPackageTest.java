@@ -13,18 +13,18 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-class UMLPackageTest {
+public class UMLPackageTest {
 
     private UMLPackage umlPackage;
 
     @Mock
-    UMLPackage referencePackage;
+    private UMLPackage referencePackage;
 
     @Mock
-    UMLClass class1;
+    private UMLClass class1;
 
     @Mock
-    UMLClass class2;
+    private UMLClass class2;
 
     @BeforeEach
     void setUp() {

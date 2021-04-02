@@ -25,55 +25,35 @@ import de.tum.in.www1.artemis.util.ModelFactory;
 public class LectureIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
-    LectureRepository lectureRepository;
+    private LectureRepository lectureRepository;
 
     @Autowired
-    CourseRepository courseRepository;
+    private CourseRepository courseRepository;
 
     @Autowired
-    UserRepository userRepository;
+    private UserRepository userRepository;
 
     @Autowired
-    TextExerciseRepository textExerciseRepository;
+    private TextExerciseRepository textExerciseRepository;
 
     @Autowired
-    AttachmentUnitRepository attachmentUnitRepository;
+    private AttachmentRepository attachmentRepository;
 
-    @Autowired
-    AttachmentRepository attachmentRepository;
+    private Attachment attachmentDirectOfLecture;
 
-    @Autowired
-    ExerciseUnitRepository exerciseUnitRepository;
+    private Attachment attachmentOfAttachmentUnit;
 
-    @Autowired
-    TextUnitRepository textUnitRepository;
+    private TextExercise textExercise;
 
-    @Autowired
-    VideoUnitRepository videoUnitRepository;
+    private Course course1;
 
-    Attachment attachmentDirectOfLecture;
-
-    Attachment attachmentOfAttachmentUnit;
-
-    TextExercise textExercise;
-
-    Course course1;
-
-    Lecture lecture1;
-
-    TextUnit textUnit;
-
-    ExerciseUnit exerciseUnit;
-
-    VideoUnit videoUnit;
-
-    AttachmentUnit attachmentUnit;
+    private Lecture lecture1;
 
     @BeforeEach
     public void initTestCase() throws Exception {
         this.database.addUsers(10, 10, 10);
         List<Course> courses = this.database.createCoursesWithExercisesAndLectures(true);
-        this.course1 = this.courseRepository.findWithEagerExercisesAndLecturesById(courses.get(0).getId());
+        this.course1 = this.courseRepository.findByIdWithExercisesAndLecturesElseThrow(courses.get(0).getId());
         this.lecture1 = this.course1.getLectures().stream().findFirst().get();
         this.textExercise = textExerciseRepository.findByCourseId(course1.getId()).stream().findFirst().get();
         // Add users that are not in the course
@@ -82,14 +62,14 @@ public class LectureIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         userRepository.save(ModelFactory.generateActivatedUser("instructor42"));
 
         // Setting up a lecture with various kinds of content
-        this.exerciseUnit = database.createExerciseUnit(textExercise);
-        this.attachmentUnit = database.createAttachmentUnit();
+        ExerciseUnit exerciseUnit = database.createExerciseUnit(textExercise);
+        AttachmentUnit attachmentUnit = database.createAttachmentUnit();
         this.attachmentOfAttachmentUnit = attachmentUnit.getAttachment();
-        this.videoUnit = database.createVideoUnit();
-        this.textUnit = database.createTextUnit();
+        VideoUnit videoUnit = database.createVideoUnit();
+        TextUnit textUnit = database.createTextUnit();
         addAttachmentToLecture();
 
-        this.lecture1 = database.addLectureUnitsToLecture(this.lecture1, Set.of(this.exerciseUnit, this.attachmentUnit, this.videoUnit, this.textUnit));
+        this.lecture1 = database.addLectureUnitsToLecture(this.lecture1, Set.of(exerciseUnit, attachmentUnit, videoUnit, textUnit));
     }
 
     private void addAttachmentToLecture() {

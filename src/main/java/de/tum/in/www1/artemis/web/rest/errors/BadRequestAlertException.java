@@ -2,11 +2,9 @@ package de.tum.in.www1.artemis.web.rest.errors;
 
 import java.io.Serial;
 import java.net.URI;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
-import org.zalando.problem.AbstractThrowableProblem;
-import org.zalando.problem.Status;
+import org.zalando.problem.*;
 
 public class BadRequestAlertException extends AbstractThrowableProblem {
 

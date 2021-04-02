@@ -7,8 +7,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
-import ch.qos.logback.classic.Level;
-import ch.qos.logback.classic.LoggerContext;
+import ch.qos.logback.classic.*;
 import de.tum.in.www1.artemis.web.rest.vm.LoggerVM;
 
 /**

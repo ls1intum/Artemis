@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.domain.notification;
 
-import de.tum.in.www1.artemis.domain.StudentQuestionAnswer;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 
 public class SingleUserNotificationFactory {

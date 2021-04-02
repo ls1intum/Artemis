@@ -23,7 +23,7 @@ import de.tum.in.www1.artemis.service.compass.umlmodel.activity.UMLActivityNode;
 import de.tum.in.www1.artemis.service.compass.umlmodel.activity.UMLControlFlow;
 import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.*;
 
-class UMLModelParserTest {
+public class UMLModelParserTest {
 
     @Test
     void buildModelFromJSON_classDiagram() throws Exception {

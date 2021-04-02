@@ -87,7 +87,7 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     Optional<Course> findWithEagerLearningGoalsById(long courseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "exercises", "lectures" })
-    Course findWithEagerExercisesAndLecturesById(long courseId);
+    Optional<Course> findWithEagerExercisesAndLecturesById(long courseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "exercises", "lectures", "lectures.lectureUnits", "learningGoals" })
     Course findWithEagerExercisesAndLecturesAndLectureUnitsAndLearningGoalsById(long courseId);
@@ -239,13 +239,13 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     }
 
     /**
-     * Get one course by id.
+     * Get one course by id with lectures and exams. If the course cannot be found throw an exception
      *
      * @param courseId the id of the entity
      * @return the entity
      */
     @NotNull
-    default Course findByIdWithLecturesAndExamsElseThrow(Long courseId) {
+    default Course findByIdWithLecturesAndExamsElseThrow(long courseId) {
         return findWithEagerLecturesAndExamsById(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
     }
 
@@ -255,7 +255,7 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
      * @param organization the organization to add to the course
      */
     @NotNull
-    default void addOrganizationToCourse(Long courseId, Organization organization) {
+    default void addOrganizationToCourse(long courseId, Organization organization) {
         Course course = findWithEagerOrganizationsElseThrow(courseId);
         if (!course.getOrganizations().contains(organization)) {
             course.getOrganizations().add(organization);
@@ -264,16 +264,21 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     }
 
     /**
-     * Remove organizaiton from course, if currently contained
+     * Remove organization from course, if currently contained
      * @param courseId the id of the course to remove from the organization
      * @param organization the organization to remove from the course
      */
     @NotNull
-    default void removeOrganizationFromCourse(Long courseId, Organization organization) {
+    default void removeOrganizationFromCourse(long courseId, Organization organization) {
         Course course = findWithEagerOrganizationsElseThrow(courseId);
         if (course.getOrganizations().contains(organization)) {
             course.getOrganizations().remove(organization);
             save(course);
         }
+    }
+
+    @NotNull
+    default Course findByIdWithExercisesAndLecturesElseThrow(long courseId) {
+        return findWithEagerExercisesAndLecturesById(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
     }
 }

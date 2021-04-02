@@ -26,16 +26,16 @@ import de.tum.in.www1.artemis.util.ModelFactory;
 public class FileUploadExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
-    CourseRepository courseRepo;
+    private CourseRepository courseRepo;
 
     @Autowired
-    ExerciseRepository exerciseRepo;
+    private ExerciseRepository exerciseRepo;
 
     @Autowired
-    FileUploadExerciseRepository fileUploadExerciseRepository;
+    private FileUploadExerciseRepository fileUploadExerciseRepository;
 
     @Autowired
-    FileUploadSubmissionRepository fileUploadSubmissionRepository;
+    private FileUploadSubmissionRepository fileUploadSubmissionRepository;
 
     private List<GradingCriterion> gradingCriteria;
 

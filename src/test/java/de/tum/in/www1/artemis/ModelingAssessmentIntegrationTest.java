@@ -45,7 +45,6 @@ import de.tum.in.www1.artemis.domain.plagiarism.modeling.ModelingPlagiarismResul
 import de.tum.in.www1.artemis.domain.plagiarism.modeling.ModelingSubmissionElement;
 import de.tum.in.www1.artemis.repository.ComplaintRepository;
 import de.tum.in.www1.artemis.repository.ComplaintResponseRepository;
-import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
@@ -55,7 +54,6 @@ import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.AssessmentService;
-import de.tum.in.www1.artemis.service.ModelingSubmissionService;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.compass.CompassService;
 import de.tum.in.www1.artemis.util.FileUtils;
@@ -66,49 +64,43 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
     public static final String API_MODELING_SUBMISSIONS = "/api/modeling-submissions/";
 
     @Autowired
-    CourseRepository courseRepo;
+    private ExerciseRepository exerciseRepo;
 
     @Autowired
-    ExerciseRepository exerciseRepo;
+    private UserRepository userRepo;
 
     @Autowired
-    UserRepository userRepo;
+    private ModelingSubmissionRepository modelingSubmissionRepo;
 
     @Autowired
-    ModelingSubmissionService modelSubmissionService;
+    private ResultRepository resultRepo;
 
     @Autowired
-    ModelingSubmissionRepository modelingSubmissionRepo;
+    private ParticipationService participationService;
 
     @Autowired
-    ResultRepository resultRepo;
+    private ExampleSubmissionRepository exampleSubmissionRepository;
 
     @Autowired
-    ParticipationService participationService;
+    private CompassService compassService;
 
     @Autowired
-    ExampleSubmissionRepository exampleSubmissionRepository;
+    private AssessmentService assessmentService;
 
     @Autowired
-    CompassService compassService;
+    private ExamRepository examRepository;
 
     @Autowired
-    AssessmentService assessmentService;
+    private StudentParticipationRepository studentParticipationRepository;
 
     @Autowired
-    ExamRepository examRepository;
+    private SubmissionRepository submissionRepository;
 
     @Autowired
-    StudentParticipationRepository studentParticipationRepository;
+    private ComplaintResponseRepository complaintResponseRepository;
 
     @Autowired
-    SubmissionRepository submissionRepository;
-
-    @Autowired
-    ComplaintResponseRepository complaintResponseRepository;
-
-    @Autowired
-    ComplaintRepository complaintRepository;
+    private ComplaintRepository complaintRepository;
 
     private ModelingExercise classExercise;
 
@@ -525,6 +517,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
 
         request.get("/api/modeling-exercises/" + classExercise.getId() + "/print-statistic", HttpStatus.OK, String.class); // void == empty string
         String statistics = request.get("/api/modeling-exercises/" + classExercise.getId() + "/statistics", HttpStatus.OK, String.class);
+        assertThat(statistics).isNotNull();
         // TODO: assert that the statistics is correct
     }
 

@@ -1,8 +1,6 @@
 package de.tum.in.www1.artemis.web.rest.dto;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 

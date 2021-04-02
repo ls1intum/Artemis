@@ -14,12 +14,12 @@ import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-class UMLActivityTest {
+public class UMLActivityTest {
 
-    UMLActivity activity;
+    private UMLActivity activity;
 
     @Spy
-    UMLActivity referenceActivity;
+    private UMLActivity referenceActivity;
 
     @BeforeEach
     void setUp() {

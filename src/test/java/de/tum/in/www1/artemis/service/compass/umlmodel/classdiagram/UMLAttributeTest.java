@@ -13,18 +13,18 @@ import org.mockito.MockitoAnnotations;
 
 import de.tum.in.www1.artemis.service.compass.utils.CompassConfiguration;
 
-class UMLAttributeTest {
+public class UMLAttributeTest {
 
     private UMLAttribute attribute;
 
     @Mock
-    UMLClass parentClass;
+    private UMLClass parentClass;
 
     @Mock
-    UMLAttribute referenceAttribute;
+    private UMLAttribute referenceAttribute;
 
     @Mock
-    UMLClass referenceParentClass;
+    private UMLClass referenceParentClass;
 
     @BeforeEach
     void setUp() {

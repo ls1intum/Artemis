@@ -1,8 +1,6 @@
 package de.tum.in.www1.artemis.domain.enumeration;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.StringJoiner;
+import java.util.*;
 
 /**
  * Enumeration for supported static code analysis tools

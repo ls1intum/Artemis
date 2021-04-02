@@ -6,11 +6,11 @@ import java.nio.charset.StandardCharsets;
 
 import org.apache.commons.io.IOUtils;
 
-final class UMLCommunicationDiagrams {
+public final class UMLCommunicationDiagrams {
 
-    static final String COMMUNICATION_MODEL_1;
+    public static final String COMMUNICATION_MODEL_1;
 
-    static final String COMMUNICATION_MODEL_2;
+    public static final String COMMUNICATION_MODEL_2;
 
     static {
         try {

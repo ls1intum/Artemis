@@ -2,35 +2,25 @@ package de.tum.in.www1.artemis.config;
 
 import java.io.*;
 import java.security.Security;
-import java.security.cert.CertificateException;
-import java.security.cert.CertificateFactory;
-import java.security.cert.X509Certificate;
+import java.security.cert.*;
 import java.security.interfaces.RSAPrivateKey;
-import java.util.Collection;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
 import org.bouncycastle.asn1.pkcs.PrivateKeyInfo;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.openssl.PEMParser;
 import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Profile;
+import org.slf4j.*;
+import org.springframework.context.annotation.*;
 import org.springframework.core.annotation.Order;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.saml2.core.Saml2X509Credential;
-import org.springframework.security.saml2.provider.service.registration.InMemoryRelyingPartyRegistrationRepository;
-import org.springframework.security.saml2.provider.service.registration.RelyingPartyRegistration;
-import org.springframework.security.saml2.provider.service.registration.RelyingPartyRegistrationRepository;
-import org.springframework.security.saml2.provider.service.registration.RelyingPartyRegistrations;
+import org.springframework.security.saml2.provider.service.registration.*;
 
 /**
  * This class describes the security configuration for SAML2.
- * 
+ *
  * Since this {@link WebSecurityConfigurerAdapter} is annotated with {@link Order} and {@link SecurityConfiguration}
  * is not, this configuration is evaluated first when the SAML2 Profile is active.
  */
@@ -57,8 +47,8 @@ public class SAML2Configuration extends WebSecurityConfigurerAdapter {
 
     /**
      * Returns the RelyingPartyRegistrationRepository used by SAML2 configuration.
-     * 
-     * The relying parties are configured in the SAML2 properties. A helper method 
+     *
+     * The relying parties are configured in the SAML2 properties. A helper method
      * {@link RelyingPartyRegistrations#fromMetadataLocation} extracts the needed information from the given
      * XML metadata file. Optionally X509 Credentials can be supplied to enable encryption.
      *

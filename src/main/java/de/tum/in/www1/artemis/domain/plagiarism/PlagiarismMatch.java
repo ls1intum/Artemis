@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.domain.plagiarism;
 
-import javax.persistence.Column;
-import javax.persistence.Embeddable;
+import javax.persistence.*;
 
 import jplag.Match;
 

@@ -94,36 +94,25 @@ public class LtiServiceTest {
     @Test
     public void handleLaunchRequest_LTILaunchFromEdx() {
         launchRequest.setUser_id("student");
-
-        InternalAuthenticationServiceException exception = assertThrows(InternalAuthenticationServiceException.class, () -> {
-            ltiService.handleLaunchRequest(launchRequest, exercise);
-        });
-
+        var exception = assertThrows(InternalAuthenticationServiceException.class, () -> ltiService.handleLaunchRequest(launchRequest, exercise));
         String expectedMessage = "Invalid username sent by launch request. Please do not launch the exercise from edX studio. Use 'Preview' instead.";
-        assertThat(exception.getMessage().equals(expectedMessage));
+        assertThat(exception.getMessage()).isEqualTo(expectedMessage);
     }
 
     @Test
     public void handleLaunchRequest_InvalidContextLabel() {
         launchRequest.setContext_label("randomLabel");
-
-        InternalAuthenticationServiceException exception = assertThrows(InternalAuthenticationServiceException.class, () -> {
-            ltiService.handleLaunchRequest(launchRequest, exercise);
-        });
-
+        var exception = assertThrows(InternalAuthenticationServiceException.class, () -> ltiService.handleLaunchRequest(launchRequest, exercise));
         String expectedMessage = "Unknown context_label sent in LTI Launch Request: " + launchRequest.toString();
-        assertThat(exception.getMessage().equals(expectedMessage));
+        assertThat(exception.getMessage()).isEqualTo(expectedMessage);
     }
 
     @Test
     public void handleLaunchRequest_existingMappingForLtiUserId() {
         when(ltiUserIdRepository.findByLtiUserId(launchRequest.getUser_id())).thenReturn(Optional.of(ltiUserId));
         when(userRepository.getUserWithGroupsAndAuthorities()).thenReturn(user);
-
         onSuccessfulAuthenticationSetup(user, ltiUserId);
-
         ltiService.handleLaunchRequest(launchRequest, exercise);
-
         onSuccessfulAuthenticationAssertions(user, ltiUserId);
     }
 
@@ -165,12 +154,9 @@ public class LtiServiceTest {
         SecurityContextHolder.clearContext();
         launchRequest.setContext_label("randomLabel");
 
-        InternalAuthenticationServiceException exception = assertThrows(InternalAuthenticationServiceException.class, () -> {
-            ltiService.handleLaunchRequest(launchRequest, exercise);
-        });
-
+        var exception = assertThrows(InternalAuthenticationServiceException.class, () -> ltiService.handleLaunchRequest(launchRequest, exercise));
         String expectedMessage = "User group not activated or unknown context_label sent in LTI Launch Request: " + launchRequest.toString();
-        assertThat(exception.getMessage().equals(expectedMessage));
+        assertThat(exception.getMessage()).isEqualTo(expectedMessage);
     }
 
     @Test
@@ -186,18 +172,16 @@ public class LtiServiceTest {
 
         ltiService.handleLaunchRequest(launchRequest, exercise);
 
-        assertThat(ltiService.launchRequestForSession.containsKey(sessionId));
-        assertThat(ltiService.launchRequestForSession.containsValue(Pair.of(launchRequest, exercise)));
-        assertThat(ltiService.launchRequestForSession.get(sessionId).equals(Pair.of(launchRequest, exercise)));
+        assertThat(ltiService.launchRequestForSession).containsKey(sessionId);
+        assertThat(ltiService.launchRequestForSession).containsValue(Pair.of(launchRequest, exercise));
+        assertThat(ltiService.launchRequestForSession.get(sessionId)).isEqualTo(Pair.of(launchRequest, exercise));
     }
 
     @Test
     public void onSuccessfulLtiAuthentication() {
         ltiUserId.setLtiUserId("oldStudentId");
         onSuccessfulAuthenticationSetup(user, ltiUserId);
-
         ltiService.onSuccessfulLtiAuthentication(launchRequest, exercise);
-
         onSuccessfulAuthenticationAssertions(user, ltiUserId);
     }
 
@@ -212,10 +196,10 @@ public class LtiServiceTest {
     }
 
     private void onSuccessfulAuthenticationAssertions(User user, LtiUserId ltiUserId) {
-        assertThat(user.getGroups().contains(courseStudentGroupName));
-        assertThat("ff30145d6884eeb2c1cef50298939383".equals(ltiUserId.getLtiUserId()));
-        assertThat("some.outcome.service.url.com".equals(ltiOutcomeUrl.getUrl()));
-        assertThat("someResultSourceId".equals(ltiOutcomeUrl.getSourcedId()));
+        assertThat(user.getGroups()).contains(courseStudentGroupName);
+        assertThat("ff30145d6884eeb2c1cef50298939383").isEqualTo(ltiUserId.getLtiUserId());
+        assertThat("some.outcome.service.url.com").isEqualTo(ltiOutcomeUrl.getUrl());
+        assertThat("someResultSourceId").isEqualTo(ltiOutcomeUrl.getSourcedId());
         verify(userCreationService, times(1)).saveUser(user);
         verify(artemisAuthenticationProvider, times(1)).addUserToGroup(user, courseStudentGroupName);
         verify(ltiOutcomeUrlRepository, times(1)).save(ltiOutcomeUrl);
@@ -225,10 +209,8 @@ public class LtiServiceTest {
     public void verifyRequest_oauthSecretNotSpecified() {
         ReflectionTestUtils.setField(ltiService, "OAUTH_SECRET", Optional.empty());
         HttpServletRequest request = mock(HttpServletRequest.class);
-
         String message = ltiService.verifyRequest(request);
-
-        assertThat("verifyRequest for LTI is not supported on this Artemis instance, artemis.lti.oauth-secret was not specified in the yml configuration".equals(message));
+        assertThat("verifyRequest for LTI is not supported on this Artemis instance, artemis.lti.oauth-secret was not specified in the yml configuration").isEqualTo(message);
     }
 
     @Test
@@ -241,10 +223,8 @@ public class LtiServiceTest {
         when(request.getMethod()).thenReturn("GET");
         when(request.getHeaderNames()).thenReturn(Collections.emptyEnumeration());
         when(request.getParameterNames()).thenReturn(Collections.emptyEnumeration());
-
         String message = ltiService.verifyRequest(request);
-
-        assertThat("LTI signature verification failed with message: Failed to validate: parameter_absent; error: bad_request, launch result: null".equals(message));
+        assertThat("LTI signature verification failed with message: Failed to validate: parameter_absent; error: bad_request, launch result: null").isEqualTo(message);
     }
 
     @Test
@@ -264,12 +244,9 @@ public class LtiServiceTest {
         ltiOutcomeUrl.setSourcedId("sourceId");
         ltiOutcomeUrl.setExercise(exercise);
         ltiOutcomeUrl.setUser(user);
-
         ltiOutcomeUrlRepositorySetup(user);
         when(resultRepository.findFirstByParticipationIdOrderByCompletionDateDesc(27L)).thenReturn(Optional.of(result));
-
         ltiService.onNewResult(participation);
-
         verify(resultRepository, times(1)).findFirstByParticipationIdOrderByCompletionDateDesc(27L);
     }
 
@@ -278,11 +255,8 @@ public class LtiServiceTest {
         String sessionId = "sessionId";
         ltiService.launchRequestForSession.put(sessionId, Pair.of(launchRequest, exercise));
         onSuccessfulAuthenticationSetup(user, ltiUserId);
-
         ltiService.handleLaunchRequestForSession(sessionId);
-
         onSuccessfulAuthenticationAssertions(user, ltiUserId);
-        assertThat(ltiService.launchRequestForSession.isEmpty());
+        assertThat(ltiService.launchRequestForSession).isEmpty();
     }
-
 }

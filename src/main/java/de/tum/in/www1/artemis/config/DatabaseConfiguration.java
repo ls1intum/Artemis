@@ -1,10 +1,8 @@
 package de.tum.in.www1.artemis.config;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.slf4j.*;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
-import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
+import org.springframework.data.jpa.repository.config.*;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 
 @Configuration

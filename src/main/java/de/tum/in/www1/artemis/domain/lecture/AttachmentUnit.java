@@ -2,8 +2,7 @@ package de.tum.in.www1.artemis.domain.lecture;
 
 import javax.persistence.*;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.*;
 import de.tum.in.www1.artemis.domain.Attachment;
 
 @Entity

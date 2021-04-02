@@ -35,25 +35,25 @@ import de.tum.in.www1.artemis.util.ModelFactory;
 public class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
-    CourseRepository courseRepo;
+    private CourseRepository courseRepo;
 
     @Autowired
-    ExerciseRepository exerciseRepo;
+    private ExerciseRepository exerciseRepo;
 
     @Autowired
-    StudentParticipationRepository participationRepo;
+    private StudentParticipationRepository participationRepo;
 
     @Autowired
-    SubmissionRepository submissionRepository;
+    private SubmissionRepository submissionRepository;
 
     @Autowired
-    ResultRepository resultRepository;
+    private ResultRepository resultRepository;
 
     @Autowired
-    UserRepository userRepo;
+    private UserRepository userRepo;
 
     @Autowired
-    FeatureToggleService featureToggleService;
+    private FeatureToggleService featureToggleService;
 
     private Course course;
 
@@ -133,7 +133,7 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationBambo
     public void participateTwiceInModelingExercise_sameParticipation() throws Exception {
         var participation1 = request.post("/api/courses/" + course.getId() + "/exercises/" + modelingExercise.getId() + "/participations", null, HttpStatus.CREATED);
         var participation2 = request.post("/api/courses/" + course.getId() + "/exercises/" + modelingExercise.getId() + "/participations", null, HttpStatus.CREATED);
-        assertThat(participation1.equals(participation2));
+        assertThat(participation1).isEqualTo(participation2);
     }
 
     @Test
@@ -141,7 +141,7 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationBambo
     public void participateTwiceInTextExercise_sameParticipation() throws Exception {
         var participation1 = request.post("/api/courses/" + course.getId() + "/exercises/" + textExercise.getId() + "/participations", null, HttpStatus.CREATED);
         var participation2 = request.post("/api/courses/" + course.getId() + "/exercises/" + textExercise.getId() + "/participations", null, HttpStatus.CREATED);
-        assertThat(participation1.equals(participation2));
+        assertThat(participation1).isEqualTo(participation2);
     }
 
     @Test
@@ -188,7 +188,7 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationBambo
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void deleteParticipation() throws Exception {
         Submission submissionWithResult = database.addSubmission(modelingExercise, new ModelingSubmission(), "student1");
-        Submission submissionWithoutResult = database.addSubmission((StudentParticipation) submissionWithResult.getParticipation(), new ModelingSubmission());
+        database.addSubmission((StudentParticipation) submissionWithResult.getParticipation(), new ModelingSubmission());
         Long participationId = submissionWithResult.getParticipation().getId();
         database.addResultToSubmission(submissionWithResult, null);
 

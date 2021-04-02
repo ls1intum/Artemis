@@ -18,7 +18,7 @@ import org.mockito.Spy;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
 import de.tum.in.www1.artemis.service.compass.utils.CompassConfiguration;
 
-class UMLClassTest {
+public class UMLClassTest {
 
     private UMLClass umlClass;
 

@@ -1,12 +1,9 @@
 package de.tum.in.www1.artemis.web.rest.dto;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-
-import de.tum.in.www1.artemis.domain.AssessmentUpdate;
-import de.tum.in.www1.artemis.domain.TextBlock;
+import de.tum.in.www1.artemis.domain.*;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class TextAssessmentUpdateDTO extends AssessmentUpdate {

@@ -23,7 +23,7 @@ import de.tum.in.www1.artemis.util.ModelFactory;
 public class ExerciseGroupIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
-    TextExerciseRepository textExerciseRepository;
+    private TextExerciseRepository textExerciseRepository;
 
     private Course course1;
 

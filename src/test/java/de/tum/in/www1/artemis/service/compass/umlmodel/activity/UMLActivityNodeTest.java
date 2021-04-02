@@ -13,12 +13,12 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-class UMLActivityNodeTest {
+public class UMLActivityNodeTest {
 
     private UMLActivityNode activityNode;
 
     @Mock
-    UMLActivityNode referenceNode;
+    private UMLActivityNode referenceNode;
 
     @BeforeEach
     void setUp() {

@@ -142,7 +142,7 @@ public class ExerciseService {
         if (authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
             exercisesUserIsAllowedToSee = exercises;
         }
-        else if (authCheckService.isStudentInCourse(course, user)) {
+        else if (authCheckService.isOnlyStudentInCourse(course, user)) {
             if (course.isOnlineCourse()) {
                 for (Exercise exercise : exercises) {
                     if (!exercise.isVisibleToStudents()) {
@@ -241,7 +241,7 @@ public class ExerciseService {
             // tutors/instructors/admins can see all exercises of the course
             exercises = exerciseRepository.findByCourseIdWithCategories(course.getId());
         }
-        else if (authCheckService.isStudentInCourse(course, user)) {
+        else if (authCheckService.isOnlyStudentInCourse(course, user)) {
 
             if (course.isOnlineCourse()) {
                 // students in online courses can only see exercises where the lti outcome url exists, otherwise the result cannot be reported later on

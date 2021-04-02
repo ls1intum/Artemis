@@ -2,8 +2,7 @@ package de.tum.in.www1.artemis.web.rest.errors;
 
 import java.io.Serial;
 
-import org.zalando.problem.AbstractThrowableProblem;
-import org.zalando.problem.Status;
+import org.zalando.problem.*;
 
 /**
  * Simple exception with a message, that returns an Internal Server Error code.

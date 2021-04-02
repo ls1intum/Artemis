@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.web.rest.errors;
 
-import java.io.Serial;
-import java.io.Serializable;
+import java.io.*;
 
 public class FieldErrorVM implements Serializable {
 

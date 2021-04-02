@@ -130,12 +130,8 @@ public class ExamSubmissionServiceTest extends AbstractSpringIntegrationBambooBi
         examRepository.save(exam);
         studentExam.setUser(null);
         studentExamRepository.save(studentExam);
-        assertThrows(EntityNotFoundException.class, () -> {
-            examSubmissionService.checkSubmissionAllowance(exercise, user);
-        });
-        assertThrows(EntityNotFoundException.class, () -> {
-            examSubmissionService.isAllowedToSubmitDuringExam(exercise, user);
-        });
+        assertThrows(EntityNotFoundException.class, () -> examSubmissionService.checkSubmissionAllowance(exercise, user));
+        assertThrows(EntityNotFoundException.class, () -> examSubmissionService.isAllowedToSubmitDuringExam(exercise, user));
         // Should fail if the user's student exam does not have the exercise
         studentExam.setUser(user);
         studentExam.removeExercise(exercise);

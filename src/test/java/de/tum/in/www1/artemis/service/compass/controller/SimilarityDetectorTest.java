@@ -20,7 +20,7 @@ import de.tum.in.www1.artemis.service.compass.umlmodel.activity.UMLControlFlow;
 import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.*;
 
 @ExtendWith(MockitoExtension.class)
-class SimilarityDetectorTest {
+public class SimilarityDetectorTest {
 
     @Mock
     private UMLClassDiagram classDiagram;

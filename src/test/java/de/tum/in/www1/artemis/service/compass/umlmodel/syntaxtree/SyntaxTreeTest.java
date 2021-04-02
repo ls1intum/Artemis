@@ -1,9 +1,7 @@
 package de.tum.in.www1.artemis.service.compass.umlmodel.syntaxtree;
 
 import static com.google.gson.JsonParser.parseString;
-import static de.tum.in.www1.artemis.service.compass.umlmodel.syntaxtree.SyntaxTrees.SYNTAX_TREE_MODEL_1A;
-import static de.tum.in.www1.artemis.service.compass.umlmodel.syntaxtree.SyntaxTrees.SYNTAX_TREE_MODEL_1B;
-import static de.tum.in.www1.artemis.service.compass.umlmodel.syntaxtree.SyntaxTrees.SYNTAX_TREE_MODEL_2;
+import static de.tum.in.www1.artemis.service.compass.umlmodel.syntaxtree.SyntaxTrees.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.InstanceOfAssertFactories.type;
 

@@ -2,23 +2,18 @@ package de.tum.in.www1.artemis.web.rest;
 
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 
-import java.net.URI;
-import java.net.URISyntaxException;
+import java.net.*;
 import java.util.Set;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.slf4j.*;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.repository.ExerciseHintRepository;
-import de.tum.in.www1.artemis.repository.ExerciseRepository;
-import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import io.github.jhipster.web.util.HeaderUtil;
 
 /**
@@ -157,12 +152,11 @@ public class ExerciseHintResource {
     public ResponseEntity<Set<ExerciseHint>> getExerciseHintsForExercise(@PathVariable Long exerciseId) {
         log.debug("REST request to get ExerciseHint : {}", exerciseId);
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
-        User user = userRepository.getUserWithGroupsAndAuthorities();
 
         Course course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
-        if (!authCheckService.isStudentInCourse(course, user) && !authCheckService.isAtLeastTeachingAssistantInCourse(course, user))
+        if (!authCheckService.isOnlyStudentInCourse(course, null)) {
             return forbidden();
-
+        }
         Set<ExerciseHint> exerciseHints = exerciseHintRepository.findByExerciseId(exerciseId);
         return ResponseEntity.ok(exerciseHints);
     }
@@ -178,9 +172,7 @@ public class ExerciseHintResource {
     public ResponseEntity<Void> deleteExerciseHint(@PathVariable Long exerciseHintId) {
         log.debug("REST request to delete ExerciseHint : {}", exerciseHintId);
         var exerciseHint = exerciseHintRepository.findByIdElseThrow(exerciseHintId);
-        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exerciseHint.getExercise())) {
-            return forbidden();
-        }
+        authCheckService.checkIsAtLeastTeachingAssistantForExerciseElseThrow(exerciseHint.getExercise(), null);
         exerciseHintRepository.deleteById(exerciseHintId);
         return ResponseEntity.noContent().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, exerciseHintId.toString())).build();
     }

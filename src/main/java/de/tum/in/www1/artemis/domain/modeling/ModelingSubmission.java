@@ -1,9 +1,6 @@
 package de.tum.in.www1.artemis.domain.modeling;
 
-import javax.persistence.Column;
-import javax.persistence.DiscriminatorValue;
-import javax.persistence.Entity;
-import javax.persistence.Lob;
+import javax.persistence.*;
 
 import org.springframework.util.StringUtils;
 
