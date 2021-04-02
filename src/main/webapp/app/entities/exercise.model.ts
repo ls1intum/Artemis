@@ -144,10 +144,7 @@ export abstract class Exercise implements BaseEntity {
     }
 }
 
-export function getIcon(exerciseType?: ExerciseType): IconProp | undefined {
-    if (!exerciseType) {
-        return undefined;
-    }
+export function getIcon(exerciseType: ExerciseType): IconProp {
     const icons = {
         [ExerciseType.PROGRAMMING]: 'keyboard',
         [ExerciseType.MODELING]: 'project-diagram',
