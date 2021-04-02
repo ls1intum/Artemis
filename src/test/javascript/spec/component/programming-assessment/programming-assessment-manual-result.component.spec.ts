@@ -125,9 +125,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
     participation.repositoryUrl = 'http://student1@bitbucket.ase.in.tum.de/scm/TEST/test-repo-student1.git';
     result.submission!.participation = participation;
     const unassessedSubmission = new ProgrammingSubmission();
-    const participation2 = new ProgrammingExerciseStudentParticipation();
-    participation2.id = 12;
-    unassessedSubmission.participation = participation2;
+    unassessedSubmission.id = 12;
 
     const afterComplaintResult = new Result();
     afterComplaintResult.score = 100;
@@ -375,7 +373,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         tick(100);
         comp.nextSubmission();
 
-        const url = ['/course-management', courseId.toString(), 'programming-exercises', exercise.id!.toString(), 'code-editor', participation2.id!.toString(), 'assessment'];
+        const url = ['/course-management', courseId.toString(), 'programming-exercises', exercise.id!.toString(), 'submissions', unassessedSubmission.id!.toString(), 'assessment'];
         const queryParams = { queryParams: { 'correction-round': 0 } };
         expect(getProgrammingSubmissionForExerciseWithoutAssessmentStub).to.be.calledOnce;
         expect(routerStub).to.have.been.calledWith(url, queryParams);

@@ -37,9 +37,6 @@ export const getLinkToSubmissionAssessment = (
     exerciseGroupId: number,
     resultId?: number,
 ): string[] => {
-    // Special case: If we're dealing with programming exercises use 'code-editor' instead of 'submissions'
-    const submissionsURL = exerciseType === ExerciseType.PROGRAMMING ? 'code-editor' : 'submissions';
-
     if (examId > 0) {
         const route = [
             '/course-management',
@@ -50,7 +47,7 @@ export const getLinkToSubmissionAssessment = (
             exerciseGroupId.toString(),
             exerciseType + '-exercises',
             exerciseId.toString(),
-            submissionsURL,
+            'submissions',
             submissionId.toString(),
             'assessment',
         ];
@@ -60,7 +57,7 @@ export const getLinkToSubmissionAssessment = (
         }
         return route;
     } else {
-        return ['/course-management', courseId.toString(), exerciseType + '-exercises', exerciseId.toString(), submissionsURL, submissionId.toString(), 'assessment'];
+        return ['/course-management', courseId.toString(), exerciseType + '-exercises', exerciseId.toString(), 'submissions', submissionId.toString(), 'assessment'];
     }
 };
 

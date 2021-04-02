@@ -76,27 +76,11 @@ export const routes: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: ':courseId/programming-exercises/:exerciseId/code-editor/new/assessment',
+        path: ':courseId/programming-exercises/:exerciseId/submissions/:submissionId/assessment',
         component: CodeEditorTutorAssessmentContainerComponent,
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.TA],
             pageTitle: 'artemisApp.programmingExercise.home.title',
-        },
-        resolve: {
-            studentParticipationId: NewStudentParticipationResolver,
-        },
-        runGuardsAndResolvers: 'always',
-        canActivate: [UserRouteAccessService],
-    },
-    {
-        path: ':courseId/programming-exercises/:exerciseId/code-editor/:participationId/assessment',
-        component: CodeEditorTutorAssessmentContainerComponent,
-        data: {
-            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.TA],
-            pageTitle: 'artemisApp.programmingExercise.home.title',
-        },
-        resolve: {
-            studentParticipationId: StudentParticipationResolver,
         },
         canActivate: [UserRouteAccessService],
     },

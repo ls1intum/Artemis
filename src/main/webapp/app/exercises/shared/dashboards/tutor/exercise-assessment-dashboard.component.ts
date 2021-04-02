@@ -585,7 +585,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
         }
 
         this.openingAssessmentEditorForNewSubmission = true;
-        const submissionId: number | 'new' = submission === 'new' ? 'new' : this.exercise.type === ExerciseType.PROGRAMMING ? submission.participation!.id! : submission.id!;
+        const submissionId: number | 'new' = submission === 'new' ? 'new' : submission.id!;
         const url = getLinkToSubmissionAssessment(this.exercise.type!, this.courseId, this.exerciseId, submissionId, this.examId, this.exerciseGroupId);
         if (this.isTestRun) {
             await this.router.navigate(url, { queryParams: { testRun: this.isTestRun, 'correction-round': correctionRound } });
@@ -601,8 +601,6 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
      */
     viewComplaint(complaint: Complaint) {
         const submission: Submission = complaint.result?.submission!;
-        // For programming exercises we need the participationId
-        submission.participation = complaint.result?.participation;
         // numberOfAssessmentsOfCorrectionRounds size is the number of correction rounds
         this.openAssessmentEditor(submission, this.numberOfAssessmentsOfCorrectionRounds.length - 1);
     }

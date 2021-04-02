@@ -260,7 +260,7 @@
                         </a>
                         <a
                             *ngIf="exercise.course && newManualResultAllowed"
-                            [routerLink]="['/course-management', exercise.course?.id, 'programming-exercises', exercise.id, 'code-editor', value.participation.id, 'assessment']"
+                            [routerLink]="['/course-management', exercise.course?.id, 'programming-exercises', exercise.id, 'submissions', value.submission.id, 'assessment']"
                             class="btn btn-primary btn-sm mr-1"
                         >
                             <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>
@@ -277,8 +277,8 @@
                                 exercise.exerciseGroup!.id,
                                 'programming-exercises',
                                 exercise.id,
-                                'code-editor',
-                                value.participation.id,
+                                'submissions',
+                                value.submission.id,
                                 'assessment'
                             ]"
                             class="btn btn-primary btn-sm mr-1"

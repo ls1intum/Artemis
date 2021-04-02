@@ -209,29 +209,29 @@ describe('FileUploadAssessmentDashboardComponent', () => {
 
     describe('shouldGetAssessmentLink', () => {
         it('should get assessment link for exam exercise', () => {
-            const participationId = 8;
+            const submissionId = 8;
             component.exercise = programmingExercise1;
             component.exerciseId = programmingExercise1.id!;
             component.courseId = programmingExercise1.course!.id!;
-            expect(component.getAssessmentLink(participationId)).toEqual([
+            expect(component.getAssessmentLink(submissionId)).toEqual([
                 '/course-management',
                 component.exercise.course!.id!.toString(),
                 'programming-exercises',
                 component.exercise.id!.toString(),
-                'code-editor',
-                participationId.toString(),
+                'submissions',
+                submissionId.toString(),
                 'assessment',
             ]);
         });
 
         it('should get assessment link for normal exercise', () => {
-            const participationId = 9;
+            const submissionId = 9;
             component.exercise = programmingExercise2;
             component.exerciseId = programmingExercise2.id!;
             component.courseId = programmingExercise2.exerciseGroup!.exam!.course!.id!;
             component.examId = programmingExercise2.exerciseGroup!.exam!.id!;
             component.exerciseGroupId = programmingExercise2.exerciseGroup!.id!;
-            expect(component.getAssessmentLink(participationId)).toEqual([
+            expect(component.getAssessmentLink(submissionId)).toEqual([
                 '/course-management',
                 component.exercise.exerciseGroup!.exam!.course!.id!.toString(),
                 'exams',
@@ -240,8 +240,8 @@ describe('FileUploadAssessmentDashboardComponent', () => {
                 component.exercise.exerciseGroup!.id!.toString(),
                 'programming-exercises',
                 component.exercise.id!.toString(),
-                'code-editor',
-                participationId.toString(),
+                'submissions',
+                submissionId.toString(),
                 'assessment',
             ]);
         });

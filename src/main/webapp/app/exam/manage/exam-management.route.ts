@@ -45,7 +45,6 @@ import { ModelingAssessmentDashboardComponent } from 'app/exercises/modeling/ass
 import { ModelingAssessmentEditorComponent } from 'app/exercises/modeling/assess/modeling-assessment-editor/modeling-assessment-editor.component';
 import { ProgrammingAssessmentDashboardComponent } from 'app/exercises/programming/assess/programming-assessment-dashboard/programming-assessment-dashboard.component';
 import { CodeEditorTutorAssessmentContainerComponent } from 'app/exercises/programming/assess/code-editor-tutor-assessment-container.component';
-import { NewStudentParticipationResolver, StudentParticipationResolver } from 'app/exercises/programming/assess/programming-assessment.route';
 
 @Injectable({ providedIn: 'root' })
 export class ExamResolve implements Resolve<Exam> {
@@ -596,27 +595,11 @@ export const examManagementRoute: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: ':examId/exercise-groups/:exerciseGroupId/programming-exercises/:exerciseId/code-editor/new/assessment',
+        path: ':examId/exercise-groups/:exerciseGroupId/programming-exercises/:exerciseId/submissions/:submissionId/assessment',
         component: CodeEditorTutorAssessmentContainerComponent,
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.TA],
             pageTitle: 'artemisApp.programmingExercise.home.title',
-        },
-        resolve: {
-            studentParticipationId: NewStudentParticipationResolver,
-        },
-        runGuardsAndResolvers: 'always',
-        canActivate: [UserRouteAccessService],
-    },
-    {
-        path: ':examId/exercise-groups/:exerciseGroupId/programming-exercises/:exerciseId/code-editor/:participationId/assessment',
-        component: CodeEditorTutorAssessmentContainerComponent,
-        data: {
-            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.TA],
-            pageTitle: 'artemisApp.programmingExercise.home.title',
-        },
-        resolve: {
-            studentParticipationId: StudentParticipationResolver,
         },
         canActivate: [UserRouteAccessService],
     },

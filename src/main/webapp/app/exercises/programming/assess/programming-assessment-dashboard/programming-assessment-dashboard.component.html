@@ -107,7 +107,7 @@
                                     <a
                                         *ngIf="submission.results.length == 0"
                                         [class.disabled]="busy"
-                                        [routerLink]="getAssessmentLink(submission.participation!.id)"
+                                        [routerLink]="getAssessmentLink(submission.id)"
                                         class="btn btn-success btn-sm mb-1"
                                     >
                                         <fa-icon [fixedWidth]="true" [icon]="'folder-open'"></fa-icon>&nbsp;{{
@@ -118,7 +118,7 @@
                                     <a
                                         *ngIf="submission.results.length == 1 && submission.latestResult.completionDate"
                                         [class.disabled]="busy"
-                                        [routerLink]="getAssessmentLink(submission.participation!.id)"
+                                        [routerLink]="getAssessmentLink(submission.id)"
                                         class="btn btn-primary btn-sm mb-1"
                                     >
                                         <fa-icon [fixedWidth]="true" [icon]="'folder-open'"></fa-icon>&nbsp;{{ 'artemisApp.assessment.dashboard.actions.open' | artemisTranslate }}
@@ -128,7 +128,7 @@
                                         <a
                                             *ngIf="submission.results.length == 1 && !submission.latestResult.completionDate"
                                             [class.disabled]="busy"
-                                            [routerLink]="getAssessmentLink(submission.participation!.id)"
+                                            [routerLink]="getAssessmentLink(submission.id)"
                                             class="btn btn-warning btn-sm mb-1"
                                         >
                                             <fa-icon [fixedWidth]="true" [icon]="'folder-open'"></fa-icon>&nbsp;{{
@@ -160,7 +160,7 @@
                                             *ngIf="submission.results[correctionRound].completionDate"
                                             [class.disabled]="busy"
                                             [queryParams]="{ 'correction-round': correctionRound }"
-                                            [routerLink]="getAssessmentLink(submission.participation!.id)"
+                                            [routerLink]="getAssessmentLink(submission.id)"
                                             class="btn btn-primary btn-sm mb-1"
                                         >
                                             <fa-icon [fixedWidth]="true" [icon]="'folder-open'"></fa-icon>&nbsp;
@@ -173,7 +173,7 @@
                                             <a
                                                 [class.disabled]="busy"
                                                 [queryParams]="{ 'correction-round': correctionRound }"
-                                                [routerLink]="getAssessmentLink(submission.participation!.id)"
+                                                [routerLink]="getAssessmentLink(submission.id)"
                                                 class="btn btn-warning btn-sm mb-1"
                                             >
                                                 <fa-icon [fixedWidth]="true" [icon]="'edit'"></fa-icon>&nbsp;
@@ -208,7 +208,7 @@
                                         "
                                         [class.disabled]="busy"
                                         [queryParams]="{ 'correction-round': submission.results ? submission.results.length : 0 }"
-                                        [routerLink]="getAssessmentLink(submission.participation!.id)"
+                                        [routerLink]="getAssessmentLink(submission.id)"
                                         class="btn btn-success btn-sm mb-1"
                                     >
                                         <fa-icon [fixedWidth]="true" [icon]="'folder-open'"></fa-icon>

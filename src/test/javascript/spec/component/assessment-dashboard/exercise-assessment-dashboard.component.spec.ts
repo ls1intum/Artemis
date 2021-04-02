@@ -475,16 +475,15 @@ describe('ExerciseAssessmentDashboardComponent', () => {
             comp.exercise.type = ExerciseType.PROGRAMMING;
             comp.courseId = 4;
             comp.exerciseId = exercise.id!;
-            const participationId = 3;
-            const submission = { id: 8, participation: { id: participationId } };
+            const submission = { id: 8 };
 
             const expectedUrl = [
                 '/course-management',
                 comp.courseId.toString(),
                 'programming-exercises',
                 exercise.id!.toString(),
-                'code-editor',
-                participationId.toString(),
+                'submissions',
+                submission.id.toString(),
                 'assessment',
             ];
             comp.openAssessmentEditor(submission);
