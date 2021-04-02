@@ -15,7 +15,9 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.maven.plugin.surefire.log.api.PrintStreamLogger;
-import org.apache.maven.plugins.surefire.report.*;
+import org.apache.maven.plugins.surefire.report.ReportTestCase;
+import org.apache.maven.plugins.surefire.report.ReportTestSuite;
+import org.apache.maven.plugins.surefire.report.SurefireReportParser;
 import org.apache.maven.reporting.MavenReportException;
 import org.apache.maven.shared.invoker.*;
 import org.apache.maven.shared.utils.Os;
@@ -33,7 +35,9 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.service.programming.ProgrammingLanguageFeatureService;
-import de.tum.in.www1.artemis.util.*;
+import de.tum.in.www1.artemis.util.LocalRepository;
+import de.tum.in.www1.artemis.util.ModelFactory;
+import de.tum.in.www1.artemis.util.ProgrammingExerciseTestService;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {

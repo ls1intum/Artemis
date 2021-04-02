@@ -10,7 +10,9 @@ import java.util.stream.Collectors;
 
 import org.assertj.core.data.Offset;
 import org.eclipse.jgit.lib.ObjectId;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentMatchers;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;

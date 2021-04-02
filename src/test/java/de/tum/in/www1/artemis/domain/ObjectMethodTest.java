@@ -16,7 +16,9 @@ import org.junit.jupiter.api.TestFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import de.tum.in.www1.artemis.util.classpath.*;
+import de.tum.in.www1.artemis.util.classpath.ClassNode;
+import de.tum.in.www1.artemis.util.classpath.ClassPathNode;
+import de.tum.in.www1.artemis.util.classpath.ClassPathUtil;
 import io.github.classgraph.ClassInfo;
 
 /**
