@@ -1,14 +1,21 @@
 <div class="course-exercise-row row align-items-center mb-2 mt-2" (click)="showDetails($event)" [class.guided-tour]="hasGuidedTour">
     <div class="col-auto d-none d-sm-block">
         <div class="exercise-row-icon">
-            <fa-icon [icon]="getIcon(exercise.type)" size="2x" placement="right" [ngbTooltip]="getIconTooltip(exercise.type) | artemisTranslate" container="body"></fa-icon>
+            <fa-icon
+                *ngIf="exercise.type"
+                [icon]="getIcon(exercise.type)"
+                size="2x"
+                placement="right"
+                [ngbTooltip]="getIconTooltip(exercise.type) | artemisTranslate"
+                container="body"
+            ></fa-icon>
         </div>
     </div>
     <div class="col">
         <div class="row">
             <div class="col-auto d-sm-none">
                 <h4>
-                    <fa-icon [icon]="getIcon(exercise.type)"></fa-icon>
+                    <fa-icon *ngIf="exercise.type" [icon]="getIcon(exercise.type)"></fa-icon>
                 </h4>
             </div>
             <div class="col-sm col">
