@@ -2068,14 +2068,10 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void testGenerateStudentExamsTemplateCombine() throws Exception {
         Exam examWithProgramming = database.addExerciseGroupsAndExercisesToExam(exam1, true);
-
         doNothing().when(gitService).combineAllCommitsOfRepositoryIntoOne(any());
-
         // invoke generate student exams
-        List<StudentExam> studentExams = request.postListWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + examWithProgramming.getId() + "/generate-student-exams",
-                Optional.empty(), StudentExam.class, HttpStatus.OK);
-        assertThat(studentExams).isNotEmpty();
-
+        request.postListWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + examWithProgramming.getId() + "/generate-student-exams", Optional.empty(),
+                StudentExam.class, HttpStatus.OK);
         verify(gitService, times(1)).combineAllCommitsOfRepositoryIntoOne(any());
     }
 

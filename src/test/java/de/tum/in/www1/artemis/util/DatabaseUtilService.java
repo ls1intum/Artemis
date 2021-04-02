@@ -2305,6 +2305,7 @@ public class DatabaseUtilService {
         Result result = new Result();
         result.setAssessor(getUserByLogin(assessorLogin));
         result.setScore(100D);
+        result.setResultString(exercise.getMaxPoints(), exercise.getMaxPoints());
         if (exercise.getReleaseDate() != null) {
             result.setCompletionDate(exercise.getReleaseDate());
         }

@@ -51,7 +51,7 @@ public class AuthorizationCheckService {
      * @param exercise belongs to a course that will be checked for permission rights
      * @return true if the currently logged in user is at least a teaching assistant (also if the user is instructor or admin), false otherwise
      */
-    public boolean isAtLeastTeachingAssistantForExercise(Exercise exercise) {
+    public boolean isAtLeastTeachingAssistantForExercise(@NotNull Exercise exercise) {
         return isAtLeastTeachingAssistantInCourse(exercise.getCourseViaExerciseGroupOrCourseMember(), null);
     }
 
@@ -70,14 +70,14 @@ public class AuthorizationCheckService {
     }
 
     /**
-     * checks if the passed user is at least a teaching assistant in the course of the given exercise
+     * Checks if the passed user is at least a teaching assistant in the course of the given exercise.
      * The course is identified from {@link Exercise#getCourseViaExerciseGroupOrCourseMember()}
      *
      * @param exercise the exercise that needs to be checked
      * @param user the user whose permissions should be checked
      * @return true if the passed user is at least a teaching assistant (also if the user is instructor or admin), false otherwise
      */
-    public boolean isAtLeastTeachingAssistantForExercise(Exercise exercise, User user) {
+    public boolean isAtLeastTeachingAssistantForExercise(@NotNull Exercise exercise, @Nullable User user) {
         if (user == null || user.getGroups() == null) {
             // only retrieve the user and the groups if the user is null or the groups are missing (to save performance)
             user = userRepository.getUserWithGroupsAndAuthorities();
@@ -91,8 +91,22 @@ public class AuthorizationCheckService {
      * @param exercise belongs to a course that will be checked for permission rights
      * @return true if the currently logged in user is at least a student (also if the user is teaching assistant, instructor or admin), false otherwise
      */
-    public boolean isAtLeastStudentForExercise(Exercise exercise) {
+    public boolean isAtLeastStudentForExercise(@NotNull Exercise exercise) {
         return isAtLeastStudentForExercise(exercise, null);
+    }
+
+    /**
+     * Checks if the passed user is at least a student in the course of the given exercise.
+     * The course is identified from {@link Exercise#getCourseViaExerciseGroupOrCourseMember()}
+     * Throws an AccessForbiddenException if the user has no access which returns a 403
+     *
+     * @param exercise the exercise that needs to be checked
+     * @param user the user whose permissions should be checked
+     */
+    public void checkIsAtLeastStudentForExerciseElseThrow(@NotNull Exercise exercise, @Nullable User user) {
+        if (!isAtLeastStudentForExercise(exercise, user)) {
+            throw new AccessForbiddenException("Exercise", exercise.getId());
+        }
     }
 
     /**
@@ -102,7 +116,7 @@ public class AuthorizationCheckService {
      * @param user the user whose permissions should be checked
      * @return true if the currently logged in user is at least a student (also if the user is teaching assistant, instructor or admin), false otherwise
      */
-    public boolean isAtLeastStudentForExercise(Exercise exercise, User user) {
+    public boolean isAtLeastStudentForExercise(@NotNull Exercise exercise, @Nullable User user) {
         if (user == null || user.getGroups() == null) {
             // only retrieve the user and the groups if the user is null or the groups are missing (to save performance)
             user = userRepository.getUserWithGroupsAndAuthorities();

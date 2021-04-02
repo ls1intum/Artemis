@@ -127,9 +127,7 @@ public class LtiServiceTest {
                 .thenReturn(user);
 
         onSuccessfulAuthenticationSetup(user, ltiUserId);
-
         ltiService.handleLaunchRequest(launchRequest, exercise);
-
         onSuccessfulAuthenticationAssertions(user, ltiUserId);
     }
 
@@ -145,17 +143,14 @@ public class LtiServiceTest {
                 null, "en")).thenReturn(user);
 
         onSuccessfulAuthenticationSetup(user, ltiUserId);
-
         ltiService.handleLaunchRequest(launchRequest, exercise);
-
         onSuccessfulAuthenticationAssertions(user, ltiUserId);
         verify(userCreationService).activateUser(user);
 
         SecurityContextHolder.clearContext();
         launchRequest.setContext_label("randomLabel");
-
         var exception = assertThrows(InternalAuthenticationServiceException.class, () -> ltiService.handleLaunchRequest(launchRequest, exercise));
-        String expectedMessage = "User group not activated or unknown context_label sent in LTI Launch Request: " + launchRequest.toString();
+        String expectedMessage = "Unknown context_label sent in LTI Launch Request: " + launchRequest.toString();
         assertThat(exception.getMessage()).isEqualTo(expectedMessage);
     }
 
@@ -169,7 +164,6 @@ public class LtiServiceTest {
         when(response.getHeaders("Set-Cookie")).thenReturn(headers);
         when(response.getHeader("Set-Cookie")).thenReturn(headers.get(0));
         String sessionId = "(123)";
-
         ltiService.handleLaunchRequest(launchRequest, exercise);
 
         assertThat(ltiService.launchRequestForSession).containsKey(sessionId);

@@ -432,7 +432,7 @@ public class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrati
         fileUploadSubmission = database.saveFileUploadSubmissionWithResultAndAssessor(assessedFileUploadExercise, fileUploadSubmission, "student1", "tutor1");
         Result result = request.get("/api/file-upload-submissions/" + fileUploadSubmission.getId() + "/result", HttpStatus.OK, Result.class);
         assertThat(result.getResultString()).isNotNull();
-        // TODO: add assertions
+        assertThat(result.getScore()).isEqualTo(100D);
     }
 
     @Test
@@ -441,9 +441,7 @@ public class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrati
         FileUploadExercise assessedFileUploadExercise = database.findFileUploadExerciseWithTitle(course.getExercises(), "assessed");
         FileUploadSubmission fileUploadSubmission = ModelFactory.generateFileUploadSubmission(true);
         fileUploadSubmission = database.saveFileUploadSubmissionWithResultAndAssessor(assessedFileUploadExercise, fileUploadSubmission, "student1", "tutor1");
-        Result result = request.get("/api/file-upload-submissions/" + fileUploadSubmission.getId() + "/result", HttpStatus.FORBIDDEN, Result.class);
-        assertThat(result.getResultString()).isNotNull();
-        // TODO: add assertions
+        request.get("/api/file-upload-submissions/" + fileUploadSubmission.getId() + "/result", HttpStatus.FORBIDDEN, Result.class);
     }
 
     @Test

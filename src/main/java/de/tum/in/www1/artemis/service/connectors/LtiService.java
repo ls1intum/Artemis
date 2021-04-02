@@ -383,10 +383,11 @@ public class LtiService {
             LtiVerificationResult ltiResult = ltiVerifier.verify(request, this.OAUTH_SECRET.get());
             if (!ltiResult.getSuccess()) {
                 String requestString = httpServletRequestToString(request);
-                log.error("LTI signature verification failed with message: " + ltiResult.getMessage() + "; error: " + ltiResult.getError() + ", launch result: "
-                        + ltiResult.getLtiLaunchResult());
+                final var message = "LTI signature verification failed with message: " + ltiResult.getMessage() + "; error: " + ltiResult.getError() + ", launch result: "
+                        + ltiResult.getLtiLaunchResult();
+                log.error(message);
                 log.error("Request: " + requestString);
-                return "Lti signature verification failed with message: " + ltiResult.getMessage() + "; error: " + ltiResult.getError();
+                return message;
             }
         }
         catch (LtiVerificationException e) {

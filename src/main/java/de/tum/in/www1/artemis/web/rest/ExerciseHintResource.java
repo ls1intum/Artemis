@@ -36,8 +36,6 @@ public class ExerciseHintResource {
 
     private final AuthorizationCheckService authCheckService;
 
-    private final UserRepository userRepository;
-
     private final ExerciseRepository exerciseRepository;
 
     public ExerciseHintResource(ExerciseHintRepository exerciseHintRepository, AuthorizationCheckService authCheckService,
@@ -45,7 +43,6 @@ public class ExerciseHintResource {
         this.exerciseHintRepository = exerciseHintRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.authCheckService = authCheckService;
-        this.userRepository = userRepository;
         this.exerciseRepository = exerciseRepository;
     }
 
@@ -70,10 +67,7 @@ public class ExerciseHintResource {
         if (exercise.isExamExercise()) {
             return forbidden();
         }
-        Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
-        if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, null)) {
-            return forbidden();
-        }
+        authCheckService.checkIsAtLeastTeachingAssistantForExerciseElseThrow(exercise, null);
         ExerciseHint result = exerciseHintRepository.save(exerciseHint);
         return ResponseEntity.created(new URI("/api/exercise-hints/" + result.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
@@ -152,11 +146,7 @@ public class ExerciseHintResource {
     public ResponseEntity<Set<ExerciseHint>> getExerciseHintsForExercise(@PathVariable Long exerciseId) {
         log.debug("REST request to get ExerciseHint : {}", exerciseId);
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
-
-        Course course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
-        if (!authCheckService.isOnlyStudentInCourse(course, null)) {
-            return forbidden();
-        }
+        authCheckService.checkIsAtLeastStudentForExerciseElseThrow(programmingExercise, null);
         Set<ExerciseHint> exerciseHints = exerciseHintRepository.findByExerciseId(exerciseId);
         return ResponseEntity.ok(exerciseHints);
     }
