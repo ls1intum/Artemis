@@ -1,7 +1,9 @@
 package de.tum.in.www1.artemis.web.rest.errors;
 
 import java.io.Serial;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.springframework.data.util.Pair;

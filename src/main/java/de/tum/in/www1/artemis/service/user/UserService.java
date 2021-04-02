@@ -1,14 +1,10 @@
 package de.tum.in.www1.artemis.service.user;
 
 import static de.tum.in.www1.artemis.domain.Authority.ADMIN_AUTHORITY;
-import static de.tum.in.www1.artemis.security.AuthoritiesConstants.ADMIN;
-import static de.tum.in.www1.artemis.security.AuthoritiesConstants.USER;
+import static de.tum.in.www1.artemis.security.AuthoritiesConstants.*;
 
 import java.time.Instant;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -26,10 +22,7 @@ import de.tum.in.www1.artemis.domain.GuidedTourSetting;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
 import de.tum.in.www1.artemis.exception.UsernameAlreadyUsedException;
-import de.tum.in.www1.artemis.repository.AuthorityRepository;
-import de.tum.in.www1.artemis.repository.GuidedTourSettingsRepository;
-import de.tum.in.www1.artemis.repository.StudentScoreRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.connectors.CIUserManagementService;

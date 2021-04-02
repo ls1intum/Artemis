@@ -3,8 +3,9 @@ package de.tum.in.www1.artemis.web.rest;
 import static de.tum.in.www1.artemis.config.Constants.FILE_ENDING_PATTERN;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 
-import java.io.*;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;

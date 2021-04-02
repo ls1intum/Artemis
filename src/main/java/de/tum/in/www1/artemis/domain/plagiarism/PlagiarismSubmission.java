@@ -1,6 +1,8 @@
 package de.tum.in.www1.artemis.domain.plagiarism;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import javax.persistence.*;

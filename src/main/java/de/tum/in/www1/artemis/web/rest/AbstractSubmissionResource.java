@@ -6,9 +6,13 @@ import java.util.List;
 
 import org.springframework.http.ResponseEntity;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.Submission;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.ResultService;
+import de.tum.in.www1.artemis.service.SubmissionService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 
 /**

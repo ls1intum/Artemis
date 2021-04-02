@@ -1,6 +1,8 @@
 package de.tum.in.www1.artemis.config.websocket;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.health.Health;

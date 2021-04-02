@@ -1,16 +1,14 @@
 package de.tum.in.www1.artemis.service.plagiarism;
 
-import static java.util.stream.Collectors.toList;
-import static java.util.stream.Collectors.toUnmodifiableList;
+import static java.util.stream.Collectors.*;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 
-import jplag.ExitException;
-import jplag.JPlag;
-import jplag.JPlagOptions;
-import jplag.JPlagResult;
+import jplag.*;
 import jplag.options.LanguageOption;
 
 import org.slf4j.Logger;

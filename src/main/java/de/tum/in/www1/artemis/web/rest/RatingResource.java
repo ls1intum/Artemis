@@ -18,7 +18,9 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.RatingService;
+import de.tum.in.www1.artemis.service.ResultService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 /**

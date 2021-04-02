@@ -6,11 +6,10 @@ import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
 import javax.persistence.*;
-import javax.persistence.Entity;
-import javax.persistence.Table;
 
-import org.hibernate.annotations.*;
 import org.hibernate.annotations.Cache;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
+import org.hibernate.annotations.DiscriminatorOptions;
 
 import com.fasterxml.jackson.annotation.*;
 

@@ -3,9 +3,13 @@ package de.tum.in.www1.artemis.config.connector;
 import java.net.URL;
 
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.*;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 
-import com.atlassian.bamboo.specs.util.*;
+import com.atlassian.bamboo.specs.util.BambooServer;
+import com.atlassian.bamboo.specs.util.SimpleTokenCredentials;
+import com.atlassian.bamboo.specs.util.TokenCredentials;
 
 @Configuration
 @Profile("bamboo")

@@ -1,8 +1,7 @@
 package de.tum.in.www1.artemis.service.connectors.bamboo;
 
 import static de.tum.in.www1.artemis.config.Constants.*;
-import static de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService.RepositoryCheckoutPath;
-import static de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService.getDockerImageName;
+import static de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService.*;
 
 import java.io.IOException;
 import java.net.URL;
@@ -27,10 +26,7 @@ import com.atlassian.bamboo.specs.api.builders.notification.Notification;
 import com.atlassian.bamboo.specs.api.builders.permission.PermissionType;
 import com.atlassian.bamboo.specs.api.builders.permission.Permissions;
 import com.atlassian.bamboo.specs.api.builders.permission.PlanPermissions;
-import com.atlassian.bamboo.specs.api.builders.plan.Job;
-import com.atlassian.bamboo.specs.api.builders.plan.Plan;
-import com.atlassian.bamboo.specs.api.builders.plan.PlanIdentifier;
-import com.atlassian.bamboo.specs.api.builders.plan.Stage;
+import com.atlassian.bamboo.specs.api.builders.plan.*;
 import com.atlassian.bamboo.specs.api.builders.plan.artifact.Artifact;
 import com.atlassian.bamboo.specs.api.builders.plan.branches.BranchCleanup;
 import com.atlassian.bamboo.specs.api.builders.plan.branches.PlanBranchManagement;

@@ -5,8 +5,9 @@ import static de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException.NO
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 import static java.time.ZonedDateTime.now;
 
-import java.io.*;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.ZonedDateTime;

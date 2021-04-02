@@ -1,10 +1,7 @@
 package de.tum.in.www1.artemis.service.compass.assessment;
 
 import java.io.Serializable;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.slf4j.Logger;

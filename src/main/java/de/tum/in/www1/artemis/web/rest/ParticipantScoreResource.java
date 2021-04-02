@@ -2,7 +2,9 @@ package de.tum.in.www1.artemis.web.rest;
 
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -21,7 +23,9 @@ import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ParticipantScoreService;
-import de.tum.in.www1.artemis.web.rest.dto.*;
+import de.tum.in.www1.artemis.web.rest.dto.ParticipantScoreAverageDTO;
+import de.tum.in.www1.artemis.web.rest.dto.ParticipantScoreDTO;
+import de.tum.in.www1.artemis.web.rest.dto.ScoreDTO;
 
 @RestController
 @RequestMapping("/api")

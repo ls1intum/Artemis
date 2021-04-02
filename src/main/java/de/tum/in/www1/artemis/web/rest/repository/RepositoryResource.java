@@ -4,12 +4,16 @@ import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.*;
+import java.nio.file.FileAlreadyExistsException;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.*;
 
 import javax.servlet.http.HttpServletRequest;
 
-import org.eclipse.jgit.api.errors.*;
+import org.eclipse.jgit.api.errors.CheckoutConflictException;
+import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.api.errors.WrongRepositoryStateException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.*;
@@ -20,9 +24,13 @@ import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.RepositoryService;
-import de.tum.in.www1.artemis.service.connectors.*;
+import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
+import de.tum.in.www1.artemis.service.connectors.GitService;
+import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.web.rest.ParticipationResource;
-import de.tum.in.www1.artemis.web.rest.dto.*;
+import de.tum.in.www1.artemis.web.rest.dto.FileMove;
+import de.tum.in.www1.artemis.web.rest.dto.RepositoryStatusDTO;
+import de.tum.in.www1.artemis.web.rest.dto.RepositoryStatusDTOType;
 import de.tum.in.www1.artemis.web.rest.repository.util.RepositoryExecutor;
 
 /**

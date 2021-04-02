@@ -1,10 +1,13 @@
 package de.tum.in.www1.artemis.config;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
 
 import javax.annotation.PostConstruct;
 
-import org.slf4j.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.boot.actuate.health.*;
 import org.springframework.cloud.client.discovery.health.DiscoveryCompositeHealthContributor;
 import org.springframework.core.env.Environment;
@@ -15,7 +18,8 @@ import org.springframework.web.socket.WebSocketHandler;
 import org.springframework.web.socket.config.WebSocketMessageBrokerStats;
 import org.springframework.web.socket.messaging.SubProtocolWebSocketHandler;
 
-import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.Gauge;
+import io.micrometer.core.instrument.MeterRegistry;
 
 @Component
 public class MetricsBean {

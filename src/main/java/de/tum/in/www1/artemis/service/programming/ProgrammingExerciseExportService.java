@@ -22,15 +22,9 @@ import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
-import javax.xml.xpath.XPath;
-import javax.xml.xpath.XPathConstants;
-import javax.xml.xpath.XPathException;
-import javax.xml.xpath.XPathFactory;
+import javax.xml.xpath.*;
 
-import jplag.ExitException;
-import jplag.JPlag;
-import jplag.JPlagOptions;
-import jplag.JPlagResult;
+import jplag.*;
 import jplag.options.LanguageOption;
 import jplag.reporting.Report;
 
@@ -47,6 +41,7 @@ import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Submission;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;

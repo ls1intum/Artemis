@@ -1,6 +1,8 @@
 package de.tum.in.www1.artemis.web.websocket.dto;
 
-import java.util.*;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 
 import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;

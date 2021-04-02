@@ -6,10 +6,7 @@ import java.util.Set;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
-import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
-import de.tum.in.www1.artemis.repository.ResultRepository;
-import de.tum.in.www1.artemis.repository.SubmissionRepository;
-import de.tum.in.www1.artemis.repository.TextBlockRepository;
+import de.tum.in.www1.artemis.repository.*;
 
 public abstract class ExerciseImportService {
 

@@ -2,7 +2,8 @@ package de.tum.in.www1.artemis.config;
 
 import static io.github.jhipster.config.logging.LoggingUtils.*;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;

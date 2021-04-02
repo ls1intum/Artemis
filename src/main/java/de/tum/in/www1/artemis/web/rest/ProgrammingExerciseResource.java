@@ -4,8 +4,9 @@ import static de.tum.in.www1.artemis.config.Constants.*;
 import static de.tum.in.www1.artemis.service.util.TimeLogUtil.formatDurationFrom;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 
-import java.io.*;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Paths;
@@ -37,12 +38,16 @@ import de.tum.in.www1.artemis.domain.plagiarism.text.TextPlagiarismResult;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.*;
-import de.tum.in.www1.artemis.service.connectors.*;
+import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
+import de.tum.in.www1.artemis.service.connectors.GitService;
+import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
 import de.tum.in.www1.artemis.service.plagiarism.PlagiarismService;
 import de.tum.in.www1.artemis.service.programming.*;
-import de.tum.in.www1.artemis.web.rest.dto.*;
+import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
+import de.tum.in.www1.artemis.web.rest.dto.RepositoryExportOptionsDTO;
+import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
@@ -704,16 +709,7 @@ public class ProgrammingExerciseResource {
     public ResponseEntity<ProgrammingExercise> updateProblemStatement(@PathVariable long exerciseId, @RequestBody String updatedProblemStatement,
             @RequestParam(value = "notificationText", required = false) String notificationText) {
         log.debug("REST request to update ProgrammingExercise with new problem statement: {}", updatedProblemStatement);
-        ProgrammingExercise updatedProgrammingExercise;
-        try {
-            updatedProgrammingExercise = programmingExerciseService.updateProblemStatement(exerciseId, updatedProblemStatement, notificationText);
-        }
-        catch (IllegalAccessException ex) {
-            return forbidden();
-        }
-        catch (EntityNotFoundException ex) {
-            return notFound();
-        }
+        var updatedProgrammingExercise = programmingExerciseService.updateProblemStatement(exerciseId, updatedProblemStatement, notificationText);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, updatedProgrammingExercise.getTitle()))
                 .body(updatedProgrammingExercise);
     }
@@ -945,12 +941,12 @@ public class ProgrammingExerciseResource {
     public ResponseEntity<Resource> exportSubmissionsByParticipationIds(@PathVariable long exerciseId, @PathVariable String participationIds,
             @RequestBody RepositoryExportOptionsDTO repositoryExportOptions) throws IOException {
         var programmingExercise = programmingExerciseRepository.findByIdWithStudentParticipationsAndSubmissionsElseThrow(exerciseId);
-        authCheckService.checkIsAtLeastInstructorForExerciseElseThrow(programmingExercise, null);
+        authCheckService.checkIsAtLeastTeachingAssistantForExerciseElseThrow(programmingExercise, null);
         if (repositoryExportOptions.getFilterLateSubmissionsDate() == null) {
             repositoryExportOptions.setFilterLateSubmissionsDate(programmingExercise.getDueDate());
         }
 
-        Set<Long> participationIdSet = new ArrayList<>(Arrays.asList(participationIds.split(","))).stream().map(String::trim).map(Long::parseLong).collect(Collectors.toSet());
+        var participationIdSet = new ArrayList<>(Arrays.asList(participationIds.split(","))).stream().map(String::trim).map(Long::parseLong).collect(Collectors.toSet());
 
         // Select the participations that should be exported
         List<ProgrammingExerciseStudentParticipation> exportedStudentParticipations = programmingExercise.getStudentParticipations().stream()
