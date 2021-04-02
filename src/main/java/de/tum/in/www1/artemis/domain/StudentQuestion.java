@@ -23,7 +23,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 public class StudentQuestion extends DomainObject {
 
     @Size(max = 1000)
-    @Column(name = "question_text")
+    @Column(name = "question_text", length = 1000)
     private String questionText;
 
     @Column(name = "creation_date")
