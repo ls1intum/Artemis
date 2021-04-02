@@ -4,6 +4,7 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 
 import { Health, HealthDetails, HealthKey, HealthService } from './health.service';
 import { HealthModalComponent } from './health-modal.component';
+import { KeyValue } from '@angular/common';
 
 @Component({
     selector: 'jhi-health',
@@ -18,7 +19,7 @@ export class HealthComponent implements OnInit {
         this.refresh();
     }
 
-    getBadgeClass(statusState: string) {
+    getBadgeClass(statusState: string | undefined) {
         if (statusState === 'UP') {
             return 'badge-success';
         } else {
@@ -37,7 +38,7 @@ export class HealthComponent implements OnInit {
         );
     }
 
-    showHealth(health: { key: HealthKey; value: HealthDetails }): void {
+    showHealth(health: KeyValue<string, HealthDetails | undefined>): void {
         const modalRef = this.modalService.open(HealthModalComponent);
         modalRef.componentInstance.health = health;
     }

@@ -18,18 +18,18 @@
                     <td>
                         <span>
                             {{ 'health.indicator.' + componentHealth.key | artemisTranslate }}
-                            <a *ngIf="componentHealth.value.details?.url" class="badge badge-info" [href]="componentHealth.value.details.url">
-                                {{ componentHealth.value.details.url }}
+                            <a *ngIf="componentHealth.value?.details?.url" class="badge badge-info" [href]="componentHealth.value?.details.url">
+                                {{ componentHealth.value?.details.url }}
                             </a>
                         </span>
                     </td>
                     <td class="text-center">
-                        <span class="badge" [ngClass]="getBadgeClass(componentHealth.value.status)" jhiTranslate="{{ 'health.status.' + componentHealth.value.status }}">
-                            {{ componentHealth.value.status }}
+                        <span class="badge" [ngClass]="getBadgeClass(componentHealth.value?.status)" jhiTranslate="{{ 'health.status.' + componentHealth.value?.status }}">
+                            {{ componentHealth.value?.status }}
                         </span>
                     </td>
                     <td class="text-center">
-                        <a class="hand" (click)="showHealth(componentHealth)" *ngIf="componentHealth.value.details">
+                        <a class="hand" (click)="showHealth(componentHealth)" *ngIf="componentHealth.value?.details">
                             <fa-icon [icon]="'eye'"></fa-icon>
                         </a>
                     </td>
