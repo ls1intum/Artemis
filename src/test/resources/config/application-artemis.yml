@@ -25,6 +25,8 @@ artemis:
         registration:
             enabled: true
             allowed-email-pattern: '[a-zA-Z0-9_\-\.\+]+@[a-zA-Z0-9_\-\.]+\.[a-zA-Z]{2,5}'
+        course-registration:
+            allowed-username-pattern: .*
     version-control:
         user: fake-username
         password: fake-password
