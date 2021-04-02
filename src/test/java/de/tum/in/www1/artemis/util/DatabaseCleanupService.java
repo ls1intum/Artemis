@@ -5,9 +5,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import javax.persistence.EntityManager;
-import javax.persistence.JoinTable;
-import javax.persistence.Table;
+import javax.persistence.*;
 import javax.persistence.metamodel.ManagedType;
 
 import org.springframework.beans.factory.InitializingBean;

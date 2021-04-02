@@ -3,7 +3,9 @@ package de.tum.in.www1.artemis.web.rest.dto;
 import java.util.*;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import de.tum.in.www1.artemis.domain.*;
+
+import de.tum.in.www1.artemis.domain.TextBlockType;
+import de.tum.in.www1.artemis.domain.TextCluster;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class AtheneDTO {

@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.config.connector;
 
-import java.net.*;
+import java.net.URISyntaxException;
+import java.net.URL;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.*;

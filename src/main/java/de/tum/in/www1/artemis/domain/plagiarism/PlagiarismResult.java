@@ -8,7 +8,8 @@ import javax.persistence.*;
 
 import org.hibernate.annotations.DiscriminatorOptions;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.AbstractAuditingEntity;
+import de.tum.in.www1.artemis.domain.Exercise;
 
 /**
  * Base result of any automatic plagiarism detection.

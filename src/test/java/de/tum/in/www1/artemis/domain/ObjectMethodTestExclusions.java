@@ -1,8 +1,6 @@
 package de.tum.in.www1.artemis.domain;
 
-import java.util.EnumSet;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
 
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;

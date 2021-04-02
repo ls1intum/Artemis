@@ -6,7 +6,9 @@ import javax.persistence.*;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.google.gson.JsonObject;
-import de.tum.in.www1.artemis.domain.*;
+
+import de.tum.in.www1.artemis.domain.StudentQuestionAnswer;
+import de.tum.in.www1.artemis.domain.User;
 
 /**
  * A SingleUserNotification.

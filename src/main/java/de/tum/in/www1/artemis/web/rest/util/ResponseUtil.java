@@ -1,7 +1,8 @@
 package de.tum.in.www1.artemis.web.rest.util;
 
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.*;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 
 public final class ResponseUtil implements io.github.jhipster.web.util.ResponseUtil {
 

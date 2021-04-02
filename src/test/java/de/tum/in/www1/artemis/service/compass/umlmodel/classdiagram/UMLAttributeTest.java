@@ -1,8 +1,7 @@
 package de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 import me.xdrop.fuzzywuzzy.FuzzySearch;
 

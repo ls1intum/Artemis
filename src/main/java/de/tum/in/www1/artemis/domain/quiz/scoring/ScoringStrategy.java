@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.domain.quiz.scoring;
 
-import de.tum.in.www1.artemis.domain.quiz.*;
+import de.tum.in.www1.artemis.domain.quiz.QuizQuestion;
+import de.tum.in.www1.artemis.domain.quiz.SubmittedAnswer;
 
 public interface ScoringStrategy {
 

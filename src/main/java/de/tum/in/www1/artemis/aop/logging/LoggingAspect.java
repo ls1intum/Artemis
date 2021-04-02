@@ -2,10 +2,13 @@ package de.tum.in.www1.artemis.aop.logging;
 
 import java.util.Arrays;
 
-import org.aspectj.lang.*;
+import org.aspectj.lang.JoinPoint;
+import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.*;
-import org.slf4j.*;
-import org.springframework.core.env.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.core.env.Environment;
+import org.springframework.core.env.Profiles;
 
 import io.github.jhipster.config.JHipsterConstants;
 

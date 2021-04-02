@@ -5,7 +5,8 @@ import java.util.*;
 
 import org.springframework.data.util.Pair;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Team;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.web.rest.TeamResource;
 
 /**

@@ -2,7 +2,8 @@ package de.tum.in.www1.artemis.domain.enumeration;
 
 import java.time.ZonedDateTime;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 
 public enum ExerciseLifecycle implements IExerciseLifecycle {
     RELEASE {

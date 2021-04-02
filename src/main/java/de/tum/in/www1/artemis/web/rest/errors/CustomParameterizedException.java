@@ -3,7 +3,8 @@ package de.tum.in.www1.artemis.web.rest.errors;
 import static org.zalando.problem.Status.BAD_REQUEST;
 
 import java.io.Serial;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.zalando.problem.AbstractThrowableProblem;
 

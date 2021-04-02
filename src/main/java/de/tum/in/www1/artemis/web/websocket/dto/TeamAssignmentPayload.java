@@ -7,7 +7,8 @@ import javax.validation.constraints.NotNull;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.Team;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)

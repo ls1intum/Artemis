@@ -3,13 +3,11 @@ package de.tum.in.www1.artemis.domain.quiz;
 import java.util.Objects;
 
 import javax.persistence.*;
-import javax.persistence.Entity;
-import javax.persistence.Table;
 
 import me.xdrop.fuzzywuzzy.FuzzySearch;
 
-import org.hibernate.annotations.*;
 import org.hibernate.annotations.Cache;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.*;
 

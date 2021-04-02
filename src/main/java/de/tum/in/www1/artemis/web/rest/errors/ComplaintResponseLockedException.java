@@ -2,7 +2,8 @@ package de.tum.in.www1.artemis.web.rest.errors;
 
 import java.io.Serial;
 import java.time.format.DateTimeFormatter;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
 
 import de.tum.in.www1.artemis.domain.ComplaintResponse;
 import de.tum.in.www1.artemis.web.rest.ComplaintResponseResource;

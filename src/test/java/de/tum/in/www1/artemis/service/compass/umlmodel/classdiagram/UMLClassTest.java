@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram;
 
-import static de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLClass.UMLClassType.ABSTRACT_CLASS;
-import static de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLClass.UMLClassType.CLASS;
+import static de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLClass.UMLClassType.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 

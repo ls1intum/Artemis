@@ -3,8 +3,10 @@ package de.tum.in.www1.artemis.web.rest.util;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 
-import org.slf4j.*;
-import org.springframework.http.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 
 /**
  * Utility class for HTTP headers creation.

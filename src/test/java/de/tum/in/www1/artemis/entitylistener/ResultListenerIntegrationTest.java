@@ -22,9 +22,7 @@ import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.Participant;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
-import de.tum.in.www1.artemis.domain.scores.ParticipantScore;
-import de.tum.in.www1.artemis.domain.scores.StudentScore;
-import de.tum.in.www1.artemis.domain.scores.TeamScore;
+import de.tum.in.www1.artemis.domain.scores.*;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 

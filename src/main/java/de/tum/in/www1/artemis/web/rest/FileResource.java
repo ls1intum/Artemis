@@ -1,7 +1,7 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import java.io.*;
 import java.io.File;
+import java.io.IOException;
 import java.net.*;
 import java.nio.file.*;
 import java.time.ZonedDateTime;
@@ -10,8 +10,10 @@ import java.util.*;
 import javax.activation.MimetypesFileTypeMap;
 import javax.validation.constraints.NotNull;
 
-import org.apache.commons.io.*;
-import org.slf4j.*;
+import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.io.IOUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.core.io.Resource;
 import org.springframework.http.*;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -21,7 +23,8 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.*;
+import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
+import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.jwt.TokenProvider;
