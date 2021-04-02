@@ -394,20 +394,16 @@ public class DatabaseUtilService {
         return exerciseRepo.save(teamTextExercise);
     }
 
-    public Result createParticipationSubmissionAndResult(Long idOfExercise, Participant participant, Double pointsOfExercise, Double bonusPointsOfExercise, long scoreAwarded,
-            boolean rated) {
-        Exercise exercise = exerciseRepo.findById(idOfExercise).get();
-
-        if (!exercise.getMaxPoints().equals(pointsOfExercise)) {
-            exercise.setMaxPoints(pointsOfExercise);
+    public Result createParticipationSubmissionAndResult(long exerciseId, Participant participant, Double points, Double bonusPoints, long scoreAwarded, boolean rated) {
+        Exercise exercise = exerciseRepo.findById(exerciseId).get();
+        if (!exercise.getMaxPoints().equals(points)) {
+            exercise.setMaxPoints(points);
         }
-        if (!exercise.getBonusPoints().equals(bonusPointsOfExercise)) {
-            exercise.setBonusPoints(bonusPointsOfExercise);
+        if (!exercise.getBonusPoints().equals(bonusPoints)) {
+            exercise.setBonusPoints(bonusPoints);
         }
         exercise = exerciseRepo.saveAndFlush(exercise);
-
         StudentParticipation studentParticipation = participationService.startExercise(exercise, participant, false);
-
         return createSubmissionAndResult(studentParticipation, scoreAwarded, rated);
     }
 

@@ -112,18 +112,9 @@ public class ParticipantScoreResource {
         long start = System.currentTimeMillis();
         log.debug("REST request to get participant scores for course : {}", courseId);
         Course course = courseRepository.findByIdWithEagerExercisesElseThrow(courseId);
-        if (!authorizationCheckService.isAtLeastInstructorInCourse(course, null)) {
-            return forbidden();
-        }
+        authorizationCheckService.checkIsAtLeastInstructorInCourseElseThrow(course, null);
         Set<Exercise> exercisesOfCourse = course.getExercises().stream().filter(Exercise::isCourseExercise).collect(Collectors.toSet());
-        Pageable page;
-        if (getUnpaged) {
-            page = Pageable.unpaged();
-        }
-        else {
-            page = pageable;
-        }
-        List<ParticipantScoreDTO> resultsOfAllExercises = participantScoreService.getParticipantScoreDTOs(page, exercisesOfCourse);
+        List<ParticipantScoreDTO> resultsOfAllExercises = participantScoreService.getParticipantScoreDTOs(getUnpaged ? Pageable.unpaged() : pageable, exercisesOfCourse);
         log.info("getParticipantScoresOfCourse took " + (System.currentTimeMillis() - start) + "ms");
         return ResponseEntity.ok().body(resultsOfAllExercises);
     }
