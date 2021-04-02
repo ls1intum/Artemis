@@ -118,8 +118,6 @@ public class ProgrammingSubmissionService extends SubmissionService {
         }
 
         ProgrammingExerciseParticipation programmingExerciseParticipation = (ProgrammingExerciseParticipation) participation;
-        ProgrammingExercise programmingExercise = programmingExerciseParticipation.getProgrammingExercise();
-        boolean isExamExercise = programmingExercise.isExamExercise();
 
         // if the commit is made by the Artemis user and contains the commit message "Setup" (use a constant to determine this), we should ignore this
         // and we should not create a new submission here
@@ -154,7 +152,6 @@ public class ProgrammingSubmissionService extends SubmissionService {
             // as the VCS-server performs the request
             SecurityUtils.setAuthorizationObject();
 
-            // TODO: is this still allowed for an exam? what do we want to do here?
             participationService.resumeProgrammingExercise((ProgrammingExerciseStudentParticipation) programmingExerciseParticipation);
             // Note: in this case we do not need an empty commit: when we trigger the build manually (below), subsequent commits will work correctly
             try {
