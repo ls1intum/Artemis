@@ -119,7 +119,7 @@ public class TeamImportIntegrationTest extends AbstractSpringIntegrationBambooBi
         assertCorrectnessOfImport(addedTeams, destinationTeamsAfter);
     }
 
-    @ParameterizedTest
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @EnumSource(TeamImportStrategyType.class)
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testImportTeamsFromExerciseIntoEmptyExercise(TeamImportStrategyType importStrategyType) throws Exception {
@@ -127,7 +127,7 @@ public class TeamImportIntegrationTest extends AbstractSpringIntegrationBambooBi
         testImportTeamsIntoExercise(ImportType.FROM_EXERCISE, importStrategyType, null, sourceTeams);
     }
 
-    @ParameterizedTest
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @EnumSource(TeamImportStrategyType.class)
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testImportTeamsFromListIntoEmptyExercise(TeamImportStrategyType importStrategyType) throws Exception {

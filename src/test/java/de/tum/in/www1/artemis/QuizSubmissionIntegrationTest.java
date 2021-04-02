@@ -559,7 +559,7 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         }
     }
 
-    @ParameterizedTest
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @EnumSource(ScoringType.class)
     @WithMockUser(value = "student1", roles = "USER")
     public void testQuizScoringType(ScoringType scoringType) {

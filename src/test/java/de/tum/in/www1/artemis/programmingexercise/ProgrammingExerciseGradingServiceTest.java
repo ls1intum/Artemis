@@ -513,7 +513,7 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
     }
 
     @ValueSource(booleans = { false, true })
-    @ParameterizedTest(name = "shouldNotIncludeTestsMarkedAsNeverVisibleInScoreCalculation [isAfterDueDate = {0}]")
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void shouldNotIncludeTestsMarkedAsNeverVisibleInScoreCalculation(boolean isAfterDueDate) throws Exception {
         // test case marked as never should not affect score for students neither before nor after due date

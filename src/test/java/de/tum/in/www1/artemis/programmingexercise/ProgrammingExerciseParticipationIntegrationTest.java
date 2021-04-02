@@ -86,7 +86,7 @@ public class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpr
                 Arguments.of(AssessmentType.SEMI_AUTOMATIC, someDate, pastDate, true));
     }
 
-    @ParameterizedTest
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @MethodSource("argumentsForGetParticipationWithLatestResult")
     @WithMockUser(username = "student1", roles = "USER")
     public void testGetParticipationWithLatestResultAsAStudent(AssessmentType assessmentType, ZonedDateTime completionDate, ZonedDateTime assessmentDueDate,
@@ -106,7 +106,7 @@ public class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpr
         }
     }
 
-    @ParameterizedTest
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @MethodSource("argumentsForGetParticipationWithLatestResult")
     @WithMockUser(username = "student1", roles = "USER")
     public void testGetParticipationWithLatestResult_multipleResultsAvailable(AssessmentType assessmentType, ZonedDateTime completionDate, ZonedDateTime assessmentDueDate,
@@ -217,7 +217,7 @@ public class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpr
         assertThat(requestedResult.getFeedbacks().stream().filter(Feedback::isInvisible)).hasSize(1);
     }
 
-    @ParameterizedTest
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @ValueSource(booleans = { true, false })
     @WithMockUser(username = "student1", roles = "USER")
     public void testGetLatestResultWithSubmission(boolean withSubmission) throws Exception {

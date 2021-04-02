@@ -213,7 +213,7 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
     }
 
     @ValueSource(booleans = { false, true })
-    @ParameterizedTest(name = "shouldReturnTheResultDetailsForAStudentParticipationWithSensitiveInformationFiltered [isAfterDueDate = {0}]")
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @WithMockUser(value = "student2", roles = "USER")
     public void shouldReturnTheResultDetailsForAStudentParticipationWithSensitiveInformationFiltered(boolean isAfterDueDate) throws Exception {
         Result result = database.addResultToParticipation(null, null, studentParticipation);
@@ -243,7 +243,7 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
     }
 
     @ValueSource(booleans = { false, true })
-    @ParameterizedTest(name = "shouldReturnTheResultDetailsForAnInstructorWithoutSensitiveInformationFiltered [isAfterDueDate = {0}]")
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void shouldReturnTheResultDetailsForAnInstructorWithoutSensitiveInformationFiltered(boolean isAfterDueDate) throws Exception {
         Result result = database.addResultToParticipation(null, null, studentParticipation);
@@ -302,7 +302,7 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
         assertThat(feedbacks.stream().filter(f -> f.getVisibility() == Visibility.AFTER_DUE_DATE)).hasSize(1);
     }
 
-    @ParameterizedTest
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @MethodSource("setResultRatedPermutations")
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     void setProgrammingExerciseResultRated(boolean shouldBeRated, ZonedDateTime buildAndTestAfterDueDate, SubmissionType submissionType, ZonedDateTime dueDate) {
