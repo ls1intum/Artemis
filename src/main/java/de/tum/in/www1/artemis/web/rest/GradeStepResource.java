@@ -1,15 +1,12 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.badRequest;
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.notFound;
 
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -18,75 +15,88 @@ import de.tum.in.www1.artemis.domain.GradeStep;
 import de.tum.in.www1.artemis.domain.GradingScale;
 import de.tum.in.www1.artemis.repository.GradeStepRepository;
 import de.tum.in.www1.artemis.repository.GradingScaleRepository;
-import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
+import de.tum.in.www1.artemis.service.GradingScaleService;
+import de.tum.in.www1.artemis.web.rest.util.ResponseUtil;
 
 @RestController
 @RequestMapping("/api")
 public class GradeStepResource {
 
-    private final Logger log = LoggerFactory.getLogger(GradeStepResource.class);
+    private final Logger log = LoggerFactory.getLogger(GradingScaleResource.class);
 
-    private static final String ENTITY_NAME = "gradeStep";
-
-    @Value("${jhipster.clientApp.name}")
-    private String applicationName;
-
-    private final GradeStepRepository gradeStepRepository;
+    private final GradingScaleService gradingScaleService;
 
     private final GradingScaleRepository gradingScaleRepository;
 
-    public GradeStepResource(GradeStepRepository gradeStepRepository, GradingScaleRepository gradingScaleRepository) {
-        this.gradeStepRepository = gradeStepRepository;
+    private final GradeStepRepository gradeStepRepository;
+
+    public GradeStepResource(GradingScaleService gradingScaleService, GradingScaleRepository gradingScaleRepository, GradeStepRepository gradeStepRepository) {
+        this.gradingScaleService = gradingScaleService;
         this.gradingScaleRepository = gradingScaleRepository;
+        this.gradeStepRepository = gradeStepRepository;
     }
 
-    @GetMapping("/grading-scale/{gradingScaleId}/grade-step")
+    @GetMapping("/courses/{courseId}/grading-scale/grade-steps")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    public List<GradeStep> getAllGradeSteps(@PathVariable Long gradingScaleId) {
-        log.debug("REST Request to fetch all grade steps for grading scale: {}", gradingScaleId);
-        return gradeStepRepository.findByGradingScale_Id(gradingScaleId);
+    public ResponseEntity<Set<GradeStep>> getAllGradeStepsForCourse(@PathVariable Long courseId) {
+        log.debug("REST request to get all grade steps for course: {}", courseId);
+        Optional<GradingScale> gradingScale = gradingScaleRepository.findByCourse_Id(courseId);
+        return gradingScale.map(scale -> ResponseEntity.ok(scale.getGradeSteps())).orElseGet(ResponseUtil::notFound);
     }
 
-    @GetMapping("/grading-scale/{gradingScaleId}/grade-step/{gradeStepId}")
+    @GetMapping("/courses/{courseId}/exams/{examId}/grading-scale/grade-steps")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<GradeStep> getGradeStepById(@PathVariable Long gradingScaleId, @PathVariable Long gradeStepId) {
-        log.debug("REST Request to fetch grade step {} for grading scale: {}", gradeStepId, gradingScaleId);
-        Optional<GradeStep> gradeStep = gradeStepRepository.findByIdAndGradingScale_Id(gradeStepId, gradingScaleId);
-        return gradeStep.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+    public ResponseEntity<Set<GradeStep>> getAllGradeStepsForExam(@PathVariable Long examId) {
+        log.debug("REST request to get all grade steps for exam: {}", examId);
+        Optional<GradingScale> gradingScale = gradingScaleRepository.findByExam_Id(examId);
+        return gradingScale.map(scale -> ResponseEntity.ok(scale.getGradeSteps())).orElseGet(ResponseUtil::notFound);
     }
 
-    @PostMapping("/grading-scale/{gradingScaleId}/grade-step")
+    @GetMapping("/courses/{courseId}/grading-scale/grade-steps/{gradeStepId}")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<GradeStep> createGradeStep(@PathVariable Long gradingScaleId, @RequestBody GradeStep gradeStep) throws URISyntaxException {
-        log.debug("REST Request to create grade step for grading scale: {}", gradingScaleId);
-        if (gradeStep.getGradingScale() != null) {
-            return badRequest();
+    public ResponseEntity<GradeStep> getGradeStepsByIdForCourse(@PathVariable Long courseId, @PathVariable Long gradeStepId) {
+        log.debug("REST request to get grade step {} for course: {}", gradeStepId, courseId);
+        Optional<GradingScale> gradingScale = gradingScaleRepository.findByCourse_Id(courseId);
+        return handleGradeStepGetRequest(gradingScale, gradeStepId);
+    }
+
+    @GetMapping("/courses/{courseId}/exams/{examId}/grading-scale/grade-steps/{gradeStepId}")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<GradeStep> getGradeStepsByIdForExam(@PathVariable Long examId, @PathVariable Long gradeStepId) {
+        log.debug("REST request to get grade step {} for exam: {}", gradeStepId, examId);
+        Optional<GradingScale> gradingScale = gradingScaleRepository.findByExam_Id(examId);
+        return handleGradeStepGetRequest(gradingScale, gradeStepId);
+    }
+
+    private ResponseEntity<GradeStep> handleGradeStepGetRequest(Optional<GradingScale> gradingScale, Long gradeStepId) {
+        if (gradingScale.isEmpty()) {
+            return notFound();
         }
-        GradingScale gradingScale = gradingScaleRepository.findById(gradingScaleId).orElseThrow();
-        gradeStep.setGradingScale(gradingScale);
-        gradeStep = gradeStepRepository.saveAndFlush(gradeStep);
-        return ResponseEntity.created(new URI("/api/grade-step/" + gradeStep.getId())).headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, ""))
-                .body(gradeStep);
+        Optional<GradeStep> gradeStep = gradeStepRepository.findByIdAndGradingScale_Id(gradeStepId, gradingScale.get().getId());
+        return gradeStep.map(ResponseEntity::ok).orElseGet(ResponseUtil::notFound);
     }
 
-    @PutMapping("/grading-scale/{gradingScaleId}/grade-step")
+    @GetMapping("/courses/{courseId}/grading-scale/grade-steps")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<GradeStep> updateGradeStep(@PathVariable Long gradingScaleId, @RequestBody GradeStep gradeStep) {
-        log.debug("REST Request to update grade step for grading scale: {}", gradingScaleId);
-        if (gradeStep.getGradingScale() != null) {
-            return badRequest();
+    public ResponseEntity<GradeStep> getGradeStepByPercentageForCourse(@PathVariable Long courseId, @RequestParam Integer gradePercentage) {
+        log.debug("REST request to get grade step for grade percentage {} for course: {}", gradePercentage, courseId);
+        Optional<GradingScale> gradingScale = gradingScaleRepository.findByCourse_Id(courseId);
+        if (gradingScale.isEmpty()) {
+            return notFound();
         }
-        GradingScale gradingScale = gradingScaleRepository.findById(gradingScaleId).orElseThrow();
-        gradeStep.setGradingScale(gradingScale);
-        gradeStep = gradeStepRepository.saveAndFlush(gradeStep);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, "")).body(gradeStep);
+        GradeStep gradeStep = gradingScaleService.matchPercentageToGradeStep(gradePercentage, gradingScale.get().getId());
+        return ResponseEntity.ok(gradeStep);
     }
 
-    @DeleteMapping("/grading-scale/{gradingScaleId}/grade-step/{gradeStepId}")
+    @GetMapping("/courses/{courseId}/exams/{examId}/grading-scale/grade-steps")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Void> deleteGradeStepById(@PathVariable Long gradingScaleId, @PathVariable Long gradeStepId) {
-        log.debug("REST Request to delete grade step {} for grading scale: {}", gradeStepId, gradingScaleId);
-        gradeStepRepository.deleteById(gradingScaleId);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, "")).build();
+    public ResponseEntity<GradeStep> getGradeStepByPercentageForExam(@PathVariable Long examId, @RequestParam Integer gradePercentage) {
+        log.debug("REST request to get grade step for grade percentage {} for exam: {}", gradePercentage, examId);
+        Optional<GradingScale> gradingScale = gradingScaleRepository.findByExam_Id(examId);
+        if (gradingScale.isEmpty()) {
+            return notFound();
+        }
+        GradeStep gradeStep = gradingScaleService.matchPercentageToGradeStep(gradePercentage, gradingScale.get().getId());
+        return ResponseEntity.ok(gradeStep);
     }
 }

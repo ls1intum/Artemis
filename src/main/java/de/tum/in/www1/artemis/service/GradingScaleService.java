@@ -7,17 +7,10 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.GradeStep;
 import de.tum.in.www1.artemis.domain.GradingScale;
-import de.tum.in.www1.artemis.domain.exam.Exam;
-import de.tum.in.www1.artemis.repository.CourseRepository;
-import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.GradeStepRepository;
 import de.tum.in.www1.artemis.repository.GradingScaleRepository;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -26,28 +19,16 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 @Service
 public class GradingScaleService {
 
-    @Value("${jhipster.clientApp.name}")
-    private String applicationName;
-
-    private final Logger log = LoggerFactory.getLogger(GradingScaleService.class);
-
     private final GradingScaleRepository gradingScaleRepository;
 
     private final GradeStepRepository gradeStepRepository;
 
-    private final CourseRepository courseRepository;
-
-    private final ExamRepository examRepository;
-
-    public GradingScaleService(GradingScaleRepository gradingScaleRepository, GradeStepRepository gradeStepRepository, CourseRepository courseRepository,
-            ExamRepository examRepository) {
+    public GradingScaleService(GradingScaleRepository gradingScaleRepository, GradeStepRepository gradeStepRepository) {
         this.gradeStepRepository = gradeStepRepository;
         this.gradingScaleRepository = gradingScaleRepository;
-        this.courseRepository = courseRepository;
-        this.examRepository = examRepository;
     }
 
-    public GradeStep matchGradeToGradeStep(int percentage, Long gradingScaleId) {
+    public GradeStep matchPercentageToGradeStep(int percentage, Long gradingScaleId) {
         List<GradeStep> gradeSteps = gradeStepRepository.findByGradingScale_Id(gradingScaleId);
         Optional<GradeStep> matchingGradeStep = gradeSteps.stream().filter(gradeStep -> gradeStep.matchingGradePercentage(percentage)).findFirst();
         if (matchingGradeStep.isPresent()) {
@@ -58,33 +39,33 @@ public class GradingScaleService {
         }
     }
 
-    public GradingScale updateGradeStepsForGradingScale(Set<GradeStep> newGradeSteps, Long gradingScaleId) {
-        if (newGradeSteps.stream().allMatch(GradeStep::isValid)) {
-            throw new BadRequestAlertException("Not all grade steps are follow the correct format.", "gradeStep", "invalidFormat");
-        }
-        if (!gradeStepSetMapsToValidGradingScale(newGradeSteps)) {
-            throw new BadRequestAlertException("Grade step set can't match to a valid grading scale.", "gradeStep", "invalidFormat");
-        }
-        gradeStepRepository.deleteAllGradeStepsForGradingScaleById(gradingScaleId);
-        GradingScale gradingScale = gradingScaleRepository.findById(gradingScaleId).orElseThrow();
-        for (GradeStep gradeStep : newGradeSteps) {
-            gradeStep.setGradingScale(gradingScale);
-            gradeStepRepository.save(gradeStep);
-        }
-        gradeStepRepository.flush();
-        return gradingScaleRepository.findById(gradingScaleId).orElseThrow();
+    public GradingScale saveGradingScale(GradingScale gradingScale, boolean update) {
+        Set<GradeStep> gradeSteps = gradingScale.getGradeSteps();
+        gradingScale.setGradeSteps(null);
+        gradingScaleRepository.saveAndFlush(gradingScale);
+        return saveGradeStepsForGradingScale(gradingScale, gradeSteps, update);
     }
 
-    public GradingScale saveGradingScaleForCourse(GradingScale gradingScale, Long courseId) {
-        Course course = courseRepository.findById(courseId).orElseThrow();
-        gradingScale.setCourse(course);
-        return gradingScaleRepository.saveAndFlush(gradingScale);
-    }
+    private GradingScale saveGradeStepsForGradingScale(GradingScale gradingScale, Set<GradeStep> gradeSteps, boolean update) {
+        if (gradeSteps != null) {
+            if (gradeSteps.stream().allMatch(GradeStep::isValid)) {
+                throw new BadRequestAlertException("Not all grade steps are follow the correct format.", "gradeStep", "invalidFormat");
+            }
+            if (!gradeStepSetMapsToValidGradingScale(gradeSteps)) {
+                throw new BadRequestAlertException("Grade step set can't match to a valid grading scale.", "gradeStep", "invalidFormat");
+            }
 
-    public GradingScale saveGradingScaleForExam(GradingScale gradingScale, Long examId) {
-        Exam exam = examRepository.findById(examId).orElseThrow();
-        gradingScale.setExam(exam);
-        return gradingScaleRepository.saveAndFlush(gradingScale);
+            if (update) {
+                gradeStepRepository.deleteAllGradeStepsForGradingScaleById(gradingScale.getId());
+            }
+
+            for (GradeStep gradeStep : gradeSteps) {
+                gradeStep.setGradingScale(gradingScale);
+                gradeStepRepository.save(gradeStep);
+            }
+            gradeStepRepository.flush();
+        }
+        return gradingScaleRepository.findById(gradingScale.getId()).orElseThrow();
     }
 
     private boolean gradeStepSetMapsToValidGradingScale(Set<GradeStep> gradeSteps) {
