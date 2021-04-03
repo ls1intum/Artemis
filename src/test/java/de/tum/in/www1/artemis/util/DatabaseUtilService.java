@@ -3120,4 +3120,43 @@ public class DatabaseUtilService {
         return fileUploadSubmissionRepo.save(fileUploadSubmission);
     }
 
+    public Course createCourseWithExamAndExercises() throws IOException {
+        Course course = courseRepo.save(addEmptyCourse());
+
+        // Create a file upload exercise with a dummy submission file
+        var exerciseGroup1 = exerciseGroupRepository.save(new ExerciseGroup());
+        var fileUploadExercise = ModelFactory.generateFileUploadExerciseForExam(".png", exerciseGroup1);
+        fileUploadExercise = exerciseRepo.save(fileUploadExercise);
+        createFileUploadSubmissionWithFile(fileUploadExercise, "uploaded-file.png");
+        exerciseGroup1.addExercise(fileUploadExercise);
+        exerciseGroup1 = exerciseGroupRepository.save(exerciseGroup1);
+
+        // Create a text exercise with a dummy submission file
+        var exerciseGroup2 = exerciseGroupRepository.save(new ExerciseGroup());
+        var textExercise = ModelFactory.generateTextExerciseForExam(exerciseGroup2);
+        textExercise = exerciseRepo.save(textExercise);
+        var textSubmission = ModelFactory.generateTextSubmission("example text", Language.ENGLISH, true);
+        saveTextSubmission(textExercise, textSubmission, "student1");
+        exerciseGroup2.addExercise(textExercise);
+        exerciseGroup2 = exerciseGroupRepository.save(exerciseGroup2);
+
+        // Create a modeling exercise with a dummy submission file
+        var exerciseGroup3 = exerciseGroupRepository.save(new ExerciseGroup());
+        var modelingExercise = ModelFactory.generateModelingExerciseForExam(DiagramType.ClassDiagram, exerciseGroup2);
+        modelingExercise = exerciseRepo.save(modelingExercise);
+        String emptyActivityModel = FileUtils.loadFileFromResources("test-data/model-submission/empty-activity-diagram.json");
+        var modelingSubmission = ModelFactory.generateModelingSubmission(emptyActivityModel, true);
+        addSubmission(modelingExercise, modelingSubmission, "student1");
+        exerciseGroup3.addExercise(modelingExercise);
+        exerciseGroupRepository.save(exerciseGroup3);
+
+        Exam exam = addExam(course);
+        exam.setEndDate(ZonedDateTime.now().minusMinutes(5));
+        exam.addExerciseGroup(exerciseGroup1);
+        exam.addExerciseGroup(exerciseGroup2);
+        examRepository.save(exam);
+
+        return course;
+    }
+
 }

@@ -36,6 +36,7 @@ import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.service.ZipFileService;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
 import de.tum.in.www1.artemis.service.exam.ExamDateService;
 import de.tum.in.www1.artemis.service.exam.ExamRegistrationService;
@@ -96,6 +97,9 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     @Autowired
     ParticipationTestRepository participationTestRepository;
+
+    @Autowired
+    ZipFileService zipFileService;
 
     private List<User> users;
 
@@ -1696,23 +1700,8 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testArchiveExamAsInstructor() throws Exception {
-        Course course = courseRepo.save(database.addEmptyCourse());
-
-        ExerciseGroup exerciseGroup1 = new ExerciseGroup();
-
-        Exam exam = database.addExam(course);
-        exam.setEndDate(ZonedDateTime.now().minusMinutes(5));
-        exam.addExerciseGroup(exerciseGroup1);
-        exam = examRepository.save(exam);
-
-        Exam examWithExerciseGroups = examRepository.findWithExerciseGroupsAndExercisesById(exam.getId()).get();
-        exerciseGroup1 = examWithExerciseGroups.getExerciseGroups().get(0);
-
-        ProgrammingExercise programmingExercise = ModelFactory.generateProgrammingExerciseForExam(exerciseGroup1);
-        programmingExercise = programmingExerciseRepository.save(programmingExercise);
-        exerciseGroup1.addExercise(programmingExercise);
-
-        exerciseGroupRepository.save(exerciseGroup1);
+        var course = database.createCourseWithExamAndExercises();
+        var exam = examRepository.findByCourseId(course.getId()).stream().findFirst().get();
 
         request.put("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/archive", null, HttpStatus.OK);
 
@@ -1793,24 +1782,40 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testDownloadExamArchiveAsInstructor() throws Exception {
-        // Dummy exam archive
-        Path examArchivePath = Path.of(examsArchivePath, "some-exam-archive.zip");
-        if (!Files.exists(examArchivePath)) {
-            Files.createDirectories(Path.of(examsArchivePath));
-            Files.createFile(examArchivePath);
-        }
+        testArchiveExamAsInstructor();
 
-        // Generate an exam that has an archive
-        Course course = database.createCourse();
-        course = courseRepo.save(course);
-        var exam = database.addExam(course);
-        exam.setExamArchivePath(examArchivePath.toString());
-        examRepository.save(exam);
+        // Download the archive
+        var courses = courseRepo.findAll();
+        var course = courses.get(courses.size() - 1);
+        var exam = examRepository.findByCourseId(course.getId()).stream().findFirst().get();
+        var archive = request.getFile("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/download-archive", HttpStatus.OK, new LinkedMultiValueMap<>());
+        assertThat(archive).isNotNull();
 
-        var downloadedArchive = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/download-archive", HttpStatus.OK, String.class);
-        assertThat(downloadedArchive).isNotNull();
-        // TODO: we should try to add some additional tests here, e.g. unzip the zip file and check the content, see e.g. assertZipContains in SubmissionExportIntegrationTest
-        Files.delete(examArchivePath);
+        // Extract the archive
+        zipFileService.extractZipFileRecursively(archive.getAbsolutePath());
+        String extractedArchiveDir = archive.getPath().substring(0, archive.getPath().length() - 4);
+
+        // Check that the dummy files we created exist in the archive.
+        var filenames = Files.walk(Path.of(extractedArchiveDir)).filter(Files::isRegularFile).map(Path::getFileName).collect(Collectors.toList());
+
+        var submissions = submissionRepository.findAll();
+
+        var submission = submissions.stream().filter(s -> s instanceof FileUploadSubmission).findFirst().get();
+        assertSubmissionFilename(filenames, submission, ".png");
+
+        submission = submissions.stream().filter(s -> s instanceof TextSubmission).findFirst().get();
+        assertSubmissionFilename(filenames, submission, ".txt");
+
+        submission = submissions.stream().filter(s -> s instanceof ModelingSubmission).findFirst().get();
+        assertSubmissionFilename(filenames, submission, ".json");
+    }
+
+    private void assertSubmissionFilename(List<Path> expectedFilenames, Submission submission, String filenameExtension) {
+        var studentParticipation = (StudentParticipation) submission.getParticipation();
+        var exerciseTitle = submission.getParticipation().getExercise().getTitle();
+        var studentLogin = studentParticipation.getStudent().get().getLogin();
+        var filename = exerciseTitle + "-" + studentLogin + "-" + submission.getId() + filenameExtension;
+        assertThat(expectedFilenames).contains(Path.of(filename));
     }
 
     @Test
