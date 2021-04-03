@@ -4,7 +4,10 @@ import static com.google.gson.JsonParser.parseString;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
+import java.io.IOException;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.*;
@@ -3080,4 +3083,20 @@ public class DatabaseUtilService {
         params.add("minimumSize", String.valueOf(minimumSize));
         return params;
     }
+
+    public FileUploadSubmission createFileUploadSubmissionWithFile(FileUploadExercise fileUploadExercise, String filename) throws IOException {
+        var fileUploadSubmission = ModelFactory.generateFileUploadSubmission(true);
+        fileUploadSubmission = addFileUploadSubmission(fileUploadExercise, fileUploadSubmission, "student1");
+
+        // Create a dummy file
+        var uploadedFileDir = Path.of("./", FileUploadSubmission.buildFilePath(fileUploadExercise.getId(), fileUploadSubmission.getId()));
+        var uploadedFilePath = Path.of(uploadedFileDir.toString(), filename);
+        if (!Files.exists(uploadedFilePath)) {
+            Files.createDirectories(uploadedFileDir);
+            Files.createFile(uploadedFilePath);
+        }
+        fileUploadSubmission.setFilePath(uploadedFilePath.toString());
+        return fileUploadSubmissionRepo.save(fileUploadSubmission);
+    }
+
 }

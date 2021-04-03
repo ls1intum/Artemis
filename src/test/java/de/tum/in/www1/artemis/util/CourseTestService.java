@@ -12,12 +12,14 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
@@ -32,6 +34,7 @@ import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.programmingexercise.MockDelegate;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.GroupNotificationService;
+import de.tum.in.www1.artemis.service.ZipFileService;
 import de.tum.in.www1.artemis.service.user.UserService;
 import de.tum.in.www1.artemis.web.rest.dto.CourseManagementOverviewStatisticsDTO;
 import de.tum.in.www1.artemis.web.rest.dto.StatsForDashboardDTO;
@@ -83,6 +86,9 @@ public class CourseTestService {
 
     @Autowired
     protected RequestUtilService request;
+
+    @Autowired
+    ZipFileService zipFileService;
 
     private final int numberOfStudents = 8;
 
@@ -1173,14 +1179,23 @@ public class CourseTestService {
 
     // Test
     public void testArchiveCourseWithTestModelingAndFileUploadExercises() throws Exception {
+        var course = createCourseWithTestModelingAndFileUploadExercisesAndSubmissions();
+
+        request.put("/api/courses/" + course.getId() + "/archive", null, HttpStatus.OK);
+
+        await().until(() -> courseRepo.findById(course.getId()).get().getCourseArchivePath() != null);
+
+        var updatedCourse = courseRepo.findById(course.getId()).get();
+        assertThat(updatedCourse.getCourseArchivePath()).isNotEmpty();
+    }
+
+    private Course createCourseWithTestModelingAndFileUploadExercisesAndSubmissions() throws Exception {
         Course course = database.addCourseWithModelingAndTextAndFileUploadExercise();
         course.setEndDate(ZonedDateTime.now().minusMinutes(5));
         course = courseRepo.save(course);
 
-        // Generate submissions
         var fileUploadExercise = database.findFileUploadExerciseWithTitle(course.getExercises(), "FileUpload");
-        var fileUploadSubmission = ModelFactory.generateFileUploadSubmission(true);
-        database.addFileUploadSubmission(fileUploadExercise, fileUploadSubmission, "student1");
+        database.createFileUploadSubmissionWithFile(fileUploadExercise, "uploaded-file.png");
 
         var textExercise = database.findTextExerciseWithTitle(course.getExercises(), "Text");
         var textSubmission = ModelFactory.generateTextSubmission("example text", Language.ENGLISH, true);
@@ -1189,16 +1204,10 @@ public class CourseTestService {
         var modelingExercise = database.findModelingExerciseWithTitle(course.getExercises(), "Modeling");
         database.createAndSaveParticipationForExercise(modelingExercise, "student1");
         String emptyActivityModel = FileUtils.loadFileFromResources("test-data/model-submission/empty-activity-diagram.json");
-        ModelingSubmission submission = ModelFactory.generateModelingSubmission(emptyActivityModel, false);
+        ModelingSubmission submission = ModelFactory.generateModelingSubmission(emptyActivityModel, true);
         database.addSubmission(modelingExercise, submission, "student1");
 
-        request.put("/api/courses/" + course.getId() + "/archive", null, HttpStatus.OK);
-
-        final var courseId = course.getId();
-        await().until(() -> courseRepo.findById(courseId).get().getCourseArchivePath() != null);
-
-        var updatedCourse = courseRepo.findById(courseId).get();
-        assertThat(updatedCourse.getCourseArchivePath()).isNotEmpty();
+        return course;
     }
 
     // Test
@@ -1223,23 +1232,26 @@ public class CourseTestService {
 
     // Test
     public void testDownloadCourseArchiveAsInstructor() throws Exception {
+        // Archive the course and wait until it's complete
+        var course = createCourseWithTestModelingAndFileUploadExercisesAndSubmissions();
+        request.put("/api/courses/" + course.getId() + "/archive", null, HttpStatus.OK);
+        await().until(() -> courseRepo.findById(course.getId()).get().getCourseArchivePath() != null);
 
-        // Dummy course archive
-        Path courseArchivePath = Path.of(courseArchivesDirPath, "some-course-archive.zip");
-        if (!Files.exists(courseArchivePath)) {
-            Files.createDirectories(Path.of(courseArchivesDirPath));
-            Files.createFile(courseArchivePath);
-        }
+        // Download the archive
+        var archive = request.getFile("/api/courses/" + course.getId() + "/download-archive", HttpStatus.OK, new LinkedMultiValueMap<>());
+        assertThat(archive).isNotNull();
+        assertThat(archive).exists();
 
-        // Generate a course that has an archive
-        Course course = database.createCourse();
-        course.setCourseArchivePath(courseArchivePath.toString());
-        course = courseRepo.save(course);
+        // Extract the archive
+        zipFileService.extractZipFileRecursively(archive.getAbsolutePath());
+        String extractedArchiveDir = archive.getPath().substring(0, archive.getPath().length() - 4);
 
-        var downloadedArchive = request.get("/api/courses/" + course.getId() + "/download-archive", HttpStatus.OK, String.class);
-        assertThat(downloadedArchive).isNotNull();
-
-        Files.delete(courseArchivePath);
+        // We test for the filenames of the submissions since it's the easiest way.
+        // We don't test the directory structure
+        var filenames = Files.walk(Path.of(extractedArchiveDir)).filter(Files::isRegularFile).map(Path::getFileName).collect(Collectors.toList());
+        assertThat(filenames).contains(Path.of("FileUpload-student1-1.png"));
+        assertThat(filenames).contains(Path.of("Text-student1-2.txt"));
+        assertThat(filenames).contains(Path.of("Modeling-student1-3.json"));
     }
 
     // Test
