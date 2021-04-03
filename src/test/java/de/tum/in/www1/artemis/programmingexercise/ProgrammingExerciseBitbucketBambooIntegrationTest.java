@@ -279,4 +279,10 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
     public void testArchiveCourseWithProgrammingExercise() throws Exception {
         programmingExerciseTestService.testArchiveCourseWithProgrammingExercise();
     }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testDownloadCourseArchiveAsInstructor() throws Exception {
+        programmingExerciseTestService.testDownloadCourseArchiveAsInstructor();
+    }
 }
