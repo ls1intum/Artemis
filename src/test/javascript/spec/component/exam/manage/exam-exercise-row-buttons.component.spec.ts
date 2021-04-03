@@ -4,7 +4,8 @@ import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { Course } from 'app/entities/course.model';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
-
+import * as sinon from 'sinon';
+import { HttpResponse } from '@angular/common/http';
 import { Exam } from 'app/entities/exam.model';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { ExerciseGroupsComponent } from 'app/exam/manage/exercise-groups/exercise-groups.component';
@@ -16,6 +17,7 @@ import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.dire
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe.ts';
 import * as moment from 'moment';
+import { of } from 'rxjs';
 import { JhiEventManager } from 'ng-jhipster';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { MockRouter } from '../../../helpers/mocks/service/mock-route.service';
@@ -25,6 +27,8 @@ import { FileUploadExerciseGroupCellComponent } from 'app/exam/manage/exercise-g
 import { ModelingExerciseGroupCellComponent } from 'app/exam/manage/exercise-groups/modeling-exercise-cell/modeling-exercise-group-cell.component';
 import { ProgrammingExerciseGroupCellComponent } from 'app/exam/manage/exercise-groups/programming-exercise-cell/programming-exercise-group-cell.component';
 import { QuizExerciseGroupCellComponent } from 'app/exam/manage/exercise-groups/quiz-exercise-cell/quiz-exercise-group-cell.component';
+import { TextExerciseService } from 'app/exercises/text/manage/text-exercise/text-exercise.service';
+import { DueDateStat } from 'app/course/dashboards/instructor-course-dashboard/due-date-stat.model';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -38,16 +42,26 @@ describe('Exam Exercise Row Buttons Component', () => {
     exam.course = course;
     exam.id = 123;
 
+    const dueDateStat = { inTime: 0, late: 0 } as DueDateStat;
+
     const fileExercise = { id: 1, type: ExerciseType.FILE_UPLOAD, maxPoints: 100 };
     const programmingExercise = { id: 2, type: ExerciseType.PROGRAMMING, maxPoints: 100 };
     const modelingExercise = { id: 3, type: ExerciseType.MODELING, maxPoints: 100 };
-    const textExercise = { id: 4, type: ExerciseType.TEXT, maxPoints: 100 };
+    const textExercise = {
+        id: 4,
+        type: ExerciseType.TEXT,
+        maxPoints: 100,
+        secondCorrectionEnabled: false,
+        studentAssignedTeamIdComputed: false,
+        numberOfAssessmentsOfCorrectionRounds: [dueDateStat],
+    };
 
     let comp: ExamExerciseRowButtonsComponent;
     let fixture: ComponentFixture<ExamExerciseRowButtonsComponent>;
 
     let jhiEventManager: JhiEventManager;
     let router: Router;
+    let textExerciseService: TextExerciseService;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -74,6 +88,8 @@ describe('Exam Exercise Row Buttons Component', () => {
         comp = fixture.componentInstance;
 
         jhiEventManager = TestBed.inject(JhiEventManager);
+        textExerciseService = TestBed.inject(TextExerciseService);
+
         router = TestBed.inject(Router);
     });
 
@@ -82,15 +98,19 @@ describe('Exam Exercise Row Buttons Component', () => {
         comp.exam = exam;
     });
 
+    afterEach(function () {
+        sinon.restore();
+    });
+
     describe('check exam is over', () => {
         it('should check exam is over is true', fakeAsync(() => {
-            //setup
+            // setup
             comp.latestIndividualEndDate = moment().subtract(1, 'days');
 
-            //call
+            // call
             const isExamOver = comp.isExamOver();
 
-            //check
+            // check
             expect(isExamOver).to.be.true;
         }));
 
@@ -101,4 +121,20 @@ describe('Exam Exercise Row Buttons Component', () => {
             expect(isExamOver).to.be.false;
         }));
     });
+
+    it('should delete textExercise', fakeAsync(() => {
+        // setup
+        comp.exercise = textExercise;
+        const textExerciseServiceDeleteStub = sinon.stub(textExerciseService, 'delete').returns(
+            of(
+                new HttpResponse<{}>({ body: [] }),
+            ),
+        );
+
+        // call
+        comp.deleteExercise();
+
+        // check
+        expect(textExerciseServiceDeleteStub).to.have.been.calledOnceWith(textExercise.id);
+    }));
 });
