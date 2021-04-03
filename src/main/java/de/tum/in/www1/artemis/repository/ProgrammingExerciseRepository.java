@@ -132,12 +132,12 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     Optional<ProgrammingExercise> findWithEagerStudentParticipationsById(Long exerciseId);
 
     @Query("""
-            select pe from ProgrammingExercise pe
-            left join fetch pe.studentParticipations pep
-            left join fetch pep.student
-            left join fetch pep.submissions s
-            where pe.id = :#{#exerciseId}
-                and (s.type <> 'ILLEGAL' or s.type is null)
+            SELECT pe FROM ProgrammingExercise pe
+            LEFT JOIN FETCH pe.studentParticipations pep
+            LEFT JOIN FETCH pep.student
+            LEFT JOIN FETCH pep.submissions s
+            WHERE pe.id = :#{#exerciseId}
+                AND (s.type <> 'ILLEGAL' OR s.type IS NULL)
             """)
     Optional<ProgrammingExercise> findWithEagerStudentParticipationsStudentAndLegalSubmissionsById(Long exerciseId);
 
