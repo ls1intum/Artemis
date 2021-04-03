@@ -8,7 +8,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import javax.persistence.*;
-import javax.validation.constraints.Size;
+import javax.validation.constraints.*;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
@@ -34,18 +34,18 @@ public class Feedback extends DomainObject {
     public static final String STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER = "SCAFeedbackIdentifier:";
 
     @Size(max = 500)
-    @Column(name = "text")
+    @Column(name = "text", length = 500)
     private String text;
 
     @Size(max = FEEDBACK_DETAIL_TEXT_MAX_CHARACTERS)   // this ensures that the detail_text can be stored, even for long feedback
-    @Column(name = "detail_text")
+    @Column(name = "detail_text", length = FEEDBACK_DETAIL_TEXT_MAX_CHARACTERS)
     private String detailText;
 
     /**
      * Reference to the assessed element (e.g. model element id or text element string)
      */
     @Size(max = MAX_REFERENCE_LENGTH)
-    @Column(name = "reference")
+    @Column(name = "reference", length = MAX_REFERENCE_LENGTH)
     private String reference;
 
     /**
