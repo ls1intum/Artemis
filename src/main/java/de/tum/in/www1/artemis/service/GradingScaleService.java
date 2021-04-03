@@ -39,11 +39,18 @@ public class GradingScaleService {
         }
     }
 
-    public GradingScale saveGradingScale(GradingScale gradingScale, boolean update) {
+    public GradingScale saveGradingScale(GradingScale gradingScale) {
         Set<GradeStep> gradeSteps = gradingScale.getGradeSteps();
         gradingScale.setGradeSteps(null);
-        gradingScale = gradingScaleRepository.saveAndFlush(gradingScale);
-        return saveGradeStepsForGradingScale(gradingScale, gradeSteps, update);
+        gradingScaleRepository.saveAndFlush(gradingScale);
+        return saveGradeStepsForGradingScale(gradingScale, gradeSteps, false);
+    }
+
+    public GradingScale updateGradingScale(GradingScale gradingScale) {
+        Set<GradeStep> gradeSteps = gradingScale.getGradeSteps();
+        saveGradeStepsForGradingScale(gradingScale, gradeSteps, true);
+        gradingScale.setGradeSteps(null);
+        return gradingScaleRepository.saveAndFlush(gradingScale);
     }
 
     private GradingScale saveGradeStepsForGradingScale(GradingScale gradingScale, Set<GradeStep> gradeSteps, boolean update) {
@@ -62,7 +69,7 @@ public class GradingScaleService {
             }
 
             if (update) {
-                gradeStepRepository.deleteAllGradeStepsForGradingScaleById(gradingScale.getId());
+                deleteAllGradeStepsForGradingScale(gradingScale);
             }
 
             for (GradeStep gradeStep : gradeSteps) {
@@ -84,6 +91,13 @@ public class GradingScaleService {
         boolean validLastElement = sortedGradeSteps.get(sortedGradeSteps.size() - 1).isUpperBoundInclusive()
                 && sortedGradeSteps.get(sortedGradeSteps.size() - 1).getUpperBoundPercentage() == 100;
         return validAdjacency && validFirstElement && validLastElement;
+    }
+
+    public void deleteAllGradeStepsForGradingScale(GradingScale gradingScale) {
+        List<GradeStep> gradeSteps = gradeStepRepository.findByGradingScale_Id(gradingScale.getId());
+        for (GradeStep gradeStep : gradeSteps) {
+            gradeStepRepository.deleteById(gradeStep.getId());
+        }
     }
 
 }

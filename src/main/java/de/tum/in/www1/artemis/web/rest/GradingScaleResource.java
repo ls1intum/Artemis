@@ -4,7 +4,7 @@ import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.badRequest;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.Optional;
+import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,7 +21,6 @@ import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.GradingScaleRepository;
 import de.tum.in.www1.artemis.service.GradingScaleService;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
-import de.tum.in.www1.artemis.web.rest.util.ResponseUtil;
 
 @RestController
 @RequestMapping("/api")
@@ -54,30 +53,30 @@ public class GradingScaleResource {
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<GradingScale> getGradingScaleForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get grading scale for course: {}", courseId);
-        Optional<GradingScale> gradingScale = gradingScaleRepository.findByCourse_Id(courseId);
-        return gradingScale.map(ResponseEntity::ok).orElseGet(ResponseUtil::notFound);
+        GradingScale gradingScale = gradingScaleRepository.findByCourseIdOrElseThrow(courseId);
+        return ResponseEntity.ok(gradingScale);
     }
 
     @GetMapping("/courses/{courseId}/exams/{examId}/grading-scale")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<GradingScale> getGradingScaleForExam(@PathVariable Long examId) {
         log.debug("REST request to get grading scale for exam: {}", examId);
-        Optional<GradingScale> gradingScale = gradingScaleRepository.findByExam_Id(examId);
-        return gradingScale.map(ResponseEntity::ok).orElseGet(ResponseUtil::notFound);
+        GradingScale gradingScale = gradingScaleRepository.findByExamIdOrElseThrow(examId);
+        return ResponseEntity.ok(gradingScale);
     }
 
     @PostMapping("/courses/{courseId}/grading-scale")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<GradingScale> createGradingScaleForCourse(@PathVariable Long courseId, @RequestBody GradingScale gradingScale) throws URISyntaxException {
         log.debug("REST request to create a grading scale for course: {}", courseId);
-        Optional<GradingScale> existingGradingScale = gradingScaleRepository.findByCourse_Id(courseId);
-        if (existingGradingScale.isPresent() || gradingScale.getGradeSteps() == null) {
+        gradingScaleRepository.findByCourseIdOrElseThrow(courseId);
+        if (gradingScale.getGradeSteps() == null) {
             return badRequest();
         }
         Course course = courseRepository.findById(courseId).orElseThrow();
         gradingScale.setCourse(course);
 
-        gradingScale = gradingScaleService.saveGradingScale(gradingScale, false);
+        gradingScale = gradingScaleService.saveGradingScale(gradingScale);
         return ResponseEntity.created(new URI("/api/courses/" + courseId + "/grading-scale/")).headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, ""))
                 .body(gradingScale);
     }
@@ -87,14 +86,14 @@ public class GradingScaleResource {
     public ResponseEntity<GradingScale> createGradingScaleForExam(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody GradingScale gradingScale)
             throws URISyntaxException {
         log.debug("REST request to create a grading scale for exam: {}", examId);
-        Optional<GradingScale> existingGradingScale = gradingScaleRepository.findByExam_Id(examId);
-        if (existingGradingScale.isPresent() || gradingScale.getGradeSteps() == null) {
+        gradingScaleRepository.findByExamIdOrElseThrow(examId);
+        if (gradingScale.getGradeSteps() == null) {
             return badRequest();
         }
         Exam exam = examRepository.findById(examId).orElseThrow();
         gradingScale.setExam(exam);
 
-        gradingScale = gradingScaleService.saveGradingScale(gradingScale, false);
+        gradingScale = gradingScaleService.saveGradingScale(gradingScale);
         return ResponseEntity.created(new URI("/api/courses/" + courseId + "/exams/" + examId + "/grading-scale/"))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, "")).body(gradingScale);
     }
@@ -103,10 +102,10 @@ public class GradingScaleResource {
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<GradingScale> updateGradingScaleForCourse(@PathVariable Long courseId, @RequestBody GradingScale gradingScale) {
         log.debug("REST request to update a grading scale for course: {}", courseId);
-        if (gradingScaleRepository.findByCourse_Id(courseId).isEmpty()) {
-            return badRequest(ENTITY_NAME, "gradingScaleExists", "Grading scale doesn't exist for the given course.");
-        }
-        gradingScale = gradingScaleService.saveGradingScale(gradingScale, true);
+        GradingScale oldGradingScale = gradingScaleRepository.findByCourseIdOrElseThrow(courseId);
+        gradingScale.setId(oldGradingScale.getId());
+        gradingScale.setCourse(oldGradingScale.getCourse());
+        gradingScale = gradingScaleService.updateGradingScale(gradingScale);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, "")).body(gradingScale);
     }
 
@@ -117,7 +116,7 @@ public class GradingScaleResource {
         if (gradingScaleRepository.findByExam_Id(examId).isEmpty()) {
             return badRequest(ENTITY_NAME, "gradingScaleExists", "Grading scale doesn't exist for the given course.");
         }
-        gradingScale = gradingScaleService.saveGradingScale(gradingScale, true);
+        gradingScale = gradingScaleService.updateGradingScale(gradingScale);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, "")).body(gradingScale);
     }
 
@@ -125,7 +124,9 @@ public class GradingScaleResource {
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Void> deleteGradingScaleForCourse(@PathVariable Long courseId) {
         log.debug("REST request to delete the grading scale for course: {}", courseId);
-        gradingScaleRepository.deleteByCourse_Id(courseId);
+        GradingScale gradingScale = gradingScaleRepository.findByCourseIdOrElseThrow(courseId);
+        gradingScaleService.deleteAllGradeStepsForGradingScale(gradingScale);
+        gradingScaleRepository.deleteInBatch(List.of(gradingScale));
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, "")).build();
     }
 
@@ -133,7 +134,9 @@ public class GradingScaleResource {
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Void> deleteGradingScaleForExam(@PathVariable Long examId) {
         log.debug("REST request to delete the grading scale for exam: {}", examId);
-        gradingScaleRepository.deleteByExam_Id(examId);
+        GradingScale gradingScale = gradingScaleRepository.findByExamIdOrElseThrow(examId);
+        gradingScaleService.deleteAllGradeStepsForGradingScale(gradingScale);
+        gradingScaleRepository.deleteInBatch(List.of(gradingScale));
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, "")).build();
     }
 

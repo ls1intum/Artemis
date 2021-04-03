@@ -12,7 +12,7 @@ import org.springframework.cloud.cloudfoundry.com.fasterxml.jackson.annotation.J
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class GradeStep extends DomainObject {
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne
     @JoinColumn(name = "grading_scale_id")
     private GradingScale gradingScale;
 

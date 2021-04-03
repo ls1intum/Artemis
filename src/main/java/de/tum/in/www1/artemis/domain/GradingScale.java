@@ -4,8 +4,6 @@ import java.util.Set;
 
 import javax.persistence.*;
 
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.springframework.cloud.cloudfoundry.com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import org.springframework.cloud.cloudfoundry.com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -28,8 +26,7 @@ public class GradingScale extends DomainObject {
     @JoinColumn(name = "exam_id")
     private Exam exam;
 
-    @OneToMany(mappedBy = "gradingScale", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+    @OneToMany(mappedBy = "gradingScale", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnoreProperties("gradingScale")
     private Set<GradeStep> gradeSteps;
 
