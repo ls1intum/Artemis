@@ -3084,6 +3084,27 @@ public class DatabaseUtilService {
         return params;
     }
 
+    public Course createCourseWithTestModelingAndFileUploadExercisesAndSubmissions() throws Exception {
+        Course course = addCourseWithModelingAndTextAndFileUploadExercise();
+        course.setEndDate(ZonedDateTime.now().minusMinutes(5));
+        course = courseRepo.save(course);
+
+        var fileUploadExercise = findFileUploadExerciseWithTitle(course.getExercises(), "FileUpload");
+        createFileUploadSubmissionWithFile(fileUploadExercise, "uploaded-file.png");
+
+        var textExercise = findTextExerciseWithTitle(course.getExercises(), "Text");
+        var textSubmission = ModelFactory.generateTextSubmission("example text", Language.ENGLISH, true);
+        saveTextSubmission(textExercise, textSubmission, "student1");
+
+        var modelingExercise = findModelingExerciseWithTitle(course.getExercises(), "Modeling");
+        createAndSaveParticipationForExercise(modelingExercise, "student1");
+        String emptyActivityModel = FileUtils.loadFileFromResources("test-data/model-submission/empty-activity-diagram.json");
+        ModelingSubmission submission = ModelFactory.generateModelingSubmission(emptyActivityModel, true);
+        addSubmission(modelingExercise, submission, "student1");
+
+        return course;
+    }
+
     public FileUploadSubmission createFileUploadSubmissionWithFile(FileUploadExercise fileUploadExercise, String filename) throws IOException {
         var fileUploadSubmission = ModelFactory.generateFileUploadSubmission(true);
         fileUploadSubmission = addFileUploadSubmission(fileUploadExercise, fileUploadSubmission, "student1");

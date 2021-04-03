@@ -1179,7 +1179,7 @@ public class CourseTestService {
 
     // Test
     public void testArchiveCourseWithTestModelingAndFileUploadExercises() throws Exception {
-        var course = createCourseWithTestModelingAndFileUploadExercisesAndSubmissions();
+        var course = database.createCourseWithTestModelingAndFileUploadExercisesAndSubmissions();
 
         request.put("/api/courses/" + course.getId() + "/archive", null, HttpStatus.OK);
 
@@ -1187,27 +1187,6 @@ public class CourseTestService {
 
         var updatedCourse = courseRepo.findById(course.getId()).get();
         assertThat(updatedCourse.getCourseArchivePath()).isNotEmpty();
-    }
-
-    private Course createCourseWithTestModelingAndFileUploadExercisesAndSubmissions() throws Exception {
-        Course course = database.addCourseWithModelingAndTextAndFileUploadExercise();
-        course.setEndDate(ZonedDateTime.now().minusMinutes(5));
-        course = courseRepo.save(course);
-
-        var fileUploadExercise = database.findFileUploadExerciseWithTitle(course.getExercises(), "FileUpload");
-        database.createFileUploadSubmissionWithFile(fileUploadExercise, "uploaded-file.png");
-
-        var textExercise = database.findTextExerciseWithTitle(course.getExercises(), "Text");
-        var textSubmission = ModelFactory.generateTextSubmission("example text", Language.ENGLISH, true);
-        database.saveTextSubmission(textExercise, textSubmission, "student1");
-
-        var modelingExercise = database.findModelingExerciseWithTitle(course.getExercises(), "Modeling");
-        database.createAndSaveParticipationForExercise(modelingExercise, "student1");
-        String emptyActivityModel = FileUtils.loadFileFromResources("test-data/model-submission/empty-activity-diagram.json");
-        ModelingSubmission submission = ModelFactory.generateModelingSubmission(emptyActivityModel, true);
-        database.addSubmission(modelingExercise, submission, "student1");
-
-        return course;
     }
 
     // Test
@@ -1233,7 +1212,7 @@ public class CourseTestService {
     // Test
     public void testDownloadCourseArchiveAsInstructor() throws Exception {
         // Archive the course and wait until it's complete
-        var course = createCourseWithTestModelingAndFileUploadExercisesAndSubmissions();
+        var course = database.createCourseWithTestModelingAndFileUploadExercisesAndSubmissions();
         request.put("/api/courses/" + course.getId() + "/archive", null, HttpStatus.OK);
         await().until(() -> courseRepo.findById(course.getId()).get().getCourseArchivePath() != null);
 
