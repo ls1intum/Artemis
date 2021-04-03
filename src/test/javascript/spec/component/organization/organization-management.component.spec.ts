@@ -54,9 +54,9 @@ describe('OrganizationManagementComponent', () => {
         organization2.id = 6;
         organization2.name = 'orgTwo';
 
-        const numOfUsersAndCoursesOfOrganizations = {};
-        numOfUsersAndCoursesOfOrganizations[5] = { users: 1, courses: 1 };
-        numOfUsersAndCoursesOfOrganizations[6] = { users: 2, courses: 2 };
+        const numOfUsersAndCoursesOfOrganizations = [];
+        numOfUsersAndCoursesOfOrganizations.push({ organizationId: 5, numberOfUsers: 1, numberOfCourses: 1 });
+        numOfUsersAndCoursesOfOrganizations.push({ organizationId: 6, numberOfUsers: 2, numberOfCourses: 2 });
 
         component.organizations = [organization1];
         spyOn(organizationService, 'getOrganizations').and.returnValue(Observable.of([organization1, organization2]));

@@ -19,6 +19,7 @@ import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.OrganizationRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.util.ModelFactory;
+import de.tum.in.www1.artemis.web.rest.dto.OrganizationCountDTO;
 
 public class OrganizationIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -292,18 +293,17 @@ public class OrganizationIntegrationTest extends AbstractSpringIntegrationBamboo
         course1 = courseRepo.save(course1);
 
         Organization organization = database.createOrganization();
-        organization.getCourses().add(course1);
-        organization.getUsers().add(users.get(0));
         organization = organizationRepo.save(organization);
 
-        Map<Long, Map> result = request.getMap("/api/organizations/count-all", HttpStatus.OK, Long.class, Map.class);
+        courseRepo.addOrganizationToCourse(course1.getId(), organization);
+        userRepo.addOrganizationToUser(users.get(0).getId(), organization);
+
+        List<OrganizationCountDTO> result = request.getList("/api/organizations/count-all", HttpStatus.OK, OrganizationCountDTO.class);
 
         assertThat(result).hasSize(1);
 
-        Map<String, Integer> resultEntry = (Map<String, Integer>) result.get(organization.getId());
-        // TODO: Daniel Crazzolara this assertation fails, please fix it
-        // assertThat(resultEntry.get("users")).isEqualTo(1);
-        // assertThat(resultEntry.get("courses")).isEqualTo(1);
+        assertThat(result.get(0).getNumberOfCourses()).isEqualTo(1);
+        assertThat(result.get(0).getNumberOfUsers()).isEqualTo(1);
     }
 
     /**
@@ -317,15 +317,15 @@ public class OrganizationIntegrationTest extends AbstractSpringIntegrationBamboo
         course1 = courseRepo.save(course1);
 
         Organization organization = database.createOrganization();
-        organization.getCourses().add(course1);
-        organization.getUsers().add(users.get(0));
         organization = organizationRepo.save(organization);
 
-        Map<String, Long> result = request.getMap("/api/organizations/" + organization.getId() + "/count", HttpStatus.OK, String.class, Long.class);
+        courseRepo.addOrganizationToCourse(course1.getId(), organization);
+        userRepo.addOrganizationToUser(users.get(0).getId(), organization);
 
-        // TODO: Daniel Crazzolara this assertation fails, please fix it
-        // assertThat(result.get("users")).isEqualTo(1);
-        // assertThat(result.get("courses")).isEqualTo(1);
+        OrganizationCountDTO result = request.get("/api/organizations/" + organization.getId() + "/count", HttpStatus.OK, OrganizationCountDTO.class);
+
+        assertThat(result.getNumberOfUsers()).isEqualTo(1);
+        assertThat(result.getNumberOfCourses()).isEqualTo(1);
     }
 
     /**
@@ -340,15 +340,20 @@ public class OrganizationIntegrationTest extends AbstractSpringIntegrationBamboo
         Organization organization = database.createOrganization();
         organization = organizationRepo.save(organization);
 
+        Course course1 = ModelFactory.generateCourse(null, ZonedDateTime.now(), ZonedDateTime.now(), new HashSet<>(), "testcourse1", "tutor", "instructor");
+        course1 = courseRepo.save(course1);
+        courseRepo.addOrganizationToCourse(course1.getId(), organization);
+
+        userRepo.addOrganizationToUser(users.get(0).getId(), organization);
+
         Organization result = request.get("/api/organizations/" + organization.getId(), HttpStatus.OK, Organization.class);
         Organization resultWithCoursesAndUsers = request.get("/api/organizations/" + organization.getId() + "/full", HttpStatus.OK, Organization.class);
 
         assertThat(result.getId()).isEqualTo(organization.getId());
         assertThat(result.getName()).isEqualTo(organization.getName());
 
-        // TODO: Daniel Crazzolara the following checks do not really make sense, do you mean isNotEmpty()?
-        assertThat(resultWithCoursesAndUsers.getCourses()).isNotNull();
-        assertThat(resultWithCoursesAndUsers.getUsers()).isNotNull();
+        assertThat(resultWithCoursesAndUsers.getCourses()).contains(course1);
+        assertThat(resultWithCoursesAndUsers.getUsers()).contains(users.get(0));
     }
 
     /**
@@ -364,12 +369,12 @@ public class OrganizationIntegrationTest extends AbstractSpringIntegrationBamboo
         course1 = courseRepo.save(course1);
 
         Organization organization = database.createOrganization();
-        organization.getCourses().add(course1);
         organization = organizationRepo.save(organization);
 
+        courseRepo.addOrganizationToCourse(course1.getId(), organization);
+
         List<Organization> result = request.getList("/api/organizations/course/" + course1.getId(), HttpStatus.OK, Organization.class);
-        // TODO: Daniel Crazzolara this assertation fails, please fix it
-        // assertThat(result).contains(organization);
+        assertThat(result).contains(organization);
     }
 
     /**
@@ -382,13 +387,13 @@ public class OrganizationIntegrationTest extends AbstractSpringIntegrationBamboo
         jiraRequestMockProvider.enableMockingOfRequests();
 
         Organization organization = database.createOrganization();
-        organization.getUsers().add(users.get(0));
         organization = organizationRepo.save(organization);
+
+        userRepo.addOrganizationToUser(users.get(0).getId(), organization);
 
         List<Organization> result = request.getList("/api/organizations/user/" + users.get(0).getId(), HttpStatus.OK, Organization.class);
 
-        // TODO: Daniel Crazzolara this assertation fails, please fix it
-        // assertThat(result).contains(organization);
+        assertThat(result).contains(organization);
     }
 
     /**

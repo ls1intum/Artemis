@@ -16,6 +16,7 @@ import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.OrganizationRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.OrganizationService;
+import de.tum.in.www1.artemis.web.rest.dto.OrganizationCountDTO;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
 /**
@@ -194,11 +195,12 @@ public class OrganizationResource {
      */
     @GetMapping("/organizations/{organizationId}/count")
     @PreAuthorize("hasAnyRole('ADMIN')")
-    public ResponseEntity<Map<String, Long>> getNumberOfUsersAndCoursesByOrganization(@PathVariable long organizationId) {
+    public ResponseEntity<OrganizationCountDTO> getNumberOfUsersAndCoursesByOrganization(@PathVariable long organizationId) {
         log.debug("REST request to get number of users and courses of organization : {}", organizationId);
-        Map<String, Long> numberOfUsersAndCourses = new HashMap<>();
-        numberOfUsersAndCourses.put("users", organizationRepository.getNumberOfUsersByOrganizationId(organizationId));
-        numberOfUsersAndCourses.put("courses", organizationRepository.getNumberOfCoursesByOrganizationId(organizationId));
+
+        OrganizationCountDTO numberOfUsersAndCourses = new OrganizationCountDTO(organizationId, organizationRepository.getNumberOfUsersByOrganizationId(organizationId),
+                organizationRepository.getNumberOfCoursesByOrganizationId(organizationId));
+
         return new ResponseEntity<>(numberOfUsersAndCourses, HttpStatus.OK);
     }
 
@@ -210,16 +212,14 @@ public class OrganizationResource {
      */
     @GetMapping("/organizations/count-all")
     @PreAuthorize("hasAnyRole('ADMIN')")
-    public ResponseEntity<Map<Long, Map<String, Long>>> getNumberOfUsersAndCoursesOfAllOrganizations() {
+    public ResponseEntity<List<OrganizationCountDTO>> getNumberOfUsersAndCoursesOfAllOrganizations() {
         log.debug("REST request to get number of users and courses of all organizations");
-        Map<Long, Map<String, Long>> result = new HashMap<>();
 
+        List<OrganizationCountDTO> result = new ArrayList<>();
         List<Organization> organizations = organizationRepository.findAll();
         for (Organization organization : organizations) {
-            Map<String, Long> numberOfUsersAndCourses = new HashMap<>();
-            numberOfUsersAndCourses.put("users", organizationRepository.getNumberOfUsersByOrganizationId(organization.getId()));
-            numberOfUsersAndCourses.put("courses", organizationRepository.getNumberOfCoursesByOrganizationId(organization.getId()));
-            result.put(organization.getId(), numberOfUsersAndCourses);
+            result.add(new OrganizationCountDTO(organization.getId(), organizationRepository.getNumberOfUsersByOrganizationId(organization.getId()),
+                    organizationRepository.getNumberOfCoursesByOrganizationId(organization.getId())));
         }
 
         return new ResponseEntity<>(result, HttpStatus.OK);
