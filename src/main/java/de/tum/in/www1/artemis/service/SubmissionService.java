@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
+import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.UserRepository;
@@ -183,8 +184,8 @@ public class SubmissionService {
             participations = studentParticipationRepository.findByExerciseIdWithLatestSubmissionWithoutManualResults(exercise.getId());
         }
 
-        List<Submission> submissionsWithoutResult = participations.stream().map(participation -> participation.findLatestSubmission(true)).filter(Optional::isPresent)
-                .map(Optional::get).collect(toList());
+        List<Submission> submissionsWithoutResult = participations.stream().map(Participation::findLatesLegalOrIllegalSubmission).filter(Optional::isPresent).map(Optional::get)
+                .collect(toList());
 
         if (correctionRound > 0) {
             // remove submission if user already assessed first correction round
