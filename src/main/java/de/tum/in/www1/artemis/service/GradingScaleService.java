@@ -42,16 +42,22 @@ public class GradingScaleService {
     public GradingScale saveGradingScale(GradingScale gradingScale, boolean update) {
         Set<GradeStep> gradeSteps = gradingScale.getGradeSteps();
         gradingScale.setGradeSteps(null);
-        gradingScaleRepository.saveAndFlush(gradingScale);
+        gradingScale = gradingScaleRepository.saveAndFlush(gradingScale);
         return saveGradeStepsForGradingScale(gradingScale, gradeSteps, update);
     }
 
     private GradingScale saveGradeStepsForGradingScale(GradingScale gradingScale, Set<GradeStep> gradeSteps, boolean update) {
         if (gradeSteps != null) {
-            if (gradeSteps.stream().allMatch(GradeStep::isValid)) {
-                throw new BadRequestAlertException("Not all grade steps are follow the correct format.", "gradeStep", "invalidFormat");
+            if (!gradeSteps.stream().allMatch(GradeStep::isValid)) {
+                if (!update) {
+                    gradingScaleRepository.deleteById(gradingScale.getId());
+                }
+                throw new BadRequestAlertException("Not all grade steps are following the correct format.", "gradeStep", "invalidFormat");
             }
             if (!gradeStepSetMapsToValidGradingScale(gradeSteps)) {
+                if (!update) {
+                    gradingScaleRepository.deleteById(gradingScale.getId());
+                }
                 throw new BadRequestAlertException("Grade step set can't match to a valid grading scale.", "gradeStep", "invalidFormat");
             }
 

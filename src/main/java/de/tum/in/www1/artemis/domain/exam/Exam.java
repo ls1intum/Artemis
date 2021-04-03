@@ -104,6 +104,7 @@ public class Exam extends DomainObject {
     private String courseName;
 
     @OneToOne(mappedBy = "exam", cascade = CascadeType.ALL)
+    @JsonIgnoreProperties("exam")
     private GradingScale gradingScale;
 
     @ManyToOne

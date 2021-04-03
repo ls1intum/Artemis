@@ -19,4 +19,6 @@ public interface GradeStepRepository extends JpaRepository<GradeStep, Long> {
 
     @Query("delete from GradeStep gs where gs.gradingScale.id=:gradingScaleId")
     void deleteAllGradeStepsForGradingScaleById(@Param("gradingScaleId") Long gradingScaleId);
+
+    void deleteByGradingScale_Id(@Param("gradingScaleId") Long gradingScaleId);
 }

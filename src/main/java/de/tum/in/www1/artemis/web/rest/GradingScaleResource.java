@@ -50,7 +50,7 @@ public class GradingScaleResource {
         this.examRepository = examRepository;
     }
 
-    @GetMapping("/courses/{courseId}/grading-scale/")
+    @GetMapping("/courses/{courseId}/grading-scale")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<GradingScale> getGradingScaleForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get grading scale for course: {}", courseId);
@@ -58,7 +58,7 @@ public class GradingScaleResource {
         return gradingScale.map(ResponseEntity::ok).orElseGet(ResponseUtil::notFound);
     }
 
-    @GetMapping("/courses/{courseId}/exams/{examId}/grading-scale/")
+    @GetMapping("/courses/{courseId}/exams/{examId}/grading-scale")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<GradingScale> getGradingScaleForExam(@PathVariable Long examId) {
         log.debug("REST request to get grading scale for exam: {}", examId);
@@ -66,7 +66,7 @@ public class GradingScaleResource {
         return gradingScale.map(ResponseEntity::ok).orElseGet(ResponseUtil::notFound);
     }
 
-    @PostMapping("/courses/{courseId}/grading-scale/")
+    @PostMapping("/courses/{courseId}/grading-scale")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<GradingScale> createGradingScaleForCourse(@PathVariable Long courseId, @RequestBody GradingScale gradingScale) throws URISyntaxException {
         log.debug("REST request to create a grading scale for course: {}", courseId);
@@ -82,7 +82,7 @@ public class GradingScaleResource {
                 .body(gradingScale);
     }
 
-    @PostMapping("/courses/{courseId}/exams/{examId}/grading-scale/")
+    @PostMapping("/courses/{courseId}/exams/{examId}/grading-scale")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<GradingScale> createGradingScaleForExam(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody GradingScale gradingScale)
             throws URISyntaxException {
@@ -99,7 +99,7 @@ public class GradingScaleResource {
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, "")).body(gradingScale);
     }
 
-    @PutMapping("/courses/{courseId}/grading-scale/")
+    @PutMapping("/courses/{courseId}/grading-scale")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<GradingScale> updateGradingScaleForCourse(@PathVariable Long courseId, @RequestBody GradingScale gradingScale) {
         log.debug("REST request to update a grading scale for course: {}", courseId);
@@ -110,7 +110,7 @@ public class GradingScaleResource {
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, "")).body(gradingScale);
     }
 
-    @PutMapping("/courses/{courseId}/exams/{examId}/grading-scale/")
+    @PutMapping("/courses/{courseId}/exams/{examId}/grading-scale")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<GradingScale> updateGradingScaleForExam(@PathVariable Long examId, @RequestBody GradingScale gradingScale) {
         log.debug("REST request to update a grading scale for exam: {}", examId);
@@ -121,19 +121,19 @@ public class GradingScaleResource {
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, "")).body(gradingScale);
     }
 
-    @DeleteMapping("/courses/{courseId}/grading-scale/")
+    @DeleteMapping("/courses/{courseId}/grading-scale")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Void> deleteGradingScaleForCourse(@PathVariable Long courseId) {
         log.debug("REST request to delete the grading scale for course: {}", courseId);
-        gradingScaleRepository.deleteGradingScaleForCourse(courseId);
+        gradingScaleRepository.deleteByCourse_Id(courseId);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, "")).build();
     }
 
-    @DeleteMapping("/courses/{courseId}/exams/{examId}/grading-scale/")
+    @DeleteMapping("/courses/{courseId}/exams/{examId}/grading-scale")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Void> deleteGradingScaleForExam(@PathVariable Long examId) {
         log.debug("REST request to delete the grading scale for exam: {}", examId);
-        gradingScaleRepository.deleteGradingScaleForExam(examId);
+        gradingScaleRepository.deleteByExam_Id(examId);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, "")).build();
     }
 
