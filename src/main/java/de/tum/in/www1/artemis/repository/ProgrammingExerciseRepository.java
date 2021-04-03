@@ -360,7 +360,7 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
             WHERE p.exercise.assessmentType <> 'AUTOMATIC'
                 AND p.exercise.exerciseGroup.exam.id = :#{#examId}
                 AND s IS NOT EMPTY
-                AND (s.type <> 'ILLEGAL' or s.type is null)
+                AND (s.type <> 'ILLEGAL' OR s.type is null)
             """)
     long countLegalSubmissionsByExamIdSubmitted(@Param("examId") Long examId);
 
