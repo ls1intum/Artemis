@@ -29,7 +29,7 @@ public class TextBlock implements Serializable {
 
     @Id
     @Size(min = 40, max = 40)
-    @Column(name = "id", unique = true, columnDefinition = "CHAR(40)")
+    @Column(name = "id", unique = true, columnDefinition = "CHAR(40)", length = 40)
     private String id;
 
     @Column(name = "text", nullable = false)
