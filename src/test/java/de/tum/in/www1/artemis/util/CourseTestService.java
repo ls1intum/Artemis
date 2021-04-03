@@ -1211,10 +1211,12 @@ public class CourseTestService {
 
     // Test
     public void testDownloadCourseArchiveAsInstructor() throws Exception {
+        submissionRepo.deleteAll();
+
         // Archive the course and wait until it's complete
-        var course = database.createCourseWithTestModelingAndFileUploadExercisesAndSubmissions();
-        request.put("/api/courses/" + course.getId() + "/archive", null, HttpStatus.OK);
-        await().until(() -> courseRepo.findById(course.getId()).get().getCourseArchivePath() != null);
+        testArchiveCourseWithTestModelingAndFileUploadExercises();
+
+        var course = courseRepo.findAll().stream().findFirst().get();
 
         // Download the archive
         var archive = request.getFile("/api/courses/" + course.getId() + "/download-archive", HttpStatus.OK, new LinkedMultiValueMap<>());
@@ -1228,9 +1230,17 @@ public class CourseTestService {
         // We test for the filenames of the submissions since it's the easiest way.
         // We don't test the directory structure
         var filenames = Files.walk(Path.of(extractedArchiveDir)).filter(Files::isRegularFile).map(Path::getFileName).collect(Collectors.toList());
-        assertThat(filenames).contains(Path.of("FileUpload-student1-1.png"));
-        assertThat(filenames).contains(Path.of("Text-student1-2.txt"));
-        assertThat(filenames).contains(Path.of("Modeling-student1-3.json"));
+
+        var submissions = submissionRepo.findAll();
+
+        var fileUploadSubmissionId = submissions.stream().filter(submission -> submission instanceof FileUploadSubmission).findFirst().get().getId();
+        assertThat(filenames).contains(Path.of("FileUpload-student1-" + fileUploadSubmissionId + ".png"));
+
+        var textSubmissionId = submissions.stream().filter(submission -> submission instanceof TextSubmission).findFirst().get().getId();
+        assertThat(filenames).contains(Path.of("Text-student1-" + textSubmissionId + ".txt"));
+
+        var modelingSubmission = submissions.stream().filter(submission -> submission instanceof ModelingSubmission).findFirst().get().getId();
+        assertThat(filenames).contains(Path.of("Modeling-student1-" + modelingSubmission + ".json"));
     }
 
     // Test
