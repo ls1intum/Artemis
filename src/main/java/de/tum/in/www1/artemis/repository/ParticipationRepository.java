@@ -39,7 +39,7 @@ public interface ParticipationRepository extends JpaRepository<Participation, Lo
             SELECT p FROM Participation p
             LEFT JOIN FETCH p.submissions s
             WHERE p.id = :#{#participationId}
-                AND (s.type <> 'ILLEGAL' or s.type is null)
+                AND (s.type <> 'ILLEGAL' OR s.type IS NULL)
             """)
     Optional<Participation> findWithEagerLegalSubmissionsById(Long participationId);
 
