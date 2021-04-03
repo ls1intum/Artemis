@@ -76,7 +76,7 @@ public class GradeStepResource {
         return gradeStep.map(ResponseEntity::ok).orElseGet(ResponseUtil::notFound);
     }
 
-    @GetMapping("/courses/{courseId}/grading-scale/grade-steps")
+    @GetMapping("/courses/{courseId}/grading-scale/grade-step")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<GradeStep> getGradeStepByPercentageForCourse(@PathVariable Long courseId, @RequestParam Integer gradePercentage) {
         log.debug("REST request to get grade step for grade percentage {} for course: {}", gradePercentage, courseId);
@@ -88,7 +88,7 @@ public class GradeStepResource {
         return ResponseEntity.ok(gradeStep);
     }
 
-    @GetMapping("/courses/{courseId}/exams/{examId}/grading-scale/grade-steps")
+    @GetMapping("/courses/{courseId}/exams/{examId}/grading-scale/grade-step")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<GradeStep> getGradeStepByPercentageForExam(@PathVariable Long examId, @RequestParam Integer gradePercentage) {
         log.debug("REST request to get grade step for grade percentage {} for exam: {}", gradePercentage, examId);
