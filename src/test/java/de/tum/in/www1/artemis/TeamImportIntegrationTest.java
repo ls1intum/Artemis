@@ -31,16 +31,16 @@ import de.tum.in.www1.artemis.util.ModelFactory;
 public class TeamImportIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
-    CourseRepository courseRepo;
+    private CourseRepository courseRepo;
 
     @Autowired
-    ExerciseRepository exerciseRepo;
+    private ExerciseRepository exerciseRepo;
 
     @Autowired
-    TeamRepository teamRepo;
+    private TeamRepository teamRepo;
 
     @Autowired
-    UserRepository userRepo;
+    private UserRepository userRepo;
 
     private enum ImportType {
         FROM_EXERCISE, FROM_LIST
@@ -215,7 +215,7 @@ public class TeamImportIntegrationTest extends AbstractSpringIntegrationBambooBi
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testImportTeamsFromExerciseIntoExerciseWithTeamShortNameConflictsUsingCreateOnlyStrategy() throws Exception {
         List<Team> sourceTeamsWithoutConflict = database.addTeamsForExercise(sourceExercise, "sourceTeam", 1, tutor);
-        List<Team> sourceTeamsWithTeamShortNameConflict = database.addTeamsForExercise(sourceExercise, "sameShortName", "other", 2, tutor);
+        database.addTeamsForExercise(sourceExercise, "sameShortName", "other", 2, tutor);
         testImportTeamsIntoExerciseWithTeamShortNameConflictsUsingCreateOnlyStrategy(ImportType.FROM_EXERCISE, null, sourceTeamsWithoutConflict);
     }
 

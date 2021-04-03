@@ -980,6 +980,16 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
         testCaseStatsMap.put("test2", new ProgrammingExerciseGradingStatisticsDTO.TestCaseStats(2, 3));
         testCaseStatsMap.put("test3", new ProgrammingExerciseGradingStatisticsDTO.TestCaseStats(2, 3));
 
+        // check some additional methods to increase test coverage
+        var test1 = testCaseStatsMap.get("test1");
+        var test2 = testCaseStatsMap.get("test2");
+        assertThat(test1.getNumFailed()).isEqualTo(0);
+        assertThat(test1.getNumPassed()).isEqualTo(5);
+        assertThat(test1.hashCode()).isNotEqualTo(test2.hashCode());
+        assertThat(test1).isNotEqualTo(test2);
+        assertThat(test1).isNotEqualTo(null);
+        assertThat(test1).isEqualTo(test1);
+
         assertThat(statistics.getTestCaseStatsMap()).containsExactlyInAnyOrderEntriesOf(testCaseStatsMap);
 
         var categoryIssuesMap = new HashMap<String, Map<Integer, Integer>>();

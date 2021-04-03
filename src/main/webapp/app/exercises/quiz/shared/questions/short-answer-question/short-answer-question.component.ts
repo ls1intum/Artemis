@@ -4,7 +4,7 @@ import { ShortAnswerQuestionUtil } from 'app/exercises/quiz/shared/short-answer-
 import { ShortAnswerSolution } from 'app/entities/quiz/short-answer-solution.model';
 import { ShortAnswerQuestion } from 'app/entities/quiz/short-answer-question.model';
 import { ShortAnswerSubmittedText } from 'app/entities/quiz/short-answer-submitted-text.model';
-import { RenderedQuizQuestionMarkDownElement } from 'app/entities/quiz/quiz-question.model';
+import { QuizQuestion, RenderedQuizQuestionMarkDownElement } from 'app/entities/quiz/quiz-question.model';
 
 @Component({
     selector: 'jhi-short-answer-question',
@@ -14,17 +14,13 @@ import { RenderedQuizQuestionMarkDownElement } from 'app/entities/quiz/quiz-ques
     encapsulation: ViewEncapsulation.None,
 })
 export class ShortAnswerQuestionComponent {
-    _question: ShortAnswerQuestion;
+    shortAnswerQuestion: ShortAnswerQuestion;
     _forceSampleSolution: boolean;
 
     @Input()
-    set question(question: ShortAnswerQuestion) {
-        this._question = question;
+    set question(question: QuizQuestion) {
+        this.shortAnswerQuestion = question as ShortAnswerQuestion;
         this.watchCollection();
-    }
-
-    get question() {
-        return this._question;
     }
 
     // TODO: Map vs. Array --> consistency
@@ -69,12 +65,12 @@ export class ShortAnswerQuestionComponent {
         const artemisMarkdown = this.artemisMarkdown;
         this.renderedQuestion = new RenderedQuizQuestionMarkDownElement();
 
-        const textParts = this.shortAnswerQuestionUtil.divideQuestionTextIntoTextParts(this.question.text!);
+        const textParts = this.shortAnswerQuestionUtil.divideQuestionTextIntoTextParts(this.shortAnswerQuestion.text!);
         this.textParts = this.shortAnswerQuestionUtil.transformTextPartsIntoHTML(textParts, this.artemisMarkdown);
 
-        this.renderedQuestion.text = artemisMarkdown.safeHtmlForMarkdown(this.question.text);
-        this.renderedQuestion.hint = artemisMarkdown.safeHtmlForMarkdown(this.question.hint);
-        this.renderedQuestion.explanation = artemisMarkdown.safeHtmlForMarkdown(this.question.explanation);
+        this.renderedQuestion.text = artemisMarkdown.safeHtmlForMarkdown(this.shortAnswerQuestion.text);
+        this.renderedQuestion.hint = artemisMarkdown.safeHtmlForMarkdown(this.shortAnswerQuestion.hint);
+        this.renderedQuestion.explanation = artemisMarkdown.safeHtmlForMarkdown(this.shortAnswerQuestion.explanation);
     }
 
     /**
@@ -89,8 +85,8 @@ export class ShortAnswerQuestionComponent {
             for (const element of textpart) {
                 if (this.shortAnswerQuestionUtil.isInputField(element!)) {
                     const submittedText = new ShortAnswerSubmittedText();
-                    submittedText.text = (<HTMLInputElement>document.getElementById('solution-' + i + '-' + j + '-' + this._question.id)).value;
-                    submittedText.spot = this.shortAnswerQuestionUtil.getSpot(this.shortAnswerQuestionUtil.getSpotNr(element!), this.question);
+                    submittedText.text = (<HTMLInputElement>document.getElementById('solution-' + i + '-' + j + '-' + this.shortAnswerQuestion.id)).value;
+                    submittedText.spot = this.shortAnswerQuestionUtil.getSpot(this.shortAnswerQuestionUtil.getSpotNr(element!), this.shortAnswerQuestion);
                     this.submittedTexts.push(submittedText);
                 }
                 j++;
@@ -109,7 +105,7 @@ export class ShortAnswerQuestionComponent {
      */
     showSampleSolution() {
         // TODO: the question is not yet available
-        this.sampleSolutions = this.shortAnswerQuestionUtil.getSampleSolutions(this.question);
+        this.sampleSolutions = this.shortAnswerQuestionUtil.getSampleSolutions(this.shortAnswerQuestion);
         this.showingSampleSolution = true;
     }
 
@@ -151,7 +147,7 @@ export class ShortAnswerQuestionComponent {
      * @param spotTag Spot tag for which to get the sample solution
      */
     getSampleSolutionForSpot(spotTag: string): ShortAnswerSolution {
-        const index = this.question.spots!.findIndex((spot) => spot.spotNr === this.shortAnswerQuestionUtil.getSpotNr(spotTag));
+        const index = this.shortAnswerQuestion.spots!.findIndex((spot) => spot.spotNr === this.shortAnswerQuestionUtil.getSpotNr(spotTag));
         return this.sampleSolutions[index];
     }
 
@@ -192,8 +188,8 @@ export class ShortAnswerQuestionComponent {
     isSubmittedTextCompletelyCorrect(spotTag: string): boolean {
         let isTextCorrect = false;
         const solutionsForSpot = this.shortAnswerQuestionUtil.getAllSolutionsForSpot(
-            this.question.correctMappings,
-            this.shortAnswerQuestionUtil.getSpot(this.shortAnswerQuestionUtil.getSpotNr(spotTag), this.question),
+            this.shortAnswerQuestion.correctMappings,
+            this.shortAnswerQuestionUtil.getSpot(this.shortAnswerQuestionUtil.getSpotNr(spotTag), this.shortAnswerQuestion),
         );
         const solutions = solutionsForSpot?.filter((solution) => solution.text?.trim() === this.getSubmittedTextForSpot(spotTag)?.text?.trim());
         if (solutions && solutions.length > 0) {

@@ -13,6 +13,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { LoginService } from 'app/core/login/login.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { StateStorageService } from 'app/core/auth/state-storage.service';
+import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 
 @Component({
     selector: 'jhi-home',
@@ -45,6 +46,9 @@ export class HomeComponent implements OnInit, AfterViewChecked {
 
     isSubmittingLogin = false;
 
+    profileInfo: ProfileInfo | undefined = undefined;
+    showResetPasswordLink = false;
+
     constructor(
         private router: Router,
         private accountService: AccountService,
@@ -63,6 +67,7 @@ export class HomeComponent implements OnInit, AfterViewChecked {
     ngOnInit() {
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
             if (profileInfo) {
+                this.profileInfo = profileInfo;
                 if (profileInfo.activeProfiles.includes('jira')) {
                     this.externalUserManagementUrl = profileInfo.externalUserManagementURL;
                     this.externalUserManagementName = profileInfo.externalUserManagementName;
@@ -78,6 +83,7 @@ export class HomeComponent implements OnInit, AfterViewChecked {
                     this.errorMessageUsername = 'home.errors.tumWarning';
                 }
                 this.isRegistrationEnabled = profileInfo.registrationEnabled || false;
+                this.showResetPasswordLink = this.isRegistrationEnabled || profileInfo.saml2?.enablePassword || false;
             }
         });
         this.accountService.identity().then((user) => {

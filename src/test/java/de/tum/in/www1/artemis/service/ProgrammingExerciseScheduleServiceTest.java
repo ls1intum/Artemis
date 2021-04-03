@@ -18,8 +18,10 @@ import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.connector.bitbucket.BitbucketRequestMockProvider;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.Visibility;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
@@ -287,5 +289,20 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
         }
         // no tests marked as AFTER_DUE_DATE => do not update scores on due date
         verify(programmingExerciseGradingService, never()).updateAllResults(programmingExercise);
+    }
+
+    @Test
+    public void testCombineTemplateBeforeRelease() throws Exception {
+        ProgrammingExercise programmingExerciseWithTemplate = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(programmingExercise.getId());
+        VcsRepositoryUrl repositoryUrl = programmingExerciseWithTemplate.getVcsTemplateRepositoryUrl();
+        doNothing().when(gitService).combineAllCommitsOfRepositoryIntoOne(repositoryUrl);
+
+        programmingExercise.releaseDate(ZonedDateTime.now().plusSeconds(Constants.SECONDS_BEFORE_RELEASE_DATE_FOR_COMBINING_TEMPLATE_COMMITS + 1));
+        programmingExerciseRepository.save(programmingExercise);
+        instanceMessageReceiveService.processScheduleProgrammingExercise(programmingExercise.getId());
+
+        Thread.sleep(1500);
+
+        verify(gitService, times(1)).combineAllCommitsOfRepositoryIntoOne(repositoryUrl);
     }
 }

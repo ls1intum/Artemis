@@ -43,6 +43,10 @@ public class RequestUtilService {
         this.mapper = mapper;
     }
 
+    public MockMvc getMvc() {
+        return mvc;
+    }
+
     public <T, R> R postWithMultipartFile(String path, T paramValue, String paramName, MockMultipartFile file, Class<R> responseType, HttpStatus expectedStatus) throws Exception {
         String jsonBody = mapper.writeValueAsString(paramValue);
         MockMultipartFile json = new MockMultipartFile(paramName, "", MediaType.APPLICATION_JSON_VALUE, jsonBody.getBytes());
@@ -323,6 +327,18 @@ public class RequestUtilService {
 
     public <T> T get(String path, HttpStatus expectedStatus, Class<T> responseType, MultiValueMap<String, String> params) throws Exception {
         return get(path, expectedStatus, responseType, params, new HttpHeaders());
+    }
+
+    public File getFile(String path, HttpStatus expectedStatus, MultiValueMap<String, String> params) throws Exception {
+        MvcResult res = mvc.perform(MockMvcRequestBuilders.get(new URI(path)).params(params).headers(new HttpHeaders())).andExpect(status().is(expectedStatus.value())).andReturn();
+        restoreSecurityContext();
+        if (!expectedStatus.is2xxSuccessful()) {
+            assertThat(res.getResponse().containsHeader("location")).as("no location header on failed request").isFalse();
+            return null;
+        }
+        final var tmpFile = File.createTempFile(res.getResponse().getHeader("filename"), null);
+        Files.write(tmpFile.toPath(), res.getResponse().getContentAsByteArray());
+        return tmpFile;
     }
 
     @SuppressWarnings("unchecked")

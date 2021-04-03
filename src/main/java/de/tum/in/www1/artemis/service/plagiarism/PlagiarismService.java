@@ -34,7 +34,7 @@ public class PlagiarismService {
      * @param exercise Exercise to get the latest plagiarism result for.
      * @return the latest plagiarism result for the given exercise.
      */
-    public Optional<PlagiarismResult> getPlagiarismResult(Exercise exercise) {
+    public Optional<PlagiarismResult<?>> getPlagiarismResult(Exercise exercise) {
         return plagiarismResultRepository.findFirstByExerciseIdOrderByLastModifiedDateDesc(exercise.getId());
     }
 
@@ -42,17 +42,8 @@ public class PlagiarismService {
      * Delete the given plagiarism result.
      * @param result the result to delete.
      */
-    public void deletePlagiarismResult(PlagiarismResult result) {
+    public void deletePlagiarismResult(PlagiarismResult<?> result) {
         plagiarismResultRepository.delete(result);
-    }
-
-    /**
-     * Return the plagiarism comparison with the given ID or empty otherwise.
-     * @param comparisonId ID of the plagiarism comparison to fetch.
-     * @return the plagiarism comparison with the given ID.
-     */
-    public Optional<PlagiarismComparison> getPlagiarismComparison(long comparisonId) {
-        return plagiarismComparisonRepository.findById(comparisonId);
     }
 
     /**
@@ -61,8 +52,9 @@ public class PlagiarismService {
      * @param comparison Plagiarism comparison to update.
      * @param status The new status of the plagiarism comparison.
      */
-    @Transactional
-    public void updateStatusOfComparison(PlagiarismComparison comparison, PlagiarismStatus status) {
+    // TODO: move to Repository
+    @Transactional // ok because of modifying query
+    public void updateStatusOfComparison(PlagiarismComparison<?> comparison, PlagiarismStatus status) {
         plagiarismComparisonRepository.updatePlagiarismComparisonStatus(comparison.getId(), status);
     }
 
@@ -72,10 +64,8 @@ public class PlagiarismService {
      * @param result TextPlagiarismResult to store in the database.
      */
     public void savePlagiarismResultAndRemovePrevious(TextPlagiarismResult result) {
-        Optional<PlagiarismResult> optionalPreviousResult = this.getPlagiarismResult(result.getExercise());
-
+        Optional<PlagiarismResult<?>> optionalPreviousResult = this.getPlagiarismResult(result.getExercise());
         plagiarismResultRepository.save(result);
-
         optionalPreviousResult.ifPresent(this::deletePlagiarismResult);
     }
 
@@ -85,11 +75,8 @@ public class PlagiarismService {
      * @param result ModelingPlagiarismResult to store in the database.
      */
     public void savePlagiarismResultAndRemovePrevious(ModelingPlagiarismResult result) {
-        Optional<PlagiarismResult> optionalPreviousResult = this.getPlagiarismResult(result.getExercise());
-
+        Optional<PlagiarismResult<?>> optionalPreviousResult = this.getPlagiarismResult(result.getExercise());
         plagiarismResultRepository.save(result);
-
         optionalPreviousResult.ifPresent(this::deletePlagiarismResult);
     }
-
 }
