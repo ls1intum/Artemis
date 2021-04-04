@@ -17,13 +17,13 @@ import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { GuidedTourState, Orientation, ResetParticipation, UserInteractionEvent } from 'app/guided-tour/guided-tour.constants';
 import { GuidedTourComponent } from 'app/guided-tour/guided-tour.component';
 import { GuidedTourMapping, GuidedTourSetting } from 'app/guided-tour/guided-tour-setting.model';
-import { ModelingTaskTourStep, TextTourStep, UserInterActionTourStep } from 'app/guided-tour/guided-tour-step.model';
+import { AssessmentTaskTourStep, ModelingTaskTourStep, TextTourStep, UserInterActionTourStep } from 'app/guided-tour/guided-tour-step.model';
 import { MockAccountService } from '../helpers/mocks/service/mock-account.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { DeviceDetectorService } from 'ngx-device-detector';
 import { Course } from 'app/entities/course.model';
 import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
-import { GuidedTourModelingTask, personUML } from 'app/guided-tour/guided-tour-task.model';
+import { AssessmentObject, GuidedTourAssessmentTask, GuidedTourModelingTask, personUML } from 'app/guided-tour/guided-tour-task.model';
 import { completedTour } from 'app/guided-tour/tours/general-tour';
 import { SinonStub, stub } from 'sinon';
 import { HttpResponse } from '@angular/common/http';
@@ -440,6 +440,88 @@ describe('GuidedTourService', () => {
                     expect(enableNextStep.calls.count()).to.equal(1);
                 }),
             ));
+        });
+        describe('init', () => {});
+        describe('getGuidedTourAvailabilityStream', () => {});
+        describe('checkModelingComponent', () => {});
+        describe('updateModelingResult', () => {});
+        describe('componentPageLoaded', () => {});
+        describe('isCurrentStep', () => {});
+        describe('isCurrentTour', () => {});
+        describe('getCurrentStepString', () => {});
+        describe('backStep', () => {});
+        describe('nextStep', () => {});
+        describe('finishGuidedTour', () => {});
+        describe('skipTour', () => {});
+        describe('subscribeToAndUpdateGuidedTourSettings', () => {});
+        describe('getLastSeenTourStepIndex', () => {});
+        describe('resetTour', () => {});
+        describe('enableUserInteraction', () => {});
+        describe('observeMutations', () => {});
+        describe('initGuidedTour', () => {});
+        describe('restartTour', () => {});
+        describe('preventBackdropFromAdvancing', () => {});
+        describe('enableTourForCourseExerciseComponent', () => {});
+        describe('enableTourForCourseOverview', () => {});
+        describe('enableTourForExercise', () => {});
+        describe('updateAssessmentResult', () => {
+            let tourWithAssessmentTourSteps: GuidedTour;
+            let tourWithAssessmentTourStep: GuidedTour;
+            let enableNextStepSpy: any;
+
+            beforeEach(() => {
+                const assessmentObject = new AssessmentObject(2, 3);
+                const assessmentObjectScoreZero = new AssessmentObject(2, 0);
+                const assessmentTask = new GuidedTourAssessmentTask('t', assessmentObject);
+                tourWithAssessmentTourSteps = {
+                    settingsKey: 'tour',
+                    resetParticipation: ResetParticipation.EXERCISE_PARTICIPATION,
+                    steps: [
+                        { assessmentTask: assessmentTask } as AssessmentTaskTourStep,
+                        new TextTourStep({ highlightSelector: '.random-selector', headlineTranslateKey: '', contentTranslateKey: '' }),
+                        new TextTourStep({ headlineTranslateKey: '', contentTranslateKey: '', orientation: Orientation.TOPLEFT }),
+                    ],
+                };
+                tourWithAssessmentTourStep = {
+                    settingsKey: 'tour',
+                    resetParticipation: ResetParticipation.EXERCISE_PARTICIPATION,
+                    steps: [{ assessmentTask: new GuidedTourAssessmentTask('t', assessmentObjectScoreZero) } as AssessmentTaskTourStep],
+                };
+                enableNextStepSpy = spyOn<any>(guidedTourService, 'enableNextStepClick').and.returnValue(of());
+            });
+            afterEach(() => {
+                jest.clearAllMocks();
+            });
+            it('should updateAssessmentResult and enableNextStepClick', fakeAsync(() => {
+                guidedTourService.currentTour = tourWithAssessmentTourSteps;
+                guidedTourService.updateAssessmentResult(2, 3);
+                tick(0);
+                expect(enableNextStepSpy.calls.count()).to.equal(1);
+            }));
+            it('should updateAssessmentResult and not enableNextStepClick as number of assessments is not correct', fakeAsync(() => {
+                guidedTourService.currentTour = tourWithAssessmentTourSteps;
+                guidedTourService.updateAssessmentResult(3, 3);
+                tick(0);
+                expect(enableNextStepSpy.calls.count()).to.equal(0);
+            }));
+            it('should updateAssessmentResult and not enableNextStepClick as score not correct', fakeAsync(() => {
+                guidedTourService.currentTour = tourWithAssessmentTourSteps;
+                guidedTourService.updateAssessmentResult(2, 1);
+                tick(0);
+                expect(enableNextStepSpy.calls.count()).to.equal(0);
+            }));
+            it('should not updateAssessmentResult as there is no assessmentTask', fakeAsync(() => {
+                guidedTourService.currentTour = tour;
+                guidedTourService.updateAssessmentResult(2, 1);
+                tick(0);
+                expect(enableNextStepSpy.calls.count()).to.equal(0);
+            }));
+            it('should not updateAssessmentResult as the totalScore is 0', fakeAsync(() => {
+                guidedTourService.currentTour = tourWithAssessmentTourStep;
+                guidedTourService.updateAssessmentResult(2, 0);
+                tick(0);
+                expect(enableNextStepSpy.calls.count()).to.equal(1);
+            }));
         });
     });
 });
