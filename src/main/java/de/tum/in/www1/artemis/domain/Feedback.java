@@ -8,7 +8,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import javax.persistence.*;
-import javax.validation.constraints.*;
+import javax.validation.constraints.Size;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
@@ -56,6 +56,9 @@ public class Feedback extends DomainObject {
 
     @Column(name = "positive")
     private Boolean positive;
+
+    @Column(name = "copied_feedback")
+    private Boolean copiedFeedback;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "type")
@@ -237,6 +240,14 @@ public class Feedback extends DomainObject {
 
     public void setGradingInstruction(GradingInstruction gradingInstruction) {
         this.gradingInstruction = gradingInstruction;
+    }
+
+    public Boolean getCopiedFeedback() {
+        return copiedFeedback;
+    }
+
+    public void setCopiedFeedback(Boolean copiedFeedback) {
+        this.copiedFeedback = copiedFeedback;
     }
 
     public List<FeedbackConflict> getFirstConflicts() {
