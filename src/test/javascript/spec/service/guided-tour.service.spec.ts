@@ -36,6 +36,7 @@ import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.serv
 import { MockCookieService } from '../helpers/mocks/service/mock-cookie.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { MockProvider } from 'ng-mocks';
+import * as sinon from 'sinon';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -446,23 +447,159 @@ describe('GuidedTourService', () => {
         describe('checkModelingComponent', () => {});
         describe('updateModelingResult', () => {});
         describe('componentPageLoaded', () => {});
-        describe('isCurrentStep', () => {});
-        describe('isCurrentTour', () => {});
-        describe('getCurrentStepString', () => {});
-        describe('backStep', () => {});
-        describe('nextStep', () => {});
-        describe('finishGuidedTour', () => {});
-        describe('skipTour', () => {});
+
+        describe('isCurrentStep', () => {
+            const step1 = new TextTourStep({ highlightSelector: '.random-selector', headlineTranslateKey: '', contentTranslateKey: '' });
+            const step2 = new TextTourStep({ headlineTranslateKey: '', contentTranslateKey: '', orientation: Orientation.TOPLEFT });
+            const guidedTour: GuidedTour = {
+                settingsKey: 'tour2',
+                resetParticipation: ResetParticipation.EXERCISE_PARTICIPATION,
+                steps: [step1, step2],
+            };
+            it('should return true if it is the current Step', () => {
+                guidedTourService.currentTour = guidedTour;
+                expect(guidedTourService.isCurrentStep(step1)).to.be.true;
+                guidedTourService.currentTourStepIndex += 1;
+                expect(guidedTourService.isCurrentStep(step2)).to.be.true;
+            });
+            it('should return false if it is not the current Step', () => {
+                guidedTourService.currentTour = guidedTour;
+                expect(guidedTourService.isCurrentStep(step2)).to.be.false;
+                guidedTourService.currentTourStepIndex += 1;
+                expect(guidedTourService.isCurrentStep(step1)).to.be.false;
+            });
+            it('should return false if current Tour is undefined', () => {
+                expect(guidedTourService.isCurrentStep(step1)).to.be.false;
+            });
+        });
+
+        describe('isCurrentTour', () => {
+            it('should return true if it is the current Tour', () => {
+                guidedTourService.currentTour = tour;
+                expect(guidedTourService.isCurrentTour(tour)).to.be.true;
+            });
+            it('should return false if it is not the current Tour', () => {
+                expect(guidedTourService.isCurrentTour(tour)).to.be.false;
+            });
+            it('should return false if the current Tour is undefined', () => {
+                guidedTourService.currentTour = tourWithCourseAndExercise;
+                expect(guidedTourService.isCurrentTour(tour)).to.be.false;
+            });
+        });
+
+        describe('getCurrentStepString', () => {
+            it('should return nothing if currentTour is undefined', () => {
+                expect(guidedTourService.getCurrentStepString()).to.be.undefined;
+            });
+            it('should return correct string if currentTour is defined', () => {
+                guidedTourService.currentTour = tour;
+                expect(guidedTourService.getCurrentStepString()).to.equal('1 / 2');
+            });
+        });
+
+        describe('backStep, nextStep', () => {
+            let currentDotSubjectSpy: any;
+            let resetSpy: any;
+
+            beforeEach(() => {
+                currentDotSubjectSpy = spyOn<any>(guidedTourService.currentDotSubject, 'next');
+                resetSpy = spyOn<any>(guidedTourService, 'resetTour');
+            });
+            afterEach(() => {
+                jest.clearAllMocks();
+            });
+            it('backStep should just return if currentTour is not defined', () => {
+                guidedTourService.backStep();
+                expect(currentDotSubjectSpy.calls.count()).to.equal(0);
+                expect(resetSpy.calls.count()).to.equal(0);
+            });
+            it('backStep should reset tour if currentTour is defined', () => {
+                guidedTourService.currentTour = tour;
+                guidedTourService.backStep();
+                expect(currentDotSubjectSpy.calls.count()).to.equal(1);
+                expect(resetSpy.calls.count()).to.equal(1);
+            });
+            it('nextStep should just return if currentTour is not defined', () => {
+                guidedTourService.nextStep();
+                expect(currentDotSubjectSpy.calls.count()).to.equal(0);
+                expect(resetSpy.calls.count()).to.equal(0);
+            });
+            it('nextStep should reset return if currentTour is defined', () => {
+                guidedTourService.currentTour = tour;
+                guidedTourService.nextStep();
+                expect(currentDotSubjectSpy.calls.count()).to.equal(1);
+            });
+        });
+        describe('finishGuidedTour', () => {
+            it('should just return if currentTour is not defined', () => {
+                guidedTourService.finishGuidedTour();
+            });
+        });
+        describe('skipTour', () => {
+            it('should just return if currentTour is not defined', () => {
+                guidedTourService.skipTour();
+            });
+        });
         describe('subscribeToAndUpdateGuidedTourSettings', () => {});
         describe('getLastSeenTourStepIndex', () => {});
         describe('resetTour', () => {});
-        describe('enableUserInteraction', () => {});
+
+        describe('enableUserInteraction', () => {
+            const addEventListener = jest.fn();
+            const htmlTarget = { addEventListener: addEventListener } as any;
+            let observeMutationsStub: SinonStub;
+            let handleWaitForSelectorEventSpy: any;
+            let querySelectorSpy: any;
+
+            beforeEach(() => {
+                guidedTourService.currentTour = tour;
+                observeMutationsStub = stub(guidedTourService, 'observeMutations');
+                handleWaitForSelectorEventSpy = spyOn<any>(guidedTourService, 'handleWaitForSelectorEvent');
+                querySelectorSpy = spyOn<any>(document, 'querySelector');
+            });
+            afterEach(() => {
+                jest.clearAllMocks();
+                sinon.restore();
+            });
+            it('should enableUserInteraction with UserInteractionEvent.WAIT_FOR_SELECTOR', fakeAsync(() => {
+                let userinteractionEvent = UserInteractionEvent.WAIT_FOR_SELECTOR;
+                guidedTourService.enableUserInteraction({} as any, userinteractionEvent);
+                expect(handleWaitForSelectorEventSpy.calls.count()).to.equal(1);
+                expect(querySelectorSpy.calls.count()).to.equal(0);
+            }));
+            it('should enableUserInteraction with UserInteractionEvent.CLICK', fakeAsync(() => {
+                let userinteractionEvent = UserInteractionEvent.CLICK;
+                guidedTourService.enableUserInteraction(htmlTarget, userinteractionEvent);
+                expect(querySelectorSpy.calls.count()).to.equal(0);
+            }));
+            it('should enableUserInteraction with UserInteractionEvent.ACE_EDITOR', fakeAsync(() => {
+                let userinteractionEvent = UserInteractionEvent.ACE_EDITOR;
+                observeMutationsStub.returns(of({ addedNodes: { length: 0 } as NodeList, removedNodes: { length: 0 } as NodeList } as MutationRecord));
+                guidedTourService.enableUserInteraction(htmlTarget, userinteractionEvent);
+                expect(querySelectorSpy.calls.count()).to.equal(1);
+            }));
+            it('should enableUserInteraction with UserInteractionEvent.MODELING', fakeAsync(() => {
+                let userinteractionEvent = UserInteractionEvent.MODELING;
+                observeMutationsStub.returns(of({ addedNodes: { length: 0 } as NodeList, removedNodes: { length: 0 } as NodeList } as MutationRecord));
+                guidedTourService.enableUserInteraction(htmlTarget, userinteractionEvent);
+                expect(querySelectorSpy.calls.count()).to.equal(1);
+            }));
+            it('should enableUserInteraction with UserInteractionEvent.ASSESS_SUBMISSION', fakeAsync(() => {
+                let isAssessmentCorrectSpy = spyOn<any>(guidedTourService, 'isAssessmentCorrect');
+                let userinteractionEvent = UserInteractionEvent.ASSESS_SUBMISSION;
+                guidedTourService.enableUserInteraction(htmlTarget, userinteractionEvent);
+                expect(isAssessmentCorrectSpy.calls.count()).to.equal(1);
+                expect(querySelectorSpy.calls.count()).to.equal(0);
+            }));
+        });
+
         describe('observeMutations', () => {});
         describe('initGuidedTour', () => {});
         describe('restartTour', () => {});
         describe('preventBackdropFromAdvancing', () => {});
         describe('enableTourForCourseExerciseComponent', () => {});
         describe('enableTourForCourseOverview', () => {});
+
         describe('enableTourForExercise', () => {
             const exerciseText = { id: 456, course: { id: 123 } as Course, type: ExerciseType.TEXT } as Exercise;
             const exerciseProgramming = { id: 456, course: { id: 123 } as Course, type: ExerciseType.PROGRAMMING } as Exercise;
