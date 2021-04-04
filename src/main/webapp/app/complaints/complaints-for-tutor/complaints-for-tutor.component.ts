@@ -17,7 +17,7 @@ import { Submission } from 'app/entities/submission.model';
     providers: [],
 })
 export class ComplaintsForTutorComponent implements OnInit {
-    @Input() complaint: Complaint;
+    @Input() complaint: Complaint | undefined;
     @Input() isTestRun = false;
     @Input() isAssessor = false;
     @Input() zeroIndent = true;

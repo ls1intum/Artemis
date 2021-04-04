@@ -25,7 +25,7 @@ export class AssessmentHeaderComponent {
     @Input() isTestRun = false;
     @Input() canOverride: boolean;
 
-    @Input() result: Result | null;
+    @Input() result: Result | undefined;
     @Input() hasComplaint = false;
     @Input() hasMoreFeedbackRequest = false;
     @Input() complaintHandled = false;
