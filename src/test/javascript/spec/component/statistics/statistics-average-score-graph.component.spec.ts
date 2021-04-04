@@ -1,7 +1,6 @@
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
 import { ArtemisTestModule } from '../../test.module';
 import { RouterTestingModule } from '@angular/router/testing';
 import { MomentModule } from 'ngx-moment';
@@ -20,7 +19,6 @@ const expect = chai.expect;
 describe('StatisticsAverageScoreGraphComponent', () => {
     let fixture: ComponentFixture<StatisticsAverageScoreGraphComponent>;
     let component: StatisticsAverageScoreGraphComponent;
-    let service: StatisticsService;
 
     const returnValue = [
         { exerciseId: 1, exerciseName: 'BridgePattern', averageScore: 20 },
@@ -52,7 +50,6 @@ describe('StatisticsAverageScoreGraphComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(StatisticsAverageScoreGraphComponent);
                 component = fixture.componentInstance;
-                service = TestBed.inject(StatisticsService);
 
                 component.exerciseAverageScores = returnValue;
                 component.courseAverage = courseAverageScore;
