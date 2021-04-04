@@ -546,7 +546,7 @@ describe('GuidedTourService', () => {
 
         describe('enableUserInteraction', () => {
             const addEventListener = jest.fn();
-            const htmlTarget = { addEventListener: addEventListener } as any;
+            const htmlTarget = { addEventListener } as any;
             let observeMutationsStub: SinonStub;
             let handleWaitForSelectorEventSpy: any;
             let querySelectorSpy: any;
@@ -562,31 +562,31 @@ describe('GuidedTourService', () => {
                 sinon.restore();
             });
             it('should enableUserInteraction with UserInteractionEvent.WAIT_FOR_SELECTOR', fakeAsync(() => {
-                let userinteractionEvent = UserInteractionEvent.WAIT_FOR_SELECTOR;
+                const userinteractionEvent = UserInteractionEvent.WAIT_FOR_SELECTOR;
                 guidedTourService.enableUserInteraction({} as any, userinteractionEvent);
                 expect(handleWaitForSelectorEventSpy.calls.count()).to.equal(1);
                 expect(querySelectorSpy.calls.count()).to.equal(0);
             }));
             it('should enableUserInteraction with UserInteractionEvent.CLICK', fakeAsync(() => {
-                let userinteractionEvent = UserInteractionEvent.CLICK;
+                const userinteractionEvent = UserInteractionEvent.CLICK;
                 guidedTourService.enableUserInteraction(htmlTarget, userinteractionEvent);
                 expect(querySelectorSpy.calls.count()).to.equal(0);
             }));
             it('should enableUserInteraction with UserInteractionEvent.ACE_EDITOR', fakeAsync(() => {
-                let userinteractionEvent = UserInteractionEvent.ACE_EDITOR;
+                const userinteractionEvent = UserInteractionEvent.ACE_EDITOR;
                 observeMutationsStub.returns(of({ addedNodes: { length: 0 } as NodeList, removedNodes: { length: 0 } as NodeList } as MutationRecord));
                 guidedTourService.enableUserInteraction(htmlTarget, userinteractionEvent);
                 expect(querySelectorSpy.calls.count()).to.equal(1);
             }));
             it('should enableUserInteraction with UserInteractionEvent.MODELING', fakeAsync(() => {
-                let userinteractionEvent = UserInteractionEvent.MODELING;
+                const userinteractionEvent = UserInteractionEvent.MODELING;
                 observeMutationsStub.returns(of({ addedNodes: { length: 0 } as NodeList, removedNodes: { length: 0 } as NodeList } as MutationRecord));
                 guidedTourService.enableUserInteraction(htmlTarget, userinteractionEvent);
                 expect(querySelectorSpy.calls.count()).to.equal(1);
             }));
             it('should enableUserInteraction with UserInteractionEvent.ASSESS_SUBMISSION', fakeAsync(() => {
-                let isAssessmentCorrectSpy = spyOn<any>(guidedTourService, 'isAssessmentCorrect');
-                let userinteractionEvent = UserInteractionEvent.ASSESS_SUBMISSION;
+                const isAssessmentCorrectSpy = spyOn<any>(guidedTourService, 'isAssessmentCorrect');
+                const userinteractionEvent = UserInteractionEvent.ASSESS_SUBMISSION;
                 guidedTourService.enableUserInteraction(htmlTarget, userinteractionEvent);
                 expect(isAssessmentCorrectSpy.calls.count()).to.equal(1);
                 expect(querySelectorSpy.calls.count()).to.equal(0);
@@ -622,7 +622,7 @@ describe('GuidedTourService', () => {
             });
             describe('return undefined if parameters are undefined', () => {
                 it('should return undefined if exercise.course is undefibed', fakeAsync(() => {
-                    let inputExercise = {} as Exercise;
+                    const inputExercise = {} as Exercise;
                     expect(guidedTourService.enableTourForExercise(inputExercise, tour, true)).to.be.undefined;
                     expect(enableTourSpy.calls.count()).to.equal(0);
                 }));
@@ -667,7 +667,7 @@ describe('GuidedTourService', () => {
                     settingsKey: 'tour',
                     resetParticipation: ResetParticipation.EXERCISE_PARTICIPATION,
                     steps: [
-                        { assessmentTask: assessmentTask } as AssessmentTaskTourStep,
+                        { assessmentTask } as AssessmentTaskTourStep,
                         new TextTourStep({ highlightSelector: '.random-selector', headlineTranslateKey: '', contentTranslateKey: '' }),
                         new TextTourStep({ headlineTranslateKey: '', contentTranslateKey: '', orientation: Orientation.TOPLEFT }),
                     ],
