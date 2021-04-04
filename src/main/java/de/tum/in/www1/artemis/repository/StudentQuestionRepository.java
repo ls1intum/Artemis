@@ -29,7 +29,7 @@ public interface StudentQuestionRepository extends JpaRepository<StudentQuestion
     @Query("select distinct student_question from StudentQuestion student_question left join student_question.lecture lecture left join student_question.exercise exercise where ( lecture.course.id = :#{#courseId} or exercise.course.id = :#{#courseId} )")
     List<StudentQuestion> findStudentQuestionsForCourse(@Param("courseId") Long courseId);
 
-    default StudentQuestion findByIdElseThrow(Long studentQuestionId) throws EntityNotFoundException {
+    default StudentQuestion findByIdElseThrow(long studentQuestionId) throws EntityNotFoundException {
         return findById(studentQuestionId).orElseThrow(() -> new EntityNotFoundException("Student Question", studentQuestionId));
     }
 }

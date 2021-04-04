@@ -5,13 +5,13 @@ import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
-import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PostAuthorize;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -23,7 +23,6 @@ import de.tum.in.www1.artemis.repository.StudentQuestionRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
-import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
 /**
@@ -81,7 +80,7 @@ public class StudentQuestionResource {
         if (studentQuestion.getId() != null) {
             throw new BadRequestAlertException("A new studentQuestion cannot already have an ID", ENTITY_NAME, "idexists");
         }
-        final var course = courseRepository.findByIdElseThrow(courseId);
+        final Course course = courseRepository.findByIdElseThrow(courseId);
         if (!this.authorizationCheckService.isAtLeastStudentInCourse(course, user)) {
             return forbidden();
         }
@@ -116,7 +115,7 @@ public class StudentQuestionResource {
             throw new BadRequestAlertException("Invalid id", ENTITY_NAME, "idnull");
         }
         courseRepository.findByIdElseThrow(courseId);
-        var existingStudentQuestion = studentQuestionRepository.findByIdElseThrow(studentQuestion.getId());
+        StudentQuestion existingStudentQuestion = studentQuestionRepository.findByIdElseThrow(studentQuestion.getId());
         if (!existingStudentQuestion.getCourse().getId().equals(courseId)) {
             return forbidden();
         }
@@ -147,19 +146,15 @@ public class StudentQuestionResource {
             return forbidden();
         }
         final User user = userRepository.getUserWithGroupsAndAuthorities();
-        Optional<StudentQuestion> optionalStudentQuestion = studentQuestionRepository.findById(questionId);
-        if (optionalStudentQuestion.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
+        StudentQuestion studentQuestion = studentQuestionRepository.findByIdElseThrow(questionId);
         courseRepository.findByIdElseThrow(courseId);
-        if (!optionalStudentQuestion.get().getCourse().getId().equals(courseId)) {
+        if (!studentQuestion.getCourse().getId().equals(courseId)) {
             return forbidden();
         }
-        if (mayUpdateStudentQuestionVotes(optionalStudentQuestion.get(), user)) {
-            StudentQuestion updatedStudentQuestion = optionalStudentQuestion.get();
-            Integer newVotes = updatedStudentQuestion.getVotes() + voteChange;
-            updatedStudentQuestion.setVotes(newVotes);
-            StudentQuestion result = studentQuestionRepository.save(updatedStudentQuestion);
+        if (mayUpdateStudentQuestionVotes(studentQuestion, user)) {
+            Integer newVotes = studentQuestion.getVotes() + voteChange;
+            studentQuestion.setVotes(newVotes);
+            StudentQuestion result = studentQuestionRepository.save(studentQuestion);
             return ResponseEntity.ok().body(result);
         }
         else {
@@ -178,15 +173,12 @@ public class StudentQuestionResource {
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<List<StudentQuestion>> getAllQuestionsForExercise(@PathVariable Long courseId, @PathVariable Long exerciseId) {
         final User user = userRepository.getUserWithGroupsAndAuthorities();
-        Optional<Exercise> exercise = exerciseRepository.findById(exerciseId);
-        if (exercise.isEmpty()) {
-            throw new EntityNotFoundException("Exercise with exerciseId " + exerciseId + " does not exist!");
-        }
+        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         courseRepository.findByIdElseThrow(courseId);
-        if (!authorizationCheckService.isAtLeastStudentForExercise(exercise.get(), user)) {
+        if (!authorizationCheckService.isAtLeastStudentForExercise(exercise, user)) {
             return forbidden();
         }
-        if (!exercise.get().getCourseViaExerciseGroupOrCourseMember().getId().equals(courseId)) {
+        if (!exercise.getCourseViaExerciseGroupOrCourseMember().getId().equals(courseId)) {
             return forbidden();
         }
         List<StudentQuestion> studentQuestions = studentQuestionRepository.findStudentQuestionsForExercise(exerciseId);
@@ -204,22 +196,19 @@ public class StudentQuestionResource {
      */
     @GetMapping("courses/{courseId}/lectures/{lectureId}/student-questions")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    @PostAuthorize("")
     public ResponseEntity<List<StudentQuestion>> getAllQuestionsForLecture(@PathVariable Long courseId, @PathVariable Long lectureId) {
-        Optional<Lecture> lecture = lectureRepository.findById(lectureId);
-        if (lecture.isEmpty()) {
-            throw new EntityNotFoundException("Lecture with lectureId " + lectureId + " does not exist!");
-        }
+        Lecture lecture = lectureRepository.findByIdElseThrow(lectureId);
         courseRepository.findByIdElseThrow(courseId);
         final User user = userRepository.getUserWithGroupsAndAuthorities();
-        if (!authorizationCheckService.isAtLeastStudentInCourse(lecture.get().getCourse(), user)) {
+        if (!authorizationCheckService.isAtLeastStudentInCourse(lecture.getCourse(), user)) {
             return forbidden();
         }
-        if (!lecture.get().getCourse().getId().equals(courseId)) {
+        if (!lecture.getCourse().getId().equals(courseId)) {
             return forbidden();
         }
         List<StudentQuestion> studentQuestions = studentQuestionRepository.findStudentQuestionsForLecture(lectureId);
         hideSensitiveInformation(studentQuestions);
-
         return new ResponseEntity<>(studentQuestions, null, HttpStatus.OK);
     }
 
@@ -265,7 +254,7 @@ public class StudentQuestionResource {
     public ResponseEntity<Void> deleteStudentQuestion(@PathVariable Long courseId, @PathVariable Long studentQuestionId) {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         courseRepository.findByIdElseThrow(courseId);
-        var studentQuestion = studentQuestionRepository.findByIdElseThrow(studentQuestionId);
+        StudentQuestion studentQuestion = studentQuestionRepository.findByIdElseThrow(studentQuestionId);
         String entity = "";
         if (studentQuestion.getLecture() != null) {
             entity = "lecture with id: " + studentQuestion.getLecture().getId();

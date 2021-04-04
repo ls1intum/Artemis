@@ -4,7 +4,6 @@ import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,7 +23,6 @@ import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
-import io.github.jhipster.web.util.ResponseUtil;
 
 /**
  * REST controller for managing StudentQuestionAnswer.
@@ -84,15 +82,12 @@ public class StudentQuestionAnswerResource {
         if (studentQuestionAnswer.getId() != null) {
             throw new BadRequestAlertException("A new studentQuestionAnswer cannot already have an ID", ENTITY_NAME, "idexists");
         }
-        var course = courseRepository.findByIdElseThrow(courseId);
+        Course course = courseRepository.findByIdElseThrow(courseId);
         if (!this.authorizationCheckService.isAtLeastStudentInCourse(course, user)) {
             return forbidden();
         }
-        Optional<StudentQuestion> optionalStudentQuestion = studentQuestionRepository.findById(studentQuestionAnswer.getQuestion().getId());
-        if (optionalStudentQuestion.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
-        if (!optionalStudentQuestion.get().getCourse().getId().equals(courseId)) {
+        StudentQuestion optionalStudentQuestion = studentQuestionRepository.findByIdElseThrow(studentQuestionAnswer.getQuestion().getId());
+        if (!optionalStudentQuestion.getCourse().getId().equals(courseId)) {
             return forbidden();
         }
         // answer to approved if written by an instructor
@@ -127,14 +122,11 @@ public class StudentQuestionAnswerResource {
             throw new BadRequestAlertException("Invalid id", ENTITY_NAME, "idnull");
         }
         courseRepository.findByIdElseThrow(courseId);
-        Optional<StudentQuestionAnswer> optionalStudentQuestionAnswer = studentQuestionAnswerRepository.findById(studentQuestionAnswer.getId());
-        if (optionalStudentQuestionAnswer.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
-        if (!optionalStudentQuestionAnswer.get().getQuestion().getCourse().getId().equals(courseId)) {
+        StudentQuestionAnswer optionalStudentQuestionAnswer = studentQuestionAnswerRepository.findByIdElseThrow(studentQuestionAnswer.getId());
+        if (!optionalStudentQuestionAnswer.getQuestion().getCourse().getId().equals(courseId)) {
             return forbidden();
         }
-        if (mayUpdateOrDeleteStudentQuestionAnswer(optionalStudentQuestionAnswer.get(), user)) {
+        if (mayUpdateOrDeleteStudentQuestionAnswer(optionalStudentQuestionAnswer, user)) {
             StudentQuestionAnswer result = studentQuestionAnswerRepository.save(studentQuestionAnswer);
             return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, studentQuestionAnswer.getId().toString())).body(result);
         }
@@ -159,14 +151,11 @@ public class StudentQuestionAnswerResource {
         if (!this.authorizationCheckService.isAtLeastStudentInCourse(course, user)) {
             return forbidden();
         }
-        Optional<StudentQuestionAnswer> questionAnswer = studentQuestionAnswerRepository.findById(id);
-        if (questionAnswer.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
-        if (!questionAnswer.get().getQuestion().getCourse().getId().equals(courseId)) {
+        StudentQuestionAnswer questionAnswer = studentQuestionAnswerRepository.findByIdElseThrow(id);
+        if (!questionAnswer.getQuestion().getCourse().getId().equals(courseId)) {
             return forbidden();
         }
-        return ResponseUtil.wrapOrNotFound(questionAnswer);
+        return ResponseEntity.ok(questionAnswer);
     }
 
     /**
@@ -180,12 +169,8 @@ public class StudentQuestionAnswerResource {
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Void> deleteStudentQuestionAnswer(@PathVariable Long courseId, @PathVariable Long id) {
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        Optional<StudentQuestionAnswer> optionalStudentQuestionAnswer = studentQuestionAnswerRepository.findById(id);
-        if (optionalStudentQuestionAnswer.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
+        StudentQuestionAnswer studentQuestionAnswer = studentQuestionAnswerRepository.findByIdElseThrow(id);
         courseRepository.findByIdElseThrow(courseId);
-        StudentQuestionAnswer studentQuestionAnswer = optionalStudentQuestionAnswer.get();
         Course course = studentQuestionAnswer.getQuestion().getCourse();
         String entity = "";
         if (studentQuestionAnswer.getQuestion().getLecture() != null) {
