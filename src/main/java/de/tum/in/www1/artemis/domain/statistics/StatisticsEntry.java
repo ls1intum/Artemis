@@ -30,7 +30,6 @@ public class StatisticsEntry {
     }
 
     public StatisticsEntry() {
-        this.day = null;
         this.amount = 0L;
         this.username = "";
     }
