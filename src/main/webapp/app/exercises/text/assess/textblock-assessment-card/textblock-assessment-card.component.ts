@@ -20,6 +20,8 @@ export class TextblockAssessmentCardComponent {
     @Input() conflictMode: boolean;
     @Input() conflictType?: FeedbackConflictType;
     @Input() isLeftConflictingFeedback: boolean;
+    @Input() highlightDifferences: boolean;
+
     @Output() didSelect = new EventEmitter<OptionalTextBlockRef>();
     @Output() didChange = new EventEmitter<TextBlockRef>();
     @Output() didDelete = new EventEmitter<TextBlockRef>();

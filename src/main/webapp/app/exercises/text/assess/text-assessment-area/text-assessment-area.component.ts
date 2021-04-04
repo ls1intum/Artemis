@@ -16,6 +16,7 @@ import { FeedbackConflict, FeedbackConflictType } from 'app/entities/feedback-co
     ],
 })
 export class TextAssessmentAreaComponent implements OnChanges {
+    // inputs
     @Input() submission: TextSubmission;
     @Input() textBlockRefs: TextBlockRef[];
     @Input() readOnly: boolean;
@@ -23,6 +24,9 @@ export class TextAssessmentAreaComponent implements OnChanges {
     @Input() conflictMode: boolean;
     @Input() isLeftConflictingFeedback: boolean;
     @Input() feedbackConflicts: FeedbackConflict[];
+    @Input() highlightDifferences: boolean;
+
+    // outputs
     @Output() textBlockRefsChange = new EventEmitter<TextBlockRef[]>();
     @Output() textBlockRefsAddedRemoved = new EventEmitter<void>();
     @Output() onConflictsClicked = new EventEmitter<number>();

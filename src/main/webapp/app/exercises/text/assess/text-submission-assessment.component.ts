@@ -62,6 +62,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
     correctionRound: number;
     resultId: number;
     loadingInitialSubmission = true;
+    highlightDifferences = false;
 
     /*
      * Non-resetted properties:
@@ -127,6 +128,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         this.isAtLeastInstructor = false;
         this.assessmentsAreValid = false;
         this.noNewSubmissions = false;
+        this.highlightDifferences = false;
     }
 
     /**
@@ -271,6 +273,14 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         if (confirmCancel && this.exercise && this.submission) {
             this.assessmentsService.cancelAssessment(this.exercise!.id!, this.submission!.id!).subscribe(() => this.navigateBack());
         }
+    }
+
+    /**
+     * In ExamMode:
+     * Highlight the difference between the first and second correction round
+     */
+    switchHighlightDifferences(): void {
+        this.highlightDifferences = !this.highlightDifferences;
     }
 
     /**

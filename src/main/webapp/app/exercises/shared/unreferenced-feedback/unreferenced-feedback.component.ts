@@ -11,6 +11,8 @@ export class UnreferencedFeedbackComponent {
     assessmentsAreValid: boolean;
     @Input() busy: boolean;
     @Input() readOnly: boolean;
+    @Input() highlightDifferences: boolean;
+
     @Output() feedbacksChange = new EventEmitter<Feedback[]>();
 
     @Input() set feedbacks(feedbacks: Feedback[]) {

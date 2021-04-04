@@ -1,5 +1,5 @@
 <div (drop)="updateAssessmentOnDrop($event)" (dragover)="$event.preventDefault()" class="card mb-3">
-    <div class="card-header" [class.color-cyan]="assessment.type == FeedbackType_AUTOMATIC">
+    <div class="card-header" [class.color-cyan]="assessment.type == FeedbackType_AUTOMATIC" [class.color-orange]="highlightDifferences && assessment.copiedFeedback">
         <fa-icon [icon]="'trash-alt'" class="float-right" (click)="delete()" *ngIf="!disabled"></fa-icon>
         <span
             class="badge badge-secondary float-right"
@@ -10,7 +10,7 @@
             <span jhiTranslate="artemisApp.textAssessment.automatic">Automatic</span>
         </span>
     </div>
-    <div class="card-body">
+    <div class="card-body" [class.color-orange-light]="highlightDifferences && assessment.copiedFeedback">
         <div class="form-group row">
             <label class="col-3 assessment-label" jhiTranslate="artemisApp.exercise.score"></label>
             <input

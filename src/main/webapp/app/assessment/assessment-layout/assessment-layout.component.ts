@@ -26,6 +26,7 @@ export class AssessmentLayoutComponent {
     @Input() submitBusy: boolean;
     @Input() cancelBusy: boolean;
     @Input() nextSubmissionBusy: boolean;
+    @Input() correctionRound: number;
 
     @Input() isTeamMode: boolean;
     @Input() isAssessor: boolean;
@@ -46,4 +47,6 @@ export class AssessmentLayoutComponent {
     @Output() cancel = new EventEmitter<void>();
     @Output() nextSubmission = new EventEmitter<void>();
     @Output() updateAssessmentAfterComplaint = new EventEmitter<ComplaintResponse>();
+    @Output() switchHighlightDifferences = new EventEmitter<void>();
+    @Input() highlightDifferences: boolean;
 }

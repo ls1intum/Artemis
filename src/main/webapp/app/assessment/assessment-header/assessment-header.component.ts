@@ -18,6 +18,7 @@ export class AssessmentHeaderComponent {
     @Input() submitBusy: boolean;
     @Input() cancelBusy: boolean;
     @Input() nextSubmissionBusy: boolean;
+    @Input() correctionRound = 0; // correctionRound defaults to 0
 
     @Input() isTeamMode: boolean;
     @Input() isAssessor: boolean;
@@ -32,9 +33,11 @@ export class AssessmentHeaderComponent {
     @Input() complaintHandled = false;
     @Input() assessmentsAreValid: boolean;
     @Input() hasAssessmentDueDatePassed: boolean;
+    @Input() highlightDifferences: boolean;
 
     @Output() save = new EventEmitter<void>();
     @Output() submit = new EventEmitter<void>();
     @Output() cancel = new EventEmitter<void>();
     @Output() nextSubmission = new EventEmitter<void>();
+    @Output() switchHighlightDifferences = new EventEmitter<any>();
 }

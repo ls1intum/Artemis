@@ -70,6 +70,24 @@
         >
             You have the lock for this assessment
         </span>
+        <!-- Highlight the difference between first and second correction -->
+        <button
+            *ngIf="!highlightDifferences && result && correctionRound > 0"
+            class="btn ml-2 btn-primary"
+            (click)="switchHighlightDifferences.emit()"
+            [disabled]="saveBusy || submitBusy || cancelBusy"
+        >
+            <span>Activate Diff-View</span>
+        </button>
+        <button
+            *ngIf="highlightDifferences && result && correctionRound > 0"
+            class="btn ml-2 btn-primary"
+            (click)="switchHighlightDifferences.emit()"
+            [disabled]="saveBusy || submitBusy || cancelBusy"
+        >
+            <span>Deactivate Diff-View</span>
+        </button>
+        <br />
         <ng-container *ngIf="!result?.completionDate">
             <button class="btn ml-2 btn-primary" (click)="save.emit()" [disabled]="!assessmentsAreValid || !isAssessor || saveBusy || submitBusy || cancelBusy">
                 <fa-icon *ngIf="saveBusy" [icon]="'spinner'" [spin]="true">&nbsp;</fa-icon>

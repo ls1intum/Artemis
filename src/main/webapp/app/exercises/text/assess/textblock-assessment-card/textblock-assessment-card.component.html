@@ -14,6 +14,7 @@
 ></span>
 <!-- Display Feedback Editor -->
 <jhi-textblock-feedback-editor
+    [class.color-orange-light]="highlightDifferences && textBlockRef.feedback?.copiedFeedback"
     *ngIf="textBlockRef.feedback || selected"
     [textBlock]="textBlockRef.block"
     [feedback]="textBlockRef.feedback"
@@ -30,4 +31,5 @@
     [conflictMode]="conflictMode"
     [isLeftConflictingFeedback]="isLeftConflictingFeedback"
     [isSelectedConflict]="conflictMode && isConflictingFeedback && !isLeftConflictingFeedback && selected"
+    [highlightDifferences]="highlightDifferences"
 ></jhi-textblock-feedback-editor>

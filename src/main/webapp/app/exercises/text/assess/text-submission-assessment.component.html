@@ -17,10 +17,13 @@
     [isTestRun]="isTestRun"
     [exerciseDashboardLink]="exerciseDashboardLink"
     [hasAssessmentDueDatePassed]="hasAssessmentDueDatePassed"
+    [correctionRound]="correctionRound"
     (save)="save()"
     (submit)="submit()"
     (cancel)="cancel()"
     (nextSubmission)="nextSubmission()"
+    (switchHighlightDifferences)="switchHighlightDifferences()"
+    [highlightDifferences]="highlightDifferences"
     (updateAssessmentAfterComplaint)="updateAssessmentAfterComplaint($event)"
 >
     <ng-container *ngIf="submission; then assessment; else noSubmission"></ng-container>
@@ -37,6 +40,7 @@
                 [(textBlockRefs)]="textBlockRefs"
                 [readOnly]="readOnly"
                 [conflictMode]="false"
+                [highlightDifferences]="highlightDifferences"
                 (textBlockRefsChange)="validateFeedback()"
                 (textBlockRefsAddedRemoved)="recalculateTextBlockRefs()"
                 (onConflictsClicked)="navigateToConflictingSubmissions($event)"
@@ -54,7 +58,12 @@
 
     <div class="row mt-3">
         <div class="col-md-6">
-            <jhi-unreferenced-feedback [(feedbacks)]="unreferencedFeedback" (feedbacksChange)="validateFeedback()" [readOnly]="readOnly"></jhi-unreferenced-feedback>
+            <jhi-unreferenced-feedback
+                [(feedbacks)]="unreferencedFeedback"
+                [highlightDifferences]="highlightDifferences"
+                (feedbacksChange)="validateFeedback()"
+                [readOnly]="readOnly"
+            ></jhi-unreferenced-feedback>
         </div>
     </div>
 </ng-template>

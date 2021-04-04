@@ -28,6 +28,7 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit {
     @Input() conflictType?: FeedbackConflictType;
     @Input() isLeftConflictingFeedback: boolean;
     @Input() isSelectedConflict: boolean;
+    @Input() highlightDifferences: boolean;
     private textareaElement: HTMLTextAreaElement;
 
     @HostBinding('class.alert') @HostBinding('class.alert-dismissible') readonly classes = true;

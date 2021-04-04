@@ -14,6 +14,7 @@ export class AssessmentDetailComponent implements AfterViewInit {
     @Output() public deleteAssessment = new EventEmitter<Feedback>();
     @Input() public disabled = false;
     @Input() public readOnly: boolean;
+    @Input() highlightDifferences: boolean;
     disableEditScore = false;
 
     public FeedbackType_AUTOMATIC = FeedbackType.AUTOMATIC;
