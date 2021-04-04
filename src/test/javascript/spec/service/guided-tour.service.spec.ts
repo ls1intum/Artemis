@@ -463,7 +463,60 @@ describe('GuidedTourService', () => {
         describe('preventBackdropFromAdvancing', () => {});
         describe('enableTourForCourseExerciseComponent', () => {});
         describe('enableTourForCourseOverview', () => {});
-        describe('enableTourForExercise', () => {});
+        describe('enableTourForExercise', () => {
+            const exerciseText = { id: 456, course: { id: 123 } as Course, type: ExerciseType.TEXT } as Exercise;
+            const exerciseProgramming = { id: 456, course: { id: 123 } as Course, type: ExerciseType.PROGRAMMING } as Exercise;
+            const guidedTourMapping = { courseShortName: 'tutorial', tours: { tour_with_course_and_exercise: 'git' } } as GuidedTourMapping;
+            let enableTourSpy: any;
+            let startTourSpy: any;
+            let checkTourStateSpy: any;
+
+            const guidedTourSettings = [new GuidedTourSetting('guided_tour_key', 1, GuidedTourState.STARTED)];
+
+            beforeEach(() => {
+                enableTourSpy = spyOn<any>(guidedTourService, 'enableTour').and.returnValue(of());
+                startTourSpy = spyOn<any>(guidedTourService, 'startTour').and.returnValue(of());
+                checkTourStateSpy = spyOn<any>(guidedTourService, 'checkTourState').and.returnValue(of());
+                guidedTourService.guidedTourMapping = guidedTourMapping;
+                guidedTourService.guidedTourSettings = [];
+            });
+            afterEach(() => {
+                jest.clearAllMocks();
+            });
+            describe('return undefined if parameters are undefined', () => {
+                it('should return undefined if exercise.course is undefibed', fakeAsync(() => {
+                    let inputExercise = {} as Exercise;
+                    expect(guidedTourService.enableTourForExercise(inputExercise, tour, true)).to.be.undefined;
+                    expect(enableTourSpy.calls.count()).to.equal(0);
+                }));
+                it('should return undefined if guidedTour mapping is undefined', fakeAsync(() => {
+                    guidedTourService.guidedTourMapping = undefined;
+                    expect(guidedTourService.enableTourForExercise(exerciseText, tour, true)).to.be.undefined;
+                }));
+            });
+            it('should enableTourForExercise for text exercise', fakeAsync(() => {
+                expect(guidedTourService.enableTourForExercise(exerciseText, tour, true)).to.be.equal(exerciseText);
+                expect(enableTourSpy.calls.count()).to.equal(1);
+                expect(startTourSpy.calls.count()).to.equal(0);
+            }));
+            it('should enableTourForExercise for text exercise', fakeAsync(() => {
+                expect(guidedTourService.enableTourForExercise(exerciseText, tour, true)).to.be.equal(exerciseText);
+                expect(enableTourSpy.calls.count()).to.equal(1);
+                expect(startTourSpy.calls.count()).to.equal(0);
+            }));
+            it('should enableTourForExercise for programming exercise', fakeAsync(() => {
+                expect(guidedTourService.enableTourForExercise(exerciseProgramming, tour, true)).to.be.equal(exerciseProgramming);
+                expect(enableTourSpy.calls.count()).to.equal(1);
+                expect(startTourSpy.calls.count()).to.equal(0);
+            }));
+            it('should enableTourForExercise for text exercise with init set to false', fakeAsync(() => {
+                guidedTourService.guidedTourSettings = guidedTourSettings;
+                expect(guidedTourService.enableTourForExercise(exerciseText, tour, false)).to.be.equal(exerciseText);
+                expect(enableTourSpy.calls.count()).to.equal(1);
+                expect(startTourSpy.calls.count()).to.equal(0);
+            }));
+        });
+
         describe('updateAssessmentResult', () => {
             let tourWithAssessmentTourSteps: GuidedTour;
             let tourWithAssessmentTourStep: GuidedTour;
