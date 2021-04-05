@@ -4,11 +4,13 @@ import java.util.Set;
 
 import javax.persistence.*;
 
-import org.springframework.cloud.cloudfoundry.com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import org.springframework.cloud.cloudfoundry.com.fasterxml.jackson.annotation.JsonInclude;
-
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 
+/**
+ * A grading scale for a course or an exam the consists of grade steps
+ */
 @Entity
 @Table(name = "grading_scale")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)

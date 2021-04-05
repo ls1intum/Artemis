@@ -8,6 +8,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.GradeStep;
 import de.tum.in.www1.artemis.domain.GradingScale;
@@ -28,7 +29,17 @@ public class GradingScaleService {
         this.gradingScaleRepository = gradingScaleRepository;
     }
 
-    public GradeStep matchPercentageToGradeStep(int percentage, Long gradingScaleId) {
+    /**
+     * Maps a grade percentage to a valid grade step within the grading scale or throws an exception if no match was found
+     *
+     * @param percentage the grade percentage to be mapped
+     * @param gradingScaleId the identifier for the grading scale
+     * @return grade step corresponding to the given percentage
+     */
+    public GradeStep matchPercentageToGradeStep(double percentage, Long gradingScaleId) {
+        if (percentage < 0 || percentage > 100) {
+            throw new BadRequestAlertException("Grade percentages must be between 0 and 100", "gradeStep", "invalidGradePercentage");
+        }
         List<GradeStep> gradeSteps = gradeStepRepository.findByGradingScale_Id(gradingScaleId);
         Optional<GradeStep> matchingGradeStep = gradeSteps.stream().filter(gradeStep -> gradeStep.matchingGradePercentage(percentage)).findFirst();
         if (matchingGradeStep.isPresent()) {
@@ -39,48 +50,55 @@ public class GradingScaleService {
         }
     }
 
-    public GradingScale saveGradingScale(GradingScale gradingScale) {
+    /**
+     * Saves a grading scale to the database if it is valid
+     * - if {@param update} is set to true, also deletes the grade steps for the current grading scale to preserve consistency
+     *
+     * @param gradingScale the grading scale to be saved
+     * @param update should the method save a new grading scale or update an existing one
+     * @return the saved grading scale
+     */
+    @Transactional
+    public GradingScale saveGradingScale(GradingScale gradingScale, boolean update) {
         Set<GradeStep> gradeSteps = gradingScale.getGradeSteps();
-        gradingScale.setGradeSteps(null);
-        gradingScaleRepository.saveAndFlush(gradingScale);
-        return saveGradeStepsForGradingScale(gradingScale, gradeSteps, false);
+        checkGradeStepValidity(gradeSteps);
+        for (GradeStep gradeStep : gradeSteps) {
+            gradeStep.setGradingScale(gradingScale);
+        }
+        gradingScale.setGradeSteps(gradeSteps);
+        if (update) {
+            deleteAllGradeStepsForGradingScale(gradingScale);
+        }
+        return gradingScaleRepository.save(gradingScale);
     }
 
-    public GradingScale updateGradingScale(GradingScale gradingScale) {
-        Set<GradeStep> gradeSteps = gradingScale.getGradeSteps();
-        saveGradeStepsForGradingScale(gradingScale, gradeSteps, true);
-        gradingScale.setGradeSteps(null);
-        return gradingScaleRepository.saveAndFlush(gradingScale);
-    }
-
-    private GradingScale saveGradeStepsForGradingScale(GradingScale gradingScale, Set<GradeStep> gradeSteps, boolean update) {
+    /**
+     * Checks the validity of a grade step set and throws an exception if one of the following conditions is not fulfilled
+     * - all individuals grade steps should be in a valid format
+     * - the grade steps set should form a valid and congruent grading scale
+     *
+     * @param gradeSteps the grade steps to be checked
+     */
+    private void checkGradeStepValidity(Set<GradeStep> gradeSteps) {
         if (gradeSteps != null) {
             if (!gradeSteps.stream().allMatch(GradeStep::isValid)) {
-                if (!update) {
-                    gradingScaleRepository.deleteById(gradingScale.getId());
-                }
                 throw new BadRequestAlertException("Not all grade steps are following the correct format.", "gradeStep", "invalidFormat");
             }
-            if (!gradeStepSetMapsToValidGradingScale(gradeSteps)) {
-                if (!update) {
-                    gradingScaleRepository.deleteById(gradingScale.getId());
-                }
+            else if (!gradeStepSetMapsToValidGradingScale(gradeSteps)) {
                 throw new BadRequestAlertException("Grade step set can't match to a valid grading scale.", "gradeStep", "invalidFormat");
             }
-
-            if (update) {
-                deleteAllGradeStepsForGradingScale(gradingScale);
-            }
-
-            for (GradeStep gradeStep : gradeSteps) {
-                gradeStep.setGradingScale(gradingScale);
-                gradeStepRepository.save(gradeStep);
-            }
-            gradeStepRepository.flush();
         }
-        return gradingScaleRepository.findById(gradingScale.getId()).orElseThrow();
     }
 
+    /**
+     * Checks if the grade steps map to a valid grading scale
+     * - the grade names should all be unique for the grading scale
+     * - when ordered, all steps should fulfill valid adjacency
+     * - the first and the last element should fulfill the boundary conditions (start with 0% and end with 100%)
+     *
+     * @param gradeSteps the grade steps to be checked
+     * @return true if the grade steps map to a valid grading scale and false otherwise
+     */
     private boolean gradeStepSetMapsToValidGradingScale(Set<GradeStep> gradeSteps) {
         if (gradeSteps.stream().map(GradeStep::getGradeName).distinct().count() != gradeSteps.size()) {
             return false;
@@ -93,11 +111,14 @@ public class GradingScaleService {
         return validAdjacency && validFirstElement && validLastElement;
     }
 
+    /**
+     * Deletes all grade steps for the given grading scale
+     *
+     * @param gradingScale the grading scale for which the grade steps should be deleted
+     */
     public void deleteAllGradeStepsForGradingScale(GradingScale gradingScale) {
         List<GradeStep> gradeSteps = gradeStepRepository.findByGradingScale_Id(gradingScale.getId());
-        for (GradeStep gradeStep : gradeSteps) {
-            gradeStepRepository.deleteById(gradeStep.getId());
-        }
+        gradeStepRepository.deleteInBatch(gradeSteps);
     }
 
 }

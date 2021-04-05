@@ -4,12 +4,13 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.GradeStep;
 
+/**
+ * Spring Data JPA Repository for the GradeStep entity
+ */
 @Repository
 public interface GradeStepRepository extends JpaRepository<GradeStep, Long> {
 
@@ -17,8 +18,4 @@ public interface GradeStepRepository extends JpaRepository<GradeStep, Long> {
 
     Optional<GradeStep> findByIdAndGradingScale_Id(Long gradeStepId, Long gradingScaleId);
 
-    @Query("delete from GradeStep gs where gs.gradingScale.id=:gradingScaleId")
-    void deleteAllGradeStepsForGradingScaleById(@Param("gradingScaleId") Long gradingScaleId);
-
-    void deleteByGradingScale_Id(@Param("gradingScaleId") Long gradingScaleId);
 }
