@@ -31,7 +31,7 @@ export class StatisticsGraphComponent implements OnChanges {
     barChartOptions: ChartOptions = {};
     barChartType: ChartType = 'bar';
     lineChartType: ChartType = 'line';
-    amountOfStudents: string;
+    labelTitle: string;
     chartName: string;
     barChartLegend = false;
     chartTime: any;
@@ -55,7 +55,7 @@ export class StatisticsGraphComponent implements OnChanges {
         this.currentSpan = changes.currentSpan?.currentValue;
         this.barChartLabels = [];
         this.currentPeriod = 0;
-        this.amountOfStudents = this.translateService.instant('statistics.amountOfStudents');
+        this.labelTitle = this.translateService.instant(`statistics.${this.graphType.toString().toLowerCase()}`);
         this.chartName = this.translateService.instant(`statistics.${this.graphType.toString().toLowerCase()}`);
         this.initializeChart();
     }
@@ -64,7 +64,7 @@ export class StatisticsGraphComponent implements OnChanges {
         this.createLabels();
         this.chartData = [
             {
-                label: this.amountOfStudents,
+                label: this.labelTitle,
                 data: new Array(this.barChartLabels.length).fill(0),
                 backgroundColor: 'rgba(53,61,71,1)',
                 borderColor: 'rgba(53,61,71,1)',
@@ -77,7 +77,7 @@ export class StatisticsGraphComponent implements OnChanges {
                 this.dataForSpanType = res;
                 this.chartData = [
                     {
-                        label: this.amountOfStudents,
+                        label: this.labelTitle,
                         data: this.dataForSpanType,
                         backgroundColor: 'rgba(53,61,71,1)',
                         borderColor: 'rgba(53,61,71,1)',
@@ -90,7 +90,7 @@ export class StatisticsGraphComponent implements OnChanges {
                 this.dataForSpanType = res;
                 this.chartData = [
                     {
-                        label: this.amountOfStudents,
+                        label: this.labelTitle,
                         data: this.dataForSpanType,
                         backgroundColor: 'rgba(53,61,71,1)',
                         borderColor: 'rgba(53,61,71,1)',
