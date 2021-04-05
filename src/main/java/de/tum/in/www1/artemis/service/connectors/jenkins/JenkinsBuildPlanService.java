@@ -73,10 +73,12 @@ public class JenkinsBuildPlanService {
      * @param testRepositoryURL the url of the tests vcs repository
      */
     public void createBuildPlanForExercise(ProgrammingExercise exercise, String planKey, VcsRepositoryUrl repositoryURL, VcsRepositoryUrl testRepositoryURL) {
-        // TODO support sequential test runs
         var programmingLanguage = exercise.getProgrammingLanguage();
+        var statisCodeAnalysisEnabled = exercise.isStaticCodeAnalysisEnabled();
+        var isSequentialTestRuns = exercise.hasSequentialTestRuns();
+
         final var configBuilder = builderFor(programmingLanguage);
-        Document jobConfig = configBuilder.buildBasicConfig(programmingLanguage, testRepositoryURL, repositoryURL, Boolean.TRUE.equals(exercise.isStaticCodeAnalysisEnabled()));
+        Document jobConfig = configBuilder.buildBasicConfig(programmingLanguage, testRepositoryURL, repositoryURL, statisCodeAnalysisEnabled, isSequentialTestRuns);
 
         var jobFolder = exercise.getProjectKey();
         var job = jobFolder + "-" + planKey;

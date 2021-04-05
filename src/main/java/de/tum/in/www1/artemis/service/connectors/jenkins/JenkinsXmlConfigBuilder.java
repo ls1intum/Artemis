@@ -19,5 +19,5 @@ public interface JenkinsXmlConfigBuilder {
      * @return The parsed XML document containing the Jenkins build config
      */
     Document buildBasicConfig(ProgrammingLanguage programmingLanguage, VcsRepositoryUrl testRepositoryURL, VcsRepositoryUrl assignmentRepositoryURL,
-            boolean isStaticCodeAnalysisEnabled);
+            boolean isStaticCodeAnalysisEnabled, boolean isSequentialRuns);
 }

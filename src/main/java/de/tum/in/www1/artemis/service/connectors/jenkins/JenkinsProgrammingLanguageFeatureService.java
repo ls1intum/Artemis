@@ -17,7 +17,8 @@ public class JenkinsProgrammingLanguageFeatureService extends ProgrammingLanguag
 
     public JenkinsProgrammingLanguageFeatureService() {
         // Must be extended once a new programming language is added
-        programmingLanguageFeatures.put(JAVA, new ProgrammingLanguageFeature(JAVA, false, true, true, true, false, List.of(ECLIPSE, MAVEN)));
+        programmingLanguageFeatures.put(JAVA, new ProgrammingLanguageFeature(JAVA, true, true, true, true, false, List.of(ECLIPSE, MAVEN)));
+        programmingLanguageFeatures.put(KOTLIN, new ProgrammingLanguageFeature(KOTLIN, true, false, false, true, false, List.of()));
         programmingLanguageFeatures.put(PYTHON, new ProgrammingLanguageFeature(PYTHON, true, false, true, false, false, List.of()));
         programmingLanguageFeatures.put(SWIFT, new ProgrammingLanguageFeature(SWIFT, false, true, false, true, false, List.of()));
         programmingLanguageFeatures.put(C, new ProgrammingLanguageFeature(C, false, false, true, false, false, List.of()));
