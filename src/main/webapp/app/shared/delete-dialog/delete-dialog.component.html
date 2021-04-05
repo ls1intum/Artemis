@@ -27,7 +27,7 @@
         </div>
     </div>
     <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-dismiss="modal" (click)="clear()">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal" (click)="clear()" [disabled]="submitDisabled">
             <fa-icon [icon]="'ban'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
         </button>
         <button
@@ -37,6 +37,7 @@
             [disabled]="deleteForm.form.invalid || (deleteConfirmationText && confirmEntityName != entityTitle) || submitDisabled"
             [ngSwitch]="actionType"
         >
+            <fa-icon *ngIf="submitDisabled" [icon]="'spinner'" [spin]="true">&nbsp;</fa-icon>&nbsp;
             <fa-icon [icon]="'times'"></fa-icon>&nbsp;
             <span *ngSwitchCase="actionTypes.Delete" jhiTranslate="entity.action.delete">Delete</span>
             <span *ngSwitchCase="actionTypes.Reset" jhiTranslate="entity.action.reset">Reset</span>
