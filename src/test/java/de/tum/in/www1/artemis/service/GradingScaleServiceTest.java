@@ -18,7 +18,6 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.GradeStep;
 import de.tum.in.www1.artemis.domain.GradingScale;
-import de.tum.in.www1.artemis.repository.GradeStepRepository;
 import de.tum.in.www1.artemis.repository.GradingScaleRepository;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -30,9 +29,6 @@ public class GradingScaleServiceTest extends AbstractSpringIntegrationBambooBitb
 
     @Autowired
     private GradingScaleRepository gradingScaleRepository;
-
-    @Autowired
-    private GradeStepRepository gradeStepRepository;
 
     private GradingScale gradingScale;
 

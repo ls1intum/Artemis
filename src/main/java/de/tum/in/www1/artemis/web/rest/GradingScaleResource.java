@@ -102,9 +102,9 @@ public class GradingScaleResource {
         Course course = courseRepository.findById(courseId).orElseThrow();
         gradingScale.setCourse(course);
 
-        gradingScale = gradingScaleService.saveGradingScale(gradingScale);
+        GradingScale savedGradingScale = gradingScaleService.saveGradingScale(gradingScale);
         return ResponseEntity.created(new URI("/api/courses/" + courseId + "/grading-scale/")).headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, ""))
-                .body(gradingScale);
+                .body(savedGradingScale);
     }
 
     /**
@@ -131,9 +131,9 @@ public class GradingScaleResource {
         Exam exam = examRepository.findById(examId).orElseThrow();
         gradingScale.setExam(exam);
 
-        gradingScale = gradingScaleService.saveGradingScale(gradingScale);
+        GradingScale savedGradingScale = gradingScaleService.saveGradingScale(gradingScale);
         return ResponseEntity.created(new URI("/api/courses/" + courseId + "/exams/" + examId + "/grading-scale/"))
-                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, "")).body(gradingScale);
+                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, "")).body(savedGradingScale);
     }
 
     /**
@@ -150,8 +150,8 @@ public class GradingScaleResource {
         GradingScale oldGradingScale = gradingScaleRepository.findByCourseIdOrElseThrow(courseId);
         gradingScale.setId(oldGradingScale.getId());
         gradingScale.setCourse(oldGradingScale.getCourse());
-        gradingScale = gradingScaleService.saveGradingScale(gradingScale);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, "")).body(gradingScale);
+        GradingScale savedGradingScale = gradingScaleService.saveGradingScale(gradingScale);
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, "")).body(savedGradingScale);
     }
 
     /**
@@ -168,8 +168,8 @@ public class GradingScaleResource {
         GradingScale oldGradingScale = gradingScaleRepository.findByExamIdOrElseThrow(examId);
         gradingScale.setId(oldGradingScale.getId());
         gradingScale.setExam(oldGradingScale.getExam());
-        gradingScale = gradingScaleService.saveGradingScale(gradingScale);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, "")).body(gradingScale);
+        GradingScale savedGradingScale = gradingScaleService.saveGradingScale(gradingScale);
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, "")).body(savedGradingScale);
     }
 
     /**
