@@ -22,7 +22,20 @@
         "created_results": "Erstellte Resultate",
         "created_feedbacks": "Erstellte Feedbacks",
         "questions_asked": "Gestellte Fragen",
-        "questions_answered": "Beantwortete Fragen"
+        "questions_answered": "Beantwortete Fragen",
+        "submissionsTitle": "# an Abgaben",
+        "active_usersTitle": "# an Benutzer",
+        "logged_in_usersTitle": "# an Benutzer",
+        "released_exercisesTitle": "# an Aufgaben",
+        "exercises_dueTitle": "# an Aufgaben",
+        "conducted_examsTitle": "# an Klausuren",
+        "exam_participationsTitle": "# an Klausurteilnahmen",
+        "exam_registrationsTitle": "# an Klausuranmeldungen",
+        "active_tutorsTitle": "# an Tutoren",
+        "created_resultsTitle": "# an Bewertungen",
+        "created_feedbacksTitle": "# an Feedbacks",
+        "questions_askedTitle": "# an Fragen",
+        "questions_answeredTitle": "# an Antworten"
     },
     "calendar_week": "KW",
     "overview": {

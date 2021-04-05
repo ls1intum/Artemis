@@ -55,7 +55,7 @@ export class StatisticsGraphComponent implements OnChanges {
         this.currentSpan = changes.currentSpan?.currentValue;
         this.barChartLabels = [];
         this.currentPeriod = 0;
-        this.labelTitle = this.translateService.instant(`statistics.${this.graphType.toString().toLowerCase()}`);
+        this.labelTitle = this.translateService.instant(`statistics.${this.graphType.toString().toLowerCase()}Title`);
         this.chartName = this.translateService.instant(`statistics.${this.graphType.toString().toLowerCase()}`);
         this.initializeChart();
     }

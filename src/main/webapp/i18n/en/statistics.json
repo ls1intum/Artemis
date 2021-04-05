@@ -22,7 +22,20 @@
         "created_results": "Created results",
         "created_feedbacks": "Created feedbacks",
         "questions_asked": "Questions asked",
-        "questions_answered": "Questions answered"
+        "questions_answered": "Questions answered",
+        "submissionsTitle": "# of submissions",
+        "active_usersTitle": "# of users",
+        "logged_in_usersTitle": "# of users",
+        "released_exercisesTitle": "# of exercises",
+        "exercises_dueTitle": "# of exercises",
+        "conducted_examsTitle": "# of exams",
+        "exam_participationsTitle": "# of exam participations",
+        "exam_registrationsTitle": "# of exam registrations",
+        "active_tutorsTitle": "# of tutors",
+        "created_resultsTitle": "# of results",
+        "created_feedbacksTitle": "# of feedbacks",
+        "questions_askedTitle": "# of questions",
+        "questions_answeredTitle": "# of answers"
     },
     "calendar_week": "CW",
     "overview": {
