@@ -32,11 +32,11 @@
                 <div>
                     <h5>
                         {{ notification.title }}
-                        <span class="badge ml-1 badge-primary" *ngIf="lastNotificationRead && notification.notificationDate.isAfter(lastNotificationRead)"> new </span>
+                        <span class="badge ml-1 badge-primary" *ngIf="lastNotificationRead && notification.notificationDate?.isAfter(lastNotificationRead)"> new </span>
                     </h5>
                     <div class="mb-1 text-break" [innerHTML]="notification.text"></div>
                     <div class="info text-muted text-right">
-                        {{ notification.notificationDate | date: 'dd.MM.yy HH:mm' }}
+                        {{ notification.notificationDate?.toDate() | date: 'dd.MM.yy HH:mm' }}
                         {{ 'artemisApp.notification.by' | artemisTranslate }}
                         <span *ngIf="notification.author; else noAuthor">{{ notification.author.name }}</span>
                         <ng-template #noAuthor>
@@ -46,7 +46,7 @@
                 </div>
             </div>
             <div class="loading-spinner text-center mx-3 my-2" style="font-size: large" *ngIf="loading">
-                <fa-icon [icon]="'circle-notch'" spin="true"></fa-icon>
+                <fa-icon [icon]="'circle-notch'" [spin]="true"></fa-icon>
             </div>
             <small class="all-loaded text-center d-block mx-3 my-2" *ngIf="notifications.length > 0 && notifications.length >= totalNotifications">
                 {{ 'artemisApp.notification.allLoaded' | artemisTranslate }}
