@@ -150,7 +150,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
                 this.scrollToAndSetElement();
                 this.handleTransition();
                 this.guidedTourService.isBackPageNavigation.next(false);
-                if (this.currentStepIndex && this.nextStepIndex) {
+                if (this.currentStepIndex !== undefined && this.nextStepIndex !== undefined) {
                     setTimeout(() => {
                         this.calculateAndDisplayDotNavigation(this.currentStepIndex!, this.nextStepIndex!);
                     }, 0);

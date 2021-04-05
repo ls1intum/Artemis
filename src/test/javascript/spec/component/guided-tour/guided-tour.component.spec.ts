@@ -1,7 +1,7 @@
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import { NO_ERRORS_SCHEMA } from '@angular/core';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed } from '@angular/core/testing';
 import { RouterTestingModule } from '@angular/router/testing';
 import { CookieService } from 'ngx-cookie-service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
@@ -20,6 +20,7 @@ import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { By } from '@angular/platform-browser';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { Authority } from 'app/shared/constants/authority.constants';
+import * as sinon from 'sinon';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -355,6 +356,41 @@ describe('GuidedTourComponent', () => {
             setOrientation(Orientation.TOPRIGHT);
             guidedTourComponent['flipOrientation']();
             expect(guidedTourComponent.orientation).to.equal(Orientation.TOPLEFT);
+        });
+    });
+    describe('Guided Tour Step 2', () => {
+        jest.useFakeTimers();
+        beforeEach(() => {
+            var clock = sinon.useFakeTimers();
+        });
+        afterEach(() => {});
+        it('should do stuff', async () => {
+            // Prepare guided tour service
+            spyOn(guidedTourService, 'init').and.returnValue(of());
+            spyOn(guidedTourService, 'getLastSeenTourStepIndex').and.returnValue(0);
+            spyOn<any>(guidedTourService, 'updateGuidedTourSettings');
+            spyOn<any>(guidedTourService, 'enableTour').and.callFake(() => {
+                guidedTourService['availableTourForComponent'] = courseOverviewTour;
+                guidedTourService.currentTour = courseOverviewTour;
+            });
+            spyOn<any>(guidedTourComponent, 'subscribeToDotChanges').and.returnValue(of());
+            guidedTourComponent.currentStepIndex = 0;
+            guidedTourComponent.nextStepIndex = 1;
+            // Prepare guided tour component
+            guidedTourComponent.ngAfterViewInit();
+            jest.runAllTimers();
+            // Start course overview tour
+            expect(guidedTourComponent.currentTourStep).to.not.exist;
+            guidedTourService['enableTour'](courseOverviewTour, true);
+            guidedTourService['startTour']();
+            expect(guidedTourComponent.currentTourStep).to.exist;
+
+            // Check highlight (current) dot and small dot
+            guidedTourComponentFixture.detectChanges();
+            const highlightDot = guidedTourComponentFixture.debugElement.query(By.css('.current'));
+            expect(highlightDot).to.exist;
+            const nSmallDot = guidedTourComponentFixture.debugElement.queryAll(By.css('.n-small'));
+            expect(nSmallDot).to.exist;
         });
     });
 });
