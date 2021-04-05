@@ -35,7 +35,7 @@ public class RatingService {
      * @param resultId - Id of Result that the rating refers to
      * @return Rating if it exists else null
      */
-    public Optional<Rating> findRatingByResultId(Long resultId) {
+    public Optional<Rating> findRatingByResultId(long resultId) {
         return ratingRepository.findRatingByResultId(resultId);
     }
 
@@ -44,7 +44,7 @@ public class RatingService {
      * @param courseId - Id of the course that the ratings are fetched for
      * @return List of Ratings for the course
      */
-    public List<Rating> getAllRatingsByCourse(Long courseId) {
+    public List<Rating> getAllRatingsByCourse(long courseId) {
         return ratingRepository.findAllByResult_Participation_Exercise_Course_Id(courseId);
     }
 
@@ -55,7 +55,7 @@ public class RatingService {
      * @param ratingValue - Value of the rating that should be persisted
      * @return persisted Rating
      */
-    public Rating saveRating(Long resultId, Integer ratingValue) {
+    public Rating saveRating(long resultId, int ratingValue) {
         Result result = resultRepository.findById(resultId).orElseThrow();
         Rating serverRating = new Rating();
         serverRating.setRating(ratingValue);
@@ -70,7 +70,7 @@ public class RatingService {
      * @param ratingValue - Value of the updated rating
      * @return updated rating
      */
-    public Rating updateRating(Long resultId, Integer ratingValue) {
+    public Rating updateRating(long resultId, int ratingValue) {
         Rating updatedRating = this.ratingRepository.findRatingByResultId(resultId).orElseThrow();
         updatedRating.setRating(ratingValue);
         return ratingRepository.save(updatedRating);
