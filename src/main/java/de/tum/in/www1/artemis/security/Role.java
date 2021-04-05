@@ -5,15 +5,26 @@ package de.tum.in.www1.artemis.security;
  */
 public enum Role {
 
-    ADMIN("ROLE_ADMIN"), INSTRUCTOR("ROLE_INSTRUCTOR"), TEACHING_ASSISTANT("ROLE_TA"), USER("ROLE_USER"), ANONYMOUS("ROLE_ANONYMOUS");
+    ADMIN("ADMIN"), INSTRUCTOR("INSTRUCTOR"), TEACHING_ASSISTANT("TA"), USER("USER"), ANONYMOUS("ANONYMOUS");
 
-    private final String authority;
+    public static final String ROLE_PREFIX = "ROLE_";
 
-    Role(String authority) {
-        this.authority = authority;
+    private final String role;
+
+    Role(String role) {
+        this.role = role;
     }
 
     public String getAuthority() {
-        return authority;
+        return ROLE_PREFIX + role;
+    }
+
+    public String getRole() {
+        return role;
+    }
+
+    @Override
+    public String toString() {
+        return role;
     }
 }
