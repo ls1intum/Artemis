@@ -353,8 +353,8 @@ public class GitLabService extends AbstractVersionControlService {
     public void createRepository(String projectKey, String repoName, String parentProjectKey) throws VersionControlException {
         try {
             final var groupId = gitlab.getGroupApi().getGroup(projectKey).getId();
-            final var project = new Project().withName(repoName.toLowerCase()).withNamespaceId(groupId).withVisibility(Visibility.PRIVATE).withJobsEnabled(false)
-                    .withSharedRunnersEnabled(false).withContainerRegistryEnabled(false);
+            final var project = new Project().withPath(repoName.toLowerCase()).withName(repoName.toLowerCase()).withNamespaceId(groupId).withVisibility(Visibility.PRIVATE)
+                    .withJobsEnabled(false).withSharedRunnersEnabled(false).withContainerRegistryEnabled(false);
             gitlab.getProjectApi().createProject(project);
         }
         catch (GitLabApiException e) {
