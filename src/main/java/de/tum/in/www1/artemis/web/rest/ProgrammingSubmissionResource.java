@@ -6,9 +6,7 @@ import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 
 import java.time.ZonedDateTime;
 import java.util.*;
-import java.util.stream.Collectors;
 
-import org.eclipse.jgit.lib.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -309,11 +307,10 @@ public class ProgrammingSubmissionResource {
         // as the VCS-server performs the request
         SecurityUtils.setAuthorizationObject();
 
-        ObjectId lastCommitId = null;
+        String lastCommitHash = null;
         try {
             Commit commit = versionControlService.get().getLastCommitDetails(requestBody);
-            String lastCommitHash = commit.getCommitHash();
-            lastCommitId = ObjectId.fromString(lastCommitHash);
+            lastCommitHash = commit.getCommitHash();
             log.info("create new programmingSubmission with commitHash: " + lastCommitHash + " for exercise " + exerciseId);
         }
         catch (Exception ex) {
@@ -322,7 +319,7 @@ public class ProgrammingSubmissionResource {
         }
 
         // When the tests were changed, the solution repository will be built. We therefore create a submission for the solution participation.
-        ProgrammingSubmission submission = programmingSubmissionService.createSolutionParticipationSubmissionWithTypeTest(exerciseId, lastCommitId);
+        ProgrammingSubmission submission = programmingSubmissionService.createSolutionParticipationSubmissionWithTypeTest(exerciseId, lastCommitHash);
         programmingSubmissionService.notifyUserAboutSubmission(submission);
         // It is possible that there is now a new test case or an old one has been removed. We use this flag to inform the instructor about outdated student results.
         programmingSubmissionService.setTestCasesChanged(exerciseId, true);
@@ -394,7 +391,7 @@ public class ProgrammingSubmissionResource {
             return forbidden("assessment", "assessmentSaveNotAllowed", "Creating manual results is disabled for this exercise!");
         }
 
-        int numberOfManualResults = participation.getResults().stream().filter(Result::isManual).collect(Collectors.toList()).size();
+        var numberOfManualResults = participation.getResults().stream().filter(Result::isManual).count();
         if (numberOfManualResults >= correctionRound + 1) {
             return ResponseEntity.ok(participation);
         }
