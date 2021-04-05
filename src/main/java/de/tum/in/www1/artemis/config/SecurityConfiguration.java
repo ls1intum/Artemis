@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.config;
 import static de.tum.in.www1.artemis.config.Constants.*;
 
 import java.util.Optional;
+
 import javax.annotation.PostConstruct;
 
 import org.jasypt.encryption.pbe.StandardPBEStringEncryptor;
@@ -28,8 +29,8 @@ import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWrite
 import org.springframework.web.filter.CorsFilter;
 import org.zalando.problem.spring.web.advice.security.SecurityProblemSupport;
 
-import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.PBEPasswordEncoder;
+import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.jwt.JWTConfigurer;
 import de.tum.in.www1.artemis.security.jwt.TokenProvider;
 

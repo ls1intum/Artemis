@@ -1,10 +1,8 @@
 package de.tum.in.www1.artemis;
 
 import static io.github.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.doReturn;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
 import java.util.Map;
 
