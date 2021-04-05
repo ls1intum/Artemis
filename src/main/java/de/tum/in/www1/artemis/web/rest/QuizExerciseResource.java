@@ -24,6 +24,7 @@ import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.QuizExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.exam.ExamDateService;
 import de.tum.in.www1.artemis.service.scheduled.quiz.QuizScheduleService;
@@ -240,7 +241,7 @@ public class QuizExerciseResource {
     public List<QuizExercise> getQuizExercisesForExam(@PathVariable Long examId) {
         List<QuizExercise> quizExercises = quizExerciseRepository.findByExamId(examId);
         Course course = quizExercises.get(0).getCourseViaExerciseGroupOrCourseMember();
-        authCheckService.checkIsAtLeastInstructorInCourseElseThrow(course, null);
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
 
         for (QuizExercise quizExercise : quizExercises) {
             quizExercise.setQuizQuestions(null);

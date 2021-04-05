@@ -26,7 +26,7 @@ import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWrite
 import org.springframework.web.filter.CorsFilter;
 import org.zalando.problem.spring.web.advice.security.SecurityProblemSupport;
 
-import de.tum.in.www1.artemis.security.AuthoritiesConstants;
+import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.PBEPasswordEncoder;
 import de.tum.in.www1.artemis.security.jwt.JWTConfigurer;
 import de.tum.in.www1.artemis.security.jwt.TokenProvider;
@@ -160,13 +160,13 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
             .antMatchers("/api/files/file-upload-submission/**").permitAll()
             .antMatchers("/api/files/markdown/**").permitAll()
             .antMatchers("/api/**").authenticated()
-            .antMatchers("/websocket/tracker").hasAuthority(AuthoritiesConstants.ADMIN)
+            .antMatchers("/websocket/tracker").hasAuthority(Role.ADMIN.getAuthority())
             .antMatchers("/websocket/**").permitAll()
             .antMatchers("/management/health").permitAll()
             .antMatchers("/management/info").permitAll()
             // Only allow the configured IP address to access the prometheus endpoint, or allow 127.0.0.1 if none is specified
             .antMatchers("/management/prometheus/**").hasIpAddress(monitoringIpAddress.orElse("127.0.0.1"))
-            .antMatchers("/management/**").hasAuthority(AuthoritiesConstants.ADMIN)
+            .antMatchers("/management/**").hasAuthority(Role.ADMIN.getAuthority())
             .antMatchers("/time").permitAll()
         .and()
             .apply(securityConfigurerAdapter());

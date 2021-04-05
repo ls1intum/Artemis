@@ -20,7 +20,7 @@ import de.tum.in.www1.artemis.config.SAML2Properties;
 import de.tum.in.www1.artemis.domain.Authority;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.security.AuthoritiesConstants;
+import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.MailService;
 import de.tum.in.www1.artemis.service.user.UserCreationService;
 import de.tum.in.www1.artemis.service.user.UserService;
@@ -121,7 +121,7 @@ public class SAML2Service {
             newUser.setVisibleRegistrationNumber(registrationNumber);
         } // else set registration number to null to preserve uniqueness
         newUser.setLangKey(substituteAttributes(properties.getLangKeyPattern(), principal));
-        newUser.setAuthorities(new HashSet<>(Set.of(AuthoritiesConstants.USER)));
+        newUser.setAuthorities(new HashSet<>(Set.of(Role.USER.getAuthority())));
         newUser.setGroups(new HashSet<>());
 
         // userService.createUser(ManagedUserVM) does create an activated User

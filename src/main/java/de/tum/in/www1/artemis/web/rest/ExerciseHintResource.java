@@ -17,6 +17,7 @@ import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.ExerciseHint;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import io.github.jhipster.web.util.HeaderUtil;
 
@@ -71,7 +72,7 @@ public class ExerciseHintResource {
         if (exercise.isExamExercise()) {
             return forbidden();
         }
-        authCheckService.checkIsAtLeastTeachingAssistantForExerciseElseThrow(exercise, null);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
         ExerciseHint result = exerciseHintRepository.save(exerciseHint);
         return ResponseEntity.created(new URI("/api/exercise-hints/" + result.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
@@ -150,7 +151,7 @@ public class ExerciseHintResource {
     public ResponseEntity<Set<ExerciseHint>> getExerciseHintsForExercise(@PathVariable Long exerciseId) {
         log.debug("REST request to get ExerciseHint : {}", exerciseId);
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
-        authCheckService.checkIsAtLeastStudentForExerciseElseThrow(programmingExercise, null);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.USER, programmingExercise, null);
         Set<ExerciseHint> exerciseHints = exerciseHintRepository.findByExerciseId(exerciseId);
         return ResponseEntity.ok(exerciseHints);
     }
@@ -166,7 +167,7 @@ public class ExerciseHintResource {
     public ResponseEntity<Void> deleteExerciseHint(@PathVariable Long exerciseHintId) {
         log.debug("REST request to delete ExerciseHint : {}", exerciseHintId);
         var exerciseHint = exerciseHintRepository.findByIdElseThrow(exerciseHintId);
-        authCheckService.checkIsAtLeastTeachingAssistantForExerciseElseThrow(exerciseHint.getExercise(), null);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exerciseHint.getExercise(), null);
         exerciseHintRepository.deleteById(exerciseHintId);
         return ResponseEntity.noContent().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, exerciseHintId.toString())).build();
     }

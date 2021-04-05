@@ -19,6 +19,7 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.TutorParticipationService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
@@ -73,7 +74,7 @@ public class TutorParticipationResource {
         log.debug("REST request to start tutor participation : {}", exerciseId);
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        authorizationCheckService.checkIsAtLeastTeachingAssistantForExerciseElseThrow(exercise, user);
+        authorizationCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, user);
 
         if (tutorParticipationService.existsByAssessedExerciseIdAndTutorId(exerciseId, user.getId())) {
             // tutorParticipation already exists
@@ -129,7 +130,7 @@ public class TutorParticipationResource {
         Exercise exercise = this.exerciseRepository.findByIdElseThrow(exerciseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         // Allow all tutors to delete their own participation if it's for a tutorial
-        authorizationCheckService.checkIsAtLeastTeachingAssistantForExerciseElseThrow(exercise, user);
+        authorizationCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, user);
         if (!guidedTourConfiguration.isExerciseForTutorial(exercise)) {
             throw new AccessForbiddenException("This exercise is not part of a tutorial. Current tutorials: " + guidedTourConfiguration.getTours());
         }

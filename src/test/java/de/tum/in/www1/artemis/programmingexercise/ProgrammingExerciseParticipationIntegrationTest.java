@@ -33,26 +33,23 @@ public class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpr
     private final String exercisesBaseUrl = "/api/programming-exercises/";
 
     @Autowired
-    ProgrammingExerciseRepository programmingExerciseRepository;
+    private ProgrammingExerciseRepository programmingExerciseRepository;
 
     @Autowired
-    ParticipationRepository participationRepository;
+    private StudentParticipationRepository studentParticipationRepository;
 
     @Autowired
-    StudentParticipationRepository studentParticipationRepository;
+    private TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository;
 
     @Autowired
-    TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository;
+    private SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository;
 
     @Autowired
-    SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository;
+    private ResultRepository resultRepository;
 
-    @Autowired
-    ResultRepository resultRepository;
+    private ProgrammingExercise programmingExercise;
 
-    ProgrammingExercise programmingExercise;
-
-    Participation programmingExerciseParticipation;
+    private Participation programmingExerciseParticipation;
 
     @BeforeEach
     public void initTestCase() {

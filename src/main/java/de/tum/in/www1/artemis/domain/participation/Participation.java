@@ -133,18 +133,6 @@ public abstract class Participation extends DomainObject implements Participatio
         this.testRun = testRun;
     }
 
-    /**
-     *
-     * @return exercise object
-     */
-    public abstract Exercise getExercise();
-
-    /**
-     *
-     * @param exercise that will be set
-     */
-    public abstract void setExercise(Exercise exercise);
-
     public Set<Result> getResults() {
         return results;
     }

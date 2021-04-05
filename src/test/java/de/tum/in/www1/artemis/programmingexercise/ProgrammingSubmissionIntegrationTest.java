@@ -37,17 +37,17 @@ import de.tum.in.www1.artemis.util.TestConstants;
 public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
-    ProgrammingExerciseRepository programmingExerciseRepository;
+    private ProgrammingExerciseRepository programmingExerciseRepository;
 
     @Autowired
-    ProgrammingSubmissionRepository submissionRepository;
+    private ProgrammingSubmissionRepository submissionRepository;
 
     @Autowired
     private ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
 
-    ProgrammingExercise exercise;
+    private ProgrammingExercise exercise;
 
-    ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation;
+    private ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation;
 
     @BeforeEach
     public void init() {
@@ -381,12 +381,15 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
         database.updateExerciseDueDate(exercise.getId(), ZonedDateTime.now().minusHours(1));
         var submissions = submissionRepository.findAll();
 
-        Participation response = request.get("/api/programming-submissions/" + programmingExerciseStudentParticipation.getId() + "/lock", HttpStatus.FORBIDDEN,
+        Participation participation = request.get("/api/programming-submissions/" + programmingExerciseStudentParticipation.getId() + "/lock", HttpStatus.FORBIDDEN,
                 Participation.class);
 
         // Make sure no new submissions are created
         var latestSubmissions = submissionRepository.findAll();
         assertThat(submissions.size()).isEqualTo(latestSubmissions.size());
+
+        assertThat(participation).isNotNull();
+        // TODO add more assertions for participation
     }
 
     @Test
@@ -410,9 +413,6 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
     @WithMockUser(value = "tutor1", roles = "TA")
     public void testGetProgrammingSubmissionWithoutAssessment_lockSubmission() throws Exception {
         User user = database.getUserByLogin("tutor1");
-        var automaticFeedback = new Feedback().credits(null).detailText("asdfasdf").type(FeedbackType.AUTOMATIC).text("asdf");
-        var automaticFeedbacks = new ArrayList<Feedback>();
-        automaticFeedbacks.add(automaticFeedback);
         var newResult = database.addResultToParticipation(AssessmentType.AUTOMATIC, ZonedDateTime.now().minusHours(2), programmingExerciseStudentParticipation);
         programmingExerciseStudentParticipation.addResult(newResult);
         var submission = database.addProgrammingSubmissionToResultAndParticipation(newResult, programmingExerciseStudentParticipation, "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d");

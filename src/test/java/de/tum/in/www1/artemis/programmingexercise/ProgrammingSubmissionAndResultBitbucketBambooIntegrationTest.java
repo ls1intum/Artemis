@@ -41,8 +41,6 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildLogDTO;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildResultNotificationDTO;
 import de.tum.in.www1.artemis.util.ModelFactory;
-import de.tum.in.www1.artemis.web.rest.ProgrammingSubmissionResource;
-import de.tum.in.www1.artemis.web.rest.ResultResource;
 
 class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -54,46 +52,34 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
     private String ARTEMIS_AUTHENTICATION_TOKEN_VALUE;
 
     @Autowired
-    ProgrammingExerciseRepository exerciseRepo;
+    private ProgrammingSubmissionRepository submissionRepository;
 
     @Autowired
-    ProgrammingSubmissionResource programmingSubmissionResource;
+    private ParticipationRepository participationRepository;
 
     @Autowired
-    ResultResource resultResource;
+    private ProgrammingExerciseStudentParticipationRepository studentParticipationRepository;
 
     @Autowired
-    ProgrammingSubmissionRepository submissionRepository;
+    private SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository;
 
     @Autowired
-    ParticipationRepository participationRepository;
+    private TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository;
 
     @Autowired
-    ProgrammingExerciseStudentParticipationRepository studentParticipationRepository;
+    private ProgrammingExerciseRepository programmingExerciseRepository;
 
     @Autowired
-    SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository;
+    private ExamRepository examRepository;
 
     @Autowired
-    TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository;
+    private UserRepository userRepository;
 
     @Autowired
-    ProgrammingExerciseRepository programmingExerciseRepository;
+    private StudentExamRepository studentExamRepository;
 
     @Autowired
-    ExamRepository examRepository;
-
-    @Autowired
-    UserRepository userRepository;
-
-    @Autowired
-    StudentExamRepository studentExamRepository;
-
-    @Autowired
-    ResultRepository resultRepository;
-
-    @Autowired
-    BuildLogEntryRepository buildLogEntryRepository;
+    private ResultRepository resultRepository;
 
     private Long exerciseId;
 
@@ -485,7 +471,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         assertThat(results).hasSize(1);
         for (Result r : results) {
             boolean hasMatchingSubmission = submissions.stream().anyMatch(s -> s.getId().equals(r.getSubmission().getId()));
-            assertThat(hasMatchingSubmission);
+            assertThat(hasMatchingSubmission).isTrue();
         }
         for (Participation p : participations) {
             assertThat(p.getSubmissions()).hasSize(1);

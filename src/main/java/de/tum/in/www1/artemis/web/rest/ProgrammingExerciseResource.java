@@ -37,6 +37,7 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextPlagiarismResult;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
@@ -370,7 +371,7 @@ public class ProgrammingExerciseResource {
         // Valid exercises have set either a course or an exerciseGroup
         programmingExercise.checkCourseAndExerciseGroupExclusivity(ENTITY_NAME);
         Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(programmingExercise);
-        authCheckService.checkIsAtLeastInstructorInCourseElseThrow(course, null);
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
 
         // Validate general programming exercise settings
         Optional<ResponseEntity<ProgrammingExercise>> optionalGeneralError = validateGeneralSettings(programmingExercise);
@@ -532,7 +533,7 @@ public class ProgrammingExerciseResource {
 
         final var user = userRepository.getUserWithGroupsAndAuthorities();
         Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(newExercise);
-        authCheckService.checkIsAtLeastInstructorInCourseElseThrow(course, user);
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, user);
 
         // Validate course settings
         Optional<ResponseEntity<ProgrammingExercise>> optionalCourseError = validateCourseSettings(newExercise, course);
@@ -555,7 +556,7 @@ public class ProgrammingExerciseResource {
 
         // Check if the user has the rights to access the original programming exercise
         Course originalCourse = courseService.retrieveCourseOverExerciseGroupOrCourseId(originalProgrammingExercise);
-        authCheckService.checkIsAtLeastInstructorInCourseElseThrow(originalCourse, user);
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, originalCourse, user);
 
         newExercise.generateAndSetProjectKey();
         Optional<ResponseEntity<ProgrammingExercise>> projectExistsError = checkIfProjectExists(newExercise);
@@ -632,7 +633,7 @@ public class ProgrammingExerciseResource {
 
         // fetch course from database to make sure client didn't change groups
         Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(updatedProgrammingExercise);
-        authCheckService.checkIsAtLeastInstructorInCourseElseThrow(course, null);
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
 
         ResponseEntity<ProgrammingExercise> errorResponse = checkProgrammingExerciseForError(updatedProgrammingExercise);
         if (errorResponse != null) {
@@ -689,7 +690,7 @@ public class ProgrammingExerciseResource {
             @RequestParam(value = "notificationText", required = false) String notificationText) {
         log.debug("REST request to update the timeline of ProgrammingExercise : {}", updatedProgrammingExercise);
         var existingProgrammingExercise = programmingExerciseRepository.findByIdElseThrow(updatedProgrammingExercise.getId());
-        authCheckService.checkIsAtLeastInstructorForExerciseElseThrow(existingProgrammingExercise, null);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, existingProgrammingExercise, null);
         updatedProgrammingExercise = programmingExerciseService.updateTimeline(updatedProgrammingExercise, notificationText);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, updatedProgrammingExercise.getTitle()))
                 .body(updatedProgrammingExercise);
@@ -725,7 +726,7 @@ public class ProgrammingExerciseResource {
     public ResponseEntity<List<ProgrammingExercise>> getProgrammingExercisesForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all ProgrammingExercises for the course with id : {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
-        authCheckService.checkIsAtLeastTeachingAssistantInCourseElseThrow(course, null);
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, null);
         List<ProgrammingExercise> exercises = programmingExerciseRepository.findByCourseIdWithLatestResultForTemplateSolutionParticipations(courseId);
         for (ProgrammingExercise exercise : exercises) {
             // not required in the returned json body
@@ -752,10 +753,10 @@ public class ProgrammingExerciseResource {
         programmingExercise.setGradingCriteria(gradingCriteria);
         // If the exercise belongs to an exam, only instructors and admins are allowed to access it, otherwise also TA have access
         if (programmingExercise.isExamExercise()) {
-            authCheckService.checkIsAtLeastInstructorForExerciseElseThrow(programmingExercise, null);
+            authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, programmingExercise, null);
         }
         else {
-            authCheckService.checkIsAtLeastTeachingAssistantForExerciseElseThrow(programmingExercise, null);
+            authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, programmingExercise, null);
         }
         return ResponseEntity.ok().body(programmingExercise);
     }
@@ -772,7 +773,7 @@ public class ProgrammingExerciseResource {
         log.debug("REST request to get ProgrammingExercise : {}", exerciseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationLatestResultElseThrow(exerciseId);
-        authCheckService.checkIsAtLeastInstructorForExerciseElseThrow(programmingExercise, user);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, programmingExercise, user);
         var assignmentParticipation = studentParticipationRepository.findByExerciseIdAndStudentIdWithLatestResult(programmingExercise.getId(), user.getId());
         Set<StudentParticipation> participations = new HashSet<>();
         assignmentParticipation.ifPresent(participations::add);
@@ -799,7 +800,7 @@ public class ProgrammingExerciseResource {
         else {
             programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
         }
-        authCheckService.checkIsAtLeastTeachingAssistantForExerciseElseThrow(programmingExercise, null);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, programmingExercise, null);
         return ResponseEntity.ok(programmingExercise);
     }
 
@@ -819,7 +820,7 @@ public class ProgrammingExerciseResource {
         log.info("REST request to delete ProgrammingExercise : {}", exerciseId);
         var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesElseThrow(exerciseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        authCheckService.checkIsAtLeastInstructorForExerciseElseThrow(programmingExercise, user);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, programmingExercise, user);
         exerciseService.logDeletion(programmingExercise, programmingExercise.getCourseViaExerciseGroupOrCourseMember(), user);
         exerciseService.delete(exerciseId, deleteStudentReposBuildPlans, deleteBaseReposBuildPlans);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, programmingExercise.getTitle())).build();
@@ -840,7 +841,7 @@ public class ProgrammingExerciseResource {
     public ResponseEntity<Void> combineTemplateRepositoryCommits(@PathVariable long exerciseId) {
         log.debug("REST request to combine the commits of the template repository of ProgrammingExercise with id: {}", exerciseId);
         var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesElseThrow(exerciseId);
-        authCheckService.checkIsAtLeastInstructorForExerciseElseThrow(programmingExercise, null);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, programmingExercise, null);
         try {
             var exerciseRepoURL = programmingExercise.getVcsTemplateRepositoryUrl();
             gitService.combineAllCommitsOfRepositoryIntoOne(exerciseRepoURL);
@@ -865,7 +866,7 @@ public class ProgrammingExerciseResource {
             throws IOException {
         var programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        authCheckService.checkIsAtLeastTeachingAssistantForExerciseElseThrow(programmingExercise, user);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, programmingExercise, user);
 
         long start = System.nanoTime();
         File zipFile = programmingExerciseExportService.exportInstructorRepositoryForExercise(programmingExercise.getId(), repositoryType, new ArrayList<>());
@@ -898,10 +899,10 @@ public class ProgrammingExerciseResource {
             @RequestBody RepositoryExportOptionsDTO repositoryExportOptions) throws IOException {
         var programmingExercise = programmingExerciseRepository.findByIdWithStudentParticipationsAndSubmissionsElseThrow(exerciseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        authCheckService.checkIsAtLeastTeachingAssistantForExerciseElseThrow(programmingExercise, user);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, programmingExercise, user);
         if (repositoryExportOptions.isExportAllParticipants()) {
             // only instructors are allowed to download all repos
-            authCheckService.checkIsAtLeastInstructorForExerciseElseThrow(programmingExercise, user);
+            authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, programmingExercise, user);
         }
 
         if (repositoryExportOptions.getFilterLateSubmissionsDate() == null) {
@@ -941,7 +942,7 @@ public class ProgrammingExerciseResource {
     public ResponseEntity<Resource> exportSubmissionsByParticipationIds(@PathVariable long exerciseId, @PathVariable String participationIds,
             @RequestBody RepositoryExportOptionsDTO repositoryExportOptions) throws IOException {
         var programmingExercise = programmingExerciseRepository.findByIdWithStudentParticipationsAndSubmissionsElseThrow(exerciseId);
-        authCheckService.checkIsAtLeastTeachingAssistantForExerciseElseThrow(programmingExercise, null);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, programmingExercise, null);
         if (repositoryExportOptions.getFilterLateSubmissionsDate() == null) {
             repositoryExportOptions.setFilterLateSubmissionsDate(programmingExercise.getDueDate());
         }
@@ -994,7 +995,7 @@ public class ProgrammingExerciseResource {
         log.debug("REST request to generate the structure oracle for ProgrammingExercise with id: {}", exerciseId);
         var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesElseThrow(exerciseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        authCheckService.checkIsAtLeastInstructorForExerciseElseThrow(programmingExercise, user);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, programmingExercise, user);
         if (programmingExercise.getPackageName() == null || programmingExercise.getPackageName().length() < 3) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName,
                     "This is a linked exercise and generating the structure oracle for this exercise is not possible.", "couldNotGenerateStructureOracle")).body(null);
@@ -1040,7 +1041,7 @@ public class ProgrammingExerciseResource {
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<ProgrammingExerciseTestCaseStateDTO> hasAtLeastOneStudentResult(@PathVariable long exerciseId) {
         var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesElseThrow(exerciseId);
-        authCheckService.checkIsAtLeastTeachingAssistantForExerciseElseThrow(programmingExercise, null);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, programmingExercise, null);
         boolean hasAtLeastOneStudentResult = programmingExerciseService.hasAtLeastOneStudentResult(programmingExercise);
         boolean isReleased = programmingExercise.isReleased();
         ProgrammingExerciseTestCaseStateDTO testCaseDTO = new ProgrammingExerciseTestCaseStateDTO().released(isReleased).studentResult(hasAtLeastOneStudentResult)
@@ -1076,7 +1077,7 @@ public class ProgrammingExerciseResource {
     public ResponseEntity<TextPlagiarismResult> getPlagiarismResult(@PathVariable long exerciseId) {
         log.debug("REST request to get the latest plagiarism result for the programming exercise with id: {}", exerciseId);
         var programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
-        authCheckService.checkIsAtLeastInstructorForExerciseElseThrow(programmingExercise, null);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, programmingExercise, null);
         var plagiarismResult = plagiarismResultRepository.findFirstByExerciseIdOrderByLastModifiedDateDescElseThrow(programmingExercise.getId());
         return ResponseEntity.ok((TextPlagiarismResult) plagiarismResult);
     }
@@ -1100,7 +1101,7 @@ public class ProgrammingExerciseResource {
             throws ExitException, IOException {
         log.debug("REST request to check plagiarism for ProgrammingExercise with id: {}", exerciseId);
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
-        authCheckService.checkIsAtLeastInstructorForExerciseElseThrow(programmingExercise, null);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, programmingExercise, null);
 
         ProgrammingLanguage language = programmingExercise.getProgrammingLanguage();
         ProgrammingLanguageFeature programmingLanguageFeature = programmingLanguageFeatureService.getProgrammingLanguageFeatures(language);
@@ -1137,7 +1138,7 @@ public class ProgrammingExerciseResource {
         long start = System.nanoTime();
 
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
-        authCheckService.checkIsAtLeastInstructorForExerciseElseThrow(programmingExercise, null);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, programmingExercise, null);
 
         var language = programmingExercise.getProgrammingLanguage();
         ProgrammingLanguageFeature programmingLanguageFeature = programmingLanguageFeatureService.getProgrammingLanguageFeatures(language);
@@ -1174,7 +1175,7 @@ public class ProgrammingExerciseResource {
     public ResponseEntity<Void> unlockAllRepositories(@PathVariable Long exerciseId) {
         log.info("REST request to unlock all repositories of programming exercise {}", exerciseId);
         var programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
-        authCheckService.checkIsAtLeastInstructorForExerciseElseThrow(programmingExercise, null);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, programmingExercise, null);
         programmingExerciseService.unlockAllRepositories(exerciseId);
         log.info("Unlocked all repositories of programming exercise {} upon manual request", exerciseId);
         return ResponseEntity.ok().build();
@@ -1191,7 +1192,7 @@ public class ProgrammingExerciseResource {
     public ResponseEntity<Void> lockAllRepositories(@PathVariable Long exerciseId) {
         log.info("REST request to lock all repositories of programming exercise {}", exerciseId);
         var programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
-        authCheckService.checkIsAtLeastInstructorForExerciseElseThrow(programmingExercise, null);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, programmingExercise, null);
         programmingExerciseService.lockAllRepositories(exerciseId);
         log.info("Locked all repositories of programming exercise {} upon manual request", exerciseId);
         return ResponseEntity.ok().build();

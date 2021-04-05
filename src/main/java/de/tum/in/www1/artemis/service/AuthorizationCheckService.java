@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
+import static de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException.NOT_ALLOWED;
+
 import java.security.Principal;
 import java.time.ZonedDateTime;
 import java.util.Optional;
@@ -14,7 +16,7 @@ import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.security.AuthoritiesConstants;
+import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 
@@ -63,7 +65,7 @@ public class AuthorizationCheckService {
      * @param exercise belongs to a course that will be checked for permission rights
      * @param user the user whose permissions should be checked
      */
-    public void checkIsAtLeastTeachingAssistantForExerciseElseThrow(@NotNull Exercise exercise, @Nullable User user) {
+    private void checkIsAtLeastTeachingAssistantForExerciseElseThrow(@NotNull Exercise exercise, @Nullable User user) {
         if (!isAtLeastTeachingAssistantInCourse(exercise.getCourseViaExerciseGroupOrCourseMember(), user)) {
             throw new AccessForbiddenException("Exercise", exercise.getId());
         }
@@ -103,7 +105,7 @@ public class AuthorizationCheckService {
      * @param exercise the exercise that needs to be checked
      * @param user the user whose permissions should be checked
      */
-    public void checkIsAtLeastStudentForExerciseElseThrow(@NotNull Exercise exercise, @Nullable User user) {
+    private void checkIsAtLeastStudentForExerciseElseThrow(@NotNull Exercise exercise, @Nullable User user) {
         if (!isAtLeastStudentForExercise(exercise, user)) {
             throw new AccessForbiddenException("Exercise", exercise.getId());
         }
@@ -131,7 +133,7 @@ public class AuthorizationCheckService {
      * @param course the course that needs to be checked
      * @param user the user whose permissions should be checked
      */
-    public void checkIsAtLeastTeachingAssistantInCourseElseThrow(@NotNull Course course, @Nullable User user) {
+    private void checkIsAtLeastTeachingAssistantInCourseElseThrow(@NotNull Course course, @Nullable User user) {
         if (!isAtLeastTeachingAssistantInCourse(course, user)) {
             throw new AccessForbiddenException("Course", course.getId());
         }
@@ -150,6 +152,19 @@ public class AuthorizationCheckService {
             user = userRepository.getUserWithGroupsAndAuthorities();
         }
         return user.getGroups().contains(course.getInstructorGroupName()) || user.getGroups().contains(course.getTeachingAssistantGroupName()) || isAdmin(user);
+    }
+
+    /**
+     * Checks if the passed user is at least a student in the given course.
+     * Throws an AccessForbiddenException if the user has no access which returns a 403
+     *
+     * @param course the course that needs to be checked
+     * @param user the user whose permissions should be checked
+     */
+    private void checkIsAtLeastStudentInCourseElseThrow(@NotNull Course course, @Nullable User user) {
+        if (!isAtLeastStudentInCourse(course, user)) {
+            throw new AccessForbiddenException("Course", course.getId());
+        }
     }
 
     /**
@@ -197,9 +212,45 @@ public class AuthorizationCheckService {
      * @param exercise belongs to a course that will be checked for permission rights
      * @param user the user whose permissions should be checked (can be null)
      */
-    public void checkIsAtLeastInstructorForExerciseElseThrow(@NotNull Exercise exercise, @Nullable User user) {
+    private void checkIsAtLeastInstructorForExerciseElseThrow(@NotNull Exercise exercise, @Nullable User user) {
         if (!isAtLeastInstructorForExercise(exercise, user)) {
             throw new AccessForbiddenException("Exercise", exercise.getId());
+        }
+    }
+
+    /**
+     * Checks if the passed user has at least the given role for the given exercise.
+     * Throws an AccessForbiddenException if the user has no access which returns a 403
+     *
+     * @param role the role that should be checked
+     * @param exercise belongs to a course that will be checked for permission rights
+     * @param user the user whose permissions should be checked
+     */
+    public void checkHasAtLeastRoleForExerciseElseThrow(Role role, @NotNull Exercise exercise, @Nullable User user) {
+        switch (role) {
+            case ADMIN -> isAdminElseThrow(user);
+            case INSTRUCTOR -> checkIsAtLeastInstructorForExerciseElseThrow(exercise, user);
+            case TEACHING_ASSISTANT -> checkIsAtLeastTeachingAssistantForExerciseElseThrow(exercise, user);
+            case USER -> checkIsAtLeastStudentForExerciseElseThrow(exercise, user);
+            case ANONYMOUS -> throw new AccessForbiddenException(NOT_ALLOWED);
+        }
+    }
+
+    /**
+     * Checks if the passed user has at least the given role in the given course.
+     * Throws an AccessForbiddenException if the user has no access which returns a 403
+     *
+     * @param role the role that should be checked
+     * @param course the course that needs to be checked
+     * @param user the user whose permissions should be checked
+     */
+    public void checkHasAtLeastRoleInCourseElseThrow(Role role, @NotNull Course course, @Nullable User user) {
+        switch (role) {
+            case ADMIN -> isAdminElseThrow(user);
+            case INSTRUCTOR -> checkIsAtLeastInstructorInCourseElseThrow(course, user);
+            case TEACHING_ASSISTANT -> checkIsAtLeastTeachingAssistantInCourseElseThrow(course, user);
+            case USER -> checkIsAtLeastStudentInCourseElseThrow(course, user);
+            case ANONYMOUS -> throw new AccessForbiddenException(NOT_ALLOWED);
         }
     }
 
@@ -210,7 +261,7 @@ public class AuthorizationCheckService {
      * @param course the course that needs to be checked
      * @param user the user whose permissions should be checked
      */
-    public void checkIsAtLeastInstructorInCourseElseThrow(@NotNull Course course, @Nullable User user) {
+    private void checkIsAtLeastInstructorInCourseElseThrow(@NotNull Course course, @Nullable User user) {
         if (!isAtLeastInstructorInCourse(course, user)) {
             throw new AccessForbiddenException("Course", course.getId());
         }
@@ -375,7 +426,7 @@ public class AuthorizationCheckService {
             return true;
         }
         Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
-        return isInstructorInCourse(course, user) || isTeachingAssistantInCourse(course, user) || (isStudentInCourse(course, user) && exercise.isVisibleToStudents());
+        return isAtLeastTeachingAssistantInCourse(course, user) || (isStudentInCourse(course, user) && exercise.isVisibleToStudents());
     }
 
     /**
@@ -405,17 +456,30 @@ public class AuthorizationCheckService {
      * @return true, if user is admin, otherwise false
      */
     public boolean isAdmin() {
-        return SecurityUtils.isCurrentUserInRole(AuthoritiesConstants.ADMIN);
+        return SecurityUtils.isCurrentUserInRole(Role.ADMIN.getAuthority());
     }
 
     /**
-     * checks if the currently logged in user is an admin user
-     * @param user the user with authorities. Both cannot be null
+     * Checks if the passed user is an admin user
+     * @param user the user with authorities. If the user is null, the currently logged in user will be used.
      *
      * @return true, if user is admin, otherwise false
      */
-    public boolean isAdmin(@NotNull User user) {
+    public boolean isAdmin(@Nullable User user) {
+        if (user == null) {
+            return isAdmin();
+        }
         return user.getAuthorities().contains(Authority.ADMIN_AUTHORITY);
+    }
+
+    /**
+     * Checks if the passed user is an admin user. Throws an AccessForbiddenException in case the user is not an admin
+     * @param user the user with authorities. If the user is null, the currently logged in user will be used.
+     **/
+    public void isAdminElseThrow(@Nullable User user) {
+        if (!isAdmin(user)) {
+            throw new AccessForbiddenException(NOT_ALLOWED);
+        }
     }
 
     /**

@@ -18,7 +18,7 @@ import de.tum.in.www1.artemis.service.ProgrammingExerciseIntegrationServiceTest;
 class ProgrammingExerciseIntegrationBambooBitbucketJiraTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
-    ProgrammingExerciseIntegrationServiceTest programmingExerciseIntegrationServiceTest;
+    private ProgrammingExerciseIntegrationServiceTest programmingExerciseIntegrationServiceTest;
 
     @BeforeEach
     void initTestCase() throws Exception {

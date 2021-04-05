@@ -789,7 +789,7 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     void testFindStudentParticipation() {
-        var response = programmingExerciseParticipationService.findStudentParticipation(participation.getId());
+        var response = studentParticipationRepository.findById(participation.getId());
         assertThat(response.isPresent()).isTrue();
         assertThat(response.get().getId()).isEqualTo(participation.getId());
     }

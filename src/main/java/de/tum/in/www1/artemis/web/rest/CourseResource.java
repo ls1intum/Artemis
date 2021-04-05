@@ -42,6 +42,7 @@ import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
 import de.tum.in.www1.artemis.exception.GroupAlreadyExistsException;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
+import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.CIUserManagementService;
 import de.tum.in.www1.artemis.service.connectors.VcsUserManagementService;
@@ -1020,7 +1021,7 @@ public class CourseResource {
     public ResponseEntity<Void> archiveCourse(@PathVariable Long courseId) {
         log.info("REST request to archive Course : {}", courseId);
         final Course course = courseRepository.findByIdWithExercisesAndLecturesElseThrow(courseId);
-        authCheckService.checkIsAtLeastInstructorInCourseElseThrow(course, null);
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
         // Archiving a course is only possible after the course is over
         if (now().isBefore(course.getEndDate())) {
             throw new BadRequestAlertException("You cannot archive a course that is not over.", ENTITY_NAME, "courseNotOver", true);
@@ -1046,11 +1047,10 @@ public class CourseResource {
      * @return ResponseEntity with status
      */
     @GetMapping("/courses/{courseId}/download-archive")
-    @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR')")
     public ResponseEntity<Resource> downloadCourseArchive(@PathVariable Long courseId) throws FileNotFoundException {
         log.info("REST request to download archive of Course : {}", courseId);
         final Course course = courseRepository.findByIdElseThrow(courseId);
-        authCheckService.checkIsAtLeastInstructorInCourseElseThrow(course, null);
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
         if (!course.hasCourseArchive()) {
             return notFound();
         }
@@ -1071,7 +1071,7 @@ public class CourseResource {
     public ResponseEntity<Resource> cleanup(@PathVariable Long courseId) {
         log.info("REST request to cleanup the Course : {}", courseId);
         final Course course = courseRepository.findByIdElseThrow(courseId);
-        authCheckService.checkIsAtLeastInstructorInCourseElseThrow(course, null);
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
         // Forbid cleaning the course if no archive has been created
         if (!course.hasCourseArchive()) {
             throw new BadRequestAlertException("Failed to clean up course " + courseId + " because it needs to be archived first.", ENTITY_NAME, "archivenonexistant");
@@ -1091,7 +1091,7 @@ public class CourseResource {
     public ResponseEntity<Set<String>> getCategoriesInCourse(@PathVariable Long courseId) {
         log.debug("REST request to get categories of Course : {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
-        authCheckService.checkIsAtLeastInstructorInCourseElseThrow(course, null);
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
         return ResponseEntity.ok().body(exerciseRepository.findAllCategoryNames(course.getId()));
     }
 

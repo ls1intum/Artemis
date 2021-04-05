@@ -42,7 +42,7 @@ import de.tum.in.www1.artemis.domain.plagiarism.modeling.ModelingPlagiarismResul
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextPlagiarismResult;
 import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.security.AuthoritiesConstants;
+import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AssessmentService;
 import de.tum.in.www1.artemis.service.ModelingSubmissionService;
 import de.tum.in.www1.artemis.service.ParticipationService;
@@ -58,13 +58,13 @@ public class DatabaseUtilService {
 
     private static final ZonedDateTime futureFutureTimestamp = ZonedDateTime.now().plusDays(2);
 
-    private static final Authority userAuthority = new Authority(AuthoritiesConstants.USER);
+    private static final Authority userAuthority = new Authority(Role.USER.getAuthority());
 
-    private static final Authority tutorAuthority = new Authority(AuthoritiesConstants.TEACHING_ASSISTANT);
+    private static final Authority tutorAuthority = new Authority(Role.TEACHING_ASSISTANT.getAuthority());
 
-    private static final Authority instructorAuthority = new Authority(AuthoritiesConstants.INSTRUCTOR);
+    private static final Authority instructorAuthority = new Authority(Role.INSTRUCTOR.getAuthority());
 
-    private static final Authority adminAuthority = new Authority(AuthoritiesConstants.ADMIN);
+    private static final Authority adminAuthority = new Authority(Role.ADMIN.getAuthority());
 
     private static final Set<Authority> studentAuthorities = Set.of(userAuthority);
 

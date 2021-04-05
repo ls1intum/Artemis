@@ -34,7 +34,7 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
-import de.tum.in.www1.artemis.security.AuthoritiesConstants;
+import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.user.UserCreationService;
 import de.tum.in.www1.artemis.web.rest.dto.LtiLaunchRequestDTO;
@@ -45,6 +45,8 @@ public class LtiService {
     public static final String TUMX = "TUMx";
 
     public static final String U4I = "U4I";
+
+    protected static final List<SimpleGrantedAuthority> SIMPLE_USER_LIST_AUTHORITY = Collections.singletonList(new SimpleGrantedAuthority(Role.USER.getAuthority()));
 
     private final Logger log = LoggerFactory.getLogger(LtiService.class);
 
@@ -199,8 +201,7 @@ public class LtiService {
         if (optionalLtiUserId.isPresent()) {
             final var user = optionalLtiUserId.get().getUser();
             // Authenticate
-            return Optional.of(
-                    new UsernamePasswordAuthenticationToken(user.getLogin(), user.getPassword(), Collections.singletonList(new SimpleGrantedAuthority(AuthoritiesConstants.USER))));
+            return Optional.of(new UsernamePasswordAuthenticationToken(user.getLogin(), user.getPassword(), SIMPLE_USER_LIST_AUTHORITY));
         }
 
         // 3. Case: Lookup user with the LTI email address. Sign in as this user.
@@ -252,8 +253,7 @@ public class LtiService {
         }
 
         log.info("Signing in as {}", username);
-        return Optional
-                .of(new UsernamePasswordAuthenticationToken(user.getLogin(), user.getPassword(), Collections.singletonList(new SimpleGrantedAuthority(AuthoritiesConstants.USER))));
+        return Optional.of(new UsernamePasswordAuthenticationToken(user.getLogin(), user.getPassword(), SIMPLE_USER_LIST_AUTHORITY));
     }
 
     private Optional<Authentication> loginUserByEmail(LtiLaunchRequestDTO launchRequest, String username, String email, String fullname) {
@@ -268,7 +268,7 @@ public class LtiService {
         final var user = artemisAuthenticationProvider.getOrCreateUser(new UsernamePasswordAuthenticationToken(username, ""), firstName, fullname, email, true);
 
         return Optional
-                .of(new UsernamePasswordAuthenticationToken(user.getLogin(), user.getPassword(), Collections.singletonList(new SimpleGrantedAuthority(AuthoritiesConstants.USER))));
+                .of(new UsernamePasswordAuthenticationToken(user.getLogin(), user.getPassword(), Collections.singletonList(new SimpleGrantedAuthority(Role.USER.getAuthority()))));
     }
 
     @NotNull

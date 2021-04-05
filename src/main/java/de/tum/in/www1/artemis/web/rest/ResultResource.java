@@ -27,6 +27,7 @@ import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
@@ -218,7 +219,7 @@ public class ResultResource {
         log.debug("REST request to get Results for Exercise : {}", exerciseId);
 
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
-        authCheckService.checkIsAtLeastTeachingAssistantForExerciseElseThrow(exercise, null);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
 
         List<Result> results = new ArrayList<>();
         var examMode = exercise.isExamExercise();
@@ -459,7 +460,7 @@ public class ResultResource {
         }
 
         Optional<User> student = userRepository.findOneWithGroupsAndAuthoritiesByLogin(studentLogin);
-        authCheckService.checkIsAtLeastInstructorForExerciseElseThrow(exercise, null);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
         if (student.isEmpty() || !authCheckService.isAtLeastStudentInCourse(exercise.getCourseViaExerciseGroupOrCourseMember(), student.get())) {
             return ResponseEntity.badRequest()
                     .headers(HeaderUtil.createFailureAlert(applicationName, true, "result", "studentNotFound", "The student could not be found in this course.")).build();

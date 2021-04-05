@@ -44,10 +44,10 @@ public class ProgrammingExerciseParticipationResource {
 
     private final GradingCriterionRepository gradingCriterionRepository;
 
-    public ProgrammingExerciseParticipationResource(ProgrammingExerciseParticipationService programmingExerciseParticipationService,
+    public ProgrammingExerciseParticipationResource(ProgrammingExerciseParticipationService programmingExerciseParticipationService, ResultService resultService,
             ParticipationRepository participationRepository, ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
-            ResultService resultService, ProgrammingSubmissionService submissionService, ProgrammingExerciseRepository programmingExerciseRepository,
-            AuthorizationCheckService authCheckService, GradingCriterionRepository gradingCriterionRepository) {
+            ProgrammingSubmissionService submissionService, ProgrammingExerciseRepository programmingExerciseRepository, AuthorizationCheckService authCheckService,
+            GradingCriterionRepository gradingCriterionRepository) {
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.participationRepository = participationRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
@@ -150,17 +150,12 @@ public class ProgrammingExerciseParticipationResource {
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Result> getLatestResultWithFeedbacksForProgrammingExerciseParticipation(@PathVariable Long participationId,
             @RequestParam(defaultValue = "false") boolean withSubmission) {
-        Participation participation = participationRepository.findByIdElseThrow(participationId);
-        if (!(participation instanceof ProgrammingExerciseParticipation)) {
-            return badRequest();
-        }
-        var programmingParticipation = (ProgrammingExerciseParticipation) participation;
-
-        if (!programmingExerciseParticipationService.canAccessParticipation(programmingParticipation)) {
+        var participation = participationRepository.findByIdElseThrow(participationId);
+        if (!programmingExerciseParticipationService.canAccessParticipation((ProgrammingExerciseParticipation) participation)) {
             return forbidden();
         }
 
-        Optional<Result> result = resultService.findLatestResultWithFeedbacksForParticipation(programmingParticipation.getId(), withSubmission);
+        Optional<Result> result = resultService.findLatestResultWithFeedbacksForParticipation(participation.getId(), withSubmission);
         if (result.isPresent() && !authCheckService.isAtLeastTeachingAssistantForExercise(participation.getExercise())) {
             final boolean isBeforeDueDate = participation.getExercise().isBeforeDueDate();
             result.get().filterSensitiveInformation();

@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.domain;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.Objects;
 
@@ -11,7 +12,7 @@ import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import de.tum.in.www1.artemis.security.AuthoritiesConstants;
+import de.tum.in.www1.artemis.security.Role;
 
 /**
  * An authority (a security role) used by Spring Security.
@@ -22,13 +23,14 @@ import de.tum.in.www1.artemis.security.AuthoritiesConstants;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class Authority implements Serializable {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     public Authority() {
         // empty constructor would not be available otherwise
     }
 
-    public static Authority ADMIN_AUTHORITY = new Authority(AuthoritiesConstants.ADMIN);
+    public static Authority ADMIN_AUTHORITY = new Authority(Role.ADMIN.getAuthority());
 
     public Authority(String name) {
         // we need this constructor because we use the UserDTO which maps a set of authorities to a set of strings

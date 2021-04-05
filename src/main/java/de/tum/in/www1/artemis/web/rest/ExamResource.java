@@ -31,6 +31,7 @@ import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
 import de.tum.in.www1.artemis.service.exam.*;
@@ -311,7 +312,7 @@ public class ExamResource {
         }
 
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        authCheckService.checkIsAtLeastTeachingAssistantInCourseElseThrow(course, user);
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, user);
 
         if (ZonedDateTime.now().isBefore(exam.getEndDate()) && authCheckService.isTeachingAssistantInCourse(course, user)) {
             // tutors cannot access the exercises before the exam ends

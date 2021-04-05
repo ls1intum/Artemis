@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.service.user;
 
-import static de.tum.in.www1.artemis.security.AuthoritiesConstants.*;
+import static de.tum.in.www1.artemis.security.Role.*;
 
 import java.time.Instant;
 import java.util.HashSet;
@@ -114,7 +114,7 @@ public class UserCreationService {
         // new user gets registration key
         newUser.setActivationKey(RandomUtil.generateActivationKey());
 
-        final var authority = authorityRepository.findById(USER).get();
+        final var authority = authorityRepository.findById(USER.getAuthority()).get();
         // needs to be mutable --> new HashSet<>(Set.of(...))
         final var authorities = new HashSet<>(Set.of(authority));
         newUser.setAuthorities(authorities);

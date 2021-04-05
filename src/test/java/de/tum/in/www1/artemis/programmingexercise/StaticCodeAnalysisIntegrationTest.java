@@ -30,8 +30,6 @@ import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.StaticCodeAnalysisService;
 import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisReportDTO;
-import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseGradingService;
-import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseTestCaseService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.StaticCodeAnalysisResource;
 
@@ -42,21 +40,6 @@ class StaticCodeAnalysisIntegrationTest extends AbstractSpringIntegrationBambooB
 
     @Autowired
     private ProgrammingExerciseRepository programmingExerciseRepository;
-
-    @Autowired
-    StudentParticipationRepository studentParticipationRepository;
-
-    @Autowired
-    ResultRepository resultRepository;
-
-    @Autowired
-    ProgrammingExerciseGradingService gradingService;
-
-    @Autowired
-    ProgrammingExerciseTestCaseService testCaseService;
-
-    @Autowired
-    ProgrammingExerciseTestCaseRepository testCaseRepository;
 
     @Autowired
     @Qualifier("staticCodeAnalysisConfiguration")

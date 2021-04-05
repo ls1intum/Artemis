@@ -28,6 +28,7 @@ import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.*;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
@@ -606,7 +607,7 @@ public class ProgrammingExerciseService {
     public ProgrammingExercise updateProblemStatement(Long programmingExerciseId, String problemStatement, @Nullable String notificationText) throws EntityNotFoundException {
         var programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExerciseId)
                 .orElseThrow(() -> new EntityNotFoundException("Programming Exercise", programmingExerciseId));
-        authCheckService.checkIsAtLeastInstructorForExerciseElseThrow(programmingExercise, null);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, programmingExercise, null);
         programmingExercise.setProblemStatement(problemStatement);
         ProgrammingExercise updatedProgrammingExercise = programmingExerciseRepository.save(programmingExercise);
         if (notificationText != null) {

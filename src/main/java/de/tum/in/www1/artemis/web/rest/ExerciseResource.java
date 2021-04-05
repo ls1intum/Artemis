@@ -21,6 +21,7 @@ import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.exam.ExamDateService;
 import de.tum.in.www1.artemis.service.feature.Feature;
@@ -160,7 +161,7 @@ public class ExerciseResource {
     public ResponseEntity<Exercise> getExerciseForAssessmentDashboard(@PathVariable Long exerciseId) {
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        authCheckService.checkIsAtLeastTeachingAssistantForExerciseElseThrow(exercise, user);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, user);
 
         // Programming exercises with only automatic assessment should *NOT* be available on the assessment dashboard!
         if (exercise instanceof ProgrammingExercise && exercise.getAssessmentType().equals(AssessmentType.AUTOMATIC)) {
@@ -331,7 +332,7 @@ public class ExerciseResource {
     public ResponseEntity<StatsForDashboardDTO> getStatsForInstructorExerciseDashboard(@PathVariable Long exerciseId) {
         log.debug("REST request to get exercise statistics for instructor dashboard : {}", exerciseId);
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
-        authCheckService.checkIsAtLeastInstructorForExerciseElseThrow(exercise, null);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
 
         StatsForDashboardDTO stats = populateCommonStatistics(exercise, exercise.isExamExercise());
         long numberOfOpenComplaints = complaintRepository.countComplaintsByExerciseIdAndComplaintType(exerciseId, ComplaintType.COMPLAINT);
@@ -353,7 +354,7 @@ public class ExerciseResource {
     public ResponseEntity<Void> reset(@PathVariable Long exerciseId) {
         log.debug("REST request to reset Exercise : {}", exerciseId);
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
-        authCheckService.checkIsAtLeastInstructorForExerciseElseThrow(exercise, null);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
         exerciseService.reset(exercise);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, "exercise", exerciseId.toString())).build();
     }

@@ -31,6 +31,7 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
@@ -130,7 +131,7 @@ public class ParticipationResource {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         Participant participant = user;
         Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
-        authCheckService.checkIsAtLeastStudentForExerciseElseThrow(exercise, user);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.USER, exercise, user);
 
         // if the user is a student and the exercise has a release date, he cannot start the exercise before the release date
         if (exercise.getReleaseDate() != null && exercise.getReleaseDate().isAfter(now())) {
@@ -262,7 +263,7 @@ public class ParticipationResource {
             @RequestParam(defaultValue = "false") boolean withLatestResult) {
         log.debug("REST request to get all Participations for Exercise {}", exerciseId);
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
-        authCheckService.checkIsAtLeastTeachingAssistantForExerciseElseThrow(exercise, null);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
         boolean examMode = exercise.isExamExercise();
         List<StudentParticipation> participations;
         if (withLatestResult) {
@@ -418,7 +419,7 @@ public class ParticipationResource {
     public ResponseEntity<MappingJacksonValue> getParticipation(@PathVariable Long exerciseId, Principal principal) {
         log.debug("REST request to get Participation for Exercise : {}", exerciseId);
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
-        authCheckService.checkIsAtLeastStudentForExerciseElseThrow(exercise, null);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.USER, exercise, null);
         MappingJacksonValue response;
         if (exercise instanceof QuizExercise) {
             // fetch again to load some additional objects

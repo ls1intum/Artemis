@@ -1,7 +1,7 @@
 package de.tum.in.www1.artemis.service.user;
 
 import static de.tum.in.www1.artemis.domain.Authority.ADMIN_AUTHORITY;
-import static de.tum.in.www1.artemis.security.AuthoritiesConstants.*;
+import static de.tum.in.www1.artemis.security.Role.*;
 
 import java.util.HashSet;
 import java.util.Optional;
@@ -60,15 +60,15 @@ public class AuthorityService {
 
         // Check if user is an instructor in any course
         if (groups.stream().anyMatch(instructorGroups::contains)) {
-            authorities.add(new Authority(INSTRUCTOR));
+            authorities.add(new Authority(INSTRUCTOR.getAuthority()));
         }
 
         // Check if user is a tutor in any course
         if (groups.stream().anyMatch(teachingAssistantGroups::contains)) {
-            authorities.add(new Authority(TEACHING_ASSISTANT));
+            authorities.add(new Authority(TEACHING_ASSISTANT.getAuthority()));
         }
 
-        authorities.add(new Authority(USER));
+        authorities.add(new Authority(USER.getAuthority()));
         return authorities;
     }
 }

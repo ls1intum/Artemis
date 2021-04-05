@@ -24,7 +24,7 @@ import de.tum.in.www1.artemis.connector.gitlab.GitlabRequestMockProvider;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.ArtemisInternalAuthenticationProvider;
-import de.tum.in.www1.artemis.security.AuthoritiesConstants;
+import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.jwt.TokenProvider;
 import de.tum.in.www1.artemis.service.user.PasswordService;
 import de.tum.in.www1.artemis.util.ModelFactory;
@@ -94,10 +94,10 @@ public class InternalAuthenticationIntegrationTest extends AbstractSpringIntegra
         ltiLaunchRequest = AuthenticationIntegrationTestHelper.setupDefaultLtiLaunchRequest();
         doReturn(null).when(ltiService).verifyRequest(any());
 
-        final var userAuthority = new Authority(AuthoritiesConstants.USER);
-        final var instructorAuthority = new Authority(AuthoritiesConstants.INSTRUCTOR);
-        final var adminAuthority = new Authority(AuthoritiesConstants.ADMIN);
-        final var taAuthority = new Authority(AuthoritiesConstants.TEACHING_ASSISTANT);
+        final var userAuthority = new Authority(Role.USER.getAuthority());
+        final var instructorAuthority = new Authority(Role.INSTRUCTOR.getAuthority());
+        final var adminAuthority = new Authority(Role.ADMIN.getAuthority());
+        final var taAuthority = new Authority(Role.TEACHING_ASSISTANT.getAuthority());
         authorityRepository.saveAll(List.of(userAuthority, instructorAuthority, adminAuthority, taAuthority));
 
         student = userRepository.findOneWithGroupsAndAuthoritiesByLogin(USERNAME).get();
@@ -173,7 +173,7 @@ public class InternalAuthenticationIntegrationTest extends AbstractSpringIntegra
         student.setPassword("foobar");
         student.setEmail("user1@secret.invalid");
         Set<Authority> authorities = new HashSet<>();
-        authorities.add(new Authority(AuthoritiesConstants.USER));
+        authorities.add(new Authority(Role.USER.getAuthority()));
 
         student.setAuthorities(authorities);
 
@@ -201,8 +201,8 @@ public class InternalAuthenticationIntegrationTest extends AbstractSpringIntegra
         student.setPassword("foobar");
         student.setEmail("btutor1@secret.invalid");
         Set<Authority> authorities = new HashSet<>();
-        authorities.add(new Authority(AuthoritiesConstants.USER));
-        authorities.add(new Authority(AuthoritiesConstants.TEACHING_ASSISTANT));
+        authorities.add(new Authority(Role.USER.getAuthority()));
+        authorities.add(new Authority(Role.TEACHING_ASSISTANT.getAuthority()));
 
         student.setAuthorities(authorities);
 
@@ -229,9 +229,9 @@ public class InternalAuthenticationIntegrationTest extends AbstractSpringIntegra
         student.setPassword("foobar");
         student.setEmail("instructor1@secret.invalid");
         Set<Authority> authorities = new HashSet<>();
-        authorities.add(new Authority(AuthoritiesConstants.USER));
-        authorities.add(new Authority(AuthoritiesConstants.TEACHING_ASSISTANT));
-        authorities.add(new Authority(AuthoritiesConstants.INSTRUCTOR));
+        authorities.add(new Authority(Role.USER.getAuthority()));
+        authorities.add(new Authority(Role.TEACHING_ASSISTANT.getAuthority()));
+        authorities.add(new Authority(Role.INSTRUCTOR.getAuthority()));
 
         student.setAuthorities(authorities);
 

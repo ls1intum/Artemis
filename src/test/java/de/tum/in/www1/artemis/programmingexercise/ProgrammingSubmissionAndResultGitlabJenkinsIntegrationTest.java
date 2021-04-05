@@ -30,8 +30,6 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.connectors.jenkins.dto.TestResultsDTO;
 import de.tum.in.www1.artemis.util.ModelFactory;
-import de.tum.in.www1.artemis.web.rest.ProgrammingSubmissionResource;
-import de.tum.in.www1.artemis.web.rest.ResultResource;
 
 public class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 
@@ -39,37 +37,16 @@ public class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends 
     private String ARTEMIS_AUTHENTICATION_TOKEN_VALUE;
 
     @Autowired
-    ProgrammingExerciseRepository exerciseRepo;
+    private ProgrammingSubmissionRepository submissionRepository;
 
     @Autowired
-    ProgrammingSubmissionResource programmingSubmissionResource;
+    private ProgrammingExerciseStudentParticipationRepository studentParticipationRepository;
 
     @Autowired
-    ResultResource resultResource;
+    private ProgrammingExerciseRepository programmingExerciseRepository;
 
     @Autowired
-    ProgrammingSubmissionRepository submissionRepository;
-
-    @Autowired
-    ParticipationRepository participationRepository;
-
-    @Autowired
-    ProgrammingExerciseStudentParticipationRepository studentParticipationRepository;
-
-    @Autowired
-    SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository;
-
-    @Autowired
-    TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository;
-
-    @Autowired
-    ProgrammingExerciseRepository programmingExerciseRepository;
-
-    @Autowired
-    ResultRepository resultRepository;
-
-    @Autowired
-    BuildLogEntryRepository buildLogEntryRepository;
+    private ResultRepository resultRepository;
 
     private ProgrammingExercise exercise;
 

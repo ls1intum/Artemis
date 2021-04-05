@@ -8,6 +8,7 @@ import java.security.Principal;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -47,7 +48,7 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.security.AuthoritiesConstants;
+import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.validation.InetSocketAddressValidator;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -94,7 +95,7 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
     }
 
     @Override
-    protected void configureMessageBroker(MessageBrokerRegistry config) {
+    protected void configureMessageBroker(@NotNull MessageBrokerRegistry config) {
         // Try to create a TCP client that will connect to the message broker (or the message brokers if multiple exists).
         // If tcpClient is null, there is no valid address specified in the config. This could be due to a development setup or a mistake in the config.
         TcpOperations<byte[]> tcpClient = createTcpClient();
@@ -157,6 +158,7 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
         registration.interceptors(new TopicSubscriptionInterceptor());
     }
 
+    @NotNull
     @Override
     protected MappingJackson2MessageConverter createJacksonConverter() {
         // NOTE: We need to adapt the default messageConverter for WebSocket messages
@@ -175,7 +177,8 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
         return new HandshakeInterceptor() {
 
             @Override
-            public boolean beforeHandshake(ServerHttpRequest request, ServerHttpResponse response, WebSocketHandler wsHandler, Map<String, Object> attributes) {
+            public boolean beforeHandshake(@NotNull ServerHttpRequest request, @NotNull ServerHttpResponse response, @NotNull WebSocketHandler wsHandler,
+                    @NotNull Map<String, Object> attributes) {
                 if (request instanceof ServletServerHttpRequest) {
                     ServletServerHttpRequest servletRequest = (ServletServerHttpRequest) request;
                     attributes.put(IP_ADDRESS, servletRequest.getRemoteAddress());
@@ -184,7 +187,7 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
             }
 
             @Override
-            public void afterHandshake(ServerHttpRequest request, ServerHttpResponse response, WebSocketHandler wsHandler, Exception exception) {
+            public void afterHandshake(@NotNull ServerHttpRequest request, @NotNull ServerHttpResponse response, @NotNull WebSocketHandler wsHandler, Exception exception) {
                 if (exception != null) {
                     log.warn("Exception occurred in WS.afterHandshake: " + exception.getMessage());
                 }
@@ -196,11 +199,11 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
         return new DefaultHandshakeHandler() {
 
             @Override
-            protected Principal determineUser(ServerHttpRequest request, WebSocketHandler wsHandler, Map<String, Object> attributes) {
+            protected Principal determineUser(@NotNull ServerHttpRequest request, @NotNull WebSocketHandler wsHandler, @NotNull Map<String, Object> attributes) {
                 Principal principal = request.getPrincipal();
                 if (principal == null) {
                     Collection<SimpleGrantedAuthority> authorities = new ArrayList<>();
-                    authorities.add(new SimpleGrantedAuthority(AuthoritiesConstants.ANONYMOUS));
+                    authorities.add(new SimpleGrantedAuthority(Role.ANONYMOUS.getAuthority()));
                     principal = new AnonymousAuthenticationToken("WebsocketConfiguration", "anonymous", authorities);
                 }
                 log.debug("determineUser: " + principal);
@@ -219,7 +222,7 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
          * @return message that gets passed along further
          */
         @Override
-        public Message<?> preSend(Message<?> message, MessageChannel channel) {
+        public Message<?> preSend(@NotNull Message<?> message, @NotNull MessageChannel channel) {
             StompHeaderAccessor headerAccessor = StompHeaderAccessor.wrap(message);
             Principal principal = headerAccessor.getUser();
             String destination = headerAccessor.getDestination();
@@ -233,7 +236,7 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
                 }
                 catch (EntityNotFoundException e) {
                     // If the user is not found (e.g. because he is not logged in), he should not be able to subscribe to these topics
-                    log.warn("An error occurred while subscribing user {} to destination {}: {}", principal.getName(), destination, e.getMessage());
+                    log.warn("An error occurred while subscribing user {} to destination {}: {}", principal != null ? principal.getName() : "null", destination, e.getMessage());
                     return null;
                 }
             }

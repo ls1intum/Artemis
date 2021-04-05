@@ -1,7 +1,7 @@
 package de.tum.in.www1.artemis.service.user;
 
 import static de.tum.in.www1.artemis.domain.Authority.ADMIN_AUTHORITY;
-import static de.tum.in.www1.artemis.security.AuthoritiesConstants.*;
+import static de.tum.in.www1.artemis.security.Role.*;
 
 import java.time.Instant;
 import java.util.*;
@@ -110,7 +110,7 @@ public class UserService {
                     log.info("Update internal admin user " + artemisInternalAdminUsername.get());
                     existingInternalAdmin.get().setPassword(passwordService.encodePassword(artemisInternalAdminPassword.get()));
                     // needs to be mutable --> new HashSet<>(Set.of(...))
-                    existingInternalAdmin.get().setAuthorities(new HashSet<>(Set.of(ADMIN_AUTHORITY, new Authority(USER))));
+                    existingInternalAdmin.get().setAuthorities(new HashSet<>(Set.of(ADMIN_AUTHORITY, new Authority(USER.getAuthority()))));
                     saveUser(existingInternalAdmin.get());
                     updateUserInConnectorsAndAuthProvider(existingInternalAdmin.get(), existingInternalAdmin.get().getLogin(), existingInternalAdmin.get().getGroups());
                 }
@@ -127,7 +127,7 @@ public class UserService {
                     userDto.setCreatedBy("system");
                     userDto.setLastModifiedBy("system");
                     // needs to be mutable --> new HashSet<>(Set.of(...))
-                    userDto.setAuthorities(new HashSet<>(Set.of(ADMIN, USER)));
+                    userDto.setAuthorities(new HashSet<>(Set.of(ADMIN.getAuthority(), USER.getAuthority())));
                     userDto.setGroups(new HashSet<>());
                     userCreationService.createUser(userDto);
                 }
@@ -234,7 +234,7 @@ public class UserService {
         // new user gets registration key
         newUser.setActivationKey(RandomUtil.generateActivationKey());
         Set<Authority> authorities = new HashSet<>();
-        authorityRepository.findById(USER).ifPresent(authorities::add);
+        authorityRepository.findById(USER.getAuthority()).ifPresent(authorities::add);
         newUser.setAuthorities(authorities);
         saveUser(newUser);
         // we need to save first so that the user can be found in the database in the subsequent method

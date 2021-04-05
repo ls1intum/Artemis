@@ -21,6 +21,7 @@ import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExamRepository;
+import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ParticipantScoreService;
 import de.tum.in.www1.artemis.web.rest.dto.ParticipantScoreAverageDTO;
@@ -121,7 +122,7 @@ public class ParticipantScoreResource {
         long start = System.currentTimeMillis();
         log.debug("REST request to get participant scores for course : {}", courseId);
         Course course = courseRepository.findByIdWithEagerExercisesElseThrow(courseId);
-        authorizationCheckService.checkIsAtLeastInstructorInCourseElseThrow(course, null);
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
         Set<Exercise> exercisesOfCourse = course.getExercises().stream().filter(Exercise::isCourseExercise).collect(Collectors.toSet());
         List<ParticipantScoreDTO> resultsOfAllExercises = participantScoreService.getParticipantScoreDTOs(getUnpaged ? Pageable.unpaged() : pageable, exercisesOfCourse);
         log.info("getParticipantScoresOfCourse took " + (System.currentTimeMillis() - start) + "ms");
