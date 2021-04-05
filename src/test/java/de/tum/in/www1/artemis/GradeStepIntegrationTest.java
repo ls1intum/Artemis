@@ -118,7 +118,7 @@ public class GradeStepIntegrationTest extends AbstractSpringIntegrationBambooBit
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGetGradeStepByIdForCourse_NoGradingScaleExists() throws Exception {
-        request.get("/api/courses/" + course.getId() + "/grading-scale/grade-step/1", HttpStatus.NOT_FOUND, GradeStep.class);
+        request.get("/api/courses/" + course.getId() + "/grading-scale/grade-steps/1", HttpStatus.NOT_FOUND, GradeStep.class);
     }
 
     @Test
@@ -134,7 +134,7 @@ public class GradeStepIntegrationTest extends AbstractSpringIntegrationBambooBit
         gradingScaleRepository.save(courseGradingScale);
         Long gradeStepId = gradeStepRepository.findAll().get(0).getId();
 
-        GradeStep foundGradeStep = request.get("/api/courses/" + course.getId() + "/grading-scale/grade-step/" + gradeStepId, HttpStatus.OK, GradeStep.class);
+        GradeStep foundGradeStep = request.get("/api/courses/" + course.getId() + "/grading-scale/grade-steps/" + gradeStepId, HttpStatus.OK, GradeStep.class);
 
         assertThat(foundGradeStep).usingRecursiveComparison().ignoringFields("gradingScale", "id").isEqualTo(gradeStep);
     }
@@ -142,7 +142,7 @@ public class GradeStepIntegrationTest extends AbstractSpringIntegrationBambooBit
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGetGradeStepByIdForExam_NoGradingScaleExists() throws Exception {
-        request.get("/api/courses/" + course.getId() + "/grading-scale/grade-step/1", HttpStatus.NOT_FOUND, GradeStep.class);
+        request.get("/api/courses/" + course.getId() + "/grading-scale/grade-steps/1", HttpStatus.NOT_FOUND, GradeStep.class);
     }
 
     @Test
@@ -158,7 +158,7 @@ public class GradeStepIntegrationTest extends AbstractSpringIntegrationBambooBit
         gradingScaleRepository.save(examGradingScale);
         Long gradeStepId = gradeStepRepository.findAll().get(0).getId();
 
-        GradeStep foundGradeStep = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale/grade-step/" + gradeStepId, HttpStatus.OK,
+        GradeStep foundGradeStep = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale/grade-steps/" + gradeStepId, HttpStatus.OK,
                 GradeStep.class);
 
         assertThat(foundGradeStep).usingRecursiveComparison().ignoringFields("gradingScale", "id").isEqualTo(gradeStep);
