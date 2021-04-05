@@ -52,23 +52,18 @@ public class GradingScaleService {
 
     /**
      * Saves a grading scale to the database if it is valid
-     * - if {@param update} is set to true, also deletes the grade steps for the current grading scale to preserve consistency
      *
      * @param gradingScale the grading scale to be saved
-     * @param update should the method save a new grading scale or update an existing one
      * @return the saved grading scale
      */
     @Transactional
-    public GradingScale saveGradingScale(GradingScale gradingScale, boolean update) {
+    public GradingScale saveGradingScale(GradingScale gradingScale) {
         Set<GradeStep> gradeSteps = gradingScale.getGradeSteps();
         checkGradeStepValidity(gradeSteps);
         for (GradeStep gradeStep : gradeSteps) {
             gradeStep.setGradingScale(gradingScale);
         }
         gradingScale.setGradeSteps(gradeSteps);
-        if (update) {
-            deleteAllGradeStepsForGradingScale(gradingScale);
-        }
         return gradingScaleRepository.save(gradingScale);
     }
 
@@ -109,16 +104,6 @@ public class GradingScaleService {
         boolean validLastElement = sortedGradeSteps.get(sortedGradeSteps.size() - 1).isUpperBoundInclusive()
                 && sortedGradeSteps.get(sortedGradeSteps.size() - 1).getUpperBoundPercentage() == 100;
         return validAdjacency && validFirstElement && validLastElement;
-    }
-
-    /**
-     * Deletes all grade steps for the given grading scale
-     *
-     * @param gradingScale the grading scale for which the grade steps should be deleted
-     */
-    public void deleteAllGradeStepsForGradingScale(GradingScale gradingScale) {
-        List<GradeStep> gradeSteps = gradeStepRepository.findByGradingScale_Id(gradingScale.getId());
-        gradeStepRepository.deleteInBatch(gradeSteps);
     }
 
 }

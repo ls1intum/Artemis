@@ -4,7 +4,6 @@ import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.badRequest;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.List;
 import java.util.Optional;
 
 import org.slf4j.Logger;
@@ -103,7 +102,7 @@ public class GradingScaleResource {
         Course course = courseRepository.findById(courseId).orElseThrow();
         gradingScale.setCourse(course);
 
-        gradingScale = gradingScaleService.saveGradingScale(gradingScale, false);
+        gradingScale = gradingScaleService.saveGradingScale(gradingScale);
         return ResponseEntity.created(new URI("/api/courses/" + courseId + "/grading-scale/")).headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, ""))
                 .body(gradingScale);
     }
@@ -132,7 +131,7 @@ public class GradingScaleResource {
         Exam exam = examRepository.findById(examId).orElseThrow();
         gradingScale.setExam(exam);
 
-        gradingScale = gradingScaleService.saveGradingScale(gradingScale, false);
+        gradingScale = gradingScaleService.saveGradingScale(gradingScale);
         return ResponseEntity.created(new URI("/api/courses/" + courseId + "/exams/" + examId + "/grading-scale/"))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, "")).body(gradingScale);
     }
@@ -151,7 +150,7 @@ public class GradingScaleResource {
         GradingScale oldGradingScale = gradingScaleRepository.findByCourseIdOrElseThrow(courseId);
         gradingScale.setId(oldGradingScale.getId());
         gradingScale.setCourse(oldGradingScale.getCourse());
-        gradingScale = gradingScaleService.saveGradingScale(gradingScale, true);
+        gradingScale = gradingScaleService.saveGradingScale(gradingScale);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, "")).body(gradingScale);
     }
 
@@ -169,7 +168,7 @@ public class GradingScaleResource {
         GradingScale oldGradingScale = gradingScaleRepository.findByExamIdOrElseThrow(examId);
         gradingScale.setId(oldGradingScale.getId());
         gradingScale.setExam(oldGradingScale.getExam());
-        gradingScale = gradingScaleService.saveGradingScale(gradingScale, true);
+        gradingScale = gradingScaleService.saveGradingScale(gradingScale);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, "")).body(gradingScale);
     }
 
@@ -184,8 +183,7 @@ public class GradingScaleResource {
     public ResponseEntity<Void> deleteGradingScaleForCourse(@PathVariable Long courseId) {
         log.debug("REST request to delete the grading scale for course: {}", courseId);
         GradingScale gradingScale = gradingScaleRepository.findByCourseIdOrElseThrow(courseId);
-        gradingScaleService.deleteAllGradeStepsForGradingScale(gradingScale);
-        gradingScaleRepository.deleteInBatch(List.of(gradingScale));
+        gradingScaleRepository.deleteById(gradingScale.getId());
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, "")).build();
     }
 
@@ -200,8 +198,7 @@ public class GradingScaleResource {
     public ResponseEntity<Void> deleteGradingScaleForExam(@PathVariable Long examId) {
         log.debug("REST request to delete the grading scale for exam: {}", examId);
         GradingScale gradingScale = gradingScaleRepository.findByExamIdOrElseThrow(examId);
-        gradingScaleService.deleteAllGradeStepsForGradingScale(gradingScale);
-        gradingScaleRepository.deleteInBatch(List.of(gradingScale));
+        gradingScaleRepository.deleteById(gradingScale.getId());
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, "")).build();
     }
 
