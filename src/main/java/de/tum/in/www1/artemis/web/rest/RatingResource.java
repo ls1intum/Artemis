@@ -61,7 +61,7 @@ public class RatingResource {
      * @return Rating or null
      */
     @GetMapping("/results/{resultId}/rating")
-    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Optional<Rating>> getRatingForResult(@PathVariable Long resultId) {
         // TODO allow for Instructors
         if (!checkIfUserIsOwnerOfSubmission(resultId) && !authCheckService.isAdmin()) {
@@ -80,7 +80,7 @@ public class RatingResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("/results/{resultId}/rating/{ratingValue}")
-    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Rating> createRatingForResult(@PathVariable long resultId, @PathVariable int ratingValue) throws URISyntaxException {
         checkRating(ratingValue);
         if (!checkIfUserIsOwnerOfSubmission(resultId)) {
@@ -105,7 +105,7 @@ public class RatingResource {
      * @return updated Rating
      */
     @PutMapping("/results/{resultId}/rating/{ratingValue}")
-    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Rating> updateRatingForResult(@PathVariable long resultId, @PathVariable int ratingValue) {
         checkRating(ratingValue);
         if (!checkIfUserIsOwnerOfSubmission(resultId)) {
@@ -123,7 +123,7 @@ public class RatingResource {
      * @return List of Ratings for the course
      */
     @GetMapping("/course/{courseId}/rating")
-    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<List<Rating>> getRatingForInstructorDashboard(@PathVariable Long courseId) {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         Course course = courseRepository.findByIdElseThrow(courseId);

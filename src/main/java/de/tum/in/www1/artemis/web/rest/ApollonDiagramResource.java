@@ -65,7 +65,7 @@ public class ApollonDiagramResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("/course/{courseId}/apollon-diagrams")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('TA')")
     public ResponseEntity<ApollonDiagram> createApollonDiagram(@RequestBody ApollonDiagram apollonDiagram, @PathVariable Long courseId) throws URISyntaxException {
         log.debug("REST request to save ApollonDiagram : {}", apollonDiagram);
 
@@ -94,7 +94,7 @@ public class ApollonDiagramResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PutMapping("/course/{courseId}/apollon-diagrams")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('TA')")
     public ResponseEntity<ApollonDiagram> updateApollonDiagram(@RequestBody ApollonDiagram apollonDiagram, @PathVariable Long courseId) throws URISyntaxException {
         log.debug("REST request to update ApollonDiagram : {}", apollonDiagram);
 
@@ -119,7 +119,7 @@ public class ApollonDiagramResource {
      * @return the title of the diagram wrapped in an ResponseEntity or 404 Not Found if no diagram with that id exists
      */
     @GetMapping(value = "/apollon-diagrams/{diagramId}/title")
-    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<String> getExerciseTitle(@PathVariable Long diagramId) {
         final var title = apollonDiagramRepository.getDiagramTitle(diagramId);
         return title == null ? ResponseEntity.notFound().build() : ResponseEntity.ok(title);
@@ -131,7 +131,7 @@ public class ApollonDiagramResource {
      * @return the ResponseEntity with status 200 (OK) and the list of apollonDiagrams in body
      */
     @GetMapping("/apollon-diagrams")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('TA')")
     public List<ApollonDiagram> getAllApollonDiagrams() {
         log.debug("REST request to get all ApollonDiagrams");
         return apollonDiagramRepository.findAll();
@@ -144,7 +144,7 @@ public class ApollonDiagramResource {
      * @return the ResponseEntity with status 200 (OK) and the list of apollonDiagrams in body
      */
     @GetMapping("/course/{courseId}/apollon-diagrams")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('TA')")
     public List<ApollonDiagram> getDiagramsByCourse(@PathVariable Long courseId) {
         log.debug("REST request to get ApollonDiagrams matching current course");
 
@@ -165,7 +165,7 @@ public class ApollonDiagramResource {
      * @return the ResponseEntity with status 200 (OK) and with body the apollonDiagram, or with status 404 (Not Found)
      */
     @GetMapping("/course/{courseId}/apollon-diagrams/{id}")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('TA')")
     public ResponseEntity<ApollonDiagram> getApollonDiagram(@PathVariable Long id, @PathVariable Long courseId) {
         log.debug("REST request to get ApollonDiagram : {}", id);
         Optional<ApollonDiagram> apollonDiagram = apollonDiagramRepository.findById(id);
@@ -189,7 +189,7 @@ public class ApollonDiagramResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("/course/{courseId}/apollon-diagrams/{id}")
-    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Void> deleteApollonDiagram(@PathVariable Long id, @PathVariable Long courseId) {
         log.debug("REST request to delete ApollonDiagram : {}", id);
 

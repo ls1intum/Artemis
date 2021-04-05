@@ -65,7 +65,7 @@ public class ParticipantScoreResource {
      * @return list of scores for every member of the course
      */
     @GetMapping("/courses/{courseId}/course-scores")
-    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<List<ScoreDTO>> getScoresOfCourse(@PathVariable Long courseId) {
         long start = System.currentTimeMillis();
         log.debug("REST request to get course scores for course : {}", courseId);
@@ -93,7 +93,7 @@ public class ParticipantScoreResource {
      * @return list of scores for every registered user in the xam
      */
     @GetMapping("/exams/{examId}/exam-scores")
-    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<List<ScoreDTO>> getScoresOfExam(@PathVariable Long examId) {
         long start = System.currentTimeMillis();
         log.debug("REST request to get exam scores for exam : {}", examId);
@@ -116,7 +116,7 @@ public class ParticipantScoreResource {
      * @return the ResponseEntity with status 200 (OK) and with the participant scores in the body
      */
     @GetMapping("/courses/{courseId}/participant-scores")
-    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<List<ParticipantScoreDTO>> getParticipantScoresOfCourse(@PathVariable Long courseId, Pageable pageable,
             @RequestParam(value = "getUnpaged", required = false, defaultValue = "false") boolean getUnpaged) {
         long start = System.currentTimeMillis();
@@ -138,7 +138,7 @@ public class ParticipantScoreResource {
      * @return the ResponseEntity with status 200 (OK) and with the average scores in the body
      */
     @GetMapping("/courses/{courseId}/participant-scores/average-participant")
-    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<List<ParticipantScoreAverageDTO>> getAverageScoreOfParticipantInCourse(@PathVariable Long courseId) {
         long start = System.currentTimeMillis();
         log.debug("REST request to get average participant scores of participants for course : {}", courseId);
@@ -163,7 +163,7 @@ public class ParticipantScoreResource {
      * @return the ResponseEntity with status 200 (OK) and with average score in the body
      */
     @GetMapping("/courses/{courseId}/participant-scores/average")
-    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Double> getAverageScoreOfCourse(@PathVariable Long courseId, @RequestParam(defaultValue = "true", required = false) boolean onlyConsiderRatedScores) {
         long start = System.currentTimeMillis();
         if (onlyConsiderRatedScores) {
@@ -192,7 +192,7 @@ public class ParticipantScoreResource {
      * @return the ResponseEntity with status 200 (OK) and with the participant scores in the body
      */
     @GetMapping("/exams/{examId}/participant-scores")
-    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<List<ParticipantScoreDTO>> getParticipantScoresOfExam(@PathVariable Long examId, Pageable pageable,
             @RequestParam(value = "getUnpaged", required = false, defaultValue = "false") boolean getUnpaged) {
         long start = System.currentTimeMillis();
@@ -227,7 +227,7 @@ public class ParticipantScoreResource {
      * @return the ResponseEntity with status 200 (OK) and with average score in the body
      */
     @GetMapping("/exams/{examId}/participant-scores/average")
-    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Double> getAverageScoreOfExam(@PathVariable Long examId, @RequestParam(defaultValue = "true", required = false) boolean onlyConsiderRatedScores) {
         long start = System.currentTimeMillis();
         if (onlyConsiderRatedScores) {
@@ -261,7 +261,7 @@ public class ParticipantScoreResource {
      * @return the ResponseEntity with status 200 (OK) and with the average scores in the body
      */
     @GetMapping("/exams/{examId}/participant-scores/average-participant")
-    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<List<ParticipantScoreAverageDTO>> getAverageScoreOfParticipantInExam(@PathVariable Long examId) {
         long start = System.currentTimeMillis();
         log.debug("REST request to get average participant scores of participants for exam : {}", examId);

@@ -69,7 +69,7 @@ public class TutorParticipationResource {
      * @throws URISyntaxException if URI path can't be created
      */
     @PostMapping(value = "/exercises/{exerciseId}/tutorParticipations")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('TA')")
     public ResponseEntity<TutorParticipation> initTutorParticipation(@PathVariable Long exerciseId) throws URISyntaxException {
         log.debug("REST request to start tutor participation : {}", exerciseId);
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
@@ -96,7 +96,7 @@ public class TutorParticipationResource {
      * @return the ResponseEntity with status 200 (OK) and with body the exercise, or with status 404 (Not Found)
      */
     @PostMapping(value = "/exercises/{exerciseId}/exampleSubmission")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('TA')")
     public ResponseEntity<TutorParticipation> addExampleSubmission(@PathVariable Long exerciseId, @RequestBody ExampleSubmission exampleSubmission) {
         log.debug("REST request to add example submission to exercise id : {}", exerciseId);
         Exercise exercise = this.exerciseRepository.findByIdElseThrow(exerciseId);
@@ -124,7 +124,7 @@ public class TutorParticipationResource {
      * @return  the ResponseEntity with status 200 (OK) or 403 (FORBIDDEN)
      */
     @DeleteMapping(value = "guided-tour/exercises/{exerciseId}/exampleSubmission")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('TA')")
     public ResponseEntity<TutorParticipation> deleteTutorParticipationForGuidedTour(@PathVariable Long exerciseId) {
         log.debug("REST request to remove tutor participation of the example submission for exercise id : {}", exerciseId);
         Exercise exercise = this.exerciseRepository.findByIdElseThrow(exerciseId);

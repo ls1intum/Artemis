@@ -71,7 +71,7 @@ public class AttachmentResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("/attachments")
-    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Attachment> createAttachment(@RequestBody Attachment attachment) throws URISyntaxException {
         log.debug("REST request to save Attachment : {}", attachment);
         if (attachment.getId() != null) {
@@ -93,7 +93,7 @@ public class AttachmentResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PutMapping("/attachments")
-    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Attachment> updateAttachment(@RequestBody Attachment attachment, @RequestParam(value = "notificationText", required = false) String notificationText)
             throws URISyntaxException {
         log.debug("REST request to update Attachment : {}", attachment);
@@ -120,7 +120,7 @@ public class AttachmentResource {
      * @return the ResponseEntity with status 200 (OK) and with body the attachment, or with status 404 (Not Found)
      */
     @GetMapping("/attachments/{id}")
-    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Attachment> getAttachment(@PathVariable Long id) {
         log.debug("REST request to get Attachment : {}", id);
         Optional<Attachment> attachment = attachmentRepository.findById(id);
@@ -134,7 +134,7 @@ public class AttachmentResource {
      * @return the ResponseEntity with status 200 (OK) and the list of attachments in body
      */
     @GetMapping(value = "/lectures/{lectureId}/attachments")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('TA')")
     public List<Attachment> getAttachmentsForLecture(@PathVariable Long lectureId) {
         log.debug("REST request to get all attachments for the lecture with id : {}", lectureId);
         return attachmentRepository.findAllByLectureId(lectureId);
@@ -147,7 +147,7 @@ public class AttachmentResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("/attachments/{id}")
-    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Void> deleteAttachment(@PathVariable Long id) {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         Optional<Attachment> optionalAttachment = attachmentRepository.findById(id);

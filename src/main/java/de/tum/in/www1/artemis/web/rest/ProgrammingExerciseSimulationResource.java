@@ -68,7 +68,7 @@ public class ProgrammingExerciseSimulationResource {
      * @return a Response Entity
      */
     @PostMapping(ProgrammingExerciseSimulationResource.Endpoints.EXERCISES_SIMULATION)
-    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
     @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
     public ResponseEntity<ProgrammingExercise> createProgrammingExerciseWithoutVersionControlAndContinuousIntegrationAvailable(
             @RequestBody ProgrammingExercise programmingExercise) {

@@ -85,7 +85,7 @@ public class ProgrammingSubmissionResultSimulationResource {
      */
 
     @PostMapping(Endpoints.SUBMISSIONS_SIMULATION)
-    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<ProgrammingSubmission> createParticipationAndSubmissionSimulation(@PathVariable Long exerciseId) {
 
         User user = userRepository.getUserWithGroupsAndAuthorities();
@@ -117,7 +117,7 @@ public class ProgrammingSubmissionResultSimulationResource {
      * @return HTTP OK and Result
      */
     @PostMapping(Endpoints.RESULTS_SIMULATION)
-    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Result> createNewProgrammingExerciseResult(@PathVariable Long exerciseId) {
         log.debug("Received result notify (NEW)");
         User user = userRepository.getUserWithGroupsAndAuthorities();

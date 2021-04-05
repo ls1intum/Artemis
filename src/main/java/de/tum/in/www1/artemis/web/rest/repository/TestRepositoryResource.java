@@ -35,7 +35,7 @@ import de.tum.in.www1.artemis.web.rest.dto.RepositoryStatusDTO;
  */
 @RestController
 @RequestMapping("/api")
-@PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+@PreAuthorize("hasRole('TA')")
 public class TestRepositoryResource extends RepositoryResource {
 
     public TestRepositoryResource(UserRepository userRepository, AuthorizationCheckService authCheckService, GitService gitService,

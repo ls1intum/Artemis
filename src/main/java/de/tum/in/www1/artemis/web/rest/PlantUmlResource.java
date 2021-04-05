@@ -16,7 +16,7 @@ import de.tum.in.www1.artemis.service.PlantUmlService;
 
 @RestController
 @RequestMapping(PlantUmlResource.Endpoints.ROOT)
-@PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+@PreAuthorize("hasRole('USER')")
 public class PlantUmlResource {
 
     private final Logger log = LoggerFactory.getLogger(ParticipationResource.class);

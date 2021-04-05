@@ -33,7 +33,7 @@ public class ManagementResource {
      * @return A list of all enabled features
      */
     @PutMapping(SUB_FEATURE_TOGGLE)
-    @PreAuthorize("hasAnyRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<Feature>> toggleFeatures(@RequestBody Map<Feature, Boolean> features) {
         featureToggleService.updateFeatureToggles(features);
 
