@@ -27,7 +27,6 @@ import de.tum.in.www1.artemis.service.connectors.SAML2Service;
 import de.tum.in.www1.artemis.service.programming.ProgrammingLanguageFeatureService;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.RequestUtilService;
-import de.tum.in.www1.artemis.util.UserTestService;
 import de.tum.in.www1.artemis.web.rest.UserJWTController;
 
 /**
@@ -42,12 +41,8 @@ import de.tum.in.www1.artemis.web.rest.UserJWTController;
 // NOTE: we use a common set of active profiles to reduce the number of application launches during testing. This significantly saves time and memory!
 
 @ActiveProfiles({ SPRING_PROFILE_TEST, "artemis", "saml2" })
-@TestPropertySource(properties = { "info.guided-tour.course-group-tutors=", "info.guided-tour.course-group-students=artemis-artemistutorial-students",
-        "info.guided-tour.course-group-instructors=artemis-artemistutorial-instructors", "artemis.user-management.use-external=false" })
+@TestPropertySource(properties = { "artemis.user-management.use-external=false" })
 public abstract class AbstractSpringIntegrationSaml2Test {
-
-    @Autowired
-    UserTestService userTestService;
 
     @Autowired
     protected DatabaseUtilService database;

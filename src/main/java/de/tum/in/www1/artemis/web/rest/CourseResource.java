@@ -1044,6 +1044,7 @@ public class CourseResource {
      * @param courseId The course id of the archived course
      * @return ResponseEntity with status
      */
+    @PreAuthorize("hasRole('INSTRUCTOR')")
     @GetMapping("/courses/{courseId}/download-archive")
     public ResponseEntity<Resource> downloadCourseArchive(@PathVariable Long courseId) throws FileNotFoundException {
         log.info("REST request to download archive of Course : {}", courseId);

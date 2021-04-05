@@ -299,11 +299,11 @@ public class UserCreationService {
             if (tutorialGroupStudents.isPresent() && courseRepository.findCourseByStudentGroupName(tutorialGroupStudents.get()) != null) {
                 groupsToAdd.add(tutorialGroupStudents.get());
             }
-            if (tutorialGroupTutors.isPresent() && user.getAuthorities().contains(TEACHING_ASSISTANT)
+            if (tutorialGroupTutors.isPresent() && user.getAuthorities().contains(TEACHING_ASSISTANT.getAuthority())
                     && courseRepository.findCourseByTeachingAssistantGroupName(tutorialGroupTutors.get()) != null) {
                 groupsToAdd.add(tutorialGroupTutors.get());
             }
-            if (tutorialGroupInstructors.isPresent() && user.getAuthorities().contains(INSTRUCTOR)
+            if (tutorialGroupInstructors.isPresent() && user.getAuthorities().contains(INSTRUCTOR.getAuthority())
                     && courseRepository.findCourseByInstructorGroupName(tutorialGroupInstructors.get()) != null) {
                 groupsToAdd.add(tutorialGroupInstructors.get());
             }
