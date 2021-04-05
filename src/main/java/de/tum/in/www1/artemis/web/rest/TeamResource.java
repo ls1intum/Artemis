@@ -27,6 +27,7 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.TeamImportStrategyType;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.dto.TeamSearchUserDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
@@ -107,9 +108,7 @@ public class TeamResource {
         }
         User user = userRepository.getUserWithGroupsAndAuthorities();
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
-        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
-            return forbidden();
-        }
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, user);
         if (!exercise.isTeamMode()) {
             throw new BadRequestAlertException("A team cannot be created for an exercise that is not team-based.", ENTITY_NAME, "exerciseNotTeamBased");
         }
