@@ -8,9 +8,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import jplag.*;
-import jplag.options.LanguageOption;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -24,6 +21,8 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextPlagiarismResult;
 import de.tum.in.www1.artemis.service.TextSubmissionExportService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
+import jplag.*;
+import jplag.options.LanguageOption;
 
 @Service
 public class TextPlagiarismDetectionService {

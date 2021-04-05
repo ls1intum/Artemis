@@ -17,8 +17,6 @@ import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
 
-import jplag.ExitException;
-
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,6 +51,7 @@ import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import de.tum.in.www1.artemis.web.websocket.dto.ProgrammingExerciseTestCaseStateDTO;
+import jplag.ExitException;
 
 /**
  * REST controller for managing ProgrammingExercise.

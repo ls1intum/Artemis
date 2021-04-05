@@ -7,8 +7,6 @@ import static org.mockito.Mockito.*;
 import java.util.Collections;
 import java.util.List;
 
-import me.xdrop.fuzzywuzzy.FuzzySearch;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockitoAnnotations;
@@ -16,6 +14,7 @@ import org.mockito.Spy;
 
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
 import de.tum.in.www1.artemis.service.compass.utils.CompassConfiguration;
+import me.xdrop.fuzzywuzzy.FuzzySearch;
 
 public class UMLClassTest {
 

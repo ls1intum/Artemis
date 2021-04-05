@@ -3,14 +3,13 @@ package de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
-import me.xdrop.fuzzywuzzy.FuzzySearch;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import de.tum.in.www1.artemis.service.compass.utils.CompassConfiguration;
+import me.xdrop.fuzzywuzzy.FuzzySearch;
 
 public class UMLAttributeTest {
 

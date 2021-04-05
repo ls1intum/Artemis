@@ -5,12 +5,11 @@ import java.util.stream.Collectors;
 
 import javax.persistence.*;
 
-import jplag.JPlagComparison;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextSubmissionElement;
+import jplag.JPlagComparison;
 
 /**
  * Pair of compared student submissions whose similarity is above a certain threshold.

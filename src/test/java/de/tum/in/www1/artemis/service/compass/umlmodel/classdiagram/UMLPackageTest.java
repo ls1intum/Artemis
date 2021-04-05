@@ -5,12 +5,12 @@ import static org.mockito.Mockito.*;
 
 import java.util.List;
 
-import me.xdrop.fuzzywuzzy.FuzzySearch;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+
+import me.xdrop.fuzzywuzzy.FuzzySearch;
 
 public class UMLPackageTest {
 
