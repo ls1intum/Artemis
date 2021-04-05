@@ -1,17 +1,128 @@
 .card {
-    height: 320px;
-    cursor: pointer;
+    min-height: 320px;
+
     .card-header {
-        min-height: 60px;
-        max-height: 100px;
+        position: relative;
+        padding: 0;
+        height: 80px;
         display: flex;
         justify-content: center;
         align-items: center;
+
+        .col {
+            height: 80px;
+            display: flex;
+            align-items: center;
+        }
+
+        .image-col {
+            justify-content: flex-start;
+        }
+
+        .title-col {
+            justify-content: center;
+        }
+
+        .course-info-col {
+            justify-content: flex-end;
+
+            .course-info-amounts {
+                display: flex;
+                flex-direction: column;
+                line-height: 20px;
+                white-space: nowrap;
+                z-index: 1;
+
+                a {
+                    color: white;
+                    font-weight: unset;
+                }
+            }
+        }
+
+        .container {
+            height: 80px;
+
+            .row {
+                height: 80px;
+                justify-content: space-between;
+            }
+        }
+
+        .card-title {
+            overflow: hidden;
+            padding-bottom: 1px;
+            max-height: 80px;
+        }
     }
+
     .card-body {
+        position: relative;
         display: flex;
         justify-content: center;
         align-items: center;
         flex-direction: column;
+
+        .chart-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            .chart-text {
+                position: absolute;
+            }
+        }
+
+        canvas {
+            z-index: 1;
+        }
+    }
+
+    .card-footer {
+        position: relative;
+        padding: 0;
+        height: 50px;
+
+        .container {
+            height: 50px;
+
+            .row {
+                height: 50px;
+            }
+        }
+
+        .next-exercise-col {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+
+            h5 {
+                margin-bottom: 1px;
+                height: 1em;
+                overflow: hidden;
+            }
+
+            h6 {
+                margin-bottom: 0;
+            }
+        }
+
+        .no-exercise {
+            display: flex;
+            height: 50px;
+            align-items: center;
+
+            h6 {
+                margin-bottom: 0;
+            }
+        }
+    }
+}
+
+jhi-secured-image {
+    ::ng-deep img {
+        border-radius: 50%;
+        height: 65px;
+        width: auto;
     }
 }

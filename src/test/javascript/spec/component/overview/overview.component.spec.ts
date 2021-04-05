@@ -109,7 +109,7 @@ describe('Overview Component', () => {
 
                     spyOn<any>(guidedTourComponent, 'subscribeToDotChanges').and.returnValue(of());
 
-                    spyOn(exerciseService, 'getNextExerciseForDays').and.returnValue(of());
+                    spyOn(exerciseService, 'getNextExercisesForDays').and.returnValue(of());
                     spyOn(guidedTourService, 'init').and.returnValue(of());
                     spyOn<any>(guidedTourService, 'updateGuidedTourSettings').and.returnValue(of());
 
