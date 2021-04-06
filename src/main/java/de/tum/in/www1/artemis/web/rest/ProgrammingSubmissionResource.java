@@ -24,7 +24,6 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
-import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.*;
@@ -60,7 +59,9 @@ public class ProgrammingSubmissionResource {
 
     private final ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
 
-    private final StudentParticipationRepository studentParticipationRepository;
+    private final GradingCriterionRepository gradingCriterionRepository;
+
+    private final SubmissionRepository submissionRepository;
 
     private final Optional<VersionControlService> versionControlService;
 
@@ -72,7 +73,8 @@ public class ProgrammingSubmissionResource {
             ParticipationRepository participationRepository, AuthorizationCheckService authCheckService, ProgrammingExerciseRepository programmingExerciseRepository,
             ProgrammingExerciseParticipationService programmingExerciseParticipationService,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, Optional<VersionControlService> versionControlService,
-            UserRepository userRepository, Optional<ContinuousIntegrationService> continuousIntegrationService, StudentParticipationRepository studentParticipationRepository) {
+            UserRepository userRepository, Optional<ContinuousIntegrationService> continuousIntegrationService, GradingCriterionRepository gradingCriterionRepository,
+            SubmissionRepository submissionRepository) {
         this.programmingSubmissionService = programmingSubmissionService;
         this.exerciseRepository = exerciseRepository;
         this.participationRepository = participationRepository;
@@ -83,7 +85,8 @@ public class ProgrammingSubmissionResource {
         this.versionControlService = versionControlService;
         this.userRepository = userRepository;
         this.continuousIntegrationService = continuousIntegrationService;
-        this.studentParticipationRepository = studentParticipationRepository;
+        this.gradingCriterionRepository = gradingCriterionRepository;
+        this.submissionRepository = submissionRepository;
     }
 
     /**
@@ -372,54 +375,54 @@ public class ProgrammingSubmissionResource {
         return ResponseEntity.ok().body(programmingSubmissions);
     }
 
-    // TODO: Make this call use submissionId instead of participationId (after implementation of one to many relation ship of submission and results)
     /**
-     * GET /programming-submissions/:participationId/lock : get the programmingSubmissions participation by it's id and locks the corresponding submission for assessment
+     * GET /programming-submissions/:submissionId/lock : get the programmingSubmissions participation by it's id and locks the corresponding submission for assessment
      *
-     * @param participationId the id of the participation to retrieve
+     * @param submissionId the id of the participation to retrieve
      * @param correctionRound correction round for which we prepare the submission
      * @return the ResponseEntity with status 200 (OK) and with body the programmingSubmissions participation
      */
-    @GetMapping("/programming-submissions/{participationId}/lock")
+    @GetMapping("/programming-submissions/{submissionId}/lock")
     @PreAuthorize("hasAnyRole('TA','INSTRUCTOR','ADMIN')")
-    public ResponseEntity<Participation> lockAndGetProgrammingSubmissionParticipation(@PathVariable Long participationId,
+    public ResponseEntity<ProgrammingSubmission> lockAndGetProgrammingSubmission(@PathVariable Long submissionId,
             @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound) {
-        log.debug("REST request to get ProgrammingSubmission of Participation with id: {}", participationId);
-        final var participation = studentParticipationRepository.findByIdWithResultsElseThrow(participationId);
-        final var exercise = participation.getExercise();
-        final User user = userRepository.getUserWithGroupsAndAuthorities();
+        log.debug("REST request to get ProgrammingSubmission with id: {}", submissionId);
+        var programmingSubmission = (ProgrammingSubmission) submissionRepository.findOneWithEagerResultAndFeedback(submissionId);
+        final var participation = programmingSubmission.getParticipation();
+        final var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(participation.getExercise().getId());
+        var gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(programmingExercise.getId());
+        programmingExercise.setGradingCriteria(gradingCriteria);
 
-        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
+        final User user = userRepository.getUserWithGroupsAndAuthorities();
+        if (!authCheckService.isAtLeastTeachingAssistantForExercise(programmingExercise, user)) {
             return forbidden();
         }
 
-        if (!((ProgrammingExercise) participation.getExercise()).areManualResultsAllowed()) {
+        if (!programmingExercise.areManualResultsAllowed()) {
             return forbidden("assessment", "assessmentSaveNotAllowed", "Creating manual results is disabled for this exercise!");
         }
 
-        int numberOfManualResults = participation.getResults().stream().filter(Result::isManual).collect(Collectors.toList()).size();
-        if (numberOfManualResults >= correctionRound + 1) {
-            return ResponseEntity.ok(participation);
-        }
-        else {
+        int numberOfManualResults = programmingSubmission.getResults().stream().filter(Result::isManual).collect(Collectors.toList()).size();
+        if (numberOfManualResults < correctionRound + 1) {
             // Check lock limit
-            programmingSubmissionService.checkSubmissionLockLimit(exercise.getCourseViaExerciseGroupOrCourseMember().getId());
+            programmingSubmissionService.checkSubmissionLockLimit(programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId());
 
             // As no manual result is present we need to lock the submission for assessment
-            Result latestAutomaticResult = participation.findLatestResult();
-            ProgrammingSubmission submission;
-            if (latestAutomaticResult != null) {
-                submission = programmingSubmissionService.findByResultId(latestAutomaticResult.getId());
-            }
-            else {
+            Result latestAutomaticResult = programmingSubmission.getLatestResult();
+            if (latestAutomaticResult == null) {
                 // if the participation does not have a result we want to create a new result for the submission of the participation.
                 // If there isn't a submission either, we should not create any result.
-                submission = programmingSubmissionService.getLatestPendingSubmission(participation.getId(), false).orElseThrow();
+                programmingSubmission = programmingSubmissionService.getLatestPendingSubmission(participation.getId(), false).orElseThrow();
             }
-            submission = programmingSubmissionService.lockAndGetProgrammingSubmission(submission.getId(), correctionRound);
-            return ResponseEntity.ok(submission.getParticipation());
-
+            programmingSubmission = programmingSubmissionService.lockAndGetProgrammingSubmission(programmingSubmission.getId(), correctionRound);
         }
+
+        participation.setExercise(programmingExercise);
+        // prepare programming submission for response
+        programmingSubmissionService.hideDetails(programmingSubmission, user);
+        // remove automatic results before sending to client
+        programmingSubmission.setResults(programmingSubmission.getManualResults());
+        return ResponseEntity.ok(programmingSubmission);
     }
 
     /**
@@ -436,6 +439,8 @@ public class ProgrammingSubmissionResource {
             @RequestParam(value = "lock", defaultValue = "false") boolean lockSubmission, @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound) {
         log.debug("REST request to get a programming submission without assessment");
         final ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
+        List<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exerciseId);
+        programmingExercise.setGradingCriteria(gradingCriteria);
         final User user = userRepository.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(programmingExercise, user)) {
             return forbidden();
@@ -447,6 +452,7 @@ public class ProgrammingSubmissionResource {
         // Check if the limit of simultaneously locked submissions has been reached
         programmingSubmissionService.checkSubmissionLockLimit(programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId());
 
+        // TODO Check if submission has newly created manual result for this and endpoint and endpoint above
         final ProgrammingSubmission programmingSubmission;
         if (lockSubmission) {
             programmingSubmission = programmingSubmissionService.lockAndGetProgrammingSubmissionWithoutResult(programmingExercise, correctionRound);
@@ -461,9 +467,7 @@ public class ProgrammingSubmissionResource {
 
         }
 
-        // Make sure the exercise is connected to the participation in the json response
-        StudentParticipation studentParticipation = (StudentParticipation) programmingSubmission.getParticipation();
-        studentParticipation.setExercise(programmingExercise);
+        programmingSubmission.getParticipation().setExercise(programmingExercise);
         programmingSubmissionService.hideDetails(programmingSubmission, user);
         // remove automatic results before sending to client
         programmingSubmission.setResults(programmingSubmission.getManualResults());

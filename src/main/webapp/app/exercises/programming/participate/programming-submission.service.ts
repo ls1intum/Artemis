@@ -596,12 +596,12 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
      * @param participationId
      * @param correctionRound
      */
-    lockAndGetProgrammingSubmissionParticipation(participationId: number, correctionRound = 0): Observable<Participation> {
+    lockAndGetProgrammingSubmissionParticipation(submissionId: number, correctionRound = 0): Observable<ProgrammingSubmission> {
         let params = new HttpParams();
         if (correctionRound > 0) {
             params = params.set('correction-round', correctionRound.toString());
         }
-        return this.http.get<Participation>(`api/programming-submissions/${participationId}/lock`, { params });
+        return this.http.get<ProgrammingSubmission>(`api/programming-submissions/${submissionId}/lock`, { params });
     }
 
     private static convertArrayResponse(res: HttpResponse<ProgrammingSubmission[]>): HttpResponse<ProgrammingSubmission[]> {

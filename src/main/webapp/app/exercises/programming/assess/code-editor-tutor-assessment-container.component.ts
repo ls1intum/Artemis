@@ -37,6 +37,8 @@ import { TemplateProgrammingExerciseParticipation } from 'app/entities/participa
 import { getPositiveAndCappedTotalScore } from 'app/exercises/shared/exercise/exercise-utils';
 import { round } from 'app/shared/util/utils';
 import { getExerciseDashboardLink, getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
+import { Observable } from 'rxjs';
+import { getLatestSubmissionResult } from 'app/entities/submission.model';
 
 @Component({
     selector: 'jhi-code-editor-tutor-assessment',
@@ -141,62 +143,25 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
 
             this.exerciseDashboardLink = getExerciseDashboardLink(this.courseId, this.exerciseId, this.examId, this.isTestRun);
 
-            let participationId;
-            if (!params['participationId']) {
-                // Check if error is thrown and show info about error
-                const response = this.route.snapshot.data.studentParticipationId;
-                if (response?.error?.errorKey === 'lockedSubmissionsLimitReached') {
-                    this.lockLimitReached = true;
-                    return;
-                } else if (response?.error?.status === 404) {
-                    // there are no unassessed submission, nothing we have to worry about
-                    return;
-                } else if (response?.error) {
-                    this.onError(response?.error?.detail || 'Not Found');
-                    return;
-                }
-                participationId = Number(response);
-                // Update the url with the new id, without reloading the page, to make the history consistent
-                const newUrl = window.location.hash.replace('#', '').replace('new', `${participationId}`);
-                this.location.go(newUrl);
-            } else {
-                participationId = Number(params['participationId']);
-            }
-
-            this.programmingExerciseParticipationService
-                .getStudentParticipationWithResultOfCorrectionRound(participationId, this.correctionRound)
+            const submissionId = params['submissionId'];
+            const submissionObservable = submissionId === 'new' ? this.loadRandomSubmission(this.exerciseId) : this.loadSubmission(Number(submissionId));
+            submissionObservable
                 .pipe(
                     tap(
-                        (participationWithResult: ProgrammingExerciseStudentParticipation) => {
-                            this.loadingInitialSubmission = false;
-
-                            // Set domain to make file editor work properly
-                            this.domainService.setDomain([DomainType.PARTICIPATION, participationWithResult]);
-                            this.participation = participationWithResult;
-                            this.manualResult = this.participation.results![0];
-
-                            // Either submission from latest manual or automatic result
-                            this.submission = this.manualResult.submission as ProgrammingSubmission;
-                            this.submission.participation = this.participation;
-                            this.exercise = this.participation.exercise as ProgrammingExercise;
-                            this.hasAssessmentDueDatePassed = !!this.exercise!.assessmentDueDate && moment(this.exercise!.assessmentDueDate).isBefore(now());
-
-                            this.checkPermissions();
-                            this.handleFeedback();
-
-                            if (this.manualResult && this.manualResult.hasComplaint) {
-                                this.getComplaint();
+                        (submission: ProgrammingSubmission) => {
+                            this.handleReceivedSubmission(submission);
+                            if (submissionId === 'new') {
+                                // Update the url with the new id, without reloading the page, to make the history consistent
+                                const newUrl = window.location.hash.replace('#', '').replace('new', `${this.submission!.id}`);
+                                this.location.go(newUrl);
                             }
                         },
                         (error: HttpErrorResponse) => {
-                            this.loadingInitialSubmission = false;
-                            this.participationCouldNotBeFetched = true;
-                            if (error.error && error.error.errorKey === 'lockedSubmissionsLimitReached') {
-                                this.lockLimitReached = true;
-                            }
+                            this.handleErrorResponse(error);
                         },
                         () => (this.loadingParticipation = false),
                     ),
+                    // The following is needed for highlighting changed code lines
                     switchMap(() => this.programmingExerciseService.findWithTemplateAndSolutionParticipation(this.exercise.id!)),
                     tap((programmingExercise) => (this.templateParticipation = programmingExercise.body!.templateParticipation!)),
                     switchMap(() => {
@@ -223,6 +188,45 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     ngOnDestroy() {
         if (this.paramSub) {
             this.paramSub.unsubscribe();
+        }
+    }
+
+    private loadRandomSubmission(exerciseId: number): Observable<ProgrammingSubmission> {
+        return this.programmingSubmissionService.getProgrammingSubmissionForExerciseForCorrectionRoundWithoutAssessment(exerciseId, true, this.correctionRound);
+    }
+
+    private loadSubmission(submissionId: number): Observable<ProgrammingSubmission> {
+        return this.programmingSubmissionService.lockAndGetProgrammingSubmissionParticipation(submissionId, this.correctionRound);
+    }
+
+    private handleReceivedSubmission(submission: ProgrammingSubmission) {
+        this.loadingInitialSubmission = false;
+
+        // Set domain to correctly fetch data
+        this.domainService.setDomain([DomainType.PARTICIPATION, submission.participation!]);
+        this.submission = submission;
+        this.manualResult = getLatestSubmissionResult(this.submission);
+        this.participation = submission.participation!;
+        this.exercise = this.participation.exercise as ProgrammingExercise;
+        this.hasAssessmentDueDatePassed = !!this.exercise!.assessmentDueDate && moment(this.exercise!.assessmentDueDate).isBefore(now());
+
+        this.checkPermissions();
+        this.handleFeedback();
+
+        if (this.manualResult?.hasComplaint) {
+            this.getComplaint();
+        }
+    }
+
+    private handleErrorResponse(error: HttpErrorResponse): void {
+        this.loadingInitialSubmission = false;
+        this.participationCouldNotBeFetched = true;
+        if (error?.error?.errorKey === 'lockedSubmissionsLimitReached') {
+            this.lockLimitReached = true;
+        } else if (error?.error?.status === 404) {
+            // there are no unassessed submission, nothing we have to worry about
+        } else if (error?.error) {
+            this.onError(error?.error?.detail || 'Not Found');
         }
     }
 
