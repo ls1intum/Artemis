@@ -32,6 +32,8 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
     @Input() readOnly = false;
     @Input() enablePopups = true;
     @Input() displayPoints = true;
+    @Input() highlightDifferences: boolean;
+
     @Output() feedbackChanged = new EventEmitter<Feedback[]>();
     @Output() selectionChanged = new EventEmitter<Selection>();
 

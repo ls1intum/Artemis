@@ -65,6 +65,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     correctionRound = 0;
     resultId: number;
     loadingInitialSubmission = true;
+    highlightDifferences = false;
 
     private cancelConfirmationText: string;
 
@@ -266,6 +267,14 @@ export class ModelingAssessmentEditorComponent implements OnInit {
 
     get readOnly(): boolean {
         return !this.isAtLeastInstructor && !!this.complaint && this.isAssessor;
+    }
+
+    /**
+     * In ExamMode:
+     * Highlight the difference between the first and second correction round
+     */
+    switchHighlightDifferences(): void {
+        this.highlightDifferences = !this.highlightDifferences;
     }
 
     private handeErrorResponse(error: HttpErrorResponse): void {
