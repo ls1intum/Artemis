@@ -30,15 +30,10 @@ describe('Course Management Service', () => {
     let participationService: ParticipationWebsocketService;
     let httpMock: HttpTestingController;
     let exerciseId: number;
-    let isAtLeastTutorInCourseStub: sinon.SinonStub;
-    let convertExercisesDateFromServerStub: sinon.SinonStub;
-    let convertDatesForLecturesFromServerStub: sinon.SinonStub;
-    let addParticipationStub: sinon.SinonStub;
     const resourceUrl = SERVER_API_URL + 'api/courses';
     let course: Course;
     let exercises: Exercise[];
     let returnedFromService: any;
-    let participations: StudentParticipation[];
     let programmingExercise: ProgrammingExercise;
     let modelingExercise: ModelingExercise;
 
@@ -69,7 +64,6 @@ describe('Course Management Service', () => {
         exerciseId = 123;
         participationService = injector.get(ParticipationWebsocketService);
 
-        addParticipationStub = sinon.stub(participationService, 'addParticipation');
         course = new Course();
         course.id = 1234;
         course.title = 'testTitle';
@@ -113,7 +107,6 @@ describe('Course Management Service', () => {
         exercises = [];
         course.exercises = exercises;
         returnedFromService = { ...course };
-        participations = [new StudentParticipation()];
     });
 
     const expectDateConversionToBeDone = (exerciseToCheck: Exercise, withoutAssessmentDueDate?: boolean) => {

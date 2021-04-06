@@ -13,7 +13,6 @@ chai.use(sinonChai);
 const expect = chai.expect;
 
 describe('Course Exercise Card Component', () => {
-    let comp: CourseExerciseCardComponent;
     let fixture: ComponentFixture<CourseExerciseCardComponent>;
 
     beforeEach(() => {
@@ -23,7 +22,6 @@ describe('Course Exercise Card Component', () => {
             providers: [MockProvider(CourseManagementService)],
         }).compileComponents();
         fixture = TestBed.createComponent(CourseExerciseCardComponent);
-        comp = fixture.componentInstance;
     });
 
     afterEach(function () {

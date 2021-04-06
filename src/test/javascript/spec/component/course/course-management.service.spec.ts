@@ -1,4 +1,3 @@
-import { HttpResponse } from '@angular/common/http';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { getTestBed, TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
@@ -12,6 +11,7 @@ import { CourseManagementOverviewStatisticsDto } from 'app/course/manage/overvie
 import { Course, CourseGroup } from 'app/entities/course.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { ModelingExercise, UMLDiagramType } from 'app/entities/modeling-exercise.model';
+import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 import { Organization } from 'app/entities/organization.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
@@ -24,7 +24,6 @@ import * as sinonChai from 'sinon-chai';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
-import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -36,7 +35,6 @@ describe('Course Management Service', () => {
     let exerciseService: ExerciseService;
     let lectureService: LectureService;
     let httpMock: HttpTestingController;
-    let exerciseId: number;
     let isAtLeastTutorInCourseStub: sinon.SinonStub;
     let isAtLeastInstructorInCourseStub: sinon.SinonStub;
     let convertExercisesDateFromServerStub: sinon.SinonStub;
@@ -60,7 +58,6 @@ describe('Course Management Service', () => {
         injector = getTestBed();
         service = injector.get(CourseManagementService);
         httpMock = injector.get(HttpTestingController);
-        exerciseId = 123;
         accountService = injector.get(AccountService);
         exerciseService = injector.get(ExerciseService);
         lectureService = injector.get(LectureService);
