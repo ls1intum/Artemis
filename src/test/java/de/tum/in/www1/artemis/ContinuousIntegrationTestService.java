@@ -33,23 +33,21 @@ public class ContinuousIntegrationTestService {
     private URL ciServerUrl;
 
     @Autowired
-    ProgrammingExerciseRepository programmingExerciseRepository;
+    private ProgrammingExerciseRepository programmingExerciseRepository;
 
-    LocalRepository localRepo = new LocalRepository();
+    private final LocalRepository localRepo = new LocalRepository();
 
-    GitUtilService.MockFileRepositoryUrl localRepoUrl;
-
-    ProgrammingExerciseStudentParticipation participation;
+    private ProgrammingExerciseStudentParticipation participation;
 
     @Autowired
-    DatabaseUtilService database;
+    private DatabaseUtilService database;
 
     @Autowired
-    GitService gitService;
+    private GitService gitService;
 
-    MockDelegate mockDelegate;
+    private MockDelegate mockDelegate;
 
-    ContinuousIntegrationService continuousIntegrationService;
+    private ContinuousIntegrationService continuousIntegrationService;
 
     /**
      * This method initializes the test case by setting up a local repo
@@ -76,7 +74,7 @@ public class ContinuousIntegrationTestService {
         filePath = Paths.get(localRepo.localRepoFile + "/" + currentLocalFolderName);
         Files.createDirectory(filePath).toFile();
 
-        localRepoUrl = new GitUtilService.MockFileRepositoryUrl(localRepo.localRepoFile);
+        GitUtilService.MockFileRepositoryUrl localRepoUrl = new GitUtilService.MockFileRepositoryUrl(localRepo.localRepoFile);
         // create a participation
         participation = database.addStudentParticipationForProgrammingExerciseForLocalRepo(programmingExercise, "student1", localRepoUrl.getURL());
         assertThat(programmingExercise).as("Exercise was correctly set").isEqualTo(participation.getProgrammingExercise());

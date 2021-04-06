@@ -23,17 +23,13 @@ import org.springframework.security.test.context.TestSecurityContextHolder;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
-import de.tum.in.www1.artemis.domain.Feedback;
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
-import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.domain.enumeration.Visibility;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.service.StaticCodeAnalysisService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseGradingService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseTestCaseService;
 import de.tum.in.www1.artemis.util.ModelFactory;
@@ -43,47 +39,33 @@ import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseGradingStatisticsD
 public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
-    ProgrammingSubmissionRepository programmingSubmissionRepository;
+    private ProgrammingExerciseTestCaseRepository testCaseRepository;
 
     @Autowired
-    ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
+    private StudentParticipationRepository studentParticipationRepository;
 
     @Autowired
-    ProgrammingExerciseTestCaseRepository testCaseRepository;
+    private ResultRepository resultRepository;
 
     @Autowired
-    ParticipationRepository participationRepository;
+    private StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository;
 
     @Autowired
-    StudentParticipationRepository studentParticipationRepository;
+    private ProgrammingExerciseTestCaseService testCaseService;
 
     @Autowired
-    ResultRepository resultRepository;
+    private ProgrammingExerciseRepository programmingExerciseRepository;
 
     @Autowired
-    StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository;
-
-    @Autowired
-    ProgrammingExerciseTestCaseService testCaseService;
-
-    @Autowired
-    ProgrammingExerciseRepository programmingExerciseRepository;
-
-    @Autowired
-    StaticCodeAnalysisService staticCodeAnalysisService;
-
-    @Autowired
-    ProgrammingExerciseGradingService gradingService;
+    private ProgrammingExerciseGradingService gradingService;
 
     private ProgrammingExercise programmingExerciseSCAEnabled;
 
     private ProgrammingExercise programmingExercise;
 
-    private ProgrammingExerciseStudentParticipation participation;
-
     private Result result;
 
-    private Double offsetByTenThousandth = 0.0001;
+    private final Double offsetByTenThousandth = 0.0001;
 
     @BeforeEach
     public void setUp() {
@@ -95,7 +77,7 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
         var programmingExercises = programmingExerciseRepository.findAllWithEagerTemplateAndSolutionParticipations();
         programmingExercise = programmingExercises.get(0);
 
-        participation = database.addStudentParticipationForProgrammingExercise(programmingExercise, "student1");
+        ProgrammingExerciseStudentParticipation participation = database.addStudentParticipationForProgrammingExercise(programmingExercise, "student1");
         result = new Result();
         result.setParticipation(participation);
         bambooRequestMockProvider.enableMockingOfRequests();
@@ -433,31 +415,6 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
         assertThat(result.getFeedbacks().stream().noneMatch(feedback -> feedback.getText().equals("test3"))).isEqualTo(false);
     }
 
-    private void testAndAssertZeroScoreIfThereAreNoTestCasesBeforeDueDate(ProgrammingExercise programmingExercise, String expectedResultString, int expectedFeedbackSize) {
-        // Set programming exercise due date in future.
-        programmingExercise.setDueDate(ZonedDateTime.now().plusHours(10));
-        Double scoreBeforeUpdate = result.getScore();
-
-        // Set all test cases of the programming exercise to be executed after due date.
-        Set<ProgrammingExerciseTestCase> testCases = testCaseRepository.findByExerciseId(programmingExercise.getId());
-        for (ProgrammingExerciseTestCase testCase : testCases) {
-            testCase.visibility(Visibility.AFTER_DUE_DATE);
-        }
-        testCaseRepository.saveAll(testCases);
-
-        gradingService.calculateScoreForResult(result, programmingExercise, true);
-
-        // No test case was executed.
-        Double expectedScore = 0D;
-
-        assertThat(scoreBeforeUpdate).isNotEqualTo(result.getScore());
-        assertThat(result.getResultString()).isEqualTo(expectedResultString);
-        assertThat(result.getScore()).isEqualTo(expectedScore);
-        assertThat(result.isSuccessful()).isFalse();
-        // The feedback must be empty as not test should be executed yet.
-        assertThat(result.getFeedbacks()).hasSize(expectedFeedbackSize);
-    }
-
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void shouldReEvaluateScoreOfTheCorrectResults() throws Exception {
@@ -516,7 +473,7 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
     }
 
     @ValueSource(booleans = { false, true })
-    @ParameterizedTest(name = "shouldNotIncludeTestsMarkedAsNeverVisibleInScoreCalculation [isAfterDueDate = {0}]")
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void shouldNotIncludeTestsMarkedAsNeverVisibleInScoreCalculation(boolean isAfterDueDate) throws Exception {
         // test case marked as never should not affect score for students neither before nor after due date
@@ -670,7 +627,7 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
             // score 0 %
             var resultTemplate = new Result().participation(participationTemplate).resultString("x of y passed").successful(false).rated(true).score(100D);
             participationTemplate.setResults(Set.of(resultTemplate));
-            resultTemplate = updateAndSaveAutomaticResult(resultTemplate, false, false, false);
+            updateAndSaveAutomaticResult(resultTemplate, false, false, false);
         }
 
         // solution passes most tests but is still faulty
@@ -1071,7 +1028,7 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
         return List.of(participation1, participation2, participation3, participation4, participation5);
     }
 
-    private List<Participation> createTestParticipationsWithMultipleResults() {
+    private void createTestParticipationsWithMultipleResults() {
 
         // create results
         var participation1 = database.addStudentParticipationForProgrammingExercise(programmingExerciseSCAEnabled, "student1");
@@ -1112,7 +1069,6 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
             updateAndSaveAutomaticResult(result5, true, true, true, 5, 5);
         }
 
-        return List.of(participation1, participation2, participation3, participation4, participation5);
     }
 
     private void testParticipationResult(Result result, Double score, String resultString, boolean hasFeedback, int feedbackSize, AssessmentType assessmentType) {

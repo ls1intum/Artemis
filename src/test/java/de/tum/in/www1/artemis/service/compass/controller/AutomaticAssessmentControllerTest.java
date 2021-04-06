@@ -1,8 +1,6 @@
 package de.tum.in.www1.artemis.service.compass.controller;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.offset;
-import static org.mockito.ArgumentMatchers.*;
+import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import java.util.*;
@@ -26,7 +24,7 @@ import de.tum.in.www1.artemis.service.compass.assessment.SimilaritySetAssessment
 import de.tum.in.www1.artemis.service.compass.umlmodel.activity.*;
 import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.*;
 
-class AutomaticAssessmentControllerTest {
+public class AutomaticAssessmentControllerTest {
 
     private AutomaticAssessmentController automaticAssessmentController;
 
@@ -140,8 +138,8 @@ class AutomaticAssessmentControllerTest {
 
         automaticAssessmentController.addFeedbacksToSimilaritySet(feedbacks, classDiagram);
         Optional<SimilaritySetAssessment> ssA = automaticAssessmentController.getAssessmentForSimilaritySet(1);
-
-        assertThat(automaticAssessmentController.getAssessmentMap().values().size()).isEqualTo(0);
+        assertThat(ssA).isEmpty();
+        assertThat(automaticAssessmentController.getAssessmentMap().values()).hasSize(0);
     }
 
     @Test
