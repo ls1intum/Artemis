@@ -5,21 +5,21 @@ import static org.mockito.Mockito.*;
 
 import java.util.Collections;
 
-import me.xdrop.fuzzywuzzy.FuzzySearch;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-@ExtendWith(MockitoExtension.class)
-class UMLActivityTest {
+import me.xdrop.fuzzywuzzy.FuzzySearch;
 
-    UMLActivity activity;
+@ExtendWith(MockitoExtension.class)
+public class UMLActivityTest {
+
+    private UMLActivity activity;
 
     @Spy
-    UMLActivity referenceActivity;
+    private UMLActivity referenceActivity;
 
     @BeforeEach
     void setUp() {

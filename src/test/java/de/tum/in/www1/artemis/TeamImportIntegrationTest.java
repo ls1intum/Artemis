@@ -16,16 +16,10 @@ import org.springframework.data.util.Pair;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.Team;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
 import de.tum.in.www1.artemis.domain.enumeration.TeamImportStrategyType;
-import de.tum.in.www1.artemis.repository.CourseRepository;
-import de.tum.in.www1.artemis.repository.ExerciseRepository;
-import de.tum.in.www1.artemis.repository.TeamRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
 public class TeamImportIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -125,7 +119,7 @@ public class TeamImportIntegrationTest extends AbstractSpringIntegrationBambooBi
         assertCorrectnessOfImport(addedTeams, destinationTeamsAfter);
     }
 
-    @ParameterizedTest
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @EnumSource(TeamImportStrategyType.class)
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testImportTeamsFromExerciseIntoEmptyExercise(TeamImportStrategyType importStrategyType) throws Exception {
@@ -133,7 +127,7 @@ public class TeamImportIntegrationTest extends AbstractSpringIntegrationBambooBi
         testImportTeamsIntoExercise(ImportType.FROM_EXERCISE, importStrategyType, null, sourceTeams);
     }
 
-    @ParameterizedTest
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @EnumSource(TeamImportStrategyType.class)
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testImportTeamsFromListIntoEmptyExercise(TeamImportStrategyType importStrategyType) throws Exception {

@@ -14,42 +14,42 @@ import org.mockito.MockitoAnnotations;
 import de.tum.in.www1.artemis.service.compass.umlmodel.AbstractUMLDiagramTest;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
 
-class UMLClassDiagramTest extends AbstractUMLDiagramTest {
+public class UMLClassDiagramTest extends AbstractUMLDiagramTest {
 
     private UMLClassDiagram classDiagram;
 
     @Mock
-    UMLClass umlClass1;
+    private UMLClass umlClass1;
 
     @Mock
-    UMLClass umlClass2;
+    private UMLClass umlClass2;
 
     @Mock
-    UMLClass umlClass3;
+    private UMLClass umlClass3;
 
     @Mock
-    UMLRelationship umlRelationship1;
+    private UMLRelationship umlRelationship1;
 
     @Mock
-    UMLRelationship umlRelationship2;
+    private UMLRelationship umlRelationship2;
 
     @Mock
-    UMLRelationship umlRelationship3;
+    private UMLRelationship umlRelationship3;
 
     @Mock
-    UMLPackage umlPackage1;
+    private UMLPackage umlPackage1;
 
     @Mock
-    UMLPackage umlPackage2;
+    private UMLPackage umlPackage2;
 
     @Mock
-    UMLPackage umlPackage3;
+    private UMLPackage umlPackage3;
 
     @Mock
-    UMLAttribute umlAttribute;
+    private UMLAttribute umlAttribute;
 
     @Mock
-    UMLMethod umlMethod;
+    private UMLMethod umlMethod;
 
     @BeforeEach
     void setUp() {

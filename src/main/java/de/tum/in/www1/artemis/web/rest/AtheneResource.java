@@ -11,7 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.config.Constants;
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.service.connectors.athene.AtheneService;
 import de.tum.in.www1.artemis.web.rest.dto.AtheneDTO;
 

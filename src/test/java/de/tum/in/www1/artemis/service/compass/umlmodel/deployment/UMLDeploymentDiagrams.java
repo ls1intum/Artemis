@@ -6,13 +6,13 @@ import java.nio.charset.StandardCharsets;
 
 import org.apache.commons.io.IOUtils;
 
-final class UMLDeploymentDiagrams {
+public final class UMLDeploymentDiagrams {
 
-    static final String DEPLOYMENT_MODEL_1;
+    public static final String DEPLOYMENT_MODEL_1;
 
-    static final String DEPLOYMENT_MODEL_2;
+    public static final String DEPLOYMENT_MODEL_2;
 
-    static final String DEPLOYMENT_MODEL_3;
+    public static final String DEPLOYMENT_MODEL_3;
 
     static {
         try {

@@ -2,10 +2,7 @@ package de.tum.in.www1.artemis.service.connectors;
 
 import java.net.URL;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 import javax.validation.constraints.NotNull;
 

@@ -1,15 +1,19 @@
 package de.tum.in.www1.artemis.config;
 
-import de.tum.in.www1.artemis.security.AuthoritiesConstants;
-import de.tum.in.www1.artemis.security.PBEPasswordEncoder;
-import de.tum.in.www1.artemis.security.jwt.JWTConfigurer;
-import de.tum.in.www1.artemis.security.jwt.TokenProvider;
+import static de.tum.in.www1.artemis.config.Constants.*;
+
+import java.util.Optional;
+
+import javax.annotation.PostConstruct;
+
 import org.jasypt.encryption.pbe.StandardPBEStringEncryptor;
 import org.springframework.beans.factory.BeanInitializationException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpMethod;
+import org.springframework.security.access.hierarchicalroles.RoleHierarchy;
+import org.springframework.security.access.hierarchicalroles.RoleHierarchyImpl;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
@@ -25,10 +29,10 @@ import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWrite
 import org.springframework.web.filter.CorsFilter;
 import org.zalando.problem.spring.web.advice.security.SecurityProblemSupport;
 
-import javax.annotation.PostConstruct;
-import java.util.Optional;
-
-import static de.tum.in.www1.artemis.config.Constants.*;
+import de.tum.in.www1.artemis.security.PBEPasswordEncoder;
+import de.tum.in.www1.artemis.security.Role;
+import de.tum.in.www1.artemis.security.jwt.JWTConfigurer;
+import de.tum.in.www1.artemis.security.jwt.TokenProvider;
 
 // @formatter:off
 @EnableWebSecurity
@@ -96,6 +100,18 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
         return encryptor;
     }
 
+    @Bean
+    RoleHierarchy roleHierarchy() {
+        var roleHierarchy = new RoleHierarchyImpl();
+        roleHierarchy.setHierarchy("""
+                    ROLE_ADMIN > ROLE_INSTRUCTOR
+                    ROLE_INSTRUCTOR > ROLE_TA
+                    ROLE_TA > ROLE_USER
+                    ROLE_USER > ROLE_ANONYMOUS
+                """);
+        return roleHierarchy;
+    }
+
     @Override
     public void configure(WebSecurity web) {
         // @formatter:off
@@ -159,13 +175,13 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
             .antMatchers("/api/files/file-upload-submission/**").permitAll()
             .antMatchers("/api/files/markdown/**").permitAll()
             .antMatchers("/api/**").authenticated()
-            .antMatchers("/websocket/tracker").hasAuthority(AuthoritiesConstants.ADMIN)
+            .antMatchers("/websocket/tracker").hasAuthority(Role.ADMIN.getAuthority())
             .antMatchers("/websocket/**").permitAll()
             .antMatchers("/management/health").permitAll()
             .antMatchers("/management/info").permitAll()
             // Only allow the configured IP address to access the prometheus endpoint, or allow 127.0.0.1 if none is specified
             .antMatchers("/management/prometheus/**").hasIpAddress(monitoringIpAddress.orElse("127.0.0.1"))
-            .antMatchers("/management/**").hasAuthority(AuthoritiesConstants.ADMIN)
+            .antMatchers("/management/**").hasAuthority(Role.ADMIN.getAuthority())
             .antMatchers("/time").permitAll()
         .and()
             .apply(securityConfigurerAdapter());

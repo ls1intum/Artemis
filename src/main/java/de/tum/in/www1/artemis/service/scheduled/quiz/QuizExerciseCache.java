@@ -1,9 +1,6 @@
 package de.tum.in.www1.artemis.service.scheduled.quiz;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 import com.hazelcast.config.Config;
 import com.hazelcast.scheduledexecutor.ScheduledTaskHandler;

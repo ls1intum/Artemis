@@ -10,10 +10,7 @@ import org.assertj.core.data.Offset;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
-import de.tum.in.www1.artemis.service.compass.umlmodel.component.UMLComponent;
-import de.tum.in.www1.artemis.service.compass.umlmodel.component.UMLComponentDiagram;
-import de.tum.in.www1.artemis.service.compass.umlmodel.component.UMLComponentInterface;
-import de.tum.in.www1.artemis.service.compass.umlmodel.component.UMLComponentRelationship;
+import de.tum.in.www1.artemis.service.compass.umlmodel.component.*;
 import de.tum.in.www1.artemis.service.plagiarism.ModelingPlagiarismDetectionService;
 
 public abstract class AbstractUMLDiagramTest {

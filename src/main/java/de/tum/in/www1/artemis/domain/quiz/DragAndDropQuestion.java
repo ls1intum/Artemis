@@ -1,9 +1,6 @@
 package de.tum.in.www1.artemis.domain.quiz;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import javax.persistence.*;
 
@@ -15,10 +12,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonView;
 
 import de.tum.in.www1.artemis.config.Constants;
-import de.tum.in.www1.artemis.domain.quiz.scoring.ScoringStrategy;
-import de.tum.in.www1.artemis.domain.quiz.scoring.ScoringStrategyDragAndDropAllOrNothing;
-import de.tum.in.www1.artemis.domain.quiz.scoring.ScoringStrategyDragAndDropProportionalWithPenalty;
-import de.tum.in.www1.artemis.domain.quiz.scoring.ScoringStrategyDragAndDropProportionalWithoutPenalty;
+import de.tum.in.www1.artemis.domain.quiz.scoring.*;
 import de.tum.in.www1.artemis.domain.view.QuizView;
 import de.tum.in.www1.artemis.service.FilePathService;
 import de.tum.in.www1.artemis.service.FileService;

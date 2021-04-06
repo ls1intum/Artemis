@@ -4,11 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.repository.PlagiarismComparisonRepository;
 import de.tum.in.www1.artemis.service.plagiarism.PlagiarismService;
@@ -43,7 +39,7 @@ public class PlagiarismResource {
      * parameters are invalid
      */
     @PutMapping("/plagiarism-comparisons/{comparisonId}/status")
-    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Void> updatePlagiarismComparisonStatus(@PathVariable long comparisonId, @RequestBody PlagiarismComparisonStatusDTO statusDTO) {
         // TODO: check that the instructor has access to the corresponding course (add the exerciseId to the URL)
         log.debug("REST request to update the status of the plagiarism comparison with id: {}", comparisonId);
