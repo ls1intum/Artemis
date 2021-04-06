@@ -275,7 +275,7 @@ Functionally both queries extract the same result set, but the first one is less
 20. REST endpoint best practices for authorization
 ==================================================
 
-To prevent unauthorized access to resources we employ a two-step system:
+To prevent unauthorized access to resources Artemis employs a two-step system:
 
 #. ``PreAuthorize`` annotations are responsible for blocking users with wrong or missing authorization roles without querying the database.
 #. The ``AuthorizationCheckService`` is responsible for checking access rights to individual resources by querying the database.
@@ -289,7 +289,7 @@ The following example makes the call only accessible to ADMIN and INSTRUCTOR use
     public ResponseEntity<ProgrammingExercise> getProgrammingExercise(@PathVariable long exerciseId) {
     }
 
-We currently distinguish five different roles: ADMIN, INSTRUCTOR, TA (teaching assistant), USER and ANONYMOUS.
+Artemis distinguishes between five different roles: ADMIN, INSTRUCTOR, TA (teaching assistant), USER and ANONYMOUS.
 Each of the roles has the all the access rights of the roles following it, e.g. ANONOYMOUS has almost no rights, while ADMIN users can access every page.
 
 If a user passess the ``PreAuthorize`` check, the access to individual resources like courses and exercises still has to be checked. (A user can be a teaching assistant in one course, but only a student in another, for example.)
