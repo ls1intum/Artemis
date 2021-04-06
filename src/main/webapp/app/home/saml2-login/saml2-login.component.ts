@@ -1,7 +1,7 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { LoginService } from 'app/core/login/login.service';
-import { JhiEventManager } from 'ng-jhipster';
+import { JhiEventManager, JhiAlertService } from 'ng-jhipster';
 import { Saml2Config } from 'app/home/saml2-login/saml2.config';
 
 @Component({
@@ -17,7 +17,7 @@ export class Saml2LoginComponent implements OnInit {
     @Input()
     saml2Profile: Saml2Config;
 
-    constructor(private loginService: LoginService, private eventManager: JhiEventManager) {}
+    constructor(private loginService: LoginService, private eventManager: JhiEventManager, private alertService: JhiAlertService) {}
 
     ngOnInit(): void {
         // If SAML2 flow was started, retry login.
@@ -43,6 +43,14 @@ export class Saml2LoginComponent implements OnInit {
                     document.cookie = 'SAML2flow=true; max-age=120; SameSite=Lax;';
                     // arbitrary by SAML2 HTTP Filter Chain secured URL
                     window.location.replace('/saml2/authenticate');
+                } else if (error.status === 403) {
+                    // for example if user was disabled
+                    let message = 'Forbidden';
+                    const details = error.headers.get('X-artemisApp-error');
+                    if (details) {
+                        message += ': ' + details;
+                    }
+                    this.alertService.warning(message);
                 }
             });
     }

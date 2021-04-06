@@ -21,6 +21,7 @@ import de.tum.in.www1.artemis.domain.Authority;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.Role;
+import de.tum.in.www1.artemis.security.UserNotActivatedException;
 import de.tum.in.www1.artemis.service.MailService;
 import de.tum.in.www1.artemis.service.user.UserCreationService;
 import de.tum.in.www1.artemis.service.user.UserService;
@@ -103,6 +104,11 @@ public class SAML2Service {
                     log.error("User {} was created but could not be found in the database!", user.get());
                 }
             }
+        }
+
+        if (!user.get().getActivated()) {
+            log.debug("Not activated SAML2 user {} attempted login.", user.get());
+            throw new UserNotActivatedException("User was disabled.");
         }
 
         auth = new UsernamePasswordAuthenticationToken(user.get().getLogin(), user.get().getPassword(), toGrantedAuthorities(user.get().getAuthorities()));
