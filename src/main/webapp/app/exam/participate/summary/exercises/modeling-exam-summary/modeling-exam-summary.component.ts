@@ -12,7 +12,7 @@ export class ModelingExamSummaryComponent implements OnInit {
     exercise: ModelingExercise;
 
     @Input()
-    submission: ModelingSubmission;
+    submission: ModelingSubmission | undefined;
 
     umlModel: UMLModel;
     explanation: string;

@@ -12,10 +12,10 @@ export class ProgrammingExamSummaryComponent {
     exercise: ProgrammingExercise;
 
     @Input()
-    participation: ProgrammingExerciseStudentParticipation;
+    participation: ProgrammingExerciseStudentParticipation | undefined;
 
     @Input()
-    submission: ProgrammingSubmission;
+    submission: ProgrammingSubmission | undefined;
 
     constructor() {}
 }

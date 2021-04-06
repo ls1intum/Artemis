@@ -12,7 +12,7 @@
         </button>
     </h2>
 </div>
-<jhi-exam-information [exam]="studentExam.exam" [studentExam]="studentExam"></jhi-exam-information>
+<jhi-exam-information [exam]="studentExam.exam!" [studentExam]="studentExam"></jhi-exam-information>
 <div class="mb-4 text-center" *ngIf="studentExam && studentExam.exam && isBeforeStudentReviewEnd() && isAfterStudentReviewStart()">
     <a class="btn btn-success" style="cursor: default; pointer-events: none">
         {{ 'artemisApp.exam.studentReviewEnabled' | artemisTranslate }}
@@ -35,14 +35,14 @@
             <button
                 id="{{ 'toggleCollapseExerciseButton-' + i }}"
                 class="btn btn-light question-collapse"
-                (click)="toggleCollapseExercise(exercise.id)"
-                [attr.aria-expanded]="!isCollapsed(exercise.id)"
-                [attr.aria-controls]="isCollapsed(exercise.id)"
+                (click)="toggleCollapseExercise(exercise.id!)"
+                [attr.aria-expanded]="!isCollapsed(exercise.id!)"
+                [attr.aria-controls]="isCollapsed(exercise.id!)"
             >
-                <fa-icon size="2x" [icon]="isCollapsed(exercise.id) ? 'angle-right' : 'angle-down'"></fa-icon>
+                <fa-icon size="2x" [icon]="isCollapsed(exercise.id!) ? 'angle-right' : 'angle-down'"></fa-icon>
             </button>
         </div>
-        <div class="card-body question-card-body" [ngbCollapse]="isCollapsed(exercise.id)">
+        <div class="card-body question-card-body" [ngbCollapse]="isCollapsed(exercise.id!)">
             <div *ngIf="exercise.type !== QUIZ && exercise.type !== PROGRAMMING && resultsPublished">
                 <a *ngIf="exercise.studentParticipations && exercise.studentParticipations.length > 0" class="btn btn-primary float-right" [routerLink]="generateLink(exercise)">
                     <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>
@@ -82,7 +82,7 @@
                     <ng-container *ngIf="exercise.type === QUIZ">
                         <jhi-quiz-exam-summary
                             [exercise]="exercise"
-                            [exam]="studentExam.exam"
+                            [exam]="studentExam.exam!"
                             [submission]="getSubmissionForExercise(exercise)"
                             [resultsPublished]="resultsPublished"
                         ></jhi-quiz-exam-summary>

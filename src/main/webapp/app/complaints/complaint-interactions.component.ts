@@ -17,7 +17,7 @@ import { AccountService } from 'app/core/auth/account.service';
 })
 export class ComplaintInteractionsComponent implements OnInit {
     @Input() exercise: Exercise;
-    @Input() participation: StudentParticipation;
+    @Input() participation: StudentParticipation | undefined;
     @Input() result: Result;
     @Input() exam: Exam;
     // flag to indicate exam test run. Default set to false.
@@ -69,7 +69,7 @@ export class ComplaintInteractionsComponent implements OnInit {
                 }
             }
         }
-        if (this.participation.submissions && this.participation.submissions.length > 0) {
+        if (this.participation?.submissions && this.participation?.submissions.length > 0) {
             if (this.result && this.result.completionDate) {
                 this.complaintService.findByResultId(this.result.id!).subscribe((res) => {
                     if (res.body) {

@@ -15,7 +15,7 @@ import { TextSubmission } from 'app/entities/text-submission.model';
     ],
 })
 export class TextExamSummaryComponent implements OnInit {
-    @Input() submission: TextSubmission;
+    @Input() submission: TextSubmission | undefined;
 
     ngOnInit(): void {}
 }
