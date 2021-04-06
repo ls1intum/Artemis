@@ -6,13 +6,13 @@ import java.nio.charset.StandardCharsets;
 
 import org.apache.commons.io.IOUtils;
 
-class SyntaxTrees {
+public class SyntaxTrees {
 
-    static final String SYNTAX_TREE_MODEL_1A;
+    public static final String SYNTAX_TREE_MODEL_1A;
 
-    static final String SYNTAX_TREE_MODEL_1B;
+    public static final String SYNTAX_TREE_MODEL_1B;
 
-    static final String SYNTAX_TREE_MODEL_2;
+    public static final String SYNTAX_TREE_MODEL_2;
 
     static {
         try {

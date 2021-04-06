@@ -28,17 +28,6 @@ export class ProgrammingExerciseParticipationService implements IProgrammingExer
         return this.http.get<ProgrammingExerciseStudentParticipation>(this.resourceUrl + participationId + '/student-participation-with-latest-result-and-feedbacks');
     }
 
-    getStudentParticipationWithResultOfCorrectionRound(participationId: number, correctionRound: number) {
-        return this.http
-            .get<ProgrammingExerciseStudentParticipation>(
-                this.resourceUrl + participationId + '/student-participation-with-result-and-feedbacks-for/' + correctionRound + '/correction-round',
-            )
-            .map((participation: ProgrammingExerciseStudentParticipation) => {
-                addUserIndependentRepositoryUrl(participation);
-                return participation;
-            });
-    }
-
     checkIfParticipationHasResult(participationId: number): Observable<boolean> {
         return this.http.get<boolean>(this.resourceUrl + participationId + '/has-result');
     }

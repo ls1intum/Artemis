@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
-import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 import java.time.ZonedDateTime;
 import java.util.List;
