@@ -129,7 +129,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
     const submission: ProgrammingSubmission = new ProgrammingSubmission();
     submission.results = [result];
     submission.participation = participation;
-    submission.id = 123;
+    submission.id = 1234;
     submission.latestResult = result;
 
     const unassessedSubmission = new ProgrammingSubmission();
@@ -138,8 +138,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
     const afterComplaintResult = new Result();
     afterComplaintResult.score = 100;
 
-    const route = ({ params: of({ participationId: 1 }), queryParamMap: of(convertToParamMap({ testRun: false })) } as any) as ActivatedRoute;
-
+    const route = ({ params: of({ submissionId: 123 }), queryParamMap: of(convertToParamMap({ testRun: false })) } as any) as ActivatedRoute;
     const fileContent = 'This is the content of a file';
     const templateFileSessionReturn: { [fileName: string]: string } = { 'folder/file1': fileContent };
 
@@ -211,6 +210,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         updateAfterComplaintStub.restore();
         findByResultIdStub.restore();
         lockAndGetProgrammingSubmissionParticipationStub.restore();
+        getProgrammingSubmissionForExerciseWithoutAssessmentStub.restore();
     }));
 
     it('should use jhi-assessment-layout', () => {
@@ -235,6 +235,18 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
 
         // Wait until periodic timer has passed out
         tick(100);
+    }));
+
+    it('should lock a new submission', fakeAsync(() => {
+        const activatedRoute: ActivatedRoute = fixture.debugElement.injector.get(ActivatedRoute);
+        activatedRoute.params = of({ submissionId: 'new' });
+        TestBed.inject(ActivatedRoute);
+
+        getProgrammingSubmissionForExerciseWithoutAssessmentStub.returns(of(submission));
+
+        comp.ngOnInit();
+        tick(100);
+        expect(getProgrammingSubmissionForExerciseWithoutAssessmentStub).to.be.calledOnce;
     }));
 
     it('should not show complaint when result does not have it', fakeAsync(() => {
