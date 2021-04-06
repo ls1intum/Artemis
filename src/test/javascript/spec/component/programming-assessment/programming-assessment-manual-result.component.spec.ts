@@ -88,7 +88,11 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
     let findByResultIdStub: SinonStub;
     let getIdentityStub: SinonStub;
     let getProgrammingSubmissionForExerciseWithoutAssessmentStub: SinonStub;
+    let lockAndGetProgrammingSubmissionParticipationStub: SinonStub;
     let findWithParticipationsStub: SinonStub;
+
+    let loadRandomSubmissionStub: SinonStub;
+    let loadSubmissionStub: SinonStub;
 
     const user = <User>{ id: 99, groups: ['instructorGroup'] };
     const result: Result = <any>{
@@ -117,6 +121,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         gradingInstructions: 'Grading Instructions',
         course: <Course>{ instructorGroupName: 'instructorGroup' },
     } as unknown) as ProgrammingExercise;
+
     const participation: ProgrammingExerciseStudentParticipation = new ProgrammingExerciseStudentParticipation();
     participation.results = [result];
     participation.exercise = exercise;
@@ -124,6 +129,13 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
     participation.student = { login: 'student1' } as User;
     participation.repositoryUrl = 'http://student1@bitbucket.ase.in.tum.de/scm/TEST/test-repo-student1.git';
     result.submission!.participation = participation;
+
+    const submission: ProgrammingSubmission = new ProgrammingSubmission();
+    submission.results = [result];
+    submission.participation = participation;
+    submission.id = 123;
+    submission.latestResult = result;
+
     const unassessedSubmission = new ProgrammingSubmission();
     unassessedSubmission.id = 12;
 
@@ -187,6 +199,9 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
                 getStudentParticipationWithResultsStub = stub(programmingExerciseParticipationService, 'getStudentParticipationWithResultOfCorrectionRound').returns(
                     of(participation).pipe(delay(100)),
                 );
+                lockAndGetProgrammingSubmissionParticipationStub = stub(programmingSubmissionService, 'lockAndGetProgrammingSubmissionParticipation').returns(
+                    of(submission).pipe(delay(100)),
+                );
                 findByResultIdStub = stub(complaintService, 'findByResultId').returns(of({ body: complaint } as HttpResponse<Complaint>));
                 getIdentityStub = stub(accountService, 'identity').returns(new Promise((promise) => promise(user)));
                 getProgrammingSubmissionForExerciseWithoutAssessmentStub = stub(
@@ -215,7 +230,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         tick(100);
 
         expect(getIdentityStub.calledOnce).to.be.true;
-        expect(getStudentParticipationWithResultsStub.calledOnce).to.be.true;
+        expect(lockAndGetProgrammingSubmissionParticipationStub.calledOnce).to.be.true;
         expect(findByResultIdStub.calledOnce).to.be.true;
         expect(comp.isAssessor).to.be.true;
         expect(comp.complaint).to.exist;
@@ -235,7 +250,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         tick(100);
 
         expect(getIdentityStub.calledOnce).to.be.true;
-        expect(getStudentParticipationWithResultsStub.calledOnce).to.be.true;
+        expect(lockAndGetProgrammingSubmissionParticipationStub.calledOnce).to.be.true;
         expect(findByResultIdStub.notCalled).to.be.true;
         expect(comp.complaint).to.not.exist;
         fixture.detectChanges();
