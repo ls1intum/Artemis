@@ -273,7 +273,8 @@ public class StudentQuestionResource {
         else if (exercise != null) {
             authorizationCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, exercise, user);
         }
-        else
+        else {
             throw new AccessForbiddenException("StudentQuestion", studentQuestion.getId());
+        }
     }
 }
