@@ -84,7 +84,6 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
     let repositoryFileService: CodeEditorRepositoryFileService;
 
     let updateAfterComplaintStub: SinonStub;
-    let getStudentParticipationWithResultsStub: SinonStub;
     let findByResultIdStub: SinonStub;
     let getIdentityStub: SinonStub;
     let getProgrammingSubmissionForExerciseWithoutAssessmentStub: SinonStub;
@@ -193,9 +192,6 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
                 repositoryFileService = debugElement.injector.get(CodeEditorRepositoryFileService);
 
                 updateAfterComplaintStub = stub(programmingAssessmentManualResultService, 'updateAfterComplaint').returns(of(afterComplaintResult));
-                getStudentParticipationWithResultsStub = stub(programmingExerciseParticipationService, 'getStudentParticipationWithResultOfCorrectionRound').returns(
-                    of(participation).pipe(delay(100)),
-                );
                 lockAndGetProgrammingSubmissionParticipationStub = stub(programmingSubmissionService, 'lockAndGetProgrammingSubmissionParticipation').returns(
                     of(submission).pipe(delay(100)),
                 );
@@ -214,7 +210,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
     afterEach(fakeAsync(() => {
         updateAfterComplaintStub.restore();
         findByResultIdStub.restore();
-        getStudentParticipationWithResultsStub.restore();
+        lockAndGetProgrammingSubmissionParticipationStub.restore();
     }));
 
     it('should use jhi-assessment-layout', () => {
