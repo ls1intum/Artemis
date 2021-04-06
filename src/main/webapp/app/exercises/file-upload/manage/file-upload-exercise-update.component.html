@@ -46,7 +46,7 @@
                     <div class="form-group-narrow flex-grow-1 ml-3">
                         <jhi-date-time-picker
                             labelName="{{ 'artemisApp.exercise.dueDate' | artemisTranslate }}"
-                            [(ngModel)]="fileUploadExercise.dueDate!"
+                            [(ngModel)]="fileUploadExercise.dueDate"
                             name="dueDate"
                             [error]="fileUploadExercise.dueDateError!"
                             (valueChange)="validateDate()"
@@ -60,14 +60,14 @@
                         [error]="fileUploadExercise.assessmentDueDateError!"
                         labelName="{{ 'artemisApp.exercise.assessmentDueDate' | artemisTranslate }}"
                         (valueChange)="validateDate()"
-                        [(ngModel)]="fileUploadExercise.assessmentDueDate!"
+                        [(ngModel)]="fileUploadExercise.assessmentDueDate"
                     ></jhi-date-time-picker>
                     <span *ngIf="fileUploadExercise.assessmentDueDateError" class="invalid-feedback">{{ 'artemisApp.exercise.assessmentDueDateError' | artemisTranslate }}</span>
                 </div>
                 <div class="form-group">
                     <label class="form-control-label">{{ 'artemisApp.exercise.includedInOverallScoreLabel' | artemisTranslate }}</label>
-                    <div *ngIf="fileUploadExercise.includedInOverallScore">
-                        <jhi-included-in-overall-score-picker [(includedInOverallScore)]="fileUploadExercise.includedInOverallScore"></jhi-included-in-overall-score-picker>
+                    <div>
+                        <jhi-included-in-overall-score-picker [(includedInOverallScore)]="fileUploadExercise.includedInOverallScore!"></jhi-included-in-overall-score-picker>
                     </div>
                 </div>
                 <div class="row">
