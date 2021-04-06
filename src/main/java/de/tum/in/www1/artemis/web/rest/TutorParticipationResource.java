@@ -19,7 +19,9 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.security.Role;
+import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.TutorParticipationService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
@@ -67,15 +69,12 @@ public class TutorParticipationResource {
      * @throws URISyntaxException if URI path can't be created
      */
     @PostMapping(value = "/exercises/{exerciseId}/tutorParticipations")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('TA')")
     public ResponseEntity<TutorParticipation> initTutorParticipation(@PathVariable Long exerciseId) throws URISyntaxException {
         log.debug("REST request to start tutor participation : {}", exerciseId);
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
-
-        if (!authorizationCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
-            return forbidden();
-        }
+        authorizationCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, user);
 
         if (tutorParticipationService.existsByAssessedExerciseIdAndTutorId(exerciseId, user.getId())) {
             // tutorParticipation already exists
@@ -97,7 +96,7 @@ public class TutorParticipationResource {
      * @return the ResponseEntity with status 200 (OK) and with body the exercise, or with status 404 (Not Found)
      */
     @PostMapping(value = "/exercises/{exerciseId}/exampleSubmission")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('TA')")
     public ResponseEntity<TutorParticipation> addExampleSubmission(@PathVariable Long exerciseId, @RequestBody ExampleSubmission exampleSubmission) {
         log.debug("REST request to add example submission to exercise id : {}", exerciseId);
         Exercise exercise = this.exerciseRepository.findByIdElseThrow(exerciseId);
@@ -125,20 +124,16 @@ public class TutorParticipationResource {
      * @return  the ResponseEntity with status 200 (OK) or 403 (FORBIDDEN)
      */
     @DeleteMapping(value = "guided-tour/exercises/{exerciseId}/exampleSubmission")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('TA')")
     public ResponseEntity<TutorParticipation> deleteTutorParticipationForGuidedTour(@PathVariable Long exerciseId) {
         log.debug("REST request to remove tutor participation of the example submission for exercise id : {}", exerciseId);
         Exercise exercise = this.exerciseRepository.findByIdElseThrow(exerciseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
-
         // Allow all tutors to delete their own participation if it's for a tutorial
-        if (!authorizationCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
-            throw new AccessForbiddenException("You are not allowed to access this resource");
-        }
+        authorizationCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, user);
         if (!guidedTourConfiguration.isExerciseForTutorial(exercise)) {
             throw new AccessForbiddenException("This exercise is not part of a tutorial. Current tutorials: " + guidedTourConfiguration.getTours());
         }
-
         tutorParticipationService.removeTutorParticipations(exercise, user);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, exerciseId.toString())).build();
     }

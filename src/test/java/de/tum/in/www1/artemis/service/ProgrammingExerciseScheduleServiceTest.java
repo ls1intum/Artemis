@@ -259,7 +259,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
         verify(programmingExerciseGradingService, never()).updateAllResults(programmingExercise);
     }
 
-    @ParameterizedTest()
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @ValueSource(booleans = { true, false })
     void shouldNotUpdateScoresIfHasNoTestsAfterDueDate(boolean hasBuildAndTestAfterDueDate) throws Exception {
         mockStudentRepoLocks();

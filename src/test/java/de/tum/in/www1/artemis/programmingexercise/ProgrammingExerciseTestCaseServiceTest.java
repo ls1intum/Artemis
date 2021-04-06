@@ -16,10 +16,11 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.config.Constants;
-import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseGradingService;
-import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseService;
+import de.tum.in.www1.artemis.domain.Feedback;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseTestCaseService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseTestCaseDTO;
@@ -27,34 +28,13 @@ import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseTestCaseDTO;
 public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
-    ProgrammingSubmissionRepository programmingSubmissionRepository;
+    private ProgrammingExerciseTestCaseRepository testCaseRepository;
 
     @Autowired
-    ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
+    private ProgrammingExerciseTestCaseService testCaseService;
 
     @Autowired
-    ProgrammingExerciseTestCaseRepository testCaseRepository;
-
-    @Autowired
-    ParticipationRepository participationRepository;
-
-    @Autowired
-    StudentParticipationRepository studentParticipationRepository;
-
-    @Autowired
-    ResultRepository resultRepository;
-
-    @Autowired
-    ProgrammingExerciseTestCaseService testCaseService;
-
-    @Autowired
-    ProgrammingExerciseService programmingExerciseService;
-
-    @Autowired
-    ProgrammingExerciseRepository programmingExerciseRepository;
-
-    @Autowired
-    ProgrammingExerciseGradingService gradingService;
+    private ProgrammingExerciseRepository programmingExerciseRepository;
 
     private ProgrammingExercise programmingExercise;
 

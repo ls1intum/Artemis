@@ -6,13 +6,13 @@ import java.nio.charset.StandardCharsets;
 
 import org.apache.commons.io.IOUtils;
 
-final class UMLComponentDiagrams {
+public final class UMLComponentDiagrams {
 
-    static final String COMPONENT_MODEL_1;
+    public static final String COMPONENT_MODEL_1;
 
-    static final String COMPONENT_MODEL_2;
+    public static final String COMPONENT_MODEL_2;
 
-    static final String COMPONENT_MODEL_3;
+    public static final String COMPONENT_MODEL_3;
 
     static {
         try {

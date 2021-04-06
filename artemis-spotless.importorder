@@ -1,6 +1,7 @@
 #Organize Import Order
 #Thu Mar 28 17:21:31 CET 2019
-3=com
-2=org
-1=javax
 0=java
+1=javax
+2=org
+3=com
+4=

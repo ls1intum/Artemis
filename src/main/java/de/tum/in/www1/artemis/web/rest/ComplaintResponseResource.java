@@ -60,7 +60,7 @@ public class ComplaintResponseResource {
      * @return the ResponseEntity with status 201 (Created) and with body the empty complaint response
      */
     @PostMapping("/complaint-responses/complaint/{complaintId}/create-lock")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('TA')")
     public ResponseEntity<ComplaintResponse> lockComplaint(@PathVariable long complaintId) {
         log.debug("REST request to create empty complaint response for complaint with id: {}", complaintId);
         Complaint complaint = getComplaintFromDatabaseAndCheckAccessRights(complaintId);
@@ -77,7 +77,7 @@ public class ComplaintResponseResource {
      * @return the ResponseEntity with status 201 (Created) and with body the empty complaint response
      */
     @PostMapping("/complaint-responses/complaint/{complaintId}/refresh-lock")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('TA')")
     public ResponseEntity<ComplaintResponse> refreshLockOnComplaint(@PathVariable long complaintId) {
         log.debug("REST request to refresh empty complaint response for complaint with id: {}", complaintId);
         Complaint complaint = getComplaintFromDatabaseAndCheckAccessRights(complaintId);
@@ -94,7 +94,7 @@ public class ComplaintResponseResource {
      * @return the ResponseEntity with status 200 (Ok)
      */
     @DeleteMapping("/complaint-responses/complaint/{complaintId}/remove-lock")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('TA')")
     public ResponseEntity<Void> removeLockFromComplaint(@PathVariable long complaintId) {
         log.debug("REST request to remove the lock on the complaint with the id: {}", complaintId);
         Complaint complaint = getComplaintFromDatabaseAndCheckAccessRights(complaintId);
@@ -110,7 +110,7 @@ public class ComplaintResponseResource {
      * @return the ResponseEntity with status 200 (Ok) and with body the complaint response used for resolving the complaint
      */
     @PutMapping("/complaint-responses/complaint/{complaintId}/resolve")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('TA')")
     public ResponseEntity<ComplaintResponse> resolveComplaint(@RequestBody ComplaintResponse complaintResponse, @PathVariable long complaintId) {
         log.debug("REST request to resolve the complaint with id: {}", complaintId);
         getComplaintFromDatabaseAndCheckAccessRights(complaintId);
@@ -129,7 +129,7 @@ public class ComplaintResponseResource {
      */
     // TODO: change URL to /complaint-responses?complaintId={complaintId}
     @GetMapping("/complaint-responses/complaint/{complaintId}")
-    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<ComplaintResponse> getComplaintResponseByComplaintId(@PathVariable long complaintId, Principal principal) {
         log.debug("REST request to get ComplaintResponse associated to complaint : {}", complaintId);
         Optional<ComplaintResponse> complaintResponse = complaintResponseRepository.findByComplaint_Id(complaintId);

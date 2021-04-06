@@ -18,7 +18,6 @@ import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
@@ -60,14 +59,6 @@ public class ProgrammingExerciseParticipationService {
         this.authCheckService = authCheckService;
         this.userRepository = userRepository;
         this.gitService = gitService;
-    }
-
-    public Optional<ProgrammingExerciseStudentParticipation> findStudentParticipation(Long participationId) {
-        return studentParticipationRepository.findById(participationId);
-    }
-
-    public Optional<TemplateProgrammingExerciseParticipation> findTemplateParticipation(Long participationId) {
-        return templateParticipationRepository.findById(participationId);
     }
 
     public Optional<SolutionProgrammingExerciseParticipation> findSolutionParticipation(Long participationId) {
@@ -166,31 +157,26 @@ public class ProgrammingExerciseParticipationService {
     }
 
     private boolean canAccessParticipation(@NotNull ProgrammingExerciseStudentParticipation participation) {
-        User user = userRepository.getUserWithGroupsAndAuthorities();
-        Course course = participation.getExercise().getCourseViaExerciseGroupOrCourseMember();
-        return participation.isOwnedBy(user) || authCheckService.isAtLeastTeachingAssistantInCourse(course, user);
+        var user = userRepository.getUserWithGroupsAndAuthorities();
+        return participation.isOwnedBy(user) || authCheckService.isAtLeastTeachingAssistantForExercise(participation.getExercise(), user);
     }
 
     private boolean canAccessParticipation(@NotNull SolutionProgrammingExerciseParticipation participation) {
-        User user = userRepository.getUserWithGroupsAndAuthorities();
         // Note: if this participation was retrieved as Participation (abstract super class) from the database, the programming exercise might not be correctly initialized
         // To prevent null pointer exceptions, we therefore retrieve it again as concrete solution programming exercise participation
         if (participation.getProgrammingExercise() == null || !Hibernate.isInitialized(participation.getProgrammingExercise())) {
-            participation = findSolutionParticipation(participation.getId()).get();
+            participation.setProgrammingExercise(solutionParticipationRepository.findById(participation.getId()).get().getProgrammingExercise());
         }
-        Course course = participation.getExercise().getCourseViaExerciseGroupOrCourseMember();
-        return authCheckService.isAtLeastTeachingAssistantInCourse(course, user);
+        return authCheckService.isAtLeastTeachingAssistantForExercise(participation.getExercise(), null);
     }
 
     private boolean canAccessParticipation(@NotNull TemplateProgrammingExerciseParticipation participation) {
-        User user = userRepository.getUserWithGroupsAndAuthorities();
         // Note: if this participation was retrieved as Participation (abstract super class) from the database, the programming exercise might not be correctly initialized
         // To prevent null pointer exceptions, we therefore retrieve it again as concrete template programming exercise participation
         if (participation.getProgrammingExercise() == null || !Hibernate.isInitialized(participation.getProgrammingExercise())) {
-            participation = findTemplateParticipation(participation.getId()).get();
+            participation.setProgrammingExercise(templateParticipationRepository.findById(participation.getId()).get().getProgrammingExercise());
         }
-        Course course = participation.getExercise().getCourseViaExerciseGroupOrCourseMember();
-        return authCheckService.isAtLeastTeachingAssistantInCourse(course, user);
+        return authCheckService.isAtLeastTeachingAssistantForExercise(participation.getExercise(), null);
     }
 
     /**

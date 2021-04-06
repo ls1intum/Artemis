@@ -6,11 +6,11 @@ import java.nio.charset.StandardCharsets;
 
 import org.apache.commons.io.IOUtils;
 
-final class UMLUseCaseDiagrams {
+public final class UMLUseCaseDiagrams {
 
-    static final String USE_CASE_MODEL_1;
+    public static final String USE_CASE_MODEL_1;
 
-    static final String USE_CASE_MODEL_2;
+    public static final String USE_CASE_MODEL_2;
 
     static {
         try {
