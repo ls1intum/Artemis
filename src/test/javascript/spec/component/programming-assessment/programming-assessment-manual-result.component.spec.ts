@@ -91,9 +91,6 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
     let lockAndGetProgrammingSubmissionParticipationStub: SinonStub;
     let findWithParticipationsStub: SinonStub;
 
-    let loadRandomSubmissionStub: SinonStub;
-    let loadSubmissionStub: SinonStub;
-
     const user = <User>{ id: 99, groups: ['instructorGroup'] };
     const result: Result = <any>{
         feedbacks: [new Feedback()],
