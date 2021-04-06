@@ -1,16 +1,10 @@
 package de.tum.in.www1.artemis.domain.quiz;
 
-import javax.persistence.Column;
-import javax.persistence.DiscriminatorValue;
-import javax.persistence.Entity;
-import javax.persistence.OneToOne;
+import javax.persistence.*;
 
 import org.hibernate.annotations.DiscriminatorOptions;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonSubTypes;
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import com.fasterxml.jackson.annotation.*;
 
 @Entity
 @DiscriminatorValue(value = "Q")

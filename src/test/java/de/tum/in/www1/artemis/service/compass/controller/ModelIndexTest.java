@@ -31,9 +31,9 @@ import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLPackage;
 
 class ElementAnswer implements Serializable, Answer {
 
-    List<UMLElement> elements;
+    private final List<UMLElement> elements;
 
-    List<Double> similarities;
+    private final List<Double> similarities;
 
     ElementAnswer(List<UMLElement> elements, List<Double> similarities) {
         this.elements = elements;
@@ -56,21 +56,21 @@ class ElementAnswer implements Serializable, Answer {
 
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
-class ModelIndexTest {
+public class ModelIndexTest {
 
     private ModelIndex modelIndex;
 
     @Mock(serializable = true)
-    UMLElement umlElement1;
+    private UMLElement umlElement1;
 
     @Mock(serializable = true)
-    UMLElement umlElement2;
+    private UMLElement umlElement2;
 
     @Mock(serializable = true)
-    UMLElement umlElement3;
+    private UMLElement umlElement3;
 
     @Mock(serializable = true)
-    UMLElement umlElement4;
+    private UMLElement umlElement4;
 
     @BeforeEach
     void setUp() {

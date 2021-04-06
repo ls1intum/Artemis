@@ -10,11 +10,7 @@ import org.springframework.boot.actuate.audit.AuditEventRepository;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.config.Constants;
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.Feedback;
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.Visibility;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;

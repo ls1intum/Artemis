@@ -4,22 +4,17 @@ import static de.tum.in.www1.artemis.config.Constants.NEW_SUBMISSION_TOPIC;
 import static de.tum.in.www1.artemis.util.TestConstants.COMMIT_HASH_OBJECT_ID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import org.eclipse.jgit.lib.ObjectId;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.Timeout;
+import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -32,10 +27,7 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
-import de.tum.in.www1.artemis.domain.participation.Participation;
-import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
-import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
-import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
@@ -46,17 +38,17 @@ import de.tum.in.www1.artemis.util.TestConstants;
 public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
-    ProgrammingExerciseRepository programmingExerciseRepository;
+    private ProgrammingExerciseRepository programmingExerciseRepository;
 
     @Autowired
-    ProgrammingSubmissionRepository submissionRepository;
+    private ProgrammingSubmissionRepository submissionRepository;
 
     @Autowired
     private ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
 
-    ProgrammingExercise exercise;
+    private ProgrammingExercise exercise;
 
-    ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation;
+    private ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation;
 
     @BeforeEach
     public void init() {
@@ -390,8 +382,7 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
         database.updateExerciseDueDate(exercise.getId(), ZonedDateTime.now().minusHours(1));
         var submissions = submissionRepository.findAll();
 
-        Participation response = request.get("/api/programming-submissions/" + programmingExerciseStudentParticipation.getId() + "/lock", HttpStatus.FORBIDDEN,
-                Participation.class);
+        request.get("/api/programming-submissions/" + programmingExerciseStudentParticipation.getId() + "/lock", HttpStatus.FORBIDDEN, Participation.class);
 
         // Make sure no new submissions are created
         var latestSubmissions = submissionRepository.findAll();
@@ -419,9 +410,6 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
     @WithMockUser(value = "tutor1", roles = "TA")
     public void testGetProgrammingSubmissionWithoutAssessment_lockSubmission() throws Exception {
         User user = database.getUserByLogin("tutor1");
-        var automaticFeedback = new Feedback().credits(null).detailText("asdfasdf").type(FeedbackType.AUTOMATIC).text("asdf");
-        var automaticFeedbacks = new ArrayList<Feedback>();
-        automaticFeedbacks.add(automaticFeedback);
         var newResult = database.addResultToParticipation(AssessmentType.AUTOMATIC, ZonedDateTime.now().minusHours(2), programmingExerciseStudentParticipation);
         programmingExerciseStudentParticipation.addResult(newResult);
         var submission = database.addProgrammingSubmissionToResultAndParticipation(newResult, programmingExerciseStudentParticipation, "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d");

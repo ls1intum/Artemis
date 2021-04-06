@@ -1,8 +1,7 @@
 package de.tum.in.www1.artemis.util;
 
 import static com.google.gson.JsonParser.parseString;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.fail;
+import static org.assertj.core.api.Assertions.*;
 
 import java.net.URL;
 import java.time.Duration;
@@ -43,7 +42,7 @@ import de.tum.in.www1.artemis.domain.plagiarism.modeling.ModelingPlagiarismResul
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextPlagiarismResult;
 import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.security.AuthoritiesConstants;
+import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AssessmentService;
 import de.tum.in.www1.artemis.service.ModelingSubmissionService;
 import de.tum.in.www1.artemis.service.ParticipationService;
@@ -59,13 +58,13 @@ public class DatabaseUtilService {
 
     private static final ZonedDateTime futureFutureTimestamp = ZonedDateTime.now().plusDays(2);
 
-    private static final Authority userAuthority = new Authority(AuthoritiesConstants.USER);
+    private static final Authority userAuthority = new Authority(Role.STUDENT.getAuthority());
 
-    private static final Authority tutorAuthority = new Authority(AuthoritiesConstants.TEACHING_ASSISTANT);
+    private static final Authority tutorAuthority = new Authority(Role.TEACHING_ASSISTANT.getAuthority());
 
-    private static final Authority instructorAuthority = new Authority(AuthoritiesConstants.INSTRUCTOR);
+    private static final Authority instructorAuthority = new Authority(Role.INSTRUCTOR.getAuthority());
 
-    private static final Authority adminAuthority = new Authority(AuthoritiesConstants.ADMIN);
+    private static final Authority adminAuthority = new Authority(Role.ADMIN.getAuthority());
 
     private static final Set<Authority> studentAuthorities = Set.of(userAuthority);
 
@@ -394,20 +393,16 @@ public class DatabaseUtilService {
         return exerciseRepo.save(teamTextExercise);
     }
 
-    public Result createParticipationSubmissionAndResult(Long idOfExercise, Participant participant, Double pointsOfExercise, Double bonusPointsOfExercise, long scoreAwarded,
-            boolean rated) {
-        Exercise exercise = exerciseRepo.findById(idOfExercise).get();
-
-        if (!exercise.getMaxPoints().equals(pointsOfExercise)) {
-            exercise.setMaxPoints(pointsOfExercise);
+    public Result createParticipationSubmissionAndResult(long exerciseId, Participant participant, Double points, Double bonusPoints, long scoreAwarded, boolean rated) {
+        Exercise exercise = exerciseRepo.findById(exerciseId).get();
+        if (!exercise.getMaxPoints().equals(points)) {
+            exercise.setMaxPoints(points);
         }
-        if (!exercise.getBonusPoints().equals(bonusPointsOfExercise)) {
-            exercise.setBonusPoints(bonusPointsOfExercise);
+        if (!exercise.getBonusPoints().equals(bonusPoints)) {
+            exercise.setBonusPoints(bonusPoints);
         }
         exercise = exerciseRepo.saveAndFlush(exercise);
-
         StudentParticipation studentParticipation = participationService.startExercise(exercise, participant, false);
-
         return createSubmissionAndResult(studentParticipation, scoreAwarded, rated);
     }
 
@@ -465,7 +460,7 @@ public class DatabaseUtilService {
 
     public List<Course> createCoursesWithExercisesAndLecturesAndLectureUnits(boolean withParticiptions) throws Exception {
         List<Course> courses = this.createCoursesWithExercisesAndLectures(withParticiptions);
-        Course course1 = this.courseRepo.findWithEagerExercisesAndLecturesById(courses.get(0).getId());
+        Course course1 = this.courseRepo.findByIdWithExercisesAndLecturesElseThrow(courses.get(0).getId());
         Lecture lecture1 = course1.getLectures().stream().findFirst().get();
         TextExercise textExercise = textExerciseRepository.findByCourseId(course1.getId()).stream().findFirst().get();
         VideoUnit videoUnit = createVideoUnit();
@@ -1655,7 +1650,7 @@ public class DatabaseUtilService {
         exerciseRepo.save(objectExercise);
         exerciseRepo.save(useCaseExercise);
         exerciseRepo.save(finishedExercise);
-        Course storedCourse = courseRepo.findWithEagerExercisesAndLecturesById(course.getId());
+        Course storedCourse = courseRepo.findByIdWithExercisesAndLecturesElseThrow(course.getId());
         Set<Exercise> exercises = storedCourse.getExercises();
         assertThat(exercises.size()).as("five exercises got stored").isEqualTo(5);
         assertThat(exercises).as("Contains all exercises").containsExactlyInAnyOrder(course.getExercises().toArray(new Exercise[] {}));
@@ -1675,7 +1670,7 @@ public class DatabaseUtilService {
         course = courseRepo.save(course);
         var programmingExercise = addProgrammingExerciseToCourse(course, enableStaticCodeAnalysis, programmingLanguage);
         assertThat(programmingExercise.getPresentationScoreEnabled()).as("presentation score is enabled").isTrue();
-        return courseRepo.findWithEagerExercisesAndLecturesById(course.getId());
+        return courseRepo.findByIdWithExercisesAndLecturesElseThrow(course.getId());
     }
 
     public ProgrammingExercise addProgrammingExerciseToCourse(Course course, boolean enableStaticCodeAnalysis) {
@@ -1716,7 +1711,7 @@ public class DatabaseUtilService {
 
         assertThat(programmingExercise.getPresentationScoreEnabled()).as("presentation score is enabled").isTrue();
 
-        return courseRepo.findWithEagerExercisesAndLecturesById(course.getId());
+        return courseRepo.findByIdWithExercisesAndLecturesElseThrow(course.getId());
     }
 
     private void populateProgrammingExercise(ProgrammingExercise programmingExercise, String shortName, String title, boolean enableStaticCodeAnalysis) {
@@ -2305,6 +2300,7 @@ public class DatabaseUtilService {
         Result result = new Result();
         result.setAssessor(getUserByLogin(assessorLogin));
         result.setScore(100D);
+        result.setResultString(exercise.getMaxPoints(), exercise.getMaxPoints());
         if (exercise.getReleaseDate() != null) {
             result.setCompletionDate(exercise.getReleaseDate());
         }

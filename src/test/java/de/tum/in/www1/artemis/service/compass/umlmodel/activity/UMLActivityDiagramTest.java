@@ -14,36 +14,36 @@ import org.mockito.MockitoAnnotations;
 import de.tum.in.www1.artemis.service.compass.umlmodel.AbstractUMLDiagramTest;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
 
-class UMLActivityDiagramTest extends AbstractUMLDiagramTest {
+public class UMLActivityDiagramTest extends AbstractUMLDiagramTest {
 
     private UMLActivityDiagram activityDiagram;
 
     @Mock
-    UMLActivityNode umlActivityNode1;
+    private UMLActivityNode umlActivityNode1;
 
     @Mock
-    UMLActivityNode umlActivityNode2;
+    private UMLActivityNode umlActivityNode2;
 
     @Mock
-    UMLActivityNode umlActivityNode3;
+    private UMLActivityNode umlActivityNode3;
 
     @Mock
-    UMLActivity umlActivity1;
+    private UMLActivity umlActivity1;
 
     @Mock
-    UMLActivity umlActivity2;
+    private UMLActivity umlActivity2;
 
     @Mock
-    UMLActivity umlActivity3;
+    private UMLActivity umlActivity3;
 
     @Mock
-    UMLControlFlow umlControlFlow1;
+    private UMLControlFlow umlControlFlow1;
 
     @Mock
-    UMLControlFlow umlControlFlow2;
+    private UMLControlFlow umlControlFlow2;
 
     @Mock
-    UMLControlFlow umlControlFlow3;
+    private UMLControlFlow umlControlFlow3;
 
     @BeforeEach
     void setUp() {

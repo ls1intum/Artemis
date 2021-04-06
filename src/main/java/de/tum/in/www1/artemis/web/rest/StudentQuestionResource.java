@@ -16,12 +16,9 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.repository.CourseRepository;
-import de.tum.in.www1.artemis.repository.ExerciseRepository;
-import de.tum.in.www1.artemis.repository.LectureRepository;
-import de.tum.in.www1.artemis.repository.StudentQuestionRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.GroupNotificationService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
@@ -74,7 +71,7 @@ public class StudentQuestionResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("courses/{courseId}/student-questions")
-    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<StudentQuestion> createStudentQuestion(@PathVariable Long courseId, @RequestBody StudentQuestion studentQuestion) throws URISyntaxException {
         log.debug("REST request to save StudentQuestion : {}", studentQuestion);
         User user = this.userRepository.getUserWithGroupsAndAuthorities();
@@ -108,7 +105,7 @@ public class StudentQuestionResource {
      *         status 500 (Internal Server Error) if the studentQuestion couldn't be updated
      */
     @PutMapping("courses/{courseId}/student-questions")
-    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<StudentQuestion> updateStudentQuestion(@PathVariable Long courseId, @RequestBody StudentQuestion studentQuestion) {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         log.debug("REST request to update StudentQuestion : {}", studentQuestion);
@@ -141,7 +138,7 @@ public class StudentQuestionResource {
      *         status 500 (Internal Server Error) if the studentQuestion couldn't be updated
      */
     @PutMapping("courses/{courseId}/student-questions/{questionId}/votes")
-    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<StudentQuestion> updateStudentQuestionVotes(@PathVariable Long courseId, @PathVariable Long questionId, @RequestBody Integer voteChange) {
         if (voteChange < -2 || voteChange > 2) {
             return forbidden();
@@ -175,7 +172,7 @@ public class StudentQuestionResource {
      * @return the ResponseEntity with status 200 (OK) and with body all student questions for exercise
      */
     @GetMapping("courses/{courseId}/exercises/{exerciseId}/student-questions")
-    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<List<StudentQuestion>> getAllQuestionsForExercise(@PathVariable Long courseId, @PathVariable Long exerciseId) {
         final User user = userRepository.getUserWithGroupsAndAuthorities();
         Optional<Exercise> exercise = exerciseRepository.findById(exerciseId);
@@ -203,7 +200,7 @@ public class StudentQuestionResource {
      * @return the ResponseEntity with status 200 (OK) and with body all student questions for lecture
      */
     @GetMapping("courses/{courseId}/lectures/{lectureId}/student-questions")
-    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<List<StudentQuestion>> getAllQuestionsForLecture(@PathVariable Long courseId, @PathVariable Long lectureId) {
         Optional<Lecture> lecture = lectureRepository.findById(lectureId);
         if (lecture.isEmpty()) {
@@ -230,7 +227,7 @@ public class StudentQuestionResource {
      * @return the ResponseEntity with status 200 (OK) and with body all student questions for course
      */
     @GetMapping("courses/{courseId}/student-questions")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('TA')")
     public ResponseEntity<List<StudentQuestion>> getAllQuestionsForCourse(@PathVariable Long courseId) {
         final User user = userRepository.getUserWithGroupsAndAuthorities();
         var course = courseRepository.findByIdElseThrow(courseId);
@@ -261,7 +258,7 @@ public class StudentQuestionResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("courses/{courseId}/student-questions/{studentQuestionId}")
-    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Void> deleteStudentQuestion(@PathVariable Long courseId, @PathVariable Long studentQuestionId) {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         courseRepository.findByIdElseThrow(courseId);

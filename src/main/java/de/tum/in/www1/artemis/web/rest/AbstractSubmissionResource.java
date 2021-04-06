@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException.NOT_ALLOWED;
+
 import java.util.List;
 
 import org.springframework.http.ResponseEntity;
@@ -7,11 +9,10 @@ import org.springframework.http.ResponseEntity;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Submission;
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.repository.ExerciseRepository;
-import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
-import de.tum.in.www1.artemis.repository.SubmissionRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.ResultService;
+import de.tum.in.www1.artemis.service.SubmissionService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 
 /**
@@ -60,11 +61,11 @@ public abstract class AbstractSubmissionResource {
 
         if (assessedByTutor) {
             if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
-                throw new AccessForbiddenException("You are not allowed to access this resource");
+                throw new AccessForbiddenException(NOT_ALLOWED);
             }
         }
         else if (!authCheckService.isAtLeastInstructorForExercise(exercise)) {
-            throw new AccessForbiddenException("You are not allowed to access this resource");
+            throw new AccessForbiddenException(NOT_ALLOWED);
         }
 
         final boolean examMode = exercise.isExamExercise();

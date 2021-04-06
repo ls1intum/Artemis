@@ -1,9 +1,6 @@
 package de.tum.in.www1.artemis.domain.quiz.scoring;
 
-import de.tum.in.www1.artemis.domain.quiz.QuizQuestion;
-import de.tum.in.www1.artemis.domain.quiz.ShortAnswerQuestion;
-import de.tum.in.www1.artemis.domain.quiz.ShortAnswerSubmittedAnswer;
-import de.tum.in.www1.artemis.domain.quiz.SubmittedAnswer;
+import de.tum.in.www1.artemis.domain.quiz.*;
 
 /**
  * All or nothing means the full score is given if the answer is 100% correct, otherwise a score of 0 is given

@@ -13,7 +13,7 @@ import de.tum.in.www1.artemis.repository.FeedbackRepository;
 class FeedbackRepositoryTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
-    FeedbackRepository feedbackRepository;
+    private FeedbackRepository feedbackRepository;
 
     @Test
     void createFeedbackFromTestCaseCombineMultiple() {

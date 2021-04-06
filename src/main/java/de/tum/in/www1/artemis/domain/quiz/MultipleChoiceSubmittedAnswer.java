@@ -12,6 +12,7 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonView;
+
 import de.tum.in.www1.artemis.domain.view.QuizView;
 
 /**

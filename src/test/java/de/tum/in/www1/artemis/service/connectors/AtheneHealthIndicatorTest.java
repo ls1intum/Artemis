@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.service.connectors.athene;
+package de.tum.in.www1.artemis.service.connectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -11,8 +11,9 @@ import org.springframework.boot.actuate.health.Status;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.connector.athene.AtheneRequestMockProvider;
+import de.tum.in.www1.artemis.service.connectors.athene.AtheneHealthIndicator;
 
-class AtheneHealthIndicatorTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+public class AtheneHealthIndicatorTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     private AtheneRequestMockProvider atheneRequestMockProvider;

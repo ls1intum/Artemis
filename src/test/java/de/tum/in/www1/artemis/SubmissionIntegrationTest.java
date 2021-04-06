@@ -5,9 +5,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.Submission;
+import de.tum.in.www1.artemis.domain.TextSubmission;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.repository.SubmissionRepository;
 
 public class SubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 

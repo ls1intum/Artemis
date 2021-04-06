@@ -52,7 +52,7 @@ public class ProgrammingExerciseSimulationIntegrationTest extends AbstractSpring
         request.post(ROOT + EXERCISES_SIMULATION, null, HttpStatus.BAD_REQUEST);
     }
 
-    @ParameterizedTest
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @EnumSource(ExerciseMode.class)
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void createProgrammingExerciseWithoutConnectionToVCSandCI_validExercise_created(ExerciseMode mode) throws Exception {

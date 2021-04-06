@@ -2,10 +2,7 @@ package de.tum.in.www1.artemis;
 
 import static de.tum.in.www1.artemis.config.Constants.ATHENE_RESULT_API_PATH;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.greaterThan;
-import static org.hamcrest.Matchers.hasSize;
-import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.*;
 
 import java.util.ArrayList;
 import java.util.Collection;

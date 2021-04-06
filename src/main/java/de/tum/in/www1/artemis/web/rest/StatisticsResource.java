@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.enumeration.GraphType;
 import de.tum.in.www1.artemis.domain.enumeration.SpanType;
-import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.service.StatisticsService;
 
 /**
  * REST controller for managing user statistics.

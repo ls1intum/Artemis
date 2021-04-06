@@ -34,7 +34,7 @@ public class GuidedTourSettingsResource {
      * @return the guided tour settings
      */
     @PutMapping("/guided-tour-settings")
-    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Set<GuidedTourSetting>> updateGuidedTourSettings(@RequestBody Set<GuidedTourSetting> guidedTourSettings) {
         log.debug("REST request to update GuidedTourSetting : {}", guidedTourSettings);
         User currentUser = userService.updateGuidedTourSettings(guidedTourSettings);
@@ -47,7 +47,7 @@ public class GuidedTourSettingsResource {
      * @return the guided tour settings
      */
     @DeleteMapping("/guided-tour-settings/{settingsKey}")
-    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Set<GuidedTourSetting>> deleteGuidedTourSetting(@PathVariable String settingsKey) {
         log.debug("REST request to delete GuidedTourSetting : {}", settingsKey);
         // Note: there is no explicit permission check here, because every user can delete the guided tour settings, e.g. by restarting a tutorial

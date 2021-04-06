@@ -16,20 +16,16 @@ import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.ExerciseHint;
 import de.tum.in.www1.artemis.repository.ExerciseHintRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
-import de.tum.in.www1.artemis.web.rest.ExerciseHintResource;
 
 public class ExerciseHintIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
-    ExerciseHintResource exerciseHintResource;
+    private ExerciseHintRepository exerciseHintRepository;
 
     @Autowired
-    ExerciseHintRepository exerciseHintRepository;
+    private ProgrammingExerciseRepository exerciseRepository;
 
-    @Autowired
-    ProgrammingExerciseRepository exerciseRepository;
-
-    Exercise exercise;
+    private Exercise exercise;
 
     @BeforeEach
     public void initTestCase() {
@@ -82,7 +78,7 @@ public class ExerciseHintIntegrationTest extends AbstractSpringIntegrationBamboo
     public void getHintForAnExerciseAsAnInstructor() throws Exception {
         ExerciseHint exerciseHint = exerciseHintRepository.findAll().get(0);
         request.get("/api/exercise-hints/" + exerciseHint.getId(), HttpStatus.OK, ExerciseHint.class);
-        request.get("/api/exercise-hints/" + 0l, HttpStatus.NOT_FOUND, ExerciseHint.class);
+        request.get("/api/exercise-hints/" + 0L, HttpStatus.NOT_FOUND, ExerciseHint.class);
     }
 
     @Test
@@ -137,7 +133,7 @@ public class ExerciseHintIntegrationTest extends AbstractSpringIntegrationBamboo
 
         exerciseHint.setContent(newContent);
         request.put("/api/exercise-hints/" + exerciseHint.getId(), exerciseHint, HttpStatus.OK);
-        request.put("/api/exercise-hints/" + 0l, exerciseHint, HttpStatus.BAD_REQUEST);
+        request.put("/api/exercise-hints/" + 0L, exerciseHint, HttpStatus.BAD_REQUEST);
         Optional<ExerciseHint> hintAfterSave = exerciseHintRepository.findById(exerciseHint.getId());
         assertThat(hintAfterSave.get().getContent()).isEqualTo(newContent);
     }
@@ -159,7 +155,7 @@ public class ExerciseHintIntegrationTest extends AbstractSpringIntegrationBamboo
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void deleteHintAsInstructor() throws Exception {
         ExerciseHint exerciseHint = new ExerciseHint().title("title 4").content("content 4").exercise(exercise);
-        request.delete("/api/exercise-hints/" + 0l, HttpStatus.NOT_FOUND);
+        request.delete("/api/exercise-hints/" + 0L, HttpStatus.NOT_FOUND);
         request.post("/api/exercise-hints", exerciseHint, HttpStatus.CREATED);
         List<ExerciseHint> exerciseHints = exerciseHintRepository.findAll();
         request.delete("/api/exercise-hints/" + exerciseHints.get(0).getId(), HttpStatus.NO_CONTENT);
