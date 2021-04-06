@@ -12,7 +12,7 @@ import { ArtemisTestModule } from '../../test.module';
 chai.use(sinonChai);
 const expect = chai.expect;
 
-describe('Course Management Detail Component', () => {
+describe('Course Exercise Card Component', () => {
     let comp: CourseExerciseCardComponent;
     let fixture: ComponentFixture<CourseExerciseCardComponent>;
 
