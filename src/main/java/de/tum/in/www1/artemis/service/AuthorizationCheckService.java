@@ -5,6 +5,7 @@ import static de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException.NO
 import java.security.Principal;
 import java.time.ZonedDateTime;
 import java.util.Optional;
+import java.util.function.Consumer;
 
 import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
@@ -226,14 +227,17 @@ public class AuthorizationCheckService {
      * @param exercise belongs to a course that will be checked for permission rights
      * @param user the user whose permissions should be checked
      */
-    public void checkHasAtLeastRoleForExerciseElseThrow(Role role, @NotNull Exercise exercise, @Nullable User user) {
-        switch (role) {
-            case ADMIN -> isAdminElseThrow(user);
-            case INSTRUCTOR -> checkIsAtLeastInstructorForExerciseElseThrow(exercise, user);
-            case TEACHING_ASSISTANT -> checkIsAtLeastTeachingAssistantForExerciseElseThrow(exercise, user);
-            case USER -> checkIsAtLeastStudentForExerciseElseThrow(exercise, user);
-            case ANONYMOUS -> throw new AccessForbiddenException(NOT_ALLOWED);
-        }
+    public void checkHasAtLeastRoleForExerciseElseThrow(@NotNull Role role, @NotNull Exercise exercise, @Nullable User user) {
+        // Note: the consumer is necessary to get an exhaustive check for the switch expression here, also see https://stackoverflow.com/questions/66204407
+        Consumer<User> consumer = switch (role) {
+            case ADMIN -> this::checkIsAdminElseThrow;
+            case INSTRUCTOR -> userOrNull -> checkIsAtLeastInstructorForExerciseElseThrow(exercise, userOrNull);
+            case TEACHING_ASSISTANT -> userOrNull -> checkIsAtLeastTeachingAssistantForExerciseElseThrow(exercise, userOrNull);
+            case USER -> userOrNull -> checkIsAtLeastStudentForExerciseElseThrow(exercise, userOrNull);
+            // anonymous users never have access to exercises, so we have to throw an exception
+            case ANONYMOUS -> throw new IllegalArgumentException("The role anonymous does not make sense in this context");
+        };
+        consumer.accept(user);
     }
 
     /**
@@ -244,14 +248,17 @@ public class AuthorizationCheckService {
      * @param course the course that needs to be checked
      * @param user the user whose permissions should be checked
      */
-    public void checkHasAtLeastRoleInCourseElseThrow(Role role, @NotNull Course course, @Nullable User user) {
-        switch (role) {
-            case ADMIN -> isAdminElseThrow(user);
-            case INSTRUCTOR -> checkIsAtLeastInstructorInCourseElseThrow(course, user);
-            case TEACHING_ASSISTANT -> checkIsAtLeastTeachingAssistantInCourseElseThrow(course, user);
-            case USER -> checkIsAtLeastStudentInCourseElseThrow(course, user);
-            case ANONYMOUS -> throw new AccessForbiddenException(NOT_ALLOWED);
-        }
+    public void checkHasAtLeastRoleInCourseElseThrow(@NotNull Role role, @NotNull Course course, @Nullable User user) {
+        // Note: the consumer is necessary to get an exhaustive check for the switch expression here, also see https://stackoverflow.com/questions/66204407
+        Consumer<User> consumer = switch (role) {
+            case ADMIN -> this::checkIsAdminElseThrow;
+            case INSTRUCTOR -> userOrNull -> checkIsAtLeastInstructorInCourseElseThrow(course, userOrNull);
+            case TEACHING_ASSISTANT -> userOrNull -> checkIsAtLeastTeachingAssistantInCourseElseThrow(course, userOrNull);
+            case USER -> userOrNull -> checkIsAtLeastStudentInCourseElseThrow(course, userOrNull);
+            // anonymous users never have access to courses, so we have to throw an exception
+            case ANONYMOUS -> throw new IllegalArgumentException("The role anonymous does not make sense in this context");
+        };
+        consumer.accept(user);
     }
 
     /**
@@ -476,7 +483,7 @@ public class AuthorizationCheckService {
      * Checks if the passed user is an admin user. Throws an AccessForbiddenException in case the user is not an admin
      * @param user the user with authorities. If the user is null, the currently logged in user will be used.
      **/
-    public void isAdminElseThrow(@Nullable User user) {
+    public void checkIsAdminElseThrow(@Nullable User user) {
         if (!isAdmin(user)) {
             throw new AccessForbiddenException(NOT_ALLOWED);
         }

@@ -359,8 +359,8 @@ public class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrati
                 submittedFileUploadSubmission, "submission", file, FileUploadSubmission.class, HttpStatus.OK);
 
         final var submissionInDb = fileUploadSubmissionRepository.findById(submittedFileUploadSubmission.getId());
-        assertThat(submissionInDb.isPresent()).isTrue();
-        assertThat(submissionInDb.get().getFilePath().contains("ffile.png")).isTrue();
+        assertThat(submissionInDb).isPresent();
+        assertThat(submissionInDb.get().getFilePath()).contains("ffile.png");
     }
 
     private FileUploadSubmission performInitialSubmission(Long exerciseId, FileUploadSubmission submission) throws Exception {
