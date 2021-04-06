@@ -359,6 +359,9 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
     public void testLockAndGetProgrammingSubmission_withManualResult() throws Exception {
+        database.addGradingInstructionsToExercise(exercise);
+        programmingExerciseRepository.save(exercise);
+
         ProgrammingSubmission submission = ModelFactory.generateProgrammingSubmission(true);
         submission = database.addProgrammingSubmission(exercise, submission, "student1");
         exercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
@@ -370,28 +373,32 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
         result.setSubmission(submission);
         submission.addResult(result);
         submission.setParticipation(programmingExerciseStudentParticipation);
-        submissionRepository.save(submission);
+        submission = submissionRepository.save(submission);
         var submissions = submissionRepository.findAll();
 
-        request.get("/api/programming-submissions/" + programmingExerciseStudentParticipation.getId() + "/lock", HttpStatus.OK, Participation.class);
+        var storedSubmission = request.get("/api/programming-submissions/" + submission.getId() + "/lock", HttpStatus.OK, ProgrammingSubmission.class);
 
         // Make sure no new submissions are created
         var latestSubmissions = submissionRepository.findAll();
         assertThat(submissions.size()).isEqualTo(latestSubmissions.size());
+
+        // Check that grading instructions are loaded
+        ProgrammingExercise exercise = (ProgrammingExercise) storedSubmission.getParticipation().getExercise();
+        assertThat(exercise.getGradingCriteria().get(0).getStructuredGradingInstructions().size()).isEqualTo(1);
+        assertThat(exercise.getGradingCriteria().get(1).getStructuredGradingInstructions().size()).isEqualTo(1);
     }
 
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
     public void testLockAndGetProgrammingSubmission_withoutManualResult() throws Exception {
         var result = database.addResultToParticipation(AssessmentType.AUTOMATIC, ZonedDateTime.now().minusHours(1).minusMinutes(30), programmingExerciseStudentParticipation);
-        database.addProgrammingSubmissionToResultAndParticipation(result, programmingExerciseStudentParticipation, "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d");
+        var submission = database.addProgrammingSubmissionToResultAndParticipation(result, programmingExerciseStudentParticipation, "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d");
         exercise.setAssessmentType(AssessmentType.AUTOMATIC);
         exercise = programmingExerciseRepository.save(exercise);
         database.updateExerciseDueDate(exercise.getId(), ZonedDateTime.now().minusHours(1));
         var submissions = submissionRepository.findAll();
 
-        Participation response = request.get("/api/programming-submissions/" + programmingExerciseStudentParticipation.getId() + "/lock", HttpStatus.FORBIDDEN,
-                Participation.class);
+        Participation response = request.get("/api/programming-submissions/" + submission.getId() + "/lock", HttpStatus.FORBIDDEN, Participation.class);
 
         // Make sure no new submissions are created
         var latestSubmissions = submissionRepository.findAll();
@@ -418,6 +425,8 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
     public void testGetProgrammingSubmissionWithoutAssessment_lockSubmission() throws Exception {
+        database.addGradingInstructionsToExercise(exercise);
+        programmingExerciseRepository.save(exercise);
         User user = database.getUserByLogin("tutor1");
         var automaticFeedback = new Feedback().credits(null).detailText("asdfasdf").type(FeedbackType.AUTOMATIC).text("asdf");
         var automaticFeedbacks = new ArrayList<Feedback>();
@@ -443,6 +452,11 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
         var latestSubmissions = submissionRepository.findAll();
         assertThat(latestSubmissions.size()).isEqualTo(1);
         assertThat(latestSubmissions.get(0).getId()).isEqualTo(submission.getId());
+
+        // Check that grading instructions are loaded
+        ProgrammingExercise exercise = (ProgrammingExercise) storedSubmission.getParticipation().getExercise();
+        assertThat(exercise.getGradingCriteria().get(0).getStructuredGradingInstructions().size()).isEqualTo(1);
+        assertThat(exercise.getGradingCriteria().get(1).getStructuredGradingInstructions().size()).isEqualTo(1);
     }
 
     @Test
