@@ -18,7 +18,6 @@ import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.GroupNotificationService;
 import de.tum.in.www1.artemis.service.SingleUserNotificationService;
-import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
@@ -118,11 +117,11 @@ public class StudentQuestionAnswerResource {
             throw new BadRequestAlertException("Invalid id", ENTITY_NAME, "idnull");
         }
         courseRepository.findByIdElseThrow(courseId);
-        StudentQuestionAnswer optionalStudentQuestionAnswer = studentQuestionAnswerRepository.findByIdElseThrow(studentQuestionAnswer.getId());
-        if (!optionalStudentQuestionAnswer.getQuestion().getCourse().getId().equals(courseId)) {
+        StudentQuestionAnswer existingStudentQuestionAnswer = studentQuestionAnswerRepository.findByIdElseThrow(studentQuestionAnswer.getId());
+        if (!existingStudentQuestionAnswer.getQuestion().getCourse().getId().equals(courseId)) {
             return forbidden();
         }
-        mayUpdateOrDeleteStudentQuestionAnswerElseThrow(optionalStudentQuestionAnswer, user);
+        mayUpdateOrDeleteStudentQuestionAnswerElseThrow(existingStudentQuestionAnswer, user);
         StudentQuestionAnswer result = studentQuestionAnswerRepository.save(studentQuestionAnswer);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, studentQuestionAnswer.getId().toString())).body(result);
     }
@@ -189,9 +188,8 @@ public class StudentQuestionAnswerResource {
      */
     private void mayUpdateOrDeleteStudentQuestionAnswerElseThrow(StudentQuestionAnswer studentQuestionAnswer, User user) {
         Course course = studentQuestionAnswer.getQuestion().getCourse();
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, user);
         if (!user.getId().equals(studentQuestionAnswer.getAuthor().getId())) {
-            throw new AccessForbiddenException("StudentQuestionAnswer", studentQuestionAnswer.getId());
+            authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, user);
         }
     }
 }

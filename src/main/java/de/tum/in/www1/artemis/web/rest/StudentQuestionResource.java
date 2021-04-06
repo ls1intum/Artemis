@@ -253,9 +253,8 @@ public class StudentQuestionResource {
      * @param user user for which to check
      */
     private void mayUpdateOrDeleteStudentQuestionElseThrow(StudentQuestion studentQuestion, User user) {
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, studentQuestion.getCourse(), user);
         if (!user.getId().equals(studentQuestion.getAuthor().getId())) {
-            throw new AccessForbiddenException("StudentQuestion", studentQuestion.getId());
+            authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, studentQuestion.getCourse(), user);
         }
     }
 
@@ -274,6 +273,7 @@ public class StudentQuestionResource {
         else if (exercise != null) {
             authorizationCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, exercise, user);
         }
-        throw new AccessForbiddenException("StudentQuestion", studentQuestion.getId());
+        else
+            throw new AccessForbiddenException("StudentQuestion", studentQuestion.getId());
     }
 }
