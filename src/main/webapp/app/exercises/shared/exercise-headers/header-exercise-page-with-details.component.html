@@ -16,7 +16,7 @@
                 <h4 *ngIf="!isTestRun">
                     <span class="mr-2"> {{ 'artemisApp.exam.publishResultsDate' | artemisTranslate }} : {{ exam?.publishResultsDate | artemisDate }} </span>
                     <span *ngIf="exam?.publishResultsDate" [ngClass]="exerciseStatusBadge" class="badge">
-                        {{ exam?.publishResultsDate | artemisDate }}
+                        {{ exam?.publishResultsDate | artemisTimeAgo }}
                     </span>
                 </h4>
             </ng-template>
