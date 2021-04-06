@@ -416,7 +416,7 @@ public class ProgrammingSubmissionResource {
         programmingSubmissionService.hideDetails(programmingSubmission, user);
         // remove automatic results before sending to client
         programmingSubmission.setResults(programmingSubmission.getManualResults());
-        programmingSubmission.getParticipation().setResults(programmingSubmission.getResults().stream().collect(Collectors.toSet()));
+        programmingSubmission.getParticipation().setResults(new HashSet<>(programmingSubmission.getResults()));
         return ResponseEntity.ok(programmingSubmission);
     }
 
