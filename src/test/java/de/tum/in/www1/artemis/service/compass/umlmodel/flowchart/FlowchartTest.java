@@ -1,9 +1,7 @@
 package de.tum.in.www1.artemis.service.compass.umlmodel.flowchart;
 
 import static com.google.gson.JsonParser.parseString;
-import static de.tum.in.www1.artemis.service.compass.umlmodel.flowchart.FlowchartUtil.FLOWCHART_MODEL_1A;
-import static de.tum.in.www1.artemis.service.compass.umlmodel.flowchart.FlowchartUtil.FLOWCHART_MODEL_1B;
-import static de.tum.in.www1.artemis.service.compass.umlmodel.flowchart.FlowchartUtil.FLOWCHART_MODEL_2;
+import static de.tum.in.www1.artemis.service.compass.umlmodel.flowchart.FlowchartUtil.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.InstanceOfAssertFactories.type;
 

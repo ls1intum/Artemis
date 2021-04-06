@@ -13,6 +13,7 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+
 import de.tum.in.www1.artemis.domain.participation.Participant;
 
 /**

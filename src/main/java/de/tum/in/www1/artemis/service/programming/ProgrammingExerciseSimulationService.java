@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.service.programming;
 
-import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.SOLUTION;
-import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.TEMPLATE;
+import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.*;
 
 import java.util.Optional;
 

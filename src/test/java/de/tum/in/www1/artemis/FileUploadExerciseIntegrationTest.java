@@ -17,25 +17,22 @@ import de.tum.in.www1.artemis.domain.FileUploadExercise;
 import de.tum.in.www1.artemis.domain.GradingCriterion;
 import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
-import de.tum.in.www1.artemis.repository.CourseRepository;
-import de.tum.in.www1.artemis.repository.ExerciseRepository;
-import de.tum.in.www1.artemis.repository.FileUploadExerciseRepository;
-import de.tum.in.www1.artemis.repository.FileUploadSubmissionRepository;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
 public class FileUploadExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
-    CourseRepository courseRepo;
+    private CourseRepository courseRepo;
 
     @Autowired
-    ExerciseRepository exerciseRepo;
+    private ExerciseRepository exerciseRepo;
 
     @Autowired
-    FileUploadExerciseRepository fileUploadExerciseRepository;
+    private FileUploadExerciseRepository fileUploadExerciseRepository;
 
     @Autowired
-    FileUploadSubmissionRepository fileUploadSubmissionRepository;
+    private FileUploadSubmissionRepository fileUploadSubmissionRepository;
 
     private List<GradingCriterion> gradingCriteria;
 

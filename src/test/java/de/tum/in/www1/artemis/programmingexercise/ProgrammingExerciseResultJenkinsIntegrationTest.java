@@ -64,7 +64,7 @@ class ProgrammingExerciseResultJenkinsIntegrationTest extends AbstractSpringInte
         programmingExerciseResultTestService.shouldUpdateTestCasesAndResultScoreFromSolutionParticipationResult(notification, true);
     }
 
-    @ParameterizedTest
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @EnumSource(value = ProgrammingLanguage.class, names = { "JAVA", "SWIFT" })
     @WithMockUser(value = "student1", roles = "USER")
     public void shouldStoreFeedbackForResultWithStaticCodeAnalysisReport(ProgrammingLanguage programmingLanguage) {
@@ -73,7 +73,7 @@ class ProgrammingExerciseResultJenkinsIntegrationTest extends AbstractSpringInte
         programmingExerciseResultTestService.shouldStoreFeedbackForResultWithStaticCodeAnalysisReport(notification, programmingLanguage);
     }
 
-    @ParameterizedTest
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @EnumSource(value = ProgrammingLanguage.class, names = { "JAVA", "SWIFT" })
     @WithMockUser(value = "student1", roles = "USER")
     public void shouldStoreFeedbackForResultWithStaticCodeAnalysisReportAndCustomTestMessages(ProgrammingLanguage programmingLanguage) {

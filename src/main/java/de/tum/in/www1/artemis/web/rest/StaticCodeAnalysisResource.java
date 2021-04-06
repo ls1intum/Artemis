@@ -10,12 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.StaticCodeAnalysisCategory;
@@ -57,7 +52,7 @@ public class StaticCodeAnalysisResource {
      * @return the static code analysis categories
      */
     @GetMapping(Endpoints.CATEGORIES)
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('TA')")
     public ResponseEntity<Set<StaticCodeAnalysisCategory>> getStaticCodeAnalysisCategories(@PathVariable Long exerciseId) {
         log.debug("REST request to get static code analysis categories for programming exercise {}", exerciseId);
 
@@ -83,7 +78,7 @@ public class StaticCodeAnalysisResource {
      * @return the updated static code analysis categories
      */
     @PatchMapping(Endpoints.CATEGORIES)
-    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Set<StaticCodeAnalysisCategory>> updateStaticCodeAnalysisCategories(@PathVariable Long exerciseId,
             @RequestBody Set<StaticCodeAnalysisCategory> categories) {
         log.debug("REST request to update static code analysis categories for programming exercise {}", exerciseId);
@@ -114,7 +109,7 @@ public class StaticCodeAnalysisResource {
      * @return static code analysis categories with the default configuration
      */
     @PatchMapping(Endpoints.RESET)
-    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Set<StaticCodeAnalysisCategory>> resetStaticCodeAnalysisCategories(@PathVariable Long exerciseId) {
         log.debug("REST request to reset static code analysis categories for programming exercise {}", exerciseId);
 

@@ -20,7 +20,7 @@ import de.tum.in.www1.artemis.util.GitUtilService;
 public class GitServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
-    GitUtilService gitUtilService;
+    private GitUtilService gitUtilService;
 
     @BeforeEach
     public void beforeEach() {

@@ -1,24 +1,22 @@
 package de.tum.in.www1.artemis.service.compass.umlmodel.activity;
 
-import static de.tum.in.www1.artemis.service.compass.umlmodel.activity.UMLActivityNode.UMLActivityNodeType.ACTIVITY_ACTION_NODE;
-import static de.tum.in.www1.artemis.service.compass.umlmodel.activity.UMLActivityNode.UMLActivityNodeType.ACTIVITY_FINAL_NODE;
+import static de.tum.in.www1.artemis.service.compass.umlmodel.activity.UMLActivityNode.UMLActivityNodeType.*;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
-import me.xdrop.fuzzywuzzy.FuzzySearch;
+import static org.mockito.Mockito.*;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-class UMLActivityNodeTest {
+import me.xdrop.fuzzywuzzy.FuzzySearch;
+
+public class UMLActivityNodeTest {
 
     private UMLActivityNode activityNode;
 
     @Mock
-    UMLActivityNode referenceNode;
+    private UMLActivityNode referenceNode;
 
     @BeforeEach
     void setUp() {

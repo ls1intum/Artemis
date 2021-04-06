@@ -3,10 +3,7 @@ package de.tum.in.www1.artemis;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -22,10 +19,7 @@ import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
-import de.tum.in.www1.artemis.repository.CourseRepository;
-import de.tum.in.www1.artemis.repository.ExerciseRepository;
-import de.tum.in.www1.artemis.repository.TeamRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.dto.TeamSearchUserDTO;
 import de.tum.in.www1.artemis.util.ModelFactory;
 

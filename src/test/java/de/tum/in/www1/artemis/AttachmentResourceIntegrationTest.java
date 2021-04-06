@@ -11,10 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
-import de.tum.in.www1.artemis.domain.Attachment;
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.Lecture;
-import de.tum.in.www1.artemis.domain.TextExercise;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AttachmentType;
 import de.tum.in.www1.artemis.repository.*;
 

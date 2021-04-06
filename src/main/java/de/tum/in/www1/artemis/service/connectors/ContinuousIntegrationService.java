@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.service.connectors;
 
-import static de.tum.in.www1.artemis.config.Constants.ASSIGNMENT_DIRECTORY;
-import static de.tum.in.www1.artemis.config.Constants.ASSIGNMENT_REPO_NAME;
+import static de.tum.in.www1.artemis.config.Constants.*;
 
 import java.util.List;
 import java.util.Optional;
