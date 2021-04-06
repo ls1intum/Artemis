@@ -4,7 +4,7 @@ import { ChartDataSets, ChartOptions, ChartType } from 'chart.js';
 import { BaseChartDirective, Label } from 'ng2-charts';
 import { DataSet } from 'app/exercises/quiz/manage/statistics/quiz-statistic/quiz-statistic.component';
 import { TranslateService } from '@ngx-translate/core';
-import { Graphs, SpanType } from 'app/entities/statistics.model';
+import { GraphColors, Graphs, SpanType } from 'app/entities/statistics.model';
 import { CourseManagementStatisticsModel } from 'app/entities/quiz/course-management-statistics-model';
 
 @Component({
@@ -59,24 +59,24 @@ export class StatisticsAverageScoreGraphComponent implements OnInit {
                 // Average course score line
                 label: this.courseAverageLegend,
                 data: new Array(this.barChartLabels.length).fill(this.courseAverage),
-                backgroundColor: 'rgba(93,138,201,1)',
+                backgroundColor: GraphColors.BLUE,
                 fill: false,
-                pointBackgroundColor: 'rgba(93,138,201,0)',
-                pointBorderColor: 'rgba(93,138,201,0)',
-                pointHoverBackgroundColor: 'rgba(93,138,201,1)',
-                pointHoverBorderColor: 'rgba(93,138,201,0)',
-                borderColor: 'rgba(93,138,201,1)',
-                hoverBackgroundColor: 'rgba(93,138,201,1)',
-                hoverBorderColor: 'rgba(93,138,201,1)',
+                pointBackgroundColor: GraphColors.BLUE_TRANSPARENT,
+                pointBorderColor: GraphColors.BLUE_TRANSPARENT,
+                pointHoverBackgroundColor: GraphColors.BLUE,
+                pointHoverBorderColor: GraphColors.BLUE_TRANSPARENT,
+                borderColor: GraphColors.BLUE,
+                hoverBackgroundColor: GraphColors.BLUE,
+                hoverBorderColor: GraphColors.BLUE,
             },
             {
                 // Average exercise score bars
                 label: this.exerciseAverageLegend,
                 data: this.exerciseAverageScores.slice(this.currentPeriod, 10 + this.currentPeriod).map((exercise) => exercise.averageScore),
                 type: 'bar',
-                backgroundColor: 'rgba(53,61,71,1)',
-                borderColor: 'rgba(53,61,71,1)',
-                hoverBackgroundColor: 'rgba(53,61,71,1)',
+                backgroundColor: GraphColors.DARK_BLUE,
+                borderColor: GraphColors.DARK_BLUE,
+                hoverBackgroundColor: GraphColors.DARK_BLUE,
             },
         ];
     }
@@ -136,10 +136,10 @@ export class StatisticsAverageScoreGraphComponent implements OnInit {
         };
     }
 
-    // handles arrow clicks and updates the exercises which are shwon
-    public switchTimeSpan(index: boolean): void {
+    // handles arrow clicks and updates the exercises which are shown, forward is boolean since it is either forward or backward
+    public switchTimeSpan(forward: boolean): void {
         // eslint-disable-next-line chai-friendly/no-unused-expressions
-        index ? (this.currentPeriod += 1) : (this.currentPeriod -= 1);
+        this.currentPeriod += forward ? 1 : -1;
         this.initializeChart();
     }
 }

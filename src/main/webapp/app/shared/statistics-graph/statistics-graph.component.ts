@@ -5,7 +5,7 @@ import { BaseChartDirective, Label } from 'ng2-charts';
 import { DataSet } from 'app/exercises/quiz/manage/statistics/quiz-statistic/quiz-statistic.component';
 import { TranslateService } from '@ngx-translate/core';
 import * as moment from 'moment';
-import { Graphs, SpanType, StatisticsView } from 'app/entities/statistics.model';
+import { GraphColors, Graphs, SpanType, StatisticsView } from 'app/entities/statistics.model';
 
 @Component({
     selector: 'jhi-statistics-graph',
@@ -66,9 +66,9 @@ export class StatisticsGraphComponent implements OnChanges {
             {
                 label: this.labelTitle,
                 data: new Array(this.barChartLabels.length).fill(0),
-                backgroundColor: 'rgba(53,61,71,1)',
-                borderColor: 'rgba(53,61,71,1)',
-                hoverBackgroundColor: 'rgba(53,61,71,1)',
+                backgroundColor: GraphColors.DARK_BLUE,
+                borderColor: GraphColors.DARK_BLUE,
+                hoverBackgroundColor: GraphColors.DARK_BLUE,
             },
         ];
         this.createCharts();
@@ -79,9 +79,9 @@ export class StatisticsGraphComponent implements OnChanges {
                     {
                         label: this.labelTitle,
                         data: this.dataForSpanType,
-                        backgroundColor: 'rgba(53,61,71,1)',
-                        borderColor: 'rgba(53,61,71,1)',
-                        hoverBackgroundColor: 'rgba(53,61,71,1)',
+                        backgroundColor: GraphColors.DARK_BLUE,
+                        borderColor: GraphColors.DARK_BLUE,
+                        hoverBackgroundColor: GraphColors.DARK_BLUE,
                     },
                 ];
             });
@@ -92,9 +92,9 @@ export class StatisticsGraphComponent implements OnChanges {
                     {
                         label: this.labelTitle,
                         data: this.dataForSpanType,
-                        backgroundColor: 'rgba(53,61,71,1)',
-                        borderColor: 'rgba(53,61,71,1)',
-                        hoverBackgroundColor: 'rgba(53,61,71,1)',
+                        backgroundColor: GraphColors.DARK_BLUE,
+                        borderColor: GraphColors.DARK_BLUE,
+                        hoverBackgroundColor: GraphColors.DARK_BLUE,
                     },
                 ];
             });
