@@ -11,14 +11,15 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PostAuthorize;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.GroupNotificationService;
+import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
@@ -70,7 +71,7 @@ public class StudentQuestionResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("courses/{courseId}/student-questions")
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasRole('USER') && #studentQuestion.course.id == #courseId")
     public ResponseEntity<StudentQuestion> createStudentQuestion(@PathVariable Long courseId, @RequestBody StudentQuestion studentQuestion) throws URISyntaxException {
         log.debug("REST request to save StudentQuestion : {}", studentQuestion);
         User user = this.userRepository.getUserWithGroupsAndAuthorities();
@@ -78,12 +79,7 @@ public class StudentQuestionResource {
             throw new BadRequestAlertException("A new studentQuestion cannot already have an ID", ENTITY_NAME, "idexists");
         }
         final Course course = courseRepository.findByIdElseThrow(courseId);
-        if (!this.authorizationCheckService.isAtLeastStudentInCourse(course, user)) {
-            return forbidden();
-        }
-        if (!studentQuestion.getCourse().getId().equals(courseId)) {
-            return forbidden();
-        }
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
         StudentQuestion question = studentQuestionRepository.save(studentQuestion);
         if (question.getExercise() != null) {
             groupNotificationService.notifyTutorAndInstructorGroupAboutNewQuestionForExercise(question);
@@ -116,15 +112,11 @@ public class StudentQuestionResource {
         if (!existingStudentQuestion.getCourse().getId().equals(courseId)) {
             return forbidden();
         }
-        if (mayUpdateOrDeleteStudentQuestion(existingStudentQuestion, user)) {
-            existingStudentQuestion.setQuestionText(studentQuestion.getQuestionText());
-            existingStudentQuestion.setVisibleForStudents(studentQuestion.isVisibleForStudents());
-            StudentQuestion result = studentQuestionRepository.save(existingStudentQuestion);
-            return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, studentQuestion.getId().toString())).body(result);
-        }
-        else {
-            return forbidden();
-        }
+        mayUpdateOrDeleteStudentQuestionElseThrow(existingStudentQuestion, user);
+        existingStudentQuestion.setQuestionText(studentQuestion.getQuestionText());
+        existingStudentQuestion.setVisibleForStudents(studentQuestion.isVisibleForStudents());
+        StudentQuestion result = studentQuestionRepository.save(existingStudentQuestion);
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, studentQuestion.getId().toString())).body(result);
     }
 
     /**
@@ -137,26 +129,19 @@ public class StudentQuestionResource {
      *         status 500 (Internal Server Error) if the studentQuestion couldn't be updated
      */
     @PutMapping("courses/{courseId}/student-questions/{questionId}/votes")
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasRole('USER') && (#voteChange >= -2 || #voteChange <= 2)")
     public ResponseEntity<StudentQuestion> updateStudentQuestionVotes(@PathVariable Long courseId, @PathVariable Long questionId, @RequestBody Integer voteChange) {
-        if (voteChange < -2 || voteChange > 2) {
-            return forbidden();
-        }
         final User user = userRepository.getUserWithGroupsAndAuthorities();
         StudentQuestion studentQuestion = studentQuestionRepository.findByIdElseThrow(questionId);
         courseRepository.findByIdElseThrow(courseId);
         if (!studentQuestion.getCourse().getId().equals(courseId)) {
             return forbidden();
         }
-        if (mayUpdateStudentQuestionVotes(studentQuestion, user)) {
-            Integer newVotes = studentQuestion.getVotes() + voteChange;
-            studentQuestion.setVotes(newVotes);
-            StudentQuestion result = studentQuestionRepository.save(studentQuestion);
-            return ResponseEntity.ok().body(result);
-        }
-        else {
-            return forbidden();
-        }
+        mayUpdateStudentQuestionVotesElseThrow(studentQuestion, user);
+        Integer newVotes = studentQuestion.getVotes() + voteChange;
+        studentQuestion.setVotes(newVotes);
+        StudentQuestion result = studentQuestionRepository.save(studentQuestion);
+        return ResponseEntity.ok().body(result);
     }
 
     /**
@@ -172,15 +157,12 @@ public class StudentQuestionResource {
         final User user = userRepository.getUserWithGroupsAndAuthorities();
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         courseRepository.findByIdElseThrow(courseId);
-        if (!authorizationCheckService.isAtLeastStudentForExercise(exercise, user)) {
-            return forbidden();
-        }
+        authorizationCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, exercise, user);
         if (!exercise.getCourseViaExerciseGroupOrCourseMember().getId().equals(courseId)) {
             return forbidden();
         }
         List<StudentQuestion> studentQuestions = studentQuestionRepository.findStudentQuestionsForExercise(exerciseId);
         hideSensitiveInformation(studentQuestions);
-
         return new ResponseEntity<>(studentQuestions, null, HttpStatus.OK);
     }
 
@@ -197,15 +179,14 @@ public class StudentQuestionResource {
         Lecture lecture = lectureRepository.findByIdElseThrow(lectureId);
         courseRepository.findByIdElseThrow(courseId);
         final User user = userRepository.getUserWithGroupsAndAuthorities();
-        if (!authorizationCheckService.isAtLeastStudentInCourse(lecture.getCourse(), user)) {
-            return forbidden();
+        if (lecture.getCourse().getId().equals(courseId)) {
+            authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, lecture.getCourse(), user);
+            List<StudentQuestion> studentQuestions = studentQuestionRepository.findStudentQuestionsForLecture(lectureId);
+            hideSensitiveInformation(studentQuestions);
+            return new ResponseEntity<>(studentQuestions, null, HttpStatus.OK);
         }
-        if (!lecture.getCourse().getId().equals(courseId)) {
+        else
             return forbidden();
-        }
-        List<StudentQuestion> studentQuestions = studentQuestionRepository.findStudentQuestionsForLecture(lectureId);
-        hideSensitiveInformation(studentQuestions);
-        return new ResponseEntity<>(studentQuestions, null, HttpStatus.OK);
     }
 
     /**
@@ -219,9 +200,7 @@ public class StudentQuestionResource {
     public ResponseEntity<List<StudentQuestion>> getAllQuestionsForCourse(@PathVariable Long courseId) {
         final User user = userRepository.getUserWithGroupsAndAuthorities();
         var course = courseRepository.findByIdElseThrow(courseId);
-        if (!authorizationCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
-            return forbidden();
-        }
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, user);
         List<StudentQuestion> studentQuestions = studentQuestionRepository.findStudentQuestionsForCourse(courseId);
 
         return new ResponseEntity<>(studentQuestions, null, HttpStatus.OK);
@@ -261,33 +240,40 @@ public class StudentQuestionResource {
         if (studentQuestion.getCourse() == null) {
             return ResponseEntity.badRequest().build();
         }
-        if (mayUpdateOrDeleteStudentQuestion(studentQuestion, user)) {
-            log.info("StudentQuestion deleted by " + user.getLogin() + ". Question: " + studentQuestion.getQuestionText() + " for " + entity, user.getLogin());
-            studentQuestionRepository.deleteById(studentQuestionId);
-            return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, studentQuestionId.toString())).build();
-        }
-        else {
-            return forbidden();
+        mayUpdateOrDeleteStudentQuestionElseThrow(studentQuestion, user);
+        log.info("StudentQuestion deleted by " + user.getLogin() + ". Question: " + studentQuestion.getQuestionText() + " for " + entity, user.getLogin());
+        studentQuestionRepository.deleteById(studentQuestionId);
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, studentQuestionId.toString())).build();
+    }
+
+    /**
+     * Check if user can update or delete StudentQuestion, if not throws an AccessForbiddenException
+     *
+     * @param studentQuestion studentQuestion for which to check
+     * @param user user for which to check
+     */
+    private void mayUpdateOrDeleteStudentQuestionElseThrow(StudentQuestion studentQuestion, User user) {
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, studentQuestion.getCourse(), user);
+        if (!user.getId().equals(studentQuestion.getAuthor().getId())) {
+            throw new AccessForbiddenException("StudentQuestion", studentQuestion.getId());
         }
     }
 
-    private boolean mayUpdateOrDeleteStudentQuestion(StudentQuestion studentQuestion, User user) {
-        Boolean hasCourseTAAccess = authorizationCheckService.isAtLeastTeachingAssistantInCourse(studentQuestion.getCourse(), user);
-        Boolean isUserAuthor = user.getId().equals(studentQuestion.getAuthor().getId());
-        return hasCourseTAAccess || isUserAuthor;
-    }
-
-    private boolean mayUpdateStudentQuestionVotes(StudentQuestion studentQuestion, User user) {
+    /**
+     * Check if user can update the StudentQuestions votes, if not throws an AccessForbiddenException
+     *
+     * @param studentQuestion studentQuestionAnswer for which to check
+     * @param user user for which to check
+     */
+    private void mayUpdateStudentQuestionVotesElseThrow(StudentQuestion studentQuestion, User user) {
         Course course = studentQuestion.getCourse();
         Exercise exercise = studentQuestion.getExercise();
         if (course != null) {
-            return authorizationCheckService.isAtLeastStudentInCourse(course, user);
+            authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
         }
         else if (exercise != null) {
-            return authorizationCheckService.isAtLeastStudentForExercise(exercise, user);
+            authorizationCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, exercise, user);
         }
-        else {
-            return false;
-        }
+        throw new AccessForbiddenException("StudentQuestion", studentQuestion.getId());
     }
 }

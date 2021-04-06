@@ -14,9 +14,11 @@ import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.GroupNotificationService;
 import de.tum.in.www1.artemis.service.SingleUserNotificationService;
+import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
@@ -79,9 +81,7 @@ public class StudentQuestionAnswerResource {
             throw new BadRequestAlertException("A new studentQuestionAnswer cannot already have an ID", ENTITY_NAME, "idexists");
         }
         Course course = courseRepository.findByIdElseThrow(courseId);
-        if (!this.authorizationCheckService.isAtLeastStudentInCourse(course, user)) {
-            return forbidden();
-        }
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
         StudentQuestion optionalStudentQuestion = studentQuestionRepository.findByIdElseThrow(studentQuestionAnswer.getQuestion().getId());
         if (!optionalStudentQuestion.getCourse().getId().equals(courseId)) {
             return forbidden();
@@ -122,13 +122,9 @@ public class StudentQuestionAnswerResource {
         if (!optionalStudentQuestionAnswer.getQuestion().getCourse().getId().equals(courseId)) {
             return forbidden();
         }
-        if (mayUpdateOrDeleteStudentQuestionAnswer(optionalStudentQuestionAnswer, user)) {
-            StudentQuestionAnswer result = studentQuestionAnswerRepository.save(studentQuestionAnswer);
-            return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, studentQuestionAnswer.getId().toString())).body(result);
-        }
-        else {
-            return forbidden();
-        }
+        mayUpdateOrDeleteStudentQuestionAnswerElseThrow(optionalStudentQuestionAnswer, user);
+        StudentQuestionAnswer result = studentQuestionAnswerRepository.save(studentQuestionAnswer);
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, studentQuestionAnswer.getId().toString())).body(result);
     }
 
     /**
@@ -144,9 +140,7 @@ public class StudentQuestionAnswerResource {
         log.debug("REST request to get StudentQuestionAnswer : {}", id);
         User user = this.userRepository.getUserWithGroupsAndAuthorities();
         var course = courseRepository.findByIdElseThrow(courseId);
-        if (!this.authorizationCheckService.isAtLeastStudentInCourse(course, user)) {
-            return forbidden();
-        }
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
         StudentQuestionAnswer questionAnswer = studentQuestionAnswerRepository.findByIdElseThrow(id);
         if (!questionAnswer.getQuestion().getCourse().getId().equals(courseId)) {
             return forbidden();
@@ -181,27 +175,23 @@ public class StudentQuestionAnswerResource {
         if (!course.getId().equals(courseId)) {
             return forbidden();
         }
-        if (mayUpdateOrDeleteStudentQuestionAnswer(studentQuestionAnswer, user)) {
-            log.info("StudentQuestionAnswer deleted by " + user.getLogin() + ". Answer: " + studentQuestionAnswer.getAnswerText() + " for " + entity, user.getLogin());
-            studentQuestionAnswerRepository.deleteById(id);
-            return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, id.toString())).build();
-        }
-        else {
-            return forbidden();
-        }
+        mayUpdateOrDeleteStudentQuestionAnswerElseThrow(studentQuestionAnswer, user);
+        log.info("StudentQuestionAnswer deleted by " + user.getLogin() + ". Answer: " + studentQuestionAnswer.getAnswerText() + " for " + entity, user.getLogin());
+        studentQuestionAnswerRepository.deleteById(id);
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, id.toString())).build();
     }
 
     /**
-     * Check if user can update or delete StudentQuestionAnswer
+     * Check if user can update or delete StudentQuestionAnswer, if not throws an AccessForbiddenException
      *
      * @param studentQuestionAnswer studentQuestionAnswer for which to check
      * @param user user for which to check
-     * @return Boolean if StudentQuestionAnswer can updated or deleted
      */
-    private boolean mayUpdateOrDeleteStudentQuestionAnswer(StudentQuestionAnswer studentQuestionAnswer, User user) {
+    private void mayUpdateOrDeleteStudentQuestionAnswerElseThrow(StudentQuestionAnswer studentQuestionAnswer, User user) {
         Course course = studentQuestionAnswer.getQuestion().getCourse();
-        Boolean hasCourseTAAccess = authorizationCheckService.isAtLeastTeachingAssistantInCourse(course, user);
-        Boolean isUserAuthor = user.getId().equals(studentQuestionAnswer.getAuthor().getId());
-        return hasCourseTAAccess || isUserAuthor;
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, user);
+        if (!user.getId().equals(studentQuestionAnswer.getAuthor().getId())) {
+            throw new AccessForbiddenException("StudentQuestionAnswer", studentQuestionAnswer.getId());
+        }
     }
 }
