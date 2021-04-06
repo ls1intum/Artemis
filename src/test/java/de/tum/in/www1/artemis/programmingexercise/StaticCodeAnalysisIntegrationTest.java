@@ -24,12 +24,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.*;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.domain.enumeration.CategoryState;
+import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
+import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.in.www1.artemis.repository.StaticCodeAnalysisCategoryRepository;
 import de.tum.in.www1.artemis.service.StaticCodeAnalysisService;
 import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisReportDTO;
-import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseGradingService;
-import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseTestCaseService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.StaticCodeAnalysisResource;
 
@@ -40,21 +41,6 @@ class StaticCodeAnalysisIntegrationTest extends AbstractSpringIntegrationBambooB
 
     @Autowired
     private ProgrammingExerciseRepository programmingExerciseRepository;
-
-    @Autowired
-    StudentParticipationRepository studentParticipationRepository;
-
-    @Autowired
-    ResultRepository resultRepository;
-
-    @Autowired
-    ProgrammingExerciseGradingService gradingService;
-
-    @Autowired
-    ProgrammingExerciseTestCaseService testCaseService;
-
-    @Autowired
-    ProgrammingExerciseTestCaseRepository testCaseRepository;
 
     @Autowired
     @Qualifier("staticCodeAnalysisConfiguration")
@@ -106,7 +92,7 @@ class StaticCodeAnalysisIntegrationTest extends AbstractSpringIntegrationBambooB
                 .containsExactlyInAnyOrderElementsOf(categories);
     }
 
-    @ParameterizedTest
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @EnumSource(value = ProgrammingLanguage.class, names = { "JAVA", "SWIFT" })
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     void testCreateDefaultCategories(ProgrammingLanguage programmingLanguage) {
@@ -148,7 +134,7 @@ class StaticCodeAnalysisIntegrationTest extends AbstractSpringIntegrationBambooB
         request.getList(endpoint, HttpStatus.BAD_REQUEST, StaticCodeAnalysisCategory.class);
     }
 
-    @ParameterizedTest
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @EnumSource(value = ProgrammingLanguage.class, names = { "JAVA", "SWIFT" })
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     void testUpdateStaticCodeAnalysisCategories(ProgrammingLanguage programmingLanguage) throws Exception {
@@ -198,7 +184,7 @@ class StaticCodeAnalysisIntegrationTest extends AbstractSpringIntegrationBambooB
         request.patch(endpoint, "{}", HttpStatus.FORBIDDEN);
     }
 
-    @ParameterizedTest
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @EnumSource(value = ProgrammingLanguage.class, names = { "JAVA", "SWIFT" })
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testResetCategories(ProgrammingLanguage programmingLanguage) throws Exception {

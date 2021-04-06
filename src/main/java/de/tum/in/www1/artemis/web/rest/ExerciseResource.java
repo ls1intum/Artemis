@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.badRequest;
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 
 import java.time.ZonedDateTime;
 import java.util.*;
@@ -22,6 +21,7 @@ import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.exam.ExamDateService;
 import de.tum.in.www1.artemis.service.feature.Feature;
@@ -80,7 +80,7 @@ public class ExerciseResource {
 
     public ExerciseResource(ExerciseService exerciseService, ParticipationService participationService, UserRepository userRepository, ExamDateService examDateService,
             AuthorizationCheckService authCheckService, TutorParticipationService tutorParticipationService, ExampleSubmissionRepository exampleSubmissionRepository,
-            ComplaintRepository complaintRepository, SubmissionRepository submissionRepository, ResultService resultService, TutorLeaderboardService tutorLeaderboardService,
+            ComplaintRepository complaintRepository, SubmissionRepository submissionRepository, TutorLeaderboardService tutorLeaderboardService,
             ComplaintResponseRepository complaintResponseRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             GradingCriterionRepository gradingCriterionRepository, ExerciseRepository exerciseRepository, ResultRepository resultRepository) {
         this.exerciseService = exerciseService;
@@ -107,7 +107,7 @@ public class ExerciseResource {
      * @return the ResponseEntity with status 200 (OK) and with body the exercise, or with status 404 (Not Found)
      */
     @GetMapping("/exercises/{exerciseId}")
-    @PreAuthorize("hasAnyRole('USER','TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Exercise> getExercise(@PathVariable Long exerciseId) {
 
         log.debug("REST request to get Exercise : {}", exerciseId);
@@ -124,8 +124,8 @@ public class ExerciseResource {
             }
             else if (authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
                 // tutors should only be able to see exam exercises when the exercise has finished
-                ZonedDateTime latestIndiviudalExamEndDate = examDateService.getLatestIndividualExamEndDate(exam);
-                if (latestIndiviudalExamEndDate == null || latestIndiviudalExamEndDate.isAfter(ZonedDateTime.now())) {
+                ZonedDateTime latestIndividualExamEndDate = examDateService.getLatestIndividualExamEndDate(exam);
+                if (latestIndividualExamEndDate == null || latestIndividualExamEndDate.isAfter(ZonedDateTime.now())) {
                     // When there is no due date or the due date is in the future, we return forbidden here
                     return forbidden();
                 }
@@ -157,14 +157,12 @@ public class ExerciseResource {
      * @return the ResponseEntity with status 200 (OK) and with body the exercise, or with status 404 (Not Found)
      */
     @GetMapping("/exercises/{exerciseId}/for-assessment-dashboard")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('TA')")
     public ResponseEntity<Exercise> getExerciseForAssessmentDashboard(@PathVariable Long exerciseId) {
-        Exercise exercise = exerciseService.findOneWithAdditionalElements(exerciseId);
+        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, user);
 
-        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
-            return forbidden();
-        }
         // Programming exercises with only automatic assessment should *NOT* be available on the assessment dashboard!
         if (exercise instanceof ProgrammingExercise && exercise.getAssessmentType().equals(AssessmentType.AUTOMATIC)) {
             return badRequest();
@@ -212,7 +210,7 @@ public class ExerciseResource {
      * @return the title of the exercise wrapped in an ResponseEntity or 404 Not Found if no exercise with that id exists
      */
     @GetMapping(value = "/exercises/{exerciseId}/title")
-    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<String> getExerciseTitle(@PathVariable Long exerciseId) {
         final var title = exerciseRepository.getExerciseTitle(exerciseId);
         return title == null ? ResponseEntity.notFound().build() : ResponseEntity.ok(title);
@@ -225,7 +223,7 @@ public class ExerciseResource {
      * @return the ResponseEntity with status 200 (OK) and with body the stats, or with status 404 (Not Found)
      */
     @GetMapping("/exercises/{exerciseId}/stats-for-assessment-dashboard")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('TA')")
     public ResponseEntity<StatsForDashboardDTO> getStatsForExerciseAssessmentDashboard(@PathVariable Long exerciseId) {
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
 
@@ -330,14 +328,11 @@ public class ExerciseResource {
      * @return the ResponseEntity with status 200 (OK) and with body the stats, or with status 404 (Not Found)
      */
     @GetMapping("/exercises/{exerciseId}/stats-for-instructor-dashboard")
-    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<StatsForDashboardDTO> getStatsForInstructorExerciseDashboard(@PathVariable Long exerciseId) {
         log.debug("REST request to get exercise statistics for instructor dashboard : {}", exerciseId);
-        Exercise exercise = exerciseService.findOneWithAdditionalElements(exerciseId);
-
-        if (!authCheckService.isAtLeastInstructorForExercise(exercise)) {
-            return forbidden();
-        }
+        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
 
         StatsForDashboardDTO stats = populateCommonStatistics(exercise, exercise.isExamExercise());
         long numberOfOpenComplaints = complaintRepository.countComplaintsByExerciseIdAndComplaintType(exerciseId, ComplaintType.COMPLAINT);
@@ -345,7 +340,6 @@ public class ExerciseResource {
 
         long numberOfOpenMoreFeedbackRequests = complaintRepository.countByResult_Participation_Exercise_Course_IdAndComplaintType(exerciseId, ComplaintType.MORE_FEEDBACK);
         stats.setNumberOfOpenMoreFeedbackRequests(numberOfOpenMoreFeedbackRequests);
-
         return ResponseEntity.ok(stats);
     }
 
@@ -356,13 +350,11 @@ public class ExerciseResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping(value = "/exercises/{exerciseId}/reset")
-    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Void> reset(@PathVariable Long exerciseId) {
         log.debug("REST request to reset Exercise : {}", exerciseId);
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
-        if (!authCheckService.isAtLeastInstructorForExercise(exercise)) {
-            return forbidden();
-        }
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
         exerciseService.reset(exercise);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, "exercise", exerciseId.toString())).build();
     }
@@ -375,7 +367,7 @@ public class ExerciseResource {
      * @return ResponseEntity with status
      */
     @DeleteMapping(value = "/exercises/{exerciseId}/cleanup")
-    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
     @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
     public ResponseEntity<Resource> cleanup(@PathVariable Long exerciseId, @RequestParam(defaultValue = "false") boolean deleteRepositories) {
         log.info("Start to cleanup build plans for Exercise: {}, delete repositories: {}", exerciseId, deleteRepositories);
@@ -395,7 +387,7 @@ public class ExerciseResource {
      * @return the ResponseEntity with status 200 (OK) and with body the exercise, or with status 404 (Not Found)
      */
     @GetMapping(value = "/exercises/{exerciseId}/details")
-    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Exercise> getExerciseDetails(@PathVariable Long exerciseId) {
         long start = System.currentTimeMillis();
         User user = userRepository.getUserWithGroupsAndAuthorities();
@@ -448,7 +440,7 @@ public class ExerciseResource {
      * @return the ResponseEntity with status 200 (OK) and with body the exercise, or with status 404 (Not Found)
      */
     @PutMapping(value = "/exercises/{exerciseId}/toggle-second-correction")
-    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Boolean> toggleSecondCorrectionEnabled(@PathVariable Long exerciseId) {
         log.debug("toggleSecondCorrectionEnabled for exercise with id: {}", exerciseId);
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);

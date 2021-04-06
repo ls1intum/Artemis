@@ -22,17 +22,12 @@ import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
-import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
-import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
-import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
+import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.exam.Exam;
-import de.tum.in.www1.artemis.domain.participation.Participation;
-import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
-import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
-import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
@@ -40,7 +35,6 @@ import de.tum.in.www1.artemis.service.connectors.LtiService;
 import de.tum.in.www1.artemis.service.exam.ExamDateService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseGradingService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
-import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
 
@@ -71,6 +65,8 @@ public class ResultResource {
 
     private final ExerciseService exerciseService;
 
+    private final ExerciseRepository exerciseRepository;
+
     private final AuthorizationCheckService authCheckService;
 
     private final UserRepository userRepository;
@@ -96,12 +92,14 @@ public class ResultResource {
     private final ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
 
     public ResultResource(ProgrammingExerciseParticipationService programmingExerciseParticipationService, ParticipationService participationService, ResultService resultService,
-            ExerciseService exerciseService, AuthorizationCheckService authCheckService, Optional<ContinuousIntegrationService> continuousIntegrationService, LtiService ltiService,
-            ResultRepository resultRepository, WebsocketMessagingService messagingService, UserRepository userRepository, ExamDateService examDateService,
+            ExerciseService exerciseService, ExerciseRepository exerciseRepository, AuthorizationCheckService authCheckService,
+            Optional<ContinuousIntegrationService> continuousIntegrationService, LtiService ltiService, ResultRepository resultRepository,
+            WebsocketMessagingService messagingService, UserRepository userRepository, ExamDateService examDateService,
             ProgrammingExerciseGradingService programmingExerciseGradingService, ParticipationRepository participationRepository,
             StudentParticipationRepository studentParticipationRepository, TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository) {
+        this.exerciseRepository = exerciseRepository;
         this.resultRepository = resultRepository;
         this.participationService = participationService;
         this.resultService = resultService;
@@ -215,16 +213,13 @@ public class ResultResource {
      * @return the ResponseEntity with status 200 (OK) and the list of results in body
      */
     @GetMapping(value = "exercises/{exerciseId}/results")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('TA')")
     public ResponseEntity<List<Result>> getResultsForExercise(@PathVariable Long exerciseId, @RequestParam(defaultValue = "true") boolean withSubmissions) {
         long start = System.currentTimeMillis();
         log.debug("REST request to get Results for Exercise : {}", exerciseId);
 
-        Exercise exercise = exerciseService.findOneWithAdditionalElements(exerciseId);
-        Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
-        if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, null)) {
-            return forbidden();
-        }
+        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
 
         List<Result> results = new ArrayList<>();
         var examMode = exercise.isExamExercise();
@@ -277,7 +272,7 @@ public class ResultResource {
      * @return the ResponseEntity with status 200 (OK) and with body the result, or with status 404 (Not Found)
      */
     @GetMapping("/results/{resultId}")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('TA')")
     public ResponseEntity<Result> getResult(@PathVariable Long resultId) {
         log.debug("REST request to get Result : {}", resultId);
         Optional<Result> result = resultRepository.findById(resultId);
@@ -299,7 +294,7 @@ public class ResultResource {
      * @return the ResponseEntity with status 200 (OK) and with body the result, or with status 404 (Not Found)
      */
     @GetMapping("participations/{participationId}/latest-result")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('TA')")
     public ResponseEntity<Result> getLatestResultWithFeedbacks(@PathVariable Long participationId) {
         log.debug("REST request to get latest result for participation : {}", participationId);
         Participation participation = participationRepository.findByIdElseThrow(participationId);
@@ -322,7 +317,7 @@ public class ResultResource {
      * @return the ResponseEntity with status 200 (OK) and with body the result, status 404 (Not Found) if the result does not exist or 403 (forbidden) if the user does not have permissions to access the participation.
      */
     @GetMapping(value = "/results/{resultId}/details")
-    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<List<Feedback>> getResultDetails(@PathVariable Long resultId) {
         log.debug("REST request to get Result : {}", resultId);
         Optional<Result> optionalResult = resultRepository.findByIdWithEagerFeedbacks(resultId);
@@ -353,7 +348,7 @@ public class ResultResource {
         // Filter feedbacks marked with visibility afterDueDate or never
         Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        boolean filterForStudent = authCheckService.isStudentInCourse(course, user);
+        boolean filterForStudent = authCheckService.isOnlyStudentInCourse(course, user);
         if (filterForStudent) {
             result.filterSensitiveInformation();
             result.filterSensitiveFeedbacks(exercise.isBeforeDueDate());
@@ -381,7 +376,7 @@ public class ResultResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("/results/{resultId}")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('TA')")
     public ResponseEntity<Void> deleteResult(@PathVariable Long resultId) {
         log.debug("REST request to delete Result : {}", resultId);
         Optional<Result> result = resultRepository.findById(resultId);
@@ -404,7 +399,7 @@ public class ResultResource {
      * @return the ResponseEntity with status 200 (OK) and the list of results in body
      */
     @GetMapping(value = "/results/submission/{submissionId}")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('TA')")
     public ResponseEntity<Result> getResultForSubmission(@PathVariable Long submissionId) {
         log.debug("REST request to get Result for submission : {}", submissionId);
         Optional<Result> result = resultRepository.findDistinctBySubmissionId(submissionId);
@@ -419,7 +414,7 @@ public class ResultResource {
      * @return The newly created result
      */
     @PostMapping("/submissions/{submissionId}/example-result")
-    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Result> createExampleResult(@PathVariable long submissionId,
             @RequestParam(defaultValue = "false", required = false) boolean isProgrammingExerciseWithFeedback) {
         log.debug("REST request to create a new example result for submission: {}", submissionId);
@@ -437,12 +432,12 @@ public class ResultResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping(value = "/exercises/{exerciseId}/external-submission-results")
-    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Result> createResultForExternalSubmission(@PathVariable Long exerciseId, @RequestParam String studentLogin, @RequestBody Result result)
             throws URISyntaxException {
         log.debug("REST request to create Result for External Submission for Exercise : {}", exerciseId);
 
-        Exercise exercise = exerciseService.findOneWithAdditionalElements(exerciseId);
+        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
 
         if (!exercise.isExamExercise()) {
             if (exercise.getDueDate() == null || ZonedDateTime.now().isBefore(exercise.getDueDate())) {
@@ -452,8 +447,8 @@ public class ResultResource {
         }
         else {
             Exam exam = exercise.getExerciseGroup().getExam();
-            ZonedDateTime latestIndiviudalExamEndDate = examDateService.getLatestIndividualExamEndDate(exam);
-            if (latestIndiviudalExamEndDate == null || ZonedDateTime.now().isBefore(latestIndiviudalExamEndDate)) {
+            ZonedDateTime latestIndividualExamEndDate = examDateService.getLatestIndividualExamEndDate(exam);
+            if (latestIndividualExamEndDate == null || ZonedDateTime.now().isBefore(latestIndividualExamEndDate)) {
                 return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, "result", "externalSubmissionBeforeDueDate",
                         "External submissions are not supported before the end of the exam.")).build();
             }
@@ -464,13 +459,9 @@ public class ResultResource {
                     "External submissions are not supported for Quiz exercises.")).build();
         }
 
-        User user = userRepository.getUserWithGroupsAndAuthorities();
         Optional<User> student = userRepository.findOneWithGroupsAndAuthoritiesByLogin(studentLogin);
-        Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
-        if (!authCheckService.isAtLeastInstructorForExercise(exercise, user)) {
-            throw new AccessForbiddenException("You are not allowed to access this resource");
-        }
-        if (student.isEmpty() || !authCheckService.isAtLeastStudentInCourse(course, student.get())) {
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
+        if (student.isEmpty() || !authCheckService.isAtLeastStudentInCourse(exercise.getCourseViaExerciseGroupOrCourseMember(), student.get())) {
             return ResponseEntity.badRequest()
                     .headers(HeaderUtil.createFailureAlert(applicationName, true, "result", "studentNotFound", "The student could not be found in this course.")).build();
         }

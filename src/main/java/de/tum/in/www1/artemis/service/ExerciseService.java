@@ -142,7 +142,7 @@ public class ExerciseService {
         if (authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
             exercisesUserIsAllowedToSee = exercises;
         }
-        else if (authCheckService.isStudentInCourse(course, user)) {
+        else if (authCheckService.isOnlyStudentInCourse(course, user)) {
             if (course.isOnlineCourse()) {
                 for (Exercise exercise : exercises) {
                     if (!exercise.isVisibleToStudents()) {
@@ -241,7 +241,7 @@ public class ExerciseService {
             // tutors/instructors/admins can see all exercises of the course
             exercises = exerciseRepository.findByCourseIdWithCategories(course.getId());
         }
-        else if (authCheckService.isStudentInCourse(course, user)) {
+        else if (authCheckService.isOnlyStudentInCourse(course, user)) {
 
             if (course.isOnlineCourse()) {
                 // students in online courses can only see exercises where the lti outcome url exists, otherwise the result cannot be reported later on
@@ -269,34 +269,6 @@ public class ExerciseService {
         }
 
         return exercises;
-    }
-
-    /**
-     * Get one exercise by exerciseId with additional details such as quiz questions and statistics or template / solution participation
-     * NOTE: prefer #ExerciseRepository.findByIdElseThrow() if you don't need these additional details
-     * <p>
-     * DEPRECATED: Please use findByIdElseThrow() or write a custom method
-     *
-     * @param exerciseId the exerciseId of the entity
-     * @return the entity
-     */
-    @Deprecated(forRemoval = true)
-    // TODO: redesign this method, the caller should specify which exact elements should be loaded from the database
-    public Exercise findOneWithAdditionalElements(Long exerciseId) {
-        Optional<Exercise> optionalExercise = exerciseRepository.findById(exerciseId);
-        if (optionalExercise.isEmpty()) {
-            throw new EntityNotFoundException("Exercise with exerciseId " + exerciseId + " does not exist!");
-        }
-        Exercise exercise = optionalExercise.get();
-        if (exercise instanceof QuizExercise) {
-            // eagerly load questions and statistic
-            exercise = quizExerciseRepository.findOneWithQuestionsAndStatistics(exerciseId);
-        }
-        else if (exercise instanceof ProgrammingExercise) {
-            // eagerly load template participation and solution participation
-            exercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
-        }
-        return exercise;
     }
 
     /**

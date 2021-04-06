@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.service.connectors.bamboo.dto;
 
-import static de.tum.in.www1.artemis.config.Constants.ASSIGNMENT_REPO_NAME;
-import static de.tum.in.www1.artemis.config.Constants.TEST_REPO_NAME;
+import static de.tum.in.www1.artemis.config.Constants.*;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;

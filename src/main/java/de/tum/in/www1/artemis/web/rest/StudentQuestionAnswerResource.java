@@ -13,15 +13,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.StudentQuestion;
-import de.tum.in.www1.artemis.domain.StudentQuestionAnswer;
-import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.repository.CourseRepository;
-import de.tum.in.www1.artemis.repository.StudentQuestionAnswerRepository;
-import de.tum.in.www1.artemis.repository.StudentQuestionRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.GroupNotificationService;
+import de.tum.in.www1.artemis.service.SingleUserNotificationService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
@@ -76,7 +72,7 @@ public class StudentQuestionAnswerResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("courses/{courseId}/student-question-answers")
-    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<StudentQuestionAnswer> createStudentQuestionAnswer(@PathVariable Long courseId, @RequestBody StudentQuestionAnswer studentQuestionAnswer)
             throws URISyntaxException {
         log.debug("REST request to save StudentQuestionAnswer : {}", studentQuestionAnswer);
@@ -119,7 +115,7 @@ public class StudentQuestionAnswerResource {
      *         or with status 500 (Internal Server Error) if the studentQuestionAnswer couldn't be updated
      */
     @PutMapping("courses/{courseId}/student-question-answers")
-    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<StudentQuestionAnswer> updateStudentQuestionAnswer(@PathVariable Long courseId, @RequestBody StudentQuestionAnswer studentQuestionAnswer) {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         log.debug("REST request to update StudentQuestionAnswer : {}", studentQuestionAnswer);
@@ -151,7 +147,7 @@ public class StudentQuestionAnswerResource {
      * @return the ResponseEntity with status 200 (OK) and with body the questionAnswer, or with status 404 (Not Found)
      */
     @GetMapping("courses/{courseId}/student-question-answers/{id}")
-    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<StudentQuestionAnswer> getStudentQuestionAnswer(@PathVariable Long courseId, @PathVariable Long id) {
         log.debug("REST request to get StudentQuestionAnswer : {}", id);
         User user = this.userRepository.getUserWithGroupsAndAuthorities();
@@ -177,7 +173,7 @@ public class StudentQuestionAnswerResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("courses/{courseId}/student-question-answers/{id}")
-    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Void> deleteStudentQuestionAnswer(@PathVariable Long courseId, @PathVariable Long id) {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         Optional<StudentQuestionAnswer> optionalStudentQuestionAnswer = studentQuestionAnswerRepository.findById(id);

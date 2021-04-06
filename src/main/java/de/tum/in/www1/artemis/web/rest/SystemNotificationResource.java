@@ -56,7 +56,7 @@ public class SystemNotificationResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("/system-notifications")
-    @PreAuthorize("hasAnyRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Notification> createSystemNotification(@RequestBody SystemNotification systemNotification) throws URISyntaxException {
         log.debug("REST request to save SystemNotification : {}", systemNotification);
         if (systemNotification.getId() != null) {
@@ -77,7 +77,7 @@ public class SystemNotificationResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PutMapping("/system-notifications")
-    @PreAuthorize("hasAnyRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<SystemNotification> updateSystemNotification(@RequestBody SystemNotification systemNotification) throws URISyntaxException {
         log.debug("REST request to update SystemNotification : {}", systemNotification);
         if (systemNotification.getId() == null) {
@@ -95,7 +95,7 @@ public class SystemNotificationResource {
      * @return the list of system notifications
      */
     @GetMapping("/system-notifications")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('TA')")
     public ResponseEntity<List<SystemNotification>> getAllSystemNotifications(@ApiParam Pageable pageable) {
         log.debug("REST request to get all Courses the user has access to");
         final Page<SystemNotification> page = systemNotificationRepository.findAll(pageable);
@@ -110,7 +110,7 @@ public class SystemNotificationResource {
      * @return the ResponseEntity with status 200 (OK) and with body the notification, or with status 404 (Not Found)
      */
     @GetMapping("/system-notifications/{id}")
-    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<SystemNotification> getSystemNotification(@PathVariable Long id) {
         log.debug("REST request to get SystemNotification : {}", id);
         Optional<SystemNotification> systemNotification = systemNotificationRepository.findById(id);
@@ -124,7 +124,7 @@ public class SystemNotificationResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("/system-notifications/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deleteSystemNotification(@PathVariable Long id) {
         log.debug("REST request to delete SystemNotification : {}", id);
         systemNotificationRepository.deleteById(id);

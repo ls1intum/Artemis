@@ -3,16 +3,15 @@ package de.tum.in.www1.artemis.domain.participation;
 import java.util.Optional;
 import java.util.Set;
 
-import javax.persistence.Column;
-import javax.persistence.DiscriminatorValue;
-import javax.persistence.Entity;
-import javax.persistence.ManyToOne;
+import javax.persistence.*;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonView;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.Team;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.view.QuizView;
 
 @Entity

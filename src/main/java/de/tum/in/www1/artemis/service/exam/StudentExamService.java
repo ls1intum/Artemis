@@ -7,6 +7,7 @@ import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 
+import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.PageRequest;
@@ -419,8 +420,7 @@ public class StudentExamService {
             if (studentParticipations.stream().noneMatch(studentParticipation -> studentParticipation.getParticipant().equals(student)
                     && studentParticipation.getInitializationState() != null && studentParticipation.getInitializationState().hasCompletedState(InitializationState.INITIALIZED))) {
                 try {
-                    if (exercise instanceof ProgrammingExercise) {
-                        // TODO: we should try to move this out of the for-loop into the method which calls this method.
+                    if (exercise instanceof ProgrammingExercise && !Hibernate.isInitialized(((ProgrammingExercise) exercise).getTemplateParticipation())) {
                         // Load lazy property
                         final var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exercise.getId());
                         ((ProgrammingExercise) exercise).setTemplateParticipation(programmingExercise.getTemplateParticipation());

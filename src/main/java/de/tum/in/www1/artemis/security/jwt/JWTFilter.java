@@ -2,10 +2,7 @@ package de.tum.in.www1.artemis.security.jwt;
 
 import java.io.IOException;
 
-import javax.servlet.FilterChain;
-import javax.servlet.ServletException;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
+import javax.servlet.*;
 import javax.servlet.http.HttpServletRequest;
 
 import org.springframework.security.core.Authentication;

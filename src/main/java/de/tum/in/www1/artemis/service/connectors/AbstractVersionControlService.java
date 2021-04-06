@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.service.connectors;
 
-import static de.tum.in.www1.artemis.config.Constants.PROGRAMMING_SUBMISSION_RESOURCE_API_PATH;
-import static de.tum.in.www1.artemis.config.Constants.TEST_CASE_CHANGED_API_PATH;
+import static de.tum.in.www1.artemis.config.Constants.*;
 
 import java.io.IOException;
 import java.nio.file.Path;

@@ -29,13 +29,13 @@ public class UserJenkinsGitlabIntegrationTest extends AbstractSpringIntegrationJ
     private boolean usePseudonymsGitlab;
 
     @Autowired
-    UserTestService userTestService;
+    private UserTestService userTestService;
 
     @Autowired
-    JenkinsUserManagementService jenkinsUserManagementService;
+    private JenkinsUserManagementService jenkinsUserManagementService;
 
     @Autowired
-    GitLabUserManagementService gitLabUserManagementService;
+    private GitLabUserManagementService gitLabUserManagementService;
 
     @BeforeEach
     public void setUp() throws Exception {

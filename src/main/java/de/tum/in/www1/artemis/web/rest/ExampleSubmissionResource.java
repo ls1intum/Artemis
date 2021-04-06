@@ -58,7 +58,7 @@ public class ExampleSubmissionResource {
      * @return the ResponseEntity with status 200 (OK) and the Result as its body, or with status 4xx if the request is invalid
      */
     @PostMapping("/exercises/{exerciseId}/example-submissions")
-    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<ExampleSubmission> createExampleSubmission(@PathVariable Long exerciseId, @RequestBody ExampleSubmission exampleSubmission) {
         log.debug("REST request to save ExampleSubmission : {}", exampleSubmission);
         if (exampleSubmission.getId() != null) {
@@ -78,7 +78,7 @@ public class ExampleSubmissionResource {
      *         status 500 (Internal Server Error) if the exampleSubmission couldn't be updated
      */
     @PutMapping("/exercises/{exerciseId}/example-submissions")
-    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<ExampleSubmission> updateExampleSubmission(@PathVariable Long exerciseId, @RequestBody ExampleSubmission exampleSubmission) {
         log.debug("REST request to update ExampleSubmission : {}", exampleSubmission);
         if (exampleSubmission.getId() == null) {
@@ -107,7 +107,7 @@ public class ExampleSubmissionResource {
      * @return the ResponseEntity with status 200 (OK) and with body the exampleSubmission, or with status 404 (Not Found)
      */
     @GetMapping("/example-submissions/{id}")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('TA')")
     public ResponseEntity<ExampleSubmission> getExampleSubmission(@PathVariable Long id) {
         log.debug("REST request to get ExampleSubmission : {}", id);
         Optional<ExampleSubmission> exampleSubmission = exampleSubmissionRepository.findWithSubmissionResultExerciseGradingCriteriaById(id);
@@ -128,7 +128,7 @@ public class ExampleSubmissionResource {
      * @return the ResponseEntity with status 200 (OK), or with status 404 (Not Found)
      */
     @DeleteMapping("/example-submissions/{id}")
-    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Void> deleteExampleSubmission(@PathVariable Long id) {
         log.debug("REST request to delete ExampleSubmission : {}", id);
         Optional<ExampleSubmission> exampleSubmission = exampleSubmissionRepository.findWithSubmissionResultExerciseGradingCriteriaById(id);

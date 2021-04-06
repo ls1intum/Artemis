@@ -15,10 +15,7 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.BasicResponseHandler;
 import org.apache.http.impl.client.HttpClientBuilder;
-import org.imsglobal.lti.launch.LtiOauthVerifier;
-import org.imsglobal.lti.launch.LtiVerificationException;
-import org.imsglobal.lti.launch.LtiVerificationResult;
-import org.imsglobal.lti.launch.LtiVerifier;
+import org.imsglobal.lti.launch.*;
 import org.imsglobal.pox.IMSPOXRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,12 +32,9 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
-import de.tum.in.www1.artemis.repository.LtiOutcomeUrlRepository;
-import de.tum.in.www1.artemis.repository.LtiUserIdRepository;
-import de.tum.in.www1.artemis.repository.ResultRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
-import de.tum.in.www1.artemis.security.AuthoritiesConstants;
+import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.user.UserCreationService;
 import de.tum.in.www1.artemis.web.rest.dto.LtiLaunchRequestDTO;
@@ -51,6 +45,8 @@ public class LtiService {
     public static final String TUMX = "TUMx";
 
     public static final String U4I = "U4I";
+
+    protected static final List<SimpleGrantedAuthority> SIMPLE_USER_LIST_AUTHORITY = Collections.singletonList(new SimpleGrantedAuthority(Role.STUDENT.getAuthority()));
 
     private final Logger log = LoggerFactory.getLogger(LtiService.class);
 
@@ -205,8 +201,7 @@ public class LtiService {
         if (optionalLtiUserId.isPresent()) {
             final var user = optionalLtiUserId.get().getUser();
             // Authenticate
-            return Optional.of(
-                    new UsernamePasswordAuthenticationToken(user.getLogin(), user.getPassword(), Collections.singletonList(new SimpleGrantedAuthority(AuthoritiesConstants.USER))));
+            return Optional.of(new UsernamePasswordAuthenticationToken(user.getLogin(), user.getPassword(), SIMPLE_USER_LIST_AUTHORITY));
         }
 
         // 3. Case: Lookup user with the LTI email address. Sign in as this user.
@@ -258,8 +253,7 @@ public class LtiService {
         }
 
         log.info("Signing in as {}", username);
-        return Optional
-                .of(new UsernamePasswordAuthenticationToken(user.getLogin(), user.getPassword(), Collections.singletonList(new SimpleGrantedAuthority(AuthoritiesConstants.USER))));
+        return Optional.of(new UsernamePasswordAuthenticationToken(user.getLogin(), user.getPassword(), SIMPLE_USER_LIST_AUTHORITY));
     }
 
     private Optional<Authentication> loginUserByEmail(LtiLaunchRequestDTO launchRequest, String username, String email, String fullname) {
@@ -273,8 +267,8 @@ public class LtiService {
         }
         final var user = artemisAuthenticationProvider.getOrCreateUser(new UsernamePasswordAuthenticationToken(username, ""), firstName, fullname, email, true);
 
-        return Optional
-                .of(new UsernamePasswordAuthenticationToken(user.getLogin(), user.getPassword(), Collections.singletonList(new SimpleGrantedAuthority(AuthoritiesConstants.USER))));
+        return Optional.of(
+                new UsernamePasswordAuthenticationToken(user.getLogin(), user.getPassword(), Collections.singletonList(new SimpleGrantedAuthority(Role.STUDENT.getAuthority()))));
     }
 
     @NotNull
@@ -383,10 +377,11 @@ public class LtiService {
             LtiVerificationResult ltiResult = ltiVerifier.verify(request, this.OAUTH_SECRET.get());
             if (!ltiResult.getSuccess()) {
                 String requestString = httpServletRequestToString(request);
-                log.error("LTI signature verification failed with message: {}; error: {}, launch result: {}", ltiResult.getMessage(), ltiResult.getError(),
-                        ltiResult.getLtiLaunchResult());
+                final var message = "LTI signature verification failed with message: " + ltiResult.getMessage() + "; error: " + ltiResult.getError() + ", launch result: "
+                        + ltiResult.getLtiLaunchResult();
+                log.error(message);
                 log.error("Request: {}", requestString);
-                return "Lti signature verification failed with message: " + ltiResult.getMessage() + "; error: " + ltiResult.getError();
+                return message;
             }
         }
         catch (LtiVerificationException e) {

@@ -22,8 +22,6 @@ import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.service.FileUploadSubmissionService;
-import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
@@ -32,34 +30,26 @@ public class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrati
     public static final String API_FILE_UPLOAD_SUBMISSIONS = "/api/file-upload-submissions/";
 
     @Autowired
-    FileUploadSubmissionService fileUploadSubmissionService;
+    private ResultRepository resultRepo;
 
     @Autowired
-    ResultRepository resultRepo;
+    private ComplaintRepository complaintRepo;
 
     @Autowired
-    ParticipationService participationService;
+    private FileUploadExerciseRepository fileUploadExerciseRepository;
 
     @Autowired
-    ComplaintRepository complaintRepo;
+    private ExerciseRepository exerciseRepository;
 
     @Autowired
-    FileUploadExerciseRepository fileUploadExerciseRepository;
+    private ExamRepository examRepository;
 
     @Autowired
-    ExerciseRepository exerciseRepository;
-
-    @Autowired
-    ExamRepository examRepository;
-
-    @Autowired
-    StudentParticipationRepository studentParticipationRepository;
+    private StudentParticipationRepository studentParticipationRepository;
 
     private FileUploadExercise afterReleaseFileUploadExercise;
 
     private Course course;
-
-    private Double offsetByTenThousandth = 0.0001;
 
     @BeforeEach
     public void initTestCase() {
@@ -230,6 +220,7 @@ public class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrati
         // Check that result is capped to maximum of maxScore + bonus points -> 110
         feedbacks.add(new Feedback().credits(25.00).type(FeedbackType.MANUAL_UNREFERENCED).detailText("nice submission 3"));
         response = request.putWithResponseBodyAndParams(API_FILE_UPLOAD_SUBMISSIONS + fileUploadSubmission.getId() + "/feedback", feedbacks, Result.class, HttpStatus.OK, params);
+        Double offsetByTenThousandth = 0.0001;
         assertThat(response.getScore()).isEqualTo(110, Offset.offset(offsetByTenThousandth));
     }
 
@@ -440,6 +431,8 @@ public class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrati
         FileUploadSubmission fileUploadSubmission = ModelFactory.generateFileUploadSubmission(true);
         fileUploadSubmission = database.saveFileUploadSubmissionWithResultAndAssessor(assessedFileUploadExercise, fileUploadSubmission, "student1", "tutor1");
         Result result = request.get("/api/file-upload-submissions/" + fileUploadSubmission.getId() + "/result", HttpStatus.OK, Result.class);
+        assertThat(result.getResultString()).isNotNull();
+        assertThat(result.getScore()).isEqualTo(100D);
     }
 
     @Test
