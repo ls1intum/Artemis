@@ -1,0 +1,9 @@
+<div>
+    <!-- correction round label-->
+    <h5 class="correction-label" *ngIf="highlightDifferences && feedback.copiedFeedback">
+        <span class="badge text-white mr-1" [ngStyle]="{ backgroundColor: '#3e8acc' }">First correction round</span>
+    </h5>
+    <h5 class="correction-label" *ngIf="highlightDifferences && !feedback.copiedFeedback">
+        <span class="badge text-white mr-1" [ngStyle]="{ backgroundColor: '#ffa561' }">Second correction round</span>
+    </h5>
+</div>
