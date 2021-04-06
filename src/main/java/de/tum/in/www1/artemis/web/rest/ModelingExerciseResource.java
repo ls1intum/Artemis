@@ -110,7 +110,7 @@ public class ModelingExerciseResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("/modeling-exercises")
-    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<ModelingExercise> createModelingExercise(@RequestBody ModelingExercise modelingExercise) throws URISyntaxException {
         log.debug("REST request to save ModelingExercise : {}", modelingExercise);
         if (modelingExercise.getId() != null) {
@@ -165,7 +165,7 @@ public class ModelingExerciseResource {
      * @return The desired page, sorted and matching the given query
      */
     @GetMapping("/modeling-exercises")
-    @PreAuthorize("hasAnyRole('INSTRUCTOR, ADMIN')")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<SearchResultPageDTO<ModelingExercise>> getAllExercisesOnPage(PageableSearchDTO<String> search) {
         final var user = userRepository.getUserWithGroupsAndAuthorities();
         return ResponseEntity.ok(modelingExerciseService.getAllOnPageWithSize(search, user));
@@ -181,7 +181,7 @@ public class ModelingExerciseResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PutMapping("/modeling-exercises")
-    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<ModelingExercise> updateModelingExercise(@RequestBody ModelingExercise modelingExercise,
             @RequestParam(value = "notificationText", required = false) String notificationText) throws URISyntaxException {
         log.debug("REST request to update ModelingExercise : {}", modelingExercise);
@@ -226,7 +226,7 @@ public class ModelingExerciseResource {
      * @return the ResponseEntity with status 200 (OK) and the list of modelingExercises in body
      */
     @GetMapping(value = "/courses/{courseId}/modeling-exercises")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('TA')")
     public ResponseEntity<List<ModelingExercise>> getModelingExercisesForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all ModelingExercises for the course with id : {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
@@ -250,7 +250,7 @@ public class ModelingExerciseResource {
      * @return the json encoded modelingExercise statistics
      */
     @GetMapping(value = "/modeling-exercises/{exerciseId}/statistics")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('TA')")
     public ResponseEntity<String> getModelingExerciseStatistics(@PathVariable Long exerciseId) {
         log.debug("REST request to get ModelingExercise Statistics for Exercise: {}", exerciseId);
         Optional<ModelingExercise> modelingExercise = modelingExerciseRepository.findById(exerciseId);
@@ -275,7 +275,7 @@ public class ModelingExerciseResource {
      * @return the statistic as key-value pairs in json
      */
     @GetMapping("/modeling-exercises/{exerciseId}/print-statistic")
-    @PreAuthorize("hasAnyRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> printCompassStatisticForExercise(@PathVariable Long exerciseId) {
         ModelingExercise modelingExercise = modelingExerciseRepository.findOne(exerciseId);
         compassService.printStatistic(modelingExercise.getId());
@@ -289,7 +289,7 @@ public class ModelingExerciseResource {
      * @return the ResponseEntity with status 200 (OK) and with body the modelingExercise, or with status 404 (Not Found)
      */
     @GetMapping("/modeling-exercises/{exerciseId}")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('TA')")
     public ResponseEntity<ModelingExercise> getModelingExercise(@PathVariable Long exerciseId) {
         log.debug("REST request to get ModelingExercise : {}", exerciseId);
         // TODO CZ: provide separate endpoint GET /modeling-exercises/{id}/withExampleSubmissions and load exercise without example submissions here
@@ -309,7 +309,7 @@ public class ModelingExerciseResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("/modeling-exercises/{exerciseId}")
-    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Void> deleteModelingExercise(@PathVariable Long exerciseId) {
         log.info("REST request to delete ModelingExercise : {}", exerciseId);
         Optional<ModelingExercise> modelingExercise = modelingExerciseRepository.findById(exerciseId);
@@ -342,7 +342,7 @@ public class ModelingExerciseResource {
      *         (403) if the user is not at least an instructor in the target course.
      */
     @PostMapping("/modeling-exercises/import/{sourceExerciseId}")
-    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<ModelingExercise> importExercise(@PathVariable long sourceExerciseId, @RequestBody ModelingExercise importedExercise) throws URISyntaxException {
         if (sourceExerciseId <= 0 || (importedExercise.getCourseViaExerciseGroupOrCourseMember() == null && importedExercise.getExerciseGroup() == null)) {
             log.debug("Either the courseId or exerciseGroupId must be set for an import");
@@ -394,7 +394,7 @@ public class ModelingExerciseResource {
      * @return ResponseEntity with status
      */
     @PostMapping("/modeling-exercises/{exerciseId}/export-submissions")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('TA')")
     public ResponseEntity<Resource> exportSubmissions(@PathVariable long exerciseId, @RequestBody SubmissionExportOptionsDTO submissionExportOptions) {
 
         Optional<ModelingExercise> optionalModelingExercise = modelingExerciseRepository.findById(exerciseId);
@@ -444,7 +444,7 @@ public class ModelingExerciseResource {
      * parameters are invalid
      */
     @GetMapping("/modeling-exercises/{exerciseId}/plagiarism-result")
-    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<ModelingPlagiarismResult> getPlagiarismResult(@PathVariable long exerciseId) {
         log.debug("REST request to get the latest plagiarism result for the modeling exercise with id: {}", exerciseId);
         ModelingExercise modelingExercise = modelingExerciseRepository.findByIdWithStudentParticipationsSubmissionsResultsElseThrow(exerciseId);
@@ -470,7 +470,7 @@ public class ModelingExerciseResource {
      * similarities above a threshold of 80%.
      */
     @GetMapping("/modeling-exercises/{exerciseId}/check-plagiarism")
-    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<ModelingPlagiarismResult> checkPlagiarism(@PathVariable long exerciseId, @RequestParam float similarityThreshold, @RequestParam int minimumScore,
             @RequestParam int minimumSize) {
         ModelingExercise modelingExercise = modelingExerciseRepository.findByIdWithStudentParticipationsSubmissionsResultsElseThrow(exerciseId);

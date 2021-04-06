@@ -9,10 +9,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 
-import ch.qos.logback.classic.LoggerContext;
-
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
+import ch.qos.logback.classic.LoggerContext;
 import io.github.jhipster.config.JHipsterProperties;
 
 /*

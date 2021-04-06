@@ -89,31 +89,9 @@ test {
     jvmArgs "--illegal-access=warn"
 }
 
-task integrationTest(type: Test) {
-    useJUnitPlatform()
-    description = "Execute integration tests."
-    group = "verification"
-    include "**/*IT*", "**/*IntTest*"
-
-    testLogging {
-        events "FAILED", "SKIPPED"
-    }
-
-    maxHeapSize = "1024m"
-    jvmArgs "-XX:MaxPermSize=512m --illegal-access=warn"
-    reports.html.enabled = false
-}
-
-check.dependsOn integrationTest
-
 task testReport(type: TestReport) {
     destinationDir = file("$buildDir/reports/tests")
     reportOn test
-}
-
-task integrationTestReport(type: TestReport) {
-    destinationDir = file("$buildDir/reports/tests")
-    reportOn integrationTest
 }
 
 jacoco {
@@ -317,16 +295,6 @@ tasks.withType(Test) {
         showCauses true
         showStackTraces true
 
-        // set options for log level DEBUG and INFO
-        debug {
-            events TestLogEvent.STARTED,
-                TestLogEvent.FAILED,
-                TestLogEvent.PASSED,
-                TestLogEvent.SKIPPED,
-                TestLogEvent.STANDARD_ERROR,
-                TestLogEvent.STANDARD_OUT
-            exceptionFormat TestExceptionFormat.FULL
-        }
         info.events = debug.events
         info.exceptionFormat = debug.exceptionFormat
 
