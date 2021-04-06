@@ -46,35 +46,6 @@ There is no standard pattern for method length among the developers. Someone can
 
 Avoid code duplication. If we cannot reuse a method elsewhere, then the method is probably bad and we should consider a better way to write this method. Use Abstraction to abstract common things in one place.
 
-Use the `OrElseThrow` method pattern instead of checking for edge cases (like "not found") and throwing manually.
-For example, instead of writing
-
-.. code-block:: java
-
-    Optional<ProgrammingExercise> programmingExerciseOpt = programmingExerciseRepository.findById(exerciseId);
-    if (programmingExerciseOpt.isPresent()) {
-        ProgrammingExercise programmingExercise = programmingExerciseOpt.get();
-        Course course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
-        if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
-            return forbidden();
-        }
-
-        [...]
-    }
-    else {
-        return notFound();
-    }
-
-use
-
-.. code-block:: java
-
-        var programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, programmingExercise, user);
-        [...]
-
-The repository call takes care of throwing ``notFound`` if there exists no matching exercise. The ``authCeckService`` throws ``forbidden`` if the user with the given role is unauthorized. The code becomes much shorter, cleaner and more maintainable.
-
 5. Variables and methods declaration
 ====================================
 
@@ -300,10 +271,16 @@ you should use:
 
 Functionally both queries extract the same result set, but the first one is less efficient as the sub-query is calculated for each StudentParticipation.
 
-20. Annotate REST calls with @PreAuthorize
-==========================================
 
-Use ``PreAuthorize`` with the ``hasRole`` method. Pass the role with the *least* permissions as parameter.
+20. REST endpoint best practices for authorization
+==================================================
+
+To prevent unauthorized access to resources we employ a two-step system:
+
+#. ``PreAuthorize`` annotations are responsible for blocking users with wrong or missing authorization roles without querying the database.
+#. The ``AuthorizationCheckService`` is responsible for checking access rights to individual resources by querying the database.
+
+Because the first method without database queries is substantially faster, always annotate your REST endpoints with ``@PreAuthorize``. Pass the role with the *least* permissions as parameter to the ``hasRole`` method.
 The following example makes the call only accessible to ADMIN and INSTRUCTOR users:
 
 .. code-block:: java
@@ -312,15 +289,35 @@ The following example makes the call only accessible to ADMIN and INSTRUCTOR use
     public ResponseEntity<ProgrammingExercise> getProgrammingExercise(@PathVariable long exerciseId) {
     }
 
-We currently distinguish five different roles: ADMIN, INSTRUCTOR, TEACHING_ASSISSTANT (TA), USER and ANONYMOUS.
+We currently distinguish five different roles: ADMIN, INSTRUCTOR, TA (teaching assistant), USER and ANONYMOUS.
 Each of the roles has the all the access rights of the roles following it, e.g. ANONOYMOUS has almost no rights, while ADMIN users can access every page.
 
-When checking a users permission do not fetch the user from the database yourself (unless you need to re-use the user object), but only hand a role to the ``authCeckService``:
+If a user passess the ``PreAuthorize`` check, the access to individual resources like courses and exercises still has to be checked. (A user can be a teaching assistant in one course, but only a student in another, for example.)
+However, do not fetch the user from the database yourself (unless you need to re-use the user object), but only hand a role to the ``AuthorizationCheckService``:
 
 .. code-block:: java
 
-        // If we pass 'null' instead of a user here, the service will fetch the object and check if the user has at least the given role
+        // If we pass 'null' instead of a user here, the service will fetch the user object
+        // and check if the user has at least the given role and access to the resource
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
+
+To reduce duplication, do not add explicit checks for authorization or existence of an entity but always use the ``AuthorizationCheckService``:
+
+.. code-block:: java
+
+    @GetMapping(Endpoints.GET_FOR_COURSE)
+    @PreAuthorize("hasRole('TA')")
+    public ResponseEntity<List<ProgrammingExercise>> getActiveProgrammingExercisesForCourse(@PathVariable Long courseId) {
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, null);
+
+        List<ProgrammingExercise> exercises = programmingExerciseService.findActiveExercisesByCourseId(courseId);
+        return ResponseEntity.ok().body(exercises);
+    }
+
+
+The course repository call takes care of throwing a ``404 Not Found`` exception if there exists no matching course. The ``AuthorizationCheckService`` throws a ``403 Forbidden`` exception if the user with the given role is unauthorized. Afterwards delegate to a service or repository method. The code becomes much shorter, cleaner and more maintainable.
+
 
 21. Assert using the most specific overload method
 ==================================================
