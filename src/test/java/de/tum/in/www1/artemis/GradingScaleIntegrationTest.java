@@ -17,7 +17,7 @@ import de.tum.in.www1.artemis.domain.GradingScale;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.repository.GradingScaleRepository;
 
-public class GradingSystemIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+public class GradingScaleIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     private GradingScaleRepository gradingScaleRepository;
