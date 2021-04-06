@@ -496,4 +496,43 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
             return countAssessmentsByExerciseIdSubmitted(exerciseId);
         }
     }
+
+    /**
+     * Find a programming exercise by its id, with eagerly loaded template and solution participation, team assignment config and categories
+     *
+     * @param programmingExerciseId of the programming exercise.
+     * @return The programming exercise related to the given id
+     * @throws EntityNotFoundException the programming exercise could not be found.
+     */
+    @NotNull
+    default ProgrammingExercise findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesElseThrow(long programmingExerciseId) throws EntityNotFoundException {
+        Optional<ProgrammingExercise> programmingExercise = findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExerciseId);
+        return programmingExercise.orElseThrow(() -> new EntityNotFoundException("Programming Exercise", programmingExerciseId));
+    }
+
+    /**
+     * Find a programming exercise by its id, with eagerly loaded template and solution participation, submissions and results
+     *
+     * @param programmingExerciseId of the programming exercise.
+     * @return The programming exercise related to the given id
+     * @throws EntityNotFoundException the programming exercise could not be found.
+     */
+    @NotNull
+    default ProgrammingExercise findByIdWithTemplateAndSolutionParticipationSubmissionsAndResultsElseThrow(long programmingExerciseId) throws EntityNotFoundException {
+        Optional<ProgrammingExercise> programmingExercise = findWithTemplateAndSolutionParticipationSubmissionsAndResultsById(programmingExerciseId);
+        return programmingExercise.orElseThrow(() -> new EntityNotFoundException("Programming Exercise", programmingExerciseId));
+    }
+
+    /**
+     * Find a programming exercise by its id, with eagerly loaded template and solution participation, and latest result
+     *
+     * @param programmingExerciseId of the programming exercise.
+     * @return The programming exercise related to the given id
+     * @throws EntityNotFoundException the programming exercise could not be found.
+     */
+    @NotNull
+    default ProgrammingExercise findByIdWithTemplateAndSolutionParticipationLatestResultElseThrow(long programmingExerciseId) throws EntityNotFoundException {
+        Optional<ProgrammingExercise> programmingExercise = findWithTemplateAndSolutionParticipationLatestResultById(programmingExerciseId);
+        return programmingExercise.orElseThrow(() -> new EntityNotFoundException("Programming Exercise", programmingExerciseId));
+    }
 }

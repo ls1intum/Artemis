@@ -48,7 +48,7 @@
                     <span>{{ 'artemisApp.examManagement.students' | artemisTranslate }}</span>
                 </a>
 
-                <div *ngIf="exam && isExamOver" class="my-2 mr-1">
+                <div *ngIf="exam && isExamOver && exam.course" class="my-2 mr-1">
                     <jhi-course-exam-archive-button [archiveMode]="'Exam'" [exam]="exam" [course]="exam.course"></jhi-course-exam-archive-button>
                 </div>
             </div>
