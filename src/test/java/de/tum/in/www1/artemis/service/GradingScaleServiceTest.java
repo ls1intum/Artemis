@@ -6,7 +6,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -49,7 +48,7 @@ public class GradingScaleServiceTest extends AbstractSpringIntegrationBambooBitb
     @ParameterizedTest
     @ValueSource(doubles = { -60, -1.3, -0.0002, 100.1, 150 })
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testMatchPercentageToGradeStep_InvalidPercentage(double invalidPercentage) {
+    public void testMatchPercentageToGradeStepInvalidPercentage(double invalidPercentage) {
         BadRequestAlertException exception = assertThrows(BadRequestAlertException.class, () -> {
             gradingScaleService.matchPercentageToGradeStep(invalidPercentage, gradingScale.getId());
         });
@@ -61,8 +60,8 @@ public class GradingScaleServiceTest extends AbstractSpringIntegrationBambooBitb
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testMatchPercentageToGradeStep_NoValidMapping() {
-        gradeSteps = generateGradeStepSet(false);
+    public void testMatchPercentageToGradeStepNoValidMapping() {
+        gradeSteps = database.generateGradeStepSet(gradingScale, false);
         gradingScale.setGradeSteps(gradeSteps);
         gradingScaleRepository.save(gradingScale);
 
@@ -77,7 +76,7 @@ public class GradingScaleServiceTest extends AbstractSpringIntegrationBambooBitb
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testMatchPercentageToGradeStep_ValidMappingExists() {
+    public void testMatchPercentageToGradeStepValidMappingExists() {
         GradeStep expectedGradeStep = new GradeStep();
         expectedGradeStep.setPassingGrade(true);
         expectedGradeStep.setGradeName("Pass");
@@ -97,7 +96,7 @@ public class GradingScaleServiceTest extends AbstractSpringIntegrationBambooBitb
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testSaveGradingScale_InvalidGradeSteps_NoGradeName() {
+    public void testSaveGradingScaleInvalidGradeStepsNoGradeName() {
         GradeStep gradeStep = new GradeStep();
         gradeStep.setPassingGrade(true);
         gradeStep.setGradeName("");
@@ -117,7 +116,7 @@ public class GradingScaleServiceTest extends AbstractSpringIntegrationBambooBitb
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testSaveGradingScale_InvalidGradeSteps_InvalidPercentageValues() {
+    public void testSaveGradingScaleInvalidGradeStepsInvalidPercentageValues() {
         GradeStep gradeStep = new GradeStep();
         gradeStep.setPassingGrade(true);
         gradeStep.setGradeName("Name");
@@ -137,8 +136,8 @@ public class GradingScaleServiceTest extends AbstractSpringIntegrationBambooBitb
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testSaveGradingScale_InvalidGradeStepSet() {
-        gradeSteps = generateGradeStepSet(false);
+    public void testSaveGradingScaleInvalidGradeStepSet() {
+        gradeSteps = database.generateGradeStepSet(gradingScale, false);
         gradingScale.setGradeSteps(gradeSteps);
 
         BadRequestAlertException exception = assertThrows(BadRequestAlertException.class, () -> {
@@ -152,8 +151,8 @@ public class GradingScaleServiceTest extends AbstractSpringIntegrationBambooBitb
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testSaveGradingScale_ValidGradeStepSet() {
-        gradeSteps = generateGradeStepSet(true);
+    public void testSaveGradingScaleValidGradeStepSet() {
+        gradeSteps = database.generateGradeStepSet(gradingScale, true);
         gradingScale.setGradeSteps(gradeSteps);
 
         GradingScale savedGradingScale = gradingScaleService.saveGradingScale(gradingScale);
@@ -161,42 +160,4 @@ public class GradingScaleServiceTest extends AbstractSpringIntegrationBambooBitb
         assertThat(savedGradingScale).usingRecursiveComparison().ignoringFields("exam", "course", "gradeSteps", "id").isEqualTo(gradingScale);
         assertThat(savedGradingScale.getGradeSteps()).usingRecursiveComparison().ignoringFields("gradingScale", "id").isEqualTo(gradingScale.getGradeSteps());
     }
-
-    @NotNull
-    private Set<GradeStep> generateGradeStepSet(boolean valid) {
-        GradeStep gradeStep1 = new GradeStep();
-        GradeStep gradeStep2 = new GradeStep();
-        GradeStep gradeStep3 = new GradeStep();
-
-        gradeStep1.setGradingScale(gradingScale);
-        gradeStep2.setGradingScale(gradingScale);
-        gradeStep3.setGradingScale(gradingScale);
-
-        gradeStep1.setId(1L);
-        gradeStep1.setPassingGrade(false);
-        gradeStep1.setGradeName("Fail");
-        gradeStep1.setLowerBoundPercentage(0);
-        gradeStep1.setUpperBoundPercentage(60);
-
-        gradeStep2.setId(2L);
-        gradeStep2.setPassingGrade(true);
-        gradeStep2.setGradeName("Pass");
-        gradeStep2.setLowerBoundPercentage(60);
-        if (valid) {
-            gradeStep2.setUpperBoundPercentage(90);
-        }
-        else {
-            gradeStep2.setUpperBoundPercentage(80);
-        }
-
-        gradeStep3.setId(3L);
-        gradeStep3.setPassingGrade(true);
-        gradeStep3.setGradeName("Excellent");
-        gradeStep3.setLowerBoundPercentage(90);
-        gradeStep3.setUpperBoundPercentage(100);
-        gradeStep3.setUpperBoundInclusive(true);
-
-        return Set.of(gradeStep1, gradeStep2, gradeStep3);
-    }
-
 }

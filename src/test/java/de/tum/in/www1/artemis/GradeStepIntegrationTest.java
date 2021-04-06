@@ -60,7 +60,7 @@ public class GradeStepIntegrationTest extends AbstractSpringIntegrationBambooBit
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testGetAllGradeStepsForCourse_NoGradingScaleExists() throws Exception {
+    public void testGetAllGradeStepsForCourseNoGradingScaleExists() throws Exception {
         request.getList("/api/courses/" + course.getId() + "/grading-scale/grade-steps", HttpStatus.NOT_FOUND, GradeStep.class);
     }
 
@@ -88,7 +88,7 @@ public class GradeStepIntegrationTest extends AbstractSpringIntegrationBambooBit
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testGetAllGradeStepsForExam_NoGradingScaleExists() throws Exception {
+    public void testGetAllGradeStepsForExamNoGradingScaleExists() throws Exception {
         request.getList("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale/grade-steps", HttpStatus.NOT_FOUND, GradeStep.class);
     }
 
@@ -117,7 +117,7 @@ public class GradeStepIntegrationTest extends AbstractSpringIntegrationBambooBit
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testGetGradeStepByIdForCourse_NoGradingScaleExists() throws Exception {
+    public void testGetGradeStepByIdForCourseNoGradingScaleExists() throws Exception {
         request.get("/api/courses/" + course.getId() + "/grading-scale/grade-steps/1", HttpStatus.NOT_FOUND, GradeStep.class);
     }
 
@@ -141,7 +141,7 @@ public class GradeStepIntegrationTest extends AbstractSpringIntegrationBambooBit
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testGetGradeStepByIdForExam_NoGradingScaleExists() throws Exception {
+    public void testGetGradeStepByIdForExamNoGradingScaleExists() throws Exception {
         request.get("/api/courses/" + course.getId() + "/grading-scale/grade-steps/1", HttpStatus.NOT_FOUND, GradeStep.class);
     }
 
@@ -166,7 +166,7 @@ public class GradeStepIntegrationTest extends AbstractSpringIntegrationBambooBit
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testGetGradeStepByPercentageForCourse_NoGradingScaleExists() throws Exception {
+    public void testGetGradeStepByPercentageForCourseNoGradingScaleExists() throws Exception {
         request.get("/api/courses/" + course.getId() + "/grading-scale/match-grade-step?gradePercentage=70", HttpStatus.NOT_FOUND, GradeStep.class);
     }
 
@@ -189,7 +189,7 @@ public class GradeStepIntegrationTest extends AbstractSpringIntegrationBambooBit
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testGetGradeStepByPercentageForExam_NoGradingScaleExists() throws Exception {
+    public void testGetGradeStepByPercentageForExamNoGradingScaleExists() throws Exception {
         request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale/match-grade-step?gradePercentage=70", HttpStatus.NOT_FOUND, GradeStep.class);
     }
 
