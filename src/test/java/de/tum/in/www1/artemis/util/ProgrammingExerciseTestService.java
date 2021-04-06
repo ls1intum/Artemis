@@ -939,7 +939,7 @@ public class ProgrammingExerciseTestService {
         mockDelegate.mockConnectorRequestsForStartParticipation(exercise, team.getParticipantIdentifier(), team.getStudents(), true, HttpStatus.CREATED);
 
         // Add a new student to the team
-        User newStudent = ModelFactory.generateActivatedUsers("new-student", new String[] { "tumuser", "testgroup" }, Set.of(new Authority(Role.USER.getAuthority())), 1).get(0);
+        User newStudent = ModelFactory.generateActivatedUsers("new-student", new String[] { "tumuser", "testgroup" }, Set.of(new Authority(Role.STUDENT.getAuthority())), 1).get(0);
         newStudent = userRepo.save(newStudent);
         team.addStudents(newStudent);
 
@@ -995,7 +995,7 @@ public class ProgrammingExerciseTestService {
 
         // create a team for the user (necessary condition before starting an exercise)
         final String edxUsername = userPrefixEdx.get() + "student";
-        User edxStudent = ModelFactory.generateActivatedUsers(edxUsername, new String[] { "tumuser", "testgroup" }, Set.of(new Authority(Role.USER.getAuthority())), 1).get(0);
+        User edxStudent = ModelFactory.generateActivatedUsers(edxUsername, new String[] { "tumuser", "testgroup" }, Set.of(new Authority(Role.STUDENT.getAuthority())), 1).get(0);
         edxStudent.setPassword(passwordService.encryptPassword(edxStudent.getPassword()));
         edxStudent = userRepo.save(edxStudent);
         Team team = setupTeam(edxStudent);

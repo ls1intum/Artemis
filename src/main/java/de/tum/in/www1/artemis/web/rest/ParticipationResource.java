@@ -131,7 +131,7 @@ public class ParticipationResource {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         Participant participant = user;
         Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.USER, exercise, user);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, exercise, user);
 
         // if the user is a student and the exercise has a release date, he cannot start the exercise before the release date
         if (exercise.getReleaseDate() != null && exercise.getReleaseDate().isAfter(now())) {
@@ -419,7 +419,7 @@ public class ParticipationResource {
     public ResponseEntity<MappingJacksonValue> getParticipation(@PathVariable Long exerciseId, Principal principal) {
         log.debug("REST request to get Participation for Exercise : {}", exerciseId);
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.USER, exercise, null);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, exercise, null);
         MappingJacksonValue response;
         if (exercise instanceof QuizExercise) {
             // fetch again to load some additional objects

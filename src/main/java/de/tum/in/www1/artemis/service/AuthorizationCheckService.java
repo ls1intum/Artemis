@@ -233,7 +233,7 @@ public class AuthorizationCheckService {
             case ADMIN -> this::checkIsAdminElseThrow;
             case INSTRUCTOR -> userOrNull -> checkIsAtLeastInstructorForExerciseElseThrow(exercise, userOrNull);
             case TEACHING_ASSISTANT -> userOrNull -> checkIsAtLeastTeachingAssistantForExerciseElseThrow(exercise, userOrNull);
-            case USER -> userOrNull -> checkIsAtLeastStudentForExerciseElseThrow(exercise, userOrNull);
+            case STUDENT -> userOrNull -> checkIsAtLeastStudentForExerciseElseThrow(exercise, userOrNull);
             // anonymous users never have access to exercises, so we have to throw an exception
             case ANONYMOUS -> throw new IllegalArgumentException("The role anonymous does not make sense in this context");
         };
@@ -254,7 +254,7 @@ public class AuthorizationCheckService {
             case ADMIN -> this::checkIsAdminElseThrow;
             case INSTRUCTOR -> userOrNull -> checkIsAtLeastInstructorInCourseElseThrow(course, userOrNull);
             case TEACHING_ASSISTANT -> userOrNull -> checkIsAtLeastTeachingAssistantInCourseElseThrow(course, userOrNull);
-            case USER -> userOrNull -> checkIsAtLeastStudentInCourseElseThrow(course, userOrNull);
+            case STUDENT -> userOrNull -> checkIsAtLeastStudentInCourseElseThrow(course, userOrNull);
             // anonymous users never have access to courses, so we have to throw an exception
             case ANONYMOUS -> throw new IllegalArgumentException("The role anonymous does not make sense in this context");
         };

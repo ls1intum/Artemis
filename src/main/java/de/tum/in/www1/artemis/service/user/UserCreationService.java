@@ -114,7 +114,7 @@ public class UserCreationService {
         // new user gets registration key
         newUser.setActivationKey(RandomUtil.generateActivationKey());
 
-        final var authority = authorityRepository.findById(USER.getAuthority()).get();
+        final var authority = authorityRepository.findById(STUDENT.getAuthority()).get();
         // needs to be mutable --> new HashSet<>(Set.of(...))
         final var authorities = new HashSet<>(Set.of(authority));
         newUser.setAuthorities(authorities);

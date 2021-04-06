@@ -96,7 +96,7 @@ public class JiraAuthenticationIntegationTest extends AbstractSpringIntegrationB
         ltiLaunchRequest = AuthenticationIntegrationTestHelper.setupDefaultLtiLaunchRequest();
         doReturn(null).when(ltiService).verifyRequest(any());
 
-        final var userAuthority = new Authority(Role.USER.getAuthority());
+        final var userAuthority = new Authority(Role.STUDENT.getAuthority());
         final var instructorAuthority = new Authority(Role.INSTRUCTOR.getAuthority());
         final var adminAuthority = new Authority(Role.ADMIN.getAuthority());
         final var taAuthority = new Authority(Role.TEACHING_ASSISTANT.getAuthority());

@@ -58,7 +58,7 @@ public class DatabaseUtilService {
 
     private static final ZonedDateTime futureFutureTimestamp = ZonedDateTime.now().plusDays(2);
 
-    private static final Authority userAuthority = new Authority(Role.USER.getAuthority());
+    private static final Authority userAuthority = new Authority(Role.STUDENT.getAuthority());
 
     private static final Authority tutorAuthority = new Authority(Role.TEACHING_ASSISTANT.getAuthority());
 

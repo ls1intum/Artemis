@@ -110,7 +110,7 @@ public class UserService {
                     log.info("Update internal admin user " + artemisInternalAdminUsername.get());
                     existingInternalAdmin.get().setPassword(passwordService.encodePassword(artemisInternalAdminPassword.get()));
                     // needs to be mutable --> new HashSet<>(Set.of(...))
-                    existingInternalAdmin.get().setAuthorities(new HashSet<>(Set.of(ADMIN_AUTHORITY, new Authority(USER.getAuthority()))));
+                    existingInternalAdmin.get().setAuthorities(new HashSet<>(Set.of(ADMIN_AUTHORITY, new Authority(STUDENT.getAuthority()))));
                     saveUser(existingInternalAdmin.get());
                     updateUserInConnectorsAndAuthProvider(existingInternalAdmin.get(), existingInternalAdmin.get().getLogin(), existingInternalAdmin.get().getGroups());
                 }
@@ -127,7 +127,7 @@ public class UserService {
                     userDto.setCreatedBy("system");
                     userDto.setLastModifiedBy("system");
                     // needs to be mutable --> new HashSet<>(Set.of(...))
-                    userDto.setAuthorities(new HashSet<>(Set.of(ADMIN.getAuthority(), USER.getAuthority())));
+                    userDto.setAuthorities(new HashSet<>(Set.of(ADMIN.getAuthority(), STUDENT.getAuthority())));
                     userDto.setGroups(new HashSet<>());
                     userCreationService.createUser(userDto);
                 }
@@ -234,7 +234,7 @@ public class UserService {
         // new user gets registration key
         newUser.setActivationKey(RandomUtil.generateActivationKey());
         Set<Authority> authorities = new HashSet<>();
-        authorityRepository.findById(USER.getAuthority()).ifPresent(authorities::add);
+        authorityRepository.findById(STUDENT.getAuthority()).ifPresent(authorities::add);
         newUser.setAuthorities(authorities);
         saveUser(newUser);
         // we need to save first so that the user can be found in the database in the subsequent method

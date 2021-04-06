@@ -37,7 +37,7 @@ public class Authority implements Serializable {
 
     public static Authority TA_AUTHORITY = new Authority(Role.TEACHING_ASSISTANT.getAuthority());
 
-    public static Authority USER_AUTHORITY = new Authority(Role.USER.getAuthority());
+    public static Authority USER_AUTHORITY = new Authority(Role.STUDENT.getAuthority());
 
     public Authority(String name) {
         // we need this constructor because we use the UserDTO which maps a set of authorities to a set of strings

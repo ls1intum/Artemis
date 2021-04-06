@@ -68,7 +68,7 @@ public class AuthorityService {
             authorities.add(new Authority(TEACHING_ASSISTANT.getAuthority()));
         }
 
-        authorities.add(new Authority(USER.getAuthority()));
+        authorities.add(new Authority(STUDENT.getAuthority()));
         return authorities;
     }
 }

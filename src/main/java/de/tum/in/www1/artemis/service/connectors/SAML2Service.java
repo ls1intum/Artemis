@@ -121,7 +121,7 @@ public class SAML2Service {
             newUser.setVisibleRegistrationNumber(registrationNumber);
         } // else set registration number to null to preserve uniqueness
         newUser.setLangKey(substituteAttributes(properties.getLangKeyPattern(), principal));
-        newUser.setAuthorities(new HashSet<>(Set.of(Role.USER.getAuthority())));
+        newUser.setAuthorities(new HashSet<>(Set.of(Role.STUDENT.getAuthority())));
         newUser.setGroups(new HashSet<>());
 
         // userService.createUser(ManagedUserVM) does create an activated User

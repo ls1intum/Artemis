@@ -46,7 +46,7 @@ public class LtiService {
 
     public static final String U4I = "U4I";
 
-    protected static final List<SimpleGrantedAuthority> SIMPLE_USER_LIST_AUTHORITY = Collections.singletonList(new SimpleGrantedAuthority(Role.USER.getAuthority()));
+    protected static final List<SimpleGrantedAuthority> SIMPLE_USER_LIST_AUTHORITY = Collections.singletonList(new SimpleGrantedAuthority(Role.STUDENT.getAuthority()));
 
     private final Logger log = LoggerFactory.getLogger(LtiService.class);
 
@@ -267,8 +267,8 @@ public class LtiService {
         }
         final var user = artemisAuthenticationProvider.getOrCreateUser(new UsernamePasswordAuthenticationToken(username, ""), firstName, fullname, email, true);
 
-        return Optional
-                .of(new UsernamePasswordAuthenticationToken(user.getLogin(), user.getPassword(), Collections.singletonList(new SimpleGrantedAuthority(Role.USER.getAuthority()))));
+        return Optional.of(
+                new UsernamePasswordAuthenticationToken(user.getLogin(), user.getPassword(), Collections.singletonList(new SimpleGrantedAuthority(Role.STUDENT.getAuthority()))));
     }
 
     @NotNull
