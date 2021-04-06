@@ -82,8 +82,8 @@ public class StudentQuestionAnswerResource {
         }
         Course course = courseRepository.findByIdElseThrow(courseId);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
-        StudentQuestion optionalStudentQuestion = studentQuestionRepository.findByIdElseThrow(studentQuestionAnswer.getQuestion().getId());
-        if (!optionalStudentQuestion.getCourse().getId().equals(courseId)) {
+        StudentQuestion studentQuestion = studentQuestionRepository.findByIdElseThrow(studentQuestionAnswer.getQuestion().getId());
+        if (!studentQuestion.getCourse().getId().equals(courseId)) {
             return forbidden();
         }
         // answer to approved if written by an instructor
