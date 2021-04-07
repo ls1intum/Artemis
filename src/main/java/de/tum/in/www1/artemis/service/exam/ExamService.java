@@ -590,6 +590,21 @@ public class ExamService {
     }
 
     /**
+     * Sets exam exercise transient properties for different exercise types
+     * @param exam - the exam for which we set the exercise properties
+     */
+    public void setExamExerciseProperties(Exam exam) {
+        exam.getExerciseGroups().forEach(exerciseGroup -> {
+            exerciseGroup.getExercises().forEach(exercise -> {
+                // Set transient property for quiz exam exercise if test runs exist
+                if (exercise instanceof QuizExercise) {
+                    exerciseService.checkTestRunsExist(exercise);
+                }
+            });
+        });
+    }
+
+    /**
      * Gets a collection of useful statistics for the tutor exam-assessment-dashboard, including: - number of submissions to the course - number of
      * assessments - number of assessments assessed by the tutor - number of complaints
      *

@@ -16,10 +16,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.Submission;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
@@ -130,12 +127,8 @@ public class ExamSubmissionServiceTest extends AbstractSpringIntegrationBambooBi
         examRepository.save(exam);
         studentExam.setUser(null);
         studentExamRepository.save(studentExam);
-        assertThrows(EntityNotFoundException.class, () -> {
-            examSubmissionService.checkSubmissionAllowance(exercise, user);
-        });
-        assertThrows(EntityNotFoundException.class, () -> {
-            examSubmissionService.isAllowedToSubmitDuringExam(exercise, user);
-        });
+        assertThrows(EntityNotFoundException.class, () -> examSubmissionService.checkSubmissionAllowance(exercise, user));
+        assertThrows(EntityNotFoundException.class, () -> examSubmissionService.isAllowedToSubmitDuringExam(exercise, user));
         // Should fail if the user's student exam does not have the exercise
         studentExam.setUser(user);
         studentExam.removeExercise(exercise);

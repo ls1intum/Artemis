@@ -18,7 +18,6 @@ import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.lecture.ExerciseUnit;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.dto.ParticipantScoreAverageDTO;
 import de.tum.in.www1.artemis.web.rest.dto.ParticipantScoreDTO;
@@ -26,57 +25,48 @@ import de.tum.in.www1.artemis.web.rest.dto.ScoreDTO;
 
 public class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
-    Long idOfExam;
+    private Long idOfExam;
 
-    Long idOfCourse;
+    private Long idOfCourse;
 
-    Long idOfTeam1;
+    private Long idOfTeam1;
 
-    Long idOfStudent1;
+    private Long idOfStudent1;
 
-    Long idOfIndividualTextExercise;
+    private Long idOfIndividualTextExercise;
 
-    Long getIdOfIndividualTextExerciseOfExam;
+    private Long getIdOfIndividualTextExerciseOfExam;
 
-    Long idOfTeamTextExercise;
+    private Long idOfTeamTextExercise;
 
-    Long idOfExerciseUnit;
-
-    @Autowired
-    SubmissionRepository submissionRepository;
+    private Long idOfExerciseUnit;
 
     @Autowired
-    ResultRepository resultRepository;
+    private ExerciseRepository exerciseRepository;
 
     @Autowired
-    ExerciseRepository exerciseRepository;
+    private CourseRepository courseRepository;
 
     @Autowired
-    CourseRepository courseRepository;
+    private UserRepository userRepository;
 
     @Autowired
-    UserRepository userRepository;
+    private TeamRepository teamRepository;
 
     @Autowired
-    ParticipationService participationService;
+    private ExamRepository examRepository;
 
     @Autowired
-    TeamRepository teamRepository;
+    private LectureRepository lectureRepository;
 
     @Autowired
-    ExamRepository examRepository;
+    private LearningGoalRepository learningGoalRepository;
 
     @Autowired
-    LectureRepository lectureRepository;
+    private LectureUnitRepository lectureUnitRepository;
 
     @Autowired
-    LearningGoalRepository learningGoalRepository;
-
-    @Autowired
-    LectureUnitRepository lectureUnitRepository;
-
-    @Autowired
-    StudentParticipationRepository studentParticipationRepository;
+    private StudentParticipationRepository studentParticipationRepository;
 
     @AfterEach
     public void resetDatabase() {
@@ -105,7 +95,7 @@ public class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationBa
         learningGoal.setTitle("ExampleLearningGoal");
         learningGoal.setCourse(course);
         learningGoal.addLectureUnit(exerciseUnit);
-        learningGoal = learningGoalRepository.saveAndFlush(learningGoal);
+        learningGoalRepository.saveAndFlush(learningGoal);
         idOfIndividualTextExercise = textExercise.getId();
         Exercise teamExercise = database.createTeamTextExercise(course, pastTimestamp, pastTimestamp, pastTimestamp);
         idOfTeamTextExercise = teamExercise.getId();
