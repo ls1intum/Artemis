@@ -120,12 +120,7 @@
                                         </span>
                                     </a>
                                     <!-- button for existing result with lock-->
-                                    <span
-                                        *ngIf="
-                                            submission.results &&
-                                            !(submission?.results && submission.results[correctionRound] && submission.results[correctionRound].completionDate)
-                                        "
-                                    >
+                                    <span *ngIf="submission.results && !(submission!.results![correctionRound] && submission!.results![correctionRound].completionDate)">
                                         <div class="btn-group-vertical mr-1 mb-10">
                                             <a
                                                 [class.disabled]="busy"
