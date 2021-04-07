@@ -322,7 +322,7 @@ The course repository call takes care of throwing a ``404 Not Found`` exception 
 21. Assert using the most specific overload method
 ==================================================
 
-When expecting results use ``AsserThat`` for server tests. That call **must** be followed by another assertion statement like ``isTrue()``. It is best practice to use more specific assertion statement rather than always expecting boolean values.
+When expecting results use ``assertThat`` for server tests. That call **must** be followed by another assertion statement like ``isTrue()``. It is best practice to use more specific assertion statement rather than always expecting boolean values.
 
 For example, instead of
 
@@ -339,5 +339,14 @@ use the methods from inside the ``assertThat`` directly:
     assertThat(submissionInDb.get().getFilePath()).contains("ffile.png");
 
 This gives better error messages when an assertion fails and improves the code readability. However, be aware that not all methods can be used for assertions like this.
+
+If you can't avoid using ``isTrue`` use the ``as`` keyword to add a custom error message:
+
+.. code-block:: java
+
+    assertThat(submission.isSubmittedInTime()).as("submission was not in time").isTrue();
+
+Please read `the AssertJ documentation <https://assertj.github.io/doc/#assertj-core-assertions-guide>`__, especially the `section about avoiding incorrect usage <https://assertj.github.io/doc/#assertj-core-incorrect-usage>`__.
+
 
 Some parts of these guidelines are adapted from https://medium.com/@madhupathy/ultimate-clean-code-guide-for-java-spring-based-applications-4d4c9095cc2a
