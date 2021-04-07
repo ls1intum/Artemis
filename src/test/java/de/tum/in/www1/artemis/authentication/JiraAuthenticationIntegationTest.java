@@ -1,8 +1,7 @@
 package de.tum.in.www1.artemis.authentication;
 
 import static de.tum.in.www1.artemis.util.ModelFactory.USER_PASSWORD;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
 
@@ -29,7 +28,7 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.ArtemisInternalAuthenticationProvider;
-import de.tum.in.www1.artemis.security.AuthoritiesConstants;
+import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.jwt.TokenProvider;
 import de.tum.in.www1.artemis.service.connectors.jira.JiraAuthenticationProvider;
 import de.tum.in.www1.artemis.service.user.PasswordService;
@@ -97,10 +96,10 @@ public class JiraAuthenticationIntegationTest extends AbstractSpringIntegrationB
         ltiLaunchRequest = AuthenticationIntegrationTestHelper.setupDefaultLtiLaunchRequest();
         doReturn(null).when(ltiService).verifyRequest(any());
 
-        final var userAuthority = new Authority(AuthoritiesConstants.USER);
-        final var instructorAuthority = new Authority(AuthoritiesConstants.INSTRUCTOR);
-        final var adminAuthority = new Authority(AuthoritiesConstants.ADMIN);
-        final var taAuthority = new Authority(AuthoritiesConstants.TEACHING_ASSISTANT);
+        final var userAuthority = new Authority(Role.STUDENT.getAuthority());
+        final var instructorAuthority = new Authority(Role.INSTRUCTOR.getAuthority());
+        final var adminAuthority = new Authority(Role.ADMIN.getAuthority());
+        final var taAuthority = new Authority(Role.TEACHING_ASSISTANT.getAuthority());
         authorityRepository.saveAll(List.of(userAuthority, instructorAuthority, adminAuthority, taAuthority));
         jiraRequestMockProvider.enableMockingOfRequests();
     }

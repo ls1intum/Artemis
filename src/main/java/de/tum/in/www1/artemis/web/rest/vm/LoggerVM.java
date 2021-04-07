@@ -1,8 +1,8 @@
 package de.tum.in.www1.artemis.web.rest.vm;
 
-import ch.qos.logback.classic.Logger;
-
 import com.fasterxml.jackson.annotation.JsonInclude;
+
+import ch.qos.logback.classic.Logger;
 
 /**
  * View Model object for storing a Logback logger.

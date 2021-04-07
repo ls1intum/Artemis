@@ -13,14 +13,11 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import de.tum.in.www1.artemis.service.compass.assessment.Context;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
-import de.tum.in.www1.artemis.service.compass.umlmodel.activity.UMLActivity;
-import de.tum.in.www1.artemis.service.compass.umlmodel.activity.UMLActivityDiagram;
-import de.tum.in.www1.artemis.service.compass.umlmodel.activity.UMLActivityNode;
-import de.tum.in.www1.artemis.service.compass.umlmodel.activity.UMLControlFlow;
+import de.tum.in.www1.artemis.service.compass.umlmodel.activity.*;
 import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.*;
 
 @ExtendWith(MockitoExtension.class)
-class SimilarityDetectorTest {
+public class SimilarityDetectorTest {
 
     @Mock
     private UMLClassDiagram classDiagram;
