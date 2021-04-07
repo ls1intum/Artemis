@@ -18,25 +18,17 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
-import de.tum.in.www1.artemis.repository.LtiOutcomeUrlRepository;
-import de.tum.in.www1.artemis.repository.LtiUserIdRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.web.rest.dto.ExerciseLtiConfigurationDTO;
 
 public class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
-    ProgrammingExerciseRepository programmingExerciseRepository;
-
-    @Autowired
-    LtiOutcomeUrlRepository ltiOutcomeUrlRepository;
-
-    @Autowired
-    LtiUserIdRepository ltiUserIdRepository;
+    private ProgrammingExerciseRepository programmingExerciseRepository;
 
     private ProgrammingExercise programmingExercise;
 
-    private String requestBody = """
+    private final String requestBody = """
             custom_component_display_name=Exercise\
             &lti_version=LTI-1p0\
             &oauth_nonce=171298047571430710991572204884\

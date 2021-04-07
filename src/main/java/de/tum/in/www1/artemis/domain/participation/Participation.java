@@ -13,10 +13,7 @@ import org.hibernate.annotations.DiscriminatorOptions;
 
 import com.fasterxml.jackson.annotation.*;
 
-import de.tum.in.www1.artemis.domain.DomainObject;
-import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.Result;
-import de.tum.in.www1.artemis.domain.Submission;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.view.QuizView;
 
@@ -135,18 +132,6 @@ public abstract class Participation extends DomainObject implements Participatio
     public void setTestRun(boolean testRun) {
         this.testRun = testRun;
     }
-
-    /**
-     *
-     * @return exercise object
-     */
-    public abstract Exercise getExercise();
-
-    /**
-     *
-     * @param exercise that will be set
-     */
-    public abstract void setExercise(Exercise exercise);
 
     public Set<Result> getResults() {
         return results;

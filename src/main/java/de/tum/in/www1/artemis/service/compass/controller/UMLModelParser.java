@@ -22,14 +22,8 @@ import de.tum.in.www1.artemis.service.compass.umlmodel.activity.UMLActivityNode.
 import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.*;
 import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLClass.UMLClassType;
 import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLRelationship.UMLRelationshipType;
-import de.tum.in.www1.artemis.service.compass.umlmodel.communication.Direction;
-import de.tum.in.www1.artemis.service.compass.umlmodel.communication.UMLCommunicationDiagram;
-import de.tum.in.www1.artemis.service.compass.umlmodel.communication.UMLCommunicationLink;
-import de.tum.in.www1.artemis.service.compass.umlmodel.communication.UMLMessage;
-import de.tum.in.www1.artemis.service.compass.umlmodel.component.UMLComponent;
-import de.tum.in.www1.artemis.service.compass.umlmodel.component.UMLComponentDiagram;
-import de.tum.in.www1.artemis.service.compass.umlmodel.component.UMLComponentInterface;
-import de.tum.in.www1.artemis.service.compass.umlmodel.component.UMLComponentRelationship;
+import de.tum.in.www1.artemis.service.compass.umlmodel.communication.*;
+import de.tum.in.www1.artemis.service.compass.umlmodel.component.*;
 import de.tum.in.www1.artemis.service.compass.umlmodel.deployment.UMLArtifact;
 import de.tum.in.www1.artemis.service.compass.umlmodel.deployment.UMLDeploymentDiagram;
 import de.tum.in.www1.artemis.service.compass.umlmodel.deployment.UMLNode;
@@ -37,14 +31,8 @@ import de.tum.in.www1.artemis.service.compass.umlmodel.flowchart.*;
 import de.tum.in.www1.artemis.service.compass.umlmodel.object.UMLObject;
 import de.tum.in.www1.artemis.service.compass.umlmodel.object.UMLObjectDiagram;
 import de.tum.in.www1.artemis.service.compass.umlmodel.object.UMLObjectLink;
-import de.tum.in.www1.artemis.service.compass.umlmodel.petrinet.PetriNet;
-import de.tum.in.www1.artemis.service.compass.umlmodel.petrinet.PetriNetArc;
-import de.tum.in.www1.artemis.service.compass.umlmodel.petrinet.PetriNetPlace;
-import de.tum.in.www1.artemis.service.compass.umlmodel.petrinet.PetriNetTransition;
-import de.tum.in.www1.artemis.service.compass.umlmodel.syntaxtree.SyntaxTree;
-import de.tum.in.www1.artemis.service.compass.umlmodel.syntaxtree.SyntaxTreeLink;
-import de.tum.in.www1.artemis.service.compass.umlmodel.syntaxtree.SyntaxTreeNonterminal;
-import de.tum.in.www1.artemis.service.compass.umlmodel.syntaxtree.SyntaxTreeTerminal;
+import de.tum.in.www1.artemis.service.compass.umlmodel.petrinet.*;
+import de.tum.in.www1.artemis.service.compass.umlmodel.syntaxtree.*;
 import de.tum.in.www1.artemis.service.compass.umlmodel.usecase.*;
 
 public class UMLModelParser {
