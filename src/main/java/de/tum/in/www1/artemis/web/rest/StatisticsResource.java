@@ -16,7 +16,7 @@ import de.tum.in.www1.artemis.web.rest.dto.CourseManagementStatisticsDTO;
  */
 @RestController
 @RequestMapping("/api")
-@PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+@PreAuthorize("hasRole('TA')")
 public class StatisticsResource {
 
     private final Logger log = LoggerFactory.getLogger(StatisticsResource.class);
@@ -52,7 +52,7 @@ public class StatisticsResource {
      * @return the ResponseEntity with status 200 (OK) and the data in body, or status 404 (Not Found)
      */
     @GetMapping("management/statistics/data-for-course")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('TA')")
     public ResponseEntity<Integer[]> getChartData(@RequestParam SpanType span, @RequestParam Integer periodIndex, @RequestParam GraphType graphType, @RequestParam Long courseId) {
         return ResponseEntity.ok(this.service.getChartData(span, periodIndex, graphType, courseId));
     }
@@ -64,7 +64,7 @@ public class StatisticsResource {
      * @return the ResponseEntity with status 200 (OK) and the data in body, or status 404 (Not Found)
      */
     @GetMapping("management/statistics/course-statistics")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('TA')")
     public ResponseEntity<CourseManagementStatisticsDTO> getCourseStatistics(@RequestParam Long courseId) {
         return ResponseEntity.ok(this.service.getCourseStatistics(courseId));
     }
