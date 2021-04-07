@@ -36,13 +36,13 @@ import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.service.ZipFileService;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
 import de.tum.in.www1.artemis.service.exam.ExamDateService;
 import de.tum.in.www1.artemis.service.exam.ExamRegistrationService;
 import de.tum.in.www1.artemis.service.exam.ExamService;
 import de.tum.in.www1.artemis.service.ldap.LdapUserDto;
 import de.tum.in.www1.artemis.util.ModelFactory;
+import de.tum.in.www1.artemis.util.ZipFileService;
 import de.tum.in.www1.artemis.web.rest.dto.*;
 
 public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -1800,14 +1800,14 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
         var submissions = submissionRepository.findAll();
 
-        var submission = submissions.stream().filter(s -> s instanceof FileUploadSubmission).findFirst().get();
-        assertSubmissionFilename(filenames, submission, ".png");
+        var savedSubmission = submissions.stream().filter(submission -> submission instanceof FileUploadSubmission).findFirst().get();
+        assertSubmissionFilename(filenames, savedSubmission, ".png");
 
-        submission = submissions.stream().filter(s -> s instanceof TextSubmission).findFirst().get();
-        assertSubmissionFilename(filenames, submission, ".txt");
+        savedSubmission = submissions.stream().filter(submission -> submission instanceof TextSubmission).findFirst().get();
+        assertSubmissionFilename(filenames, savedSubmission, ".txt");
 
-        submission = submissions.stream().filter(s -> s instanceof ModelingSubmission).findFirst().get();
-        assertSubmissionFilename(filenames, submission, ".json");
+        savedSubmission = submissions.stream().filter(submission -> submission instanceof ModelingSubmission).findFirst().get();
+        assertSubmissionFilename(filenames, savedSubmission, ".json");
     }
 
     private void assertSubmissionFilename(List<Path> expectedFilenames, Submission submission, String filenameExtension) {
