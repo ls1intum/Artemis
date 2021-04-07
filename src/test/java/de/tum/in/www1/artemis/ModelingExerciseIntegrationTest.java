@@ -45,7 +45,7 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBa
     private TeamRepository teamRepository;
 
     @Autowired
-    SubmissionRepository submissionRepository;
+    private SubmissionRepository submissionRepository;
 
     @Autowired
     ResultRepository resultRepository;
