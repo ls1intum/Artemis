@@ -391,7 +391,7 @@ This is ideal as a quickstart for developers. For a more detailed setup, see `Ma
                 password: your.gitlab.admin.password
 
 
-6. Navigate to the bottom of the file set the url of your Gitlab instance. This is typically the ip address or hostname of the Gitlab container.
+6. Navigate to the bottom of the file and set the url of your Gitlab instance. This is typically the ip address or hostname of the Gitlab container.
 
 .. code:: yaml
 
