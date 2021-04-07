@@ -2,34 +2,47 @@ import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import * as sinon from 'sinon';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { ArtemisTestModule } from '../../test.module';
-import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
+import { ArtemisTestModule } from '../../../test.module';
+import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { AlertComponent } from 'app/shared/alert/alert.component';
 import { RouterTestingModule } from '@angular/router/testing';
-import { MockHasAnyAuthorityDirective } from '../../helpers/mocks/directive/mock-has-any-authority.directive';
+import { MockHasAnyAuthorityDirective } from '../../../helpers/mocks/directive/mock-has-any-authority.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe.ts';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { MomentModule } from 'ngx-moment';
-import { StatisticsComponent } from 'app/admin/statistics/statistics.component';
 import { StatisticsGraphComponent } from 'app/shared/statistics-graph/statistics-graph.component';
 import { SpanType } from 'app/entities/statistics.model';
+import { CourseManagementStatisticsComponent } from 'app/course/manage/course-management-statistics.component';
+import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
+import { of } from 'rxjs';
+import { StatisticsAverageScoreGraphComponent } from 'app/shared/statistics-graph/statistics-average-score-graph.component';
 
 chai.use(sinonChai);
 const expect = chai.expect;
 
-describe('StatisticsComponent', () => {
-    let fixture: ComponentFixture<StatisticsComponent>;
-    let component: StatisticsComponent;
+describe('CourseManagementStatisticsComponent', () => {
+    let fixture: ComponentFixture<CourseManagementStatisticsComponent>;
+    let component: CourseManagementStatisticsComponent;
+    let service: StatisticsService;
 
-    beforeEach(fakeAsync(() => {
+    const returnValue = {
+        averageScoreOfCourse: 75,
+        averageScoresOfExercises: [
+            { exerciseId: 1, exerciseName: 'PatternsExercise', averageScore: 50 },
+            { exerciseId: 2, exerciseName: 'MorePatterns', averageScore: 50 },
+        ],
+    };
+
+    beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, RouterTestingModule.withRoutes([]), MomentModule],
             declarations: [
-                StatisticsComponent,
+                CourseManagementStatisticsComponent,
                 MockComponent(AlertComponent),
                 MockComponent(StatisticsGraphComponent),
+                MockComponent(StatisticsAverageScoreGraphComponent),
                 MockDirective(MockHasAnyAuthorityDirective),
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(ArtemisDatePipe),
@@ -41,21 +54,24 @@ describe('StatisticsComponent', () => {
         })
             .compileComponents()
             .then(() => {
-                fixture = TestBed.createComponent(StatisticsComponent);
+                fixture = TestBed.createComponent(CourseManagementStatisticsComponent);
                 component = fixture.componentInstance;
+                service = TestBed.inject(StatisticsService);
             });
-    }));
+    });
 
-    afterEach(fakeAsync(() => {
+    afterEach(() => {
         jest.clearAllMocks();
-    }));
+    });
 
-    it('should initialize', fakeAsync(() => {
+    it('should initialize', () => {
+        spyOn(service, 'getCourseStatistics').and.returnValue(of(returnValue));
         fixture.detectChanges();
         expect(component).to.be.ok;
-    }));
+    });
 
-    it('should click Month button', fakeAsync(() => {
+    it('should trigger when tab changed', fakeAsync(() => {
+        spyOn(service, 'getCourseStatistics').and.returnValue(of(returnValue));
         const tabSpy = sinon.spy(component, 'onTabChanged');
         fixture.detectChanges();
 

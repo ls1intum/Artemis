@@ -110,9 +110,9 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
         }
 
         // Check the file size
-        if (file.getSize() > Constants.MAX_UPLOAD_FILESIZE_BYTES) {
-            // NOTE: Maximum file size for submission is 4 MB
-            return ResponseEntity.status(413).headers(HeaderUtil.createAlert(applicationName, "The maximum file size is 4 MB!", "fileUploadSubmissionFileTooBig")).build();
+        if (file.getSize() > Constants.MAX_SUBMISSION_FILE_SIZE) {
+            // NOTE: Maximum file size for submission is 8 MB
+            return ResponseEntity.status(413).headers(HeaderUtil.createAlert(applicationName, "The maximum file size is 8 MB!", "fileUploadSubmissionFileTooBig")).build();
         }
 
         // Check the pattern

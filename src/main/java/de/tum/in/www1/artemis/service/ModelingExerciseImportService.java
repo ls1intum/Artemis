@@ -17,7 +17,7 @@ import de.tum.in.www1.artemis.repository.*;
 @Service
 public class ModelingExerciseImportService extends ExerciseImportService {
 
-    private final Logger log = LoggerFactory.getLogger(TextExerciseImportService.class);
+    private final Logger log = LoggerFactory.getLogger(ModelingExerciseImportService.class);
 
     private final ModelingExerciseRepository modelingExerciseRepository;
 

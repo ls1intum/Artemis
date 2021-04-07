@@ -758,6 +758,30 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testGetExam_asInstructor_WithTestRunQuizExerciseSubmissions() throws Exception {
+        Course course = database.addEmptyCourse();
+        Exam exam = database.addExamWithExerciseGroup(course, true);
+        ExerciseGroup exerciseGroup = exam.getExerciseGroups().get(0);
+        examRepository.save(exam);
+
+        StudentParticipation studentParticipation = new StudentParticipation();
+        studentParticipation.setTestRun(true);
+
+        QuizExercise quizExercise = database.createQuizForExam(exerciseGroup);
+        quizExercise.setStudentParticipations(Set.of(studentParticipation));
+        studentParticipation.setExercise(quizExercise);
+
+        exerciseRepo.save(quizExercise);
+        studentParticipationRepository.save(studentParticipation);
+
+        Exam returnedExam = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "?withExerciseGroups=true", HttpStatus.OK, Exam.class);
+
+        assertThat(returnedExam.getExerciseGroups()).anyMatch(groups -> groups.getExercises().stream().anyMatch(Exercise::getTestRunParticipationsExist));
+        verify(examAccessService, times(1)).checkCourseAndExamAccessForInstructor(course.getId(), exam.getId());
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGetExamsForCourse_asInstructor() throws Exception {
         request.getList("/api/courses/" + course1.getId() + "/exams", HttpStatus.OK, Exam.class);
         verify(examAccessService, times(1)).checkCourseAccessForTeachingAssistant(course1.getId());
