@@ -23,38 +23,27 @@ import de.tum.in.www1.artemis.util.ModelFactory;
 public class LectureUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
-    CourseRepository courseRepository;
+    private CourseRepository courseRepository;
 
     @Autowired
-    UserRepository userRepo;
+    private UserRepository userRepo;
 
     @Autowired
-    TextUnitRepository textUnitRepository;
+    private TextUnitRepository textUnitRepository;
 
     @Autowired
-    VideoUnitRepository videoUnitRepository;
+    private LectureRepository lectureRepository;
 
-    @Autowired
-    AttachmentUnitRepository attachmentUnitRepository;
+    private Lecture lecture1;
 
-    @Autowired
-    ExerciseUnitRepository exerciseUnitRepository;
+    private TextUnit textUnit;
 
-    @Autowired
-    LectureRepository lectureRepository;
+    private TextUnit textUnit2;
 
-    Course course1;
-
-    Lecture lecture1;
-
-    TextUnit textUnit;
-
-    TextUnit textUnit2;
-
-    TextUnit textUnit3;
+    private TextUnit textUnit3;
 
     // needed for correct jackson subtype serialization: see https://github.com/FasterXML/jackson-databind/issues/336#issuecomment-27228643
-    class TextUnitList extends ArrayList<TextUnit> {
+    static class TextUnitList extends ArrayList<TextUnit> {
 
     }
 
@@ -84,8 +73,8 @@ public class LectureUnitIntegrationTest extends AbstractSpringIntegrationBambooB
     public void initTestCase() throws Exception {
         this.database.addUsers(10, 10, 10);
         List<Course> courses = this.database.createCoursesWithExercisesAndLectures(true);
-        this.course1 = this.courseRepository.findWithEagerExercisesAndLecturesById(courses.get(0).getId());
-        this.lecture1 = this.course1.getLectures().stream().findFirst().get();
+        Course course1 = this.courseRepository.findByIdWithExercisesAndLecturesElseThrow(courses.get(0).getId());
+        this.lecture1 = course1.getLectures().stream().findFirst().get();
 
         // Add users that are not in the course
         userRepo.save(ModelFactory.generateActivatedUser("student42"));

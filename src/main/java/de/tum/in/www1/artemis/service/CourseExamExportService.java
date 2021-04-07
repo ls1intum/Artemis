@@ -311,7 +311,7 @@ public class CourseExamExportService {
     }
 
     private void logMessageAndAppendToList(String message, List<String> messageList) {
-        log.info(message);
+        log.error(message);
         messageList.add(message);
     }
 

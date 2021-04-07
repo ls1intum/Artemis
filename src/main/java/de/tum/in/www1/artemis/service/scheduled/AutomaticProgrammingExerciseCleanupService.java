@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.service.scheduled;
 
-import static de.tum.in.www1.artemis.config.Constants.EXTERNAL_SYSTEM_REQUEST_BATCH_SIZE;
-import static de.tum.in.www1.artemis.config.Constants.EXTERNAL_SYSTEM_REQUEST_BATCH_WAIT_TIME_MS;
+import static de.tum.in.www1.artemis.config.Constants.*;
 import static java.time.ZonedDateTime.now;
 
 import java.time.ZonedDateTime;
