@@ -1,9 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
 
 import org.springframework.stereotype.Service;
 

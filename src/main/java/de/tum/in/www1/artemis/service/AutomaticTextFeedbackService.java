@@ -3,10 +3,7 @@ package de.tum.in.www1.artemis.service;
 import static java.util.Comparator.comparing;
 import static java.util.stream.Collectors.toList;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 
 import javax.validation.constraints.NotNull;
 

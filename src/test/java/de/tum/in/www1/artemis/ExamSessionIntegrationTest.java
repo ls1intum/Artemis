@@ -22,27 +22,21 @@ import inet.ipaddr.IPAddressString;
 public class ExamSessionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
-    StudentExamRepository studentExamRepository;
+    private StudentExamRepository studentExamRepository;
 
     @Autowired
-    ExamSessionRepository examSessionRepository;
+    private ExamSessionRepository examSessionRepository;
 
     @Autowired
-    ExamSessionService examSessionService;
-
-    private List<User> users;
-
-    private Course course1;
-
-    private Exam exam1;
+    private ExamSessionService examSessionService;
 
     private StudentExam studentExam1;
 
     @BeforeEach
     public void initTestCase() {
-        users = database.addUsers(1, 1, 1);
-        course1 = database.addEmptyCourse();
-        exam1 = database.addActiveExamWithRegisteredUser(course1, users.get(0));
+        List<User> users = database.addUsers(1, 1, 1);
+        Course course1 = database.addEmptyCourse();
+        Exam exam1 = database.addActiveExamWithRegisteredUser(course1, users.get(0));
         studentExam1 = database.addStudentExam(exam1);
         studentExam1.setUser(users.get(0));
         studentExamRepository.save(studentExam1);

@@ -91,7 +91,6 @@ public class PackageNode extends ClassPathNode {
     }
 
     @Override
-    @SuppressWarnings("unchecked")
     public <N, C extends N, P extends N> P mapTreeAdvanced(Function<ClassNode, C> classMapper, TriFunction<PackageNode, Stream<P>, Stream<C>, P> packageMapper) {
         var mappedSubPackages = subPackages.values().stream().map(node -> node.mapTreeAdvanced(classMapper, packageMapper));
         var mappedOwnClasses = ownClasses.stream().map(node -> node.mapTreeAdvanced(classMapper, packageMapper));
