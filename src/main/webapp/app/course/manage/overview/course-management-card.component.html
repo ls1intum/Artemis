@@ -1,13 +1,15 @@
 <div class="card">
     <div class="card-heading text-white" [ngStyle]="{ backgroundColor: course.color || ARTEMIS_DEFAULT_COLOR }">
         <a class="stretched-link" [routerLink]="['/course-management', course.id]"></a>
-        <jhi-secured-image class="header-item" *ngIf="course.courseIcon" [cachingStrategy]="CachingStrategy.LOCAL_STORAGE" [src]="course.courseIcon"></jhi-secured-image>
-        <div class="card-date">
-            <span *ngIf="course.startDate && course.endDate">{{ course.startDate | artemisDate: 'long-date' }} - {{ course.endDate | artemisDate: 'long-date' }}</span>
-            <span *ngIf="course.startDate && !course.endDate">
-                <span jhiTranslate="artemisApp.course.startDate">Start Date</span>: {{ course.startDate | artemisDate: 'long-date' }}
-            </span>
-            <span *ngIf="!course.startDate && course.endDate"><span jhiTranslate="artemisApp.course.endDate">End Date</span>: {{ course.endDate | artemisDate: 'long-date' }}</span>
+        <div class="card-header-left">
+            <jhi-secured-image class="header-item" *ngIf="course.courseIcon" [cachingStrategy]="CachingStrategy.LOCAL_STORAGE" [src]="course.courseIcon"></jhi-secured-image>
+            <div class="card-date">
+                <div *ngIf="course.startDate && course.endDate">{{ course.startDate | artemisDate: 'long-date' }} - {{ course.endDate | artemisDate: 'long-date' }}</div>
+                <div *ngIf="course.startDate && !course.endDate">
+                    <span jhiTranslate="artemisApp.course.startDate">Start Date</span>: {{ course.startDate | artemisDate: 'long-date' }}
+                </div>
+                <div *ngIf="!course.startDate && course.endDate"><span jhiTranslate="artemisApp.course.endDate">End Date</span>: {{ course.endDate | artemisDate: 'long-date' }}</div>
+            </div>
         </div>
 
         <div class="container container-padding" [routerLink]="['/course-management', course.id]">
@@ -162,7 +164,7 @@
             [ngbTooltip]="'entity.action.exercise' | artemisTranslate"
         >
             <fa-icon [icon]="'list-alt'"></fa-icon>
-            <span class="d-none d-md-inline">{{ 'entity.action.exercise' | artemisTranslate }}</span>
+            <span class="d-none d-xl-inline">{{ 'entity.action.exercise' | artemisTranslate }}</span>
         </a>
         <a
             *ngIf="course.isAtLeastTutor"
@@ -171,7 +173,7 @@
             [ngbTooltip]="'entity.action.exams' | artemisTranslate"
         >
             <fa-icon [icon]="'graduation-cap'"></fa-icon>
-            <span class="d-none d-md-inline">{{ 'entity.action.exams' | artemisTranslate }}</span>
+            <span class="d-none d-xl-inline">{{ 'entity.action.exams' | artemisTranslate }}</span>
         </a>
         <a
             *ngIf="course.isAtLeastInstructor"
@@ -180,7 +182,7 @@
             [ngbTooltip]="'entity.action.lecture' | artemisTranslate"
         >
             <fa-icon [icon]="'file-pdf'"></fa-icon>
-            <span class="d-none d-md-inline">{{ 'entity.action.lecture' | artemisTranslate }}</span>
+            <span class="d-none d-xl-inline">{{ 'entity.action.lecture' | artemisTranslate }}</span>
         </a>
         <a
             *ngIf="course.isAtLeastInstructor"
@@ -189,7 +191,7 @@
             [ngbTooltip]="'artemisApp.learningGoal.learningGoalButton' | artemisTranslate"
         >
             <fa-icon [icon]="'flag'"></fa-icon>
-            <span [innerHTML]="'artemisApp.learningGoal.learningGoalButton' | artemisTranslate" class="d-none d-md-inline"></span>
+            <span [innerHTML]="'artemisApp.learningGoal.learningGoalButton' | artemisTranslate" class="d-none d-xl-inline"></span>
         </a>
         <a
             *ngIf="course.isAtLeastTutor"
@@ -200,7 +202,7 @@
             [class.guided-tour]="isGuidedTour"
         >
             <fa-icon [icon]="'user-check'"></fa-icon>
-            <span class="d-none d-md-inline">{{ 'entity.action.assessmentDashboard' | artemisTranslate }}</span>
+            <span class="d-none d-xl-inline">{{ 'entity.action.assessmentDashboard' | artemisTranslate }}</span>
         </a>
         <a
             *ngIf="course.isAtLeastInstructor"
@@ -209,7 +211,7 @@
             [ngbTooltip]="'artemisApp.course.instructorDashboard' | artemisTranslate"
         >
             <fa-icon [icon]="'chess-king'"></fa-icon>
-            <span class="d-none d-md-inline">{{ 'artemisApp.course.instructorDashboard' | artemisTranslate }}</span>
+            <span class="d-none d-xl-inline">{{ 'artemisApp.course.instructorDashboard' | artemisTranslate }}</span>
         </a>
         <a
             *ngIf="course.isAtLeastInstructor"
@@ -218,7 +220,7 @@
             [ngbTooltip]="'entity.action.scores' | artemisTranslate"
         >
             <fa-icon [icon]="'table'"></fa-icon>
-            <span class="d-none d-md-inline">{{ 'entity.action.scores' | artemisTranslate }}</span>
+            <span class="d-none d-xl-inline">{{ 'entity.action.scores' | artemisTranslate }}</span>
         </a>
         <a
             *ngIf="course.isAtLeastTutor"
@@ -227,7 +229,7 @@
             [ngbTooltip]="'artemisApp.courseStatistics.statistics' | artemisTranslate"
         >
             <fa-icon [icon]="'chart-bar'"></fa-icon>
-            <span class="d-none d-md-inline">{{ 'artemisApp.courseStatistics.statistics' | artemisTranslate }}</span>
+            <span class="d-none d-xl-inline">{{ 'artemisApp.courseStatistics.statistics' | artemisTranslate }}</span>
         </a>
     </div>
 </div>

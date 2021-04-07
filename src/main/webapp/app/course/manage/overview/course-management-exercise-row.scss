@@ -9,6 +9,10 @@
     align-content: center;
     height: 60px;
 
+    .exercise-details-container {
+        max-width: 55ch;
+    }
+
     .item-title-container {
         display: flex;
         align-items: center;
@@ -100,7 +104,7 @@
 
     .exercise-date-container {
         justify-content: center;
-        min-width: 340px;
+        min-width: 285px;
         max-width: max-content;
         padding: 0;
         margin: auto;
@@ -119,18 +123,21 @@
     }
 
     .exercise-score-container {
-        padding-left: 0;
+        padding: 0;
         margin: auto;
         z-index: 1;
     }
 
     .exercise-score {
-        padding-left: 15px;
         width: 250px;
         text-align: center;
         display: flex;
         flex-direction: column;
         justify-content: center;
+
+        span {
+            white-space: nowrap;
+        }
     }
 
     .pointer-row {
@@ -163,6 +170,10 @@
     }
 
     .course-item {
+        .exercise-details-container {
+            max-width: 43ch;
+        }
+
         .item-title {
             max-width: 40ch;
         }
@@ -174,22 +185,64 @@
 }
 
 @media screen and (max-width: 1680px) {
-    .hide-1680 {
-        display: none !important;
-    }
+    .course-item {
+        .exercise-details-container {
+            max-width: 33ch;
+        }
 
-    .pointer-row {
-        min-width: 45%;
+        .item-title {
+            max-width: 30ch;
+        }
+
+        .exercise-score {
+            span {
+                font-size: small;
+            }
+        }
     }
 }
 
-@media screen and (max-width: 1450px) {
-    .hide-1400 {
+@media screen and (max-width: 1400px) {
+    .course-item {
+        .exercise-details-container {
+            max-width: 23ch;
+        }
+
+        .item-title {
+            max-width: 15ch;
+        }
+    }
+}
+
+@media screen and (max-width: 1250px) {
+    .course-item {
+        .exercise-details-container {
+            max-width: 18ch;
+        }
+
+        .item-title {
+            max-width: 10ch;
+        }
+    }
+}
+
+@media screen and (max-width: 1150px) {
+    .exercise-score-container {
         display: none !important;
     }
 
-    .pointer-row {
-        min-width: 100%;
+    .exercise-date-container {
+        display: none !important;
+    }
+
+    .course-item {
+        .exercise-details-container {
+            max-width: 60ch;
+        }
+
+        .item-title {
+            max-width: 50ch;
+        }
     }
 }
 
@@ -199,6 +252,10 @@
     }
 
     .course-item {
+        .exercise-details-container {
+            max-width: 30ch;
+        }
+
         .item-title {
             max-width: 20ch;
         }
@@ -207,6 +264,10 @@
 
 @media screen and (max-width: 480px) {
     .course-item {
+        .exercise-details-container {
+            max-width: 40ch;
+        }
+
         .item-title {
             max-width: 15ch;
         }
