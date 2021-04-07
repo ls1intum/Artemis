@@ -390,7 +390,7 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
         database.updateExerciseDueDate(exercise.getId(), ZonedDateTime.now().minusHours(1));
         var submissions = submissionRepository.findAll();
 
-        Participation response = request.get("/api/programming-submissions/" + submission.getId() + "/lock", HttpStatus.FORBIDDEN, Participation.class);
+        request.get("/api/programming-submissions/" + submission.getId() + "/lock", HttpStatus.FORBIDDEN, Participation.class);
 
         // Make sure no new submissions are created
         var latestSubmissions = submissionRepository.findAll();

@@ -23,7 +23,6 @@ import { JhiAlertService } from 'ng-jhipster';
 import { MockComponent } from 'ng-mocks';
 import { ResultService } from 'app/exercises/shared/result/result.service';
 import { RepositoryFileService } from 'app/exercises/shared/result/repository.service';
-import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ProgrammingAssessmentRepoExportButtonComponent } from 'app/exercises/programming/assess/repo-export/programming-assessment-repo-export-button.component';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
@@ -78,7 +77,6 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
     let programmingAssessmentManualResultService: ProgrammingAssessmentManualResultService;
     let complaintService: ComplaintService;
     let accountService: AccountService;
-    let programmingExerciseParticipationService: ProgrammingExerciseParticipationService;
     let programmingSubmissionService: ProgrammingSubmissionService;
     let programmingExerciseService: ProgrammingExerciseService;
     let repositoryFileService: CodeEditorRepositoryFileService;
@@ -157,7 +155,6 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
             declarations: [MockComponent(ProgrammingAssessmentRepoExportButtonComponent)],
             providers: [
                 ProgrammingAssessmentManualResultService,
-                ProgrammingExerciseParticipationService,
                 ComplaintService,
                 BuildLogService,
                 AccountService,
@@ -183,7 +180,6 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
                 comp = fixture.componentInstance;
                 debugElement = fixture.debugElement;
                 programmingAssessmentManualResultService = debugElement.injector.get(ProgrammingAssessmentManualResultService);
-                programmingExerciseParticipationService = debugElement.injector.get(ProgrammingExerciseParticipationService);
                 programmingSubmissionService = debugElement.injector.get(ProgrammingSubmissionService);
                 complaintService = debugElement.injector.get(ComplaintService);
                 accountService = debugElement.injector.get(AccountService);

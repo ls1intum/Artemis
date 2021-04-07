@@ -12,7 +12,6 @@ import { ProgrammingSubmission } from 'app/entities/programming-submission.model
 import { getLatestSubmissionResult, setLatestSubmissionResult, SubmissionType } from 'app/entities/submission.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { findLatestResult } from 'app/shared/util/utils';
-import { Participation } from 'app/entities/participation/participation.model';
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
 
 export enum ProgrammingSubmissionState {
