@@ -7,6 +7,7 @@ import static org.mockito.Mockito.verify;
 
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Objects;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -42,6 +43,9 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBa
 
     @Autowired
     private TeamRepository teamRepository;
+
+    @Autowired
+    SubmissionRepository submissionRepository;
 
     private ModelingExercise classExercise;
 
@@ -273,11 +277,14 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBa
 
         ModelingExercise modelingExercise = ModelFactory.generateModelingExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1), DiagramType.ClassDiagram, course1);
         modelingExercise = modelingExerciseRepository.save(modelingExercise);
+        database.addGradingInstructionsToExercise(modelingExercise);
 
         // Create example submission
         var exampleSubmission = database.generateExampleSubmission("model", modelingExercise, true);
         exampleSubmission = database.addExampleSubmission(exampleSubmission);
         database.addResultToSubmission(exampleSubmission.getSubmission(), AssessmentType.MANUAL);
+        var submission = submissionRepository.findWithEagerResultAndFeedbackById(exampleSubmission.getSubmission().getId()).get();
+        database.addFeedbackToResult(ModelFactory.generateFeedback().stream().findFirst().get(), Objects.requireNonNull(submission.getLatestResult()));
 
         modelingExercise.setCourse(course2);
         request.postWithResponseBody("/api/modeling-exercises/import/" + modelingExercise.getId(), modelingExercise, ModelingExercise.class, HttpStatus.CREATED);
