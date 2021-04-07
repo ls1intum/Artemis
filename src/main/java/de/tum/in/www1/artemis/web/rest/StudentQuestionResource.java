@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -67,12 +67,16 @@ public class StudentQuestionResource {
      *
      * @param courseId course the question belongs to
      * @param studentQuestion the studentQuestion to create
-     * @return the ResponseEntity with status 201 (Created) and with body the new studentQuestion, or with status 400 (Bad Request) if the studentQuestion has already an ID
+     * @return the ResponseEntity with status 201 (Created) and with body the new studentQuestion, or with status 400 (Bad Request) if the studentQuestion
+     * already has an ID or the courseId in the body doesnt match the PathVariable
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("courses/{courseId}/student-questions")
-    @PreAuthorize("hasRole('USER') && #studentQuestion.course.id == #courseId")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<StudentQuestion> createStudentQuestion(@PathVariable Long courseId, @RequestBody StudentQuestion studentQuestion) throws URISyntaxException {
+        if (!studentQuestion.getCourse().getId().equals(courseId)) {
+            badRequest("courseId", "400", "PathVariable courseId doesnt match the courseId of the sent StudentQuestion in Body");
+        }
         log.debug("REST request to save StudentQuestion : {}", studentQuestion);
         User user = this.userRepository.getUserWithGroupsAndAuthorities();
         if (studentQuestion.getId() != null) {
@@ -110,7 +114,7 @@ public class StudentQuestionResource {
         courseRepository.findByIdElseThrow(courseId);
         StudentQuestion existingStudentQuestion = studentQuestionRepository.findByIdElseThrow(studentQuestion.getId());
         if (!existingStudentQuestion.getCourse().getId().equals(courseId)) {
-            return forbidden();
+            return badRequest("courseId", "400", "PathVariable courseId doesnt match courseId of the StudentQuestion that should be changed");
         }
         mayUpdateOrDeleteStudentQuestionElseThrow(existingStudentQuestion, user);
         existingStudentQuestion.setQuestionText(studentQuestion.getQuestionText());
@@ -125,17 +129,20 @@ public class StudentQuestionResource {
      * @param courseId course the question belongs to
      * @param questionId the ID of the question to update
      * @param voteChange value by which votes are increased / decreased
-     * @return the ResponseEntity with status 200 (OK) and with body the updated studentQuestion, or with status 400 (Bad Request) if the studentQuestion is not valid, or with
+     * @return the ResponseEntity with status 200 (OK) and with body the updated studentQuestion, or with status 400 (Bad Request) if the studentQuestion or the voteChanges are invalid, or with
      *         status 500 (Internal Server Error) if the studentQuestion couldn't be updated
      */
     @PutMapping("courses/{courseId}/student-questions/{questionId}/votes")
-    @PreAuthorize("hasRole('USER') && (#voteChange >= -2 || #voteChange <= 2)")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<StudentQuestion> updateStudentQuestionVotes(@PathVariable Long courseId, @PathVariable Long questionId, @RequestBody Integer voteChange) {
+        if (voteChange < -2 || voteChange > 2) {
+            badRequest("voteChange", "400", "voteChange must be >= -2 and <= 2");
+        }
         final User user = userRepository.getUserWithGroupsAndAuthorities();
         StudentQuestion studentQuestion = studentQuestionRepository.findByIdElseThrow(questionId);
         courseRepository.findByIdElseThrow(courseId);
         if (!studentQuestion.getCourse().getId().equals(courseId)) {
-            return forbidden();
+            return badRequest("courseId", "400", "PathVariable courseId doesnt match courseId of the StudentQuestion that should be changed");
         }
         mayUpdateStudentQuestionVotesElseThrow(studentQuestion, user);
         Integer newVotes = studentQuestion.getVotes() + voteChange;
@@ -149,7 +156,8 @@ public class StudentQuestionResource {
      *
      * @param courseId course the question belongs to
      * @param exerciseId the exercise that the student questions belong to
-     * @return the ResponseEntity with status 200 (OK) and with body all student questions for exercise
+     * @return the ResponseEntity with status 200 (OK) and with body all student questions for exercise or 400 (Bad Request) if exercises courseId doesnt match
+     * the PathVariable courseId
      */
     @GetMapping("courses/{courseId}/exercises/{exerciseId}/student-questions")
     @PreAuthorize("hasRole('USER')")
@@ -159,7 +167,7 @@ public class StudentQuestionResource {
         courseRepository.findByIdElseThrow(courseId);
         authorizationCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, exercise, user);
         if (!exercise.getCourseViaExerciseGroupOrCourseMember().getId().equals(courseId)) {
-            return forbidden();
+            return badRequest("courseId", "400", "PathVariable courseId doesnt match courseId of the exercise that should be returned");
         }
         List<StudentQuestion> studentQuestions = studentQuestionRepository.findStudentQuestionsForExercise(exerciseId);
         hideSensitiveInformation(studentQuestions);
@@ -171,7 +179,8 @@ public class StudentQuestionResource {
      *
      * @param courseId course the question belongs to
      * @param lectureId the lecture that the student questions belong to
-     * @return the ResponseEntity with status 200 (OK) and with body all student questions for lecture
+     * @return the ResponseEntity with status 200 (OK) and with body all student questions for lecture or 400 (Bad Request) if the lectures courseId doesnt match
+     * the PathVariable courseId
      */
     @GetMapping("courses/{courseId}/lectures/{lectureId}/student-questions")
     @PreAuthorize("hasRole('USER')")
@@ -185,8 +194,9 @@ public class StudentQuestionResource {
             hideSensitiveInformation(studentQuestions);
             return new ResponseEntity<>(studentQuestions, null, HttpStatus.OK);
         }
-        else
-            return forbidden();
+        else {
+            return badRequest("courseId", "400", "PathVariable courseId and the courseId of the Lecture dont match");
+        }
     }
 
     /**
@@ -202,7 +212,6 @@ public class StudentQuestionResource {
         var course = courseRepository.findByIdElseThrow(courseId);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, user);
         List<StudentQuestion> studentQuestions = studentQuestionRepository.findStudentQuestionsForCourse(courseId);
-
         return new ResponseEntity<>(studentQuestions, null, HttpStatus.OK);
     }
 
@@ -222,7 +231,7 @@ public class StudentQuestionResource {
      *
      * @param courseId course the question belongs to
      * @param studentQuestionId the id of the studentQuestion to delete
-     * @return the ResponseEntity with status 200 (OK)
+     * @return the ResponseEntity with status 200 (OK) or 400 (Bad Request) if the data is inconsistent
      */
     @DeleteMapping("courses/{courseId}/student-questions/{studentQuestionId}")
     @PreAuthorize("hasRole('USER')")

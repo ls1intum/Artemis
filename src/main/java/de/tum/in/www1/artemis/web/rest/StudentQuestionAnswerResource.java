@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.badRequest;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -67,7 +67,7 @@ public class StudentQuestionAnswerResource {
      * @param courseId the id of the course the answer belongs to
      * @param studentQuestionAnswer the studentQuestionAnswer to create
      * @return the ResponseEntity with status 201 (Created) and with body the new studentQuestionAnswer, or with status 400 (Bad Request) if the studentQuestionAnswer has already
-     *         an ID
+     *         an ID or there are inconsistencies within the data
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("courses/{courseId}/student-question-answers")
@@ -83,7 +83,7 @@ public class StudentQuestionAnswerResource {
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
         StudentQuestion studentQuestion = studentQuestionRepository.findByIdElseThrow(studentQuestionAnswer.getQuestion().getId());
         if (!studentQuestion.getCourse().getId().equals(courseId)) {
-            return forbidden();
+            return badRequest("courseId", "400", "PathVariable courseId doesnt match courseId of the StudentQuestionAnswer in the body that should be added");
         }
         // answer to approved if written by an instructor
         studentQuestionAnswer.setTutorApproved(this.authorizationCheckService.isAtLeastInstructorInCourse(course, user));
@@ -119,7 +119,7 @@ public class StudentQuestionAnswerResource {
         courseRepository.findByIdElseThrow(courseId);
         StudentQuestionAnswer existingStudentQuestionAnswer = studentQuestionAnswerRepository.findByIdElseThrow(studentQuestionAnswer.getId());
         if (!existingStudentQuestionAnswer.getQuestion().getCourse().getId().equals(courseId)) {
-            return forbidden();
+            return badRequest("courseId", "400", "PathVariable courseId doesnt match courseId of the StudentQuestionAnswer in the body");
         }
         mayUpdateOrDeleteStudentQuestionAnswerElseThrow(existingStudentQuestionAnswer, user);
         StudentQuestionAnswer result = studentQuestionAnswerRepository.save(studentQuestionAnswer);
@@ -131,7 +131,7 @@ public class StudentQuestionAnswerResource {
      *
      * @param courseId the id of the course the answer belongs to
      * @param id the id of the questionAnswer to retrieve
-     * @return the ResponseEntity with status 200 (OK) and with body the questionAnswer, or with status 404 (Not Found)
+     * @return the ResponseEntity with status 200 (OK) and with body the questionAnswer, with status 400 (Bad Request) if theres inconsistencies within the data requested, or with status 404 (Not Found)
      */
     @GetMapping("courses/{courseId}/student-question-answers/{id}")
     @PreAuthorize("hasRole('INSTRUCTOR')")
@@ -142,7 +142,7 @@ public class StudentQuestionAnswerResource {
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
         StudentQuestionAnswer questionAnswer = studentQuestionAnswerRepository.findByIdElseThrow(id);
         if (!questionAnswer.getQuestion().getCourse().getId().equals(courseId)) {
-            return forbidden();
+            return badRequest("courseId", "400", "PathVariable courseId doesnt match courseId of the StudentQuestionAnswer that should be returned");
         }
         return ResponseEntity.ok(questionAnswer);
     }
@@ -152,7 +152,7 @@ public class StudentQuestionAnswerResource {
      *
      * @param courseId the id of the course the answer belongs to
      * @param id the id of the questionAnswer to delete
-     * @return the ResponseEntity with status 200 (OK)
+     * @return the ResponseEntity with status 200 (OK) or 400 (Bad Request) if theres inconsistencies within the data
      */
     @DeleteMapping("courses/{courseId}/student-question-answers/{id}")
     @PreAuthorize("hasRole('USER')")
@@ -172,7 +172,7 @@ public class StudentQuestionAnswerResource {
             return ResponseEntity.badRequest().build();
         }
         if (!course.getId().equals(courseId)) {
-            return forbidden();
+            return badRequest("courseId", "400", "PathVariable courseId doesnt match courseId of the StudentQuestionAnswer that should be deleted");
         }
         mayUpdateOrDeleteStudentQuestionAnswerElseThrow(studentQuestionAnswer, user);
         log.info("StudentQuestionAnswer deleted by " + user.getLogin() + ". Answer: " + studentQuestionAnswer.getAnswerText() + " for " + entity, user.getLogin());
