@@ -47,9 +47,6 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBa
     @Autowired
     private SubmissionRepository submissionRepository;
 
-    @Autowired
-    private ResultRepository resultRepository;
-
     private ModelingExercise classExercise;
 
     private List<GradingCriterion> gradingCriteria;
