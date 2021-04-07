@@ -47,6 +47,9 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBa
     @Autowired
     SubmissionRepository submissionRepository;
 
+    @Autowired
+    ResultRepository resultRepository;
+
     private ModelingExercise classExercise;
 
     private List<GradingCriterion> gradingCriteria;
@@ -287,7 +290,15 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBa
         database.addFeedbackToResult(ModelFactory.generateFeedback().stream().findFirst().get(), Objects.requireNonNull(submission.getLatestResult()));
 
         modelingExercise.setCourse(course2);
-        request.postWithResponseBody("/api/modeling-exercises/import/" + modelingExercise.getId(), modelingExercise, ModelingExercise.class, HttpStatus.CREATED);
+        var importedModelingExercise = request.postWithResponseBody("/api/modeling-exercises/import/" + modelingExercise.getId(), modelingExercise, ModelingExercise.class,
+                HttpStatus.CREATED);
+
+        assertThat(modelingExerciseRepository.findById(importedModelingExercise.getId())).isPresent();
+        importedModelingExercise = modelingExerciseRepository.findByIdWithExampleSubmissionsAndResults(modelingExercise.getId()).get();
+
+        var importedExampleSubmission = importedModelingExercise.getExampleSubmissions().stream().findFirst().get();
+        assertThat(importedExampleSubmission.getId()).isEqualTo(exampleSubmission.getId());
+        assertThat(importedExampleSubmission.getSubmission().getLatestResult()).isEqualTo(submission.getLatestResult());
     }
 
     @Test
