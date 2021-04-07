@@ -54,7 +54,7 @@
                         <jhi-result [participation]="submission.participation!"></jhi-result>
                     </td>
                     <td>
-                        <ng-container *ngIf="submission.participation?.submissions">
+                        <ng-container *ngIf="submission.participation!.submissions">
                             <a
                                 *ngIf="exercise.isAtLeastInstructor && !examId"
                                 [routerLink]="['/course-management', courseId, 'exercises', exercise.id, 'participations', submission.participation!.id!, 'submissions']"
@@ -85,7 +85,7 @@
                         {{ 'artemisApp.assessment.dashboard.minutes' | artemisTranslate }}
                     </td>
                     <td>
-                        <div *ngIf="submission?.results?.length && submission.results!.length! > 1 && submission.results && submission.results[0]?.assessor">
+                        <div *ngIf="submission?.results?.length && submission.results!.length! > 1 && submission!.results![0]?.assessor">
                             {{ submission.results![0]!.assessor!.name }}
                         </div>
                         <div *ngIf="submission.latestResult && submission.latestResult!.assessor">{{ submission.latestResult!.assessor!.name }}</div>
