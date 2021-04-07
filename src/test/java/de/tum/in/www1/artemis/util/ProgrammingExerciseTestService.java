@@ -5,8 +5,7 @@ import static de.tum.in.www1.artemis.domain.enumeration.ExerciseMode.TEAM;
 import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource.Endpoints.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
@@ -42,7 +41,7 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentPar
 import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.programmingexercise.MockDelegate;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.security.AuthoritiesConstants;
+import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
@@ -320,6 +319,10 @@ public class ProgrammingExerciseTestService {
         assertThat(programmingExerciseRepository.count()).isEqualTo(1);
     }
 
+    private void commonImportSetup(ProgrammingExercise sourceExercise) {
+        // TODO: make sure that the local and remote repos of the origin exercise include the correct files so that the template upgrade service is invoked correctly
+    }
+
     // TEST
     public void importExercise_created(ProgrammingLanguage programmingLanguage, boolean recreateBuildPlans) throws Exception {
         boolean staticCodeAnalysisEnabled = programmingLanguage == ProgrammingLanguage.JAVA || programmingLanguage == ProgrammingLanguage.SWIFT;
@@ -330,6 +333,7 @@ public class ProgrammingExerciseTestService {
         database.addHintsToExercise(sourceExercise);
         database.addHintsToProblemStatement(sourceExercise);
         sourceExercise = database.loadProgrammingExerciseWithEagerReferences(sourceExercise);
+        commonImportSetup(sourceExercise);
         ProgrammingExercise exerciseToBeImported = ModelFactory.generateToBeImportedProgrammingExercise("ImportTitle", "imported", sourceExercise, database.addEmptyCourse());
         exerciseToBeImported.setStaticCodeAnalysisEnabled(staticCodeAnalysisEnabled);
         // Mock requests
@@ -374,6 +378,7 @@ public class ProgrammingExerciseTestService {
     public void importExercise_enablePlanFails() throws Exception {
         // Setup exercises for import
         ProgrammingExercise sourceExercise = database.addCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories();
+        commonImportSetup(sourceExercise);
         // database.addTestCasesToProgrammingExercise(sourceExercise);
         sourceExercise = database.loadProgrammingExerciseWithEagerReferences(sourceExercise);
         ProgrammingExercise exerciseToBeImported = ModelFactory.generateToBeImportedProgrammingExercise("ImportTitle", "imported", sourceExercise, database.addEmptyCourse());
@@ -397,6 +402,7 @@ public class ProgrammingExerciseTestService {
     public void importExercise_planDoesntExist() throws Exception {
         // Setup exercises for import
         ProgrammingExercise sourceExercise = database.addCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories();
+        commonImportSetup(sourceExercise);
         // database.addTestCasesToProgrammingExercise(sourceExercise);
         sourceExercise = database.loadProgrammingExerciseWithEagerReferences(sourceExercise);
         ProgrammingExercise exerciseToBeImported = ModelFactory.generateToBeImportedProgrammingExercise("ImportTitle", "imported", sourceExercise, database.addEmptyCourse());
@@ -933,7 +939,7 @@ public class ProgrammingExerciseTestService {
         mockDelegate.mockConnectorRequestsForStartParticipation(exercise, team.getParticipantIdentifier(), team.getStudents(), true, HttpStatus.CREATED);
 
         // Add a new student to the team
-        User newStudent = ModelFactory.generateActivatedUsers("new-student", new String[] { "tumuser", "testgroup" }, Set.of(new Authority(AuthoritiesConstants.USER)), 1).get(0);
+        User newStudent = ModelFactory.generateActivatedUsers("new-student", new String[] { "tumuser", "testgroup" }, Set.of(new Authority(Role.STUDENT.getAuthority())), 1).get(0);
         newStudent = userRepo.save(newStudent);
         team.addStudents(newStudent);
 
@@ -989,7 +995,7 @@ public class ProgrammingExerciseTestService {
 
         // create a team for the user (necessary condition before starting an exercise)
         final String edxUsername = userPrefixEdx.get() + "student";
-        User edxStudent = ModelFactory.generateActivatedUsers(edxUsername, new String[] { "tumuser", "testgroup" }, Set.of(new Authority(AuthoritiesConstants.USER)), 1).get(0);
+        User edxStudent = ModelFactory.generateActivatedUsers(edxUsername, new String[] { "tumuser", "testgroup" }, Set.of(new Authority(Role.STUDENT.getAuthority())), 1).get(0);
         edxStudent.setPassword(passwordService.encryptPassword(edxStudent.getPassword()));
         edxStudent = userRepo.save(edxStudent);
         Team team = setupTeam(edxStudent);

@@ -11,14 +11,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
-import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
-import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
-import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
-import de.tum.in.www1.artemis.domain.participation.Participant;
-import de.tum.in.www1.artemis.domain.participation.Participation;
-import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
-import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.domain.enumeration.*;
+import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
@@ -56,6 +50,8 @@ public class ParticipationService {
 
     private final ExerciseRepository exerciseRepository;
 
+    private final ProgrammingExerciseRepository programmingExerciseRepository;
+
     private final ResultRepository resultRepository;
 
     private final SubmissionRepository submissionRepository;
@@ -71,11 +67,12 @@ public class ParticipationService {
     private final ParticipantScoreRepository participantScoreRepository;
 
     public ParticipationService(UrlService urlService, ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
-            StudentParticipationRepository studentParticipationRepository, ExerciseRepository exerciseRepository, ResultRepository resultRepository,
-            SubmissionRepository submissionRepository, ComplaintResponseRepository complaintResponseRepository, ComplaintRepository complaintRepository,
-            TeamRepository teamRepository, GitService gitService, QuizScheduleService quizScheduleService, ParticipationRepository participationRepository,
-            Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService, RatingRepository ratingRepository,
-            ParticipantScoreRepository participantScoreRepository) {
+            StudentParticipationRepository studentParticipationRepository, ExerciseRepository exerciseRepository, ProgrammingExerciseRepository programmingExerciseRepository,
+            ResultRepository resultRepository, SubmissionRepository submissionRepository, ComplaintResponseRepository complaintResponseRepository,
+            ComplaintRepository complaintRepository, TeamRepository teamRepository, GitService gitService, QuizScheduleService quizScheduleService,
+            ParticipationRepository participationRepository, Optional<ContinuousIntegrationService> continuousIntegrationService,
+            Optional<VersionControlService> versionControlService, RatingRepository ratingRepository, ParticipantScoreRepository participantScoreRepository) {
+        this.programmingExerciseRepository = programmingExerciseRepository;
         this.participationRepository = participationRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
         this.studentParticipationRepository = studentParticipationRepository;
@@ -98,9 +95,9 @@ public class ParticipationService {
      * This method is triggered when a student starts an exercise. It creates a Participation which connects the corresponding student and exercise. Additionally, it configures
      * repository / build plan related stuff for programming exercises. In the case of modeling or text exercises, it also initializes and stores the corresponding submission.
      *
-     * @param exercise the exercise which is started
+     * @param exercise the exercise which is started, a programming exercise needs to have the template and solution participation eagerly loaded
      * @param participant the user or team who starts the exercise
-     * @param createInitialSubmission whether an initial empty submission should be created for text,modeling,quiz,fileupload or not
+     * @param createInitialSubmission whether an initial empty submission should be created for text, modeling, quiz, fileupload or not
      * @return the participation connecting the given exercise and user
      */
     public StudentParticipation startExercise(Exercise exercise, Participant participant, boolean createInitialSubmission) {
@@ -128,7 +125,9 @@ public class ParticipationService {
         }
 
         if (exercise instanceof ProgrammingExercise) {
-            participation = startProgrammingExercise((ProgrammingExercise) exercise, (ProgrammingExerciseStudentParticipation) participation);
+            // fetch again to get additional objects
+            var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exercise.getId());
+            participation = startProgrammingExercise(programmingExercise, (ProgrammingExerciseStudentParticipation) participation);
         }
         else {// for all other exercises: QuizExercise, ModelingExercise, TextExercise, FileUploadExercise
             if (participation.getInitializationState() == null || participation.getInitializationState() == UNINITIALIZED
@@ -217,9 +216,10 @@ public class ParticipationService {
 
         // setup repository in case of programming exercise
         if (exercise instanceof ProgrammingExercise) {
-            ProgrammingExercise programmingExercise = (ProgrammingExercise) exercise;
+            // fetch again to get additional objects
+            ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exercise.getId());
             ProgrammingExerciseStudentParticipation programmingParticipation = (ProgrammingExerciseStudentParticipation) participation;
-            // Note: we need a repository, otherwise the student cannot click resume.
+            // Note: we need a repository, otherwise the student would not be possible to click resume (in case he wants to further participate after the deadline)
             programmingParticipation = copyRepository(programmingParticipation);
             programmingParticipation = configureRepository(programmingExercise, programmingParticipation);
             programmingParticipation = configureRepositoryWebHook(programmingParticipation);

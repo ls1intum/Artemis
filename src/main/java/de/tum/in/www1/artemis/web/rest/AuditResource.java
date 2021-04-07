@@ -25,7 +25,7 @@ import io.swagger.annotations.ApiParam;
  */
 @RestController
 @RequestMapping("/management/audits")
-@PreAuthorize("hasAnyRole('ADMIN')")
+@PreAuthorize("hasRole('ADMIN')")
 public class AuditResource {
 
     private final AuditEventService auditEventService;

@@ -2,8 +2,7 @@ package de.tum.in.www1.artemis.programmingexercise;
 
 import static de.tum.in.www1.artemis.config.Constants.NEW_RESULT_RESOURCE_PATH;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 
 import java.util.Arrays;
 import java.util.List;
@@ -32,8 +31,6 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.connectors.jenkins.dto.TestResultsDTO;
 import de.tum.in.www1.artemis.util.ModelFactory;
-import de.tum.in.www1.artemis.web.rest.ProgrammingSubmissionResource;
-import de.tum.in.www1.artemis.web.rest.ResultResource;
 
 public class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 
@@ -41,37 +38,16 @@ public class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends 
     private String ARTEMIS_AUTHENTICATION_TOKEN_VALUE;
 
     @Autowired
-    ProgrammingExerciseRepository exerciseRepo;
+    private ProgrammingSubmissionRepository submissionRepository;
 
     @Autowired
-    ProgrammingSubmissionResource programmingSubmissionResource;
+    private ProgrammingExerciseStudentParticipationRepository studentParticipationRepository;
 
     @Autowired
-    ResultResource resultResource;
+    private ProgrammingExerciseRepository programmingExerciseRepository;
 
     @Autowired
-    ProgrammingSubmissionRepository submissionRepository;
-
-    @Autowired
-    ParticipationRepository participationRepository;
-
-    @Autowired
-    ProgrammingExerciseStudentParticipationRepository studentParticipationRepository;
-
-    @Autowired
-    SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository;
-
-    @Autowired
-    TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository;
-
-    @Autowired
-    ProgrammingExerciseRepository programmingExerciseRepository;
-
-    @Autowired
-    ResultRepository resultRepository;
-
-    @Autowired
-    BuildLogEntryRepository buildLogEntryRepository;
+    private ResultRepository resultRepository;
 
     private ProgrammingExercise exercise;
 
@@ -102,7 +78,7 @@ public class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends 
                 .flatMap(programmingLanguage -> Stream.of(Arguments.of(programmingLanguage, true), Arguments.of(programmingLanguage, false)));
     }
 
-    @ParameterizedTest
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @MethodSource("shouldSavebuildLogsOnStudentParticipationArguments")
     @WithMockUser(username = "student1", roles = "USER")
     void shouldNotReceiveBuildLogsOnStudentParticipationWithoutResult(ProgrammingLanguage programmingLanguage, boolean enableStaticCodeAnalysis) throws Exception {
@@ -125,7 +101,7 @@ public class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends 
         assertNoNewSubmissions(submission);
     }
 
-    @ParameterizedTest
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @MethodSource("shouldSavebuildLogsOnStudentParticipationArguments")
     @WithMockUser(username = "student1", roles = "USER")
     void shouldNotReceiveBuildLogsOnStudentParticipationWithoutSubmissionNorResult(ProgrammingLanguage programmingLanguage, boolean enableStaticCodeAnalysis) throws Exception {
