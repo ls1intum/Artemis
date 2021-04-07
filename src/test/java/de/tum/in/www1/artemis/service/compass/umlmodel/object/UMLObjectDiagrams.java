@@ -6,7 +6,7 @@ import java.nio.charset.StandardCharsets;
 
 import org.apache.commons.io.IOUtils;
 
-final class UMLObjectDiagrams {
+public final class UMLObjectDiagrams {
 
     static final String OBJECT_MODEL_1;
 
