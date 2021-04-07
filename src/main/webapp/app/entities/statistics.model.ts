@@ -22,4 +22,20 @@ export enum Graphs {
 
     // Course overview
     ACTIVE_STUDENTS = 'ACTIVE_STUDENTS',
+
+    // Course Statistics
+    AVERAGE_SCORE = 'AVERAGE_SCORE',
+    QUESTIONS_ASKED = 'QUESTIONS_ASKED',
+    QUESTIONS_ANSWERED = 'QUESTIONS_ANSWERED',
+}
+
+export enum StatisticsView {
+    ARTEMIS = 'ARTEMIS',
+    COURSE = 'COURSE',
+}
+
+export enum GraphColors {
+    DARK_BLUE = 'rgba(53,61,71,1)',
+    BLUE = 'rgba(93,138,201,1)',
+    BLUE_TRANSPARENT = 'rgba(93,138,201,0)',
 }
