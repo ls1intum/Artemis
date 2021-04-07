@@ -272,8 +272,18 @@ public class ExerciseService {
     }
 
     /**
+     * Checks if the exercise has any test runs and sets the transient property if it does
+     * @param exercise - the exercise for which we check if test runs exist
+     */
+    public void checkTestRunsExist(Exercise exercise) {
+        Long containsTestRunParticipations = studentParticipationRepository.countParticipationsOnlyTestRunsByExerciseId(exercise.getId());
+        if (containsTestRunParticipations != null && containsTestRunParticipations > 0) {
+            exercise.setTestRunParticipationsExist(Boolean.TRUE);
+        }
+    }
+
+    /**
      * Resets an Exercise by deleting all its participations
-     *
      * @param exercise which should be reset
      */
     public void reset(Exercise exercise) {
