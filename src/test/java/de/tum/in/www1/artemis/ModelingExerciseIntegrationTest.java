@@ -266,6 +266,25 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBa
 
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void importModelingExerciseWithExampleSubmissionFromCourseToCourse() throws Exception {
+        var now = ZonedDateTime.now();
+        Course course1 = database.addEmptyCourse();
+        Course course2 = database.addEmptyCourse();
+
+        ModelingExercise modelingExercise = ModelFactory.generateModelingExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1), DiagramType.ClassDiagram, course1);
+        modelingExercise = modelingExerciseRepository.save(modelingExercise);
+
+        // Create example submission
+        var exampleSubmission = database.generateExampleSubmission("model", modelingExercise, true);
+        exampleSubmission = database.addExampleSubmission(exampleSubmission);
+        database.addResultToSubmission(exampleSubmission.getSubmission(), AssessmentType.MANUAL);
+
+        modelingExercise.setCourse(course2);
+        request.postWithResponseBody("/api/modeling-exercises/import/" + modelingExercise.getId(), modelingExercise, ModelingExercise.class, HttpStatus.CREATED);
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void importModelingExerciseFromCourseToExam() throws Exception {
         var now = ZonedDateTime.now();
         Course course1 = database.addEmptyCourse();
