@@ -44,7 +44,7 @@
                 </tr>
             </thead>
             <tbody>
-                <tr [ngStyle]="{ 'font-weight': 'bold' }" *ngFor="let submission of filteredSubmissions; let i = index">
+                <tr *ngFor="let submission of filteredSubmissions; let i = index">
                     <td>{{ i + 1 }}</td>
                     <td *ngIf="exercise.isAtLeastInstructor">
                         {{ submission.participation!.participantName! }}
