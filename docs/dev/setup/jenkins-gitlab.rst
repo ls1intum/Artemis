@@ -409,7 +409,7 @@ This is ideal as a quickstart for developers. For a more detailed setup, see `Ma
 
 If you already have a Gitlab and Mysql instance running, you can comment out all services except for jenkins and then run the docker-compose file.
 
-8. You need to generate the `ci-token` and `secret-push-token`. Please follow the `Gitlab to Jenkins push notification token <##gitlab-to-jenkins-push-notification-token>`__. steps
+8. You need to generate the `ci-token` and `secret-push-token`. Please follow the `Gitlab to Jenkins push notification token <##gitlab-to-jenkins-push-notification-token>`__ steps.
 
 9. The `application-local.yml` must be adapted with the values configured in ``jenkins-casc-config.yml``:
 
