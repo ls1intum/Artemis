@@ -282,7 +282,7 @@ public class ExerciseService {
         }
     }
 
-    /*
+    /**
      * Resets an Exercise by deleting all its participations
      * @param exercise which should be reset
      */
