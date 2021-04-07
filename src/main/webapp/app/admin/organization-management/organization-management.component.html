@@ -24,10 +24,10 @@
             <tbody>
                 <tr *ngFor="let organization of organizations; trackBy: trackIdentity">
                     <td>
-                        <ngb-highlight [result]="organization.id"></ngb-highlight>
+                        <ngb-highlight [result]="organization.id!.toString()"></ngb-highlight>
                     </td>
                     <td>
-                        <ngb-highlight [result]="organization.name"></ngb-highlight>
+                        <ngb-highlight [result]="organization.name!"></ngb-highlight>
                     </td>
                     <td>
                         <ngb-highlight [result]="organization.shortName"></ngb-highlight>
@@ -49,9 +49,9 @@
                             </button>
                             <button
                                 jhiDeleteButton
-                                [entityTitle]="organization.name"
+                                [entityTitle]="organization.name!"
                                 deleteQuestion="organizationManagement.delete.question"
-                                (delete)="deleteOrganization(organization.id)"
+                                (delete)="deleteOrganization(organization.id!)"
                                 [dialogError]="dialogError$"
                             >
                                 <fa-icon [icon]="'times'"></fa-icon>
