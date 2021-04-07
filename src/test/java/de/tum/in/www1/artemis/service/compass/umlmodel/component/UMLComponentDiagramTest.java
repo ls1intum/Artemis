@@ -1,9 +1,7 @@
 package de.tum.in.www1.artemis.service.compass.umlmodel.component;
 
 import static com.google.gson.JsonParser.parseString;
-import static de.tum.in.www1.artemis.service.compass.umlmodel.component.UMLComponentRelationship.UMLComponentRelationshipType.COMPONENT_DEPENDENCY;
-import static de.tum.in.www1.artemis.service.compass.umlmodel.component.UMLComponentRelationship.UMLComponentRelationshipType.COMPONENT_INTERFACE_PROVIDED;
-import static de.tum.in.www1.artemis.service.compass.umlmodel.component.UMLComponentRelationship.UMLComponentRelationshipType.COMPONENT_INTERFACE_REQUIRED;
+import static de.tum.in.www1.artemis.service.compass.umlmodel.component.UMLComponentRelationship.UMLComponentRelationshipType.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.io.IOException;

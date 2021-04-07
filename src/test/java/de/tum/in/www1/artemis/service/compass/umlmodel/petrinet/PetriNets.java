@@ -6,13 +6,13 @@ import java.nio.charset.StandardCharsets;
 
 import org.apache.commons.io.IOUtils;
 
-class PetriNets {
+public class PetriNets {
 
-    static final String PETRI_NET_MODEL_1A;
+    public static final String PETRI_NET_MODEL_1A;
 
-    static final String PETRI_NET_MODEL_1B;
+    public static final String PETRI_NET_MODEL_1B;
 
-    static final String PETRI_NET_MODEL_2;
+    public static final String PETRI_NET_MODEL_2;
 
     static {
         try {

@@ -95,7 +95,7 @@ public class SystemNotificationIntegrationTest extends AbstractSpringIntegration
         request.post("/api/system-notifications", systemNotification, HttpStatus.BAD_REQUEST);
     }
 
-    @ParameterizedTest
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @ValueSource(strings = { "/api/system-notifications/", "/api/notifications/" })
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testCreateSystemNotification_asInstructor_Forbidden(String endpoint) throws Exception {
@@ -120,7 +120,7 @@ public class SystemNotificationIntegrationTest extends AbstractSpringIntegration
         assertThat(systemNotificationRepo.findById(systemNotification.getId()).get()).as("repository contains updated notification").isEqualTo(response);
     }
 
-    @ParameterizedTest
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @ValueSource(strings = { "/api/system-notifications/", "/api/notifications/" })
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testUpdateSystemNotification_asInstructor_Forbidden(String endpoint) throws Exception {
@@ -160,7 +160,7 @@ public class SystemNotificationIntegrationTest extends AbstractSpringIntegration
         request.delete("/api/system-notifications/" + response.getId(), HttpStatus.OK);
     }
 
-    @ParameterizedTest
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @ValueSource(strings = { "/api/system-notifications/", "/api/notifications/" })
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testDeleteSystemNotification_asInstructor_Forbidden(String endpoint) throws Exception {
