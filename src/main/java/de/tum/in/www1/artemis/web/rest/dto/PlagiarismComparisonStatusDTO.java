@@ -4,5 +4,13 @@ import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismStatus;
 
 public class PlagiarismComparisonStatusDTO {
 
-    public PlagiarismStatus status;
+    private PlagiarismStatus status;
+
+    public PlagiarismStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(PlagiarismStatus status) {
+        this.status = status;
+    }
 }

@@ -333,7 +333,7 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
         // Extract test case feedback
         for (final var job : jobs) {
             for (final var testCase : job.getTestCases()) {
-                var feedbackMessages = extractMessagesFromTestCase(testCase);
+                var feedbackMessages = extractMessageFromTestCase(testCase).map(List::of).orElse(List.of());
                 var feedback = feedbackRepository.createFeedbackFromTestCase(testCase.getName(), feedbackMessages, testCase.isSuccessful(), programmingLanguage);
                 result.addFeedback(feedback);
             }
@@ -351,40 +351,39 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
     }
 
     /**
-     * Extracts the most helpful messages from the given test case.
+     * Extracts the most helpful message from the given test case.
      * @param testCase the test case information as received from Jenkins.
-     * @return a list of helpful messages that can be added to an automatic {@link Feedback}.
+     * @return the most helpful message that can be added to an automatic {@link Feedback}.
      */
-    private List<String> extractMessagesFromTestCase(final TestCaseDTO testCase) {
+    private Optional<String> extractMessageFromTestCase(final TestCaseDTO testCase) {
         var hasErrors = !CollectionUtils.isEmpty(testCase.getErrors());
         var hasFailures = !CollectionUtils.isEmpty(testCase.getFailures());
         var hasSuccessInfos = !CollectionUtils.isEmpty(testCase.getSuccessInfos());
         boolean successful = testCase.isSuccessful();
 
-        final List<String> feedbackMessages = new ArrayList<>();
-
         if (successful && hasSuccessInfos && testCase.getSuccessInfos().get(0).getMostInformativeMessage() != null) {
-            feedbackMessages.add(testCase.getSuccessInfos().get(0).getMostInformativeMessage());
+            return Optional.of(testCase.getSuccessInfos().get(0).getMostInformativeMessage());
         }
         else if (hasErrors && testCase.getErrors().get(0).getMostInformativeMessage() != null) {
-            feedbackMessages.add(testCase.getErrors().get(0).getMostInformativeMessage());
+            return Optional.of(testCase.getErrors().get(0).getMostInformativeMessage());
         }
         else if (hasFailures && testCase.getFailures().get(0).getMostInformativeMessage() != null) {
-            feedbackMessages.add(testCase.getFailures().get(0).getMostInformativeMessage());
+            return Optional.of(testCase.getFailures().get(0).getMostInformativeMessage());
         }
         else if (hasErrors && testCase.getErrors().get(0).getType() != null) {
-            feedbackMessages.add(String.format("Unsuccessful due to an error of type: %s", testCase.getErrors().get(0).getType()));
+            return Optional.of(String.format("Unsuccessful due to an error of type: %s", testCase.getErrors().get(0).getType()));
         }
         else if (hasFailures && testCase.getFailures().get(0).getType() != null) {
-            feedbackMessages.add(String.format("Unsuccessful due to an error of type: %s", testCase.getFailures().get(0).getType()));
+            return Optional.of(String.format("Unsuccessful due to an error of type: %s", testCase.getFailures().get(0).getType()));
         }
         else if (!successful) {
             // this is an edge case which typically does not happen
-            feedbackMessages.add("Unsuccessful due to an unknown error. Please contact your instructor!");
+            return Optional.of("Unsuccessful due to an unknown error. Please contact your instructor!");
         }
-        // default case: successful and no message available => do not generate one
-
-        return feedbackMessages;
+        else {
+            // successful and no message available => do not generate one
+            return Optional.empty();
+        }
     }
 
     @Override

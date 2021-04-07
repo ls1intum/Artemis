@@ -2,8 +2,7 @@ package de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram;
 
 import static de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLRelationship.UMLRelationshipType.*;
 import static de.tum.in.www1.artemis.service.compass.utils.CompassConfiguration.*;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.offset;
+import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import org.junit.jupiter.api.AfterEach;
@@ -13,24 +12,24 @@ import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.mockito.Spy;
 
-class UMLRelationshipTest {
+public class UMLRelationshipTest {
 
     private UMLRelationship relationship;
 
     @Spy
-    UMLRelationship referenceRelationship;
+    private UMLRelationship referenceRelationship;
 
     @Spy
-    UMLClass source1;
+    private UMLClass source1;
 
     @Spy
-    UMLClass source2;
+    private UMLClass source2;
 
     @Spy
-    UMLClass target1;
+    private UMLClass target1;
 
     @Spy
-    UMLClass target2;
+    private UMLClass target2;
 
     @BeforeEach
     void setUp() {

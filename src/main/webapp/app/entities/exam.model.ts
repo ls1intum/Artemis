@@ -7,7 +7,7 @@ import { User } from 'app/core/user/user.model';
 
 export class Exam implements BaseEntity {
     public id?: number;
-    public title?: String;
+    public title?: string;
     public visibleDate?: Moment;
     public startDate?: Moment;
     public endDate?: Moment;

@@ -8,15 +8,19 @@ import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismComparison;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismStatus;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
  * Spring Data JPA repository for the PlagiarismComparison entity.
  */
 @Repository
-public interface PlagiarismComparisonRepository extends JpaRepository<PlagiarismComparison, Long> {
+public interface PlagiarismComparisonRepository extends JpaRepository<PlagiarismComparison<?>, Long> {
 
     @Modifying
-    @Query("UPDATE PlagiarismComparison plagiarismComparison set plagiarismComparison.status = :status where plagiarismComparison.id = :id")
-    void updatePlagiarismComparisonStatus(@Param("id") Long id, @Param("status") PlagiarismStatus status);
+    @Query("UPDATE PlagiarismComparison plagiarismComparison set plagiarismComparison.status = :status where plagiarismComparison.id = :plagiarismComparisonId")
+    void updatePlagiarismComparisonStatus(@Param("plagiarismComparisonId") Long plagiarismComparisonId, @Param("status") PlagiarismStatus status);
 
+    default PlagiarismComparison<?> findByIdElseThrow(long comparisonId) {
+        return findById(comparisonId).orElseThrow(() -> new EntityNotFoundException("PlagiarismComparison", comparisonId));
+    }
 }

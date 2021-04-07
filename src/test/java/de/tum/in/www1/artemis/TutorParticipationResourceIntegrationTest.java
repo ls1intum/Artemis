@@ -22,13 +22,13 @@ import de.tum.in.www1.artemis.repository.TutorParticipationRepository;
 public class TutorParticipationResourceIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
-    ExerciseRepository exerciseRepository;
+    private ExerciseRepository exerciseRepository;
 
     @Autowired
-    TutorParticipationRepository tutorParticipationRepository;
+    private TutorParticipationRepository tutorParticipationRepository;
 
     @Autowired
-    ExampleSubmissionRepository exampleSubmissionRepository;
+    private ExampleSubmissionRepository exampleSubmissionRepository;
 
     private Exercise exercise;
 

@@ -64,7 +64,10 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
     protected ProgrammingExerciseScheduleService programmingExerciseScheduleService;
 
     @SpyBean
-    protected ProgrammingExerciseParticipationService programmingExerciseParticipationServiceSpy;
+    protected ProgrammingExerciseParticipationService programmingExerciseParticipationService;
+
+    @SpyBean
+    protected ScoreService scoreService;
 
     @SpyBean
     protected UrlService urlService;
@@ -77,7 +80,7 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
 
     public void resetSpyBeans() {
         Mockito.reset(ltiService, gitService, groupNotificationService, websocketMessagingService, plantUmlService, messagingTemplate, programmingSubmissionService,
-                examAccessService, instanceMessageSendService, programmingExerciseScheduleService, programmingExerciseParticipationServiceSpy, urlService);
+                examAccessService, instanceMessageSendService, programmingExerciseScheduleService, programmingExerciseParticipationService, urlService, scoreService);
     }
 
     @Override

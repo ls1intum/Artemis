@@ -23,7 +23,7 @@ export class OrganizationManagementService {
      * all organizations
      */
     getNumberOfUsersAndCoursesOfOrganizations(): Observable<any> {
-        return this.http.get(this.resourceUrl + '/allCount');
+        return this.http.get(this.resourceUrl + '/count-all');
     }
 
     /**

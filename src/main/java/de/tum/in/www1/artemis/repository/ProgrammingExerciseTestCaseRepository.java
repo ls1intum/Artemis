@@ -26,9 +26,9 @@ public interface ProgrammingExerciseTestCaseRepository extends JpaRepository<Pro
      * @return the number of test cases marked as {@link de.tum.in.www1.artemis.domain.enumeration.Visibility#AFTER_DUE_DATE}.
      */
     @Query("""
-                select count (distinct testCase) from ProgrammingExerciseTestCase testCase
-                where testCase.exercise.id = :#{#exerciseId}
-                    and testCase.visibility = 'AFTER_DUE_DATE'
+            SELECT COUNT (DISTINCT testCase) FROM ProgrammingExerciseTestCase testCase
+            WHERE testCase.exercise.id = :#{#exerciseId}
+                AND testCase.visibility = 'AFTER_DUE_DATE'
             """)
     long countAfterDueDateByExerciseId(@Param("exerciseId") Long exerciseId);
 }

@@ -19,7 +19,8 @@ import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.service.ResultService;
+import de.tum.in.www1.artemis.service.StaticCodeAnalysisService;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildResultNotificationDTO;
 import de.tum.in.www1.artemis.service.dto.AbstractBuildResultNotificationDTO;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseGradingService;
@@ -63,6 +64,18 @@ public class ProgrammingExerciseResultTestService {
     @Autowired
     private ProgrammingExerciseTestCaseService programmingExerciseTestCaseService;
 
+    @Autowired
+    private FeedbackRepository feedbackRepository;
+
+    @Autowired
+    private ProgrammingExerciseStudentParticipationRepository participationRepository;
+
+    @Autowired
+    private ResultRepository resultRepository;
+
+    @Autowired
+    private RequestUtilService request;
+
     private ProgrammingExercise programmingExercise;
 
     private SolutionProgrammingExerciseParticipation solutionParticipation;
@@ -70,15 +83,6 @@ public class ProgrammingExerciseResultTestService {
     private ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation;
 
     private ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipationStaticCodeAnalysis;
-
-    @Autowired
-    ProgrammingExerciseStudentParticipationRepository participationRepository;
-
-    @Autowired
-    ResultRepository resultRepository;
-
-    @Autowired
-    protected RequestUtilService request;
 
     public void setup() {
         database.addUsers(10, 2, 2);
@@ -267,9 +271,9 @@ public class ProgrammingExerciseResultTestService {
                 AssessmentType.SEMI_AUTOMATIC, true);
 
         List<Feedback> feedback = ModelFactory.generateManualFeedback();
-        feedback = database.feedbackRepo.saveAll(feedback);
+        feedback = feedbackRepository.saveAll(feedback);
         programmingSubmission.getFirstResult().addFeedbacks(feedback);
-        database.resultRepo.save(programmingSubmission.getFirstResult());
+        resultRepository.save(programmingSubmission.getFirstResult());
 
         final var optionalResult = gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipation, resultNotification);
 

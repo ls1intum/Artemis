@@ -405,6 +405,18 @@ public class GitService {
         }
     }
 
+    /**
+     * Combine all commits of the given repository into one.
+     *
+     * @param repoUrl of the repository to combine.
+     * @throws InterruptedException If the checkout fails
+     * @throws GitAPIException      If the checkout fails
+     */
+    public void combineAllCommitsOfRepositoryIntoOne(VcsRepositoryUrl repoUrl) throws InterruptedException, GitAPIException {
+        Repository exerciseRepository = getOrCheckoutRepository(repoUrl, true);
+        combineAllCommitsIntoInitialCommit(exerciseRepository);
+    }
+
     public Path getDefaultLocalPathOfRepo(VcsRepositoryUrl targetUrl) {
         return getLocalPathOfRepo(repoClonePath, targetUrl);
     }
