@@ -26,15 +26,11 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
-import de.tum.in.www1.artemis.domain.participation.Participation;
-import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
-import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
-import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
+import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.programmingexercise.MockDelegate;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.GroupNotificationService;
-import de.tum.in.www1.artemis.service.user.UserService;
 import de.tum.in.www1.artemis.web.rest.dto.CourseManagementOverviewStatisticsDTO;
 import de.tum.in.www1.artemis.web.rest.dto.StatsForDashboardDTO;
 
@@ -48,43 +44,34 @@ public class CourseTestService {
     private DatabaseUtilService database;
 
     @Autowired
-    CourseRepository courseRepo;
+    private CourseRepository courseRepo;
 
     @Autowired
-    ExerciseRepository exerciseRepo;
+    private ExerciseRepository exerciseRepo;
 
     @Autowired
-    LectureRepository lectureRepo;
+    private LectureRepository lectureRepo;
 
     @Autowired
-    ParticipationRepository participationRepo;
+    private ResultRepository resultRepo;
 
     @Autowired
-    SubmissionRepository submissionRepo;
+    private CustomAuditEventRepository auditEventRepo;
 
     @Autowired
-    ResultRepository resultRepo;
+    private UserRepository userRepo;
 
     @Autowired
-    CustomAuditEventRepository auditEventRepo;
+    private NotificationRepository notificationRepo;
 
     @Autowired
-    UserRepository userRepo;
+    private ExamRepository examRepo;
 
     @Autowired
-    UserService userService;
+    private ProgrammingExerciseRepository programmingExerciseRepository;
 
     @Autowired
-    NotificationRepository notificationRepo;
-
-    @Autowired
-    ExamRepository examRepo;
-
-    @Autowired
-    ProgrammingExerciseRepository programmingExerciseRepository;
-
-    @Autowired
-    protected RequestUtilService request;
+    private RequestUtilService request;
 
     @Autowired
     ZipFileService zipFileService;
@@ -573,8 +560,8 @@ public class CourseTestService {
     public void testGetCourseWithOrganizations() throws Exception {
         Course courseWithOrganization = database.createCourseWithOrganizations();
         Course course = request.get("/api/courses/" + courseWithOrganization.getId() + "/with-organizations", HttpStatus.OK, Course.class);
-        assertThat(course.getOrganizations() == courseWithOrganization.getOrganizations());
-        assertThat(course.getOrganizations().size() > 0);
+        assertThat(course.getOrganizations()).isEqualTo(courseWithOrganization.getOrganizations());
+        assertThat(course.getOrganizations()).isNotEmpty();
     }
 
     // Test
@@ -904,9 +891,9 @@ public class CourseTestService {
         List<Course> testCourses = database.createCoursesWithExercisesAndLectures(true);
         Course course1 = testCourses.get(0);
         Course course2 = testCourses.get(1);
-        Set<String> categories1 = request.get("/api/courses/" + course1.getId() + "/categories", HttpStatus.OK, Set.class);
+        List<String> categories1 = request.getList("/api/courses/" + course1.getId() + "/categories", HttpStatus.OK, String.class);
         assertThat(categories1).as("Correct categories in course1").containsExactlyInAnyOrder("Category", "Modeling", "Quiz", "File", "Text", "Programming");
-        Set<String> categories2 = request.get("/api/courses/" + course2.getId() + "/categories", HttpStatus.OK, Set.class);
+        List<String> categories2 = request.getList("/api/courses/" + course2.getId() + "/categories", HttpStatus.OK, String.class);
         assertThat(categories2).as("No categories in course2").isEmpty();
     }
 

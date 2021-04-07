@@ -2,9 +2,7 @@ package de.tum.in.www1.artemis.programmingexercise;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -35,16 +33,16 @@ import de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource;
 public class ProgrammingExerciseGitIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
-    GitUtilService gitUtilService;
+    private GitUtilService gitUtilService;
 
     @Autowired
-    ProgrammingExerciseRepository programmingExerciseRepository;
+    private ProgrammingExerciseRepository programmingExerciseRepository;
 
-    File localRepoFile;
+    private File localRepoFile;
 
-    Git localGit;
+    private Git localGit;
 
-    ProgrammingExercise programmingExercise;
+    private ProgrammingExercise programmingExercise;
 
     @BeforeEach
     void initTestCase() throws Exception {

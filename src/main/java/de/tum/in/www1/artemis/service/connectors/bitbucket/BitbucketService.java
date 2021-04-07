@@ -3,7 +3,9 @@ package de.tum.in.www1.artemis.service.connectors.bitbucket;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.time.Instant;
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
@@ -29,10 +31,7 @@ import de.tum.in.www1.artemis.exception.BitbucketException;
 import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.UrlService;
-import de.tum.in.www1.artemis.service.connectors.AbstractVersionControlService;
-import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
-import de.tum.in.www1.artemis.service.connectors.GitService;
-import de.tum.in.www1.artemis.service.connectors.VersionControlRepositoryPermission;
+import de.tum.in.www1.artemis.service.connectors.*;
 import de.tum.in.www1.artemis.service.connectors.bitbucket.dto.*;
 import de.tum.in.www1.artemis.service.user.PasswordService;
 
