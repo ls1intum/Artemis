@@ -79,6 +79,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     exerciseGroupId: number;
     exerciseDashboardLink: string[];
     loadingInitialSubmission = true;
+    highlightDifferences = false;
 
     private get course(): Course | undefined {
         return this.exercise?.course || this.exercise?.exerciseGroup?.exam?.course;
@@ -274,6 +275,14 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
                 });
             }
         }
+    }
+
+    /**
+     * In ExamMode:
+     * Highlight the difference between the first and second correction round
+     */
+    switchHighlightDifferences(): void {
+        this.highlightDifferences = !this.highlightDifferences;
     }
 
     /**

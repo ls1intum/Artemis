@@ -57,6 +57,9 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
     isTutorAssessment = false;
     @Input()
     feedbacks: Feedback[];
+    @Input()
+    highlightDifferences: boolean;
+
     @Output()
     onFileContentChange = new EventEmitter<{ file: string; fileContent: string }>();
     @Output()

@@ -53,6 +53,9 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate {
     highlightFileChanges = false;
     @Input()
     readOnlyManualFeedback = false;
+    @Input()
+    highlightDifferences: boolean;
+
     @Output()
     onResizeEditorInstructions = new EventEmitter<void>();
     @Output()
