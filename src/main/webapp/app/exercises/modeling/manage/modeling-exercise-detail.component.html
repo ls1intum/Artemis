@@ -13,7 +13,7 @@
                     [isExamExercise]="false"
                 ></jhi-non-programming-exercise-detail-common-actions>
 
-                <a class="btn btn-primary btn-sm mr-1" id="check-plagiarism-download" routerLink="plagiarism">
+                <a *ngIf="modelingExercise.isAtLeastInstructor" class="btn btn-primary btn-sm mr-1" id="check-plagiarism-download" routerLink="plagiarism">
                     <span jhiTranslate="artemisApp.textExercise.checkPlagiarism">Check Plagiarism</span>
                 </a>
             </div>

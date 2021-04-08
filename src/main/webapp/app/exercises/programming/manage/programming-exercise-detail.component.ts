@@ -41,7 +41,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
-    checkPlagiarismInProgress: boolean;
 
     constructor(
         private activatedRoute: ActivatedRoute,
