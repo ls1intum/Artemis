@@ -5,7 +5,7 @@ General best practices
 
   These comments should contain information about what is tested specifically, which task from the problem statement
   is addressed or which TODO (if there are numbered TODOs in the template), how many points this test is worth when
-  passed and more if necessary.
+  passed and more if necessary. But make sure to keep the information consistent with the settings on Artemis like the weight of each testcase.
 
   .. code-block:: java
 
@@ -46,7 +46,8 @@ General best practices
 
   If you have many tests in different (nested) classes that are not completely distinct, add the name of the tested
   class to the test to avoid having two tests with the same names. For example, if you test both ``add`` methods of a
-  LinkedList and an ArrayList. Clear and distinct test names also makes it easier to read and configure the grading in Artemis.
+  LinkedList and an ArrayList. Having the same test name will lead to errors on Artemis.
+  Clearer test names also makes it easier to read and configure the grading in Artemis.
 
   .. code-block:: java
 
@@ -63,7 +64,8 @@ General best practices
 
   For regular test cases, using a ``@StrictTimeout(1)``  annotation is enough. This represents a strict timeout of one
   second. The value type of the strict timeout annotation defaults to seconds. If you need a shorter timeout, you can use
-  ``@StrictTimeout(value = 500, unit = TimeUnit.MILLISECONDS)``.
+  ``@StrictTimeout(value = 500, unit = TimeUnit.MILLISECONDS)``. This annotation can also be added over a test class.
+  In that case the timeout applies individually to every test in that class.
 
   .. code-block:: java
 
@@ -81,7 +83,8 @@ General best practices
 
   Instead use conditional ``fail()`` calls to hide confusing information from the students. This could be considered a
   bad practice in regular testing but it helps to create fail messages that are less confusing, especially for beginners.
-  Additionally, this also hides information about test implementation details.
+  Additionally, this also hides information about test implementation details, if the specific inputs or expected outputs
+  should stay unknown to students.
 
   .. code-block:: java
 
