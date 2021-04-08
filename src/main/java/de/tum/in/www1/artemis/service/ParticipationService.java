@@ -231,8 +231,8 @@ public class ParticipationService {
                             programmingParticipation.getStudents());
                 }
                 catch (VersionControlException e) {
-                    log.error("Removing write permissions failed for programming exercise with id " + programmingExercise.getId() + " for student repository with participation id "
-                            + programmingParticipation.getId() + ": " + e.getMessage());
+                    log.error("Removing write permissions failed for programming exercise with id {} for student repository with participation id {}: {}",
+                            programmingExercise.getId(), programmingParticipation.getId(), e.getMessage());
                 }
             }
         }
@@ -269,7 +269,7 @@ public class ParticipationService {
             Optional<StudentParticipation> optionalParticipation = findOneByExerciseAndStudentLoginAnyState(quizExercise, username);
 
             if (optionalParticipation.isEmpty()) {
-                log.error("Participation in quiz " + quizExercise.getTitle() + " not found for user " + username);
+                log.error("Participation in quiz {} not found for user {}", quizExercise.getTitle(), username);
                 // TODO properly handle this case
                 return null;
             }
@@ -585,7 +585,7 @@ public class ParticipationService {
                     versionControlService.get().deleteRepository(repositoryUrl);
                 }
                 catch (Exception ex) {
-                    log.error("Could not delete repository: " + ex.getMessage());
+                    log.error("Could not delete repository: {}", ex.getMessage());
                 }
             }
             // delete local repository cache
