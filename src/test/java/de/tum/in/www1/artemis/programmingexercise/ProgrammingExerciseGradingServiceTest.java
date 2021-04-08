@@ -90,6 +90,7 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
     }
 
     @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void shouldNotUpdateResultIfNoTestCasesExist() {
         testCaseRepository.deleteAll();
 
@@ -100,6 +101,7 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
     }
 
     @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void shouldAddFeedbackForDuplicateTestCases() {
         // Adjust existing test cases to our need
         var testCases = testCaseService.findByExerciseId(programmingExercise.getId()).stream()
@@ -135,6 +137,7 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
     }
 
     @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void shouldRecalculateScoreBasedOnTestCasesWeightAutomatic() {
         List<Feedback> feedbacks = new ArrayList<>();
         feedbacks.add(new Feedback().text("test1").positive(true).type(FeedbackType.AUTOMATIC));
@@ -156,6 +159,7 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
     }
 
     @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void shouldRecalculateScoreBasedOnTestCasesWeightManual() {
         List<Feedback> feedbacks = new ArrayList<>();
         // we deliberately don't set the credits here, null must work as well
@@ -183,6 +187,7 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
     }
 
     @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void shouldRecalculateScoreWithTestCaseBonusButNoExerciseBonus() {
         // Set up test cases with bonus
         var testCases = testCaseService.findByExerciseId(programmingExercise.getId()).stream()
@@ -280,6 +285,7 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
     }
 
     @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void shouldRecalculateScoreWithTestCaseBonusAndExerciseBonus() {
         // Set up test cases with bonus
         var testCases = testCaseService.findByExerciseId(programmingExercise.getId()).stream()
@@ -335,6 +341,7 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
     }
 
     @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void shouldRemoveTestsWithAfterDueDateFlagIfDueDateHasNotPassed() {
         // Set programming exercise due date in future.
         programmingExercise.setDueDate(ZonedDateTime.now().plusHours(10));
@@ -362,6 +369,7 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
     }
 
     @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void shouldNotIncludeTestsInResultWithAfterDueDateFlagIfDueDateHasNotPassedForNonStudentParticipation() {
         // Set programming exercise due date in future.
         programmingExercise.setDueDate(ZonedDateTime.now().plusHours(10));
@@ -389,6 +397,7 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
     }
 
     @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void shouldKeepTestsWithAfterDueDateFlagIfDueDateHasPassed() {
         // Set programming exercise due date in past.
         programmingExercise.setDueDate(ZonedDateTime.now().minusHours(10));
@@ -710,8 +719,8 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
     }
 
     @Test
-    public void shouldRemoveInvisibleStaticCodeAnalysisFeedbackOnGrading() {
-
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void shouldRemoveInvisibleStaticCodeAnalysisFeedbackOnGrading() throws Exception {
         var participation1 = database.addStudentParticipationForProgrammingExercise(programmingExerciseSCAEnabled, "student1");
         var result1 = new Result().participation(participation1).resultString("x of y passed").successful(false).rated(true).score(100D);
         // Add some positive test case feedback otherwise the service method won't execute
@@ -924,6 +933,7 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
     }
 
     @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void shouldCalculateCorrectStatistics() {
         activateAllTestCases(false);
         createTestParticipationsWithResults();
@@ -960,6 +970,7 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
     }
 
     @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void shouldGetCorrectLatestAutomaticResults() {
         createTestParticipationsWithResults();
         var results = resultRepository.findLatestAutomaticResultsWithEagerFeedbacksForExercise(programmingExerciseSCAEnabled.getId());
@@ -967,6 +978,7 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
     }
 
     @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void shouldGetCorrectLatestAutomaticResultsWithMultipleResults() {
         createTestParticipationsWithMultipleResults();
         // this method is tested. It should probably be improved as there is an inner query

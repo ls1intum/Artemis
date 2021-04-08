@@ -86,7 +86,7 @@ public class RepositoryService {
      * Get a single file/folder from repository.
      *
      * @param repository in which the requested file is located.
-     * @param filename of the file to be retrieved.
+     * @param filename   of the file to be retrieved.
      * @return The file if found or throw an exception.
      * @throws IOException if the file can't be found, is corrupt, etc.
      */

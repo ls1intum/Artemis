@@ -757,7 +757,7 @@ public class CourseResource {
             DueDateStat totalNumberOfAssessments;
 
             if (exercise instanceof ProgrammingExercise) {
-                numberOfSubmissions = new DueDateStat(programmingExerciseRepository.countSubmissionsByExerciseIdSubmitted(exercise.getId(), false), 0L);
+                numberOfSubmissions = new DueDateStat(programmingExerciseRepository.countLegalSubmissionsByExerciseIdSubmitted(exercise.getId(), false), 0L);
                 totalNumberOfAssessments = new DueDateStat(programmingExerciseRepository.countAssessmentsByExerciseIdSubmitted(exercise.getId(), false), 0L);
             }
             else {
@@ -901,7 +901,7 @@ public class CourseResource {
 
         start2 = System.currentTimeMillis();
         final long numberOfInTimeSubmissions = submissionRepository.countByCourseIdSubmittedBeforeDueDate(courseId)
-                + programmingExerciseRepository.countSubmissionsByCourseIdSubmitted(courseId);
+                + programmingExerciseRepository.countLegalSubmissionsByCourseIdSubmitted(courseId);
         end2 = System.currentTimeMillis();
         log.info("Finished > submissionRepository.countByCourseIdSubmittedBeforeDueDate < call for course {} in {}ms", course.getId(), end2 - start2);
         start2 = System.currentTimeMillis();

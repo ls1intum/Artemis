@@ -110,7 +110,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
      * @throws IllegalArgumentException it the Commit hash could not be parsed for submission from participation
      */
     public ProgrammingSubmission notifyPush(Long participationId, Object requestBody) throws EntityNotFoundException, IllegalStateException, IllegalArgumentException {
-        Participation participation = participationRepository.findByIdWithSubmissionsElseThrow(participationId);
+        Participation participation = participationRepository.findByIdWithLegalSubmissionsElseThrow(participationId);
         if (!(participation instanceof ProgrammingExerciseParticipation)) {
             throw new EntityNotFoundException("Programming Exercise Participation", participationId);
         }
@@ -150,7 +150,6 @@ public class ProgrammingSubmissionService extends SubmissionService {
             // as the VCS-server performs the request
             SecurityUtils.setAuthorizationObject();
 
-            // TODO: is this still allowed for an exam? what do we want to do here?
             participationService.resumeProgrammingExercise((ProgrammingExerciseStudentParticipation) programmingExerciseParticipation);
             // Note: in this case we do not need an empty commit: when we trigger the build manually (below), subsequent commits will work correctly
             try {
@@ -174,10 +173,11 @@ public class ProgrammingSubmissionService extends SubmissionService {
         programmingSubmission.setSubmitted(true);
         programmingSubmission.setSubmissionDate(ZonedDateTime.now());
         programmingSubmission.setType(SubmissionType.MANUAL);
-        programmingExerciseParticipation.addSubmission(programmingSubmission);
 
         // Students are not allowed to submit a programming exercise after the exam due date, if this happens we set the Submission to ILLEGAL
         checkForIllegalExamSubmission(programmingExerciseParticipation, programmingSubmission);
+
+        programmingExerciseParticipation.addSubmission(programmingSubmission);
 
         programmingSubmission = programmingSubmissionRepository.save(programmingSubmission);
         // NOTE: we don't need to save the participation here, this might lead to concurrency problems when doing the empty commit during resume exercise!
@@ -247,9 +247,14 @@ public class ProgrammingSubmissionService extends SubmissionService {
     }
 
     private Optional<ProgrammingSubmission> findLatestPendingSubmissionForParticipation(final long participationId, final boolean isGraded) {
-        final var optionalSubmission = isGraded
-                ? programmingSubmissionRepository.findGradedByParticipationIdOrderBySubmissionDateDesc(participationId, PageRequest.of(0, 1)).stream().findFirst()
-                : programmingSubmissionRepository.findFirstByParticipationIdOrderBySubmissionDateDesc(participationId);
+        Optional<ProgrammingSubmission> optionalSubmission;
+        if (isGraded) {
+            optionalSubmission = programmingSubmissionRepository.findGradedByParticipationIdOrderBySubmissionDateDesc(participationId, PageRequest.of(0, 1)).stream().findFirst();
+        }
+        else {
+            optionalSubmission = programmingSubmissionRepository.findFirstByParticipationIdOrderBySubmissionDateDesc(participationId);
+        }
+
         if (optionalSubmission.isEmpty() || optionalSubmission.get().getLatestResult() != null) {
             // This is not an error case, it is very likely that there is no pending submission for a participation.
             return Optional.empty();
@@ -637,10 +642,10 @@ public class ProgrammingSubmissionService extends SubmissionService {
     public List<ProgrammingSubmission> getProgrammingSubmissions(long exerciseId, boolean submittedOnly, boolean examMode) {
         List<StudentParticipation> participations;
         if (examMode) {
-            participations = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseIdIgnoreTestRuns(exerciseId);
+            participations = studentParticipationRepository.findAllWithEagerLegalSubmissionsAndEagerResultsAndEagerAssessorByExerciseIdIgnoreTestRuns(exerciseId);
         }
         else {
-            participations = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseId(exerciseId);
+            participations = studentParticipationRepository.findAllWithEagerLegalSubmissionsAndEagerResultsAndEagerAssessorByExerciseId(exerciseId);
         }
         List<ProgrammingSubmission> submissions = new ArrayList<>();
         participations.stream().peek(participation -> participation.getExercise().setStudentParticipations(null)).map(StudentParticipation::findLatestSubmission)
