@@ -89,31 +89,9 @@ test {
     jvmArgs "--illegal-access=warn"
 }
 
-task integrationTest(type: Test) {
-    useJUnitPlatform()
-    description = "Execute integration tests."
-    group = "verification"
-    include "**/*IT*", "**/*IntTest*"
-
-    testLogging {
-        events "FAILED", "SKIPPED"
-    }
-
-    maxHeapSize = "1024m"
-    jvmArgs "-XX:MaxPermSize=512m --illegal-access=warn"
-    reports.html.enabled = false
-}
-
-check.dependsOn integrationTest
-
 task testReport(type: TestReport) {
     destinationDir = file("$buildDir/reports/tests")
     reportOn test
-}
-
-task integrationTestReport(type: TestReport) {
-    destinationDir = file("$buildDir/reports/tests")
-    reportOn integrationTest
 }
 
 jacoco {
@@ -147,7 +125,7 @@ jacocoTestCoverageVerification {
                 counter = "INSTRUCTION"
                 value = "COVEREDRATIO"
                 // TODO: in the future the following value should become at least 0.90
-                minimum = 0.868
+                minimum = 0.870
             }
             limit {
                 counter = "CLASS"
@@ -265,7 +243,7 @@ dependencies {
     implementation "org.zalando:problem-spring-web:0.26.2"
     implementation "com.ibm.icu:icu4j:68.2"
     implementation "com.github.seancfoley:ipaddress:5.3.3"
-    implementation "org.apache.maven:maven-model:3.6.3"
+    implementation "org.apache.maven:maven-model:3.8.1"
 
     annotationProcessor "org.hibernate:hibernate-jpamodelgen:${hibernate_version}"
     annotationProcessor ("org.glassfish.jaxb:jaxb-runtime:${jaxb_runtime_version}") {
@@ -317,16 +295,6 @@ tasks.withType(Test) {
         showCauses true
         showStackTraces true
 
-        // set options for log level DEBUG and INFO
-        debug {
-            events TestLogEvent.STARTED,
-                TestLogEvent.FAILED,
-                TestLogEvent.PASSED,
-                TestLogEvent.SKIPPED,
-                TestLogEvent.STANDARD_ERROR,
-                TestLogEvent.STANDARD_OUT
-            exceptionFormat TestExceptionFormat.FULL
-        }
         info.events = debug.events
         info.exceptionFormat = debug.exceptionFormat
 

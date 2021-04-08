@@ -3,10 +3,7 @@ package de.tum.in.www1.artemis.service.util.structureoraclegenerator;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,6 +14,7 @@ import com.google.gson.JsonObject;
 import com.thoughtworks.qdox.JavaProjectBuilder;
 import com.thoughtworks.qdox.model.JavaClass;
 import com.thoughtworks.qdox.model.JavaSource;
+
 import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 
 /**

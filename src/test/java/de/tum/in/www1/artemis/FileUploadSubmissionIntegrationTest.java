@@ -7,54 +7,33 @@ import java.nio.file.Paths;
 import java.time.ZonedDateTime;
 import java.util.List;
 
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.Feedback;
-import de.tum.in.www1.artemis.domain.FileUploadExercise;
-import de.tum.in.www1.artemis.domain.FileUploadSubmission;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.exception.FilePathParsingException;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.FileUploadSubmissionRepository;
+import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.service.FileService;
-import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
 public class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
-    CourseRepository courseRepo;
+    private FileService fileService;
 
     @Autowired
-    ExerciseRepository exerciseRepo;
+    private FileUploadSubmissionRepository fileUploadSubmissionRepository;
 
     @Autowired
-    UserRepository userRepo;
-
-    @Autowired
-    ParticipationService participationService;
-
-    @Autowired
-    FileService fileService;
-
-    @Autowired
-    ResultRepository resultRepo;
-
-    @Autowired
-    FileUploadSubmissionRepository fileUploadSubmissionRepository;
-
-    @Autowired
-    ParticipationRepository participationRepository;
+    private ParticipationRepository participationRepository;
 
     private FileUploadExercise releasedFileUploadExercise;
 
@@ -380,8 +359,8 @@ public class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrati
                 submittedFileUploadSubmission, "submission", file, FileUploadSubmission.class, HttpStatus.OK);
 
         final var submissionInDb = fileUploadSubmissionRepository.findById(submittedFileUploadSubmission.getId());
-        assertThat(submissionInDb.isPresent()).isTrue();
-        assertThat(submissionInDb.get().getFilePath().contains("ffile.png")).isTrue();
+        assertThat(submissionInDb).isPresent();
+        assertThat(submissionInDb.get().getFilePath()).contains("ffile.png");
     }
 
     private FileUploadSubmission performInitialSubmission(Long exerciseId, FileUploadSubmission submission) throws Exception {
