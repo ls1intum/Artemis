@@ -388,7 +388,7 @@ public class ProgrammingExerciseGradingService {
     private void retainAutomaticFeedbacksWithTestCase(Result result, final Set<ProgrammingExerciseTestCase> testCases) {
         // Remove automatic feedbacks not associated with test cases
         result.getFeedbacks().removeIf(feedback -> feedback.getType() == FeedbackType.AUTOMATIC && !feedback.isStaticCodeAnalysisFeedback()
-                && testCases.stream().noneMatch(test -> test.getTestName().equals(feedback.getText())));
+                && testCases.stream().noneMatch(test -> test.getTestName().equalsIgnoreCase(feedback.getText())));
 
         // If there are no feedbacks left after filtering those not valid, also setHasFeedback to false.
         if (result.getFeedbacks().stream().noneMatch(feedback -> Boolean.FALSE.equals(feedback.isPositive())
@@ -404,7 +404,7 @@ public class ProgrammingExerciseGradingService {
      */
     private void setVisibilityForFeedbacksWithTestCase(Result result, final Set<ProgrammingExerciseTestCase> allTests) {
         for (Feedback feedback : result.getFeedbacks()) {
-            allTests.stream().filter(testCase -> testCase.getTestName().equals(feedback.getText())).findFirst()
+            allTests.stream().filter(testCase -> testCase.getTestName().equalsIgnoreCase(feedback.getText())).findFirst()
                     .ifPresent(testCase -> feedback.setVisibility(testCase.getVisibility()));
         }
     }
