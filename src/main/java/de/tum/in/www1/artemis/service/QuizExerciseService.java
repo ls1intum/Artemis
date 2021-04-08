@@ -182,7 +182,7 @@ public class QuizExerciseService {
     private void updateResultsOnQuizChanges(QuizExercise quizExercise) {
         // change existing results if an answer or and question was deleted
         List<Result> results = resultRepository.findByParticipationExerciseIdOrderByCompletionDateAsc(quizExercise.getId());
-        log.debug("Found " + results.size() + " results to update for quiz re-evaluate");
+        log.debug("Found {} results to update for quiz re-evaluate", results.size());
         List<QuizSubmission> submissions = new ArrayList<>();
         for (Result result : results) {
 
@@ -210,7 +210,7 @@ public class QuizExerciseService {
         // save the updated submissions and results
         quizSubmissionRepository.saveAll(submissions);
         resultRepository.saveAll(results);
-        log.info(results.size() + " results have been updated successfully for quiz re-evaluate");
+        log.info("{} results have been updated successfully for quiz re-evaluate", results.size());
     }
 
     /**

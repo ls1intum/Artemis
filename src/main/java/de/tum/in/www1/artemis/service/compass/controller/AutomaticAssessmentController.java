@@ -84,7 +84,7 @@ public class AutomaticAssessmentController {
                 UMLElement element = model.getElementByJSONID(jsonElementId);
 
                 if (element == null) {
-                    log.warn("Element with id " + jsonElementId + " could not be found in model.");
+                    log.warn("Element with id {} could not be found in model.", jsonElementId);
                     continue;
                 }
 
@@ -152,7 +152,7 @@ public class AutomaticAssessmentController {
                 Score score = optionalAssessment.get().getScore();
 
                 if (score == null) {
-                    log.debug("Unable to find score for element " + element.getJSONElementID() + " in model " + model.getModelSubmissionId() + " with the specific context");
+                    log.debug("Unable to find score for element {} in model {} with the specific context", element.getJSONElementID(), model.getModelSubmissionId());
                 }
                 else {
                     scoreHashMap.put(element.getJSONElementID(), score);

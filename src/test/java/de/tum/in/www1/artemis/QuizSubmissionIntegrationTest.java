@@ -607,7 +607,7 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
     }
 
     private void sleep(long millis) throws InterruptedException {
-        log.debug("zzzzzzzzzzzzz Sleep " + millis + "ms");
+        log.debug("zzzzzzzzzzzzz Sleep {}ms", millis);
         TimeUnit.MILLISECONDS.sleep(millis);
     }
 }

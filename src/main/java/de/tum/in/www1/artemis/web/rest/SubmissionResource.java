@@ -75,7 +75,7 @@ public class SubmissionResource {
         Optional<Submission> submission = submissionRepository.findWithEagerResultsAndAssessorById(id);
 
         if (submission.isEmpty()) {
-            log.error("Submission with id: " + id + " cannot be deleted");
+            log.error("Submission with id: {} cannot be deleted", id);
             return ResponseEntity.notFound().build();
         }
 
@@ -110,7 +110,7 @@ public class SubmissionResource {
         }
         User user = userRepository.getUserWithGroupsAndAuthorities();
 
-        var testRunParticipations = studentParticipationRepository.findTestRunParticipationsByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(user.getId(),
+        var testRunParticipations = studentParticipationRepository.findTestRunParticipationsByStudentIdAndIndividualExercisesWithEagerLegalSubmissionsResult(user.getId(),
                 List.of(exercise));
         if (!testRunParticipations.isEmpty() && testRunParticipations.get(0).findLatestSubmission().isPresent()) {
             var latestSubmission = testRunParticipations.get(0).findLatestSubmission().get();

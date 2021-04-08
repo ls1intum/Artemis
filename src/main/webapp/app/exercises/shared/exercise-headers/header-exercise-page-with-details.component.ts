@@ -1,6 +1,6 @@
 import { Component, Input, OnChanges, OnInit } from '@angular/core';
 import * as moment from 'moment';
-import { Exercise, ExerciseCategory, getIcon, IncludedInOverallScore } from 'app/entities/exercise.model';
+import { Exercise, ExerciseCategory, ExerciseType, getIcon, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { Exam } from 'app/entities/exam.model';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
@@ -33,7 +33,7 @@ export class HeaderExercisePageWithDetailsComponent implements OnInit, OnChanges
     ngOnInit(): void {
         this.setExerciseStatusBadge();
         this.exerciseCategories = this.exerciseService.convertExerciseCategoriesFromServer(this.exercise);
-        this.icon = getIcon(this.exercise?.type) as IconProp;
+        this.setIcon(this.exercise.type);
     }
 
     /**
@@ -42,7 +42,7 @@ export class HeaderExercisePageWithDetailsComponent implements OnInit, OnChanges
     ngOnChanges(): void {
         this.setExerciseStatusBadge();
         this.exerciseCategories = this.exerciseService.convertExerciseCategoriesFromServer(this.exercise);
-        this.icon = getIcon(this.exercise?.type) as IconProp;
+        this.setIcon(this.exercise.type);
 
         if (this.exam) {
             this.isExamMode = true;
@@ -56,6 +56,12 @@ export class HeaderExercisePageWithDetailsComponent implements OnInit, OnChanges
             } else {
                 this.exerciseStatusBadge = moment(this.exercise.dueDate!).isBefore(moment()) ? 'badge-danger' : 'badge-success';
             }
+        }
+    }
+
+    setIcon(exerciseType?: ExerciseType) {
+        if (exerciseType) {
+            this.icon = getIcon(exerciseType) as IconProp;
         }
     }
 }
