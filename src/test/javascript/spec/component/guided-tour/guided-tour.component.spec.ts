@@ -358,39 +358,4 @@ describe('GuidedTourComponent', () => {
             expect(guidedTourComponent.orientation).to.equal(Orientation.TOPLEFT);
         });
     });
-    describe('Guided Tour Step 2', () => {
-        jest.useFakeTimers();
-        beforeEach(() => {
-            var clock = sinon.useFakeTimers();
-        });
-        afterEach(() => {});
-        it('should do stuff', async () => {
-            // Prepare guided tour service
-            spyOn(guidedTourService, 'init').and.returnValue(of());
-            spyOn(guidedTourService, 'getLastSeenTourStepIndex').and.returnValue(0);
-            spyOn<any>(guidedTourService, 'updateGuidedTourSettings');
-            spyOn<any>(guidedTourService, 'enableTour').and.callFake(() => {
-                guidedTourService['availableTourForComponent'] = courseOverviewTour;
-                guidedTourService.currentTour = courseOverviewTour;
-            });
-            spyOn<any>(guidedTourComponent, 'subscribeToDotChanges').and.returnValue(of());
-            guidedTourComponent.currentStepIndex = 0;
-            guidedTourComponent.nextStepIndex = 1;
-            // Prepare guided tour component
-            guidedTourComponent.ngAfterViewInit();
-            jest.runAllTimers();
-            // Start course overview tour
-            expect(guidedTourComponent.currentTourStep).to.not.exist;
-            guidedTourService['enableTour'](courseOverviewTour, true);
-            guidedTourService['startTour']();
-            expect(guidedTourComponent.currentTourStep).to.exist;
-
-            // Check highlight (current) dot and small dot
-            guidedTourComponentFixture.detectChanges();
-            const highlightDot = guidedTourComponentFixture.debugElement.query(By.css('.current'));
-            expect(highlightDot).to.exist;
-            const nSmallDot = guidedTourComponentFixture.debugElement.queryAll(By.css('.n-small'));
-            expect(nSmallDot).to.exist;
-        });
-    });
 });
