@@ -1,7 +1,7 @@
 General best practices
 ^^^^^^^^^^^^^^^^^^^^^^
 
-- **Write meaningful comments for your tests**
+- **Write Meaningful Comments for your Tests**
 
   These comments should contain information about what is tested specifically, which task from the problem statement
   is addressed or which TODO (if there are numbered TODOs in the template), how many points this test is worth when
@@ -30,7 +30,7 @@ General best practices
         // Test Code
     }
 
-- **Use appropriate and descriptive names for test cases**
+- **Use Appropriate and Descriptive Names for Test Cases**
 
   After exercises and exams, test names will be used to create statistics. If the tests are called *test1*, *test2*, *test3*,
   it will be hard to read those statistics. This is the same reason as to why you should not name your variables ``int a``,
@@ -60,7 +60,7 @@ General best practices
     For Java exercises: If all test methods are in a single class this is not necessary, because the Java compiler
     won't allow multiple methods with override-equivalent signatures.
 
-- **Use appropriate timeouts for test cases**
+- **Use Appropriate Timeouts for Test Cases**
 
   For regular test cases, using a ``@StrictTimeout(1)``  annotation is enough. This represents a strict timeout of one
   second. The value type of the strict timeout annotation defaults to seconds. If you need a shorter timeout, you can use
@@ -79,7 +79,7 @@ General best practices
       When defining timeouts, you should take into account that the tests are run on a Continuous Integration Server
       (using build agents). The tests will most likely execute a lot faster on your local machine.
 
-- **Avoiding assert statements**
+- **Avoiding Assert Statements**
 
   Instead use conditional ``fail()`` calls to hide confusing information from the students. This could be considered a
   bad practice in regular testing but it helps to create fail messages that are less confusing, especially for beginners.
@@ -111,7 +111,7 @@ General best practices
 
   This will just display the message 'org.opentest4j.AssertionFailedError: A borrowed book is not available anymore!', which focuses, except for the first part, on the actual error instead of test internals.
 
-- **Write tests that are as independent of the student's code as possible**
+- **Write Tests that are as Independent of the Student's Code as Possible**
 
   Students can break everything and will break everything. Avoid direct code references and use reflective operations
   instead. That way if a student modifies the template by accident and the test code would normally not compile,
@@ -145,13 +145,13 @@ General best practices
   The code above will lead to an error message like *The class 'Book' was not found within the submission. Make sure to implement it properly.*
   The message is clear and tells the student exactly what is wrong with their code.
 
-- **Check for hard coded student solutions**
+- **Check for Hard-Coded Student Solutions**
 
   It is possible that students hardcode values to pass a certain set of tests. Therefore, you should check whether this
   is the case or not. This is especially important in an exam setting, so students don't get awarded points for a
   solution that does not fulfill the requirements described in the problem statement.
 
-- **Avoid relying on a specific order in which students solve the tasks**
+- **Avoid Relying on a Specific Order in which Students Solve the Tasks**
 
   Tests should successfully cover one aspect of the submission without requiring the implementation of a different part
   of the exercise, even if those aspects are heavily coupled.
@@ -209,7 +209,7 @@ General best practices
     If you use the this technique, you should have some way to deal with students that make the class or method final, either via
     problem statement or test. Otherwise students get compilation errors in the test code.
 
-- **Catch possible student errors**
+- **Catch Possible Student Errors**
 
   Handle possible student mistakes appropriately in the test case. For example, if a method of the student returns null
   and this is not handled appropriately in the test, this might produce a ``NullPointerException``, which will lead to a
@@ -218,7 +218,7 @@ General best practices
 Java best practices
 ^^^^^^^^^^^^^^^^^^^
 
-- **Use constant String attributes to represent the base package**
+- **Use Constant String Attributes to Represent the Base Package**
 
   Some courses use long package identifiers like ``de.tum.in.ase.pse``. When instantiating objects with reflections,
   the instantiation method usually takes the full canonical name of a class, which is ``de.tum.in.ase.pse.Book`` for example.
@@ -235,7 +235,7 @@ Java best practices
       // Test Code
     }
 
-- **Use JUnit5 and AJTS features**
+- **Use JUnit5 and AJTS Features**
 
   More information can be found in the `JUnit5 <https://junit.org/junit5/docs/current/user-guide/#writing-tests>`__ and
   `AJTS <https://github.com/ls1intum/artemis-java-test-sandbox#readme>`__ documentation. The following list adds some
@@ -266,7 +266,7 @@ Java best practices
     - pass mocked objects (flexible and safe, students don't need to know) → EasyMock/Mockito
     - mock single methods of tested objects (partial mock) or mock constructors → one of the above plus PowerMock
 
-- **Define your own annotations**
+- **Define your own Annotations**
 
   Own annotations are an easy and powerful tool that keeps your code readable. This example defines an annotation
   that combines both test and strict timeout.
@@ -281,7 +281,7 @@ Java best practices
 
     }
 
-- **Consider using jqwik for property-based testing**
+- **Consider using jqwik for Property-Based Testing**
 
   `Jqwik <https://jqwik.net>`__ allows testing with arbitrary inputs and shrinks the test errors, resulting in excellent
   counter examples when student code fails (usually exactly the edge case).
