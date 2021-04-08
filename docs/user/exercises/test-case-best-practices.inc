@@ -235,10 +235,10 @@ Java best practices
       // Test Code
     }
 
-- **Use JUnit5 and AJTS Features**
+- **Use JUnit5 and Ares Features**
 
   More information can be found in the `JUnit5 <https://junit.org/junit5/docs/current/user-guide/#writing-tests>`__ and
-  `AJTS <https://github.com/ls1intum/artemis-java-test-sandbox#readme>`__ documentation. The following list adds some
+  `Ares <https://github.com/ls1intum/artemis-java-test-sandbox#readme>`__ documentation. The following list adds some
   useful notes:
 
   - Use `Nested Tests <https://junit.org/junit5/docs/current/user-guide/#writing-tests-nested>`__ to group tests
@@ -287,7 +287,7 @@ Java best practices
   counter examples when student code fails (usually exactly the edge case).
 
   .. note::
-    AJTS currently only supports jqwik 1.3.4.
+    Ares currently only supports jqwik 1.3.4.
 
 - **Eclipse Compiler and Best-Effort Compilation**
 
