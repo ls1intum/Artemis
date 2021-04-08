@@ -27,6 +27,7 @@ export class AssessmentHeaderComponent {
     @Input() canOverride: boolean;
 
     @Input() result: Result | null;
+    @Input() isIllegalSubmission: boolean;
     @Input() hasComplaint = false;
     @Input() hasMoreFeedbackRequest = false;
     @Input() complaintHandled = false;
