@@ -24,32 +24,27 @@ import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.service.*;
-import de.tum.in.www1.artemis.service.user.UserService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
 public class TextSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
-    ExerciseRepository exerciseRepo;
+    private ExerciseRepository exerciseRepo;
 
     @Autowired
-    TextSubmissionRepository submissionRepository;
+    private TextSubmissionRepository submissionRepository;
 
     @Autowired
-    SubmissionVersionRepository submissionVersionRepository;
+    private SubmissionVersionRepository submissionVersionRepository;
 
     @Autowired
-    StudentParticipationRepository participationRepository;
+    private StudentParticipationRepository participationRepository;
 
     @Autowired
-    UserService userService;
+    private UserRepository userRepository;
 
     @Autowired
-    UserRepository userRepository;
-
-    @Autowired
-    TeamService teamService;
+    private TeamRepository teamRepository;
 
     private TextExercise finishedTextExercise;
 
@@ -61,11 +56,9 @@ public class TextSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
 
     private StudentParticipation lateParticipation;
 
-    private User student;
-
     @BeforeEach
     public void initTestCase() {
-        student = database.addUsers(2, 1, 1).get(0);
+        User student = database.addUsers(2, 1, 1).get(0);
         Course course1 = database.addCourseWithOneReleasedTextExercise();
         Course course2 = database.addCourseWithOneFinishedTextExercise();
         releasedTextExercise = database.findTextExerciseWithTitle(course1.getExercises(), "Text");
@@ -276,7 +269,7 @@ public class TextSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         team.setExercise(releasedTextExercise);
         team.addStudents(userRepository.findOneByLogin("student1").orElseThrow());
         team.addStudents(userRepository.findOneByLogin("student2").orElseThrow());
-        teamService.save(releasedTextExercise, team);
+        teamRepository.save(releasedTextExercise, team);
 
         StudentParticipation participation = database.addTeamParticipationForExercise(releasedTextExercise, team.getId());
         releasedTextExercise.setStudentParticipations(Set.of(participation));
@@ -328,7 +321,7 @@ public class TextSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         request.put(submitPath, textSubmission, HttpStatus.OK);
 
         final var submissionInDb = submissionRepository.findById(textSubmission.getId());
-        assertThat(submissionInDb.isPresent());
+        assertThat(submissionInDb).isPresent();
         assertThat(submissionInDb.get().getText()).isEqualTo(newSubmissionText);
     }
 

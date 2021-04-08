@@ -103,16 +103,6 @@ public class ResultService {
     }
 
     /**
-     * Get the latest results for each participation in an exercise from the database together with the list of feedback items.
-     *
-     * @param exerciseId the id of the exercise to load from the database
-     * @return an list of results.
-     */
-    public List<Result> findLatestAutomaticResultsWithFeedbacksForExercise(Long exerciseId) {
-        return resultRepository.findLatestAutomaticResultsWithEagerFeedbacksForExercise(exerciseId);
-    }
-
-    /**
      * Check if there is a result for the given participation.
      *
      * @param participationId the id of the participation for which to check if there is a result.

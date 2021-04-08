@@ -32,6 +32,7 @@ import { Feedback } from 'app/entities/feedback.model';
     templateUrl: './code-editor-container.component.html',
 })
 export class CodeEditorContainerComponent implements ComponentCanDeactivate {
+    readonly CommitState = CommitState;
     @ViewChild(CodeEditorGridComponent, { static: false }) grid: CodeEditorGridComponent;
 
     @ViewChild(CodeEditorFileBrowserComponent, { static: false }) fileBrowser: CodeEditorFileBrowserComponent;

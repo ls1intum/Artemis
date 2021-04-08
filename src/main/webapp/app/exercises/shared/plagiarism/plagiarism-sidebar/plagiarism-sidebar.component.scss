@@ -112,6 +112,7 @@
     .plagiarism-status-indicator {
         background-color: $body-bg;
         border-radius: 50%;
+        flex-shrink: 0;
         height: 8px;
         margin-right: 0.75rem;
         width: 8px;
@@ -123,5 +124,9 @@
         &.denied {
             background-color: red;
         }
+    }
+
+    .plagiarism-percentage {
+        flex-shrink: 0;
     }
 }

@@ -9,7 +9,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { Observable, of } from 'rxjs';
 import { CreateLearningGoalComponent } from 'app/course/learning-goals/create-learning-goal/create-learning-goal.component';
 import { LearningGoalFormData } from 'app/course/learning-goals/learning-goal-form/learning-goal-form.component';
-import { TranslatePipe } from '@ngx-translate/core';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe.ts';
 import { LearningGoalService } from 'app/course/learning-goals/learningGoal.service';
 import { LectureService } from 'app/lecture/lecture.service';
 import { MockRouter } from '../../helpers/mocks/mock-router';
@@ -39,7 +39,7 @@ describe('CreateLearningGoal', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [],
-            declarations: [LearningGoalFormStubComponent, CreateLearningGoalComponent, MockPipe(TranslatePipe)],
+            declarations: [LearningGoalFormStubComponent, CreateLearningGoalComponent, MockPipe(ArtemisTranslatePipe)],
             providers: [
                 MockProvider(LearningGoalService),
                 MockProvider(LectureService),

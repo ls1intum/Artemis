@@ -1,4 +1,4 @@
 <ng-container *ngIf="complaint">
-    <div class="alert alert-info" *ngIf="complaint.complaintType === ComplaintType.COMPLAINT">{{ 'artemisApp.complaint.hint' | translate }}</div>
-    <div class="alert alert-info" *ngIf="complaint.complaintType === ComplaintType.MORE_FEEDBACK">{{ 'artemisApp.moreFeedback.hint' | translate }}</div>
+    <div class="alert alert-info" *ngIf="complaint.complaintType === ComplaintType.COMPLAINT">{{ 'artemisApp.complaint.hint' | artemisTranslate }}</div>
+    <div class="alert alert-info" *ngIf="complaint.complaintType === ComplaintType.MORE_FEEDBACK">{{ 'artemisApp.moreFeedback.hint' | artemisTranslate }}</div>
 </ng-container>

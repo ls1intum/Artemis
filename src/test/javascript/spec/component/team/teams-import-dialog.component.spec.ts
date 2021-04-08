@@ -2,7 +2,6 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ComponentFixture, fakeAsync, TestBed, tick, waitForAsync } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { TranslatePipe } from '@ngx-translate/core';
 import { User } from 'app/core/user/user.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { Team, TeamImportStrategyType } from 'app/entities/team.model';
@@ -15,6 +14,7 @@ import { AlertErrorComponent } from 'app/shared/alert/alert-error.component';
 import { AlertComponent } from 'app/shared/alert/alert.component';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component.ts';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe.ts';
 import * as chai from 'chai';
 import { flatMap } from 'lodash';
 import { JhiAlertService, NgJhipsterModule } from 'ng-jhipster';
@@ -24,6 +24,7 @@ import { restore, SinonSpy, SinonStub, spy, stub } from 'sinon';
 import * as sinonChai from 'sinon-chai';
 import { mockExercise, mockSourceExercise, mockSourceTeams, mockSourceTeamStudents, mockTeam, mockTeams, mockTeamStudents } from '../../helpers/mocks/service/mock-team.service';
 import { ArtemisTestModule } from '../../test.module';
+
 chai.use(sinonChai);
 const expect = chai.expect;
 
@@ -67,7 +68,7 @@ describe('TeamsImportDialogComponent', () => {
                     TeamsImportDialogComponent,
                     MockComponent(TeamsImportFromFileFormComponent),
                     MockDirective(DeleteButtonDirective),
-                    MockPipe(TranslatePipe),
+                    MockPipe(ArtemisTranslatePipe),
                     MockComponent(AlertComponent),
                     MockComponent(AlertErrorComponent),
                     MockComponent(TeamExerciseSearchComponent),

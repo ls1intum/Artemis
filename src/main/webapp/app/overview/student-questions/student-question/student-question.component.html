@@ -5,13 +5,13 @@
             <fa-icon [icon]="'comment'"></fa-icon>
         </div>
         <div class="col">
-            <span class="question-subtitle">{{ 'artemisApp.courseOverview.exerciseDetails.faq.questionLabel' | translate }}</span>
+            <span class="question-subtitle">{{ 'artemisApp.courseOverview.exerciseDetails.faq.questionLabel' | artemisTranslate }}</span>
         </div>
         <div class="col-auto px-0">
             <fa-icon
                 class="clickable mr-1"
                 *ngIf="isAtLeastTutorInCourse || isAuthorOfQuestion(studentQuestion)"
-                [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.editQuestion' | translate"
+                [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.editQuestion' | artemisTranslate"
                 container="body"
                 [icon]="'pencil-alt'"
                 (click)="toggleEditMode()"
@@ -21,8 +21,8 @@
                 *ngIf="isAtLeastTutorInCourse || isAuthorOfQuestion(studentQuestion)"
                 (confirmEvent)="deleteQuestion()"
                 [ngClass]="'mr-1'"
-                [initialTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.deleteQuestion' | translate"
-                [confirmTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.confirmDeleteQuestion' | translate"
+                [initialTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.deleteQuestion' | artemisTranslate"
+                [confirmTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.confirmDeleteQuestion' | artemisTranslate"
             ></jhi-confirm-icon>
         </div>
     </div>
@@ -47,13 +47,13 @@
                     <fa-icon [icon]="'comment'"></fa-icon>
                 </div>
                 <div class="col">
-                    <span class="form-control-label question-subtitle">{{ 'artemisApp.courseOverview.exerciseDetails.faq.editQuestion' | translate }}</span>
+                    <span class="form-control-label question-subtitle">{{ 'artemisApp.courseOverview.exerciseDetails.faq.editQuestion' | artemisTranslate }}</span>
                 </div>
                 <div class="col-auto px-0">
                     <fa-icon
                         class="clickable mr-1"
                         *ngIf="isAtLeastTutorInCourse || isAuthorOfQuestion(studentQuestion)"
-                        [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.editQuestion' | translate"
+                        [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.editQuestion' | artemisTranslate"
                         container="body"
                         [icon]="'pencil-alt'"
                         (click)="toggleEditMode()"
@@ -63,8 +63,8 @@
                         *ngIf="isAtLeastTutorInCourse || isAuthorOfQuestion(studentQuestion)"
                         (confirmEvent)="deleteQuestion()"
                         [ngClass]="'mr-1'"
-                        [initialTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.deleteQuestion' | translate"
-                        [confirmTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.confirmDeleteQuestion' | translate"
+                        [initialTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.deleteQuestion' | artemisTranslate"
+                        [confirmTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.confirmDeleteQuestion' | artemisTranslate"
                     ></jhi-confirm-icon>
                 </div>
             </div>
@@ -81,10 +81,10 @@
         </div>
         <div class="col-12 d-flex justify-content-around">
             <button class="btn btn-sm btn-outline-secondary" (click)="toggleEditMode()">
-                {{ 'artemisApp.courseOverview.exerciseDetails.faq.cancel' | translate }}
+                {{ 'artemisApp.courseOverview.exerciseDetails.faq.cancel' | artemisTranslate }}
             </button>
             <button class="btn btn-sm btn-outline-secondary" (click)="saveQuestion()">
-                {{ 'artemisApp.courseOverview.exerciseDetails.faq.saveQuestion' | translate }}
+                {{ 'artemisApp.courseOverview.exerciseDetails.faq.saveQuestion' | artemisTranslate }}
             </button>
         </div>
     </div>

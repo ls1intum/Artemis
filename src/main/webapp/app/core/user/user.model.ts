@@ -1,9 +1,11 @@
 import { Account } from 'app/core/user/account.model';
 import { Moment } from 'moment';
+import { Organization } from 'app/entities/organization.model';
 
 export class User extends Account {
     public id?: number;
     public groups?: string[];
+    public organizations?: Organization[];
     public createdBy?: string;
     public createdDate?: Date;
     public lastModifiedBy?: string;
@@ -22,6 +24,7 @@ export class User extends Account {
         langKey?: string,
         authorities?: string[],
         groups?: string[],
+        organizations?: Organization[],
         createdBy?: string,
         createdDate?: Date,
         lastModifiedBy?: string,

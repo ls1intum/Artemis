@@ -23,7 +23,7 @@ import de.tum.in.www1.artemis.domain.enumeration.ExerciseLifecycle;
 import de.tum.in.www1.artemis.repository.TextExerciseRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.ExerciseLifecycleService;
-import de.tum.in.www1.artemis.service.connectors.AtheneService;
+import de.tum.in.www1.artemis.service.connectors.athene.AtheneService;
 import io.github.jhipster.config.JHipsterConstants;
 
 @Service
@@ -63,7 +63,7 @@ public class AtheneScheduleService {
         }
         final List<TextExercise> runningTextExercises = textExerciseRepository.findAllAutomaticAssessmentTextExercisesWithFutureDueDate();
         runningTextExercises.forEach(this::scheduleExerciseForAthene);
-        log.info("Scheduled Athene for " + runningTextExercises.size() + " text exercises with future due dates.");
+        log.info("Scheduled Athene for {} text exercises with future due dates.", runningTextExercises.size());
     }
 
     /**
@@ -91,7 +91,7 @@ public class AtheneScheduleService {
         final ScheduledFuture future = exerciseLifecycleService.scheduleTask(exercise, ExerciseLifecycle.DUE, atheneRunnableForExercise(exercise));
 
         scheduledAtheneTasks.put(exercise.getId(), future);
-        log.debug("Scheduled Athene for Text Exercise \"" + exercise.getTitle() + "\" (#" + exercise.getId() + ") for " + exercise.getDueDate() + ".");
+        log.debug("Scheduled Athene for Text Exercise '{}' (#{}) for {}.", exercise.getTitle(), exercise.getId(), exercise.getDueDate());
     }
 
     /**

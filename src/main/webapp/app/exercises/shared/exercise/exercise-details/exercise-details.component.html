@@ -83,8 +83,8 @@
 </dd>
 <dt><span jhiTranslate="artemisApp.exercise.presentationScoreEnabled.title">Presentation Score enabled</span></dt>
 <dd>
-    <span *ngIf="exercise.presentationScoreEnabled">{{ 'global.generic.yes' | translate }}</span>
-    <span *ngIf="!exercise.presentationScoreEnabled">{{ 'global.generic.no' | translate }}</span>
+    <span *ngIf="exercise.presentationScoreEnabled">{{ 'global.generic.yes' | artemisTranslate }}</span>
+    <span *ngIf="!exercise.presentationScoreEnabled">{{ 'global.generic.no' | artemisTranslate }}</span>
 </dd>
 <dt><span jhiTranslate="artemisApp.exercise.problemStatement">Problem Statement</span></dt>
 <ng-container *ngIf="exercise.type !== ExerciseType.PROGRAMMING">

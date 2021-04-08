@@ -81,7 +81,8 @@
             },
             "complaintHint": "Zeigt Beschwerden über Bewertungen von anderen Tutoren. Beachte: Beschwerden über deine Bewertungen werden hier nicht angezeigt.",
             "moreFeedbackRequestHint": "Zeigt Anfragen für weiteres Feedback von deinen Bewertungen an.",
-            "noSubmissionsBecauseOfOtherLockedSubmissions": "Alle Einreichungen sind von anderen Tutoren gesperrt.",
+            "noSubmissionsInfo": "In dieser Korrekturrunde kannst du 0 Einreichungen korrigieren. {{notYetAssessed}} Einreichungen sind noch nicht korrigiert, davon sind {{lockedSubmissionsByOtherTutor}} von anderen Tutoren gesperrt",
+            "noSubmissionsInfoSecondCorrection": " und {{firstRoundAssessments}} wurden von dir in der ersten Korrekturrunde korrigiert. ",
             "noSubmissionsBecauseFirstAssessedByYourself": "Nur Einreichungen die du nicht selbst in der ersten Korrekturrunde bearbeitet hast können korrigiert werden."
         }
     }

@@ -1,7 +1,8 @@
 package de.tum.in.www1.artemis.service;
 
-import static org.hamcrest.MatcherAssert.*;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 import javax.servlet.http.HttpServletRequest;
@@ -16,7 +17,6 @@ public class HttpRequestUtilsTest {
     public void testIPv4String() {
         HttpServletRequest request = httpRequestMockWithIp("192.0.2.235");
         final var ipAddress = HttpRequestUtils.getIpAddressFromRequest(request).get();
-
         assertThat(ipAddress.toFullString(), is(equalTo("192.000.002.235")));
     }
 
@@ -24,7 +24,6 @@ public class HttpRequestUtilsTest {
     void testIPv6String() {
         HttpServletRequest request = httpRequestMockWithIp("2001:db8:0:0:0:8a2e:370:7334");
         final var ipAddress = HttpRequestUtils.getIpAddressFromRequest(request).get();
-
         assertThat(ipAddress.toFullString(), is(equalTo("2001:0db8:0000:0000:0000:8a2e:0370:7334")));
     }
 
@@ -32,7 +31,6 @@ public class HttpRequestUtilsTest {
     void testIPv6ShortString() {
         HttpServletRequest request = httpRequestMockWithIp("2001:db8::8a2e:370:7334");
         final var ipAddress = HttpRequestUtils.getIpAddressFromRequest(request).get();
-
         assertThat(ipAddress.isIPv6(), is(true));
         assertThat(ipAddress.toFullString(), is(equalTo("2001:0db8:0000:0000:0000:8a2e:0370:7334")));
     }
@@ -41,7 +39,6 @@ public class HttpRequestUtilsTest {
     void testIPv4Lopback() {
         HttpServletRequest request = httpRequestMockWithIp("127.0.0.1");
         final var ipAddress = HttpRequestUtils.getIpAddressFromRequest(request).get();
-
         assertThat(ipAddress.isIPv4(), is(true));
         assertThat(ipAddress.toFullString(), is(equalTo("127.000.000.001")));
     }
@@ -50,7 +47,6 @@ public class HttpRequestUtilsTest {
     void testIPv6Loopback() {
         HttpServletRequest request = httpRequestMockWithIp("0:0:0:0:0:0:0:1");
         final var ipAddress = HttpRequestUtils.getIpAddressFromRequest(request).get();
-
         assertThat(ipAddress.isIPv6(), is(true));
         assertThat(ipAddress.toFullString(), is(equalTo("0000:0000:0000:0000:0000:0000:0000:0001")));
     }
@@ -59,7 +55,6 @@ public class HttpRequestUtilsTest {
     void testIPv6ShortLoopback() {
         HttpServletRequest request = httpRequestMockWithIp("::1");
         final var ipAddress = HttpRequestUtils.getIpAddressFromRequest(request).get();
-
         assertThat(ipAddress.isIPv6(), is(true));
         assertThat(ipAddress.toFullString(), is(equalTo("0000:0000:0000:0000:0000:0000:0000:0001")));
     }
@@ -68,7 +63,6 @@ public class HttpRequestUtilsTest {
     void testInvalidIPv4String() {
         HttpServletRequest request = httpRequestMockWithIp("192.256.2.235");
         final var ipAddress = HttpRequestUtils.getIpAddressFromRequest(request);
-
         assertThat(ipAddress.isEmpty(), is(true));
     }
 
@@ -76,7 +70,6 @@ public class HttpRequestUtilsTest {
     void testRandomString() {
         HttpServletRequest request = httpRequestMockWithIp("foo.example");
         final var ipAddress = HttpRequestUtils.getIpAddressFromRequest(request);
-
         assertThat(ipAddress.isEmpty(), is(true));
     }
 
@@ -84,7 +77,6 @@ public class HttpRequestUtilsTest {
     void testIpInRemoteAddr() {
         HttpServletRequest request = httpRequestMockWithIp("REMOTE_ADDR", "224.14.7.42");
         final var ipAddress = HttpRequestUtils.getIpAddressFromRequest(request).get();
-
         assertThat(ipAddress.toFullString(), is(equalTo("224.014.007.042")));
     }
 
@@ -98,5 +90,4 @@ public class HttpRequestUtilsTest {
         when(request.getHeader(headerName)).thenReturn(ipAddress);
         return request;
     }
-
 }

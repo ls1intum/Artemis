@@ -17,7 +17,7 @@ import { LectureService } from 'app/lecture/lecture.service';
 import { LearningGoal } from 'app/entities/learningGoal.model';
 import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
 import { MockRouter } from '../../helpers/mocks/mock-router';
-import { TranslatePipe } from '@ngx-translate/core';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe.ts';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -38,7 +38,7 @@ describe('EditLearningGoalComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [],
-            declarations: [LearningGoalFormStubComponent, EditLearningGoalComponent, MockPipe(TranslatePipe)],
+            declarations: [LearningGoalFormStubComponent, EditLearningGoalComponent, MockPipe(ArtemisTranslatePipe)],
             providers: [
                 MockProvider(LectureService),
                 MockProvider(LearningGoalService),

@@ -18,11 +18,11 @@ import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 class ProgrammingExerciseServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
-    ProgrammingExerciseRepository programmingExerciseRepository;
+    private ProgrammingExerciseRepository programmingExerciseRepository;
 
-    ProgrammingExercise programmingExercise1;
+    private ProgrammingExercise programmingExercise1;
 
-    ProgrammingExercise programmingExercise2;
+    private ProgrammingExercise programmingExercise2;
 
     @BeforeEach
     void init() {

@@ -2,11 +2,11 @@
     <div *ngIf="showPageSizeDropdownAndSearchField" class="d-flex mb-2">
         <div ngbDropdown class="d-inline-block mr-2">
             <button class="btn btn-outline-primary" id="dropdownBasic1" ngbDropdownToggle>
-                {{ perPageTranslation(pagingValue) | translate: { number: pagingValue } }}
+                {{ perPageTranslation(pagingValue) | artemisTranslate: { number: pagingValue } }}
             </button>
             <div ngbDropdownMenu aria-labelledby="dropdownBasic1">
                 <button *ngFor="let pagingOption of PAGING_VALUES" (click)="setEntitiesPerPage(pagingOption)" [class.selected]="pagingOption === pagingValue" ngbDropdownItem>
-                    {{ perPageTranslation(pagingOption) | translate: { number: pagingOption } }}
+                    {{ perPageTranslation(pagingOption) | artemisTranslate: { number: pagingOption } }}
                 </button>
             </div>
         </div>
@@ -17,7 +17,7 @@
                 type="text"
                 class="form-control"
                 (selectItem)="onAutocompleteSelect($event.item)"
-                [placeholder]="searchPlaceholderTranslation | translate"
+                [placeholder]="searchPlaceholderTranslation | artemisTranslate"
                 [ngbTypeahead]="onSearch"
                 [resultFormatter]="searchResultFormatter"
                 [inputFormatter]="searchInputFormatter"

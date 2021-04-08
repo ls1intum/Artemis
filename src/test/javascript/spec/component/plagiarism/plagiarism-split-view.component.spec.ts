@@ -5,12 +5,14 @@ import { Subject } from 'rxjs';
 import { ArtemisTestModule } from '../../test.module';
 import { MockTranslateService, TranslateTestingModule } from '../../helpers/mocks/service/mock-translate.service';
 import { PlagiarismComparison } from 'app/exercises/shared/plagiarism/types/PlagiarismComparison';
-import { ModelingSubmissionElement } from 'app/exercises/shared/plagiarism/types/modeling/ModelingSubmissionElement';
 import { PlagiarismSplitViewComponent } from 'app/exercises/shared/plagiarism/plagiarism-split-view/plagiarism-split-view.component';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { ArtemisPlagiarismModule } from 'app/exercises/shared/plagiarism/plagiarism.module';
+import { PlagiarismSubmission } from 'app/exercises/shared/plagiarism/types/PlagiarismSubmission';
+import { TextSubmissionElement } from 'app/exercises/shared/plagiarism/types/text/TextSubmissionElement';
+import { PlagiarismMatch } from 'app/exercises/shared/plagiarism/types/PlagiarismMatch';
 
 const collapse = jest.fn();
 const setSizes = jest.fn();
@@ -30,6 +32,9 @@ describe('Plagiarism Split View Component', () => {
     const textExercise = { id: 234, type: ExerciseType.TEXT } as TextExercise;
     const splitControlSubject = new Subject<string>();
 
+    const submissionA = { studentLogin: 'studentA' } as PlagiarismSubmission<TextSubmissionElement>;
+    const submissionB = { studentLogin: 'studentB' } as PlagiarismSubmission<TextSubmissionElement>;
+
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, ArtemisPlagiarismModule, TranslateTestingModule],
@@ -40,9 +45,9 @@ describe('Plagiarism Split View Component', () => {
         comp = fixture.componentInstance;
 
         comp.comparison = {
-            submissionA: { studentLogin: 'studentA' },
-            submissionB: { studentLogin: 'studentB' },
-        } as PlagiarismComparison<ModelingSubmissionElement>;
+            submissionA,
+            submissionB,
+        } as PlagiarismComparison<TextSubmissionElement>;
         comp.splitControlSubject = splitControlSubject;
     });
 
@@ -97,5 +102,36 @@ describe('Plagiarism Split View Component', () => {
         comp.handleSplitControl('even');
 
         expect(setSizes).toHaveBeenCalledWith([50, 50]);
+    });
+
+    it('should get the first modeling submission', () => {
+        const modelingSubmissionA = comp.getModelingSubmissionA();
+        expect(modelingSubmissionA).toEqual(submissionA);
+    });
+
+    it('should get the second modeling submission', () => {
+        const modelingSubmissionB = comp.getModelingSubmissionB();
+        expect(modelingSubmissionB).toEqual(submissionB);
+    });
+
+    it('should get the first text submission', () => {
+        const textSubmissionA = comp.getTextSubmissionA();
+        expect(textSubmissionA).toEqual(submissionA);
+    });
+
+    it('should get the second text submission', () => {
+        const textSubmissionB = comp.getTextSubmissionB();
+        expect(textSubmissionB).toEqual(submissionB);
+    });
+
+    it('parses text matches', () => {
+        spyOn(comp, 'mapMatchesToElements').and.returnValue(new Map());
+
+        const matches: PlagiarismMatch[] = [];
+        comp.parseTextMatches({ submissionA, submissionB, matches } as PlagiarismComparison<TextSubmissionElement>);
+
+        expect(comp.matchesA).toBeDefined();
+        expect(comp.matchesB).toBeDefined();
+        expect(comp.mapMatchesToElements).toHaveBeenCalledTimes(2);
     });
 });

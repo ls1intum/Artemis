@@ -2,10 +2,10 @@
     <jhi-alert *ngIf="!examId"></jhi-alert>
     <div class="row">
         <div class="col-12">
-            <h3>{{ complaintType === ComplaintType.MORE_FEEDBACK ? ('artemisApp.moreFeedback.title' | translate) : ('artemisApp.complaint.title' | translate) }}</h3>
+            <h3>{{ complaintType === ComplaintType.MORE_FEEDBACK ? ('artemisApp.moreFeedback.title' | artemisTranslate) : ('artemisApp.complaint.title' | artemisTranslate) }}</h3>
             <p *ngIf="complaintType === ComplaintType.MORE_FEEDBACK; else complaintDescription">
-                {{ 'artemisApp.moreFeedback.' + (exercise.teamMode ? 'descriptionTeam' : 'description') | translate }}
-                <fa-icon [icon]="'info-circle'" title="{{ 'artemisApp.moreFeedback.info' | translate }}" class="info-icon"></fa-icon>
+                {{ 'artemisApp.moreFeedback.' + (exercise.teamMode ? 'descriptionTeam' : 'description') | artemisTranslate }}
+                <fa-icon [icon]="'info-circle'" title="{{ 'artemisApp.moreFeedback.info' | artemisTranslate }}" class="info-icon"></fa-icon>
             </p>
             <ng-template #complaintDescription>
                 <p>
@@ -20,7 +20,7 @@
                         [translateValues]="{ maxComplaintNumber: maxComplaintsPerCourse, allowedComplaints: allowedComplaints }"
                     ></span>
                     <span *ngIf="examId && isCurrentUserSubmissionAuthor" [jhiTranslate]="'artemisApp.complaint.descriptionExam'"></span>
-                    <fa-icon *ngIf="!examId" [icon]="'info-circle'" title="{{ 'artemisApp.complaint.info' | translate }}" class="info-icon"></fa-icon>
+                    <fa-icon *ngIf="!examId" [icon]="'info-circle'" title="{{ 'artemisApp.complaint.info' | artemisTranslate }}" class="info-icon"></fa-icon>
                 </p>
             </ng-template>
         </div>
@@ -30,13 +30,17 @@
         <div class="col-12 col-md-6">
             <p *ngIf="!alreadySubmitted && isCurrentUserSubmissionAuthor">
                 <span *ngIf="!exercise.teamMode">
-                    {{ complaintType === ComplaintType.MORE_FEEDBACK ? ('artemisApp.moreFeedback.beDescriptive' | translate) : ('artemisApp.complaint.beDescriptive' | translate) }}
+                    {{
+                        complaintType === ComplaintType.MORE_FEEDBACK
+                            ? ('artemisApp.moreFeedback.beDescriptive' | artemisTranslate)
+                            : ('artemisApp.complaint.beDescriptive' | artemisTranslate)
+                    }}
                 </span>
                 <span *ngIf="exercise.teamMode">
                     {{
                         complaintType === ComplaintType.MORE_FEEDBACK
-                            ? ('artemisApp.moreFeedback.beDescriptiveTeam' | translate)
-                            : ('artemisApp.complaint.beDescriptiveTeam' | translate)
+                            ? ('artemisApp.moreFeedback.beDescriptiveTeam' | artemisTranslate)
+                            : ('artemisApp.complaint.beDescriptiveTeam' | artemisTranslate)
                     }}
                 </span>
             </p>
@@ -45,19 +49,21 @@
                 {{
                     complaintType === ComplaintType.MORE_FEEDBACK
                         ? isCurrentUserSubmissionAuthor
-                            ? ('artemisApp.moreFeedback.alreadySubmittedSubmissionAuthor' | translate)
-                            : ('artemisApp.moreFeedback.alreadySubmittedNotSubmissionAuthor' | translate)
+                            ? ('artemisApp.moreFeedback.alreadySubmittedSubmissionAuthor' | artemisTranslate)
+                            : ('artemisApp.moreFeedback.alreadySubmittedNotSubmissionAuthor' | artemisTranslate)
                         : isCurrentUserSubmissionAuthor
-                        ? ('artemisApp.complaint.alreadySubmittedSubmissionAuthor' | translate)
-                        : ('artemisApp.complaint.alreadySubmittedNotSubmissionAuthor' | translate)
+                        ? ('artemisApp.complaint.alreadySubmittedSubmissionAuthor' | artemisTranslate)
+                        : ('artemisApp.complaint.alreadySubmittedNotSubmissionAuthor' | artemisTranslate)
                 }}
-                <span [ngbTooltip]="submittedDate | artemisDate">{{ submittedDate | amTimeAgo }}</span>
+                <span [ngbTooltip]="submittedDate | artemisDate">{{ submittedDate | artemisTimeAgo }}</span>
                 <span *ngIf="handled && accepted" class="text-light bg-success">
                     &nbsp;{{
-                        complaintType === ComplaintType.MORE_FEEDBACK ? ('artemisApp.moreFeedback.acceptedLong' | translate) : ('artemisApp.complaint.acceptedLong' | translate)
+                        complaintType === ComplaintType.MORE_FEEDBACK
+                            ? ('artemisApp.moreFeedback.acceptedLong' | artemisTranslate)
+                            : ('artemisApp.complaint.acceptedLong' | artemisTranslate)
                     }}&nbsp;
                 </span>
-                <span *ngIf="handled && !accepted" class="text-light bg-danger"> &nbsp;{{ 'artemisApp.complaint.rejectedLong' | translate }}&nbsp; </span>
+                <span *ngIf="handled && !accepted" class="text-light bg-danger"> &nbsp;{{ 'artemisApp.complaint.rejectedLong' | artemisTranslate }}&nbsp; </span>
             </p>
 
             <textarea
@@ -73,7 +79,11 @@
             <div class="row" *ngIf="!alreadySubmitted && isCurrentUserSubmissionAuthor">
                 <div class="col-6">
                     <button class="btn btn-primary" [disabled]="!complaintText" (click)="createComplaint()">
-                        {{ complaintType === ComplaintType.MORE_FEEDBACK ? ('artemisApp.moreFeedback.button' | translate) : ('artemisApp.complaint.submit' | translate) }}
+                        {{
+                            complaintType === ComplaintType.MORE_FEEDBACK
+                                ? ('artemisApp.moreFeedback.button' | artemisTranslate)
+                                : ('artemisApp.complaint.submit' | artemisTranslate)
+                        }}
                     </button>
                 </div>
             </div>
@@ -81,8 +91,12 @@
 
         <div class="col-12 col-md-6">
             <p class="col-12" *ngIf="complaintResponse" class="mt-4">
-                {{ complaintType === ComplaintType.MORE_FEEDBACK ? ('artemisApp.moreFeedback.responseExists' | translate) : ('artemisApp.complaint.responseExists' | translate) }}
-                <span [ngbTooltip]="complaintResponse.submittedTime | artemisDate">{{ complaintResponse.submittedTime! | amTimeAgo }}</span
+                {{
+                    complaintType === ComplaintType.MORE_FEEDBACK
+                        ? ('artemisApp.moreFeedback.responseExists' | artemisTranslate)
+                        : ('artemisApp.complaint.responseExists' | artemisTranslate)
+                }}
+                <span [ngbTooltip]="complaintResponse.submittedTime | artemisDate">{{ complaintResponse.submittedTime! | artemisTimeAgo }}</span
                 >:<br />
             </p>
 

@@ -19,8 +19,6 @@ export class TextExerciseDetailComponent implements OnInit, OnDestroy {
 
     textExercise: TextExercise;
     isExamExercise: boolean;
-    checkPlagiarismInProgress: boolean;
-
     formattedProblemStatement: SafeHtml | null;
     formattedSampleSolution: SafeHtml | null;
     formattedGradingInstructions: SafeHtml | null;
@@ -63,27 +61,6 @@ export class TextExerciseDetailComponent implements OnInit, OnDestroy {
                 this.textExercise.categories = this.textExercise.categories.map((category) => JSON.parse(category));
             }
         });
-    }
-
-    /**
-     * Returns the route for editing the exercise. Exam and course exercises have different routes.
-     */
-    getEditRoute() {
-        if (this.isExamExercise) {
-            return [
-                '/course-management',
-                this.textExercise.exerciseGroup?.exam?.course?.id,
-                'exams',
-                this.textExercise.exerciseGroup?.exam?.id,
-                'exercise-groups',
-                this.textExercise.exerciseGroup?.id,
-                'text-exercises',
-                this.textExercise.id,
-                'edit',
-            ];
-        } else {
-            return ['/course-management', this.textExercise.course?.id, 'text-exercises', this.textExercise.id, 'edit'];
-        }
     }
 
     /**

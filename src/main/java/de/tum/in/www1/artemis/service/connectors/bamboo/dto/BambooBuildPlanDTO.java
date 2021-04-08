@@ -4,8 +4,10 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class BambooBuildPlanDTO {
 
     private String name;
@@ -28,7 +30,7 @@ public class BambooBuildPlanDTO {
 
     private boolean isBuilding;
 
-    private Map<String, BambooRepositoryDTO> repositories = new HashMap<>();
+    private final Map<String, BambooRepositoryDTO> repositories = new HashMap<>();
 
     /**
      * needed for Jackson

@@ -1,0 +1,9 @@
+(include_subdirs unqualified)
+
+(test
+ (name test)
+ (flags (:standard -warn-error -A))
+ (libraries ounit2 batteries core)
+ ;;; results will appear in _build/results.xml
+ (action (run %{test} -output-junit-file "../results.xml"))
+)

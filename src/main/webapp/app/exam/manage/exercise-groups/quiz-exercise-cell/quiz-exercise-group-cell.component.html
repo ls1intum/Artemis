@@ -1,0 +1,5 @@
+<td class="align-middle">
+    <ng-container *ngIf="quizExercise.type === exerciseType.QUIZ">
+        {{ quizExercise.quizQuestions?.length || 0 }}
+    </ng-container>
+</td>

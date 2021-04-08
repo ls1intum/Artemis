@@ -26,7 +26,8 @@
             "versionControlServer": "Version Control Server",
             "userManagement": "User Management",
             "hazelcast": "Hazelcast",
-            "websocketBroker": "Websocket Broker (Server -> Broker)"
+            "websocketBroker": "Websocket Broker (Server -> Broker)",
+            "athene": "Athene"
         },
         "table": {
             "service": "Service name",

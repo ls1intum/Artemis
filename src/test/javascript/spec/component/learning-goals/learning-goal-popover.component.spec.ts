@@ -3,7 +3,7 @@ import * as sinonChai from 'sinon-chai';
 import * as sinon from 'sinon';
 import { Location } from '@angular/common';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { TranslatePipe } from '@ngx-translate/core';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe.ts';
 import { MockComponent, MockPipe } from 'ng-mocks';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { RouterTestingModule } from '@angular/router/testing';
@@ -38,7 +38,7 @@ describe('LearningGoalPopoverComponent', () => {
                     { path: 'course-management/:courseId/goal-management', component: DummyManagementComponent },
                 ]),
             ],
-            declarations: [LearningGoalsPopoverComponent, MockPipe(TranslatePipe), MockComponent(FaIconComponent), DummyStatisticsComponent, DummyManagementComponent],
+            declarations: [LearningGoalsPopoverComponent, MockPipe(ArtemisTranslatePipe), MockComponent(FaIconComponent), DummyStatisticsComponent, DummyManagementComponent],
             providers: [],
             schemas: [],
         })

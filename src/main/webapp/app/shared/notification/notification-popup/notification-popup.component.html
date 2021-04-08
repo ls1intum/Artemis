@@ -1,7 +1,7 @@
 <div class="notification-popup-container">
     <div *ngFor="let notification of notifications; let i = index" (click)="removeNotification(i); navigateToTarget(notification)">
         <div class="icon-container d-flex flex-column justify-content-center p-4">
-            <fa-icon [icon]="notificationIcon(notification)"></fa-icon>
+            <fa-icon [icon]="'check-double'"></fa-icon>
         </div>
         <div class="pr-4 py-3">
             <button class="m-0 px-1 py-0" (click)="removeNotification(i)">

@@ -2,12 +2,15 @@ package de.tum.in.www1.artemis.web.rest.vm;
 
 import javax.validation.constraints.Size;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.service.dto.UserDTO;
 
 /**
  * View Model extending the UserDTO, which is meant to be used in the user management UI.
  */
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class ManagedUserVM extends UserDTO {
 
     public static final int PASSWORD_MIN_LENGTH = 8;

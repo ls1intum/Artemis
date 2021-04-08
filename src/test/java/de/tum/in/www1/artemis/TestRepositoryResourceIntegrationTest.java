@@ -1,8 +1,7 @@
 package de.tum.in.www1.artemis;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.*;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -30,17 +29,19 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.FileType;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
-import de.tum.in.www1.artemis.util.*;
+import de.tum.in.www1.artemis.util.GitUtilService;
+import de.tum.in.www1.artemis.util.LocalRepository;
+import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.dto.FileMove;
 import de.tum.in.www1.artemis.web.rest.dto.RepositoryStatusDTO;
 import de.tum.in.www1.artemis.web.rest.repository.FileSubmission;
 
 public class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
-    private final String testRepoBaseUrl = "/api/test-repository/";
-
     @Autowired
-    ProgrammingExerciseRepository programmingExerciseRepository;
+    private ProgrammingExerciseRepository programmingExerciseRepository;
+
+    private final String testRepoBaseUrl = "/api/test-repository/";
 
     private ProgrammingExercise programmingExercise;
 
@@ -50,7 +51,7 @@ public class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegra
 
     private final String currentLocalFolderName = "currentFolderName";
 
-    LocalRepository testRepo = new LocalRepository();
+    private final LocalRepository testRepo = new LocalRepository();
 
     @BeforeEach
     public void setup() throws Exception {

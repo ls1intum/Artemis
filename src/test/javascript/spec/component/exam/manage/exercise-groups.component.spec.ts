@@ -2,33 +2,37 @@ import { HttpResponse } from '@angular/common/http';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap, Router, RouterModule } from '@angular/router';
 import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { TranslatePipe } from '@ngx-translate/core';
+import { Course } from 'app/entities/course.model';
+import { ExamInformationDTO } from 'app/entities/exam-information.model';
+import { Exam } from 'app/entities/exam.model';
+import { ExerciseGroup } from 'app/entities/exercise-group.model';
+import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { ModelingExercise } from 'app/entities/modeling-exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { TextExercise } from 'app/entities/text-exercise.model';
+import { ExamManagementService } from 'app/exam/manage/exam-management.service';
+import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
+import { ExerciseGroupsComponent } from 'app/exam/manage/exercise-groups/exercise-groups.component';
+import { ProgrammingExerciseInstructorStatusComponent } from 'app/exercises/programming/manage/status/programming-exercise-instructor-status.component';
+import { BuildPlanLinkDirective } from 'app/exercises/programming/shared/utils/build-plan-link.directive';
+import { ExamExerciseRowButtonsComponent } from 'app/exercises/shared/exam-exercise-row-buttons/exam-exercise-row-buttons.component';
+import { AlertErrorComponent } from 'app/shared/alert/alert-error.component';
+import { AlertComponent } from 'app/shared/alert/alert.component';
+import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
+import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe.ts';
 import * as moment from 'moment';
 import { JhiEventManager } from 'ng-jhipster';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { of } from 'rxjs';
-import { Course } from 'app/entities/course.model';
-import { Exam } from 'app/entities/exam.model';
-import { AlertErrorComponent } from 'app/shared/alert/alert-error.component';
-import { ExerciseGroupsComponent } from 'app/exam/manage/exercise-groups/exercise-groups.component';
-import { ExamManagementService } from 'app/exam/manage/exam-management.service';
-import { ExerciseGroup } from 'app/entities/exercise-group.model';
-import { AlertComponent } from 'app/shared/alert/alert.component';
-import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
-import { ExamExerciseRowButtonsComponent } from 'app/exercises/shared/exam-exercise-row-buttons/exam-exercise-row-buttons.component';
-import { ProgrammingExerciseInstructorStatusComponent } from 'app/exercises/programming/manage/status/programming-exercise-instructor-status.component';
-import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
-import { BuildPlanLinkDirective } from 'app/exercises/programming/shared/utils/build-plan-link.directive';
-import { ArtemisTestModule } from '../../../test.module';
-import { TranslateTestingModule } from '../../../helpers/mocks/service/mock-translate.service';
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { MockNgbModalService } from '../../../helpers/mocks/service/mock-ngb-modal.service';
 import { MockRouter } from '../../../helpers/mocks/service/mock-route.service';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { ExamInformationDTO } from 'app/entities/exam-information.model';
-import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
-import { ModelingExercise } from 'app/entities/modeling-exercise.model';
-import { TextExercise } from 'app/entities/text-exercise.model';
+import { TranslateTestingModule } from '../../../helpers/mocks/service/mock-translate.service';
+import { ArtemisTestModule } from '../../../test.module';
+import { FileUploadExerciseGroupCellComponent } from 'app/exam/manage/exercise-groups/file-upload-exercise-cell/file-upload-exercise-group-cell.component';
+import { ModelingExerciseGroupCellComponent } from 'app/exam/manage/exercise-groups/modeling-exercise-cell/modeling-exercise-group-cell.component';
+import { ProgrammingExerciseGroupCellComponent } from 'app/exam/manage/exercise-groups/programming-exercise-cell/programming-exercise-group-cell.component';
+import { QuizExerciseGroupCellComponent } from 'app/exam/manage/exercise-groups/quiz-exercise-cell/quiz-exercise-group-cell.component';
 
 describe('Exercise Groups Component', () => {
     const course = new Course();
@@ -65,7 +69,11 @@ describe('Exercise Groups Component', () => {
                 MockDirective(DeleteButtonDirective),
                 MockDirective(HasAnyAuthorityDirective),
                 MockDirective(NgbTooltip),
-                MockPipe(TranslatePipe),
+                MockPipe(ArtemisTranslatePipe),
+                MockComponent(FileUploadExerciseGroupCellComponent),
+                MockComponent(ModelingExerciseGroupCellComponent),
+                MockComponent(ProgrammingExerciseGroupCellComponent),
+                MockComponent(QuizExerciseGroupCellComponent),
             ],
             providers: [
                 { provide: ActivatedRoute, useValue: route },

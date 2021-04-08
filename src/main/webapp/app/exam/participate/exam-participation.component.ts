@@ -31,6 +31,7 @@ import { ProgrammingSubmission } from 'app/entities/programming-submission.model
 import { cloneDeep } from 'lodash';
 import { Course } from 'app/entities/course.model';
 import * as Sentry from '@sentry/browser';
+import { HttpErrorResponse } from '@angular/common/http';
 
 type GenerateParticipationStatus = 'generating' | 'failed' | 'success';
 
@@ -68,6 +69,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     activeExercise: Exercise;
     unsavedChanges = false;
     disconnected = false;
+    loggedOut = false;
 
     handInEarly = false;
     handInPossible = true;
@@ -157,13 +159,26 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                         this.studentExam = studentExam;
                         this.exam = studentExam.exam!;
                         this.initIndividualEndDates(this.exam.startDate!);
+
                         // only show the summary if the student was able to submit on time.
                         if (this.isOver() && this.studentExam.submitted) {
                             this.examParticipationService
-                                .loadStudentExamWithExercisesForSummary(this.exam.course!.id!, this.exam.id!)
+                                .loadStudentExamWithExercisesForSummary(this.courseId, this.examId)
                                 .subscribe((studentExamWithExercises: StudentExam) => (this.studentExam = studentExamWithExercises));
                         }
-                        this.loadingExam = false;
+
+                        // Directly start the exam when we continue from a failed save
+                        if (this.examParticipationService.lastSaveFailed(this.courseId, this.examId)) {
+                            this.examParticipationService
+                                .loadStudentExamWithExercisesForConductionFromLocalStorage(this.courseId, this.examId)
+                                .subscribe((localExam: StudentExam) => {
+                                    this.studentExam = localExam;
+                                    this.loadingExam = false;
+                                    this.examStarted(this.studentExam);
+                                });
+                        } else {
+                            this.loadingExam = false;
+                        }
                     },
                     // if error occurs
                     () => (this.loadingExam = false),
@@ -174,7 +189,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     }
 
     canDeactivate() {
-        return this.isOver() || !this.studentExam || this.handInEarly || !this.examStartConfirmed;
+        return this.loggedOut || this.isOver() || !this.studentExam || this.handInEarly || !this.examStartConfirmed;
     }
 
     get canDeactivateWarning() {
@@ -466,15 +481,6 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     }
 
     /**
-     * update the current exercise from the navigation
-     * @param exerciseChange
-     */
-    saveFileUpload(exerciseChange: { exercise: Exercise; forceSave: boolean }): void {
-        this.triggerSave(exerciseChange.forceSave);
-        this.initializeExercise(exerciseChange.exercise);
-    }
-
-    /**
      * sets active exercise and checks if participation is valid for exercise
      * if not -> initialize participation and in case of programming exercises subscribe to latestSubmissions
      * @param exercise to initialize
@@ -580,6 +586,9 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             }
         });
 
+        // save the studentExam in localStorage, so that we would be able to retrieve it later on, in case the student needs to reload the page while being offline
+        this.examParticipationService.saveStudentExamToLocalStorage(this.courseId, this.examId, this.studentExam);
+
         // if no connection available -> don't try to sync, except it is forced
         // based on the submissions that need to be saved and the exercise, we perform different actions
         if (forceSave || !this.disconnected) {
@@ -587,14 +596,14 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                 switch (submissionToSync.exercise.type) {
                     case ExerciseType.TEXT:
                         this.textSubmissionService.update(submissionToSync.submission as TextSubmission, submissionToSync.exercise.id!).subscribe(
-                            () => ExamParticipationComponent.onSaveSubmissionSuccess(submissionToSync.submission),
-                            () => this.onSaveSubmissionError(),
+                            () => this.onSaveSubmissionSuccess(submissionToSync.submission),
+                            (error: HttpErrorResponse) => this.onSaveSubmissionError(error),
                         );
                         break;
                     case ExerciseType.MODELING:
                         this.modelingSubmissionService.update(submissionToSync.submission as ModelingSubmission, submissionToSync.exercise.id!).subscribe(
-                            () => ExamParticipationComponent.onSaveSubmissionSuccess(submissionToSync.submission),
-                            () => this.onSaveSubmissionError(),
+                            () => this.onSaveSubmissionSuccess(submissionToSync.submission),
+                            (error: HttpErrorResponse) => this.onSaveSubmissionError(error),
                         );
                         break;
                     case ExerciseType.PROGRAMMING:
@@ -602,8 +611,8 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                         break;
                     case ExerciseType.QUIZ:
                         this.examParticipationService.updateQuizSubmission(submissionToSync.exercise.id!, submissionToSync.submission as QuizSubmission).subscribe(
-                            () => ExamParticipationComponent.onSaveSubmissionSuccess(submissionToSync.submission),
-                            () => this.onSaveSubmissionError(),
+                            () => this.onSaveSubmissionSuccess(submissionToSync.submission),
+                            (error: HttpErrorResponse) => this.onSaveSubmissionError(error),
                         );
                         break;
                     case ExerciseType.FILE_UPLOAD:
@@ -612,24 +621,29 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                 }
             });
         }
-
-        // save the studentExam in localStorage, so that we would be able to retrieve it later on, in case the student needs to reload the page while being offline
-        // NOTE: this recovery behavior is NOT yet implemented
-        this.examParticipationService.saveStudentExamToLocalStorage(this.courseId, this.examId, this.studentExam);
     }
 
     private updateLocalStudentExam() {
         this.currentSubmissionComponents.filter((component) => component.hasUnsavedChanges()).forEach((component) => component.updateSubmissionFromView());
     }
 
-    private static onSaveSubmissionSuccess(submission: Submission) {
+    private onSaveSubmissionSuccess(submission: Submission) {
+        this.examParticipationService.setLastSaveFailed(false, this.courseId, this.examId);
         submission.isSynced = true;
         submission.submitted = true;
     }
 
-    private onSaveSubmissionError() {
-        // show an only one error for 5s - see constructor
-        this.synchronizationAlert$.next();
+    private onSaveSubmissionError(error: HttpErrorResponse) {
+        this.examParticipationService.setLastSaveFailed(true, this.courseId, this.examId);
+
+        if (error.status === 401) {
+            // Unauthorized means the user needs to login to resume
+            // Therefore don't show errors because we are redirected to the login page
+            this.loggedOut = true;
+        } else {
+            // show only one error for 5s - see constructor
+            this.synchronizationAlert$.next();
+        }
     }
 
     /**

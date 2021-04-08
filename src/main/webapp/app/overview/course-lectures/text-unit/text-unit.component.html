@@ -4,15 +4,15 @@
             <div class="row">
                 <div class="col-10">
                     <h5 class="card-title my-auto">
-                        <fa-icon class="mr-2" [icon]="'scroll'" [ngbTooltip]="'artemisApp.textUnit.tooltip' | translate"></fa-icon>
+                        <fa-icon class="mr-2" [icon]="'scroll'" [ngbTooltip]="'artemisApp.textUnit.tooltip' | artemisTranslate"></fa-icon>
                         {{ textUnit?.name ? textUnit.name : '' }}
                         <span
                             *ngIf="!textUnit?.visibleToStudents"
                             class="badge badge-warning"
                             placement="right"
-                            ngbTooltip="{{ 'artemisApp.textUnit.notReleasedTooltip' | translate }} {{ textUnit?.releaseDate | artemisDate }}"
+                            ngbTooltip="{{ 'artemisApp.textUnit.notReleasedTooltip' | artemisTranslate }} {{ textUnit?.releaseDate | artemisDate }}"
                         >
-                            {{ 'artemisApp.courseOverview.exerciseList.notReleased' | translate }}</span
+                            {{ 'artemisApp.courseOverview.exerciseList.notReleased' | artemisTranslate }}</span
                         >
                     </h5>
                 </div>

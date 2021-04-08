@@ -13,6 +13,7 @@
             "actions": {
                 "open": "Assess model"
             }
-        }
+        },
+        "notFound": "We haven't found any new modeling submission without an assessment, please go back to the dashboard."
     }
 }

@@ -2,7 +2,7 @@
 
 <div *ngIf="isLoading" class="d-flex justify-content-center">
     <div class="spinner-border" role="status">
-        <span class="sr-only">{{ 'loading' | translate }}</span>
+        <span class="sr-only">{{ 'loading' | artemisTranslate }}</span>
     </div>
 </div>
 
@@ -52,7 +52,7 @@
             </button>
             <a *ngIf="editButtonAvailable(lectureUnit)" class="btn mt-1 btn-sm btn-primary edit rounded-pill" [routerLink]="editButtonRouterLink(lectureUnit)">
                 <fa-icon [icon]="'pencil-alt'"></fa-icon>
-                <span class="d-none d-md-inline">{{ 'entity.action.edit' | translate }}</span>
+                <span class="d-none d-md-inline">{{ 'entity.action.edit' | artemisTranslate }}</span>
             </a>
         </div>
     </div>

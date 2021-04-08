@@ -25,7 +25,7 @@ export class SystemNotificationManagementComponent implements OnInit, OnDestroy 
     success: string;
     routeData: Subscription;
     links: any;
-    totalItems: string;
+    totalItems: number;
     itemsPerPage: number;
     page: number;
     predicate: string;
@@ -58,7 +58,7 @@ export class SystemNotificationManagementComponent implements OnInit, OnDestroy 
      * Initializes current account and system notifications
      */
     ngOnInit() {
-        this.accountService.identity().then((user) => {
+        this.accountService.identity().then((user: User) => {
             this.currentAccount = user!;
             this.loadAll();
             this.registerChangeInUsers();
@@ -167,7 +167,7 @@ export class SystemNotificationManagementComponent implements OnInit, OnDestroy 
 
     private onSuccess(data: SystemNotification[], headers: HttpHeaders) {
         this.links = this.parseLinks.parse(headers.get('link')!);
-        this.totalItems = headers.get('X-Total-Count')!;
+        this.totalItems = Number(headers.get('X-Total-Count')!);
         this.notifications = data;
     }
 }

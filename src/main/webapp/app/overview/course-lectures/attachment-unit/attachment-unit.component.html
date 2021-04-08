@@ -1,28 +1,28 @@
 <div class="row align-items-center mb-2 mt-2">
     <div class="card unit-card">
         <h5 class="card-header unit-card-header" [class.rounded]="isCollapsed" (click)="handleCollapse($event)">
-            <fa-icon class="mr-2" [icon]="getAttachmentIcon()" [ngbTooltip]="'artemisApp.attachmentUnit.tooltip' | translate"></fa-icon>
+            <fa-icon class="mr-2" [icon]="getAttachmentIcon()" [ngbTooltip]="'artemisApp.attachmentUnit.tooltip' | artemisTranslate"></fa-icon>
             {{ attachmentUnit?.attachment?.name ? attachmentUnit?.attachment?.name : '' }}
             <span
                 *ngIf="!attachmentUnit?.visibleToStudents"
                 class="badge badge-warning ml-2"
                 placement="right"
-                ngbTooltip="{{ 'artemisApp.attachmentUnit.notReleasedTooltip' | translate }} {{ attachmentUnit?.releaseDate | artemisDate }}"
+                ngbTooltip="{{ 'artemisApp.attachmentUnit.notReleasedTooltip' | artemisTranslate }} {{ attachmentUnit?.releaseDate | artemisDate }}"
             >
-                {{ 'artemisApp.courseOverview.exerciseList.notReleased' | translate }}</span
+                {{ 'artemisApp.courseOverview.exerciseList.notReleased' | artemisTranslate }}</span
             >
         </h5>
         <div class="card-body unit-card-body" [ngbCollapse]="isCollapsed">
             <div *ngIf="attachmentUnit?.attachment?.uploadDate">
-                <span class="font-weight-bold"> {{ 'artemisApp.attachmentUnit.uploadDate' | translate }}: </span>
+                <span class="font-weight-bold"> {{ 'artemisApp.attachmentUnit.uploadDate' | artemisTranslate }}: </span>
                 {{ attachmentUnit?.attachment?.uploadDate | artemisDate }}
             </div>
             <div *ngIf="attachmentUnit?.attachment?.version">
-                <span class="font-weight-bold"> {{ 'artemisApp.attachmentUnit.version' | translate }}: </span>
+                <span class="font-weight-bold"> {{ 'artemisApp.attachmentUnit.version' | artemisTranslate }}: </span>
                 {{ attachmentUnit?.attachment?.version }}
             </div>
             <div *ngIf="attachmentUnit?.attachment?.link">
-                <span class="font-weight-bold"> {{ 'artemisApp.attachmentUnit.FileName' | translate }}: </span>
+                <span class="font-weight-bold"> {{ 'artemisApp.attachmentUnit.FileName' | artemisTranslate }}: </span>
                 {{ getFileName() }}
             </div>
             <div *ngIf="attachmentUnit?.description">

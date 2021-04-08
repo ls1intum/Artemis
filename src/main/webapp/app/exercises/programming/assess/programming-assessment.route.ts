@@ -71,8 +71,7 @@ export const routes: Routes = [
         component: ProgrammingAssessmentDashboardComponent,
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.TA],
-            usePathForBreadcrumbs: true,
-            pageTitle: 'assessmentDashboard.title',
+            pageTitle: 'artemisApp.assessmentDashboard.home.title',
         },
         canActivate: [UserRouteAccessService],
     },
@@ -81,7 +80,6 @@ export const routes: Routes = [
         component: CodeEditorTutorAssessmentContainerComponent,
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.TA],
-            usePathForBreadcrumbs: true,
             pageTitle: 'artemisApp.programmingExercise.home.title',
         },
         resolve: {
@@ -95,7 +93,6 @@ export const routes: Routes = [
         component: CodeEditorTutorAssessmentContainerComponent,
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.TA],
-            usePathForBreadcrumbs: true,
             pageTitle: 'artemisApp.programmingExercise.home.title',
         },
         resolve: {

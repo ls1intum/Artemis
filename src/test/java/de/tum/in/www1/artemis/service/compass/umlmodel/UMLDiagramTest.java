@@ -16,31 +16,31 @@ import org.mockito.Spy;
 import de.tum.in.www1.artemis.service.compass.assessment.CompassResult;
 import de.tum.in.www1.artemis.service.compass.umlmodel.activity.UMLActivityDiagram;
 
-class UMLDiagramTest {
+public class UMLDiagramTest {
 
     @Spy
-    UMLDiagram umlDiagram;
+    private UMLDiagram umlDiagram;
 
     @Spy
-    UMLDiagram referenceDiagram;
+    private UMLDiagram referenceDiagram;
 
     @Spy
-    UMLElement umlElement1;
+    private UMLElement umlElement1;
 
     @Spy
-    UMLElement umlElement2;
+    private UMLElement umlElement2;
 
     @Spy
-    UMLElement umlElement3;
+    private UMLElement umlElement3;
 
     @Spy
-    UMLElement referenceElement1;
+    private UMLElement referenceElement1;
 
     @Spy
-    UMLElement referenceElement2;
+    private UMLElement referenceElement2;
 
     @Spy
-    CompassResult compassResult;
+    private CompassResult compassResult;
 
     @BeforeEach
     void setUp() {
@@ -96,47 +96,6 @@ class UMLDiagramTest {
 
         assertThat(similarity).isEqualTo(expectedSimilarity);
         assertThat(symmetricSimilarity).isEqualTo(similarity);
-    }
-
-    @Test
-    void isUnassessed_true() {
-        boolean isUnassessed = umlDiagram.isUnassessed();
-        assertThat(isUnassessed).isTrue();
-    }
-
-    @Test
-    void isUnassessed_false() {
-        doReturn(spy(CompassResult.class)).when(umlDiagram).getLastAssessmentCompassResult();
-        boolean isUnassessed = umlDiagram.isUnassessed();
-        assertThat(isUnassessed).isFalse();
-    }
-
-    @Test
-    void getLastAssessmentConfidence() {
-        doReturn(compassResult).when(umlDiagram).getLastAssessmentCompassResult();
-        doReturn(0.456).when(compassResult).getConfidence();
-        double confidence = umlDiagram.getLastAssessmentConfidence();
-        assertThat(confidence).isEqualTo(0.456);
-    }
-
-    @Test
-    void getLastAssessmentConfidence_noCompassResult() {
-        double confidence = umlDiagram.getLastAssessmentConfidence();
-        assertThat(confidence).isEqualTo(-1);
-    }
-
-    @Test
-    void getLastAssessmentCoverage() {
-        doReturn(compassResult).when(umlDiagram).getLastAssessmentCompassResult();
-        doReturn(0.789).when(compassResult).getCoverage();
-        double confidence = umlDiagram.getLastAssessmentCoverage();
-        assertThat(confidence).isEqualTo(0.789);
-    }
-
-    @Test
-    void getLastAssessmentCoverage_noCompassResult() {
-        double confidence = umlDiagram.getLastAssessmentCoverage();
-        assertThat(confidence).isEqualTo(-1);
     }
 
     private void verifyNoElementInteraction() {

@@ -2,7 +2,7 @@ import { HTTP_INTERCEPTORS } from '@angular/common/http';
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
-import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { TranslateService } from '@ngx-translate/core';
 import { NgxDatatableModule } from '@swimlane/ngx-datatable';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
@@ -16,6 +16,7 @@ import { AlertComponent } from 'app/shared/alert/alert.component';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.module';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe.ts';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe.ts';
 import * as chai from 'chai';
 import { JhiAlertService, NgJhipsterModule } from 'ng-jhipster';
 import { MockComponent, MockModule, MockPipe, MockProvider } from 'ng-mocks';
@@ -54,7 +55,7 @@ describe('TeamComponent', () => {
                 TeamComponent,
                 MockComponent(TeamUpdateButtonComponent),
                 MockComponent(TeamDeleteButtonComponent),
-                MockPipe(TranslatePipe),
+                MockPipe(ArtemisTranslatePipe),
                 MockPipe(ArtemisDatePipe),
                 MockComponent(TeamParticipationTableComponent),
                 MockComponent(DataTableComponent),

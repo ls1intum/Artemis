@@ -1,22 +1,22 @@
 <div *ngIf="isLoading" class="d-flex justify-content-center">
     <div class="spinner-border" role="status">
-        <span class="sr-only">{{ 'loading' | translate }}</span>
+        <span class="sr-only">{{ 'loading' | artemisTranslate }}</span>
     </div>
 </div>
 
 <div *ngIf="!isLoading" class="container">
     <div class="row">
         <div class="col-12 mx-auto">
-            <h2>{{ 'artemisApp.exerciseUnit.createExerciseUnit.headline' | translate }}</h2>
+            <h2>{{ 'artemisApp.exerciseUnit.createExerciseUnit.headline' | artemisTranslate }}</h2>
         </div>
     </div>
     <div class="row">
         <div class="col-sm-6 mx-auto">
-            <p>{{ 'artemisApp.exerciseUnit.createExerciseUnit.description' | translate }}</p>
+            <p>{{ 'artemisApp.exerciseUnit.createExerciseUnit.description' | artemisTranslate }}</p>
         </div>
         <div class="col-sm-6 mx-auto text-right">
             <button id="createButton" type="button" class="btn btn-primary" [disabled]="exercisesToCreateUnitFor.length === 0" (click)="createExerciseUnits()">
-                {{ 'entity.action.submit' | translate }}
+                {{ 'entity.action.submit' | artemisTranslate }}
             </button>
         </div>
     </div>
@@ -31,27 +31,27 @@
                                 <fa-icon [icon]="'sort'"></fa-icon>
                             </th>
                             <th jhiSortBy="type">
-                                {{ 'artemisApp.exercise.type' | translate }}
+                                {{ 'artemisApp.exercise.type' | artemisTranslate }}
                                 <fa-icon [icon]="'sort'"></fa-icon>
                             </th>
                             <th jhiSortBy="title">
-                                {{ 'artemisApp.exercise.title' | translate }}
+                                {{ 'artemisApp.exercise.title' | artemisTranslate }}
                                 <fa-icon [icon]="'sort'"></fa-icon>
                             </th>
                             <th jhiSortBy="shortName">
-                                {{ 'artemisApp.exercise.shortName' | translate }}
+                                {{ 'artemisApp.exercise.shortName' | artemisTranslate }}
                                 <fa-icon [icon]="'sort'"></fa-icon>
                             </th>
                             <th jhiSortBy="releaseDate">
-                                {{ 'artemisApp.exercise.releaseDate' | translate }}
+                                {{ 'artemisApp.exercise.releaseDate' | artemisTranslate }}
                                 <fa-icon [icon]="'sort'"></fa-icon>
                             </th>
                             <th jhiSortBy="dueDate">
-                                {{ 'artemisApp.exercise.dueDate' | translate }}
+                                {{ 'artemisApp.exercise.dueDate' | artemisTranslate }}
                                 <fa-icon [icon]="'sort'"></fa-icon>
                             </th>
                             <th jhiSortBy="assessmentDueDate">
-                                {{ 'artemisApp.exercise.assessmentDueDate' | translate }}
+                                {{ 'artemisApp.exercise.assessmentDueDate' | artemisTranslate }}
                                 <fa-icon [icon]="'sort'"></fa-icon>
                             </th>
                         </tr>

@@ -30,7 +30,7 @@ export class ExamParticipationService {
         private exerciseService: ExerciseService,
     ) {}
 
-    private getLocalStorageKeyForStudentExam(courseId: number, examId: number): string {
+    private static getLocalStorageKeyForStudentExam(courseId: number, examId: number): string {
         const prefix = 'artemis_student_exam';
         return `${prefix}_${courseId}_${examId}`;
     }
@@ -43,6 +43,17 @@ export class ExamParticipationService {
     public loadStudentExamWithExercisesForConduction(courseId: number, examId: number): Observable<StudentExam> {
         const url = this.getResourceURL(courseId, examId) + '/student-exams/conduction';
         return this.getStudentExamFromServer(url, courseId, examId);
+    }
+
+    /**
+     * Retrieves a {@link StudentExam} from the localstorage. Will also mark the student exam as started
+     *
+     * @param courseId the id of the course the exam is created in
+     * @param examId the id of the exam
+     */
+    public loadStudentExamWithExercisesForConductionFromLocalStorage(courseId: number, examId: number): Observable<StudentExam> {
+        const localStoredExam: StudentExam = JSON.parse(this.localStorageService.retrieve(ExamParticipationService.getLocalStorageKeyForStudentExam(courseId, examId)));
+        return Observable.of(localStoredExam);
     }
 
     /**
@@ -67,7 +78,7 @@ export class ExamParticipationService {
                 return this.convertStudentExamFromServer(studentExam);
             }),
             catchError(() => {
-                const localStoredExam: StudentExam = JSON.parse(this.localStorageService.retrieve(this.getLocalStorageKeyForStudentExam(courseId, examId)));
+                const localStoredExam: StudentExam = JSON.parse(this.localStorageService.retrieve(ExamParticipationService.getLocalStorageKeyForStudentExam(courseId, examId)));
                 return Observable.of(localStoredExam);
             }),
         );
@@ -161,7 +172,7 @@ export class ExamParticipationService {
     public saveStudentExamToLocalStorage(courseId: number, examId: number, studentExam: StudentExam): void {
         const studentExamCopy = cloneDeep(studentExam);
         ExamParticipationService.breakCircularDependency(studentExamCopy);
-        this.localStorageService.store(this.getLocalStorageKeyForStudentExam(courseId, examId), JSON.stringify(studentExamCopy));
+        this.localStorageService.store(ExamParticipationService.getLocalStorageKeyForStudentExam(courseId, examId), JSON.stringify(studentExamCopy));
     }
 
     /**
@@ -181,6 +192,16 @@ export class ExamParticipationService {
     public updateQuizSubmission(exerciseId: number, quizSubmission: QuizSubmission): Observable<QuizSubmission> {
         const url = `${SERVER_API_URL}api/exercises/${exerciseId}/submissions/exam`;
         return this.httpClient.put<QuizSubmission>(url, quizSubmission);
+    }
+
+    public setLastSaveFailed(saveFailed: boolean, courseId: number, examId: number): void {
+        const key = ExamParticipationService.getLocalStorageKeyForStudentExam(courseId, examId) + '-save-failed';
+        this.localStorageService.store(key, saveFailed);
+    }
+
+    public lastSaveFailed(courseId: number, examId: number): boolean {
+        const key = ExamParticipationService.getLocalStorageKeyForStudentExam(courseId, examId) + '-save-failed';
+        return this.localStorageService.retrieve(key);
     }
 
     private convertStudentExamFromServer(studentExam: StudentExam): StudentExam {

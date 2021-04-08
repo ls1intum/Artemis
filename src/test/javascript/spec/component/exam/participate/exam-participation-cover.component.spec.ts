@@ -1,36 +1,37 @@
-import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { HttpClientModule } from '@angular/common/http';
-import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
-import * as sinon from 'sinon';
-import { spy } from 'sinon';
-import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
-import { TranslatePipe, TranslateService } from '@ngx-translate/core';
-import { Course } from 'app/entities/course.model';
-import { Exam } from 'app/entities/exam.model';
-import { MockComponent } from 'ng-mocks/dist/lib/mock-component/mock-component';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { MockPipe } from 'ng-mocks/dist/lib/mock-pipe/mock-pipe';
-import { AlertErrorComponent } from 'app/shared/alert/alert-error.component';
+import { EventEmitter } from '@angular/core';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
-import { ExamParticipationCoverComponent } from 'app/exam/participate/exam-cover/exam-participation-cover.component';
-import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
-import { MockRouter } from '../../../helpers/mocks/service/mock-route.service';
 import { Router } from '@angular/router';
-import { StudentExam } from 'app/entities/student-exam.model';
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
-import { of } from 'rxjs/internal/observable/of';
-import * as moment from 'moment';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
-import { ArtemisServerDateService } from 'app/shared/server-date.service';
-import { EventEmitter } from '@angular/core';
-import { ExamTimerComponent } from 'app/exam/participate/timer/exam-timer.component';
+import { Course } from 'app/entities/course.model';
+import { Exam } from 'app/entities/exam.model';
+import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { StudentExam } from 'app/entities/student-exam.model';
+import { ExamParticipationCoverComponent } from 'app/exam/participate/exam-cover/exam-participation-cover.component';
+import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
 import { ExamInformationComponent } from 'app/exam/participate/information/exam-information.component';
-import { MockDirective } from 'ng-mocks/dist/lib/mock-directive/mock-directive';
+import { ExamTimerComponent } from 'app/exam/participate/timer/exam-timer.component';
+import { AlertErrorComponent } from 'app/shared/alert/alert-error.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe.ts';
+import { ArtemisServerDateService } from 'app/shared/server-date.service';
+import * as chai from 'chai';
+import * as moment from 'moment';
 import { JhiTranslateDirective } from 'ng-jhipster';
+import { MockComponent } from 'ng-mocks/dist/lib/mock-component/mock-component';
+import { MockDirective } from 'ng-mocks/dist/lib/mock-directive/mock-directive';
+import { MockPipe } from 'ng-mocks/dist/lib/mock-pipe/mock-pipe';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { of } from 'rxjs/internal/observable/of';
+import * as sinon from 'sinon';
+import { spy } from 'sinon';
+import * as sinonChai from 'sinon-chai';
+import { MockRouter } from '../../../helpers/mocks/service/mock-route.service';
+import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -54,7 +55,7 @@ describe('ExamParticipationCoverComponent', () => {
             imports: [HttpClientModule, FormsModule],
             declarations: [
                 ExamParticipationCoverComponent,
-                MockPipe(TranslatePipe),
+                MockPipe(ArtemisTranslatePipe),
                 MockComponent(FaIconComponent),
                 MockComponent(AlertErrorComponent),
                 MockComponent(ExamTimerComponent),

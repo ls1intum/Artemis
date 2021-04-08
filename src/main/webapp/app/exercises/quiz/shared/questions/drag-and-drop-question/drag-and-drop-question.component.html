@@ -5,18 +5,18 @@
     <div [hidden]="loadingState === 'success'">
         <h2 *ngIf="loadingState !== 'error'">
             <span style="color: grey"
-                ><fa-icon [icon]="'spinner'" spin="true"></fa-icon>&nbsp;<span>{{ 'artemisApp.quizQuestion.loading' | translate }}</span></span
+                ><fa-icon [icon]="'spinner'" spin="true"></fa-icon>&nbsp;<span>{{ 'artemisApp.quizQuestion.loading' | artemisTranslate }}</span></span
             >
         </h2>
         <div *ngIf="loadingState === 'error'">
             <h2>
                 <span style="color: grey"
-                    ><fa-icon [icon]="'exclamation-circle'"></fa-icon>&nbsp;<span>{{ 'artemisApp.quizQuestion.failed' | translate }}</span></span
+                    ><fa-icon [icon]="'exclamation-circle'"></fa-icon>&nbsp;<span>{{ 'artemisApp.quizQuestion.failed' | artemisTranslate }}</span></span
                 >
             </h2>
             <p>
                 <button class="btn btn-default" (click)="secureImageComponent.retryLoadImage()">
-                    {{ 'artemisApp.quizQuestion.retry' | translate }}
+                    {{ 'artemisApp.quizQuestion.retry' | artemisTranslate }}
                 </button>
             </p>
         </div>
@@ -65,10 +65,10 @@
             <span jhiTranslate="artemisApp.dragAndDropQuestion.showingYourAnswer" *ngIf="!showingSampleSolution"></span>
             <div *ngIf="showResult && !forceSampleSolution">
                 <div class="btn btn-outline-primary" *ngIf="!showingSampleSolution" (click)="showSampleSolution()">
-                    {{ 'artemisApp.quizQuestion.showSampleSolution' | translate }}
+                    {{ 'artemisApp.quizQuestion.showSampleSolution' | artemisTranslate }}
                 </div>
                 <div class="btn btn-outline-primary" *ngIf="showingSampleSolution" (click)="hideSampleSolution()">
-                    {{ 'artemisApp.quizQuestion.hideSampleSolution' | translate }}
+                    {{ 'artemisApp.quizQuestion.hideSampleSolution' | artemisTranslate }}
                 </div>
             </div>
         </div>

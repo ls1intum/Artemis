@@ -30,8 +30,8 @@
                     >
                         <b class="fa">SA</b>
                     </span>
-                    <ng-template #tooltipExplanationTranslate>{{ 'artemisApp.quizExercise.explanationAnswered' | translate }}</ng-template>
-                    <ng-template #tooltipNotExplanationTranslate>{{ 'artemisApp.quizExercise.explanationNotAnswered' | translate }}</ng-template>
+                    <ng-template #tooltipExplanationTranslate>{{ 'artemisApp.quizExercise.explanationAnswered' | artemisTranslate }}</ng-template>
+                    <ng-template #tooltipNotExplanationTranslate>{{ 'artemisApp.quizExercise.explanationNotAnswered' | artemisTranslate }}</ng-template>
                 </div>
             </div>
         </div>
@@ -40,7 +40,7 @@
         <h4>
             {{ exercise.title }}
             <span
-                >[{{ exercise.maxPoints }} {{ 'artemisApp.examParticipation.points' | translate }}]
+                >[{{ exercise.maxPoints }} {{ 'artemisApp.examParticipation.points' | artemisTranslate }}]
                 <jhi-included-in-score-badge
                     *ngIf="exercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY"
                     [includedInOverallScore]="exercise.includedInOverallScore"

@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.notFound;
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -12,10 +11,10 @@ import org.springframework.http.ResponseEntity;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
-import de.tum.in.www1.artemis.repository.ExerciseRepository;
-import de.tum.in.www1.artemis.repository.ResultRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.service.AssessmentService;
+import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 import de.tum.in.www1.artemis.service.exam.ExamService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -30,8 +29,6 @@ public abstract class AssessmentResource {
 
     protected final ExerciseRepository exerciseRepository;
 
-    protected final SubmissionService submissionService;
-
     protected final AssessmentService assessmentService;
 
     protected final ResultRepository resultRepository;
@@ -40,20 +37,22 @@ public abstract class AssessmentResource {
 
     protected final WebsocketMessagingService messagingService;
 
-    protected final ExampleSubmissionService exampleSubmissionService;
+    protected final ExampleSubmissionRepository exampleSubmissionRepository;
 
-    public AssessmentResource(AuthorizationCheckService authCheckService, UserRepository userRepository, ExerciseRepository exerciseRepository, SubmissionService submissionService,
-            AssessmentService assessmentService, ResultRepository resultRepository, ExamService examService, WebsocketMessagingService messagingService,
-            ExampleSubmissionService exampleSubmissionService) {
+    protected final SubmissionRepository submissionRepository;
+
+    public AssessmentResource(AuthorizationCheckService authCheckService, UserRepository userRepository, ExerciseRepository exerciseRepository, AssessmentService assessmentService,
+            ResultRepository resultRepository, ExamService examService, WebsocketMessagingService messagingService, ExampleSubmissionRepository exampleSubmissionRepository,
+            SubmissionRepository submissionRepository) {
         this.authCheckService = authCheckService;
         this.userRepository = userRepository;
         this.exerciseRepository = exerciseRepository;
-        this.submissionService = submissionService;
         this.assessmentService = assessmentService;
         this.resultRepository = resultRepository;
         this.examService = examService;
         this.messagingService = messagingService;
-        this.exampleSubmissionService = exampleSubmissionService;
+        this.exampleSubmissionRepository = exampleSubmissionRepository;
+        this.submissionRepository = submissionRepository;
     }
 
     abstract String getEntityName();
@@ -68,7 +67,7 @@ public abstract class AssessmentResource {
      */
     ResponseEntity<Result> getAssessmentBySubmissionId(Long submissionId) {
         log.debug("REST request to get assessment for submission with id {}", submissionId);
-        Submission submission = submissionService.findOneWithEagerResultAndFeedback(submissionId);
+        Submission submission = submissionRepository.findOneWithEagerResultAndFeedback(submissionId);
         StudentParticipation participation = (StudentParticipation) submission.getParticipation();
         Exercise exercise = participation.getExercise();
 
@@ -108,7 +107,7 @@ public abstract class AssessmentResource {
 
         final var isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(exercise, user);
         if (!assessmentService.isAllowedToCreateOrOverrideResult(submission.getLatestResult(), exercise, studentParticipation, user, isAtLeastInstructor)) {
-            log.debug("The user " + user.getLogin() + " is not allowed to override the assessment for the submission " + submission.getId());
+            log.debug("The user {} is not allowed to override the assessment for the submission {}", user.getLogin(), submission.getId());
             return forbidden("assessment", "assessmentSaveNotAllowed", "The user is not allowed to override the assessment");
         }
 
@@ -134,7 +133,7 @@ public abstract class AssessmentResource {
      */
     protected ResponseEntity<Result> saveExampleAssessment(long exampleSubmissionId, List<Feedback> feedbacks) {
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        ExampleSubmission exampleSubmission = exampleSubmissionService.findOneWithEagerResult(exampleSubmissionId);
+        final var exampleSubmission = exampleSubmissionRepository.findByIdWithEagerResultAndFeedbackElseThrow(exampleSubmissionId);
         Submission submission = exampleSubmission.getSubmission();
         Exercise exercise = exampleSubmission.getExercise();
         checkAuthorization(exercise, user);
@@ -158,7 +157,7 @@ public abstract class AssessmentResource {
      */
     ResponseEntity<Result> getExampleAssessment(long exerciseId, long submissionId) {
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
-        ExampleSubmission exampleSubmission = exampleSubmissionService.findOneBySubmissionId(submissionId);
+        final var exampleSubmission = exampleSubmissionRepository.findBySubmissionIdWithResultsElseThrow(submissionId);
 
         // It is allowed to get the example assessment, if the user is an instructor or
         // if the user is a tutor and the submission is not used for tutorial in the assessment dashboard
@@ -181,7 +180,7 @@ public abstract class AssessmentResource {
     void checkAuthorization(Exercise exercise, User user) throws AccessForbiddenException, BadRequestAlertException {
         validateExercise(exercise);
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
-            log.debug("Insufficient permission for course: " + exercise.getCourseViaExerciseGroupOrCourseMember().getTitle());
+            log.debug("Insufficient permission for course: {}", exercise.getCourseViaExerciseGroupOrCourseMember().getTitle());
             throw new AccessForbiddenException("Insufficient permission for course: " + exercise.getCourseViaExerciseGroupOrCourseMember().getTitle());
         }
     }
@@ -195,7 +194,7 @@ public abstract class AssessmentResource {
 
     protected ResponseEntity<Void> cancelAssessment(long submissionId) { // TODO: Add correction round !
         log.debug("REST request to cancel assessment of submission: {}", submissionId);
-        Submission submission = submissionService.findOneWithEagerResults(submissionId);
+        Submission submission = submissionRepository.findByIdWithResultsElseThrow(submissionId);
         if (submission.getLatestResult() == null) {
             // if there is no result everything is fine
             return ResponseEntity.ok().build();

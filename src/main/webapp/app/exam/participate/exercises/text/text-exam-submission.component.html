@@ -3,8 +3,8 @@
     <!--region Left Panel-->
     <span left-header *ngIf="exercise.title">{{ exercise.title }}</span>
     <!-- prettier-ignore -->
-    <span left-header>&nbsp;[{{ exercise.maxPoints }} {{ 'artemisApp.examParticipation.points' | translate }}<span
-        *ngIf="exercise.bonusPoints">, {{ exercise.bonusPoints }} {{ 'artemisApp.examParticipation.bonus' | translate }}</span>] <jhi-included-in-score-badge
+    <span left-header>&nbsp;[{{ exercise.maxPoints }} {{ 'artemisApp.examParticipation.points' | artemisTranslate }}<span
+        *ngIf="exercise.bonusPoints">, {{ exercise.bonusPoints }} {{ 'artemisApp.examParticipation.bonus' | artemisTranslate }}</span>] <jhi-included-in-score-badge
         *ngIf="exercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY"
         [includedInOverallScore]="exercise.includedInOverallScore"></jhi-included-in-score-badge></span>
 
@@ -12,10 +12,10 @@
         <div class="grid-area-main">
             <div>
                 <span class="badge badge-primary mb-2">
-                    {{ 'artemisApp.textExercise.wordCount' | translate: { count: wordCount } }}
+                    {{ 'artemisApp.textExercise.wordCount' | artemisTranslate: { count: wordCount } }}
                 </span>
                 <span class="badge badge-primary mb-2">
-                    {{ 'artemisApp.textExercise.characterCount' | translate: { count: characterCount } }}
+                    {{ 'artemisApp.textExercise.characterCount' | artemisTranslate: { count: characterCount } }}
                 </span>
             </div>
             <ng-container>

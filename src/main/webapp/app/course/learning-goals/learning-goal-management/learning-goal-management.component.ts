@@ -8,6 +8,8 @@ import { finalize } from 'rxjs/operators';
 import { onError } from 'app/shared/util/global.utils';
 import { forkJoin, Subject } from 'rxjs';
 import { CourseLearningGoalProgress } from 'app/course/learning-goals/learning-goal-course-progress.dtos.model';
+import * as _ from 'lodash';
+import * as Sentry from '@sentry/browser';
 
 @Component({
     selector: 'jhi-learning-goal-management',
@@ -19,6 +21,10 @@ export class LearningGoalManagementComponent implements OnInit, OnDestroy {
     isLoading = false;
     learningGoals: LearningGoal[] = [];
     learningGoalIdToLearningGoalCourseProgress = new Map<number, CourseLearningGoalProgress>();
+    // this is calculated using the participant scores table on the server instead of going participation -> submission -> result
+    // we calculate it here to find out if the participant scores table is robust enough to replace the classic way of finding the last result
+    learningGoalIdToLearningGoalCourseProgressUsingParticipantScoresTables = new Map<number, CourseLearningGoalProgress>();
+
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
 
@@ -63,10 +69,14 @@ export class LearningGoalManagementComponent implements OnInit, OnDestroy {
                 this.learningGoals = res.body!;
 
                 const progressObservable = this.learningGoals.map((lg) => {
-                    return this.learningGoalService.getCourseProgress(lg.id!, this.courseId);
+                    return this.learningGoalService.getCourseProgress(lg.id!, this.courseId, false);
                 });
 
-                return forkJoin(progressObservable);
+                const progressObservableUsingParticipantScore = this.learningGoals.map((lg) => {
+                    return this.learningGoalService.getCourseProgress(lg.id!, this.courseId, true);
+                });
+
+                return forkJoin([forkJoin(progressObservable), forkJoin(progressObservableUsingParticipantScore)]);
             })
             .pipe(
                 finalize(() => {
@@ -74,13 +84,40 @@ export class LearningGoalManagementComponent implements OnInit, OnDestroy {
                 }),
             )
             .subscribe(
-                (learningGoalProgressResponses) => {
+                ([learningGoalProgressResponses, learningGoalProgressResponsesUsingParticipantScores]) => {
                     for (const learningGoalProgressResponse of learningGoalProgressResponses) {
                         const learningGoalProgress = learningGoalProgressResponse.body!;
                         this.learningGoalIdToLearningGoalCourseProgress.set(learningGoalProgress.learningGoalId, learningGoalProgress);
                     }
+                    for (const learningGoalProgressResponse of learningGoalProgressResponsesUsingParticipantScores) {
+                        const learningGoalProgress = learningGoalProgressResponse.body!;
+                        this.learningGoalIdToLearningGoalCourseProgressUsingParticipantScoresTables.set(learningGoalProgress.learningGoalId, learningGoalProgress);
+                    }
+                    this.testIfScoreUsingParticipantScoresTableDiffers();
                 },
                 (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
             );
+    }
+
+    /**
+     * Using this test we want to find out if the progress calculation using the participant scores table leads to the same
+     * result as going through participation -> submission -> result
+     */
+    private testIfScoreUsingParticipantScoresTableDiffers() {
+        this.learningGoalIdToLearningGoalCourseProgress.forEach((learningGoalProgress, learningGoalId) => {
+            const learningGoalProgressParticipantScoresTable = this.learningGoalIdToLearningGoalCourseProgressUsingParticipantScoresTables.get(learningGoalId);
+            if (
+                !_.isEqual(
+                    learningGoalProgress.averagePointsAchievedByStudentInLearningGoal,
+                    learningGoalProgressParticipantScoresTable!.averagePointsAchievedByStudentInLearningGoal,
+                )
+            ) {
+                const message = `Warning: Learning Goal(id=${learningGoalProgress.learningGoalId}) Course Progress different using participant scores for course ${
+                    this.courseId
+                }! Original: ${JSON.stringify(learningGoalProgress)} | Using ParticipantScores: ${JSON.stringify(learningGoalProgressParticipantScoresTable)}!`;
+                console.log(message);
+                Sentry.captureException(new Error(message));
+            }
+        });
     }
 }

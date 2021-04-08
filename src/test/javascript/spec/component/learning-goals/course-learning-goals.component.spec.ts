@@ -2,7 +2,7 @@ import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import * as sinon from 'sinon';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { TranslatePipe } from '@ngx-translate/core';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe.ts';
 import { MockPipe, MockProvider } from 'ng-mocks';
 import { LearningGoalService } from 'app/course/learning-goals/learningGoal.service';
 import { of } from 'rxjs';
@@ -15,6 +15,10 @@ import { CourseLearningGoalsComponent } from 'app/overview/course-learning-goals
 import { HttpResponse } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
 import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
+import { AccountService } from 'app/core/auth/account.service';
+import { User } from 'app/core/user/user.model';
+import * as _ from 'lodash';
+import * as Sentry from '@sentry/browser';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -47,10 +51,11 @@ describe('CourseLearningGoals', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [],
-            declarations: [CourseLearningGoalsComponent, LearningGoalCardStubComponent, MockPipe(TranslatePipe)],
+            declarations: [CourseLearningGoalsComponent, LearningGoalCardStubComponent, MockPipe(ArtemisTranslatePipe)],
             providers: [
                 MockProvider(JhiAlertService),
                 MockProvider(LearningGoalService),
+                MockProvider(AccountService),
                 {
                     provide: ActivatedRoute,
                     useValue: mockActivatedRoute,
@@ -62,6 +67,12 @@ describe('CourseLearningGoals', () => {
             .then(() => {
                 courseLearningGoalsComponentFixture = TestBed.createComponent(CourseLearningGoalsComponent);
                 courseLearningGoalsComponent = courseLearningGoalsComponentFixture.componentInstance;
+                const accountService = TestBed.get(AccountService);
+                const user = new User();
+                user.login = 'testUser';
+                sinon.stub(accountService, 'userIdentity').get(function getterFn() {
+                    return user;
+                });
             });
     });
 
@@ -101,14 +112,26 @@ describe('CourseLearningGoals', () => {
             status: 200,
         });
 
+        const learningGoalProgressParticipantScores = _.cloneDeep(learningGoalProgress);
+        learningGoalProgressParticipantScores.pointsAchievedByStudentInLearningGoal = 0;
+        const learningGoalProgressParticipantScoreResponse: HttpResponse<IndividualLearningGoalProgress> = new HttpResponse({
+            body: learningGoalProgressParticipantScores,
+            status: 200,
+        });
+
         const getAllForCourseStub = sinon.stub(learningGoalService, 'getAllForCourse').returns(of(learningGoalsOfCourseResponse));
-        const getProgressStub = sinon.stub(learningGoalService, 'getProgress').returns(of(learningGoalProgressResponse));
+        const getProgressStub = sinon.stub(learningGoalService, 'getProgress');
+        getProgressStub.withArgs(sinon.match.any, sinon.match.any, false).returns(of(learningGoalProgressResponse));
+        getProgressStub.withArgs(sinon.match.any, sinon.match.any, true).returns(of(learningGoalProgressParticipantScoreResponse));
+
+        const captureExceptionSpy = sinon.spy(Sentry, 'captureException');
 
         courseLearningGoalsComponentFixture.detectChanges();
 
         const learningGoalCards = courseLearningGoalsComponentFixture.debugElement.queryAll(By.directive(LearningGoalCardStubComponent));
         expect(learningGoalCards).to.have.lengthOf(2);
         expect(getAllForCourseStub).to.have.been.calledOnce;
-        expect(getProgressStub).to.have.been.calledTwice;
+        expect(getProgressStub).to.have.callCount(4);
+        expect(captureExceptionSpy).to.have.been.calledOnce;
     });
 });

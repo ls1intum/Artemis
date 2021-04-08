@@ -18,10 +18,7 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.LearningGoal;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
-import de.tum.in.www1.artemis.repository.CourseRepository;
-import de.tum.in.www1.artemis.repository.LearningGoalRepository;
-import de.tum.in.www1.artemis.repository.LectureUnitRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.LearningGoalService;
 import de.tum.in.www1.artemis.web.rest.dto.CourseLearningGoalProgress;
@@ -63,13 +60,16 @@ public class LearningGoalResource {
 
     /**
      * GET /courses/:courseId/goals/:learningGoalId/course-progress  gets the learning goal progress for the whole course
-     * @param courseId the id of the course to which the learning goal belongs
-     * @param learningGoalId the id of the learning goal for which to get the progress
+     *
+     * @param courseId                 the id of the course to which the learning goal belongs
+     * @param learningGoalId           the id of the learning goal for which to get the progress
+     * @param useParticipantScoreTable use the participant score table instead of going through participation -> submission -> result
      * @return the ResponseEntity with status 200 (OK) and with the learning goal cours performance in the body
      */
     @GetMapping("/courses/{courseId}/goals/{learningGoalId}/course-progress")
-    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<CourseLearningGoalProgress> getLearningGoalProgressOfCourse(@PathVariable Long learningGoalId, @PathVariable Long courseId) {
+    @PreAuthorize("hasRole('INSTRUCTOR')")
+    public ResponseEntity<CourseLearningGoalProgress> getLearningGoalProgressOfCourse(@PathVariable Long learningGoalId, @PathVariable Long courseId,
+            @RequestParam(defaultValue = "false", required = false) boolean useParticipantScoreTable) {
         log.debug("REST request to get course progress for LearningGoal : {}", learningGoalId);
         Optional<LearningGoal> optionalLearningGoal = learningGoalRepository.findByIdWithLectureUnitsBidirectional(learningGoalId);
         if (optionalLearningGoal.isEmpty()) {
@@ -87,19 +87,22 @@ public class LearningGoalResource {
             return forbidden();
         }
 
-        CourseLearningGoalProgress courseLearningGoalProgress = learningGoalService.calculateLearningGoalCourseProgress(learningGoal);
+        CourseLearningGoalProgress courseLearningGoalProgress = learningGoalService.calculateLearningGoalCourseProgress(learningGoal, useParticipantScoreTable);
         return ResponseEntity.ok().body(courseLearningGoalProgress);
     }
 
     /**
      * GET /courses/:courseId/goals/:learningGoalId/progress  gets the learning goal progress for the logged in user
-     * @param courseId the id of the course to which the learning goal belongs
-     * @param learningGoalId the id of the learning goal for which to get the progress
+     *
+     * @param courseId                 the id of the course to which the learning goal belongs
+     * @param learningGoalId           the id of the learning goal for which to get the progress
+     * @param useParticipantScoreTable use the participant score table instead of going through participation -> submission -> result
      * @return the ResponseEntity with status 200 (OK) and with the learning goal performance in the body
      */
     @GetMapping("/courses/{courseId}/goals/{learningGoalId}/individual-progress")
-    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<IndividualLearningGoalProgress> getLearningGoalProgress(@PathVariable Long learningGoalId, @PathVariable Long courseId) {
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<IndividualLearningGoalProgress> getLearningGoalProgress(@PathVariable Long learningGoalId, @PathVariable Long courseId,
+            @RequestParam(defaultValue = "false", required = false) boolean useParticipantScoreTable) {
         log.debug("REST request to get performance for LearningGoal : {}", learningGoalId);
         Optional<LearningGoal> optionalLearningGoal = learningGoalRepository.findByIdWithLectureUnitsBidirectional(learningGoalId);
         if (optionalLearningGoal.isEmpty()) {
@@ -117,7 +120,7 @@ public class LearningGoalResource {
             return forbidden();
         }
 
-        IndividualLearningGoalProgress individualLearningGoalProgress = learningGoalService.calculateLearningGoalProgress(learningGoal, user);
+        IndividualLearningGoalProgress individualLearningGoalProgress = learningGoalService.calculateLearningGoalProgress(learningGoal, user, useParticipantScoreTable);
         return ResponseEntity.ok().body(individualLearningGoalProgress);
     }
 
@@ -128,7 +131,7 @@ public class LearningGoalResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("/courses/{courseId}/goals/{learningGoalId}")
-    @PreAuthorize("hasAnyRole('ADMIN','INSTRUCTOR')")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Void> deleteLectureUnit(@PathVariable Long learningGoalId, @PathVariable Long courseId) {
         log.info("REST request to remove a LearningGoal : {}", learningGoalId);
         Optional<LearningGoal> learningGoalOptional = this.learningGoalRepository.findByIdWithLectureUnitsBidirectional(learningGoalId);
@@ -152,7 +155,7 @@ public class LearningGoalResource {
      * @return the ResponseEntity with status 200 (OK) and with body the found learning goals
      */
     @GetMapping("/courses/{courseId}/goals")
-    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<List<LearningGoal>> getLearningGoals(@PathVariable Long courseId) {
         log.debug("REST request to get learning goals for course with id: {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
@@ -182,7 +185,7 @@ public class LearningGoalResource {
      * @return the ResponseEntity with status 200 (OK) and with body the learning goal, or with status 404 (Not Found)
      */
     @GetMapping("/courses/{courseId}/goals/{learningGoalId}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR')")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<LearningGoal> getLearningGoal(@PathVariable Long learningGoalId, @PathVariable Long courseId) {
         log.debug("REST request to get LearningGoal : {}", learningGoalId);
         Optional<LearningGoal> optionalLearningGoal = learningGoalRepository.findByIdWithLectureUnitsBidirectional(learningGoalId);
@@ -210,7 +213,7 @@ public class LearningGoalResource {
      * @return the ResponseEntity with status 200 (OK) and with body the updated learningGoal
      */
     @PutMapping("/courses/{courseId}/goals")
-    @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR')")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<LearningGoal> updateLearningGoal(@PathVariable Long courseId, @RequestBody LearningGoal learningGoal) {
         log.debug("REST request to update LearningGoal : {}", learningGoal);
         if (learningGoal.getId() == null) {
@@ -266,7 +269,7 @@ public class LearningGoalResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("/courses/{courseId}/goals")
-    @PreAuthorize("hasAnyRole('ADMIN','INSTRUCTOR')")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<LearningGoal> createLearningGoal(@PathVariable Long courseId, @RequestBody LearningGoal learningGoalFromClient) throws URISyntaxException {
         log.debug("REST request to create LearningGoal : {}", learningGoalFromClient);
 

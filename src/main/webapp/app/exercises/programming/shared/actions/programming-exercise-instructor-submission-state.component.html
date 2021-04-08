@@ -2,8 +2,8 @@
     <div id="result-eta" *ngIf="hasBuildingSubmissions" class="badge badge-secondary d-flex flex-column justify-content-between mr-3">
         <fa-icon [icon]="'clock'"></fa-icon>
         <span
-            [ngbTooltip]="'artemisApp.programmingExercise.resultETATooltip' | translate"
-            [innerHTML]="'artemisApp.programmingExercise.resultETA' | translate: { eta: resultEtaInMs | amDuration: 'milliseconds' }"
+            [ngbTooltip]="'artemisApp.programmingExercise.resultETATooltip' | artemisTranslate"
+            [innerHTML]="'artemisApp.programmingExercise.resultETA' | artemisTranslate: { eta: resultEtaInMs | amDuration: 'milliseconds' }"
             >Result ETA: {{ resultEtaInMs | amDuration: 'milliseconds' }}</span
         >
     </div>
@@ -12,7 +12,7 @@
             id="build-state-building"
             class="badge badge-primary flex-grow-0"
             [innerHTML]="
-                'artemisApp.programmingExercise.buildingSubmissions' | translate: { number: buildingSummary[ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION] || 0 }
+                'artemisApp.programmingExercise.buildingSubmissions' | artemisTranslate: { number: buildingSummary[ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION] || 0 }
             "
         >
             Building submissions: {{ buildingSummary[ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION] || 0 }}
@@ -20,7 +20,7 @@
         <span
             id="build-state-failed"
             [ngClass]="['badge', buildingSummary[ProgrammingSubmissionState.HAS_FAILED_SUBMISSION] > 0 ? 'badge-danger' : 'badge-success', 'flex-grow-0']"
-            [innerHTML]="'artemisApp.programmingExercise.failedSubmissions' | translate: { number: buildingSummary[ProgrammingSubmissionState.HAS_FAILED_SUBMISSION] || 0 }"
+            [innerHTML]="'artemisApp.programmingExercise.failedSubmissions' | artemisTranslate: { number: buildingSummary[ProgrammingSubmissionState.HAS_FAILED_SUBMISSION] || 0 }"
         >
             Failed submissions: {{ buildingSummary[ProgrammingSubmissionState.HAS_FAILED_SUBMISSION] || 0 }}
         </span>

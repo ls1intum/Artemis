@@ -16,19 +16,14 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.Submission;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
-import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.service.exam.ExamService;
 import de.tum.in.www1.artemis.service.exam.ExamSubmissionService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -36,26 +31,18 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 public class ExamSubmissionServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
-    ExamSubmissionService examSubmissionService;
+    private ExamSubmissionService examSubmissionService;
 
     @Autowired
-    ExamService examService;
+    private ExamRepository examRepository;
 
     @Autowired
-    ExamRepository examRepository;
+    private StudentExamRepository studentExamRepository;
 
     @Autowired
-    StudentExamRepository studentExamRepository;
-
-    @Autowired
-    StudentParticipationRepository studentParticipationRepository;
-
-    @Autowired
-    UserRepository userRepository;
+    private UserRepository userRepository;
 
     private User user;
-
-    private Course course;
 
     private Exam exam;
 
@@ -68,7 +55,7 @@ public class ExamSubmissionServiceTest extends AbstractSpringIntegrationBambooBi
         List<User> users = database.addUsers(1, 0, 1);
         user = users.get(0);
         exercise = database.addCourseExamExerciseGroupWithOneTextExercise();
-        course = exercise.getCourseViaExerciseGroupOrCourseMember();
+        Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
         exam = examRepository.findByCourseId(course.getId()).get(0);
         studentExam = database.addStudentExam(exam);
         studentExam.setWorkingTime(7200); // 2 hours
@@ -140,12 +127,8 @@ public class ExamSubmissionServiceTest extends AbstractSpringIntegrationBambooBi
         examRepository.save(exam);
         studentExam.setUser(null);
         studentExamRepository.save(studentExam);
-        assertThrows(EntityNotFoundException.class, () -> {
-            examSubmissionService.checkSubmissionAllowance(exercise, user);
-        });
-        assertThrows(EntityNotFoundException.class, () -> {
-            examSubmissionService.isAllowedToSubmitDuringExam(exercise, user);
-        });
+        assertThrows(EntityNotFoundException.class, () -> examSubmissionService.checkSubmissionAllowance(exercise, user));
+        assertThrows(EntityNotFoundException.class, () -> examSubmissionService.isAllowedToSubmitDuringExam(exercise, user));
         // Should fail if the user's student exam does not have the exercise
         studentExam.setUser(user);
         studentExam.removeExercise(exercise);

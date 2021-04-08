@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.domain;
 
 import static org.apache.commons.codec.digest.DigestUtils.sha1Hex;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.Objects;
 
@@ -23,11 +24,12 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class TextBlock implements Serializable {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     @Id
     @Size(min = 40, max = 40)
-    @Column(name = "id", unique = true, columnDefinition = "CHAR(40)")
+    @Column(name = "id", unique = true, columnDefinition = "CHAR(40)", length = 40)
     private String id;
 
     @Column(name = "text", nullable = false)

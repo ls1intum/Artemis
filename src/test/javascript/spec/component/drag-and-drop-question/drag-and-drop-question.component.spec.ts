@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NgbCollapse, NgbPopoverModule } from '@ng-bootstrap/ng-bootstrap';
-import { TranslatePipe } from '@ngx-translate/core';
 import { AngularFittextModule } from 'angular-fittext';
 import { DragAndDropMapping } from 'app/entities/quiz/drag-and-drop-mapping.model';
 import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.model';
@@ -13,6 +12,7 @@ import { QuizScoringInfoStudentModalComponent } from 'app/exercises/quiz/shared/
 import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
 import { MarkdownEditorComponent } from 'app/shared/markdown-editor/markdown-editor.component';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe.ts';
 import * as chai from 'chai';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { DndModule } from 'ng2-dnd';
@@ -41,7 +41,7 @@ describe('DragAndDropQuestionComponent', () => {
             imports: [NgbPopoverModule, ArtemisTestModule, DndModule.forRoot(), AngularFittextModule],
             declarations: [
                 DragAndDropQuestionComponent,
-                MockPipe(TranslatePipe),
+                MockPipe(ArtemisTranslatePipe),
                 MockComponent(MarkdownEditorComponent),
                 MockComponent(SecuredImageComponent),
                 MockComponent(DragAndDropQuestionComponent),

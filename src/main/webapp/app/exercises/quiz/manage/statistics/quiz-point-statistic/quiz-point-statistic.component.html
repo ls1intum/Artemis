@@ -3,7 +3,7 @@
         <h3>{{ quizExercise.title }}</h3>
 
         <button *jhiHasAnyAuthority="['ROLE_TA', 'ROLE_ADMIN', 'ROLE_INSTRUCTOR']" class="btn btn-primary btn-sm float-right" (click)="recalculate()">
-            <fa-icon [icon]="'sync'" [fixedWidth]="true"></fa-icon>&nbsp;{{ 'showStatistic.recalculateStatistics' | translate }}
+            <fa-icon [icon]="'sync'" [fixedWidth]="true"></fa-icon>&nbsp;{{ 'showStatistic.recalculateStatistics' | artemisTranslate }}
         </button>
 
         <div class="text-center">

@@ -60,7 +60,6 @@ export const userMgmtRoute: Route[] = [
                 },
                 data: {
                     pageTitle: 'userManagement.home.title',
-                    breadcrumbLabelVariable: 'user.body.login',
                 },
             },
             {
@@ -69,16 +68,12 @@ export const userMgmtRoute: Route[] = [
                 resolve: {
                     user: UserMgmtResolve,
                 },
-                data: {
-                    breadcrumbLabelVariable: 'user.body.login',
-                },
                 children: [
                     {
                         path: 'edit',
                         component: UserManagementUpdateComponent,
                         data: {
                             pageTitle: 'userManagement.home.createOrEditLabel',
-                            breadcrumbLabelVariable: '',
                         },
                     },
                 ],

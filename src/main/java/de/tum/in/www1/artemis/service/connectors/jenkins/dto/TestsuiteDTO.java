@@ -1,7 +1,11 @@
 package de.tum.in.www1.artemis.service.connectors.jenkins.dto;
 
+import java.util.ArrayList;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class TestsuiteDTO {
 
     private String name;
@@ -16,7 +20,7 @@ public class TestsuiteDTO {
 
     private int tests;
 
-    private List<TestCaseDTO> testCases;
+    private List<TestCaseDTO> testCases = new ArrayList<>();
 
     public String getName() {
         return name;

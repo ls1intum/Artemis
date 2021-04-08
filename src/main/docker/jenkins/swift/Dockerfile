@@ -9,13 +9,13 @@ RUN apt update
 # Install Java and Maven dependencies
 RUN apt-get install -y maven
 RUN cd /usr/lib/jvm && \
-    wget https://github.com/AdoptOpenJDK/openjdk15-binaries/releases/download/jdk-15%2B36/OpenJDK15U-jdk_x64_linux_hotspot_15_36.tar.gz && \
-    tar -zxf OpenJDK15U-jdk_x64_linux_hotspot_15_36.tar.gz \
-    && mv jdk-15+36 java-15-openjdk-amd64 \
-    && rm OpenJDK15U-jdk_x64_linux_hotspot_15_36.tar.gz
-RUN chown -R root:root /usr/lib/jvm/java-15-openjdk-amd64
-RUN JAVA_HOME="/usr/lib/jvm/java-15-openjdk-amd64" && export JAVA_HOME
-ENV JAVA_HOME /usr/lib/jvm/java-15-openjdk-amd64
+    wget https://github.com/AdoptOpenJDK/openjdk16-binaries/releases/download/jdk-16%2B36/OpenJDK16-jdk_x64_linux_hotspot_16_36.tar.gz && \
+    tar -zxf OpenJDK16-jdk_x64_linux_hotspot_16_36.tar.gz \
+    && mv jdk-16+36 java-16-openjdk-amd64 \
+    && rm OpenJDK16-jdk_x64_linux_hotspot_16_36.tar.gz
+RUN chown -R root:root /usr/lib/jvm/java-16-openjdk-amd64
+RUN JAVA_HOME="/usr/lib/jvm/java-16-openjdk-amd64" && export JAVA_HOME
+ENV JAVA_HOME /usr/lib/jvm/java-16-openjdk-amd64
 
 # Install C dependencies
 RUN apt install -y gcc gdb make libubsan0 liblsan0 libtsan0

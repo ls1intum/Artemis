@@ -82,7 +82,7 @@ public class QuizSubmissionResource {
      * @return the ResponseEntity with status 200 (OK) and the Result as its body, or with status 4xx if the request is invalid
      */
     @PostMapping("/exercises/{exerciseId}/submissions/live")
-    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<QuizSubmission> submitForLiveMode(@PathVariable Long exerciseId, @RequestBody QuizSubmission quizSubmission, Principal principal) {
         log.debug("REST request to submit QuizSubmission for live mode : {}", quizSubmission);
         try {
@@ -92,7 +92,7 @@ public class QuizSubmissionResource {
             return ResponseEntity.ok(updatedQuizSubmission);
         }
         catch (QuizSubmissionException e) {
-            log.warn("QuizSubmissionException :" + e.getMessage() + " for user " + principal.getName() + " in quiz " + exerciseId);
+            log.warn("QuizSubmissionException: {} for user {} in quiz {}", e.getMessage(), principal.getName(), exerciseId);
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "quizSubmissionError", e.getMessage())).body(null);
         }
     }
@@ -105,7 +105,7 @@ public class QuizSubmissionResource {
      * @return the ResponseEntity with status 200 (OK) and the Result as its body, or with status 4xx if the request is invalid
      */
     @PostMapping("/exercises/{exerciseId}/submissions/practice")
-    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Result> submitForPractice(@PathVariable Long exerciseId, @RequestBody QuizSubmission quizSubmission) {
         log.debug("REST request to submit QuizSubmission for practice : {}", quizSubmission);
 
@@ -166,7 +166,7 @@ public class QuizSubmissionResource {
      * @return the ResponseEntity with status 200 and body the result or the appropriate error code.
      */
     @PostMapping("exercises/{exerciseId}/submissions/preview")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('TA')")
     public ResponseEntity<Result> submitForPreview(@PathVariable Long exerciseId, @RequestBody QuizSubmission quizSubmission) {
         log.debug("REST request to submit QuizSubmission for preview : {}", quizSubmission);
 
@@ -208,7 +208,7 @@ public class QuizSubmissionResource {
      * @return                  the ResponseEntity with status 200 and body the result or the appropriate error code.
      */
     @PutMapping("exercises/{exerciseId}/submissions/exam")
-    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<QuizSubmission> submitQuizForExam(@PathVariable Long exerciseId, @RequestBody QuizSubmission quizSubmission) {
         long start = System.currentTimeMillis();
         log.debug("REST request to submit QuizSubmission for exam : {}", quizSubmission);
@@ -232,7 +232,7 @@ public class QuizSubmissionResource {
 
         QuizSubmission updatedQuizSubmission = quizSubmissionService.saveSubmissionForExamMode(quizExercise, quizSubmission, user.getLogin());
         long end = System.currentTimeMillis();
-        log.info("submitQuizForExam took " + (end - start) + "ms for exercise " + exerciseId + " and user " + user.getLogin());
+        log.info("submitQuizForExam took {}ms for exercise {} and user {}", end - start, exerciseId, user.getLogin());
         return ResponseEntity.ok(updatedQuizSubmission);
     }
 }

@@ -10,7 +10,6 @@ const routes: Routes = [
         component: ExerciseScoresComponent,
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.TA],
-            usePathForBreadcrumbs: true,
             pageTitle: 'instructorDashboard.exerciseDashboard',
         },
         canActivate: [UserRouteAccessService],

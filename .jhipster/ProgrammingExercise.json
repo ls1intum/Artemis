@@ -16,7 +16,7 @@
         {
             "fieldName": "programmingLanguage",
             "fieldType": "ProgrammingLanguage",
-            "fieldValues": "JAVA,PYTHON,C,HASKELL,KOTLIN,VHDL,ASSEMBLER,SWIFT"
+            "fieldValues": "JAVA,PYTHON,C,HASKELL,KOTLIN,VHDL,ASSEMBLER,SWIFT,OCAML"
         },
         {
             "fieldName": "packageName",

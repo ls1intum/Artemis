@@ -1,14 +1,11 @@
 package de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram;
 
-import static de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLClass.UMLClassType.ABSTRACT_CLASS;
-import static de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLClass.UMLClassType.CLASS;
+import static de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLClass.UMLClassType.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
 import java.util.Collections;
 import java.util.List;
-
-import me.xdrop.fuzzywuzzy.FuzzySearch;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -17,8 +14,9 @@ import org.mockito.Spy;
 
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
 import de.tum.in.www1.artemis.service.compass.utils.CompassConfiguration;
+import me.xdrop.fuzzywuzzy.FuzzySearch;
 
-class UMLClassTest {
+public class UMLClassTest {
 
     private UMLClass umlClass;
 

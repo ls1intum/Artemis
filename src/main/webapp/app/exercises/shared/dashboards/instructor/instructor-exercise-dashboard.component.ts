@@ -7,6 +7,7 @@ import { Exercise } from 'app/entities/exercise.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { ResultService } from 'app/exercises/shared/result/result.service';
 import { DueDateStat } from 'app/course/dashboards/instructor-course-dashboard/due-date-stat.model';
+import { SortService } from 'app/shared/service/sort.service';
 
 @Component({
     selector: 'jhi-instructor-exercise-dashboard',
@@ -29,6 +30,7 @@ export class InstructorExerciseDashboardComponent implements OnInit {
         private jhiAlertService: JhiAlertService,
         private resultService: ResultService,
         private router: Router,
+        private sortService: SortService,
     ) {}
 
     /**
@@ -84,6 +86,7 @@ export class InstructorExerciseDashboardComponent implements OnInit {
 
         this.exerciseService.getStatsForInstructors(exerciseId).subscribe(
             (res: HttpResponse<StatsForDashboard>) => {
+                this.sortService.sortByProperty(this.stats.tutorLeaderboardEntries, 'points', false);
                 this.stats = StatsForDashboard.from(Object.assign({}, this.stats, res.body));
                 this.setStatistics();
             },

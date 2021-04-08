@@ -52,7 +52,9 @@
             </div>
         </div>
         <div class="form-group mb-2">
-            <a [hidden]="feedbacks.length > 0" (click)="pushFeedback()" jhiTranslate="artemisApp.result.addFeedback">Add feedback</a>
+            <button type="button" class="btn btn-default" [hidden]="feedbacks.length > 0" (click)="pushFeedback()">
+                <span jhiTranslate="artemisApp.result.addFeedback">Add feedback</span>
+            </button>
         </div>
         <div *ngIf="feedbacks.length > 0">
             <div *ngFor="let feedback of feedbacks; let i = index">
@@ -79,9 +81,13 @@
             </div>
         </div>
         <div class="form-group mb-2" *ngIf="feedbacks.length > 0">
-            <a (click)="pushFeedback()" jhiTranslate="artemisApp.result.addFeedback">More feedback</a>
+            <button type="button" class="btn btn-default" (click)="pushFeedback()">
+                <span jhiTranslate="artemisApp.result.addFeedback">More feedback</span>
+            </button>
             &nbsp;
-            <a (click)="popFeedback()" jhiTranslate="artemisApp.result.deleteFeedback">Less feedback</a>
+            <button type="button" class="btn btn-default" (click)="popFeedback()">
+                <span jhiTranslate="artemisApp.result.deleteFeedback">Less feedback</span>
+            </button>
         </div>
         <div class="form-group">
             <h4 class="control-label" jhiTranslate="artemisApp.result.rated">Rated</h4>

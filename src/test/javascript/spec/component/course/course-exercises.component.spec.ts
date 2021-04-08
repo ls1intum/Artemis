@@ -12,7 +12,8 @@ import { OrionFilterDirective } from 'app/shared/orion/orion-filter.directive';
 import { AlertComponent } from 'app/shared/alert/alert.component';
 import { RouterTestingModule } from '@angular/router/testing';
 import { MockHasAnyAuthorityDirective } from '../../helpers/mocks/directive/mock-has-any-authority.directive';
-import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { TranslateService } from '@ngx-translate/core';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe.ts';
 import { JhiSortByDirective, JhiSortDirective } from 'ng-jhipster';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
@@ -63,7 +64,7 @@ describe('CourseExercisesComponent', () => {
                 MockComponent(SidePanelComponent),
                 MockDirective(MockHasAnyAuthorityDirective),
                 MockDirective(JhiSortByDirective),
-                MockPipe(TranslatePipe),
+                MockPipe(ArtemisTranslatePipe),
                 MockDirective(JhiSortDirective),
                 MockPipe(ArtemisDatePipe),
                 MockDirective(DeleteButtonDirective),

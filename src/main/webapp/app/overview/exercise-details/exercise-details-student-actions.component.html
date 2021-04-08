@@ -5,7 +5,7 @@
         <button
             jhi-exercise-action-button
             buttonIcon="redo"
-            [buttonLabel]="'artemisApp.exerciseActions.practice' | translate"
+            [buttonLabel]="'artemisApp.exerciseActions.practice' | artemisTranslate"
             [buttonLoading]="exercise.loading"
             [smallButton]="smallButtons"
             [hideLabelMobile]="false"
@@ -15,7 +15,7 @@
         <button
             jhi-exercise-action-button
             buttonIcon="play-circle"
-            [buttonLabel]="'artemisApp.exerciseActions.openQuiz' | translate"
+            [buttonLabel]="'artemisApp.exerciseActions.openQuiz' | artemisTranslate"
             [buttonLoading]="exercise.loading"
             [smallButton]="smallButtons"
             [hideLabelMobile]="false"
@@ -25,7 +25,7 @@
         <button
             jhi-exercise-action-button
             buttonIcon="play-circle"
-            [buttonLabel]="'artemisApp.exerciseActions.startQuiz' | translate"
+            [buttonLabel]="'artemisApp.exerciseActions.startQuiz' | artemisTranslate"
             [buttonLoading]="exercise.loading"
             [smallButton]="smallButtons"
             [hideLabelMobile]="false"
@@ -36,7 +36,7 @@
         <button
             jhi-exercise-action-button
             buttonIcon="play-circle"
-            [buttonLabel]="'artemisApp.exerciseActions.openQuiz' | translate"
+            [buttonLabel]="'artemisApp.exerciseActions.openQuiz' | artemisTranslate"
             *ngIf="participationStatusWrapper() === ParticipationStatus.QUIZ_ACTIVE"
             [buttonLoading]="exercise.loading"
             [smallButton]="smallButtons"
@@ -51,7 +51,7 @@
         <button
             jhi-exercise-action-button
             buttonIcon="eye"
-            [buttonLabel]="'artemisApp.exerciseActions.viewSubmissions' | translate"
+            [buttonLabel]="'artemisApp.exerciseActions.viewSubmissions' | artemisTranslate"
             outlined="true"
             [buttonLoading]="exercise.loading"
             *ngIf="participationStatusWrapper() === ParticipationStatus.QUIZ_SUBMITTED"
@@ -61,7 +61,7 @@
         <button
             jhi-exercise-action-button
             buttonIcon="eye"
-            [buttonLabel]="'artemisApp.exerciseActions.viewResults' | translate"
+            [buttonLabel]="'artemisApp.exerciseActions.viewResults' | artemisTranslate"
             outlined="true"
             [buttonLoading]="exercise.loading"
             *ngIf="participationStatusWrapper() === ParticipationStatus.QUIZ_FINISHED && showResult"
@@ -72,7 +72,7 @@
             jhi-exercise-action-button
             *ngIf="exercise.isAtLeastTutor"
             buttonIcon="signal"
-            [buttonLabel]="'artemisApp.exerciseActions.statistics' | translate"
+            [buttonLabel]="'artemisApp.exerciseActions.statistics' | artemisTranslate"
             outlined="true"
             [buttonLoading]="exercise.loading"
             [smallButton]="smallButtons"
@@ -90,7 +90,7 @@
         <button
             jhi-exercise-action-button
             buttonIcon="users"
-            [buttonLabel]="'artemisApp.exerciseActions.viewTeam' | translate"
+            [buttonLabel]="'artemisApp.exerciseActions.viewTeam' | artemisTranslate"
             *ngIf="exercise.teamMode && participationStatusWrapper() !== ParticipationStatus.NO_TEAM_ASSIGNED"
             [smallButton]="smallButtons"
             [hideLabelMobile]="true"
@@ -99,7 +99,7 @@
         <button
             jhi-exercise-action-button
             buttonIcon="play-circle"
-            [buttonLabel]="'artemisApp.exerciseActions.startExercise' | translate"
+            [buttonLabel]="'artemisApp.exerciseActions.startExercise' | artemisTranslate"
             [buttonLoading]="exercise.loading"
             [smallButton]="smallButtons"
             [hideLabelMobile]="false"
@@ -109,7 +109,7 @@
         <button
             jhi-exercise-action-button
             buttonIcon="folder-open"
-            [buttonLabel]="'artemisApp.exerciseActions.openModelingEditor' | translate"
+            [buttonLabel]="'artemisApp.exerciseActions.openModelingEditor' | artemisTranslate"
             [buttonLoading]="exercise.loading"
             [smallButton]="smallButtons"
             [hideLabelMobile]="false"
@@ -124,7 +124,7 @@
             <button
                 jhi-exercise-action-button
                 buttonIcon="folder-open"
-                [buttonLabel]="'artemisApp.exerciseActions.viewSubmissions' | translate"
+                [buttonLabel]="'artemisApp.exerciseActions.viewSubmissions' | artemisTranslate"
                 outlined="true"
                 [buttonLoading]="exercise.loading"
                 [smallButton]="smallButtons"
@@ -140,7 +140,7 @@
             <button
                 jhi-exercise-action-button
                 buttonIcon="folder-open"
-                [buttonLabel]="'artemisApp.exerciseActions.viewResults' | translate"
+                [buttonLabel]="'artemisApp.exerciseActions.viewResults' | artemisTranslate"
                 outlined="true"
                 [buttonLoading]="exercise.loading"
                 [smallButton]="smallButtons"
@@ -168,7 +168,7 @@
             class="view-team"
             jhi-exercise-action-button
             buttonIcon="users"
-            [buttonLabel]="'artemisApp.exerciseActions.viewTeam' | translate"
+            [buttonLabel]="'artemisApp.exerciseActions.viewTeam' | artemisTranslate"
             *ngIf="exercise.teamMode && participationStatusWrapper() !== ParticipationStatus.NO_TEAM_ASSIGNED"
             [smallButton]="smallButtons"
             [hideLabelMobile]="true"
@@ -179,7 +179,7 @@
             jhi-exercise-action-button
             buttonIcon="play-circle"
             [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
-            [buttonLabel]="'artemisApp.exerciseActions.startExercise' | translate"
+            [buttonLabel]="'artemisApp.exerciseActions.startExercise' | artemisTranslate"
             [buttonLoading]="exercise.loading"
             [smallButton]="smallButtons"
             [hideLabelMobile]="false"
@@ -192,7 +192,7 @@
             jhi-exercise-action-button
             buttonIcon="folder-open"
             [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
-            [buttonLabel]="'artemisApp.exerciseActions.openCodeEditor' | translate"
+            [buttonLabel]="'artemisApp.exerciseActions.openCodeEditor' | artemisTranslate"
             [buttonLoading]="exercise.loading"
             [smallButton]="smallButtons"
             [hideLabelMobile]="false"
@@ -223,7 +223,7 @@
             jhi-exercise-action-button
             buttonIcon="play-circle"
             [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
-            [buttonLabel]="'artemisApp.exerciseActions.resumeExercise' | translate"
+            [buttonLabel]="'artemisApp.exerciseActions.resumeExercise' | artemisTranslate"
             [buttonLoading]="exercise.loading"
             [smallButton]="smallButtons"
             [hideLabelMobile]="false"
@@ -242,7 +242,7 @@
         <button
             jhi-exercise-action-button
             buttonIcon="users"
-            [buttonLabel]="'artemisApp.exerciseActions.viewTeam' | translate"
+            [buttonLabel]="'artemisApp.exerciseActions.viewTeam' | artemisTranslate"
             *ngIf="exercise.teamMode && participationStatusWrapper() !== ParticipationStatus.NO_TEAM_ASSIGNED"
             [smallButton]="smallButtons"
             [hideLabelMobile]="true"
@@ -252,7 +252,7 @@
             class="start-exercise"
             jhi-exercise-action-button
             buttonIcon="play-circle"
-            [buttonLabel]="'artemisApp.exerciseActions.startExercise' | translate"
+            [buttonLabel]="'artemisApp.exerciseActions.startExercise' | artemisTranslate"
             [buttonLoading]="exercise.loading"
             [smallButton]="smallButtons"
             [hideLabelMobile]="false"
@@ -262,7 +262,7 @@
         <button
             jhi-exercise-action-button
             buttonIcon="folder-open"
-            [buttonLabel]="'artemisApp.exerciseActions.openTextEditor' | translate"
+            [buttonLabel]="'artemisApp.exerciseActions.openTextEditor' | artemisTranslate"
             [buttonLoading]="exercise.loading"
             [smallButton]="smallButtons"
             [hideLabelMobile]="false"
@@ -276,7 +276,7 @@
         <button
             jhi-exercise-action-button
             buttonIcon="folder-open"
-            [buttonLabel]="'artemisApp.exerciseActions.viewSubmissions' | translate"
+            [buttonLabel]="'artemisApp.exerciseActions.viewSubmissions' | artemisTranslate"
             outlined="true"
             [buttonLoading]="exercise.loading"
             [smallButton]="smallButtons"
@@ -293,7 +293,7 @@
         <button
             jhi-exercise-action-button
             buttonIcon="folder-open"
-            [buttonLabel]="'artemisApp.exerciseActions.viewResults' | translate"
+            [buttonLabel]="'artemisApp.exerciseActions.viewResults' | artemisTranslate"
             outlined="true"
             [buttonLoading]="exercise.loading"
             [smallButton]="smallButtons"
@@ -319,7 +319,7 @@
         <button
             jhi-exercise-action-button
             buttonIcon="users"
-            [buttonLabel]="'artemisApp.exerciseActions.viewTeam' | translate"
+            [buttonLabel]="'artemisApp.exerciseActions.viewTeam' | artemisTranslate"
             *ngIf="exercise.teamMode && participationStatusWrapper() !== ParticipationStatus.NO_TEAM_ASSIGNED"
             [smallButton]="smallButtons"
             [hideLabelMobile]="true"
@@ -328,7 +328,7 @@
         <button
             jhi-exercise-action-button
             buttonIcon="play-circle"
-            [buttonLabel]="'artemisApp.exerciseActions.startExercise' | translate"
+            [buttonLabel]="'artemisApp.exerciseActions.startExercise' | artemisTranslate"
             [buttonLoading]="exercise.loading"
             *ngIf="participationStatusWrapper() === ParticipationStatus.UNINITIALIZED"
             [smallButton]="smallButtons"
@@ -338,7 +338,7 @@
         <button
             jhi-exercise-action-button
             buttonIcon="folder-open"
-            [buttonLabel]="'artemisApp.exerciseActions.uploadFile' | translate"
+            [buttonLabel]="'artemisApp.exerciseActions.uploadFile' | artemisTranslate"
             [buttonLoading]="exercise.loading"
             [smallButton]="smallButtons"
             [hideLabelMobile]="false"
@@ -352,7 +352,7 @@
         <button
             jhi-exercise-action-button
             buttonIcon="folder-open"
-            [buttonLabel]="'artemisApp.exerciseActions.viewSubmissions' | translate"
+            [buttonLabel]="'artemisApp.exerciseActions.viewSubmissions' | artemisTranslate"
             outlined="true"
             [buttonLoading]="exercise.loading"
             [smallButton]="smallButtons"
@@ -368,7 +368,7 @@
         <button
             jhi-exercise-action-button
             buttonIcon="folder-open"
-            [buttonLabel]="'artemisApp.exerciseActions.viewResults' | translate"
+            [buttonLabel]="'artemisApp.exerciseActions.viewResults' | artemisTranslate"
             outlined="true"
             [buttonLoading]="exercise.loading"
             [smallButton]="smallButtons"

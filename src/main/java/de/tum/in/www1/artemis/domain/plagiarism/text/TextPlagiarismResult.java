@@ -1,15 +1,18 @@
 package de.tum.in.www1.artemis.domain.plagiarism.text;
 
-import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.stream.Collectors;
 
-import jplag.JPlagResult;
+import javax.persistence.Entity;
+
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismComparison;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismResult;
+import jplag.JPlagResult;
 
 /**
  * Result of the automatic plagiarism detection for text or programming exercises.
  */
+@Entity
 public class TextPlagiarismResult extends PlagiarismResult<TextSubmissionElement> {
 
     /**
@@ -17,14 +20,16 @@ public class TextPlagiarismResult extends PlagiarismResult<TextSubmissionElement
      */
     public TextPlagiarismResult() {
         // Intentionally left empty.
-        this.comparisons = new ArrayList<>();
+        this.comparisons = new HashSet<>();
     }
 
     public TextPlagiarismResult(JPlagResult result) {
+        this.comparisons = result.getComparisons().stream().map(PlagiarismComparison::fromJPlagComparison).peek(comparison -> {
+            comparison.setPlagiarismResult(this);
+        }).collect(Collectors.toSet());
         this.duration = result.getDuration();
-        this.similarityDistribution = result.getSimilarityDistribution();
 
-        this.comparisons = result.getComparisons().stream().map(PlagiarismComparison::fromJPlagComparison).collect(Collectors.toList());
+        this.setSimilarityDistribution(result.getSimilarityDistribution());
     }
 
 }

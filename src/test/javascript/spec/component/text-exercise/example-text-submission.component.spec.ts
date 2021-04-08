@@ -1,32 +1,32 @@
-import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { HttpResponse } from '@angular/common/http';
-import { ActivatedRoute, ActivatedRouteSnapshot, convertToParamMap } from '@angular/router';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { By } from '@angular/platform-browser';
-import { of } from 'rxjs';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { TranslatePipe, TranslateService } from '@ngx-translate/core';
-import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
-
-import { ExampleTextSubmissionComponent } from 'app/exercises/text/manage/example-text-submission/example-text-submission.component';
-import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { ExampleSubmissionService } from 'app/exercises/shared/example-submission/example-submission.service';
+import { ActivatedRoute, ActivatedRouteSnapshot, convertToParamMap } from '@angular/router';
+import { TranslateService } from '@ngx-translate/core';
+import { AssessmentInstructionsComponent } from 'app/assessment/assessment-instructions/assessment-instructions/assessment-instructions.component';
 import { ExampleSubmission } from 'app/entities/example-submission.model';
-import { TextSubmission } from 'app/entities/text-submission.model';
-import { TextAssessmentService } from 'app/exercises/text/assess/text-assessment.service';
-import { Result } from 'app/entities/result.model';
-import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
-import { TextExercise } from 'app/entities/text-exercise.model';
-import { State } from 'app/exercises/text/manage/example-text-submission/example-text-submission-state.model';
 import { Feedback } from 'app/entities/feedback.model';
+import { Result } from 'app/entities/result.model';
 import { TextBlock } from 'app/entities/text-block.model';
+import { TextExercise } from 'app/entities/text-exercise.model';
+import { TextSubmission } from 'app/entities/text-submission.model';
+import { TutorParticipationService } from 'app/exercises/shared/dashboards/tutor/tutor-participation.service';
+import { ExampleSubmissionService } from 'app/exercises/shared/example-submission/example-submission.service';
+import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { TextAssessmentAreaComponent } from 'app/exercises/text/assess/text-assessment-area/text-assessment-area.component';
+import { TextAssessmentService } from 'app/exercises/text/assess/text-assessment.service';
+import { State } from 'app/exercises/text/manage/example-text-submission/example-text-submission-state.model';
+import { ExampleTextSubmissionComponent } from 'app/exercises/text/manage/example-text-submission/example-text-submission.component';
+import { AlertComponent } from 'app/shared/alert/alert.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe.ts';
 import { ResizeableContainerComponent } from 'app/shared/resizeable-container/resizeable-container.component';
 import { ScoreDisplayComponent } from 'app/shared/score-display/score-display.component';
-import { TextAssessmentAreaComponent } from 'app/exercises/text/assess/text-assessment-area/text-assessment-area.component';
-import { AssessmentInstructionsComponent } from 'app/assessment/assessment-instructions/assessment-instructions/assessment-instructions.component';
-import { AlertComponent } from 'app/shared/alert/alert.component';
+import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { of } from 'rxjs';
+import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { ArtemisTestModule } from '../../test.module';
-import { TutorParticipationService } from 'app/exercises/shared/dashboards/tutor/tutor-participation.service';
 
 describe('ExampleTextSubmissionComponent', () => {
     let fixture: ComponentFixture<ExampleTextSubmissionComponent>;
@@ -59,7 +59,7 @@ describe('ExampleTextSubmissionComponent', () => {
                 MockComponent(ScoreDisplayComponent),
                 MockComponent(TextAssessmentAreaComponent),
                 MockComponent(AssessmentInstructionsComponent),
-                MockPipe(TranslatePipe),
+                MockPipe(ArtemisTranslatePipe),
                 MockComponent(AlertComponent),
             ],
             providers: [

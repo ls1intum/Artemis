@@ -12,7 +12,8 @@ import { ActivatedRoute, convertToParamMap, RouterModule, UrlSegment } from '@an
 import { of } from 'rxjs';
 import { TutorParticipationGraphComponent } from 'app/shared/dashboards/tutor-participation-graph/tutor-participation-graph.component';
 import { TutorLeaderboardComponent } from 'app/shared/dashboards/tutor-leaderboard/tutor-leaderboard.component';
-import { TranslateModule, TranslatePipe } from '@ngx-translate/core';
+import { TranslateModule } from '@ngx-translate/core';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe.ts';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { ArtemisAssessmentSharedModule } from 'app/assessment/assessment-shared.module';
@@ -128,7 +129,7 @@ describe('AssessmentDashboardInformationComponent', () => {
                 MockComponent(TutorLeaderboardComponent),
                 MockComponent(TutorParticipationGraphComponent),
                 MockComponent(AssessmentDashboardInformationComponent),
-                MockPipe(TranslatePipe),
+                MockPipe(ArtemisTranslatePipe),
                 MockPipe(ArtemisDatePipe),
                 MockPipe(TimeAgoPipe),
                 MockComponent(SecondCorrectionEnableButtonComponent),

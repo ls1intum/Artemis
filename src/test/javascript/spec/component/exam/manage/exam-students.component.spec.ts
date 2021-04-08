@@ -1,35 +1,36 @@
+import { HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Observable, of } from 'rxjs';
-import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
-import * as sinon from 'sinon';
-import { MockPipe } from 'ng-mocks/dist/lib/mock-pipe/mock-pipe';
-import { ArtemisTestModule } from '../../../test.module';
 import { ActivatedRoute, convertToParamMap, UrlSegment } from '@angular/router';
+import { RouterTestingModule } from '@angular/router/testing';
+import { TranslateService } from '@ngx-translate/core';
+import { NgxDatatableModule } from '@swimlane/ngx-datatable';
+import { User } from 'app/core/user/user.model';
+import { UserService } from 'app/core/user/user.service';
 import { Course } from 'app/entities/course.model';
 import { Exam } from 'app/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { ExamStudentsComponent } from 'app/exam/manage/students/exam-students.component';
 import { StudentsExamImportButtonComponent } from 'app/exam/manage/students/students-exam-import-dialog/students-exam-import-button.component';
-import { MockComponent, MockDirective } from 'ng-mocks';
 import { AlertComponent } from 'app/shared/alert/alert.component';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
-import { NgxDatatableModule } from '@swimlane/ngx-datatable';
-import { JhiTranslateDirective } from 'ng-jhipster';
-import { RouterTestingModule } from '@angular/router/testing';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
-import { User } from 'app/core/user/user.model';
-import { HttpResponse } from '@angular/common/http';
-import { UserService } from 'app/core/user/user.service';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe.ts';
+import * as chai from 'chai';
+import { JhiTranslateDirective } from 'ng-jhipster';
+import { MockComponent, MockDirective } from 'ng-mocks';
+import { MockPipe } from 'ng-mocks/dist/lib/mock-pipe/mock-pipe';
+import { Observable, of } from 'rxjs';
+import * as sinon from 'sinon';
+import * as sinonChai from 'sinon-chai';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
-import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { ArtemisTestModule } from '../../../test.module';
 
 chai.use(sinonChai);
 const expect = chai.expect;
 
 describe('ExamStudentsComponent', () => {
     const course = { id: 1 } as Course;
-    const user1 = { id: 1 } as User;
+    const user1 = { id: 1, name: 'name', login: 'login' } as User;
     const user2 = { id: 2, login: 'user2' } as User;
     const examWithCourse: Exam = { course, id: 2, registeredUsers: [user1, user2] } as Exam;
 
@@ -54,7 +55,7 @@ describe('ExamStudentsComponent', () => {
                 MockComponent(AlertComponent),
                 MockDirective(JhiTranslateDirective),
                 MockDirective(DeleteButtonDirective),
-                MockPipe(TranslatePipe),
+                MockPipe(ArtemisTranslatePipe),
             ],
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
@@ -163,5 +164,44 @@ describe('ExamStudentsComponent', () => {
         expect(examServiceStub).to.have.been.calledOnceWith(course.id, examWithCourse.id, true);
         expect(examServiceStubAddAll).to.have.been.calledOnceWith(course.id, examWithCourse.id);
         expect(component.allRegisteredUsers).to.deep.equal([user2]);
+    });
+
+    it('should remove all users from the exam', () => {
+        const examServiceStub = sinon.stub(examManagementService, 'removeAllStudentsFromExam').returns(of(new HttpResponse()));
+        fixture.detectChanges();
+        component.allRegisteredUsers = [user1, user2];
+
+        component.removeAllStudents({ deleteParticipationsAndSubmission: false });
+        fixture.detectChanges();
+
+        expect(examServiceStub).to.have.been.calledOnceWith(course.id, examWithCourse.id, false);
+        expect(component.allRegisteredUsers).to.deep.equal([]);
+    });
+
+    it('should remove all users from the exam with participaations', () => {
+        const examServiceStub = sinon.stub(examManagementService, 'removeAllStudentsFromExam').returns(of(new HttpResponse()));
+        fixture.detectChanges();
+        component.allRegisteredUsers = [user1, user2];
+
+        component.removeAllStudents({ deleteParticipationsAndSubmission: true });
+        fixture.detectChanges();
+
+        expect(examServiceStub).to.have.been.calledOnceWith(course.id, examWithCourse.id, true);
+        expect(component.allRegisteredUsers).to.deep.equal([]);
+    });
+
+    it('should format search result', () => {
+        const resultString = component.searchResultFormatter(user1);
+        expect(resultString).to.equal('name (login)');
+    });
+
+    it('should format search text from user', () => {
+        const resultString = component.searchTextFromUser(user1);
+        expect(resultString).to.equal('login');
+    });
+
+    it('should test on error', () => {
+        component.onError('ErrorString');
+        expect(component.isTransitioning).to.equal(false);
     });
 });

@@ -3,7 +3,7 @@
         <h3 class="card-title">
             <fa-icon [icon]="['far', 'file-alt']"></fa-icon>
             <span> &nbsp;{{ selectedFile }}</span>
-            <fa-icon *ngIf="isLoading" [icon]="'circle-notch'" spin="true" class="ml-2" title="{{ 'artemisApp.editor.loadingFile' | translate }}"></fa-icon>
+            <fa-icon *ngIf="isLoading" [icon]="'circle-notch'" spin="true" class="ml-2" title="{{ 'artemisApp.editor.loadingFile' | artemisTranslate }}"></fa-icon>
         </h3>
     </div>
 

@@ -1,12 +1,9 @@
 package de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 import java.util.List;
-
-import me.xdrop.fuzzywuzzy.FuzzySearch;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -14,19 +11,20 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import de.tum.in.www1.artemis.service.compass.utils.CompassConfiguration;
+import me.xdrop.fuzzywuzzy.FuzzySearch;
 
-class UMLMethodTest {
+public class UMLMethodTest {
 
     private UMLMethod method;
 
     @Mock
-    UMLClass parentClass;
+    private UMLClass parentClass;
 
     @Mock
-    UMLMethod referenceMethod;
+    private UMLMethod referenceMethod;
 
     @Mock
-    UMLClass referenceParentClass;
+    private UMLClass referenceParentClass;
 
     @BeforeEach
     void setUp() {

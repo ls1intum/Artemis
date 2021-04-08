@@ -14,7 +14,7 @@
             [disabled]="disableActions || isLoadingFiles || commitState === CommitState.CONFLICT"
             class="btn btn-light"
             (click)="setCreatingFileInRoot(FileType.FILE)"
-            title="{{ 'artemisApp.editor.fileBrowser.createFileRoot' | translate }}"
+            title="{{ 'artemisApp.editor.fileBrowser.createFileRoot' | artemisTranslate }}"
         >
             <fa-icon [icon]="'plus'"></fa-icon>
             <fa-icon [icon]="'file'" class="ml-1"></fa-icon>
@@ -24,7 +24,7 @@
             [disabled]="disableActions || isLoadingFiles || commitState === CommitState.CONFLICT"
             class="btn btn-light ml-2"
             (click)="setCreatingFileInRoot(FileType.FOLDER)"
-            title="{{ 'artemisApp.editor.fileBrowser.createFolderRoot' | translate }}"
+            title="{{ 'artemisApp.editor.fileBrowser.createFolderRoot' | artemisTranslate }}"
         >
             <fa-icon [icon]="'plus'"></fa-icon>
             <fa-icon [icon]="'folder'" class="ml-1"></fa-icon>
@@ -34,7 +34,7 @@
             [disabled]="isLoadingFiles"
             class="btn btn-light ml-auto"
             (click)="toggleTreeCompress()"
-            title="{{ 'artemisApp.editor.fileBrowser.compressTree' | translate }}"
+            title="{{ 'artemisApp.editor.fileBrowser.compressTree' | artemisTranslate }}"
         >
             <fa-icon [icon]="compressFolders ? 'angle-double-up' : 'angle-double-down'"></fa-icon>
         </button>

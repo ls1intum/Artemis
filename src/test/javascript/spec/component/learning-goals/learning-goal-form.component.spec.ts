@@ -1,20 +1,21 @@
-import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
-import * as sinon from 'sinon';
+import { HttpResponse } from '@angular/common/http';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { TranslatePipe, TranslateService } from '@ngx-translate/core';
-import { MockPipe, MockProvider } from 'ng-mocks';
-import { LearningGoalFormComponent, LearningGoalFormData } from 'app/course/learning-goals/learning-goal-form/learning-goal-form.component';
-import { JhiAlertService } from 'ng-jhipster';
-import { LearningGoalService } from 'app/course/learning-goals/learningGoal.service';
-import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 import { NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
-import { of } from 'rxjs';
+import { TranslateService } from '@ngx-translate/core';
+import { LearningGoalFormComponent, LearningGoalFormData } from 'app/course/learning-goals/learning-goal-form/learning-goal-form.component';
+import { LearningGoalService } from 'app/course/learning-goals/learningGoal.service';
 import { LearningGoal } from 'app/entities/learningGoal.model';
-import { HttpResponse } from '@angular/common/http';
 import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
 import { Lecture } from 'app/entities/lecture.model';
+import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe.ts';
+import * as chai from 'chai';
+import { JhiAlertService } from 'ng-jhipster';
+import { MockPipe, MockProvider } from 'ng-mocks';
+import { of } from 'rxjs';
+import * as sinon from 'sinon';
+import * as sinonChai from 'sinon-chai';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -25,7 +26,7 @@ describe('LearningGoalFormComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ReactiveFormsModule, FormsModule, NgbDropdownModule],
-            declarations: [LearningGoalFormComponent, MockPipe(TranslatePipe)],
+            declarations: [LearningGoalFormComponent, MockPipe(ArtemisTranslatePipe)],
             providers: [MockProvider(LearningGoalService), MockProvider(LectureUnitService), MockProvider(JhiAlertService), MockProvider(TranslateService)],
             schemas: [],
         })

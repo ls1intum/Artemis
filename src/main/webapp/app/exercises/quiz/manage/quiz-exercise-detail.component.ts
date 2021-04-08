@@ -202,6 +202,9 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
             this.quizExerciseService.find(quizId).subscribe((response: HttpResponse<QuizExercise>) => {
                 this.quizExercise = response.body!;
                 this.init();
+                if (this.isExamMode && this.quizExercise.testRunParticipationsExist) {
+                    this.jhiAlertService.warning(this.translateService.instant('artemisApp.quizExercise.edit.testRunSubmissionsExist'));
+                }
             });
         }
         // TODO: we should try to avoid calling this.init() above more than once
@@ -628,7 +631,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
      * @return {boolean} true if the provided Question[] objects are identical, false otherwise
      */
     areQuizExerciseEntityQuestionsIdentical(QA1?: QuizQuestion[], QA2?: QuizQuestion[]): boolean {
-        return JSON.stringify(QA1 || []).toLowerCase() === JSON.stringify(QA2 || []).toLowerCase();
+        return JSON.stringify(QA1 || []) === JSON.stringify(QA2 || []);
     }
 
     /**
@@ -707,12 +710,15 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
 
         const maxPointsReachableInQuiz = this.quizExercise.quizQuestions?.map((quizQuestion) => quizQuestion.points ?? 0).reduce((a, b) => a + b, 0);
 
+        const noTestRunExists = !this.isExamMode || !this.quizExercise.testRunParticipationsExist;
+
         return (
             isGenerallyValid &&
             areAllQuestionsValid === true &&
             this.isEmpty(this.invalidFlaggedQuestions) &&
             maxPointsReachableInQuiz !== undefined &&
-            maxPointsReachableInQuiz > 0
+            maxPointsReachableInQuiz > 0 &&
+            noTestRunExists
         );
     }
 
@@ -844,6 +850,12 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
         if (!this.quizExercise.quizQuestions || this.quizExercise.quizQuestions.length === 0) {
             invalidReasons.push({
                 translateKey: 'artemisApp.quizExercise.invalidReasons.noQuestion',
+                translateValues: {},
+            });
+        }
+        if (this.isExamMode && this.quizExercise.testRunParticipationsExist) {
+            invalidReasons.push({
+                translateKey: 'artemisApp.quizExercise.edit.testRunSubmissionsExist',
                 translateValues: {},
             });
         }
