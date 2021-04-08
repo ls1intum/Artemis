@@ -1,8 +1,9 @@
 package de.tum.in.www1.artemis.service.connectors;
 
-class TestSubmissionConstants {
+// TODO: use these constants in text exercise / athene tests
+public class TestSubmissionConstants {
 
-    static final String TEXT_0 = """
+    public static final String TEXT_0 = """
             Differences:
             Antipatterns:
             -Have one problem and two solutions(one problematic and one refactored
@@ -11,7 +12,7 @@ class TestSubmissionConstants {
             -Have one problem and one solutio
             -Patterns are a sign of elaborated architecutre and coding""";
 
-    static final String TEXT_1 = """
+    public static final String TEXT_1 = """
             The main difference between patterns and antipatterns is, that patterns show you a good way to do something and antipatterns show a bad way to do something. \
             Nevertheless patterns may become antipatterns in the course of changing understanding of how good software engineering looks like. One example for that is functional decomposition, \
             which used to be a pattern and good practice. Over the time it turned out that it is not a goog way to solve problems, so it became a antipattern
@@ -19,29 +20,29 @@ class TestSubmissionConstants {
             A pattern itsself is a proposed solution to a problem that occurs often and in different situations
             In contrast to that a antipattern shows commonly made mistakes when dealing with a certain problem. Nevertheless a refactored solution is aswell proposed.""";
 
-    static final String TEXT_2 = """
+    public static final String TEXT_2 = """
             1.Patterns can evolve into Antipatterns when change occurs\\n\
             2. Pattern has one solution, whereas anti pattern can have subtypes of solution\\n3\
             . Antipattern has negative consequences and symptom, where as patterns looks only into benefits and consequences""";
 
-    static final String TEXT_3 = """
+    public static final String TEXT_3 = """
             Patterns: A way to Model code in differents ways
             Antipattern: A way of how Not to Model code""";
 
-    static final String TEXT_4 = """
+    public static final String TEXT_4 = """
             Antipatterns are used when there are common mistakes in software management and development to find these, \
             while patterns by themselves are used to build software systems in the context of frequent change by reducing complexity and isolating the change
             Another difference is that the antipatterns have problematic solution and then refactored solution, while patterns only have a solution.""";
 
-    static final String TEXT_5 = """
+    public static final String TEXT_5 = """
             - In patterns we have a problem and a solution, in antipatterns we have a problematic solution and a refactored solution instea
             - patterns represent best practices from the industry etc. so proven concepts, whereas antipatterns shed a light on common mistakes during software development etc.""";
 
-    static final String TEXT_6 = """
+    public static final String TEXT_6 = """
             1) Patterns have one solution, antipatterns have to solutions (one problematic and one refactored)
             2) for the coice of patterns code has to be written; for antipatterns, the bad smell code already exists""";
 
-    static final String TEXT_7 = """
+    public static final String TEXT_7 = """
             Design Patterns
 
             Solutions which are productive and efficient and are developed by Software Engineers over the years of practice and solving problems
@@ -50,11 +51,11 @@ class TestSubmissionConstants {
 
             Known solutions which are actually bad or defective to certain kind of problems.""";
 
-    static final String TEXT_8 = """
+    public static final String TEXT_8 = """
             Patterns has one problem and one solution
             Antipatterns have one problematic solution and a solution for that. The antipattern happens when  a solution that is been used for a long time can not apply anymore. """;
 
-    static final String TEXT_9 = """
+    public static final String TEXT_9 = """
             Patterns identify problems and present solutions
             Antipatterns identify problems but two kinds of solutions. One problematic solution and a better refactored version of the solution. \
             Problematic solutions are suggested not to be used because they results in smells or hinder future work.""";

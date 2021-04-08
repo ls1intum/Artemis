@@ -17,7 +17,8 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 import de.tum.in.www1.artemis.service.connectors.LtiService;
 import de.tum.in.www1.artemis.service.exam.ExamService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingAssessmentService;
@@ -62,7 +63,7 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
      */
     @ResponseStatus(HttpStatus.OK)
     @PutMapping("/programming-submissions/{submissionId}/assessment-after-complaint")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('TA')")
     public ResponseEntity<Result> updateProgrammingManualResultAfterComplaint(@RequestBody AssessmentUpdate assessmentUpdate, @PathVariable long submissionId) {
         log.debug("REST request to update the assessment of manual result for submission {} after complaint.", submissionId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
@@ -97,7 +98,7 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
      * @return 200 Ok response if canceling was successful, 403 Forbidden if current user is not the assessor of the submission
      */
     @PutMapping("/programming-submissions/{submissionId}/cancel-assessment")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('TA')")
     public ResponseEntity<Void> cancelAssessment(@PathVariable Long submissionId) {
         return super.cancelAssessment(submissionId);
     }
@@ -112,7 +113,7 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
      */
     @ResponseStatus(HttpStatus.OK)
     @PutMapping("/participations/{participationId}/manual-results")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('TA')")
     public ResponseEntity<Result> saveProgrammingAssessment(@PathVariable Long participationId, @RequestParam(value = "submit", defaultValue = "false") boolean submit,
             @RequestBody Result newManualResult) {
         log.debug("REST request to save a new result : {}", newManualResult);

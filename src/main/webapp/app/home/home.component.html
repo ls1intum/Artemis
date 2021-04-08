@@ -72,26 +72,33 @@
                                 </label>
                             </div>
                         </div>
-                        <button
-                            type="submit"
-                            [disabled]="isSubmittingLogin || !acceptTerms || !password || password.length < 4 || !username || username.length < 4"
-                            class="btn btn-primary"
-                        >
-                            <span *ngIf="isSubmittingLogin" class="mr-1"><fa-icon [icon]="'circle-notch'" [spin]="true"></fa-icon></span>
-                            <span jhiTranslate="login.form.button"> Sign in </span>
-                        </button>
+                        <div class="btn-toolbar">
+                            <button
+                                type="submit"
+                                [disabled]="isSubmittingLogin || !acceptTerms || !password || password.length < 4 || !username || username.length < 4"
+                                class="btn btn-primary btn-space"
+                            >
+                                <span *ngIf="isSubmittingLogin" class="mr-1"><fa-icon [icon]="'circle-notch'" [spin]="true"></fa-icon></span>
+                                <span jhiTranslate="login.form.button"> Sign in </span>
+                            </button>
+                            <div *ngIf="profileInfo && profileInfo.saml2">
+                                <jhi-saml2-login [acceptTerms]="acceptTerms" [rememberMe]="rememberMe" [saml2Profile]="profileInfo.saml2"> </jhi-saml2-login>
+                            </div>
+                        </div>
                     </form>
                 </div>
             </div>
         </div>
     </div>
-    <div *ngIf="isRegistrationEnabled">
+    <div>
         <br /><br />
-        <div class="d-flex justify-content-center">
-            <span jhiTranslate="global.messages.info.register.noaccount">You don't have an account yet?</span>&nbsp;
-            <a class="alert-link" routerLink="account/register" jhiTranslate="global.messages.info.register.link">Register a new account</a>
+        <div *ngIf="isRegistrationEnabled">
+            <div class="d-flex justify-content-center">
+                <span jhiTranslate="global.messages.info.register.noaccount">You don't have an account yet?</span>&nbsp;
+                <a class="alert-link" routerLink="account/register" jhiTranslate="global.messages.info.register.link">Register a new account</a>
+            </div>
         </div>
-        <div class="d-flex justify-content-center">
+        <div class="d-flex justify-content-center" *ngIf="showResetPasswordLink">
             <a class="alert-link" routerLink="account/reset/request" jhiTranslate="login.password.forgot">Did you forget your password?</a>
         </div>
     </div>
