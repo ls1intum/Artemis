@@ -70,7 +70,7 @@ export class ComplaintsForTutorComponent implements OnInit {
     private createLock() {
         this.isLoading = true;
         this.complaintResponseService
-            .createLock(this.complaint.id!)
+            .createLock(this.complaint?.id!)
             .pipe(
                 finalize(() => {
                     this.isLoading = false;
@@ -91,7 +91,7 @@ export class ComplaintsForTutorComponent implements OnInit {
     }
 
     private refreshLock() {
-        this.complaintResponse = this.complaint.complaintResponse!;
+        this.complaintResponse = this.complaint?.complaintResponse!;
         this.showLockDuration = true;
         // a lock exists we have to check if it affects the currently logged in user
         this.isLockedForLoggedInUser = this.complaintResponseService.isComplaintResponseLockedForLoggedInUser(this.complaintResponse, this.exercise!);
@@ -99,7 +99,7 @@ export class ComplaintsForTutorComponent implements OnInit {
             // update the lock
             this.isLoading = true;
             this.complaintResponseService
-                .refreshLock(this.complaint.id!)
+                .refreshLock(this.complaint?.id!)
                 .pipe(
                     finalize(() => {
                         this.isLoading = false;
@@ -126,7 +126,7 @@ export class ComplaintsForTutorComponent implements OnInit {
     }
 
     removeLock() {
-        this.complaintResponseService.removeLock(this.complaint.id!).subscribe(
+        this.complaintResponseService.removeLock(this.complaint?.id!).subscribe(
             () => {
                 this.jhiAlertService.success('artemisApp.locks.lockRemoved');
                 this.navigateBack();
@@ -147,10 +147,12 @@ export class ComplaintsForTutorComponent implements OnInit {
         }
 
         this.complaintResponse.complaint = this.complaint;
-        this.complaintResponse.complaint.complaintResponse = undefined; // breaking circular structure
+        if (this.complaintResponse.complaint) {
+            this.complaintResponse.complaint.complaintResponse = undefined; // breaking circular structure
+        }
         this.complaintResponse.complaint!.accepted = acceptComplaint;
 
-        if (acceptComplaint && this.complaint.complaintType === ComplaintType.COMPLAINT) {
+        if (acceptComplaint && this.complaint?.complaintType === ComplaintType.COMPLAINT) {
             // Tell the parent (assessment) component to update the corresponding result if the complaint was accepted.
             // The complaint is sent along with the assessment update by the parent to avoid additional requests.
             this.updateAssessmentAfterComplaint.emit(this.complaintResponse);
@@ -176,7 +178,7 @@ export class ComplaintsForTutorComponent implements OnInit {
                 (response) => {
                     this.handled = true;
                     // eslint-disable-next-line chai-friendly/no-unused-expressions
-                    this.complaint.complaintType === ComplaintType.MORE_FEEDBACK
+                    this.complaint?.complaintType === ComplaintType.MORE_FEEDBACK
                         ? this.jhiAlertService.success('artemisApp.moreFeedbackResponse.created')
                         : this.jhiAlertService.success('artemisApp.complaintResponse.created');
                     this.complaintResponse = response.body!;
