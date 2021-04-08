@@ -7,6 +7,7 @@ import static org.mockito.Mockito.verify;
 
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Objects;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -42,6 +43,9 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBa
 
     @Autowired
     private TeamRepository teamRepository;
+
+    @Autowired
+    private SubmissionRepository submissionRepository;
 
     private ModelingExercise classExercise;
 
@@ -262,6 +266,36 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBa
         modelingExercise.setCourse(course2);
 
         request.postWithResponseBody("/api/modeling-exercises/import/" + modelingExercise.getId(), modelingExercise, ModelingExercise.class, HttpStatus.CREATED);
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void importModelingExerciseWithExampleSubmissionFromCourseToCourse() throws Exception {
+        var now = ZonedDateTime.now();
+        Course course1 = database.addEmptyCourse();
+        Course course2 = database.addEmptyCourse();
+
+        ModelingExercise modelingExercise = ModelFactory.generateModelingExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1), DiagramType.ClassDiagram, course1);
+        modelingExercise = modelingExerciseRepository.save(modelingExercise);
+        database.addGradingInstructionsToExercise(modelingExercise);
+
+        // Create example submission
+        var exampleSubmission = database.generateExampleSubmission("model", modelingExercise, true);
+        exampleSubmission = database.addExampleSubmission(exampleSubmission);
+        database.addResultToSubmission(exampleSubmission.getSubmission(), AssessmentType.MANUAL);
+        var submission = submissionRepository.findWithEagerResultAndFeedbackById(exampleSubmission.getSubmission().getId()).get();
+        database.addFeedbackToResult(ModelFactory.generateFeedback().stream().findFirst().get(), Objects.requireNonNull(submission.getLatestResult()));
+
+        modelingExercise.setCourse(course2);
+        var importedModelingExercise = request.postWithResponseBody("/api/modeling-exercises/import/" + modelingExercise.getId(), modelingExercise, ModelingExercise.class,
+                HttpStatus.CREATED);
+
+        assertThat(modelingExerciseRepository.findById(importedModelingExercise.getId())).isPresent();
+        importedModelingExercise = modelingExerciseRepository.findByIdWithExampleSubmissionsAndResults(modelingExercise.getId()).get();
+
+        var importedExampleSubmission = importedModelingExercise.getExampleSubmissions().stream().findFirst().get();
+        assertThat(importedExampleSubmission.getId()).isEqualTo(exampleSubmission.getId());
+        assertThat(importedExampleSubmission.getSubmission().getLatestResult()).isEqualTo(submission.getLatestResult());
     }
 
     @Test

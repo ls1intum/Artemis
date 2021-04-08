@@ -1036,6 +1036,16 @@ describe('QuizExercise Management Detail Component', () => {
                 expect(quizExerciseServiceUpdateStub).to.not.have.been.called;
             });
 
+            it('should call not update if testruns exist in exam mode', () => {
+                comp.quizExercise.testRunParticipationsExist = true;
+                comp.isExamMode = true;
+                saveQuizWithPendingChangesCache();
+                expect(exerciseStub).to.not.have.been.calledWith(comp.quizExercise);
+                expect(quizExerciseServiceCreateStub).to.not.have.been.called;
+                expect(quizExerciseServiceUpdateStub).to.not.have.been.called;
+                expect(quizExerciseServiceUpdateStub).to.not.have.been.calledWith(comp.quizExercise, {});
+            });
+
             it('should update if valid and quiz exercise has id', () => {
                 saveQuizWithPendingChangesCache();
                 expect(exerciseStub).to.have.been.calledWith(comp.quizExercise);

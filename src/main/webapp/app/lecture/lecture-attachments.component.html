@@ -58,7 +58,7 @@
                                     <td>{{ attachment.name }}</td>
                                     <td>{{ attachment.attachmentType }}</td>
                                     <td>
-                                        <a class="text-primary" (click)="downloadAttachment(attachment.link)" *ngIf="!isDownloadingAttachmentLink">
+                                        <a class="text-primary" (click)="downloadAttachment(attachment.link || '')" *ngIf="!isDownloadingAttachmentLink">
                                             {{ attachment.name }}
                                         </a>
                                         <a class="text-primary" *ngIf="isDownloadingAttachmentLink === attachment.link">
@@ -78,10 +78,10 @@
                                             </button>
                                             <button
                                                 jhiDeleteButton
-                                                [entityTitle]="attachment.name"
+                                                [entityTitle]="attachment?.name || ''"
                                                 deleteQuestion="artemisApp.attachment.deleteQuestion"
                                                 (delete)="deleteAttachment(attachment)"
-                                                [dialogError]=""
+                                                [dialogError]="dialogError$"
                                             ></button>
                                         </div>
                                     </td>

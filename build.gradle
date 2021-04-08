@@ -125,7 +125,7 @@ jacocoTestCoverageVerification {
                 counter = "INSTRUCTION"
                 value = "COVEREDRATIO"
                 // TODO: in the future the following value should become at least 0.90
-                minimum = 0.868
+                minimum = 0.870
             }
             limit {
                 counter = "CLASS"
@@ -243,7 +243,7 @@ dependencies {
     implementation "org.zalando:problem-spring-web:0.26.2"
     implementation "com.ibm.icu:icu4j:68.2"
     implementation "com.github.seancfoley:ipaddress:5.3.3"
-    implementation "org.apache.maven:maven-model:3.6.3"
+    implementation "org.apache.maven:maven-model:3.8.1"
 
     annotationProcessor "org.hibernate:hibernate-jpamodelgen:${hibernate_version}"
     annotationProcessor ("org.glassfish.jaxb:jaxb-runtime:${jaxb_runtime_version}") {

@@ -161,7 +161,7 @@ public class ExamService {
     public void delete(@NotNull long examId) {
         User user = userRepository.getUser();
         Exam exam = examRepository.findOneWithEagerExercisesGroupsAndStudentExams(examId);
-        log.info("User " + user.getLogin() + " has requested to delete the exam {}", exam.getTitle());
+        log.info("User {} has requested to delete the exam {}", user.getLogin(), exam.getTitle());
         AuditEvent auditEvent = new AuditEvent(user.getLogin(), Constants.DELETE_EXAM, "exam=" + exam.getTitle());
         auditEventRepository.add(auditEvent);
 
@@ -410,7 +410,7 @@ public class ExamService {
      * @return a examStatisticsDTO filled with all statistics regarding the exam
      */
     public ExamChecklistDTO getStatsForChecklist(Exam exam) {
-        log.info("getStatsForChecklist invoked for exam " + exam.getId());
+        log.info("getStatsForChecklist invoked for exam {}", exam.getId());
         int numberOfCorrectionRoundsInExam = exam.getNumberOfCorrectionRoundsInExam();
         long start = System.nanoTime();
         ExamChecklistDTO examChecklistDTO = new ExamChecklistDTO();
@@ -426,21 +426,21 @@ public class ExamService {
             // number of complaints open
             numberOfComplaintsOpenByExercise.add(complaintRepository.countByResultParticipationExerciseIdAndComplaintTypeIgnoreTestRuns(exercise.getId(), ComplaintType.COMPLAINT));
 
-            log.debug("StatsTimeLog: number of complaints open done in " + TimeLogUtil.formatDurationFrom(start) + " for exercise " + exercise.getId());
+            log.debug("StatsTimeLog: number of complaints open done in {} for exercise {}", TimeLogUtil.formatDurationFrom(start), exercise.getId());
             // number of complaints finished
             numberOfComplaintResponsesByExercise
                     .add(complaintResponseRepository.countComplaintResponseByExerciseIdAndComplaintTypeAndSubmittedTimeIsNotNull(exercise.getId(), ComplaintType.COMPLAINT));
 
-            log.debug("StatsTimeLog: number of complaints finished done in " + TimeLogUtil.formatDurationFrom(start) + " for exercise " + exercise.getId());
+            log.debug("StatsTimeLog: number of complaints finished done in {} for exercise {}", TimeLogUtil.formatDurationFrom(start), exercise.getId());
             // number of assessments done
             numberOfAssessmentsFinishedOfCorrectionRoundsByExercise
                     .add(resultRepository.countNumberOfFinishedAssessmentsForExamExerciseForCorrectionRounds(exercise, numberOfCorrectionRoundsInExam));
 
-            log.debug("StatsTimeLog: number of assessments done in " + TimeLogUtil.formatDurationFrom(start) + " for exercise " + exercise.getId());
+            log.debug("StatsTimeLog: number of assessments done in {} for exercise {}", TimeLogUtil.formatDurationFrom(start), exercise.getId());
             // get number of all generated participations
             numberOfParticipationsGeneratedByExercise.add(studentParticipationRepository.countParticipationsIgnoreTestRunsByExerciseId(exercise.getId()));
 
-            log.debug("StatsTimeLog: number of generated participations in " + TimeLogUtil.formatDurationFrom(start) + " for exercise " + exercise.getId());
+            log.debug("StatsTimeLog: number of generated participations in {} for exercise {}", TimeLogUtil.formatDurationFrom(start), exercise.getId());
             if (!(exercise instanceof QuizExercise || exercise.getAssessmentType() == AssessmentType.AUTOMATIC)) {
                 numberOfParticipationsForAssessmentGeneratedByExercise.add(submissionRepository.countByExerciseIdSubmittedBeforeDueDateIgnoreTestRuns(exercise.getId()));
             }
@@ -483,13 +483,13 @@ public class ExamService {
         long numberOfGeneratedStudentExams = examRepository.countGeneratedStudentExamsByExamWithoutTestRuns(exam.getId());
         examChecklistDTO.setNumberOfGeneratedStudentExams(numberOfGeneratedStudentExams);
 
-        log.debug("StatsTimeLog: number of generated student exams done in " + TimeLogUtil.formatDurationFrom(start));
+        log.debug("StatsTimeLog: number of generated student exams done in {}", TimeLogUtil.formatDurationFrom(start));
 
         // set number of test runs
         long numberOfTestRuns = studentExamRepository.countTestRunsByExamId(exam.getId());
         examChecklistDTO.setNumberOfTestRuns(numberOfTestRuns);
 
-        log.debug("StatsTimeLog: number of test runs done in " + TimeLogUtil.formatDurationFrom(start));
+        log.debug("StatsTimeLog: number of test runs done in {}", TimeLogUtil.formatDurationFrom(start));
 
         // check if all exercises have been prepared for all students;
         boolean exercisesPrepared = numberOfGeneratedStudentExams != 0
@@ -498,9 +498,9 @@ public class ExamService {
 
         // set started and submitted exam properties
         long numberOfStudentExamsStarted = studentExamRepository.countStudentExamsStartedByExamIdIgnoreTestRuns(exam.getId());
-        log.debug("StatsTimeLog: number of student exams started done in " + TimeLogUtil.formatDurationFrom(start));
+        log.debug("StatsTimeLog: number of student exams started done in {}", TimeLogUtil.formatDurationFrom(start));
         long numberOfStudentExamsSubmitted = studentExamRepository.countStudentExamsSubmittedByExamIdIgnoreTestRuns(exam.getId());
-        log.debug("StatsTimeLog: number of student exams submitted done in " + TimeLogUtil.formatDurationFrom(start));
+        log.debug("StatsTimeLog: number of student exams submitted done in {}", TimeLogUtil.formatDurationFrom(start));
         examChecklistDTO.setNumberOfTotalParticipationsForAssessment(totalNumberOfParticipationsForAssessment);
         examChecklistDTO.setNumberOfExamsStarted(numberOfStudentExamsStarted);
         examChecklistDTO.setNumberOfExamsSubmitted(numberOfStudentExamsSubmitted);
@@ -587,6 +587,21 @@ public class ExamService {
         }
 
         return programmingExercises.size();
+    }
+
+    /**
+     * Sets exam exercise transient properties for different exercise types
+     * @param exam - the exam for which we set the exercise properties
+     */
+    public void setExamExerciseProperties(Exam exam) {
+        exam.getExerciseGroups().forEach(exerciseGroup -> {
+            exerciseGroup.getExercises().forEach(exercise -> {
+                // Set transient property for quiz exam exercise if test runs exist
+                if (exercise instanceof QuizExercise) {
+                    exerciseService.checkTestRunsExist(exercise);
+                }
+            });
+        });
     }
 
     /**
@@ -682,7 +697,7 @@ public class ExamService {
                 ProgrammingExercise programmingExerciseWithTemplateParticipation = programmingExerciseRepository
                         .findByIdWithTemplateAndSolutionParticipationElseThrow(exercise.getId());
                 gitService.combineAllCommitsOfRepositoryIntoOne(programmingExerciseWithTemplateParticipation.getTemplateParticipation().getVcsRepositoryUrl());
-                log.debug("Finished combination of template commits for programming exercise " + programmingExerciseWithTemplateParticipation.toString());
+                log.debug("Finished combination of template commits for programming exercise {}", programmingExerciseWithTemplateParticipation.toString());
             }
             catch (InterruptedException | GitAPIException e) {
                 log.error("An error occurred when trying to combine template commits for exam " + exam.getId() + ".", e);
