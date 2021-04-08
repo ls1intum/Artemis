@@ -13,7 +13,7 @@ eval $(opam env)
 # Therefore, hide stderr output by rederecting it to a file.
 timeout -s SIGTERM $TIMEOUT dune runtest --build-dir=$OUTPUT_FOLDER 2>$ERROR_LOG
 
-if [ $? = 124 ]; then # timeout exits with 124 it if had to kill the tests.
+if [ $? = 124 ]; then # timeout exits with 124 if it had to kill the tests.
     echo -e "Testing your submission resulted in a timeout." 1>&2
 # Warn the participant in case no output file could be generated
 elif [ ! -f "$OUTPUT_FILE" ]; then
