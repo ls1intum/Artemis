@@ -120,8 +120,7 @@ have to configure the file ``application-artemis.yml`` in the folder
            name: Artemis
            email: artemis@in.tum.de
        athene:
-           submit-url: http://localhost/submit
-           feedback-consistency-url: http://localhost:8001/feedback_consistency
+           url: http://localhost
            base64-secret: YWVuaXF1YWRpNWNlaXJpNmFlbTZkb283dXphaVF1b29oM3J1MWNoYWlyNHRoZWUzb2huZ2FpM211bGVlM0VpcAo=
            token-validity-in-seconds: 10800
 
@@ -417,8 +416,7 @@ HTTP. We need to extend the configuration in the file
    artemis:
      # ...
      athene:
-       submit-url: http://localhost/submit
-       feedback-consistency-url: http://localhost:8001/feedback_consistency
+       url: http://localhost
        base64-secret: YWVuaXF1YWRpNWNlaXJpNmFlbTZkb283dXphaVF1b29oM3J1MWNoYWlyNHRoZWUzb2huZ2FpM211bGVlM0VpcAo=
        token-validity-in-seconds: 10800
 

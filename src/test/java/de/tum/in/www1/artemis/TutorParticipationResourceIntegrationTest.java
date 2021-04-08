@@ -22,13 +22,13 @@ import de.tum.in.www1.artemis.repository.TutorParticipationRepository;
 public class TutorParticipationResourceIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
-    ExerciseRepository exerciseRepository;
+    private ExerciseRepository exerciseRepository;
 
     @Autowired
-    TutorParticipationRepository tutorParticipationRepository;
+    private TutorParticipationRepository tutorParticipationRepository;
 
     @Autowired
-    ExampleSubmissionRepository exampleSubmissionRepository;
+    private ExampleSubmissionRepository exampleSubmissionRepository;
 
     private Exercise exercise;
 
@@ -58,7 +58,7 @@ public class TutorParticipationResourceIntegrationTest extends AbstractSpringInt
         exampleSubmission.addTutorParticipations(tutorParticipationRepository.findWithEagerExampleSubmissionAndResultsByAssessedExerciseAndTutor(exercise, tutor));
         exampleSubmissionRepository.save(exampleSubmission);
 
-        Optional<ExampleSubmission> exampleSubmissionWithEagerExercise = exampleSubmissionRepository.findWithEagerExerciseById(exampleSubmission.getId());
+        Optional<ExampleSubmission> exampleSubmissionWithEagerExercise = exampleSubmissionRepository.findWithSubmissionResultExerciseGradingCriteriaById(exampleSubmission.getId());
         if (exampleSubmissionWithEagerExercise.isPresent()) {
             exercise = exampleSubmissionWithEagerExercise.get().getExercise();
             exercise.setTitle("Patterns in Software Engineering");

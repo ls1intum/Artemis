@@ -4,6 +4,9 @@ import java.util.Objects;
 
 import javax.validation.constraints.Size;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class StudentDTO {
 
     @Size(max = 50)

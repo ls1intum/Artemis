@@ -35,6 +35,9 @@ import { MockLocalStorageService } from '../../../helpers/mocks/service/mock-loc
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { ArtemisTestModule } from '../../../test.module';
+import { AnswerOption } from 'app/entities/quiz/answer-option.model';
+import { DragAndDropMapping } from 'app/entities/quiz/drag-and-drop-mapping.model';
+import { ShortAnswerSubmittedText } from 'app/entities/quiz/short-answer-submitted-text.model';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -220,6 +223,27 @@ describe('QuizParticipationComponent', () => {
             expect(component.isSubmitting).to.be.false;
         });
 
+        it('should return true if student didnt interact with any question', () => {
+            component.quizExercise = { ...quizExercise, quizQuestions: undefined };
+            expect(component.areAllQuestionsAnswered()).to.be.true;
+
+            component.quizExercise = quizExercise;
+            component.selectedAnswerOptions = new Map<number, AnswerOption[]>();
+            component.selectedAnswerOptions.set(2, []);
+            expect(component.areAllQuestionsAnswered()).to.be.false;
+
+            component.selectedAnswerOptions = new Map<number, AnswerOption[]>();
+            component.dragAndDropMappings = new Map<number, DragAndDropMapping[]>();
+            component.dragAndDropMappings.set(1, []);
+            expect(component.areAllQuestionsAnswered()).to.be.false;
+
+            component.selectedAnswerOptions = new Map<number, AnswerOption[]>();
+            component.dragAndDropMappings = new Map<number, DragAndDropMapping[]>();
+            component.shortAnswerSubmittedTexts = new Map<number, ShortAnswerSubmittedText[]>();
+            component.shortAnswerSubmittedTexts.set(3, []);
+            expect(component.areAllQuestionsAnswered()).to.be.false;
+        });
+
         it('should show warning on submit', () => {
             const confirmStub = sinon.stub(window, 'confirm').returns(true);
             fixture.detectChanges();
@@ -283,6 +307,36 @@ describe('QuizParticipationComponent', () => {
             expect(component.unsavedChanges).to.be.true;
 
             expect(alertStub).to.have.been.called;
+        });
+
+        it('should express timespan in humanized text', () => {
+            expect(component.relativeTimeText(100020)).to.equal('1667 min');
+            expect(component.relativeTimeText(60)).to.equal('1 min 0 s');
+            expect(component.relativeTimeText(5)).to.equal('5 s');
+        });
+
+        it('should adjust release date of the quiz if it didnt start', () => {
+            const releaseDate = moment().add(1, 'minutes');
+            const timeUntilPlannedStart = 10;
+            const quizToApply = { ...quizExercise, started: false, isPlannedToStart: true, releaseDate, timeUntilPlannedStart };
+
+            component.applyQuizFull(quizToApply);
+            expect(component.quizExercise).to.equal(quizToApply);
+            expect(component.quizExercise.releaseDate!.toString()).to.equal(releaseDate.toString());
+        });
+
+        it('should apply participation', () => {
+            const submission: QuizSubmission = { id: 1, submissionDate: moment().subtract(10, 'minutes'), submittedAnswers: [] };
+            const result: Result = { id: 1, submission, resultString: 'result-string' };
+            const endedQuizExercise = { ...quizExercise, ended: true };
+            const participation: StudentParticipation = { exercise: endedQuizExercise, results: [result] };
+
+            component.quizExercise = quizExercise;
+            component.timeDifference = 10;
+            component.updateParticipationFromServer(participation);
+
+            expect(component.submission.id).to.equal(submission.id);
+            expect(component.quizExercise.ended).to.be.true;
         });
     });
 

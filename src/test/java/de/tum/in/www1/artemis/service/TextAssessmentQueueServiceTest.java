@@ -113,10 +113,8 @@ public class TextAssessmentQueueServiceTest extends AbstractSpringIntegrationBam
         for (int i = 0; i < clusterCount; i++) {
             clusters.add(new TextCluster());
         }
-        // Add all textblocks to a random cluster
-        textBlocks.forEach(textBlock -> {
-            clusters.get(random.nextInt(clusterCount)).addBlocks(textBlock);
-        });
+        // Add all text blocks to a random cluster
+        textBlocks.forEach(textBlock -> clusters.get(random.nextInt(clusterCount)).addBlocks(textBlock));
         return clusters;
     }
 

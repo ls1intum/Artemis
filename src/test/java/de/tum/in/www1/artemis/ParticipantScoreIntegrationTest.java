@@ -15,8 +15,9 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.exam.Exam;
+import de.tum.in.www1.artemis.domain.lecture.ExerciseUnit;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.dto.ParticipantScoreAverageDTO;
 import de.tum.in.www1.artemis.web.rest.dto.ParticipantScoreDTO;
@@ -24,43 +25,48 @@ import de.tum.in.www1.artemis.web.rest.dto.ScoreDTO;
 
 public class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
-    Long idOfExam;
+    private Long idOfExam;
 
-    Long idOfCourse;
+    private Long idOfCourse;
 
-    Long idOfTeam1;
+    private Long idOfTeam1;
 
-    Long idOfStudent1;
+    private Long idOfStudent1;
 
-    Long idOfIndividualTextExercise;
+    private Long idOfIndividualTextExercise;
 
-    Long getIdOfIndividualTextExerciseOfExam;
+    private Long getIdOfIndividualTextExerciseOfExam;
 
-    Long idOfTeamTextExercise;
+    private Long idOfTeamTextExercise;
 
-    @Autowired
-    SubmissionRepository submissionRepository;
-
-    @Autowired
-    ResultRepository resultRepository;
+    private Long idOfExerciseUnit;
 
     @Autowired
-    ExerciseRepository exerciseRepository;
+    private ExerciseRepository exerciseRepository;
 
     @Autowired
-    CourseRepository courseRepository;
+    private CourseRepository courseRepository;
 
     @Autowired
-    UserRepository userRepository;
+    private UserRepository userRepository;
 
     @Autowired
-    ParticipationService participationService;
+    private TeamRepository teamRepository;
 
     @Autowired
-    TeamRepository teamRepository;
+    private ExamRepository examRepository;
 
     @Autowired
-    ExamRepository examRepository;
+    private LectureRepository lectureRepository;
+
+    @Autowired
+    private LearningGoalRepository learningGoalRepository;
+
+    @Autowired
+    private LectureUnitRepository lectureUnitRepository;
+
+    @Autowired
+    private StudentParticipationRepository studentParticipationRepository;
 
     @AfterEach
     public void resetDatabase() {
@@ -74,8 +80,22 @@ public class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationBa
         this.database.addUsers(5, 10, 10);
         // creating course
         Course course = this.database.createCourse();
+        Lecture lecture = new Lecture();
+        lecture.setTitle("ExampleLecture");
+        lecture.setCourse(course);
+        lecture = lectureRepository.saveAndFlush(lecture);
         idOfCourse = course.getId();
         TextExercise textExercise = database.createIndividualTextExercise(course, pastTimestamp, pastTimestamp, pastTimestamp);
+        ExerciseUnit exerciseUnit = database.createExerciseUnit(textExercise);
+        database.addLectureUnitsToLecture(lecture, Set.of(exerciseUnit));
+        lecture = lectureRepository.findByIdWithStudentQuestionsAndLectureUnitsAndLearningGoals(lecture.getId()).get();
+        exerciseUnit = (ExerciseUnit) lecture.getLectureUnits().get(0);
+        idOfExerciseUnit = exerciseUnit.getId();
+        LearningGoal learningGoal = new LearningGoal();
+        learningGoal.setTitle("ExampleLearningGoal");
+        learningGoal.setCourse(course);
+        learningGoal.addLectureUnit(exerciseUnit);
+        learningGoalRepository.saveAndFlush(learningGoal);
         idOfIndividualTextExercise = textExercise.getId();
         Exercise teamExercise = database.createTeamTextExercise(course, pastTimestamp, pastTimestamp, pastTimestamp);
         idOfTeamTextExercise = teamExercise.getId();
@@ -121,6 +141,38 @@ public class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationBa
     @WithMockUser(username = "student1", roles = "USER")
     public void testAll_asStudent() throws Exception {
         this.testAllPreAuthorize();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void deleteParticipation_asInstructorOfCourse_shouldDeleteParticipation() throws Exception {
+        List<StudentParticipation> participations = studentParticipationRepository.findByExerciseIdAndStudentId(idOfIndividualTextExercise, idOfStudent1);
+        assertThat(participations).isNotEmpty();
+        for (StudentParticipation studentParticipation : participations) {
+            database.createSubmissionAndResult(studentParticipation, 30, false);
+        }
+        participations = studentParticipationRepository.findByExerciseIdAndStudentId(idOfIndividualTextExercise, idOfStudent1);
+        assertThat(participations).isNotEmpty();
+        for (StudentParticipation studentParticipation : participations) {
+            request.delete("/api/participations/" + studentParticipation.getId(), HttpStatus.OK);
+        }
+        participations = studentParticipationRepository.findByExerciseIdAndStudentId(idOfIndividualTextExercise, idOfStudent1);
+        assertThat(participations).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void deleteExercise_asInstructorOfCourse_shouldDeleteExercise() throws Exception {
+        request.delete("/api/text-exercises/" + idOfIndividualTextExercise, HttpStatus.OK);
+        assertThat(exerciseRepository.existsById(idOfIndividualTextExercise)).isFalse();
+        assertThat(lectureUnitRepository.existsById(idOfExerciseUnit)).isFalse();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    public void deleteCourse_asInstructorOfCourse_shouldDeleteExercise() throws Exception {
+        request.delete("/api/courses/" + idOfCourse, HttpStatus.OK);
+        assertThat(courseRepository.existsById(idOfCourse)).isFalse();
     }
 
     @Test

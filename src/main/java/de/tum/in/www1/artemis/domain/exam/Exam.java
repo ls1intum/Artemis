@@ -1,10 +1,7 @@
 package de.tum.in.www1.artemis.domain.exam;
 
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
@@ -116,6 +113,9 @@ public class Exam extends DomainObject {
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonIgnoreProperties("exam")
     private Set<StudentExam> studentExams = new HashSet<>();
+
+    @Column(name = "exam_archive_path")
+    private String examArchivePath;
 
     // Unidirectional
     @ManyToMany
@@ -384,5 +384,17 @@ public class Exam extends DomainObject {
             return false;
         }
         return publishResultsDate.isBefore(ZonedDateTime.now());
+    }
+
+    public boolean hasExamArchive() {
+        return examArchivePath != null && !examArchivePath.isEmpty();
+    }
+
+    public String getExamArchivePath() {
+        return examArchivePath;
+    }
+
+    public void setExamArchivePath(String examArchivePath) {
+        this.examArchivePath = examArchivePath;
     }
 }

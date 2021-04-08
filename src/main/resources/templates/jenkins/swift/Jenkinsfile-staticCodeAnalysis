@@ -31,11 +31,11 @@ pipeline {
                             cp -R Tests assignment
                             cp Package.swift assignment
 
-                            echo "---------- swift build ----------"
+                            # swift
                             cd assignment
                             swift build
 
-                            echo "---------- swift test ----------"
+                            # swift test
                             swift test || true
                             '''
                     }

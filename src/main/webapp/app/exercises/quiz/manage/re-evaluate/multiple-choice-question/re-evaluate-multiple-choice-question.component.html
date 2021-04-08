@@ -12,16 +12,16 @@
         </div>
         <div class="col-md-2 text-right">
             <div class="form-group">
-                <div class="re-evaluate-button" (click)="moveUp()">
+                <div class="re-evaluate-button" id="move-up-button" (click)="moveUp()">
                     <fa-icon [icon]="'chevron-up'" size="2x"></fa-icon>
                 </div>
-                <div class="re-evaluate-button" (click)="moveDown()">
+                <div class="re-evaluate-button" id="move-down-button" (click)="moveDown()">
                     <fa-icon [icon]="'chevron-down'" size="2x"></fa-icon>
                 </div>
-                <div class="re-evaluate-button" (click)="resetQuestion()">
+                <div class="re-evaluate-button" id="reset-button" (click)="resetQuestion()">
                     <fa-icon [icon]="'undo'" size="2x"></fa-icon>
                 </div>
-                <div class="re-evaluate-button" (click)="delete()">
+                <div class="re-evaluate-button" id="delete-button" (click)="delete()">
                     <fa-icon [icon]="'trash'" size="2x"></fa-icon>
                 </div>
             </div>

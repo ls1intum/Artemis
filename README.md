@@ -104,13 +104,14 @@ The Continuous Integration Server typically delegates the build jobs to local bu
 
 ### Data model
 
-The Artemis application server uses the following (simplified) data model in the MySQL database (note that the figure does not include all entities, attributes and relationships). It supports multiple courses with multiple exercises. Each student in the participating student group can participate in the exercise by clicking the **Start Exercise** button. 
-Then a repository and a build plan for the student (User) will be created and configured. The initialization state variable (Enum) helps to track the progress of this complex operation and allows recovering from errors. 
+The Artemis application server uses the following (simplified) data model in the MySQL database. It supports multiple courses with multiple exercises. Each student in the participating student group can participate in the exercise by clicking the **Start Exercise** button. 
+Then a repository and a build plan for the student (User) will be created and configured. The initialization state helps to track the progress of this complex operation and allows recovering from errors. 
 A student can submit multiple solutions by committing and pushing the source code changes to a given example code into the version control system or using the user interface. The continuous integration server automatically tests each submission, and notifies the Artemis application server, when a new result exists. 
 In addition, teaching assistants can assess student solutions and "manually" create results.
-The current data model is more complex and supports more features such as online exams, lectures, student questions and static code analysis.
 
 ![Data Model](docs/dev/system-design/DataModel.svg "Data Model")
+
+Please note, that the actual database model is more complex. The UML class diagram above omits some details for readability (e.g. lectures, student questions, exercise details, static code analysis, quiz questions, exam sessions, submission subclasses, etc.)
 
 ### Artemis Community
 
@@ -122,14 +123,14 @@ We communicate using Github issues and pull requests. Additionally, you can join
 
 #### Universities with Artemis in Use
 
-The following universities are activly using Artemis or are currently evaluating Artemis.
+The following universities are actively using Artemis or are currently evaluating Artemis.
 
 ##### Technical University of Munich
 
 * https://artemis.ase.in.tum.de 
 * Main contact person: [Stephan Krusche](mailto:krusche@in.tum.de)
 
-##### LFU Innsbruck, Uni Salzburg, JKU Linz, AAU Klagenfurt
+##### LFU Innsbruck, Uni Salzburg, JKU Linz, AAU Klagenfurt, TU Wien
 
 * https://artemis.codeability.uibk.ac.at
 * [codeAbility project](https://codeability.uibk.ac.at)
@@ -142,13 +143,15 @@ The following universities are activly using Artemis or are currently evaluating
 
 ##### Universität Bonn
 
-* http://alpro.besec.uni-bonn.de 
-* Main contact person: [Alexander Von Trostorff](mailto:s6alvont@uni-bonn.de)
+* https://alpro.besec.uni-bonn.de 
+* Main contact person: [Alexander von Trostorff](mailto:s6alvont@uni-bonn.de)
 
 ##### Universität Passau
 
-* Evaluating Artemis
+* https://artemis.se2.fim.uni-passau.de
+* Main contact person: [Christian Bachmaier](mailto:bachmaier@fim.uni-passau.de)
 
 ##### Karlsruhe Institute of Technology
 
-* Evaluating Artemis
+* https://artemis.praktomat.cs.kit.edu
+* Main contact person: [Dominik Fuchß](mailto:dominik.fuchss@kit.edu)

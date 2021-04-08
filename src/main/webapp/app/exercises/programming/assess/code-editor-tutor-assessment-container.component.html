@@ -6,9 +6,9 @@
         </span>
         <div *ngIf="lockLimitReached">
             <fa-icon [icon]="'times-circle'" class="text-danger"></fa-icon>
-            <span jhiTranslate="artemisApp.submission.lockedSubmissionsLimitReached"
-                >You have reached the maximum number of unfinished assessments in this course. Please finish your open assessments before being able to start a new one.</span
-            >
+            <span jhiTranslate="artemisApp.submission.lockedSubmissionsLimitReached">
+                You have reached the maximum number of unfinished assessments in this course. Please finish your open assessments before being able to start a new one.
+            </span>
         </div>
     </div>
 </nav>
@@ -22,6 +22,7 @@
     [isTeamMode]="exercise?.teamMode"
     [isAssessor]="isAssessor"
     [isTestRun]="isTestRun"
+    [exerciseDashboardLink]="exerciseDashboardLink"
     [isAtLeastInstructor]="isAtLeastInstructor"
     [canOverride]="canOverride"
     [result]="manualResult"
@@ -36,6 +37,10 @@
     (nextSubmission)="nextSubmission()"
     (updateAssessmentAfterComplaint)="onUpdateAssessmentAfterComplaint($event)"
 >
+    <ng-container *ngIf="submission; then assessment; else noSubmission"></ng-container>
+</jhi-assessment-layout>
+
+<ng-template #assessment>
     <jhi-code-editor-container
         *ngIf="!loadingParticipation && !participationCouldNotBeFetched"
         [editable]="false"
@@ -50,14 +55,14 @@
         <div editorTitle>
             <span>{{ exercise?.title }}</span>
             <span
-                >&nbsp;[{{ exercise?.maxPoints }} {{ 'artemisApp.examParticipation.points' | artemisTranslate
-                }}<span *ngIf="exercise.bonusPoints">, {{ exercise.bonusPoints }} {{ 'artemisApp.examParticipation.bonus' | artemisTranslate }}</span
+                >&nbsp;[{{ exercise?.maxPoints }} {{ 'artemisApp.examParticipation.points' | artemisTranslate }}
+                <span *ngIf="exercise.bonusPoints">, {{ exercise.bonusPoints }} {{ 'artemisApp.examParticipation.bonus' | artemisTranslate }}</span
                 >]
                 <jhi-included-in-score-badge
                     *ngIf="exercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY"
                     [includedInOverallScore]="exercise.includedInOverallScore"
-                ></jhi-included-in-score-badge
-            ></span>
+                ></jhi-included-in-score-badge>
+            </span>
         </div>
         <div editorToolbar>
             <jhi-programming-assessment-repo-export
@@ -71,8 +76,9 @@
                 target="_blank"
                 rel="noopener noreferrer"
                 jhiTranslate="artemisApp.exerciseAssessmentDashboard.programmingExercise.goToRepo"
-                >Go to repository</a
             >
+                Go to repository
+            </a>
             <jhi-result
                 *ngIf="participation"
                 [result]="manualResult"
@@ -100,4 +106,13 @@
             </div>
         </div>
     </jhi-code-editor-container>
-</jhi-assessment-layout>
+</ng-template>
+
+<ng-template #noSubmission>
+    <div *ngIf="!loadingInitialSubmission" class="alert alert-warning text-center mt-4" role="alert">
+        <p jhiTranslate="artemisApp.fileUploadAssessment.notFound">We haven't found any new submission without an assessment, please go back.</p>
+        <a [routerLink]="exerciseDashboardLink" class="btn btn-info btn-sm mr-1 mb-1 assessment-dashboard">
+            <span class="d-none d-md-inline" jhiTranslate="entity.action.exerciseDashboard">Exercise dashboard</span>
+        </a>
+    </div>
+</ng-template>

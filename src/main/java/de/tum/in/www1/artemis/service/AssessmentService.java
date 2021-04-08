@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.service;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 
@@ -18,7 +17,6 @@ import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.connectors.LtiService;
 import de.tum.in.www1.artemis.service.exam.ExamDateService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingAssessmentService;
@@ -45,7 +43,7 @@ public class AssessmentService {
 
     protected final SubmissionRepository submissionRepository;
 
-    protected final GradingCriterionService gradingCriterionService;
+    protected final GradingCriterionRepository gradingCriterionRepository;
 
     protected final UserRepository userRepository;
 
@@ -57,7 +55,7 @@ public class AssessmentService {
 
     public AssessmentService(ComplaintResponseService complaintResponseService, ComplaintRepository complaintRepository, FeedbackRepository feedbackRepository,
             ResultRepository resultRepository, StudentParticipationRepository studentParticipationRepository, ResultService resultService, SubmissionService submissionService,
-            SubmissionRepository submissionRepository, ExamDateService examDateService, GradingCriterionService gradingCriterionService, UserRepository userRepository,
+            SubmissionRepository submissionRepository, ExamDateService examDateService, GradingCriterionRepository gradingCriterionRepository, UserRepository userRepository,
             LtiService ltiService) {
         this.complaintResponseService = complaintResponseService;
         this.complaintRepository = complaintRepository;
@@ -68,35 +66,9 @@ public class AssessmentService {
         this.submissionService = submissionService;
         this.submissionRepository = submissionRepository;
         this.examDateService = examDateService;
-        this.gradingCriterionService = gradingCriterionService;
+        this.gradingCriterionRepository = gradingCriterionRepository;
         this.userRepository = userRepository;
         this.ltiService = ltiService;
-    }
-
-    Result submitResult(Result result, Exercise exercise, Double calculatedPoints) {
-        double maxPoints = exercise.getMaxPoints();
-        double bonusPoints = Optional.ofNullable(exercise.getBonusPoints()).orElse(0.0);
-
-        // Exam results and manual results of programming exercises are always to rated
-        if (exercise.isExamExercise() || exercise instanceof ProgrammingExercise) {
-            result.setRated(true);
-        }
-        else {
-            result.setRatedIfNotExceeded(exercise.getDueDate(), result.getSubmission().getSubmissionDate());
-        }
-
-        result.setCompletionDate(ZonedDateTime.now());
-        // Take bonus points into account to achieve a result score > 100%
-        double totalScore = calculateTotalPoints(calculatedPoints, maxPoints + bonusPoints);
-        // Set score and resultString according to maxPoints, to establish results with score > 100%
-        result.setScore(totalScore, maxPoints);
-        result.setResultString(totalScore, maxPoints);
-
-        // Workaround to prevent the assessor turning into a proxy object after saving
-        var assessor = result.getAssessor();
-        result = resultRepository.save(result);
-        result.setAssessor(assessor);
-        return result;
     }
 
     /**
@@ -128,6 +100,8 @@ public class AssessmentService {
 
         // Update the result that was complained about with the new feedback
         originalResult.updateAllFeedbackItems(assessmentUpdate.getFeedbacks(), exercise instanceof ProgrammingExercise);
+        // persist feedback before result to prevent "null index column for collection" error
+        storeAssociatedFeedbackInDatabase(originalResult);
         if (exercise instanceof ProgrammingExercise) {
             double points = ((ProgrammingAssessmentService) this).calculateTotalScore(originalResult);
             originalResult.setScore(points, exercise.getMaxPoints());
@@ -142,9 +116,28 @@ public class AssessmentService {
             return resultRepository.findByIdWithEagerAssessor(savedResult.getId()).get(); // to eagerly load assessor
         }
         else {
-            Double calculatedPoints = calculateTotalPoints(originalResult.getFeedbacks());
-            return submitResult(originalResult, exercise, calculatedPoints);
+            return resultRepository.submitResult(originalResult, exercise);
         }
+    }
+
+    /**
+     * With ordered collections (like result and feedback here),
+     * we have to be very careful with the way we persist the objects in the database.
+     * We must first persist the child object without a relation to the parent object.
+     * Then, we recreate the association and persist the parent object.
+     */
+    private void storeAssociatedFeedbackInDatabase(Result originalResult) {
+        List<Feedback> savedFeedbacks = new ArrayList<>();
+        originalResult.getFeedbacks().forEach(feedback -> {
+            // cut association to parent object
+            feedback.setResult(null);
+            // persist the child object without an association to the parent object.
+            feedback = feedbackRepository.saveAndFlush(feedback);
+            // restore the association to the parent object
+            feedback.setResult(originalResult);
+            savedFeedbacks.add(feedback);
+        });
+        originalResult.setFeedbacks(savedFeedbacks);
     }
 
     /**
@@ -253,35 +246,6 @@ public class AssessmentService {
         }
     }
 
-    public double calculateTotalPoints(Double calculatedScore, Double maxScore) {
-        double totalScore = Math.max(0, calculatedScore);
-        return (maxScore == null) ? totalScore : Math.min(totalScore, maxScore);
-    }
-
-    /**
-     * Helper function to calculate the total points of a feedback list. It loops through all assessed model elements and sums the credits up.
-     * The points of an assessment model is not summed up only in the case the usageCount limit is exceeded
-     * meaning the structured grading instruction was applied on the assessment model more often than allowed
-     *
-     * @param assessments the List of Feedback
-     * @return the total points
-     */
-    public Double calculateTotalPoints(List<Feedback> assessments) {
-        double totalPoints = 0.0;
-        var gradingInstructions = new HashMap<Long, Integer>(); // { instructionId: noOfEncounters }
-
-        for (Feedback feedback : assessments) {
-            if (feedback.getGradingInstruction() != null) {
-                totalPoints = gradingCriterionService.computeTotalScore(feedback, totalPoints, gradingInstructions);
-            }
-            else {
-                // in case no structured grading instruction was applied on the assessment model we just sum the feedback credit
-                totalPoints += feedback.getCredits();
-            }
-        }
-        return totalPoints;
-    }
-
     /**
      * Gets an example submission with the given submissionId and returns the result of the submission.
      *
@@ -299,7 +263,7 @@ public class AssessmentService {
      * This function is used for submitting a manual assessment/result. It gets the result that belongs to the given resultId, updates the completion date, sets the assessment type
      * to MANUAL and sets the assessor attribute. Afterwards, it saves the update result in the database again.
      *
-     * For programming exercises we use a different approach see {@link ProgrammingAssessmentService#submitManualAssessment(long)})}
+     * For programming exercises we use a different approach see {@link ResultRepository#submitManualAssessment(long)})}
      *
      * @param resultId the id of the result that should be submitted
      * @param exercise the exercise the assessment belongs to
@@ -311,8 +275,7 @@ public class AssessmentService {
                 .orElseThrow(() -> new EntityNotFoundException("No result for the given resultId could be found"));
         result.setRatedIfNotExceeded(exercise.getDueDate(), submissionDate);
         result.setCompletionDate(ZonedDateTime.now());
-        Double calculatedPoints = calculateTotalPoints(result.getFeedbacks());
-        result = submitResult(result, exercise, calculatedPoints);
+        result = resultRepository.submitResult(result, exercise);
         // Note: we always need to report the result (independent of the assessment due date) over LTI, otherwise it might never become visible in the external system
         ltiService.onNewResult((StudentParticipation) result.getParticipation());
         return result;
@@ -346,7 +309,7 @@ public class AssessmentService {
         User user = userRepository.getUser();
         result.setAssessor(user);
         // first save the feedback (that is not yet in the database) to prevent null index exception
-        var savedFeedbackList = saveFeedbacks(feedbackList);
+        var savedFeedbackList = feedbackRepository.saveFeedbacks(feedbackList);
         result.updateAllFeedbackItems(savedFeedbackList, false);
         // Note: this boolean flag is only used for programming exercises
         result.setHasFeedback(false);
@@ -362,23 +325,5 @@ public class AssessmentService {
         result = resultRepository.save(result);
         result.setAssessor(assessor);
         return result;
-    }
-
-    private List<Feedback> saveFeedbacks(List<Feedback> feedbackList) {
-        log.debug("Save new feedback: " + feedbackList);
-        List<Feedback> updatedFeedbackList = new ArrayList<>();
-        for (var feedback : feedbackList) {
-            if (feedback.getResult() == null) {
-                // only save feedback not yet connected to a result
-                updatedFeedbackList.add(feedbackRepository.save(feedback));
-                log.debug("        Do save " + feedback);
-            }
-            else {
-                updatedFeedbackList.add(feedback);
-                log.debug("        Do NOT save " + feedback);
-            }
-        }
-        log.debug("Updated feedback: " + updatedFeedbackList);
-        return updatedFeedbackList;
     }
 }

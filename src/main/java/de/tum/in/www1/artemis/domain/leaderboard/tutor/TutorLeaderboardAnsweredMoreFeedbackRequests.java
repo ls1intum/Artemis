@@ -6,15 +6,11 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class TutorLeaderboardAnsweredMoreFeedbackRequests {
 
-    private final long exerciseId;
-
     private final long userId;
 
     private final long answeredRequests;
 
     private final double points;
-
-    private final long courseId;
 
     public long getAnsweredRequests() {
         return answeredRequests;
@@ -28,19 +24,19 @@ public class TutorLeaderboardAnsweredMoreFeedbackRequests {
         return userId;
     }
 
-    public long getCourseId() {
-        return courseId;
-    }
-
-    public long getExerciseId() {
-        return exerciseId;
-    }
-
-    public TutorLeaderboardAnsweredMoreFeedbackRequests(long exerciseId, long userId, long answeredRequests, double points, long courseId) {
-        this.exerciseId = exerciseId;
+    public TutorLeaderboardAnsweredMoreFeedbackRequests(long userId, long answeredRequests, double points) {
         this.userId = userId;
         this.answeredRequests = answeredRequests;
         this.points = points;
-        this.courseId = courseId;
+    }
+
+    public TutorLeaderboardAnsweredMoreFeedbackRequests() {
+        this.userId = 0L;
+        this.answeredRequests = 0L;
+        this.points = 0.0;
+    }
+
+    public Long getKey() {
+        return userId;
     }
 }

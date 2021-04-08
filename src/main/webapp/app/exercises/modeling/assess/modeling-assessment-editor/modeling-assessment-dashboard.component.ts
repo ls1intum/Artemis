@@ -19,6 +19,7 @@ import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { SortService } from 'app/shared/service/sort.service';
 import { Authority } from 'app/shared/constants/authority.constants';
+import { getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
 
 @Component({
     selector: 'jhi-assessment-dashboard',
@@ -37,6 +38,9 @@ export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
     reverse: boolean;
     nextOptimalSubmissionIds: number[] = [];
     courseId: number;
+    examId: number;
+    exerciseId: number;
+    exerciseGroupId: number;
     numberOfCorrectionrounds = 1;
 
     private cancelConfirmationText: string;
@@ -85,10 +89,12 @@ export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
             this.userId = user!.id!;
         });
         this.paramSub = this.route.params.subscribe((params) => {
-            this.courseService.find(params['courseId']).subscribe((res: HttpResponse<Course>) => {
+            this.courseId = params['courseId'];
+            this.courseService.find(this.courseId).subscribe((res: HttpResponse<Course>) => {
                 this.course = res.body!;
             });
-            this.exerciseService.find(params['exerciseId']).subscribe((res: HttpResponse<Exercise>) => {
+            this.exerciseId = params['exerciseId'];
+            this.exerciseService.find(this.exerciseId).subscribe((res: HttpResponse<Exercise>) => {
                 if (res.body!.type === ExerciseType.MODELING) {
                     this.exercise = res.body as ModelingExercise;
                     this.courseId = this.exercise.course ? this.exercise.course.id! : this.exercise.exerciseGroup!.exam!.course!.id!;
@@ -99,6 +105,9 @@ export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
                     // TODO: error message if this is not a modeling exercise
                 }
             });
+
+            this.examId = params['examId'];
+            this.exerciseGroupId = params['exerciseGroupId'];
         });
         this.registerChangeInResults();
     }
@@ -210,7 +219,7 @@ export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
     /**
      * Select the next optimal submission to assess or otherwise trigger the REST call
      */
-    assessNextOptimal() {
+    assessNextOptimal(): void {
         this.busy = true;
         if (this.nextOptimalSubmissionIds.length === 0) {
             this.modelingAssessmentService.getOptimalSubmissions(this.exercise.id!).subscribe(
@@ -235,10 +244,22 @@ export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
         }
     }
 
-    private navigateToNextRandomOptimalSubmission() {
+    getAssessmentRouterLink(submissionId: number): string[] {
+        return getLinkToSubmissionAssessment(ExerciseType.MODELING, this.courseId, this.exerciseId, submissionId, this.examId, this.exerciseGroupId);
+    }
+
+    private navigateToNextRandomOptimalSubmission(): void {
         const randomInt = Math.floor(Math.random() * this.nextOptimalSubmissionIds.length);
+        const url = getLinkToSubmissionAssessment(
+            ExerciseType.MODELING,
+            this.courseId,
+            this.exerciseId,
+            this.nextOptimalSubmissionIds[randomInt],
+            this.examId,
+            this.exerciseGroupId,
+        );
         this.router.onSameUrlNavigation = 'reload';
-        this.router.navigate(['/course-management', this.course.id, 'modeling-exercises', this.exercise.id, 'submissions', this.nextOptimalSubmissionIds[randomInt], 'assessment']);
+        this.router.navigate(url);
     }
 
     private setPermissions() {
@@ -272,13 +293,8 @@ export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
 
     /**
      * get the link for the assessment of a specific submission of the current exercise
-     * @param submissionId
      */
-    getAssessmentLink(submissionId: number) {
-        if (this.exercise.exerciseGroup) {
-            return ['/course-management', this.exercise.exerciseGroup.exam?.course?.id, 'modeling-exercises', this.exercise.id, 'submissions', submissionId, 'assessment'];
-        } else {
-            return ['/course-management', this.exercise.course?.id, 'modeling-exercises', this.exercise.id, 'submissions', submissionId, 'assessment'];
-        }
+    getAssessmentLink(submissionId: number): string[] {
+        return getLinkToSubmissionAssessment(this.exercise.type!, this.courseId, this.exerciseId, submissionId, this.examId, this.exerciseGroupId);
     }
 }

@@ -13,6 +13,7 @@ import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.TextSubmission;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 /**
  * Spring Data JPA repository for the TextSubmission entity.
@@ -68,4 +69,16 @@ public interface TextSubmissionRepository extends JpaRepository<TextSubmission, 
      */
     List<TextSubmission> findByParticipation_ExerciseIdAndSubmittedIsTrueAndLanguage(Long exerciseId, Language language);
 
+    default List<TextSubmission> getTextSubmissionsWithTextBlocksByExerciseId(Long exerciseId) {
+        return findByParticipation_ExerciseIdAndSubmittedIsTrue(exerciseId);
+    }
+
+    default TextSubmission getTextSubmissionWithResultAndTextBlocksAndFeedbackByResultId(Long resultId) {
+        return findWithEagerResultAndTextBlocksAndFeedbackByResults_Id(resultId)
+                .orElseThrow(() -> new BadRequestAlertException("No text submission found for the given result.", "textSubmission", "textSubmissionNotFound"));
+    }
+
+    default List<TextSubmission> getTextSubmissionsWithTextBlocksByExerciseIdAndLanguage(Long exerciseId, Language language) {
+        return findByParticipation_ExerciseIdAndSubmittedIsTrueAndLanguage(exerciseId, language);
+    }
 }

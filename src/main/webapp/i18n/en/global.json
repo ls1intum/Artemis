@@ -84,6 +84,7 @@
                 "main": "Server Administration",
                 "upcomingExamsAndExercises": "Upcoming exams & exercises",
                 "userManagement": "User management",
+                "organizationManagement": "Organization management",
                 "systemNotifications": "System notifications",
                 "featureToggles": "Feature Toggles",
                 "statistics": "User statistics",
@@ -296,6 +297,7 @@
     "pendingChanges": "WARNING: You have unsaved changes. Press Cancel to go back and save these changes, or OK to lose these changes.",
     "overview": {
         "title": "Course overview",
+        "aboutUs": "About us",
         "course": "Course details",
         "lectures": "Lectures",
         "exercise": "Exercise details",

@@ -1,12 +1,8 @@
 package de.tum.in.www1.artemis.service.connectors.gitlab;
 
-import static org.gitlab4j.api.models.AccessLevel.MAINTAINER;
-import static org.gitlab4j.api.models.AccessLevel.REPORTER;
+import static org.gitlab4j.api.models.AccessLevel.*;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import org.gitlab4j.api.GitLabApi;
@@ -14,6 +10,7 @@ import org.gitlab4j.api.GitLabApiException;
 import org.gitlab4j.api.models.AccessLevel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -38,6 +35,9 @@ public class GitLabUserManagementService implements VcsUserManagementService {
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
     private final GitLabApi gitlabApi;
+
+    @Value("${gitlab.use-pseudonyms:#{false}}")
+    private boolean usePseudonyms;
 
     public GitLabUserManagementService(ProgrammingExerciseRepository programmingExerciseRepository, GitLabApi gitlabApi, UserRepository userRepository,
             PasswordService passwordService) {
@@ -68,13 +68,13 @@ public class GitLabUserManagementService implements VcsUserManagementService {
             final var gitlabUser = userApi.getUser(vcsLogin);
             if (gitlabUser == null) {
                 // in case the user does not exist in Gitlab, we cannot update it
-                log.warn("User " + user.getLogin() + " does not exist in Gitlab and cannot be updated!");
+                log.warn("User {} does not exist in Gitlab and cannot be updated!", user.getLogin());
                 return;
             }
 
             // Update general user information. Skip confirmation is necessary
             // in order to update the email without user re-confirmation
-            gitlabUser.setName(user.getName());
+            gitlabUser.setName(getUsersName(user));
             gitlabUser.setUsername(user.getLogin());
             gitlabUser.setEmail(user.getEmail());
             gitlabUser.setSkipConfirmation(true);
@@ -99,7 +99,7 @@ public class GitLabUserManagementService implements VcsUserManagementService {
                         // if user is already member of group in GitLab, ignore the exception to synchronize the "membership" with artemis
                         // ignore other errors
                         if (!"Member already exists".equalsIgnoreCase(ex.getMessage())) {
-                            log.error("Gitlab Exception when adding a user " + gitlabUser.getId() + " to a group " + exercise.getProjectKey() + ": " + ex.getMessage(), ex);
+                            log.error("Gitlab Exception when adding a user " + gitlabUser.getId() + " to a group " + exercise.getProjectKey(), ex);
                         }
                     }
                 }
@@ -127,7 +127,7 @@ public class GitLabUserManagementService implements VcsUserManagementService {
                             // If user membership to group is missing on Gitlab, ignore the exception
                             // and let artemis synchronize with GitLab groups
                             if (ex.getHttpStatus() != 404) {
-                                log.error("Gitlab Exception when removing a user " + gitlabUser.getId() + " to a group " + exercise.getProjectKey() + ": " + ex.getMessage(), ex);
+                                log.error("Gitlab Exception when removing a user " + gitlabUser.getId() + " to a group " + exercise.getProjectKey(), ex);
                             }
                         }
                     }
@@ -290,7 +290,7 @@ public class GitLabUserManagementService implements VcsUserManagementService {
             }
             catch (GitLabApiException e) {
                 if (e.getMessage().equals("Member already exists")) {
-                    log.warn("Member already exists for group " + exercise.getProjectKey());
+                    log.warn("Member already exists for group {}", exercise.getProjectKey());
                     return;
                 }
                 throw new GitLabException(String.format("Error adding new user [%d] to group [%s]", userId, exercise.toString()), e);
@@ -305,7 +305,7 @@ public class GitLabUserManagementService implements VcsUserManagementService {
      * @return a Gitlab user
      */
     public org.gitlab4j.api.models.User importUser(User user) {
-        final var gitlabUser = new org.gitlab4j.api.models.User().withEmail(user.getEmail()).withUsername(user.getLogin()).withName(user.getName()).withCanCreateGroup(false)
+        final var gitlabUser = new org.gitlab4j.api.models.User().withEmail(user.getEmail()).withUsername(user.getLogin()).withName(getUsersName(user)).withCanCreateGroup(false)
                 .withCanCreateProject(false).withSkipConfirmation(true);
         try {
             return gitlabApi.getUserApi().createUser(gitlabUser, passwordService.decryptPassword(user), false);
@@ -313,6 +313,18 @@ public class GitLabUserManagementService implements VcsUserManagementService {
         catch (GitLabApiException e) {
             throw new GitLabException("Unable to create new user in GitLab " + user.getLogin(), e);
         }
+    }
+
+    private String getUsersName(User user) {
+        // Get User's name by checking the use of pseudonyms
+        String name;
+        if (usePseudonyms) {
+            name = String.format("User %s", user.getLogin());
+        }
+        else {
+            name = user.getName();
+        }
+        return name;
     }
 
     /**

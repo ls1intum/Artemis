@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.web.rest;
 
 import static de.tum.in.www1.artemis.config.Constants.SHORT_NAME_PATTERN;
+import static de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException.NOT_ALLOWED;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
 import java.net.URI;
@@ -26,10 +27,8 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.TeamImportStrategyType;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.ParticipationService;
-import de.tum.in.www1.artemis.service.SubmissionService;
-import de.tum.in.www1.artemis.service.TeamService;
+import de.tum.in.www1.artemis.security.Role;
+import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.dto.TeamSearchUserDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -101,7 +100,7 @@ public class TeamResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("/exercises/{exerciseId}/teams")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('TA')")
     public ResponseEntity<Team> createTeam(@RequestBody Team team, @PathVariable long exerciseId) throws URISyntaxException {
         log.debug("REST request to save Team : {}", team);
         if (team.getId() != null) {
@@ -109,9 +108,7 @@ public class TeamResource {
         }
         User user = userRepository.getUserWithGroupsAndAuthorities();
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
-        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
-            return forbidden();
-        }
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, user);
         if (!exercise.isTeamMode()) {
             throw new BadRequestAlertException("A team cannot be created for an exercise that is not team-based.", ENTITY_NAME, "exerciseNotTeamBased");
         }
@@ -128,7 +125,7 @@ public class TeamResource {
         if (!authCheckService.isAtLeastInstructorForExercise(exercise, user)) {
             team.setOwner(user);
         }
-        Team savedTeam = teamService.save(exercise, team);
+        Team savedTeam = teamRepository.save(exercise, team);
         savedTeam.filterSensitiveInformation();
         savedTeam.getStudents().forEach(student -> student.setVisibleRegistrationNumber(student.getRegistrationNumber()));
         teamWebsocketService.sendTeamAssignmentUpdate(exercise, null, savedTeam);
@@ -141,22 +138,21 @@ public class TeamResource {
      *
      * @param team       the team to update
      * @param exerciseId the id of the exercise that the team belongs to
-     * @param id         the id of the team which to update
+     * @param teamId     the id of the team which to update
      * @return the ResponseEntity with status 200 (OK) and with body the updated team, or with status 400 (Bad Request) if the team is not valid, or with status 500 (Internal
      * Server Error) if the team couldn't be updated
-     * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @PutMapping("/exercises/{exerciseId}/teams/{id}")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Team> updateTeam(@RequestBody Team team, @PathVariable long exerciseId, @PathVariable long id) throws URISyntaxException {
+    @PutMapping("/exercises/{exerciseId}/teams/{teamId}")
+    @PreAuthorize("hasRole('TA')")
+    public ResponseEntity<Team> updateTeam(@RequestBody Team team, @PathVariable long exerciseId, @PathVariable long teamId) {
         log.debug("REST request to update Team : {}", team);
         if (team.getId() == null) {
             throw new BadRequestAlertException("Invalid id", ENTITY_NAME, "idnull");
         }
-        if (!team.getId().equals(id)) {
+        if (!team.getId().equals(teamId)) {
             throw new BadRequestAlertException("The team has an incorrect id.", ENTITY_NAME, "wrongId");
         }
-        Optional<Team> existingTeam = teamRepository.findById(id);
+        Optional<Team> existingTeam = teamRepository.findById(teamId);
         if (existingTeam.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
@@ -186,7 +182,7 @@ public class TeamResource {
         }
 
         // Save team (includes check for conflicts that no student is assigned to multiple teams for an exercise)
-        Team savedTeam = teamService.save(exercise, team);
+        Team savedTeam = teamRepository.save(exercise, team);
 
         // Propagate team owner change to other instances of this team in the course
         if (ownerWasChanged) {
@@ -211,14 +207,14 @@ public class TeamResource {
      * GET /exercises/:exerciseId/teams/:id : get the "id" team.
      *
      * @param exerciseId the id of the exercise that the team belongs to
-     * @param id         the id of the team to retrieve
+     * @param teamId         the id of the team to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the team, or with status 404 (Not Found)
      */
-    @GetMapping("/exercises/{exerciseId}/teams/{id}")
-    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Team> getTeam(@PathVariable long exerciseId, @PathVariable long id) {
-        log.debug("REST request to get Team : {}", id);
-        Optional<Team> optionalTeam = teamRepository.findOneWithEagerStudents(id);
+    @GetMapping("/exercises/{exerciseId}/teams/{teamId}")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<Team> getTeam(@PathVariable long exerciseId, @PathVariable long teamId) {
+        log.debug("REST request to get Team : {}", teamId);
+        Optional<Team> optionalTeam = teamRepository.findOneWithEagerStudents(teamId);
         if (optionalTeam.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
@@ -243,7 +239,7 @@ public class TeamResource {
      * @return the ResponseEntity with status 200 (OK) and the list of teams in body
      */
     @GetMapping("/exercises/{exerciseId}/teams")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('TA')")
     public ResponseEntity<List<Team>> getTeamsForExercise(@PathVariable long exerciseId, @RequestParam(value = "teamOwnerId", required = false) Long teamOwnerId) {
         log.debug("REST request to get all Teams for the exercise with id : {}", exerciseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
@@ -251,7 +247,7 @@ public class TeamResource {
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
             return forbidden();
         }
-        List<Team> teams = teamService.findAllByExerciseIdWithEagerStudents(exercise, teamOwnerId);
+        List<Team> teams = teamRepository.findAllByExerciseIdWithEagerStudents(exercise, teamOwnerId);
         teams.forEach(Team::filterSensitiveInformation);
         teams.forEach(team -> team.getStudents().forEach(student -> student.setVisibleRegistrationNumber(student.getRegistrationNumber())));
         return ResponseEntity.ok().body(teams);
@@ -261,15 +257,15 @@ public class TeamResource {
      * DELETE /exercises/:exerciseId/teams/:id : delete the "id" team.
      *
      * @param exerciseId the id of the exercise that the team belongs to
-     * @param id         the id of the team to delete
+     * @param teamId     the id of the team to delete
      * @return the ResponseEntity with status 200 (OK)
      */
-    @DeleteMapping("/exercises/{exerciseId}/teams/{id}")
-    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Void> deleteTeam(@PathVariable long exerciseId, @PathVariable long id) {
-        log.info("REST request to delete Team with id {} in exercise with id {}", id, exerciseId);
+    @DeleteMapping("/exercises/{exerciseId}/teams/{teamId}")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
+    public ResponseEntity<Void> deleteTeam(@PathVariable long exerciseId, @PathVariable long teamId) {
+        log.info("REST request to delete Team with id {} in exercise with id {}", teamId, exerciseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        Optional<Team> optionalTeam = teamRepository.findById(id);
+        Optional<Team> optionalTeam = teamRepository.findById(teamId);
         if (optionalTeam.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
@@ -282,18 +278,18 @@ public class TeamResource {
             return forbidden();
         }
         // Create audit event for team delete action
-        var logMessage = "Delete Team with id " + id + " in exercise with id " + exerciseId;
+        var logMessage = "Delete Team with id " + teamId + " in exercise with id " + exerciseId;
         var auditEvent = new AuditEvent(user.getLogin(), Constants.DELETE_TEAM, logMessage);
         auditEventRepository.add(auditEvent);
         // Delete all participations of the team first and then the team itself
-        participationService.deleteAllByTeamId(id, false, false);
+        participationService.deleteAllByTeamId(teamId, false, false);
         // delete all team scores associated with the team
         teamScoreRepository.deleteAllByTeam(team);
 
         teamRepository.delete(team);
 
         teamWebsocketService.sendTeamAssignmentUpdate(exercise, team, null);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, Long.toString(id))).build();
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, Long.toString(teamId))).build();
     }
 
     /**
@@ -304,7 +300,7 @@ public class TeamResource {
      * @return Response with status 200 (OK) and boolean flag in the body
      */
     @GetMapping("/courses/{courseId}/teams/exists")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('TA')")
     public ResponseEntity<Boolean> existsTeamByShortName(@PathVariable long courseId, @RequestParam("shortName") String shortName) {
         log.debug("REST request to check Team existence for course with id {} for shortName : {}", courseId, shortName);
         Course course = courseRepository.findByIdElseThrow(courseId);
@@ -324,7 +320,7 @@ public class TeamResource {
      * @return the ResponseEntity with status 200 (OK) and with body all users
      */
     @GetMapping("/courses/{courseId}/exercises/{exerciseId}/team-search-users")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('TA')")
     public ResponseEntity<List<TeamSearchUserDTO>> searchUsersInCourse(@PathVariable long courseId, @PathVariable long exerciseId,
             @RequestParam("loginOrName") String loginOrName) {
         log.debug("REST request to search Users for {} in course with id : {}", loginOrName, courseId);
@@ -350,7 +346,7 @@ public class TeamResource {
      * @return the ResponseEntity with status 200 (OK) and the list of created teams in body
      */
     @PutMapping("/exercises/{exerciseId}/teams/import-from-list")
-    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<List<Team>> importTeamsFromList(@PathVariable long exerciseId, @RequestBody List<Team> teams, @RequestParam TeamImportStrategyType importStrategyType) {
         log.debug("REST request import given teams into destination exercise with id {}", exerciseId);
 
@@ -392,7 +388,7 @@ public class TeamResource {
      * @return the ResponseEntity with status 200 (OK) and the list of created teams in body
      */
     @PutMapping("/exercises/{destinationExerciseId}/teams/import-from-exercise/{sourceExerciseId}")
-    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<List<Team>> importTeamsFromSourceExercise(@PathVariable long destinationExerciseId, @PathVariable long sourceExerciseId,
             @RequestParam TeamImportStrategyType importStrategyType) {
         log.debug("REST request import all teams from source exercise with id {} into destination exercise with id {}", sourceExerciseId, destinationExerciseId);
@@ -439,13 +435,13 @@ public class TeamResource {
      * @return Course with exercises and participations (and latest submissions) for the team
      */
     @GetMapping(value = "/courses/{courseId}/teams/{teamShortName}/with-exercises-and-participations")
-    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Course> getCourseWithExercisesAndParticipationsForTeam(@PathVariable Long courseId, @PathVariable String teamShortName) {
         log.debug("REST request to get Course {} with exercises and participations for Team with short name {}", courseId, teamShortName);
         Course course = courseRepository.findByIdElseThrow(courseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         if (!(authCheckService.isAtLeastTeachingAssistantInCourse(course, user) || authCheckService.isStudentInTeam(course, teamShortName, user))) {
-            throw new AccessForbiddenException("You are not allowed to access this resource");
+            throw new AccessForbiddenException(NOT_ALLOWED);
         }
 
         // Get all team instances in course with the given team short name

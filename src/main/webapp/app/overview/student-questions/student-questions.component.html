@@ -57,11 +57,7 @@
             <!-- new question button -->
             <div class="row" *ngIf="!isEditMode">
                 <div class="col-12">
-                    <button
-                        class="btn btn-sm btn-outline-secondary"
-                        [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.addNewQuestion' | artemisTranslate"
-                        (click)="isEditMode = true"
-                    >
+                    <button class="btn btn-sm btn-outline-secondary" (click)="isEditMode = true">
                         <fa-icon [icon]="'plus'"></fa-icon>
                         <span class="d-none d-md-inline">{{ 'artemisApp.courseOverview.exerciseDetails.faq.addNewQuestion' | artemisTranslate }}</span>
                     </button>

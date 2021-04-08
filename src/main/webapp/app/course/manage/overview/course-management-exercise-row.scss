@@ -1,0 +1,214 @@
+@import '../../../overview/_overview-vars.scss';
+
+.course-item {
+    border: 1px solid $blue-border-color;
+    background-color: $light-background-color;
+    border-radius: 0.1rem;
+    display: flex;
+    align-items: center;
+    align-content: center;
+    height: 60px;
+
+    .item-title-container {
+        display: flex;
+        align-items: center;
+    }
+
+    .item-title {
+        font-weight: bold;
+        margin-left: 15px;
+        margin-bottom: 0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 50ch;
+        display: block;
+    }
+
+    .item-category {
+        color: gray;
+        margin-left: 15px;
+        display: flex;
+        align-items: flex-start;
+        flex-direction: column;
+        justify-content: space-around;
+
+        h4 {
+            margin-bottom: -5px;
+            font-size: 1rem;
+
+            .badge {
+                max-width: 150px;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+        }
+    }
+
+    .btn {
+        margin-top: 5px;
+        float: right;
+        height: 40px;
+        width: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .row-flex {
+        display: inline-flex;
+        flex-direction: row;
+    }
+
+    .exercise-details-item {
+        z-index: 1;
+        display: flex;
+        align-items: center;
+    }
+
+    .calender-icon-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .calender-icon-circle {
+        width: 19px;
+        height: 19px;
+        background-color: $light-border-color;
+        border-radius: 25px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .calender-icon {
+        font-size: x-small;
+    }
+
+    .exercise-date-timeline {
+        top: 50%;
+        bottom: 0;
+        position: relative;
+        content: ' ';
+        width: 100%;
+        height: 4px;
+        background-color: #3e8acc;
+        z-index: -1;
+    }
+
+    .exercise-date-container {
+        justify-content: center;
+        min-width: 340px;
+        max-width: max-content;
+        padding: 0;
+        margin: auto;
+    }
+
+    .exercise-date {
+        text-align: center;
+        z-index: 1;
+        min-width: 95px;
+        font-size: x-small;
+        margin-top: -5px;
+    }
+
+    .exercise-no-date {
+        opacity: 0.4;
+    }
+
+    .exercise-score-container {
+        padding-left: 0;
+        margin: auto;
+        z-index: 1;
+    }
+
+    .exercise-score {
+        padding-left: 15px;
+        width: 250px;
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+
+    .pointer-row {
+        cursor: pointer;
+        overflow: hidden;
+        align-items: center;
+    }
+
+    .container {
+        max-width: 100%;
+    }
+
+    .button-row {
+        z-index: 1;
+        min-width: 132px;
+        align-items: center;
+        justify-content: start;
+        margin-right: 5px;
+    }
+
+    .grading-icon {
+        font-size: large;
+        margin-left: 5px;
+    }
+}
+
+@media screen and (max-width: 1900px) {
+    .hide-categories {
+        display: none !important;
+    }
+
+    .course-item {
+        .item-title {
+            max-width: 40ch;
+        }
+
+        .exercise-date-container {
+            margin-right: unset !important;
+        }
+    }
+}
+
+@media screen and (max-width: 1680px) {
+    .hide-1680 {
+        display: none !important;
+    }
+
+    .pointer-row {
+        min-width: 45%;
+    }
+}
+
+@media screen and (max-width: 1450px) {
+    .hide-1400 {
+        display: none !important;
+    }
+
+    .pointer-row {
+        min-width: 100%;
+    }
+}
+
+@media screen and (max-width: 675px) {
+    .details-container {
+        max-width: 70% !important;
+    }
+
+    .course-item {
+        .item-title {
+            max-width: 20ch;
+        }
+    }
+}
+
+@media screen and (max-width: 480px) {
+    .course-item {
+        .item-title {
+            max-width: 15ch;
+        }
+    }
+}

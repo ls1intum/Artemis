@@ -96,13 +96,13 @@ public class GroupNotification extends Notification {
     }
 
     /**
-     * Create JSON representation for a GroupNotification for an ProgrammingExercise in an Exam.
+     * Create JSON representation for a GroupNotification for an ProgrammingExercise in an Exam or if duplicated test cases were detected.
      *
      * @param programmingExercise for which to create the notification.
-     * @param message to use for the notification.
+     * @param message             to use for the notification.
      * @return the stringified JSON of the target.
      */
-    public String getExamProgrammingExerciseTarget(ProgrammingExercise programmingExercise, String message) {
+    public String getExamProgrammingExerciseOrTestCaseTarget(ProgrammingExercise programmingExercise, String message) {
         JsonObject target = new JsonObject();
         target.addProperty("message", message);
         target.addProperty("id", programmingExercise.getId());

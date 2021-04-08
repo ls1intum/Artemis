@@ -2,9 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs/Observable';
 import { SERVER_API_URL } from 'app/app.constants';
-
 import * as moment from 'moment';
-
 import { Exercise, ExerciseCategory, ExerciseType, IncludedInOverallScore, ParticipationStatus } from 'app/entities/exercise.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { ParticipationService } from '../participation/participation.service';
@@ -72,11 +70,14 @@ export class ExerciseService {
             .map((res: EntityResponseType) => this.checkPermission(res));
     }
 
-    findExamExercise(exerciseId: number): Observable<EntityResponseType> {
-        return this.http
-            .get<Exercise>(`${this.resourceUrl}/examExercise/${exerciseId}`, { observe: 'response' })
-            .map((res: EntityResponseType) => this.convertDateFromServer(res))
-            .map((res: EntityResponseType) => this.checkPermission(res));
+    /**
+     * Fetches the title of the exercise with the given id
+     *
+     * @param exerciseId the id of the exercise
+     * @return the title of the exercise in an HttpResponse, or an HttpErrorResponse on error
+     */
+    getTitle(exerciseId: number): Observable<HttpResponse<string>> {
+        return this.http.get(`${this.resourceUrl}/${exerciseId}/title`, { observe: 'response', responseType: 'text' });
     }
 
     /**
@@ -300,7 +301,7 @@ export class ExerciseService {
 
     /**
      * Retrieve a collection of useful statistics for the tutor exercise dashboard of the exercise with the given exerciseId
-     * @param { number } exerciseId - Id of exercise to retreive the stats for
+     * @param { number } exerciseId - Id of exercise to retrieve the stats for
      */
     getStatsForTutors(exerciseId: number): Observable<HttpResponse<StatsForDashboard>> {
         return this.http.get<StatsForDashboard>(`${this.resourceUrl}/${exerciseId}/stats-for-assessment-dashboard`, { observe: 'response' });

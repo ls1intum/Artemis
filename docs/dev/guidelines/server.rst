@@ -197,6 +197,156 @@ Another approach is moving objects into the domain classes, but be aware that yo
         return false;
     }
 
+17. Proper annotation of SQL query parameters
+=============================================
+
+Query parameters for SQL must be annotated with ``@Param("variable")``!
+
+Do **not** write
+
+.. code-block:: java
+
+    @Query("""
+            SELECT r FROM Result r
+            LEFT JOIN FETCH r.feedbacks
+            WHERE r.id = :resultId
+            """)
+    Optional<Result> findByIdWithEagerFeedbacks(Long resultId);
+
+but instead annotate the parameter with @Param:
+
+.. code-block:: java
+
+    @Query("""
+            SELECT r FROM Result r
+            LEFT JOIN FETCH r.feedbacks
+            WHERE r.id = :resultId
+            """)
+    Optional<Result> findByIdWithEagerFeedbacks(@Param("resultId") Long resultId);
+
+The string name inside must match the name of the variable exactly!
+
+18. SQL statement formatting
+============================
+
+We prefer to write SQL statements all in upper case. Split queries onto multiple lines using the Java Text Blocks notation (triple quotation mark):
+
+.. code-block:: java
+
+    @Query("""
+            SELECT r FROM Result r
+            LEFT JOIN FETCH r.feedbacks
+            WHERE r.id = :resultId
+            """)
+    Optional<Result> findByIdWithEagerFeedbacks(@Param("resultId") Long resultId);
+
+19. Avoid the usage of Sub-queries
+==================================
+
+SQL statements which do not contain sub-queries are preferable as they are more readable and have a better performance.
+So instead of:
+
+.. code-block:: java
+
+    @Query("""
+            SELECT COUNT (DISTINCT p) FROM StudentParticipation p
+                WHERE p.exercise.id = :#{#exerciseId}
+                AND EXISTS (SELECT s FROM Submission s
+                    WHERE s.participation.id = p.id
+                    AND s.submitted = TRUE
+            """)
+    long countByExerciseIdSubmitted(@Param("exerciseId") long exerciseId);
+
+
+you should use:
+
+.. code-block:: java
+
+    @Query("""
+            SELECT COUNT (DISTINCT p) FROM StudentParticipation p JOIN p.submissions s
+                WHERE p.exercise.id = :#{#exerciseId}
+                AND s.submitted = TRUE
+            """)
+    long countByExerciseIdSubmitted(@Param("exerciseId") long exerciseId);
+
+Functionally both queries extract the same result set, but the first one is less efficient as the sub-query is calculated for each StudentParticipation.
+
+
+20. REST endpoint best practices for authorization
+==================================================
+
+To prevent unauthorized access to resources Artemis employs a two-step system:
+
+#. ``PreAuthorize`` annotations are responsible for blocking users with wrong or missing authorization roles without querying the database.
+#. The ``AuthorizationCheckService`` is responsible for checking access rights to individual resources by querying the database.
+
+Because the first method without database queries is substantially faster, always annotate your REST endpoints with ``@PreAuthorize``. Pass the role with the *least* permissions as parameter to the ``hasRole`` method.
+The following example makes the call only accessible to ADMIN and INSTRUCTOR users:
+
+.. code-block:: java
+
+    @PreAuthorize("hasRole('INSTRUCTOR')")
+    public ResponseEntity<ProgrammingExercise> getProgrammingExercise(@PathVariable long exerciseId) {
+    }
+
+Artemis distinguishes between five different roles: ADMIN, INSTRUCTOR, TA (teaching assistant), USER and ANONYMOUS.
+Each of the roles has the all the access rights of the roles following it, e.g. ANONOYMOUS has almost no rights, while ADMIN users can access every page.
+
+If a user passess the ``PreAuthorize`` check, the access to individual resources like courses and exercises still has to be checked. (A user can be a teaching assistant in one course, but only a student in another, for example.)
+However, do not fetch the user from the database yourself (unless you need to re-use the user object), but only hand a role to the ``AuthorizationCheckService``:
+
+.. code-block:: java
+
+        // If we pass 'null' instead of a user here, the service will fetch the user object
+        // and check if the user has at least the given role and access to the resource
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
+
+To reduce duplication, do not add explicit checks for authorization or existence of an entity but always use the ``AuthorizationCheckService``:
+
+.. code-block:: java
+
+    @GetMapping(Endpoints.GET_FOR_COURSE)
+    @PreAuthorize("hasRole('TA')")
+    public ResponseEntity<List<ProgrammingExercise>> getActiveProgrammingExercisesForCourse(@PathVariable Long courseId) {
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, null);
+
+        List<ProgrammingExercise> exercises = programmingExerciseService.findActiveExercisesByCourseId(courseId);
+        return ResponseEntity.ok().body(exercises);
+    }
+
+
+The course repository call takes care of throwing a ``404 Not Found`` exception if there exists no matching course. The ``AuthorizationCheckService`` throws a ``403 Forbidden`` exception if the user with the given role is unauthorized. Afterwards delegate to a service or repository method. The code becomes much shorter, cleaner and more maintainable.
+
+
+21. Assert using the most specific overload method
+==================================================
+
+When expecting results use ``assertThat`` for server tests. That call **must** be followed by another assertion statement like ``isTrue()``. It is best practice to use more specific assertion statement rather than always expecting boolean values.
+
+For example, instead of
+
+.. code-block:: java
+
+    assertThat(submissionInDb.isPresent()).isTrue();
+    assertThat(submissionInDb.get().getFilePath().contains("ffile.png")).isTrue();
+
+use the methods from inside the ``assertThat`` directly:
+
+.. code-block:: java
+
+    assertThat(submissionInDb).isPresent();
+    assertThat(submissionInDb.get().getFilePath()).contains("ffile.png");
+
+This gives better error messages when an assertion fails and improves the code readability. However, be aware that not all methods can be used for assertions like this.
+
+If you can't avoid using ``isTrue`` use the ``as`` keyword to add a custom error message:
+
+.. code-block:: java
+
+    assertThat(submission.isSubmittedInTime()).as("submission was not in time").isTrue();
+
+Please read `the AssertJ documentation <https://assertj.github.io/doc/#assertj-core-assertions-guide>`__, especially the `section about avoiding incorrect usage <https://assertj.github.io/doc/#assertj-core-incorrect-usage>`__.
 
 
 Some parts of these guidelines are adapted from https://medium.com/@madhupathy/ultimate-clean-code-guide-for-java-spring-based-applications-4d4c9095cc2a

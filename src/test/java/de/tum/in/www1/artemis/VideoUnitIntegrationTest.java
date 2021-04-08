@@ -19,17 +19,17 @@ import de.tum.in.www1.artemis.util.ModelFactory;
 public class VideoUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
-    UserRepository userRepository;
+    private UserRepository userRepository;
 
     @Autowired
-    VideoUnitRepository videoUnitRepository;
+    private VideoUnitRepository videoUnitRepository;
 
     @Autowired
-    LectureRepository lectureRepository;
+    private LectureRepository lectureRepository;
 
-    Lecture lecture1;
+    private Lecture lecture1;
 
-    VideoUnit videoUnit;
+    private VideoUnit videoUnit;
 
     @BeforeEach
     public void initTestCase() throws Exception {

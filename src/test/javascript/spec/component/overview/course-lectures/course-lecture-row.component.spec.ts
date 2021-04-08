@@ -1,19 +1,19 @@
-import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
-import * as sinon from 'sinon';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe.ts';
-import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
+import { By } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { CourseLectureRowComponent } from 'app/overview/course-lectures/course-lecture-row.component';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { TimeAgoPipe } from 'ngx-moment';
-import { Lecture } from 'app/entities/lecture.model';
 import { Course } from 'app/entities/course.model';
+import { Lecture } from 'app/entities/lecture.model';
+import { CourseLectureRowComponent } from 'app/overview/course-lectures/course-lecture-row.component';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe.ts';
+import * as chai from 'chai';
 import * as moment from 'moment';
-import { By } from '@angular/platform-browser';
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
+import * as sinon from 'sinon';
+import * as sinonChai from 'sinon-chai';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -36,7 +36,7 @@ describe('CourseLectureRow', () => {
                 MockPipe(ArtemisDatePipe),
                 MockComponent(FaIconComponent),
                 MockDirective(NgbTooltip),
-                MockPipe(TimeAgoPipe),
+                MockPipe(ArtemisTimeAgoPipe),
             ],
             providers: [
                 { provide: ActivatedRoute, useValue: mockActivatedRoute },

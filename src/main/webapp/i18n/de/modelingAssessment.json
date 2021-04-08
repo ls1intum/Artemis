@@ -14,6 +14,7 @@
             "actions": {
                 "open": "Modell bewerten"
             }
-        }
+        },
+        "notFound": "Wir haben keine neue Modellierungsaufgabe ohne Bewertung gefunden, bitte gehe zurück zum Dashboard."
     }
 }

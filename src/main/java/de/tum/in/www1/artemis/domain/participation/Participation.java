@@ -13,10 +13,7 @@ import org.hibernate.annotations.DiscriminatorOptions;
 
 import com.fasterxml.jackson.annotation.*;
 
-import de.tum.in.www1.artemis.domain.DomainObject;
-import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.Result;
-import de.tum.in.www1.artemis.domain.Submission;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.view.QuizView;
 
@@ -136,18 +133,6 @@ public abstract class Participation extends DomainObject implements Participatio
         this.testRun = testRun;
     }
 
-    /**
-     *
-     * @return exercise object
-     */
-    public abstract Exercise getExercise();
-
-    /**
-     *
-     * @param exercise that will be set
-     */
-    public abstract void setExercise(Exercise exercise);
-
     public Set<Result> getResults() {
         return results;
     }
@@ -211,8 +196,6 @@ public abstract class Participation extends DomainObject implements Participatio
         }
         return sortedResultsWithCompletionDate.get(0);
     }
-
-    // TODO: implement a method Result findLatestResultBeforeDueDate(ZonedDateTime dueDate)
 
     /**
      * Finds the latest submission for the participation. Checks if the participation has any submissions. If there are no submissions, return null. Otherwise sort the submissions

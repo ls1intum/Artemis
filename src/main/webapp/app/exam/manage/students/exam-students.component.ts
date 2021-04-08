@@ -178,6 +178,19 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
     }
 
     /**
+     * Unregister all students from the exam
+     */
+    removeAllStudents($event: { [key: string]: boolean }) {
+        this.examManagementService.removeAllStudentsFromExam(this.courseId, this.exam.id!, $event.deleteParticipationsAndSubmission).subscribe(
+            () => {
+                this.allRegisteredUsers = [];
+                this.dialogErrorSource.next('');
+            },
+            (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+        );
+    }
+
+    /**
      * Update the number of filtered users
      *
      * @param filteredUsersSize Total number of users after filters have been applied

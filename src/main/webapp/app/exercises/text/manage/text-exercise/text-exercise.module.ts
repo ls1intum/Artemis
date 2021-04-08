@@ -21,6 +21,7 @@ import { ArtemisSharedComponentModule } from 'app/shared/components/shared-compo
 import { TextExerciseRowButtonsComponent } from 'app/exercises/text/manage/text-exercise/text-exercise-row-buttons.component';
 import { ArtemisIncludedInOverallScorePickerModule } from 'app/exercises/shared/included-in-overall-score-picker/included-in-overall-score-picker.module';
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
+import { NonProgrammingExerciseDetailCommonActionsModule } from 'app/exercises/shared/exercise-detail-common-actions/non-programming-exercise-detail-common-actions.module';
 
 const ENTITY_STATES = [...textExerciseRoute];
 
@@ -41,6 +42,7 @@ const ENTITY_STATES = [...textExerciseRoute];
         ExerciseDetailsModule,
         ArtemisSharedComponentModule,
         ArtemisMarkdownModule,
+        NonProgrammingExerciseDetailCommonActionsModule,
     ],
     declarations: [TextExerciseComponent, TextExerciseDetailComponent, TextExerciseUpdateComponent, TextExerciseRowButtonsComponent],
     exports: [TextExerciseComponent],

@@ -5,9 +5,9 @@
         <div class="d-flex align-items-center ml-auto">
             <ng-content select="[editorToolbar]"></ng-content>
             <jhi-code-editor-actions
-                *ngIf="!isTutorAssessment"
+                *ngIf="!isTutorAssessment || commitState === CommitState.CONFLICT"
                 [buildable]="buildable"
-                [disableActions]="!editable"
+                [disableActions]="!editable && (!isTutorAssessment || commitState !== CommitState.CONFLICT)"
                 [unsavedFiles]="unsavedFiles"
                 [(editorState)]="editorState"
                 [(commitState)]="commitState"

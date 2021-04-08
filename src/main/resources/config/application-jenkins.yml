@@ -10,3 +10,8 @@ jenkins:
     # The default value for this parameter is true, so if it is not specified, crumb protection will be active.
     # If you experience problems using crumb, you can deactivate it here.
     use-crumb: true
+
+    # The following (optional) parameter allows to enable the use of pseudonyms.
+    # If activated, the user's first and last name are not transferred to jenkins.
+    # Instead the user will be called "user <loginname>".
+    use-pseudonyms: false

@@ -1,5 +1,6 @@
 import { Component, Input } from '@angular/core';
 import { MIN_SCORE_GREEN, MIN_SCORE_ORANGE } from 'app/app.constants';
+import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { Result } from 'app/entities/result.model';
 import { round } from 'app/shared/util/utils';
 
@@ -13,7 +14,7 @@ export class ResultHistoryComponent {
     readonly round = round;
 
     @Input() results: Result[];
-    @Input() maxScore: number;
+    @Input() maxScore?: number;
     @Input() showPreviousDivider = false;
 
     /**
@@ -21,7 +22,7 @@ export class ResultHistoryComponent {
      * @param {Result} result
      * @return {string} icon
      */
-    resultIcon(result: Result): string {
+    resultIcon(result: Result): IconProp {
         if (result.score && result.score >= MIN_SCORE_GREEN) {
             return 'check';
         } else {

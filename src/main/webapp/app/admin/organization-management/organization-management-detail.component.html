@@ -1,0 +1,162 @@
+<div>
+    <h2>
+        <span jhiTranslate="organizationManagement.detail.title">Organization</span> [<b>{{ organization.name }}</b
+        >]
+    </h2>
+    <div class="container">
+        <div class="row">
+            <div class="col">
+                <dl class="row-md jh-entity-details">
+                    <dt><span jhiTranslate="global.field.id">Id</span></dt>
+                    <dd>{{ organization.id }}</dd>
+                    <dt><span jhiTranslate="organizationManagement.name">Name</span></dt>
+                    <dd>{{ organization.name }}</dd>
+                    <dt><span jhiTranslate="organizationManagement.shortName">Short Name</span></dt>
+                    <dd>{{ organization.shortName }}</dd>
+                    <dt><span jhiTranslate="organizationManagement.url">Url</span></dt>
+                    <dd>{{ organization.url }}</dd>
+                    <dt><span jhiTranslate="organizationManagement.logoUrl">Logo Url</span></dt>
+                    <dd>{{ organization.logoUrl }}</dd>
+                    <dt><span jhiTranslate="organizationManagement.description">Description</span></dt>
+                    <dd>{{ organization.description }}</dd>
+                    <dt><span jhiTranslate="organizationManagement.emailPattern">Email Pattern</span></dt>
+                    <dd>{{ organization.emailPattern }}</dd>
+                </dl>
+            </div>
+        </div>
+        <div class="row">
+            <h3>
+                <span jhiTranslate="organizationManagement.courses">Courses</span>
+            </h3>
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th><span jhiTranslate="global.field.id">ID</span></th>
+                            <th><span jhiTranslate="artemisApp.course.title">Title</span></th>
+                            <th><span jhiTranslate="artemisApp.course.shortName">Short Name</span></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr *ngFor="let course of organization.courses">
+                            <td>
+                                <a [routerLink]="['/course-management/', course.id]">{{ course.id }}</a>
+                            </td>
+                            <td>
+                                <ngb-highlight [result]="course.title"></ngb-highlight>
+                            </td>
+                            <td>
+                                <ngb-highlight [result]="course.shortName"></ngb-highlight>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="container p-2">
+        <h3>
+            <span jhiTranslate="organizationManagement.users">Users</span>
+        </h3>
+        <jhi-data-table
+            [isLoading]="isLoading"
+            [isSearching]="isSearching"
+            [searchFailed]="searchFailed"
+            [searchNoResults]="searchNoResults"
+            [isTransitioning]="isTransitioning"
+            entityType="user"
+            [allEntities]="organization.users"
+            entitiesPerPageTranslation="organizationManagement.userSearch.usersPerPage"
+            showAllEntitiesTranslation="organizationManagement.userSearch.showAllUsers"
+            searchNoResultsTranslation="organizationManagement.userSearch.searchNoResults"
+            searchPlaceholderTranslation="organizationManagement.userSearch.searchForUsers"
+            [searchFields]="['login', 'name']"
+            [searchTextFromEntity]="searchTextFromUser"
+            [searchResultFormatter]="searchResultFormatter"
+            [onSearchWrapper]="searchAllUsers"
+            [onAutocompleteSelectWrapper]="onAutocompleteSelect"
+            (entitiesSizeChange)="handleUsersSizeChange($event)"
+        >
+            <ng-template let-settings="settings" let-controls="controls">
+                <ngx-datatable
+                    class="bootstrap"
+                    [limit]="settings.limit"
+                    [sortType]="settings.sortType"
+                    [columnMode]="settings.columnMode"
+                    [headerHeight]="settings.headerHeight"
+                    [footerHeight]="settings.footerHeight"
+                    [rowHeight]="settings.rowHeight"
+                    [rows]="settings.rows"
+                    [rowClass]="dataTableRowClass"
+                    [scrollbarH]="settings.scrollbarH"
+                >
+                    <ngx-datatable-column prop="" [minWidth]="60" [width]="80" [maxWidth]="100">
+                        <ng-template ngx-datatable-header-template>
+                            <span class="datatable-header-cell-wrapper" (click)="controls.onSort('id')">
+                                <span class="datatable-header-cell-label bold sortable" jhiTranslate="global.field.id"> ID </span>
+                                <fa-icon [icon]="controls.iconForSortPropField('id')"></fa-icon>
+                            </span>
+                        </ng-template>
+                        <ng-template ngx-datatable-cell-template let-value="value">
+                            <a routerLink="/admin/user-management/{{ value?.login }}"> {{ value.id }} </a>
+                        </ng-template>
+                    </ngx-datatable-column>
+
+                    <ngx-datatable-column prop="login" [minWidth]="150" [width]="200" [maxWidth]="200">
+                        <ng-template ngx-datatable-header-template>
+                            <span class="datatable-header-cell-wrapper" (click)="controls.onSort('login')">
+                                <span class="datatable-header-cell-label bold sortable" jhiTranslate="userManagement.login"> Login </span>
+                                <fa-icon [icon]="controls.iconForSortPropField('login')"></fa-icon>
+                            </span>
+                        </ng-template>
+                        <ng-template ngx-datatable-cell-template let-value="value">
+                            <span>{{ value }}</span>
+                        </ng-template>
+                    </ngx-datatable-column>
+
+                    <ngx-datatable-column prop="name" [minWidth]="150" [width]="250" [maxWidth]="250">
+                        <ng-template ngx-datatable-header-template>
+                            <span class="datatable-header-cell-wrapper" (click)="controls.onSort('name')">
+                                <span class="datatable-header-cell-label bold sortable" jhiTranslate="userManagement.name"> Name </span>
+                                <fa-icon [icon]="controls.iconForSortPropField('name')"></fa-icon>
+                            </span>
+                        </ng-template>
+                        <ng-template ngx-datatable-cell-template let-value="value">
+                            <span>{{ value }}</span>
+                        </ng-template>
+                    </ngx-datatable-column>
+
+                    <ngx-datatable-column prop="email" [minWidth]="150" [width]="250">
+                        <ng-template ngx-datatable-header-template>
+                            <span class="datatable-header-cell-wrapper" (click)="controls.onSort('email')">
+                                <span class="datatable-header-cell-label bold sortable" jhiTranslate="userManagement.email"> Email </span>
+                                <fa-icon [icon]="controls.iconForSortPropField('email')"></fa-icon>
+                            </span>
+                        </ng-template>
+                        <ng-template ngx-datatable-cell-template let-value="value">
+                            <span>{{ value }}</span>
+                        </ng-template>
+                    </ngx-datatable-column>
+
+                    <ngx-datatable-column prop="" [minWidth]="150" [width]="200">
+                        <ng-template ngx-datatable-header-template> </ng-template>
+                        <ng-template ngx-datatable-cell-template let-value="value">
+                            <div class="w-100 text-right">
+                                <button
+                                    jhiDeleteButton
+                                    [actionType]="ActionType.Remove"
+                                    [entityTitle]="value.login"
+                                    deleteQuestion="organizationManagement.userSearch.removeFromOrganization.modalQuestion"
+                                    (delete)="removeFromOrganization(value)"
+                                    [dialogError]="dialogError$"
+                                >
+                                    <fa-icon [icon]="'user-slash'" class="mr-1"></fa-icon>
+                                </button>
+                            </div>
+                        </ng-template>
+                    </ngx-datatable-column>
+                </ngx-datatable>
+            </ng-template>
+        </jhi-data-table>
+    </div>
+</div>

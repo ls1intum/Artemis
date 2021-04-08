@@ -1,10 +1,11 @@
 package de.tum.in.www1.artemis.service.compass.assessment;
 
+import java.io.Serializable;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class Context {
+public class Context implements Serializable {
 
     private Set<Integer> contextElementIDs;
 

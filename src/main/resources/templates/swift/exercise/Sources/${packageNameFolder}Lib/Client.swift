@@ -1,14 +1,14 @@
 ﻿import Foundation
 
 public class Client {
-    // TODO: Implement BubbleSort
-    // TODO: Implement MergeSort
+    /// TODO: Implement BubbleSort
+    /// TODO: Implement MergeSort
 
-    // TODO: Create a SortStrategy interface according to the UML class diagram
-    // TODO: Make the sorting algorithms implement this interface.
+    /// TODO: Create a SortStrategy interface according to the UML class diagram
+    /// TODO: Make the sorting algorithms implement this interface.
 
-    // TODO: Create and implement a Context class according to the UML class diagram
-    // TODO: Create and implement a Policy class as described in the problem statement
+    /// TODO: Create and implement a Context class according to the UML class diagram
+    /// TODO: Create and implement a Policy class as described in the problem statement
 
     /**
      Main method.

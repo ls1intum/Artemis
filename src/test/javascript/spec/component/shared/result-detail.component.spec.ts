@@ -76,7 +76,7 @@ describe('ResultDetailComponent', () => {
         };
     };
 
-    const generateTestCaseFeedbackPair = (showDetails: boolean, name: string, message: string, credits = 0) => {
+    const generateTestCaseFeedbackPair = (showDetails: boolean, name: string, message: string | undefined, credits = 0) => {
         return {
             fb: makeFeedback({
                 text: name,
@@ -130,6 +130,7 @@ describe('ResultDetailComponent', () => {
         addPair(generateManualFeedbackPair(showTestDetails, 'Neutral', 'This is neutral', 0));
         addPair(generateTestCaseFeedbackPair(showTestDetails, 'TestCase1', 'This failed.'));
         addPair(generateTestCaseFeedbackPair(showTestDetails, 'TestCase2', 'This passed.', 3));
+        addPair(generateTestCaseFeedbackPair(showTestDetails, 'TestCase3', undefined, 3));
 
         if (!showTestDetails) {
             expectedItems.pop();
@@ -288,7 +289,7 @@ describe('ResultDetailComponent', () => {
         const { feedbacks, expectedItems } = generateFeedbacksAndExpectedItems();
         comp.exerciseType = ExerciseType.PROGRAMMING;
         comp.result.feedbacks = feedbacks;
-        comp.feedbackFilter = ['TestCase1', 'TestCase2'];
+        comp.feedbackFilter = ['TestCase1', 'TestCase2', 'TestCase3'];
 
         comp.ngOnInit();
 
@@ -300,8 +301,17 @@ describe('ResultDetailComponent', () => {
     it('should generate correct class names for feedback items', () => {
         const { expectedItems } = generateFeedbacksAndExpectedItems();
 
-        //                       test case 1       sca              sca              sca              manual 1         manual 2        manual 3         test case 2
-        const expectedClasses = ['alert-success', 'alert-warning', 'alert-warning', 'alert-warning', 'alert-success', 'alert-danger', 'alert-warning', 'alert-danger'];
+        const expectedClasses = [
+            'alert-success', // test case 1
+            'alert-warning', // sca
+            'alert-warning', // sca
+            'alert-warning', // sca
+            'alert-success', // manual 1
+            'alert-danger', // manual 2
+            'alert-warning', // manual 3
+            'alert-danger', // test case 2
+            'alert-success', // test case 3
+        ];
 
         expectedItems.forEach((item, index) => expect(comp.getClassNameForFeedbackItem(item)).to.equal(expectedClasses[index]));
     });
@@ -321,8 +331,8 @@ describe('ResultDetailComponent', () => {
         expect(comp.filteredFeedbackList).to.have.deep.members(expectedItems);
         expect(comp.showScoreChartTooltip).to.equal(true);
 
-        expect(chartSetValuesSpy).to.have.been.calledOnceWithExactly(7, 5, 6, 100, 100);
-        checkChartPreset(2, 5, '7', '5 of 6');
+        expect(chartSetValuesSpy).to.have.been.calledOnceWithExactly(10, 5, 6, 100, 100);
+        checkChartPreset(5, 5, '10', '5 of 6');
         expect(comp.isLoading).to.be.false;
 
         // test score exceeding exercise maxpoints
@@ -350,8 +360,8 @@ describe('ResultDetailComponent', () => {
         comp.ngOnInit();
 
         expect(comp.filteredFeedbackList).to.have.deep.members(expectedItems);
-        expect(chartSetValuesSpy).to.have.been.calledOnceWithExactly(7, 22, 206, 100, 100);
-        checkChartPreset(0, 7, '7', '7 of 206');
+        expect(chartSetValuesSpy).to.have.been.calledOnceWithExactly(10, 22, 206, 100, 100);
+        checkChartPreset(0, 10, '10', '10 of 206');
     });
 
     const checkChartPreset = (d1: number, d2: number, l1: string, l2: string) => {

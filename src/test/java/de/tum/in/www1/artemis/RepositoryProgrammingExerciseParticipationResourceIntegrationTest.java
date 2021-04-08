@@ -37,11 +37,15 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
-import de.tum.in.www1.artemis.domain.participation.*;
-import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
-import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
+import de.tum.in.www1.artemis.domain.exam.Exam;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
-import de.tum.in.www1.artemis.util.*;
+import de.tum.in.www1.artemis.util.GitUtilService;
+import de.tum.in.www1.artemis.util.LocalRepository;
+import de.tum.in.www1.artemis.util.TestConstants;
 import de.tum.in.www1.artemis.web.rest.dto.FileMove;
 import de.tum.in.www1.artemis.web.rest.dto.RepositoryStatusDTO;
 import de.tum.in.www1.artemis.web.rest.repository.FileSubmission;
@@ -51,13 +55,19 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
     private final String studentRepoBaseUrl = "/api/repository/";
 
     @Autowired
-    ProgrammingExerciseRepository programmingExerciseRepository;
+    private ProgrammingExerciseRepository programmingExerciseRepository;
 
     @Autowired
-    StudentParticipationRepository studentParticipationRepository;
+    private StudentParticipationRepository studentParticipationRepository;
 
     @Autowired
-    ProgrammingExerciseParticipationService programmingExerciseParticipationService;
+    private ExamRepository examRepository;
+
+    @Autowired
+    private StudentExamRepository studentExamRepository;
+
+    @Autowired
+    private ProgrammingExerciseParticipationService programmingExerciseParticipationService;
 
     private ProgrammingExercise programmingExercise;
 
@@ -67,19 +77,13 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
 
     private final String currentLocalFolderName = "currentFolderName";
 
-    private final String newLocalFileName = "newFileName";
+    private final LocalRepository studentRepository = new LocalRepository();
 
-    private final String newLocalFolderName = "newFolderName";
+    private final List<BuildLogEntry> logs = new ArrayList<>();
 
-    LocalRepository studentRepository = new LocalRepository();
+    private final BuildLogEntry buildLogEntry = new BuildLogEntry(ZonedDateTime.now(), "Checkout to revision e65aa77cc0380aeb9567ccceb78aca416d86085b has failed.");
 
-    LocalRepository templateRepository = new LocalRepository();
-
-    List<BuildLogEntry> logs = new ArrayList<>();
-
-    BuildLogEntry buildLogEntry = new BuildLogEntry(ZonedDateTime.now(), "Checkout to revision e65aa77cc0380aeb9567ccceb78aca416d86085b has failed.");
-
-    BuildLogEntry largeBuildLogEntry = new BuildLogEntry(ZonedDateTime.now(),
+    private final BuildLogEntry largeBuildLogEntry = new BuildLogEntry(ZonedDateTime.now(),
             "[ERROR] Failed to execute goal org.apache.maven.plugins:maven-checkstyle-plugin:3.1.1:checkstyle (default-cli)"
                     + "on project testPluginSCA-Tests: An error has occurred in Checkstyle report generation. Failed during checkstyle"
                     + "configuration: Exception was thrown while processing C:\\Users\\Stefan\\bamboo-home\\xml-data\\build-dir\\STCTES"
@@ -87,15 +91,13 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
                     + "while parsing file C:\\Users\\Stefan\\bamboo-home\\xml-data\\build-dir\\STCTESTPLUGINSCA-SOLUTION-JOB1\\assignment\\"
                     + "src\\www\\testPluginSCA\\BubbleSort.java. expecting EOF, found '}' -> [Help 1]");
 
-    StudentParticipation participation;
+    private StudentParticipation participation;
 
-    ListAppender<ILoggingEvent> listAppender;
+    private ListAppender<ILoggingEvent> listAppender;
 
-    Logger logger;
+    private Path studentFilePath;
 
-    Path studentFilePath;
-
-    File studentFile;
+    private File studentFile;
 
     @BeforeEach
     public void setup() throws Exception {
@@ -123,7 +125,7 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
         programmingExercise.setTestRepositoryUrl(localRepoUrl.toString());
 
         // Create template repo
-        templateRepository = new LocalRepository();
+        LocalRepository templateRepository = new LocalRepository();
         templateRepository.configureRepos("templateLocalRepo", "templateOriginRepo");
 
         // add file to the template repo folder
@@ -157,7 +159,7 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
 
         // Following setup is to check log messages see: https://stackoverflow.com/a/51812144
         // Get Logback Logger
-        logger = (Logger) LoggerFactory.getLogger(ProgrammingExerciseParticipationService.class);
+        Logger logger = (Logger) LoggerFactory.getLogger(ProgrammingExerciseParticipationService.class);
 
         // Create and start a ListAppender
         listAppender = new ListAppender<>();
@@ -313,6 +315,7 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
     @WithMockUser(username = "student1", roles = "USER")
     public void testRenameFile() throws Exception {
         assertThat(Files.exists(Paths.get(studentRepository.localRepoFile + "/" + currentLocalFileName))).isTrue();
+        String newLocalFileName = "newFileName";
         assertThat(Files.exists(Paths.get(studentRepository.localRepoFile + "/" + newLocalFileName))).isFalse();
         FileMove fileMove = new FileMove();
         fileMove.setCurrentFilePath(currentLocalFileName);
@@ -326,6 +329,7 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
     @WithMockUser(username = "student1", roles = "USER")
     public void testRenameFolder() throws Exception {
         assertThat(Files.exists(Paths.get(studentRepository.localRepoFile + "/" + currentLocalFolderName))).isTrue();
+        String newLocalFolderName = "newFolderName";
         assertThat(Files.exists(Paths.get(studentRepository.localRepoFile + "/" + newLocalFolderName))).isFalse();
         FileMove fileMove = new FileMove();
         fileMove.setCurrentFilePath(currentLocalFolderName);
@@ -568,15 +572,24 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
         testCommitChanges();
     }
 
-    @Test
-    @WithMockUser(username = "student1", roles = "USER")
-    public void testCommitChangesNotAllowedForBuildAndTestAfterDueDate() throws Exception {
+    private void setBuildAndTestForProgrammingExercise() {
         programmingExercise.setReleaseDate(ZonedDateTime.now().minusHours(2));
         programmingExercise.setDueDate(ZonedDateTime.now().minusHours(1));
         programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().plusHours(1));
         programmingExercise.setAssessmentType(AssessmentType.AUTOMATIC);
         programmingExerciseRepository.save(programmingExercise);
+    }
 
+    private void setManualAssessmentForProgrammingExercise() {
+        programmingExercise.setReleaseDate(ZonedDateTime.now().minusHours(2));
+        programmingExercise.setDueDate(ZonedDateTime.now().minusHours(1));
+        programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(null);
+        programmingExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+        programmingExerciseRepository.save(programmingExercise);
+    }
+
+    private void assertUnchangedRepositoryStatusForForbiddenCommit() throws Exception {
+        // Committing is not allowed
         var receivedStatusBeforeCommit = request.get(studentRepoBaseUrl + participation.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
         assertThat(receivedStatusBeforeCommit.repositoryStatus.toString()).isEqualTo("UNCOMMITTED_CHANGES");
         request.postWithoutLocation(studentRepoBaseUrl + participation.getId() + "/commit", null, HttpStatus.FORBIDDEN, null);
@@ -585,17 +598,71 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testCommitChangesNotAllowedForManuallyAssessedAfterDueDate() throws Exception {
-        programmingExercise.setReleaseDate(ZonedDateTime.now().minusHours(2));
-        programmingExercise.setDueDate(ZonedDateTime.now().minusHours(1));
-        programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(null);
-        programmingExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
-        programmingExerciseRepository.save(programmingExercise);
+    public void testCommitChangesNotAllowedForBuildAndTestAfterDueDate() throws Exception {
+        setBuildAndTestForProgrammingExercise();
+        assertUnchangedRepositoryStatusForForbiddenCommit();
+    }
 
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testCommitChangesNotAllowedForManuallyAssessedAfterDueDate() throws Exception {
+        setManualAssessmentForProgrammingExercise();
+        assertUnchangedRepositoryStatusForForbiddenCommit();
+    }
+
+    private void assertUnchangedRepositoryStatusForForbiddenReset() throws Exception {
+        // Reset the repo is not allowed
         var receivedStatusBeforeCommit = request.get(studentRepoBaseUrl + participation.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
         assertThat(receivedStatusBeforeCommit.repositoryStatus.toString()).isEqualTo("UNCOMMITTED_CHANGES");
-        request.postWithoutLocation(studentRepoBaseUrl + participation.getId() + "/commit", null, HttpStatus.FORBIDDEN, null);
+        request.postWithoutLocation(studentRepoBaseUrl + participation.getId() + "/reset", null, HttpStatus.FORBIDDEN, null);
         assertThat(receivedStatusBeforeCommit.repositoryStatus.toString()).isEqualTo("UNCOMMITTED_CHANGES");
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testResetNotAllowedForBuildAndTestAfterDueDate() throws Exception {
+        setBuildAndTestForProgrammingExercise();
+        assertUnchangedRepositoryStatusForForbiddenReset();
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testResetNotAllowedForManuallyAssessedAfterDueDate() throws Exception {
+        setManualAssessmentForProgrammingExercise();
+        assertUnchangedRepositoryStatusForForbiddenReset();
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testResetNotAllowedBeforeDueDate() throws Exception {
+        programmingExercise.setReleaseDate(ZonedDateTime.now().minusHours(2));
+        programmingExercise.setDueDate(ZonedDateTime.now().plusHours(1));
+        programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(null);
+        programmingExercise.setAssessmentType(AssessmentType.AUTOMATIC);
+        programmingExerciseRepository.save(programmingExercise);
+
+        assertUnchangedRepositoryStatusForForbiddenReset();
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testResetNotAllowedForExamBeforeDueDate() throws Exception {
+        // Create an exam programming exercise
+        programmingExercise = database.addCourseExamExerciseGroupWithOneProgrammingExerciseAndTestCases();
+        programmingExerciseRepository.save(programmingExercise);
+        participation.setExercise(programmingExercise);
+        studentParticipationRepository.save(participation);
+        // Create an exam which has already started
+        Exam exam = examRepository.findByIdElseThrow(programmingExercise.getExerciseGroup().getExam().getId());
+        exam.setStartDate(ZonedDateTime.now().minusHours(1));
+        examRepository.save(exam);
+        var studentExam = database.addStudentExam(exam);
+        studentExam.setWorkingTime(7200); // 2 hours
+        studentExam.setUser(participation.getStudent().get());
+        studentExam.addExercise(programmingExercise);
+        studentExamRepository.save(studentExam);
+        // A tutor is not allowed to reset the repository during the exam time
+        assertUnchangedRepositoryStatusForForbiddenReset();
     }
 
     @Test
@@ -620,8 +687,8 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
 
         // Check the logs
         List<ILoggingEvent> logsList = listAppender.list;
-        assertThat(logsList.get(0).getMessage())
-                .isEqualTo("Cannot stash student repository for participation " + participation.getId() + " because the repository was not copied yet!");
+        assertThat(logsList.get(0).getMessage()).startsWith("Cannot stash student repository for participation ");
+        assertThat(logsList.get(0).getArgumentArray()).containsExactly(participation.getId());
     }
 
     @Test
@@ -723,7 +790,7 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     void testFindStudentParticipation() {
-        var response = programmingExerciseParticipationService.findStudentParticipation(participation.getId());
+        var response = studentParticipationRepository.findById(participation.getId());
         assertThat(response.isPresent()).isTrue();
         assertThat(response.get().getId()).isEqualTo(participation.getId());
     }
@@ -751,8 +818,8 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
 
         // Check the logs
         List<ILoggingEvent> logsList = listAppender.list;
-        assertThat(logsList.get(0).getMessage())
-                .isEqualTo("Cannot unlock student repository for participation " + participation.getId() + " because the repository was not copied yet!");
+        assertThat(logsList.get(0).getMessage()).startsWith("Cannot unlock student repository for participation ");
+        assertThat(logsList.get(0).getArgumentArray()).containsExactly(participation.getId());
     }
 
     @Test
@@ -776,8 +843,8 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
 
         // Check the logs
         List<ILoggingEvent> logsList = listAppender.list;
-        assertThat(logsList.get(0).getMessage())
-                .isEqualTo("Cannot lock student repository for participation " + participation.getId() + " because the repository was not copied yet!");
+        assertThat(logsList.get(0).getMessage()).startsWith("Cannot lock student repository for participation ");
+        assertThat(logsList.get(0).getArgumentArray()).containsExactly(participation.getId());
     }
 
     private List<FileSubmission> getFileSubmissions(String fileContent) {

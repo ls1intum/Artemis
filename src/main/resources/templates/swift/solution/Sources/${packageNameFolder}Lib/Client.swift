@@ -6,19 +6,21 @@ public class Client {
       Add code to demonstrate your implementation here.
      */
     public static func main() {
-        //  Init Context and Policy
+        ///  Init Context and Policy
         let sortingContext = Context()
         let policy = Policy(sortingContext)
-        //  Run 10 times to simulate different sorting strategies
+        ///  Run 10 times to simulate different sorting strategies
         for _ in 0 ..< 10 {
             let dates: [Date] = createRandomDatesList()
             sortingContext.setDates(dates)
             policy.configure()
             print("Unsorted Array of course dates = ")
             printDateList(dates)
+            print()
             sortingContext.sort()
             print("Sorted Array of course dates = ")
             printDateList(sortingContext.getDates())
+            print()
         }
     }
 

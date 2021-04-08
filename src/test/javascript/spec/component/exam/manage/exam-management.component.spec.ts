@@ -17,7 +17,6 @@ import { Exam } from 'app/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { ExamInformationDTO } from 'app/entities/exam-information.model';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -93,35 +92,32 @@ describe('Exam Management Component', () => {
 
     it('Should return true for examHasFinished when component has no exam information ', () => {
         // GIVEN
-        comp.examIdToExamInformation = new Map<number, ExamInformationDTO>();
+        exam.latestIndividualEndDate = undefined;
 
         // WHEN
-        const examHasFinished = comp.examHasFinished(exam.id!);
+        const examHasFinished = comp.examHasFinished(exam);
 
         // THEN
-        expect(examHasFinished).to.be.true;
+        expect(examHasFinished).to.be.false;
     });
 
     it('Should return true for examHasFinished when component has information of other exams', () => {
         // GIVEN
-        comp.examIdToExamInformation = new Map<number, ExamInformationDTO>();
-        comp.examIdToExamInformation.set(1, new ExamInformationDTO());
+        exam.latestIndividualEndDate = undefined;
 
         // WHEN
-        const examHasFinished = comp.examHasFinished(exam.id!);
+        const examHasFinished = comp.examHasFinished(exam);
 
         // THEN
-        expect(examHasFinished).to.be.true;
+        expect(examHasFinished).to.be.false;
     });
 
     it('Should return true for examHasFinished when exam is in the past ', () => {
         // GIVEN
-        comp.examIdToExamInformation = new Map<number, ExamInformationDTO>();
-        const examInformation: ExamInformationDTO = { latestIndividualEndDate: moment().subtract(1, 'days') };
-        comp.examIdToExamInformation.set(exam.id!, examInformation);
+        exam.latestIndividualEndDate = moment().subtract(1, 'days');
 
         // WHEN
-        const examHasFinished = comp.examHasFinished(exam.id!);
+        const examHasFinished = comp.examHasFinished(exam);
 
         // THEN
         expect(examHasFinished).to.be.true;
@@ -129,12 +125,10 @@ describe('Exam Management Component', () => {
 
     it('Should return false for examHasFinished when exam is in the future ', () => {
         // GIVEN
-        comp.examIdToExamInformation = new Map<number, ExamInformationDTO>();
-        const examInformation: ExamInformationDTO = { latestIndividualEndDate: moment().add(1, 'minute') };
-        comp.examIdToExamInformation.set(exam.id!, examInformation);
+        exam.latestIndividualEndDate = moment().add(1, 'minute');
 
         // WHEN
-        const examHasFinished = comp.examHasFinished(exam.id!);
+        const examHasFinished = comp.examHasFinished(exam);
 
         // THEN
         expect(examHasFinished).to.be.false;

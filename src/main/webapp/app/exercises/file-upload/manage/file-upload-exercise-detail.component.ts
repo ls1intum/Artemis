@@ -59,27 +59,6 @@ export class FileUploadExerciseDetailComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Returns the route for editing the exercise. Exam and course exercises have different routes.
-     */
-    getEditRoute() {
-        if (this.isExamExercise) {
-            return [
-                '/course-management',
-                this.fileUploadExercise.exerciseGroup?.exam?.course?.id,
-                'exams',
-                this.fileUploadExercise.exerciseGroup?.exam?.id,
-                'exercise-groups',
-                this.fileUploadExercise.exerciseGroup?.id,
-                'file-upload-exercises',
-                this.fileUploadExercise.id,
-                'edit',
-            ];
-        } else {
-            return ['/course-management', this.fileUploadExercise.course?.id, 'file-upload-exercises', this.fileUploadExercise.id, 'edit'];
-        }
-    }
-
-    /**
      * Unsubscribes on component destruction
      */
     ngOnDestroy() {

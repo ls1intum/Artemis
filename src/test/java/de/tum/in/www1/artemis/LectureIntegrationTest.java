@@ -3,9 +3,7 @@ package de.tum.in.www1.artemis;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.AfterEach;
@@ -15,70 +13,44 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.in.www1.artemis.domain.Attachment;
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.Lecture;
-import de.tum.in.www1.artemis.domain.TextExercise;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AttachmentType;
-import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
-import de.tum.in.www1.artemis.domain.lecture.ExerciseUnit;
-import de.tum.in.www1.artemis.domain.lecture.TextUnit;
-import de.tum.in.www1.artemis.domain.lecture.VideoUnit;
+import de.tum.in.www1.artemis.domain.lecture.*;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
 public class LectureIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
-    LectureRepository lectureRepository;
+    private LectureRepository lectureRepository;
 
     @Autowired
-    CourseRepository courseRepository;
+    private CourseRepository courseRepository;
 
     @Autowired
-    UserRepository userRepository;
+    private UserRepository userRepository;
 
     @Autowired
-    TextExerciseRepository textExerciseRepository;
+    private TextExerciseRepository textExerciseRepository;
 
     @Autowired
-    AttachmentUnitRepository attachmentUnitRepository;
+    private AttachmentRepository attachmentRepository;
 
-    @Autowired
-    AttachmentRepository attachmentRepository;
+    private Attachment attachmentDirectOfLecture;
 
-    @Autowired
-    ExerciseUnitRepository exerciseUnitRepository;
+    private Attachment attachmentOfAttachmentUnit;
 
-    @Autowired
-    TextUnitRepository textUnitRepository;
+    private TextExercise textExercise;
 
-    @Autowired
-    VideoUnitRepository videoUnitRepository;
+    private Course course1;
 
-    Attachment attachmentDirectOfLecture;
-
-    Attachment attachmentOfAttachmentUnit;
-
-    TextExercise textExercise;
-
-    Course course1;
-
-    Lecture lecture1;
-
-    TextUnit textUnit;
-
-    ExerciseUnit exerciseUnit;
-
-    VideoUnit videoUnit;
-
-    AttachmentUnit attachmentUnit;
+    private Lecture lecture1;
 
     @BeforeEach
     public void initTestCase() throws Exception {
         this.database.addUsers(10, 10, 10);
         List<Course> courses = this.database.createCoursesWithExercisesAndLectures(true);
-        this.course1 = this.courseRepository.findWithEagerExercisesAndLecturesById(courses.get(0).getId());
+        this.course1 = this.courseRepository.findByIdWithExercisesAndLecturesElseThrow(courses.get(0).getId());
         this.lecture1 = this.course1.getLectures().stream().findFirst().get();
         this.textExercise = textExerciseRepository.findByCourseId(course1.getId()).stream().findFirst().get();
         // Add users that are not in the course
@@ -87,14 +59,14 @@ public class LectureIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         userRepository.save(ModelFactory.generateActivatedUser("instructor42"));
 
         // Setting up a lecture with various kinds of content
-        this.exerciseUnit = database.createExerciseUnit(textExercise);
-        this.attachmentUnit = database.createAttachmentUnit();
+        ExerciseUnit exerciseUnit = database.createExerciseUnit(textExercise);
+        AttachmentUnit attachmentUnit = database.createAttachmentUnit();
         this.attachmentOfAttachmentUnit = attachmentUnit.getAttachment();
-        this.videoUnit = database.createVideoUnit();
-        this.textUnit = database.createTextUnit();
+        VideoUnit videoUnit = database.createVideoUnit();
+        TextUnit textUnit = database.createTextUnit();
         addAttachmentToLecture();
 
-        this.lecture1 = database.addLectureUnitsToLecture(this.lecture1, Set.of(this.exerciseUnit, this.attachmentUnit, this.videoUnit, this.textUnit));
+        this.lecture1 = database.addLectureUnitsToLecture(this.lecture1, Set.of(exerciseUnit, attachmentUnit, videoUnit, textUnit));
     }
 
     private void addAttachmentToLecture() {
@@ -259,6 +231,57 @@ public class LectureIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         assertThat(lectureOptional.isEmpty()).isTrue();
     }
 
+    /**
+     * Hibernates sometimes adds null to the list of lecture units to keep the order after a lecture unit has been deleted.
+     * This should not happen any more as we have refactored the way lecture units are deleted, nevertheless we want to
+     * check here that this case not causes any errors as null values could still exist in the database
+     */
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void deleteLecture_NullInListOfLectureUnits_shouldDeleteLecture() throws Exception {
+        Lecture lecture = lectureRepository.findByIdWithStudentQuestionsAndLectureUnitsAndLearningGoalsElseThrow(lecture1.getId());
+        List<LectureUnit> lectureUnits = lecture.getLectureUnits();
+        assertThat(lectureUnits.size()).isEqualTo(4);
+        ArrayList<LectureUnit> lectureUnitsWithNulls = new ArrayList<>();
+        for (LectureUnit lectureUnit : lectureUnits) {
+            lectureUnitsWithNulls.add(null);
+            lectureUnitsWithNulls.add(lectureUnit);
+        }
+        lecture.getLectureUnits().clear();
+        lecture.getLectureUnits().addAll(lectureUnitsWithNulls);
+        lectureRepository.saveAndFlush(lecture);
+        lecture = lectureRepository.findByIdWithStudentQuestionsAndLectureUnitsAndLearningGoalsElseThrow(lecture1.getId());
+        lectureUnits = lecture.getLectureUnits();
+        assertThat(lectureUnits.size()).isEqualTo(8);
+        request.delete("/api/lectures/" + lecture1.getId(), HttpStatus.OK);
+        Optional<Lecture> lectureOptional = lectureRepository.findById(lecture1.getId());
+        assertThat(lectureOptional.isEmpty()).isTrue();
+    }
+
+    /**
+     * We have to make sure to reorder the list of lecture units when we delete a lecture unit to prevent hibernate
+     * from entering nulls into the list to keep the order of lecture units
+     */
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void deleteLectureUnit_FirstLectureUnit_ShouldReorderList() throws Exception {
+        Lecture lecture = lectureRepository.findByIdWithStudentQuestionsAndLectureUnitsAndLearningGoalsElseThrow(lecture1.getId());
+        assertThat(lecture.getLectureUnits().size()).isEqualTo(4);
+        LectureUnit firstLectureUnit = lecture.getLectureUnits().stream().findFirst().get();
+        request.delete("/api/lectures/" + lecture1.getId() + "/lecture-units/" + firstLectureUnit.getId(), HttpStatus.OK);
+        lecture = lectureRepository.findByIdWithStudentQuestionsAndLectureUnitsAndLearningGoalsElseThrow(lecture1.getId());
+        assertThat(lecture.getLectureUnits().size()).isEqualTo(3);
+        boolean nullFound = false;
+        for (LectureUnit lectureUnit : lecture.getLectureUnits()) {
+            if (Objects.isNull(lectureUnit)) {
+                nullFound = true;
+                break;
+            }
+        }
+        assertThat(nullFound).isFalse();
+
+    }
+
     @Test
     @WithMockUser(username = "instructor42", roles = "INSTRUCTOR")
     public void deleteLecture_asInstructorNotInCourse_shouldReturnForbidden() throws Exception {
@@ -271,4 +294,40 @@ public class LectureIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         request.delete("/api/lectures/" + 0, HttpStatus.NOT_FOUND);
     }
 
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testGetLectureTitleAsInstuctor() throws Exception {
+        // Only user and role matter, so we can re-use the logic
+        testGetLectureTitle();
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testGetLectureTitleAsTeachingAssistant() throws Exception {
+        // Only user and role matter, so we can re-use the logic
+        testGetLectureTitle();
+    }
+
+    @Test
+    @WithMockUser(username = "user1", roles = "USER")
+    public void testGetLectureTitleAsUser() throws Exception {
+        // Only user and role matter, so we can re-use the logic
+        testGetLectureTitle();
+    }
+
+    private void testGetLectureTitle() throws Exception {
+        Lecture lecture = new Lecture();
+        lecture.title("Test Lecture");
+        lectureRepository.save(lecture);
+
+        final var title = request.get("/api/lectures/" + lecture.getId() + "/title", HttpStatus.OK, String.class);
+        assertThat(title).isEqualTo(lecture.getTitle());
+    }
+
+    @Test
+    @WithMockUser(username = "user1", roles = "USER")
+    public void testGetLectureTitleForNonExistingLecture() throws Exception {
+        // No lecture with id 1337 was created
+        request.get("/api/lectures/1337/title", HttpStatus.NOT_FOUND, String.class);
+    }
 }

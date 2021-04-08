@@ -18,11 +18,9 @@ import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.exam.ExamDateService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
-import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Service
 public class SubmissionService {
@@ -205,27 +203,20 @@ public class SubmissionService {
     }
 
     /**
-     * Get the submission with the given id from the database. The submission is loaded together with its results and the assessors. Throws an EntityNotFoundException if no
-     * submission could be found for the given id.
+     * Get all currently locked submissions for all users in the given exam.
+     * These are all submissions for which users started, but did not yet finish the assessment.
      *
-     * @param submissionId the id of the submission that should be loaded from the database
-     * @return the submission with the given id
+     * @param examId  - the exam id
+     * @param user    - the user trying to access the locked submissions
+     * @return        - list of submissions that have locked results in the exam
      */
-    public Submission findOneWithEagerResults(long submissionId) {
-        return submissionRepository.findWithEagerResultsAndAssessorById(submissionId)
-                .orElseThrow(() -> new EntityNotFoundException("Submission with id \"" + submissionId + "\" does not exist"));
-    }
+    public List<Submission> getLockedSubmissions(Long examId, User user) {
+        List<Submission> submissions = submissionRepository.getLockedSubmissionsAndResultsByExamId(examId);
 
-    /**
-     * Get the submission with the given id from the database. The submission is loaded together with its result, the feedback of the result and the assessor of the
-     * result. Throws an EntityNotFoundException if no submission could be found for the given id.
-     *
-     * @param submissionId the id of the submission that should be loaded from the database
-     * @return the submission with the given id
-     */
-    public Submission findOneWithEagerResultAndFeedback(long submissionId) {
-        return submissionRepository.findWithEagerResultAndFeedbackById(submissionId)
-                .orElseThrow(() -> new EntityNotFoundException("Submission with id \"" + submissionId + "\" does not exist"));
+        for (Submission submission : submissions) {
+            hideDetails(submission, user);
+        }
+        return submissions;
     }
 
     /**
@@ -491,7 +482,7 @@ public class SubmissionService {
         if (isExamMode) {
             ZonedDateTime latestIndividualExamEndDate = examDateService.getLatestIndividualExamEndDate(exercise.getExerciseGroup().getExam());
             if (latestIndividualExamEndDate != null && latestIndividualExamEndDate.isAfter(ZonedDateTime.now())) {
-                log.debug("The due date of exercise '" + exercise.getTitle() + "' has not been reached yet.");
+                log.debug("The due date of exercise '{}' has not been reached yet.", exercise.getTitle());
                 throw new AccessForbiddenException("The due date of exercise '" + exercise.getTitle() + "' has not been reached yet.");
             }
         }
@@ -501,13 +492,13 @@ public class SubmissionService {
                 ProgrammingExercise programmingExercise = (ProgrammingExercise) exercise;
                 if (programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null
                         && programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate().isAfter(ZonedDateTime.now())) {
-                    log.debug("The due date to build and test of exercise '" + exercise.getTitle() + "' has not been reached yet.");
+                    log.debug("The due date to build and test of exercise '{}' has not been reached yet.", exercise.getTitle());
                     throw new AccessForbiddenException("The due date to build and test of exercise '" + exercise.getTitle() + "' has not been reached yet.");
                 }
             }
 
             if (exercise.getDueDate() != null && exercise.getDueDate().isAfter(ZonedDateTime.now())) {
-                log.debug("The due date of exercise '" + exercise.getTitle() + "' has not been reached yet.");
+                log.debug("The due date of exercise '{}' has not been reached yet.", exercise.getTitle());
                 throw new AccessForbiddenException("The due date of exercise '" + exercise.getTitle() + "' has not been reached yet.");
             }
         }
@@ -537,4 +528,5 @@ public class SubmissionService {
                 .filter(submission -> submission.isPresent() && (!submittedOnly || submission.get().isSubmitted())).forEach(submission -> submissions.add((T) submission.get()));
         return submissions;
     }
+
 }
