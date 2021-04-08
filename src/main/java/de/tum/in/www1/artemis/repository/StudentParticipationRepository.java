@@ -13,10 +13,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.Result;
-import de.tum.in.www1.artemis.domain.Submission;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
@@ -622,6 +619,14 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             GROUP BY exercise.id
             """)
     Long countParticipationsIgnoreTestRunsByExerciseId(@Param("exerciseId") Long exerciseId);
+
+    @Query("""
+            SELECT COUNT(p) FROM StudentParticipation p
+                LEFT JOIN p.exercise exercise WHERE exercise.id = :#{#exerciseId}
+            AND p.testRun = true
+            GROUP BY exercise.id
+            """)
+    Long countParticipationsOnlyTestRunsByExerciseId(@Param("exerciseId") Long exerciseId);
 
     /**
      * Adds the transient property numberOfParticipations for each exercise to

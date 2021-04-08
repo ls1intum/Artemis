@@ -1,14 +1,10 @@
 package de.tum.in.www1.artemis.service.user;
 
 import static de.tum.in.www1.artemis.domain.Authority.ADMIN_AUTHORITY;
-import static de.tum.in.www1.artemis.security.AuthoritiesConstants.ADMIN;
-import static de.tum.in.www1.artemis.security.AuthoritiesConstants.USER;
+import static de.tum.in.www1.artemis.security.Role.*;
 
 import java.time.Instant;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -26,10 +22,7 @@ import de.tum.in.www1.artemis.domain.GuidedTourSetting;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
 import de.tum.in.www1.artemis.exception.UsernameAlreadyUsedException;
-import de.tum.in.www1.artemis.repository.AuthorityRepository;
-import de.tum.in.www1.artemis.repository.GuidedTourSettingsRepository;
-import de.tum.in.www1.artemis.repository.StudentScoreRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.connectors.CIUserManagementService;
@@ -117,7 +110,7 @@ public class UserService {
                     log.info("Update internal admin user " + artemisInternalAdminUsername.get());
                     existingInternalAdmin.get().setPassword(passwordService.encodePassword(artemisInternalAdminPassword.get()));
                     // needs to be mutable --> new HashSet<>(Set.of(...))
-                    existingInternalAdmin.get().setAuthorities(new HashSet<>(Set.of(ADMIN_AUTHORITY, new Authority(USER))));
+                    existingInternalAdmin.get().setAuthorities(new HashSet<>(Set.of(ADMIN_AUTHORITY, new Authority(STUDENT.getAuthority()))));
                     saveUser(existingInternalAdmin.get());
                     updateUserInConnectorsAndAuthProvider(existingInternalAdmin.get(), existingInternalAdmin.get().getLogin(), existingInternalAdmin.get().getGroups());
                 }
@@ -134,7 +127,7 @@ public class UserService {
                     userDto.setCreatedBy("system");
                     userDto.setLastModifiedBy("system");
                     // needs to be mutable --> new HashSet<>(Set.of(...))
-                    userDto.setAuthorities(new HashSet<>(Set.of(ADMIN, USER)));
+                    userDto.setAuthorities(new HashSet<>(Set.of(ADMIN.getAuthority(), STUDENT.getAuthority())));
                     userDto.setGroups(new HashSet<>());
                     userCreationService.createUser(userDto);
                 }
@@ -241,7 +234,7 @@ public class UserService {
         // new user gets registration key
         newUser.setActivationKey(RandomUtil.generateActivationKey());
         Set<Authority> authorities = new HashSet<>();
-        authorityRepository.findById(USER).ifPresent(authorities::add);
+        authorityRepository.findById(STUDENT.getAuthority()).ifPresent(authorities::add);
         newUser.setAuthorities(authorities);
         saveUser(newUser);
         // we need to save first so that the user can be found in the database in the subsequent method

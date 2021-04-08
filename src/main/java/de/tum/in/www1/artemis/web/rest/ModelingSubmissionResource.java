@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.badRequest;
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 
 import java.security.Principal;
 import java.util.*;
@@ -17,15 +16,14 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import de.tum.in.www1.artemis.domain.GradingCriterion;
-import de.tum.in.www1.artemis.domain.Result;
-import de.tum.in.www1.artemis.domain.Submission;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.ModelingSubmissionService;
+import de.tum.in.www1.artemis.service.ResultService;
 import de.tum.in.www1.artemis.service.compass.CompassService;
 import de.tum.in.www1.artemis.service.exam.ExamSubmissionService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
@@ -86,7 +84,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
      * @return the ResponseEntity with status 200 (OK) and the Result as its body, or with status 4xx if the request is invalid
      */
     @PostMapping("/exercises/{exerciseId}/modeling-submissions")
-    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<ModelingSubmission> createModelingSubmission(@PathVariable long exerciseId, Principal principal, @RequestBody ModelingSubmission modelingSubmission) {
         log.debug("REST request to create ModelingSubmission : {}", modelingSubmission.getModel());
         long start = System.currentTimeMillis();
@@ -110,7 +108,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
      *         with status 500 (Internal Server Error) if the modelingSubmission couldn't be updated
      */
     @PutMapping("/exercises/{exerciseId}/modeling-submissions")
-    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<ModelingSubmission> updateModelingSubmission(@PathVariable long exerciseId, Principal principal, @RequestBody ModelingSubmission modelingSubmission) {
         long start = System.currentTimeMillis();
         log.debug("REST request to update ModelingSubmission : {}", modelingSubmission.getModel());
@@ -161,7 +159,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
     @ApiResponses({ @ApiResponse(code = 200, message = GET_200_SUBMISSIONS_REASON, response = ModelingSubmission.class, responseContainer = "List"),
             @ApiResponse(code = 403, message = ErrorConstants.REQ_403_REASON), @ApiResponse(code = 404, message = ErrorConstants.REQ_404_REASON), })
     @GetMapping(value = "/exercises/{exerciseId}/modeling-submissions")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('TA')")
     // TODO: separate this into 2 calls, one for instructors (with all submissions) and one for tutors (only the submissions for the requesting tutor)
     public ResponseEntity<List<Submission>> getAllModelingSubmissions(@PathVariable Long exerciseId, @RequestParam(defaultValue = "false") boolean submittedOnly,
             @RequestParam(defaultValue = "false") boolean assessedByTutor, @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound) {
@@ -183,7 +181,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
      *         found
      */
     @GetMapping("/modeling-submissions/{submissionId}")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('TA')")
     public ResponseEntity<ModelingSubmission> getModelingSubmission(@PathVariable Long submissionId,
             @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound, @RequestParam(value = "resultId", required = false) Long resultId) {
         log.debug("REST request to get ModelingSubmission with id: {}", submissionId);
@@ -235,7 +233,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
      * @return the ResponseEntity with status 200 (OK) and a modeling submission without assessment in body
      */
     @GetMapping(value = "/exercises/{exerciseId}/modeling-submission-without-assessment")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('TA')")
     public ResponseEntity<ModelingSubmission> getModelingSubmissionWithoutAssessment(@PathVariable Long exerciseId,
             @RequestParam(value = "lock", defaultValue = "false") boolean lockSubmission, @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound) {
 
@@ -282,7 +280,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
      */
     @Deprecated(since = "4.9.0", forRemoval = true)
     @GetMapping("/exercises/{exerciseId}/optimal-model-submissions")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('TA')")
     public ResponseEntity<Long[]> getNextOptimalModelSubmissions(@PathVariable Long exerciseId, @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound) {
         final ModelingExercise modelingExercise = modelingExerciseRepository.findOne(exerciseId);
         final User user = userRepository.getUserWithGroupsAndAuthorities();
@@ -328,7 +326,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
      */
     @Deprecated(since = "4.9.0", forRemoval = true)
     @DeleteMapping("/exercises/{exerciseId}/optimal-model-submissions")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('TA')")
     public ResponseEntity<String> resetOptimalModels(@PathVariable Long exerciseId) {
         final ModelingExercise modelingExercise = modelingExerciseRepository.findOne(exerciseId);
         final User user = userRepository.getUserWithGroupsAndAuthorities();
@@ -346,7 +344,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
      * @return the ResponseEntity with the submission as body
      */
     @GetMapping("/participations/{participationId}/latest-modeling-submission")
-    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<ModelingSubmission> getLatestSubmissionForModelingEditor(@PathVariable long participationId) {
         StudentParticipation participation = studentParticipationRepository.findByIdWithSubmissionsResultsFeedbackElseThrow(participationId);
         User user = userRepository.getUserWithGroupsAndAuthorities();

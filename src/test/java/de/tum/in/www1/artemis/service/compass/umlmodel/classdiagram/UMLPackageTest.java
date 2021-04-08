@@ -1,30 +1,29 @@
 package de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 import java.util.List;
-
-import me.xdrop.fuzzywuzzy.FuzzySearch;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-class UMLPackageTest {
+import me.xdrop.fuzzywuzzy.FuzzySearch;
+
+public class UMLPackageTest {
 
     private UMLPackage umlPackage;
 
     @Mock
-    UMLPackage referencePackage;
+    private UMLPackage referencePackage;
 
     @Mock
-    UMLClass class1;
+    private UMLClass class1;
 
     @Mock
-    UMLClass class2;
+    private UMLClass class2;
 
     @BeforeEach
     void setUp() {

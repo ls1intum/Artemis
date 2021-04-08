@@ -123,14 +123,14 @@ We communicate using Github issues and pull requests. Additionally, you can join
 
 #### Universities with Artemis in Use
 
-The following universities are activly using Artemis or are currently evaluating Artemis.
+The following universities are actively using Artemis or are currently evaluating Artemis.
 
 ##### Technical University of Munich
 
 * https://artemis.ase.in.tum.de 
 * Main contact person: [Stephan Krusche](mailto:krusche@in.tum.de)
 
-##### LFU Innsbruck, Uni Salzburg, JKU Linz, AAU Klagenfurt
+##### LFU Innsbruck, Uni Salzburg, JKU Linz, AAU Klagenfurt, TU Wien
 
 * https://artemis.codeability.uibk.ac.at
 * [codeAbility project](https://codeability.uibk.ac.at)
@@ -143,12 +143,13 @@ The following universities are activly using Artemis or are currently evaluating
 
 ##### Universität Bonn
 
-* http://alpro.besec.uni-bonn.de 
-* Main contact person: [Alexander Von Trostorff](mailto:s6alvont@uni-bonn.de)
+* https://alpro.besec.uni-bonn.de 
+* Main contact person: [Alexander von Trostorff](mailto:s6alvont@uni-bonn.de)
 
 ##### Universität Passau
 
-* Evaluating Artemis
+* https://artemis.se2.fim.uni-passau.de
+* Main contact person: [Christian Bachmaier](mailto:bachmaier@fim.uni-passau.de)
 
 ##### Karlsruhe Institute of Technology
 

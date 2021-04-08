@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 import java.time.Instant;
@@ -17,12 +18,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.in.www1.artemis.config.audit.AuditEventConverter;
 import de.tum.in.www1.artemis.domain.PersistentAuditEvent;
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 import de.tum.in.www1.artemis.repository.PersistenceAuditEventRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
-import de.tum.in.www1.artemis.service.AuditEventService;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggleService;
@@ -31,19 +30,13 @@ import de.tum.in.www1.artemis.util.ModelFactory;
 public class ManagementResourceIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
-    AuditEventService auditEventService;
+    private PersistenceAuditEventRepository persistenceAuditEventRepository;
 
     @Autowired
-    PersistenceAuditEventRepository persistenceAuditEventRepository;
+    private ProgrammingExerciseRepository programmingExerciseRepository;
 
     @Autowired
-    AuditEventConverter auditEventConverter;
-
-    @Autowired
-    ProgrammingExerciseRepository programmingExerciseRepository;
-
-    @Autowired
-    FeatureToggleService featureToggleService;
+    private FeatureToggleService featureToggleService;
 
     private PersistentAuditEvent persAuditEvent;
 

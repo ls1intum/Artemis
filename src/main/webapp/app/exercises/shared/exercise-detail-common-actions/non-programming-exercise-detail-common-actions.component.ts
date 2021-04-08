@@ -36,7 +36,7 @@ export class NonProgrammingExerciseDetailCommonActionsComponent {
      * Returns the route for editing the exercise. Exam and course exercises have different routes.
      */
     getEditRoute() {
-        if (this.isExamExercise && this.exercise.type !== ExerciseType.MODELING) {
+        if (this.isExamExercise) {
             return [
                 '/course-management',
                 this.exercise.exerciseGroup?.exam?.course?.id,
