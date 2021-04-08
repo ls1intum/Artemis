@@ -201,7 +201,7 @@ General best practices
         if(!expected.equals(actual)) fail("Descriptive fail message");
     }
 
-  This test correctly check, if the student added the case for the French language and called the appropriate method
+  This test correctly checks, if the student added the case for the French language and called the appropriate method
   with the appropriate parameters. Because the translation method was overridden, it doesn't matter whether the student
   has already completed the previous task or not.
 
@@ -245,7 +245,7 @@ Java best practices
 
     In combination with display names for both tests and the nested classes, this allows to structure grading with
     tests and the grouping is also helpful when executing the test in the IDE. One example would be to structure the
-    tests by exercise sub-tasks, or group tests that all check a single more complicated method. You can also do this
+    tests by exercise sub-tasks or to group tests that all check a single more complicated method. You can also do this
     by using static nested classes instead of inner classes annotated with ``@Nested`` (decide depending on your scenario).
 
   - Define a custom, well-structured and predictable test execution order with ``@Order``
