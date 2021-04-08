@@ -13,6 +13,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.StudentQuestion;
 import de.tum.in.www1.artemis.domain.StudentQuestionAnswer;
 import de.tum.in.www1.artemis.repository.StudentQuestionAnswerRepository;
@@ -54,6 +56,45 @@ public class StudentQuestionAnswerIntegrationTest extends AbstractSpringIntegrat
         // trying to create same studentQuestionAnswer again --> bad request
         request.postWithResponseBody("/api/courses/" + studentQuestion.getCourse().getId() + "/student-question-answers", response, StudentQuestionAnswer.class,
                 HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void createStudentQuestionAnswerWithWrongCourseId() throws Exception {
+        StudentQuestion studentQuestion = database.createCourseWithExerciseAndStudentQuestions().get(0);
+        Course courseDummy = database.createCourse();
+
+        StudentQuestionAnswer studentQuestionAnswer = new StudentQuestionAnswer();
+        studentQuestionAnswer.setAuthor(database.getUserByLoginWithoutAuthorities("instructor1"));
+        studentQuestionAnswer.setAnswerText("Test Answer");
+        studentQuestionAnswer.setAnswerDate(ZonedDateTime.now());
+        studentQuestionAnswer.setQuestion(studentQuestion);
+
+        StudentQuestionAnswer response = request.postWithResponseBody("/api/courses/" + courseDummy.getId() + "/student-question-answers", studentQuestionAnswer,
+                StudentQuestionAnswer.class, HttpStatus.BAD_REQUEST);
+
+        assertThat(response).isNull();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void createStudentQuestionWithLectureNotNullAndExerciseNull() throws Exception {
+        StudentQuestion studentQuestion = database.createCourseWithExerciseAndStudentQuestions().get(0);
+
+        StudentQuestionAnswer studentQuestionAnswer = new StudentQuestionAnswer();
+        studentQuestionAnswer.setAuthor(database.getUserByLoginWithoutAuthorities("instructor1"));
+        studentQuestionAnswer.setAnswerText("Test Answer");
+        studentQuestionAnswer.setAnswerDate(ZonedDateTime.now());
+        studentQuestionAnswer.setQuestion(studentQuestion);
+        Long courseId = studentQuestion.getCourse().getId();
+        Lecture notNullLecture = new Lecture();
+        notNullLecture.setCourse(studentQuestion.getCourse());
+        studentQuestion.setLecture(notNullLecture);
+        studentQuestion.setExercise(null);
+        StudentQuestionAnswer response = request.postWithResponseBody("/api/courses/" + courseId + "/student-question-answers", studentQuestionAnswer, StudentQuestionAnswer.class,
+                HttpStatus.CREATED);
+
+        assertThat(response).isNotNull();
     }
 
     @Test
@@ -109,6 +150,20 @@ public class StudentQuestionAnswerIntegrationTest extends AbstractSpringIntegrat
                 "/api/courses/" + studentQuestionAnswer.getQuestion().getCourse().getId() + "/student-question-answers", newStudentQuestionAnswer, StudentQuestionAnswer.class,
                 HttpStatus.BAD_REQUEST);
         assertThat(newStudentQuestionAnswerServer).isNull();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void editStudentQuestionAnswerWithWrongCourseId() throws Exception {
+        StudentQuestionAnswer studentQuestionAnswer = createStudentQuestionAnswersOnServer().get(0);
+        Course courseDummy = database.createCourse();
+
+        studentQuestionAnswer.setAuthor(database.getUserByLoginWithoutAuthorities("tutor2"));
+        studentQuestionAnswer.setAnswerText("New Answer Text");
+        studentQuestionAnswer.setAnswerDate(ZonedDateTime.now().minusHours(1));
+        StudentQuestionAnswer updatedStudentQuestionAnswerServer = request.putWithResponseBody("/api/courses/" + courseDummy.getId() + "/student-question-answers",
+                studentQuestionAnswer, StudentQuestionAnswer.class, HttpStatus.BAD_REQUEST);
+        assertThat(updatedStudentQuestionAnswerServer).isNull();
     }
 
     @Test
@@ -181,6 +236,17 @@ public class StudentQuestionAnswerIntegrationTest extends AbstractSpringIntegrat
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void getStudentQuestionAnswerWithWrongCourseId() throws Exception {
+        StudentQuestionAnswer studentQuestionAnswer = createStudentQuestionAnswersOnServer().get(0);
+        Course dummyCourse = database.createCourse();
+
+        StudentQuestionAnswer returnedStudentQuestionAnswer = request.get("/api/courses/" + dummyCourse.getId() + "/student-question-answers/" + studentQuestionAnswer.getId(),
+                HttpStatus.BAD_REQUEST, StudentQuestionAnswer.class);
+        assertThat(returnedStudentQuestionAnswer).isNull();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void deleteStudentQuestionAnswer_asInstructor() throws Exception {
         List<StudentQuestionAnswer> answers = createStudentQuestionAnswersOnServer();
         StudentQuestionAnswer studentQuestionAnswer_tutor1 = answers.get(0);
@@ -200,6 +266,48 @@ public class StudentQuestionAnswerIntegrationTest extends AbstractSpringIntegrat
         request.delete("/api/courses/" + studentQuestionAnswer_tutor2.getQuestion().getCourse().getId() + "/student-question-answers/" + studentQuestionAnswer_tutor2.getId(),
                 HttpStatus.OK);
         assertThat(studentQuestionAnswerRepository.findById(studentQuestionAnswer_tutor2.getId())).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void deleteStudentQuestionAnswerWithWrongCourseId() throws Exception {
+        List<StudentQuestionAnswer> answers = createStudentQuestionAnswersOnServer();
+        Course dummyCourse = database.createCourse();
+        StudentQuestionAnswer studentQuestionAnswer_tutor1 = answers.get(0);
+
+        request.delete("/api/courses/" + dummyCourse.getId() + "/student-question-answers/" + studentQuestionAnswer_tutor1.getId(), HttpStatus.BAD_REQUEST);
+        assertThat(studentQuestionAnswerRepository.findById(studentQuestionAnswer_tutor1.getId())).isNotEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void deleteStudentQuestionAnswerWithLectureNotNullAndExerciseNull() throws Exception {
+        List<StudentQuestionAnswer> answers = createStudentQuestionAnswersOnServer();
+        StudentQuestionAnswer studentQuestionAnswer = answers.get(0);
+        Course course = studentQuestionAnswer.getQuestion().getCourse();
+        studentQuestionAnswer.getQuestion().getExercise().setCourse(null);
+        Lecture notNullLecture = new Lecture();
+        notNullLecture.setCourse(course);
+        studentQuestionAnswer.getQuestion().setLecture(notNullLecture);
+
+        request.delete("/api/courses/" + course.getId() + "/student-question-answers/" + studentQuestionAnswer.getId(), HttpStatus.OK);
+        assertThat(studentQuestionAnswerRepository.findById(studentQuestionAnswer.getId())).isEmpty();
+    }
+
+    // TODO
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void deleteStudentQuestionAnswerWithCourseNull() throws Exception {
+        List<StudentQuestionAnswer> answers = createStudentQuestionAnswersOnServer();
+        StudentQuestionAnswer studentQuestionAnswer = answers.get(0);
+        Course course = studentQuestionAnswer.getQuestion().getCourse();
+        studentQuestionAnswer.getQuestion().getExercise().setCourse(null);
+        Lecture notNullLecture = new Lecture();
+        notNullLecture.setCourse(course);
+        studentQuestionAnswer.getQuestion().setLecture(notNullLecture);
+
+        request.delete("/api/courses/" + course.getId() + "/student-question-answers/" + studentQuestionAnswer.getId(), HttpStatus.OK);
+        assertThat(studentQuestionAnswerRepository.findById(studentQuestionAnswer.getId())).isEmpty();
     }
 
     @Test

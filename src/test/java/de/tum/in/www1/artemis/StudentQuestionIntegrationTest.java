@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -30,6 +31,12 @@ public class StudentQuestionIntegrationTest extends AbstractSpringIntegrationBam
 
     @Autowired
     private StudentQuestionRepository studentQuestionRepository;
+
+    @Autowired
+    private StudentQuestionAnswerRepository studentQuestionAnswerRepository;
+
+    @Autowired
+    private UserRepository userRepository;
 
     @BeforeEach
     public void initTestCase() {
@@ -58,6 +65,42 @@ public class StudentQuestionIntegrationTest extends AbstractSpringIntegrationBam
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void createStudentQuestionWithWrongCourseId() throws Exception {
+        StudentQuestion studentQuestion = database.createCourseWithExerciseAndStudentQuestions().get(0);
+        Course dummyCourse = database.createCourse();
+        StudentQuestion studentQuestionToSave = new StudentQuestion();
+        studentQuestionToSave.setQuestionText("Test Student Question 1");
+        studentQuestionToSave.setVisibleForStudents(true);
+        studentQuestionToSave.setExercise(studentQuestion.getExercise());
+
+        StudentQuestion createdStudentQuestion = request.postWithResponseBody("/api/courses/" + dummyCourse.getId() + "/student-questions", studentQuestionToSave,
+                StudentQuestion.class, HttpStatus.BAD_REQUEST);
+
+        assertThat(createdStudentQuestion).isNull();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void createStudentQuestionWithLectureNotNullAndExerciseNull() throws Exception {
+        StudentQuestion studentQuestion = database.createCourseWithExerciseAndStudentQuestions().get(0);
+        StudentQuestion studentQuestionToSave = new StudentQuestion();
+        studentQuestionToSave.setQuestionText("Test Student Question 1");
+        studentQuestionToSave.setVisibleForStudents(true);
+        Course course = studentQuestion.getExercise().getCourseViaExerciseGroupOrCourseMember();
+        Lecture lecture = new Lecture();
+        lectureRepo.save(lecture);
+        lecture.setCourse(course);
+        course.addLectures(lecture);
+        studentQuestionToSave.setLecture(lecture);
+
+        StudentQuestion createdStudentQuestion = request.postWithResponseBody("/api/courses/" + studentQuestionToSave.getCourse().getId() + "/student-questions",
+                studentQuestionToSave, StudentQuestion.class, HttpStatus.CREATED);
+
+        assertThat(createdStudentQuestion).isNotNull();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void createExistingStudentQuestion() throws Exception {
         StudentQuestion studentQuestion = database.createCourseWithExerciseAndStudentQuestions().get(0);
 
@@ -76,6 +119,29 @@ public class StudentQuestionIntegrationTest extends AbstractSpringIntegrationBam
                 StudentQuestion.class, HttpStatus.OK);
         assertThat(updatedStudentQuestion.getQuestionText()).isEqualTo("New Test Student Question");
         assertThat(updatedStudentQuestion.isVisibleForStudents()).isFalse();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void editStudentQuestionWithIdIsNull() throws Exception {
+        StudentQuestion studentQuestion = database.createCourseWithExerciseAndStudentQuestions().get(0);
+        studentQuestion.setId(null);
+
+        StudentQuestion updatedStudentQuestion = request.putWithResponseBody("/api/courses/" + studentQuestion.getCourse().getId() + "/student-questions", studentQuestion,
+                StudentQuestion.class, HttpStatus.BAD_REQUEST);
+        assertThat(updatedStudentQuestion).isNull();
+
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void editStudentQuestionWithWrongCourseId() throws Exception {
+        StudentQuestion studentQuestion = database.createCourseWithExerciseAndStudentQuestions().get(0);
+        Course dummyCourse = database.createCourse();
+
+        StudentQuestion updatedStudentQuestion = request.putWithResponseBody("/api/courses/" + dummyCourse.getId() + "/student-questions", studentQuestion, StudentQuestion.class,
+                HttpStatus.BAD_REQUEST);
+        assertThat(updatedStudentQuestion).isNull();
     }
 
     @Test
@@ -128,6 +194,18 @@ public class StudentQuestionIntegrationTest extends AbstractSpringIntegrationBam
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void getAllStudentQuestionsForExerciseWithWrongCourseId() throws Exception {
+        StudentQuestion studentQuestion = database.createCourseWithExerciseAndStudentQuestions().get(0);
+        Long exerciseID = studentQuestion.getExercise().getId();
+        Course dummyCourse = database.createCourse();
+
+        List<StudentQuestion> returnedStudentQuestions = request.getList("/api/courses/" + dummyCourse.getId() + "/exercises/" + exerciseID + "/student-questions",
+                HttpStatus.BAD_REQUEST, StudentQuestion.class);
+        assertThat(returnedStudentQuestions).isNull();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void getAllStudentQuestionsForLecture() throws Exception {
         ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
         ZonedDateTime futureTimestamp = ZonedDateTime.now().plusDays(5);
@@ -146,12 +224,51 @@ public class StudentQuestionIntegrationTest extends AbstractSpringIntegrationBam
         studentQuestion1.setLecture(lecture1);
         StudentQuestion studentQuestion2 = database.createCourseWithExerciseAndStudentQuestions().get(0);
         studentQuestion2.setLecture(lecture1);
+        StudentQuestionAnswer studentQuestionAnswer1 = new StudentQuestionAnswer();
+        studentQuestionAnswer1.setQuestion(studentQuestion1);
+        User author = new User();
+        author.setFirstName("Test");
+        author.setLogin("loginTest");
+        studentQuestionAnswer1.setAuthor(author);
+        Set<StudentQuestionAnswer> answers1 = new HashSet<>();
+        answers1.add(studentQuestionAnswer1);
+        studentQuestion1.setAnswers(answers1);
         studentQuestionRepository.save(studentQuestion1);
+        userRepository.save(author);
         studentQuestionRepository.save(studentQuestion2);
+        studentQuestionAnswerRepository.save(studentQuestionAnswer1);
 
         List<StudentQuestion> returnedStudentQuestions = request
                 .getList("/api/courses/" + studentQuestion1.getCourse().getId() + "/lectures/" + lecture1.getId() + "/student-questions", HttpStatus.OK, StudentQuestion.class);
         assertThat(returnedStudentQuestions.size()).isEqualTo(2);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void getAllStudentQuestionsForLectureWithWrongCourseId() throws Exception {
+        ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
+        ZonedDateTime futureTimestamp = ZonedDateTime.now().plusDays(5);
+        ZonedDateTime futureFutureTimestamp = ZonedDateTime.now().plusDays(8);
+
+        Course course1 = ModelFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "tumuser", "tutor", "instructor");
+        Course dummyCourse = database.createCourse();
+        Lecture lecture1 = ModelFactory.generateLecture(pastTimestamp, futureFutureTimestamp, course1);
+        Attachment attachment1 = ModelFactory.generateAttachment(pastTimestamp, lecture1);
+        lecture1.addAttachments(attachment1);
+        courseRepo.save(course1);
+        lectureRepo.save(lecture1);
+        attachmentRepo.save(attachment1);
+
+        StudentQuestion studentQuestion1 = database.createCourseWithExerciseAndStudentQuestions().get(0);
+        studentQuestion1.setLecture(lecture1);
+        StudentQuestion studentQuestion2 = database.createCourseWithExerciseAndStudentQuestions().get(0);
+        studentQuestion2.setLecture(lecture1);
+        studentQuestionRepository.save(studentQuestion1);
+        studentQuestionRepository.save(studentQuestion2);
+
+        List<StudentQuestion> returnedStudentQuestions = request.getList("/api/courses/" + dummyCourse.getId() + "/lectures/" + lecture1.getId() + "/student-questions",
+                HttpStatus.BAD_REQUEST, StudentQuestion.class);
+        assertThat(returnedStudentQuestions).isNull();
     }
 
     @Test
@@ -214,6 +331,30 @@ public class StudentQuestionIntegrationTest extends AbstractSpringIntegrationBam
         StudentQuestion updatedStudentQuestion = request.putWithResponseBody(
                 "/api/courses/" + studentQuestion.getCourse().getId() + "/student-questions/" + studentQuestion.getId() + "/votes", 1, StudentQuestion.class, HttpStatus.OK);
         assertThat(updatedStudentQuestion.getVotes()).isEqualTo(1);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void editStudentQuestionVotesToInvalidAmount() throws Exception {
+        StudentQuestion studentQuestion = database.createCourseWithExerciseAndStudentQuestions().get(0);
+        StudentQuestion updatedStudentQuestion = request.putWithResponseBody(
+                "/api/courses/" + studentQuestion.getCourse().getId() + "/student-questions/" + studentQuestion.getId() + "/votes", 3, StudentQuestion.class,
+                HttpStatus.BAD_REQUEST);
+        assertThat(updatedStudentQuestion).isNull();
+        updatedStudentQuestion = request.putWithResponseBody("/api/courses/" + studentQuestion.getCourse().getId() + "/student-questions/" + studentQuestion.getId() + "/votes", -3,
+                StudentQuestion.class, HttpStatus.BAD_REQUEST);
+        assertThat(updatedStudentQuestion).isNull();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void editStudentQuestionVotesWithWrongCourseId() throws Exception {
+        StudentQuestion studentQuestion = database.createCourseWithExerciseAndStudentQuestions().get(0);
+        Course dummyCourse = database.createCourse();
+
+        StudentQuestion updatedStudentQuestion = request.putWithResponseBody("/api/courses/" + dummyCourse.getId() + "/student-questions/" + studentQuestion.getId() + "/votes", 1,
+                StudentQuestion.class, HttpStatus.BAD_REQUEST);
+        assertThat(updatedStudentQuestion).isNull();
     }
 
     @Test

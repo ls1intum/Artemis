@@ -458,8 +458,8 @@ public class DatabaseUtilService {
         return courseRepo.save(course);
     }
 
-    public List<Course> createCoursesWithExercisesAndLecturesAndLectureUnits(boolean withParticiptions) throws Exception {
-        List<Course> courses = this.createCoursesWithExercisesAndLectures(withParticiptions);
+    public List<Course> createCoursesWithExercisesAndLecturesAndLectureUnits(boolean withParticipations) throws Exception {
+        List<Course> courses = this.createCoursesWithExercisesAndLectures(withParticipations);
         Course course1 = this.courseRepo.findByIdWithExercisesAndLecturesElseThrow(courses.get(0).getId());
         Lecture lecture1 = course1.getLectures().stream().findFirst().get();
         TextExercise textExercise = textExerciseRepository.findByCourseId(course1.getId()).stream().findFirst().get();
