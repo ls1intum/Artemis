@@ -13,12 +13,12 @@ import * as sinonChai from 'sinon-chai';
 import * as chai from 'chai';
 import * as sinon from 'sinon';
 import { TeamService } from 'app/exercises/shared/team/team.service';
-import { interval, Observable, of } from 'rxjs';
+import { Observable, of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { TeamSearchUser } from 'app/entities/team-search-user.model';
 import { TranslateModule } from '@ngx-translate/core';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe.ts';
-import { MockComponent, MockPipe } from 'ng-mocks';
+import { MockPipe } from 'ng-mocks';
 import { Course } from 'app/entities/course.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { Team } from 'app/entities/team.model';
@@ -26,12 +26,11 @@ import { User } from 'app/core/user/user.model';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
 import { NgbModal, NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { FormsModule } from '@angular/forms';
-import { BrowserModule, By } from '@angular/platform-browser';
-import { DebugElement, ElementRef } from '@angular/core';
-import { map, take } from 'rxjs/operators';
+import { BrowserModule } from '@angular/platform-browser';
+import { DebugElement } from '@angular/core';
 
 chai.use(sinonChai);
-//const expect = chai.expect;
+const expect = chai.expect;
 
 describe('TeamStudentSearchComponent', () => {
     let comp: TeamStudentSearchComponent;
@@ -93,7 +92,7 @@ describe('TeamStudentSearchComponent', () => {
 
             comp.ngbTypeahead = { nativeElement: { nextSibling: { children: [child1, child2] } } };
             comp.onSearch(textMock$).subscribe((teamSearchUsers) => {
-                expect(teamSearchUsers.length).toBe(2);
+                expect(teamSearchUsers.length).to.be.equal(2);
             });
             //expect(comp['userCanBeAddedToPendingTeam']).toHaveBeenCalled();
         }));
