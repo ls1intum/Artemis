@@ -17,7 +17,7 @@ import org.springframework.stereotype.Service;
  *
  */
 @Service
-public class ZipFileService {
+public class ZipFileTestUtilService {
 
     /**
      * Extracts a zip file recursively.

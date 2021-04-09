@@ -67,7 +67,7 @@ public class CourseTestService {
     private RequestUtilService request;
 
     @Autowired
-    private ZipFileService zipFileService;
+    private ZipFileTestUtilService zipFileTestUtilService;
 
     @Autowired
     private SubmissionRepository submissionRepository;
@@ -1209,7 +1209,7 @@ public class CourseTestService {
         assertThat(archive.getPath().length()).isGreaterThanOrEqualTo(4);
 
         // Extract the archive
-        zipFileService.extractZipFileRecursively(archive.getAbsolutePath());
+        zipFileTestUtilService.extractZipFileRecursively(archive.getAbsolutePath());
         String extractedArchiveDir = archive.getPath().substring(0, archive.getPath().length() - 4);
 
         // We test for the filenames of the submissions since it's the easiest way.

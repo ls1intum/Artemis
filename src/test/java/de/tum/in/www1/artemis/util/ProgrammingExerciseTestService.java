@@ -104,7 +104,7 @@ public class ProgrammingExerciseTestService {
     private PasswordService passwordService;
 
     @Autowired
-    ZipFileService zipFileService;
+    ZipFileTestUtilService zipFileTestUtilService;
 
     @Value("${artemis.lti.user-prefix-edx:#{null}}")
     private Optional<String> userPrefixEdx;
@@ -856,7 +856,7 @@ public class ProgrammingExerciseTestService {
         assertThat(archive).exists();
 
         // Extract the archive
-        zipFileService.extractZipFileRecursively(archive.getAbsolutePath());
+        zipFileTestUtilService.extractZipFileRecursively(archive.getAbsolutePath());
         String extractedArchiveDir = archive.getPath().substring(0, archive.getPath().length() - 4);
 
         // Check that the dummy files we created exist in the archivie.

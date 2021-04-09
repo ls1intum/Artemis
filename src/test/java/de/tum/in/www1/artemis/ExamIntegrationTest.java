@@ -42,7 +42,7 @@ import de.tum.in.www1.artemis.service.exam.ExamRegistrationService;
 import de.tum.in.www1.artemis.service.exam.ExamService;
 import de.tum.in.www1.artemis.service.ldap.LdapUserDto;
 import de.tum.in.www1.artemis.util.ModelFactory;
-import de.tum.in.www1.artemis.util.ZipFileService;
+import de.tum.in.www1.artemis.util.ZipFileTestUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.*;
 
 public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -96,7 +96,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     private ParticipationTestRepository participationTestRepository;
 
     @Autowired
-    ZipFileService zipFileService;
+    ZipFileTestUtilService zipFileTestUtilService;
 
     private List<User> users;
 
@@ -1813,7 +1813,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         assertThat(archive).isNotNull();
 
         // Extract the archive
-        zipFileService.extractZipFileRecursively(archive.getAbsolutePath());
+        zipFileTestUtilService.extractZipFileRecursively(archive.getAbsolutePath());
         String extractedArchiveDir = archive.getPath().substring(0, archive.getPath().length() - 4);
 
         // Check that the dummy files we created exist in the archive.
