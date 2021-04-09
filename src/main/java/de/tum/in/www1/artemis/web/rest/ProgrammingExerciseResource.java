@@ -983,7 +983,7 @@ public class ProgrammingExerciseResource {
         }
 
         long start = System.nanoTime();
-        File zipFile = programmingExerciseExportService.exportInstructorRepositoryForExercise(programmingExercise.getId(), repositoryType, new ArrayList<>());
+        File zipFile = programmingExerciseExportService.exportInstructorRepositoryForExercise(programmingExercise.getId(), repositoryType, new ArrayList<>(), false);
         if (zipFile == null) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "internalServerError",
                     "There was an error on the server and the zip file could not be created.")).body(null);
@@ -993,6 +993,37 @@ public class ProgrammingExerciseResource {
 
         log.info("Export of the repository of type {} programming exercise {} with title '{}' was successful in {}.", repositoryType.getName(), programmingExercise.getId(),
                 programmingExercise.getTitle(), formatDurationFrom(start));
+
+        return ResponseEntity.ok().contentLength(zipFile.length()).contentType(MediaType.APPLICATION_OCTET_STREAM).header("filename", zipFile.getName()).body(resource);
+    }
+
+    /**
+     * GET /programming-exercises/:exerciseId/export-instructor-exercise : returns a zip file containing
+     * exercise, solution and tests repositories of an exercise as well as additional metadata
+     * stored as yml files and the problem statement.
+     * @param exerciseId The id of the programming exercise
+     * @return a zip file containing all the before mentioned repositories and information
+     */
+    @GetMapping(Endpoints.EXPORT_INSTRUCTOR_EXERCISE)
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
+    public ResponseEntity<Resource> exportInstructorProgrammingExercise(@PathVariable long exerciseId) throws IOException {
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
+
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        if (!authCheckService.isAtLeastTeachingAssistantForExercise(programmingExercise, user)) {
+            return forbidden();
+        }
+
+        File zipFile = programmingExerciseExportService.exportInstructorProgrammingExercise(programmingExercise);
+        if (zipFile == null) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "internalServerError",
+                    "There was an error on the server and the zip file could not be created.")).body(null);
+        }
+
+        InputStreamResource resource = new InputStreamResource(new FileInputStream(zipFile));
+
+        log.info("Export of programming exercise '{}' was successful.", programmingExercise.getTitle());
 
         return ResponseEntity.ok().contentLength(zipFile.length()).contentType(MediaType.APPLICATION_OCTET_STREAM).header("filename", zipFile.getName()).body(resource);
     }
@@ -1396,6 +1427,8 @@ public class ProgrammingExerciseResource {
         public static final String EXPORT_SUBMISSIONS_BY_PARTICIPATIONS = PROGRAMMING_EXERCISE + "/export-repos-by-participation-ids/{participationIds}";
 
         public static final String EXPORT_INSTRUCTOR_REPOSITORY = PROGRAMMING_EXERCISE + "/export-instructor-repository/{repositoryType}";
+
+        public static final String EXPORT_INSTRUCTOR_EXERCISE = PROGRAMMING_EXERCISE + "/export-instructor-exercise";
 
         public static final String GENERATE_TESTS = PROGRAMMING_EXERCISE + "/generate-tests";
 

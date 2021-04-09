@@ -18,6 +18,7 @@ import { JhiEventManager } from 'ng-jhipster';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-button.component';
 import { TranslateService } from '@ngx-translate/core';
+import { downloadZipFileFromResponse } from 'app/shared/util/download.util';
 
 @Component({
     selector: 'jhi-programming-exercise-detail',
@@ -179,6 +180,16 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                 this.dialogErrorSource.next('');
             },
             (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+        );
+    }
+
+    exportExercise(programmingExerciseId: number) {
+        return this.programmingExerciseService.exportInstructorExercise(programmingExerciseId).subscribe(
+            (response) => {
+                downloadZipFileFromResponse(response);
+                this.jhiAlertService.success('artemisApp.programmingExercise.export.successMessage');
+            },
+            (error: HttpErrorResponse) => this.jhiAlertService.error('Unable to export exercise. Error: ' + error.message),
         );
     }
 

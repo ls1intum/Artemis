@@ -333,4 +333,17 @@ export class ProgrammingExerciseService {
             responseType: 'blob',
         });
     }
+
+    /**
+     * Exports a zip file containing exercise, solution and tests repositories
+     * of an exercise as well as additional metadata
+     * stored as yml files and the problem statement.
+     * @param exerciseId
+     */
+    exportInstructorExercise(exerciseId: number): Observable<HttpResponse<Blob>> {
+        return this.http.get(`${this.resourceUrl}/${exerciseId}/export-instructor-exercise`, {
+            observe: 'response',
+            responseType: 'blob',
+        });
+    }
 }

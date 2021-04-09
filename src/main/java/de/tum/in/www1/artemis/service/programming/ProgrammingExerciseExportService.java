@@ -1,16 +1,19 @@
 package de.tum.in.www1.artemis.service.programming;
 
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -47,6 +50,7 @@ import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.DifficultyLevel;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
@@ -56,6 +60,7 @@ import de.tum.in.www1.artemis.domain.plagiarism.text.TextPlagiarismResult;
 import de.tum.in.www1.artemis.exception.GitException;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.UrlService;
 import de.tum.in.www1.artemis.service.ZipFileService;
@@ -73,9 +78,14 @@ public class ProgrammingExerciseExportService {
     @Value("${artemis.repo-download-clone-path}")
     private String repoDownloadClonePath;
 
+    @Value("${server.url}")
+    private String ARTEMIS_URL;
+
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
     private final StudentParticipationRepository studentParticipationRepository;
+
+    private final UserRepository userRepository;
 
     private final FileService fileService;
 
@@ -88,9 +98,10 @@ public class ProgrammingExerciseExportService {
     private final ScheduledExecutorService executor = Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors());
 
     public ProgrammingExerciseExportService(ProgrammingExerciseRepository programmingExerciseRepository, StudentParticipationRepository studentParticipationRepository,
-            FileService fileService, GitService gitService, ZipFileService zipFileService, UrlService urlService) {
+            UserRepository userRepository, FileService fileService, GitService gitService, ZipFileService zipFileService, UrlService urlService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.studentParticipationRepository = studentParticipationRepository;
+        this.userRepository = userRepository;
         this.fileService = fileService;
         this.gitService = gitService;
         this.zipFileService = zipFileService;
@@ -124,9 +135,9 @@ public class ProgrammingExerciseExportService {
         zipFiles.addAll(studentZipFilePaths);
 
         // Export the template, solution, and tests repositories
-        zipFiles.add(exportInstructorRepositoryForExercise(exercise.getId(), RepositoryType.TEMPLATE, exportErrors));
-        zipFiles.add(exportInstructorRepositoryForExercise(exercise.getId(), RepositoryType.SOLUTION, exportErrors));
-        zipFiles.add(exportInstructorRepositoryForExercise(exercise.getId(), RepositoryType.TESTS, exportErrors));
+        zipFiles.add(exportInstructorRepositoryForExercise(exercise.getId(), RepositoryType.TEMPLATE, exportErrors, false));
+        zipFiles.add(exportInstructorRepositoryForExercise(exercise.getId(), RepositoryType.SOLUTION, exportErrors, false));
+        zipFiles.add(exportInstructorRepositoryForExercise(exercise.getId(), RepositoryType.TESTS, exportErrors, false));
 
         // Remove null elements and get the file path of each zip file.
         var zipFilePathsNonNull = zipFiles.stream().filter(Objects::nonNull).map(File::toPath).collect(Collectors.toList());
@@ -158,9 +169,10 @@ public class ProgrammingExerciseExportService {
      * @param exerciseId     The id of the programming exercise that has the repository
      * @param repositoryType the type of repository to export
      * @param exportErrors   List of failures that occurred during the export
-     * @return a zipped file
+     * @param asDir          To return the repository as directory
+     * @return a zipped file or a directory (if asDir is set to true)
      */
-    public File exportInstructorRepositoryForExercise(long exerciseId, RepositoryType repositoryType, List<String> exportErrors) {
+    public File exportInstructorRepositoryForExercise(long exerciseId, RepositoryType repositoryType, List<String> exportErrors, Boolean asDir) {
         var exerciseOrEmpty = programmingExerciseRepository.findWithTemplateAndSolutionParticipationById(exerciseId);
         if (exerciseOrEmpty.isEmpty()) {
             var error = "Failed to export instructor repository " + repositoryType + " because the exercise " + exerciseId + " does not exist.";
@@ -189,6 +201,9 @@ public class ProgrammingExerciseExportService {
                 return null;
             }
 
+            if (asDir) {
+                return createDirForRepository(repositoryUrl).toFile();
+            }
             Path zippedRepo = createZipForRepository(repositoryUrl, zippedRepoName);
             if (zippedRepo != null) {
                 return new File(zippedRepo.toString());
@@ -270,6 +285,162 @@ public class ProgrammingExerciseExportService {
     }
 
     /**
+     * Create and return a single zip file containing exercise, solution and tests repositories of an exercise
+     * as well as additional metadata of the exercise stored as yml files and the exercise text.
+     * @param exercise the programming exercise to export
+     * @return a zip file containing all the before mentioned repositories and information
+     * @throws IOException if an error occurs by handling files
+     */
+    public File exportInstructorProgrammingExercise(ProgrammingExercise exercise) throws IOException {
+        exercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exercise.getId());
+
+        final var tmpDirectory = Files.createDirectory(fileService.getUniquePath(repoDownloadClonePath)).toFile();
+
+        // rename directory and move it to the temporary directory
+        FileUtils.moveDirectory(exportInstructorRepositoryForExercise(exercise.getId(), RepositoryType.TEMPLATE, new ArrayList<>(), true), new File(tmpDirectory, "exercise"));
+        FileUtils.moveDirectory(exportInstructorRepositoryForExercise(exercise.getId(), RepositoryType.SOLUTION, new ArrayList<>(), true), new File(tmpDirectory, "solution"));
+        FileUtils.moveDirectory(exportInstructorRepositoryForExercise(exercise.getId(), RepositoryType.TESTS, new ArrayList<>(), true), new File(tmpDirectory, "tests"));
+
+        // create additional files
+        writeMetadataToFile(exercise, new File(tmpDirectory, "metadata.yaml"));
+        writeExerciseStatementToFile(exercise, new File(tmpDirectory, "exercise.md"));
+        writeAdditionalConfigsToFile(exercise, new File(tmpDirectory, "artemis.yaml"));
+
+        File zipFile = new File(tmpDirectory.getParent(), exercise.getProjectName().replace(" ", "_"));
+        zipFileService.createZipFile(zipFile.toPath(), dirToPaths(tmpDirectory), tmpDirectory.toPath());
+
+        fileService.scheduleForDirectoryDeletion(tmpDirectory.toPath(), 5);
+        fileService.scheduleForDeletion(zipFile.toPath(), 5);
+
+        return zipFile;
+    }
+
+    /**
+     * Writes the metadata of a programming exercise into a given File
+     * @param programmingExercise where to extract the metadata from
+     * @param metadata the file in which the metadata should be written
+     * @throws IOException in case of errors
+     */
+    private void writeMetadataToFile(ProgrammingExercise programmingExercise, File metadata) throws IOException {
+        BufferedWriter writer = new BufferedWriter(new FileWriter(metadata, true));
+
+        // Required attributes
+        writer.append("metadataVersion: ").append("\"0.2\"").append("\n");
+        writer.append("type: ").append("programming exercise").append("\n"); // currently only programming exercises can be exported
+        writer.append("title: ").append(programmingExercise.getTitle()).append("\n");
+        writer.append("license: ").append("CC-SA-BY 4.0").append("\n");
+        writer.append("keyword: \n");
+        List<String> keywords = new ArrayList();
+        Pattern pattern = Pattern.compile("(?:\"category\":\")(.*?)(?:\",\"color\":\")");
+        for (String category : programmingExercise.getCategories()) {
+            Matcher matcher = pattern.matcher(category);
+            if (matcher.find()) {
+                keywords.add(matcher.group(1));
+            }
+        }
+        writer.append("  - Artemis\n");
+
+        if (keywords.size() > 0) {
+            writer.append("  - ");
+            writer.append(String.join("\n  - ", keywords)).append("\n");
+        }
+
+        // Optional Attributes
+        writer.append("format: ").append("\n  - artemis").append("\n");
+        writer.append("structure: ").append("atomic").append("\n");
+        writer.append("programmingLanguage: ").append("\n  - " + programmingExercise.getProgrammingLanguage().name()).append("\n");
+
+        List<User> instructors = userRepository.getInstructors(programmingExercise.getCourseViaExerciseGroupOrCourseMember());
+        if (instructors.size() > 0) {
+            writer.append("creator: ").append("\n");
+
+            for (User user : instructors) {
+                writer.append("  - name: ").append(user.getLastName() + " " + user.getFirstName()).append("\n    affiliation: ").append(user.getEmail().split("@")[1])
+                        .append("\n    email: ").append(user.getEmail()).append("\n");
+            }
+        }
+        if (programmingExercise.getDifficulty() != null) {
+            writer.append("difficulty: ").append(mapDifficutlyToMetadata(programmingExercise.getDifficulty())).append("\n");
+        }
+        writer.append("source:").append("\n  - \"" + ARTEMIS_URL + "/course-management/" + programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId()
+                + "/programming-exercises/" + programmingExercise.getId()).append("\"\n");
+        writer.close();
+    }
+
+    /**
+     * Writes the exercise problem statement into a given file
+     * @param programmingExercise where the exercise statement should be extracted from
+     * @param exerciseStatementFile the file in which the exercise statement should be written
+     * @throws IOException if errors occur
+     */
+    private void writeExerciseStatementToFile(ProgrammingExercise programmingExercise, File exerciseStatementFile) throws IOException {
+        BufferedWriter writer = new BufferedWriter(new FileWriter(exerciseStatementFile, true));
+        writer.append(programmingExercise.getTemplateParticipation().getExercise().getProblemStatement());
+        writer.close();
+    }
+
+    /**
+     * Writes additional configuration entries into a given file
+     * @param programmingExercise where the configurations should be extracted form
+     * @param additionalConfigsFile the file in which the configurations should be written
+     * @throws IOException if errors occur
+     */
+    private void writeAdditionalConfigsToFile(ProgrammingExercise programmingExercise, File additionalConfigsFile) throws IOException {
+        BufferedWriter writer = new BufferedWriter(new FileWriter(additionalConfigsFile, true));
+        writer.append("maxPoints: ").append(String.valueOf(programmingExercise.getMaxPoints())).append("\n");
+        writer.append("bonusPoints: ").append(String.valueOf(programmingExercise.getBonusPoints())).append("\n");
+        writer.append("mode: ").append(programmingExercise.getMode().name()).append("\n");
+        if (programmingExercise.getGradingInstructions() != null) {
+            writer.append("gradingInstructions: ").append(programmingExercise.getGradingInstructions()).append("\n");
+        }
+        if (programmingExercise.isStaticCodeAnalysisEnabled() != null) {
+            writer.append("staticCodeAnalysis: ").append(programmingExercise.isStaticCodeAnalysisEnabled().toString()).append("\n");
+        }
+        writer.append("allowOfflineIDE: ").append(programmingExercise.isAllowOfflineIde().toString()).append("\n");
+        writer.append("allowOnlineEditor: ").append(programmingExercise.isAllowOnlineEditor().toString()).append("\n");
+        writer.append("showTestNamesToStudents: ").append(programmingExercise.getShowTestNamesToStudents().toString()).append("\n");
+        writer.append("sequentialTestRuns: ").append(String.valueOf(programmingExercise.hasSequentialTestRuns())).append("\n");
+        writer.close();
+    }
+
+    /**
+     * Utility method traversing a directory and extracting the path of each contained file
+     * to a list
+     * @param dir the directory to traverse
+     * @throws IOException if an error occurs
+     * @return list containing the paths of all files in the given directory
+     */
+    private List<Path> dirToPaths(File dir) throws IOException {
+        List<Path> paths = new ArrayList<>();
+        FileVisitor<Path> fileVisitor = new FileVisitor<>() {
+
+            @Override
+            public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
+                paths.add(dir);
+                return FileVisitResult.CONTINUE;
+            }
+
+            @Override
+            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
+                paths.add(file);
+                return FileVisitResult.CONTINUE;
+            }
+
+            @Override
+            public FileVisitResult visitFileFailed(Path file, IOException exc) {
+                return FileVisitResult.CONTINUE;
+            }
+
+            @Override
+            public FileVisitResult postVisitDirectory(Path dir, IOException exc) {
+                return FileVisitResult.CONTINUE;
+            }
+        };
+        Files.walkFileTree(dir.toPath(), fileVisitor);
+        return paths;
+    }
+
+    /**
      * Creates a zip file with the contents of the git repository. Note that the zip file is deleted in 5 minutes.
      *
      * @param repositoryUrl The url of the repository to zip
@@ -282,6 +453,19 @@ public class ProgrammingExerciseExportService {
      */
     private Path createZipForRepository(VcsRepositoryUrl repositoryUrl, String zipFilename) throws GitAPIException, GitException, InterruptedException, IOException {
         var repoProjectPath = fileService.getUniquePathString(repoDownloadClonePath);
+        // Zip it
+        return gitService.zipRepository(createDirForRepository(repositoryUrl), zipFilename, repoProjectPath);
+    }
+
+    /**
+     * Creates a directory with the contents of the git repository. Note that the files are deleted in 5 minutes.
+     * @param repositoryUrl The url of the repository to zip
+     * @return The path to the directory
+     * @throws GitAPIException if the repos don't exist
+     * @throws InterruptedException something went wrong
+     */
+    private Path createDirForRepository(VcsRepositoryUrl repositoryUrl) throws GitAPIException, InterruptedException {
+        var repoProjectPath = fileService.getUniquePathString(repoDownloadClonePath);
         Repository repository = null;
 
         try {
@@ -289,16 +473,12 @@ public class ProgrammingExerciseExportService {
             repository = gitService.getOrCheckoutRepository(repositoryUrl, repoProjectPath, true);
             gitService.resetToOriginMaster(repository);
 
-            // Zip it
-            Path zippedRepo = gitService.zipRepository(repository.getLocalPath(), zipFilename, repoProjectPath);
-
             // if repository is not closed, it causes weird IO issues when trying to delete the repository again
             // java.io.IOException: Unable to delete file: ...\.git\objects\pack\...
             repository.close();
-            return zippedRepo;
+            return repository.getLocalPath();
         }
         finally {
-            deleteTempLocalRepository(repository);
             fileService.scheduleForDirectoryDeletion(Path.of(repoProjectPath), 5);
         }
     }
@@ -814,5 +994,19 @@ public class ProgrammingExerciseExportService {
             e.printStackTrace();
         }
         return allRepoFiles;
+    }
+
+    /**
+     * Used to map the difficulty level of an exercise to the
+     * corresponding sharing metadata difficulty
+     * @param difficultyLevel the difficulty level to map
+     * @return the mapped string of the difficulty
+     */
+    private String mapDifficutlyToMetadata(DifficultyLevel difficultyLevel) {
+        return switch (difficultyLevel) {
+            case EASY -> "simple";
+            case MEDIUM -> "medium";
+            case HARD -> "advanced";
+        };
     }
 }
