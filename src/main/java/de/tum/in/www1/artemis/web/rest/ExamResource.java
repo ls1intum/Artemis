@@ -294,7 +294,7 @@ public class ExamResource {
             return courseAndExamAccessFailure.get();
         }
         ExamScoresDTO examScoresDTO = examService.calculateExamScores(examId);
-        log.info("get scores for exam " + examId + " took " + (System.currentTimeMillis() - start) + "ms");
+        log.info("get scores for exam {} took {}ms", examId, System.currentTimeMillis() - start);
         return ResponseEntity.ok(examScoresDTO);
     }
 
@@ -853,7 +853,7 @@ public class ExamResource {
         List<Submission> submissions = submissionService.getLockedSubmissions(examId, user);
 
         long end = System.currentTimeMillis();
-        log.debug("Finished /courses/" + courseId + "/submissions call in " + (end - start) + "ms");
+        log.debug("Finished /courses/{}/submissions call in {}ms", courseId, end - start);
         return ResponseEntity.ok(submissions);
     }
 

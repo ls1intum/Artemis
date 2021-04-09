@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.service;
 
-import java.util.Optional;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -10,7 +8,6 @@ import de.tum.in.www1.artemis.domain.Organization;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.OrganizationRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
  * Service implementation for managing Organization entities
@@ -38,7 +35,7 @@ public class OrganizationService {
      * Users not matching the pattern will be removed from the organization (if contained).
      * @param organization the organization used to perform the indexing
      */
-    public void indexing(final Organization organization) {
+    public void index(final Organization organization) {
         log.debug("Start indexing for organization: {}", organization.getName());
         organization.getUsers().forEach(user -> {
             userRepository.removeOrganizationFromUser(user.getId(), organization);
@@ -68,7 +65,7 @@ public class OrganizationService {
     public Organization add(Organization organization) {
         Organization addedOrganization = save(organization);
         addedOrganization = organizationRepository.findOneWithEagerUsersAndCoursesOrElseThrow(addedOrganization.getId());
-        indexing(addedOrganization);
+        index(addedOrganization);
         return addedOrganization;
     }
 
@@ -82,26 +79,20 @@ public class OrganizationService {
     public Organization update(Organization organization) {
         log.debug("Request to update Organization : {}", organization);
         boolean indexingRequired = false;
-        Optional<Organization> optionalOldOrganization = organizationRepository.findByIdWithEagerUsersAndCourses(organization.getId());
-        if (optionalOldOrganization.isPresent()) {
-            Organization oldOrganization = optionalOldOrganization.get();
-            if (!oldOrganization.getEmailPattern().equals(organization.getEmailPattern())) {
-                indexingRequired = true;
-            }
-            oldOrganization.setName(organization.getName());
-            oldOrganization.setShortName(organization.getShortName());
-            oldOrganization.setUrl(organization.getUrl());
-            oldOrganization.setDescription(organization.getDescription());
-            oldOrganization.setLogoUrl(organization.getLogoUrl());
-            oldOrganization.setEmailPattern(organization.getEmailPattern());
-            if (indexingRequired) {
-                indexing(oldOrganization);
-            }
-            return organizationRepository.save(oldOrganization);
+        var oldOrganization = organizationRepository.findOneWithEagerUsersAndCoursesOrElseThrow(organization.getId());
+        if (!oldOrganization.getEmailPattern().equals(organization.getEmailPattern())) {
+            indexingRequired = true;
         }
-        else {
-            throw new EntityNotFoundException("Organization with id: \"" + organization.getId() + "\" does not exist");
+        oldOrganization.setName(organization.getName());
+        oldOrganization.setShortName(organization.getShortName());
+        oldOrganization.setUrl(organization.getUrl());
+        oldOrganization.setDescription(organization.getDescription());
+        oldOrganization.setLogoUrl(organization.getLogoUrl());
+        oldOrganization.setEmailPattern(organization.getEmailPattern());
+        if (indexingRequired) {
+            index(oldOrganization);
         }
+        return organizationRepository.save(oldOrganization);
     }
 
     /**

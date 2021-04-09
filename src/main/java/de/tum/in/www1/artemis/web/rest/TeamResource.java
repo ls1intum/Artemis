@@ -198,7 +198,7 @@ public class TeamResource {
 
         savedTeam.filterSensitiveInformation();
         savedTeam.getStudents().forEach(student -> student.setVisibleRegistrationNumber(student.getRegistrationNumber()));
-        var participationsOfSavedTeam = studentParticipationRepository.findByExerciseIdAndTeamIdWithEagerResultsAndSubmissions(exercise.getId(), savedTeam.getId());
+        var participationsOfSavedTeam = studentParticipationRepository.findByExerciseIdAndTeamIdWithEagerResultsAndLegalSubmissions(exercise.getId(), savedTeam.getId());
         teamWebsocketService.sendTeamAssignmentUpdate(exercise, existingTeam.get(), savedTeam, participationsOfSavedTeam);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, team.getId().toString())).body(savedTeam);
     }
@@ -464,7 +464,7 @@ public class TeamResource {
         List<StudentParticipation> participations;
         if (authCheckService.isAtLeastInstructorInCourse(course, user) || teams.stream().map(Team::getOwner).allMatch(user::equals)) {
             // fetch including submissions and results for team tutor and instructors
-            participations = studentParticipationRepository.findAllByCourseIdAndTeamShortNameWithEagerSubmissionsResult(course.getId(), teamShortName);
+            participations = studentParticipationRepository.findAllByCourseIdAndTeamShortNameWithEagerLegalSubmissionsResult(course.getId(), teamShortName);
             submissionService.reduceParticipationSubmissionsToLatest(participations, false);
         }
         else {
@@ -474,7 +474,7 @@ public class TeamResource {
         }
 
         // Set the submission count for all participations
-        Map<Long, Integer> submissionCountMap = studentParticipationRepository.countSubmissionsPerParticipationByCourseIdAndTeamShortNameAsMap(courseId, teamShortName);
+        Map<Long, Integer> submissionCountMap = studentParticipationRepository.countLegalSubmissionsPerParticipationByCourseIdAndTeamShortNameAsMap(courseId, teamShortName);
         participations.forEach(participation -> participation.setSubmissionCount(submissionCountMap.get(participation.getId())));
 
         // Set studentParticipations on all exercises
@@ -500,7 +500,7 @@ public class TeamResource {
      */
     private void sendTeamAssignmentUpdates(Exercise exercise, List<Team> teams) {
         // Get participation to given exercise into a map which participation identifiers as key and a lists of all participation with that identifier as value
-        Map<String, List<StudentParticipation>> participationsMap = studentParticipationRepository.findByExerciseIdWithEagerSubmissionsResult(exercise.getId()).stream()
+        Map<String, List<StudentParticipation>> participationsMap = studentParticipationRepository.findByExerciseIdWithEagerLegalSubmissionsResult(exercise.getId()).stream()
                 .collect(Collectors.toMap(StudentParticipation::getParticipantIdentifier, List::of, (a, b) -> Stream.concat(a.stream(), b.stream()).collect(Collectors.toList())));
 
         // Send out team assignment update via websockets to each team

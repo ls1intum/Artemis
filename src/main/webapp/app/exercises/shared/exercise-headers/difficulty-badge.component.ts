@@ -9,7 +9,7 @@ import { DifficultyLevel, Exercise } from 'app/entities/exercise.model';
 })
 export class DifficultyBadgeComponent implements OnInit, OnDestroy {
     @Input() exercise: Exercise;
-    @Input() showNoLevel: true;
+    @Input() showNoLevel: boolean;
     public translatedDifficulty: string;
     public badgeClass: string;
     private translateSubscription: Subscription;
