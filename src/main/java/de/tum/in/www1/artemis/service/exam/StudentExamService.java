@@ -138,7 +138,7 @@ public class StudentExamService {
     }
 
     private void saveSubmissions(StudentExam studentExam, User currentUser) {
-        List<StudentParticipation> existingParticipations = studentParticipationRepository.findByStudentExamWithEagerSubmissionsResult(studentExam, false);
+        List<StudentParticipation> existingParticipations = studentParticipationRepository.findByStudentExamWithEagerLegalSubmissionsResult(studentExam, false);
 
         for (Exercise exercise : studentExam.getExercises()) {
             // we do not apply the following checks for programming exercises or file upload exercises
@@ -158,7 +158,7 @@ public class StudentExamService {
             try {
                 if (exercise.getStudentParticipations() != null && exercise.getStudentParticipations().size() == 1) {
                     var studentParticipation = exercise.getStudentParticipations().iterator().next();
-                    var latestSubmission = programmingSubmissionRepository.findLatestSubmissionForParticipation(studentParticipation.getId(), PageRequest.of(0, 1)).stream()
+                    var latestSubmission = programmingSubmissionRepository.findLatestLegalSubmissionForParticipation(studentParticipation.getId(), PageRequest.of(0, 1)).stream()
                             .findFirst();
                     latestSubmission.ifPresent(programmingSubmission -> studentParticipation.setSubmissions(Set.of(programmingSubmission)));
                 }
@@ -227,7 +227,7 @@ public class StudentExamService {
                             submissionVersionService.saveVersionForIndividual(submission, currentUser.getLogin());
                         }
                         catch (Exception ex) {
-                            log.error("Submission version could not be saved: " + ex);
+                            log.error("Submission version could not be saved", ex);
                         }
                     }
                 }
@@ -251,7 +251,7 @@ public class StudentExamService {
                                 .filter(exercise -> exercise instanceof ModelingExercise || exercise instanceof TextExercise || exercise instanceof FileUploadExercise)
                                 .collect(Collectors.toList())));
         for (final var user : exercisesOfUser.keySet()) {
-            final var studentParticipations = studentParticipationRepository.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(user.getId(),
+            final var studentParticipations = studentParticipationRepository.findByStudentIdAndIndividualExercisesWithEagerLegalSubmissionsResultIgnoreTestRuns(user.getId(),
                     exercisesOfUser.get(user));
             for (final var studentParticipation : studentParticipations) {
                 final var latestSubmission = studentParticipation.findLatestSubmission();
@@ -286,7 +286,7 @@ public class StudentExamService {
                                 .filter(exercise -> exercise instanceof ModelingExercise || exercise instanceof TextExercise || exercise instanceof FileUploadExercise)
                                 .collect(Collectors.toList())));
         for (final var user : exercisesOfUser.keySet()) {
-            final var studentParticipations = studentParticipationRepository.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(user.getId(),
+            final var studentParticipations = studentParticipationRepository.findByStudentIdAndIndividualExercisesWithEagerLegalSubmissionsResultIgnoreTestRuns(user.getId(),
                     exercisesOfUser.get(user));
             for (final var studentParticipation : studentParticipations) {
                 final var latestSubmission = studentParticipation.findLatestSubmission();
@@ -446,7 +446,7 @@ public class StudentExamService {
     public StudentExam deleteTestRun(Long testRunId) {
         var testRun = studentExamRepository.findByIdWithExercisesElseThrow(testRunId);
         User instructor = testRun.getUser();
-        var participations = studentParticipationRepository.findTestRunParticipationsByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(instructor.getId(),
+        var participations = studentParticipationRepository.findTestRunParticipationsByStudentIdAndIndividualExercisesWithEagerLegalSubmissionsResult(instructor.getId(),
                 testRun.getExercises());
         testRun.getExercises().forEach(exercise -> {
             var relevantParticipation = exercise.findRelevantParticipation(participations);

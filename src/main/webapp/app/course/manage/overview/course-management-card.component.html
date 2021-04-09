@@ -143,11 +143,11 @@
             </div>
             <div class="col-4 section-card statistics-card align-center">
                 <div class="section-content align-center">
-                    <jhi-course-management-statistics
+                    <jhi-course-management-overview-statistics
                         [initialStats]="courseStatistics?.activeStudents"
                         [amountOfStudentsInCourse]="!!courseWithUsers && courseWithUsers.numberOfStudents ? courseWithUsers.numberOfStudents : 0"
                     >
-                    </jhi-course-management-statistics>
+                    </jhi-course-management-overview-statistics>
                 </div>
             </div>
         </div>
@@ -218,6 +218,15 @@
         >
             <fa-icon [icon]="'table'"></fa-icon>
             <span class="d-none d-md-inline">{{ 'entity.action.scores' | artemisTranslate }}</span>
+        </a>
+        <a
+            *ngIf="course.isAtLeastTutor"
+            [routerLink]="['/course-management', course.id, 'course-statistics']"
+            class="btn btn-info mr-1 mb-1"
+            [ngbTooltip]="'artemisApp.courseStatistics.statistics' | artemisTranslate"
+        >
+            <fa-icon [icon]="'chart-bar'"></fa-icon>
+            <span class="d-none d-md-inline">{{ 'artemisApp.courseStatistics.statistics' | artemisTranslate }}</span>
         </a>
     </div>
 </div>

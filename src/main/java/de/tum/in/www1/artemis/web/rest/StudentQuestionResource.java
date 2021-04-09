@@ -254,6 +254,7 @@ public class StudentQuestionResource {
         log.info("StudentQuestion deleted by " + user.getLogin() + ". Question: " + studentQuestion.getQuestionText() + " for " + entity, user.getLogin());
         studentQuestionRepository.deleteById(studentQuestionId);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, studentQuestionId.toString())).build();
+
     }
 
     /**

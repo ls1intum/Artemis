@@ -115,7 +115,7 @@ public class SAML2Configuration extends WebSecurityConfigurerAdapter {
         File certFile = new File(config.getCertFile());
 
         if (!keyFile.exists() || !certFile.exists()) {
-            log.error("Keyfile or Certfile for SAML[" + config.getRegistrationId() + "] does not exist.");
+            log.error("Keyfile or Certfile for SAML[{}] does not exist.", config.getRegistrationId());
             return false;
         }
 

@@ -242,8 +242,8 @@ public class ParticipationResource {
         }
         StudentParticipation currentParticipation = studentParticipationRepository.findByIdElseThrow(participation.getId());
         if (currentParticipation.getPresentationScore() != null && currentParticipation.getPresentationScore() > participation.getPresentationScore()) {
-            log.info(user.getLogin() + " removed the presentation score of " + participation.getParticipantIdentifier() + " for exercise with participationId "
-                    + participation.getExercise().getId());
+            log.info("{} removed the presentation score of {} for exercise with participationId {}", user.getLogin(), participation.getParticipantIdentifier(),
+                    participation.getExercise().getId());
         }
 
         Participation result = studentParticipationRepository.saveAndFlush(participation);
@@ -279,7 +279,7 @@ public class ParticipationResource {
         }
         participations = participations.stream().filter(participation -> participation.getParticipant() != null).collect(Collectors.toList());
 
-        Map<Long, Integer> submissionCountMap = studentParticipationRepository.countSubmissionsPerParticipationByExerciseIdAsMap(exerciseId);
+        Map<Long, Integer> submissionCountMap = studentParticipationRepository.countLegalSubmissionsPerParticipationByExerciseIdAsMap(exerciseId);
         participations.forEach(participation -> participation.setSubmissionCount(submissionCountMap.get(participation.getId())));
 
         return ResponseEntity.ok(participations);
@@ -348,7 +348,7 @@ public class ParticipationResource {
             resultCount += participation.getResults().size();
         }
         long end = System.currentTimeMillis();
-        log.info("Found " + participations.size() + " particpations with " + resultCount + " results in " + (end - start) + " ms");
+        log.info("Found {} particpations with {} results in {}ms", participations.size(), resultCount, end - start);
         return ResponseEntity.ok().body(participations);
     }
 

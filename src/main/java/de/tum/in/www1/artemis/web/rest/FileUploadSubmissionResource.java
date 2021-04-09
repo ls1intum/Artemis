@@ -110,9 +110,9 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
         }
 
         // Check the file size
-        if (file.getSize() > Constants.MAX_UPLOAD_FILESIZE_BYTES) {
-            // NOTE: Maximum file size for submission is 4 MB
-            return ResponseEntity.status(413).headers(HeaderUtil.createAlert(applicationName, "The maximum file size is 4 MB!", "fileUploadSubmissionFileTooBig")).build();
+        if (file.getSize() > Constants.MAX_SUBMISSION_FILE_SIZE) {
+            // NOTE: Maximum file size for submission is 8 MB
+            return ResponseEntity.status(413).headers(HeaderUtil.createAlert(applicationName, "The maximum file size is 8 MB!", "fileUploadSubmissionFileTooBig")).build();
         }
 
         // Check the pattern
@@ -141,7 +141,7 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
 
         this.fileUploadSubmissionService.hideDetails(submission, user);
         long end = System.currentTimeMillis();
-        log.info("submitFileUploadExercise took " + (end - start) + "ms for exercise " + exerciseId + " and user " + user.getLogin());
+        log.info("submitFileUploadExercise took {}ms for exercise {} and user {}", end - start, exerciseId, user.getLogin());
         return ResponseEntity.ok(submission);
     }
 
@@ -281,7 +281,7 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
     @GetMapping("/participations/{participationId}/file-upload-editor")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<FileUploadSubmission> getDataForFileUpload(@PathVariable Long participationId) {
-        StudentParticipation participation = studentParticipationRepository.findByIdWithSubmissionsResultsFeedbackElseThrow(participationId);
+        StudentParticipation participation = studentParticipationRepository.findByIdWithLegalSubmissionsResultsFeedbackElseThrow(participationId);
         if (participation == null) {
             return ResponseEntity.notFound()
                     .headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "participationNotFound", "No participation was found for the given ID.")).build();

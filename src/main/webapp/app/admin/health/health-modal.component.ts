@@ -12,7 +12,7 @@ export class HealthModalComponent {
 
     constructor(public activeModal: NgbActiveModal) {}
 
-    readableValue(value: number): string {
+    readableValue(value: any): string {
         if (this.health && this.health.key === 'diskSpace') {
             // Should display storage space in an human readable unit
             const val = value / 1073741824;

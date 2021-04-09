@@ -117,7 +117,7 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
     public ResponseEntity<Result> saveProgrammingAssessment(@PathVariable Long participationId, @RequestParam(value = "submit", defaultValue = "false") boolean submit,
             @RequestBody Result newManualResult) {
         log.debug("REST request to save a new result : {}", newManualResult);
-        final var participation = studentParticipationRepository.findByIdWithSubmissionsResultsFeedbackElseThrow(participationId);
+        final var participation = studentParticipationRepository.findByIdWithResultsElseThrow(participationId);
 
         User user = userRepository.getUserWithGroupsAndAuthorities();
 
@@ -139,7 +139,7 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
 
         final var isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(programmingExercise, user);
         if (!assessmentService.isAllowedToCreateOrOverrideResult(existingManualResult, programmingExercise, participation, user, isAtLeastInstructor)) {
-            log.debug("The user " + user.getLogin() + " is not allowed to override the assessment for the participation " + participation.getId() + " for User " + user.getLogin());
+            log.debug("The user {} is not allowed to override the assessment for the participation {} for User {}", user.getLogin(), participation.getId(), user.getLogin());
             return forbidden("assessment", "assessmentSaveNotAllowed", "The user is not allowed to override the assessment");
         }
 
