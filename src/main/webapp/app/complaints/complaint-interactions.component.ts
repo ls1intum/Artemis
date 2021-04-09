@@ -182,7 +182,7 @@ export class ComplaintInteractionsComponent implements OnInit {
      */
     calculateMaxComplaints() {
         if (this.course) {
-            return this.exercise.teamMode ? this.course.maxTeamComplaints : this.course.maxComplaints;
+            return this.exercise.teamMode ? this.course.maxTeamComplaints! : this.course.maxComplaints!;
         } else {
             return 1;
         }

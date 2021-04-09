@@ -29,7 +29,7 @@
                 [showInOrionWindow]="false"
                 [actionsOnly]="true"
                 [smallButtons]="true"
-                [courseId]="course.id"
+                [courseId]="course.id!"
                 [smallColumns]="true"
                 [equalColumns]="false"
                 [exercise]="exercise"
@@ -62,7 +62,7 @@
                     <jhi-included-in-score-badge [includedInOverallScore]="exercise.includedInOverallScore"></jhi-included-in-score-badge>
                 </h4>
             </div>
-            <div class="col-sm-auto mb-2" *ngIf="exercise.dueDate; else noDate" [ngClass]="getUrgentClass(exercise.dueDate ? exercise.dueDate : exercise.releaseDate)">
+            <div class="col-sm-auto mb-2" *ngIf="exercise.dueDate; else noDate" [ngClass]="getUrgentClass(exercise.dueDate ? exercise.dueDate : exercise.releaseDate) || ''">
                 <span class="d-none d-sm-inline"> {{ 'artemisApp.exercise.dueDate' | artemisTranslate }}: </span>
                 {{ (exercise.dueDate ? exercise.dueDate : exercise.releaseDate!) | artemisTimeAgo }}
             </div>

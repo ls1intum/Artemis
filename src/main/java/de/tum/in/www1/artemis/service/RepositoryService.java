@@ -76,7 +76,7 @@ public class RepositoryService {
                 fileListWithContent.put(file.toString(), FileUtils.readFileToString(file, StandardCharsets.UTF_8));
             }
             catch (IOException e) {
-                log.error("Content of file: " + file.toString() + " could not be loaded and throws the following error: " + e.getMessage());
+                log.error("Content of file: {} could not be loaded and throws the following error: {}", file.toString(), e.getMessage());
             }
         });
         return fileListWithContent;
@@ -86,7 +86,7 @@ public class RepositoryService {
      * Get a single file/folder from repository.
      *
      * @param repository in which the requested file is located.
-     * @param filename of the file to be retrieved.
+     * @param filename   of the file to be retrieved.
      * @return The file if found or throw an exception.
      * @throws IOException if the file can't be found, is corrupt, etc.
      */
@@ -135,7 +135,7 @@ public class RepositoryService {
                     }
                 }
                 catch (IOException e) {
-                    log.error("Comparing file1 " + fileName + " with file2 " + templateFile.toString() + " throws in following error: " + e.getMessage());
+                    log.error("Comparing files '{}' with '{}' failed: {}", fileName, templateFile.toString(), e.getMessage());
                 }
             }
         });

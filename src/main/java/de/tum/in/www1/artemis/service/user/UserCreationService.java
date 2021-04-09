@@ -249,7 +249,7 @@ public class UserCreationService {
      */
     public User saveUser(User user) {
         clearUserCaches(user);
-        log.debug("Save user " + user);
+        log.debug("Save user {}", user);
         return userRepository.save(user);
     }
 
