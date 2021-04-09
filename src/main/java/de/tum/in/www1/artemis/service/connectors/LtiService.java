@@ -241,11 +241,11 @@ public class LtiService {
                 log.error(message);
                 throw new InternalAuthenticationServiceException(message);
             }
-            log.info("Created new user " + newUser);
+            log.info("Created new user {}", newUser);
             return newUser;
         });
 
-        log.info("createNewUserFromLaunchRequest: " + user);
+        log.info("createNewUserFromLaunchRequest: {}", user);
 
         // Make sure the user is activated
         if (!user.getActivated()) {
@@ -380,7 +380,7 @@ public class LtiService {
                 final var message = "LTI signature verification failed with message: " + ltiResult.getMessage() + "; error: " + ltiResult.getError() + ", launch result: "
                         + ltiResult.getLtiLaunchResult();
                 log.error(message);
-                log.error("Request: " + requestString);
+                log.error("Request: {}", requestString);
                 return message;
             }
         }
@@ -458,7 +458,7 @@ public class LtiService {
                     log.info("Response from LTI consumer: {}", responseString);
                 }
                 catch (Exception ex) {
-                    log.error("Reporting to LTI consumer failed: " + ex.getMessage(), ex);
+                    log.error("Reporting to LTI consumer failed", ex);
                 }
             }));
         }

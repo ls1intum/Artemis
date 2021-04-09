@@ -687,8 +687,8 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
 
         // Check the logs
         List<ILoggingEvent> logsList = listAppender.list;
-        assertThat(logsList.get(0).getMessage())
-                .isEqualTo("Cannot stash student repository for participation " + participation.getId() + " because the repository was not copied yet!");
+        assertThat(logsList.get(0).getMessage()).startsWith("Cannot stash student repository for participation ");
+        assertThat(logsList.get(0).getArgumentArray()).containsExactly(participation.getId());
     }
 
     @Test
@@ -818,8 +818,8 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
 
         // Check the logs
         List<ILoggingEvent> logsList = listAppender.list;
-        assertThat(logsList.get(0).getMessage())
-                .isEqualTo("Cannot unlock student repository for participation " + participation.getId() + " because the repository was not copied yet!");
+        assertThat(logsList.get(0).getMessage()).startsWith("Cannot unlock student repository for participation ");
+        assertThat(logsList.get(0).getArgumentArray()).containsExactly(participation.getId());
     }
 
     @Test
@@ -843,8 +843,8 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
 
         // Check the logs
         List<ILoggingEvent> logsList = listAppender.list;
-        assertThat(logsList.get(0).getMessage())
-                .isEqualTo("Cannot lock student repository for participation " + participation.getId() + " because the repository was not copied yet!");
+        assertThat(logsList.get(0).getMessage()).startsWith("Cannot lock student repository for participation ");
+        assertThat(logsList.get(0).getArgumentArray()).containsExactly(participation.getId());
     }
 
     private List<FileSubmission> getFileSubmissions(String fileContent) {
