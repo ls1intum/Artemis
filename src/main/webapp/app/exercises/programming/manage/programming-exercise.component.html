@@ -214,7 +214,7 @@
                         <div class="btn-group flex-btn-group-container">
                             <div class="btn-group-vertical mr-1 mb-1">
                                 <a
-                                    *ngIf="programmingExercise.isAtLeastTutor"
+                                    *ngIf="programmingExercise.isAtLeastInstructor"
                                     [routerLink]="['/course-management', courseId, 'programming-exercises', programmingExercise.id, 'assessment']"
                                     class="btn btn-success btn-sm mr-1 mb-1"
                                 >
