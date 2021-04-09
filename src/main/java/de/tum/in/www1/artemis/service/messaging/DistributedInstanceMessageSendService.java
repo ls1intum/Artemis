@@ -31,43 +31,43 @@ public class DistributedInstanceMessageSendService implements InstanceMessageSen
 
     @Override
     public void sendProgrammingExerciseSchedule(Long exerciseId) {
-        log.info("Sending schedule for programming exercise " + exerciseId + " to broker.");
+        log.info("Sending schedule for programming exercise {} to broker.", exerciseId);
         sendMessageDelayed("programming-exercise-schedule", exerciseId);
     }
 
     @Override
     public void sendProgrammingExerciseScheduleCancel(Long exerciseId) {
-        log.info("Sending schedule cancel for programming exercise " + exerciseId + " to broker.");
+        log.info("Sending schedule cancel for programming exercise {} to broker.", exerciseId);
         sendMessageDelayed("programming-exercise-schedule-cancel", exerciseId);
     }
 
     @Override
     public void sendTextExerciseSchedule(Long exerciseId) {
-        log.info("Sending schedule for text exercise " + exerciseId + " to broker.");
+        log.info("Sending schedule for text exercise {} to broker.", exerciseId);
         sendMessageDelayed("text-exercise-schedule", exerciseId);
     }
 
     @Override
     public void sendTextExerciseScheduleCancel(Long exerciseId) {
-        log.info("Sending schedule cancel for text exercise " + exerciseId + " to broker.");
+        log.info("Sending schedule cancel for text exercise {} to broker.", exerciseId);
         sendMessageDelayed("text-exercise-schedule-cancel", exerciseId);
     }
 
     @Override
     public void sendTextExerciseInstantClustering(Long exerciseId) {
-        log.info("Sending schedule instant clustering for text exercise " + exerciseId + " to broker.");
+        log.info("Sending schedule instant clustering for text exercise {} to broker.", exerciseId);
         sendMessageDelayed("text-exercise-schedule-instant-clustering", exerciseId);
     }
 
     @Override
     public void sendUnlockAllRepositories(Long exerciseId) {
-        log.info("Sending unlock all repositories for programming exercise " + exerciseId + " to broker.");
+        log.info("Sending unlock all repositories for programming exercise {} to broker.", exerciseId);
         sendMessageDelayed("programming-exercise-unlock-repositories", exerciseId);
     }
 
     @Override
     public void sendLockAllRepositories(Long exerciseId) {
-        log.info("Sending lock all repositories for programming exercise " + exerciseId + " to broker.");
+        log.info("Sending lock all repositories for programming exercise {} to broker.", exerciseId);
         sendMessageDelayed("programming-exercise-lock-repositories", exerciseId);
     }
 

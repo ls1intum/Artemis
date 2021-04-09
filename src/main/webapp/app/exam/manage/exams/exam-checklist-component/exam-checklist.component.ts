@@ -1,6 +1,5 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { Exam } from 'app/entities/exam.model';
-import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { HttpResponse } from '@angular/common/http';
 import { AccountService } from 'app/core/auth/account.service';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
@@ -28,18 +27,9 @@ export class ExamChecklistComponent implements OnInit {
     constructor(private accountService: AccountService, private examService: ExamManagementService, private exerciseGroupService: ExerciseGroupService) {}
 
     ngOnInit() {
-        this.exerciseGroupService
-            .findAllForExam(this.exam!.course!.id!, this.exam.id!)
-            .pipe(
-                filter((res) => !!res.body),
-                map((exerciseGroupArray: HttpResponse<ExerciseGroup[]>) => exerciseGroupArray.body!),
-            )
-            .subscribe((exGroups) => {
-                this.exam.exerciseGroups = exGroups;
-                this.checkPointsExercisesEqual();
-                this.checkTotalPointsMandatory();
-                this.checkAllGroupContainsExercise();
-            });
+        this.checkPointsExercisesEqual();
+        this.checkTotalPointsMandatory();
+        this.checkAllGroupContainsExercise();
         this.examService
             .getExamStatistics(this.exam.course!.id!, this.exam.id!)
             .pipe(
