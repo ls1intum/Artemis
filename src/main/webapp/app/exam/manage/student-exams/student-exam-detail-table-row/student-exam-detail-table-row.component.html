@@ -8,7 +8,7 @@
     {{ exercise?.title }}
 </td>
 <td class="align-middle">
-    <ng-container *ngIf="result && result.score && exercise && exercise.maxPoints">
+    <ng-container *ngIf="result && result.score != undefined && exercise && exercise.maxPoints">
         {{ rounding((result.score * exercise.maxPoints) / 100) }}
     </ng-container>
 </td>
