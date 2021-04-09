@@ -19,11 +19,12 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe.ts';
 import * as chai from 'chai';
 import * as moment from 'moment';
-import { JhiAlertService, JhiEventManager, JhiTranslateDirective } from 'ng-jhipster';
+import { JhiAlertService, JhiTranslateDirective } from 'ng-jhipster';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { Observable, of, throwError } from 'rxjs';
-import Sinon, * as sinon from 'sinon';
+import * as sinon from 'sinon';
+import { SinonStub } from 'sinon';
 import * as sinonChai from 'sinon-chai';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
@@ -38,8 +39,6 @@ describe('Course Management Detail Component', () => {
     let fixture: ComponentFixture<CourseGroupComponent>;
     let courseService: CourseManagementService;
     let userService: UserService;
-    let eventManager: JhiEventManager;
-    let alertService: JhiAlertService;
     const courseGroup = CourseGroup.STUDENTS;
     const course = { id: 123, title: 'Course Title', isAtLeastInstructor: true, endDate: moment().subtract(5, 'minutes'), courseArchivePath: 'some-path' };
     const parentRoute = ({
@@ -79,8 +78,6 @@ describe('Course Management Detail Component', () => {
         fixture = TestBed.createComponent(CourseGroupComponent);
         comp = fixture.componentInstance;
         courseService = fixture.debugElement.injector.get(CourseManagementService);
-        alertService = TestBed.inject(JhiAlertService);
-        eventManager = fixture.debugElement.injector.get(JhiEventManager);
         userService = fixture.debugElement.injector.get(UserService);
     });
 
@@ -108,7 +105,7 @@ describe('Course Management Detail Component', () => {
     describe('searchAllUsers', () => {
         let loginOrName: string;
         let loginStream: Observable<{ text: string; entities: User[] }>;
-        let searchStub: Sinon.SinonStub;
+        let searchStub: SinonStub;
 
         beforeEach(() => {
             loginOrName = 'testLoginOrName';

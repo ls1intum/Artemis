@@ -25,6 +25,7 @@ import { Course } from 'app/entities/course.model';
 import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
 import { AssessmentObject, GuidedTourAssessmentTask, GuidedTourModelingTask, personUML } from 'app/guided-tour/guided-tour-task.model';
 import { completedTour } from 'app/guided-tour/tours/general-tour';
+import * as sinon from 'sinon';
 import { SinonStub, stub } from 'sinon';
 import { HttpResponse } from '@angular/common/http';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
@@ -36,7 +37,6 @@ import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.serv
 import { MockCookieService } from '../helpers/mocks/service/mock-cookie.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { MockProvider } from 'ng-mocks';
-import * as sinon from 'sinon';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -174,9 +174,7 @@ describe('GuidedTourService', () => {
                     guidedTourComponentFixture = TestBed.createComponent(GuidedTourComponent);
                     guidedTourComponent = guidedTourComponentFixture.componentInstance;
 
-                    const navBarComponentFixture = TestBed.createComponent(NavbarComponent);
-                    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                    const navBarComponent = navBarComponentFixture.componentInstance;
+                    TestBed.createComponent(NavbarComponent);
 
                     router = TestBed.inject(Router);
                     guidedTourService = TestBed.inject(GuidedTourService);
@@ -313,8 +311,7 @@ describe('GuidedTourService', () => {
                 expect(guidedTourService['currentExercise']).to.equal(exercise1);
                 resetCurrentTour();
 
-                const tourWithoutExerciseMapping = { courseShortName: 'tutorial', tours: { tour_with_course_and_exercise: '' } } as GuidedTourMapping;
-                guidedTourService.guidedTourMapping = tourWithoutExerciseMapping;
+                guidedTourService.guidedTourMapping = { courseShortName: 'tutorial', tours: { tour_with_course_and_exercise: '' } } as GuidedTourMapping;
 
                 // enable tour for matching course title
                 guidedTourService.enableTourForCourseOverview(courses, tourWithCourseAndExercise, true);

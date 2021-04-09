@@ -11,7 +11,6 @@ import { ModelingExercise, UMLDiagramType } from 'app/entities/modeling-exercise
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
-import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import * as chai from 'chai';
 import * as moment from 'moment';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
@@ -27,7 +26,6 @@ const expect = chai.expect;
 describe('Course Management Service', () => {
     let injector: TestBed;
     let service: CourseExerciseService;
-    let participationService: ParticipationWebsocketService;
     let httpMock: HttpTestingController;
     let exerciseId: number;
     const resourceUrl = SERVER_API_URL + 'api/courses';
@@ -62,7 +60,6 @@ describe('Course Management Service', () => {
         service = injector.get(CourseExerciseService);
         httpMock = injector.get(HttpTestingController);
         exerciseId = 123;
-        participationService = injector.get(ParticipationWebsocketService);
 
         course = new Course();
         course.id = 1234;
