@@ -155,7 +155,7 @@ export class GradingInstructionsDetailsComponent implements OnInit {
         this.markdownEditor.parse();
     }
 
-    hasCriterionCommand(domainCommands: [string, DomainCommand][]): boolean {
+    hasCriterionCommand(domainCommands: [string, DomainCommand | null][]): boolean {
         return domainCommands.some(([, command]) => command instanceof GradingCriterionCommand);
     }
 
@@ -167,11 +167,11 @@ export class GradingInstructionsDetailsComponent implements OnInit {
      *       2. for each subarrray a method is called to create the criterion and instruction objects
      * @param domainCommands containing tuples of [text, domainCommandIdentifiers]
      */
-    createSubInstructionCommands(domainCommands: [string, DomainCommand][]): void {
+    createSubInstructionCommands(domainCommands: [string, DomainCommand | null][]): void {
         let instructionCommands;
         let criteriaCommands;
         let endOfInstructionsCommand = 0;
-        if (this.hasCriterionCommand(domainCommands) === false) {
+        if (!this.hasCriterionCommand(domainCommands)) {
             this.setParentForInstructionsWithNoCriterion(domainCommands);
         } else {
             for (const [, command] of domainCommands) {
@@ -197,7 +197,7 @@ export class GradingInstructionsDetailsComponent implements OnInit {
      * @desc 1. creates a dummy criterion object for each stand-alone instruction
      * @param domainCommands containing tuples of [text, domainCommandIdentifiers]
      */
-    setParentForInstructionsWithNoCriterion(domainCommands: [string, DomainCommand][]): void {
+    setParentForInstructionsWithNoCriterion(domainCommands: [string, DomainCommand | null][]): void {
         for (const [, command] of domainCommands) {
             if (command instanceof GradingInstructionCommand) {
                 const dummyCriterion = new GradingCriterion();
@@ -218,7 +218,7 @@ export class GradingInstructionsDetailsComponent implements OnInit {
      *          and creates the instruction objects of this criterion then assigns them to their parent criterion
      * @param domainCommands containing tuples of [text, domainCommandIdentifiers]
      */
-    groupInstructionsToCriteria(domainCommands: [string, DomainCommand][]): void {
+    groupInstructionsToCriteria(domainCommands: [string, DomainCommand | null][]): void {
         const initialCriteriaCommands = domainCommands;
         if (this.exercise.gradingCriteria === undefined) {
             this.exercise.gradingCriteria = [];
@@ -245,7 +245,7 @@ export class GradingInstructionsDetailsComponent implements OnInit {
                 }
             }
         }
-        this.setInstructionParameters(initialCriteriaCommands.filter(([, command]) => command instanceof GradingCriterionCommand === false));
+        this.setInstructionParameters(initialCriteriaCommands.filter(([, command]) => !(command instanceof GradingCriterionCommand)));
     }
 
     /**
@@ -255,7 +255,7 @@ export class GradingInstructionsDetailsComponent implements OnInit {
      *       instruction objects must be created before the method gets triggered
      * @param domainCommands containing tuples of [text, domainCommandIdentifiers]
      */
-    setInstructionParameters(domainCommands: [string, DomainCommand][]): void {
+    setInstructionParameters(domainCommands: [string, DomainCommand | null][]): void {
         let index = 0;
         for (const [text, command] of domainCommands) {
             if (command instanceof CreditsCommand) {
@@ -279,7 +279,7 @@ export class GradingInstructionsDetailsComponent implements OnInit {
      *       2. The tupple order is the same as the order of the commands in the markdown text inserted by the user
      * @param domainCommands containing tuples of [text, domainCommandIdentifiers]
      */
-    domainCommandsFound(domainCommands: [string, DomainCommand][]): void {
+    domainCommandsFound(domainCommands: [string, DomainCommand | null][]): void {
         this.instructions = [];
         this.criteria = [];
         this.exercise.gradingCriteria = [];
