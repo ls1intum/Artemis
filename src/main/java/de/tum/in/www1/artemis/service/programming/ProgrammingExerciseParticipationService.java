@@ -121,6 +121,7 @@ public class ProgrammingExerciseParticipationService {
 
     /**
      * Try to find a programming exercise participation for the given id.
+     * It contains the last submission which might be illegal!
      *
      * @param participationId ProgrammingExerciseParticipation id
      * @return the casted participation

@@ -12,7 +12,7 @@ export class OrionButtonComponent {
     @Input() outlined = false;
     @Input() smallButton = false;
     @Input() disabled = false;
-    @Input() featureToggle = FeatureToggle; // Disable by feature toggle.
+    @Input() featureToggle: FeatureToggle = FeatureToggle.PROGRAMMING_EXERCISES; // Disable by feature toggle.
 
     constructor() {}
 

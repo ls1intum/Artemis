@@ -116,12 +116,13 @@
                         <td>{{ exercise.title }}</td>
                         <td>{{ exercise.dueDate | artemisDate }}</td>
                         <td>{{ exercise.assessmentDueDate | artemisDate }}</td>
-                        <td>{{ exercise.numberOfSubmissions.total }}</td>
+                        <td>{{ exercise.numberOfSubmissions?.total }}</td>
                         <td>{{ exercise.numberOfComplaints }}</td>
                         <td>{{ exercise.numberOfMoreFeedbackRequests }}</td>
                         <td class="text-center">
                             <div class="progress position-relative">
                                 <div
+                                    *ngIf="exercise.numberOfSubmissions && exercise.totalNumberOfAssessments"
                                     class="progress-bar"
                                     role="progressbar"
                                     [ngClass]="calculateClass(exercise.totalNumberOfAssessments.inTime, exercise.numberOfSubmissions.inTime)"
@@ -138,7 +139,10 @@
                                 </div>
                             </div>
 
-                            <div class="progress position-relative mt-1" *ngIf="exercise.numberOfSubmissions.late > 0">
+                            <div
+                                class="progress position-relative mt-1"
+                                *ngIf="exercise.numberOfSubmissions && exercise.totalNumberOfAssessments && exercise.numberOfSubmissions.late > 0"
+                            >
                                 <div
                                     class="progress-bar"
                                     role="progressbar"
