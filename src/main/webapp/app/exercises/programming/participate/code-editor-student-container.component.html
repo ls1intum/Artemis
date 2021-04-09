@@ -2,7 +2,7 @@
 <nav *ngIf="loadingParticipation || participationCouldNotBeFetched" class="card">
     <div class="card-body">
         <span *ngIf="loadingParticipation">
-            <fa-icon [icon]="'circle-notch'" spin="true"></fa-icon>
+            <fa-icon [icon]="'circle-notch'" [spin]="true"></fa-icon>
             <span jhiTranslate="artemisApp.editor.fetchingParticipation"> Your participation is being loaded... </span>
         </span>
         <span *ngIf="participationCouldNotBeFetched">
