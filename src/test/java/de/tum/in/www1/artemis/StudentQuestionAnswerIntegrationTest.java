@@ -231,7 +231,7 @@ public class StudentQuestionAnswerIntegrationTest extends AbstractSpringIntegrat
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void TestGetStudentQuestionAnswer() throws Exception {
+    public void testGetStudentQuestionAnswer() throws Exception {
         StudentQuestionAnswer studentQuestionAnswer = createStudentQuestionAnswersOnServer().get(0);
 
         StudentQuestionAnswer returnedStudentQuestionAnswer = request.get(
@@ -242,7 +242,7 @@ public class StudentQuestionAnswerIntegrationTest extends AbstractSpringIntegrat
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void TestGetStudentQuestionAnswerWithWrongCourseId() throws Exception {
+    public void testGetStudentQuestionAnswerWithWrongCourseId() throws Exception {
         StudentQuestionAnswer studentQuestionAnswer = createStudentQuestionAnswersOnServer().get(0);
         Course dummyCourse = database.createCourse();
 
