@@ -294,7 +294,7 @@ public class StudentExamService {
                 // we want to set it to FINISHED as the exam was handed in.
                 if (studentParticipation.getInitializationState().equals(InitializationState.INITIALIZED)) {
                     studentParticipation.setInitializationState(InitializationState.FINISHED);
-                    studentParticipation = studentParticipationRepository.save(studentParticipation);
+                    studentParticipationRepository.save(studentParticipation);
                 }
                 final var latestSubmission = studentParticipation.findLatestSubmission();
                 if (latestSubmission.isPresent() && latestSubmission.get().isEmpty()) {
