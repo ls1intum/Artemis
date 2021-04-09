@@ -3,7 +3,10 @@ package de.tum.in.www1.artemis.util;
 import static com.google.gson.JsonParser.parseString;
 import static org.assertj.core.api.Assertions.*;
 
+import java.io.IOException;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.*;
@@ -3075,6 +3078,81 @@ public class DatabaseUtilService {
         params.add("minimumScore", String.valueOf(minimumScore));
         params.add("minimumSize", String.valueOf(minimumSize));
         return params;
+    }
+
+    public Course createCourseWithTestModelingAndFileUploadExercisesAndSubmissions() throws Exception {
+        Course course = addCourseWithModelingAndTextAndFileUploadExercise();
+        course.setEndDate(ZonedDateTime.now().minusMinutes(5));
+        course = courseRepo.save(course);
+
+        var fileUploadExercise = findFileUploadExerciseWithTitle(course.getExercises(), "FileUpload");
+        createFileUploadSubmissionWithFile(fileUploadExercise, "uploaded-file.png");
+
+        var textExercise = findTextExerciseWithTitle(course.getExercises(), "Text");
+        var textSubmission = ModelFactory.generateTextSubmission("example text", Language.ENGLISH, true);
+        saveTextSubmission(textExercise, textSubmission, "student1");
+
+        var modelingExercise = findModelingExerciseWithTitle(course.getExercises(), "Modeling");
+        createAndSaveParticipationForExercise(modelingExercise, "student1");
+        String emptyActivityModel = FileUtils.loadFileFromResources("test-data/model-submission/empty-activity-diagram.json");
+        ModelingSubmission submission = ModelFactory.generateModelingSubmission(emptyActivityModel, true);
+        addSubmission(modelingExercise, submission, "student1");
+
+        return course;
+    }
+
+    public FileUploadSubmission createFileUploadSubmissionWithFile(FileUploadExercise fileUploadExercise, String filename) throws IOException {
+        var fileUploadSubmission = ModelFactory.generateFileUploadSubmission(true);
+        fileUploadSubmission = addFileUploadSubmission(fileUploadExercise, fileUploadSubmission, "student1");
+
+        // Create a dummy file
+        var uploadedFileDir = Path.of("./", FileUploadSubmission.buildFilePath(fileUploadExercise.getId(), fileUploadSubmission.getId()));
+        var uploadedFilePath = Path.of(uploadedFileDir.toString(), filename);
+        if (!Files.exists(uploadedFilePath)) {
+            Files.createDirectories(uploadedFileDir);
+            Files.createFile(uploadedFilePath);
+        }
+        fileUploadSubmission.setFilePath(uploadedFilePath.toString());
+        return fileUploadSubmissionRepo.save(fileUploadSubmission);
+    }
+
+    public Course createCourseWithExamAndExercises() throws IOException {
+        Course course = courseRepo.save(addEmptyCourse());
+
+        // Create a file upload exercise with a dummy submission file
+        var exerciseGroup1 = exerciseGroupRepository.save(new ExerciseGroup());
+        var fileUploadExercise = ModelFactory.generateFileUploadExerciseForExam(".png", exerciseGroup1);
+        fileUploadExercise = exerciseRepo.save(fileUploadExercise);
+        createFileUploadSubmissionWithFile(fileUploadExercise, "uploaded-file.png");
+        exerciseGroup1.addExercise(fileUploadExercise);
+        exerciseGroup1 = exerciseGroupRepository.save(exerciseGroup1);
+
+        // Create a text exercise with a dummy submission file
+        var exerciseGroup2 = exerciseGroupRepository.save(new ExerciseGroup());
+        var textExercise = ModelFactory.generateTextExerciseForExam(exerciseGroup2);
+        textExercise = exerciseRepo.save(textExercise);
+        var textSubmission = ModelFactory.generateTextSubmission("example text", Language.ENGLISH, true);
+        saveTextSubmission(textExercise, textSubmission, "student1");
+        exerciseGroup2.addExercise(textExercise);
+        exerciseGroup2 = exerciseGroupRepository.save(exerciseGroup2);
+
+        // Create a modeling exercise with a dummy submission file
+        var exerciseGroup3 = exerciseGroupRepository.save(new ExerciseGroup());
+        var modelingExercise = ModelFactory.generateModelingExerciseForExam(DiagramType.ClassDiagram, exerciseGroup2);
+        modelingExercise = exerciseRepo.save(modelingExercise);
+        String emptyActivityModel = FileUtils.loadFileFromResources("test-data/model-submission/empty-activity-diagram.json");
+        var modelingSubmission = ModelFactory.generateModelingSubmission(emptyActivityModel, true);
+        addSubmission(modelingExercise, modelingSubmission, "student1");
+        exerciseGroup3.addExercise(modelingExercise);
+        exerciseGroupRepository.save(exerciseGroup3);
+
+        Exam exam = addExam(course);
+        exam.setEndDate(ZonedDateTime.now().minusMinutes(5));
+        exam.addExerciseGroup(exerciseGroup1);
+        exam.addExerciseGroup(exerciseGroup2);
+        examRepository.save(exam);
+
+        return course;
     }
 
     public Course createCourseWithProgrammingExerciseAndIllegalAndLegalSubmissions() {
