@@ -1,5 +1,5 @@
 import { SimpleChanges } from '@angular/core';
-import { getExercise, InitializationState, Participation } from 'app/entities/participation/participation.model';
+import { getExercise, Participation } from 'app/entities/participation/participation.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import * as moment from 'moment';
 import { findLatestResult } from 'app/shared/util/utils';
