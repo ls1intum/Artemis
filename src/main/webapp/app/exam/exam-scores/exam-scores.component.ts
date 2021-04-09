@@ -263,8 +263,12 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                 histogramIndex = 100 / this.binWidth - 1;
             }
             this.histogramData[histogramIndex]++;
+            if (!studentResult.exerciseGroupIdToExerciseResult) {
+                continue;
+            }
+            const entries = Object.entries(studentResult.exerciseGroupIdToExerciseResult);
 
-            for (const [exGroupId, studentExerciseResult] of Object.entries(studentResult.exerciseGroupIdToExerciseResult)) {
+            for (const [exGroupId, studentExerciseResult] of entries) {
                 // Ignore exercise results with only empty submission if the option was set
                 if (!studentExerciseResult.hasNonEmptySubmission && this.filterForNonEmptySubmissions) {
                     continue;
