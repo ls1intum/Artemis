@@ -52,6 +52,8 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
     disableEditScore = false;
     constructor(private translateService: TranslateService, public structuredGradingCriterionService: StructuredGradingCriterionService) {}
 
+    ngOnInit() {}
+
     /**
      * Updates the current feedback and sets props and emits the feedback to parent component
      */

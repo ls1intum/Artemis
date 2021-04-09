@@ -216,6 +216,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
                 )
                 .subscribe();
         });
+        console.log('code editor tutor asses container: ', this.highlightDifferences);
     }
 
     /**

@@ -1,4 +1,4 @@
-import { Component, EventEmitter, HostListener, Input, Output, ViewChild } from '@angular/core';
+import { Component, EventEmitter, HostListener, Input, Output, ViewChild, OnInit } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { fromPairs, toPairs, uniq } from 'lodash/fp';
 import { isEmpty as _isEmpty } from 'lodash';
@@ -31,7 +31,7 @@ import { Feedback } from 'app/entities/feedback.model';
     selector: 'jhi-code-editor-container',
     templateUrl: './code-editor-container.component.html',
 })
-export class CodeEditorContainerComponent implements ComponentCanDeactivate {
+export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnInit {
     readonly CommitState = CommitState;
     @ViewChild(CodeEditorGridComponent, { static: false }) grid: CodeEditorGridComponent;
 
@@ -95,6 +95,10 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate {
         private fileService: CodeEditorFileService,
     ) {
         this.initializeProperties();
+    }
+
+    ngOnInit() {
+        console.log('code editor container: ', this.highlightDifferences);
     }
 
     get unsavedFiles() {
