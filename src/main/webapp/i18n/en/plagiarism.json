@@ -26,7 +26,9 @@
             "minimum-size-tooltip-modeling": "Consider only submissions that have at least as many modeling elements as the specified value",
             "minimum-size-tooltip-text": "Consider only submissions that have at least as many characters as the specified value",
             "no-info-available": "No information available",
-            "caution": "Plagiarism detection can take a long time for large courses."
+            "caution": "Plagiarism detection can take a long time for large courses.",
+            "detect": "Detect plagiarism",
+            "rerun": "Rerun plagiarism detection"
         }
     }
 }

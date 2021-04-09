@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.modeling.ApollonDiagram;
@@ -28,5 +29,5 @@ public interface ApollonDiagramRepository extends JpaRepository<ApollonDiagram, 
             FROM ApollonDiagram ad
             WHERE ad.id = :diagramId
             """)
-    String getDiagramTitle(Long diagramId);
+    String getDiagramTitle(@Param("diagramId") Long diagramId);
 }

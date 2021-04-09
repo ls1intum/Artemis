@@ -1,8 +1,11 @@
 package de.tum.in.www1.artemis.web.rest.dto;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 /**
  * This is a dto for providing statistics for the exam instructor dashboard
  */
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class ExamChecklistDTO {
 
     private Long numberOfGeneratedStudentExams;

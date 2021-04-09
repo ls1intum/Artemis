@@ -1,13 +1,9 @@
 package de.tum.in.www1.artemis.service.programming;
 
-import static de.tum.in.www1.artemis.config.Constants.ASSIGNMENT_REPO_NAME;
-import static de.tum.in.www1.artemis.config.Constants.TEST_REPO_NAME;
+import static de.tum.in.www1.artemis.config.Constants.*;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -241,7 +237,7 @@ public class ProgrammingExerciseImportService {
 
             // Copy everything except for the referenced exercise
             copy.setActive(testCase.isActive());
-            copy.setAfterDueDate(testCase.isAfterDueDate());
+            copy.setVisibility(testCase.getVisibility());
             copy.setTestName(testCase.getTestName());
             copy.setWeight(testCase.getWeight());
             copy.setBonusMultiplier(testCase.getBonusMultiplier());

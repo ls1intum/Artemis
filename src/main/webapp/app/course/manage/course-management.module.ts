@@ -7,6 +7,7 @@ import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-
 import { ArtemisColorSelectorModule } from 'app/shared/color-selector/color-selector.module';
 import { ImageCropperModule } from 'ngx-image-cropper';
 import { MomentModule } from 'ngx-moment';
+import { TagInputModule } from 'ngx-chips';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { CourseManagementExercisesComponent } from 'app/course/manage/course-management-exercises.component';
 import { CourseDetailComponent } from 'app/course/manage/course-detail.component';
@@ -41,11 +42,12 @@ import { ArtemisSharedPipesModule } from 'app/shared/pipes/shared-pipes.module';
 import { ArtemisLearningGoalsModule } from 'app/course/learning-goals/learning-goal.module';
 import { CourseManagementCardComponent } from 'app/course/manage/overview/course-management-card.component';
 import { CourseManagementExerciseRowComponent } from './overview/course-management-exercise-row.component';
-import { CourseManagementStatisticsComponent } from './overview/course-management-statistics.component';
+import { CourseManagementOverviewStatisticsComponent } from './overview/course-management-overview-statistics.component';
 import { ArtemisTutorParticipationGraphModule } from 'app/shared/dashboards/tutor-participation-graph/tutor-participation-graph.module';
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { ArtemisCourseParticipantScoresModule } from 'app/course/course-participant-scores/course-participant-scores.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+import { CourseManagementStatisticsComponent } from 'app/course/manage/course-management-statistics.component';
 
 @NgModule({
     imports: [
@@ -56,6 +58,7 @@ import { ArtemisSharedComponentModule } from 'app/shared/components/shared-compo
         ImageCropperModule,
         OrionModule,
         MomentModule,
+        TagInputModule,
         ArtemisExerciseModule,
         ArtemisLectureModule,
         ArtemisCourseScoresModule,
@@ -93,10 +96,11 @@ import { ArtemisSharedComponentModule } from 'app/shared/components/shared-compo
         CourseUpdateComponent,
         CourseExerciseCardComponent,
         CourseManagementExercisesComponent,
+        CourseManagementStatisticsComponent,
         CourseGroupComponent,
         CourseManagementCardComponent,
         CourseManagementExerciseRowComponent,
-        CourseManagementStatisticsComponent,
+        CourseManagementOverviewStatisticsComponent,
     ],
 })
 export class ArtemisCourseManagementModule {}

@@ -20,10 +20,7 @@ import org.w3c.dom.Document;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.offbytwo.jenkins.JenkinsServer;
 
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.exception.JenkinsException;
 import de.tum.in.www1.artemis.repository.UserRepository;
@@ -192,7 +189,7 @@ public class JenkinsBuildPlanService {
             return isJobBuilding ? ContinuousIntegrationService.BuildStatus.BUILDING : ContinuousIntegrationService.BuildStatus.INACTIVE;
         }
         catch (NullPointerException | HttpClientErrorException e) {
-            log.error("Error while trying to fetch build status from Jenkins for " + planKey + ":" + e.getMessage());
+            log.error("Error while trying to fetch build status from Jenkins for {}: {}", planKey, e.getMessage());
             return ContinuousIntegrationService.BuildStatus.INACTIVE;
         }
     }

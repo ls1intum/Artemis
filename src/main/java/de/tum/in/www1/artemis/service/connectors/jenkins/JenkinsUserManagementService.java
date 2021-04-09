@@ -169,13 +169,10 @@ public class JenkinsUserManagementService implements CIUserManagementService {
 
         // Only update a user if it exists.
         var jenkinsUser = getUser(user.getLogin());
-        if (jenkinsUser == null) {
-            createUser(user);
-        }
-        else {
+        if (jenkinsUser != null) {
             deleteUser(user);
-            createUser(user);
         }
+        createUser(user);
     }
 
     /**
@@ -374,7 +371,7 @@ public class JenkinsUserManagementService implements CIUserManagementService {
             }
 
             var errorMessage = "Could not get user " + userLogin;
-            log.error(errorMessage + ": " + e);
+            log.error(errorMessage, e);
             throw new JenkinsException(errorMessage, e);
         }
     }

@@ -395,7 +395,15 @@ Exercise Creation
 
     - **Bonus multiplier**: Allows instructors to multiply the points for passing a test case without affecting the points rewarded for passing other test cases
     - **Bonus points**: Adds a flat point bonus for passing a test case
-    - **After Due Date**: Select test cases that should only be executed after the due date passed. This option is only available if the *Timeline of the whole programming exercise* (available during exercise creation, edit, import option) includes *Run Tests once after Due Date*
+    - **Visibility**: Select the visibility of feedbacks to students for this test case.
+
+      - **Always**: Feedback associated with this test case is visible to students directly after the automatic grading process for their submission.
+      - **After Due Date**: Feedback associated with this test case is visible to students only after the due date for this exercise has passed.
+        Tutors and Instructors are able to see the feedback before the due date.
+      - **Never**: Feedback associated with this test case is *never* visible to students even after the due date for this exercise has passed.
+        Tutors and Instructors are able to see the feedback before and after the due date, e.g. when manually assessing submissions.
+        Additionally, results of this test case are *not* considered in the student score calculation.
+
     - **Is Active**: Displays whether the test case is currently part of the grading configuration. The *Show inactivate test cases* controls whether inactive test cases are displayed
     - **Passed %**: Displays statistics about the percentage of participating students that passed or failed the test case
 
@@ -403,7 +411,7 @@ Exercise Creation
       **Example 1**: Given an exercise with 3 test cases, maximum points of 10 and 10 achievable bonus points. The highest achievable score is :math:`\frac{10+10}{10}*100=200\%`. Test Case (TC) A has weight 2, TC B and TC C have weight 1 (bonus multipliers 1 and bonus points 0 for all test cases). A student that only passes TC A will receive 50% of the maximum points (5 points).
 
     .. note::
-      **Example 2**: Given the configuration of **Example 1** with an additional bonus multiplier of 2 for TC A. Passing TC A accounts for :math:`\frac{2*2}{2+1+1}*100=100\%` of the maximum points (10). Passing TC B or TC C accounts for :math:`\frac{1}{4}*100=25%` of the maximum points (2.5). If the student passes all test cases he will receive a score of 150%, which amounts to 10 points and 5 bonus points.
+      **Example 2**: Given the configuration of **Example 1** with an additional bonus multiplier of 2 for TC A. Passing TC A accounts for :math:`\frac{2*2}{2+1+1}*100=100\%` of the maximum points (10). Passing TC B or TC C accounts for :math:`\frac{1}{4}*100=25\%` of the maximum points (2.5). If the student passes all test cases he will receive a score of 150%, which amounts to 10 points and 5 bonus points.
 
     .. note::
       **Example 3**: Given the configuration of **Example 2** with additional bonus points of 5 for TC B. The points achieved for passing TC A and TC C do not change. Passing TC B now accounts for 2.5 points plus 5 bonus points (7.5). If the student passes all test cases he will receive 10 (TC A) + 7.5 (TC B) + 2.5 (TC C) points, which amounts to 10 points and 10 bonus points and a score of 200%.

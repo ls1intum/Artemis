@@ -20,9 +20,12 @@ import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 import { ArtemisSharedLibsModule } from 'app/shared/shared-libs.module';
 import { CustomMaxDirective } from 'app/shared/validators/custom-max-validator.directive';
 import { CustomMinDirective } from 'app/shared/validators/custom-min-validator.directive';
+import { OrganizationSelectorComponent } from './organization-selector/organization-selector.component';
 import { AdditionalFeedbackComponent } from './additional-feedback/additional-feedback.component';
 import { ResizeableContainerComponent } from './resizeable-container/resizeable-container.component';
 import { TranslatePipe } from '@ngx-translate/core';
+import { StatisticsGraphComponent } from 'app/shared/statistics-graph/statistics-graph.component';
+import { StatisticsAverageScoreGraphComponent } from 'app/shared/statistics-graph/statistics-average-score-graph.component';
 
 @NgModule({
     imports: [ArtemisSharedLibsModule, ArtemisSharedCommonModule, ArtemisSharedPipesModule],
@@ -40,10 +43,13 @@ import { TranslatePipe } from '@ngx-translate/core';
         SlideToggleComponent,
         JhiConnectionStatusComponent,
         ChartComponent,
+        OrganizationSelectorComponent,
         CustomMinDirective,
         CustomMaxDirective,
         ArtemisTranslatePipe,
         ArtemisTimeAgoPipe,
+        StatisticsGraphComponent,
+        StatisticsAverageScoreGraphComponent,
     ],
     entryComponents: [DeleteDialogComponent],
     exports: [
@@ -70,6 +76,8 @@ import { TranslatePipe } from '@ngx-translate/core';
         CustomMaxDirective,
         ArtemisTranslatePipe,
         ArtemisTimeAgoPipe,
+        StatisticsGraphComponent,
+        StatisticsAverageScoreGraphComponent,
     ],
     providers: [ArtemisDatePipe, TranslatePipe],
 })

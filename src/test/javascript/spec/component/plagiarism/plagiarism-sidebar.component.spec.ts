@@ -21,6 +21,13 @@ describe('Plagiarism Sidebar Component', () => {
         comp.pageSize = 10;
     });
 
+    it('displays the run details', () => {
+        spyOn(comp.showRunDetailsChange, 'emit');
+
+        comp.displayRunDetails();
+        expect(comp.showRunDetailsChange.emit).toHaveBeenCalledWith(true);
+    });
+
     it('computes the number of pages with multiple comparisons', () => {
         const numberOfPages = comp.computeNumberOfPages(12);
         expect(numberOfPages).toEqual(1);

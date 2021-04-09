@@ -27,7 +27,7 @@
             <button
                 [disabled]="isLoading"
                 [actionType]="ActionType.Remove"
-                [entityTitle]="exam.title"
+                [entityTitle]="exam.title || ''"
                 [renderButtonText]="false"
                 [buttonSize]="ButtonSize.MEDIUM"
                 jhiDeleteButton

@@ -2,9 +2,12 @@ package de.tum.in.www1.artemis.web.rest.dto;
 
 import java.time.ZonedDateTime;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 /**
  * This is a dto for the repository export options.
  */
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class RepositoryExportOptionsDTO {
 
     private boolean exportAllParticipants;

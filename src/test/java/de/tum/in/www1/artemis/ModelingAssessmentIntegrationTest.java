@@ -22,9 +22,12 @@ import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismComparison;
+import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismStatus;
+import de.tum.in.www1.artemis.domain.plagiarism.modeling.ModelingPlagiarismResult;
+import de.tum.in.www1.artemis.domain.plagiarism.modeling.ModelingSubmissionElement;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.AssessmentService;
-import de.tum.in.www1.artemis.service.ModelingSubmissionService;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.compass.CompassService;
 import de.tum.in.www1.artemis.util.FileUtils;
@@ -35,49 +38,43 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
     public static final String API_MODELING_SUBMISSIONS = "/api/modeling-submissions/";
 
     @Autowired
-    CourseRepository courseRepo;
+    private ExerciseRepository exerciseRepo;
 
     @Autowired
-    ExerciseRepository exerciseRepo;
+    private UserRepository userRepo;
 
     @Autowired
-    UserRepository userRepo;
+    private ModelingSubmissionRepository modelingSubmissionRepo;
 
     @Autowired
-    ModelingSubmissionService modelSubmissionService;
+    private ResultRepository resultRepo;
 
     @Autowired
-    ModelingSubmissionRepository modelingSubmissionRepo;
+    private ParticipationService participationService;
 
     @Autowired
-    ResultRepository resultRepo;
+    private ExampleSubmissionRepository exampleSubmissionRepository;
 
     @Autowired
-    ParticipationService participationService;
+    private CompassService compassService;
 
     @Autowired
-    ExampleSubmissionRepository exampleSubmissionRepository;
+    private AssessmentService assessmentService;
 
     @Autowired
-    CompassService compassService;
+    private ExamRepository examRepository;
 
     @Autowired
-    AssessmentService assessmentService;
+    private StudentParticipationRepository studentParticipationRepository;
 
     @Autowired
-    ExamRepository examRepository;
+    private SubmissionRepository submissionRepository;
 
     @Autowired
-    StudentParticipationRepository studentParticipationRepository;
+    private ComplaintResponseRepository complaintResponseRepository;
 
     @Autowired
-    SubmissionRepository submissionRepository;
-
-    @Autowired
-    ComplaintResponseRepository complaintResponseRepository;
-
-    @Autowired
-    ComplaintRepository complaintRepository;
+    private ComplaintRepository complaintRepository;
 
     private ModelingExercise classExercise;
 
@@ -494,6 +491,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
 
         request.get("/api/modeling-exercises/" + classExercise.getId() + "/print-statistic", HttpStatus.OK, String.class); // void == empty string
         String statistics = request.get("/api/modeling-exercises/" + classExercise.getId() + "/statistics", HttpStatus.OK, String.class);
+        assertThat(statistics).isNotNull();
         // TODO: assert that the statistics is correct
     }
 
@@ -1054,7 +1052,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
         assertThat(firstSubmittedManualResult.getParticipation()).isEqualTo(studentParticipation);
 
         // verify that the relationship between student participation,
-        var databaseRelationshipStateOfResultsOverParticipation = studentParticipationRepository.findWithEagerSubmissionsAndResultsAssessorsById(studentParticipation.getId());
+        var databaseRelationshipStateOfResultsOverParticipation = studentParticipationRepository.findWithEagerLegalSubmissionsAndResultsAssessorsById(studentParticipation.getId());
         assertThat(databaseRelationshipStateOfResultsOverParticipation.isPresent()).isTrue();
         var fetchedParticipation = databaseRelationshipStateOfResultsOverParticipation.get();
 
@@ -1064,7 +1062,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
         assertThat(fetchedParticipation.findLatestResult()).isEqualTo(firstSubmittedManualResult);
 
         var databaseRelationshipStateOfResultsOverSubmission = studentParticipationRepository
-                .findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseId(exercise.getId());
+                .findAllWithEagerLegalSubmissionsAndEagerResultsAndEagerAssessorByExerciseId(exercise.getId());
         assertThat(databaseRelationshipStateOfResultsOverSubmission.size()).isEqualTo(1);
         fetchedParticipation = databaseRelationshipStateOfResultsOverSubmission.get(0);
         assertThat(fetchedParticipation.getSubmissions().size()).isEqualTo(1);
@@ -1091,7 +1089,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
         assertThat(submissionWithoutSecondAssessment.getLatestResult().getAssessmentType()).isEqualTo(AssessmentType.MANUAL);
 
         // verify that the relationship between student participation,
-        databaseRelationshipStateOfResultsOverParticipation = studentParticipationRepository.findWithEagerSubmissionsAndResultsAssessorsById(studentParticipation.getId());
+        databaseRelationshipStateOfResultsOverParticipation = studentParticipationRepository.findWithEagerLegalSubmissionsAndResultsAssessorsById(studentParticipation.getId());
         assertThat(databaseRelationshipStateOfResultsOverParticipation.isPresent()).isTrue();
         fetchedParticipation = databaseRelationshipStateOfResultsOverParticipation.get();
 
@@ -1101,7 +1099,8 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
         assertThat(fetchedParticipation.getResults().stream().filter(x -> x.getCompletionDate() == null).findFirst().get())
                 .isEqualTo(submissionWithoutSecondAssessment.getLatestResult());
 
-        databaseRelationshipStateOfResultsOverSubmission = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseId(exercise.getId());
+        databaseRelationshipStateOfResultsOverSubmission = studentParticipationRepository
+                .findAllWithEagerLegalSubmissionsAndEagerResultsAndEagerAssessorByExerciseId(exercise.getId());
         assertThat(databaseRelationshipStateOfResultsOverSubmission.size()).isEqualTo(1);
         fetchedParticipation = databaseRelationshipStateOfResultsOverSubmission.get(0);
         assertThat(fetchedParticipation.getSubmissions().size()).isEqualTo(1);
@@ -1254,6 +1253,22 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
         assertThat(savedSubmission.getLatestResult().getScore()).isEqualTo(40L);
         assertThat(savedSubmission.getLatestResult().hasComplaint()).isEqualTo(true);
 
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testCheckPlagiarismIdenticalLongTexts() throws Exception {
+        database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.json", "student1");
+        database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.json", "student2");
+        var path = "/api/modeling-exercises/" + classExercise.getId() + "/check-plagiarism";
+        var result = request.get(path, HttpStatus.OK, ModelingPlagiarismResult.class, database.getDefaultPlagiarismOptions());
+        assertThat(result.getComparisons()).hasSize(1);
+        assertThat(result.getExercise().getId()).isEqualTo(classExercise.getId());
+
+        PlagiarismComparison<ModelingSubmissionElement> comparison = result.getComparisons().iterator().next();
+
+        assertThat(comparison.getSimilarity()).isEqualTo(100.0, Offset.offset(0.1));
+        assertThat(comparison.getStatus()).isEqualTo(PlagiarismStatus.NONE);
     }
 
 }

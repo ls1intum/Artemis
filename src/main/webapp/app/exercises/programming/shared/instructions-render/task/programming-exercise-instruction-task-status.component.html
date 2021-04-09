@@ -13,6 +13,7 @@
         <span
             *ngIf="latestResult && latestResult.successful && (!latestResult.feedbacks || !latestResult.feedbacks.length); else detailedResult"
             class="text-success"
+            [class.test-status--linked]="hasMessage"
             [innerHTML]="translationBasePath + 'testPassing' | artemisTranslate"
         ></span>
         <!-- Some tests are successful, some not, show detailed status.-->
@@ -21,9 +22,9 @@
                 *ngIf="latestResult && latestResult.feedbacks && latestResult.feedbacks.length; else noResult"
                 class="guided-tour"
                 [class]="tests.length === successfulTests.length ? 'text-success' : failedTests.length ? 'text-danger' : 'text-secondary'"
-                [class.test-status--linked]="tests.length !== successfulTests.length"
+                [class.test-status--linked]="tests.length !== successfulTests.length || hasMessage"
                 [innerHTML]="translationBasePath + 'totalTestsPassing' | artemisTranslate: { totalTests: tests.length, passedTests: successfulTests.length }"
-                (click)="failedTests.length + notExecutedTests.length > 0 ? showDetailsForTests() : null"
+                (click)="failedTests.length + notExecutedTests.length > 0 || hasMessage ? showDetailsForTests() : null"
             ></span>
             <fa-icon *ngIf="failedTests.length > 0 && exerciseHints.length" [icon]="'question-circle'" class="text-secondary" (click)="openHintsModal()"></fa-icon>
         </ng-template>

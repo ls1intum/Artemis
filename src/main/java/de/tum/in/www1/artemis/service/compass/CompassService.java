@@ -219,7 +219,7 @@ public class CompassService {
      * @param modelingAssessment the new assessment as a list of Feedback
      */
     public void addAssessment(long exerciseId, long submissionId, List<Feedback> modelingAssessment) {
-        log.info("Add assessment for exercise " + exerciseId + " and model " + submissionId);
+        log.info("Add assessment for exercise {} and model {}", exerciseId, submissionId);
         if (!isSupported(exerciseId) || !loadExerciseIfSuspended(exerciseId)) { // TODO rework after distinguishing between saved and submitted assessments
             return;
         }
@@ -468,7 +468,7 @@ public class CompassService {
         if (compassCalculationEngines.containsKey(exerciseId)) {
             return;
         }
-        log.info("Loading Compass calculation engine for exercise " + exerciseId);
+        log.info("Loading Compass calculation engine for exercise {}", exerciseId);
 
         Set<ModelingSubmission> modelingSubmissions = getSubmissionsForExercise(exerciseId);
         CompassCalculationEngine calculationEngine = new CompassCalculationEngine(exerciseId, modelingSubmissions, hazelcastInstance);
@@ -529,9 +529,11 @@ public class CompassService {
      */
     public List<Long> getCalculationEngineModelsWaitingForAssessment(Long exerciseId) {
         List<ModelingSubmission> modelingSubmissions = modelingSubmissionRepository.findSubmittedByExerciseIdWithEagerResultsAndFeedback(exerciseId);
-        assessAllAutomatically(modelingSubmissions.stream().map(Submission::getId).collect(Collectors.toList()), exerciseId);
+
         CompassCalculationEngine engine = compassCalculationEngines.get(exerciseId);
         engine.notifyNewModels(modelingSubmissions);
+
+        assessAllAutomatically(modelingSubmissions.stream().map(Submission::getId).collect(Collectors.toList()), exerciseId);
 
         return engine.getModelsWaitingForAssessment();
     }

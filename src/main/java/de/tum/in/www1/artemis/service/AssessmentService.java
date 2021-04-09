@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -16,7 +17,6 @@ import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.connectors.LtiService;
 import de.tum.in.www1.artemis.service.exam.ExamDateService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingAssessmentService;
@@ -100,6 +100,8 @@ public class AssessmentService {
 
         // Update the result that was complained about with the new feedback
         originalResult.updateAllFeedbackItems(assessmentUpdate.getFeedbacks(), exercise instanceof ProgrammingExercise);
+        // persist feedback before result to prevent "null index column for collection" error
+        storeAssociatedFeedbackInDatabase(originalResult);
         if (exercise instanceof ProgrammingExercise) {
             double points = ((ProgrammingAssessmentService) this).calculateTotalScore(originalResult);
             originalResult.setScore(points, exercise.getMaxPoints());
@@ -116,6 +118,26 @@ public class AssessmentService {
         else {
             return resultRepository.submitResult(originalResult, exercise);
         }
+    }
+
+    /**
+     * With ordered collections (like result and feedback here),
+     * we have to be very careful with the way we persist the objects in the database.
+     * We must first persist the child object without a relation to the parent object.
+     * Then, we recreate the association and persist the parent object.
+     */
+    private void storeAssociatedFeedbackInDatabase(Result originalResult) {
+        List<Feedback> savedFeedbacks = new ArrayList<>();
+        originalResult.getFeedbacks().forEach(feedback -> {
+            // cut association to parent object
+            feedback.setResult(null);
+            // persist the child object without an association to the parent object.
+            feedback = feedbackRepository.saveAndFlush(feedback);
+            // restore the association to the parent object
+            feedback.setResult(originalResult);
+            savedFeedbacks.add(feedback);
+        });
+        originalResult.setFeedbacks(savedFeedbacks);
     }
 
     /**

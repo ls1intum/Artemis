@@ -21,7 +21,7 @@
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
-        max-width: 40ch;
+        max-width: 50ch;
         display: block;
     }
 
@@ -157,9 +157,19 @@
     }
 }
 
-@media screen and (max-width: 1750px) {
+@media screen and (max-width: 1900px) {
     .hide-categories {
         display: none !important;
+    }
+
+    .course-item {
+        .item-title {
+            max-width: 40ch;
+        }
+
+        .exercise-date-container {
+            margin-right: unset !important;
+        }
     }
 }
 
@@ -171,15 +181,9 @@
     .pointer-row {
         min-width: 45%;
     }
-
-    .course-item {
-        .exercise-date-container {
-            margin-right: unset !important;
-        }
-    }
 }
 
-@media screen and (max-width: 1400px) {
+@media screen and (max-width: 1450px) {
     .hide-1400 {
         display: none !important;
     }

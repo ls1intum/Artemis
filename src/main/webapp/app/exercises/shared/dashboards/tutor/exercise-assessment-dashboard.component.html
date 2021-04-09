@@ -73,11 +73,11 @@
                     <div class="col-8">{{ 'artemisApp.exerciseAssessmentDashboard.numberOfSubmissionsAssessedByYou' | artemisTranslate }}</div>
                     <div class="col-4">{{ numberOfTutorAssessments }} ({{ tutorAssessmentPercentage }}%)</div>
                 </div>
-                <div class="row mb-1">
+                <div class="row mb-1" *ngIf="complaintsEnabled">
                     <div class="col-8">{{ 'artemisApp.assessmentDashboard.totalComplaints' | artemisTranslate }}</div>
                     <div class="col-4">{{ numberOfComplaints }}</div>
                 </div>
-                <div class="row mb-1">
+                <div class="row mb-1" *ngIf="complaintsEnabled">
                     <div class="col-8">{{ 'artemisApp.assessmentDashboard.complaintsAboutYourAssessments' | artemisTranslate }}</div>
                     <div class="col-4">
                         <a [routerLink]="['/course-management', courseId, 'exercises', exercise.id, 'complaints']" [queryParams]="{ tutorId: tutor?.id }">{{
@@ -85,11 +85,11 @@
                         }}</a>
                     </div>
                 </div>
-                <div class="row mb-1">
+                <div class="row mb-1" *ngIf="feedbackRequestEnabled">
                     <div class="col-8">{{ 'artemisApp.assessmentDashboard.totalMoreFeedbackRequests' | artemisTranslate }}</div>
                     <div class="col-4">{{ numberOfMoreFeedbackRequests }}</div>
                 </div>
-                <div class="row mb-1">
+                <div class="row mb-1" *ngIf="feedbackRequestEnabled">
                     <div class="col-8">{{ 'artemisApp.assessmentDashboard.moreFeedbackRequestsForYourAssessments' | artemisTranslate }}</div>
                     <div class="col-4">
                         <a [routerLink]="['/course-management', courseId, 'exercises', exercise.id, 'more-feedback-requests']" [queryParams]="{ tutorId: tutor?.id }">{{

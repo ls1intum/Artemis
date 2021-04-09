@@ -14,45 +14,25 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.repository.RatingRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.RatingService;
-import de.tum.in.www1.artemis.service.user.UserService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
 public class RatingResourceIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
-    CourseRepository courseRepository;
+    private ExerciseRepository exerciseRepo;
 
     @Autowired
-    ExerciseRepository exerciseRepo;
+    private RatingService ratingService;
 
     @Autowired
-    ResultRepository resultRepo;
+    private RatingRepository ratingRepo;
 
     @Autowired
-    UserService userService;
-
-    @Autowired
-    UserRepository userRepository;
-
-    @Autowired
-    RatingService ratingService;
-
-    @Autowired
-    RatingRepository ratingRepo;
-
-    @Autowired
-    SubmissionRepository submissionRepo;
-
-    @Autowired
-    UserRepository userRepo;
-
-    private TextExercise exercise;
-
-    private List<User> users;
-
-    private TextSubmission submission;
+    private UserRepository userRepo;
 
     private Result result;
 
@@ -62,13 +42,13 @@ public class RatingResourceIntegrationTest extends AbstractSpringIntegrationBamb
 
     @BeforeEach
     public void initTestCase() {
-        users = database.addUsers(2, 1, 1);
+        List<User> users = database.addUsers(2, 1, 1);
         course = database.addCourseWithOneReleasedTextExercise();
-        exercise = (TextExercise) exerciseRepo.findAll().get(0);
+        TextExercise exercise = (TextExercise) exerciseRepo.findAll().get(0);
         User student1 = users.get(0);
         database.createAndSaveParticipationForExercise(exercise, student1.getLogin());
 
-        submission = ModelFactory.generateTextSubmission("example text", Language.ENGLISH, true);
+        TextSubmission submission = ModelFactory.generateTextSubmission("example text", Language.ENGLISH, true);
         submission = database.saveTextSubmission(exercise, submission, student1.getLogin());
         submission = (TextSubmission) database.addResultToSubmission(submission, null, null, 0D, true);
         result = submission.getLatestResult();

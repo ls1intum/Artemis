@@ -143,7 +143,15 @@
                 </thead>
                 <tbody>
                     <ng-template ngFor let-exercise [ngForOf]="studentExam.exercises" let-i="index">
-                        <tr jhi-student-exam-detail-table-row [course]="course" [examId]="examId" [exercise]="exercise" [busy]="busy" [isTestRun]="isTestRun"></tr>
+                        <tr
+                            jhi-student-exam-detail-table-row
+                            [course]="course"
+                            [examId]="examId"
+                            [exercise]="exercise"
+                            [busy]="busy"
+                            [isTestRun]="isTestRun"
+                            [studentExam]="studentExam"
+                        ></tr>
                     </ng-template>
                     <tr>
                         <td></td>

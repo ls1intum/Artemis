@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.service.programming;
 
-import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.SOLUTION;
-import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.TEMPLATE;
+import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.*;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -29,16 +28,9 @@ import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.FileService;
-import de.tum.in.www1.artemis.service.GroupNotificationService;
-import de.tum.in.www1.artemis.service.ParticipationService;
-import de.tum.in.www1.artemis.service.ResourceLoaderService;
-import de.tum.in.www1.artemis.service.connectors.CIPermission;
-import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
-import de.tum.in.www1.artemis.service.connectors.GitService;
-import de.tum.in.www1.artemis.service.connectors.VersionControlService;
+import de.tum.in.www1.artemis.security.Role;
+import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.service.connectors.*;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.service.util.structureoraclegenerator.OracleGenerator;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
@@ -583,18 +575,6 @@ public class ProgrammingExerciseService {
     }
 
     /**
-     * Combine all commits of the given repository into one.
-     *
-     * @param repoUrl of the repository to combine.
-     * @throws InterruptedException If the checkout fails
-     * @throws GitAPIException      If the checkout fails
-     */
-    public void combineAllCommitsOfRepositoryIntoOne(VcsRepositoryUrl repoUrl) throws InterruptedException, GitAPIException {
-        Repository exerciseRepository = gitService.getOrCheckoutRepository(repoUrl, true);
-        gitService.combineAllCommitsIntoInitialCommit(exerciseRepository);
-    }
-
-    /**
      * Updates the timeline attributes of the given programming exercise
      * @param updatedProgrammingExercise containing the changes that have to be saved
      * @param notificationText optional text for a notification to all students about the update
@@ -623,18 +603,11 @@ public class ProgrammingExerciseService {
      * @param notificationText      optional text for a notification to all students about the update
      * @return the updated ProgrammingExercise object.
      * @throws EntityNotFoundException if there is no ProgrammingExercise for the given id.
-     * @throws IllegalAccessException  if the user does not have permissions to access the ProgrammingExercise.
      */
-    public ProgrammingExercise updateProblemStatement(Long programmingExerciseId, String problemStatement, @Nullable String notificationText)
-            throws EntityNotFoundException, IllegalAccessException {
+    public ProgrammingExercise updateProblemStatement(Long programmingExerciseId, String problemStatement, @Nullable String notificationText) throws EntityNotFoundException {
         var programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExerciseId)
                 .orElseThrow(() -> new EntityNotFoundException("Programming Exercise", programmingExerciseId));
-        User user = userRepository.getUserWithGroupsAndAuthorities();
-
-        Course course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
-        if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
-            throw new IllegalAccessException("User with login " + user.getLogin() + " is not authorized to access programming exercise with id: " + programmingExerciseId);
-        }
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, programmingExercise, null);
         programmingExercise.setProblemStatement(problemStatement);
         ProgrammingExercise updatedProgrammingExercise = programmingExerciseRepository.save(programmingExercise);
         if (notificationText != null) {

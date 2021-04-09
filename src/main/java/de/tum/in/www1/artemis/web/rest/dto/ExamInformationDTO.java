@@ -2,7 +2,12 @@ package de.tum.in.www1.artemis.web.rest.dto;
 
 import java.time.ZonedDateTime;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class ExamInformationDTO {
+
+    private ZonedDateTime latestIndividualEndDate;
 
     public ExamInformationDTO() {
     }
@@ -10,8 +15,6 @@ public class ExamInformationDTO {
     public ExamInformationDTO(ZonedDateTime latestIndividualEndDate) {
         this.latestIndividualEndDate = latestIndividualEndDate;
     }
-
-    private ZonedDateTime latestIndividualEndDate;
 
     public ZonedDateTime getLatestIndividualEndDate() {
         return latestIndividualEndDate;

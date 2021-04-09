@@ -16,7 +16,7 @@
                 <h4 *ngIf="!isTestRun">
                     <span class="mr-2"> {{ 'artemisApp.exam.publishResultsDate' | artemisTranslate }} : {{ exam?.publishResultsDate | artemisDate }} </span>
                     <span *ngIf="exam?.publishResultsDate" [ngClass]="exerciseStatusBadge" class="badge">
-                        {{ exam?.publishResultsDate | artemisDate }}
+                        {{ exam?.publishResultsDate | artemisTimeAgo }}
                     </span>
                 </h4>
             </ng-template>
@@ -50,7 +50,7 @@
                 <div class="col-6">
                     <h5>
                         {{ exercise.type | exerciseTypeLabel }}
-                        <fa-icon [icon]="getIcon(exercise.type)" placement="right"></fa-icon>
+                        <fa-icon *ngIf="icon" [icon]="icon" placement="right"></fa-icon>
                     </h5>
                 </div>
             </div>

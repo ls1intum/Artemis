@@ -26,5 +26,8 @@ public interface SolutionProgrammingExerciseParticipationRepository extends JpaR
     @EntityGraph(type = LOAD, attributePaths = { "results", "submissions", "submissions.results" })
     Optional<SolutionProgrammingExerciseParticipation> findWithEagerResultsAndSubmissionsByProgrammingExerciseId(Long exerciseId);
 
+    @EntityGraph(type = LOAD, attributePaths = { "results", "results.feedbacks" })
+    Optional<SolutionProgrammingExerciseParticipation> findWithEagerResultsAndFeedbacksByProgrammingExerciseId(Long exerciseId);
+
     Optional<SolutionProgrammingExerciseParticipation> findByProgrammingExerciseId(Long programmingExerciseId);
 }

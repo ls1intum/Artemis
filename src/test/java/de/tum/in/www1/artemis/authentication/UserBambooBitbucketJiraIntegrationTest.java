@@ -18,7 +18,7 @@ import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
 public class UserBambooBitbucketJiraIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
-    UserTestService userTestService;
+    private UserTestService userTestService;
 
     @BeforeEach
     public void setUp() throws Exception {

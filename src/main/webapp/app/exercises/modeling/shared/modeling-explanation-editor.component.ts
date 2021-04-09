@@ -16,7 +16,7 @@ export class ModelingExplanationEditorComponent {
     explanationChange = new EventEmitter();
 
     // Add tab to the value of textarea instead of moving to the next element in DOM
-    onTextEditorTab(editor: HTMLTextAreaElement, event: KeyboardEvent) {
+    onTextEditorTab(editor: HTMLTextAreaElement, event: Event) {
         event.preventDefault();
         const value = editor.value;
         const start = editor.selectionStart;

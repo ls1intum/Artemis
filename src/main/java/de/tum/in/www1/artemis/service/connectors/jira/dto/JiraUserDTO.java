@@ -6,8 +6,10 @@ import java.util.List;
 import java.util.Set;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class JiraUserDTO {
 
     private String key;
@@ -96,6 +98,7 @@ public class JiraUserDTO {
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public static final class JiraUserGroupsDTO {
 
         private int size;
@@ -120,6 +123,7 @@ public class JiraUserDTO {
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public static final class JiraUserGroupDTO {
 
         private String name;

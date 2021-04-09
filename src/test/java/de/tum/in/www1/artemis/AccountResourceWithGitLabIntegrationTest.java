@@ -14,7 +14,6 @@ import de.tum.in.www1.artemis.connector.gitlab.GitlabRequestMockProvider;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
-import de.tum.in.www1.artemis.service.user.UserService;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.RequestUtilService;
@@ -23,16 +22,13 @@ import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
 public class AccountResourceWithGitLabIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 
     @Autowired
-    RequestUtilService request;
+    private RequestUtilService request;
 
     @Autowired
-    UserRepository userRepo;
+    private UserRepository userRepo;
 
     @Autowired
-    UserService userService;
-
-    @Autowired
-    DatabaseUtilService database;
+    private DatabaseUtilService database;
 
     @Autowired
     private GitlabRequestMockProvider gitlabRequestMockProvider;

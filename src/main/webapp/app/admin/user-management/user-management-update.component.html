@@ -103,6 +103,21 @@
                     </tag-input>
                 </div>
                 <div class="form-group">
+                    <label class="form-control-label" jhiTranslate="userManagement.organizations">User organizations</label>
+                    <div class="btn-group d-flex flex-wrap">
+                        <div *ngFor="let organization of user.organizations">
+                            <h5>
+                                <span class="badge badge-primary font-weight-normal m-1 pl-3"
+                                    >{{ organization.name
+                                    }}<button type="button" class="btn text-light" (click)="removeOrganizationFromUser(organization)">
+                                        <fa-icon [icon]="'times'"></fa-icon></button
+                                ></span>
+                            </h5>
+                        </div>
+                    </div>
+                    <button type="button" class="btn btn-outline-primary" (click)="openOrganizationsModal()">Add</button>
+                </div>
+                <div class="form-group">
                     <label class="form-control-label" jhiTranslate="userManagement.email">Email</label>
                     <input type="email" class="form-control" name="email" #emailInput="ngModel" [(ngModel)]="user.email" minlength="5" required maxlength="100" email />
 
