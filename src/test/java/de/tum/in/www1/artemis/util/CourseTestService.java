@@ -8,14 +8,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -36,9 +32,6 @@ import de.tum.in.www1.artemis.web.rest.dto.StatsForDashboardDTO;
 
 @Service
 public class CourseTestService {
-
-    @Value("${artemis.course-archives-path}")
-    private String courseArchivesDirPath;
 
     @Autowired
     private DatabaseUtilService database;
@@ -74,7 +67,10 @@ public class CourseTestService {
     private RequestUtilService request;
 
     @Autowired
-    ZipFileService zipFileService;
+    private ZipFileService zipFileService;
+
+    @Autowired
+    private SubmissionRepository submissionRepository;
 
     private final int numberOfStudents = 8;
 
@@ -1197,17 +1193,20 @@ public class CourseTestService {
 
     // Test
     public void testDownloadCourseArchiveAsInstructor() throws Exception {
-        submissionRepo.deleteAll();
+        submissionRepository.deleteAll();
 
         // Archive the course and wait until it's complete
         testArchiveCourseWithTestModelingAndFileUploadExercises();
 
-        var course = courseRepo.findAll().stream().findFirst().get();
+        var optCourse = courseRepo.findAll().stream().findFirst();
+        assertThat(optCourse).isPresent();
+        var course = optCourse.get();
 
         // Download the archive
         var archive = request.getFile("/api/courses/" + course.getId() + "/download-archive", HttpStatus.OK, new LinkedMultiValueMap<>());
         assertThat(archive).isNotNull();
         assertThat(archive).exists();
+        assertThat(archive.getPath().length()).isGreaterThanOrEqualTo(4);
 
         // Extract the archive
         zipFileService.extractZipFileRecursively(archive.getAbsolutePath());
@@ -1217,7 +1216,7 @@ public class CourseTestService {
         // We don't test the directory structure
         var filenames = Files.walk(Path.of(extractedArchiveDir)).filter(Files::isRegularFile).map(Path::getFileName).collect(Collectors.toList());
 
-        var submissions = submissionRepo.findAll();
+        var submissions = submissionRepository.findAll();
 
         var fileUploadSubmissionId = submissions.stream().filter(submission -> submission instanceof FileUploadSubmission).findFirst().get().getId();
         assertThat(filenames).contains(Path.of("FileUpload-student1-" + fileUploadSubmissionId + ".png"));
