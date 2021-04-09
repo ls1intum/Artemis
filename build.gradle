@@ -20,7 +20,7 @@ plugins {
     id "idea"
     id "jacoco"
     id "org.springframework.boot" version "${spring_boot_version}"
-    id "com.google.cloud.tools.jib" version "2.8.0"
+    id "com.google.cloud.tools.jib" version "3.0.0"
     id "com.github.node-gradle.node" version "3.0.1"
     id "com.diffplug.spotless" version "5.11.1"
     // this allows us to find outdated dependencies via ./gradlew dependencyUpdates
@@ -125,7 +125,7 @@ jacocoTestCoverageVerification {
                 counter = "INSTRUCTION"
                 value = "COVEREDRATIO"
                 // TODO: in the future the following value should become at least 0.90
-                minimum = 0.868
+                minimum = 0.870
             }
             limit {
                 counter = "CLASS"
@@ -241,9 +241,9 @@ dependencies {
     implementation "mysql:mysql-connector-java:8.0.23"
 
     implementation "org.zalando:problem-spring-web:0.26.2"
-    implementation "com.ibm.icu:icu4j:68.2"
+    implementation "com.ibm.icu:icu4j:69.1"
     implementation "com.github.seancfoley:ipaddress:5.3.3"
-    implementation "org.apache.maven:maven-model:3.6.3"
+    implementation "org.apache.maven:maven-model:3.8.1"
 
     annotationProcessor "org.hibernate:hibernate-jpamodelgen:${hibernate_version}"
     annotationProcessor ("org.glassfish.jaxb:jaxb-runtime:${jaxb_runtime_version}") {

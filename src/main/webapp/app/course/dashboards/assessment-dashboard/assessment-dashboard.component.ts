@@ -18,6 +18,7 @@ import { Exam } from 'app/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { getExerciseSubmissionsLink } from 'app/utils/navigation.utils';
+import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 
 @Component({
     selector: 'jhi-courses',
@@ -303,5 +304,9 @@ export class AssessmentDashboardComponent implements OnInit, AfterViewInit {
 
     getSubmissionsLinkForExercise(exercise: Exercise): string[] {
         return getExerciseSubmissionsLink(exercise.type!, this.courseId, exercise.id!, this.examId, this.exerciseGroupId);
+    }
+
+    asQuizExercise(exercise: Exercise): QuizExercise {
+        return exercise as QuizExercise;
     }
 }

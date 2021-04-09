@@ -74,7 +74,7 @@ public class ParticipantScoreResource {
             return forbidden();
         }
         List<ScoreDTO> scoreDTOS = participantScoreService.calculateCourseScores(course);
-        log.info("getScoresOfCourse took " + (System.currentTimeMillis() - start) + "ms");
+        log.info("getScoresOfCourse took {}ms", System.currentTimeMillis() - start);
         return ResponseEntity.ok().body(scoreDTOS);
     }
 
@@ -103,7 +103,7 @@ public class ParticipantScoreResource {
         }
 
         List<ScoreDTO> scoreDTOS = participantScoreService.calculateExamScores(exam);
-        log.info("getScoresOfExam took " + (System.currentTimeMillis() - start) + "ms");
+        log.info("getScoresOfExam took {}ms", System.currentTimeMillis() - start);
         return ResponseEntity.ok().body(scoreDTOS);
     }
 
@@ -125,7 +125,7 @@ public class ParticipantScoreResource {
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
         Set<Exercise> exercisesOfCourse = course.getExercises().stream().filter(Exercise::isCourseExercise).collect(Collectors.toSet());
         List<ParticipantScoreDTO> resultsOfAllExercises = participantScoreService.getParticipantScoreDTOs(getUnpaged ? Pageable.unpaged() : pageable, exercisesOfCourse);
-        log.info("getParticipantScoresOfCourse took " + (System.currentTimeMillis() - start) + "ms");
+        log.info("getParticipantScoresOfCourse took {}ms", System.currentTimeMillis() - start);
         return ResponseEntity.ok().body(resultsOfAllExercises);
     }
 
@@ -149,7 +149,7 @@ public class ParticipantScoreResource {
         Set<Exercise> exercisesOfCourse = course.getExercises().stream().filter(Exercise::isCourseExercise)
                 .filter(exercise -> !exercise.getIncludedInOverallScore().equals(IncludedInOverallScore.NOT_INCLUDED)).collect(Collectors.toSet());
         List<ParticipantScoreAverageDTO> resultsOfAllExercises = participantScoreService.getParticipantScoreAverageDTOs(exercisesOfCourse);
-        log.info("getAverageScoreOfStudentInCourse took " + (System.currentTimeMillis() - start) + "ms");
+        log.info("getAverageScoreOfStudentInCourse took {}ms", System.currentTimeMillis() - start);
         return ResponseEntity.ok().body(resultsOfAllExercises);
     }
 
@@ -179,7 +179,7 @@ public class ParticipantScoreResource {
         Set<Exercise> includedExercisesOfCourse = course.getExercises().stream().filter(Exercise::isCourseExercise)
                 .filter(exercise -> !exercise.getIncludedInOverallScore().equals(IncludedInOverallScore.NOT_INCLUDED)).collect(Collectors.toSet());
         Double averageScore = participantScoreService.getAverageScore(onlyConsiderRatedScores, includedExercisesOfCourse);
-        log.info("getAverageScoreOfCourse took " + (System.currentTimeMillis() - start) + "ms");
+        log.info("getAverageScoreOfCourse took {}ms", System.currentTimeMillis() - start);
         return ResponseEntity.ok().body(averageScore);
     }
 
@@ -213,7 +213,7 @@ public class ParticipantScoreResource {
             page = pageable;
         }
         List<ParticipantScoreDTO> resultsOfAllExercises = participantScoreService.getParticipantScoreDTOs(page, exercisesOfExam);
-        log.info("getParticipantScoresOfExam took " + (System.currentTimeMillis() - start) + "ms");
+        log.info("getParticipantScoresOfExam took {}ms", System.currentTimeMillis() - start);
         return ResponseEntity.ok().body(resultsOfAllExercises);
     }
 
@@ -248,7 +248,7 @@ public class ParticipantScoreResource {
                 .collect(Collectors.toSet());
 
         Double averageScore = participantScoreService.getAverageScore(onlyConsiderRatedScores, includedExercisesOfExam);
-        log.info("getAverageScoreOfExam took " + (System.currentTimeMillis() - start) + "ms");
+        log.info("getAverageScoreOfExam took {}ms", System.currentTimeMillis() - start);
         return ResponseEntity.ok().body(averageScore);
     }
 
@@ -276,7 +276,7 @@ public class ParticipantScoreResource {
         Set<Exercise> includedExercisesOfExam = exercisesOfExam.stream().filter(exercise -> !exercise.getIncludedInOverallScore().equals(IncludedInOverallScore.NOT_INCLUDED))
                 .collect(Collectors.toSet());
         List<ParticipantScoreAverageDTO> resultsOfAllExercises = participantScoreService.getParticipantScoreAverageDTOs(includedExercisesOfExam);
-        log.info("getAverageScoreOfParticipantInExam took " + (System.currentTimeMillis() - start) + "ms");
+        log.info("getAverageScoreOfParticipantInExam took {}ms", System.currentTimeMillis() - start);
         return ResponseEntity.ok().body(resultsOfAllExercises);
     }
 

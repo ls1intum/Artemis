@@ -160,7 +160,7 @@ public class GitLabService extends AbstractVersionControlService {
     private void protectBranch(String repositoryId, String branch, Long delayTime, TimeUnit delayTimeUnit) {
         scheduler.schedule(() -> {
             try {
-                log.info("Protecting branch " + branch + "for Gitlab repository " + repositoryId);
+                log.info("Protecting branch {} for Gitlab repository {}", branch, repositoryId);
                 gitlab.getProtectedBranchesApi().protectBranch(repositoryId, branch, DEVELOPER, DEVELOPER, MAINTAINER, false);
             }
             catch (GitLabApiException e) {
@@ -187,7 +187,7 @@ public class GitLabService extends AbstractVersionControlService {
     private void unprotectBranch(String repositoryId, String branch, Long delayTime, TimeUnit delayTimeUnit) {
         scheduler.schedule(() -> {
             try {
-                log.info("Unprotecting branch " + branch + "for Gitlab repository " + repositoryId);
+                log.info("Unprotecting branch {} for Gitlab repository {}", branch, repositoryId);
                 gitlab.getProtectedBranchesApi().unprotectBranch(repositoryId, branch);
             }
             catch (GitLabApiException e) {
@@ -285,7 +285,7 @@ public class GitLabService extends AbstractVersionControlService {
             gitlab.getProjectApi().getProject(repositoryId);
         }
         catch (Exception emAll) {
-            log.warn("Invalid repository VcsRepositoryUrl " + repositoryUrl);
+            log.warn("Invalid repository VcsRepositoryUrl {}", repositoryUrl);
             return false;
         }
 
@@ -320,7 +320,7 @@ public class GitLabService extends AbstractVersionControlService {
         catch (GitLabApiException e) {
             if (e.getMessage().contains("has already been taken")) {
                 // ignore this error, because it is not really a problem
-                log.warn("Failed to add group " + exerciseName + " due to error: " + e.getMessage());
+                log.warn("Failed to add group {} due to error: {}", exerciseName, e.getMessage());
             }
             else {
                 throw new GitLabException("Unable to create new group for course " + exerciseName, e);
@@ -352,8 +352,8 @@ public class GitLabService extends AbstractVersionControlService {
     public void createRepository(String projectKey, String repoName, String parentProjectKey) throws VersionControlException {
         try {
             final var groupId = gitlab.getGroupApi().getGroup(projectKey).getId();
-            final var project = new Project().withName(repoName.toLowerCase()).withNamespaceId(groupId).withVisibility(Visibility.PRIVATE).withJobsEnabled(false)
-                    .withSharedRunnersEnabled(false).withContainerRegistryEnabled(false);
+            final var project = new Project().withPath(repoName.toLowerCase()).withName(repoName.toLowerCase()).withNamespaceId(groupId).withVisibility(Visibility.PRIVATE)
+                    .withJobsEnabled(false).withSharedRunnersEnabled(false).withContainerRegistryEnabled(false);
             gitlab.getProjectApi().createProject(project);
         }
         catch (GitLabApiException e) {

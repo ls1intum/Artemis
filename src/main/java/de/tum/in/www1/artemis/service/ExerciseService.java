@@ -219,10 +219,10 @@ public class ExerciseService {
 
         // 1st: fetch participations, submissions and results for individual exercises
         List<StudentParticipation> individualParticipations = studentParticipationRepository
-                .findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(user.getId(), individualExercises);
+                .findByStudentIdAndIndividualExercisesWithEagerLegalSubmissionsResultIgnoreTestRuns(user.getId(), individualExercises);
 
         // 2nd: fetch participations, submissions and results for team exercises
-        List<StudentParticipation> teamParticipations = studentParticipationRepository.findByStudentIdAndTeamExercisesWithEagerSubmissionsResult(user.getId(), teamExercises);
+        List<StudentParticipation> teamParticipations = studentParticipationRepository.findByStudentIdAndTeamExercisesWithEagerLegalSubmissionsResult(user.getId(), teamExercises);
 
         // 3rd: merge both into one list for further processing
         return Stream.concat(individualParticipations.stream(), teamParticipations.stream()).collect(Collectors.toList());
@@ -272,8 +272,18 @@ public class ExerciseService {
     }
 
     /**
+     * Checks if the exercise has any test runs and sets the transient property if it does
+     * @param exercise - the exercise for which we check if test runs exist
+     */
+    public void checkTestRunsExist(Exercise exercise) {
+        Long containsTestRunParticipations = studentParticipationRepository.countParticipationsOnlyTestRunsByExerciseId(exercise.getId());
+        if (containsTestRunParticipations != null && containsTestRunParticipations > 0) {
+            exercise.setTestRunParticipationsExist(Boolean.TRUE);
+        }
+    }
+
+    /**
      * Resets an Exercise by deleting all its participations
-     *
      * @param exercise which should be reset
      */
     public void reset(Exercise exercise) {
@@ -398,7 +408,7 @@ public class ExerciseService {
     public void logDeletion(Exercise exercise, Course course, User user) {
         var auditEvent = new AuditEvent(user.getLogin(), Constants.DELETE_EXERCISE, "exercise=" + exercise.getTitle(), "course=" + course.getTitle());
         auditEventRepository.add(auditEvent);
-        log.info("User " + user.getLogin() + " has requested to delete {} {} with id {}", exercise.getClass().getSimpleName(), exercise.getTitle(), exercise.getId());
+        log.info("User {} has requested to delete {} {} with id {}", user.getLogin(), exercise.getClass().getSimpleName(), exercise.getTitle(), exercise.getId());
     }
 
     /**
