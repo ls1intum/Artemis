@@ -288,7 +288,11 @@ public class StudentExamService {
         for (final var user : exercisesOfUser.keySet()) {
             final var studentParticipations = studentParticipationRepository.findByStudentIdAndIndividualExercisesWithEagerLegalSubmissionsResultIgnoreTestRuns(user.getId(),
                     exercisesOfUser.get(user));
-            for (final var studentParticipation : studentParticipations) {
+            for (var studentParticipation : studentParticipations) {
+                if (studentParticipation.getInitializationState().equals(InitializationState.INITIALIZED)) {
+                    studentParticipation.setInitializationState(InitializationState.FINISHED);
+                    studentParticipation = studentParticipationRepository.save(studentParticipation);
+                }
                 final var latestSubmission = studentParticipation.findLatestSubmission();
                 if (latestSubmission.isPresent() && latestSubmission.get().isEmpty()) {
                     for (int correctionRound = 0; correctionRound < exam.getNumberOfCorrectionRoundsInExam(); correctionRound++) {
