@@ -269,6 +269,7 @@ public class StudentExamService {
 
     /**
      * Assess the modeling-, file upload and text submissions of an exam which are empty.
+     * Also sets the state of all participations for all student exams which were submitted to FINISHED
      *
      * @param exam the exam
      * @param assessor the assessor should be the instructor making the call
@@ -289,6 +290,8 @@ public class StudentExamService {
             final var studentParticipations = studentParticipationRepository.findByStudentIdAndIndividualExercisesWithEagerLegalSubmissionsResultIgnoreTestRuns(user.getId(),
                     exercisesOfUser.get(user));
             for (var studentParticipation : studentParticipations) {
+                // even if the student did not submit anything for a specific exercise (the InitializationState is therefore only INITIALIZED)
+                // we want to set it to FINISHED as the exam was handed in.
                 if (studentParticipation.getInitializationState().equals(InitializationState.INITIALIZED)) {
                     studentParticipation.setInitializationState(InitializationState.FINISHED);
                     studentParticipation = studentParticipationRepository.save(studentParticipation);

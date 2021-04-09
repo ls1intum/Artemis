@@ -61,11 +61,7 @@ export const isModelingOrTextOrFileUpload = (participation: Participation) => {
         return false;
     }
     const exercise = getExercise(participation);
-    return (
-        (participation.initializationState === InitializationState.FINISHED || participation.initializationState === InitializationState.INITIALIZED) &&
-        exercise &&
-        (exercise.type === ExerciseType.MODELING || exercise.type === ExerciseType.TEXT || exercise.type === ExerciseType.FILE_UPLOAD)
-    );
+    return exercise && (exercise.type === ExerciseType.MODELING || exercise.type === ExerciseType.TEXT || exercise.type === ExerciseType.FILE_UPLOAD);
 };
 
 /**
