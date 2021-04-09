@@ -39,7 +39,8 @@ pipeline {
             cleanup {
                 sh 'rm -rf results'
                 sh 'mkdir results'
-                sh 'cp target/surefire-reports/*.xml $WORKSPACE/results/ || true'
+                sh 'cp structural/target/surefire-reports/*.xml $WORKSPACE/results/ || true'
+                sh 'cp behavior/target/surefire-reports/*.xml $WORKSPACE/results/ || true'
                 sendTestResults credentialsId: '#jenkinsNotificationToken', notificationUrl: '#notificationsUrl'
                 cleanWs()
             }
