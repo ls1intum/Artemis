@@ -5,9 +5,9 @@
     <div
         *ngIf="hostRectangle"
         class="indicator"
-        [style.left.px]="hostRectangle?.left"
-        [style.top.px]="positionRelative ? hostRectangle?.top - 50 : hostRectangle?.top + 20"
-        [style.width.px]="hostRectangle?.width"
+        [style.left.px]="hostRectangle.left"
+        [style.top.px]="positionRelative ? hostRectangle.top - 50 : hostRectangle.top + 20"
+        [style.width.px]="hostRectangle.width"
         [style.height.px]="0"
         [style.position]="positionRelative ? 'relative' : 'absolute'"
     >
