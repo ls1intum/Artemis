@@ -94,7 +94,9 @@ public class StudentQuestionAnswerIntegrationTest extends AbstractSpringIntegrat
         Lecture notNullLecture = new Lecture();
         notNullLecture.setCourse(studentQuestion.getCourse());
         studentQuestion.setLecture(notNullLecture);
+        lectureRepository.save(notNullLecture);
         studentQuestion.setExercise(null);
+        studentQuestionRepository.save(studentQuestion);
         StudentQuestionAnswer response = request.postWithResponseBody("/api/courses/" + courseId + "/student-question-answers", studentQuestionAnswer, StudentQuestionAnswer.class,
                 HttpStatus.CREATED);
 
@@ -229,7 +231,7 @@ public class StudentQuestionAnswerIntegrationTest extends AbstractSpringIntegrat
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void getStudentQuestionAnswer() throws Exception {
+    public void TestGetStudentQuestionAnswer() throws Exception {
         StudentQuestionAnswer studentQuestionAnswer = createStudentQuestionAnswersOnServer().get(0);
 
         StudentQuestionAnswer returnedStudentQuestionAnswer = request.get(
@@ -240,7 +242,7 @@ public class StudentQuestionAnswerIntegrationTest extends AbstractSpringIntegrat
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void getStudentQuestionAnswerWithWrongCourseId() throws Exception {
+    public void TestGetStudentQuestionAnswerWithWrongCourseId() throws Exception {
         StudentQuestionAnswer studentQuestionAnswer = createStudentQuestionAnswersOnServer().get(0);
         Course dummyCourse = database.createCourse();
 

@@ -24,9 +24,6 @@ public class StudentQuestionIntegrationTest extends AbstractSpringIntegrationBam
     private CourseRepository courseRepo;
 
     @Autowired
-    private ExerciseRepository exerciseRepository;
-
-    @Autowired
     private LectureRepository lectureRepo;
 
     @Autowired
@@ -186,7 +183,7 @@ public class StudentQuestionIntegrationTest extends AbstractSpringIntegrationBam
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void getAllStudentQuestionsForExercise() throws Exception {
+    public void testGetAllStudentQuestionsForExercise() throws Exception {
         StudentQuestion studentQuestion = database.createCourseWithExerciseAndStudentQuestions().get(0);
         Long exerciseID = studentQuestion.getExercise().getId();
 
@@ -197,7 +194,7 @@ public class StudentQuestionIntegrationTest extends AbstractSpringIntegrationBam
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void getAllStudentQuestionsForExerciseWithWrongCourseId() throws Exception {
+    public void testGetAllStudentQuestionsForExerciseWithWrongCourseId() throws Exception {
         StudentQuestion studentQuestion = database.createCourseWithExerciseAndStudentQuestions().get(0);
         Long exerciseID = studentQuestion.getExercise().getId();
         Course dummyCourse = database.createCourse();
@@ -209,7 +206,7 @@ public class StudentQuestionIntegrationTest extends AbstractSpringIntegrationBam
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void getAllStudentQuestionsForLecture() throws Exception {
+    public void testGetAllStudentQuestionsForLecture() throws Exception {
         ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
         ZonedDateTime futureTimestamp = ZonedDateTime.now().plusDays(5);
         ZonedDateTime futureFutureTimestamp = ZonedDateTime.now().plusDays(8);
@@ -248,7 +245,7 @@ public class StudentQuestionIntegrationTest extends AbstractSpringIntegrationBam
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void getAllStudentQuestionsForLectureWithWrongCourseId() throws Exception {
+    public void testGetAllStudentQuestionsForLectureWithWrongCourseId() throws Exception {
         ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
         ZonedDateTime futureTimestamp = ZonedDateTime.now().plusDays(5);
         ZonedDateTime futureFutureTimestamp = ZonedDateTime.now().plusDays(8);
