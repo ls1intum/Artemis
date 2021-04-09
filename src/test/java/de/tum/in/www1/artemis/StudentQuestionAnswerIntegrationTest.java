@@ -17,6 +17,7 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.StudentQuestion;
 import de.tum.in.www1.artemis.domain.StudentQuestionAnswer;
+import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.StudentQuestionAnswerRepository;
 import de.tum.in.www1.artemis.repository.StudentQuestionRepository;
 
@@ -27,6 +28,9 @@ public class StudentQuestionAnswerIntegrationTest extends AbstractSpringIntegrat
 
     @Autowired
     private StudentQuestionAnswerRepository studentQuestionAnswerRepository;
+
+    @Autowired
+    private LectureRepository lectureRepository;
 
     @BeforeEach
     public void initTestCase() {
@@ -285,29 +289,28 @@ public class StudentQuestionAnswerIntegrationTest extends AbstractSpringIntegrat
         List<StudentQuestionAnswer> answers = createStudentQuestionAnswersOnServer();
         StudentQuestionAnswer studentQuestionAnswer = answers.get(0);
         Course course = studentQuestionAnswer.getQuestion().getCourse();
-        studentQuestionAnswer.getQuestion().getExercise().setCourse(null);
+        studentQuestionAnswer.getQuestion().setExercise(null);
         Lecture notNullLecture = new Lecture();
         notNullLecture.setCourse(course);
+        lectureRepository.save(notNullLecture);
         studentQuestionAnswer.getQuestion().setLecture(notNullLecture);
+        studentQuestionRepository.save(studentQuestionAnswer.getQuestion());
 
         request.delete("/api/courses/" + course.getId() + "/student-question-answers/" + studentQuestionAnswer.getId(), HttpStatus.OK);
         assertThat(studentQuestionAnswerRepository.findById(studentQuestionAnswer.getId())).isEmpty();
     }
 
-    // TODO
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void deleteStudentQuestionAnswerWithCourseNull() throws Exception {
+    public void deleteStudentQuestionAnswerWithWithCourseNull() throws Exception {
         List<StudentQuestionAnswer> answers = createStudentQuestionAnswersOnServer();
         StudentQuestionAnswer studentQuestionAnswer = answers.get(0);
         Course course = studentQuestionAnswer.getQuestion().getCourse();
-        studentQuestionAnswer.getQuestion().getExercise().setCourse(null);
-        Lecture notNullLecture = new Lecture();
-        notNullLecture.setCourse(course);
-        studentQuestionAnswer.getQuestion().setLecture(notNullLecture);
+        studentQuestionAnswer.getQuestion().setExercise(null);
+        studentQuestionRepository.save(studentQuestionAnswer.getQuestion());
 
-        request.delete("/api/courses/" + course.getId() + "/student-question-answers/" + studentQuestionAnswer.getId(), HttpStatus.OK);
-        assertThat(studentQuestionAnswerRepository.findById(studentQuestionAnswer.getId())).isEmpty();
+        request.delete("/api/courses/" + course.getId() + "/student-question-answers/" + studentQuestionAnswer.getId(), HttpStatus.BAD_REQUEST);
+        assertThat(studentQuestionAnswerRepository.findById(studentQuestionAnswer.getId())).isNotEmpty();
     }
 
     @Test

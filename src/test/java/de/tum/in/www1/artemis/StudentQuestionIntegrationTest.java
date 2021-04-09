@@ -24,6 +24,9 @@ public class StudentQuestionIntegrationTest extends AbstractSpringIntegrationBam
     private CourseRepository courseRepo;
 
     @Autowired
+    private ExerciseRepository exerciseRepository;
+
+    @Autowired
     private LectureRepository lectureRepo;
 
     @Autowired
@@ -289,6 +292,56 @@ public class StudentQuestionIntegrationTest extends AbstractSpringIntegrationBam
         studentQuestionRepository.save(studentQuestion1);
         request.delete("/api/courses/" + studentQuestion1.getCourse().getId() + "/student-questions/" + studentQuestion1.getId(), HttpStatus.OK);
         assertThat(studentQuestionRepository.count()).isEqualTo(0);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void deleteStudentQuestionAnswer() throws Exception {
+        List<StudentQuestion> studentQuestions = database.createCourseWithExerciseAndStudentQuestions();
+        StudentQuestion studentQuestion = studentQuestions.get(0);
+        StudentQuestion studentQuestion1 = studentQuestions.get(1);
+
+        request.delete("/api/courses/" + studentQuestion.getCourse().getId() + "/student-questions/" + studentQuestion.getId(), HttpStatus.OK);
+        assertThat(studentQuestionRepository.count()).isEqualTo(1);
+
+        // try to delete not existing question
+        request.delete("/api/courses/" + studentQuestion.getCourse().getId() + "/student-questions/999", HttpStatus.NOT_FOUND);
+
+        // delete question with no lecture id --> OK
+        studentQuestion1.setLecture(null);
+        studentQuestionRepository.save(studentQuestion1);
+        request.delete("/api/courses/" + studentQuestion1.getCourse().getId() + "/student-questions/" + studentQuestion1.getId(), HttpStatus.OK);
+        assertThat(studentQuestionRepository.count()).isEqualTo(0);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void deleteStudentQuestionAnswerWithCourseNull() throws Exception {
+        List<StudentQuestion> studentQuestions = database.createCourseWithExerciseAndStudentQuestions();
+        StudentQuestion studentQuestion = studentQuestions.get(0);
+        Long courseId = studentQuestion.getCourse().getId();
+        studentQuestion.setLecture(null);
+        studentQuestion.setExercise(null);
+        studentQuestionRepository.save(studentQuestion);
+
+        request.delete("/api/courses/" + courseId + "/student-questions/" + studentQuestion.getId(), HttpStatus.BAD_REQUEST);
+        assertThat(studentQuestionRepository.findById(studentQuestion.getId())).isNotEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void deleteStudentQuestionAnswerWithLectureNotNullAndExerciseNull() throws Exception {
+        List<StudentQuestion> studentQuestions = database.createCourseWithExerciseAndStudentQuestions();
+        StudentQuestion studentQuestion = studentQuestions.get(0);
+        Lecture notNullLecture = new Lecture();
+        notNullLecture.setCourse(studentQuestion.getCourse());
+        studentQuestion.setLecture(notNullLecture);
+        lectureRepo.save(notNullLecture);
+        studentQuestion.setExercise(null);
+        studentQuestionRepository.save(studentQuestion);
+
+        request.delete("/api/courses/" + studentQuestion.getCourse().getId() + "/student-questions/" + studentQuestion.getId(), HttpStatus.OK);
+        assertThat(studentQuestionRepository.findById(studentQuestion.getId())).isEmpty();
     }
 
     @Test
