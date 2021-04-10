@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -90,12 +91,18 @@ public class StudentQuestionAnswerIntegrationTest extends AbstractSpringIntegrat
         studentQuestionAnswer.setAnswerText("Test Answer");
         studentQuestionAnswer.setAnswerDate(ZonedDateTime.now());
         studentQuestionAnswer.setQuestion(studentQuestion);
-        Lecture notNullLecture = new Lecture();
-        notNullLecture.setCourse(studentQuestion.getCourse());
-        studentQuestion.setLecture(notNullLecture);
-        lectureRepository.save(notNullLecture);
+        Lecture lecture = new Lecture();
+        lecture.setCourse(studentQuestion.getCourse());
+        // this basically moves the student question from the exercise to the lecture
+        studentQuestion.setLecture(lecture);
+        studentQuestion.setExercise(null);
+        lectureRepository.save(lecture);
         studentQuestionRepository.save(studentQuestion);
-        StudentQuestionAnswer response = request.postWithResponseBody("/api/courses/" + studentQuestion.getCourse().getId() + "/student-question-answers", studentQuestionAnswer,
+        // remove some values not required for the json
+        var course = studentQuestion.getCourse();
+        course.setExercises(Set.of());
+        course.setLectures(Set.of());
+        StudentQuestionAnswer response = request.postWithResponseBody("/api/courses/" + course.getId() + "/student-question-answers", studentQuestionAnswer,
                 StudentQuestionAnswer.class, HttpStatus.CREATED);
         assertThat(response).isNotNull();
     }
