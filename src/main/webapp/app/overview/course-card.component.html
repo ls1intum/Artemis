@@ -57,7 +57,7 @@
                 <div class="col-6 next-exercise-col">
                     <fa-icon [icon]="nextExerciseIcon" placement="right" [ngbTooltip]="nextExerciseTooltip | artemisTranslate" container="body" style="z-index: 1"></fa-icon>
                     <span>&nbsp;</span>
-                    <h5>{{ nextRelevantExercise.title }}</h5>
+                    <span class="next-exercise-title">{{ nextRelevantExercise.title }}</span>
                 </div>
                 <div class="col-3 next-exercise-col">
                     <div *ngIf="nextRelevantExercise.dueDate">

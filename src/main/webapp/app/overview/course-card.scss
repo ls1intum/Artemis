@@ -101,14 +101,15 @@
             justify-content: center;
             align-items: center;
 
-            h5 {
+            .next-exercise-title {
+                font-weight: bolder;
+                font-size: large;
                 margin-bottom: 0;
                 display: inline-block;
                 overflow: hidden;
                 text-overflow: ellipsis;
                 white-space: nowrap;
                 max-width: 40ch;
-                min-height: 22px;
             }
 
             h6 {
