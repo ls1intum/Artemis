@@ -9,10 +9,11 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockRouterLinkDirective } from '../lecture-unit/lecture-unit-management.component.spec';
 import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
 import { Exercise } from 'app/entities/exercise.model';
-import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockPipe, MockProvider, MockDirective } from 'ng-mocks';
 import { ChartsModule } from 'ng2-charts';
 import { TimeAgoPipe } from 'ngx-moment';
 import * as moment from 'moment';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -29,7 +30,14 @@ describe('CourseCardComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, ChartsModule],
-            declarations: [CourseCardComponent, MockPipe(ArtemisTranslatePipe), MockPipe(TimeAgoPipe), MockRouterLinkDirective, MockComponent(SecuredImageComponent)],
+            declarations: [
+                CourseCardComponent,
+                MockPipe(ArtemisTranslatePipe),
+                MockPipe(TimeAgoPipe),
+                MockRouterLinkDirective,
+                MockComponent(SecuredImageComponent),
+                MockDirective(NgbTooltip),
+            ],
             providers: [MockProvider(TranslateService)],
         })
             .compileComponents()
