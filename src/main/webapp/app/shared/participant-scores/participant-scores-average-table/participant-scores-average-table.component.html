@@ -1,13 +1,13 @@
 <jhi-data-table
     [isLoading]="isLoading"
     entityType="participationScoreAverageDTO"
-    [allEntities]="participantAverageScores"
+    allEntities="'participantAverageScores'"
     entitiesPerPageTranslation="artemisApp.exercise.resultsPerPage"
     showAllEntitiesTranslation="artemisApp.exercise.showAllResults"
     [searchPlaceholderTranslation]="'artemisApp.participantScores.searchForStudentsOrTeam'"
     [searchFields]="['userName', 'teamName']"
-    [searchTextFromEntity]="extractParticipantName"
-    [searchResultFormatter]="extractParticipantName"
+    searchTextFromEntity="'extractParticipantName'"
+    searchResultFormatter="'extractParticipantName'"
 >
     <ng-template let-settings="settings" let-controls="controls">
         <ngx-datatable
@@ -50,7 +50,7 @@
             </ngx-datatable-column>
             <ngx-datatable-column prop="averageScore" [minWidth]="500">
                 <ng-template ngx-datatable-header-template>
-                    <ng-template #tipContent>{{ 'artemisApp.participantScores.notIncluded' | translate }}</ng-template>
+                    <ng-template #tipContent>{{ 'artemisApp.participantScores.notIncluded' | artemisTranslate }}</ng-template>
                     <span [ngbTooltip]="tipContent" container="body" class="datatable-header-cell-wrapper" (click)="controls.onSort('averageScore')">
                         <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.participantScores.participantScoreAverageDTO.averageScore">
                             AverageScore
@@ -66,7 +66,7 @@
             </ngx-datatable-column>
             <ngx-datatable-column prop="averagePoints" [minWidth]="500">
                 <ng-template ngx-datatable-header-template>
-                    <ng-template #tipContent>{{ 'artemisApp.participantScores.notIncluded' | translate }}</ng-template>
+                    <ng-template #tipContent>{{ 'artemisApp.participantScores.notIncluded' | artemisTranslate }}</ng-template>
                     <span [ngbTooltip]="tipContent" container="body" class="datatable-header-cell-wrapper" (click)="controls.onSort('averagePoints')">
                         <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.participantScores.participantScoreAverageDTO.averagePoints">
                             AveragePoints
@@ -82,7 +82,7 @@
             </ngx-datatable-column>
             <ngx-datatable-column prop="averageRatedScore" [minWidth]="500">
                 <ng-template ngx-datatable-header-template>
-                    <ng-template #tipContent>{{ 'artemisApp.participantScores.notIncluded' | translate }}</ng-template>
+                    <ng-template #tipContent>{{ 'artemisApp.participantScores.notIncluded' | artemisTranslate }}</ng-template>
                     <span [ngbTooltip]="tipContent" container="body" class="datatable-header-cell-wrapper" (click)="controls.onSort('averageRatedScore')">
                         <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.participantScores.participantScoreAverageDTO.averageRatedScore">
                             AverageRatedScore
@@ -98,7 +98,7 @@
             </ngx-datatable-column>
             <ngx-datatable-column prop="averageRatedPoints" [minWidth]="500">
                 <ng-template ngx-datatable-header-template>
-                    <ng-template #tipContent>{{ 'artemisApp.participantScores.notIncluded' | translate }}</ng-template>
+                    <ng-template #tipContent>{{ 'artemisApp.participantScores.notIncluded' | artemisTranslate }}</ng-template>
                     <span [ngbTooltip]="tipContent" container="body" class="datatable-header-cell-wrapper" (click)="controls.onSort('averageRatedPoints')">
                         <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.participantScores.participantScoreAverageDTO.averageRatedPoints">
                             AverageRatedPoints

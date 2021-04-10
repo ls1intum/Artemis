@@ -1,6 +1,6 @@
 <jhi-split-pane-header studentLogin="{{ plagiarismSubmission?.studentLogin }}"></jhi-split-pane-header>
 
-<jhi-modeling-editor *ngIf="!loading" [umlModel]="submission?.model" [diagramType]="exercise.diagramType" [readOnly]="true"></jhi-modeling-editor>
+<jhi-modeling-editor *ngIf="!loading" [umlModel]="submission?.model || ''" [diagramType]="exercise.diagramType" [readOnly]="true"></jhi-modeling-editor>
 
 <div class="plagiarism-submission-loader" *ngIf="loading">
     <div class="spinner-border text-primary" role="status">

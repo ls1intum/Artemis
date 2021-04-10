@@ -55,7 +55,7 @@
                         (click)="command.execute()"
                         [ngbTooltip]="command.buttonTranslationString | artemisTranslate"
                     >
-                        <fa-icon [icon]="command.buttonIcon"></fa-icon>
+                        <fa-icon icon="'command.buttonIcon'"></fa-icon>
                     </button>
                     <!--style command -->
                     <div *ngIf="headerCommands.length > 0" class="btn-group" ngbDropdown role="group" aria-label="Button group with nested dropdown">
