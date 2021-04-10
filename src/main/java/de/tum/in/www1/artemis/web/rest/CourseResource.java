@@ -109,13 +109,15 @@ public class CourseResource {
 
     private final SubmissionRepository submissionRepository;
 
+    private final StudentParticipationRepository studentParticipationRepository;
+
     private final ResultRepository resultRepository;
 
     public CourseResource(UserRepository userRepository, CourseService courseService, CourseRepository courseRepository, ExerciseService exerciseService,
             AuthorizationCheckService authCheckService, TutorParticipationRepository tutorParticipationRepository, Environment env,
             ArtemisAuthenticationProvider artemisAuthenticationProvider, ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository,
             SubmissionService submissionService, ComplaintService complaintService, TutorLeaderboardService tutorLeaderboardService,
-            ProgrammingExerciseRepository programmingExerciseRepository, AuditEventRepository auditEventRepository,
+            ProgrammingExerciseRepository programmingExerciseRepository, AuditEventRepository auditEventRepository, StudentParticipationRepository studentParticipationRepository,
             Optional<VcsUserManagementService> optionalVcsUserManagementService, AssessmentDashboardService assessmentDashboardService, ExerciseRepository exerciseRepository,
             SubmissionRepository submissionRepository, ResultRepository resultRepository, Optional<CIUserManagementService> optionalCiUserManagementService) {
         this.courseService = courseService;
@@ -139,6 +141,7 @@ public class CourseResource {
         this.exerciseRepository = exerciseRepository;
         this.submissionRepository = submissionRepository;
         this.resultRepository = resultRepository;
+        this.studentParticipationRepository = studentParticipationRepository;
     }
 
     /**
@@ -516,7 +519,7 @@ public class CourseResource {
      */
     public void fetchParticipationsWithSubmissionsAndResultsForCourses(List<Course> courses, User user, long startTimeInMillis) {
         Set<Exercise> exercises = courses.stream().flatMap(course -> course.getExercises().stream()).collect(Collectors.toSet());
-        List<StudentParticipation> participationsOfUserInExercises = exerciseService.getAllParticipationsOfUserInExercises(user, exercises);
+        List<StudentParticipation> participationsOfUserInExercises = studentParticipationRepository.getAllParticipationsOfUserInExercises(user, exercises);
         if (participationsOfUserInExercises.isEmpty()) {
             return;
         }

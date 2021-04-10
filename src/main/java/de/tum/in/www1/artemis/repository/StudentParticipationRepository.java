@@ -4,6 +4,7 @@ import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphTyp
 
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.validation.constraints.NotNull;
 
@@ -15,6 +16,7 @@ import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
+import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
@@ -723,5 +725,34 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             Long numberOfParticipations = countParticipationsIgnoreTestRunsByExerciseId(exercise.getId());
             exercise.setNumberOfParticipations(numberOfParticipations);
         })));
+    }
+
+    /**
+     * Gets all the participations of the user in the given exercises
+     *
+     * @param user      the user to get the participations for
+     * @param exercises the exercise to get the participations for
+     * @return the participations of the user in the exercises
+     */
+    default List<StudentParticipation> getAllParticipationsOfUserInExercises(User user, Set<Exercise> exercises) {
+        Map<ExerciseMode, List<Exercise>> exercisesGroupedByExerciseMode = exercises.stream().collect(Collectors.groupingBy(Exercise::getMode));
+        List<Exercise> individualExercises = Optional.ofNullable(exercisesGroupedByExerciseMode.get(ExerciseMode.INDIVIDUAL)).orElse(List.of());
+        List<Exercise> teamExercises = Optional.ofNullable(exercisesGroupedByExerciseMode.get(ExerciseMode.TEAM)).orElse(List.of());
+
+        if (individualExercises.isEmpty() && teamExercises.isEmpty()) {
+            return List.of();
+        }
+
+        // Note: we need two database calls here, because of performance reasons: the entity structure for team is significantly different and a combined database call
+        // would lead to a SQL statement that cannot be optimized
+
+        // 1st: fetch participations, submissions and results for individual exercises
+        var individualParticipations = findByStudentIdAndIndividualExercisesWithEagerLegalSubmissionsResultIgnoreTestRuns(user.getId(), individualExercises);
+
+        // 2nd: fetch participations, submissions and results for team exercises
+        var teamParticipations = findByStudentIdAndTeamExercisesWithEagerLegalSubmissionsResult(user.getId(), teamExercises);
+
+        // 3rd: merge both into one list for further processing
+        return Stream.concat(individualParticipations.stream(), teamParticipations.stream()).collect(Collectors.toList());
     }
 }
