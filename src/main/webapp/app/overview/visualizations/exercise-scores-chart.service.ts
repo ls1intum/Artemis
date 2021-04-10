@@ -5,6 +5,9 @@ import { Observable } from 'rxjs';
 import * as moment from 'moment';
 import { Moment } from 'moment';
 
+/**
+ * Corresponds to ExerciseScoresDTO.java on the server
+ */
 export class ExerciseScoresDTO {
     public exerciseId?: number;
     public exerciseTitle?: string;
@@ -15,13 +18,24 @@ export class ExerciseScoresDTO {
     public maxScoreAchieved?: number;
 }
 
+/**
+ * Service to request the data from the server that is necessary for the exercise-scores-chart.component.ts
+ */
 @Injectable({ providedIn: 'root' })
 export class ExerciseScoresChartService {
     public resourceUrl = SERVER_API_URL + 'api';
 
     constructor(private http: HttpClient) {}
 
+    /**
+     * Get the course exercise performance statistics necessary for exercise-scores-chart.component.ts
+     * @param courseId id of the course
+     */
     getCourseExerciseScores(courseId: number): Observable<HttpResponse<ExerciseScoresDTO[]>> {
+        if (courseId === undefined || courseId === null || courseId < 1) {
+            throw new Error('Invalid courseId provided: ' + courseId);
+        }
+
         return this.http
             .get<ExerciseScoresDTO[]>(`${this.resourceUrl}/courses/${courseId}/charts/exercise-scores`, { observe: 'response' })
             .map((response: HttpResponse<ExerciseScoresDTO[]>) => {
