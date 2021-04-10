@@ -307,6 +307,7 @@ public class Feedback extends DomainObject {
         feedback.setPositive(isPositive());
         feedback.setReference(getReference());
         feedback.setVisibility(visibility);
+        feedback.setCopiedFeedback(true);
         return feedback;
     }
 
