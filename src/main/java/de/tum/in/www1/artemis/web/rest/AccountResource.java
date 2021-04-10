@@ -44,6 +44,9 @@ public class AccountResource {
     @Value("${artemis.user-management.registration.allowed-email-pattern:#{null}}")
     private Optional<Pattern> allowedEmailPattern;
 
+    @Value("${info.saml2.enable-password:#{null}}")
+    private Optional<Boolean> saml2EnablePassword;
+
     private final Logger log = LoggerFactory.getLogger(AccountResource.class);
 
     private final UserRepository userRepository;
@@ -72,6 +75,15 @@ public class AccountResource {
      */
     private boolean isRegistrationDisabled() {
         return registrationEnabled.isEmpty() || Boolean.FALSE.equals(registrationEnabled.get());
+    }
+
+    /**
+     * Returns true if saml2 app password is disabled, false otherwise.
+     *
+     * @return true if saml2 app password is disabled, false otherwise
+     */
+    private boolean isSAML2Disabled() {
+        return !(saml2EnablePassword.isPresent() && Boolean.TRUE.equals(saml2EnablePassword.get()));
     }
 
     /**
@@ -143,7 +155,7 @@ public class AccountResource {
         long start = System.currentTimeMillis();
         User user = userRepository.getUserWithGroupsAuthoritiesAndGuidedTourSettings();
         UserDTO userDTO = new UserDTO(user);
-        log.info("GET /account " + user.getLogin() + " took " + (System.currentTimeMillis() - start) + "ms");
+        log.info("GET /account {} took {}ms", user.getLogin(), System.currentTimeMillis() - start);
         return userDTO;
     }
 
@@ -193,7 +205,7 @@ public class AccountResource {
      */
     @PostMapping(path = "/account/change-password")
     public void changePassword(@RequestBody PasswordChangeDTO passwordChangeDto) {
-        if (isRegistrationDisabled()) {
+        if (isRegistrationDisabled() && isSAML2Disabled()) {
             throw new AccessForbiddenException("User Registration is disabled");
         }
         if (isPasswordLengthInvalid(passwordChangeDto.getNewPassword())) {
@@ -209,7 +221,7 @@ public class AccountResource {
      */
     @PostMapping(path = "/account/reset-password/init")
     public void requestPasswordReset(@RequestBody String mail) {
-        if (isRegistrationDisabled()) {
+        if (isRegistrationDisabled() && isSAML2Disabled()) {
             throw new AccessForbiddenException("User Registration is disabled");
         }
         Optional<User> user = userService.requestPasswordReset(mail);
@@ -232,7 +244,7 @@ public class AccountResource {
      */
     @PostMapping(path = "/account/reset-password/finish")
     public void finishPasswordReset(@RequestBody KeyAndPasswordVM keyAndPassword) {
-        if (isRegistrationDisabled()) {
+        if (isRegistrationDisabled() && isSAML2Disabled()) {
             throw new AccessForbiddenException("User Registration is disabled");
         }
         if (isPasswordLengthInvalid(keyAndPassword.getNewPassword())) {

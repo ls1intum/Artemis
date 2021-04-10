@@ -5,9 +5,9 @@ import java.util.stream.Collectors;
 
 import javax.persistence.Entity;
 
-import jplag.JPlagResult;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismComparison;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismResult;
+import jplag.JPlagResult;
 
 /**
  * Result of the automatic plagiarism detection for text or programming exercises.
@@ -24,9 +24,8 @@ public class TextPlagiarismResult extends PlagiarismResult<TextSubmissionElement
     }
 
     public TextPlagiarismResult(JPlagResult result) {
-        this.comparisons = result.getComparisons().stream().map(PlagiarismComparison::fromJPlagComparison).map(comparison -> {
+        this.comparisons = result.getComparisons().stream().map(PlagiarismComparison::fromJPlagComparison).peek(comparison -> {
             comparison.setPlagiarismResult(this);
-            return comparison;
         }).collect(Collectors.toSet());
         this.duration = result.getDuration();
 

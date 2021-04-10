@@ -32,6 +32,9 @@ public class LtiAuthenticationSuccessListener implements ApplicationListener<Int
         // Not fired on programmatic logins!
         AbstractAuthenticationToken token = (AbstractAuthenticationToken) event.getSource();
         WebAuthenticationDetails authDetails = (WebAuthenticationDetails) token.getDetails();
+        if (authDetails == null) {
+            return;
+        }
         String sessionId = authDetails.getSessionId();
         ltiService.handleLaunchRequestForSession(sessionId);
     }

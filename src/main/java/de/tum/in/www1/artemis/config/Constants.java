@@ -9,6 +9,10 @@ public final class Constants {
 
     public static int COMPLAINT_LOCK_DURATION_IN_MINUTES = 1440; // 24h
 
+    public static int SECONDS_BEFORE_RELEASE_DATE_FOR_COMBINING_TEMPLATE_COMMITS = 15;
+
+    public static int SECONDS_AFTER_RELEASE_DATE_FOR_UNLOCKING_STUDENT_EXAM_REPOS = 5;
+
     // Regex for acceptable logins
     public static final String LOGIN_REGEX = "^[_'.@A-Za-z0-9-]*$";
 
@@ -78,7 +82,8 @@ public final class Constants {
 
     public static final long MAX_NUMBER_OF_LOCKED_SUBMISSIONS_PER_TUTOR = 10;
 
-    public static final long MAX_UPLOAD_FILESIZE_BYTES = 4 * 1024 * 1024; // 4 MB
+    // Note: The values in input.constants.ts (client) need to be the same
+    public static final long MAX_SUBMISSION_FILE_SIZE = 8 * 1024 * 1024; // 8 MB
 
     public static final String TEST_CASES_CHANGED_NOTIFICATION = "The test cases of this programming exercise were updated. The student submissions should be build and tested so that results with the updated settings can be created.";
 
@@ -101,6 +106,8 @@ public final class Constants {
     public static final String PROGRAMMING_EXERCISE_FAILED_UNLOCK_OPERATIONS_NOTIFICATION = "When adding the write permissions for the student repositories, not all operations were successful. Number of failed operations: ";
 
     public static final String PROGRAMMING_EXERCISE_SUCCESSFUL_UNLOCK_OPERATION_NOTIFICATION = "The student repositories for this programming exercise were unlocked successfully.";
+
+    public static final String PROGRAMMING_EXERCISE_SUCCESSFUL_COMBINE_OF_TEMPLATE_COMMITS = "The template commits for this programming exercise were combined successfully.";
 
     public static final int FEEDBACK_DETAIL_TEXT_MAX_CHARACTERS = 5000;
 

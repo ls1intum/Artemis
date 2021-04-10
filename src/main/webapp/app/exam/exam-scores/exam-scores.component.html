@@ -221,7 +221,7 @@
                         <td>{{ studentResult.eMail ? studentResult.eMail : '-' }}</td>
                         <td>{{ studentResult.registrationNumber ? studentResult.registrationNumber : '-' }}</td>
                         <ng-container *ngFor="let exerciseGroup of examScoreDTO.exerciseGroups">
-                            <td *ngIf="studentResult.exerciseGroupIdToExerciseResult[exerciseGroup.id]; else empty">
+                            <td *ngIf="studentResult.exerciseGroupIdToExerciseResult && studentResult.exerciseGroupIdToExerciseResult[exerciseGroup.id]; else empty">
                                 {{ studentResult.exerciseGroupIdToExerciseResult[exerciseGroup.id].title }}
                                 :
                                 {{ roundAndPerformLocalConversion(studentResult.exerciseGroupIdToExerciseResult[exerciseGroup.id].achievedPoints, 1) }}

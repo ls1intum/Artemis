@@ -13,10 +13,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.Result;
-import de.tum.in.www1.artemis.domain.Submission;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
@@ -34,13 +31,29 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
 
     boolean existsByExerciseId(@Param("exerciseId") Long exerciseId);
 
-    @Query("select distinct participation from StudentParticipation participation left join fetch participation.results r where participation.exercise.course.id = :#{#courseId} and (r.rated is null or r.rated = true)")
+    @Query("""
+            SELECT DISTINCT p FROM StudentParticipation p LEFT JOIN FETCH p.results r
+            WHERE p.exercise.course.id = :#{#courseId}
+                AND (r.rated IS NULL OR r.rated = true)
+            """)
     List<StudentParticipation> findByCourseIdWithEagerRatedResults(@Param("courseId") Long courseId);
 
-    @Query("select distinct participation from StudentParticipation participation left join fetch participation.submissions s left join fetch s.results r where participation.testRun = false and participation.exercise.exerciseGroup.exam.id = :#{#examId} and r.rated = true")
-    List<StudentParticipation> findByExamIdWithEagerSubmissionsRatedResults(@Param("examId") Long examId);
+    @Query("""
+            SELECT DISTINCT p FROM StudentParticipation p
+            LEFT JOIN FETCH p.submissions s
+            LEFT JOIN FETCH s.results r
+            WHERE p.testRun = false
+                AND p.exercise.exerciseGroup.exam.id = :#{#examId}
+                AND r.rated = true
+                AND (s.type <> 'ILLEGAL' OR s.type IS NULL)
+            """)
+    List<StudentParticipation> findByExamIdWithEagerLegalSubmissionsRatedResults(@Param("examId") Long examId);
 
-    @Query("select distinct participation from StudentParticipation participation where participation.exercise.course.id = :#{#courseId} and participation.team.shortName = :#{#teamShortName}")
+    @Query("""
+            SELECT DISTINCT p FROM StudentParticipation p
+            WHERE p.exercise.course.id = :#{#courseId}
+            AND p.team.shortName = :#{#teamShortName}
+            """)
     List<StudentParticipation> findAllByCourseIdAndTeamShortName(@Param("courseId") Long courseId, @Param("teamShortName") String teamShortName);
 
     List<StudentParticipation> findByTeamId(Long teamId);
@@ -51,28 +64,53 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
     @EntityGraph(type = LOAD, attributePaths = "results")
     Optional<StudentParticipation> findWithEagerResultsByExerciseIdAndTeamId(Long exerciseId, Long teamId);
 
-    @EntityGraph(type = LOAD, attributePaths = "submissions")
-    Optional<StudentParticipation> findWithEagerSubmissionsByExerciseIdAndStudentLogin(Long exerciseId, String username);
-
-    @EntityGraph(type = LOAD, attributePaths = "submissions")
-    Optional<StudentParticipation> findWithEagerSubmissionsByExerciseIdAndTeamId(Long exerciseId, Long teamId);
-
-    @Query("select distinct participation from StudentParticipation participation left join fetch participation.submissions s left join fetch s.results where participation.exercise.id = :#{#exerciseId}")
-    List<StudentParticipation> findByExerciseIdWithEagerSubmissionsResult(@Param("exerciseId") Long exerciseId);
-
-    @Query("select distinct participation from StudentParticipation participation left join fetch participation.submissions s left join fetch s.results r left join fetch r.assessor where participation.exercise.id = :#{#exerciseId}")
-    List<StudentParticipation> findByExerciseIdWithEagerSubmissionsResultAssessor(@Param("exerciseId") Long exerciseId);
+    @Query("""
+            SELECT DISTINCT p FROM StudentParticipation p
+            LEFT JOIN FETCH p.submissions s
+            WHERE p.exercise.id = :#{#exerciseId}
+                AND p.student.login = :#{#username}
+                AND (s.type <> 'ILLEGAL' OR s.type IS NULL)
+            """)
+    Optional<StudentParticipation> findWithEagerLegalSubmissionsByExerciseIdAndStudentLogin(Long exerciseId, String username);
 
     @Query("""
-            select distinct participation from StudentParticipation participation
-            left join fetch participation.submissions s
-            left join fetch s.results r
-            left join fetch r.assessor
-            where participation.exercise.id = :#{#exerciseId}
-            and participation.testRun = false
+            SELECT DISTINCT p FROM StudentParticipation p
+            LEFT JOIN FETCH p.submissions s
+            where p.exercise.id = :#{#exerciseId}
+                AND p.team.id = :#{#teamId}
+                AND (s.type <> 'ILLEGAL' OR s.type IS NULL)
             """)
-    List<StudentParticipation> findByExerciseIdWithEagerSubmissionsResultAssessorIgnoreTestRuns(@Param("exerciseId") Long exerciseId);
+    Optional<StudentParticipation> findWithEagerLegalSubmissionsByExerciseIdAndTeamId(Long exerciseId, Long teamId);
 
+    @Query("""
+            SELECT DISTINCT p FROM StudentParticipation p
+            LEFT JOIN FETCH p.submissions s
+            LEFT JOIN FETCH s.results
+            WHERE p.exercise.id = :#{#exerciseId} AND (s.type <> 'ILLEGAL' OR s.type IS NULL)
+            """)
+    List<StudentParticipation> findByExerciseIdWithEagerLegalSubmissionsResult(@Param("exerciseId") Long exerciseId);
+
+    @Query("""
+            SELECT DISTINCT p FROM StudentParticipation p
+            LEFT JOIN FETCH p.submissions s
+            LEFT JOIN FETCH s.results r
+            LEFT JOIN FETCH r.assessor
+            WHERE p.exercise.id = :#{#exerciseId} AND (s.type <> 'ILLEGAL' OR s.type IS NULL)
+            """)
+    List<StudentParticipation> findByExerciseIdWithEagerLegalSubmissionsResultAssessor(@Param("exerciseId") Long exerciseId);
+
+    @Query("""
+            SELECT DISTINCT p FROM StudentParticipation p
+            LEFT JOIN FETCH p.submissions s
+            LEFT JOIN FETCH s.results r
+            LEFT JOIN FETCH r.assessor
+            WHERE p.exercise.id = :#{#exerciseId}
+                AND p.testRun = false
+                AND (s.type <> 'ILLEGAL' OR s.type IS NULL)
+            """)
+    List<StudentParticipation> findByExerciseIdWithEagerLegalSubmissionsResultAssessorIgnoreTestRuns(@Param("exerciseId") Long exerciseId);
+
+    // TODO SE improve
     /**
      * Get all participations for an exercise with each latest result (determined by id).
      * If there is no latest result (= no result at all), the participation will still be included in the returned ResultSet, but will have an empty Result array.
@@ -80,16 +118,30 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
      * @param exerciseId Exercise id.
      * @return participations for exercise.
      */
-    @Query("select distinct participation from StudentParticipation participation left join fetch participation.results result where participation.exercise.id = :#{#exerciseId} and (result.id = (select max(id) from participation.results) or result is null)")
+    @Query("""
+            SELECT DISTINCT p FROM StudentParticipation p
+            LEFT JOIN FETCH p.results r
+            LEFT JOIN FETCH r.submission s
+            WHERE p.exercise.id = :#{#exerciseId}
+                AND (r.id = (
+                    SELECT max(pr.id) FROM p.results pr
+                        LEFT JOIN pr.submission prs
+                        WHERE (prs.type <> 'ILLEGAL' OR prs.type IS NULL))
+                    OR r IS NULL)
+            """)
     List<StudentParticipation> findByExerciseIdWithLatestResult(@Param("exerciseId") Long exerciseId);
 
     @Query("""
-            select distinct participation from StudentParticipation participation
-            left join fetch participation.results result
-            where participation.exercise.id = :#{#exerciseId}
-            and participation.testRun = false
-            and (result.id =
-                (select max(id) from participation.results) or result is null)
+            SELECT DISTINCT p FROM StudentParticipation p
+            LEFT JOIN FETCH p.results r
+            LEFT JOIN FETCH r.submission s
+            WHERE p.exercise.id = :#{#exerciseId}
+                AND p.testRun = false
+                AND (r.id = (
+                    SELECT max(pr.id) FROM p.results pr
+                        LEFT JOIN pr.submission prs
+                        WHERE (prs.type <> 'ILLEGAL' OR prs.type IS NULL))
+                    OR r IS NULL)
             """)
     List<StudentParticipation> findByExerciseIdWithLatestResultIgnoreTestRunSubmissions(@Param("exerciseId") Long exerciseId);
 
@@ -99,111 +151,197 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
      * @param exerciseId Exercise id.
      * @return participations for exercise.
      */
-    @Query("select distinct participation from StudentParticipation participation left join fetch participation.results result left join fetch result.feedbacks where participation.exercise.id = :#{#exerciseId} and (result.id = (select max(prs.id) from participation.results prs where prs.assessmentType = 'AUTOMATIC'))")
+    @Query("""
+            select distinct p from StudentParticipation p
+            left join fetch p.results r
+            left join fetch r.feedbacks
+            left join fetch r.submission s
+            where p.exercise.id = :#{#exerciseId}
+                and (r.id = (select max(pr.id) from p.results pr
+                    left join pr.submission prs
+                    where pr.assessmentType = 'AUTOMATIC' and (prs.type <> 'ILLEGAL' or prs.type is null)))
+            """)
     List<StudentParticipation> findByExerciseIdWithLatestAutomaticResultAndFeedbacks(@Param("exerciseId") Long exerciseId);
 
     // Manual result can either be from type MANUAL or SEMI_AUTOMATIC
-    @Query("select distinct participation from StudentParticipation participation left join fetch participation.results result left join fetch result.feedbacks where participation.exercise.id = :#{#exerciseId} and (result.assessmentType = 'MANUAL' or result.assessmentType = 'SEMI_AUTOMATIC')")
+    @Query("""
+            select distinct p from StudentParticipation p
+            left join fetch p.results r
+            left join fetch r.feedbacks
+            left join fetch r.submission s
+            where p.exercise.id = :#{#exerciseId}
+                 and (s.type <> 'ILLEGAL' or s.type is null)
+                 and (r.assessmentType = 'MANUAL' or r.assessmentType = 'SEMI_AUTOMATIC')
+            """)
     List<StudentParticipation> findByExerciseIdWithManualResultAndFeedbacks(@Param("exerciseId") Long exerciseId);
 
-    @Query("select distinct participation from StudentParticipation participation left join fetch participation.submissions where participation.exercise.id = :#{#exerciseId} and participation.student.id = :#{#studentId}")
-    List<StudentParticipation> findByExerciseIdAndStudentIdWithEagerSubmissions(@Param("exerciseId") Long exerciseId, @Param("studentId") Long studentId);
+    @Query("""
+            select distinct p from StudentParticipation p
+            left join fetch p.submissions s
+            where p.exercise.id = :#{#exerciseId}
+                and p.student.id = :#{#studentId}
+                and (s.type <> 'ILLEGAL' or s.type is null)
+            """)
+    List<StudentParticipation> findByExerciseIdAndStudentIdWithEagerLegalSubmissions(@Param("exerciseId") Long exerciseId, @Param("studentId") Long studentId);
 
     @Query("""
-            select distinct participation
-            from StudentParticipation participation
-            where participation.exercise.id = :#{#exerciseId} and participation.student.id = :#{#studentId}""")
+            SELECT DISTINCT p
+            FROM StudentParticipation p
+            WHERE p.exercise.id = :#{#exerciseId} and p.student.id = :#{#studentId}
+            """)
     List<StudentParticipation> findByExerciseIdAndStudentId(@Param("exerciseId") Long exerciseId, @Param("studentId") Long studentId);
 
-    @Query("select distinct participation from StudentParticipation participation left join fetch participation.results left join fetch participation.submissions where participation.exercise.id = :#{#exerciseId} and participation.student.id = :#{#studentId}")
-    List<StudentParticipation> findByExerciseIdAndStudentIdWithEagerResultsAndSubmissions(@Param("exerciseId") Long exerciseId, @Param("studentId") Long studentId);
-
-    @Query("select distinct participation from StudentParticipation participation left join fetch participation.submissions where participation.exercise.id = :#{#exerciseId} and participation.team.id = :#{#teamId}")
-    List<StudentParticipation> findByExerciseIdAndTeamIdWithEagerSubmissions(@Param("exerciseId") Long exerciseId, @Param("teamId") Long teamId);
+    @Query("""
+            select distinct p from StudentParticipation p
+            left join fetch p.results
+            left join fetch p.submissions s
+            where p.exercise.id = :#{#exerciseId}
+                and p.student.id = :#{#studentId}
+                and (s.type <> 'ILLEGAL' or s.type is null)
+             """)
+    List<StudentParticipation> findByExerciseIdAndStudentIdWithEagerResultsAndLegalSubmissions(@Param("exerciseId") Long exerciseId, @Param("studentId") Long studentId);
 
     @Query("""
-            SELECT DISTINCT participation
-            FROM StudentParticipation participation
-            WHERE participation.exercise.id = :#{#exerciseId} AND participation.team.id = :#{#teamId}
+            select distinct p from StudentParticipation p
+            left join fetch p.submissions s
+            where p.exercise.id = :#{#exerciseId}
+                and p.team.id = :#{#teamId}
+                and (s.type <> 'ILLEGAL' or s.type is null)
+            """)
+    List<StudentParticipation> findByExerciseIdAndTeamIdWithEagerLegalSubmissions(@Param("exerciseId") Long exerciseId, @Param("teamId") Long teamId);
+
+    @Query("""
+            SELECT DISTINCT p
+            FROM StudentParticipation p
+                WHERE p.exercise.id = :#{#exerciseId} AND p.team.id = :#{#teamId}
             """)
     List<StudentParticipation> findByExerciseIdAndTeamId(@Param("exerciseId") Long exerciseId, @Param("teamId") Long teamId);
 
-    @Query("select distinct participation from StudentParticipation participation left join fetch participation.results left join fetch participation.submissions where participation.exercise.id = :#{#exerciseId} and participation.team.id = :#{#teamId}")
-    List<StudentParticipation> findByExerciseIdAndTeamIdWithEagerResultsAndSubmissions(@Param("exerciseId") Long exerciseId, @Param("teamId") Long teamId);
+    @Query("""
+            select distinct p from StudentParticipation p
+            left join fetch p.results r
+            left join fetch r.submission rs
+            left join fetch p.submissions s
+            where p.exercise.id = :#{#exerciseId}
+                and p.team.id = :#{#teamId}
+                and (s.type <> 'ILLEGAL' or s.type is null)
+                and (rs.type <> 'ILLEGAL' or rs.type is null)
+            """)
+    List<StudentParticipation> findByExerciseIdAndTeamIdWithEagerResultsAndLegalSubmissions(@Param("exerciseId") Long exerciseId, @Param("teamId") Long teamId);
 
-    @Query("select distinct participation from StudentParticipation participation left join fetch participation.results as par left join fetch par.feedbacks left join fetch par.submission where participation.exercise.id = :#{#exerciseId} and participation.student.id = :#{#studentId} and (par.id = (select max(id) from participation.results) or par.id = null)")
+    @Query("""
+            select distinct p from StudentParticipation p
+            left join fetch p.results r
+            left join fetch r.feedbacks
+            left join fetch r.submission s
+            where p.exercise.id = :#{#exerciseId}
+                and p.student.id = :#{#studentId}
+                and (r.id = (select max(pr.id) from p.results pr
+                        left join pr.submission prs
+                        where (prs.type <> 'ILLEGAL' or prs.type is null))
+                    or r.id = null)
+            """)
     Optional<StudentParticipation> findByExerciseIdAndStudentIdWithLatestResult(@Param("exerciseId") Long exerciseId, @Param("studentId") Long studentId);
 
-    @Query("select distinct participation from StudentParticipation participation left join fetch participation.results as par left join fetch par.feedbacks where participation.exercise.id = :#{#exerciseId} and participation.team.id = :#{#teamId} and (par.id = (select max(id) from participation.results) or par.id = null)")
+    @Query("""
+            select distinct p from StudentParticipation p
+            left join fetch p.results r
+            left join fetch r.feedbacks
+            left join fetch r.submission s
+            where p.exercise.id = :#{#exerciseId}
+                and p.team.id = :#{#teamId}
+                and (r.id = (select max(pr.id) from p.results pr
+                        left join pr.submission prs
+                        where (prs.type <> 'ILLEGAL' or prs.type is null))
+                    or r.id = null)
+            """)
     Optional<StudentParticipation> findByExerciseIdAndTeamIdWithLatestResult(@Param("exerciseId") Long exerciseId, @Param("teamId") Long teamId);
 
     /**
      * Find all participations of submissions that are submitted and do not already have a manual result and do not belong to test runs.
      * No manual result means that no user has started an assessment for the corresponding submission yet.
      *
-     * If a student can have multiple submissions per exercise type, the latest submission (by id) will be returned.
+     * If a student can have multiple submissions per exercise type, the latest not {@link de.tum.in.www1.artemis.domain.enumeration.SubmissionType#ILLEGAL} ILLEGAL submission (by id) will be returned.
      *
      * @param correctionRound the correction round the fetched results should belong to
      * @param exerciseId      the exercise id the participations should belong to
      * @return a list of participations including their submitted submissions that do not have a manual result
      */
     @Query("""
-            SELECT DISTINCT participation FROM StudentParticipation participation
-            LEFT JOIN FETCH participation.submissions submission
+            SELECT DISTINCT p FROM StudentParticipation p
+            LEFT JOIN FETCH p.submissions submission
             LEFT JOIN FETCH submission.results result
             LEFT JOIN FETCH result.feedbacks feedbacks
             LEFT JOIN FETCH result.assessor
-            WHERE participation.exercise.id = :#{#exerciseId}
-            AND participation.testRun = FALSE
+            WHERE p.exercise.id = :#{#exerciseId}
+            AND p.testRun = FALSE
             AND 0L = (SELECT COUNT(r2)
-                             FROM Result r2 where r2.assessor IS NOT NULL
+                             FROM Result r2 WHERE r2.assessor IS NOT NULL
                                  AND (r2.rated IS NULL OR r2.rated = FALSE)
                                  AND r2.submission = submission)
             AND
               :#{#correctionRound} = (SELECT COUNT(r)
-                             FROM Result r where r.assessor IS NOT NULL
+                             FROM Result r WHERE r.assessor IS NOT NULL
                                  AND r.rated = TRUE
                                  AND r.submission = submission
                                  AND r.completionDate IS NOT NULL
                                  AND r.assessmentType IN ('MANUAL', 'SEMI_AUTOMATIC')
-                                 AND (participation.exercise.dueDate IS NULL OR r.submission.submissionDate <= participation.exercise.dueDate))
+                                 AND (p.exercise.dueDate IS NULL OR r.submission.submissionDate <= p.exercise.dueDate))
             AND :#{#correctionRound} = (SELECT COUNT (prs)
-                            FROM participation.results prs
+                            FROM p.results prs
                             WHERE prs.assessmentType IN ('MANUAL', 'SEMI_AUTOMATIC'))
             AND submission.submitted = true
-            AND submission.id = (SELECT max(id) FROM participation.submissions)
+            AND submission.id = (SELECT max(id) FROM p.submissions)
             """)
     List<StudentParticipation> findByExerciseIdWithLatestSubmissionWithoutManualResultsAndIgnoreTestRunParticipation(@Param("exerciseId") Long exerciseId,
             @Param("correctionRound") long correctionRound);
 
+    // TODO SE This one need to be improved.
     /**
      * Find all participations of submissions that are submitted and do not already have a manual result. No manual result means that no user has started an assessment for the
      * corresponding submission yet.
      *
-     * If a student can have multiple submissions per exercise type, the latest submission (by id) will be returned.
+     * If a student can have multiple submissions per exercise type, the latest not {@link de.tum.in.www1.artemis.domain.enumeration.SubmissionType#ILLEGAL} ILLEGAL submission (by id) will be returned.
      *
      * @param exerciseId the exercise id the participations should belong to
      * @return a list of participations including their submitted submissions that do not have a manual result
      */
     @Query("""
-            select distinct participation from Participation participation
-            left join fetch participation.submissions submission
-            left join fetch submission.results result
-            left join fetch result.feedbacks feedbacks
-            where participation.exercise.id = :#{#exerciseId}
-            and not exists (select prs from participation.results prs
-                where prs.assessmentType in ('MANUAL', 'SEMI_AUTOMATIC')) and submission.submitted = true and
-                submission.id = (select max(id) from participation.submissions)
+            SELECT DISTINCT p FROM Participation p
+            LEFT JOIN FETCH p.submissions s
+            LEFT JOIN FETCH s.results r
+            LEFT JOIN FETCH r.feedbacks
+            WHERE p.exercise.id = :#{#exerciseId}
+            AND NOT EXISTS
+                (SELECT prs FROM p.results prs
+                    WHERE prs.assessmentType IN ('MANUAL', 'SEMI_AUTOMATIC'))
+                    AND s.submitted = true
+                    AND s.id = (SELECT max(id) FROM p.submissions)
             """)
     List<StudentParticipation> findByExerciseIdWithLatestSubmissionWithoutManualResults(@Param("exerciseId") Long exerciseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "submissions" })
-    Optional<StudentParticipation> findWithEagerSubmissionsById(Long participationId);
+    @Query("""
+            select p from Participation p
+            left join fetch p.submissions s
+            where p.id = :#{#participationId} and (s.type <> 'ILLEGAL' or s.type is null)
+            """)
+    Optional<StudentParticipation> findWithEagerLegalSubmissionsById(Long participationId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "results" })
+    @Query("""
+            select p from Participation p
+            left join fetch p.results r
+            left join fetch r.submission
+            where p.id = :#{#participationId}
+            """)
     Optional<StudentParticipation> findWithEagerResultsById(@Param("participationId") Long participationId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "results", "results.feedbacks" })
+    @Query("""
+            select p from Participation p
+            left join fetch p.results r
+            left join fetch r.submission rs
+            left join fetch r.feedbacks
+            where p.id = :#{#participationId} and (rs.type <> 'ILLEGAL' or rs.type is null)
+            """)
     Optional<StudentParticipation> findWithEagerResultsAndFeedbackById(@Param("participationId") Long participationId);
 
     /**
@@ -213,8 +351,18 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
      * @param participationId the id of the participation
      * @return the participation with eager submissions and results or an empty Optional
      */
-    @EntityGraph(type = LOAD, attributePaths = { "submissions", "submissions.results", "results", "team.students" })
-    Optional<StudentParticipation> findWithEagerSubmissionsAndResultsById(Long participationId);
+    @Query("""
+            select p from StudentParticipation p
+            left join fetch p.results r
+            left join fetch r.submission rs
+            left join fetch p.submissions s
+            left join fetch s.results
+            left join p.team.students
+            where p.id = :#{#participationId}
+                and (s.type <> 'ILLEGAL' or s.type is null)
+                and (rs.type <> 'ILLEGAL' or rs.type is null)
+            """)
+    Optional<StudentParticipation> findWithEagerLegalSubmissionsAndResultsById(Long participationId);
 
     /**
      * Find the participation with the given id. Additionally, load all the submissions and results of the participation from the database.
@@ -223,14 +371,41 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
      * @param participationId the id of the participation
      * @return the participation with eager submissions, results, exercise and course or an empty Optional
      */
-    @EntityGraph(type = LOAD, attributePaths = { "submissions", "submissions.results", "submissions.results.feedbacks", "results", "team.students" })
-    Optional<StudentParticipation> findWithEagerSubmissionsResultsFeedbacksById(Long participationId);
+    @Query("""
+            select p from StudentParticipation p
+            left join fetch p.results r
+            left join fetch r.submission rs
+            left join fetch p.submissions s
+            left join fetch s.results sr
+            left join fetch sr.feedbacks
+            left join p.team.students
+            where p.id = :#{#participationId}
+                and (s.type <> 'ILLEGAL' or s.type is null)
+                and (rs.type <> 'ILLEGAL' or rs.type is null)
+            """)
+    Optional<StudentParticipation> findWithEagerLegalSubmissionsResultsFeedbacksById(Long participationId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "submissions", "results", "results.assessor" })
-    Optional<StudentParticipation> findWithEagerSubmissionsAndResultsAssessorsById(Long participationId);
+    @Query("""
+            select p from StudentParticipation p
+            left join fetch p.results r
+            left join fetch r.submission rs
+            left join fetch p.submissions s
+            left join fetch r.assessor
+            where p.id = :#{#participationId}
+                and (s.type <> 'ILLEGAL' or s.type is null)
+                and (rs.type <> 'ILLEGAL' or rs.type is null)
+            """)
+    Optional<StudentParticipation> findWithEagerLegalSubmissionsAndResultsAssessorsById(Long participationId);
 
     @EntityGraph(type = LOAD, attributePaths = { "submissions", "submissions.results", "submissions.results.assessor" })
-    List<StudentParticipation> findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseId(long exerciseId);
+    @Query("""
+            select p from StudentParticipation p
+            left join fetch p.submissions s
+            left join fetch s.results sr
+            left join fetch sr.assessor
+            where p.exercise.id = :#{#exerciseId} and (s.type <> 'ILLEGAL' or s.type is null)
+            """)
+    List<StudentParticipation> findAllWithEagerLegalSubmissionsAndEagerResultsAndEagerAssessorByExerciseId(long exerciseId);
 
     @Query("""
             SELECT DISTINCT p FROM StudentParticipation p
@@ -238,14 +413,28 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             LEFT JOIN FETCH s.results r
             LEFT JOIN FETCH r.assessor a
             WHERE p.exercise.id = :#{#exerciseId}
-            AND p.testRun = FALSE
+                AND p.testRun = FALSE
+                AND (s.type <> 'ILLEGAL' or s.type is null)
             """)
-    List<StudentParticipation> findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseIdIgnoreTestRuns(@Param("exerciseId") long exerciseId);
+    List<StudentParticipation> findAllWithEagerLegalSubmissionsAndEagerResultsAndEagerAssessorByExerciseIdIgnoreTestRuns(@Param("exerciseId") long exerciseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "submissions", "submissions.results", "results" })
-    List<StudentParticipation> findAllWithEagerSubmissionsAndEagerResultsByExerciseId(long exerciseId);
+    @Query("""
+            SELECT DISTINCT p FROM StudentParticipation p
+            LEFT JOIN FETCH p.results r
+            LEFT JOIN FETCH r.submission rs
+            LEFT JOIN FETCH p.submissions s
+            LEFT JOIN FETCH s.results sr
+            WHERE p.exercise.id = :#{#exerciseId}
+                AND (s.type <> 'ILLEGAL' or s.type is null)
+                AND (rs.type <> 'ILLEGAL' or rs.type is null)
+            """)
+    List<StudentParticipation> findAllWithEagerLegalSubmissionsAndEagerResultsByExerciseId(long exerciseId);
 
-    @Query("select distinct p from StudentParticipation p where p.student.id = :#{#studentId} and p.exercise in :#{#exercises}")
+    @Query("""
+            SELECT DISTINCT p FROM StudentParticipation p
+            WHERE p.student.id = :#{#studentId}
+                AND p.exercise in :#{#exercises}
+            """)
     List<StudentParticipation> findByStudentIdAndIndividualExercises(@Param("studentId") Long studentId, @Param("exercises") List<Exercise> exercises);
 
     @Query("""
@@ -253,10 +442,11 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             LEFT JOIN FETCH p.submissions s
             LEFT JOIN FETCH s.results r
             WHERE p.testRun = FALSE
-            AND p.student.id = :#{#studentId}
-            AND p.exercise in :#{#exercises}
+                AND p.student.id = :#{#studentId}
+                AND p.exercise in :#{#exercises}
+                AND (s.type <> 'ILLEGAL' or s.type is null)
             """)
-    List<StudentParticipation> findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(@Param("studentId") Long studentId,
+    List<StudentParticipation> findByStudentIdAndIndividualExercisesWithEagerLegalSubmissionsResultIgnoreTestRuns(@Param("studentId") Long studentId,
             @Param("exercises") List<Exercise> exercises);
 
     @Query("""
@@ -265,39 +455,47 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             LEFT JOIN FETCH s.results r
             LEFT JOIN FETCH r.assessor
             WHERE p.testRun = FALSE
-            AND p.student.id = :#{#studentId}
-            AND p.exercise in :#{#exercises}
+                AND p.student.id = :#{#studentId}
+                AND p.exercise in :#{#exercises}
+                AND (s.type <> 'ILLEGAL' or s.type is null)
             """)
-    List<StudentParticipation> findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultAndAssessorIgnoreTestRuns(@Param("studentId") Long studentId,
+    List<StudentParticipation> findByStudentIdAndIndividualExercisesWithEagerLegalSubmissionsResultAndAssessorIgnoreTestRuns(@Param("studentId") Long studentId,
             @Param("exercises") List<Exercise> exercises);
-
-    @Query("select distinct p from StudentParticipation p left join fetch p.submissions s left join fetch s.results r where p.testRun = true and p.student.id = :#{#studentId} and p.exercise in :#{#exercises}")
-    List<StudentParticipation> findTestRunParticipationsByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(@Param("studentId") Long studentId,
-            @Param("exercises") List<Exercise> exercises);
-
-    @Query("select distinct p from StudentParticipation p left join fetch p.submissions s left join fetch s.results r left join fetch p.team t left join fetch t.students teamStudent where teamStudent.id = :#{#studentId} and p.exercise in :#{#exercises}")
-    List<StudentParticipation> findByStudentIdAndTeamExercisesWithEagerSubmissionsResult(@Param("studentId") Long studentId, @Param("exercises") List<Exercise> exercises);
-
-    @Query("select distinct p from StudentParticipation p left join fetch p.submissions s left join fetch s.results r left join fetch p.team t where p.exercise.course.id = :#{#courseId} and t.shortName = :#{#teamShortName}")
-    List<StudentParticipation> findAllByCourseIdAndTeamShortNameWithEagerSubmissionsResult(@Param("courseId") Long courseId, @Param("teamShortName") String teamShortName);
-
-    @EntityGraph(type = LOAD, attributePaths = { "submissions.results.assessor" })
-    @Query("select distinct p from StudentParticipation p left join fetch p.submissions s left join fetch s.results r where p.exercise.id = :#{#exerciseId} and (r.assessor.id = :#{#assessorId} and s.id = (select max(id) from p.submissions) or s.id = null)")
-    List<StudentParticipation> findWithLatestSubmissionByExerciseAndAssessor(@Param("exerciseId") Long exerciseId, @Param("assessorId") Long assessorId);
 
     @Query("""
             SELECT DISTINCT p FROM StudentParticipation p
             LEFT JOIN FETCH p.submissions s
             LEFT JOIN FETCH s.results r
-            WHERE p.exercise.id = :#{#exerciseId}
-            AND p.testRun = FALSE
-            AND (r.assessor.id = :#{#assessorId}
-                AND s.id = (SELECT MAX(id) FROM p.submissions)
-                OR s.id = NULL)
-            AND 0L = :#{#correctionRound}
-                """)
-    List<StudentParticipation> findWithLatestSubmissionByExerciseAndAssessorAndCorrectionRoundIgnoreTestRuns(@Param("exerciseId") Long exerciseId,
-            @Param("assessorId") Long assessorId, @Param("correctionRound") long correctionRound);
+            WHERE p.testRun = true
+                AND p.student.id = :#{#studentId}
+                AND p.exercise in :#{#exercises}
+                AND (s.type <> 'ILLEGAL' OR s.type IS NULL)
+            """)
+    List<StudentParticipation> findTestRunParticipationsByStudentIdAndIndividualExercisesWithEagerLegalSubmissionsResult(@Param("studentId") Long studentId,
+            @Param("exercises") List<Exercise> exercises);
+
+    @Query("""
+                SELECT DISTINCT p FROM StudentParticipation p
+                LEFT JOIN FETCH p.submissions s
+                LEFT JOIN FETCH s.results r
+                LEFT JOIN FETCH p.team t
+                LEFT JOIN FETCH t.students teamStudent
+                    WHERE teamStudent.id = :#{#studentId}
+                    AND p.exercise in :#{#exercises}
+                    AND (s.type <> 'ILLEGAL' OR s.type IS NULL)
+            """)
+    List<StudentParticipation> findByStudentIdAndTeamExercisesWithEagerLegalSubmissionsResult(@Param("studentId") Long studentId, @Param("exercises") List<Exercise> exercises);
+
+    @Query("""
+            SELECT DISTINCT p FROM StudentParticipation p
+            LEFT JOIN FETCH p.submissions s
+            LEFT JOIN FETCH s.results r
+            LEFT JOIN FETCH p.team t
+            WHERE p.exercise.course.id = :#{#courseId}
+                AND t.shortName = :#{#teamShortName}
+                AND (s.type <> 'ILLEGAL' OR s.type IS NULL)
+            """)
+    List<StudentParticipation> findAllByCourseIdAndTeamShortNameWithEagerLegalSubmissionsResult(@Param("courseId") Long courseId, @Param("teamShortName") String teamShortName);
 
     /**
      * Count the number of submissions for each participation in a given exercise.
@@ -305,8 +503,14 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
      * @param exerciseId the id of the exercise for which to consider participations
      * @return Tuples of participation ids and number of submissions per participation
      */
-    @Query("select participation.id, count(submissions) from StudentParticipation participation left join participation.submissions submissions where participation.exercise.id = :#{#exerciseId} group by participation.id")
-    List<long[]> countSubmissionsPerParticipationByExerciseId(@Param("exerciseId") long exerciseId);
+    @Query("""
+            SELECT p.id, COUNT(s) FROM StudentParticipation p
+            LEFT JOIN p.submissions s
+            WHERE p.exercise.id = :#{#exerciseId}
+                AND (s.type <> 'ILLEGAL' OR s.type IS NULL)
+            GROUP BY p.id
+            """)
+    List<long[]> countLegalSubmissionsPerParticipationByExerciseId(@Param("exerciseId") long exerciseId);
 
     /**
      * Count the number of submissions for each participation for a given team in a course
@@ -315,20 +519,28 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
      * @param teamShortName the short name of the team for which to consider participations
      * @return Tuples of participation ids and number of submissions per participation
      */
-    @Query("select participation.id, count(submissions) from StudentParticipation participation left join participation.submissions submissions where participation.team.shortName = :#{#teamShortName} and participation.exercise.course.id = :#{#courseId} group by participation.id")
-    List<long[]> countSubmissionsPerParticipationByCourseIdAndTeamShortName(@Param("courseId") long courseId, @Param("teamShortName") String teamShortName);
-
     @Query("""
-            SELECT distinct p FROM StudentParticipation p
+            SELECT p.id, COUNT(s) FROM StudentParticipation p
+            LEFT JOIN p.submissions s
+            WHERE p.team.shortName = :#{#teamShortName}
+                AND p.exercise.course.id = :#{#courseId}
+                AND (s.type <> 'ILLEGAL' OR s.type IS NULL)
+            GROUP BY p.id
+            """)
+    List<long[]> countLegalSubmissionsPerParticipationByCourseIdAndTeamShortName(@Param("courseId") long courseId, @Param("teamShortName") String teamShortName);
+
+    // TODO SE Improve - maybe leave out max id line?
+    @Query("""
+            SELECT DISTINCT p FROM StudentParticipation p
             LEFT JOIN FETCH p.submissions s
             LEFT JOIN FETCH s.results r
-                WHERE p.exercise.id = :#{#exerciseId}
+            WHERE p.exercise.id = :#{#exerciseId}
                 AND p.testRun = FALSE
-                AND s.id = (SELECT max(id) FROM p.submissions)
-                AND EXISTS (SELECT s FROM Submission s
-                    WHERE s.participation.id = p.id
-                    AND s.submitted = TRUE
-                    AND (r.assessor = :#{#assessor} OR r.assessor.id = NULL))
+                AND s.id = (SELECT max(ps.id) FROM p.submissions ps WHERE (ps.type <> 'ILLEGAL' or ps.type is null))
+                AND EXISTS (SELECT s1 FROM p.submissions s1
+                    WHERE s1.participation.id = p.id
+                    AND s1.submitted = TRUE
+                    AND (r.assessor = :#{#assessor} OR r.assessor.id IS NULL))
             """)
     List<StudentParticipation> findAllByParticipationExerciseIdAndResultAssessorAndCorrectionRoundIgnoreTestRuns(@Param("exerciseId") Long exerciseId,
             @Param("assessor") User assessor);
@@ -344,13 +556,13 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
     }
 
     @NotNull
-    default StudentParticipation findByIdWithSubmissionsResultsFeedbackElseThrow(long participationId) {
-        return findWithEagerSubmissionsResultsFeedbacksById(participationId).orElseThrow(() -> new EntityNotFoundException("StudentParticipation", participationId));
+    default StudentParticipation findByIdWithLegalSubmissionsResultsFeedbackElseThrow(long participationId) {
+        return findWithEagerLegalSubmissionsResultsFeedbacksById(participationId).orElseThrow(() -> new EntityNotFoundException("StudentParticipation", participationId));
     }
 
     @NotNull
-    default StudentParticipation findByIdWithSubmissionsElseThrow(long participationId) {
-        return findWithEagerSubmissionsById(participationId).orElseThrow(() -> new EntityNotFoundException("Participation", participationId));
+    default StudentParticipation findByIdWithLegalSubmissionsElseThrow(long participationId) {
+        return findWithEagerLegalSubmissionsById(participationId).orElseThrow(() -> new EntityNotFoundException("Participation", participationId));
     }
 
     /**
@@ -360,7 +572,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
      * @return list of participations belonging to course
      */
     default List<StudentParticipation> findByExamIdWithSubmissionRelevantResult(Long examId) {
-        var participations = findByExamIdWithEagerSubmissionsRatedResults(examId); // without test run participations
+        var participations = findByExamIdWithEagerLegalSubmissionsRatedResults(examId); // without test run participations
         // filter out the participations of test runs which can only be made by instructors
         participations = participations.stream().filter(studentParticipation -> !studentParticipation.isTestRun()).collect(Collectors.toList());
         return filterParticipationsWithRelevantResults(participations, true);
@@ -437,16 +649,16 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
      *
      * @return student's participations with submissions and results
      */
-    default List<StudentParticipation> findByStudentExamWithEagerSubmissionsResult(StudentExam studentExam, boolean withAssessor) {
+    default List<StudentParticipation> findByStudentExamWithEagerLegalSubmissionsResult(StudentExam studentExam, boolean withAssessor) {
         if (studentExam.isTestRun()) {
-            return findTestRunParticipationsByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(studentExam.getUser().getId(), studentExam.getExercises());
+            return findTestRunParticipationsByStudentIdAndIndividualExercisesWithEagerLegalSubmissionsResult(studentExam.getUser().getId(), studentExam.getExercises());
         }
         else {
             if (withAssessor) {
-                return findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultAndAssessorIgnoreTestRuns(studentExam.getUser().getId(), studentExam.getExercises());
+                return findByStudentIdAndIndividualExercisesWithEagerLegalSubmissionsResultAndAssessorIgnoreTestRuns(studentExam.getUser().getId(), studentExam.getExercises());
             }
             else {
-                return findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(studentExam.getUser().getId(), studentExam.getExercises());
+                return findByStudentIdAndIndividualExercisesWithEagerLegalSubmissionsResultIgnoreTestRuns(studentExam.getUser().getId(), studentExam.getExercises());
             }
         }
     }
@@ -457,8 +669,8 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
      * @param exerciseId the id of the exercise for which to consider participations
      * @return the number of submissions per participation in the given exercise
      */
-    default Map<Long, Integer> countSubmissionsPerParticipationByExerciseIdAsMap(long exerciseId) {
-        return convertListOfCountsIntoMap(countSubmissionsPerParticipationByExerciseId(exerciseId));
+    default Map<Long, Integer> countLegalSubmissionsPerParticipationByExerciseIdAsMap(long exerciseId) {
+        return convertListOfCountsIntoMap(countLegalSubmissionsPerParticipationByExerciseId(exerciseId));
     }
 
     /**
@@ -468,8 +680,8 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
      * @param teamShortName the short name of the team for which to consider participations
      * @return the number of submissions per participation in the given course for the team
      */
-    default Map<Long, Integer> countSubmissionsPerParticipationByCourseIdAndTeamShortNameAsMap(long courseId, String teamShortName) {
-        return convertListOfCountsIntoMap(countSubmissionsPerParticipationByCourseIdAndTeamShortName(courseId, teamShortName));
+    default Map<Long, Integer> countLegalSubmissionsPerParticipationByCourseIdAndTeamShortNameAsMap(long courseId, String teamShortName) {
+        return convertListOfCountsIntoMap(countLegalSubmissionsPerParticipationByCourseIdAndTeamShortName(courseId, teamShortName));
     }
 
     /**
@@ -484,8 +696,21 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
         ));
     }
 
-    @Query("select count(sp) from StudentParticipation sp left join sp.exercise exercise where exercise.id = :#{#exerciseId} and sp.testRun = false group by exercise.id")
+    @Query("""
+            SELECT COUNT(p) FROM StudentParticipation p
+                LEFT JOIN p.exercise exercise WHERE exercise.id = :#{#exerciseId}
+            AND p.testRun = false
+            GROUP BY exercise.id
+            """)
     Long countParticipationsIgnoreTestRunsByExerciseId(@Param("exerciseId") Long exerciseId);
+
+    @Query("""
+            SELECT COUNT(p) FROM StudentParticipation p
+                LEFT JOIN p.exercise exercise WHERE exercise.id = :#{#exerciseId}
+            AND p.testRun = true
+            GROUP BY exercise.id
+            """)
+    Long countParticipationsOnlyTestRunsByExerciseId(@Param("exerciseId") Long exerciseId);
 
     /**
      * Adds the transient property numberOfParticipations for each exercise to

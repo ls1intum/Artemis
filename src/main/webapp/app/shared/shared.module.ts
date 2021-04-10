@@ -24,6 +24,8 @@ import { OrganizationSelectorComponent } from './organization-selector/organizat
 import { AdditionalFeedbackComponent } from './additional-feedback/additional-feedback.component';
 import { ResizeableContainerComponent } from './resizeable-container/resizeable-container.component';
 import { TranslatePipe } from '@ngx-translate/core';
+import { StatisticsGraphComponent } from 'app/shared/statistics-graph/statistics-graph.component';
+import { StatisticsAverageScoreGraphComponent } from 'app/shared/statistics-graph/statistics-average-score-graph.component';
 
 @NgModule({
     imports: [ArtemisSharedLibsModule, ArtemisSharedCommonModule, ArtemisSharedPipesModule],
@@ -46,6 +48,8 @@ import { TranslatePipe } from '@ngx-translate/core';
         CustomMaxDirective,
         ArtemisTranslatePipe,
         ArtemisTimeAgoPipe,
+        StatisticsGraphComponent,
+        StatisticsAverageScoreGraphComponent,
     ],
     entryComponents: [DeleteDialogComponent],
     exports: [
@@ -72,6 +76,8 @@ import { TranslatePipe } from '@ngx-translate/core';
         CustomMaxDirective,
         ArtemisTranslatePipe,
         ArtemisTimeAgoPipe,
+        StatisticsGraphComponent,
+        StatisticsAverageScoreGraphComponent,
     ],
     providers: [ArtemisDatePipe, TranslatePipe],
 })

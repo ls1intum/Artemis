@@ -1,12 +1,8 @@
 package de.tum.in.www1.artemis.service.connectors.gitlab;
 
-import static org.gitlab4j.api.models.AccessLevel.MAINTAINER;
-import static org.gitlab4j.api.models.AccessLevel.REPORTER;
+import static org.gitlab4j.api.models.AccessLevel.*;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import org.gitlab4j.api.GitLabApi;
@@ -72,7 +68,7 @@ public class GitLabUserManagementService implements VcsUserManagementService {
             final var gitlabUser = userApi.getUser(vcsLogin);
             if (gitlabUser == null) {
                 // in case the user does not exist in Gitlab, we cannot update it
-                log.warn("User " + user.getLogin() + " does not exist in Gitlab and cannot be updated!");
+                log.warn("User {} does not exist in Gitlab and cannot be updated!", user.getLogin());
                 return;
             }
 
@@ -103,7 +99,7 @@ public class GitLabUserManagementService implements VcsUserManagementService {
                         // if user is already member of group in GitLab, ignore the exception to synchronize the "membership" with artemis
                         // ignore other errors
                         if (!"Member already exists".equalsIgnoreCase(ex.getMessage())) {
-                            log.error("Gitlab Exception when adding a user " + gitlabUser.getId() + " to a group " + exercise.getProjectKey() + ": " + ex.getMessage(), ex);
+                            log.error("Gitlab Exception when adding a user " + gitlabUser.getId() + " to a group " + exercise.getProjectKey(), ex);
                         }
                     }
                 }
@@ -131,7 +127,7 @@ public class GitLabUserManagementService implements VcsUserManagementService {
                             // If user membership to group is missing on Gitlab, ignore the exception
                             // and let artemis synchronize with GitLab groups
                             if (ex.getHttpStatus() != 404) {
-                                log.error("Gitlab Exception when removing a user " + gitlabUser.getId() + " to a group " + exercise.getProjectKey() + ": " + ex.getMessage(), ex);
+                                log.error("Gitlab Exception when removing a user " + gitlabUser.getId() + " to a group " + exercise.getProjectKey(), ex);
                             }
                         }
                     }
@@ -294,7 +290,7 @@ public class GitLabUserManagementService implements VcsUserManagementService {
             }
             catch (GitLabApiException e) {
                 if (e.getMessage().equals("Member already exists")) {
-                    log.warn("Member already exists for group " + exercise.getProjectKey());
+                    log.warn("Member already exists for group {}", exercise.getProjectKey());
                     return;
                 }
                 throw new GitLabException(String.format("Error adding new user [%d] to group [%s]", userId, exercise.toString()), e);

@@ -64,12 +64,21 @@ class ProgrammingExerciseResultJenkinsIntegrationTest extends AbstractSpringInte
         programmingExerciseResultTestService.shouldUpdateTestCasesAndResultScoreFromSolutionParticipationResult(notification, true);
     }
 
-    @ParameterizedTest
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @EnumSource(value = ProgrammingLanguage.class, names = { "JAVA", "SWIFT" })
     @WithMockUser(value = "student1", roles = "USER")
     public void shouldStoreFeedbackForResultWithStaticCodeAnalysisReport(ProgrammingLanguage programmingLanguage) {
         programmingExerciseResultTestService.setupForProgrammingLanguage(programmingLanguage);
         var notification = ModelFactory.generateTestResultDTO(Constants.ASSIGNMENT_REPO_NAME, List.of("test1"), List.of(), programmingLanguage, true);
+        programmingExerciseResultTestService.shouldStoreFeedbackForResultWithStaticCodeAnalysisReport(notification, programmingLanguage);
+    }
+
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @EnumSource(value = ProgrammingLanguage.class, names = { "JAVA", "SWIFT" })
+    @WithMockUser(value = "student1", roles = "USER")
+    public void shouldStoreFeedbackForResultWithStaticCodeAnalysisReportAndCustomTestMessages(ProgrammingLanguage programmingLanguage) {
+        programmingExerciseResultTestService.setupForProgrammingLanguage(programmingLanguage);
+        var notification = ModelFactory.generateTestResultsDTOWithCustomFeedback(Constants.ASSIGNMENT_REPO_NAME, List.of("test1"), List.of(), programmingLanguage, true);
         programmingExerciseResultTestService.shouldStoreFeedbackForResultWithStaticCodeAnalysisReport(notification, programmingLanguage);
     }
 

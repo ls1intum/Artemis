@@ -58,7 +58,7 @@ public class LectureUnitResource {
      * @return the ResponseEntity with status 200 (OK) and with body the ordered lecture units
      */
     @PutMapping("/lectures/{lectureId}/lecture-units-order")
-    @PreAuthorize("hasAnyRole('ADMIN','INSTRUCTOR')")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<List<LectureUnit>> updateLectureUnitsOrder(@PathVariable Long lectureId, @RequestBody List<LectureUnit> orderedLectureUnits) {
         log.debug("REST request to update the order of lecture units of lecture: {}", lectureId);
         Optional<Lecture> lectureOptional = lectureRepository.findByIdWithStudentQuestionsAndLectureUnitsAndLearningGoals(lectureId);
@@ -105,7 +105,7 @@ public class LectureUnitResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("/lectures/{lectureId}/lecture-units/{lectureUnitId}")
-    @PreAuthorize("hasAnyRole('ADMIN','INSTRUCTOR')")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Void> deleteLectureUnit(@PathVariable Long lectureUnitId, @PathVariable Long lectureId) {
         log.info("REST request to delete lecture unit: {}", lectureUnitId);
         Optional<LectureUnit> lectureUnitOptional = lectureUnitRepository.findByIdWithLearningGoalsBidirectional(lectureUnitId);

@@ -18,10 +18,7 @@ import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
-import de.tum.in.www1.artemis.repository.QuizExerciseRepository;
-import de.tum.in.www1.artemis.repository.ResultRepository;
-import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
-import de.tum.in.www1.artemis.repository.SubmissionRepository;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.QuizStatisticService;
 import de.tum.in.www1.artemis.service.ResultService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
@@ -61,7 +58,7 @@ public class ExamQuizService {
      */
     public void evaluateQuizAndUpdateStatistics(@NotNull Long quizExerciseId) {
         long start = System.nanoTime();
-        log.info("Starting quiz evaluation for quiz " + quizExerciseId);
+        log.info("Starting quiz evaluation for quiz {}", quizExerciseId);
         // We have to load the questions and statistics so that we can evaluate and update and we also need the participations and submissions that exist for this exercise so that
         // they can be evaluated
         var quizExercise = quizExerciseRepository.findOneWithQuestionsAndStatistics(quizExerciseId);
@@ -139,7 +136,7 @@ public class ExamQuizService {
      */
     private Set<Result> evaluateSubmissions(@NotNull QuizExercise quizExercise) {
         Set<Result> createdResults = new HashSet<>();
-        List<StudentParticipation> studentParticipations = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsByExerciseId(quizExercise.getId());
+        List<StudentParticipation> studentParticipations = studentParticipationRepository.findAllWithEagerLegalSubmissionsAndEagerResultsByExerciseId(quizExercise.getId());
 
         for (var participation : studentParticipations) {
             if (!participation.isTestRun()) {

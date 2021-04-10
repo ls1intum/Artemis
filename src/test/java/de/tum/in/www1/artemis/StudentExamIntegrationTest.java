@@ -1,11 +1,8 @@
 package de.tum.in.www1.artemis;
 
-import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.SOLUTION;
-import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.TEMPLATE;
-import static de.tum.in.www1.artemis.util.TestConstants.COMMIT_HASH_OBJECT_ID;
-import static de.tum.in.www1.artemis.util.TestConstants.COMMIT_HASH_STRING;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.fail;
+import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.*;
+import static de.tum.in.www1.artemis.util.TestConstants.*;
+import static org.assertj.core.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -43,7 +40,6 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.exam.ExamQuizService;
-import de.tum.in.www1.artemis.service.exam.StudentExamService;
 import de.tum.in.www1.artemis.util.LocalRepository;
 import de.tum.in.www1.artemis.util.ProgrammingExerciseTestService;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -51,52 +47,43 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
-    ProgrammingExerciseTestService programmingExerciseTestService;
+    private ProgrammingExerciseTestService programmingExerciseTestService;
 
     @Autowired
-    ExamRepository examRepository;
+    private ExamRepository examRepository;
 
     @Autowired
-    ResultRepository resultRepository;
+    private ResultRepository resultRepository;
 
     @Autowired
-    SubmissionRepository submissionRepository;
+    private SubmissionRepository submissionRepository;
 
     @Autowired
-    StudentExamRepository studentExamRepository;
+    private StudentExamRepository studentExamRepository;
 
     @Autowired
-    ExamSessionRepository examSessionRepository;
+    private ExamSessionRepository examSessionRepository;
 
     @Autowired
-    ProgrammingSubmissionRepository programmingSubmissionRepository;
+    private ProgrammingSubmissionRepository programmingSubmissionRepository;
 
     @Autowired
-    ExerciseRepository exerciseRepository;
+    private StudentParticipationRepository studentParticipationRepository;
 
     @Autowired
-    StudentParticipationRepository studentParticipationRepository;
+    private SubmissionVersionRepository submissionVersionRepository;
 
     @Autowired
-    StudentExamService studentExamService;
+    private ExamQuizService examQuizService;
 
     @Autowired
-    SubmissionVersionRepository submissionVersionRepository;
+    private QuizSubmissionRepository quizSubmissionRepository;
 
     @Autowired
-    QuizExerciseRepository quizExerciseRepository;
+    private ParticipationService participationService;
 
     @Autowired
-    ExamQuizService examQuizService;
-
-    @Autowired
-    QuizSubmissionRepository quizSubmissionRepository;
-
-    @Autowired
-    ParticipationService participationService;
-
-    @Autowired
-    ObjectMapper objectMapper;
+    private ObjectMapper objectMapper;
 
     private List<User> users;
 
@@ -618,7 +605,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         Map<User, List<Exercise>> exercisesOfUser = unsubmittedStudentExams.stream().collect(Collectors.toMap(StudentExam::getUser, studentExam -> studentExam.getExercises()
                 .stream().filter(exercise -> exercise instanceof ModelingExercise || exercise instanceof TextExercise).collect(Collectors.toList())));
         for (final var user : exercisesOfUser.keySet()) {
-            final var studentParticipations = studentParticipationRepository.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(user.getId(),
+            final var studentParticipations = studentParticipationRepository.findByStudentIdAndIndividualExercisesWithEagerLegalSubmissionsResultIgnoreTestRuns(user.getId(),
                     exercisesOfUser.get(user));
             for (final var studentParticipation : studentParticipations) {
                 if (studentParticipation.findLatestSubmission().isPresent()) {
@@ -653,7 +640,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         Map<User, List<Exercise>> exercisesOfUser = unsubmittedStudentExams.stream().collect(Collectors.toMap(StudentExam::getUser, studentExam -> studentExam.getExercises()
                 .stream().filter(exercise -> exercise instanceof ModelingExercise || exercise instanceof TextExercise).collect(Collectors.toList())));
         for (final var user : exercisesOfUser.keySet()) {
-            final var studentParticipations = studentParticipationRepository.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(user.getId(),
+            final var studentParticipations = studentParticipationRepository.findByStudentIdAndIndividualExercisesWithEagerLegalSubmissionsResultIgnoreTestRuns(user.getId(),
                     exercisesOfUser.get(user));
             for (final var studentParticipation : studentParticipations) {
                 if (studentParticipation.findLatestSubmission().isPresent()) {
@@ -695,7 +682,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         Map<User, List<Exercise>> exercisesOfUser = studentExams.stream().collect(Collectors.toMap(StudentExam::getUser, studentExam -> studentExam.getExercises().stream()
                 .filter(exercise -> exercise instanceof ModelingExercise || exercise instanceof TextExercise).collect(Collectors.toList())));
         for (final var user : exercisesOfUser.keySet()) {
-            final var studentParticipations = studentParticipationRepository.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(user.getId(),
+            final var studentParticipations = studentParticipationRepository.findByStudentIdAndIndividualExercisesWithEagerLegalSubmissionsResultIgnoreTestRuns(user.getId(),
                     exercisesOfUser.get(user));
             for (final var studentParticipation : studentParticipations) {
                 if (studentParticipation.findLatestSubmission().isPresent()) {
@@ -736,7 +723,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         Map<User, List<Exercise>> exercisesOfUser = studentExams.stream().collect(Collectors.toMap(StudentExam::getUser, studentExam -> studentExam.getExercises().stream()
                 .filter(exercise -> exercise instanceof ModelingExercise || exercise instanceof TextExercise).collect(Collectors.toList())));
         for (final var user : exercisesOfUser.keySet()) {
-            final var studentParticipations = studentParticipationRepository.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(user.getId(),
+            final var studentParticipations = studentParticipationRepository.findByStudentIdAndIndividualExercisesWithEagerLegalSubmissionsResultIgnoreTestRuns(user.getId(),
                     exercisesOfUser.get(user));
             for (final var studentParticipation : studentParticipations) {
                 if (studentParticipation.findLatestSubmission().isPresent()) {
@@ -872,7 +859,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         // assert that all repositories of programming exercises have been locked
         assert exercisesToBeLocked.size() == studentProgrammingParticipations.size();
         for (int i = 0; i < exercisesToBeLocked.size(); i++) {
-            verify(programmingExerciseParticipationServiceSpy, atLeastOnce()).lockStudentRepository(exercisesToBeLocked.get(i), studentProgrammingParticipations.get(i));
+            verify(programmingExerciseParticipationService, atLeastOnce()).lockStudentRepository(exercisesToBeLocked.get(i), studentProgrammingParticipations.get(i));
         }
         deleteExam1WithInstructor();
     }
@@ -897,7 +884,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
                     bambooRequestMockProvider.mockTriggerBuild((ProgrammingExerciseParticipation) participation);
                     request.postWithoutLocation("/api/programming-submissions/" + participation.getId() + "/trigger-build", null, HttpStatus.OK, new HttpHeaders());
                     Optional<ProgrammingSubmission> programmingSubmission = programmingSubmissionRepository
-                            .findFirstByParticipationIdOrderBySubmissionDateDesc(participation.getId());
+                            .findFirstByParticipationIdOrderByLegalSubmissionDateDesc(participation.getId());
                     assertThat(programmingSubmission).isPresent();
                     participation.getSubmissions().add(programmingSubmission.get());
                     continue;
@@ -1016,7 +1003,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
             assertThat(studentExamFinished.getSubmissionDate()).isNotNull();
         }
         // The method lockStudentRepository will only be called if the student hands in early (see separate test)
-        verify(programmingExerciseParticipationServiceSpy, never()).lockStudentRepository(any(), any());
+        verify(programmingExerciseParticipationService, never()).lockStudentRepository(any(), any());
         assertThat(studentExamsAfterFinish).hasSize(studentExamsAfterStart.size());
 
         deleteExam1WithInstructor();
@@ -1297,7 +1284,8 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
                 bambooRequestMockProvider.enableMockingOfRequests(true);
                 bambooRequestMockProvider.mockTriggerBuild((ProgrammingExerciseParticipation) participation);
                 request.postWithoutLocation("/api/programming-submissions/" + participation.getId() + "/trigger-build", null, HttpStatus.OK, new HttpHeaders());
-                Optional<ProgrammingSubmission> programmingSubmission = programmingSubmissionRepository.findFirstByParticipationIdOrderBySubmissionDateDesc(participation.getId());
+                Optional<ProgrammingSubmission> programmingSubmission = programmingSubmissionRepository
+                        .findFirstByParticipationIdOrderByLegalSubmissionDateDesc(participation.getId());
                 programmingSubmission.ifPresent(submission -> participation.getSubmissions().add(submission));
                 continue;
             }
@@ -1454,7 +1442,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         var exam = database.addExam(course1);
         exam = database.addTextModelingProgrammingExercisesToExam(exam, false, false);
         var testRun = database.setupTestRunForExamWithExerciseGroupsForInstructor(exam, instructor, exam.getExerciseGroups());
-        var participations = studentParticipationRepository.findByExerciseIdAndStudentIdWithEagerSubmissions(testRun.getExercises().get(0).getId(), instructor.getId());
+        var participations = studentParticipationRepository.findByExerciseIdAndStudentIdWithEagerLegalSubmissions(testRun.getExercises().get(0).getId(), instructor.getId());
         assertThat(participations).isNotEmpty();
         participationService.delete(participations.get(0).getId(), false, false);
         request.delete("/api/courses/" + exam.getCourse().getId() + "/exams/" + exam.getId() + "/test-run/" + testRun.getId(), HttpStatus.OK);

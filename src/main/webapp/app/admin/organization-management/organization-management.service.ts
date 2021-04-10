@@ -4,6 +4,7 @@ import { Observable } from 'rxjs';
 
 import { SERVER_API_URL } from 'app/app.constants';
 import { Organization } from 'app/entities/organization.model';
+import { OrganizationCountDto } from 'app/admin/organization-management/organization-count-dto.model';
 
 @Injectable({ providedIn: 'root' })
 export class OrganizationManagementService {
@@ -22,8 +23,8 @@ export class OrganizationManagementService {
      * Send GET request to retrieve the number of users and courses of
      * all organizations
      */
-    getNumberOfUsersAndCoursesOfOrganizations(): Observable<any> {
-        return this.http.get(this.resourceUrl + '/allCount');
+    getNumberOfUsersAndCoursesOfOrganizations(): Observable<[OrganizationCountDto]> {
+        return this.http.get<[OrganizationCountDto]>(this.resourceUrl + '/count-all');
     }
 
     /**

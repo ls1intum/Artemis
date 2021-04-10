@@ -1,10 +1,11 @@
 package de.tum.in.www1.artemis.service;
 
+import static de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException.NOT_ALLOWED;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.*;
-import java.time.ZonedDateTime;
 import java.time.temporal.TemporalField;
 import java.time.temporal.WeekFields;
 import java.util.*;
@@ -100,7 +101,7 @@ public class CourseService {
     public Course findOneWithExercisesAndLecturesAndExamsForUser(Long courseId, User user) {
         Course course = courseRepository.findByIdWithLecturesAndExamsElseThrow(courseId);
         if (!authCheckService.isAtLeastStudentInCourse(course, user)) {
-            throw new AccessForbiddenException("You are not allowed to access this resource");
+            throw new AccessForbiddenException(NOT_ALLOWED);
         }
         course.setExercises(exerciseService.findAllForCourse(course, user));
         course.setLectures(lectureService.filterActiveAttachments(course.getLectures(), user));
@@ -268,7 +269,7 @@ public class CourseService {
         userService.addUserToGroup(user, course.getStudentGroupName());
         final var auditEvent = new AuditEvent(user.getLogin(), Constants.REGISTER_FOR_COURSE, "course=" + course.getTitle());
         auditEventRepository.add(auditEvent);
-        log.info("User " + user.getLogin() + " has successfully registered for course " + course.getTitle());
+        log.info("User {} has successfully registered for course {}", user.getLogin(), course.getTitle());
     }
 
     /**
@@ -435,7 +436,7 @@ public class CourseService {
      */
     public void cleanupCourse(Long courseId) {
         // Get the course with all exercises
-        var course = courseRepository.findWithEagerExercisesAndLecturesById(courseId);
+        var course = courseRepository.findByIdWithExercisesAndLecturesElseThrow(courseId);
         if (!course.hasCourseArchive()) {
             log.info("Cannot clean up course {} because it hasn't been archived.", courseId);
             return;

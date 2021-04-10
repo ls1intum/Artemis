@@ -9,18 +9,17 @@ import { TranslateService } from '@ngx-translate/core';
 import { CourseManagementExerciseRowComponent } from 'app/course/manage/overview/course-management-exercise-row.component';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { CourseManagementCardComponent } from 'app/course/manage/overview/course-management-card.component';
-import { CourseManagementStatisticsComponent } from 'app/course/manage/overview/course-management-statistics.component';
+import { CourseManagementOverviewStatisticsComponent } from 'app/course/manage/overview/course-management-overview-statistics.component';
 import { ChartsModule } from 'ng2-charts';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 chai.use(sinonChai);
 const expect = chai.expect;
 
-describe('CourseManagementExerciseStatisticsComponent', () => {
-    let fixture: ComponentFixture<CourseManagementStatisticsComponent>;
-    let component: CourseManagementStatisticsComponent;
+describe('CourseManagementOverviewStatisticsComponent', () => {
+    let fixture: ComponentFixture<CourseManagementOverviewStatisticsComponent>;
+    let component: CourseManagementOverviewStatisticsComponent;
 
-    const courseId = 1;
     const amountOfStudentsInCourse = 25;
     const initialStats = [0, 11, 9, 23];
 
@@ -28,7 +27,7 @@ describe('CourseManagementExerciseStatisticsComponent', () => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, ChartsModule],
             declarations: [
-                CourseManagementStatisticsComponent,
+                CourseManagementOverviewStatisticsComponent,
                 MockPipe(ArtemisTranslatePipe),
                 MockDirective(NgbTooltip),
                 MockComponent(CourseManagementExerciseRowComponent),
@@ -38,14 +37,13 @@ describe('CourseManagementExerciseStatisticsComponent', () => {
         })
             .compileComponents()
             .then(() => {
-                fixture = TestBed.createComponent(CourseManagementStatisticsComponent);
+                fixture = TestBed.createComponent(CourseManagementOverviewStatisticsComponent);
                 component = fixture.componentInstance;
             });
     });
 
     it('should initialize component and load values', () => {
         // Provide the @Input data
-        component.courseId = courseId;
         component.amountOfStudentsInCourse = amountOfStudentsInCourse;
         component.initialStats = initialStats;
 
@@ -62,8 +60,6 @@ describe('CourseManagementExerciseStatisticsComponent', () => {
     });
 
     it('should react to changes', () => {
-        // Provide the @Input data
-        component.courseId = courseId;
         fixture.detectChanges();
 
         component.initialStats = [];

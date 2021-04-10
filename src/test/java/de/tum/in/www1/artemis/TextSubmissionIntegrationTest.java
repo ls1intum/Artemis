@@ -24,7 +24,6 @@ import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
 public class TextSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -322,7 +321,7 @@ public class TextSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         request.put(submitPath, textSubmission, HttpStatus.OK);
 
         final var submissionInDb = submissionRepository.findById(textSubmission.getId());
-        assertThat(submissionInDb.isPresent());
+        assertThat(submissionInDb).isPresent();
         assertThat(submissionInDb.get().getText()).isEqualTo(newSubmissionText);
     }
 
