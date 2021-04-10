@@ -99,7 +99,7 @@ export class TextExerciseUpdateComponent implements OnInit {
                     if (this.isImport) {
                         if (this.isExamMode) {
                             // The target exerciseId where we want to import into
-                            const exerciseGroupId = params['groupId'];
+                            const exerciseGroupId = params['exerciseGroupId'];
                             const courseId = params['courseId'];
                             const examId = params['examId'];
 

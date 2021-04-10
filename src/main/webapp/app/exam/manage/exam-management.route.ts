@@ -322,7 +322,7 @@ export const examManagementRoute: Routes = [
     },
     // Create Modeling Exercise
     {
-        path: ':examId/exercise-groups/:groupId/modeling-exercises/new',
+        path: ':examId/exercise-groups/:exerciseGroupId/modeling-exercises/new',
         component: ModelingExerciseUpdateComponent,
         resolve: {
             modelingExercise: ModelingExerciseResolver,
@@ -335,7 +335,7 @@ export const examManagementRoute: Routes = [
     },
     // Import Modeling Exercise
     {
-        path: ':examId/exercise-groups/:groupId/modeling-exercises/import/:exerciseId',
+        path: ':examId/exercise-groups/:exerciseGroupId/modeling-exercises/import/:exerciseId',
         component: ModelingExerciseUpdateComponent,
         resolve: {
             modelingExercise: ModelingExerciseResolver,
@@ -348,7 +348,7 @@ export const examManagementRoute: Routes = [
     },
     // Edit Modeling Exercise
     {
-        path: ':examId/exercise-groups/:groupId/modeling-exercises/:exerciseId/edit',
+        path: ':examId/exercise-groups/:exerciseGroupId/modeling-exercises/:exerciseId/edit',
         component: ModelingExerciseUpdateComponent,
         resolve: {
             modelingExercise: ModelingExerciseResolver,
@@ -361,7 +361,7 @@ export const examManagementRoute: Routes = [
     },
     // Create Text Exercise
     {
-        path: ':examId/exercise-groups/:groupId/text-exercises/new',
+        path: ':examId/exercise-groups/:exerciseGroupId/text-exercises/new',
         component: TextExerciseUpdateComponent,
         resolve: {
             textExercise: TextExerciseResolver,
@@ -374,7 +374,7 @@ export const examManagementRoute: Routes = [
     },
     // Import Text Exercise
     {
-        path: ':examId/exercise-groups/:groupId/text-exercises/import/:exerciseId',
+        path: ':examId/exercise-groups/:exerciseGroupId/text-exercises/import/:exerciseId',
         component: TextExerciseUpdateComponent,
         resolve: {
             textExercise: TextExerciseResolver,
@@ -387,7 +387,7 @@ export const examManagementRoute: Routes = [
     },
     // Edit Text Exercise
     {
-        path: ':examId/exercise-groups/:groupId/text-exercises/:exerciseId/edit',
+        path: ':examId/exercise-groups/:exerciseGroupId/text-exercises/:exerciseId/edit',
         component: TextExerciseUpdateComponent,
         resolve: {
             textExercise: TextExerciseResolver,
@@ -400,7 +400,7 @@ export const examManagementRoute: Routes = [
     },
     // Create File Upload Exercise
     {
-        path: ':examId/exercise-groups/:groupId/file-upload-exercises/new',
+        path: ':examId/exercise-groups/:exerciseGroupId/file-upload-exercises/new',
         component: FileUploadExerciseUpdateComponent,
         resolve: {
             fileUploadExercise: FileUploadExerciseResolve,
@@ -413,7 +413,7 @@ export const examManagementRoute: Routes = [
     },
     // Edit File Upload Exercise
     {
-        path: ':examId/exercise-groups/:groupId/file-upload-exercises/:exerciseId/edit',
+        path: ':examId/exercise-groups/:exerciseGroupId/file-upload-exercises/:exerciseId/edit',
         component: FileUploadExerciseUpdateComponent,
         resolve: {
             fileUploadExercise: FileUploadExerciseResolve,
@@ -426,7 +426,7 @@ export const examManagementRoute: Routes = [
     },
     // Create Quiz Exercise
     {
-        path: ':examId/exercise-groups/:groupId/quiz-exercises/new',
+        path: ':examId/exercise-groups/:exerciseGroupId/quiz-exercises/new',
         component: QuizExerciseDetailComponent,
         data: {
             authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
@@ -436,7 +436,7 @@ export const examManagementRoute: Routes = [
     },
     // Edit Quiz Exercise
     {
-        path: ':examId/exercise-groups/:groupId/quiz-exercises/:exerciseId/edit',
+        path: ':examId/exercise-groups/:exerciseGroupId/quiz-exercises/:exerciseId/edit',
         component: QuizExerciseDetailComponent,
         data: {
             authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
@@ -446,7 +446,7 @@ export const examManagementRoute: Routes = [
     },
     // Create Programming Exercise
     {
-        path: ':examId/exercise-groups/:groupId/programming-exercises/new',
+        path: ':examId/exercise-groups/:exerciseGroupId/programming-exercises/new',
         component: ProgrammingExerciseUpdateComponent,
         resolve: {
             programmingExercise: ProgrammingExerciseResolve,
@@ -459,7 +459,7 @@ export const examManagementRoute: Routes = [
     },
     // Import programming exercise
     {
-        path: ':examId/exercise-groups/:groupId/programming-exercises/import/:id',
+        path: ':examId/exercise-groups/:exerciseGroupId/programming-exercises/import/:id',
         component: ProgrammingExerciseUpdateComponent,
         resolve: {
             programmingExercise: ProgrammingExerciseResolve,
@@ -472,7 +472,7 @@ export const examManagementRoute: Routes = [
     },
     // Edit Programming Exercise
     {
-        path: ':examId/exercise-groups/:groupId/programming-exercises/:id/edit',
+        path: ':examId/exercise-groups/:exerciseGroupId/programming-exercises/:id/edit',
         component: ProgrammingExerciseUpdateComponent,
         resolve: {
             programmingExercise: ProgrammingExerciseResolve,
