@@ -3114,9 +3114,9 @@ public class DatabaseUtilService {
         gradeStep3.setUpperBoundPercentage(100);
         gradeStep3.setUpperBoundInclusive(true);
 
-        return Set.of(gradeStep1, gradeStep2, gradeStep3); 
+        return Set.of(gradeStep1, gradeStep2, gradeStep3);
     }
-  
+
     public Course createCourseWithTestModelingAndFileUploadExercisesAndSubmissions() throws Exception {
         Course course = addCourseWithModelingAndTextAndFileUploadExercise();
         course.setEndDate(ZonedDateTime.now().minusMinutes(5));

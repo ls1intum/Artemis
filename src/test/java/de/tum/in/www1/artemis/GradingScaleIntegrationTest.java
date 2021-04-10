@@ -22,27 +22,27 @@ public class GradingScaleIntegrationTest extends AbstractSpringIntegrationBamboo
     @Autowired
     private GradingScaleRepository gradingScaleRepository;
 
-    private Course course;
-
-    private Exam exam;
-
     private GradingScale courseGradingScale;
 
     private GradingScale examGradingScale;
 
     private Set<GradeStep> gradeSteps;
 
+    private Course course;
+
+    private Exam exam;
+
     @BeforeEach
     public void init() {
         course = database.addEmptyCourse();
         exam = database.addExamWithExerciseGroup(course, true);
         courseGradingScale = new GradingScale();
-        examGradingScale = new GradingScale();
-        gradeSteps = new HashSet<>();
         course.setGradingScale(courseGradingScale);
         courseGradingScale.setCourse(course);
+        examGradingScale = new GradingScale();
         exam.setGradingScale(examGradingScale);
         examGradingScale.setExam(exam);
+        gradeSteps = new HashSet<>();
         courseGradingScale.setGradeSteps(gradeSteps);
         examGradingScale.setGradeSteps(gradeSteps);
     }
