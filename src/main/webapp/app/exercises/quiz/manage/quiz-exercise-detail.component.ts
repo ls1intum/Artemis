@@ -174,10 +174,11 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
         this.examId = Number(this.route.snapshot.paramMap.get('examId'));
         const quizId = Number(this.route.snapshot.paramMap.get('exerciseId'));
-        const groupId = Number(this.route.snapshot.paramMap.get('groupId'));
+        const groupId = Number(this.route.snapshot.paramMap.get('exerciseGroupId'));
         if (this.examId && groupId) {
             this.isExamMode = true;
         }
+
         /** Query the courseService for the participationId given by the params */
         if (this.courseId) {
             this.courseService.find(this.courseId).subscribe((response: HttpResponse<Course>) => {
