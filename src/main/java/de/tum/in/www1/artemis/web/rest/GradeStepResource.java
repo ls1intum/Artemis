@@ -9,8 +9,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.GradeStep;
 import de.tum.in.www1.artemis.domain.GradingScale;
+import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.GradeStepRepository;
 import de.tum.in.www1.artemis.repository.GradingScaleRepository;
 import de.tum.in.www1.artemis.security.Role;
@@ -35,12 +37,15 @@ public class GradeStepResource {
 
     private final GradeStepRepository gradeStepRepository;
 
+    private final CourseRepository courseRepository;
+
     public GradeStepResource(GradingScaleService gradingScaleService, GradingScaleRepository gradingScaleRepository, GradeStepRepository gradeStepRepository,
-            AuthorizationCheckService authCheckService) {
+            AuthorizationCheckService authCheckService, CourseRepository courseRepository) {
         this.gradingScaleService = gradingScaleService;
         this.gradingScaleRepository = gradingScaleRepository;
         this.gradeStepRepository = gradeStepRepository;
         this.authCheckService = authCheckService;
+        this.courseRepository = courseRepository;
     }
 
     /**
@@ -67,10 +72,11 @@ public class GradeStepResource {
      */
     @GetMapping("/courses/{courseId}/exams/{examId}/grading-scale/grade-steps")
     @PreAuthorize("hasRole('INSTRUCTOR')")
-    public ResponseEntity<List<GradeStep>> getAllGradeStepsForExam(@PathVariable Long examId) {
+    public ResponseEntity<List<GradeStep>> getAllGradeStepsForExam(@PathVariable Long courseId, @PathVariable Long examId) {
         log.debug("REST request to get all grade steps for exam: {}", examId);
+        Course course = courseRepository.findByIdElseThrow(courseId);
         GradingScale gradingScale = gradingScaleRepository.findByExamIdOrElseThrow(examId);
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, gradingScale.getExam().getCourse(), null);
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
         List<GradeStep> gradeSteps = gradeStepRepository.findByGradingScale_Id(gradingScale.getId());
         return ResponseEntity.ok(gradeSteps);
     }
@@ -101,10 +107,11 @@ public class GradeStepResource {
      */
     @GetMapping("/courses/{courseId}/exams/{examId}/grading-scale/grade-steps/{gradeStepId}")
     @PreAuthorize("hasRole('INSTRUCTOR')")
-    public ResponseEntity<GradeStep> getGradeStepsByIdForExam(@PathVariable Long examId, @PathVariable Long gradeStepId) {
+    public ResponseEntity<GradeStep> getGradeStepsByIdForExam(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long gradeStepId) {
         log.debug("REST request to get grade step {} for exam: {}", gradeStepId, examId);
+        Course course = courseRepository.findByIdElseThrow(courseId);
         GradingScale gradingScale = gradingScaleRepository.findByExamIdOrElseThrow(examId);
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, gradingScale.getExam().getCourse(), null);
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
         Optional<GradeStep> gradeStep = gradeStepRepository.findByIdAndGradingScale_Id(gradeStepId, gradingScale.getId());
         return gradeStep.map(ResponseEntity::ok).orElseGet(ResponseUtil::notFound);
     }
@@ -135,10 +142,11 @@ public class GradeStepResource {
      */
     @GetMapping("/courses/{courseId}/exams/{examId}/grading-scale/match-grade-step")
     @PreAuthorize("hasRole('INSTRUCTOR')")
-    public ResponseEntity<GradeStep> getGradeStepByPercentageForExam(@PathVariable Long examId, @RequestParam Double gradePercentage) {
+    public ResponseEntity<GradeStep> getGradeStepByPercentageForExam(@PathVariable Long courseId, @PathVariable Long examId, @RequestParam Double gradePercentage) {
         log.debug("REST request to get grade step for grade percentage {} for exam: {}", gradePercentage, examId);
+        Course course = courseRepository.findByIdElseThrow(courseId);
         GradingScale gradingScale = gradingScaleRepository.findByExamIdOrElseThrow(examId);
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, gradingScale.getExam().getCourse(), null);
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
         GradeStep gradeStep = gradingScaleService.matchPercentageToGradeStep(gradePercentage, gradingScale.getId());
         return ResponseEntity.ok(gradeStep);
     }

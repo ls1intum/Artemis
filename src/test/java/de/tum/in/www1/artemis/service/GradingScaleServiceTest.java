@@ -33,6 +33,9 @@ public class GradingScaleServiceTest extends AbstractSpringIntegrationBambooBitb
 
     private Set<GradeStep> gradeSteps;
 
+    /**
+     * Initialize attributes
+     */
     @BeforeEach
     public void init() {
         gradingScale = new GradingScale();
@@ -45,6 +48,9 @@ public class GradingScaleServiceTest extends AbstractSpringIntegrationBambooBitb
         database.resetDatabase();
     }
 
+    /**
+     * Test match percentage query with invalid grade percentages
+     */
     @ParameterizedTest
     @ValueSource(doubles = { -60, -1.3, -0.0002, 100.1, 150 })
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
@@ -58,22 +64,29 @@ public class GradingScaleServiceTest extends AbstractSpringIntegrationBambooBitb
         assertThat(exception.getErrorKey()).isEqualTo("invalidGradePercentage");
     }
 
+    /**
+     * Test saving of an invalid grading scale
+     */
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testMatchPercentageToGradeStepNoValidMapping() {
         gradeSteps = database.generateGradeStepSet(gradingScale, false);
         gradingScale.setGradeSteps(gradeSteps);
         gradingScaleRepository.save(gradingScale);
+        Long id = gradingScaleRepository.findAll().get(0).getId();
 
         double percentage = 85;
 
         EntityNotFoundException exception = assertThrows(EntityNotFoundException.class, () -> {
-            gradingScaleService.matchPercentageToGradeStep(percentage, gradingScale.getId());
+            gradingScaleService.matchPercentageToGradeStep(percentage, id);
         });
 
         assertThat(exception.getMessage()).isEqualTo("No grade step in selected grading scale matches given percentage");
     }
 
+    /**
+     * Test mapping of a valid grade percentage to a grade step
+     */
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testMatchPercentageToGradeStepValidMappingExists() {
@@ -94,6 +107,9 @@ public class GradingScaleServiceTest extends AbstractSpringIntegrationBambooBitb
         assertThat(gradeStep).usingRecursiveComparison().ignoringFields("gradingScale", "id").isEqualTo(expectedGradeStep);
     }
 
+    /**
+     * Test saving of an invalid grading scale - missing grade names
+     */
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testSaveGradingScaleInvalidGradeStepsNoGradeName() {
@@ -114,6 +130,9 @@ public class GradingScaleServiceTest extends AbstractSpringIntegrationBambooBitb
         assertThat(exception.getErrorKey()).isEqualTo("invalidFormat");
     }
 
+    /**
+     * Test saving of an invalid grading scale - non-matching percentage bounds
+     */
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testSaveGradingScaleInvalidGradeStepsInvalidPercentageValues() {
@@ -134,6 +153,9 @@ public class GradingScaleServiceTest extends AbstractSpringIntegrationBambooBitb
         assertThat(exception.getErrorKey()).isEqualTo("invalidFormat");
     }
 
+    /**
+     * Test saving of an invalid grading scale - no valid grade step mapping
+     */
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testSaveGradingScaleInvalidGradeStepSet() {
@@ -149,6 +171,9 @@ public class GradingScaleServiceTest extends AbstractSpringIntegrationBambooBitb
         assertThat(exception.getErrorKey()).isEqualTo("invalidFormat");
     }
 
+    /**
+     * Test saving of a valid grading scale
+     */
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testSaveGradingScaleValidGradeStepSet() {

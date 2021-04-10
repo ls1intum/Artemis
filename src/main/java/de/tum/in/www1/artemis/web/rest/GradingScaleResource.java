@@ -80,10 +80,11 @@ public class GradingScaleResource {
      */
     @GetMapping("/courses/{courseId}/exams/{examId}/grading-scale")
     @PreAuthorize("hasRole('INSTRUCTOR')")
-    public ResponseEntity<GradingScale> getGradingScaleForExam(@PathVariable Long examId) {
+    public ResponseEntity<GradingScale> getGradingScaleForExam(@PathVariable Long courseId, @PathVariable Long examId) {
         log.debug("REST request to get grading scale for exam: {}", examId);
+        Course course = courseRepository.findByIdElseThrow(courseId);
         GradingScale gradingScale = gradingScaleRepository.findByExamIdOrElseThrow(examId);
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, gradingScale.getExam().getCourse(), null);
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
         return ResponseEntity.ok(gradingScale);
     }
 
@@ -129,8 +130,9 @@ public class GradingScaleResource {
     public ResponseEntity<GradingScale> createGradingScaleForExam(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody GradingScale gradingScale)
             throws URISyntaxException {
         log.debug("REST request to create a grading scale for exam: {}", examId);
+        Course course = courseRepository.findByIdElseThrow(courseId);
         Optional<GradingScale> existingGradingScale = gradingScaleRepository.findByExam_Id(examId);
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, gradingScale.getExam().getCourse(), null);
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
         if (existingGradingScale.isPresent()) {
             return badRequest(ENTITY_NAME, "gradingScaleAlreadyExists", "A grading scale already exists for the selected exam");
         }
@@ -173,10 +175,11 @@ public class GradingScaleResource {
      */
     @PutMapping("/courses/{courseId}/exams/{examId}/grading-scale")
     @PreAuthorize("hasRole('INSTRUCTOR')")
-    public ResponseEntity<GradingScale> updateGradingScaleForExam(@PathVariable Long examId, @RequestBody GradingScale gradingScale) {
+    public ResponseEntity<GradingScale> updateGradingScaleForExam(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody GradingScale gradingScale) {
         log.debug("REST request to update a grading scale for exam: {}", examId);
+        Course course = courseRepository.findByIdElseThrow(courseId);
         GradingScale oldGradingScale = gradingScaleRepository.findByExamIdOrElseThrow(examId);
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, gradingScale.getExam().getCourse(), null);
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
         gradingScale.setId(oldGradingScale.getId());
         gradingScale.setExam(oldGradingScale.getExam());
         GradingScale savedGradingScale = gradingScaleService.saveGradingScale(gradingScale);
@@ -207,10 +210,11 @@ public class GradingScaleResource {
      */
     @DeleteMapping("/courses/{courseId}/exams/{examId}/grading-scale")
     @PreAuthorize("hasRole('INSTRUCTOR')")
-    public ResponseEntity<Void> deleteGradingScaleForExam(@PathVariable Long examId) {
+    public ResponseEntity<Void> deleteGradingScaleForExam(@PathVariable Long courseId, @PathVariable Long examId) {
         log.debug("REST request to delete the grading scale for exam: {}", examId);
+        Course course = courseRepository.findByIdElseThrow(courseId);
         GradingScale gradingScale = gradingScaleRepository.findByExamIdOrElseThrow(examId);
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, gradingScale.getExam().getCourse(), null);
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
         gradingScaleRepository.deleteById(gradingScale.getId());
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, "")).build();
     }
