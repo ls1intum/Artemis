@@ -101,6 +101,11 @@
             justify-content: center;
             align-items: center;
 
+            .next-exercise-icon {
+                z-index: 1;
+                font-size: large;
+            }
+
             .next-exercise-title {
                 font-weight: bolder;
                 font-size: large;
@@ -110,6 +115,7 @@
                 text-overflow: ellipsis;
                 white-space: nowrap;
                 max-width: 40ch;
+                padding-left: 15px;
             }
 
             h6 {

@@ -29,7 +29,7 @@
 
     <div class="card-body">
         <a class="stretched-link" [routerLink]="['/courses', course.id!]"></a>
-        <div class="chart-container" *ngIf="exerciseCount > 0">
+        <div class="chart-container" *ngIf="exerciseCount > 0 && totalReachableScore > 0">
             <div class="chart-text">
                 <h2 class="text-center">{{ totalRelativeScore }}%</h2>
                 <h5 class="text-center points">{{ totalAbsoluteScore }} / {{ totalReachableScore }} Pts</h5>
@@ -55,8 +55,7 @@
                     <h6 jhiTranslate="artemisApp.studentDashboard.cardExerciseLabel">Next exercises:</h6>
                 </div>
                 <div class="col-6 next-exercise-col">
-                    <fa-icon [icon]="nextExerciseIcon" placement="right" [ngbTooltip]="nextExerciseTooltip | artemisTranslate" container="body" style="z-index: 1"></fa-icon>
-                    <span>&nbsp;</span>
+                    <fa-icon class="next-exercise-icon" [icon]="nextExerciseIcon" placement="right" [ngbTooltip]="nextExerciseTooltip | artemisTranslate" container="body"></fa-icon>
                     <span class="next-exercise-title">{{ nextRelevantExercise.title }}</span>
                 </div>
                 <div class="col-3 next-exercise-col">
