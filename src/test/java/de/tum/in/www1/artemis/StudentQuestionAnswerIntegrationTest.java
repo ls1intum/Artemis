@@ -96,10 +96,17 @@ public class StudentQuestionAnswerIntegrationTest extends AbstractSpringIntegrat
         studentQuestionAnswer.setAuthor(database.getUserByLoginWithoutAuthorities("tutor1"));
         studentQuestionAnswer.setAnswerText("Test Answer");
         studentQuestionAnswer.setAnswerDate(ZonedDateTime.now());
-        StudentQuestionAnswer response = request.postWithResponseBody("/api/courses/" + studentQuestion.getCourse().getId() + "/student-question-answers", studentQuestionAnswer,
+        StudentQuestionAnswer studentQuestionAnswer2 = new StudentQuestionAnswer();
+        studentQuestionAnswer2.setQuestion(studentQuestions.get(1));
+
+        StudentQuestionAnswer response = request.postWithResponseBody("/api/courses/" + studentQuestionAnswer2.getQuestion().getCourse().getId() + "/student-question-answers",
+                studentQuestionAnswer2, StudentQuestionAnswer.class, HttpStatus.CREATED);
+        assertThat(response).isNotNull();
+
+        StudentQuestionAnswer response2 = request.postWithResponseBody("/api/courses/" + studentQuestion.getCourse().getId() + "/student-question-answers", studentQuestionAnswer,
                 StudentQuestionAnswer.class, HttpStatus.CREATED);
 
-        assertThat(response).isNotNull();
+        assertThat(response2).isNotNull();
     }
 
     @Test
