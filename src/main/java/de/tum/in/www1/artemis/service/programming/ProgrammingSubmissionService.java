@@ -110,7 +110,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
      * @throws IllegalArgumentException it the Commit hash could not be parsed for submission from participation
      */
     public ProgrammingSubmission notifyPush(Long participationId, Object requestBody) throws EntityNotFoundException, IllegalStateException, IllegalArgumentException {
-        Participation participation = participationRepository.findByIdWithSubmissionsElseThrow(participationId);
+        Participation participation = participationRepository.findByIdWithLegalSubmissionsElseThrow(participationId);
         if (!(participation instanceof ProgrammingExerciseParticipation)) {
             throw new EntityNotFoundException("Programming Exercise Participation", participationId);
         }
@@ -124,8 +124,8 @@ public class ProgrammingSubmissionService extends SubmissionService {
             // we can find this out by looking into the requestBody, e.g. changes=[{ref={id=refs/heads/BitbucketStationSupplies, displayId=BitbucketStationSupplies, type=BRANCH}
             // if the branch is different than master, throw an IllegalArgumentException, but make sure the REST call still returns 200 to Bitbucket
             commit = versionControlService.get().getLastCommitDetails(requestBody);
-            log.info("NotifyPush invoked due to the commit " + commit.getCommitHash() + " by " + commit.getAuthorName() + " with " + commit.getAuthorEmail() + " in branch "
-                    + commit.getBranch());
+            log.info("NotifyPush invoked due to the commit {} by {} with {} in branch {}", commit.getCommitHash(), commit.getAuthorName(), commit.getAuthorEmail(),
+                    commit.getBranch());
         }
         catch (Exception ex) {
             log.error("Commit could not be parsed for submission from participation " + programmingExerciseParticipation, ex);
@@ -150,7 +150,6 @@ public class ProgrammingSubmissionService extends SubmissionService {
             // as the VCS-server performs the request
             SecurityUtils.setAuthorizationObject();
 
-            // TODO: is this still allowed for an exam? what do we want to do here?
             participationService.resumeProgrammingExercise((ProgrammingExerciseStudentParticipation) programmingExerciseParticipation);
             // Note: in this case we do not need an empty commit: when we trigger the build manually (below), subsequent commits will work correctly
             try {
@@ -169,15 +168,16 @@ public class ProgrammingSubmissionService extends SubmissionService {
 
         programmingSubmission = new ProgrammingSubmission();
         programmingSubmission.setCommitHash(commit.getCommitHash());
-        log.info("Create new programmingSubmission with commitHash: " + commit.getCommitHash() + " for participation " + participationId);
+        log.info("Create new programmingSubmission with commitHash: {} for participation {}", commit.getCommitHash(), participationId);
 
         programmingSubmission.setSubmitted(true);
         programmingSubmission.setSubmissionDate(ZonedDateTime.now());
         programmingSubmission.setType(SubmissionType.MANUAL);
-        programmingExerciseParticipation.addSubmission(programmingSubmission);
 
         // Students are not allowed to submit a programming exercise after the exam due date, if this happens we set the Submission to ILLEGAL
         checkForIllegalExamSubmission(programmingExerciseParticipation, programmingSubmission);
+
+        programmingExerciseParticipation.addSubmission(programmingSubmission);
 
         programmingSubmission = programmingSubmissionRepository.save(programmingSubmission);
         // NOTE: we don't need to save the participation here, this might lead to concurrency problems when doing the empty commit during resume exercise!
@@ -247,9 +247,14 @@ public class ProgrammingSubmissionService extends SubmissionService {
     }
 
     private Optional<ProgrammingSubmission> findLatestPendingSubmissionForParticipation(final long participationId, final boolean isGraded) {
-        final var optionalSubmission = isGraded
-                ? programmingSubmissionRepository.findGradedByParticipationIdOrderBySubmissionDateDesc(participationId, PageRequest.of(0, 1)).stream().findFirst()
-                : programmingSubmissionRepository.findFirstByParticipationIdOrderBySubmissionDateDesc(participationId);
+        Optional<ProgrammingSubmission> optionalSubmission;
+        if (isGraded) {
+            optionalSubmission = programmingSubmissionRepository.findGradedByParticipationIdOrderBySubmissionDateDesc(participationId, PageRequest.of(0, 1)).stream().findFirst();
+        }
+        else {
+            optionalSubmission = programmingSubmissionRepository.findFirstByParticipationIdOrderBySubmissionDateDesc(participationId);
+        }
+
         if (optionalSubmission.isEmpty() || optionalSubmission.get().getLatestResult() != null) {
             // This is not an error case, it is very likely that there is no pending submission for a participation.
             return Optional.empty();
@@ -306,7 +311,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
     public void logTriggerInstructorBuild(User user, Exercise exercise, Course course) {
         var auditEvent = new AuditEvent(user.getLogin(), TRIGGER_INSTRUCTOR_BUILD, "exercise=" + exercise.getTitle(), "course=" + course.getTitle());
         auditEventRepository.add(auditEvent);
-        log.info("User " + user.getLogin() + " triggered an instructor build for all participations in exercise {} with id {}", exercise.getTitle(), exercise.getId());
+        log.info("User {} triggered an instructor build for all participations in exercise {} with id {}", user.getLogin(), exercise.getTitle(), exercise.getId());
     }
 
     private void notifyInstructorAboutStartedExerciseBuildRun(ProgrammingExercise programmingExercise) {
@@ -437,7 +442,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
             notifyUserAboutSubmission(submission);
         }
         catch (Exception e) {
-            log.error("Trigger build failed for " + programmingExerciseParticipation.getBuildPlanId() + " with the exception " + e.getMessage());
+            log.error("Trigger build failed for {} with the exception {}", programmingExerciseParticipation.getBuildPlanId(), e.getMessage());
             BuildTriggerWebsocketError error = new BuildTriggerWebsocketError(e.getMessage(), submission.getParticipation().getId());
             notifyUserAboutSubmissionError(submission, error);
         }
@@ -494,7 +499,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
             continuousIntegrationService.get().triggerBuild(programmingExercise.getTemplateParticipation());
         }
         catch (ContinuousIntegrationException ex) {
-            log.error("Could not trigger build for solution repository after test case update for programming exercise with id " + programmingExerciseId);
+            log.error("Could not trigger build for solution repository after test case update for programming exercise with id {}", programmingExerciseId);
         }
     }
 
@@ -637,10 +642,10 @@ public class ProgrammingSubmissionService extends SubmissionService {
     public List<ProgrammingSubmission> getProgrammingSubmissions(long exerciseId, boolean submittedOnly, boolean examMode) {
         List<StudentParticipation> participations;
         if (examMode) {
-            participations = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseIdIgnoreTestRuns(exerciseId);
+            participations = studentParticipationRepository.findAllWithEagerLegalSubmissionsAndEagerResultsAndEagerAssessorByExerciseIdIgnoreTestRuns(exerciseId);
         }
         else {
-            participations = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseId(exerciseId);
+            participations = studentParticipationRepository.findAllWithEagerLegalSubmissionsAndEagerResultsAndEagerAssessorByExerciseId(exerciseId);
         }
         List<ProgrammingSubmission> submissions = new ArrayList<>();
         participations.stream().peek(participation -> participation.getExercise().setStudentParticipations(null)).map(StudentParticipation::findLatestSubmission)
@@ -746,7 +751,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
         var assessor = newResult.getAssessor();
         newResult = resultRepository.save(newResult);
         newResult.setAssessor(assessor);
-        log.debug("Assessment locked with result id: " + newResult.getId() + " for assessor: " + newResult.getAssessor().getName());
+        log.debug("Assessment locked with result id: {} for assessor: {}", newResult.getId(), newResult.getAssessor().getName());
         // Make sure that submission is set back after saving
         newResult.setSubmission(existingSubmission);
         return newResult;

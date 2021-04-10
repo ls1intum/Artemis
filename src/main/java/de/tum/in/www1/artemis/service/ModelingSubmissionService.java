@@ -151,7 +151,7 @@ public class ModelingSubmissionService extends SubmissionService {
             }
         }
         catch (Exception ex) {
-            log.error("Modeling submission version could not be saved: " + ex);
+            log.error("Modeling submission version could not be saved", ex);
         }
 
         participation.addSubmission(modelingSubmission);
@@ -166,7 +166,7 @@ public class ModelingSubmissionService extends SubmissionService {
             }
         }
 
-        log.debug("return model: " + modelingSubmission.getModel());
+        log.debug("return model: {}", modelingSubmission.getModel());
         return modelingSubmission;
     }
 

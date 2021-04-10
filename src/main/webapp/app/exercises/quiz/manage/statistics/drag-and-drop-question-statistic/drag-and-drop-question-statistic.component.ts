@@ -115,14 +115,10 @@ export class DragAndDropQuestionStatisticComponent extends QuestionStatisticComp
      * Get the drag item that was mapped to the given drop location in the sample solution
      *
      * @param dropLocation {object} the drop location that the drag item should be mapped to
-     * @return {object | null} the mapped drag item, or null if no drag item has been mapped to this location
+     * @return {DragItem | undefined} the mapped drag item, or undefined if no drag item has been mapped to this location
      */
     correctDragItemForDropLocation(dropLocation: DropLocation) {
         const currMapping = this.dragAndDropQuestionUtil.solve(this.question, undefined).filter((mapping) => mapping.dropLocation!.id === dropLocation.id)[0];
-        if (currMapping) {
-            return currMapping.dragItem;
-        } else {
-            return null;
-        }
+        return currMapping.dragItem;
     }
 }
