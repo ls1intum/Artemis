@@ -10,7 +10,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.in.www1.artemis.domain.Course;
@@ -27,7 +26,6 @@ import de.tum.in.www1.artemis.web.rest.dto.ExerciseScoresDTO;
  * Controller to provide the necessary data for the exercise-scores-chart.component.ts in the client
  */
 @RestController
-@RequestMapping("/api")
 public class ExerciseScoresChartResource {
 
     private final Logger log = LoggerFactory.getLogger(ExerciseScoresChartResource.class);
@@ -77,7 +75,11 @@ public class ExerciseScoresChartResource {
 
     public static final class Endpoints {
 
-        public static final String COURSE_EXERCISE_SCORES = "/courses/{courseId}/charts/exercise-scores";
+        public static final String COURSE_EXERCISE_SCORES = "/api/courses/{courseId}/charts/exercise-scores";
+
+        public static String generateCourseExerciseScoresEndpoint(long courseId) {
+            return COURSE_EXERCISE_SCORES.replaceFirst("\\{courseId\\}", "" + courseId);
+        }
 
         private Endpoints() {
         }

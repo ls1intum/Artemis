@@ -1,5 +1,15 @@
 package de.tum.in.www1.artemis.service;
 
+import static de.tum.in.www1.artemis.service.util.RoundingUtil.roundToNDecimalPlaces;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import org.springframework.stereotype.Service;
+
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
@@ -11,15 +21,6 @@ import de.tum.in.www1.artemis.repository.StudentScoreRepository;
 import de.tum.in.www1.artemis.repository.TeamScoreRepository;
 import de.tum.in.www1.artemis.web.rest.dto.ExerciseScoresAggregatedInformation;
 import de.tum.in.www1.artemis.web.rest.dto.ExerciseScoresDTO;
-import org.springframework.stereotype.Service;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
-
-import static de.tum.in.www1.artemis.service.util.RoundingUtil.roundToNDecimalPlaces;
 
 @Service
 public class ExerciseScoresChartService {
@@ -30,7 +31,8 @@ public class ExerciseScoresChartService {
 
     private final ParticipantScoreRepository participantScoreRepository;
 
-    public ExerciseScoresChartService(StudentScoreRepository studentScoreRepository, TeamScoreRepository teamScoreRepository, ParticipantScoreRepository participantScoreRepository) {
+    public ExerciseScoresChartService(StudentScoreRepository studentScoreRepository, TeamScoreRepository teamScoreRepository,
+            ParticipantScoreRepository participantScoreRepository) {
         this.studentScoreRepository = studentScoreRepository;
         this.teamScoreRepository = teamScoreRepository;
         this.participantScoreRepository = participantScoreRepository;
