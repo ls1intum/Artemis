@@ -82,7 +82,7 @@ public class StudentQuestionAnswerIntegrationTest extends AbstractSpringIntegrat
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void createStudentQuestionWithLectureNotNullAndExerciseNull() throws Exception {
+    public void createStudentQuestionAnswerWithLectureNotNullAndExerciseNull() throws Exception {
         StudentQuestion studentQuestion = database.createCourseWithExerciseAndStudentQuestions().get(0);
 
         StudentQuestionAnswer studentQuestionAnswer = new StudentQuestionAnswer();
@@ -93,8 +93,8 @@ public class StudentQuestionAnswerIntegrationTest extends AbstractSpringIntegrat
         Long courseId = studentQuestion.getCourse().getId();
         Lecture notNullLecture = new Lecture();
         notNullLecture.setCourse(studentQuestion.getCourse());
-        studentQuestion.setLecture(notNullLecture);
         lectureRepository.save(notNullLecture);
+        studentQuestion.setLecture(notNullLecture);
         studentQuestion.setExercise(null);
         studentQuestionRepository.save(studentQuestion);
         StudentQuestionAnswer response = request.postWithResponseBody("/api/courses/" + courseId + "/student-question-answers", studentQuestionAnswer, StudentQuestionAnswer.class,
