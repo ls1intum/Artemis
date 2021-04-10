@@ -102,7 +102,6 @@ describe('Overview Component', () => {
                     guidedTourService = TestBed.inject(GuidedTourService);
                     exerciseService = TestBed.inject(ExerciseService);
 
-                    spyOn(courseCardComponent, 'displayTotalRelativeScore').and.returnValue(of());
                     spyOn(navBarComponentFixture.componentInstance, 'ngOnInit').and.callFake(() => {
                         navBarComponent.currAccount = user;
                     });
