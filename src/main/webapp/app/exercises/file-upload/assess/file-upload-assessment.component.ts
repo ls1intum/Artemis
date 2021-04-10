@@ -66,6 +66,7 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
     exerciseGroupId: number;
     exerciseDashboardLink: string[];
     loadingInitialSubmission = true;
+    highlightDifferences = false;
 
     private cancelConfirmationText: string;
 
@@ -139,6 +140,14 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
         }
 
         return filePath.split('.').pop()!;
+    }
+
+    /**
+     * In ExamMode:
+     * Highlight the difference between the first and second correction round
+     */
+    switchHighlightDifferences(): void {
+        this.highlightDifferences = !this.highlightDifferences;
     }
 
     private loadOptimalSubmission(exerciseId: number): void {
