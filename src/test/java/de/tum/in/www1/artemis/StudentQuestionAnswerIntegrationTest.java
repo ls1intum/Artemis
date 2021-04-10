@@ -83,30 +83,22 @@ public class StudentQuestionAnswerIntegrationTest extends AbstractSpringIntegrat
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void createStudentQuestionAnswerWithLectureNotNullAndExerciseNull() throws Exception {
-        List<StudentQuestion> studentQuestions = database.createCourseWithExerciseAndStudentQuestions();
-        StudentQuestion studentQuestion = studentQuestions.get(0);
-        Lecture notNullLecture = new Lecture();
-        notNullLecture.setCourse(studentQuestion.getCourse());
-        studentQuestion.setLecture(notNullLecture);
-        lectureRepository.save(notNullLecture);
-        studentQuestion.setExercise(null);
-        studentQuestionRepository.save(studentQuestion);
+        List<StudentQuestion> studentQuestions = database.createCourseWithExerciseAndLectureAndStudentQuestions();
+        StudentQuestion studentQuestion = studentQuestions.get(3);
         StudentQuestionAnswer studentQuestionAnswer = new StudentQuestionAnswer();
         studentQuestionAnswer.setQuestion(studentQuestion);
         studentQuestionAnswer.setAuthor(database.getUserByLoginWithoutAuthorities("tutor1"));
         studentQuestionAnswer.setAnswerText("Test Answer");
         studentQuestionAnswer.setAnswerDate(ZonedDateTime.now());
         StudentQuestionAnswer studentQuestionAnswer2 = new StudentQuestionAnswer();
-        studentQuestionAnswer2.setQuestion(studentQuestions.get(1));
+        studentQuestionAnswer2.setQuestion(studentQuestions.get(0));
 
-        StudentQuestionAnswer response = request.postWithResponseBody("/api/courses/" + studentQuestionAnswer2.getQuestion().getCourse().getId() + "/student-question-answers",
+        StudentQuestionAnswer response2 = request.postWithResponseBody("/api/courses/" + studentQuestionAnswer2.getQuestion().getCourse().getId() + "/student-question-answers",
                 studentQuestionAnswer2, StudentQuestionAnswer.class, HttpStatus.CREATED);
-        assertThat(response).isNotNull();
 
-        StudentQuestionAnswer response2 = request.postWithResponseBody("/api/courses/" + studentQuestion.getCourse().getId() + "/student-question-answers", studentQuestionAnswer,
+        StudentQuestionAnswer response = request.postWithResponseBody("/api/courses/" + studentQuestion.getCourse().getId() + "/student-question-answers", studentQuestionAnswer,
                 StudentQuestionAnswer.class, HttpStatus.CREATED);
-
-        assertThat(response2).isNotNull();
+        assertThat(response).isNotNull();
     }
 
     @Test
