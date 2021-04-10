@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.service;
 
 import static de.tum.in.www1.artemis.service.util.RoundingUtil.roundToNDecimalPlaces;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -22,6 +21,11 @@ import de.tum.in.www1.artemis.repository.TeamScoreRepository;
 import de.tum.in.www1.artemis.web.rest.dto.ExerciseScoresAggregatedInformation;
 import de.tum.in.www1.artemis.web.rest.dto.ExerciseScoresDTO;
 
+/**
+ * Service to efficiently calculate the statistics for the exercise-scores-chart.component.ts in the client
+ * <p>
+ * This services uses the participant scores tables for performance reason
+ */
 @Service
 public class ExerciseScoresChartService {
 
@@ -42,51 +46,61 @@ public class ExerciseScoresChartService {
      * Get the score of a user, the best score and the average score in the exercises
      *
      * @param user      the user for whom to get the individual score
-     * @param exercises the exercises for which to get the scores
+     * @param exercises the exercises to consider
      * @return list of the exercise scores
      */
     public List<ExerciseScoresDTO> getExerciseScores(Set<Exercise> exercises, User user) {
         if (user == null || exercises == null) {
             throw new IllegalArgumentException();
         }
-
-        Set<Exercise> individualExercises = exercises.stream().filter(exercise -> exercise.getMode().equals(ExerciseMode.INDIVIDUAL)).collect(Collectors.toSet());
-        Set<Exercise> teamExercises = exercises.stream().filter(exercise -> exercise.getMode().equals(ExerciseMode.TEAM)).collect(Collectors.toSet());
+        if (exercises.isEmpty()) {
+            return List.of();
+        }
+        // Getting the score of the student in the exercises
+        Map<Long, StudentScore> individualExerciseIdToStudentScore = getScoreOfStudentForIndividualExercises(user,
+                exercises.stream().filter(exercise -> exercise.getMode().equals(ExerciseMode.INDIVIDUAL)).collect(Collectors.toSet()));
+        Map<Long, TeamScore> teamExerciseIdToTeamScore = getScoreOfStudentForTeamExercises(user,
+                exercises.stream().filter(exercise -> exercise.getMode().equals(ExerciseMode.TEAM)).collect(Collectors.toSet()));
         // Getting the average and max scores in the exercise
         Map<Long, ExerciseScoresAggregatedInformation> exerciseIdToAggregatedInformation = participantScoreRepository.getAggregatedExerciseScoresInformation(exercises).stream()
                 .collect(Collectors.toMap(ExerciseScoresAggregatedInformation::getExerciseId, exerciseScoresAggregatedInformation -> exerciseScoresAggregatedInformation));
-        Map<Long, StudentScore> individualExerciseIdToStudentScore = studentScoreRepository.findAllByExerciseAndUserWithEagerExercise(individualExercises, user).stream()
-                .collect(Collectors.toMap(studentScore -> studentScore.getExercise().getId(), studentSore -> studentSore));
+
+        return exercises.stream()
+                .map(exercise -> createExerciseScoreDTO(exerciseIdToAggregatedInformation, individualExerciseIdToStudentScore, teamExerciseIdToTeamScore, exercise))
+                .collect(Collectors.toList());
+    }
+
+    private Map<Long, TeamScore> getScoreOfStudentForTeamExercises(User user, Set<Exercise> teamExercises) {
         Map<Long, TeamScore> teamExerciseIdToTeamScore = teamScoreRepository.findAllByExerciseAndUserWithEagerExercise(teamExercises, user).stream()
                 .collect(Collectors.toMap(teamScore -> teamScore.getExercise().getId(), teamScore -> teamScore));
+        return teamExerciseIdToTeamScore;
+    }
 
-        List<ExerciseScoresDTO> exerciseScoresDTOs = new ArrayList<>();
+    private Map<Long, StudentScore> getScoreOfStudentForIndividualExercises(User user, Set<Exercise> individualExercises) {
+        Map<Long, StudentScore> individualExerciseIdToStudentScore = studentScoreRepository.findAllByExerciseAndUserWithEagerExercise(individualExercises, user).stream()
+                .collect(Collectors.toMap(studentScore -> studentScore.getExercise().getId(), studentSore -> studentSore));
+        return individualExerciseIdToStudentScore;
+    }
 
-        for (Exercise exercise : exercises) {
-            ExerciseScoresDTO exerciseScoresDTO = new ExerciseScoresDTO();
-            exerciseScoresDTO.exerciseId = exercise.getId();
-            exerciseScoresDTO.exerciseTitle = exercise.getTitle();
-            exerciseScoresDTO.releaseDate = exercise.getReleaseDate();
-            exerciseScoresDTO.exerciseType = exercise.getStringRepresentationOfType();
+    private ExerciseScoresDTO createExerciseScoreDTO(Map<Long, ExerciseScoresAggregatedInformation> exerciseIdToAggregatedInformation,
+            Map<Long, StudentScore> individualExerciseIdToStudentScore, Map<Long, TeamScore> teamExerciseIdToTeamScore, Exercise exercise) {
+        ExerciseScoresDTO exerciseScoresDTO = new ExerciseScoresDTO(exercise);
 
-            ExerciseScoresAggregatedInformation aggregatedInformation = exerciseIdToAggregatedInformation.get(exercise.getId());
+        ExerciseScoresAggregatedInformation aggregatedInformation = exerciseIdToAggregatedInformation.get(exercise.getId());
 
-            if (aggregatedInformation == null || aggregatedInformation.getAverageScoreAchieved() == null || aggregatedInformation.getMaxScoreAchieved() == null) {
-                exerciseScoresDTO.averageScoreAchieved = 0D;
-                exerciseScoresDTO.maxScoreAchieved = 0D;
-            }
-            else {
-                exerciseScoresDTO.averageScoreAchieved = roundToNDecimalPlaces(aggregatedInformation.getAverageScoreAchieved(), 1);
-                exerciseScoresDTO.maxScoreAchieved = roundToNDecimalPlaces(aggregatedInformation.getMaxScoreAchieved(), 0);
-            }
-
-            ParticipantScore participantScore = exercise.getMode().equals(ExerciseMode.INDIVIDUAL) ? individualExerciseIdToStudentScore.get(exercise.getId())
-                    : teamExerciseIdToTeamScore.get(exercise.getId());
-            exerciseScoresDTO.scoreOfStudent = participantScore == null || participantScore.getLastRatedScore() == null ? 0D
-                    : roundToNDecimalPlaces(participantScore.getLastScore(), 0);
-
-            exerciseScoresDTOs.add(exerciseScoresDTO);
+        if (aggregatedInformation == null || aggregatedInformation.getAverageScoreAchieved() == null || aggregatedInformation.getMaxScoreAchieved() == null) {
+            exerciseScoresDTO.averageScoreAchieved = 0D;
+            exerciseScoresDTO.maxScoreAchieved = 0D;
         }
-        return exerciseScoresDTOs;
+        else {
+            exerciseScoresDTO.averageScoreAchieved = roundToNDecimalPlaces(aggregatedInformation.getAverageScoreAchieved(), 1);
+            exerciseScoresDTO.maxScoreAchieved = roundToNDecimalPlaces(aggregatedInformation.getMaxScoreAchieved(), 0);
+        }
+
+        ParticipantScore participantScore = exercise.getMode().equals(ExerciseMode.INDIVIDUAL) ? individualExerciseIdToStudentScore.get(exercise.getId())
+                : teamExerciseIdToTeamScore.get(exercise.getId());
+        exerciseScoresDTO.scoreOfStudent = participantScore == null || participantScore.getLastRatedScore() == null ? 0D
+                : roundToNDecimalPlaces(participantScore.getLastScore(), 0);
+        return exerciseScoresDTO;
     }
 }

@@ -23,7 +23,7 @@ import de.tum.in.www1.artemis.service.ExerciseScoresChartService;
 import de.tum.in.www1.artemis.web.rest.dto.ExerciseScoresDTO;
 
 /**
- * Controller to provide the necessary data for the exercise-scores-chart.component.ts in the client
+ * Controller to provides endpoints to query the necessary data for the exercise-scores-chart.component.ts in the client
  */
 @RestController
 public class ExerciseScoresChartResource {
