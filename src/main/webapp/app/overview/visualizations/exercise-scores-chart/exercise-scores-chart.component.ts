@@ -1,6 +1,6 @@
 import { AfterViewInit, Component, ElementRef, Input, OnDestroy, ViewChild } from '@angular/core';
 import * as Chart from 'chart.js';
-import { ChartDataSets, ChartOptions, ChartPoint, ChartType } from 'chart.js';
+import { ChartDataSets, ChartOptions, ChartPoint } from 'chart.js';
 import { BaseChartDirective, Color, Label } from 'ng2-charts';
 import { ExerciseScoresChartService, ExerciseScoresDTO } from 'app/overview/visualizations/exercise-scores-chart.service';
 import { JhiAlertService } from 'ng-jhipster';
@@ -27,7 +27,104 @@ export class ExerciseScoresChartComponent implements AfterViewInit, OnDestroy {
     chartInstance: Chart;
     @ViewChild('chartDiv')
     chartDiv: ElementRef;
-    public lineChartData: ChartDataSets[] = [
+
+    constructor(
+        private router: Router,
+        private activatedRoute: ActivatedRoute,
+        private alertService: JhiAlertService,
+        private learningAnalyticsService: ExerciseScoresChartService,
+        private translateService: TranslateService,
+    ) {}
+
+    ngOnDestroy() {
+        // important to prevent memory leaks
+        this.chartInstance.destroy();
+    }
+
+    ngAfterViewInit() {
+        this.chartInstance = this.chartDirective.chart;
+        this.activatedRoute.parent!.params.subscribe((params) => {
+            this.courseId = +params['courseId'];
+            if (this.courseId) {
+                this.loadDataAndInitializeChart();
+            }
+        });
+    }
+
+    private loadDataAndInitializeChart() {
+        this.isLoading = true;
+        this.learningAnalyticsService
+            .getExerciseScoresForCourse(this.courseId)
+            .pipe(
+                finalize(() => {
+                    this.isLoading = false;
+                }),
+            )
+            .subscribe(
+                (exerciseScoresResponse) => {
+                    this.exerciseScores = exerciseScoresResponse.body!;
+                    this.initializeChart();
+                },
+                (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
+            );
+    }
+
+    private initializeChart() {
+        // we calculate the chart width depending on the number of exercises we have to show. If you look into
+        // exercise-scores-chart.component.scss you will see that we show a horizontal navigation bar when the
+        // chart has reached a certain width
+        const chartWidth = 80 * this.exerciseScores.length;
+        this.chartDiv.nativeElement.setAttribute('style', `width: ${chartWidth}px;`);
+        this.chartInstance.resize();
+        // we show all the exercises ordered by their release data
+        const sortedExerciseScores = _.sortBy(this.exerciseScores, (exerciseScore) => exerciseScore.releaseDate);
+        this.addData(this.chartInstance, sortedExerciseScores);
+    }
+
+    private addData(chart: Chart, exerciseScoresDTOs: ExerciseScoresDTO[]) {
+        for (const exerciseScoreDTO of exerciseScoresDTOs) {
+            chart.data.labels!.push(exerciseScoreDTO.exerciseTitle!);
+            (chart.data.datasets![0].data as ChartPoint[])!.push({
+                y: exerciseScoreDTO.scoreOfStudent,
+                // this bonus information is needed for tooltip generation and to navigate to an exercise page
+                exerciseId: exerciseScoreDTO.exerciseId,
+                exerciseTitle: exerciseScoreDTO.exerciseTitle,
+                exerciseType: exerciseScoreDTO.exerciseType,
+            } as Chart.ChartPoint);
+            (chart.data.datasets![1].data as ChartPoint[])!.push({
+                y: exerciseScoreDTO.averageScoreAchieved,
+                // this bonus information is needed for tooltip generation and to navigate to an exercise page
+                exerciseId: exerciseScoreDTO.exerciseId,
+                exerciseTitle: exerciseScoreDTO.exerciseTitle,
+                exerciseType: exerciseScoreDTO.exerciseType,
+            } as Chart.ChartPoint);
+            (chart.data.datasets![2].data as ChartPoint[])!.push({
+                y: exerciseScoreDTO.maxScoreAchieved,
+                // this bonus information is needed for tooltip generation and to navigate to an exercise page
+                exerciseId: exerciseScoreDTO.exerciseId,
+                exerciseTitle: exerciseScoreDTO.exerciseTitle,
+                exerciseType: exerciseScoreDTO.exerciseType,
+            } as Chart.ChartPoint);
+        }
+        this.chartInstance.update();
+    }
+
+    /**
+     * We navigate to the exercise sub page when the user clicks on a data point
+     */
+    navigateToExercise(exerciseId: number) {
+        this.router.navigate(['courses', this.courseId, 'exercises', exerciseId]);
+    }
+
+    /* ------------------------------ Settings for the Chart ------------------------------ */
+    /**
+     * For each exercise we show three data points, hence we need three data sets:
+     * 1.) Score achieved by the user in the exercise
+     * 2.) Average score achieved by all users in the exercise
+     * 3.) Best score achieved by a user in the exercise
+     */
+    public dataSets: ChartDataSets[] = [
+        // score of logged in user in exercise
         {
             fill: false,
             data: [],
@@ -37,6 +134,7 @@ export class ExerciseScoresChartComponent implements AfterViewInit, OnDestroy {
             lineTension: 0,
             spanGaps: true,
         },
+        // average score in exercise
         {
             fill: false,
             data: [],
@@ -47,6 +145,7 @@ export class ExerciseScoresChartComponent implements AfterViewInit, OnDestroy {
             spanGaps: true,
             borderDash: [1, 1],
         },
+        // best score in exercise
         {
             fill: false,
             data: [],
@@ -58,11 +157,13 @@ export class ExerciseScoresChartComponent implements AfterViewInit, OnDestroy {
             borderDash: [15, 3, 3, 3],
         },
     ];
-    public lineChartLabels: Label[] = this.exerciseScores.map((exerciseScoreDTO) => exerciseScoreDTO.exerciseTitle!);
-    public lineChartOptions: ChartOptions = {
+    public labels: Label[] = this.exerciseScores.map((exerciseScoreDTO) => exerciseScoreDTO.exerciseTitle!);
+    public chartOptions: ChartOptions = {
+        // we show the a pointer to indicate to the user that a data point is clickable (navigation to exercise)
         onHover: (event: any, chartElement) => {
             event.target.style.cursor = chartElement[0] ? 'pointer' : 'default';
         },
+        // when the user clicks on a data point, we navigate to the subpage of the corresponding exercise
         onClick: (evt) => {
             const point: any = this.chartInstance.getElementAtEvent(evt)[0];
 
@@ -140,19 +241,22 @@ export class ExerciseScoresChartComponent implements AfterViewInit, OnDestroy {
             ],
         },
     };
-    public lineChartColors: Color[] = [
+    public chartColors: Color[] = [
+        // score of logged in user in exercise
         {
             borderColor: 'skyBlue',
             backgroundColor: 'skyBlue',
             hoverBackgroundColor: 'black',
             hoverBorderColor: 'black',
         },
+        // average score in exercise
         {
             borderColor: 'salmon',
             backgroundColor: 'salmon',
             hoverBackgroundColor: 'black',
             hoverBorderColor: 'black',
         },
+        // best score in exercise
         {
             borderColor: 'limeGreen',
             backgroundColor: 'limeGreen',
@@ -160,84 +264,4 @@ export class ExerciseScoresChartComponent implements AfterViewInit, OnDestroy {
             hoverBorderColor: 'black',
         },
     ];
-    public lineChartLegend = true;
-    public lineChartType: ChartType = 'line';
-    public lineChartPlugins = [];
-
-    constructor(
-        private router: Router,
-        private activatedRoute: ActivatedRoute,
-        private alertService: JhiAlertService,
-        private learningAnalyticsService: ExerciseScoresChartService,
-        private translateService: TranslateService,
-    ) {}
-
-    ngOnDestroy() {
-        this.chartInstance.destroy();
-    }
-
-    ngAfterViewInit() {
-        this.chartInstance = this.chartDirective.chart;
-        this.activatedRoute.parent!.params.subscribe((params) => {
-            this.courseId = +params['courseId'];
-            if (this.courseId) {
-                this.loadDataAndInitializeChart();
-            }
-        });
-    }
-
-    private loadDataAndInitializeChart() {
-        this.isLoading = true;
-        this.learningAnalyticsService
-            .getExerciseScoresForCourse(this.courseId)
-            .pipe(
-                finalize(() => {
-                    this.isLoading = false;
-                }),
-            )
-            .subscribe(
-                (exerciseScoresResponse) => {
-                    this.exerciseScores = exerciseScoresResponse.body!;
-                    this.initializeChart();
-                },
-                (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
-            );
-    }
-
-    private initializeChart() {
-        const chartWidth = 80 * this.exerciseScores.length;
-        this.chartDiv.nativeElement.setAttribute('style', `width: ${chartWidth}px;`);
-        this.chartInstance.resize();
-        const sortedExerciseScores = _.sortBy(this.exerciseScores, (exerciseScore) => exerciseScore.releaseDate);
-        this.addData(this.chartInstance, sortedExerciseScores);
-    }
-
-    private addData(chart: Chart, exerciseScoresDTOs: ExerciseScoresDTO[]) {
-        for (const exerciseScoreDTO of exerciseScoresDTOs) {
-            chart.data.labels!.push(exerciseScoreDTO.exerciseTitle!);
-            (chart.data.datasets![0].data as ChartPoint[])!.push({
-                y: exerciseScoreDTO.scoreOfStudent,
-                exerciseId: exerciseScoreDTO.exerciseId,
-                exerciseTitle: exerciseScoreDTO.exerciseTitle,
-                exerciseType: exerciseScoreDTO.exerciseType,
-            } as Chart.ChartPoint);
-            (chart.data.datasets![1].data as ChartPoint[])!.push({
-                y: exerciseScoreDTO.averageScoreAchieved,
-                exerciseId: exerciseScoreDTO.exerciseId,
-                exerciseTitle: exerciseScoreDTO.exerciseTitle,
-                exerciseType: exerciseScoreDTO.exerciseType,
-            } as Chart.ChartPoint);
-            (chart.data.datasets![2].data as ChartPoint[])!.push({
-                y: exerciseScoreDTO.maxScoreAchieved,
-                exerciseId: exerciseScoreDTO.exerciseId,
-                exerciseTitle: exerciseScoreDTO.exerciseTitle,
-                exerciseType: exerciseScoreDTO.exerciseType,
-            } as Chart.ChartPoint);
-        }
-        this.chartInstance.update();
-    }
-
-    navigateToExercise(exerciseId: number) {
-        this.router.navigate(['courses', this.courseId, 'exercises', exerciseId]);
-    }
 }
