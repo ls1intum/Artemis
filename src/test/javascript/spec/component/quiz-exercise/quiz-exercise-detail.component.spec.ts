@@ -239,7 +239,7 @@ describe('QuizExercise Management Detail Component', () => {
         });
 
         describe('with exam id', () => {
-            const testRoute = ({ snapshot: { paramMap: convertToParamMap({ courseId: course.id, exerciseId: quizExercise.id, examId: 1, groupId: 2 }) } } as any) as ActivatedRoute;
+            const testRoute = ({ snapshot: { paramMap: convertToParamMap({ courseId: course.id, exerciseId: quizExercise.id, examId: 1, exerciseGroupId: 2 }) } } as any) as ActivatedRoute;
             beforeEach(waitForAsync(() => configureTestBed(testRoute)));
             beforeEach(configureFixtureAndServices);
             it('should call exerciseGroupService.find', () => {
@@ -256,7 +256,7 @@ describe('QuizExercise Management Detail Component', () => {
             });
         });
         describe('with exam id but without exercise id', () => {
-            const testRoute = ({ snapshot: { paramMap: convertToParamMap({ courseId: course.id, examId: 1, groupId: 2 }) } } as any) as ActivatedRoute;
+            const testRoute = ({ snapshot: { paramMap: convertToParamMap({ courseId: course.id, examId: 1, exerciseGroupId: 2 }) } } as any) as ActivatedRoute;
             beforeEach(waitForAsync(() => configureTestBed(testRoute)));
             beforeEach(configureFixtureAndServices);
             it('should call exerciseGroupService.find', () => {
