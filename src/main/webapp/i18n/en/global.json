@@ -138,8 +138,11 @@
                 "dontmatch": "The password and its confirmation do not match!"
             },
             "validate": {
+                "oldpassword": {
+                    "required": "Please enter your current password."
+                },
                 "newpassword": {
-                    "required": "Your password is required.",
+                    "required": "Your new password is required.",
                     "minlength": "Your password is required to be at least 8 characters.",
                     "maxlength": "Your password cannot be longer than 100 characters.",
                     "strength": "Password strength:"
