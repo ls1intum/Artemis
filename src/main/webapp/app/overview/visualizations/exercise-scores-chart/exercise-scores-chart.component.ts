@@ -32,7 +32,7 @@ export class ExerciseScoresChartComponent implements AfterViewInit, OnDestroy {
         private router: Router,
         private activatedRoute: ActivatedRoute,
         private alertService: JhiAlertService,
-        private learningAnalyticsService: ExerciseScoresChartService,
+        private exerciseScoresChartService: ExerciseScoresChartService,
         private translateService: TranslateService,
     ) {}
 
@@ -53,7 +53,7 @@ export class ExerciseScoresChartComponent implements AfterViewInit, OnDestroy {
 
     private loadDataAndInitializeChart() {
         this.isLoading = true;
-        this.learningAnalyticsService
+        this.exerciseScoresChartService
             .getExerciseScoresForCourse(this.courseId)
             .pipe(
                 finalize(() => {
