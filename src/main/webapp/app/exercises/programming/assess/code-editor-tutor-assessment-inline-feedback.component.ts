@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, OnChanges } from '@angular/core';
 import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { cloneDeep } from 'lodash';
 import { TranslateService } from '@ngx-translate/core';
@@ -9,7 +9,7 @@ import { round } from 'app/shared/util/utils';
     selector: 'jhi-code-editor-tutor-assessment-inline-feedback',
     templateUrl: './code-editor-tutor-assessment-inline-feedback.component.html',
 })
-export class CodeEditorTutorAssessmentInlineFeedbackComponent {
+export class CodeEditorTutorAssessmentInlineFeedbackComponent implements OnChanges {
     MANUAL = FeedbackType.MANUAL;
     @Input()
     get feedback(): Feedback {
@@ -52,7 +52,9 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
     disableEditScore = false;
     constructor(private translateService: TranslateService, public structuredGradingCriterionService: StructuredGradingCriterionService) {}
 
-    ngOnInit() {}
+    ngOnChanges() {
+        console.log('code editor inline feedback', this.highlightDifferences);
+    }
 
     /**
      * Updates the current feedback and sets props and emits the feedback to parent component

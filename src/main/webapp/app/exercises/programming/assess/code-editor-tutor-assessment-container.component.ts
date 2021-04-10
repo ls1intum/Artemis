@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewChild, OnChanges } from '@angular/core';
 import { Subscription } from 'rxjs/Subscription';
 import * as moment from 'moment';
 import { now } from 'moment';
@@ -42,7 +42,7 @@ import { getExerciseDashboardLink, getLinkToSubmissionAssessment } from 'app/uti
     selector: 'jhi-code-editor-tutor-assessment',
     templateUrl: './code-editor-tutor-assessment-container.component.html',
 })
-export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDestroy {
+export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDestroy, OnChanges {
     @ViewChild(CodeEditorContainerComponent, { static: false }) codeEditorContainer: CodeEditorContainerComponent;
     ButtonSize = ButtonSize;
     PROGRAMMING = ExerciseType.PROGRAMMING;
@@ -216,6 +216,9 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
                 )
                 .subscribe();
         });
+    }
+
+    ngOnChanges() {
         console.log('code editor tutor asses container: ', this.highlightDifferences);
     }
 
