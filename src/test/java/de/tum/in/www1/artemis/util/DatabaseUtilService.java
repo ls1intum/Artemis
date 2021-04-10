@@ -2060,14 +2060,14 @@ public class DatabaseUtilService {
         return submission;
     }
 
-    private Result generateResult(Submission submission, User currentUser) {
+    public Result generateResult(Submission submission, User assessor) {
         Result result = new Result();
         result = resultRepo.save(result);
         result.setSubmission(submission);
         result.completionDate(pastTimestamp);
         result.resultString("3 of 10 points");
         result.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
-        result.setAssessor(currentUser);
+        result.setAssessor(assessor);
         return result;
     }
 
