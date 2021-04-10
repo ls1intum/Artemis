@@ -23,7 +23,7 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
     @Input() highlightedElements: Map<string, string>; // map elementId -> highlight color
     @Input() centeredElementId: string;
     @Input() feedbacks: Feedback[] = [];
-    @Input() diagramType: UMLDiagramType;
+    @Input() diagramType?: UMLDiagramType = UMLDiagramType.ClassDiagram;
     @Input() maxScore: number;
     @Input() maxBonusPoints = 0;
     @Input() totalScore: number;
