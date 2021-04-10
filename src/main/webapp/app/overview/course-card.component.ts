@@ -3,10 +3,11 @@ import { Course } from 'app/entities/course.model';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
 import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
-import { Exercise } from 'app/entities/exercise.model';
+import { Exercise, getIcon, getIconTooltip } from 'app/entities/exercise.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { CourseStatisticsDataSet } from 'app/overview/course-statistics/course-statistics.component';
 import { CachingStrategy } from 'app/shared/image/secured-image.component';
+import { IconProp } from '@fortawesome/fontawesome-svg-core';
 
 @Component({
     selector: 'jhi-overview-course-card',
@@ -21,6 +22,8 @@ export class CourseCardComponent implements OnChanges {
     CachingStrategy = CachingStrategy;
 
     nextRelevantExercise?: Exercise;
+    nextExerciseIcon: IconProp;
+    nextExerciseTooltip: string;
     exerciseCount = 0;
     lectureCount = 0;
     examCount = 0;
@@ -59,6 +62,8 @@ export class CourseCardComponent implements OnChanges {
             const nextExercises = this.exerciseService.getNextExercisesForDays(this.course.exercises);
             if (nextExercises.length > 0) {
                 this.nextRelevantExercise = nextExercises[0];
+                this.nextExerciseIcon = getIcon(this.nextRelevantExercise.type);
+                this.nextExerciseTooltip = getIconTooltip(this.nextRelevantExercise.type);
             }
 
             const scores = this.courseScoreCalculationService.calculateTotalScores(this.course.exercises);
