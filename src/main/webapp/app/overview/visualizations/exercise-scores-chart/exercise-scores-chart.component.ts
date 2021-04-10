@@ -83,27 +83,26 @@ export class ExerciseScoresChartComponent implements AfterViewInit, OnDestroy {
 
     private addData(chart: Chart, exerciseScoresDTOs: ExerciseScoresDTO[]) {
         for (const exerciseScoreDTO of exerciseScoresDTOs) {
-            chart.data.labels!.push(exerciseScoreDTO.exerciseTitle!);
-            (chart.data.datasets![0].data as ChartPoint[])!.push({
-                y: exerciseScoreDTO.scoreOfStudent,
-                // this bonus information is needed for tooltip generation and to navigate to an exercise page
+            // this bonus information is needed for tooltip generation and to navigate to an exercise page
+            const extraInformation = {
                 exerciseId: exerciseScoreDTO.exerciseId,
                 exerciseTitle: exerciseScoreDTO.exerciseTitle,
                 exerciseType: exerciseScoreDTO.exerciseType,
+            };
+
+            chart.data.labels!.push(exerciseScoreDTO.exerciseTitle!);
+            // from each dto we generate a data point for each of three data sets
+            (chart.data.datasets![0].data as ChartPoint[])!.push({
+                y: exerciseScoreDTO.scoreOfStudent,
+                ...extraInformation,
             } as Chart.ChartPoint);
             (chart.data.datasets![1].data as ChartPoint[])!.push({
                 y: exerciseScoreDTO.averageScoreAchieved,
-                // this bonus information is needed for tooltip generation and to navigate to an exercise page
-                exerciseId: exerciseScoreDTO.exerciseId,
-                exerciseTitle: exerciseScoreDTO.exerciseTitle,
-                exerciseType: exerciseScoreDTO.exerciseType,
+                ...extraInformation,
             } as Chart.ChartPoint);
             (chart.data.datasets![2].data as ChartPoint[])!.push({
                 y: exerciseScoreDTO.maxScoreAchieved,
-                // this bonus information is needed for tooltip generation and to navigate to an exercise page
-                exerciseId: exerciseScoreDTO.exerciseId,
-                exerciseTitle: exerciseScoreDTO.exerciseTitle,
-                exerciseType: exerciseScoreDTO.exerciseType,
+                ...extraInformation,
             } as Chart.ChartPoint);
         }
         this.chartInstance.update();
