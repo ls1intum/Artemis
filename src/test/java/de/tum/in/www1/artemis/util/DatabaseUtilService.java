@@ -731,7 +731,7 @@ public class DatabaseUtilService {
         studentQuestion4.setVisibleForStudents(true);
         studentQuestion4.setAuthor(getUserByLoginWithoutAuthorities("student2"));
         studentQuestionRepository.save(studentQuestion4);
-        studentQuestions.add(studentQuestion2);
+        studentQuestions.add(studentQuestion4);
 
         return studentQuestions;
     }

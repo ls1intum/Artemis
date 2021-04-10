@@ -83,18 +83,13 @@ public class StudentQuestionAnswerIntegrationTest extends AbstractSpringIntegrat
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void createStudentQuestionAnswerWithLectureNotNullAndExerciseNull() throws Exception {
-        StudentQuestion studentQuestion = database.createCourseWithExerciseAndStudentQuestions().get(0);
-
+        StudentQuestion studentQuestion = database.createCourseWithExerciseAndLectureAndStudentQuestions().get(2);
         StudentQuestionAnswer studentQuestionAnswer = new StudentQuestionAnswer();
         studentQuestionAnswer.setAuthor(database.getUserByLoginWithoutAuthorities("instructor1"));
         studentQuestionAnswer.setAnswerText("Test Answer");
         studentQuestionAnswer.setAnswerDate(ZonedDateTime.now());
         studentQuestionAnswer.setQuestion(studentQuestion);
         Long courseId = studentQuestion.getCourse().getId();
-        Lecture notNullLecture = new Lecture();
-        notNullLecture.setCourse(studentQuestion.getCourse());
-        lectureRepository.save(notNullLecture);
-        studentQuestion.setLecture(notNullLecture);
         studentQuestion.setExercise(null);
         studentQuestionRepository.save(studentQuestion);
         StudentQuestionAnswer response = request.postWithResponseBody("/api/courses/" + courseId + "/student-question-answers", studentQuestionAnswer, StudentQuestionAnswer.class,
