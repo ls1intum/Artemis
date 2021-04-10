@@ -33,7 +33,7 @@ public interface ProgrammingSubmissionRepository extends JpaRepository<Programmi
             AND s.participation.id = :#{#participationId}
             AND s.id = (SELECT max(s2.id) FROM ProgrammingSubmission s2 WHERE s2.participation.id = :#{#participationId} AND (s2.type <> 'ILLEGAL' or s2.type is null))
             """)
-    Optional<ProgrammingSubmission> findFirstByParticipationIdOrderByLegalSubmissionDateDesc(Long participationId);
+    Optional<ProgrammingSubmission> findFirstByParticipationIdOrderByLegalSubmissionDateDesc(@Param("participationId") Long participationId);
 
     @EntityGraph(type = LOAD, attributePaths = "results")
     Optional<ProgrammingSubmission> findFirstByParticipationIdOrderBySubmissionDateDesc(Long participationId);

@@ -71,7 +71,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
                 AND p.student.login = :#{#username}
                 AND (s.type <> 'ILLEGAL' OR s.type IS NULL)
             """)
-    Optional<StudentParticipation> findWithEagerLegalSubmissionsByExerciseIdAndStudentLogin(Long exerciseId, String username);
+    Optional<StudentParticipation> findWithEagerLegalSubmissionsByExerciseIdAndStudentLogin(@Param("exerciseId") Long exerciseId, @Param("username") String username);
 
     @Query("""
             SELECT DISTINCT p FROM StudentParticipation p
@@ -80,7 +80,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
                 AND p.team.id = :#{#teamId}
                 AND (s.type <> 'ILLEGAL' OR s.type IS NULL)
             """)
-    Optional<StudentParticipation> findWithEagerLegalSubmissionsByExerciseIdAndTeamId(Long exerciseId, Long teamId);
+    Optional<StudentParticipation> findWithEagerLegalSubmissionsByExerciseIdAndTeamId(@Param("exerciseId") Long exerciseId, @Param("teamId") Long teamId);
 
     @Query("""
             SELECT DISTINCT p FROM StudentParticipation p
@@ -325,7 +325,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             left join fetch p.submissions s
             where p.id = :#{#participationId} and (s.type <> 'ILLEGAL' or s.type is null)
             """)
-    Optional<StudentParticipation> findWithEagerLegalSubmissionsById(Long participationId);
+    Optional<StudentParticipation> findWithEagerLegalSubmissionsById(@Param("participationId") Long participationId);
 
     @Query("""
             select p from Participation p
@@ -362,7 +362,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
                 and (s.type <> 'ILLEGAL' or s.type is null)
                 and (rs.type <> 'ILLEGAL' or rs.type is null)
             """)
-    Optional<StudentParticipation> findWithEagerLegalSubmissionsAndResultsById(Long participationId);
+    Optional<StudentParticipation> findWithEagerLegalSubmissionsAndResultsById(@Param("participationId") Long participationId);
 
     /**
      * Find the participation with the given id. Additionally, load all the submissions and results of the participation from the database.
@@ -383,7 +383,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
                 and (s.type <> 'ILLEGAL' or s.type is null)
                 and (rs.type <> 'ILLEGAL' or rs.type is null)
             """)
-    Optional<StudentParticipation> findWithEagerLegalSubmissionsResultsFeedbacksById(Long participationId);
+    Optional<StudentParticipation> findWithEagerLegalSubmissionsResultsFeedbacksById(@Param("participationId") Long participationId);
 
     @Query("""
             select p from StudentParticipation p
@@ -395,7 +395,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
                 and (s.type <> 'ILLEGAL' or s.type is null)
                 and (rs.type <> 'ILLEGAL' or rs.type is null)
             """)
-    Optional<StudentParticipation> findWithEagerLegalSubmissionsAndResultsAssessorsById(Long participationId);
+    Optional<StudentParticipation> findWithEagerLegalSubmissionsAndResultsAssessorsById(@Param("participationId") Long participationId);
 
     @EntityGraph(type = LOAD, attributePaths = { "submissions", "submissions.results", "submissions.results.assessor" })
     @Query("""
@@ -405,7 +405,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             left join fetch sr.assessor
             where p.exercise.id = :#{#exerciseId} and (s.type <> 'ILLEGAL' or s.type is null)
             """)
-    List<StudentParticipation> findAllWithEagerLegalSubmissionsAndEagerResultsAndEagerAssessorByExerciseId(long exerciseId);
+    List<StudentParticipation> findAllWithEagerLegalSubmissionsAndEagerResultsAndEagerAssessorByExerciseId(@Param("exerciseId") long exerciseId);
 
     @Query("""
             SELECT DISTINCT p FROM StudentParticipation p
@@ -428,7 +428,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
                 AND (s.type <> 'ILLEGAL' or s.type is null)
                 AND (rs.type <> 'ILLEGAL' or rs.type is null)
             """)
-    List<StudentParticipation> findAllWithEagerLegalSubmissionsAndEagerResultsByExerciseId(long exerciseId);
+    List<StudentParticipation> findAllWithEagerLegalSubmissionsAndEagerResultsByExerciseId(@Param("exerciseId") long exerciseId);
 
     @Query("""
             SELECT DISTINCT p FROM StudentParticipation p

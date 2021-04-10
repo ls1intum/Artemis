@@ -50,7 +50,7 @@ public class TextExerciseResource {
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
-    private final TextAssessmentService textAssessmentService;
+    private final FeedbackRepository feedbackRepository;
 
     private final TextBlockRepository textBlockRepository;
 
@@ -92,14 +92,14 @@ public class TextExerciseResource {
 
     private final CourseRepository courseRepository;
 
-    public TextExerciseResource(TextExerciseRepository textExerciseRepository, TextExerciseService textExerciseService, TextAssessmentService textAssessmentService,
+    public TextExerciseResource(TextExerciseRepository textExerciseRepository, TextExerciseService textExerciseService, FeedbackRepository feedbackRepository,
             PlagiarismResultRepository plagiarismResultRepository, UserRepository userRepository, AuthorizationCheckService authCheckService, CourseService courseService,
             StudentParticipationRepository studentParticipationRepository, ResultRepository resultRepository, PlagiarismService plagiarismService,
             GroupNotificationService groupNotificationService, TextExerciseImportService textExerciseImportService, TextSubmissionExportService textSubmissionExportService,
             ExampleSubmissionRepository exampleSubmissionRepository, ExerciseService exerciseService, GradingCriterionRepository gradingCriterionRepository,
             TextBlockRepository textBlockRepository, ExerciseGroupRepository exerciseGroupRepository, InstanceMessageSendService instanceMessageSendService,
             TextPlagiarismDetectionService textPlagiarismDetectionService, CourseRepository courseRepository) {
-        this.textAssessmentService = textAssessmentService;
+        this.feedbackRepository = feedbackRepository;
         this.plagiarismResultRepository = plagiarismResultRepository;
         this.textBlockRepository = textBlockRepository;
         this.textExerciseService = textExerciseService;
@@ -397,7 +397,7 @@ public class TextExerciseResource {
                 textSubmission.setBlocks(textBlocks);
 
                 if (textSubmission.isSubmitted() && result.getCompletionDate() != null) {
-                    List<Feedback> assessments = textAssessmentService.getAssessmentsForResult(result);
+                    List<Feedback> assessments = feedbackRepository.findByResult(result);
                     result.setFeedbacks(assessments);
                 }
 
