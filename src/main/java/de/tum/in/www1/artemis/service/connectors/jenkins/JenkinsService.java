@@ -280,8 +280,9 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
          * (TESTEXC-SOLUTION) would be: TESTEXC » TESTEXC-SOLUTION #3 ==> This would mean that at index 2, we have the actual job/plan key, i.e. TESTEXC-SOLUTION
          */
         if (nameParams.length != 4) {
-            log.error("Can't extract planKey from requestBody! Not a test notification result!: " + new ObjectMapper().writeValueAsString(requestBody));
-            throw new JenkinsException("Can't extract planKey from requestBody! Not a test notification result!: " + new ObjectMapper().writeValueAsString(requestBody));
+            var requestBodyString = new ObjectMapper().writeValueAsString(requestBody);
+            log.error("Can't extract planKey from requestBody! Not a test notification result!: {}", requestBodyString);
+            throw new JenkinsException("Can't extract planKey from requestBody! Not a test notification result!: " + requestBodyString);
         }
 
         return nameParams[2];

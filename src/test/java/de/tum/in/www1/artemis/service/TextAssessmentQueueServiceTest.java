@@ -8,6 +8,7 @@ import org.assertj.core.data.Percentage;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
@@ -73,6 +74,7 @@ public class TextAssessmentQueueServiceTest extends AbstractSpringIntegrationBam
     // evaluated in the call textAssessmentQueueService.calculateSmallerClusterPercentageBatch
     // TODO: we should remove transactions in the corresponding production code and make sure to eagerly load text blocks with the submission in such a case
     @Transactional(readOnly = true)
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void calculateSmallerClusterPercentageTest() {
         int submissionCount = 5;
         int submissionSize = 4;

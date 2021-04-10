@@ -41,8 +41,6 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildLogDTO;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildResultNotificationDTO;
 import de.tum.in.www1.artemis.util.ModelFactory;
-import de.tum.in.www1.artemis.web.rest.ProgrammingSubmissionResource;
-import de.tum.in.www1.artemis.web.rest.ResultResource;
 
 class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -54,46 +52,34 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
     private String ARTEMIS_AUTHENTICATION_TOKEN_VALUE;
 
     @Autowired
-    ProgrammingExerciseRepository exerciseRepo;
+    private ProgrammingSubmissionRepository submissionRepository;
 
     @Autowired
-    ProgrammingSubmissionResource programmingSubmissionResource;
+    private ParticipationRepository participationRepository;
 
     @Autowired
-    ResultResource resultResource;
+    private ProgrammingExerciseStudentParticipationRepository studentParticipationRepository;
 
     @Autowired
-    ProgrammingSubmissionRepository submissionRepository;
+    private SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository;
 
     @Autowired
-    ParticipationRepository participationRepository;
+    private TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository;
 
     @Autowired
-    ProgrammingExerciseStudentParticipationRepository studentParticipationRepository;
+    private ProgrammingExerciseRepository programmingExerciseRepository;
 
     @Autowired
-    SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository;
+    private ExamRepository examRepository;
 
     @Autowired
-    TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository;
+    private UserRepository userRepository;
 
     @Autowired
-    ProgrammingExerciseRepository programmingExerciseRepository;
+    private StudentExamRepository studentExamRepository;
 
     @Autowired
-    ExamRepository examRepository;
-
-    @Autowired
-    UserRepository userRepository;
-
-    @Autowired
-    StudentExamRepository studentExamRepository;
-
-    @Autowired
-    ResultRepository resultRepository;
-
-    @Autowired
-    BuildLogEntryRepository buildLogEntryRepository;
+    private ResultRepository resultRepository;
 
     private Long exerciseId;
 
@@ -113,12 +99,12 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         database.addUsers(3, 2, 2);
         database.addCourseWithOneProgrammingExerciseAndTestCases();
 
-        exercise = programmingExerciseRepository.findAllWithEagerParticipationsAndSubmissions().get(0);
+        exercise = programmingExerciseRepository.findAllWithEagerParticipationsAndLegalSubmissions().get(0);
         database.addStudentParticipationForProgrammingExercise(exercise, "student1");
         database.addStudentParticipationForProgrammingExercise(exercise, "student2");
 
         exerciseId = exercise.getId();
-        exercise = programmingExerciseRepository.findAllWithEagerParticipationsAndSubmissions().get(0);
+        exercise = programmingExerciseRepository.findAllWithEagerParticipationsAndLegalSubmissions().get(0);
 
         templateParticipationId = templateProgrammingExerciseParticipationRepository.findWithEagerResultsAndSubmissionsByProgrammingExerciseId(exerciseId).get().getId();
         solutionParticipationId = solutionProgrammingExerciseParticipationRepository.findWithEagerResultsAndSubmissionsByProgrammingExerciseId(exerciseId).get().getId();
@@ -139,6 +125,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
      * However the participation id provided by the VCS on the request is invalid.
      */
     @Test
+    @WithMockUser(username = "student1", roles = "USER")
     void shouldNotCreateSubmissionOnNotifyPushForInvalidParticipationId() throws Exception {
         long fakeParticipationId = 9999L;
         JSONParser jsonParser = new JSONParser();
@@ -154,8 +141,9 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
      * The VCS notifies Artemis about a new submission.
      * However the participation id provided by the VCS on the request is invalid.
      */
-    @ParameterizedTest
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @EnumSource(IntegrationTestParticipationType.class)
+    @WithMockUser(username = "student1", roles = "USER")
     void shouldCreateSubmissionOnNotifyPushForSubmission(IntegrationTestParticipationType participationType) throws Exception {
         Long participationId = getParticipationIdByType(participationType, 0);
         // set the author name to "Artemis"
@@ -170,7 +158,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
 
         assertThat(submission.getParticipation().getId()).isEqualTo(participationId);
         // Needs to be set for using a custom repository method, known spring bug.
-        Participation updatedParticipation = participationRepository.findWithEagerSubmissionsById(participationId).get();
+        Participation updatedParticipation = participationRepository.findWithEagerLegalSubmissionsById(participationId).get();
         assertThat(updatedParticipation.getSubmissions().size()).isEqualTo(1);
         assertThat(updatedParticipation.getSubmissions().stream().findFirst().get().getId()).isEqualTo(submission.getId());
 
@@ -190,9 +178,10 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
      * After that the CI builds the code submission and notifies Artemis so it can create the result.
      */
     @Test
+    @WithMockUser(username = "student1", roles = "USER")
     void shouldHandleNewBuildResultCreatedByCommitWithSpecificTests() throws Exception {
         database.addCourseWithOneProgrammingExerciseAndSpecificTestCases();
-        ProgrammingExercise exercise = programmingExerciseRepository.findAllWithEagerParticipationsAndSubmissions().get(1);
+        ProgrammingExercise exercise = programmingExerciseRepository.findAllWithEagerParticipationsAndLegalSubmissions().get(1);
         var participation = database.addStudentParticipationForProgrammingExercise(exercise, "student3");
         ProgrammingSubmission submission = postSubmission(participation.getId(), HttpStatus.OK);
         final long submissionId = submission.getId();
@@ -207,7 +196,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         assertThat(feedbacks).hasSize(3);
         assertThat(createdResult.getAssessor()).isNull();
         // Needs to be set for using a custom repository method, known spring bug.
-        Participation updatedParticipation = participationRepository.findWithEagerSubmissionsById(participation.getId()).get();
+        Participation updatedParticipation = participationRepository.findWithEagerLegalSubmissionsById(participation.getId()).get();
         submission = submissionRepository.findWithEagerResultsById(submission.getId()).get();
         assertThat(createdResult.getParticipation().getId()).isEqualTo(updatedParticipation.getId());
         assertThat(submission.getLatestResult().getId()).isEqualTo(createdResult.getId());
@@ -229,8 +218,9 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
      *
      * @param additionalCommit Whether an additional commit in the Assignment repo should be added to the payload
      */
-    @ParameterizedTest
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @MethodSource("participationTypeAndAdditionalCommitProvider")
+    @WithMockUser(username = "student1", roles = "USER")
     void shouldHandleNewBuildResultCreatedByCommit(IntegrationTestParticipationType participationType, boolean additionalCommit) throws Exception {
         Long participationId = getParticipationIdByType(participationType, 0);
         ProgrammingSubmission submission = postSubmission(participationId, HttpStatus.OK);
@@ -242,7 +232,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         assertThat(results).hasSize(1);
         Result createdResult = results.get(0);
         // Needs to be set for using a custom repository method, known spring bug.
-        Participation participation = participationRepository.findWithEagerSubmissionsById(participationId).get();
+        Participation participation = participationRepository.findWithEagerLegalSubmissionsById(participationId).get();
         submission = submissionRepository.findWithEagerResultsById(submission.getId()).get();
         assertThat(createdResult.getParticipation().getId()).isEqualTo(participation.getId());
         assertThat(submission.getLatestResult().getId()).isEqualTo(createdResult.getId());
@@ -268,8 +258,9 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
      * <p>
      * Only the last result should be linked to the created submission.
      */
-    @ParameterizedTest
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @EnumSource(IntegrationTestParticipationType.class)
+    @WithMockUser(username = "student1", roles = "USER")
     void shouldNotLinkTwoResultsToTheSameSubmission(IntegrationTestParticipationType participationType) throws Exception {
         Long participationId = getParticipationIdByType(participationType, 0);
         // Create 1 submission.
@@ -306,8 +297,9 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
      * <p>
      * This should not create two identical submissions.
      */
-    @ParameterizedTest
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @EnumSource(IntegrationTestParticipationType.class)
+    @WithMockUser(username = "student1", roles = "USER")
     void shouldNotCreateTwoSubmissionsForTwoIdenticalCommits(IntegrationTestParticipationType participationType) throws Exception {
         Long participationId = getParticipationIdByType(participationType, 0);
         // Post the same submission twice.
@@ -337,13 +329,14 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
      * This is the case where an instructor manually triggers the build from the CI.
      * Here no submission exists yet and now needs to be created on the result notification.
      */
-    @ParameterizedTest
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @EnumSource(IntegrationTestParticipationType.class)
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void shouldCreateSubmissionForManualBuildRun(IntegrationTestParticipationType participationType) throws Exception {
         Long participationId = getParticipationIdByType(participationType, 0);
         postResult(participationType, 0, HttpStatus.OK, false);
 
-        Participation participation = participationRepository.findWithEagerSubmissionsById(participationId).get();
+        Participation participation = participationRepository.findWithEagerLegalSubmissionsById(participationId).get();
 
         // Now a submission for the manual build should exist.
         List<ProgrammingSubmission> submissions = submissionRepository.findAll();
@@ -367,7 +360,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
      * This is the case where an instructor manually triggers the build from the CI.
      * Here no submission exists yet and now needs to be created on the result notification.
      */
-    @ParameterizedTest
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @EnumSource(IntegrationTestParticipationType.class)
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void shouldTriggerManualBuildRunForLastCommit(IntegrationTestParticipationType participationType) throws Exception {
@@ -386,7 +379,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         assertThat(submission.getType()).isEqualTo(SubmissionType.MANUAL);
         assertThat(submission.isSubmitted()).isTrue();
 
-        Participation participation = participationRepository.findWithEagerSubmissionsById(participationId).get();
+        Participation participation = participationRepository.findWithEagerLegalSubmissionsById(participationId).get();
 
         postResult(participationType, 0, HttpStatus.OK, false);
 
@@ -408,7 +401,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
      * This is the case where an instructor manually triggers the build from the CI.
      * Here no submission exists yet and now needs to be created on the result notification.
      */
-    @ParameterizedTest
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @EnumSource(IntegrationTestParticipationType.class)
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void shouldTriggerInstructorBuildRunForLastCommit(IntegrationTestParticipationType participationType) throws Exception {
@@ -430,7 +423,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         assertThat(submission.getType()).isEqualTo(SubmissionType.INSTRUCTOR);
         assertThat(submission.isSubmitted()).isTrue();
 
-        Participation participation = participationRepository.findWithEagerSubmissionsById(participationId).get();
+        Participation participation = participationRepository.findWithEagerLegalSubmissionsById(participationId).get();
 
         postResult(participationType, 0, HttpStatus.OK, false);
 
@@ -463,7 +456,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         postTestRepositorySubmission();
         // There are two student participations, so after the test notification two new submissions should have been created.
         List<Participation> participations = new ArrayList<>();
-        participations.add(participationRepository.findWithEagerSubmissionsById(solutionParticipationId).get());
+        participations.add(participationRepository.findWithEagerLegalSubmissionsById(solutionParticipationId).get());
         List<ProgrammingSubmission> submissions = submissionRepository.findAll();
         // We only create submissions for the solution participation after a push to the test repository.
         assertThat(submissions).hasSize(1);
@@ -485,7 +478,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         assertThat(results).hasSize(1);
         for (Result r : results) {
             boolean hasMatchingSubmission = submissions.stream().anyMatch(s -> s.getId().equals(r.getSubmission().getId()));
-            assertThat(hasMatchingSubmission);
+            assertThat(hasMatchingSubmission).isTrue();
         }
         for (Participation p : participations) {
             assertThat(p.getSubmissions()).hasSize(1);
@@ -503,13 +496,14 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
                 .flatMap(programmingLanguage -> Stream.of(Arguments.of(programmingLanguage, true), Arguments.of(programmingLanguage, false)));
     }
 
-    @ParameterizedTest
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @MethodSource("shouldSavebuildLogsOnStudentParticipationArguments")
+    @WithMockUser(username = "student1", roles = "USER")
     void shouldSaveBuildLogsOnStudentParticipationWithoutResult(ProgrammingLanguage programmingLanguage, boolean enableStaticCodeAnalysis) throws Exception {
         // Precondition: Database has participation and a programming submission but no result.
         String userLogin = "student1";
         database.addCourseWithOneProgrammingExercise(enableStaticCodeAnalysis, programmingLanguage);
-        ProgrammingExercise exercise = programmingExerciseRepository.findAllWithEagerParticipationsAndSubmissions().get(1);
+        ProgrammingExercise exercise = programmingExerciseRepository.findAllWithEagerParticipationsAndLegalSubmissions().get(1);
         var participation = database.addStudentParticipationForProgrammingExercise(exercise, userLogin);
         var submission = database.createProgrammingSubmission(participation, false);
 
@@ -528,13 +522,14 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         assertNoNewSubmissionsAndIsSubmission(submission);
     }
 
-    @ParameterizedTest
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @MethodSource("shouldSavebuildLogsOnStudentParticipationArguments")
+    @WithMockUser(username = "student1", roles = "USER")
     void shouldSaveBuildLogsOnStudentParticipationWithoutSubmissionNorResult(ProgrammingLanguage programmingLanguage, boolean enableStaticCodeAnalysis) throws Exception {
         // Precondition: Database has participation without result and a programming submission.
         String userLogin = "student1";
         database.addCourseWithOneProgrammingExercise(enableStaticCodeAnalysis, programmingLanguage);
-        ProgrammingExercise exercise = programmingExerciseRepository.findAllWithEagerParticipationsAndSubmissions().get(1);
+        ProgrammingExercise exercise = programmingExerciseRepository.findAllWithEagerParticipationsAndLegalSubmissions().get(1);
         var participation = database.addStudentParticipationForProgrammingExercise(exercise, userLogin);
 
         // Call programming-exercises/new-result which includes build log entries
@@ -604,7 +599,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         assertThat(illegalSubmission.getLatestResult().getId()).isEqualTo(createdResult.getId());
 
         // Check that the result belongs to the participation
-        Participation updatedParticipation = participationRepository.findWithEagerSubmissionsById(participation.getId()).get();
+        Participation updatedParticipation = participationRepository.getOneWithEagerSubmissionsAndResults(participation.getId());
         assertThat(createdResult.getParticipation().getId()).isEqualTo(updatedParticipation.getId());
     }
 
@@ -677,29 +672,29 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         request.postWithoutLocation(TEST_CASE_CHANGED_API_PATH + exerciseId, obj, HttpStatus.OK, new HttpHeaders());
     }
 
-    private String getBuildPlanIdByParticipationType(IntegrationTestParticipationType participationType, int participationNumber) {
+    private String getBuildPlanIdByParticipationType(IntegrationTestParticipationType participationType, int participationIndex) {
         return switch (participationType) {
             case TEMPLATE -> "BASE";
             case SOLUTION -> "SOLUTION";
-            default -> getStudentLoginFromParticipation(participationNumber);
+            default -> getStudentLoginFromParticipation(participationIndex);
         };
     }
 
-    private void triggerBuild(IntegrationTestParticipationType participationType, int participationNumber) throws Exception {
-        Long id = getParticipationIdByType(participationType, participationNumber);
+    private void triggerBuild(IntegrationTestParticipationType participationType, int participationIndex) throws Exception {
+        Long id = getParticipationIdByType(participationType, participationIndex);
         request.postWithoutLocation("/api/programming-submissions/" + id + "/trigger-build", null, HttpStatus.OK, new HttpHeaders());
     }
 
-    private void triggerInstructorBuild(IntegrationTestParticipationType participationType, int participationNumber) throws Exception {
-        Long id = getParticipationIdByType(participationType, participationNumber);
+    private void triggerInstructorBuild(IntegrationTestParticipationType participationType, int participationIndex) throws Exception {
+        Long id = getParticipationIdByType(participationType, participationIndex);
         request.postWithoutLocation("/api/programming-submissions/" + id + "/trigger-build?submissionType=INSTRUCTOR", null, HttpStatus.OK, new HttpHeaders());
     }
 
     /**
      * This is the simulated request from the CI to Artemis on a new build result.
      */
-    private void postResult(IntegrationTestParticipationType participationType, int participationNumber, HttpStatus expectedStatus, boolean additionalCommit) throws Exception {
-        String buildPlanStudentId = getBuildPlanIdByParticipationType(participationType, participationNumber);
+    private void postResult(IntegrationTestParticipationType participationType, int participationIndex, HttpStatus expectedStatus, boolean additionalCommit) throws Exception {
+        String buildPlanStudentId = getBuildPlanIdByParticipationType(participationType, participationIndex);
         postResult(exercise.getProjectKey().toUpperCase() + "-" + buildPlanStudentId, expectedStatus, additionalCommit);
     }
 
@@ -740,16 +735,16 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         return mapper.convertValue(obj, BambooBuildResultNotificationDTO.class);
     }
 
-    private String getStudentLoginFromParticipation(int participationNumber) {
-        StudentParticipation participation = studentParticipationRepository.findWithStudentById(participationIds.get(participationNumber)).get();
+    private String getStudentLoginFromParticipation(int participationIndex) {
+        StudentParticipation participation = studentParticipationRepository.findWithStudentById(participationIds.get(participationIndex)).get();
         return participation.getParticipantIdentifier();
     }
 
-    private Long getParticipationIdByType(IntegrationTestParticipationType participationType, int participationNumber) {
+    private Long getParticipationIdByType(IntegrationTestParticipationType participationType, int participationIndex) {
         return switch (participationType) {
             case SOLUTION -> solutionParticipationId;
             case TEMPLATE -> templateParticipationId;
-            default -> participationIds.get(participationNumber);
+            default -> participationIds.get(participationIndex);
         };
     }
 

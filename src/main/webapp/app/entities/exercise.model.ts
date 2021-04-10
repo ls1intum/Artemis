@@ -14,6 +14,7 @@ import { Team } from 'app/entities/team.model';
 import { DueDateStat } from 'app/course/dashboards/instructor-course-dashboard/due-date-stat.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { LearningGoal } from 'app/entities/learningGoal.model';
+import { IconProp } from '@fortawesome/fontawesome-svg-core';
 
 export enum DifficultyLevel {
     EASY = 'EASY',
@@ -107,6 +108,7 @@ export abstract class Exercise implements BaseEntity {
     public studentAssignedTeamId?: number;
     public studentAssignedTeamIdComputed = false;
     public numberOfParticipations?: number;
+    public testRunParticipationsExist?: boolean;
 
     // helper attributes
     public secondCorrectionEnabled = false;
@@ -143,10 +145,11 @@ export abstract class Exercise implements BaseEntity {
     }
 }
 
-export function getIcon(exerciseType?: ExerciseType): string {
+export function getIcon(exerciseType?: ExerciseType): IconProp {
     if (!exerciseType) {
-        return '';
+        return 'question' as IconProp;
     }
+
     const icons = {
         [ExerciseType.PROGRAMMING]: 'keyboard',
         [ExerciseType.MODELING]: 'project-diagram',
@@ -155,7 +158,7 @@ export function getIcon(exerciseType?: ExerciseType): string {
         [ExerciseType.FILE_UPLOAD]: 'file-upload',
     };
 
-    return icons[exerciseType];
+    return icons[exerciseType] as IconProp;
 }
 
 export function getIconTooltip(exerciseType?: ExerciseType): string {

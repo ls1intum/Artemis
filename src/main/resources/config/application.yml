@@ -136,8 +136,8 @@ spring:
             enabled: always
     servlet:
         multipart:
-            max-file-size: 10MB # this should match the value in /webapp/app/shared/constants/input.constants.ts MAX_FILE_SIZE
-            max-request-size: 10MB
+            max-file-size: 20MB # this should match the value in /webapp/app/shared/constants/input.constants.ts MAX_FILE_SIZE
+            max-request-size: 20MB
     lifecycle:
         timeout-per-shutdown-phase: 10
     websocket:

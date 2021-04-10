@@ -1,11 +1,11 @@
 import { Component, Input, OnChanges, SimpleChanges, ViewChild } from '@angular/core';
-import { StatisticsService } from 'app/admin/statistics/statistics.service';
+import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
 import { ChartDataSets, ChartOptions, ChartType } from 'chart.js';
 import { BaseChartDirective, Label } from 'ng2-charts';
 import { DataSet } from 'app/exercises/quiz/manage/statistics/quiz-statistic/quiz-statistic.component';
 import { TranslateService } from '@ngx-translate/core';
 import * as moment from 'moment';
-import { Graphs, SpanType } from 'app/entities/statistics.model';
+import { GraphColors, Graphs, SpanType, StatisticsView } from 'app/entities/statistics.model';
 
 @Component({
     selector: 'jhi-statistics-graph',
@@ -16,6 +16,10 @@ export class StatisticsGraphComponent implements OnChanges {
     graphType: Graphs;
     @Input()
     currentSpan: SpanType;
+    @Input()
+    statisticsView: StatisticsView;
+    @Input()
+    courseId?: number;
 
     // Html properties
     LEFT = false;
@@ -27,7 +31,7 @@ export class StatisticsGraphComponent implements OnChanges {
     barChartOptions: ChartOptions = {};
     barChartType: ChartType = 'bar';
     lineChartType: ChartType = 'line';
-    amountOfStudents: string;
+    labelTitle: string;
     chartName: string;
     barChartLegend = false;
     chartTime: any;
@@ -51,7 +55,7 @@ export class StatisticsGraphComponent implements OnChanges {
         this.currentSpan = changes.currentSpan?.currentValue;
         this.barChartLabels = [];
         this.currentPeriod = 0;
-        this.amountOfStudents = this.translateService.instant('statistics.amountOfStudents');
+        this.labelTitle = this.translateService.instant(`statistics.${this.graphType.toString().toLowerCase()}Title`);
         this.chartName = this.translateService.instant(`statistics.${this.graphType.toString().toLowerCase()}`);
         this.initializeChart();
     }
@@ -60,26 +64,41 @@ export class StatisticsGraphComponent implements OnChanges {
         this.createLabels();
         this.chartData = [
             {
-                label: this.amountOfStudents,
+                label: this.labelTitle,
                 data: new Array(this.barChartLabels.length).fill(0),
-                backgroundColor: 'rgba(53,61,71,1)',
-                borderColor: 'rgba(53,61,71,1)',
-                hoverBackgroundColor: 'rgba(53,61,71,1)',
+                backgroundColor: GraphColors.DARK_BLUE,
+                borderColor: GraphColors.DARK_BLUE,
+                hoverBackgroundColor: GraphColors.DARK_BLUE,
             },
         ];
         this.createCharts();
-        this.service.getChartData(this.currentSpan, this.currentPeriod, this.graphType).subscribe((res: number[]) => {
-            this.dataForSpanType = res;
-            this.chartData = [
-                {
-                    label: this.amountOfStudents,
-                    data: this.dataForSpanType,
-                    backgroundColor: 'rgba(53,61,71,1)',
-                    borderColor: 'rgba(53,61,71,1)',
-                    hoverBackgroundColor: 'rgba(53,61,71,1)',
-                },
-            ];
-        });
+        if (this.statisticsView === StatisticsView.ARTEMIS) {
+            this.service.getChartData(this.currentSpan, this.currentPeriod, this.graphType).subscribe((res: number[]) => {
+                this.dataForSpanType = res;
+                this.chartData = [
+                    {
+                        label: this.labelTitle,
+                        data: this.dataForSpanType,
+                        backgroundColor: GraphColors.DARK_BLUE,
+                        borderColor: GraphColors.DARK_BLUE,
+                        hoverBackgroundColor: GraphColors.DARK_BLUE,
+                    },
+                ];
+            });
+        } else {
+            this.service.getChartDataForCourse(this.currentSpan, this.currentPeriod, this.graphType, this.courseId!).subscribe((res: number[]) => {
+                this.dataForSpanType = res;
+                this.chartData = [
+                    {
+                        label: this.labelTitle,
+                        data: this.dataForSpanType,
+                        backgroundColor: GraphColors.DARK_BLUE,
+                        borderColor: GraphColors.DARK_BLUE,
+                        hoverBackgroundColor: GraphColors.DARK_BLUE,
+                    },
+                ];
+            });
+        }
     }
 
     private createLabels(): void {

@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.service.connectors;
 
-import static de.tum.in.www1.artemis.config.Constants.PROGRAMMING_SUBMISSION_RESOURCE_API_PATH;
-import static de.tum.in.www1.artemis.config.Constants.TEST_CASE_CHANGED_API_PATH;
+import static de.tum.in.www1.artemis.config.Constants.*;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -124,7 +123,7 @@ public abstract class AbstractVersionControlService implements VersionControlSer
             }
             catch (IOException ex) {
                 // ignore
-                log.error("Could not delete directory of the failed cloned repository in: " + localPath);
+                log.error("Could not delete directory of the failed cloned repository in: {}", localPath);
             }
             throw new VersionControlException("Could not copy repository " + sourceRepositoryName + " to the target repository " + targetRepositoryName, e);
         }
