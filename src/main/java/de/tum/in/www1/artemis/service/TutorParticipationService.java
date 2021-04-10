@@ -152,7 +152,8 @@ public class TutorParticipationService {
                 // Otherwise, the tutor could not reach the total number of example submissions, if there are example submissions without assessment.
                 // In this case the tutor could not reach status "TRAINED" in the if statement below and would not be allowed
                 // to asses student submissions in the assessment dashboard.
-                .filter(exSub -> exSub.getSubmission() != null && exSub.getSubmission().getLatestResult() != null && exSub.getSubmission().getLatestResult().isExampleResult())
+                .filter(exSub -> exSub.getSubmission() != null && exSub.getSubmission().getLatestResult() != null
+                        && Boolean.TRUE.equals(exSub.getSubmission().getLatestResult().isExampleResult()))
                 .count();
         int numberOfAlreadyAssessedSubmissions = alreadyAssessedSubmissions.size() + 1;  // +1 because we haven't added yet the one we just did
 
