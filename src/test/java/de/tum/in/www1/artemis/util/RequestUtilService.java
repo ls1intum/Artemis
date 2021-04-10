@@ -6,6 +6,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import java.io.File;
 import java.net.URI;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -336,9 +337,12 @@ public class RequestUtilService {
             assertThat(res.getResponse().containsHeader("location")).as("no location header on failed request").isFalse();
             return null;
         }
-        final var tmpFile = File.createTempFile(res.getResponse().getHeader("filename"), null);
-        Files.write(tmpFile.toPath(), res.getResponse().getContentAsByteArray());
-        return tmpFile;
+
+        String tmpDirectory = System.getProperty("java.io.tmpdir");
+        var filename = res.getResponse().getHeader("filename");
+        var tmpFile = Files.createFile(Path.of(tmpDirectory, filename));
+        Files.write(tmpFile, res.getResponse().getContentAsByteArray());
+        return tmpFile.toFile();
     }
 
     @SuppressWarnings("unchecked")
