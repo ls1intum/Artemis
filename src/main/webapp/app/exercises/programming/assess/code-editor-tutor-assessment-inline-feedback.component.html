@@ -29,7 +29,10 @@
                 <fa-icon [icon]="'save'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.save">Save</span>
             </button>
         </div>
-        <jhi-assessment-correction-round-badge [highlightDifferences]="highlightDifferences" [feedback]="feedback"></jhi-assessment-correction-round-badge>
+        <div *ngIf="highlightDifferences">
+            <br />
+            <jhi-assessment-correction-round-badge [highlightDifferences]="highlightDifferences" [feedback]="feedback"></jhi-assessment-correction-round-badge>
+        </div>
     </div>
 </div>
 <ng-template #readOnlyFeedback>
