@@ -1,5 +1,5 @@
 import { SimpleChanges } from '@angular/core';
-import { getExercise, InitializationState, Participation } from 'app/entities/participation/participation.model';
+import { getExercise, Participation } from 'app/entities/participation/participation.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import * as moment from 'moment';
 import { findLatestResult } from 'app/shared/util/utils';
@@ -61,11 +61,7 @@ export const isModelingOrTextOrFileUpload = (participation: Participation) => {
         return false;
     }
     const exercise = getExercise(participation);
-    return (
-        participation.initializationState === InitializationState.FINISHED &&
-        exercise &&
-        (exercise.type === ExerciseType.MODELING || exercise.type === ExerciseType.TEXT || exercise.type === ExerciseType.FILE_UPLOAD)
-    );
+    return exercise && (exercise.type === ExerciseType.MODELING || exercise.type === ExerciseType.TEXT || exercise.type === ExerciseType.FILE_UPLOAD);
 };
 
 /**

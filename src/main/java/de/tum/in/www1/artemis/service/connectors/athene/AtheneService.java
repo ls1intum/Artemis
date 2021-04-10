@@ -137,7 +137,7 @@ public class AtheneService {
      * @param maxRetries number of retries before the request will be canceled
      */
     public void submitJob(TextExercise exercise, int maxRetries) {
-        log.debug("Start Athene Service for Text Exercise \"" + exercise.getTitle() + "\" (#" + exercise.getId() + ").");
+        log.debug("Start Athene Service for Text Exercise '{}' (#{}).", exercise.getTitle(), exercise.getId());
 
         // Find all submissions for Exercise
         // We only support english languages so far, to prevent corruption of the clustering
@@ -148,12 +148,12 @@ public class AtheneService {
             return;
         }
 
-        log.info("Calling Remote Service to calculate automatic feedback for " + textSubmissions.size() + " submissions.");
+        log.info("Calling Remote Service to calculate automatic feedback for {} submissions.", textSubmissions.size());
 
         try {
             final RequestDTO request = new RequestDTO(exercise.getId(), textSubmissions, artemisServerUrl + ATHENE_RESULT_API_PATH + exercise.getId());
             ResponseDTO response = connector.invokeWithRetry(atheneUrl + "/submit", request, maxRetries);
-            log.info("Remote Service to calculate automatic feedback responded: " + response.detail);
+            log.info("Remote Service to calculate automatic feedback responded: {}", response.detail);
 
             // Register task for exercise as running, AtheneResource calls finishTask on result receive
             startTask(exercise.getId());
@@ -234,7 +234,7 @@ public class AtheneService {
         // Find exercise, which the clusters belong to
         Optional<TextExercise> optionalTextExercise = textExerciseRepository.findById(exerciseId);
         if (optionalTextExercise.isEmpty()) {
-            log.error("Error while processing Athene clusters. Exercise with id " + exerciseId + " not found", new Error());
+            log.error("Error while processing Athene clusters. Exercise with id {} not found", exerciseId);
             return;
         }
         TextExercise textExercise = optionalTextExercise.get();

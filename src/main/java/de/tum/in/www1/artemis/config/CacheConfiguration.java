@@ -132,7 +132,7 @@ public class CacheConfiguration {
 
             // In the local setting (e.g. for development), everything goes through 127.0.0.1, with a different port
             if (hazelcastLocalInstances) {
-                log.info("Application is running with the \"localInstances\" setting, Hazelcast " + "cluster will only work with localhost instances");
+                log.info("Application is running with the \"localInstances\" setting, Hazelcast cluster will only work with localhost instances");
 
                 // In the local configuration, the hazelcast port is the http-port + the hazelcastPort as offset
                 config.getNetworkConfig().setPort(serverProperties.getPort() + hazelcastPort); // Own port
@@ -163,7 +163,7 @@ public class CacheConfiguration {
 
     private void hazelcastBindOnlyOnInterface(String hazelcastInterface, Config config) {
         // Hazelcast should bind to the interface and use it as local and public address
-        log.info("Binding Hazelcast to interface " + hazelcastInterface);
+        log.info("Binding Hazelcast to interface {}", hazelcastInterface);
         System.setProperty("hazelcast.local.localAddress", hazelcastInterface);
         System.setProperty("hazelcast.local.publicAddress", hazelcastInterface);
         config.getNetworkConfig().getInterfaces().setEnabled(true).setInterfaces(Collections.singleton(hazelcastInterface));

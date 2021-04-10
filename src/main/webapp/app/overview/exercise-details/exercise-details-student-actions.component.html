@@ -6,7 +6,7 @@
             jhi-exercise-action-button
             buttonIcon="redo"
             [buttonLabel]="'artemisApp.exerciseActions.practice' | artemisTranslate"
-            [buttonLoading]="exercise.loading"
+            [buttonLoading]="!!exercise.loading"
             [smallButton]="smallButtons"
             [hideLabelMobile]="false"
             *ngIf="isPracticeModeAvailable()"
@@ -16,7 +16,7 @@
             jhi-exercise-action-button
             buttonIcon="play-circle"
             [buttonLabel]="'artemisApp.exerciseActions.openQuiz' | artemisTranslate"
-            [buttonLoading]="exercise.loading"
+            [buttonLoading]="!!exercise.loading"
             [smallButton]="smallButtons"
             [hideLabelMobile]="false"
             *ngIf="participationStatusWrapper() === ParticipationStatus.QUIZ_NOT_STARTED"
@@ -26,7 +26,7 @@
             jhi-exercise-action-button
             buttonIcon="play-circle"
             [buttonLabel]="'artemisApp.exerciseActions.startQuiz' | artemisTranslate"
-            [buttonLoading]="exercise.loading"
+            [buttonLoading]="!!exercise.loading"
             [smallButton]="smallButtons"
             [hideLabelMobile]="false"
             id="student-quiz-start-{{ exercise.id }}"
@@ -38,7 +38,7 @@
             buttonIcon="play-circle"
             [buttonLabel]="'artemisApp.exerciseActions.openQuiz' | artemisTranslate"
             *ngIf="participationStatusWrapper() === ParticipationStatus.QUIZ_ACTIVE"
-            [buttonLoading]="exercise.loading"
+            [buttonLoading]="!!exercise.loading"
             [smallButton]="smallButtons"
             [hideLabelMobile]="false"
             (click)="startExercise()"
@@ -52,8 +52,8 @@
             jhi-exercise-action-button
             buttonIcon="eye"
             [buttonLabel]="'artemisApp.exerciseActions.viewSubmissions' | artemisTranslate"
-            outlined="true"
-            [buttonLoading]="exercise.loading"
+            [outlined]="true"
+            [buttonLoading]="!!exercise.loading"
             *ngIf="participationStatusWrapper() === ParticipationStatus.QUIZ_SUBMITTED"
             [smallButton]="smallButtons"
             (click)="startExercise()"
@@ -62,19 +62,19 @@
             jhi-exercise-action-button
             buttonIcon="eye"
             [buttonLabel]="'artemisApp.exerciseActions.viewResults' | artemisTranslate"
-            outlined="true"
-            [buttonLoading]="exercise.loading"
+            [outlined]="true"
+            [buttonLoading]="!!exercise.loading"
             *ngIf="participationStatusWrapper() === ParticipationStatus.QUIZ_FINISHED && showResult"
             [smallButton]="smallButtons"
             (click)="startExercise()"
         ></button>
         <button
             jhi-exercise-action-button
-            *ngIf="exercise.isAtLeastTutor"
+            *ngIf="!!exercise.isAtLeastTutor"
             buttonIcon="signal"
             [buttonLabel]="'artemisApp.exerciseActions.statistics' | artemisTranslate"
-            outlined="true"
-            [buttonLoading]="exercise.loading"
+            [outlined]="true"
+            [buttonLoading]="!!exercise.loading"
             [smallButton]="smallButtons"
             routerLink="/course-management/{{ courseId }}/quiz-exercises/{{ exercise.id }}/quiz-point-statistic"
         ></button>
@@ -91,7 +91,7 @@
             jhi-exercise-action-button
             buttonIcon="users"
             [buttonLabel]="'artemisApp.exerciseActions.viewTeam' | artemisTranslate"
-            *ngIf="exercise.teamMode && participationStatusWrapper() !== ParticipationStatus.NO_TEAM_ASSIGNED"
+            *ngIf="!!exercise.teamMode && participationStatusWrapper() !== ParticipationStatus.NO_TEAM_ASSIGNED"
             [smallButton]="smallButtons"
             [hideLabelMobile]="true"
             [routerLink]="['/courses', courseId, 'exercises', exercise.id, 'teams', assignedTeamId]"
@@ -100,7 +100,7 @@
             jhi-exercise-action-button
             buttonIcon="play-circle"
             [buttonLabel]="'artemisApp.exerciseActions.startExercise' | artemisTranslate"
-            [buttonLoading]="exercise.loading"
+            [buttonLoading]="!!exercise.loading"
             [smallButton]="smallButtons"
             [hideLabelMobile]="false"
             *ngIf="participationStatusWrapper() === ParticipationStatus.UNINITIALIZED"
@@ -110,7 +110,7 @@
             jhi-exercise-action-button
             buttonIcon="folder-open"
             [buttonLabel]="'artemisApp.exerciseActions.openModelingEditor' | artemisTranslate"
-            [buttonLoading]="exercise.loading"
+            [buttonLoading]="!!exercise.loading"
             [smallButton]="smallButtons"
             [hideLabelMobile]="false"
             *ngIf="exercise.studentParticipations && exercise.studentParticipations.length > 0 && exercise.studentParticipations[0].initializationState === 'INITIALIZED'"
@@ -125,8 +125,8 @@
                 jhi-exercise-action-button
                 buttonIcon="folder-open"
                 [buttonLabel]="'artemisApp.exerciseActions.viewSubmissions' | artemisTranslate"
-                outlined="true"
-                [buttonLoading]="exercise.loading"
+                [outlined]="true"
+                [buttonLoading]="!!exercise.loading"
                 [smallButton]="smallButtons"
                 *ngIf="
                     exercise.studentParticipations &&
@@ -141,8 +141,8 @@
                 jhi-exercise-action-button
                 buttonIcon="folder-open"
                 [buttonLabel]="'artemisApp.exerciseActions.viewResults' | artemisTranslate"
-                outlined="true"
-                [buttonLoading]="exercise.loading"
+                [outlined]="true"
+                [buttonLoading]="!!exercise.loading"
                 [smallButton]="smallButtons"
                 *ngIf="
                     exercise.studentParticipations &&
@@ -169,7 +169,7 @@
             jhi-exercise-action-button
             buttonIcon="users"
             [buttonLabel]="'artemisApp.exerciseActions.viewTeam' | artemisTranslate"
-            *ngIf="exercise.teamMode && participationStatusWrapper() !== ParticipationStatus.NO_TEAM_ASSIGNED"
+            *ngIf="!!exercise.teamMode && participationStatusWrapper() !== ParticipationStatus.NO_TEAM_ASSIGNED"
             [smallButton]="smallButtons"
             [hideLabelMobile]="true"
             [routerLink]="['/courses', courseId, 'exercises', exercise.id, 'teams', assignedTeamId]"
@@ -180,7 +180,7 @@
             buttonIcon="play-circle"
             [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
             [buttonLabel]="'artemisApp.exerciseActions.startExercise' | artemisTranslate"
-            [buttonLoading]="exercise.loading"
+            [buttonLoading]="!!exercise.loading"
             [smallButton]="smallButtons"
             [hideLabelMobile]="false"
             *ngIf="participationStatusWrapper() === ParticipationStatus.UNINITIALIZED && isStartExerciseAvailable()"
@@ -193,7 +193,7 @@
             buttonIcon="folder-open"
             [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
             [buttonLabel]="'artemisApp.exerciseActions.openCodeEditor' | artemisTranslate"
-            [buttonLoading]="exercise.loading"
+            [buttonLoading]="!!exercise.loading"
             [smallButton]="smallButtons"
             [hideLabelMobile]="false"
             *ngIf="
@@ -206,9 +206,9 @@
             [routerLink]="['/courses', courseId, 'programming-exercises', exercise.id, 'code-editor', exercise.studentParticipations[0].id]"
         ></button>
         <jhi-clone-repo-button
-            [loading]="exercise.loading"
+            [loading]="!!exercise.loading"
             [smallButtons]="smallButtons"
-            [repositoryUrl]="repositoryUrl(exercise.studentParticipations![0])"
+            [repositoryUrl]="repositoryUrl(exercise.studentParticipations![0])!"
             [isTeamParticipation]="!!exercise.studentParticipations![0].team"
             *ngIf="
                 isOfflineIdeAllowed() &&
@@ -224,7 +224,7 @@
             buttonIcon="play-circle"
             [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
             [buttonLabel]="'artemisApp.exerciseActions.resumeExercise' | artemisTranslate"
-            [buttonLoading]="exercise.loading"
+            [buttonLoading]="!!exercise.loading"
             [smallButton]="smallButtons"
             [hideLabelMobile]="false"
             *ngIf="participationStatusWrapper() === ParticipationStatus.INACTIVE && isStartExerciseAvailable()"
@@ -243,7 +243,7 @@
             jhi-exercise-action-button
             buttonIcon="users"
             [buttonLabel]="'artemisApp.exerciseActions.viewTeam' | artemisTranslate"
-            *ngIf="exercise.teamMode && participationStatusWrapper() !== ParticipationStatus.NO_TEAM_ASSIGNED"
+            *ngIf="!!exercise.teamMode && participationStatusWrapper() !== ParticipationStatus.NO_TEAM_ASSIGNED"
             [smallButton]="smallButtons"
             [hideLabelMobile]="true"
             [routerLink]="['/courses', courseId, 'exercises', exercise.id, 'teams', assignedTeamId]"
@@ -253,7 +253,7 @@
             jhi-exercise-action-button
             buttonIcon="play-circle"
             [buttonLabel]="'artemisApp.exerciseActions.startExercise' | artemisTranslate"
-            [buttonLoading]="exercise.loading"
+            [buttonLoading]="!!exercise.loading"
             [smallButton]="smallButtons"
             [hideLabelMobile]="false"
             *ngIf="participationStatusWrapper() === ParticipationStatus.UNINITIALIZED"
@@ -263,7 +263,7 @@
             jhi-exercise-action-button
             buttonIcon="folder-open"
             [buttonLabel]="'artemisApp.exerciseActions.openTextEditor' | artemisTranslate"
-            [buttonLoading]="exercise.loading"
+            [buttonLoading]="!!exercise.loading"
             [smallButton]="smallButtons"
             [hideLabelMobile]="false"
             *ngIf="exercise.studentParticipations && exercise.studentParticipations.length > 0 && exercise.studentParticipations[0].initializationState === 'INITIALIZED'"
@@ -277,8 +277,8 @@
             jhi-exercise-action-button
             buttonIcon="folder-open"
             [buttonLabel]="'artemisApp.exerciseActions.viewSubmissions' | artemisTranslate"
-            outlined="true"
-            [buttonLoading]="exercise.loading"
+            [outlined]="true"
+            [buttonLoading]="!!exercise.loading"
             [smallButton]="smallButtons"
             [hideLabelMobile]="false"
             *ngIf="
@@ -294,8 +294,8 @@
             jhi-exercise-action-button
             buttonIcon="folder-open"
             [buttonLabel]="'artemisApp.exerciseActions.viewResults' | artemisTranslate"
-            outlined="true"
-            [buttonLoading]="exercise.loading"
+            [outlined]="true"
+            [buttonLoading]="!!exercise.loading"
             [smallButton]="smallButtons"
             *ngIf="
                 exercise.studentParticipations &&
@@ -320,7 +320,7 @@
             jhi-exercise-action-button
             buttonIcon="users"
             [buttonLabel]="'artemisApp.exerciseActions.viewTeam' | artemisTranslate"
-            *ngIf="exercise.teamMode && participationStatusWrapper() !== ParticipationStatus.NO_TEAM_ASSIGNED"
+            *ngIf="!!exercise.teamMode && participationStatusWrapper() !== ParticipationStatus.NO_TEAM_ASSIGNED"
             [smallButton]="smallButtons"
             [hideLabelMobile]="true"
             [routerLink]="['/courses', courseId, 'exercises', exercise.id, 'teams', assignedTeamId]"
@@ -329,7 +329,7 @@
             jhi-exercise-action-button
             buttonIcon="play-circle"
             [buttonLabel]="'artemisApp.exerciseActions.startExercise' | artemisTranslate"
-            [buttonLoading]="exercise.loading"
+            [buttonLoading]="!!exercise.loading"
             *ngIf="participationStatusWrapper() === ParticipationStatus.UNINITIALIZED"
             [smallButton]="smallButtons"
             [hideLabelMobile]="false"
@@ -339,7 +339,7 @@
             jhi-exercise-action-button
             buttonIcon="folder-open"
             [buttonLabel]="'artemisApp.exerciseActions.uploadFile' | artemisTranslate"
-            [buttonLoading]="exercise.loading"
+            [buttonLoading]="!!exercise.loading"
             [smallButton]="smallButtons"
             [hideLabelMobile]="false"
             *ngIf="exercise.studentParticipations && exercise.studentParticipations.length > 0 && exercise.studentParticipations[0].initializationState === 'INITIALIZED'"
@@ -353,8 +353,8 @@
             jhi-exercise-action-button
             buttonIcon="folder-open"
             [buttonLabel]="'artemisApp.exerciseActions.viewSubmissions' | artemisTranslate"
-            outlined="true"
-            [buttonLoading]="exercise.loading"
+            [outlined]="true"
+            [buttonLoading]="!!exercise.loading"
             [smallButton]="smallButtons"
             [hideLabelMobile]="false"
             *ngIf="
@@ -369,8 +369,8 @@
             jhi-exercise-action-button
             buttonIcon="folder-open"
             [buttonLabel]="'artemisApp.exerciseActions.viewResults' | artemisTranslate"
-            outlined="true"
-            [buttonLoading]="exercise.loading"
+            [outlined]="true"
+            [buttonLoading]="!!exercise.loading"
             [smallButton]="smallButtons"
             *ngIf="
                 exercise.studentParticipations &&

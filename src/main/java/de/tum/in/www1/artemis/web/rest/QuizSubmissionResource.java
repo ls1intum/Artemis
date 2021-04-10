@@ -92,7 +92,7 @@ public class QuizSubmissionResource {
             return ResponseEntity.ok(updatedQuizSubmission);
         }
         catch (QuizSubmissionException e) {
-            log.warn("QuizSubmissionException :" + e.getMessage() + " for user " + principal.getName() + " in quiz " + exerciseId);
+            log.warn("QuizSubmissionException: {} for user {} in quiz {}", e.getMessage(), principal.getName(), exerciseId);
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "quizSubmissionError", e.getMessage())).body(null);
         }
     }
@@ -232,7 +232,7 @@ public class QuizSubmissionResource {
 
         QuizSubmission updatedQuizSubmission = quizSubmissionService.saveSubmissionForExamMode(quizExercise, quizSubmission, user.getLogin());
         long end = System.currentTimeMillis();
-        log.info("submitQuizForExam took " + (end - start) + "ms for exercise " + exerciseId + " and user " + user.getLogin());
+        log.info("submitQuizForExam took {}ms for exercise {} and user {}", end - start, exerciseId, user.getLogin());
         return ResponseEntity.ok(updatedQuizSubmission);
     }
 }
