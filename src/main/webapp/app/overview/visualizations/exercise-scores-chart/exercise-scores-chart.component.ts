@@ -189,7 +189,7 @@ export class ExerciseScoresChartComponent implements AfterViewInit, OnDestroy {
     private loadDataAndInitializeChart() {
         this.isLoading = true;
         this.learningAnalyticsService
-            .getCourseExerciseScores(this.courseId)
+            .getExerciseScoresForCourse(this.courseId)
             .pipe(
                 finalize(() => {
                     this.isLoading = false;

@@ -51,7 +51,7 @@ describe('Exercise Scores Chart Service', () => {
                 elemDefault,
             ),
         ];
-        service.getCourseExerciseScores(1).pipe(take(1)).subscribe();
+        service.getExerciseScoresForCourse(1).pipe(take(1)).subscribe();
 
         const req = httpMock.expectOne({ method: 'GET' });
         req.flush(JSON.stringify(returnedFromService));

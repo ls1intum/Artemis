@@ -31,7 +31,7 @@ export class ExerciseScoresChartService {
      * Get the course exercise performance statistics necessary for exercise-scores-chart.component.ts
      * @param courseId id of the course
      */
-    getCourseExerciseScores(courseId: number): Observable<HttpResponse<ExerciseScoresDTO[]>> {
+    getExerciseScoresForCourse(courseId: number): Observable<HttpResponse<ExerciseScoresDTO[]>> {
         if (courseId === undefined || courseId === null || courseId < 1) {
             throw new Error('Invalid courseId provided: ' + courseId);
         }
