@@ -50,6 +50,8 @@ public class GradingScaleServiceTest extends AbstractSpringIntegrationBambooBitb
 
     /**
      * Test match percentage query with invalid grade percentages
+     *
+     * @param invalidPercentage the invalid percentage
      */
     @ParameterizedTest
     @ValueSource(doubles = { -60, -1.3, -0.0002, 100.1, 150 })

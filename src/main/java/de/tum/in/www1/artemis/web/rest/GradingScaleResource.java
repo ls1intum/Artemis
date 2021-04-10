@@ -75,6 +75,7 @@ public class GradingScaleResource {
     /**
      * GET /courses/{courseId}/exams/{examId}/grading-scale : Find grading scale for exam
      *
+     * @param courseId the course to which the exam belongs
      * @param examId the exam to which the grading scale belongs
      * @return ResponseEntity with status 200 (Ok) with body the grading scale if it exists and 404 (Not found) otherwise
      */
@@ -169,6 +170,7 @@ public class GradingScaleResource {
     /**
      * PUT /courses/{courseId}/exams/{examId}/grading-scale : Update grading scale for exam
      *
+     * @param courseId the course to which the exam belongs
      * @param examId the exam to which the grading scale belongs
      * @param gradingScale the grading scale which will be updated
      * @return ResponseEntity with status 200 (Ok) with body the newly updated grading scale if it is correctly formatted and 400 (Bad request) otherwise
@@ -205,6 +207,7 @@ public class GradingScaleResource {
     /**
      * DELETE /courses/{courseId}/exams/{examId}/grading-scale : Delete grading scale for course
      *
+     * @param courseId the course to which the exam belongs
      * @param examId the exam to which the grading scale belongs
      * @return ResponseEntity with status 200 (Ok) if the grading scale is successfully deleted and 400 (Bad request) otherwise
      */
