@@ -84,18 +84,17 @@ public class StudentQuestionAnswerIntegrationTest extends AbstractSpringIntegrat
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void createStudentQuestionAnswerWithLectureNotNullAndExerciseNull() throws Exception {
         List<StudentQuestion> studentQuestions = database.createCourseWithExerciseAndLectureAndStudentQuestions();
-        StudentQuestion studentQuestion = studentQuestions.get(3);
+        StudentQuestion studentQuestion = studentQuestions.get(0);
         StudentQuestionAnswer studentQuestionAnswer = new StudentQuestionAnswer();
-        studentQuestionAnswer.setQuestion(studentQuestion);
-        studentQuestionAnswer.setAuthor(database.getUserByLoginWithoutAuthorities("tutor1"));
+        studentQuestionAnswer.setAuthor(database.getUserByLoginWithoutAuthorities("instructor1"));
         studentQuestionAnswer.setAnswerText("Test Answer");
         studentQuestionAnswer.setAnswerDate(ZonedDateTime.now());
-        StudentQuestionAnswer studentQuestionAnswer2 = new StudentQuestionAnswer();
-        studentQuestionAnswer2.setQuestion(studentQuestions.get(0));
-
-        StudentQuestionAnswer response2 = request.postWithResponseBody("/api/courses/" + studentQuestionAnswer2.getQuestion().getCourse().getId() + "/student-question-answers",
-                studentQuestionAnswer2, StudentQuestionAnswer.class, HttpStatus.CREATED);
-
+        studentQuestionAnswer.setQuestion(studentQuestion);
+        Lecture notNullLecture = new Lecture();
+        notNullLecture.setCourse(studentQuestion.getCourse());
+        studentQuestion.setLecture(notNullLecture);
+        lectureRepository.save(notNullLecture);
+        studentQuestionRepository.save(studentQuestion);
         StudentQuestionAnswer response = request.postWithResponseBody("/api/courses/" + studentQuestion.getCourse().getId() + "/student-question-answers", studentQuestionAnswer,
                 StudentQuestionAnswer.class, HttpStatus.CREATED);
         assertThat(response).isNotNull();
