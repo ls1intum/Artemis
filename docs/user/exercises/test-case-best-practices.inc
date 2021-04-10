@@ -328,8 +328,8 @@ Java best practices
            <artifactId>maven-compiler-plugin</artifactId>
            <version>3.8.1</version>
            <configuration>
-               <source>15</source>
-               <target>15</target>
+               <source>16</source>
+               <target>16</target>
            </configuration>
            <executions>
                <execution>
@@ -339,8 +339,8 @@ Java best practices
                        <goal>testCompile</goal>
                    </goals>
                    <configuration>
-                       <source>14</source>
-                       <target>14</target>
+                       <source>16</source>
+                       <target>16</target>
                        <compilerId>jdt</compilerId>
                        <optimize>true</optimize>
                        <failOnError>false</failOnError>
@@ -377,8 +377,8 @@ Java best practices
            <artifactId>maven-compiler-plugin</artifactId>
            <version>3.8.1</version>
            <configuration>
-               <source>14</source>
-               <target>14</target>
+               <source>16</source>
+               <target>16</target>
                <compilerId>jdt</compilerId>
                <optimize>true</optimize>
                <failOnError>false</failOnError>
