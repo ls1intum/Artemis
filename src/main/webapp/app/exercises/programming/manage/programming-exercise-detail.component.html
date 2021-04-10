@@ -82,7 +82,7 @@
                 <jhi-external-submission *ngIf="programmingExercise.isAtLeastInstructor" class="mr-1" [exercise]="programmingExercise"></jhi-external-submission>
                 <jhi-programming-assessment-repo-export
                     *ngIf="programmingExercise.isAtLeastInstructor"
-                    [exerciseId]="programmingExercise.id"
+                    [exerciseId]="programmingExercise.id!"
                     class="mr-1"
                 ></jhi-programming-assessment-repo-export>
 
@@ -91,7 +91,7 @@
                     [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
                     jhiDeleteButton
                     [actionType]="ActionType.Cleanup"
-                    [entityTitle]="programmingExercise.title"
+                    [entityTitle]="programmingExercise.title || ''"
                     deleteQuestion="instructorDashboard.cleanup.question"
                     (delete)="cleanupProgrammingExercise($event)"
                     [dialogError]="dialogError$"
@@ -106,7 +106,7 @@
                 <button
                     *ngIf="programmingExercise.course != undefined && programmingExercise.isAtLeastInstructor"
                     jhiDeleteButton
-                    [entityTitle]="programmingExercise.title"
+                    [entityTitle]="programmingExercise.title || ''"
                     deleteQuestion="artemisApp.programmingExercise.delete.question"
                     (delete)="deleteProgrammingExercise($event)"
                     [dialogError]="dialogError$"
@@ -203,7 +203,7 @@
                         ></jhi-clone-repo-button>
                         <jhi-programming-exercise-instructor-repo-download
                             class="ml-2"
-                            [exerciseId]="programmingExercise.id"
+                            [exerciseId]="programmingExercise.id!"
                             [repositoryType]="'TEMPLATE'"
                         ></jhi-programming-exercise-instructor-repo-download>
                     </div>
@@ -222,7 +222,7 @@
                         ></jhi-clone-repo-button>
                         <jhi-programming-exercise-instructor-repo-download
                             class="ml-2"
-                            [exerciseId]="programmingExercise.id"
+                            [exerciseId]="programmingExercise.id!"
                             [repositoryType]="'SOLUTION'"
                         ></jhi-programming-exercise-instructor-repo-download>
                     </div>
@@ -235,7 +235,7 @@
                         </jhi-clone-repo-button>
                         <jhi-programming-exercise-instructor-repo-download
                             class="ml-2"
-                            [exerciseId]="programmingExercise.id"
+                            [exerciseId]="programmingExercise.id!"
                             [repositoryType]="'TESTS'"
                         ></jhi-programming-exercise-instructor-repo-download>
                     </div>
@@ -243,7 +243,7 @@
                 <dt><span jhiTranslate="artemisApp.programmingExercise.templateBuildPlanId">Template Build Plan Id</span></dt>
                 <dd>
                     <span *ngIf="programmingExercise.templateParticipation && programmingExercise.templateParticipation.buildPlanId"
-                        ><a jhiBuildPlanLink [buildPlanId]="programmingExercise.templateParticipation.buildPlanId" [projectKey]="programmingExercise.projectKey">{{
+                        ><a jhiBuildPlanLink [buildPlanId]="programmingExercise.templateParticipation.buildPlanId" [projectKey]="programmingExercise.projectKey!">{{
                             programmingExercise.templateParticipation.buildPlanId
                         }}</a></span
                     >
@@ -251,7 +251,7 @@
                 <dt><span jhiTranslate="artemisApp.programmingExercise.solutionBuildPlanId">Solution Build Plan Id</span></dt>
                 <dd>
                     <span *ngIf="programmingExercise.solutionParticipation && programmingExercise.solutionParticipation.buildPlanId"
-                        ><a jhiBuildPlanLink [buildPlanId]="programmingExercise.solutionParticipation.buildPlanId" [projectKey]="programmingExercise.projectKey">{{
+                        ><a jhiBuildPlanLink [buildPlanId]="programmingExercise.solutionParticipation.buildPlanId!" [projectKey]="programmingExercise.projectKey!">{{
                             programmingExercise.solutionParticipation.buildPlanId
                         }}</a></span
                     >
@@ -290,7 +290,7 @@
                         <jhi-updating-result
                             *ngIf="!loadingTemplateParticipationResults"
                             [exercise]="programmingExercise"
-                            [participation]="programmingExercise.templateParticipation"
+                            [participation]="programmingExercise.templateParticipation!"
                             [showUngradedResults]="true"
                             [showTestNames]="true"
                             [personalParticipation]="false"
@@ -300,13 +300,13 @@
                             *ngIf="programmingExercise.templateParticipation?.results?.length"
                             class="repository-status-icon mr-2"
                             [participationType]="ProgrammingExerciseParticipationType.TEMPLATE"
-                            [participation]="programmingExercise.templateParticipation"
+                            [participation]="programmingExercise.templateParticipation!"
                             [exercise]="programmingExercise"
                         ></jhi-programming-exercise-instructor-status>
                         <jhi-programming-exercise-instructor-trigger-build-button
                             *ngIf="programmingExercise.templateParticipation?.results"
                             [exercise]="programmingExercise"
-                            [participation]="programmingExercise.templateParticipation"
+                            [participation]="programmingExercise.templateParticipation!"
                         ></jhi-programming-exercise-instructor-trigger-build-button>
                     </div>
                 </dd>
@@ -330,9 +330,9 @@
                 <dd>
                     <div *ngIf="programmingExercise?.solutionParticipation" class="d-flex align-items-center">
                         <jhi-updating-result
-                            *ngIf="!loadingSolutionParticipationResults"
+                            *ngIf="!loadingSolutionParticipationResults && programmingExercise.solutionParticipation"
                             [exercise]="programmingExercise"
-                            [participation]="programmingExercise.solutionParticipation"
+                            [participation]="programmingExercise.solutionParticipation!"
                             [showUngradedResults]="true"
                             [showTestNames]="true"
                             [personalParticipation]="false"
@@ -342,13 +342,13 @@
                             *ngIf="programmingExercise.solutionParticipation?.results?.length"
                             class="repository-status-icon mr-2"
                             [participationType]="ProgrammingExerciseParticipationType.SOLUTION"
-                            [participation]="programmingExercise.solutionParticipation"
+                            [participation]="programmingExercise.solutionParticipation!"
                             [exercise]="programmingExercise"
                         ></jhi-programming-exercise-instructor-status>
                         <jhi-programming-exercise-instructor-trigger-build-button
                             *ngIf="programmingExercise.solutionParticipation?.results"
                             [exercise]="programmingExercise"
-                            [participation]="programmingExercise.solutionParticipation"
+                            [participation]="programmingExercise.solutionParticipation!"
                         ></jhi-programming-exercise-instructor-trigger-build-button>
                     </div>
                 </dd>
