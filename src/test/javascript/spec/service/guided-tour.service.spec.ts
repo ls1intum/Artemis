@@ -603,14 +603,13 @@ describe('GuidedTourService', () => {
             const guidedTourMapping = { courseShortName: 'tutorial', tours: { tour_with_course_and_exercise: 'git' } } as GuidedTourMapping;
             let enableTourSpy: any;
             let startTourSpy: any;
-            let checkTourStateSpy: any;
 
             const guidedTourSettings = [new GuidedTourSetting('guided_tour_key', 1, GuidedTourState.STARTED)];
 
             beforeEach(() => {
                 enableTourSpy = spyOn<any>(guidedTourService, 'enableTour').and.returnValue(of());
                 startTourSpy = spyOn<any>(guidedTourService, 'startTour').and.returnValue(of());
-                checkTourStateSpy = spyOn<any>(guidedTourService, 'checkTourState').and.returnValue(of());
+                spyOn<any>(guidedTourService, 'checkTourState').and.returnValue(of());
                 guidedTourService.guidedTourMapping = guidedTourMapping;
                 guidedTourService.guidedTourSettings = [];
             });
