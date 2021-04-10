@@ -73,6 +73,11 @@
             }
         }
 
+        .points {
+            display: block;
+            max-width: 11ch;
+        }
+
         canvas {
             z-index: 1;
         }
@@ -97,9 +102,12 @@
             align-items: center;
 
             h5 {
-                margin-bottom: 1px;
-                height: 1em;
+                margin-bottom: 0;
+                display: inline-block;
                 overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+                max-width: 40ch;
             }
 
             h6 {
