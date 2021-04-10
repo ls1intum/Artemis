@@ -90,7 +90,6 @@ public class StudentQuestionAnswerIntegrationTest extends AbstractSpringIntegrat
         studentQuestionAnswer.setAnswerDate(ZonedDateTime.now());
         studentQuestionAnswer.setQuestion(studentQuestion);
         Long courseId = studentQuestion.getCourse().getId();
-        studentQuestion.setExercise(null);
         studentQuestionRepository.save(studentQuestion);
         StudentQuestionAnswer response = request.postWithResponseBody("/api/courses/" + courseId + "/student-question-answers", studentQuestionAnswer, StudentQuestionAnswer.class,
                 HttpStatus.CREATED);
