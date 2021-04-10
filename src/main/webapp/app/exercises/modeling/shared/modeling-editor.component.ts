@@ -20,7 +20,7 @@ export class ModelingEditorComponent implements AfterViewInit, OnDestroy, OnChan
     @Input()
     umlModel: UMLModel;
     @Input()
-    diagramType: UMLDiagramType;
+    diagramType?: UMLDiagramType = UMLDiagramType.ClassDiagram;
     @Input()
     readOnly = false;
     @Input()
