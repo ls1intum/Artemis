@@ -4,6 +4,7 @@ import static de.tum.in.www1.artemis.config.Constants.FEEDBACK_DETAIL_TEXT_MAX_C
 
 import java.util.*;
 
+import javax.annotation.Nullable;
 import javax.persistence.*;
 import javax.validation.constraints.Size;
 
@@ -54,6 +55,7 @@ public class Feedback extends DomainObject {
     @Column(name = "positive")
     private Boolean positive;
 
+    @Nullable
     @Column(name = "copied_feedback")
     private Boolean copiedFeedback;
 
@@ -239,11 +241,11 @@ public class Feedback extends DomainObject {
         this.gradingInstruction = gradingInstruction;
     }
 
-    public Boolean getCopiedFeedback() {
-        return copiedFeedback;
+    public boolean getCopiedFeedback() {
+        return Boolean.TRUE.equals(copiedFeedback);
     }
 
-    public void setCopiedFeedback(Boolean copiedFeedback) {
+    public void setCopiedFeedback(boolean copiedFeedback) {
         this.copiedFeedback = copiedFeedback;
     }
 
