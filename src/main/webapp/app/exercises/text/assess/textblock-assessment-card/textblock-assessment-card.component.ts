@@ -5,7 +5,7 @@ import { StructuredGradingCriterionService } from 'app/exercises/shared/structur
 import { TextBlockType } from 'app/entities/text-block.model';
 import { FeedbackConflictType } from 'app/entities/feedback-conflict';
 
-type OptionalTextBlockRef = TextBlockRef | null;
+type OptionalTextBlockRef = TextBlockRef | undefined;
 
 @Component({
     selector: 'jhi-textblock-assessment-card',
@@ -44,7 +44,7 @@ export class TextblockAssessmentCardComponent {
         }
 
         if (this.isSelectableConflict && this.selected) {
-            this.didSelect.emit(null);
+            this.didSelect.emit(undefined);
             return;
         }
 
@@ -60,7 +60,7 @@ export class TextblockAssessmentCardComponent {
      * Unselect a text block
      */
     unselect(): void {
-        this.didSelect.emit(null);
+        this.didSelect.emit(undefined);
         delete this.textBlockRef.feedback;
         if (this.textBlockRef.block!.type === TextBlockType.MANUAL) {
             this.didDelete.emit(this.textBlockRef);
