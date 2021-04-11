@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output, OnChanges } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { Result } from 'app/entities/result.model';
 
 /**
@@ -12,7 +12,7 @@ import { Result } from 'app/entities/result.model';
     templateUrl: './assessment-header.component.html',
     styleUrls: ['./assessment-header.component.scss'],
 })
-export class AssessmentHeaderComponent implements OnChanges {
+export class AssessmentHeaderComponent {
     @Input() isLoading: boolean;
     @Input() saveBusy: boolean;
     @Input() submitBusy: boolean;
@@ -59,9 +59,5 @@ export class AssessmentHeaderComponent implements OnChanges {
     public toggleHighlightDifferences() {
         this.highlightDifferences = !this.highlightDifferences;
         this.highlightDifferencesChange.emit(this.highlightDifferences);
-    }
-
-    public ngOnChanges(): void {
-        console.log('change header:', this.highlightDifferences);
     }
 }
