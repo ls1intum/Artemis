@@ -83,7 +83,7 @@ public class StudentQuestionAnswerResource {
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
         StudentQuestion studentQuestion = studentQuestionRepository.findByIdElseThrow(studentQuestionAnswer.getQuestion().getId());
         if (!studentQuestion.getCourse().getId().equals(courseId)) {
-            return badRequest("courseId", "400", "PathVariable courseId doesnt match courseId of the StudentQuestionAnswer in the body that should be added");
+            return badRequest("courseId", "400", "PathVariable courseId doesn't match courseId of the StudentQuestionAnswer in the body that should be added");
         }
         // answer to approved if written by an instructor
         studentQuestionAnswer.setTutorApproved(this.authorizationCheckService.isAtLeastInstructorInCourse(course, user));
@@ -131,15 +131,14 @@ public class StudentQuestionAnswerResource {
      *
      * @param courseId the id of the course the answer belongs to
      * @param id the id of the questionAnswer to retrieve
-     * @return the ResponseEntity with status 200 (OK) and with body the questionAnswer, with status 400 (Bad Request) if theres inconsistencies within the data requested, or with status 404 (Not Found)
+     * @return the ResponseEntity with status 200 (OK) and with body the questionAnswer, with status 400 (Bad Request) if there are inconsistencies within the data requested, or with status 404 (Not Found)
      */
     @GetMapping("courses/{courseId}/student-question-answers/{id}")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<StudentQuestionAnswer> getStudentQuestionAnswer(@PathVariable Long courseId, @PathVariable Long id) {
         log.debug("REST request to get StudentQuestionAnswer : {}", id);
-        User user = this.userRepository.getUserWithGroupsAndAuthorities();
         var course = courseRepository.findByIdElseThrow(courseId);
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
         StudentQuestionAnswer questionAnswer = studentQuestionAnswerRepository.findByIdElseThrow(id);
         if (!questionAnswer.getQuestion().getCourse().getId().equals(courseId)) {
             return badRequest("courseId", "400", "PathVariable courseId doesnt match courseId of the StudentQuestionAnswer that should be returned");
@@ -175,7 +174,7 @@ public class StudentQuestionAnswerResource {
             return badRequest("courseId", "400", "PathVariable courseId doesnt match courseId of the StudentQuestionAnswer that should be deleted");
         }
         mayUpdateOrDeleteStudentQuestionAnswerElseThrow(studentQuestionAnswer, user);
-        log.info("StudentQuestionAnswer deleted by " + user.getLogin() + ". Answer: " + studentQuestionAnswer.getAnswerText() + " for " + entity, user.getLogin());
+        log.info("StudentQuestionAnswer deleted by " + user.getLogin() + ". Answer: " + studentQuestionAnswer.getAnswerText() + " for " + entity);
         studentQuestionAnswerRepository.deleteById(id);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, id.toString())).build();
     }

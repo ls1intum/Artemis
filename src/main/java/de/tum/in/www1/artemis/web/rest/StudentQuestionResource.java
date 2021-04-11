@@ -68,15 +68,14 @@ public class StudentQuestionResource {
      * @param courseId course the question belongs to
      * @param studentQuestion the studentQuestion to create
      * @return the ResponseEntity with status 201 (Created) and with body the new studentQuestion, or with status 400 (Bad Request) if the studentQuestion
-     * already
-     * has an ID or the courseId in the body doesnt match the PathVariable
+     * already has an ID or the courseId in the body doesn't match the PathVariable
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("courses/{courseId}/student-questions")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<StudentQuestion> createStudentQuestion(@PathVariable Long courseId, @RequestBody StudentQuestion studentQuestion) throws URISyntaxException {
         if (!studentQuestion.getCourse().getId().equals(courseId)) {
-            return badRequest("courseId", "400", "PathVariable courseId doesnt match the courseId of the sent StudentQuestion in Body");
+            return badRequest("courseId", "400", "PathVariable courseId doesn't match the courseId of the sent StudentQuestion in Body");
         }
         log.debug("REST request to save StudentQuestion : {}", studentQuestion);
         User user = this.userRepository.getUserWithGroupsAndAuthorities();
@@ -251,7 +250,7 @@ public class StudentQuestionResource {
             return ResponseEntity.badRequest().build();
         }
         mayUpdateOrDeleteStudentQuestionElseThrow(studentQuestion, user);
-        log.info("StudentQuestion deleted by " + user.getLogin() + ". Question: " + studentQuestion.getQuestionText() + " for " + entity, user.getLogin());
+        log.info("StudentQuestion deleted by " + user.getLogin() + ". Question: " + studentQuestion.getQuestionText() + " for " + entity);
         studentQuestionRepository.deleteById(studentQuestionId);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, studentQuestionId.toString())).build();
 
