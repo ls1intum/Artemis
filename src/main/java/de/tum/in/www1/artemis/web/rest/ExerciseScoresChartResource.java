@@ -55,6 +55,7 @@ public class ExerciseScoresChartResource {
      * Note: Only released course exercises with assessment due date over are considered!
      * <p>
      *
+     * @param courseId id of the course for which to get the exercise scores
      * @return the ResponseEntity with status 200 (OK) and with the exercise scores in the body
      */
     @GetMapping(Endpoints.COURSE_EXERCISE_SCORES)
