@@ -1,6 +1,5 @@
 <jhi-text-feedback-conflicts-header
-    *ngIf="conflictingSubmissions"
-    [numberOfConflicts]="conflictingSubmissions!.length"
+    [numberOfConflicts]="conflictingSubmissions ? conflictingSubmissions.length : 0"
     (didChangeConflictIndex)="didChangeConflictIndex($event)"
     [haveRights]="canOverride(leftSubmission!.latestResult!)"
     [overrideBusy]="overrideBusy"
