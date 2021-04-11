@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service.connectors.jenkins;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,10 +18,10 @@ import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
 public class JenkinsDockerUrlService {
 
     @Value("${jenkins.docker.ci-url:#{null}}")
-    private URL dockerCiUrl;
+    private Optional<URL> dockerCiUrl;
 
     @Value("${jenkins.docker.vcs-url:#{null}}")
-    private URL dockerVcsUrl;
+    private Optional<URL> dockerVcsUrl;
 
     private static final Logger log = LoggerFactory.getLogger(JenkinsDockerUrlService.class);
 
@@ -31,7 +32,7 @@ public class JenkinsDockerUrlService {
      * @return the manipulated url
      */
     public VcsRepositoryUrl toDockerVcsUrl(VcsRepositoryUrl vcsRepositoryUrl) {
-        if (dockerVcsUrl == null) {
+        if (dockerVcsUrl.isEmpty()) {
             return vcsRepositoryUrl;
         }
 
@@ -41,7 +42,7 @@ public class JenkinsDockerUrlService {
         }
 
         try {
-            String newDockerUrl = replaceUrl(vcsRepositoryUrl.getURL().toString(), dockerVcsUrl);
+            String newDockerUrl = replaceUrl(vcsRepositoryUrl.getURL().toString(), dockerVcsUrl.get());
             return new VcsRepositoryUrl(newDockerUrl);
         }
         catch (MalformedURLException e) {
@@ -57,8 +58,8 @@ public class JenkinsDockerUrlService {
      * @return the manipulated url
      */
     public String toDockerCiUrl(String ciUrl) {
-        if (dockerCiUrl != null) {
-            return replaceUrl(ciUrl, dockerCiUrl);
+        if (dockerCiUrl.isPresent()) {
+            return replaceUrl(ciUrl, dockerCiUrl.get());
         }
         else {
             return ciUrl;
@@ -69,7 +70,7 @@ public class JenkinsDockerUrlService {
      * Replaces the host and port of the url with the ones defined
      * in dockerUrl
      * @param urlToReplace the url that will be manipulated
-     * @param dockerUrl the dokcer container url
+     * @param dockerUrl the docker container url
      * @return the manipulated url
      */
     private String replaceUrl(String urlToReplace, URL dockerUrl) {

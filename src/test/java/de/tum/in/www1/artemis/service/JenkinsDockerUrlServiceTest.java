@@ -41,14 +41,14 @@ public class JenkinsDockerUrlServiceTest extends AbstractSpringIntegrationJenkin
 
     @Test
     @WithMockUser(username = "student1")
-    public void testGetVcsUrlOnDockerVcsUrlEmpty() throws Exception {
+    public void testGetVcsUrlOnDockerVcsUrlEmpty() {
         var newVcsUrl = jenkinsDockerUrlService.toDockerVcsUrl(vcsRepositoryUrl);
         assertThat(newVcsUrl).hasToString(vcsRepositoryUrl.toString());
     }
 
     @Test
     @WithMockUser(username = "student1")
-    public void testGetVcsUrlOnDockerVcsUrl() throws Exception {
+    public void testGetVcsUrlOnDockerVcsUrl() {
         ReflectionTestUtils.setField(jenkinsDockerUrlService, "dockerVcsUrl", dockerVcsUrl);
 
         var newVcsUrl = jenkinsDockerUrlService.toDockerVcsUrl(vcsRepositoryUrl);
@@ -61,14 +61,14 @@ public class JenkinsDockerUrlServiceTest extends AbstractSpringIntegrationJenkin
 
     @Test
     @WithMockUser(username = "student1")
-    public void testGetCiUrlOnDockerCiUrlEmpty() throws Exception {
+    public void testGetCiUrlOnDockerCiUrlEmpty() {
         var newCiUrl = jenkinsDockerUrlService.toDockerCiUrl(ciUrl);
         assertThat(newCiUrl).hasToString(ciUrl);
     }
 
     @Test
     @WithMockUser(username = "student1")
-    public void testGetCiUrlOnDockerCiUrl() throws Exception {
+    public void testGetCiUrlOnDockerCiUrl() {
         ReflectionTestUtils.setField(jenkinsDockerUrlService, "dockerCiUrl", dockerCiUrl);
 
         var newCiUrl = jenkinsDockerUrlService.toDockerCiUrl(ciUrl);
