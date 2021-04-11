@@ -1,5 +1,4 @@
 import { Component, ElementRef, Input } from '@angular/core';
-import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { enterFullscreen, exitFullscreen, isFullScreen } from 'app/shared/util/fullscreen.util';
 
 @Component({
