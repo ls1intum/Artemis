@@ -14,8 +14,6 @@ export class ParticipantScoresAverageTableComponent {
     @Input()
     isLoading = false;
 
-    participantAverageScoresAsBaseEntity = (this.participantAverageScores as unknown) as BaseEntity[];
-
     extractParticipantName = (participantScoreAverageDTO: any) => {
         return participantScoreAverageDTO.userName ? String(participantScoreAverageDTO.userName) : String(participantScoreAverageDTO.teamName);
     };
