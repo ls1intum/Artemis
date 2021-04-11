@@ -1,4 +1,5 @@
 import { Component, ElementRef, Input } from '@angular/core';
+import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { enterFullscreen, exitFullscreen, isFullScreen } from 'app/shared/util/fullscreen.util';
 
 @Component({
@@ -7,8 +8,6 @@ import { enterFullscreen, exitFullscreen, isFullScreen } from 'app/shared/util/f
     styleUrls: ['./fullscreen.scss'],
 })
 export class FullscreenComponent {
-    buttonIcon = 'compress';
-
     @Input()
     position: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right' = 'top-right';
 

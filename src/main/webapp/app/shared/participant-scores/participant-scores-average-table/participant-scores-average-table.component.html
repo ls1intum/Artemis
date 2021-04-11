@@ -1,13 +1,13 @@
 <jhi-data-table
     [isLoading]="isLoading"
     entityType="participationScoreAverageDTO"
-    allEntities="'participantAverageScores'"
+    [allEntities]="participantAverageScoresAsBaseEntity"
     entitiesPerPageTranslation="artemisApp.exercise.resultsPerPage"
     showAllEntitiesTranslation="artemisApp.exercise.showAllResults"
     [searchPlaceholderTranslation]="'artemisApp.participantScores.searchForStudentsOrTeam'"
     [searchFields]="['userName', 'teamName']"
-    searchTextFromEntity="'extractParticipantName'"
-    searchResultFormatter="'extractParticipantName'"
+    [searchTextFromEntity]="extractParticipantName"
+    [searchResultFormatter]="extractParticipantName"
 >
     <ng-template let-settings="settings" let-controls="controls">
         <ngx-datatable
