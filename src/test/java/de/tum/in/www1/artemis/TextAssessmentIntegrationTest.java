@@ -1022,7 +1022,10 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
         assertThat(assessedSubmissionList.get(0).getResultForCorrectionRound(0)).isEqualTo(submissionWithoutFirstAssessment.getLatestResult());
 
         // assess submission and submit
-        List<Feedback> feedbacks = ModelFactory.generateFeedback().stream().peek(feedback -> feedback.setDetailText("Good work here")).collect(Collectors.toList());
+        List<Feedback> feedbacks = ModelFactory.generateFeedback().stream().peek(feedback -> {
+            feedback.setDetailText("Good work here");
+            feedback.setCopiedFeedback(false);
+        }).collect(Collectors.toList());
         TextAssessmentDTO textAssessmentDTO = new TextAssessmentDTO();
         textAssessmentDTO.setFeedbacks(feedbacks);
         Result firstSubmittedManualResult = request.putWithResponseBody(
@@ -1106,7 +1109,8 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
         secondCorrectionFeedback.setCredits(10.0);
         secondCorrectionFeedback.setPositive(true);
         secondCorrectionFeedback.setCopiedFeedback(false);
-        textAssessmentDTO.getFeedbacks().add(secondCorrectionFeedback);
+        submissionWithoutSecondAssessment.getLatestResult().getFeedbacks().add(secondCorrectionFeedback);
+        textAssessmentDTO.setFeedbacks(submissionWithoutSecondAssessment.getLatestResult().getFeedbacks());
 
         // assess submission and submit
         Result secondSubmittedManualResult = request.putWithResponseBody(
@@ -1114,8 +1118,10 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
                 Result.class, HttpStatus.OK);
         assertThat(secondSubmittedManualResult).isNotNull();
 
+        // check if feedback copy was set correctly
         int feedbackSize = secondSubmittedManualResult.getFeedbacks().size();
         assertThat(feedbackSize).isGreaterThan(0);
+        assertThat(secondSubmittedManualResult.getFeedbacks().get(0).getCopiedFeedback()).isEqualTo(true);
         assertThat(secondSubmittedManualResult.getFeedbacks().get(feedbackSize - 1).getCopiedFeedback()).isEqualTo(false);
 
         // make sure that new result correctly appears after the assessment for second correction round
