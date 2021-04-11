@@ -208,9 +208,8 @@ public class StudentQuestionResource {
     @GetMapping("courses/{courseId}/student-questions")
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<List<StudentQuestion>> getAllQuestionsForCourse(@PathVariable Long courseId) {
-        final User user = userRepository.getUserWithGroupsAndAuthorities();
         var course = courseRepository.findByIdElseThrow(courseId);
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, user);
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, null);
         List<StudentQuestion> studentQuestions = studentQuestionRepository.findStudentQuestionsForCourse(courseId);
         return new ResponseEntity<>(studentQuestions, null, HttpStatus.OK);
     }
