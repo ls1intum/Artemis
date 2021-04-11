@@ -1078,6 +1078,8 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
         assertThat(submissionWithoutSecondAssessment.getLatestResult()).isNotNull();
         assertThat(submissionWithoutSecondAssessment.getLatestResult().getAssessor().getLogin()).isEqualTo("tutor2");
         assertThat(submissionWithoutSecondAssessment.getLatestResult().getAssessmentType()).isEqualTo(AssessmentType.MANUAL);
+        assertThat(submissionWithoutSecondAssessment.getLatestResult().getFeedbacks().size()).isGreaterThan(0);
+        assertThat(submissionWithoutSecondAssessment.getLatestResult().getFeedbacks().get(0).getCopiedFeedback()).isEqualTo(true);
 
         // verify that the relationship between student participation,
         databaseRelationshipStateOfResultsOverParticipation = studentParticipationRepository.findWithEagerLegalSubmissionsAndResultsAssessorsById(studentParticipation.getId());
@@ -1099,11 +1101,22 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
         assertThat(fetchedParticipation.findLatestSubmission().get().getResults().size()).isEqualTo(2);
         assertThat(fetchedParticipation.findLatestSubmission().get().getLatestResult()).isEqualTo(submissionWithoutSecondAssessment.getLatestResult());
 
+        Feedback secondCorrectionFeedback = new Feedback();
+        secondCorrectionFeedback.setDetailText("asfd");
+        secondCorrectionFeedback.setCredits(10.0);
+        secondCorrectionFeedback.setPositive(true);
+        secondCorrectionFeedback.setCopiedFeedback(false);
+        textAssessmentDTO.getFeedbacks().add(secondCorrectionFeedback);
+
         // assess submission and submit
         Result secondSubmittedManualResult = request.putWithResponseBody(
                 "/api/text-assessments/exercise/" + textExercise.getId() + "/result/" + submissionWithoutSecondAssessment.getLatestResult().getId() + "/submit", textAssessmentDTO,
                 Result.class, HttpStatus.OK);
         assertThat(secondSubmittedManualResult).isNotNull();
+
+        int feedbackSize = secondSubmittedManualResult.getFeedbacks().size();
+        assertThat(feedbackSize).isGreaterThan(0);
+        assertThat(secondSubmittedManualResult.getFeedbacks().get(feedbackSize - 1).getCopiedFeedback()).isEqualTo(false);
 
         // make sure that new result correctly appears after the assessment for second correction round
         LinkedMultiValueMap<String, String> paramsGetAssessedCR2 = new LinkedMultiValueMap<>();
