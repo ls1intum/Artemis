@@ -196,8 +196,8 @@ under ``localhost:7990``.
       Capability type ``Executable`` → select type ``Maven 3.x`` → insert
       ``Maven 3`` as executable label → insert ``/artemis`` as path.
 
-   -  Add capabilities menu → Capability type ``JDK`` → insert ``JDK15``
-      as JDK label → insert ``/usr/lib/jvm/java-15-oracle`` as Java home.
+   -  Add capabilities menu → Capability type ``JDK`` → insert ``JDK16``
+      as JDK label → insert ``/usr/lib/jvm/java-16-oracle`` as Java home.
 
 10. Generate a personal access token
 
