@@ -21,12 +21,12 @@ fi
 
 # Generate access token for Artemis
 echo 'Generating personal access token for Artemis with api, read_user, read_api, read_repository, write_repository, and sudo scopes.'
-artemis_access_token=$(curl -s --request POST --header "$AUTHORIZATION_BEARER_HEADER" --data "name=Artemis" --data "scopes[]=api,read_user,read_api,read_repository,write_repository,sudo" "$GITLAB__API_URL/users/1/personal_access_tokens" | jq -r .token)
+artemis_access_token=$(curl -s --request POST --header "$AUTHORIZATION_BEARER_HEADER" --data "name=Artemis" --data "scopes[]=api,read_user,read_api,read_repository,write_repository,sudo" "$GITLAB__API_URL/users/$ADMIN_USER_ID/personal_access_tokens" | jq -r .token)
 echo "Success."
 
 # Generate access token for Jenkins
 echo 'Generating personal access token for Jenkins with api and read_repository scopes.'
-jenkins_access_token=$(curl -s --request POST --header "$AUTHORIZATION_BEARER_HEADER" --data "name=Jenkins" --data "scopes[]=api,read_repository" "$GITLAB__API_URL/users/1/personal_access_tokens" | jq -r .token)
+jenkins_access_token=$(curl -s --request POST --header "$AUTHORIZATION_BEARER_HEADER" --data "name=Jenkins" --data "scopes[]=api,read_repository" "$GITLAB__API_URL/users/$ADMIN_USER_ID/personal_access_tokens" | jq -r .token)
 echo "Success."
 
 echo
