@@ -100,7 +100,7 @@ public class Exam extends DomainObject {
     @Column(name = "course_name")
     private String courseName;
 
-    @OneToOne(mappedBy = "exam", cascade = CascadeType.ALL)
+    @OneToOne(mappedBy = "exam", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JsonIgnoreProperties("exam")
     private GradingScale gradingScale;
 

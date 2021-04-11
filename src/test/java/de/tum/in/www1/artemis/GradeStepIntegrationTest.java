@@ -38,8 +38,12 @@ public class GradeStepIntegrationTest extends AbstractSpringIntegrationBambooBit
 
     private Set<GradeStep> gradeSteps;
 
+    /**
+     * Initialize attributes
+     */
     @BeforeEach
     public void init() {
+        database.addUsers(0, 0, 1);
         course = database.addEmptyCourse();
         exam = database.addExamWithExerciseGroup(course, true);
         courseGradingScale = new GradingScale();
@@ -58,12 +62,22 @@ public class GradeStepIntegrationTest extends AbstractSpringIntegrationBambooBit
         database.resetDatabase();
     }
 
+    /**
+     * Test get request for all grade steps when no grading scale exists
+     *
+     * @throws Exception
+     */
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGetAllGradeStepsForCourseNoGradingScaleExists() throws Exception {
         request.getList("/api/courses/" + course.getId() + "/grading-scale/grade-steps", HttpStatus.NOT_FOUND, GradeStep.class);
     }
 
+    /**
+     * Test get request for all grade steps
+     *
+     * @throws Exception
+     */
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGetAllGradeStepsForCourse() throws Exception {
@@ -83,15 +97,25 @@ public class GradeStepIntegrationTest extends AbstractSpringIntegrationBambooBit
 
         List<GradeStep> foundGradeSteps = request.getList("/api/courses/" + course.getId() + "/grading-scale/grade-steps", HttpStatus.OK, GradeStep.class);
 
-        assertThat(foundGradeSteps).usingRecursiveComparison().ignoringFields("gradingScale", "id").isEqualTo(List.of(gradeStep1, gradeStep2));
+        assertThat(foundGradeSteps).usingRecursiveComparison().ignoringFields("gradingScale", "id").ignoringCollectionOrder().isEqualTo(List.of(gradeStep1, gradeStep2));
     }
 
+    /**
+     * Test get request for all grade steps when no grading scale exists
+     *
+     * @throws Exception
+     */
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGetAllGradeStepsForExamNoGradingScaleExists() throws Exception {
         request.getList("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale/grade-steps", HttpStatus.NOT_FOUND, GradeStep.class);
     }
 
+    /**
+     * Test get request for all grade steps
+     *
+     * @throws Exception
+     */
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGetAllGradeStepsForExam() throws Exception {
@@ -112,15 +136,25 @@ public class GradeStepIntegrationTest extends AbstractSpringIntegrationBambooBit
         List<GradeStep> foundGradeSteps = request.getList("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale/grade-steps", HttpStatus.OK,
                 GradeStep.class);
 
-        assertThat(foundGradeSteps).usingRecursiveComparison().ignoringFields("gradingScale", "id").isEqualTo(List.of(gradeStep1, gradeStep2));
+        assertThat(foundGradeSteps).usingRecursiveComparison().ignoringFields("gradingScale", "id").ignoringCollectionOrder().isEqualTo(List.of(gradeStep1, gradeStep2));
     }
 
+    /**
+     * Test get request for a single grade step when no grading scale exists
+     *
+     * @throws Exception
+     */
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGetGradeStepByIdForCourseNoGradingScaleExists() throws Exception {
         request.get("/api/courses/" + course.getId() + "/grading-scale/grade-steps/1", HttpStatus.NOT_FOUND, GradeStep.class);
     }
 
+    /**
+     * Test get request for a single grade step
+     *
+     * @throws Exception
+     */
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGetGradeStepByIdForCourse() throws Exception {
@@ -139,12 +173,22 @@ public class GradeStepIntegrationTest extends AbstractSpringIntegrationBambooBit
         assertThat(foundGradeStep).usingRecursiveComparison().ignoringFields("gradingScale", "id").isEqualTo(gradeStep);
     }
 
+    /**
+     * Test get request for a single grade step when no grading scale exists
+     *
+     * @throws Exception
+     */
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGetGradeStepByIdForExamNoGradingScaleExists() throws Exception {
         request.get("/api/courses/" + course.getId() + "/grading-scale/grade-steps/1", HttpStatus.NOT_FOUND, GradeStep.class);
     }
 
+    /**
+     * Test get request for a single grade step
+     *
+     * @throws Exception
+     */
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGetGradeStepByIdForExam() throws Exception {
@@ -164,12 +208,22 @@ public class GradeStepIntegrationTest extends AbstractSpringIntegrationBambooBit
         assertThat(foundGradeStep).usingRecursiveComparison().ignoringFields("gradingScale", "id").isEqualTo(gradeStep);
     }
 
+    /**
+     * Test get request for a single grade step by grade percentage when no grading scale exists
+     *
+     * @throws Exception
+     */
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGetGradeStepByPercentageForCourseNoGradingScaleExists() throws Exception {
         request.get("/api/courses/" + course.getId() + "/grading-scale/match-grade-step?gradePercentage=70", HttpStatus.NOT_FOUND, GradeStep.class);
     }
 
+    /**
+     * Test get request for a single grade step by grade percentage
+     *
+     * @throws Exception
+     */
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGetGradeStepByPercentageForCourse() throws Exception {
@@ -187,12 +241,22 @@ public class GradeStepIntegrationTest extends AbstractSpringIntegrationBambooBit
         assertThat(foundGradeStep).usingRecursiveComparison().ignoringFields("gradingScale", "id").isEqualTo(gradeStep);
     }
 
+    /**
+     * Test get request for a single grade step by grade percentage when no grading scale exists
+     *
+     * @throws Exception
+     */
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGetGradeStepByPercentageForExamNoGradingScaleExists() throws Exception {
         request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale/match-grade-step?gradePercentage=70", HttpStatus.NOT_FOUND, GradeStep.class);
     }
 
+    /**
+     * Test get request for a single grade step by grade percentage
+     *
+     * @throws Exception
+     */
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGetGradeStepByPercentageForExam() throws Exception {

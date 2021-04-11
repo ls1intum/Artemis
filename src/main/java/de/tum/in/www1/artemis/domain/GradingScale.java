@@ -23,13 +23,15 @@ public class GradingScale extends DomainObject {
 
     @OneToOne
     @JoinColumn(name = "course_id")
+    @JsonIgnoreProperties("gradingScale")
     private Course course;
 
     @OneToOne
     @JoinColumn(name = "exam_id")
+    @JsonIgnoreProperties("gradingScale")
     private Exam exam;
 
-    @OneToMany(mappedBy = "gradingScale", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "gradingScale", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     @JsonIgnoreProperties("gradingScale")
     private Set<GradeStep> gradeSteps;
 

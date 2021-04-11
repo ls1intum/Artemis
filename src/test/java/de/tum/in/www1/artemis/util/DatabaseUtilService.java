@@ -3090,13 +3090,11 @@ public class DatabaseUtilService {
         gradeStep2.setGradingScale(gradingScale);
         gradeStep3.setGradingScale(gradingScale);
 
-        gradeStep1.setId(1L);
         gradeStep1.setPassingGrade(false);
         gradeStep1.setGradeName("Fail");
         gradeStep1.setLowerBoundPercentage(0);
         gradeStep1.setUpperBoundPercentage(60);
 
-        gradeStep2.setId(2L);
         gradeStep2.setPassingGrade(true);
         gradeStep2.setGradeName("Pass");
         gradeStep2.setLowerBoundPercentage(60);
@@ -3107,7 +3105,6 @@ public class DatabaseUtilService {
             gradeStep2.setUpperBoundPercentage(80);
         }
 
-        gradeStep3.setId(3L);
         gradeStep3.setPassingGrade(true);
         gradeStep3.setGradeName("Excellent");
         gradeStep3.setLowerBoundPercentage(90);

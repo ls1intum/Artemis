@@ -123,7 +123,7 @@ public class Course extends DomainObject {
     @Column(name = "course_archive_path")
     private String courseArchivePath;
 
-    @OneToOne(mappedBy = "course", cascade = CascadeType.ALL)
+    @OneToOne(mappedBy = "course", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JsonIgnoreProperties("course")
     private GradingScale gradingScale;
 

@@ -104,4 +104,15 @@ public class GradingScaleService {
         return validAdjacency && validFirstElement && validLastElement;
     }
 
+    /**
+     * Deletes a grading scale and all its grade steps
+     *
+     * @param gradingScale the grading scale which will be deleted
+     */
+    public void delete(GradingScale gradingScale) {
+        List<GradeStep> gradeSteps = gradeStepRepository.findByGradingScale_Id(gradingScale.getId());
+        gradeStepRepository.deleteInBatch(gradeSteps);
+        gradingScaleRepository.deleteInBatch(List.of(gradingScale));
+    }
+
 }
