@@ -73,7 +73,7 @@ public class JenkinsDockerUrlService {
      * @param dockerUrl the docker container url
      * @return the manipulated url
      */
-    private String replaceUrl(String urlToReplace, URL dockerUrl) {
+    public String replaceUrl(String urlToReplace, URL dockerUrl) {
         if (urlToReplace == null) {
             return urlToReplace;
         }

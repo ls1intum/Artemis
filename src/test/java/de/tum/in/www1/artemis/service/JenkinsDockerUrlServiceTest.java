@@ -1,8 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.*;
 
 import java.net.URL;
 import java.util.Optional;
@@ -10,6 +9,7 @@ import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.util.ReflectionTestUtils;
 
@@ -20,6 +20,7 @@ import de.tum.in.www1.artemis.service.connectors.jenkins.JenkinsDockerUrlService
 public class JenkinsDockerUrlServiceTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 
     @Autowired
+    @SpyBean
     private JenkinsDockerUrlService jenkinsDockerUrlService;
 
     private VcsRepositoryUrl vcsRepositoryUrl;
@@ -58,6 +59,15 @@ public class JenkinsDockerUrlServiceTest extends AbstractSpringIntegrationJenkin
         var vcsRepositoryUrl = mock(VcsRepositoryUrl.class);
         doReturn(null).when(vcsRepositoryUrl).getURL();
         assertThat(jenkinsDockerUrlService.toDockerVcsUrl(vcsRepositoryUrl)).isEqualTo(vcsRepositoryUrl);
+    }
+
+    @Test
+    @WithMockUser(username = "student1")
+    public void testGetVcsUrlOnDockerVcsUrlMalformed() {
+        ReflectionTestUtils.setField(jenkinsDockerUrlService, "dockerVcsUrl", Optional.of(dockerVcsUrl));
+        doReturn("htt://invalid.com").when(jenkinsDockerUrlService).replaceUrl(eq(vcsRepositoryUrl.getURL().toString()), eq(dockerVcsUrl));
+        var newVcsUrl = jenkinsDockerUrlService.toDockerVcsUrl(vcsRepositoryUrl);
+        assertThat(newVcsUrl).hasToString(vcsRepositoryUrl.toString());
     }
 
     @Test
