@@ -5,6 +5,7 @@ import javax.persistence.*;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 /**
@@ -18,6 +19,7 @@ public class GradeStep extends DomainObject {
 
     @ManyToOne
     @JoinColumn(name = "grading_scale_id")
+    @JsonIgnore
     private GradingScale gradingScale;
 
     @Column(name = "lower_bound_percentage")
