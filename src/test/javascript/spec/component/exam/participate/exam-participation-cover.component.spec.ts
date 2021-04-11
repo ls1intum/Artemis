@@ -81,7 +81,7 @@ describe('ExamParticipationCoverComponent', () => {
         component.studentExam = studentExam;
         component.handInEarly = false;
         component.handInPossible = true;
-        component.testRunStartTime = null;
+        component.testRunStartTime = undefined;
     });
 
     afterEach(function () {

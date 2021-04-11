@@ -8,11 +8,11 @@ import org.apache.commons.io.IOUtils;
 
 public class FlowchartUtil {
 
-    static final String FLOWCHART_MODEL_1A;
+    public static final String FLOWCHART_MODEL_1A;
 
-    static final String FLOWCHART_MODEL_1B;
+    public static final String FLOWCHART_MODEL_1B;
 
-    static final String FLOWCHART_MODEL_2;
+    public static final String FLOWCHART_MODEL_2;
 
     static {
         try {

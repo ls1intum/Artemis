@@ -193,6 +193,9 @@ public abstract class Exercise extends DomainObject {
     @Transient
     private Long numberOfParticipationsTransient; // used for instructor exam checklist
 
+    @Transient
+    private Boolean testRunParticipationsExistTransient;
+
     public String getTitle() {
         return title;
     }
@@ -370,6 +373,14 @@ public abstract class Exercise extends DomainObject {
 
     public void setStudentParticipations(Set<StudentParticipation> studentParticipations) {
         this.studentParticipations = studentParticipations;
+    }
+
+    public Boolean getTestRunParticipationsExist() {
+        return testRunParticipationsExistTransient;
+    }
+
+    public void setTestRunParticipationsExist(Boolean testRunParticipationsExistTransient) {
+        this.testRunParticipationsExistTransient = testRunParticipationsExistTransient;
     }
 
     /**

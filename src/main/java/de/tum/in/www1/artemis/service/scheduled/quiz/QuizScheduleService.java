@@ -119,7 +119,7 @@ public class QuizScheduleService {
      * @param result the result, which should be added
      */
     public void addResultForStatisticUpdate(Long quizExerciseId, Result result) {
-        log.debug("add result for statistic update for quiz " + quizExerciseId + ": " + result);
+        log.debug("add result for statistic update for quiz {}: {}", quizExerciseId, result);
         if (quizExerciseId != null && result != null) {
             quizCache.getTransientWriteCacheFor(quizExerciseId).getResults().put(result.getId(), result);
         }
@@ -314,7 +314,7 @@ public class QuizScheduleService {
                 }
             }
             catch (@SuppressWarnings("unused") StaleTaskException e) {
-                log.info("Stop scheduled quiz start for quiz " + quizExerciseId + " already disposed/cancelled");
+                log.info("Stop scheduled quiz start for quiz {} already disposed/cancelled", quizExerciseId);
                 // has already been disposed (sadly there is no method to check that)
             }
         });
@@ -382,7 +382,7 @@ public class QuizScheduleService {
                 QuizExercise quizExercise = quizExerciseRepository.findOne(quizExerciseId);
                 // check if quiz has been deleted
                 if (quizExercise == null) {
-                    log.debug("Remove quiz " + quizExerciseId + " from resultHashMap");
+                    log.debug("Remove quiz {} from resultHashMap", quizExerciseId);
                     quizCache.removeAndClear(quizExerciseId);
                     continue;
                 }

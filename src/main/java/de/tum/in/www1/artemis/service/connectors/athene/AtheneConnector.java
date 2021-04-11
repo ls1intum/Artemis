@@ -3,10 +3,7 @@ package de.tum.in.www1.artemis.service.connectors.athene;
 import javax.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.web.client.RestTemplate;
 
 import de.tum.in.www1.artemis.exception.NetworkingError;
@@ -57,7 +54,7 @@ class AtheneConnector<RequestType, ResponseType> {
 
         final ResponseType responseBody = response.getBody();
         assert responseBody != null;
-        log.debug("Finished remote call in " + (System.currentTimeMillis() - start) + "ms");
+        log.debug("Finished remote call in {}ms", System.currentTimeMillis() - start);
 
         return responseBody;
     }

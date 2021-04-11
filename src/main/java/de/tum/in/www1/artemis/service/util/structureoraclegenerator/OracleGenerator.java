@@ -3,10 +3,7 @@ package de.tum.in.www1.artemis.service.util.structureoraclegenerator;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,6 +14,7 @@ import com.google.gson.JsonObject;
 import com.thoughtworks.qdox.JavaProjectBuilder;
 import com.thoughtworks.qdox.model.JavaClass;
 import com.thoughtworks.qdox.model.JavaSource;
+
 import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 
 /**
@@ -66,7 +64,7 @@ public class OracleGenerator {
      * @return The string of the JSON representation of the structure oracle.
      */
     public static String generateStructureOracleJSON(Path solutionProjectPath, Path templateProjectPath) {
-        log.debug("Generating the Oracle for the following projects: \n" + "Solution project: " + solutionProjectPath + "\n" + "Template project: " + templateProjectPath + "\n");
+        log.debug("Generating the Oracle for the following projects:\nSolution project: {}\nTemplate project: {}\n", solutionProjectPath, templateProjectPath);
 
         // Initialize the empty string.
         JsonArray structureOracleJSON = new JsonArray();
@@ -107,7 +105,7 @@ public class OracleGenerator {
                 diffJSON.add("constructors", serializer.serializeConstructors());
             }
 
-            log.debug("Generated JSON for '" + solutionType.getCanonicalName() + "'.");
+            log.debug("Generated JSON for '{}'.", solutionType.getCanonicalName());
             structureOracleJSON.add(diffJSON);
         }
 
@@ -147,8 +145,8 @@ public class OracleGenerator {
     private static Map<JavaClass, JavaClass> generateSolutionToTemplateMapping(Path solutionProjectPath, Path templateProjectPath) {
         List<File> templateFiles = retrieveJavaSourceFiles(templateProjectPath);
         List<File> solutionFiles = retrieveJavaSourceFiles(solutionProjectPath);
-        log.debug("Template Java Files " + templateFiles);
-        log.debug("Solution Java Files " + solutionFiles);
+        log.debug("Template Java Files {}", templateFiles);
+        log.debug("Solution Java Files {}", solutionFiles);
         List<JavaClass> templateClasses = getClassesFromFiles(templateFiles);
         List<JavaClass> solutionClasses = getClassesFromFiles(solutionFiles);
 

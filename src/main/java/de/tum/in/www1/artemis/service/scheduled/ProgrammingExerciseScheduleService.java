@@ -23,12 +23,9 @@ import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseLifecycle;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
-import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
-import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
-import de.tum.in.www1.artemis.repository.ResultRepository;
-import de.tum.in.www1.artemis.repository.StudentExamRepository;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.SecurityUtils;
-import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.service.GroupNotificationService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.exam.ExamDateService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseGradingService;
@@ -109,9 +106,9 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
             List<ProgrammingExercise> programmingExercisesWithExam = programmingExerciseRepository.findAllWithEagerExamByExamEndDateAfterDate(ZonedDateTime.now());
             programmingExercisesWithExam.forEach(this::scheduleExamExercise);
 
-            log.info("Scheduled " + exercisesToBeScheduled.size() + " programming exercises.");
-            log.info("Scheduled " + programmingExercisesWithTestsAfterDueDateButNoRebuild.size() + "programming exercises for a score update after due date.");
-            log.info("Scheduled " + programmingExercisesWithExam.size() + " exam programming exercises.");
+            log.info("Scheduled {} programming exercises.", exercisesToBeScheduled.size());
+            log.info("Scheduled {} programming exercises for a score update after due date.", programmingExercisesWithTestsAfterDueDateButNoRebuild.size());
+            log.info("Scheduled {} exam programming exercises.", programmingExercisesWithExam.size());
 
         }
         catch (Exception e) {
@@ -225,8 +222,8 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
                     updateAllStudentScores(exercise).run();
                 }
             });
-            log.debug("Scheduled lock student repositories after due date for Programming Exercise \"" + exercise.getTitle() + "\" (#" + exercise.getId() + ") for "
-                    + exercise.getDueDate() + ".");
+            log.debug("Scheduled lock student repositories after due date for Programming Exercise '{}' (#{}) for {}.", exercise.getTitle(), exercise.getId(),
+                    exercise.getDueDate());
         }
         else {
             scheduleService.cancelScheduledTaskForLifecycle(exercise.getId(), ExerciseLifecycle.DUE);
@@ -235,8 +232,8 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
         // For exercises with buildAndTestAfterDueDate
         if (exercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null && ZonedDateTime.now().isBefore(exercise.getBuildAndTestStudentSubmissionsAfterDueDate())) {
             scheduleService.scheduleTask(exercise, ExerciseLifecycle.BUILD_AND_TEST_AFTER_DUE_DATE, buildAndTestRunnableForExercise(exercise));
-            log.debug("Scheduled build and test for student submissions after due date for Programming Exercise \"" + exercise.getTitle() + "\" (#" + exercise.getId() + ") for "
-                    + exercise.getBuildAndTestStudentSubmissionsAfterDueDate() + ".");
+            log.debug("Scheduled build and test for student submissions after due date for Programming Exercise '{}' (#{}) for {}.", exercise.getTitle(), exercise.getId(),
+                    exercise.getBuildAndTestStudentSubmissionsAfterDueDate());
         }
         else {
             scheduleService.cancelScheduledTaskForLifecycle(exercise.getId(), ExerciseLifecycle.BUILD_AND_TEST_AFTER_DUE_DATE);
@@ -276,7 +273,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
         else {
             scheduleService.cancelScheduledTaskForLifecycle(exercise.getId(), ExerciseLifecycle.BUILD_AND_TEST_AFTER_DUE_DATE);
         }
-        log.debug("Scheduled Exam Programming Exercise \"" + exercise.getTitle() + "\" (#" + exercise.getId() + ").");
+        log.debug("Scheduled Exam Programming Exercise '{}' (#{}).", exercise.getTitle(), exercise.getId());
     }
 
     @NotNull
@@ -287,7 +284,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
                 ProgrammingExercise programmingExerciseWithTemplateParticipation = programmingExerciseRepository
                         .findByIdWithTemplateAndSolutionParticipationElseThrow(exercise.getId());
                 gitService.combineAllCommitsOfRepositoryIntoOne(programmingExerciseWithTemplateParticipation.getTemplateParticipation().getVcsRepositoryUrl());
-                log.debug("Combined template repository commits of programming exercise " + programmingExerciseWithTemplateParticipation.getId() + ".");
+                log.debug("Combined template repository commits of programming exercise {}.", programmingExerciseWithTemplateParticipation.getId());
                 groupNotificationService.notifyInstructorGroupAboutExerciseUpdate(programmingExerciseWithTemplateParticipation,
                         Constants.PROGRAMMING_EXERCISE_SUCCESSFUL_COMBINE_OF_TEMPLATE_COMMITS);
             }
@@ -305,11 +302,11 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
         return () -> {
             SecurityUtils.setAuthorizationObject();
             try {
-                log.info("Invoking scheduled task programming exercise with id " + exercise.getId() + ".");
+                log.info("Invoking scheduled task programming exercise with id {}.", exercise.getId());
                 programmingSubmissionService.triggerInstructorBuildForExercise(exercise.getId());
             }
             catch (EntityNotFoundException ex) {
-                log.error("Programming exercise with id " + exercise.getId() + " is no longer available in database for use in scheduled task.");
+                log.error("Programming exercise with id {} is no longer available in database for use in scheduled task.", exercise.getId());
             }
         };
     }
@@ -402,7 +399,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
                 }
             }
             catch (EntityNotFoundException ex) {
-                log.error("Programming exercise with id " + programmingExerciseId + " is no longer available in database for use in scheduled task.");
+                log.error("Programming exercise with id {} is no longer available in database for use in scheduled task.", programmingExerciseId);
             }
         };
     }
@@ -461,7 +458,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
                 }
             }
             catch (EntityNotFoundException ex) {
-                log.error("Programming exercise with id " + programmingExerciseId + " is no longer available in database for use in scheduled task.");
+                log.error("Programming exercise with id {} is no longer available in database for use in scheduled task.", programmingExerciseId);
             }
         };
     }
@@ -517,7 +514,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
     private List<ProgrammingExerciseStudentParticipation> invokeOperationOnAllParticipationsThatSatisfy(Long programmingExerciseId,
             BiConsumer<ProgrammingExercise, ProgrammingExerciseStudentParticipation> operation, Predicate<ProgrammingExerciseStudentParticipation> condition,
             String operationName) {
-        log.info("Invoking (scheduled) task '" + operationName + "' for programming exercise with id " + programmingExerciseId + ".");
+        log.info("Invoking (scheduled) task '{}' for programming exercise with id {}.", operationName, programmingExerciseId);
 
         Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(programmingExerciseId);
         if (programmingExercise.isEmpty()) {
@@ -541,8 +538,8 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
                 operation.accept(programmingExercise.get(), programmingExerciseStudentParticipation);
             }
             catch (Exception e) {
-                log.error("'" + operationName + "' failed for programming exercise with id " + programmingExerciseId + " for student repository with participation id "
-                        + studentParticipation.getId(), e);
+                log.error(String.format("'%s' failed for programming exercise with id %d for student repository with participation id %d", operationName, programmingExerciseId,
+                        studentParticipation.getId()), e);
                 failedOperations.add(programmingExerciseStudentParticipation);
             }
         }
