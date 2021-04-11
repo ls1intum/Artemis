@@ -22,5 +22,5 @@ export class ExerciseUnitComponent {
     course: Course;
 
     @Input()
-    isPresentationMode: false;
+    isPresentationMode = false;
 }
