@@ -3,7 +3,7 @@ import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { NgbActiveModal, NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
-    templateUrl: './confirm-autofocus-button.component.html',
+    templateUrl: './confirm-autofocus-modal.component.html',
 })
 export class ConfirmAutofocusModalComponent {
     title: string;
