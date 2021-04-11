@@ -48,7 +48,6 @@ export class StudentParticipationResolver implements Resolve<number | undefined>
     resolve(route: ActivatedRouteSnapshot) {
         const participationId = Number(route.paramMap.get('participationId'));
         const correctionRound = Number(route.queryParamMap.get('correction-round'));
-        console.log('programming route called', correctionRound);
         if (participationId) {
             return this.programmingSubmissionService.lockAndGetProgrammingSubmissionParticipation(participationId, correctionRound).pipe(
                 map((participation) => participation.id),

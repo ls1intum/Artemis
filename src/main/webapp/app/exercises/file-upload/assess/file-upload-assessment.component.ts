@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, OnDestroy, OnInit, ViewEncapsulation, OnChanges } from '@angular/core';
+import { ChangeDetectorRef, Component, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -35,7 +35,7 @@ import { getExerciseDashboardLink, getLinkToSubmissionAssessment } from 'app/uti
     styles: [],
     encapsulation: ViewEncapsulation.None,
 })
-export class FileUploadAssessmentComponent implements OnInit, OnDestroy, OnChanges {
+export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
     text: string;
     participation: StudentParticipation;
     submission: FileUploadSubmission;
@@ -93,10 +93,6 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy, OnChang
 
     get assessments(): Feedback[] {
         return [...this.unreferencedFeedback];
-    }
-
-    public ngOnChanges(): void {
-        console.log('change:', this.highlightDifferences);
     }
 
     public ngOnInit(): void {

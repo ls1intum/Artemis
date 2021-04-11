@@ -31,7 +31,7 @@ import { Feedback } from 'app/entities/feedback.model';
     selector: 'jhi-code-editor-container',
     templateUrl: './code-editor-container.component.html',
 })
-export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnChanges {
+export class CodeEditorContainerComponent implements ComponentCanDeactivate {
     readonly CommitState = CommitState;
     @ViewChild(CodeEditorGridComponent, { static: false }) grid: CodeEditorGridComponent;
 
@@ -95,10 +95,6 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnC
         private fileService: CodeEditorFileService,
     ) {
         this.initializeProperties();
-    }
-
-    ngOnChanges() {
-        console.log('code editor container: ', this.highlightDifferences);
     }
 
     get unsavedFiles() {

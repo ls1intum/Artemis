@@ -137,7 +137,6 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
                 this.initEditorAfterFileChange();
             }
         }
-        console.log('code editor ace', this.highlightDifferences);
     }
 
     /**

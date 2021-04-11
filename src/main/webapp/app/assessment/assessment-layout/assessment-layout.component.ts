@@ -1,4 +1,4 @@
-import { Component, EventEmitter, HostBinding, Input, Output, OnChanges } from '@angular/core';
+import { Component, EventEmitter, HostBinding, Input, Output } from '@angular/core';
 import { Result } from 'app/entities/result.model';
 import { ComplaintResponse } from 'app/entities/complaint-response.model';
 import { Complaint, ComplaintType } from 'app/entities/complaint.model';
@@ -16,7 +16,7 @@ import { Submission } from 'app/entities/submission.model';
     templateUrl: './assessment-layout.component.html',
     styleUrls: ['./assessment-layout.component.scss'],
 })
-export class AssessmentLayoutComponent implements OnChanges {
+export class AssessmentLayoutComponent {
     @HostBinding('class.assessment-container') readonly assessmentContainerClass = true;
 
     @Output() navigateBack = new EventEmitter<void>();
@@ -60,8 +60,4 @@ export class AssessmentLayoutComponent implements OnChanges {
     @Output() nextSubmission = new EventEmitter<void>();
     @Output() updateAssessmentAfterComplaint = new EventEmitter<ComplaintResponse>();
     @Output() highlightDifferencesChange = new EventEmitter<boolean>();
-
-    public ngOnChanges(): void {
-        console.log('change layout:', this.highlightDifferences);
-    }
 }
