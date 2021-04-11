@@ -119,7 +119,7 @@ public class StudentQuestionAnswerResource {
         courseRepository.findByIdElseThrow(courseId);
         StudentQuestionAnswer existingStudentQuestionAnswer = studentQuestionAnswerRepository.findByIdElseThrow(studentQuestionAnswer.getId());
         if (!existingStudentQuestionAnswer.getQuestion().getCourse().getId().equals(courseId)) {
-            return badRequest("courseId", "400", "PathVariable courseId doesnt match courseId of the StudentQuestionAnswer in the body");
+            return badRequest("courseId", "400", "PathVariable courseId doesn't match courseId of the StudentQuestionAnswer in the body");
         }
         mayUpdateOrDeleteStudentQuestionAnswerElseThrow(existingStudentQuestionAnswer, user);
         StudentQuestionAnswer result = studentQuestionAnswerRepository.save(studentQuestionAnswer);
