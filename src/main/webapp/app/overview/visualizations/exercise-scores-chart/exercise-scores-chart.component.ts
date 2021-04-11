@@ -1,6 +1,6 @@
 import { AfterViewInit, Component, ElementRef, Input, OnDestroy, ViewChild } from '@angular/core';
 import * as Chart from 'chart.js';
-import { ChartDataSets, ChartOptions, ChartPoint } from 'chart.js';
+import { ChartDataSets, ChartOptions } from 'chart.js';
 import { BaseChartDirective, Color, Label } from 'ng2-charts';
 import { ExerciseScoresChartService, ExerciseScoresDTO } from 'app/overview/visualizations/exercise-scores-chart.service';
 import { JhiAlertService } from 'ng-jhipster';
@@ -10,6 +10,15 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
 import * as _ from 'lodash';
 import { TranslateService } from '@ngx-translate/core';
+import { ExerciseType } from 'app/entities/exercise.model';
+
+// this exercise information is needed for tooltip generation and to navigate to an exercise page
+export class CustomChartPoint implements Chart.ChartPoint {
+    y: number;
+    exerciseId: number;
+    exerciseTitle: string;
+    exerciseType: ExerciseType;
+}
 
 @Component({
     selector: 'jhi-exercise-scores-chart',
@@ -83,7 +92,6 @@ export class ExerciseScoresChartComponent implements AfterViewInit, OnDestroy {
 
     private addData(chart: Chart, exerciseScoresDTOs: ExerciseScoresDTO[]) {
         for (const exerciseScoreDTO of exerciseScoresDTOs) {
-            // this bonus information is needed for tooltip generation and to navigate to an exercise page
             const extraInformation = {
                 exerciseId: exerciseScoreDTO.exerciseId,
                 exerciseTitle: exerciseScoreDTO.exerciseTitle,
@@ -92,18 +100,18 @@ export class ExerciseScoresChartComponent implements AfterViewInit, OnDestroy {
 
             chart.data.labels!.push(exerciseScoreDTO.exerciseTitle!);
             // from each dto we generate a data point for each of three data sets
-            (chart.data.datasets![0].data as ChartPoint[])!.push({
+            (chart.data.datasets![0].data as CustomChartPoint[])!.push({
                 y: exerciseScoreDTO.scoreOfStudent,
                 ...extraInformation,
-            } as Chart.ChartPoint);
-            (chart.data.datasets![1].data as ChartPoint[])!.push({
+            } as CustomChartPoint);
+            (chart.data.datasets![1].data as CustomChartPoint[])!.push({
                 y: exerciseScoreDTO.averageScoreAchieved,
                 ...extraInformation,
-            } as Chart.ChartPoint);
-            (chart.data.datasets![2].data as ChartPoint[])!.push({
+            } as CustomChartPoint);
+            (chart.data.datasets![2].data as CustomChartPoint[])!.push({
                 y: exerciseScoreDTO.maxScoreAchieved,
                 ...extraInformation,
-            } as Chart.ChartPoint);
+            } as CustomChartPoint);
         }
         this.chartInstance.update();
     }
@@ -122,6 +130,7 @@ export class ExerciseScoresChartComponent implements AfterViewInit, OnDestroy {
      * 2.) Average score achieved by all users in the exercise
      * 3.) Best score achieved by a user in the exercise
      */
+
     public dataSets: ChartDataSets[] = [
         // score of logged in user in exercise
         {
