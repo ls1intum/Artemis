@@ -5,6 +5,7 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 
 import java.net.URL;
+import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -35,8 +36,8 @@ public class JenkinsDockerUrlServiceTest extends AbstractSpringIntegrationJenkin
         ciUrl = "http://localhost:8080/some-ci-path";
         dockerVcsUrl = new URL("http://1.2.3.4:123");
         dockerCiUrl = new URL("http://5.6.7.8:123");
-        ReflectionTestUtils.setField(jenkinsDockerUrlService, "dockerVcsUrl", null);
-        ReflectionTestUtils.setField(jenkinsDockerUrlService, "dockerCiUrl", null);
+        ReflectionTestUtils.setField(jenkinsDockerUrlService, "dockerVcsUrl", Optional.empty());
+        ReflectionTestUtils.setField(jenkinsDockerUrlService, "dockerCiUrl", Optional.empty());
     }
 
     @Test
@@ -49,7 +50,7 @@ public class JenkinsDockerUrlServiceTest extends AbstractSpringIntegrationJenkin
     @Test
     @WithMockUser(username = "student1")
     public void testGetVcsUrlOnDockerVcsUrl() {
-        ReflectionTestUtils.setField(jenkinsDockerUrlService, "dockerVcsUrl", dockerVcsUrl);
+        ReflectionTestUtils.setField(jenkinsDockerUrlService, "dockerVcsUrl", Optional.of(dockerVcsUrl));
 
         var newVcsUrl = jenkinsDockerUrlService.toDockerVcsUrl(vcsRepositoryUrl);
         assertThat(newVcsUrl).hasToString("http://1.2.3.4:123/some-repo.git");
@@ -69,7 +70,7 @@ public class JenkinsDockerUrlServiceTest extends AbstractSpringIntegrationJenkin
     @Test
     @WithMockUser(username = "student1")
     public void testGetCiUrlOnDockerCiUrl() {
-        ReflectionTestUtils.setField(jenkinsDockerUrlService, "dockerCiUrl", dockerCiUrl);
+        ReflectionTestUtils.setField(jenkinsDockerUrlService, "dockerCiUrl", Optional.of(dockerCiUrl));
 
         var newCiUrl = jenkinsDockerUrlService.toDockerCiUrl(ciUrl);
         assertThat(newCiUrl).hasToString("http://5.6.7.8:123/some-ci-path");
@@ -80,8 +81,8 @@ public class JenkinsDockerUrlServiceTest extends AbstractSpringIntegrationJenkin
     @Test
     @WithMockUser(username = "student1")
     public void testGetUrlOnDockerUrlWithoutPort() throws Exception {
-        ReflectionTestUtils.setField(jenkinsDockerUrlService, "dockerCiUrl", new URL("http://www.host.name.com/"));
-        ReflectionTestUtils.setField(jenkinsDockerUrlService, "dockerVcsUrl", new URL("http://www.hostname.com/"));
+        ReflectionTestUtils.setField(jenkinsDockerUrlService, "dockerCiUrl", Optional.of(new URL("http://www.host.name.com/")));
+        ReflectionTestUtils.setField(jenkinsDockerUrlService, "dockerVcsUrl", Optional.of(new URL("http://www.hostname.com/")));
 
         var newVcsUrl = jenkinsDockerUrlService.toDockerVcsUrl(vcsRepositoryUrl);
         assertThat(newVcsUrl).hasToString("http://www.hostname.com/some-repo.git");
