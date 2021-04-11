@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, OnChanges } from '@angular/core';
 import { Result } from 'app/entities/result.model';
 
 /**
@@ -12,7 +12,7 @@ import { Result } from 'app/entities/result.model';
     templateUrl: './assessment-header.component.html',
     styleUrls: ['./assessment-header.component.scss'],
 })
-export class AssessmentHeaderComponent {
+export class AssessmentHeaderComponent implements OnChanges {
     @Input() isLoading: boolean;
     @Input() saveBusy: boolean;
     @Input() submitBusy: boolean;
@@ -34,11 +34,34 @@ export class AssessmentHeaderComponent {
     @Input() complaintHandled = false;
     @Input() assessmentsAreValid: boolean;
     @Input() hasAssessmentDueDatePassed: boolean;
-    @Input() highlightDifferences: boolean;
 
     @Output() save = new EventEmitter<void>();
     @Output() submit = new EventEmitter<void>();
     @Output() cancel = new EventEmitter<void>();
     @Output() nextSubmission = new EventEmitter<void>();
-    @Output() switchHighlightDifferences = new EventEmitter<any>();
+    @Output() highlightDifferencesChange = new EventEmitter<boolean>();
+
+    private _highlightDifferences: boolean;
+
+    @Input() set highlightDifferences(highlightDifferences: boolean) {
+        this._highlightDifferences = highlightDifferences;
+        this.highlightDifferencesChange.emit(this.highlightDifferences);
+    }
+
+    get highlightDifferences() {
+        return this._highlightDifferences;
+    }
+
+    /**
+     * In ExamMode:
+     * Highlight the difference between the first and second correction round
+     */
+    public toggleHighlightDifferences() {
+        this.highlightDifferences = !this.highlightDifferences;
+        this.highlightDifferencesChange.emit(this.highlightDifferences);
+    }
+
+    public ngOnChanges(): void {
+        console.log('change header:', this.highlightDifferences);
+    }
 }

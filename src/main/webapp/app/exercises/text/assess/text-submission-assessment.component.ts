@@ -276,14 +276,6 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
     }
 
     /**
-     * In ExamMode:
-     * Highlight the difference between the first and second correction round
-     */
-    switchHighlightDifferences(): void {
-        this.highlightDifferences = !this.highlightDifferences;
-    }
-
-    /**
      * Go to next submission
      */
     async nextSubmission(): Promise<void> {

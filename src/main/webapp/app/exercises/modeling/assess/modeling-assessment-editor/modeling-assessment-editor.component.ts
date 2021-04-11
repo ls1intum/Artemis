@@ -269,14 +269,6 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         return !this.isAtLeastInstructor && !!this.complaint && this.isAssessor;
     }
 
-    /**
-     * In ExamMode:
-     * Highlight the difference between the first and second correction round
-     */
-    switchHighlightDifferences(): void {
-        this.highlightDifferences = !this.highlightDifferences;
-    }
-
     private handeErrorResponse(error: HttpErrorResponse): void {
         this.loadingInitialSubmission = false;
         this.submission = undefined;

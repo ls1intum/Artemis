@@ -613,6 +613,18 @@ describe('FileUploadAssessmentComponent', () => {
         comp.navigateBack();
         expect(navigateByUrlStub).to.have.been.called;
     });
+
+    it('should toggle switch view to true', () => {
+        expect(comp.highlightDifferences).to.equal(false);
+        comp.switchHighlightDifferences(comp.highlightDifferences);
+        expect(comp.highlightDifferences).to.equal(true);
+    });
+
+    it('should toggle switch view to false', () => {
+        expect(comp.highlightDifferences).to.equal(true);
+        comp.switchHighlightDifferences(comp.highlightDifferences);
+        expect(comp.highlightDifferences).to.equal(false);
+    });
 });
 
 const createSubmission = (exercise: FileUploadExercise) => {

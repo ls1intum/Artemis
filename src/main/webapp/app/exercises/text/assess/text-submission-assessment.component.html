@@ -22,8 +22,7 @@
     (submit)="submit()"
     (cancel)="cancel()"
     (nextSubmission)="nextSubmission()"
-    (switchHighlightDifferences)="switchHighlightDifferences()"
-    [highlightDifferences]="highlightDifferences"
+    [(highlightDifferences)]="highlightDifferences"
     (updateAssessmentAfterComplaint)="updateAssessmentAfterComplaint($event)"
 >
     <ng-container *ngIf="submission; then assessment; else noSubmission"></ng-container>

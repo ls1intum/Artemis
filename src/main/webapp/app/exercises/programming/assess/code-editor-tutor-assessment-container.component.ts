@@ -284,14 +284,6 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     }
 
     /**
-     * In ExamMode:
-     * Highlight the difference between the first and second correction round
-     */
-    switchHighlightDifferences(): void {
-        this.highlightDifferences = !this.highlightDifferences;
-    }
-
-    /**
      * Save the assessment
      */
     save(): void {

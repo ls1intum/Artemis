@@ -77,18 +77,18 @@
         <button
             *ngIf="!highlightDifferences && result && correctionRound > 0"
             class="btn ml-2 btn-primary"
-            (click)="switchHighlightDifferences.emit()"
+            (click)="toggleHighlightDifferences()"
             [disabled]="saveBusy || submitBusy || cancelBusy"
         >
-            <span>Activate Diff-View</span>
+            <span jhiTranslate="artemisApp.assessment.differenceActivate">Activate Diff-View</span>
         </button>
         <button
             *ngIf="highlightDifferences && result && correctionRound > 0"
             class="btn ml-2 btn-primary"
-            (click)="switchHighlightDifferences.emit()"
+            (click)="toggleHighlightDifferences()"
             [disabled]="saveBusy || submitBusy || cancelBusy"
         >
-            <span>Deactivate Diff-View</span>
+            <span jhiTranslate="artemisApp.assessment.differenceDeactivate">Deactivate Diff-View</span>
         </button>
         <br />
         <ng-container *ngIf="!result?.completionDate">

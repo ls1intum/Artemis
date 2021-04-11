@@ -1,4 +1,4 @@
-import { Component, EventEmitter, HostBinding, Input, Output } from '@angular/core';
+import { Component, EventEmitter, HostBinding, Input, Output, OnChanges } from '@angular/core';
 import { Result } from 'app/entities/result.model';
 import { ComplaintResponse } from 'app/entities/complaint-response.model';
 import { Complaint, ComplaintType } from 'app/entities/complaint.model';
@@ -16,7 +16,7 @@ import { Submission } from 'app/entities/submission.model';
     templateUrl: './assessment-layout.component.html',
     styleUrls: ['./assessment-layout.component.scss'],
 })
-export class AssessmentLayoutComponent {
+export class AssessmentLayoutComponent implements OnChanges {
     @HostBinding('class.assessment-container') readonly assessmentContainerClass = true;
 
     @Output() navigateBack = new EventEmitter<void>();
@@ -43,11 +43,25 @@ export class AssessmentLayoutComponent {
     @Input() submission?: Submission;
     @Input() hasAssessmentDueDatePassed: boolean;
 
+    private _highlightDifferences: boolean;
+
+    @Input() set highlightDifferences(highlightDifferences: boolean) {
+        this._highlightDifferences = highlightDifferences;
+        this.highlightDifferencesChange.emit(this.highlightDifferences);
+    }
+
+    get highlightDifferences() {
+        return this._highlightDifferences;
+    }
+
     @Output() save = new EventEmitter<void>();
     @Output() submit = new EventEmitter<void>();
     @Output() cancel = new EventEmitter<void>();
     @Output() nextSubmission = new EventEmitter<void>();
     @Output() updateAssessmentAfterComplaint = new EventEmitter<ComplaintResponse>();
-    @Output() switchHighlightDifferences = new EventEmitter<void>();
-    @Input() highlightDifferences: boolean;
+    @Output() highlightDifferencesChange = new EventEmitter<boolean>();
+
+    public ngOnChanges(): void {
+        console.log('change layout:', this.highlightDifferences);
+    }
 }

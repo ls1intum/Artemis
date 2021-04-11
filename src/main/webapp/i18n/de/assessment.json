@@ -17,6 +17,8 @@
             "moreFeedbackRequest": "Du musst auf die Feedback Anfrage antworten.",
             "assessmentReadOnlyHandledComplaint": "Die Beschwerde über deine Bewertung wurde bearbeitet.",
             "assessmentDueDateIsOver": "Die Einreichungsfrist der Bewertung ist vorbei, die nächste Einreichung wird direkt veröffentlicht",
+            "differenceActivate": "Aktiviere Diff-Ansicht",
+            "differenceDeactivate": "Deaktiviere Diff-View",
             "button": {
                 "overrideAssessment": "Bewertung überschreiben",
                 "nextSubmission": "Nächste Abgabe bewerten",

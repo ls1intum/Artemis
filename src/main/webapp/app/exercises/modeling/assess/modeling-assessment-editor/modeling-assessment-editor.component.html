@@ -19,8 +19,7 @@
     (cancel)="onCancelAssessment()"
     (nextSubmission)="assessNext()"
     (updateAssessmentAfterComplaint)="onUpdateAssessmentAfterComplaint($event)"
-    (switchHighlightDifferences)="switchHighlightDifferences()"
-    [highlightDifferences]="highlightDifferences"
+    [(highlightDifferences)]="highlightDifferences"
     [correctionRound]="correctionRound"
 >
     <ng-container *ngIf="submission; then assessment; else noSubmission"></ng-container>
