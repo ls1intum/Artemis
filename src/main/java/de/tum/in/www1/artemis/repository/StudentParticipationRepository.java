@@ -124,9 +124,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             LEFT JOIN FETCH r.submission s
             WHERE p.exercise.id = :#{#exerciseId}
                 AND (r.id = (
-                    SELECT max(pr.id) FROM p.results pr
-                        LEFT JOIN pr.submission prs
-                        WHERE (prs.type <> 'ILLEGAL' OR prs.type IS NULL))
+                    SELECT max(id) FROM p.results)
                     OR r IS NULL)
             """)
     List<StudentParticipation> findByExerciseIdWithLatestResult(@Param("exerciseId") Long exerciseId);
@@ -138,9 +136,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             WHERE p.exercise.id = :#{#exerciseId}
                 AND p.testRun = false
                 AND (r.id = (
-                    SELECT max(pr.id) FROM p.results pr
-                        LEFT JOIN pr.submission prs
-                        WHERE (prs.type <> 'ILLEGAL' OR prs.type IS NULL))
+                    SELECT max(id) FROM p.results)
                     OR r IS NULL)
             """)
     List<StudentParticipation> findByExerciseIdWithLatestResultIgnoreTestRunSubmissions(@Param("exerciseId") Long exerciseId);
@@ -504,10 +500,9 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             SELECT p.id, COUNT(s) FROM StudentParticipation p
             LEFT JOIN p.submissions s
             WHERE p.exercise.id = :#{#exerciseId}
-                AND (s.type <> 'ILLEGAL' OR s.type IS NULL)
             GROUP BY p.id
             """)
-    List<long[]> countLegalSubmissionsPerParticipationByExerciseId(@Param("exerciseId") long exerciseId);
+    List<long[]> countSubmissionsPerParticipationByExerciseId(@Param("exerciseId") long exerciseId);
 
     /**
      * Count the number of submissions for each participation for a given team in a course
@@ -665,8 +660,8 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
      * @param exerciseId the id of the exercise for which to consider participations
      * @return the number of submissions per participation in the given exercise
      */
-    default Map<Long, Integer> countLegalSubmissionsPerParticipationByExerciseIdAsMap(long exerciseId) {
-        return convertListOfCountsIntoMap(countLegalSubmissionsPerParticipationByExerciseId(exerciseId));
+    default Map<Long, Integer> countSubmissionsPerParticipationByExerciseIdAsMap(long exerciseId) {
+        return convertListOfCountsIntoMap(countSubmissionsPerParticipationByExerciseId(exerciseId));
     }
 
     /**
