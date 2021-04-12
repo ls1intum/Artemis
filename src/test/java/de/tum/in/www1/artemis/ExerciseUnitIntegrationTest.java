@@ -23,54 +23,45 @@ import de.tum.in.www1.artemis.util.ModelFactory;
 public class ExerciseUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
-    ExerciseUnitRepository exerciseUnitRepository;
+    private CourseRepository courseRepository;
 
     @Autowired
-    CourseRepository courseRepository;
+    private UserRepository userRepo;
 
     @Autowired
-    LectureRepository lectureRepository;
+    private TextExerciseRepository textExerciseRepository;
 
     @Autowired
-    UserRepository userRepository;
+    private ModelingExerciseRepository modelingExerciseRepository;
 
     @Autowired
-    UserRepository userRepo;
+    private QuizExerciseRepository quizExerciseRepository;
 
     @Autowired
-    TextExerciseRepository textExerciseRepository;
+    private ProgrammingExerciseRepository programmingExerciseRepository;
 
     @Autowired
-    ModelingExerciseRepository modelingExerciseRepository;
+    private FileUploadExerciseRepository fileUploadExerciseRepository;
 
-    @Autowired
-    QuizExerciseRepository quizExerciseRepository;
+    private Course course1;
 
-    @Autowired
-    ProgrammingExerciseRepository programmingExerciseRepository;
+    private Lecture lecture1;
 
-    @Autowired
-    FileUploadExerciseRepository fileUploadExerciseRepository;
+    private TextExercise textExercise;
 
-    Course course1;
+    private ModelingExercise modelingExercise;
 
-    Lecture lecture1;
+    private ProgrammingExercise programmingExercise;
 
-    TextExercise textExercise;
+    private FileUploadExercise fileUploadExercise;
 
-    ModelingExercise modelingExercise;
-
-    ProgrammingExercise programmingExercise;
-
-    FileUploadExercise fileUploadExercise;
-
-    QuizExercise quizExercise;
+    private QuizExercise quizExercise;
 
     @BeforeEach
     public void initTestCase() throws Exception {
         this.database.addUsers(10, 10, 10);
         List<Course> courses = this.database.createCoursesWithExercisesAndLectures(true);
-        this.course1 = this.courseRepository.findWithEagerExercisesAndLecturesById(courses.get(0).getId());
+        this.course1 = this.courseRepository.findByIdWithExercisesAndLecturesElseThrow(courses.get(0).getId());
         this.lecture1 = this.course1.getLectures().stream().findFirst().get();
 
         this.textExercise = textExerciseRepository.findByCourseId(course1.getId()).stream().findFirst().get();

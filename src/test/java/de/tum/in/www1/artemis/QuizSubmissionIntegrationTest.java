@@ -1,8 +1,7 @@
 package de.tum.in.www1.artemis;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 import java.security.Principal;
@@ -559,7 +558,7 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         }
     }
 
-    @ParameterizedTest
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @EnumSource(ScoringType.class)
     @WithMockUser(value = "student1", roles = "USER")
     public void testQuizScoringType(ScoringType scoringType) {
@@ -608,7 +607,7 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
     }
 
     private void sleep(long millis) throws InterruptedException {
-        log.debug("zzzzzzzzzzzzz Sleep " + millis + "ms");
+        log.debug("zzzzzzzzzzzzz Sleep {}ms", millis);
         TimeUnit.MILLISECONDS.sleep(millis);
     }
 }

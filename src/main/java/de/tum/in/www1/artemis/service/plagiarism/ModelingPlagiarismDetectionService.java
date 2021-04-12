@@ -46,7 +46,7 @@ public class ModelingPlagiarismDetectionService {
             int minimumScore) {
         final List<ModelingSubmission> modelingSubmissions = modelingSubmissionsForComparison(exerciseWithParticipationsSubmissionsResults);
 
-        log.info("Found " + modelingSubmissions.size() + " modeling submissions in exercise " + exerciseWithParticipationsSubmissionsResults.getId());
+        log.info("Found {} modeling submissions in exercise {}", modelingSubmissions.size(), exerciseWithParticipationsSubmissionsResults.getId());
 
         ModelingPlagiarismResult result = compareSubmissions(modelingSubmissions, minimumSimilarity, minimumModelSize, minimumScore);
 
@@ -101,7 +101,7 @@ public class ModelingPlagiarismDetectionService {
                     }
                 });
 
-        log.info(String.format("Found %d modeling submissions with at least %d elements to compare", models.size(), minimumModelSize));
+        log.info("Found {} modeling submissions with at least {} elements to compare", models.size(), minimumModelSize);
 
         List<PlagiarismComparison<ModelingSubmissionElement>> comparisons = new ArrayList<>();
         List<UMLDiagram> nonEmptyDiagrams = new ArrayList<>(models.keySet());
@@ -116,7 +116,7 @@ public class ModelingPlagiarismDetectionService {
                 UMLDiagram model2 = nonEmptyDiagrams.get(j);
 
                 final double similarity = model1.similarity(model2);
-                log.debug("Compare result " + i + " with " + j + ": " + similarity);
+                log.debug("Compare result {} with {}: {}", i, j, similarity);
 
                 if (similarity < minimumSimilarity) {
                     // ignore comparison results with too small similarity
@@ -126,7 +126,7 @@ public class ModelingPlagiarismDetectionService {
                 ModelingSubmission modelingSubmissionA = models.get(model1);
                 ModelingSubmission modelingSubmissionB = models.get(model2);
 
-                log.info("Found similar models " + i + " with " + j + ": " + similarity);
+                log.info("Found similar models {} with {}: {}", i, j, similarity);
 
                 PlagiarismSubmission<ModelingSubmissionElement> submissionA = PlagiarismSubmission.fromModelingSubmission(modelingSubmissionA);
                 submissionA.setSize(model1.getAllModelElements().size());
@@ -149,7 +149,7 @@ public class ModelingPlagiarismDetectionService {
             }
         }
 
-        log.info(String.format("Found %d similar modeling submission combinations (>%f)", comparisons.size(), minimumSimilarity));
+        log.info("Found {} similar modeling submission combinations (>{})", comparisons.size(), minimumSimilarity);
 
         long durationInMillis = System.currentTimeMillis() - timeBeforeStartInMillis;
         int[] similarityDistribution = calculateSimilarityDistribution(comparisons);

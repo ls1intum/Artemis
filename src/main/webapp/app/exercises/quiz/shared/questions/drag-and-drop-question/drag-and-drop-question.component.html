@@ -5,7 +5,7 @@
     <div [hidden]="loadingState === 'success'">
         <h2 *ngIf="loadingState !== 'error'">
             <span style="color: grey"
-                ><fa-icon [icon]="'spinner'" spin="true"></fa-icon>&nbsp;<span>{{ 'artemisApp.quizQuestion.loading' | artemisTranslate }}</span></span
+                ><fa-icon [icon]="'spinner'" [spin]="true"></fa-icon>&nbsp;<span>{{ 'artemisApp.quizQuestion.loading' | artemisTranslate }}</span></span
             >
         </h2>
         <div *ngIf="loadingState === 'error'">
@@ -82,10 +82,10 @@
                             *ngFor="let dropLocation of question.dropLocations"
                             [ngClass]="dropAllowed ? 'drop-allowed' : ''"
                             [ngStyle]="{
-                                top: dropLocation.posY / 2 + '%',
-                                left: dropLocation.posX / 2 + '%',
-                                width: dropLocation.width / 2 + '%',
-                                height: dropLocation.height / 2 + '%'
+                                top: dropLocation.posY! / 2 + '%',
+                                left: dropLocation.posX! / 2 + '%',
+                                width: dropLocation.width! / 2 + '%',
+                                height: dropLocation.height! / 2 + '%'
                             }"
                             (onDropSuccess)="onDragDrop(dropLocation, $event)"
                             (onDragEnter)="preventDefault($event)"
@@ -97,13 +97,13 @@
                                 (dragenter)="drag()"
                                 (dragend)="drop()"
                                 *ngIf="dragItemForDropLocation(dropLocation)"
-                                [dragItem]="dragItemForDropLocation(dropLocation)"
+                                [dragItem]="dragItemForDropLocation(dropLocation)!"
                                 [clickDisabled]="clickDisabled"
                                 [minWidth]="100 + '%'"
                             ></jhi-drag-item>
                         </div>
                     </div>
-                    <div *ngIf="showResult && !showingSampleSolution">
+                    <div *ngIf="showResult && !showingSampleSolution && question.dropLocations">
                         <div *ngFor="let dropLocation of question.dropLocations">
                             <div
                                 class="drop-location results"
@@ -111,10 +111,10 @@
                                     incorrect: !isLocationCorrect(dropLocation) && !dropLocation.invalid && !invalidDragItemForDropLocation(dropLocation) && !question.invalid
                                 }"
                                 [ngStyle]="{
-                                    top: dropLocation.posY / 2 + '%',
-                                    left: dropLocation.posX / 2 + '%',
-                                    width: dropLocation.width / 2 + '%',
-                                    height: dropLocation.height / 2 + '%'
+                                    top: dropLocation.posY! / 2 + '%',
+                                    left: dropLocation.posX! / 2 + '%',
+                                    width: dropLocation.width! / 2 + '%',
+                                    height: dropLocation.height! / 2 + '%'
                                 }"
                             >
                                 <div
@@ -146,7 +146,7 @@
                                 </div>
                                 <jhi-drag-item
                                     *ngIf="dragItemForDropLocation(dropLocation)"
-                                    [dragItem]="dragItemForDropLocation(dropLocation)"
+                                    [dragItem]="dragItemForDropLocation(dropLocation)!"
                                     [clickDisabled]="true"
                                     [minWidth]="100 + '%'"
                                 >
@@ -165,10 +165,10 @@
                                     incorrect: !isLocationCorrect(dropLocation) && !dropLocation.invalid && !invalidDragItemForDropLocation(dropLocation) && !question.invalid
                                 }"
                                 [ngStyle]="{
-                                    top: dropLocation.posY / 2 + '%',
-                                    left: dropLocation.posX / 2 + '%',
-                                    width: dropLocation.width / 2 + '%',
-                                    height: dropLocation.height / 2 + '%'
+                                    top: dropLocation.posY! / 2 + '%',
+                                    left: dropLocation.posX! / 2 + '%',
+                                    width: dropLocation.width! / 2 + '%',
+                                    height: dropLocation.height! / 2 + '%'
                                 }"
                             >
                                 <div
@@ -201,12 +201,12 @@
                                     ></fa-icon>
                                 </div>
                                 <jhi-drag-item
-                                    [dragItem]="correctDragItemForDropLocation(dropLocation)"
-                                    *ngIf="correctDragItemForDropLocation(dropLocation) && !dropLocation.invalid && !question.invalid"
+                                    *ngIf="dropLocation && correctDragItemForDropLocation(dropLocation) && !dropLocation.invalid && !question.invalid"
+                                    [dragItem]="correctDragItemForDropLocation(dropLocation)!"
                                     [clickDisabled]="true"
                                     [minWidth]="100 + '%'"
                                 ></jhi-drag-item>
-                                <div class="drag-item no-click" *ngIf="!correctDragItemForDropLocation(dropLocation)">
+                                <div class="drag-item no-click" *ngIf="!dropLocation || !correctDragItemForDropLocation(dropLocation)">
                                     <div></div>
                                 </div>
                             </div>
@@ -235,7 +235,7 @@
                         *ngFor="let dragItem of getUnassignedDragItems()"
                         [dragItem]="dragItem"
                         [clickDisabled]="clickDisabled"
-                        [minWidth]="160"
+                        [minWidth]="'160'"
                     ></jhi-drag-item>
                 </div>
             </div>

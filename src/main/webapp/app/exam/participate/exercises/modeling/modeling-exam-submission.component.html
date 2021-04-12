@@ -13,7 +13,7 @@
                 <div *ngIf="studentSubmission && isActive" class="col-12 editor-large">
                     <jhi-modeling-editor
                         [umlModel]="umlModel"
-                        [diagramType]="exercise.diagramType"
+                        [diagramType]="exercise.diagramType!"
                         (onModelChanged)="modelChanged($event)"
                         [withExplanation]="true"
                         [explanation]="explanationText"
