@@ -69,7 +69,7 @@ public class ExamServiceTest extends AbstractSpringIntegrationBambooBitbucketJir
 
     @Test
     @WithMockUser(value = "admin", roles = "ADMIN")
-    public void testSetExamExerciseProperties() {
+    public void testSetExamProperties() {
         StudentParticipation studentParticipation = new StudentParticipation();
         studentParticipation.setTestRun(true);
         QuizExercise exercise = new QuizExercise();
@@ -88,7 +88,7 @@ public class ExamServiceTest extends AbstractSpringIntegrationBambooBitbucketJir
             });
         });
         assertThat(exam1.getNumberOfRegisteredUsers()).isNotNull();
-        assertThat(exam1.getNumberOfRegisteredUsers()).isEqualTo(2);
+        assertThat(exam1.getNumberOfRegisteredUsers()).isEqualTo(0);
     }
 
     @Test
