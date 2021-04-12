@@ -591,7 +591,7 @@ public class ExamService {
 
     /**
      * Sets exam transient properties for different exercise types
-     * @param exam - the exam for which we set the exercise properties
+     * @param exam - the exam for which we set the properties
      */
     public void setExamProperties(Exam exam) {
         exam.getExerciseGroups().forEach(exerciseGroup -> {
