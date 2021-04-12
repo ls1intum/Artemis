@@ -79,7 +79,7 @@ public class ExamServiceTest extends AbstractSpringIntegrationBambooBitbucketJir
         exerciseRepository.save(exercise);
         studentParticipationRepository.save(studentParticipation);
 
-        examService.setExamExerciseProperties(exam1);
+        examService.setExamProperties(exam1);
 
         assertThat(exercise.getTestRunParticipationsExist()).isEqualTo(true);
     }

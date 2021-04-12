@@ -54,6 +54,7 @@ export class ExamChecklistExerciseGroupTableComponent implements OnChanges {
                 }
                 exerciseGroupIndex++;
             });
+            console.log('exercisegroup', this.exerciseGroups);
         }
     }
 }
