@@ -43,10 +43,10 @@ public class ProgrammingSubmissionService extends SubmissionService {
     private final Logger log = LoggerFactory.getLogger(ProgrammingSubmissionService.class);
 
     @Value("${artemis.git.name}")
-    private String ARTEMIS_GIT_NAME;
+    private String artemisGitName;
 
     @Value("${artemis.git.email}")
-    private String ARTEMIS_GIT_EMAIL;
+    private String artemisGitEmail;
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
@@ -111,11 +111,9 @@ public class ProgrammingSubmissionService extends SubmissionService {
      */
     public ProgrammingSubmission notifyPush(Long participationId, Object requestBody) throws EntityNotFoundException, IllegalStateException, IllegalArgumentException {
         Participation participation = participationRepository.findByIdWithLegalSubmissionsElseThrow(participationId);
-        if (!(participation instanceof ProgrammingExerciseParticipation)) {
+        if (!(participation instanceof ProgrammingExerciseParticipation programmingExerciseParticipation)) {
             throw new EntityNotFoundException("Programming Exercise Participation", participationId);
         }
-
-        ProgrammingExerciseParticipation programmingExerciseParticipation = (ProgrammingExerciseParticipation) participation;
 
         // if the commit is made by the Artemis user and contains the commit message "Setup" (use a constant to determine this), we should ignore this
         // and we should not create a new submission here
@@ -137,9 +135,9 @@ public class ProgrammingSubmissionService extends SubmissionService {
             throw new IllegalStateException(
                     "Submission for participation id " + participationId + " in branch " + commit.getBranch() + " will be ignored! Only the master branch is considered");
         }
-        if (commit.getAuthorName() != null && commit.getAuthorName().equalsIgnoreCase(ARTEMIS_GIT_NAME) && commit.getAuthorEmail() != null
-                && commit.getAuthorEmail().equalsIgnoreCase(ARTEMIS_GIT_EMAIL) && commit.getMessage() != null && commit.getMessage().equals(SETUP_COMMIT_MESSAGE)) {
-            // if the commit was made by Artemis (this means it is a setup commit), we ignore this as well
+        if (artemisGitName.equalsIgnoreCase(commit.getAuthorName()) && artemisGitEmail.equalsIgnoreCase(commit.getAuthorEmail())
+                && SETUP_COMMIT_MESSAGE.equals(commit.getMessage())) {
+            // if the commit was made by Artemis and the message is "Setup" (this means it is an empty setup commit), we ignore this as well and do not create a submission!
             throw new IllegalStateException("Submission for participation id " + participationId + " based on an empty setup commit by Artemis will be ignored!");
         }
 
