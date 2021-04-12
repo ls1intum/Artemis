@@ -540,8 +540,8 @@ public class StudentExamResource {
             exercise.setExerciseGroup(null);
         }
 
-        if (exercise instanceof ProgrammingExercise) {
-            ((ProgrammingExercise) exercise).setTestRepositoryUrl(null);
+        if (exercise instanceof ProgrammingExercise programmingExercise) {
+            programmingExercise.setTestRepositoryUrl(null);
         }
 
         // get user's participation for the exercise
