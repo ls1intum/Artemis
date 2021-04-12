@@ -30,7 +30,7 @@
                 <span jhiTranslate="artemisApp.exam.exercise" [translateValues]="{ nr: i + 1 }">Exercise {{ i + 1 }}</span>
             </h5>
             <div *ngIf="resultsPublished">
-                <jhi-result [participation]="exercise.studentParticipations![0]"></jhi-result>
+                <jhi-result *ngIf="exercise.studentParticipations && exercise.studentParticipations.size > 0" [participation]="exercise.studentParticipations![0]"></jhi-result>
             </div>
             <button
                 id="{{ 'toggleCollapseExerciseButton-' + i }}"
