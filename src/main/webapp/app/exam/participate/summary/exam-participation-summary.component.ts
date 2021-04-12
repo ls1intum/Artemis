@@ -6,6 +6,8 @@ import { ActivatedRoute } from '@angular/router';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { Exam } from 'app/entities/exam.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
+import { IconProp } from '@fortawesome/fontawesome-svg-core';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 
 @Component({
     selector: 'jhi-exam-participation-summary',
@@ -36,6 +38,12 @@ export class ExamParticipationSummaryComponent implements OnInit {
 
     testRunConduction = false;
 
+    exercise: Exercise;
+
+    icon: IconProp;
+
+    programmingExercise: ProgrammingExercise;
+
     examWithOnlyIdAndStudentReviewPeriod: Exam;
 
     constructor(private route: ActivatedRoute, private serverDateService: ArtemisServerDateService) {}
@@ -50,10 +58,18 @@ export class ExamParticipationSummaryComponent implements OnInit {
         // courseId is not part of the exam or the exercise
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
         this.setExamWithOnlyIdAndStudentReviewPeriod();
+        this.setIcon(this.exercise.type);
     }
 
-    getIcon(exerciseType: ExerciseType) {
-        return getIcon(exerciseType);
+    setIcon(exerciseType?: ExerciseType) {
+        if (exerciseType) {
+            this.icon = getIcon(exerciseType) as IconProp;
+        }
+    }
+
+    getProgrammingExercise(exercise: Exercise) {
+        this.programmingExercise = exercise;
+        return this.programmingExercise;
     }
 
     get resultsPublished() {

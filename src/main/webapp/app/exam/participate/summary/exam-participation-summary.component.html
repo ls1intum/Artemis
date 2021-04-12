@@ -26,7 +26,7 @@
     <div class="question card">
         <div class="question-options card-header question-card-header">
             <h5>
-                &nbsp;<fa-icon [icon]="getIcon(exercise.type)"></fa-icon>&nbsp;
+                &nbsp;<fa-icon *ngIf="exercise && exercise.type" [icon]="icon"></fa-icon>&nbsp;
                 <span jhiTranslate="artemisApp.exam.exercise" [translateValues]="{ nr: i + 1 }">Exercise {{ i + 1 }}</span>
             </h5>
             <div *ngIf="resultsPublished">
@@ -63,7 +63,7 @@
             <jhi-programming-exercise-instructions
                 *ngIf="exercise.problemStatement && exercise.type === PROGRAMMING"
                 [exercise]="exercise"
-                [participation]="exercise.templateParticipation"
+                [participation]="getProgrammingExercise(exercise).templateParticipation!"
             ></jhi-programming-exercise-instructions>
             <ng-container *ngIf="exercise.type !== PROGRAMMING">
                 <!-- Show submission of student - if no submission found -> display that student did not participate -->
