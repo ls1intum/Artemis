@@ -1,12 +1,9 @@
 package de.tum.in.www1.artemis.repository;
 
-import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
-
 import java.util.Optional;
 
 import javax.validation.constraints.NotNull;
 
-import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -34,18 +31,21 @@ public interface ParticipationRepository extends JpaRepository<Participation, Lo
             LEFT JOIN FETCH p.submissions s
             LEFT JOIN FETCH s.results r
             WHERE p.id = :participationId
-            AND (s.id = (
-            		SELECT max(id) FROM p.submissions)
-            OR s.id = NULL)
+                AND (s.id = (SELECT max(id) FROM p.submissions) OR s.id = NULL)
             """)
     Optional<Participation> findByIdWithLatestSubmissionAndResult(@Param("participationId") Long participationId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "submissions" })
-    Optional<Participation> findWithEagerSubmissionsById(Long participationId);
+    @Query("""
+            SELECT p FROM Participation p
+            LEFT JOIN FETCH p.submissions s
+            WHERE p.id = :#{#participationId}
+                AND (s.type <> 'ILLEGAL' OR s.type IS NULL)
+            """)
+    Optional<Participation> findWithEagerLegalSubmissionsById(@Param("participationId") Long participationId);
 
     @NotNull
-    default Participation findByIdWithSubmissionsElseThrow(long participationId) {
-        return findWithEagerSubmissionsById(participationId).orElseThrow(() -> new EntityNotFoundException("Participation", participationId));
+    default Participation findByIdWithLegalSubmissionsElseThrow(long participationId) {
+        return findWithEagerLegalSubmissionsById(participationId).orElseThrow(() -> new EntityNotFoundException("Participation", participationId));
     }
 
     @NotNull

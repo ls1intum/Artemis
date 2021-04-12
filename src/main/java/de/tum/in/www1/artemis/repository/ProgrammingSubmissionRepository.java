@@ -26,6 +26,15 @@ public interface ProgrammingSubmissionRepository extends JpaRepository<Programmi
     @EntityGraph(type = LOAD, attributePaths = { "results.feedbacks" })
     ProgrammingSubmission findFirstByParticipationIdAndCommitHash(Long participationId, String commitHash);
 
+    @Query("""
+            SELECT s FROM ProgrammingSubmission s
+            LEFT JOIN FETCH s.results
+            WHERE (s.type <> 'ILLEGAL' or s.type is null)
+            AND s.participation.id = :#{#participationId}
+            AND s.id = (SELECT max(s2.id) FROM ProgrammingSubmission s2 WHERE s2.participation.id = :#{#participationId} AND (s2.type <> 'ILLEGAL' or s2.type is null))
+            """)
+    Optional<ProgrammingSubmission> findFirstByParticipationIdOrderByLegalSubmissionDateDesc(@Param("participationId") Long participationId);
+
     @EntityGraph(type = LOAD, attributePaths = "results")
     Optional<ProgrammingSubmission> findFirstByParticipationIdOrderBySubmissionDateDesc(Long participationId);
 
@@ -43,8 +52,12 @@ public interface ProgrammingSubmissionRepository extends JpaRepository<Programmi
     @Query("select s from ProgrammingSubmission s left join s.participation p left join p.exercise e where p.id = :#{#participationId} and (s.type = 'INSTRUCTOR' or s.type = 'TEST' or e.dueDate is null or s.submissionDate <= e.dueDate) order by s.submissionDate desc")
     List<ProgrammingSubmission> findGradedByParticipationIdOrderBySubmissionDateDesc(@Param("participationId") Long participationId, Pageable pageable);
 
-    @Query("select s from ProgrammingSubmission s where s.participation.id = :#{#participationId} order by s.submissionDate desc")
-    List<ProgrammingSubmission> findLatestSubmissionForParticipation(@Param("participationId") Long participationId, Pageable pageable);
+    @Query("""
+            select s from ProgrammingSubmission s
+            where s.participation.id = :#{#participationId} and (s.type <> 'ILLEGAL' or s.type is null)
+            order by s.submissionDate desc
+            """)
+    List<ProgrammingSubmission> findLatestLegalSubmissionForParticipation(@Param("participationId") Long participationId, Pageable pageable);
 
     @EntityGraph(type = LOAD, attributePaths = "results")
     Optional<ProgrammingSubmission> findWithEagerResultsById(Long submissionId);

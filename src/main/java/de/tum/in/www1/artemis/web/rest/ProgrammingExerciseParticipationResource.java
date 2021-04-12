@@ -17,7 +17,6 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipat
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.ResultService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingSubmissionService;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -34,7 +33,7 @@ public class ProgrammingExerciseParticipationResource {
 
     private final ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
 
-    private final ResultService resultService;
+    private final ResultRepository resultRepository;
 
     private final ProgrammingSubmissionService submissionService;
 
@@ -44,14 +43,14 @@ public class ProgrammingExerciseParticipationResource {
 
     private final GradingCriterionRepository gradingCriterionRepository;
 
-    public ProgrammingExerciseParticipationResource(ProgrammingExerciseParticipationService programmingExerciseParticipationService, ResultService resultService,
+    public ProgrammingExerciseParticipationResource(ProgrammingExerciseParticipationService programmingExerciseParticipationService, ResultRepository resultRepository,
             ParticipationRepository participationRepository, ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
             ProgrammingSubmissionService submissionService, ProgrammingExerciseRepository programmingExerciseRepository, AuthorizationCheckService authCheckService,
             GradingCriterionRepository gradingCriterionRepository) {
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.participationRepository = participationRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
-        this.resultService = resultService;
+        this.resultRepository = resultRepository;
         this.submissionService = submissionService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.authCheckService = authCheckService;
@@ -68,7 +67,7 @@ public class ProgrammingExerciseParticipationResource {
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Participation> getParticipationWithLatestResultForStudentParticipation(@PathVariable Long participationId) {
         Optional<ProgrammingExerciseStudentParticipation> participation = programmingExerciseStudentParticipationRepository
-                .findStudentParticipationWithLatestResultAndFeedbacksAndRelatedSubmissions(participationId);
+                .findStudentParticipationWithLatestResultAndFeedbacksAndRelatedLegalSubmissions(participationId);
         if (participation.isEmpty()) {
             return notFound();
         }
@@ -155,7 +154,7 @@ public class ProgrammingExerciseParticipationResource {
             return forbidden();
         }
 
-        Optional<Result> result = resultService.findLatestResultWithFeedbacksForParticipation(participation.getId(), withSubmission);
+        Optional<Result> result = resultRepository.findLatestResultWithFeedbacksForParticipation(participation.getId(), withSubmission);
         if (result.isPresent() && !authCheckService.isAtLeastTeachingAssistantForExercise(participation.getExercise())) {
             final boolean isBeforeDueDate = participation.getExercise().isBeforeDueDate();
             result.get().filterSensitiveInformation();
@@ -174,7 +173,7 @@ public class ProgrammingExerciseParticipationResource {
     @GetMapping(value = "/programming-exercise-participations/{participationId}/has-result")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Boolean> checkIfParticipationHashResult(@PathVariable Long participationId) {
-        boolean hasResult = resultService.existsByParticipationId(participationId);
+        boolean hasResult = resultRepository.existsByParticipationId(participationId);
         return ResponseEntity.ok(hasResult);
     }
 

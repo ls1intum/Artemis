@@ -50,7 +50,7 @@ public class TextExerciseResource {
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
-    private final TextAssessmentService textAssessmentService;
+    private final FeedbackRepository feedbackRepository;
 
     private final TextBlockRepository textBlockRepository;
 
@@ -92,14 +92,14 @@ public class TextExerciseResource {
 
     private final CourseRepository courseRepository;
 
-    public TextExerciseResource(TextExerciseRepository textExerciseRepository, TextExerciseService textExerciseService, TextAssessmentService textAssessmentService,
+    public TextExerciseResource(TextExerciseRepository textExerciseRepository, TextExerciseService textExerciseService, FeedbackRepository feedbackRepository,
             PlagiarismResultRepository plagiarismResultRepository, UserRepository userRepository, AuthorizationCheckService authCheckService, CourseService courseService,
             StudentParticipationRepository studentParticipationRepository, ResultRepository resultRepository, PlagiarismService plagiarismService,
             GroupNotificationService groupNotificationService, TextExerciseImportService textExerciseImportService, TextSubmissionExportService textSubmissionExportService,
             ExampleSubmissionRepository exampleSubmissionRepository, ExerciseService exerciseService, GradingCriterionRepository gradingCriterionRepository,
             TextBlockRepository textBlockRepository, ExerciseGroupRepository exerciseGroupRepository, InstanceMessageSendService instanceMessageSendService,
             TextPlagiarismDetectionService textPlagiarismDetectionService, CourseRepository courseRepository) {
-        this.textAssessmentService = textAssessmentService;
+        this.feedbackRepository = feedbackRepository;
         this.plagiarismResultRepository = plagiarismResultRepository;
         this.textBlockRepository = textBlockRepository;
         this.textExerciseService = textExerciseService;
@@ -142,11 +142,7 @@ public class TextExerciseResource {
             throw new BadRequestAlertException("A new textExercise needs a title", ENTITY_NAME, "missingtitle");
         }
 
-        // Validate score settings
-        Optional<ResponseEntity<TextExercise>> optionalScoreSettingsError = exerciseService.validateScoreSettings(textExercise);
-        if (optionalScoreSettingsError.isPresent()) {
-            return optionalScoreSettingsError.get();
-        }
+        exerciseService.validateScoreSettings(textExercise);
 
         if (textExercise.getDueDate() == null && textExercise.getAssessmentDueDate() != null) {
             throw new BadRequestAlertException("If you set an assessmentDueDate, then you need to add also a dueDate", ENTITY_NAME, "dueDate");
@@ -196,10 +192,7 @@ public class TextExerciseResource {
         }
 
         // Validate score settings
-        Optional<ResponseEntity<TextExercise>> optionalScoreSettingsError = exerciseService.validateScoreSettings(textExercise);
-        if (optionalScoreSettingsError.isPresent()) {
-            return optionalScoreSettingsError.get();
-        }
+        exerciseService.validateScoreSettings(textExercise);
 
         // Valid exercises have set either a course or an exerciseGroup
         textExercise.checkCourseAndExerciseGroupExclusivity(ENTITY_NAME);
@@ -358,7 +351,7 @@ public class TextExerciseResource {
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<StudentParticipation> getDataForTextEditor(@PathVariable Long participationId) {
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        StudentParticipation participation = studentParticipationRepository.findByIdWithSubmissionsResultsFeedbackElseThrow(participationId);
+        StudentParticipation participation = studentParticipationRepository.findByIdWithLegalSubmissionsResultsFeedbackElseThrow(participationId);
         if (!(participation.getExercise() instanceof TextExercise)) {
             throw new BadRequestAlertException("The exercise of the participation is not a text exercise.", ENTITY_NAME, "wrongExerciseType");
         }
@@ -397,7 +390,7 @@ public class TextExerciseResource {
                 textSubmission.setBlocks(textBlocks);
 
                 if (textSubmission.isSubmitted() && result.getCompletionDate() != null) {
-                    List<Feedback> assessments = textAssessmentService.getAssessmentsForResult(result);
+                    List<Feedback> assessments = feedbackRepository.findByResult(result);
                     result.setFeedbacks(assessments);
                 }
 

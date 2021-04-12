@@ -54,7 +54,7 @@ export class ShortAnswerQuestionComponent {
     showingSampleSolution = false;
     renderedQuestion: RenderedQuizQuestionMarkDownElement;
     sampleSolutions: ShortAnswerSolution[] = [];
-    textParts: (string | null)[][];
+    textParts: string[][];
 
     constructor(private artemisMarkdown: ArtemisMarkdownService, public shortAnswerQuestionUtil: ShortAnswerQuestionUtil) {}
 

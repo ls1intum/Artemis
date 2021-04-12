@@ -205,7 +205,7 @@ public class ProgrammingExerciseResultTestService {
     // Test
     public void shouldStoreFeedbackForResultWithStaticCodeAnalysisReport(Object resultNotification, ProgrammingLanguage programmingLanguage) {
         final var optionalResult = gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipationStaticCodeAnalysis, resultNotification);
-        final var savedResult = resultService.findOneWithEagerSubmissionAndFeedback(optionalResult.get().getId());
+        final var savedResult = resultRepository.findOneWithEagerSubmissionAndFeedback(optionalResult.get().getId());
 
         // Should be one because programmingExerciseStudentParticipationStaticCodeAnalysis doesn't have a submission
         var submissions = programmingSubmissionRepository.findAll();
@@ -237,7 +237,7 @@ public class ProgrammingExerciseResultTestService {
     public void shouldStoreBuildLogsForSubmission(Object resultNotification) {
         final var optionalResult = gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipation, resultNotification);
 
-        var submission = programmingSubmissionRepository.findFirstByParticipationIdOrderBySubmissionDateDesc(programmingExerciseStudentParticipation.getId());
+        var submission = programmingSubmissionRepository.findFirstByParticipationIdOrderByLegalSubmissionDateDesc(programmingExerciseStudentParticipation.getId());
         var submissionWithLogs = programmingSubmissionRepository.findWithEagerBuildLogEntriesById(submission.get().getId());
         var expectedNoOfLogs = getNumberOfBuildLogs(resultNotification) - 3;  // 3 of those should be filtered
         assertThat(((ProgrammingSubmission) optionalResult.get().getSubmission()).getBuildLogEntries()).hasSize(expectedNoOfLogs);

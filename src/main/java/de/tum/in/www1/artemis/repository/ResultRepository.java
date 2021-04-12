@@ -262,44 +262,54 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
     long countByAssessor_IdAndParticipation_ExerciseIdAndRatedAndCompletionDateIsNotNull(Long tutorId, Long exerciseId, boolean rated);
 
     @Query("""
-                    SELECT r
-                    FROM Exercise e JOIN e.studentParticipations p JOIN p.submissions s JOIN s.results r
-                    WHERE e.id = :exerciseId
-                    AND p.student.id = :studentId
-                    AND r.score IS NOT NULL AND r.completionDate IS NOT NULL
-                    ORDER BY p.id DESC, s.id DESC, r.id DESC
+            SELECT r
+            FROM Exercise e JOIN e.studentParticipations p JOIN p.submissions s JOIN s.results r
+            WHERE e.id = :exerciseId
+                AND p.student.id = :studentId
+                AND r.score IS NOT NULL
+                AND r.completionDate IS NOT NULL
+                AND (s.type <> 'ILLEGAL' or s.type is null)
+            ORDER BY p.id DESC, s.id DESC, r.id DESC
             """)
-    List<Result> getResultsOrderedByParticipationIdSubmissionIdResultIdDescForStudent(@Param("exerciseId") Long exerciseId, @Param("studentId") Long studentId);
+    List<Result> getResultsOrderedByParticipationIdLegalSubmissionIdResultIdDescForStudent(@Param("exerciseId") Long exerciseId, @Param("studentId") Long studentId);
 
     @Query("""
-                    SELECT r
-                    FROM Exercise e JOIN e.studentParticipations p JOIN p.submissions s JOIN s.results r
-                    WHERE e.id = :exerciseId
-                    AND p.team.id = :teamId
-                    AND r.score IS NOT NULL AND r.completionDate IS NOT NULL
-                    ORDER BY p.id DESC, s.id DESC, r.id DESC
+            SELECT r
+            FROM Exercise e JOIN e.studentParticipations p JOIN p.submissions s JOIN s.results r
+            WHERE e.id = :exerciseId
+                AND p.team.id = :teamId
+                AND r.score IS NOT NULL
+                AND r.completionDate IS NOT NULL
+                AND (s.type <> 'ILLEGAL' or s.type is null)
+            ORDER BY p.id DESC, s.id DESC, r.id DESC
             """)
-    List<Result> getResultsOrderedByParticipationIdSubmissionIdResultIdDescForTeam(@Param("exerciseId") Long exerciseId, @Param("teamId") Long teamId);
+    List<Result> getResultsOrderedByParticipationIdLegalSubmissionIdResultIdDescForTeam(@Param("exerciseId") Long exerciseId, @Param("teamId") Long teamId);
 
     @Query("""
-                    SELECT r
-                    FROM Exercise e JOIN e.studentParticipations p JOIN p.submissions s JOIN s.results r
-                    WHERE e.id = :exerciseId
-                    AND p.student.id = :studentId
-                    AND r.score IS NOT NULL AND r.completionDate IS NOT NULL AND r.rated = true
-                    ORDER BY p.id DESC, s.id DESC, r.id DESC
+            SELECT r
+            FROM Exercise e JOIN e.studentParticipations p JOIN p.submissions s JOIN s.results r
+            WHERE e.id = :exerciseId
+                AND p.student.id = :studentId
+                AND r.score IS NOT NULL
+                AND r.completionDate IS NOT NULL
+                AND r.rated = true
+                AND (s.type <> 'ILLEGAL' or s.type is null)
+            ORDER BY p.id DESC, s.id DESC, r.id DESC
             """)
-    List<Result> getRatedResultsOrderedByParticipationIdSubmissionIdResultIdDescForStudent(@Param("exerciseId") Long exerciseId, @Param("studentId") Long studentId);
+    List<Result> getRatedResultsOrderedByParticipationIdLegalSubmissionIdResultIdDescForStudent(@Param("exerciseId") Long exerciseId, @Param("studentId") Long studentId);
 
     @Query("""
-                    SELECT r
-                    FROM Exercise e JOIN e.studentParticipations p JOIN p.submissions s JOIN s.results r
-                    WHERE e.id = :exerciseId
-                    AND p.team.id = :teamId
-                    AND r.score IS NOT NULL AND r.completionDate IS NOT NULL AND r.rated = true
-                    ORDER BY p.id DESC, s.id DESC, r.id DESC
+            SELECT r
+            FROM Exercise e JOIN e.studentParticipations p JOIN p.submissions s JOIN s.results r
+            WHERE e.id = :exerciseId
+                AND p.team.id = :teamId
+                AND r.score IS NOT NULL
+                AND r.completionDate IS NOT NULL
+                AND r.rated = true
+                AND (s.type <> 'ILLEGAL' or s.type is null)
+            ORDER BY p.id DESC, s.id DESC, r.id DESC
             """)
-    List<Result> getRatedResultsOrderedByParticipationIdSubmissionIdResultIdDescForTeam(@Param("exerciseId") Long exerciseId, @Param("teamId") Long teamId);
+    List<Result> getRatedResultsOrderedByParticipationIdLegalSubmissionIdResultIdDescForTeam(@Param("exerciseId") Long exerciseId, @Param("teamId") Long teamId);
 
     /**
      * Checks if a result for the given participation exists.
@@ -561,5 +571,41 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
             }
         }
         return totalPoints;
+    }
+
+    /**
+     * Get the latest result from the database by participation id together with the list of feedback items.
+     *
+     * @param participationId the id of the participation to load from the database
+     * @param withSubmission determines whether the submission should also be fetched
+     * @return an optional result (might exist or not).
+     */
+    default Optional<Result> findLatestResultWithFeedbacksForParticipation(Long participationId, boolean withSubmission) {
+        if (withSubmission) {
+            return findFirstWithSubmissionAndFeedbacksByParticipationIdOrderByCompletionDateDesc(participationId);
+        }
+        else {
+            return findFirstWithFeedbacksByParticipationIdOrderByCompletionDateDesc(participationId);
+        }
+    }
+
+    /**
+     * Get a result from the database by its id,
+     *
+     * @param resultId the id of the result to load from the database
+     * @return the result
+     */
+    default Result findOne(long resultId) {
+        return findById(resultId).orElseThrow(() -> new EntityNotFoundException("Result", resultId));
+    }
+
+    /**
+     * Get a result from the database by its id together with the associated submission and the list of feedback items.
+     *
+     * @param resultId the id of the result to load from the database
+     * @return the result with submission and feedback list
+     */
+    default Result findOneWithEagerSubmissionAndFeedback(long resultId) {
+        return findWithEagerSubmissionAndFeedbackById(resultId).orElseThrow(() -> new EntityNotFoundException("Result with id: \"" + resultId + "\" does not exist"));
     }
 }

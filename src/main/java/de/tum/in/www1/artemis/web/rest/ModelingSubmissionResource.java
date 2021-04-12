@@ -21,6 +21,7 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ModelingSubmissionService;
 import de.tum.in.www1.artemis.service.ResultService;
@@ -120,7 +121,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
 
     @NotNull
     private ResponseEntity<ModelingSubmission> handleModelingSubmission(Long exerciseId, Principal principal, ModelingSubmission modelingSubmission) {
-        final ModelingExercise modelingExercise = modelingExerciseRepository.findOne(exerciseId);
+        final ModelingExercise modelingExercise = modelingExerciseRepository.findByIdElseThrow(exerciseId);
         final User user = userRepository.getUserWithGroupsAndAuthorities();
 
         // Apply further checks if it is an exam submission
@@ -282,9 +283,8 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
     @GetMapping("/exercises/{exerciseId}/optimal-model-submissions")
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<Long[]> getNextOptimalModelSubmissions(@PathVariable Long exerciseId, @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound) {
-        final ModelingExercise modelingExercise = modelingExerciseRepository.findOne(exerciseId);
-        final User user = userRepository.getUserWithGroupsAndAuthorities();
-        checkAuthorization(modelingExercise, user);
+        final ModelingExercise modelingExercise = modelingExerciseRepository.findByIdElseThrow(exerciseId);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, modelingExercise, null);
         // Check if the limit of simultaneously locked submissions has been reached
         modelingSubmissionService.checkSubmissionLockLimit(modelingExercise.getCourseViaExerciseGroupOrCourseMember().getId());
 
@@ -328,9 +328,8 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
     @DeleteMapping("/exercises/{exerciseId}/optimal-model-submissions")
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<String> resetOptimalModels(@PathVariable Long exerciseId) {
-        final ModelingExercise modelingExercise = modelingExerciseRepository.findOne(exerciseId);
-        final User user = userRepository.getUserWithGroupsAndAuthorities();
-        checkAuthorization(modelingExercise, user);
+        final ModelingExercise modelingExercise = modelingExerciseRepository.findByIdElseThrow(exerciseId);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, modelingExercise, null);
         if (compassService.isSupported(modelingExercise)) {
             compassService.resetModelsWaitingForAssessment(exerciseId);
         }
@@ -346,7 +345,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
     @GetMapping("/participations/{participationId}/latest-modeling-submission")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<ModelingSubmission> getLatestSubmissionForModelingEditor(@PathVariable long participationId) {
-        StudentParticipation participation = studentParticipationRepository.findByIdWithSubmissionsResultsFeedbackElseThrow(participationId);
+        StudentParticipation participation = studentParticipationRepository.findByIdWithLegalSubmissionsResultsFeedbackElseThrow(participationId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         ModelingExercise modelingExercise;
 
@@ -407,7 +406,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
         return ResponseEntity.ok(modelingSubmission);
     }
 
-    private void checkAuthorization(ModelingExercise exercise, User user) throws AccessForbiddenException {
+    private void checkAuthorization(ModelingExercise exercise, User user) {
         if (!authCheckService.isAtLeastStudentForExercise(exercise, user)) {
             throw new AccessForbiddenException("Insufficient permission for course: " + exercise.getCourseViaExerciseGroupOrCourseMember().getTitle());
         }

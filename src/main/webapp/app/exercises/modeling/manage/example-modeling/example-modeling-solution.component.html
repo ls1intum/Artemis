@@ -25,6 +25,6 @@
     </div>
 
     <div class="col-12 editor-container">
-        <jhi-modeling-editor [umlModel]="exampleSolution" [diagramType]="exercise.diagramType"></jhi-modeling-editor>
+        <jhi-modeling-editor *ngIf="exercise.diagramType" [umlModel]="exampleSolution" [diagramType]="exercise.diagramType"></jhi-modeling-editor>
     </div>
 </div>
