@@ -139,7 +139,7 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
             WHERE pe.id = :#{#exerciseId}
                 AND (s.type <> 'ILLEGAL' OR s.type IS NULL)
             """)
-    Optional<ProgrammingExercise> findWithEagerStudentParticipationsStudentAndLegalSubmissionsById(Long exerciseId);
+    Optional<ProgrammingExercise> findWithEagerStudentParticipationsStudentAndLegalSubmissionsById(@Param("exerciseId") Long exerciseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation", "studentParticipations" })
     Optional<ProgrammingExercise> findWithAllParticipationsById(Long exerciseId);
