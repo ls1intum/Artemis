@@ -121,7 +121,7 @@ describe('DragAndDropQuestionComponent', () => {
         const { dropLocation: falseDropLocation } = getDropLocationMappingAndItem();
         comp.sampleSolutionMappings = [mapping];
         expect(comp.correctDragItemForDropLocation(dropLocation)).to.deep.equal(dragItem);
-        expect(comp.correctDragItemForDropLocation(falseDropLocation)).to.null;
+        expect(comp.correctDragItemForDropLocation(falseDropLocation)).to.undefined;
     });
 
     it('should show sample solution if force sample solution is set to true', () => {
