@@ -273,6 +273,7 @@ public class QuizExerciseResource {
             if (!authCheckService.isAtLeastInstructorInCourse(course, null)) {
                 return forbidden();
             }
+            exerciseService.checkTestRunsExist(quizExercise);
         }
         else if (!authCheckService.isAllowedToSeeExercise(quizExercise, null)) {
             return forbidden();

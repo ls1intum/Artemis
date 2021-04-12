@@ -14,8 +14,8 @@
                     <fa-icon [icon]="'table'"></fa-icon>
                     <span class="d-none d-md-inline" [innerHTML]="'artemisApp.participantScores.pageTitle' | artemisTranslate"></span>
                 </a>
-                <a id="editButton" *ngIf="isAtLeastInstructor" [routerLink]="getExamRoutesByIdentifier('edit')" class="btn btn-primary">
-                    <fa-icon [icon]="'pencil-alt'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.edit"> Edit</span>
+                <a id="editButton" *ngIf="isAtLeastInstructor" [routerLink]="getExamRoutesByIdentifier('edit')" class="btn btn-warning">
+                    <fa-icon [icon]="'wrench'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.edit"> Edit</span>
                 </a>
 
                 <a id="studentExamsButton" *ngIf="isAtLeastInstructor" [routerLink]="getExamRoutesByIdentifier('student-exams')" class="btn btn-info">

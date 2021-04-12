@@ -99,10 +99,10 @@ export class TeamStudentSearchComponent {
         if (this.studentsFromPendingTeam.map((s) => s.id).includes(user.id)) {
             // If a student is already part of the pending team, they cannot (!) be added again
             return false;
-        } else if (user.assignedTeamId === null) {
+        } else if (!user.assignedTeamId) {
             // If a student is not yet assigned to any team, they can be added
             return true;
-        } else if (this.team.id === undefined) {
+        } else if (!this.team.id) {
             // If a student is assigned to an existing team but this team is just being created, they cannot (!) be added
             return false;
         }
