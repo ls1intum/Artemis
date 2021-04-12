@@ -28,8 +28,8 @@
 </ng-container>
 <dt><span jhiTranslate="artemisApp.exercise.categories">Difficulty</span></dt>
 <dd *ngIf="exercise.categories">
-    <span class="custom-tag" *ngFor="let item of exercise.categories" [ngStyle]="{ backgroundColor: item.color }">
-        <span>{{ item.category }}</span>
+    <span class="custom-tag" *ngFor="let item of exercise.categories" [ngStyle]="{ backgroundColor: item }">
+        <span>{{ item }}</span>
     </span>
 </dd>
 <dd *ngIf="!exercise.categories">
@@ -90,11 +90,11 @@
 <ng-container *ngIf="exercise.type !== ExerciseType.PROGRAMMING">
     <dd class="editor-outline-background" [innerHTML]="formattedProblemStatement"></dd>
 </ng-container>
-<ng-container *ngIf="exercise.type === ExerciseType.PROGRAMMING">
+<ng-container *ngIf="exercise.type === ExerciseType.PROGRAMMING && programmingExercise">
     <dd>
         <jhi-programming-exercise-instructions
             [exercise]="exercise"
-            [participation]="programmingExercise?.templateParticipation"
+            [participation]="programmingExercise!.templateParticipation!"
             [personalParticipation]="true"
         ></jhi-programming-exercise-instructions>
     </dd>
@@ -103,7 +103,7 @@
     <dt><span jhiTranslate="artemisApp.exercise.gradingInstructions">Grading Instructions</span></dt>
     <dd class="editor-outline-background"><span [innerHTML]="formattedGradingInstructions"></span></dd>
 </ng-container>
-<jhi-structured-grading-instructions-assessment-layout [readonly]="true" [criteria]="exercise.gradingCriteria"></jhi-structured-grading-instructions-assessment-layout>
+<jhi-structured-grading-instructions-assessment-layout [readonly]="true" [criteria]="exercise.gradingCriteria || []"></jhi-structured-grading-instructions-assessment-layout>
 <ng-container *ngIf="isExamExercise === false && exercise.course?.onlineCourse === true && exercise.isAtLeastInstructor === true">
     <dt><span jhiTranslate="artemisApp.exerciseLtiConfiguration.lti">LTI</span></dt>
     <dd>
