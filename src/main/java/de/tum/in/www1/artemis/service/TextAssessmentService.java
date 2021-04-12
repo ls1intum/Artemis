@@ -6,6 +6,8 @@ import static org.hibernate.Hibernate.isInitialized;
 import java.util.List;
 import java.util.Optional;
 
+import javax.annotation.Nullable;
+
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.*;
@@ -35,10 +37,6 @@ public class TextAssessmentService extends AssessmentService {
         this.feedbackConflictRepository = feedbackConflictRepository;
     }
 
-    public List<Feedback> getAssessmentsForResult(Result result) {
-        return this.feedbackRepository.findByResult(result);
-    }
-
     /**
      * Load entities from database needed for text assessment & compute Feedback suggestions (Athene):
      *   1. Create or load the result
@@ -49,7 +47,7 @@ public class TextAssessmentService extends AssessmentService {
      * @param textSubmission Text Submission to be assessed
      * @param result for which we prepare the submission
      */
-    public void prepareSubmissionForAssessment(TextSubmission textSubmission, Result result) {
+    public void prepareSubmissionForAssessment(TextSubmission textSubmission, @Nullable Result result) {
         final Participation participation = textSubmission.getParticipation();
         final TextExercise exercise = (TextExercise) participation.getExercise();
 
@@ -57,7 +55,7 @@ public class TextAssessmentService extends AssessmentService {
 
         if (result != null) {
             // Load Feedback already created for this assessment
-            final List<Feedback> assessments = exercise.isAutomaticAssessmentEnabled() ? getAssessmentsForResultWithConflicts(result) : getAssessmentsForResult(result);
+            final List<Feedback> assessments = exercise.isAutomaticAssessmentEnabled() ? getAssessmentsForResultWithConflicts(result) : feedbackRepository.findByResult(result);
             result.setFeedbacks(assessments);
             if (assessments.isEmpty() && computeFeedbackSuggestions) {
                 automaticTextFeedbackService.get().suggestFeedback(result);
@@ -102,8 +100,8 @@ public class TextAssessmentService extends AssessmentService {
         final List<FeedbackConflict> allConflictsByFeedbackList = this.feedbackConflictRepository
                 .findAllConflictsByFeedbackList(feedbackList.stream().map(Feedback::getId).collect(toList()));
         feedbackList.forEach(feedback -> {
-            feedback.setFirstConflicts(allConflictsByFeedbackList.stream().filter(c -> c.getFirstFeedback().getId().equals(feedback.getId())).collect(toList()));
-            feedback.setSecondConflicts(allConflictsByFeedbackList.stream().filter(c -> c.getSecondFeedback().getId().equals(feedback.getId())).collect(toList()));
+            feedback.setFirstConflicts(allConflictsByFeedbackList.stream().filter(conflict -> conflict.getFirstFeedback().getId().equals(feedback.getId())).collect(toList()));
+            feedback.setSecondConflicts(allConflictsByFeedbackList.stream().filter(conflict -> conflict.getSecondFeedback().getId().equals(feedback.getId())).collect(toList()));
         });
         return feedbackList;
     }

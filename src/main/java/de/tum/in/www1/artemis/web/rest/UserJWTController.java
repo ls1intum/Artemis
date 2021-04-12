@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.*;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import de.tum.in.www1.artemis.security.UserNotActivatedException;
 import de.tum.in.www1.artemis.security.jwt.JWTFilter;
 import de.tum.in.www1.artemis.security.jwt.TokenProvider;
 import de.tum.in.www1.artemis.service.connectors.SAML2Service;
@@ -95,7 +96,14 @@ public class UserJWTController {
         log.debug("SAML2 authentication: {}", authentication);
 
         final Saml2AuthenticatedPrincipal principal = (Saml2AuthenticatedPrincipal) authentication.getPrincipal();
-        authentication = saml2Service.get().handleAuthentication(principal);
+        try {
+            authentication = saml2Service.get().handleAuthentication(principal);
+        }
+        catch (UserNotActivatedException e) {
+            // If the exception is not catched a 401 is returned.
+            // That does not match the actual reason and would trigger authentication in the client
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).header("X-artemisApp-error", e.getMessage()).build();
+        }
 
         final String jwt = tokenProvider.createToken(authentication, rememberMe);
         final HttpHeaders httpHeaders = new HttpHeaders();
