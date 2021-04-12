@@ -168,7 +168,7 @@
             *ngIf="course.isAtLeastTutor"
             [routerLink]="['/course-management', course.id, 'exams']"
             class="btn btn-primary mr-1 mb-1"
-            [ngbTooltip]="'entity.action.exaFms' | artemisTranslate"
+            [ngbTooltip]="'entity.action.exams' | artemisTranslate"
         >
             <fa-icon [icon]="'graduation-cap'"></fa-icon>
             <span class="d-none d-md-inline">{{ 'entity.action.exams' | artemisTranslate }}</span>
