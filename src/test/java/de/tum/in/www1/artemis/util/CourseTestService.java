@@ -1287,8 +1287,7 @@ public class CourseTestService {
 
     // Test
     public void testGetCourseTitleForNonExistingCourse() throws Exception {
-        // No course with id 10 was created
-        request.get("/api/courses/10/title", HttpStatus.NOT_FOUND, String.class);
+        request.get("/api/courses/12312412321/title", HttpStatus.NOT_FOUND, String.class);
     }
 
     // Test
