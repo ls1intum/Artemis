@@ -39,6 +39,7 @@ import { round } from 'app/shared/util/utils';
 import { getExerciseDashboardLink, getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
 import { Observable } from 'rxjs';
 import { getLatestSubmissionResult } from 'app/entities/submission.model';
+import { SubmissionType } from 'app/entities/submission.model';
 
 @Component({
     selector: 'jhi-code-editor-tutor-assessment',
@@ -48,6 +49,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     @ViewChild(CodeEditorContainerComponent, { static: false }) codeEditorContainer: CodeEditorContainerComponent;
     ButtonSize = ButtonSize;
     PROGRAMMING = ExerciseType.PROGRAMMING;
+    SUBMISSION_TYPE_ILLEGAL = SubmissionType.ILLEGAL;
 
     readonly dmp = new diff_match_patch();
     readonly IncludedInOverallScore = IncludedInOverallScore;

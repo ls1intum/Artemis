@@ -61,6 +61,11 @@ public interface LectureRepository extends JpaRepository<Lecture, Long> {
     String getLectureTitle(@Param("lectureId") Long lectureId);
 
     @NotNull
+    default Lecture findByIdElseThrow(long lectureId) {
+        return findById(lectureId).orElseThrow(() -> new EntityNotFoundException("Lecture", lectureId));
+    }
+
+    @NotNull
     default Lecture findByIdWithStudentQuestionsAndLectureUnitsAndLearningGoalsElseThrow(Long lectureId) {
         return findByIdWithStudentQuestionsAndLectureUnitsAndLearningGoals(lectureId).orElseThrow(() -> new EntityNotFoundException("Lecture", lectureId));
     }

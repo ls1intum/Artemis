@@ -8,7 +8,6 @@ import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
-import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -107,11 +106,7 @@ public class QuizExerciseResource {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "invalidQuiz", "The quiz exercise is invalid")).body(null);
         }
 
-        // Validate score settings
-        Optional<ResponseEntity<QuizExercise>> optionalScoreSettingsError = exerciseService.validateScoreSettings(quizExercise);
-        if (optionalScoreSettingsError.isPresent()) {
-            return optionalScoreSettingsError.get();
-        }
+        exerciseService.validateScoreSettings(quizExercise);
 
         // Valid exercises have set either a course or an exerciseGroup
         quizExercise.checkCourseAndExerciseGroupExclusivity(ENTITY_NAME);
@@ -162,11 +157,7 @@ public class QuizExerciseResource {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "invalidQuiz", "The quiz exercise is invalid")).body(null);
         }
 
-        // Validate score settings
-        Optional<ResponseEntity<QuizExercise>> optionalScoreSettingsError = exerciseService.validateScoreSettings(quizExercise);
-        if (optionalScoreSettingsError.isPresent()) {
-            return optionalScoreSettingsError.get();
-        }
+        exerciseService.validateScoreSettings(quizExercise);
 
         // Valid exercises have set either a course or an exerciseGroup
         quizExercise.checkCourseAndExerciseGroupExclusivity(ENTITY_NAME);
@@ -273,6 +264,7 @@ public class QuizExerciseResource {
             if (!authCheckService.isAtLeastInstructorInCourse(course, null)) {
                 return forbidden();
             }
+            exerciseService.checkTestRunsExist(quizExercise);
         }
         else if (!authCheckService.isAllowedToSeeExercise(quizExercise, null)) {
             return forbidden();
@@ -458,11 +450,7 @@ public class QuizExerciseResource {
 
         quizExercise = quizExerciseService.reEvaluate(quizExercise, originalQuizExercise);
 
-        // Validate score settings
-        Optional<ResponseEntity<QuizExercise>> optionalScoreSettingsError = exerciseService.validateScoreSettings(quizExercise);
-        if (optionalScoreSettingsError.isPresent()) {
-            return optionalScoreSettingsError.get();
-        }
+        exerciseService.validateScoreSettings(quizExercise);
 
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, quizExercise.getId().toString())).body(quizExercise);
     }

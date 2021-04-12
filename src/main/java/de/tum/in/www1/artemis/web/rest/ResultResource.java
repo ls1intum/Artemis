@@ -226,10 +226,10 @@ public class ResultResource {
 
         List<StudentParticipation> participations;
         if (examMode) {
-            participations = studentParticipationRepository.findByExerciseIdWithEagerSubmissionsResultAssessorIgnoreTestRuns(exerciseId);
+            participations = studentParticipationRepository.findByExerciseIdWithEagerLegalSubmissionsResultAssessorIgnoreTestRuns(exerciseId);
         }
         else {
-            participations = studentParticipationRepository.findByExerciseIdWithEagerSubmissionsResultAssessor(exerciseId);
+            participations = studentParticipationRepository.findByExerciseIdWithEagerLegalSubmissionsResultAssessor(exerciseId);
         }
         for (StudentParticipation participation : participations) {
             // Filter out participations without students / teams
@@ -249,7 +249,7 @@ public class ResultResource {
             results.add(relevantSubmissionWithResult.getLatestResult());
         }
 
-        log.info("getResultsForExercise took " + (System.currentTimeMillis() - start) + "ms for " + results.size() + " results.");
+        log.info("getResultsForExercise took {}ms for {} results.", System.currentTimeMillis() - start, results.size());
 
         if (withSubmissions) {
             results = results.stream().filter(result -> result.getSubmission() != null && result.getSubmission().isSubmitted()).collect(Collectors.toList());
@@ -476,7 +476,7 @@ public class ResultResource {
 
         // Create a participation and a submitted empty submission if they do not exist yet
         StudentParticipation participation = participationService.createParticipationWithEmptySubmissionIfNotExisting(exercise, student.get(), SubmissionType.EXTERNAL);
-        Submission submission = participationRepository.findByIdWithSubmissionsElseThrow(participation.getId()).findLatestSubmission().get();
+        Submission submission = participationRepository.findByIdWithLegalSubmissionsElseThrow(participation.getId()).findLatestSubmission().get();
         result.setParticipation(participation);
         result.setSubmission(submission);
 

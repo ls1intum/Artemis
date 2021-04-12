@@ -1,25 +1,23 @@
 package de.tum.in.www1.artemis.service;
 
+import static de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore.*;
 import static de.tum.in.www1.artemis.service.util.RoundingUtil.round;
 
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.boot.actuate.audit.AuditEventRepository;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
-import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
@@ -35,7 +33,6 @@ import de.tum.in.www1.artemis.service.scheduled.quiz.QuizScheduleService;
 import de.tum.in.www1.artemis.web.rest.dto.CourseManagementOverviewExerciseStatisticsDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
-import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
 /**
  * Service Implementation for managing Exercise.
@@ -53,8 +50,6 @@ public class ExerciseService {
     private final AuthorizationCheckService authCheckService;
 
     private final ProgrammingExerciseService programmingExerciseService;
-
-    private final ProgrammingExerciseRepository programmingExerciseRepository;
 
     private final QuizExerciseService quizExerciseService;
 
@@ -78,8 +73,6 @@ public class ExerciseService {
 
     private final ParticipantScoreRepository participantScoreRepository;
 
-    private final QuizExerciseRepository quizExerciseRepository;
-
     private final SubmissionRepository submissionRepository;
 
     private final ResultRepository resultRepository;
@@ -94,9 +87,8 @@ public class ExerciseService {
             AuthorizationCheckService authCheckService, ProgrammingExerciseService programmingExerciseService, QuizExerciseService quizExerciseService,
             QuizScheduleService quizScheduleService, TutorParticipationRepository tutorParticipationRepository, ExampleSubmissionService exampleSubmissionService,
             AuditEventRepository auditEventRepository, TeamRepository teamRepository, StudentExamRepository studentExamRepository, ExamRepository examRepository,
-            ProgrammingExerciseRepository programmingExerciseRepository, QuizExerciseRepository quizExerciseRepository, LtiOutcomeUrlRepository ltiOutcomeUrlRepository,
-            StudentParticipationRepository studentParticipationRepository, ResultRepository resultRepository, SubmissionRepository submissionRepository,
-            ParticipantScoreRepository participantScoreRepository, LectureUnitService lectureUnitService) {
+            LtiOutcomeUrlRepository ltiOutcomeUrlRepository, StudentParticipationRepository studentParticipationRepository, ResultRepository resultRepository,
+            SubmissionRepository submissionRepository, ParticipantScoreRepository participantScoreRepository, LectureUnitService lectureUnitService) {
         this.exerciseRepository = exerciseRepository;
         this.resultRepository = resultRepository;
         this.examRepository = examRepository;
@@ -111,10 +103,8 @@ public class ExerciseService {
         this.studentExamRepository = studentExamRepository;
         this.exerciseUnitRepository = exerciseUnitRepository;
         this.submissionRepository = submissionRepository;
-        this.programmingExerciseRepository = programmingExerciseRepository;
         this.teamRepository = teamRepository;
         this.participantScoreRepository = participantScoreRepository;
-        this.quizExerciseRepository = quizExerciseRepository;
         this.ltiOutcomeUrlRepository = ltiOutcomeUrlRepository;
         this.studentParticipationRepository = studentParticipationRepository;
         this.lectureUnitService = lectureUnitService;
@@ -184,7 +174,7 @@ public class ExerciseService {
             throw new IllegalArgumentException("All exercises must be from the same course!");
         }
         Course course = courses.stream().findFirst().get();
-        List<StudentParticipation> participationsOfUserInExercises = getAllParticipationsOfUserInExercises(user, exercises);
+        List<StudentParticipation> participationsOfUserInExercises = studentParticipationRepository.getAllParticipationsOfUserInExercises(user, exercises);
         boolean isStudent = !authCheckService.isAtLeastTeachingAssistantInCourse(course, user);
         for (Exercise exercise : exercises) {
             // add participation with submission and result to each exercise
@@ -196,36 +186,6 @@ public class ExerciseService {
             setAssignedTeamIdForExerciseAndUser(exercise, user);
         }
         return exercises;
-    }
-
-    /**
-     * Gets all the participations of the user in the given exercises
-     *
-     * @param user      the user to get the participations for
-     * @param exercises the exercise to get the participations for
-     * @return the participations of the user in the exercises
-     */
-    public List<StudentParticipation> getAllParticipationsOfUserInExercises(User user, Set<Exercise> exercises) {
-        Map<ExerciseMode, List<Exercise>> exercisesGroupedByExerciseMode = exercises.stream().collect(Collectors.groupingBy(Exercise::getMode));
-        List<Exercise> individualExercises = Optional.ofNullable(exercisesGroupedByExerciseMode.get(ExerciseMode.INDIVIDUAL)).orElse(List.of());
-        List<Exercise> teamExercises = Optional.ofNullable(exercisesGroupedByExerciseMode.get(ExerciseMode.TEAM)).orElse(List.of());
-
-        if (individualExercises.isEmpty() && teamExercises.isEmpty()) {
-            return List.of();
-        }
-
-        // Note: we need two database calls here, because of performance reasons: the entity structure for team is significantly different and a combined database call
-        // would lead to a SQL statement that cannot be optimized
-
-        // 1st: fetch participations, submissions and results for individual exercises
-        List<StudentParticipation> individualParticipations = studentParticipationRepository
-                .findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(user.getId(), individualExercises);
-
-        // 2nd: fetch participations, submissions and results for team exercises
-        List<StudentParticipation> teamParticipations = studentParticipationRepository.findByStudentIdAndTeamExercisesWithEagerSubmissionsResult(user.getId(), teamExercises);
-
-        // 3rd: merge both into one list for further processing
-        return Stream.concat(individualParticipations.stream(), teamParticipations.stream()).collect(Collectors.toList());
     }
 
     /**
@@ -261,8 +221,7 @@ public class ExerciseService {
                 setAssignedTeamIdForExerciseAndUser(exercise, user);
 
                 // filter out questions and all statistical information about the quizPointStatistic from quizExercises (so users can't see which answer options are correct)
-                if (exercise instanceof QuizExercise) {
-                    QuizExercise quizExercise = (QuizExercise) exercise;
+                if (exercise instanceof QuizExercise quizExercise) {
                     quizExercise.filterSensitiveInformation();
                 }
             }
@@ -272,8 +231,18 @@ public class ExerciseService {
     }
 
     /**
+     * Checks if the exercise has any test runs and sets the transient property if it does
+     * @param exercise - the exercise for which we check if test runs exist
+     */
+    public void checkTestRunsExist(Exercise exercise) {
+        Long containsTestRunParticipations = studentParticipationRepository.countParticipationsOnlyTestRunsByExerciseId(exercise.getId());
+        if (containsTestRunParticipations != null && containsTestRunParticipations > 0) {
+            exercise.setTestRunParticipationsExist(Boolean.TRUE);
+        }
+    }
+
+    /**
      * Resets an Exercise by deleting all its participations
-     *
      * @param exercise which should be reset
      */
     public void reset(Exercise exercise) {
@@ -398,7 +367,7 @@ public class ExerciseService {
     public void logDeletion(Exercise exercise, Course course, User user) {
         var auditEvent = new AuditEvent(user.getLogin(), Constants.DELETE_EXERCISE, "exercise=" + exercise.getTitle(), "course=" + course.getTitle());
         auditEventRepository.add(auditEvent);
-        log.info("User " + user.getLogin() + " has requested to delete {} {} with id {}", exercise.getClass().getSimpleName(), exercise.getTitle(), exercise.getId());
+        log.info("User {} has requested to delete {} {} with id {}", user.getLogin(), exercise.getClass().getSimpleName(), exercise.getTitle(), exercise.getId());
     }
 
     /**
@@ -431,8 +400,7 @@ public class ExerciseService {
         // remove the problem statement, which is loaded in the exercise details call
         exercise.setProblemStatement(null);
 
-        if (exercise instanceof ProgrammingExercise) {
-            var programmingExercise = (ProgrammingExercise) exercise;
+        if (exercise instanceof ProgrammingExercise programmingExercise) {
             programmingExercise.setTestRepositoryUrl(null);
         }
 
@@ -665,26 +633,21 @@ public class ExerciseService {
      * 2. If the IncludedInOverallScore enum is either INCLUDED_AS_BONUS or NOT_INCLUDED, no bonus points are allowed
      *
      * @param exercise exercise to validate
-     * @param <T>      specific type of exercise
-     * @return Optional validation error response
      */
-    public <T extends Exercise> Optional<ResponseEntity<T>> validateScoreSettings(T exercise) {
+    public void validateScoreSettings(Exercise exercise) {
         // Check if max score is set
         if (exercise.getMaxPoints() == null || exercise.getMaxPoints() == 0) {
-            return Optional
-                    .of(ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "The max score needs to be greater than 0", "maxScoreInvalid")).body(null));
+            throw new BadRequestAlertException("The max score needs to be greater than 0", "Exercise", "maxScoreInvalid");
         }
 
         // Check IncludedInOverallScore
-        if ((exercise.getIncludedInOverallScore() == IncludedInOverallScore.INCLUDED_AS_BONUS || exercise.getIncludedInOverallScore() == IncludedInOverallScore.NOT_INCLUDED)
-                && exercise.getBonusPoints() > 0) {
-            return Optional.of(ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "Bonus points are not allowed", "bonusPointsInvalid")).body(null));
+        if ((exercise.getIncludedInOverallScore() == INCLUDED_AS_BONUS || exercise.getIncludedInOverallScore() == NOT_INCLUDED) && exercise.getBonusPoints() > 0) {
+            throw new BadRequestAlertException("Bonus points are not allowed when the exercise is not included completely", "Exercise", "bonusPointsInvalid");
         }
 
         if (exercise.getBonusPoints() == null) {
             // make sure the default value is set properly
             exercise.setBonusPoints(0.0);
         }
-        return Optional.empty();
     }
 }

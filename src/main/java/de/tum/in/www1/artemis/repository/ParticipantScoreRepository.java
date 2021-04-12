@@ -20,11 +20,11 @@ import de.tum.in.www1.artemis.domain.scores.ParticipantScore;
 @Repository
 public interface ParticipantScoreRepository extends JpaRepository<ParticipantScore, Long> {
 
-    List<ParticipantScore> removeAllByExerciseId(Long exerciseId);
+    void removeAllByExerciseId(Long exerciseId);
 
-    List<ParticipantScore> removeAllByLastResultId(Long lastResultId);
+    void removeAllByLastResultId(Long lastResultId);
 
-    List<ParticipantScore> removeAllByLastRatedResultId(Long lastResultId);
+    void removeAllByLastRatedResultId(Long lastResultId);
 
     @EntityGraph(type = LOAD, attributePaths = { "exercise", "lastResult", "lastRatedResult" })
     Optional<ParticipantScore> findParticipantScoreByLastRatedResult(Result result);
@@ -84,6 +84,14 @@ public interface ParticipantScoreRepository extends JpaRepository<ParticipantSco
             WHERE p.exercise.id = :exerciseId
             """)
     Double findAverageScoreForExercises(@Param("exerciseId") Long exerciseId);
+
+    @Query("""
+            SELECT p.exercise.id AS exerciseId, AVG(p.lastPoints) AS averagePoints
+            FROM ParticipantScore p
+            WHERE p.exercise IN :exercises
+            GROUP BY p.exercise.id
+            """)
+    List<Map<String, Object>> findAvgPointsForExercises(@Param("exercises") Set<Exercise> exercises);
 
     @Transactional(propagation = Propagation.REQUIRES_NEW) // ok because of delete
     default void deleteAllByExerciseIdTransactional(Long exerciseId) {

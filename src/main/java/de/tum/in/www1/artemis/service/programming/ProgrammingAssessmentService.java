@@ -39,19 +39,8 @@ public class ProgrammingAssessmentService extends AssessmentService {
         result.setAssessor(user);
         result.setCompletionDate(null);
 
-        // Avoid hibernate exception
-        List<Feedback> savedFeedbacks = new ArrayList<>();
-        result.getFeedbacks().forEach(feedback -> {
-            feedback.setResult(null);
-            feedback = feedbackRepository.save(feedback);
-            feedback.setResult(result);
-            savedFeedbacks.add(feedback);
-        });
+        Result finalResult = resultService.storeFeedbackInResult(result, result.getFeedbacks(), true);
 
-        Result finalResult = result;
-        finalResult.setFeedbacks(savedFeedbacks);
-        // Note: This also saves the feedback objects in the database because of the 'cascade = CascadeType.ALL' option.
-        finalResult = resultRepository.save(finalResult);
         finalResult.setParticipation(participation);
         return finalResult;
     }

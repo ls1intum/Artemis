@@ -12,8 +12,8 @@ export class ManualTextSelectionComponent {
     @Input() public positionRelative = false;
     @Output() public assess = new EventEmitter<string>();
 
-    public hostRectangle: SelectionRectangle | null;
-    public selectedText: string | null;
+    public hostRectangle: SelectionRectangle | undefined;
+    public selectedText: string | undefined;
 
     /**
      * Handle user's selection of solution text.
@@ -30,8 +30,8 @@ export class ManualTextSelectionComponent {
             this.hostRectangle = $event.hostRectangle;
             this.selectedText = convertToHtmlLinebreaks($event.text);
         } else {
-            this.hostRectangle = null;
-            this.selectedText = null;
+            this.hostRectangle = undefined;
+            this.selectedText = undefined;
         }
     }
 
@@ -40,8 +40,8 @@ export class ManualTextSelectionComponent {
      */
     deselectText(): void {
         document.getSelection()!.removeAllRanges();
-        this.hostRectangle = null;
-        this.selectedText = null;
+        this.hostRectangle = undefined;
+        this.selectedText = undefined;
     }
 
     assessAction(): void {

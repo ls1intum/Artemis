@@ -108,6 +108,7 @@ export abstract class Exercise implements BaseEntity {
     public studentAssignedTeamId?: number;
     public studentAssignedTeamIdComputed = false;
     public numberOfParticipations?: number;
+    public testRunParticipationsExist?: boolean;
 
     // helper attributes
     public secondCorrectionEnabled = false;
@@ -144,7 +145,11 @@ export abstract class Exercise implements BaseEntity {
     }
 }
 
-export function getIcon(exerciseType: ExerciseType): IconProp {
+export function getIcon(exerciseType?: ExerciseType): IconProp {
+    if (!exerciseType) {
+        return 'question' as IconProp;
+    }
+
     const icons = {
         [ExerciseType.PROGRAMMING]: 'keyboard',
         [ExerciseType.MODELING]: 'project-diagram',

@@ -48,7 +48,6 @@ import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.RepositoryExportOptionsDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
-import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import de.tum.in.www1.artemis.web.websocket.dto.ProgrammingExerciseTestCaseStateDTO;
 import jplag.ExitException;
@@ -151,31 +150,21 @@ public class ProgrammingExerciseResource {
 
     /**
      * @param exercise the exercise object we want to check for errors
-     * @return the error message as response or null if everything is fine
      */
-    private ResponseEntity<ProgrammingExercise> checkProgrammingExerciseForError(ProgrammingExercise exercise) {
+    private void checkProgrammingExerciseForError(ProgrammingExercise exercise) {
         if (!continuousIntegrationService.get().checkIfBuildPlanExists(exercise.getProjectKey(), exercise.getTemplateBuildPlanId())) {
-            return ResponseEntity.badRequest().headers(
-                    HeaderUtil.createFailureAlert(applicationName, true, "exercise", ErrorKeys.INVALID_TEMPLATE_BUILD_PLAN_ID, "The Template Build Plan ID seems to be invalid."))
-                    .body(null);
+            throw new BadRequestAlertException("The Template Build Plan ID seems to be invalid.", "Exercise", ErrorKeys.INVALID_TEMPLATE_BUILD_PLAN_ID);
         }
         if (exercise.getVcsTemplateRepositoryUrl() == null || !versionControlService.get().repositoryUrlIsValid(exercise.getVcsTemplateRepositoryUrl())) {
-            return ResponseEntity.badRequest().headers(
-                    HeaderUtil.createFailureAlert(applicationName, true, "exercise", ErrorKeys.INVALID_TEMPLATE_REPOSITORY_URL, "The Template Repository URL seems to be invalid."))
-                    .body(null);
+            throw new BadRequestAlertException("The Template Repository URL seems to be invalid.", "Exercise", ErrorKeys.INVALID_TEMPLATE_REPOSITORY_URL);
         }
         if (exercise.getSolutionBuildPlanId() != null && !continuousIntegrationService.get().checkIfBuildPlanExists(exercise.getProjectKey(), exercise.getSolutionBuildPlanId())) {
-            return ResponseEntity.badRequest().headers(
-                    HeaderUtil.createFailureAlert(applicationName, true, "exercise", ErrorKeys.INVALID_SOLUTION_BUILD_PLAN_ID, "The Solution Build Plan ID seems to be invalid."))
-                    .body(null);
+            throw new BadRequestAlertException("The Solution Build Plan ID seems to be invalid.", "Exercise", ErrorKeys.INVALID_SOLUTION_BUILD_PLAN_ID);
         }
         var solutionRepositoryUrl = exercise.getVcsSolutionRepositoryUrl();
         if (solutionRepositoryUrl != null && !versionControlService.get().repositoryUrlIsValid(solutionRepositoryUrl)) {
-            return ResponseEntity.badRequest().headers(
-                    HeaderUtil.createFailureAlert(applicationName, true, "exercise", ErrorKeys.INVALID_SOLUTION_REPOSITORY_URL, "The Solution Repository URL seems to be invalid."))
-                    .body(null);
+            throw new BadRequestAlertException("The Solution Repository URL seems to be invalid.", "Exercise", ErrorKeys.INVALID_SOLUTION_REPOSITORY_URL);
         }
-        return null;
     }
 
     /**
@@ -187,26 +176,22 @@ public class ProgrammingExerciseResource {
      *
      * @param programmingExercise Programming exercise to be validated
      * @param course              Course of the programming exercise
-     * @return Optional validation error response
      */
-    private Optional<ResponseEntity<ProgrammingExercise>> validateCourseAndExerciseShortName(ProgrammingExercise programmingExercise, Course course) {
+    private void validateCourseAndExerciseShortName(ProgrammingExercise programmingExercise, Course course) {
         // Check if exercise shortname is set
         if (programmingExercise.getShortName() == null || programmingExercise.getShortName().length() < 3) {
-            return Optional.of(ResponseEntity.badRequest()
-                    .headers(HeaderUtil.createAlert(applicationName, "The shortname of the programming exercise is not set or too short", "programmingExerciseShortnameInvalid"))
-                    .body(null));
+            throw new BadRequestAlertException("The shortname of the programming exercise is not set or too short", "Exercise", "programmingExerciseShortnameInvalid");
         }
 
         // Check if course shortname is set
         if (course.getShortName() == null || course.getShortName().length() < 3) {
-            return Optional.of(ResponseEntity.badRequest()
-                    .headers(HeaderUtil.createAlert(applicationName, "The shortname of the course is not set or too short", "courseShortnameInvalid")).body(null));
+            throw new BadRequestAlertException("The shortname of the course is not set or too short", "Exercise", "courseShortnameInvalid");
         }
 
         // Check if exercise shortname matches regex
         Matcher shortNameMatcher = SHORT_NAME_PATTERN.matcher(programmingExercise.getShortName());
         if (!shortNameMatcher.matches()) {
-            return Optional.of(ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "The shortname is invalid", "shortnameInvalid")).body(null));
+            throw new BadRequestAlertException("The shortname is invalid", "Exercise", "shortnameInvalid");
         }
 
         // NOTE: we have to cover two cases here: exercises directly stored in the course and exercises indirectly stored in the course (exercise -> exerciseGroup -> exam ->
@@ -214,10 +199,9 @@ public class ProgrammingExerciseResource {
         long numberOfProgrammingExercisesWithSameShortName = programmingExerciseRepository.countByShortNameAndCourse(programmingExercise.getShortName(), course)
                 + programmingExerciseRepository.countByShortNameAndExerciseGroupExamCourse(programmingExercise.getShortName(), course);
         if (numberOfProgrammingExercisesWithSameShortName > 0) {
-            return Optional.of(ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName,
-                    "A programming exercise with the same short name already exists. Please choose a different short name.", "shortnameAlreadyExists")).body(null));
+            throw new BadRequestAlertException("A programming exercise with the same short name already exists. Please choose a different short name.", "Exercise",
+                    "shortnameAlreadyExists");
         }
-        return Optional.empty();
     }
 
     /**
@@ -227,17 +211,10 @@ public class ProgrammingExerciseResource {
      *
      * @param programmingExercise Programming exercise to be validated
      * @param course              Course of the programming exercise
-     * @return Optional validation error response
      */
-    private Optional<ResponseEntity<ProgrammingExercise>> validateCourseSettings(ProgrammingExercise programmingExercise, Course course) {
-        // Validate exercise title
-        Optional<ResponseEntity<ProgrammingExercise>> optionalTitleValidationError = validateTitle(programmingExercise, course);
-        if (optionalTitleValidationError.isPresent()) {
-            return optionalTitleValidationError;
-        }
-
-        // Validate course and exercise short name
-        return validateCourseAndExerciseShortName(programmingExercise, course);
+    private void validateCourseSettings(ProgrammingExercise programmingExercise, Course course) {
+        validateTitle(programmingExercise, course);
+        validateCourseAndExerciseShortName(programmingExercise, course);
     }
 
     /**
@@ -247,31 +224,25 @@ public class ProgrammingExerciseResource {
      *
      * @param programmingExercise Programming exercise to be validated
      * @param course              Course of the programming exercise
-     * @return Optional validation error response
      */
-    private Optional<ResponseEntity<ProgrammingExercise>> validateTitle(ProgrammingExercise programmingExercise, Course course) {
+    private void validateTitle(ProgrammingExercise programmingExercise, Course course) {
         // Check if exercise title is set
         if (programmingExercise.getTitle() == null || programmingExercise.getTitle().length() < 3) {
-            return Optional.of(ResponseEntity.badRequest()
-                    .headers(HeaderUtil.createAlert(applicationName, "The title of the programming exercise is too short", "programmingExerciseTitleInvalid")).body(null));
+            throw new BadRequestAlertException("The title of the programming exercise is too short", "Exercise", "programmingExerciseTitleInvalid");
         }
 
         // Check if the exercise title matches regex
         Matcher titleMatcher = TITLE_NAME_PATTERN.matcher(programmingExercise.getTitle());
         if (!titleMatcher.matches()) {
-            return Optional.of(ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "The title is invalid", "titleInvalid")).body(null));
+            throw new BadRequestAlertException("The title is invalid", "Exercise", "titleInvalid");
         }
 
         // Check that the exercise title is unique among all programming exercises in the course, otherwise the corresponding project in the VCS system cannot be generated
         long numberOfProgrammingExercisesWithSameTitle = programmingExerciseRepository.countByTitleAndCourse(programmingExercise.getTitle(), course)
                 + programmingExerciseRepository.countByTitleAndExerciseGroupExamCourse(programmingExercise.getTitle(), course);
         if (numberOfProgrammingExercisesWithSameTitle > 0) {
-            return Optional.of(ResponseEntity.badRequest().headers(
-                    HeaderUtil.createAlert(applicationName, "A programming exercise with the same title already exists. Please choose a different title.", "titleAlreadyExists"))
-                    .body(null));
+            throw new BadRequestAlertException("A programming exercise with the same title already exists. Please choose a different title.", "Exercise", "titleAlreadyExists");
         }
-
-        return Optional.empty();
     }
 
     /**
@@ -281,27 +252,19 @@ public class ProgrammingExerciseResource {
      * 3. Validates the programming language
      *
      * @param programmingExercise exercise to validate
-     * @return Optional validation error response
      */
-    private Optional<ResponseEntity<ProgrammingExercise>> validateGeneralSettings(ProgrammingExercise programmingExercise) {
-        // Validate score settings
-        Optional<ResponseEntity<ProgrammingExercise>> optionalScoreSettingsError = exerciseService.validateScoreSettings(programmingExercise);
-        if (optionalScoreSettingsError.isPresent()) {
-            return optionalScoreSettingsError;
-        }
+    private void validateGeneralSettings(ProgrammingExercise programmingExercise) {
+        exerciseService.validateScoreSettings(programmingExercise);
 
         // Check if a participation mode was selected
         if (!Boolean.TRUE.equals(programmingExercise.isAllowOnlineEditor()) && !Boolean.TRUE.equals(programmingExercise.isAllowOfflineIde())) {
-            return Optional.of(ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName,
-                    "You need to allow at least one participation mode, the online editor or the offline IDE", "noParticipationModeAllowed")).body(null));
+            throw new BadRequestAlertException("You need to allow at least one participation mode, the online editor or the offline IDE", "Exercise", "noParticipationModeAllowed");
         }
 
         // Check if programming language is set
         if (programmingExercise.getProgrammingLanguage() == null) {
-            return Optional.of(
-                    ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "No programming language was specified", "programmingLanguageNotSet")).body(null));
+            throw new BadRequestAlertException("No programming language was specified", "Exercise", "programmingLanguageNotSet");
         }
-        return Optional.empty();
     }
 
     /**
@@ -313,43 +276,35 @@ public class ProgrammingExerciseResource {
      * 5. Static code analysis max penalty must be positive
      *
      * @param programmingExercise exercise to validate
-     * @return Optional validation error response
      */
-    private Optional<ResponseEntity<ProgrammingExercise>> validateStaticCodeAnalysisSettings(ProgrammingExercise programmingExercise) {
+    private void validateStaticCodeAnalysisSettings(ProgrammingExercise programmingExercise) {
         ProgrammingLanguageFeature programmingLanguageFeature = programmingLanguageFeatureService.getProgrammingLanguageFeatures(programmingExercise.getProgrammingLanguage());
 
         // Check if the static code analysis flag was set
         if (programmingExercise.isStaticCodeAnalysisEnabled() == null) {
-            return Optional.of(ResponseEntity.badRequest()
-                    .headers(HeaderUtil.createAlert(applicationName, "The static code analysis flag must be set to true or false", "staticCodeAnalysisFlagNotSet")).body(null));
+            throw new BadRequestAlertException("The static code analysis flag must be set to true or false", "Exercise", "staticCodeAnalysisFlagNotSet");
         }
 
         // Check that programming exercise doesn't have sequential test runs and static code analysis enabled
         if (Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled()) && programmingExercise.hasSequentialTestRuns()) {
-            return Optional.of(ResponseEntity.badRequest().headers(
-                    HeaderUtil.createAlert(applicationName, "The static code analysis with sequential test runs is not supported at the moment", "staticCodeAnalysisAndSequential"))
-                    .body(null));
+            throw new BadRequestAlertException("The static code analysis with sequential test runs is not supported at the moment", "Exercise", "staticCodeAnalysisAndSequential");
         }
 
         // Check if the programming language supports static code analysis
         if (Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled()) && !programmingLanguageFeature.isStaticCodeAnalysis()) {
-            return Optional.of(ResponseEntity.badRequest().headers(
-                    HeaderUtil.createAlert(applicationName, "The static code analysis is not supported for this programming language", "staticCodeAnalysisNotSupportedForLanguage"))
-                    .body(null));
+            throw new BadRequestAlertException("The static code analysis is not supported for this programming language", "Exercise", "staticCodeAnalysisNotSupportedForLanguage");
         }
 
         // Static code analysis max penalty must only be set if static code analysis is enabled
         if (Boolean.FALSE.equals(programmingExercise.isStaticCodeAnalysisEnabled()) && programmingExercise.getMaxStaticCodeAnalysisPenalty() != null) {
-            return Optional.of(ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName,
-                    "Max static code analysis penalty must only be set if static code analysis is enabled", "staticCodeAnalysisDisabledButPenaltySet")).body(null));
+            throw new BadRequestAlertException("Max static code analysis penalty must only be set if static code analysis is enabled", "Exercise",
+                    "staticCodeAnalysisDisabledButPenaltySet");
         }
 
         // Static code analysis max penalty must be positive
         if (programmingExercise.getMaxStaticCodeAnalysisPenalty() != null && programmingExercise.getMaxStaticCodeAnalysisPenalty() < 0) {
-            return Optional.of(ResponseEntity.badRequest()
-                    .headers(HeaderUtil.createAlert(applicationName, "Max static code analysis penalty must be positive", "staticCodeAnalysisMaxPenaltyNegative")).body(null));
+            throw new BadRequestAlertException("You need to allow at least one participation mode, the online editor or the offline IDE", "Exercise", "noParticipationModeAllowed");
         }
-        return Optional.empty();
     }
 
     /**
@@ -371,12 +326,7 @@ public class ProgrammingExerciseResource {
         programmingExercise.checkCourseAndExerciseGroupExclusivity(ENTITY_NAME);
         Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(programmingExercise);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
-
-        // Validate general programming exercise settings
-        Optional<ResponseEntity<ProgrammingExercise>> optionalGeneralError = validateGeneralSettings(programmingExercise);
-        if (optionalGeneralError.isPresent()) {
-            return optionalGeneralError.get();
-        }
+        validateGeneralSettings(programmingExercise);
 
         ProgrammingLanguageFeature programmingLanguageFeature = programmingLanguageFeatureService.getProgrammingLanguageFeatures(programmingExercise.getProgrammingLanguage());
 
@@ -423,17 +373,8 @@ public class ProgrammingExerciseResource {
                     .body(null);
         }
 
-        // Validate course settings
-        Optional<ResponseEntity<ProgrammingExercise>> optionalCourseError = validateCourseSettings(programmingExercise, course);
-        if (optionalCourseError.isPresent()) {
-            return optionalCourseError.get();
-        }
-
-        // Validate static code analysis settings
-        Optional<ResponseEntity<ProgrammingExercise>> optionalStaticCodeAnalysisError = validateStaticCodeAnalysisSettings(programmingExercise);
-        if (optionalStaticCodeAnalysisError.isPresent()) {
-            return optionalStaticCodeAnalysisError.get();
-        }
+        validateCourseSettings(programmingExercise, course);
+        validateStaticCodeAnalysisSettings(programmingExercise);
 
         programmingExercise.generateAndSetProjectKey();
         Optional<ResponseEntity<ProgrammingExercise>> projectExistsError = checkIfProjectExists(programmingExercise);
@@ -517,28 +458,15 @@ public class ProgrammingExerciseResource {
         newExercise.checkCourseAndExerciseGroupExclusivity(ENTITY_NAME);
 
         log.debug("REST request to import programming exercise {} into course {}", sourceExerciseId, newExercise.getCourseViaExerciseGroupOrCourseMember().getId());
-
-        // Validate general programming exercise settings
-        Optional<ResponseEntity<ProgrammingExercise>> optionalGeneralError = validateGeneralSettings(newExercise);
-        if (optionalGeneralError.isPresent()) {
-            return optionalGeneralError.get();
-        }
-
-        // Validate static code analysis settings
-        Optional<ResponseEntity<ProgrammingExercise>> optionalStaticCodeAnalysisError = validateStaticCodeAnalysisSettings(newExercise);
-        if (optionalStaticCodeAnalysisError.isPresent()) {
-            return optionalStaticCodeAnalysisError.get();
-        }
+        validateGeneralSettings(newExercise);
+        validateStaticCodeAnalysisSettings(newExercise);
 
         final var user = userRepository.getUserWithGroupsAndAuthorities();
         Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(newExercise);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, user);
 
         // Validate course settings
-        Optional<ResponseEntity<ProgrammingExercise>> optionalCourseError = validateCourseSettings(newExercise, course);
-        if (optionalCourseError.isPresent()) {
-            return optionalCourseError.get();
-        }
+        validateCourseSettings(newExercise, course);
 
         final var optionalOriginalProgrammingExercise = programmingExerciseRepository
                 .findByIdWithEagerTestCasesStaticCodeAnalysisCategoriesHintsAndTemplateAndSolutionParticipations(sourceExerciseId);
@@ -623,30 +551,19 @@ public class ProgrammingExerciseResource {
 
         // Valid exercises have set either a course or an exerciseGroup
         updatedProgrammingExercise.checkCourseAndExerciseGroupExclusivity(ENTITY_NAME);
-
-        // Validate static code analysis settings
-        Optional<ResponseEntity<ProgrammingExercise>> optionalStaticCodeAnalysisError = validateStaticCodeAnalysisSettings(updatedProgrammingExercise);
-        if (optionalStaticCodeAnalysisError.isPresent()) {
-            return optionalStaticCodeAnalysisError.get();
-        }
+        validateStaticCodeAnalysisSettings(updatedProgrammingExercise);
 
         // fetch course from database to make sure client didn't change groups
         Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(updatedProgrammingExercise);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
 
-        ResponseEntity<ProgrammingExercise> errorResponse = checkProgrammingExerciseForError(updatedProgrammingExercise);
-        if (errorResponse != null) {
-            return errorResponse;
-        }
+        checkProgrammingExerciseForError(updatedProgrammingExercise);
 
-        var existingProgrammingExercise = programmingExerciseRepository.findById(updatedProgrammingExercise.getId());
-        if (existingProgrammingExercise.isEmpty()) {
-            throw new EntityNotFoundException("Cannot update a programming exercise that does not exist in the database");
-        }
-        if (!Objects.equals(existingProgrammingExercise.get().getShortName(), updatedProgrammingExercise.getShortName())) {
+        var existingProgrammingExercise = programmingExerciseRepository.findByIdElseThrow(updatedProgrammingExercise.getId());
+        if (!Objects.equals(existingProgrammingExercise.getShortName(), updatedProgrammingExercise.getShortName())) {
             throw new BadRequestAlertException("The programming exercise short name cannot be changed", ENTITY_NAME, "shortNameCannotChange");
         }
-        if (existingProgrammingExercise.get().isStaticCodeAnalysisEnabled() != updatedProgrammingExercise.isStaticCodeAnalysisEnabled()) {
+        if (existingProgrammingExercise.isStaticCodeAnalysisEnabled() != updatedProgrammingExercise.isStaticCodeAnalysisEnabled()) {
             throw new BadRequestAlertException("Static code analysis enabled flag must not be changed", ENTITY_NAME, "staticCodeAnalysisCannotChange");
         }
         if (!Boolean.TRUE.equals(updatedProgrammingExercise.isAllowOnlineEditor()) && !Boolean.TRUE.equals(updatedProgrammingExercise.isAllowOfflineIde())) {
@@ -664,13 +581,11 @@ public class ProgrammingExerciseResource {
         // true --> false: remove access for students from all existing student participations
 
         // Forbid conversion between normal course exercise and exam exercise
-        exerciseService.checkForConversionBetweenExamAndCourseExercise(updatedProgrammingExercise, existingProgrammingExercise.get(), ENTITY_NAME);
+        exerciseService.checkForConversionBetweenExamAndCourseExercise(updatedProgrammingExercise, existingProgrammingExercise, ENTITY_NAME);
 
         // Only save after checking for errors
         ProgrammingExercise savedProgrammingExercise = programmingExerciseService.updateProgrammingExercise(updatedProgrammingExercise, notificationText);
-
-        exerciseService.updatePointsInRelatedParticipantScores(existingProgrammingExercise.get(), updatedProgrammingExercise);
-
+        exerciseService.updatePointsInRelatedParticipantScores(existingProgrammingExercise, updatedProgrammingExercise);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, updatedProgrammingExercise.getTitle()))
                 .body(savedProgrammingExercise);
     }
@@ -894,7 +809,7 @@ public class ProgrammingExerciseResource {
     @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
     public ResponseEntity<Resource> exportSubmissionsByStudentLogins(@PathVariable long exerciseId, @PathVariable String participantIdentifiers,
             @RequestBody RepositoryExportOptionsDTO repositoryExportOptions) throws IOException {
-        var programmingExercise = programmingExerciseRepository.findByIdWithStudentParticipationsAndSubmissionsElseThrow(exerciseId);
+        var programmingExercise = programmingExerciseRepository.findByIdWithStudentParticipationsAndLegalSubmissionsElseThrow(exerciseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, programmingExercise, user);
         if (repositoryExportOptions.isExportAllParticipants()) {
@@ -938,7 +853,7 @@ public class ProgrammingExerciseResource {
     @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
     public ResponseEntity<Resource> exportSubmissionsByParticipationIds(@PathVariable long exerciseId, @PathVariable String participationIds,
             @RequestBody RepositoryExportOptionsDTO repositoryExportOptions) throws IOException {
-        var programmingExercise = programmingExerciseRepository.findByIdWithStudentParticipationsAndSubmissionsElseThrow(exerciseId);
+        var programmingExercise = programmingExerciseRepository.findByIdWithStudentParticipationsAndLegalSubmissionsElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, programmingExercise, null);
         if (repositoryExportOptions.getFilterLateSubmissionsDate() == null) {
             repositoryExportOptions.setFilterLateSubmissionsDate(programmingExercise.getDueDate());

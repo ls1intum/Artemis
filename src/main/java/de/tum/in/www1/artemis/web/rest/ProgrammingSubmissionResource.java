@@ -314,7 +314,7 @@ public class ProgrammingSubmissionResource {
         try {
             Commit commit = versionControlService.get().getLastCommitDetails(requestBody);
             lastCommitHash = commit.getCommitHash();
-            log.info("create new programmingSubmission with commitHash: " + lastCommitHash + " for exercise " + exerciseId);
+            log.info("create new programmingSubmission with commitHash: {} for exercise {}", lastCommitHash, exerciseId);
         }
         catch (Exception ex) {
             log.debug("Commit hash could not be parsed for from test repository from exercise " + exerciseId
