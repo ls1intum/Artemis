@@ -82,6 +82,13 @@ public class ExamServiceTest extends AbstractSpringIntegrationBambooBitbucketJir
         examService.setExamProperties(exam1);
 
         assertThat(exercise.getTestRunParticipationsExist()).isEqualTo(true);
+        exam1.getExerciseGroups().forEach(exerciseGroup -> {
+            exerciseGroup.getExercises().forEach(exercise1 -> {
+                assertThat(exercise.getNumberOfParticipations()).isNotNull();
+            });
+        });
+        assertThat(exam1.getNumberOfRegisteredUsers()).isNotNull();
+        assertThat(exam1.getNumberOfRegisteredUsers()).isEqualTo(2);
     }
 
     @Test

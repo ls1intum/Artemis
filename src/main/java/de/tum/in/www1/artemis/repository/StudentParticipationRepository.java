@@ -721,7 +721,8 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
     default void addNumberOfExamExerciseParticipations(ExerciseGroup exerciseGroup) {
         exerciseGroup.getExercises().forEach(exercise -> {
             Long numberOfParticipations = countParticipationsIgnoreTestRunsByExerciseId(exercise.getId());
-            exercise.setNumberOfParticipations(numberOfParticipations);
+            // avoid setting to null in case not participations exist
+            exercise.setNumberOfParticipations((numberOfParticipations != null) ? numberOfParticipations : 0);
         });
     }
 }
