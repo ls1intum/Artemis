@@ -1,7 +1,7 @@
 <div *ngIf="exercise">
     <h2>
         <span *ngIf="exercise.course">{{ exercise.course?.title }} - {{ exercise.title }}</span>
-        <span *ngIf="exercise.exerciseGroup">{{ exercise.exerciseGroup?.exam.title }} - {{ exercise.title }}</span>
+        <span *ngIf="exercise.exerciseGroup">{{ exercise.exerciseGroup?.exam?.title }} - {{ exercise.title }}</span>
         <small jhiTranslate="artemisApp.exercise.resultCount" [translateValues]="{ resultsLength: filteredResultsSize }">results</small>
     </h2>
     <jhi-alert></jhi-alert>
@@ -69,12 +69,12 @@
                 </button>
                 <jhi-programming-assessment-repo-export
                     *ngIf="exercise.type === ExerciseType.PROGRAMMING"
-                    [exerciseId]="exercise.id"
+                    [exerciseId]="exercise.id!"
                     class="mr-1"
                 ></jhi-programming-assessment-repo-export>
                 <jhi-exercise-submission-export
                     *ngIf="exercise.type === ExerciseType.TEXT || exercise.type === ExerciseType.MODELING || exercise.type == ExerciseType.FILE_UPLOAD"
-                    [exerciseId]="exercise.id"
+                    [exerciseId]="exercise.id!"
                     [exerciseType]="exercise.type"
                     class="mr-1"
                 ></jhi-exercise-submission-export>
@@ -247,7 +247,13 @@
                             <fa-icon [icon]="'code-branch'" class="mr-1"></fa-icon>
                             Repository
                         </a>
-                        <button class="btn btn-primary btn-sm mr-1" jhiBuildPlanButton [projectKey]="projectKey()" [buildPlanId]="buildPlanId(value)">
+                        <button
+                            class="btn btn-primary btn-sm mr-1"
+                            [disabled]="!!buildPlanId(value)"
+                            jhiBuildPlanButton
+                            [projectKey]="projectKey()"
+                            [buildPlanId]="buildPlanId(value)!"
+                        >
                             <fa-icon class="mr-1" [icon]="['far', 'file-code']"></fa-icon>
                             Build plan
                         </button>
@@ -269,7 +275,12 @@
                             {{ 'artemisApp.programmingSubmission.view' | artemisTranslate }}
                         </a>
                         <a
-                            *ngIf="exercise.exerciseGroup && newManualResultAllowed && exercise.exerciseGroup.exam?.numberOfCorrectionRoundsInExam < 2"
+                            *ngIf="
+                                exercise.exerciseGroup &&
+                                newManualResultAllowed &&
+                                exercise.exerciseGroup!.exam?.numberOfCorrectionRoundsInExam !== undefined &&
+                                exercise.exerciseGroup!.exam!.numberOfCorrectionRoundsInExam! < 2
+                            "
                             [routerLink]="[
                                 '/course-management',
                                 exercise.exerciseGroup!.exam!.course!.id,
@@ -308,7 +319,11 @@
                             {{ 'artemisApp.fileUploadSubmission.view' | artemisTranslate }}
                         </a>
                         <a
-                            *ngIf="exercise.exerciseGroup && exercise.exerciseGroup.exam?.numberOfCorrectionRoundsInExam < 2"
+                            *ngIf="
+                                exercise.exerciseGroup &&
+                                exercise.exerciseGroup!.exam?.numberOfCorrectionRoundsInExam !== undefined &&
+                                exercise.exerciseGroup!.exam!.numberOfCorrectionRoundsInExam! < 2
+                            "
                             [routerLink]="[
                                 '/course-management',
                                 exercise.exerciseGroup!.exam!.course!.id,
@@ -342,7 +357,11 @@
                             {{ 'artemisApp.modelingSubmission.view' | artemisTranslate }}
                         </a>
                         <a
-                            *ngIf="exercise.exerciseGroup && exercise.exerciseGroup.exam?.numberOfCorrectionRoundsInExam < 2"
+                            *ngIf="
+                                exercise.exerciseGroup &&
+                                exercise.exerciseGroup!.exam?.numberOfCorrectionRoundsInExam !== undefined &&
+                                exercise.exerciseGroup!.exam!.numberOfCorrectionRoundsInExam! < 2
+                            "
                             [routerLink]="[
                                 '/course-management',
                                 exercise.exerciseGroup!.exam!.course!.id,
@@ -376,7 +395,11 @@
                             {{ 'artemisApp.textSubmission.view' | artemisTranslate }}
                         </a>
                         <a
-                            *ngIf="exercise.exerciseGroup && exercise.exerciseGroup.exam?.numberOfCorrectionRoundsInExam < 2"
+                            *ngIf="
+                                exercise.exerciseGroup &&
+                                exercise.exerciseGroup!.exam?.numberOfCorrectionRoundsInExam !== undefined &&
+                                exercise.exerciseGroup!.exam!.numberOfCorrectionRoundsInExam! < 2
+                            "
                             [routerLink]="[
                                 '/course-management',
                                 exercise.exerciseGroup!.exam!.course!.id,
