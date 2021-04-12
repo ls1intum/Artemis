@@ -477,7 +477,7 @@ public class SubmissionService {
      *
      * @param exercise course exercise or exam exercise that is checked
      */
-    public void checkIfExerciseDueDateIsReached(Exercise exercise) throws AccessForbiddenException {
+    public void checkIfExerciseDueDateIsReached(Exercise exercise) {
         final boolean isExamMode = exercise.isExamExercise();
         // Tutors cannot start assessing submissions if the exercise due date hasn't been reached yet
         if (isExamMode) {
@@ -489,8 +489,7 @@ public class SubmissionService {
         }
         else {
             // special check for programming exercises as they use buildAndTestStudentSubmissionAfterDueDate instead of dueDate
-            if (exercise instanceof ProgrammingExercise) {
-                ProgrammingExercise programmingExercise = (ProgrammingExercise) exercise;
+            if (exercise instanceof ProgrammingExercise programmingExercise) {
                 if (programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null
                         && programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate().isAfter(ZonedDateTime.now())) {
                     log.debug("The due date to build and test of exercise '{}' has not been reached yet.", exercise.getTitle());
