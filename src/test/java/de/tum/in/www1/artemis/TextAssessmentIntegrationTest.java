@@ -1004,7 +1004,7 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
         Exam examReturned = request.get("/api/courses/" + exam.getCourse().getId() + "/exams/" + exam.getId(), HttpStatus.OK, Exam.class, params);
         examReturned.getExerciseGroups().get(0).getExercises().forEach(exerciseExamReturned -> {
             assertThat(exerciseExamReturned.getNumberOfParticipations()).isNotNull();
-            assertThat(exerciseExamReturned.getNumberOfParticipations()).isEqualTo(0);
+            assertThat(exerciseExamReturned.getNumberOfParticipations()).isEqualTo(1);
         });
         database.changeUser("tutor1");
 
