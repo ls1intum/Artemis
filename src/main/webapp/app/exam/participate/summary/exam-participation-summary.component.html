@@ -36,9 +36,7 @@
                     exercise.studentParticipations![0].submissions![0].type === SUBMISSION_TYPE_ILLEGAL
                 "
             >
-                <span class="badge badge-danger ml-3" style="font-size: 65%" jhiTranslate="artemisApp.assessment.assessmentIllegalSubmission">
-                    Warning: You are viewing an illegal submission.
-                </span>
+                <span class="badge badge-danger" jhiTranslate="artemisApp.assessment.assessmentIllegalSubmission"> Warning: You are viewing an illegal submission. </span>
             </div>
             <div *ngIf="resultsPublished && exercise.studentParticipations?.length">
                 <jhi-result [participation]="exercise.studentParticipations![0]"></jhi-result>
