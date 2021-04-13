@@ -931,8 +931,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         assertThat(exam3.getExerciseGroups()).hasSize(exam.getExerciseGroups().size());
         assertThat(exam3.getExerciseGroups().get(0).getExercises()).hasSize(exam.getExerciseGroups().get(0).getExercises().size());
         assertThat(exam3.getExerciseGroups().get(1).getExercises()).hasSize(exam.getExerciseGroups().get(1).getExercises().size());
-        assertThat(exam3.getNumberOfRegisteredUsers()).isNotNull();
-        assertThat(exam3.getNumberOfRegisteredUsers()).isEqualTo(1);
+        assertThat(exam3.getNumberOfRegisteredUsers()).isNotNull().isEqualTo(1);
 
         // 4. without students, with exercise groups
         params = new LinkedMultiValueMap<>();
