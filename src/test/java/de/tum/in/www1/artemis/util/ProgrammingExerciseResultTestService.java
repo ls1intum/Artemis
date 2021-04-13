@@ -205,7 +205,7 @@ public class ProgrammingExerciseResultTestService {
     // Test
     public void shouldStoreFeedbackForResultWithStaticCodeAnalysisReport(Object resultNotification, ProgrammingLanguage programmingLanguage) {
         final var optionalResult = gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipationStaticCodeAnalysis, resultNotification);
-        final var savedResult = resultService.findOneWithEagerSubmissionAndFeedback(optionalResult.get().getId());
+        final var savedResult = resultRepository.findOneWithEagerSubmissionAndFeedback(optionalResult.get().getId());
 
         // Should be one because programmingExerciseStudentParticipationStaticCodeAnalysis doesn't have a submission
         var submissions = programmingSubmissionRepository.findAll();
