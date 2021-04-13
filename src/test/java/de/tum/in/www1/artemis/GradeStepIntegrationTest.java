@@ -89,6 +89,7 @@ public class GradeStepIntegrationTest extends AbstractSpringIntegrationBambooBit
         gradeStep1.setUpperBoundPercentage(60);
         gradeStep2.setLowerBoundPercentage(60);
         gradeStep2.setUpperBoundPercentage(100);
+        gradeStep2.setUpperBoundInclusive(true);
         gradeStep1.setGradingScale(courseGradingScale);
         gradeStep2.setGradingScale(courseGradingScale);
         gradeSteps = Set.of(gradeStep1, gradeStep2);
@@ -125,6 +126,7 @@ public class GradeStepIntegrationTest extends AbstractSpringIntegrationBambooBit
         gradeStep2.setGradeName("Name2");
         gradeStep1.setLowerBoundPercentage(0);
         gradeStep1.setUpperBoundPercentage(60);
+        gradeStep2.setUpperBoundInclusive(true);
         gradeStep2.setLowerBoundPercentage(60);
         gradeStep2.setUpperBoundPercentage(100);
         gradeStep1.setGradingScale(examGradingScale);

@@ -51,11 +51,16 @@ public class GradingScaleService {
 
     /**
      * Saves a grading scale to the database if it is valid
+     * - grading scale can't have both course and exam set
+     * - other checks performed in {@link GradingScaleService#checkGradeStepValidity(Set)}
      *
      * @param gradingScale the grading scale to be saved
      * @return the saved grading scale
      */
     public GradingScale saveGradingScale(GradingScale gradingScale) {
+        if (gradingScale.getCourse() != null && gradingScale.getExam() != null) {
+            throw new BadRequestAlertException("Grading scales can't belong both to a course and an exam", "gradingScale", "gradingScaleBelongsToCourseAndExam");
+        }
         Set<GradeStep> gradeSteps = gradingScale.getGradeSteps();
         checkGradeStepValidity(gradeSteps);
         for (GradeStep gradeStep : gradeSteps) {

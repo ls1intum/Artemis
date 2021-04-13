@@ -111,6 +111,9 @@ public class GradingScaleResource {
         else if (gradingScale.getGradeSteps() == null) {
             return badRequest(ENTITY_NAME, "noGradeSteps", "A grading scale must contain grade steps");
         }
+        else if (gradingScale.getId() != null) {
+            return badRequest(ENTITY_NAME, "gradingScaleHasId", "A grading scale can't contain a predefined id");
+        }
         gradingScale.setCourse(course);
 
         GradingScale savedGradingScale = gradingScaleService.saveGradingScale(gradingScale);
@@ -140,6 +143,9 @@ public class GradingScaleResource {
         }
         else if (gradingScale.getGradeSteps() == null) {
             return badRequest(ENTITY_NAME, "noGradeSteps", "A grading scale must contain grade steps");
+        }
+        else if (gradingScale.getId() != null) {
+            return badRequest(ENTITY_NAME, "gradingScaleHasId", "A grading scale can't contain a predefined id");
         }
         Exam exam = examRepository.findById(examId).orElseThrow();
         gradingScale.setExam(exam);

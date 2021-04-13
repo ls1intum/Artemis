@@ -4,6 +4,7 @@ import java.util.Set;
 
 import javax.persistence.*;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -24,11 +25,13 @@ public class GradingScale extends DomainObject {
     @OneToOne
     @JoinColumn(name = "course_id")
     @JsonIgnoreProperties("gradingScale")
+    @JsonIgnore
     private Course course;
 
     @OneToOne
     @JoinColumn(name = "exam_id")
     @JsonIgnoreProperties("gradingScale")
+    @JsonIgnore
     private Exam exam;
 
     @OneToMany(mappedBy = "gradingScale", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)

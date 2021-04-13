@@ -95,9 +95,9 @@ public class GradeStepResource {
     public ResponseEntity<GradeStep> getGradeStepsByIdForCourse(@PathVariable Long courseId, @PathVariable Long gradeStepId) {
         log.debug("REST request to get grade step {} for course: {}", gradeStepId, courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
-        GradingScale gradingScale = gradingScaleRepository.findByCourseIdOrElseThrow(courseId);
+        gradingScaleRepository.findByCourseIdOrElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
-        Optional<GradeStep> gradeStep = gradeStepRepository.findByIdAndGradingScale_Id(gradeStepId, gradingScale.getId());
+        Optional<GradeStep> gradeStep = gradeStepRepository.findById(gradeStepId);
         return gradeStep.map(ResponseEntity::ok).orElseGet(ResponseUtil::notFound);
     }
 
@@ -114,9 +114,9 @@ public class GradeStepResource {
     public ResponseEntity<GradeStep> getGradeStepsByIdForExam(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long gradeStepId) {
         log.debug("REST request to get grade step {} for exam: {}", gradeStepId, examId);
         Course course = courseRepository.findByIdElseThrow(courseId);
-        GradingScale gradingScale = gradingScaleRepository.findByExamIdOrElseThrow(examId);
+        gradingScaleRepository.findByExamIdOrElseThrow(examId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
-        Optional<GradeStep> gradeStep = gradeStepRepository.findByIdAndGradingScale_Id(gradeStepId, gradingScale.getId());
+        Optional<GradeStep> gradeStep = gradeStepRepository.findById(gradeStepId);
         return gradeStep.map(ResponseEntity::ok).orElseGet(ResponseUtil::notFound);
     }
 

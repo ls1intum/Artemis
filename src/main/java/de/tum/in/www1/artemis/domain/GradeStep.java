@@ -124,14 +124,16 @@ public class GradeStep extends DomainObject {
 
     /**
      * Checks if the current grade step is valid
+     * - the id should be initially null
      * - the grade name should be set and it shouldn't be empty
      * - both bounds should be between 0 and 100 (both inclusive)
-     * - the lower bound should be strictly less than the upper bound
+     * - the lower bound should be less than or equal to the upper bound
      *
      * @return true if all conditions are true and false otherwise
      */
     public boolean isValid() {
-        return gradeName != null && !gradeName.equals("") && lowerBoundPercentage >= 0 && lowerBoundPercentage < upperBoundPercentage && upperBoundPercentage <= 100;
+        boolean validOrder = lowerBoundPercentage < upperBoundPercentage || (lowerBoundPercentage == upperBoundPercentage && lowerBoundInclusive && upperBoundInclusive);
+        return getId() == null && !gradeName.isBlank() && lowerBoundPercentage >= 0 && validOrder && upperBoundPercentage <= 100;
     }
 
     /**
