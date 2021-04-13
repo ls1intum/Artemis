@@ -18,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
 import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
@@ -33,6 +34,9 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseService;
 import de.tum.in.www1.artemis.service.scheduled.quiz.QuizScheduleService;
 import de.tum.in.www1.artemis.web.rest.dto.CourseManagementOverviewExerciseStatisticsDTO;
+import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
+import de.tum.in.www1.artemis.web.rest.dto.StatsForDashboardDTO;
+import de.tum.in.www1.artemis.web.rest.dto.TutorLeaderboardDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
@@ -78,8 +82,6 @@ public class ExerciseService {
 
     private final ParticipantScoreRepository participantScoreRepository;
 
-    private final QuizExerciseRepository quizExerciseRepository;
-
     private final SubmissionRepository submissionRepository;
 
     private final ResultRepository resultRepository;
@@ -90,13 +92,22 @@ public class ExerciseService {
 
     private final LectureUnitService lectureUnitService;
 
+    private final UserRepository userRepository;
+
+    private final ComplaintRepository complaintRepository;
+
+    private final TutorLeaderboardService tutorLeaderboardService;
+
+    private final ComplaintResponseRepository complaintResponseRepository;
+
     public ExerciseService(ExerciseRepository exerciseRepository, ExerciseUnitRepository exerciseUnitRepository, ParticipationService participationService,
             AuthorizationCheckService authCheckService, ProgrammingExerciseService programmingExerciseService, QuizExerciseService quizExerciseService,
             QuizScheduleService quizScheduleService, TutorParticipationRepository tutorParticipationRepository, ExampleSubmissionService exampleSubmissionService,
             AuditEventRepository auditEventRepository, TeamRepository teamRepository, StudentExamRepository studentExamRepository, ExamRepository examRepository,
-            ProgrammingExerciseRepository programmingExerciseRepository, QuizExerciseRepository quizExerciseRepository, LtiOutcomeUrlRepository ltiOutcomeUrlRepository,
+            ProgrammingExerciseRepository programmingExerciseRepository, LtiOutcomeUrlRepository ltiOutcomeUrlRepository,
             StudentParticipationRepository studentParticipationRepository, ResultRepository resultRepository, SubmissionRepository submissionRepository,
-            ParticipantScoreRepository participantScoreRepository, LectureUnitService lectureUnitService) {
+            ParticipantScoreRepository participantScoreRepository, LectureUnitService lectureUnitService, UserRepository userRepository, ComplaintRepository complaintRepository,
+            TutorLeaderboardService tutorLeaderboardService, ComplaintResponseRepository complaintResponseRepository) {
         this.exerciseRepository = exerciseRepository;
         this.resultRepository = resultRepository;
         this.examRepository = examRepository;
@@ -114,10 +125,13 @@ public class ExerciseService {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.teamRepository = teamRepository;
         this.participantScoreRepository = participantScoreRepository;
-        this.quizExerciseRepository = quizExerciseRepository;
         this.ltiOutcomeUrlRepository = ltiOutcomeUrlRepository;
         this.studentParticipationRepository = studentParticipationRepository;
         this.lectureUnitService = lectureUnitService;
+        this.userRepository = userRepository;
+        this.complaintRepository = complaintRepository;
+        this.tutorLeaderboardService = tutorLeaderboardService;
+        this.complaintResponseRepository = complaintResponseRepository;
     }
 
     /**
@@ -161,6 +175,91 @@ public class ExerciseService {
             }
         }
         return exercisesUserIsAllowedToSee;
+    }
+
+    /**
+     * Given an exercise exerciseId, it creates an object node with numberOfSubmissions, totalNumberOfAssessments, numberOfComplaints and numberOfMoreFeedbackRequests, that are used by both
+     * stats for assessment dashboard and for instructor dashboard
+     * TODO: refactor and improve this method
+     *
+     * @param exercise - the exercise we are interested in
+     * @param examMode - flag to determine if test run submissions should be deducted from the statistics
+     * @return a object node with the stats
+     */
+    public StatsForDashboardDTO populateCommonStatistics(Exercise exercise, boolean examMode) {
+        final Long exerciseId = exercise.getId();
+        StatsForDashboardDTO stats = new StatsForDashboardDTO();
+
+        Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
+
+        DueDateStat numberOfSubmissions;
+        DueDateStat totalNumberOfAssessments;
+
+        if (exercise instanceof ProgrammingExercise) {
+            numberOfSubmissions = new DueDateStat(programmingExerciseRepository.countLegalSubmissionsByExerciseIdSubmitted(exerciseId, examMode), 0L);
+            totalNumberOfAssessments = new DueDateStat(programmingExerciseRepository.countAssessmentsByExerciseIdSubmitted(exerciseId, examMode), 0L);
+        }
+        else {
+            numberOfSubmissions = submissionRepository.countSubmissionsForExercise(exerciseId, examMode);
+            totalNumberOfAssessments = resultRepository.countNumberOfFinishedAssessmentsForExercise(exerciseId, examMode);
+        }
+
+        stats.setNumberOfSubmissions(numberOfSubmissions);
+        stats.setTotalNumberOfAssessments(totalNumberOfAssessments);
+
+        final DueDateStat[] numberOfAssessmentsOfCorrectionRounds;
+        int numberOfCorrectionRounds = 1;
+        if (examMode) {
+            // set number of corrections specific to each correction round
+            numberOfCorrectionRounds = exercise.getExerciseGroup().getExam().getNumberOfCorrectionRoundsInExam();
+            numberOfAssessmentsOfCorrectionRounds = resultRepository.countNumberOfFinishedAssessmentsForExamExerciseForCorrectionRounds(exercise, numberOfCorrectionRounds);
+        }
+        else {
+            // no examMode here, so correction rounds defaults to 1 and is the same as totalNumberOfAssessments
+            numberOfAssessmentsOfCorrectionRounds = new DueDateStat[] { totalNumberOfAssessments };
+        }
+
+        stats.setNumberOfAssessmentsOfCorrectionRounds(numberOfAssessmentsOfCorrectionRounds);
+
+        final DueDateStat[] numberOfLockedAssessmentByOtherTutorsOfCorrectionRound;
+        numberOfLockedAssessmentByOtherTutorsOfCorrectionRound = resultRepository.countNumberOfLockedAssessmentsByOtherTutorsForExamExerciseForCorrectionRounds(exercise,
+                numberOfCorrectionRounds, userRepository.getUserWithGroupsAndAuthorities());
+        stats.setNumberOfLockedAssessmentByOtherTutorsOfCorrectionRound(numberOfLockedAssessmentByOtherTutorsOfCorrectionRound);
+
+        final DueDateStat numberOfAutomaticAssistedAssessments = resultRepository.countNumberOfAutomaticAssistedAssessmentsForExercise(exerciseId);
+        stats.setNumberOfAutomaticAssistedAssessments(numberOfAutomaticAssistedAssessments);
+
+        final long numberOfMoreFeedbackRequests = complaintRepository.countComplaintsByExerciseIdAndComplaintType(exerciseId, ComplaintType.MORE_FEEDBACK);
+        stats.setNumberOfMoreFeedbackRequests(numberOfMoreFeedbackRequests);
+
+        long numberOfComplaints;
+        if (examMode) {
+            numberOfComplaints = complaintRepository.countByResultParticipationExerciseIdAndComplaintTypeIgnoreTestRuns(exerciseId, ComplaintType.COMPLAINT);
+        }
+        else {
+            numberOfComplaints = complaintRepository.countComplaintsByExerciseIdAndComplaintType(exerciseId, ComplaintType.COMPLAINT);
+        }
+        stats.setNumberOfComplaints(numberOfComplaints);
+
+        long numberOfComplaintResponses = complaintResponseRepository.countComplaintResponseByExerciseIdAndComplaintTypeAndSubmittedTimeIsNotNull(exerciseId,
+                ComplaintType.COMPLAINT);
+
+        stats.setNumberOfOpenComplaints(numberOfComplaints - numberOfComplaintResponses);
+
+        long numberOfMoreFeedbackComplaintResponses = complaintResponseRepository.countComplaintResponseByExerciseIdAndComplaintTypeAndSubmittedTimeIsNotNull(exerciseId,
+                ComplaintType.MORE_FEEDBACK);
+
+        stats.setNumberOfOpenMoreFeedbackRequests(numberOfMoreFeedbackRequests - numberOfMoreFeedbackComplaintResponses);
+
+        List<TutorLeaderboardDTO> leaderboardEntries = tutorLeaderboardService.getExerciseLeaderboard(exercise);
+        stats.setTutorLeaderboardEntries(leaderboardEntries);
+        final long totalNumberOfAssessmentLocks = submissionRepository.countLockedSubmissionsByExerciseId(exerciseId);
+        stats.setTotalNumberOfAssessmentLocks(totalNumberOfAssessmentLocks);
+
+        stats.setFeedbackRequestEnabled(course.getComplaintsEnabled());
+        stats.setFeedbackRequestEnabled(course.getRequestMoreFeedbackEnabled());
+
+        return stats;
     }
 
     /**
