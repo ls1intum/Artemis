@@ -1214,23 +1214,18 @@ Artemis
 1. In ``docker-compose.yml``
 
    1. Make sure to use unique ports, e.g. 8080 for Artemis, 8081 for Gitlab and 8082 for Jenkins
-   2. Change the SPRING_PROFILES_ACTIVE to dev,jenkins,gitlab,artemis
+   2. Change the ``SPRING_PROFILES_ACTIVE`` environment variable to ``dev,jenkins,gitlab,artemis,scheduling``.
 
-2. In ``src/main/resources/config/application-dev.yml``
+2. In ``src/main/resources/config/application-dev.yml`` at ``server:`` use port 8080 for Artemis.
 
-   1. At ``spring.profiles.active:`` add ``& gitlab & jenkins``
-   2. At ``spring.liquibase:`` add the new property
-      ``change-log: classpath:config/liquibase/master.xml``
-   3. At ``server:`` use port 8080 for Artemis
-
-3. Run ``docker-compose up``
+3. Run ``docker-compose up``.
 
 4. After the container has been deployed run
-   ``docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' artemis_artemis-server``
+   ``docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' artemis_artemis-server``
    and copy the first resulting IP.
 
 5. In ``src/main/resources/config/application-dev.yml`` at ``server:``
-   at ``url:`` paste the copied IP
+   at ``url:`` paste the copied IP with the port number, e.g. ``url: http://172.33.0.1:8080``.
 
 6. Stop the Artemis docker container with Control-C and re-run
-   ``docker-compose up``
+   ``docker-compose up``.
