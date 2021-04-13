@@ -1024,7 +1024,6 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
         // assess submission and submit
         List<Feedback> feedbacks = ModelFactory.generateFeedback().stream().peek(feedback -> {
             feedback.setDetailText("Good work here");
-            feedback.setCopiedFeedback(false);
         }).collect(Collectors.toList());
         TextAssessmentDTO textAssessmentDTO = new TextAssessmentDTO();
         textAssessmentDTO.setFeedbacks(feedbacks);
@@ -1082,7 +1081,6 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
         assertThat(submissionWithoutSecondAssessment.getLatestResult().getAssessor().getLogin()).isEqualTo("tutor2");
         assertThat(submissionWithoutSecondAssessment.getLatestResult().getAssessmentType()).isEqualTo(AssessmentType.MANUAL);
         assertThat(submissionWithoutSecondAssessment.getLatestResult().getFeedbacks().size()).isGreaterThan(0);
-        assertThat(submissionWithoutSecondAssessment.getLatestResult().getFeedbacks().get(0).getCopiedFeedback()).isEqualTo(true);
 
         // verify that the relationship between student participation,
         databaseRelationshipStateOfResultsOverParticipation = studentParticipationRepository.findWithEagerLegalSubmissionsAndResultsAssessorsById(studentParticipation.getId());

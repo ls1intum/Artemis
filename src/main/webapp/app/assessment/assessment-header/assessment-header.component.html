@@ -74,21 +74,9 @@
             You have the lock for this assessment
         </span>
         <!-- Highlight the difference between first and second correction -->
-        <button
-            *ngIf="!highlightDifferences && result && correctionRound > 0"
-            class="btn ml-2 btn-primary"
-            (click)="toggleHighlightDifferences()"
-            [disabled]="saveBusy || submitBusy || cancelBusy"
-        >
-            <span jhiTranslate="artemisApp.assessment.differenceActivate">Activate Diff-View</span>
-        </button>
-        <button
-            *ngIf="highlightDifferences && result && correctionRound > 0"
-            class="btn ml-2 btn-primary"
-            (click)="toggleHighlightDifferences()"
-            [disabled]="saveBusy || submitBusy || cancelBusy"
-        >
-            <span jhiTranslate="artemisApp.assessment.differenceDeactivate">Deactivate Diff-View</span>
+        <button *ngIf="result && correctionRound > 0" class="btn ml-2 btn-primary" (click)="toggleHighlightDifferences()" [disabled]="saveBusy || submitBusy || cancelBusy">
+            <span *ngIf="!highlightDifferences" jhiTranslate="artemisApp.assessment.differenceActivate">Activate Diff-View</span>
+            <span *ngIf="highlightDifferences" jhiTranslate="artemisApp.assessment.differenceDeactivate">Deactivate Diff-View</span>
         </button>
         <br />
         <ng-container *ngIf="!result?.completionDate">
