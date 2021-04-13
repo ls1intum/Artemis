@@ -1171,12 +1171,13 @@ If you haven’t done so, generate the DH param file:
    resolver <if you have any, specify them here> valid=300s;
    resolver_timeout 5s;
 
-#Deployment Artemis / GitLab / Jenkins using Docker on Local machine
+Deployment Artemis / GitLab / Jenkins using Docker on Local machine
+-------------------------------------------------------------------
 
 Execute the following steps in addition to the ones described above:
 
 Preparation
------------
+~~~~~~~~~~~
 
 1. Create a Docker network named “artemis” with
    ``docker network create artemis``
@@ -1184,7 +1185,7 @@ Preparation
 .. _gitlab-1:
 
 Gitlab
-------
+~~~~~~
 
 1. Add the Gitlab container to the created network with
    ``docker network connect artemis gitlab``
@@ -1196,7 +1197,7 @@ Gitlab
 .. _jenkins-2:
 
 Jenkins
--------
+~~~~~~~
 
 1. Add the Jenkins container to the created network with
    ``docker network connect artemis jenkins``
@@ -1208,7 +1209,7 @@ Jenkins
 .. _artemis-1:
 
 Artemis
--------
+~~~~~~~
 
 1. In ``docker-compose.yml``
 
