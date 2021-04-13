@@ -29,8 +29,19 @@
                 &nbsp;<fa-icon [icon]="getIcon(exercise.type)"></fa-icon>&nbsp;
                 <span jhiTranslate="artemisApp.exam.exercise" [translateValues]="{ nr: i + 1 }">Exercise {{ i + 1 }}</span>
             </h5>
-            <div *ngIf="resultsPublished && exercise.studentParticipations?.length">
-                <jhi-result [participation]="exercise.studentParticipations![0]"></jhi-result>
+            <div
+                *ngIf="
+                    exercise.studentParticipations?.length &&
+                    exercise.studentParticipations![0].submissions?.length &&
+                    exercise.studentParticipations![0].submissions![0].type === SUBMISSION_TYPE_ILLEGAL
+                "
+            >
+                <span class="badge badge-danger ml-3" style="font-size: 65%" jhiTranslate="artemisApp.assessment.assessmentIllegalSubmission">
+                    Warning: You are viewing an illegal submission.
+                </span>
+                <div *ngIf="resultsPublished && exercise.studentParticipations?.length">
+                    <jhi-result [participation]="exercise.studentParticipations![0]"></jhi-result>
+                </div>
             </div>
             <button
                 id="{{ 'toggleCollapseExerciseButton-' + i }}"
