@@ -2146,7 +2146,6 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @Test
     @WithMockUser(username = "user1", roles = "USER")
     public void testGetExamTitleForNonExistingExam() throws Exception {
-        // No exam with id 10 was created
-        request.get("/api/exams/10/title", HttpStatus.NOT_FOUND, String.class);
+        request.get("/api/exams/123124123123/title", HttpStatus.NOT_FOUND, String.class);
     }
 }

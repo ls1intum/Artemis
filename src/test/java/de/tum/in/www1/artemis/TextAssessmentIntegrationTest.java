@@ -27,6 +27,7 @@ import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.service.TextAssessmentService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.TextExerciseUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.TextAssessmentDTO;
@@ -67,6 +68,9 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
     @Autowired
     private FeedbackConflictRepository feedbackConflictRepository;
 
+    @Autowired
+    private TextAssessmentService textAssessmentService;
+
     private TextExercise textExercise;
 
     private Course course;
@@ -83,6 +87,16 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
     @AfterEach
     public void tearDown() {
         database.resetDatabase();
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void testPrepareSubmissionForAssessment() {
+        TextSubmission textSubmission = ModelFactory.generateTextSubmission("Some text", Language.ENGLISH, false);
+        textSubmission = database.saveTextSubmission(textExercise, textSubmission, "student1");
+        textAssessmentService.prepareSubmissionForAssessment(textSubmission, null);
+        var result = resultRepo.findDistinctBySubmissionId(textSubmission.getId());
+        assertThat(result).isPresent();
     }
 
     @Test
@@ -114,7 +128,7 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
     public void retrieveParticipationForNonExistingSubmission() throws Exception {
-        StudentParticipation participation = request.get("/api/text-assessments/submission/345395769256365", HttpStatus.BAD_REQUEST, StudentParticipation.class);
+        StudentParticipation participation = request.get("/api/text-assessments/submission/345395769256365", HttpStatus.NOT_FOUND, StudentParticipation.class);
         assertThat(participation).as("participation should not be found").isNull();
     }
 
