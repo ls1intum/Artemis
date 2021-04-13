@@ -1213,10 +1213,10 @@ Artemis
 
 1. In ``docker-compose.yml``
 
-   1. Make sure to use unique ports, e.g. 8080 for Artemis, 8081 for Gitlab and 8082 for Jenkins
+   1. Make sure to use unique ports, e.g. 8080 for Artemis, 8081 for Gitlab and 8082 for Jenkins.
    2. Change the ``SPRING_PROFILES_ACTIVE`` environment variable to ``dev,jenkins,gitlab,artemis,scheduling``.
 
-2. In ``src/main/resources/config/application-dev.yml`` at ``server:`` use port 8080 for Artemis.
+2. In ``src/main/resources/config/application-dev.yml`` at ``server:`` use ``port: 8080`` for Artemis.
 
 3. Run ``docker-compose up``.
 
