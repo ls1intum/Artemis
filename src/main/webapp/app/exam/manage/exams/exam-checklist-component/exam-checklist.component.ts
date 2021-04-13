@@ -39,7 +39,6 @@ export class ExamChecklistComponent implements OnInit {
                 this.examChecklist = examStats;
                 this.checkAllExamsGenerated();
             });
-        console.log('exam:', this.exam);
     }
 
     /**
