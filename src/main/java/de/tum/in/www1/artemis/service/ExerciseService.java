@@ -95,6 +95,8 @@ public class ExerciseService {
 
     private final ComplaintResponseRepository complaintResponseRepository;
 
+    private final ProgrammingExerciseRepository programmingExerciseRepository;
+
     public ExerciseService(ExerciseRepository exerciseRepository, ExerciseUnitRepository exerciseUnitRepository, ParticipationService participationService,
             AuthorizationCheckService authCheckService, ProgrammingExerciseService programmingExerciseService, QuizExerciseService quizExerciseService,
             QuizScheduleService quizScheduleService, TutorParticipationRepository tutorParticipationRepository, ExampleSubmissionService exampleSubmissionService,
@@ -126,6 +128,7 @@ public class ExerciseService {
         this.complaintRepository = complaintRepository;
         this.tutorLeaderboardService = tutorLeaderboardService;
         this.complaintResponseRepository = complaintResponseRepository;
+        this.programmingExerciseRepository = programmingExerciseRepository;
     }
 
     /**
