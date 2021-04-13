@@ -138,7 +138,7 @@ public class StudentExamService {
     }
 
     private void saveSubmissions(StudentExam studentExam, User currentUser) {
-        List<StudentParticipation> existingParticipations = studentParticipationRepository.findByStudentExamWithEagerLegalSubmissionsResult(studentExam, false);
+        List<StudentParticipation> existingParticipations = studentParticipationRepository.findByStudentExamWithEagerSubmissionsResult(studentExam, false);
 
         for (Exercise exercise : studentExam.getExercises()) {
             // we do not apply the following checks for programming exercises or file upload exercises
@@ -251,7 +251,7 @@ public class StudentExamService {
                                 .filter(exercise -> exercise instanceof ModelingExercise || exercise instanceof TextExercise || exercise instanceof FileUploadExercise)
                                 .collect(Collectors.toList())));
         for (final var user : exercisesOfUser.keySet()) {
-            final var studentParticipations = studentParticipationRepository.findByStudentIdAndIndividualExercisesWithEagerLegalSubmissionsResultIgnoreTestRuns(user.getId(),
+            final var studentParticipations = studentParticipationRepository.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(user.getId(),
                     exercisesOfUser.get(user));
             for (final var studentParticipation : studentParticipations) {
                 final var latestSubmission = studentParticipation.findLatestSubmission();
@@ -287,7 +287,7 @@ public class StudentExamService {
                                 .filter(exercise -> exercise instanceof ModelingExercise || exercise instanceof TextExercise || exercise instanceof FileUploadExercise)
                                 .collect(Collectors.toList())));
         for (final var user : exercisesOfUser.keySet()) {
-            final var studentParticipations = studentParticipationRepository.findByStudentIdAndIndividualExercisesWithEagerLegalSubmissionsResultIgnoreTestRuns(user.getId(),
+            final var studentParticipations = studentParticipationRepository.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(user.getId(),
                     exercisesOfUser.get(user));
             for (var studentParticipation : studentParticipations) {
                 // even if the student did not submit anything for a specific exercise (the InitializationState is therefore only INITIALIZED)
@@ -453,7 +453,7 @@ public class StudentExamService {
     public StudentExam deleteTestRun(Long testRunId) {
         var testRun = studentExamRepository.findByIdWithExercisesElseThrow(testRunId);
         User instructor = testRun.getUser();
-        var participations = studentParticipationRepository.findTestRunParticipationsByStudentIdAndIndividualExercisesWithEagerLegalSubmissionsResult(instructor.getId(),
+        var participations = studentParticipationRepository.findTestRunParticipationsByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(instructor.getId(),
                 testRun.getExercises());
         testRun.getExercises().forEach(exercise -> {
             var relevantParticipation = exercise.findRelevantParticipation(participations);
