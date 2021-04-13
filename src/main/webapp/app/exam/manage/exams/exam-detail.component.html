@@ -136,8 +136,8 @@
                 </dd>
                 <dt><span jhiTranslate="artemisApp.examManagement.examStudents.registeredStudents">Registered students</span></dt>
                 <dd>
-                    <span *ngIf="exam.registeredUsers">{{ exam.registeredUsers?.length }}</span>
-                    <span *ngIf="!exam.registeredUsers">{{ 0 }}</span>
+                    <span *ngIf="exam.numberOfRegisteredUsers">{{ exam.numberOfRegisteredUsers }}</span>
+                    <span *ngIf="!exam.numberOfRegisteredUsers">{{ 0 }}</span>
                 </dd>
                 <dt><span jhiTranslate="artemisApp.examManagement.startText">Exam start text</span></dt>
                 <dd *ngIf="formattedStartText" class="editor-outline-background" [innerHTML]="formattedStartText"></dd>
