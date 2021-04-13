@@ -13,6 +13,7 @@ import { iconsAsHTML } from 'app/utils/icons.utils';
 import { Exam } from 'app/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
+import { StudentDTO } from 'app/entities/student-dto.model';
 
 const cssClasses = {
     alreadyRegistered: 'already-registered',
@@ -139,8 +140,11 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
         if (!this.allRegisteredUsers.map((u) => u.id).includes(user.id) && user.login) {
             this.isTransitioning = true;
             this.examManagementService.addStudentToExam(this.courseId, this.exam.id!, user.login).subscribe(
-                () => {
+                (student) => {
                     this.isTransitioning = false;
+
+                    // make sure the registration number is set in the user object
+                    user.visibleRegistrationNumber = student.body!.registrationNumber;
 
                     // Add newly registered user to the list of all registered users for the exam
                     this.allRegisteredUsers.push(user);
