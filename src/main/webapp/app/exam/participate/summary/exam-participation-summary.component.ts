@@ -42,8 +42,6 @@ export class ExamParticipationSummaryComponent implements OnInit {
 
     icon: IconProp;
 
-    programmingExercise: ProgrammingExercise;
-
     examWithOnlyIdAndStudentReviewPeriod: Exam;
 
     constructor(private route: ActivatedRoute, private serverDateService: ArtemisServerDateService) {}
@@ -67,9 +65,8 @@ export class ExamParticipationSummaryComponent implements OnInit {
         }
     }
 
-    getProgrammingExercise(exercise: Exercise) {
-        this.programmingExercise = exercise;
-        return this.programmingExercise;
+    asProgrammingExercise(exercise: Exercise): ProgrammingExercise {
+        return exercise as ProgrammingExercise;
     }
 
     get resultsPublished() {
