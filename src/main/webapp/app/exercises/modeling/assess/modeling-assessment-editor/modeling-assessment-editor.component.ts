@@ -17,7 +17,7 @@ import { ResultService } from 'app/exercises/shared/result/result.service';
 import { ModelingExercise, UMLDiagramType } from 'app/entities/modeling-exercise.model';
 import { ModelingExerciseService } from 'app/exercises/modeling/manage/modeling-exercise.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { Result } from 'app/entities/result.model';
+import { Result, setFeedbackCorrectionRoundTag } from 'app/entities/result.model';
 import { ModelingSubmissionService } from 'app/exercises/modeling/participate/modeling-submission.service';
 import { Feedback, FeedbackHighlightColor, FeedbackType } from 'app/entities/feedback.model';
 import { Complaint, ComplaintType } from 'app/entities/complaint.model';
@@ -189,6 +189,12 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         }
         this.checkPermissions();
         this.validateFeedback();
+
+        if (this.correctionRound > 0 && this.submission?.results && this.submission.results.length > 1) {
+            setFeedbackCorrectionRoundTag(this.submission!.results![0], this.submission!.results![1]);
+            console.log('is copied set? within mod component:', this.submission);
+        }
+
         this.isLoading = false;
     }
 

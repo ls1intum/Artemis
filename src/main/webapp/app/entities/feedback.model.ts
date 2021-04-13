@@ -32,11 +32,12 @@ export class Feedback implements BaseEntity {
     public result?: Result;
     public positive?: boolean;
     public conflictingTextAssessments?: FeedbackConflict[];
-    public copiedFeedback?: boolean;
 
     // helper attributes for modeling exercise assessments stored in Feedback
     public referenceType?: string; // this string needs to follow UMLModelElementType in Apollon in typings.d.ts
     public referenceId?: string;
+
+    public copiedFeedback?: boolean; // helper attribute, only calculated locally on the client
 
     constructor() {
         this.credits = 0;

@@ -39,3 +39,25 @@ export class Result implements BaseEntity {
         return that.assessmentType === AssessmentType.MANUAL || that.assessmentType === AssessmentType.SEMI_AUTOMATIC;
     }
 }
+
+/**
+ * Sets the transient property copiedFeedback for feedbacks when comparing a submissions results of two correction rounds
+ * @param firstResult
+ * @param secondResult
+ */
+export function setFeedbackCorrectionRoundTag(firstResult: Result, secondResult: Result) {
+    secondResult.feedbacks!.forEach((secondFeedback) => {
+        firstResult.feedbacks!.forEach((firstFeedback) => {
+            if (
+                secondFeedback.type === firstFeedback.type &&
+                secondFeedback.credits === firstFeedback.credits &&
+                secondFeedback.detailText === firstFeedback.detailText &&
+                secondFeedback.reference === firstFeedback.reference &&
+                secondFeedback.text === firstFeedback.text
+            ) {
+                secondFeedback.copiedFeedback = true;
+            }
+        });
+    });
+    console.log('set copiedFeedback:', secondResult);
+}

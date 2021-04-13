@@ -21,7 +21,7 @@ import { ResultService } from 'app/exercises/shared/result/result.service';
 import { FileUploadSubmission } from 'app/entities/file-upload-submission.model';
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { Result } from 'app/entities/result.model';
+import { Result, setFeedbackCorrectionRoundTag } from 'app/entities/result.model';
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
 import { assessmentNavigateBack } from 'app/exercises/shared/navigate-back.util';
 import { ExerciseType, getCourseFromExercise } from 'app/entities/exercise.model';
@@ -215,6 +215,13 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
 
         this.checkPermissions();
         this.validateAssessment();
+
+        console.log(this.correctionRound, this.submission);
+        if (this.correctionRound > 0 && this.submission?.results && this.submission.results.length > 1) {
+            setFeedbackCorrectionRoundTag(this.submission!.results![0], this.submission!.results![1]);
+            console.log('is copied set? within file component:', this.submission);
+        }
+
         this.busy = false;
         this.isLoading = false;
     }
