@@ -95,20 +95,18 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             LEFT JOIN FETCH p.submissions s
             LEFT JOIN FETCH s.results r
             LEFT JOIN FETCH r.assessor
-            WHERE p.exercise.id = :#{#exerciseId} AND (s.type <> 'ILLEGAL' OR s.type IS NULL)
+            WHERE p.exercise.id = :#{#exerciseId}
             """)
-    List<StudentParticipation> findByExerciseIdWithEagerLegalSubmissionsResultAssessor(@Param("exerciseId") Long exerciseId);
+    List<StudentParticipation> findByExerciseIdWithEagerSubmissionsResultAssessor(@Param("exerciseId") Long exerciseId);
 
     @Query("""
             SELECT DISTINCT p FROM StudentParticipation p
             LEFT JOIN FETCH p.submissions s
             LEFT JOIN FETCH s.results r
             LEFT JOIN FETCH r.assessor
-            WHERE p.exercise.id = :#{#exerciseId}
-                AND p.testRun = false
-                AND (s.type <> 'ILLEGAL' OR s.type IS NULL)
+            WHERE p.exercise.id = :#{#exerciseId} AND p.testRun = false
             """)
-    List<StudentParticipation> findByExerciseIdWithEagerLegalSubmissionsResultAssessorIgnoreTestRuns(@Param("exerciseId") Long exerciseId);
+    List<StudentParticipation> findByExerciseIdWithEagerSubmissionsResultAssessorIgnoreTestRuns(@Param("exerciseId") Long exerciseId);
 
     // TODO SE improve
     /**
