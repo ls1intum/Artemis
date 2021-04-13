@@ -142,7 +142,7 @@ export const tutorAssessmentTour: GuidedTour = {
         // step 14
         // new page
         new AssessmentTaskTourStep({
-            highlightSelector: '.guided-tour-assessment-editor',
+            highlightSelector: '.guided-tour-complete-assessment-editor',
             headlineTranslateKey: 'tour.exampleAssessment.addAssessment.headline',
             contentTranslateKey: 'tour.exampleAssessment.addAssessment.content',
             orientation: Orientation.TOP,
