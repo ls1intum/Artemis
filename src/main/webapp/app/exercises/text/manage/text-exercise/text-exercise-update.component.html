@@ -42,7 +42,7 @@
             <div class="form-group flex-grow-1 ml-3">
                 <jhi-date-time-picker
                     name="dueDate"
-                    [error]="textExercise.dueDateError"
+                    [error]="!!textExercise.dueDateError"
                     labelName="{{ 'artemisApp.exercise.dueDate' | artemisTranslate }}"
                     (valueChange)="validateDate()"
                     [(ngModel)]="textExercise.dueDate"
@@ -53,7 +53,7 @@
         <div class="form-group" *ngIf="!isExamMode">
             <jhi-date-time-picker
                 name="assessmentDueDate"
-                [error]="textExercise.assessmentDueDateError"
+                [error]="!!textExercise.assessmentDueDateError"
                 labelName="{{ 'artemisApp.exercise.assessmentDueDate' | artemisTranslate }}"
                 (valueChange)="validateDate()"
                 [(ngModel)]="textExercise.assessmentDueDate"
@@ -63,7 +63,7 @@
         <div class="form-group">
             <label class="form-control-label">{{ 'artemisApp.exercise.includedInOverallScoreLabel' | artemisTranslate }}</label>
             <div>
-                <jhi-included-in-overall-score-picker [(includedInOverallScore)]="textExercise.includedInOverallScore"></jhi-included-in-overall-score-picker>
+                <jhi-included-in-overall-score-picker [(includedInOverallScore)]="textExercise.includedInOverallScore!"></jhi-included-in-overall-score-picker>
             </div>
         </div>
         <div class="row">
@@ -74,8 +74,8 @@
                         required
                         type="number"
                         class="form-control"
-                        customMin="1"
-                        customMax="9999"
+                        [customMin]="1"
+                        [customMax]="9999"
                         name="points"
                         #points="ngModel"
                         id="field_points"
@@ -93,8 +93,8 @@
                         type="number"
                         [required]="textExercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_COMPLETELY"
                         class="form-control"
-                        customMin="0"
-                        customMax="9999"
+                        [customMin]="0"
+                        [customMax]="9999"
                         name="bonusPoints"
                         id="field_bonusPoints"
                         [(ngModel)]="textExercise.bonusPoints"
@@ -168,12 +168,12 @@
                         [title]="'artemisApp.exampleSubmission.usedForTutorial' | artemisTranslate"
                     ></fa-icon>
                     <fa-icon
-                        *ngIf="exampleSubmission.submission?.result?.exampleResult"
+                        *ngIf="exampleSubmission.submission?.latestResult?.exampleResult"
                         [icon]="'check-circle'"
                         style="margin-left: 10px"
                         title="An assessment is available"
                     ></fa-icon>
-                    <button class="btn btn-danger" (click)="deleteExampleSubmission(exampleSubmission.id, i)">
+                    <button class="btn btn-danger" (click)="deleteExampleSubmission(exampleSubmission.id!, i)">
                         <fa-icon [icon]="'ban'"></fa-icon>
                     </button>
                 </li>
