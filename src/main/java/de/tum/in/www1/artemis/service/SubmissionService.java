@@ -280,7 +280,6 @@ public class SubmissionService {
         List<Feedback> oldFeedback = oldResult.getFeedbacks();
         oldFeedback.forEach(feedback -> {
             Feedback newFeedback = feedback.copyFeedback();
-            newFeedback.setCopiedFeedback(true);
             newResult.addFeedback(newFeedback);
         });
         resultRepository.save(newResult);

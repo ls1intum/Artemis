@@ -1108,7 +1108,6 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
         secondCorrectionFeedback.setDetailText("asfd");
         secondCorrectionFeedback.setCredits(10.0);
         secondCorrectionFeedback.setPositive(true);
-        secondCorrectionFeedback.setCopiedFeedback(false);
         submissionWithoutSecondAssessment.getLatestResult().getFeedbacks().add(secondCorrectionFeedback);
         textAssessmentDTO.setFeedbacks(submissionWithoutSecondAssessment.getLatestResult().getFeedbacks());
 
@@ -1121,8 +1120,6 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
         // check if feedback copy was set correctly
         int feedbackSize = secondSubmittedManualResult.getFeedbacks().size();
         assertThat(feedbackSize).isGreaterThan(0);
-        assertThat(secondSubmittedManualResult.getFeedbacks().get(0).getCopiedFeedback()).isEqualTo(true);
-        assertThat(secondSubmittedManualResult.getFeedbacks().get(feedbackSize - 1).getCopiedFeedback()).isEqualTo(false);
 
         // make sure that new result correctly appears after the assessment for second correction round
         LinkedMultiValueMap<String, String> paramsGetAssessedCR2 = new LinkedMultiValueMap<>();
