@@ -676,7 +676,6 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
     @Test
     @WithMockUser(username = "user1", roles = "USER")
     public void testGetExerciseTitleForNonExistingExercise() throws Exception {
-        // No exercise with id 1 was created
-        request.get("/api/exercises/1/title", HttpStatus.NOT_FOUND, String.class);
+        request.get("/api/exercises/12312321321/title", HttpStatus.NOT_FOUND, String.class);
     }
 }

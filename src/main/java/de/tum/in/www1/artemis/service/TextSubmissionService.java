@@ -68,14 +68,9 @@ public class TextSubmissionService extends SubmissionService {
             }
         }
 
-        if (Boolean.TRUE.equals(textSubmission.isExampleSubmission())) {
-            textSubmission = save(textSubmission);
-        }
-        else {
-            // NOTE: from now on we always set submitted to true to prevent problems here!
-            textSubmission.setSubmitted(true);
-            textSubmission = save(textSubmission, participation, textExercise, principal);
-        }
+        // NOTE: from now on we always set submitted to true to prevent problems here!
+        textSubmission.setSubmitted(true);
+        textSubmission = save(textSubmission, participation, textExercise, principal);
         return textSubmission;
     }
 
@@ -120,26 +115,6 @@ public class TextSubmissionService extends SubmissionService {
                 textSubmission = (TextSubmission) optionalTextSubmission.get();
             }
         }
-
-        return textSubmission;
-    }
-
-    /**
-     * The same as `save()`, but without participation, is used by example submission, which aren't linked to any participation
-     *
-     * @param textSubmission the submission to notifyCompass
-     * @return the textSubmission entity
-     */
-    public TextSubmission save(TextSubmission textSubmission) {
-        textSubmission.setSubmissionDate(ZonedDateTime.now());
-        textSubmission.setType(SubmissionType.MANUAL);
-
-        // Rebuild connection between result and submission, if it has been lost, because hibernate needs it
-        if (textSubmission.getLatestResult() != null && textSubmission.getLatestResult().getSubmission() == null) {
-            textSubmission.getLatestResult().setSubmission(textSubmission);
-        }
-
-        textSubmission = textSubmissionRepository.save(textSubmission);
 
         return textSubmission;
     }

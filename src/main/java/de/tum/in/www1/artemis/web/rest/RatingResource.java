@@ -17,10 +17,10 @@ import org.springframework.web.bind.annotation.*;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.RatingService;
-import de.tum.in.www1.artemis.service.ResultService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 /**
@@ -41,16 +41,16 @@ public class RatingResource {
 
     private final AuthorizationCheckService authCheckService;
 
-    private final ResultService resultService;
+    private final ResultRepository resultRepository;
 
     private final CourseRepository courseRepository;
 
-    public RatingResource(RatingService ratingService, UserRepository userRepository, AuthorizationCheckService authCheckService, ResultService resultService,
+    public RatingResource(RatingService ratingService, UserRepository userRepository, AuthorizationCheckService authCheckService, ResultRepository resultRepository,
             CourseRepository courseRepository) {
         this.ratingService = ratingService;
         this.userRepository = userRepository;
         this.authCheckService = authCheckService;
-        this.resultService = resultService;
+        this.resultRepository = resultRepository;
         this.courseRepository = courseRepository;
     }
 
@@ -145,7 +145,7 @@ public class RatingResource {
      */
     private boolean checkIfUserIsOwnerOfSubmission(Long resultId) {
         User user = userRepository.getUser();
-        Result result = resultService.findOne(resultId);
+        Result result = resultRepository.findOne(resultId);
         return authCheckService.isOwnerOfParticipation((StudentParticipation) result.getParticipation(), user);
     }
 }
