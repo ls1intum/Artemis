@@ -219,7 +219,6 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
         console.log(this.correctionRound, this.submission);
         if (this.correctionRound > 0 && this.submission?.results && this.submission.results.length > 1) {
             setFeedbackCorrectionRoundTag(this.submission!.results![0], this.submission!.results![1]);
-            console.log('is copied set? within file component:', this.submission);
         }
 
         this.busy = false;

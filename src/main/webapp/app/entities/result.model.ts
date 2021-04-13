@@ -59,5 +59,4 @@ export function setFeedbackCorrectionRoundTag(firstResult: Result, secondResult:
             }
         });
     });
-    console.log('set copiedFeedback:', secondResult);
 }

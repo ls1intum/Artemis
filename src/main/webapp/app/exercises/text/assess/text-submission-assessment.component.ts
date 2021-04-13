@@ -192,7 +192,6 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
 
         if (this.correctionRound > 0 && this.submission?.results && this.submission.results.length > 1) {
             setFeedbackCorrectionRoundTag(this.submission!.results![0], this.submission!.results![1]);
-            console.log('is copied set? within component:', this.submission);
         }
     }
 
