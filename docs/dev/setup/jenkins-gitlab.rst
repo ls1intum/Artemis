@@ -1180,7 +1180,7 @@ Preparation
 ~~~~~~~~~~~
 
 1. Create a Docker network named “artemis” with
-   ``docker network create artemis``
+   ``docker network create artemis``.
 
 .. _gitlab-1:
 
@@ -1188,11 +1188,11 @@ Gitlab
 ~~~~~~
 
 1. Add the Gitlab container to the created network with
-   ``docker network connect artemis gitlab``
+   ``docker network connect artemis gitlab``.
 2. Get the URL of the Gitlab container with the first IP returned by
-   ``docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' gitlab``
+   ``docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' gitlab``.
 3. Use this IP in the ``application-artemis.yml`` file at
-   ``artemis.version-control.url``
+   ``artemis.version-control.url``.
 
 .. _jenkins-2:
 
@@ -1200,18 +1200,18 @@ Jenkins
 ~~~~~~~
 
 1. Add the Jenkins container to the created network with
-   ``docker network connect artemis jenkins``
+   ``docker network connect artemis jenkins``.
 2. Get the URL of the Gitlab container with the first IP returned by
-   ``docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' jenkins``
+   ``docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' jenkins``.
 3. Use this IP in the ``application-artemis.yml`` file at
-   ``artemis.continuous-integration.url``
+   ``artemis.continuous-integration.url``.
 
 .. _artemis-1:
 
 Artemis
 ~~~~~~~
 
-1. In ``docker-compose.yml``
+1. In ``docker-compose.yml``:
 
    1. Make sure to use unique ports, e.g. 8080 for Artemis, 8081 for Gitlab and 8082 for Jenkins.
    2. Change the ``SPRING_PROFILES_ACTIVE`` environment variable to ``dev,jenkins,gitlab,artemis,scheduling``.
