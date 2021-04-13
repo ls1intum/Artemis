@@ -11,7 +11,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 
 /**
- * A grading scale for a course or an exam the consists of grade steps
+ * A grading scale for a course or an exam that consists of grade steps
  */
 @Entity
 @Table(name = "grading_scale")

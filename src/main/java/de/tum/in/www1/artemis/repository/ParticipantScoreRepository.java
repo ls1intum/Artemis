@@ -20,11 +20,11 @@ import de.tum.in.www1.artemis.domain.scores.ParticipantScore;
 @Repository
 public interface ParticipantScoreRepository extends JpaRepository<ParticipantScore, Long> {
 
-    List<ParticipantScore> removeAllByExerciseId(Long exerciseId);
+    void removeAllByExerciseId(Long exerciseId);
 
-    List<ParticipantScore> removeAllByLastResultId(Long lastResultId);
+    void removeAllByLastResultId(Long lastResultId);
 
-    List<ParticipantScore> removeAllByLastRatedResultId(Long lastResultId);
+    void removeAllByLastRatedResultId(Long lastResultId);
 
     @EntityGraph(type = LOAD, attributePaths = { "exercise", "lastResult", "lastRatedResult" })
     Optional<ParticipantScore> findParticipantScoreByLastRatedResult(Result result);
