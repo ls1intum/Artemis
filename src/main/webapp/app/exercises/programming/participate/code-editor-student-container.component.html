@@ -11,6 +11,9 @@
         </span>
     </div>
 </nav>
+<div *ngIf="isIllegalSubmission" class="row-container">
+    <span class="badge badge-danger" jhiTranslate="artemisApp.assessment.assessmentIllegalSubmission"> Warning: You are viewing an illegal submission. </span>
+</div>
 <jhi-code-editor-container
     *ngIf="!loadingParticipation && !participationCouldNotBeFetched"
     [editable]="!repositoryIsLocked"

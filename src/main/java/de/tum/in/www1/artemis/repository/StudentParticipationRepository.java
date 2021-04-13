@@ -97,20 +97,18 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             LEFT JOIN FETCH p.submissions s
             LEFT JOIN FETCH s.results r
             LEFT JOIN FETCH r.assessor
-            WHERE p.exercise.id = :#{#exerciseId} AND (s.type <> 'ILLEGAL' OR s.type IS NULL)
+            WHERE p.exercise.id = :#{#exerciseId}
             """)
-    List<StudentParticipation> findByExerciseIdWithEagerLegalSubmissionsResultAssessor(@Param("exerciseId") Long exerciseId);
+    List<StudentParticipation> findByExerciseIdWithEagerSubmissionsResultAssessor(@Param("exerciseId") Long exerciseId);
 
     @Query("""
             SELECT DISTINCT p FROM StudentParticipation p
             LEFT JOIN FETCH p.submissions s
             LEFT JOIN FETCH s.results r
             LEFT JOIN FETCH r.assessor
-            WHERE p.exercise.id = :#{#exerciseId}
-                AND p.testRun = false
-                AND (s.type <> 'ILLEGAL' OR s.type IS NULL)
+            WHERE p.exercise.id = :#{#exerciseId} AND p.testRun = false
             """)
-    List<StudentParticipation> findByExerciseIdWithEagerLegalSubmissionsResultAssessorIgnoreTestRuns(@Param("exerciseId") Long exerciseId);
+    List<StudentParticipation> findByExerciseIdWithEagerSubmissionsResultAssessorIgnoreTestRuns(@Param("exerciseId") Long exerciseId);
 
     // TODO SE improve
     /**
@@ -126,9 +124,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             LEFT JOIN FETCH r.submission s
             WHERE p.exercise.id = :#{#exerciseId}
                 AND (r.id = (
-                    SELECT max(pr.id) FROM p.results pr
-                        LEFT JOIN pr.submission prs
-                        WHERE (prs.type <> 'ILLEGAL' OR prs.type IS NULL))
+                    SELECT max(id) FROM p.results)
                     OR r IS NULL)
             """)
     List<StudentParticipation> findByExerciseIdWithLatestResult(@Param("exerciseId") Long exerciseId);
@@ -140,9 +136,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             WHERE p.exercise.id = :#{#exerciseId}
                 AND p.testRun = false
                 AND (r.id = (
-                    SELECT max(pr.id) FROM p.results pr
-                        LEFT JOIN pr.submission prs
-                        WHERE (prs.type <> 'ILLEGAL' OR prs.type IS NULL))
+                    SELECT max(id) FROM p.results)
                     OR r IS NULL)
             """)
     List<StudentParticipation> findByExerciseIdWithLatestResultIgnoreTestRunSubmissions(@Param("exerciseId") Long exerciseId);
@@ -400,25 +394,16 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
     Optional<StudentParticipation> findWithEagerLegalSubmissionsAndResultsAssessorsById(@Param("participationId") Long participationId);
 
     @EntityGraph(type = LOAD, attributePaths = { "submissions", "submissions.results", "submissions.results.assessor" })
-    @Query("""
-            select p from StudentParticipation p
-            left join fetch p.submissions s
-            left join fetch s.results sr
-            left join fetch sr.assessor
-            where p.exercise.id = :#{#exerciseId} and (s.type <> 'ILLEGAL' or s.type is null)
-            """)
-    List<StudentParticipation> findAllWithEagerLegalSubmissionsAndEagerResultsAndEagerAssessorByExerciseId(@Param("exerciseId") long exerciseId);
+    List<StudentParticipation> findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseId(long exerciseId);
 
     @Query("""
             SELECT DISTINCT p FROM StudentParticipation p
             LEFT JOIN FETCH p.submissions s
             LEFT JOIN FETCH s.results r
             LEFT JOIN FETCH r.assessor a
-            WHERE p.exercise.id = :#{#exerciseId}
-                AND p.testRun = FALSE
-                AND (s.type <> 'ILLEGAL' or s.type is null)
+            WHERE p.exercise.id = :#{#exerciseId} AND p.testRun = FALSE
             """)
-    List<StudentParticipation> findAllWithEagerLegalSubmissionsAndEagerResultsAndEagerAssessorByExerciseIdIgnoreTestRuns(@Param("exerciseId") long exerciseId);
+    List<StudentParticipation> findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseIdIgnoreTestRuns(@Param("exerciseId") long exerciseId);
 
     @Query("""
             SELECT DISTINCT p FROM StudentParticipation p
@@ -446,9 +431,8 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             WHERE p.testRun = FALSE
                 AND p.student.id = :#{#studentId}
                 AND p.exercise in :#{#exercises}
-                AND (s.type <> 'ILLEGAL' or s.type is null)
             """)
-    List<StudentParticipation> findByStudentIdAndIndividualExercisesWithEagerLegalSubmissionsResultIgnoreTestRuns(@Param("studentId") Long studentId,
+    List<StudentParticipation> findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(@Param("studentId") Long studentId,
             @Param("exercises") List<Exercise> exercises);
 
     @Query("""
@@ -459,9 +443,8 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             WHERE p.testRun = FALSE
                 AND p.student.id = :#{#studentId}
                 AND p.exercise in :#{#exercises}
-                AND (s.type <> 'ILLEGAL' or s.type is null)
             """)
-    List<StudentParticipation> findByStudentIdAndIndividualExercisesWithEagerLegalSubmissionsResultAndAssessorIgnoreTestRuns(@Param("studentId") Long studentId,
+    List<StudentParticipation> findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultAndAssessorIgnoreTestRuns(@Param("studentId") Long studentId,
             @Param("exercises") List<Exercise> exercises);
 
     @Query("""
@@ -471,9 +454,8 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             WHERE p.testRun = true
                 AND p.student.id = :#{#studentId}
                 AND p.exercise in :#{#exercises}
-                AND (s.type <> 'ILLEGAL' OR s.type IS NULL)
             """)
-    List<StudentParticipation> findTestRunParticipationsByStudentIdAndIndividualExercisesWithEagerLegalSubmissionsResult(@Param("studentId") Long studentId,
+    List<StudentParticipation> findTestRunParticipationsByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(@Param("studentId") Long studentId,
             @Param("exercises") List<Exercise> exercises);
 
     @Query("""
@@ -509,10 +491,9 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             SELECT p.id, COUNT(s) FROM StudentParticipation p
             LEFT JOIN p.submissions s
             WHERE p.exercise.id = :#{#exerciseId}
-                AND (s.type <> 'ILLEGAL' OR s.type IS NULL)
             GROUP BY p.id
             """)
-    List<long[]> countLegalSubmissionsPerParticipationByExerciseId(@Param("exerciseId") long exerciseId);
+    List<long[]> countSubmissionsPerParticipationByExerciseId(@Param("exerciseId") long exerciseId);
 
     /**
      * Count the number of submissions for each participation for a given team in a course
@@ -538,7 +519,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             LEFT JOIN FETCH s.results r
             WHERE p.exercise.id = :#{#exerciseId}
                 AND p.testRun = FALSE
-                AND s.id = (SELECT max(ps.id) FROM p.submissions ps WHERE (ps.type <> 'ILLEGAL' or ps.type is null))
+                AND s.id = (SELECT max(id) FROM p.submissions)
                 AND EXISTS (SELECT s1 FROM p.submissions s1
                     WHERE s1.participation.id = p.id
                     AND s1.submitted = TRUE
@@ -646,21 +627,20 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
      * Get all participations for the given studentExam and exercises combined with their submissions with a result.
      * Distinguishes between student exams and test runs and only loads the respective participations
      *
-     * @param studentExam studentExam with exercises loaded
+     * @param studentExam  studentExam with exercises loaded
      * @param withAssessor (only for non test runs) if assessor should be loaded with the result
-     *
      * @return student's participations with submissions and results
      */
-    default List<StudentParticipation> findByStudentExamWithEagerLegalSubmissionsResult(StudentExam studentExam, boolean withAssessor) {
+    default List<StudentParticipation> findByStudentExamWithEagerSubmissionsResult(StudentExam studentExam, boolean withAssessor) {
         if (studentExam.isTestRun()) {
-            return findTestRunParticipationsByStudentIdAndIndividualExercisesWithEagerLegalSubmissionsResult(studentExam.getUser().getId(), studentExam.getExercises());
+            return findTestRunParticipationsByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(studentExam.getUser().getId(), studentExam.getExercises());
         }
         else {
             if (withAssessor) {
-                return findByStudentIdAndIndividualExercisesWithEagerLegalSubmissionsResultAndAssessorIgnoreTestRuns(studentExam.getUser().getId(), studentExam.getExercises());
+                return findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultAndAssessorIgnoreTestRuns(studentExam.getUser().getId(), studentExam.getExercises());
             }
             else {
-                return findByStudentIdAndIndividualExercisesWithEagerLegalSubmissionsResultIgnoreTestRuns(studentExam.getUser().getId(), studentExam.getExercises());
+                return findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(studentExam.getUser().getId(), studentExam.getExercises());
             }
         }
     }
@@ -671,8 +651,8 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
      * @param exerciseId the id of the exercise for which to consider participations
      * @return the number of submissions per participation in the given exercise
      */
-    default Map<Long, Integer> countLegalSubmissionsPerParticipationByExerciseIdAsMap(long exerciseId) {
-        return convertListOfCountsIntoMap(countLegalSubmissionsPerParticipationByExerciseId(exerciseId));
+    default Map<Long, Integer> countSubmissionsPerParticipationByExerciseIdAsMap(long exerciseId) {
+        return convertListOfCountsIntoMap(countSubmissionsPerParticipationByExerciseId(exerciseId));
     }
 
     /**
@@ -747,7 +727,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
         // would lead to a SQL statement that cannot be optimized
 
         // 1st: fetch participations, submissions and results for individual exercises
-        var individualParticipations = findByStudentIdAndIndividualExercisesWithEagerLegalSubmissionsResultIgnoreTestRuns(user.getId(), individualExercises);
+        var individualParticipations = findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(user.getId(), individualExercises);
 
         // 2nd: fetch participations, submissions and results for team exercises
         var teamParticipations = findByStudentIdAndTeamExercisesWithEagerLegalSubmissionsResult(user.getId(), teamExercises);
