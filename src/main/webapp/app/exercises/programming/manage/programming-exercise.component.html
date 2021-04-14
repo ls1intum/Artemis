@@ -106,7 +106,7 @@
                             <jhi-programming-exercise-instructor-status
                                 *ngIf="programmingExercise.templateParticipation?.results?.length"
                                 [participationType]="templateParticipationType"
-                                [participation]="castToParticipation(programmingExercise.templateParticipation!)"
+                                [participation]="programmingExercise.templateParticipation!"
                                 [exercise]="programmingExercise"
                             ></jhi-programming-exercise-instructor-status>
                         </div>
@@ -126,7 +126,7 @@
                             <jhi-programming-exercise-instructor-status
                                 *ngIf="programmingExercise.solutionParticipation?.results?.length"
                                 [participationType]="solutionParticipationType"
-                                [participation]="castToParticipation(programmingExercise.solutionParticipation!)"
+                                [participation]="programmingExercise.solutionParticipation!"
                                 [exercise]="programmingExercise"
                             ></jhi-programming-exercise-instructor-status>
                         </div>

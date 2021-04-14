@@ -21,10 +21,7 @@ import { SortService } from 'app/shared/service/sort.service';
 import { getCourseFromExercise } from 'app/entities/exercise.model';
 import { ProgrammingExerciseEditSelectedComponent } from 'app/exercises/programming/manage/programming-exercise-edit-selected.component';
 import { ProgrammingAssessmentRepoExportDialogComponent } from 'app/exercises/programming/assess/repo-export/programming-assessment-repo-export-dialog.component';
-import { Participation } from 'app/entities/participation/participation.model';
 import { ProgrammingExerciseParticipationType } from 'app/entities/programming-exercise-participation.model';
-import { SolutionProgrammingExerciseParticipation } from 'app/entities/participation/solution-programming-exercise-participation.model';
-import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
 
 @Component({
     selector: 'jhi-programming-exercise',
@@ -166,9 +163,6 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
         modalRef.componentInstance.selectedProgrammingExercises = this.selectedProgrammingExercises;
     }
 
-    castToParticipation(participation: SolutionProgrammingExerciseParticipation | TemplateProgrammingExerciseParticipation): Participation {
-        return participation as Participation;
-    }
     // ################## ONLY FOR LOCAL TESTING PURPOSE -- START ##################
 
     /**
