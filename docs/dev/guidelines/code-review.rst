@@ -15,14 +15,14 @@ STEPS
 1. Start Implementation -> only Developer
 ========================================
 
-* `Open draft pull request. <https://docs.github.com/en/github/collaborating-with-issues-and-pull-requests/creating-a-pull-request>`_. Allows for code related questions and discussions.
+* `Open draft pull request. <https://docs.github.com/en/github/collaborating-with-issues-and-pull-requests/creating-a-pull-request>`_ Allows for code related questions and discussions.
 
 2. Implementation is "done" -> only Developer
 =============================================
 
-* Make sure all steps in the `Checklist <https://github.com/ls1intum/ArTEMiS/blob/develop/.github/PULL_REQUEST_TEMPLATE.md>`_. are completed.
+* Make sure all steps in the `Checklist <https://github.com/ls1intum/ArTEMiS/blob/develop/.github/PULL_REQUEST_TEMPLATE.md>`_ are completed.
 * Add or update the "Steps for Testing" in the description of your pull request.
-* Mark the pull request as `ready for review <https://docs.github.com/en/github/collaborating-with-issues-and-pull-requests/changing-the-stage-of-a-pull-request>`_..
+* Mark the pull request as `ready for review <https://docs.github.com/en/github/collaborating-with-issues-and-pull-requests/changing-the-stage-of-a-pull-request>`_.
 * Add Stephan Krusche (@krusche) and Jan Philip Bernius (@jpbernius) and your review partner as reviewers to the pull request.
 * Make sure that the changes in the pull request are only the ones necessary
 
@@ -38,7 +38,7 @@ STEPS
 * Performance is reasonable (e.g. Number of database queries or HTTP calls)
 * Submit your comments and status (Approve or Request Changes) using GitHub.
 
-4. Respond to review
+4. Respond to review- > Developer & Reviewer
 =====================
 
 Developer
