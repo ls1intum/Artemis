@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, OnInit } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
@@ -52,7 +52,7 @@ export interface ExampleSubmissionQueryParams {
     styles: ['jhi-collapsable-assessment-instructions { max-height: 100vh }'],
     providers: [CourseManagementService],
 })
-export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewInit {
+export class ExerciseAssessmentDashboardComponent implements OnInit {
     readonly round = round;
     exercise: Exercise;
     modelingExercise: ModelingExercise;
@@ -173,11 +173,6 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
         this.loadAll();
         this.accountService.identity().then((user: User) => (this.tutor = user));
     }
-
-    /**
-     * Notifies the guided tour service that this component has loaded
-     */
-    ngAfterViewInit(): void {}
 
     /**
      * Loads all information from the server regarding this exercise that is needed for the tutor exercise dashboard

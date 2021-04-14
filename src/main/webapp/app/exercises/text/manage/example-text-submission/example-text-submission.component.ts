@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, OnInit } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Location } from '@angular/common';
 import { JhiAlertService } from 'ng-jhipster';
@@ -29,7 +29,7 @@ import { AssessButtonStates, Context, State, SubmissionButtonStates, UIStates } 
     templateUrl: './example-text-submission.component.html',
     styleUrls: ['./example-text-submission.component.scss'],
 })
-export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent implements OnInit, AfterViewInit, Context {
+export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent implements OnInit, Context {
     isNewSubmission: boolean;
     areNewAssessments = true;
     unsavedChanges = false;
@@ -96,11 +96,6 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
         }
         this.loadAll();
     }
-
-    /**
-     * Sets the size of resizable elements after initialization.
-     */
-    ngAfterViewInit(): void {}
 
     /**
      * Loads the exercise.
