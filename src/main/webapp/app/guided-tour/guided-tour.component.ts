@@ -201,7 +201,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
     }
 
     /**
-     * Subscribe to scroll event and update step location of the selected element in the tour step
+     * Subscribe to click event and update step location of the selected element in the tour step
      */
     private subscribeToClickEvent() {
         this.clickSubscription = fromEvent(window, 'click').subscribe(() => {
