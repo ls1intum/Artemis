@@ -33,6 +33,7 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
     FeatureToggle = FeatureToggle;
     orionState: OrionState;
     selectedProgrammingExercises: ProgrammingExercise[];
+    allChecked = false;
 
     constructor(
         private programmingExerciseService: ProgrammingExerciseService,
@@ -146,6 +147,19 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
         } else {
             this.selectedProgrammingExercises.push(programmingExercise);
         }
+    }
+
+    toggleAllProgrammingExercises() {
+        if (this.allChecked) {
+            this.selectedProgrammingExercises = [];
+        } else {
+            this.selectedProgrammingExercises = this.selectedProgrammingExercises.concat(this.programmingExercises);
+        }
+        this.allChecked = !this.allChecked;
+    }
+
+    isExerciseSelected(programmingExercise: ProgrammingExercise) {
+        return this.selectedProgrammingExercises.includes(programmingExercise);
     }
 
     openEditSelectedModal() {

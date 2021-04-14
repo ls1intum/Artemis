@@ -35,7 +35,9 @@
         <table class="table table-striped">
             <thead>
                 <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" [callback]="sortRows.bind(this)">
-                    <th *ngIf="course.isAtLeastInstructor" class="d-none d-md-table-cell"></th>
+                    <th *ngIf="course.isAtLeastInstructor" class="d-none d-md-table-cell">
+                        <input type="checkbox" (change)="toggleAllProgrammingExercises()" />
+                    </th>
                     <th class="d-none d-md-table-cell" jhiSortBy="id"><span jhiTranslate="global.field.id">ID</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>
                     <th jhiSortBy="title"><span jhiTranslate="artemisApp.exercise.title">Title</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>
                     <th class="d-none d-md-table-cell" jhiSortBy="shortName">
@@ -68,7 +70,7 @@
             <tbody>
                 <tr *ngFor="let programmingExercise of programmingExercises; trackBy: trackId">
                     <td *ngIf="programmingExercise.isAtLeastInstructor" class="d-none d-md-table-cell">
-                        <input type="checkbox" (change)="toggleProgrammingExercise(programmingExercise)" />
+                        <input type="checkbox" (change)="toggleProgrammingExercise(programmingExercise)" [ngModel]="isExerciseSelected(programmingExercise)" />
                     </td>
                     <td class="d-none d-md-table-cell">
                         <a [routerLink]="['/course-management', programmingExercise.course.id, 'programming-exercises', programmingExercise.id]">{{ programmingExercise.id }}</a>
@@ -345,6 +347,7 @@
                 <fa-icon [icon]="'download'"></fa-icon>
                 <span class="d-none d-md-inline" jhiTranslate="entity.action.exportRepos">Download Repos</span>
             </button>
+            <jhi-exercise-scores-export-button [exercise]="selectedProgrammingExercises" class="mr-1"></jhi-exercise-scores-export-button>
         </div>
     </div>
 </div>
