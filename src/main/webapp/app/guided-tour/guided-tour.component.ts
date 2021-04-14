@@ -38,6 +38,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
 
     private resizeSubscription: Subscription;
     private scrollSubscription: Subscription;
+    private clickSubscription: Subscription;
 
     readonly OverlayPosition = OverlayPosition;
     readonly UserInteractionEvent = UserInteractionEvent;
@@ -104,6 +105,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
         this.subscribeToUserInteractionState();
         this.subscribeToResizeEvent();
         this.subscribeToScrollEvent();
+        this.subscribeToClickEvent();
         this.subscribeToDotChanges();
     }
 
@@ -116,6 +118,9 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
         }
         if (this.resizeSubscription) {
             this.scrollSubscription.unsubscribe();
+        }
+        if (this.clickSubscription) {
+            this.clickSubscription.unsubscribe();
         }
     }
 
@@ -189,6 +194,17 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
      */
     private subscribeToScrollEvent() {
         this.scrollSubscription = fromEvent(window, 'scroll').subscribe(() => {
+            if (this.getSelectedElement()) {
+                this.selectedElementRect = this.updateStepLocation(this.getSelectedElement(), true);
+            }
+        });
+    }
+
+    /**
+     * Subscribe to scroll event and update step location of the selected element in the tour step
+     */
+    private subscribeToClickEvent() {
+        this.clickSubscription = fromEvent(window, 'click').subscribe(() => {
             if (this.getSelectedElement()) {
                 this.selectedElementRect = this.updateStepLocation(this.getSelectedElement(), true);
             }
