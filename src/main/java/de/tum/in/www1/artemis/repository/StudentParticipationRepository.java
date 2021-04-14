@@ -698,13 +698,14 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
      * Adds the transient property numberOfParticipations for each exercise to
      * let instructors know which exercise has how many participations
      *
-     * @param exerciseGroupList list of exercise groups
+     * @param exerciseGroup exercise group for which to add transient property
      */
-    default void addNumberOfExamExerciseParticipations(List<ExerciseGroup> exerciseGroupList) {
-        exerciseGroupList.forEach((exerciseGroup -> exerciseGroup.getExercises().forEach(exercise -> {
+    default void addNumberOfExamExerciseParticipations(ExerciseGroup exerciseGroup) {
+        exerciseGroup.getExercises().forEach(exercise -> {
             Long numberOfParticipations = countParticipationsIgnoreTestRunsByExerciseId(exercise.getId());
-            exercise.setNumberOfParticipations(numberOfParticipations);
-        })));
+            // avoid setting to null in case not participations exist
+            exercise.setNumberOfParticipations((numberOfParticipations != null) ? numberOfParticipations : 0);
+        });
     }
 
     /**

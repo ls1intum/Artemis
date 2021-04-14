@@ -56,6 +56,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
     readonly round = round;
     exercise: Exercise;
     modelingExercise: ModelingExercise;
+    programmingExercise: ProgrammingExercise;
     courseId: number;
     exam?: Exam;
     examId: number;
@@ -208,6 +209,9 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
                     case ExerciseType.FILE_UPLOAD:
                         const fileUploadExercise = this.exercise as FileUploadExercise;
                         this.formattedSampleSolution = this.artemisMarkdown.safeHtmlForMarkdown(fileUploadExercise.sampleSolution);
+                        break;
+                    case ExerciseType.PROGRAMMING:
+                        this.programmingExercise = this.exercise as ProgrammingExercise;
                         break;
                 }
 
@@ -603,14 +607,6 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
         const submission: Submission = complaint.result?.submission!;
         // numberOfAssessmentsOfCorrectionRounds size is the number of correction rounds
         this.openAssessmentEditor(submission, this.numberOfAssessmentsOfCorrectionRounds.length - 1);
-    }
-
-    /**
-     * Casts an Exercise to a ProgrammingExercise
-     * @param exercise Exercise to cast
-     */
-    asProgrammingExercise(exercise: Exercise) {
-        return exercise as ProgrammingExercise;
     }
 
     toggleSecondCorrection() {
