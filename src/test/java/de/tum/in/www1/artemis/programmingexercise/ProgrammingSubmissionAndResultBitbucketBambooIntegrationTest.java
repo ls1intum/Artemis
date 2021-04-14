@@ -13,6 +13,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.eclipse.jgit.lib.ObjectId;
+import org.jetbrains.annotations.NotNull;
 import org.json.simple.parser.JSONParser;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -34,6 +35,7 @@ import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
+import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
@@ -136,6 +138,18 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         assertThat(submissionRepository.findAll()).hasSize(0);
     }
 
+    private ProgrammingSubmission mockCommitInfoAndPostSubmission(long participationId) throws Exception {
+        // set the author name to "Artemis"
+        final String requestAsArtemisUser = BITBUCKET_REQUEST.replace("\"name\": \"admin\"", "\"name\": \"Artemis\"").replace("\"displayName\": \"Admin\"",
+                "\"displayName\": \"Artemis\"");
+        // mock request for fetchCommitInfo()
+        final String projectKey = "test201904bprogrammingexercise6";
+        final String slug = "test201904bprogrammingexercise6-exercise-testuser";
+        final String hash = "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d";
+        bitbucketRequestMockProvider.mockFetchCommitInfo(projectKey, slug, hash);
+        return postSubmission(participationId, HttpStatus.OK, requestAsArtemisUser);
+    }
+
     /**
      * The student commits, the code change is pushed to the VCS.
      * The VCS notifies Artemis about a new submission.
@@ -147,14 +161,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
     void shouldCreateSubmissionOnNotifyPushForSubmission(IntegrationTestParticipationType participationType) throws Exception {
         Long participationId = getParticipationIdByType(participationType, 0);
         // set the author name to "Artemis"
-        final String requestAsArtemisUser = BITBUCKET_REQUEST.replace("\"name\": \"admin\"", "\"name\": \"Artemis\"").replace("\"displayName\": \"Admin\"",
-                "\"displayName\": \"Artemis\"");
-        // mock request for fetchCommitInfo()
-        final String projectKey = "test201904bprogrammingexercise6";
-        final String slug = "test201904bprogrammingexercise6-exercise-testuser";
-        final String hash = "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d";
-        bitbucketRequestMockProvider.mockFetchCommitInfo(projectKey, slug, hash);
-        ProgrammingSubmission submission = postSubmission(participationId, HttpStatus.OK, requestAsArtemisUser);
+        ProgrammingSubmission submission = mockCommitInfoAndPostSubmission(participationId);
 
         assertThat(submission.getParticipation().getId()).isEqualTo(participationId);
         // Needs to be set for using a custom repository method, known spring bug.
@@ -537,9 +544,9 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         assertBuildError(participation.getId(), userLogin, programmingLanguage);
 
         // Do another call to new-result again and assert that no new submission is created.
-        var submisstion = submissionRepository.findAll().get(0);
+        var submission = submissionRepository.findAll().get(0);
         postResultWithBuildLogs(participation.getBuildPlanId(), HttpStatus.OK, false);
-        assertNoNewSubmissionsAndIsSubmission(submisstion);
+        assertNoNewSubmissionsAndIsSubmission(submission);
     }
 
     private void assertNoNewSubmissionsAndIsSubmission(ProgrammingSubmission submission) {
@@ -548,38 +555,37 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         assertThat(submissions.get(0).getId()).isEqualTo(submission.getId());
     }
 
-    @Test
-    @WithMockUser(username = "student1", roles = "USER")
-    void shouldCreateIllegalSubmissionOnNotifyPushForExamProgrammingExerciseAfterDueDate() throws Exception {
-        var user = userRepository.findUserWithGroupsAndAuthoritiesByLogin("student1").get();
-
-        // Create an exam with programming exercise
-        // The exam has to be over
+    @NotNull
+    private StudentExam createEndedStudentExamWithGracePeriod(User user, Integer gracePeriod) {
         var course = database.addEmptyCourse();
         var exam = database.addActiveExamWithRegisteredUser(course, user);
         exam = database.addExerciseGroupsAndExercisesToExam(exam, true);
         exam.setEndDate(ZonedDateTime.now().minusMinutes(1));
         exam.addRegisteredUser(user);
+        exam.setGracePeriod(gracePeriod);
         exam = examRepository.save(exam);
 
-        // Get student exam and add a participation for the programming exercise
         var studentExam = studentExamRepository.findWithExercisesByUserIdAndExamId(user.getId(), exam.getId()).get();
         studentExam.setWorkingTime(0);
         studentExam.setExercises(new ArrayList<>(exam.getExerciseGroups().get(6).getExercises()));
         studentExam.setUser(user);
         studentExam = studentExamRepository.save(studentExam);
+        return studentExam;
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    void shouldCreateIllegalSubmissionOnNotifyPushForExamProgrammingExerciseAfterDueDateWithoutGracePeriod() throws Exception {
+        var user = userRepository.findUserWithGroupsAndAuthoritiesByLogin("student1").get();
+
+        // The exam has to be over.
+        // Create an exam with programming exercise and no grace period.
+        StudentExam studentExam = createEndedStudentExamWithGracePeriod(user, 0);
+
+        // Add a participation for the programming exercise
         ProgrammingExercise programmingExercise = (ProgrammingExercise) studentExam.getExercises().get(0);
         var participation = database.addStudentParticipationForProgrammingExercise(programmingExercise, user.getLogin());
-
-        // set the author name to "Artemis"
-        final String requestAsArtemisUser = BITBUCKET_REQUEST.replace("\"name\": \"admin\"", "\"name\": \"Artemis\"").replace("\"displayName\": \"Admin\"",
-                "\"displayName\": \"Artemis\"");
-        // mock request for fetchCommitInfo()
-        final String projectKey = "test201904bprogrammingexercise6";
-        final String slug = "test201904bprogrammingexercise6-exercise-testuser";
-        final String hash = "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d";
-        bitbucketRequestMockProvider.mockFetchCommitInfo(projectKey, slug, hash);
-        ProgrammingSubmission submission = postSubmission(participation.getId(), HttpStatus.OK, requestAsArtemisUser);
+        ProgrammingSubmission submission = mockCommitInfoAndPostSubmission(participation.getId());
 
         // Mock result from bamboo
         postResult(participation.getBuildPlanId(), HttpStatus.OK, false);
@@ -596,6 +602,44 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         assertThat(illegalSubmission.getType()).isEqualTo(SubmissionType.ILLEGAL);
         assertThat(illegalSubmission.isSubmitted()).isTrue();
         assertThat(illegalSubmission.getLatestResult().isRated()).isFalse();
+        assertThat(illegalSubmission.getLatestResult().getId()).isEqualTo(createdResult.getId());
+
+        // Check that the result belongs to the participation
+        Participation updatedParticipation = participationRepository.getOneWithEagerSubmissionsAndResults(participation.getId());
+        assertThat(createdResult.getParticipation().getId()).isEqualTo(updatedParticipation.getId());
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    void shouldCreateLegalSubmissionOnNotifyPushForExamProgrammingExerciseAfterDueDateWithGracePeriod() throws Exception {
+        var user = userRepository.findUserWithGroupsAndAuthoritiesByLogin("student1").get();
+
+        // The exam has to be over.
+        // Create an exam with programming exercise and no grace period.
+        StudentExam studentExam = createEndedStudentExamWithGracePeriod(user, 180);
+
+        // Add a participation for the programming exercise
+        ProgrammingExercise programmingExercise = (ProgrammingExercise) studentExam.getExercises().get(0);
+        var participation = database.addStudentParticipationForProgrammingExercise(programmingExercise, user.getLogin());
+
+        // set the author name to "Artemis"
+        ProgrammingSubmission submission = mockCommitInfoAndPostSubmission(participation.getId());
+
+        // Mock result from bamboo
+        postResult(participation.getBuildPlanId(), HttpStatus.OK, false);
+
+        // Check that the result was created successfully and is linked to the participation and submission.
+        List<Result> results = resultRepository.findByParticipationIdOrderByCompletionDateDesc(participation.getId());
+        assertThat(results).hasSize(1);
+        Result createdResult = results.get(0);
+        createdResult = resultRepository.findByIdWithEagerFeedbacksAndAssessor(createdResult.getId()).get();
+
+        // Assert that the submission is illegal
+        assertThat(submission.getParticipation().getId()).isEqualTo(participation.getId());
+        var illegalSubmission = submissionRepository.findWithEagerResultsById(submission.getId()).get();
+        assertThat(illegalSubmission.getType()).isEqualTo(SubmissionType.MANUAL);
+        assertThat(illegalSubmission.isSubmitted()).isTrue();
+        assertThat(illegalSubmission.getLatestResult().isRated()).isTrue();
         assertThat(illegalSubmission.getLatestResult().getId()).isEqualTo(createdResult.getId());
 
         // Check that the result belongs to the participation

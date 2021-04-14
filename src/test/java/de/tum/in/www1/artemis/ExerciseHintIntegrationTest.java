@@ -193,7 +193,6 @@ public class ExerciseHintIntegrationTest extends AbstractSpringIntegrationBamboo
     @Test
     @WithMockUser(username = "user1", roles = "USER")
     public void testGetHintTitleForNonExistingHint() throws Exception {
-        // No hint with id 10 was created
-        request.get("/api/exercise-hints/10/title", HttpStatus.NOT_FOUND, String.class);
+        request.get("/api/exercise-hints/12312312321/title", HttpStatus.NOT_FOUND, String.class);
     }
 }
