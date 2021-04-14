@@ -61,7 +61,7 @@ public class GradeStepResource {
         Course course = courseRepository.findByIdElseThrow(courseId);
         GradingScale gradingScale = gradingScaleRepository.findByCourseIdOrElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
-        List<GradeStep> gradeSteps = gradeStepRepository.findByGradingScale_Id(gradingScale.getId());
+        List<GradeStep> gradeSteps = gradeStepRepository.findByGradingScaleId(gradingScale.getId());
         return ResponseEntity.ok(gradeSteps);
     }
 
@@ -79,7 +79,7 @@ public class GradeStepResource {
         Course course = courseRepository.findByIdElseThrow(courseId);
         GradingScale gradingScale = gradingScaleRepository.findByExamIdOrElseThrow(examId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
-        List<GradeStep> gradeSteps = gradeStepRepository.findByGradingScale_Id(gradingScale.getId());
+        List<GradeStep> gradeSteps = gradeStepRepository.findByGradingScaleId(gradingScale.getId());
         return ResponseEntity.ok(gradeSteps);
     }
 

@@ -39,7 +39,7 @@ public class GradingScaleService {
         if (percentage < 0 || percentage > 100) {
             throw new BadRequestAlertException("Grade percentages must be between 0 and 100", "gradeStep", "invalidGradePercentage");
         }
-        List<GradeStep> gradeSteps = gradeStepRepository.findByGradingScale_Id(gradingScaleId);
+        List<GradeStep> gradeSteps = gradeStepRepository.findByGradingScaleId(gradingScaleId);
         Optional<GradeStep> matchingGradeStep = gradeSteps.stream().filter(gradeStep -> gradeStep.matchingGradePercentage(percentage)).findFirst();
         if (matchingGradeStep.isPresent()) {
             return matchingGradeStep.get();
@@ -115,7 +115,7 @@ public class GradingScaleService {
      * @param gradingScale the grading scale which will be deleted
      */
     public void delete(GradingScale gradingScale) {
-        List<GradeStep> gradeSteps = gradeStepRepository.findByGradingScale_Id(gradingScale.getId());
+        List<GradeStep> gradeSteps = gradeStepRepository.findByGradingScaleId(gradingScale.getId());
         gradeStepRepository.deleteInBatch(gradeSteps);
         gradingScaleRepository.deleteInBatch(List.of(gradingScale));
     }

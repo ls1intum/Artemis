@@ -103,7 +103,7 @@ public class GradingScaleResource {
     public ResponseEntity<GradingScale> createGradingScaleForCourse(@PathVariable Long courseId, @RequestBody GradingScale gradingScale) throws URISyntaxException {
         log.debug("REST request to create a grading scale for course: {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
-        Optional<GradingScale> existingGradingScale = gradingScaleRepository.findByCourse_Id(courseId);
+        Optional<GradingScale> existingGradingScale = gradingScaleRepository.findByCourseId(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
         if (existingGradingScale.isPresent()) {
             return badRequest(ENTITY_NAME, "gradingScaleAlreadyExists", "A grading scale already exists for the selected course");
@@ -136,7 +136,7 @@ public class GradingScaleResource {
             throws URISyntaxException {
         log.debug("REST request to create a grading scale for exam: {}", examId);
         Course course = courseRepository.findByIdElseThrow(courseId);
-        Optional<GradingScale> existingGradingScale = gradingScaleRepository.findByExam_Id(examId);
+        Optional<GradingScale> existingGradingScale = gradingScaleRepository.findByExamId(examId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
         if (existingGradingScale.isPresent()) {
             return badRequest(ENTITY_NAME, "gradingScaleAlreadyExists", "A grading scale already exists for the selected exam");

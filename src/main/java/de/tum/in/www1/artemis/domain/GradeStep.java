@@ -132,7 +132,7 @@ public class GradeStep extends DomainObject {
      * @return true if all conditions are true and false otherwise
      */
     public boolean isValid() {
-        boolean validOrder = lowerBoundPercentage < upperBoundPercentage || (lowerBoundPercentage == upperBoundPercentage && lowerBoundInclusive && upperBoundInclusive);
+        boolean validOrder = lowerBoundPercentage < upperBoundPercentage || lowerBoundPercentage == upperBoundPercentage && lowerBoundInclusive && upperBoundInclusive;
         return getId() == null && !gradeName.isBlank() && lowerBoundPercentage >= 0 && validOrder && upperBoundPercentage <= 100;
     }
 
