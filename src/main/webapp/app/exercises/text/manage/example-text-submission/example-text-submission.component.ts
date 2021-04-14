@@ -100,9 +100,7 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
     /**
      * Sets the size of resizable elements after initialization.
      */
-    ngAfterViewInit(): void {
-        this.guidedTourService.componentPageLoaded();
-    }
+    ngAfterViewInit(): void {}
 
     /**
      * Loads the exercise.
@@ -131,6 +129,8 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
             } else if (this.result?.id) {
                 this.state = State.forExistingAssessmentWithContext(this);
             }
+            // do this here to make sure  everythign is loaded before the guided tour step is loaded
+            this.guidedTourService.componentPageLoaded();
         });
     }
 

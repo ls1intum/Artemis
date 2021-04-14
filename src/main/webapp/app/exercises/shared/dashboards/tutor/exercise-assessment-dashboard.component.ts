@@ -177,9 +177,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
     /**
      * Notifies the guided tour service that this component has loaded
      */
-    ngAfterViewInit(): void {
-        this.guidedTourService.componentPageLoaded();
-    }
+    ngAfterViewInit(): void {}
 
     /**
      * Loads all information from the server regarding this exercise that is needed for the tutor exercise dashboard
@@ -249,6 +247,8 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
                 if ((!this.exercise.dueDate || this.exercise.dueDate.isBefore(Date.now())) && !this.exercise.teamMode && !this.isTestRun) {
                     this.getSubmissionWithoutAssessmentForAllCorrectionrounds();
                 }
+                // load the guided tour step only after everything else on the page is loaded
+                this.guidedTourService.componentPageLoaded();
             },
             (response: string) => this.onError(response),
         );
