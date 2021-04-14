@@ -1,4 +1,4 @@
-version: "2"
+version: "3"
 services:
     gitlab:
         build: gitlab
@@ -8,11 +8,10 @@ services:
             - artemis-gitlab-config:/etc/gitlab
             - ./gitlab/gitlab-local-setup.sh:/gitlab-local-setup.sh
         environment:
-            - GITLAB_OMNIBUS_CONFIG="./gitlab/gitlab-config.rb"
+            - GITLAB_OMNIBUS_CONFIG=prometheus_monitoring['enable'] = false; gitlab_rails['gitlab_shell_ssh_port'] = 2222; gitlab_rails['monitoring_whitelist'] = ['0.0.0.0/0']
         ports:
             - "2222:22"
             - "8081:80"
-        mem_limit: 3000m
         hostname: gitlab
         networks:
             artemis:

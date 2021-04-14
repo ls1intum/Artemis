@@ -136,7 +136,7 @@ This is ideal as a quickstart for developers. For a more detailed setup, see `Ma
 
         docker-compose -f src/main/docker/gitlab-jenkins-mysql.yml up --build
 
-   The Gitlab service loads the configuration file ``src/main/docker/gitlab/gitlab-config.rb`` which configures Gitlab after the container is started.
+   The file uses the `GITLAB_OMNIBUS_CONFIG` environment variable to configure the Gitlab instance after the container is started.
    It disables prometheus monitoring, sets the ssh port to ``2222``, and adjusts the monitoring endpoint whitelist by default.
 
 2. Wait a couple of minutes since Gitlab can take some time to set up. Open the instance in your browser and set a first admin password of your choosing.
