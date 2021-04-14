@@ -8,7 +8,7 @@ import { FileService } from 'app/shared/http/file.service';
 })
 export class FileUploadExamSummaryComponent implements OnInit {
     @Input()
-    submission: FileUploadSubmission | undefined;
+    submission: FileUploadSubmission;
 
     constructor(private fileService: FileService) {}
 

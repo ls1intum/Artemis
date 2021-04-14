@@ -72,30 +72,30 @@
                 >
                     <!-- Text Exercise -->
                     <ng-container *ngIf="exercise.type === TEXT">
-                        <jhi-text-exam-summary [submission]="getSubmissionForExercise(exercise)"></jhi-text-exam-summary>
+                        <jhi-text-exam-summary [submission]="getSubmissionForExercise(exercise)!"></jhi-text-exam-summary>
                     </ng-container>
                     <!-- Modeling Exercise -->
                     <ng-container *ngIf="exercise.type === MODELING">
-                        <jhi-modeling-exam-summary [exercise]="exercise" [submission]="getSubmissionForExercise(exercise)"></jhi-modeling-exam-summary>
+                        <jhi-modeling-exam-summary [exercise]="exercise" [submission]="getSubmissionForExercise(exercise)!"></jhi-modeling-exam-summary>
                     </ng-container>
                     <!-- Quiz Exercise -->
                     <ng-container *ngIf="exercise.type === QUIZ">
                         <jhi-quiz-exam-summary
                             [exercise]="exercise"
                             [exam]="studentExam.exam!"
-                            [submission]="getSubmissionForExercise(exercise)"
-                            [resultsPublished]="resultsPublished"
+                            [submission]="getSubmissionForExercise(exercise)!"
+                            [resultsPublished]="!!resultsPublished"
                         ></jhi-quiz-exam-summary>
                     </ng-container>
                     <!-- File Upload Exercise -->
                     <ng-container *ngIf="exercise.type === FILE_UPLOAD">
-                        <jhi-file-upload-exam-summary [submission]="getSubmissionForExercise(exercise)"></jhi-file-upload-exam-summary>
+                        <jhi-file-upload-exam-summary [submission]="getSubmissionForExercise(exercise)!"></jhi-file-upload-exam-summary>
                     </ng-container>
                     <jhi-complaint-interactions
                         *ngIf="getSubmissionForExercise(exercise) && exercise.type !== QUIZ && isAfterStudentReviewStart()"
                         class="mb-2 mt-2 ml-3"
                         [exercise]="exercise"
-                        [participation]="getParticipationForExercise(exercise)"
+                        [participation]="getParticipationForExercise(exercise)!"
                         [exam]="examWithOnlyIdAndStudentReviewPeriod"
                         [testRun]="isTestRun"
                     >
@@ -108,15 +108,15 @@
                     <!-- Programming Exercise -->
                     <jhi-programming-exam-summary
                         [exercise]="exercise"
-                        [participation]="getParticipationForExercise(exercise)"
-                        [submission]="getSubmissionForExercise(exercise)"
+                        [participation]="getParticipationForExercise(exercise)!"
+                        [submission]="getSubmissionForExercise(exercise)!"
                     ></jhi-programming-exam-summary>
                 </ng-container>
                 <jhi-complaint-interactions
                     *ngIf="exercise.assessmentType === AssessmentType.SEMI_AUTOMATIC && getSubmissionForExercise(exercise) && isAfterStudentReviewStart()"
                     class="mb-2 mt-2 ml-3"
                     [exercise]="exercise"
-                    [participation]="getParticipationForExercise(exercise)"
+                    [participation]="getParticipationForExercise(exercise)!"
                     [exam]="examWithOnlyIdAndStudentReviewPeriod"
                     [testRun]="isTestRun"
                 >

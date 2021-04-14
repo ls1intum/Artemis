@@ -31,10 +31,10 @@ export class QuizExamSummaryComponent implements OnInit {
     exercise: QuizExercise;
 
     @Input()
-    submission: QuizSubmission | undefined;
+    submission: QuizSubmission;
 
     @Input()
-    resultsPublished: boolean | undefined;
+    resultsPublished: boolean;
 
     @Input()
     exam: Exam;
@@ -71,7 +71,7 @@ export class QuizExamSummaryComponent implements OnInit {
             // iterate through all questions of this quiz
             this.exercise.quizQuestions.forEach((question) => {
                 // find the submitted answer that belongs to this question, only when submitted answers already exist
-                const submittedAnswer = this.submission?.submittedAnswers
+                const submittedAnswer = this.submission.submittedAnswers
                     ? this.submission.submittedAnswers.find((answer) => {
                           return answer.quizQuestion!.id === question.id;
                       })
