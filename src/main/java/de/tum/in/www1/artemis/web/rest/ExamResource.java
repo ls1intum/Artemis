@@ -231,12 +231,10 @@ public class ExamResource {
             else {
                 exam = examService.findByIdWithExerciseGroupsAndExercisesElseThrow(examId);
             }
-            examService.setExamExerciseProperties(exam);
+            examService.setExamProperties(exam);
             return ResponseEntity.ok(exam);
         }
         Exam exam = examRepository.findByIdWithRegisteredUsersElseThrow(examId);
-        examRepository.setNumberOfRegisteredUsersForExams(Collections.singletonList(exam));
-
         exam.getRegisteredUsers().forEach(user -> user.setVisibleRegistrationNumber(user.getRegistrationNumber()));
         return ResponseEntity.ok(exam);
     }
