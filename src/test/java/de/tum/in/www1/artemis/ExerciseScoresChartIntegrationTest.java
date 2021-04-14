@@ -107,7 +107,7 @@ public class ExerciseScoresChartIntegrationTest extends AbstractSpringIntegratio
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void getCourseExerciseScores_asStudent_shouldReturnCorrectIndividualAverageAndMaxScores() throws Exception {
-        List<ExerciseScoresDTO> exerciseScores = request.getList(ExerciseScoresChartResource.Endpoints.generateCourseExerciseScoresEndpoint(idOfCourse), HttpStatus.OK,
+        List<ExerciseScoresDTO> exerciseScores = request.getList(ExerciseScoresChartResource.EndpointConstants.generateCourseExerciseScoresEndpoint(idOfCourse), HttpStatus.OK,
                 ExerciseScoresDTO.class);
         assertThat(exerciseScores.size()).isEqualTo(3);
         ExerciseScoresDTO individualTextExercise = exerciseScores.stream().filter(exerciseScoresDTO -> exerciseScoresDTO.exerciseId.equals(idOfIndividualTextExercise)).findFirst()

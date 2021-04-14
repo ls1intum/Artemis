@@ -14,17 +14,6 @@ import de.tum.in.www1.artemis.domain.Exercise;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class ExerciseScoresDTO {
 
-    public ExerciseScoresDTO() {
-        // empty constructor for jackson
-    }
-
-    public ExerciseScoresDTO(Exercise exercise) {
-        this.exerciseId = exercise.getId();
-        this.exerciseTitle = exercise.getTitle();
-        this.releaseDate = exercise.getReleaseDate();
-        this.exerciseType = exercise.getStringRepresentationOfType();
-    }
-
     public Long exerciseId;
 
     public String exerciseTitle;
@@ -39,5 +28,16 @@ public class ExerciseScoresDTO {
     public Double averageScoreAchieved;
 
     public Double maxScoreAchieved;
+
+    public ExerciseScoresDTO() {
+        // empty constructor for jackson
+    }
+
+    public ExerciseScoresDTO(Exercise exercise) {
+        this.exerciseId = exercise.getId();
+        this.exerciseTitle = exercise.getTitle();
+        this.releaseDate = exercise.getReleaseDate();
+        this.exerciseType = exercise.getStringRepresentationOfType();
+    }
 
 }

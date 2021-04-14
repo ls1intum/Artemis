@@ -58,7 +58,7 @@ public class ExerciseScoresChartResource {
      * @param courseId id of the course for which to get the exercise scores
      * @return the ResponseEntity with status 200 (OK) and with the exercise scores in the body
      */
-    @GetMapping(Endpoints.COURSE_EXERCISE_SCORES)
+    @GetMapping(EndpointConstants.COURSE_EXERCISE_SCORES)
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<List<ExerciseScoresDTO>> getCourseExerciseScores(@PathVariable Long courseId) {
         log.debug("REST request to get exercise scores for course with id: {}", courseId);
@@ -74,15 +74,15 @@ public class ExerciseScoresChartResource {
         return exercises.parallelStream().filter(Exercise::isVisibleToStudents).filter(Exercise::isAssessmentDueDateOver).collect(Collectors.toSet());
     }
 
-    public static final class Endpoints {
+    public static final class EndpointConstants {
 
         public static final String COURSE_EXERCISE_SCORES = "/api/courses/{courseId}/charts/exercise-scores";
 
         public static String generateCourseExerciseScoresEndpoint(long courseId) {
-            return COURSE_EXERCISE_SCORES.replaceFirst("\\{courseId\\}", "" + courseId);
+            return COURSE_EXERCISE_SCORES.replaceFirst("\\{courseId\\}", String.valueOf(courseId));
         }
 
-        private Endpoints() {
+        private EndpointConstants() {
         }
     }
 

@@ -71,15 +71,13 @@ public class ExerciseScoresChartService {
     }
 
     private Map<Long, TeamScore> getScoreOfStudentForTeamExercises(User user, Set<Exercise> teamExercises) {
-        Map<Long, TeamScore> teamExerciseIdToTeamScore = teamScoreRepository.findAllByExerciseAndUserWithEagerExercise(teamExercises, user).stream()
+        return teamScoreRepository.findAllByExerciseAndUserWithEagerExercise(teamExercises, user).stream()
                 .collect(Collectors.toMap(teamScore -> teamScore.getExercise().getId(), teamScore -> teamScore));
-        return teamExerciseIdToTeamScore;
     }
 
     private Map<Long, StudentScore> getScoreOfStudentForIndividualExercises(User user, Set<Exercise> individualExercises) {
-        Map<Long, StudentScore> individualExerciseIdToStudentScore = studentScoreRepository.findAllByExerciseAndUserWithEagerExercise(individualExercises, user).stream()
+        return studentScoreRepository.findAllByExerciseAndUserWithEagerExercise(individualExercises, user).stream()
                 .collect(Collectors.toMap(studentScore -> studentScore.getExercise().getId(), studentSore -> studentSore));
-        return individualExerciseIdToStudentScore;
     }
 
     private ExerciseScoresDTO createExerciseScoreDTO(Map<Long, ExerciseScoresAggregatedInformation> exerciseIdToAggregatedInformation,
