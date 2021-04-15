@@ -425,7 +425,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
         };
 
         this.exerciseGroups.forEach((exerciseGroup) => {
-            const exerciseResult = studentResult.exerciseGroupIdToExerciseResult[exerciseGroup.id];
+            const exerciseResult = studentResult.exerciseGroupIdToExerciseResult?.[exerciseGroup.id];
             if (exerciseResult) {
                 csvRow[exerciseGroup.title + ' Assigned Exercise'] = exerciseResult.title ? exerciseResult.title : '';
                 csvRow[exerciseGroup.title + ' Achieved Points'] =
