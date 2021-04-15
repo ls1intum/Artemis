@@ -144,7 +144,8 @@ public class SubmissionService {
         List<T> submissions;
         if (examMode) {
             var participations = this.studentParticipationRepository.findAllByParticipationExerciseIdAndResultAssessorAndCorrectionRoundIgnoreTestRuns(exerciseId, tutor);
-            submissions = participations.stream().map(StudentParticipation::findLatestSubmission).filter(Optional::isPresent).map(Optional::get).map(submission -> (T) submission)
+            submissions = participations.stream().map(StudentParticipation::findLatesLegalOrIllegalSubmission).filter(Optional::isPresent).map(Optional::get)
+                    .map(submission -> (T) submission)
                     .filter(submission -> submission.getResults().size() - 1 >= correctionRound && submission.getResults().get(correctionRound) != null).collect(toList());
         }
         else {
@@ -477,7 +478,7 @@ public class SubmissionService {
      *
      * @param exercise course exercise or exam exercise that is checked
      */
-    public void checkIfExerciseDueDateIsReached(Exercise exercise) throws AccessForbiddenException {
+    public void checkIfExerciseDueDateIsReached(Exercise exercise) {
         final boolean isExamMode = exercise.isExamExercise();
         // Tutors cannot start assessing submissions if the exercise due date hasn't been reached yet
         if (isExamMode) {
@@ -489,8 +490,7 @@ public class SubmissionService {
         }
         else {
             // special check for programming exercises as they use buildAndTestStudentSubmissionAfterDueDate instead of dueDate
-            if (exercise instanceof ProgrammingExercise) {
-                ProgrammingExercise programmingExercise = (ProgrammingExercise) exercise;
+            if (exercise instanceof ProgrammingExercise programmingExercise) {
                 if (programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null
                         && programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate().isAfter(ZonedDateTime.now())) {
                     log.debug("The due date to build and test of exercise '{}' has not been reached yet.", exercise.getTitle());
@@ -518,12 +518,13 @@ public class SubmissionService {
     public <T extends Submission> List<T> getAllSubmissionsForExercise(Long exerciseId, boolean submittedOnly, boolean examMode) {
         List<StudentParticipation> participations;
         if (examMode) {
-            participations = studentParticipationRepository.findAllWithEagerLegalSubmissionsAndEagerResultsAndEagerAssessorByExerciseIdIgnoreTestRuns(exerciseId);
+            participations = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseIdIgnoreTestRuns(exerciseId);
         }
         else {
-            participations = studentParticipationRepository.findAllWithEagerLegalSubmissionsAndEagerResultsAndEagerAssessorByExerciseId(exerciseId);
+            participations = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseId(exerciseId);
         }
         List<T> submissions = new ArrayList<>();
+        // we don't have illegal submissions for other exercises than programming
         participations.stream().peek(participation -> participation.getExercise().setStudentParticipations(null)).map(StudentParticipation::findLatestSubmission)
                 // filter out non submitted submissions if the flag is set to true
                 .filter(submission -> submission.isPresent() && (!submittedOnly || submission.get().isSubmitted())).forEach(submission -> submissions.add((T) submission.get()));

@@ -109,7 +109,7 @@ public class StudentExamResource {
 
         // fetch participations, submissions and results for these exercises, note: exams only contain individual exercises for now
         // fetching all participations at once is more effective
-        List<StudentParticipation> participations = studentParticipationRepository.findByStudentExamWithEagerLegalSubmissionsResult(studentExam, true);
+        List<StudentParticipation> participations = studentParticipationRepository.findByStudentExamWithEagerSubmissionsResult(studentExam, true);
 
         // connect the exercises and student participations correctly and make sure all relevant associations are available
         for (Exercise exercise : studentExam.getExercises()) {
@@ -511,7 +511,7 @@ public class StudentExamResource {
     private void fetchParticipationsSubmissionsAndResultsForStudentExam(StudentExam studentExam, User currentUser) {
         // fetch participations, submissions and results for these exercises, note: exams only contain individual exercises for now
         // fetching all participations at once is more effective
-        List<StudentParticipation> participations = studentParticipationRepository.findByStudentExamWithEagerLegalSubmissionsResult(studentExam, false);
+        List<StudentParticipation> participations = studentParticipationRepository.findByStudentExamWithEagerSubmissionsResult(studentExam, false);
 
         boolean isAtLeastInstructor = authorizationCheckService.isAtLeastInstructorInCourse(studentExam.getExam().getCourse(), currentUser);
 
@@ -540,8 +540,8 @@ public class StudentExamResource {
             exercise.setExerciseGroup(null);
         }
 
-        if (exercise instanceof ProgrammingExercise) {
-            ((ProgrammingExercise) exercise).setTestRepositoryUrl(null);
+        if (exercise instanceof ProgrammingExercise programmingExercise) {
+            programmingExercise.setTestRepositoryUrl(null);
         }
 
         // get user's participation for the exercise
@@ -552,7 +552,7 @@ public class StudentExamResource {
             // remove inner exercise from participation
             participation.setExercise(null);
             // only include the latest submission
-            Optional<Submission> optionalLatestSubmission = participation.findLatestSubmission();
+            Optional<Submission> optionalLatestSubmission = participation.findLatesLegalOrIllegalSubmission();
             if (optionalLatestSubmission.isPresent()) {
                 Submission latestSubmission = optionalLatestSubmission.get();
                 latestSubmission.setParticipation(null);
@@ -605,7 +605,7 @@ public class StudentExamResource {
 
     /**
      * Loads the quiz questions as is not possible to load them in a generic way with the entity graph used.
-     * See {@link StudentParticipationRepository#findByStudentExamWithEagerLegalSubmissionsResult}
+     * See {@link StudentParticipationRepository#findByStudentExamWithEagerSubmissionsResult}
      *
      * @param studentExam the studentExam for which to load exercises
      */

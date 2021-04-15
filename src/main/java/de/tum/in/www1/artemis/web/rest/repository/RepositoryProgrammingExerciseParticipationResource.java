@@ -102,7 +102,8 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
                 }
                 // Check for an exam exercise, as it might not be locked but a student might still be allowed to submit
                 var optStudent = ((StudentParticipation) participation).getStudent();
-                if (optStudent.isPresent() && programmingExercise.isExamExercise() && examSubmissionService.isAllowedToSubmitDuringExam(programmingExercise, optStudent.get())) {
+                if (optStudent.isPresent() && programmingExercise.isExamExercise()
+                        && examSubmissionService.isAllowedToSubmitDuringExam(programmingExercise, optStudent.get(), false)) {
                     throw new IllegalAccessException();
                 }
             }
@@ -110,7 +111,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
         // Error case 5: The user is not (any longer) allowed to submit to the exam/exercise. This check is only relevant for students.
         // This must be a student participation as hasPermissions would have been false and an error already thrown
         boolean isStudentParticipation = participation instanceof ProgrammingExerciseStudentParticipation;
-        if (isStudentParticipation && isStudent && !examSubmissionService.isAllowedToSubmitDuringExam(programmingExercise, user)) {
+        if (isStudentParticipation && isStudent && !examSubmissionService.isAllowedToSubmitDuringExam(programmingExercise, user, false)) {
             throw new IllegalAccessException();
         }
         var repositoryUrl = programmingParticipation.getVcsRepositoryUrl();
@@ -275,7 +276,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
         // Checks only apply to students and tutors, otherwise template, solution and assignment participation can't be edited using the code editor
         User user = userRepository.getUserWithGroupsAndAuthorities(principal.getName());
         if (!authCheckService.isAtLeastInstructorForExercise(programmingExerciseParticipation.getProgrammingExercise())
-                && !examSubmissionService.isAllowedToSubmitDuringExam(programmingExerciseParticipation.getProgrammingExercise(), user)) {
+                && !examSubmissionService.isAllowedToSubmitDuringExam(programmingExerciseParticipation.getProgrammingExercise(), user, false)) {
             FileSubmissionError error = new FileSubmissionError(participationId, "notAllowedExam");
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, error.getMessage(), error);
         }
