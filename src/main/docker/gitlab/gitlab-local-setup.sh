@@ -49,5 +49,5 @@ credentials:
               id: artemis_gitlab_api_token
               scope: GLOBAL
               description: 'Gitlab Api Token for Artemis'
-              apiToken: $jenkins_access_token.
+              apiToken: $jenkins_access_token
 "
