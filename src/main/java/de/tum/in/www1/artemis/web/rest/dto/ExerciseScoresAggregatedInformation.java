@@ -5,11 +5,11 @@ package de.tum.in.www1.artemis.web.rest.dto;
  */
 public class ExerciseScoresAggregatedInformation {
 
-    public Long exerciseId;
+    private Long exerciseId;
 
-    public Double averageScoreAchieved;
+    private Double averageScoreAchieved;
 
-    public Double maxScoreAchieved;
+    private Double maxScoreAchieved;
 
     public ExerciseScoresAggregatedInformation(Long exerciseId, Double averageScoreAchieved, Double maxScoreAchieved) {
         this.exerciseId = exerciseId;
