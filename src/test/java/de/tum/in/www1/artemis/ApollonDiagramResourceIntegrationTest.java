@@ -230,7 +230,6 @@ public class ApollonDiagramResourceIntegrationTest extends AbstractSpringIntegra
     @Test
     @WithMockUser(username = "user1", roles = "USER")
     public void testGetDiagramTitleForNonExistingDiagram() throws Exception {
-        // No diagram with id 1 was created
-        request.get("/api/apollon-diagrams/1/title", HttpStatus.NOT_FOUND, String.class);
+        request.get("/api/apollon-diagrams/12312312412/title", HttpStatus.NOT_FOUND, String.class);
     }
 }
