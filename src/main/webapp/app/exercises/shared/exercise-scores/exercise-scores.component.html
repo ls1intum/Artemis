@@ -247,13 +247,7 @@
                             <fa-icon [icon]="'code-branch'" class="mr-1"></fa-icon>
                             Repository
                         </a>
-                        <button
-                            class="btn btn-primary btn-sm mr-1"
-                            [disabled]="!!buildPlanId(value)"
-                            jhiBuildPlanButton
-                            [projectKey]="projectKey()"
-                            [buildPlanId]="buildPlanId(value)!"
-                        >
+                        <button class="btn btn-primary btn-sm mr-1" jhiBuildPlanButton [projectKey]="projectKey()" [buildPlanId]="buildPlanId(value)!">
                             <fa-icon class="mr-1" [icon]="['far', 'file-code']"></fa-icon>
                             Build plan
                         </button>
