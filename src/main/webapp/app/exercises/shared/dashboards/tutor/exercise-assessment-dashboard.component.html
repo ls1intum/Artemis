@@ -1,11 +1,11 @@
-<jhi-header-exercise-page-with-details [exercise]="exercise" [exam]="exam" [isTestRun]="isTestRun" [displayBackButton]="false">
+<jhi-header-exercise-page-with-details *ngIf="exercise" [exercise]="exercise" [exam]="exam" [isTestRun]="isTestRun" [displayBackButton]="false">
     <span *ngIf="!isTestRun" pagetitle>{{ 'artemisApp.exerciseAssessmentDashboard.pageHeader' | artemisTranslate }} {{ exercise?.title }}</span>
     <span *ngIf="isTestRun" pagetitle>{{ 'artemisApp.exerciseAssessmentDashboard.testRunPageHeader' | artemisTranslate }} {{ exercise?.title }}</span>
 </jhi-header-exercise-page-with-details>
 
 <jhi-alert></jhi-alert>
 
-<div *ngIf="exercise !== undefined">
+<div *ngIf="exercise">
     <div class="row my-3 justify-content-around">
         <div class="col-lg-5 col-md-6 col-sm-6 text-center" *ngIf="!isTestRun">
             <p class="h3">{{ 'artemisApp.exerciseAssessmentDashboard.yourStatus' | artemisTranslate }}:</p>
@@ -109,8 +109,8 @@
             <!-- Programming exercises have a couple of custom render modules, so we load the instructions component here.-->
             <ng-template #programmingInstructions>
                 <jhi-programming-exercise-instructions
-                    [exercise]="asProgrammingExercise(exercise)"
-                    [participation]="asProgrammingExercise(exercise).templateParticipation"
+                    [exercise]="programmingExercise"
+                    [participation]="programmingExercise.templateParticipation"
                     [personalParticipation]="false"
                 ></jhi-programming-exercise-instructions>
             </ng-template>
@@ -130,7 +130,7 @@
 
         <div class="col-12" *ngIf="exercise.type === ExerciseType.PROGRAMMING">
             <h4>{{ 'artemisApp.exerciseAssessmentDashboard.exampleSolution' | artemisTranslate }}</h4>
-            <a jhiSecureLink [href]="asProgrammingExercise(exercise).solutionParticipation!.repositoryUrl">
+            <a jhiSecureLink [href]="programmingExercise.solutionParticipation?.repositoryUrl || ''">
                 <jhi-button jhiTranslate="artemisApp.exerciseAssessmentDashboard.programmingExercise.exampleSolution"> Example solution repository </jhi-button>
             </a>
         </div>
@@ -339,7 +339,7 @@
                                         </td>
                                         <td>
                                             <button
-                                                class="btn btn-success btn-sm"
+                                                class="btn btn-success btn-sm guided-tour-new-assessment-btn"
                                                 (click)="openAssessmentEditor('new', correctionRound)"
                                                 [disabled]="exercise === exerciseForGuidedTour || openingAssessmentEditorForNewSubmission"
                                                 [class.guided-tour]="exercise === exerciseForGuidedTour"
@@ -356,12 +356,14 @@
                         </table>
                         <ng-container
                             *ngIf="
+                                isExamMode &&
                                 !(
                                     unassessedSubmissionByCorrectionRound &&
                                     unassessedSubmissionByCorrectionRound.get(correctionRound)?.id > 0 &&
                                     !exercise.teamMode &&
                                     !isTestRun
-                                ) && numberOfSubmissions.inTime != roundState.inTime
+                                ) &&
+                                numberOfSubmissions.inTime != roundState.inTime
                             "
                         >
                             <div class="alert alert-info">
@@ -385,7 +387,7 @@
                     </div>
                 </ng-container>
                 <div class="alert alert-info" *ngIf="correctionRound == 1">
-                    {{ 'artemisApp.exerciseAssessmentDashboard.noSubmissionsBecauseFirstAssessedByYourself' | translate }}
+                    {{ 'artemisApp.exerciseAssessmentDashboard.noSubmissionsBecauseFirstAssessedByYourself' | artemisTranslate }}
                 </div>
                 <ng-template #noSubmissions>
                     <jhi-assessment-warning [exercise]="exercise"></jhi-assessment-warning>

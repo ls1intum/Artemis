@@ -6,6 +6,7 @@ import { ActivatedRoute } from '@angular/router';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { Exam } from 'app/entities/exam.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
+import { SubmissionType } from 'app/entities/submission.model';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 
@@ -23,6 +24,7 @@ export class ExamParticipationSummaryComponent implements OnInit {
     readonly FILE_UPLOAD = ExerciseType.FILE_UPLOAD;
     readonly AssessmentType = AssessmentType;
     readonly IncludedInOverallScore = IncludedInOverallScore;
+    readonly SUBMISSION_TYPE_ILLEGAL = SubmissionType.ILLEGAL;
 
     @Input()
     studentExam: StudentExam;
