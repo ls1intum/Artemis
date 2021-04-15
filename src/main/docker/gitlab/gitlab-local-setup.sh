@@ -3,15 +3,13 @@
 
 # Enter the personal access token of the admin user
 ADMIN_PERSONAL_ACCESS_TOKEN="your.gitlab.admin.access.token"
-ADMIN_USER_ID="1"
 
 # Enter the url of the Gitlab instance.
-GITLAB__API_URL="http://localhost/api/v4/"
-AUTHORIZATION_BEARER_HEADER="Authorization: Bearer $ADMIN_PERSONAL_ACCESS_TOKEN"
+GITLAB_API_URL="http://localhost/api/v4/"
 
 # Allow outbound requests to local network
 echo 'Allowing outbound requests to local network...'
-outbound_requests_allowed=$(curl -s --request PUT --header "$AUTHORIZATION_BEARER_HEADER" "$GITLAB__API_URL/application/settings?allow_local_requests_from_hooks_and_services=true&allow_local_requests_from_web_hooks_and_services=true&allow_local_requests_from_system_hooks=true" | jq -r .allow_local_requests_from_web_hooks_and_services)
+outbound_requests_allowed=$(curl -s --request PUT --header "Authorization: Bearer $ADMIN_PERSONAL_ACCESS_TOKEN" "$GITLAB_API_URL/application/settings?allow_local_requests_from_hooks_and_services=true&allow_local_requests_from_web_hooks_and_services=true&allow_local_requests_from_system_hooks=true" | jq -r .allow_local_requests_from_web_hooks_and_services)
 if $outbound_requests_allowed
 then
     echo "Success."
@@ -21,12 +19,12 @@ fi
 
 # Generate access token for Artemis
 echo 'Generating personal access token for Artemis with api, read_user, read_api, read_repository, write_repository, and sudo scopes.'
-artemis_access_token=$(curl -s --request POST --header "$AUTHORIZATION_BEARER_HEADER" --data "name=Artemis" --data "scopes[]=api,read_user,read_api,read_repository,write_repository,sudo" "$GITLAB__API_URL/users/$ADMIN_USER_ID/personal_access_tokens" | jq -r .token)
+artemis_access_token=$(curl -s --request POST --header "Authorization: Bearer $ADMIN_PERSONAL_ACCESS_TOKEN" --data "name=Artemis" --data "scopes[]=api,read_user,read_api,read_repository,write_repository,sudo" "$GITLAB_API_URL/users/1/personal_access_tokens" | jq -r .token)
 echo "Success."
 
 # Generate access token for Jenkins
 echo 'Generating personal access token for Jenkins with api and read_repository scopes.'
-jenkins_access_token=$(curl -s --request POST --header "$AUTHORIZATION_BEARER_HEADER" --data "name=Jenkins" --data "scopes[]=api,read_repository" "$GITLAB__API_URL/users/$ADMIN_USER_ID/personal_access_tokens" | jq -r .token)
+jenkins_access_token=$(curl -s --request POST --header "Authorization: Bearer $ADMIN_PERSONAL_ACCESS_TOKEN" --data "name=Jenkins" --data "scopes[]=api,read_repository" "$GITLAB_API_URL/users/1/personal_access_tokens" | jq -r .token)
 echo "Success."
 
 echo
@@ -41,7 +39,7 @@ artemis:
 "
 
 echo
-echo 'The access Jenkins token has been created and can be copied into youur jenkins-casc-config.yml file:'
+echo 'The access Jenkins token has been created and can be copied into your jenkins-casc-config.yml file:'
 echo "
 credentials:
   system:
