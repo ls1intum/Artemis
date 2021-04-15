@@ -362,16 +362,6 @@ public class QuizExercise extends Exercise {
         return null;
     }
 
-    /**
-     * Gets the type of the exercise as a string
-     *
-     * @return type of the exercise as a string
-     */
-    @Override
-    public String getStringRepresentationOfType() {
-        return "Quiz-Exercise";
-    }
-
     @Override
     public StudentParticipation findRelevantParticipation(List<StudentParticipation> participations) {
         for (StudentParticipation participation : participations) {

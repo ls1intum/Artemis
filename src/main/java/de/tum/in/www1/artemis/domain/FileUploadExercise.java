@@ -1,6 +1,9 @@
 package de.tum.in.www1.artemis.domain;
 
-import javax.persistence.*;
+import javax.persistence.Column;
+import javax.persistence.DiscriminatorValue;
+import javax.persistence.Entity;
+import javax.persistence.Lob;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -40,13 +43,4 @@ public class FileUploadExercise extends Exercise {
         return "FileUploadExercise{" + "id=" + getId() + "}";
     }
 
-    /**
-     * Gets the type of the exercise as a string
-     *
-     * @return type of the exercise as a string
-     */
-    @Override
-    public String getStringRepresentationOfType() {
-        return "File-Upload-Exercise";
-    }
 }
