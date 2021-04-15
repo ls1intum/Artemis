@@ -279,7 +279,7 @@ public class ParticipationResource {
         }
         participations = participations.stream().filter(participation -> participation.getParticipant() != null).collect(Collectors.toList());
 
-        Map<Long, Integer> submissionCountMap = studentParticipationRepository.countLegalSubmissionsPerParticipationByExerciseIdAsMap(exerciseId);
+        Map<Long, Integer> submissionCountMap = studentParticipationRepository.countSubmissionsPerParticipationByExerciseIdAsMap(exerciseId);
         participations.forEach(participation -> participation.setSubmissionCount(submissionCountMap.get(participation.getId())));
 
         return ResponseEntity.ok(participations);

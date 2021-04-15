@@ -180,15 +180,16 @@ public class TextSubmissionService extends SubmissionService {
         // Instructors assume to see all submissions on the submissions page independent whether they already have results or not.
         List<StudentParticipation> participations;
         if (examMode) {
-            participations = studentParticipationRepository.findAllWithEagerLegalSubmissionsAndEagerResultsAndEagerAssessorByExerciseIdIgnoreTestRuns(exerciseId);
+            participations = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseIdIgnoreTestRuns(exerciseId);
         }
         else {
-            participations = studentParticipationRepository.findAllWithEagerLegalSubmissionsAndEagerResultsAndEagerAssessorByExerciseId(exerciseId);
+            participations = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseId(exerciseId);
         }
 
         List<TextSubmission> textSubmissions = new ArrayList<>();
 
         for (StudentParticipation participation : participations) {
+            // We don't have illegal submissions for text exercises
             Optional<Submission> optionalTextSubmission = participation.findLatestSubmission();
 
             if (optionalTextSubmission.isEmpty()) {

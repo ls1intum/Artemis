@@ -170,7 +170,6 @@ public class ExerciseGroupResource {
         Optional<ResponseEntity<List<ExerciseGroup>>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccessForInstructor(courseId, examId);
 
         List<ExerciseGroup> exerciseGroupList = exerciseGroupRepository.findWithExamAndExercisesByExamId(examId);
-        studentParticipationRepository.addNumberOfExamExerciseParticipations(exerciseGroupList);
         return courseAndExamAccessFailure.orElseGet(() -> ResponseEntity.ok(exerciseGroupList));
     }
 

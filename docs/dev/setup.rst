@@ -181,6 +181,7 @@ This is a service file that works on Debian/Ubuntu (using systemd):
      -Xmx2048m \
      --add-modules java.se \
      --add-exports java.base/jdk.internal.ref=ALL-UNNAMED \
+     --add-exports java.naming/com.sun.jndi.ldap=ALL-UNNAMED \
      --add-opens java.base/java.lang=ALL-UNNAMED \
      --add-opens java.base/java.nio=ALL-UNNAMED \
      --add-opens java.base/sun.nio.ch=ALL-UNNAMED \
