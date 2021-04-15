@@ -622,4 +622,9 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
         });
         return weight > 0;
     }
+
+    getEventValue(event: Event) {
+        const element = event.target as HTMLInputElement;
+        return element.value;
+    }
 }
