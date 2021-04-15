@@ -1,6 +1,8 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -71,7 +73,9 @@ public class ExerciseScoresChartResource {
     }
 
     private Set<Exercise> removeNotVisibleAndUnfinishedExercise(Set<Exercise> exercises) {
-        return exercises.parallelStream().filter(Exercise::isVisibleToStudents).filter(Exercise::isAssessmentDueDateOver).collect(Collectors.toSet());
+        return exercises.parallelStream().filter(Exercise::isVisibleToStudents)
+                .filter(exercise -> Objects.isNull(exercise.getDueDate()) || ZonedDateTime.now().isAfter(exercise.getDueDate())).filter(Exercise::isAssessmentDueDateOver)
+                .collect(Collectors.toSet());
     }
 
     public static final class EndpointConstants {
