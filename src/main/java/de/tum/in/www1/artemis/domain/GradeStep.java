@@ -99,7 +99,7 @@ public class GradeStep extends DomainObject {
     @Override
     public String toString() {
         return "GradeStep{" + "lowerBoundPercentage=" + lowerBoundPercentage + ", lowerBoundInclusive=" + lowerBoundInclusive + ", upperBoundPercentage=" + upperBoundPercentage
-                + ", upperBoundInclusive=" + upperBoundInclusive + ", gradeName='" + gradeName + '\'' + ", isPassingGrade=" + isPassingGrade + '}';
+                + ", upperBoundInclusive=" + upperBoundInclusive + ", gradeName='" + gradeName + "'" + ", isPassingGrade=" + isPassingGrade + "}";
     }
 
     /**
