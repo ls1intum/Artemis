@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.web.rest;
 
 import static de.tum.in.www1.artemis.service.util.TimeLogUtil.formatDurationFrom;
-import static de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException.NOT_ALLOWED;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 import static java.time.ZonedDateTime.now;
 
@@ -37,7 +36,6 @@ import de.tum.in.www1.artemis.service.dto.StudentDTO;
 import de.tum.in.www1.artemis.service.exam.*;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.web.rest.dto.*;
-import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
@@ -76,7 +74,7 @@ public class ExamResource {
 
     private final AuthorizationCheckService authCheckService;
 
-    private final TutorParticipationService tutorParticipationService;
+    private final TutorParticipationRepository tutorParticipationRepository;
 
     private final AssessmentDashboardService assessmentDashboardService;
 
@@ -84,7 +82,7 @@ public class ExamResource {
 
     public ExamResource(UserRepository userRepository, CourseRepository courseRepository, ExamService examService, ExamAccessService examAccessService,
             InstanceMessageSendService instanceMessageSendService, ExamRepository examRepository, SubmissionService submissionService, AuthorizationCheckService authCheckService,
-            ExamDateService examDateService, TutorParticipationService tutorParticipationService, AssessmentDashboardService assessmentDashboardService,
+            ExamDateService examDateService, TutorParticipationRepository tutorParticipationRepository, AssessmentDashboardService assessmentDashboardService,
             ExamRegistrationService examRegistrationService, StudentExamRepository studentExamRepository) {
         this.userRepository = userRepository;
         this.courseRepository = courseRepository;
@@ -96,7 +94,7 @@ public class ExamResource {
         this.examAccessService = examAccessService;
         this.instanceMessageSendService = instanceMessageSendService;
         this.authCheckService = authCheckService;
-        this.tutorParticipationService = tutorParticipationService;
+        this.tutorParticipationRepository = tutorParticipationRepository;
         this.assessmentDashboardService = assessmentDashboardService;
         this.studentExamRepository = studentExamRepository;
     }
@@ -233,12 +231,10 @@ public class ExamResource {
             else {
                 exam = examService.findByIdWithExerciseGroupsAndExercisesElseThrow(examId);
             }
-            examService.setExamExerciseProperties(exam);
+            examService.setExamProperties(exam);
             return ResponseEntity.ok(exam);
         }
         Exam exam = examRepository.findByIdWithRegisteredUsersElseThrow(examId);
-        examRepository.setNumberOfRegisteredUsersForExams(Collections.singletonList(exam));
-
         exam.getRegisteredUsers().forEach(user -> user.setVisibleRegistrationNumber(user.getRegistrationNumber()));
         return ResponseEntity.ok(exam);
     }
@@ -331,7 +327,7 @@ public class ExamResource {
             exercises.addAll(exerciseGroup.getExercises());
         }
 
-        List<TutorParticipation> tutorParticipations = tutorParticipationService.findAllByCourseAndTutor(course, user);
+        List<TutorParticipation> tutorParticipations = tutorParticipationRepository.findAllByAssessedExercise_Course_IdAndTutor_Id(course.getId(), user.getId());
         assessmentDashboardService.generateStatisticsForExercisesForAssessmentDashboard(exercises, tutorParticipations, true);
 
         return ResponseEntity.ok(exam);
@@ -837,18 +833,15 @@ public class ExamResource {
      * @param courseId  - the id of the course
      * @param examId    - the id of the exam
      * @return the ResponseEntity with status 200 (OK) and with body the course, or with status 404 (Not Found)
-     * @throws AccessForbiddenException if the current user doesn't have the permission to access the course
      */
     @GetMapping("/courses/{courseId}/exams/{examId}/lockedSubmissions")
     @PreAuthorize("hasRole('INSTRUCTOR')")
-    public ResponseEntity<List<Submission>> getLockedSubmissionsForExam(@PathVariable Long courseId, @PathVariable Long examId) throws AccessForbiddenException {
+    public ResponseEntity<List<Submission>> getLockedSubmissionsForExam(@PathVariable Long courseId, @PathVariable Long examId) {
         log.debug("REST request to get all locked submissions for course : {}", courseId);
         long start = System.currentTimeMillis();
         Course course = courseRepository.findWithEagerExercisesById(courseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
-            throw new AccessForbiddenException(NOT_ALLOWED);
-        }
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, user);
 
         List<Submission> submissions = submissionService.getLockedSubmissions(examId, user);
 
