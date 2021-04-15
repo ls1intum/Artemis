@@ -3,7 +3,7 @@ import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs/Observable';
 import { SERVER_API_URL } from 'app/app.constants';
 import * as moment from 'moment';
-import { Exercise, ExerciseCategory, ExerciseType, IncludedInOverallScore, ParticipationStatus } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType, IncludedInOverallScore, ParticipationStatus } from 'app/entities/exercise.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { ParticipationService } from '../participation/participation.service';
 import { map } from 'rxjs/operators';
@@ -12,6 +12,7 @@ import { StatsForDashboard } from 'app/course/dashboards/instructor-course-dashb
 import { LtiConfiguration } from 'app/entities/lti-configuration.model';
 import { CourseExerciseStatisticsDTO } from 'app/exercises/shared/exercise/exercise-statistics-dto.model';
 import { TranslateService } from '@ngx-translate/core';
+import { ExerciseCategory } from 'app/entities/exercise-category.model';
 
 export type EntityResponseType = HttpResponse<Exercise>;
 export type EntityArrayResponseType = HttpResponse<Exercise[]>;
@@ -29,9 +30,11 @@ export class ExerciseService {
      */
     create(exercise: Exercise): Observable<EntityResponseType> {
         const copy = this.convertDateFromClient(exercise);
+        copy.categories = this.stringifyExerciseCategories(copy);
         return this.http
             .post<Exercise>(this.resourceUrl, copy, { observe: 'response' })
-            .map((res: EntityResponseType) => this.convertDateFromServer(res));
+            .map((res: EntityResponseType) => this.convertDateFromServer(res))
+            .map((res: EntityResponseType) => this.convertExerciseCategoriesFromServer(res));
     }
 
     /**
@@ -40,9 +43,11 @@ export class ExerciseService {
      */
     update(exercise: Exercise): Observable<EntityResponseType> {
         const copy = this.convertDateFromClient(exercise);
+        copy.categories = this.stringifyExerciseCategories(copy);
         return this.http
             .put<Exercise>(this.resourceUrl, copy, { observe: 'response' })
-            .map((res: EntityResponseType) => this.convertDateFromServer(res));
+            .map((res: EntityResponseType) => this.convertDateFromServer(res))
+            .map((res: EntityResponseType) => this.convertExerciseCategoriesFromServer(res));
     }
 
     /**
@@ -67,6 +72,7 @@ export class ExerciseService {
         return this.http
             .get<Exercise>(`${this.resourceUrl}/${exerciseId}`, { observe: 'response' })
             .map((res: EntityResponseType) => this.convertDateFromServer(res))
+            .map((res: EntityResponseType) => this.convertExerciseCategoriesFromServer(res))
             .map((res: EntityResponseType) => this.checkPermission(res));
     }
 
@@ -106,6 +112,7 @@ export class ExerciseService {
         return this.http
             .get<Exercise>(`${this.resourceUrl}/${exerciseId}/details`, { observe: 'response' })
             .map((res: EntityResponseType) => this.convertDateFromServer(res))
+            .map((res: EntityResponseType) => this.convertExerciseCategoriesFromServer(res))
             .map((res: EntityResponseType) => {
                 if (res.body) {
                     // insert an empty list to avoid additional calls in case the list is empty on the server (because then it would be undefined in the client)
@@ -124,7 +131,10 @@ export class ExerciseService {
     getUpcomingExercises(): Observable<EntityArrayResponseType> {
         return this.http
             .get<Exercise[]>(`${this.resourceUrl}/upcoming`, { observe: 'response' })
-            .pipe(map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res)));
+            .pipe(
+                map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res)),
+                map((res: EntityArrayResponseType) => this.convertExerciseCategoryArrayFromServer(res)),
+            );
     }
 
     /**
@@ -256,14 +266,44 @@ export class ExerciseService {
     }
 
     /**
-     * Create Array of exercise categories from exercise
-     * @param { Exercise } exercise whos categories should be converted
+     * Converts the exercise category json string into ExerciseCategory objects (if it exists).
+     * @param res the response
      */
-    convertExerciseCategoriesFromServer(exercise: Exercise): ExerciseCategory[] {
-        if (!exercise || !exercise.categories) {
-            return [];
+    convertExerciseCategoriesFromServer<ERT extends EntityResponseType>(res: ERT): ERT {
+        if (res.body && res.body.categories) {
+            this.parseExerciseCategories(res.body);
         }
-        return exercise.categories.map((el) => JSON.parse(el));
+        return res;
+    }
+
+    /**
+     * Converts an exercises' categories into a json string. Does nothing if
+     * no categories exist
+     * @param exercise the exercise
+     */
+    stringifyExerciseCategories(exercise: Exercise) {
+        return exercise.categories?.map((category) => JSON.stringify(category) as ExerciseCategory);
+    }
+
+    /**
+     * Converts the exercise category json strings into ExerciseCategory objects (if it exists).
+     * @param res the response
+     */
+    convertExerciseCategoryArrayFromServer<E extends Exercise, EART extends EntityArrayResponseType>(res: EART): EART {
+        if (res.body) {
+            res.body.forEach((exercise: E) => this.parseExerciseCategories(exercise));
+        }
+        return res;
+    }
+
+    /**
+     * Parsses the exercise categories JSON string into ExerciseCategory objects.
+     * @param exercise - the exericse
+     */
+    parseExerciseCategories(exercise: Exercise) {
+        if (exercise.categories) {
+            exercise.categories = exercise.categories.map((category) => JSON.parse(category as string) as ExerciseCategory);
+        }
     }
 
     /**
@@ -281,6 +321,7 @@ export class ExerciseService {
     convertExerciseForServer<E extends Exercise>(exercise: E): Exercise {
         let copy = Object.assign(exercise, {});
         copy = this.convertDateFromClient(copy);
+        copy.categories = this.stringifyExerciseCategories(copy);
         if (copy.course) {
             copy.course.exercises = [];
             copy.course.lectures = [];
@@ -296,7 +337,10 @@ export class ExerciseService {
     getForTutors(exerciseId: number): Observable<HttpResponse<Exercise>> {
         return this.http
             .get<Exercise>(`${this.resourceUrl}/${exerciseId}/for-assessment-dashboard`, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
+            .pipe(
+                map((res: EntityResponseType) => this.convertDateFromServer(res)),
+                map((res: EntityResponseType) => this.convertExerciseCategoriesFromServer(res)),
+            );
     }
 
     /**

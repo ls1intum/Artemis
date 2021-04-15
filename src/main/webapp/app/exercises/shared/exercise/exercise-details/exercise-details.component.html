@@ -28,8 +28,8 @@
 </ng-container>
 <dt><span jhiTranslate="artemisApp.exercise.categories">Difficulty</span></dt>
 <dd *ngIf="exercise.categories">
-    <span class="custom-tag" *ngFor="let item of exercise.categories" [ngStyle]="{ backgroundColor: item }">
-        <span>{{ item }}</span>
+    <span class="custom-tag" *ngFor="let item of exercise.categories" [ngStyle]="{ backgroundColor: item.color }">
+        <span>{{ item.category }}</span>
     </span>
 </dd>
 <dd *ngIf="!exercise.categories">

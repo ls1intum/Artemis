@@ -12,7 +12,7 @@ import { switchMap, tap } from 'rxjs/operators';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { AssessmentType } from 'app/entities/assessment-type.model';
-import { Exercise, ExerciseCategory, IncludedInOverallScore } from 'app/entities/exercise.model';
+import { Exercise, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { EditorMode } from 'app/shared/markdown-editor/markdown-editor.component';
 import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
@@ -21,6 +21,7 @@ import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-g
 import { ProgrammingLanguageFeatureService } from 'app/exercises/programming/shared/service/programming-language-feature/programming-language-feature.service';
 import { navigateBackFromExerciseUpdate } from 'app/utils/navigation.utils';
 import { shortNamePattern } from 'app/shared/constants/input.constants';
+import { ExerciseCategory } from 'app/entities/exercise-category.model';
 
 @Component({
     selector: 'jhi-programming-exercise-update',
@@ -199,7 +200,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
                             this.courseService.find(courseId).subscribe((res) => {
                                 this.isExamMode = false;
                                 this.programmingExercise.course = res.body!;
-                                this.exerciseCategories = this.exerciseService.convertExerciseCategoriesFromServer(this.programmingExercise);
+                                this.exerciseCategories = this.programmingExercise.categories || [];
                                 this.courseService.findAllCategoriesOfCourse(this.programmingExercise.course!.id!).subscribe(
                                     (categoryRes: HttpResponse<string[]>) => {
                                         this.existingCategories = this.exerciseService.convertExerciseCategoriesAsStringFromServer(categoryRes.body!);
@@ -296,7 +297,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
      * @param categories which should be set
      */
     updateCategories(categories: ExerciseCategory[]) {
-        this.programmingExercise.categories = categories.map((el) => JSON.stringify(el));
+        this.programmingExercise.categories = categories;
     }
 
     /**
