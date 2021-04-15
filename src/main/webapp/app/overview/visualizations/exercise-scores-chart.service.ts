@@ -4,6 +4,7 @@ import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import * as moment from 'moment';
 import { Moment } from 'moment';
+import { splitCamelCase } from 'app/shared/util/utils';
 
 /**
  * Corresponds to ExerciseScoresDTO.java on the server
@@ -26,7 +27,6 @@ export class ExerciseScoresChartService {
     public resourceUrl = SERVER_API_URL + 'api';
 
     constructor(private http: HttpClient) {}
-
     /**
      * Get the course exercise performance statistics necessary for exercise-scores-chart.component.ts
      * @param courseId id of the course
@@ -42,6 +42,7 @@ export class ExerciseScoresChartService {
                 if (response.body) {
                     for (const exerciseScoreDTO of response.body) {
                         exerciseScoreDTO.releaseDate = exerciseScoreDTO.releaseDate ? moment(exerciseScoreDTO.releaseDate) : undefined;
+                        exerciseScoreDTO.exerciseType = exerciseScoreDTO.exerciseType ? splitCamelCase(exerciseScoreDTO.exerciseType) : undefined;
                     }
                 }
                 return response;

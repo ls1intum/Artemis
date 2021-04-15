@@ -18,6 +18,7 @@ public class ExerciseScoresDTO {
 
     public String exerciseTitle;
 
+    // this is just the simple name of the exercise class
     public String exerciseType;
 
     // we need the release date information to sort the exercises in the chart by their release date
@@ -37,7 +38,7 @@ public class ExerciseScoresDTO {
         this.exerciseId = exercise.getId();
         this.exerciseTitle = exercise.getTitle();
         this.releaseDate = exercise.getReleaseDate();
-        this.exerciseType = exercise.getStringRepresentationOfType();
+        this.exerciseType = exercise.getClass().getSimpleName();
     }
 
 }
