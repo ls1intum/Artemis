@@ -216,7 +216,7 @@ public class ExamRegistrationService {
 
         // Optionally delete participations and submissions
         if (deleteParticipationsAndSubmission) {
-            List<StudentParticipation> participations = studentParticipationRepository.findByStudentExamWithEagerLegalSubmissionsResult(studentExam, false);
+            List<StudentParticipation> participations = studentParticipationRepository.findByStudentExamWithEagerSubmissionsResult(studentExam, false);
             for (var participation : participations) {
                 participationService.delete(participation.getId(), true, true);
             }

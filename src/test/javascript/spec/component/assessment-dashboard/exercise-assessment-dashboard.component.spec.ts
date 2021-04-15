@@ -415,11 +415,6 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         expect(openAssessmentEditor).to.have.been.called;
     });
 
-    it('should return asProgrammingExercise', () => {
-        const castedExercise = comp.asProgrammingExercise(exercise);
-        expect(castedExercise).to.be.equal(exercise as ProgrammingExercise);
-    });
-
     describe('openExampleSubmission', () => {
         const courseId = 4;
 

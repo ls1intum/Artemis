@@ -590,10 +590,10 @@ public class ExamService {
     }
 
     /**
-     * Sets exam exercise transient properties for different exercise types
-     * @param exam - the exam for which we set the exercise properties
+     * Sets exam transient properties for different exercise types
+     * @param exam - the exam for which we set the properties
      */
-    public void setExamExerciseProperties(Exam exam) {
+    public void setExamProperties(Exam exam) {
         exam.getExerciseGroups().forEach(exerciseGroup -> {
             exerciseGroup.getExercises().forEach(exercise -> {
                 // Set transient property for quiz exam exercise if test runs exist
@@ -601,7 +601,11 @@ public class ExamService {
                     exerciseService.checkTestRunsExist(exercise);
                 }
             });
+            // set transient number of participations for each exercise
+            studentParticipationRepository.addNumberOfExamExerciseParticipations(exerciseGroup);
         });
+        // set transient number of registered users
+        examRepository.setNumberOfRegisteredUsersForExams(Collections.singletonList(exam));
     }
 
     /**

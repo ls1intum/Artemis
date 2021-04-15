@@ -69,7 +69,7 @@ public class ExamServiceTest extends AbstractSpringIntegrationBambooBitbucketJir
 
     @Test
     @WithMockUser(value = "admin", roles = "ADMIN")
-    public void testSetExamExerciseProperties() {
+    public void testSetExamProperties() {
         StudentParticipation studentParticipation = new StudentParticipation();
         studentParticipation.setTestRun(true);
         QuizExercise exercise = new QuizExercise();
@@ -79,9 +79,16 @@ public class ExamServiceTest extends AbstractSpringIntegrationBambooBitbucketJir
         exerciseRepository.save(exercise);
         studentParticipationRepository.save(studentParticipation);
 
-        examService.setExamExerciseProperties(exam1);
+        examService.setExamProperties(exam1);
 
         assertThat(exercise.getTestRunParticipationsExist()).isEqualTo(true);
+        exam1.getExerciseGroups().forEach(exerciseGroup -> {
+            exerciseGroup.getExercises().forEach(exercise1 -> {
+                assertThat(exercise.getNumberOfParticipations()).isNotNull();
+            });
+        });
+        assertThat(exam1.getNumberOfRegisteredUsers()).isNotNull();
+        assertThat(exam1.getNumberOfRegisteredUsers()).isEqualTo(0);
     }
 
     @Test

@@ -49,7 +49,7 @@ public class ExamSubmissionService {
      * @return an Optional with a typed ResponseEntity. If it is empty all checks passed
      */
     public <T> Optional<ResponseEntity<T>> checkSubmissionAllowance(Exercise exercise, User user) {
-        if (!isAllowedToSubmitDuringExam(exercise, user)) {
+        if (!isAllowedToSubmitDuringExam(exercise, user, false)) {
             // TODO: improve the error message sent to the client
             return Optional.of(forbidden());
         }
@@ -62,10 +62,11 @@ public class ExamSubmissionService {
      *
      * @param exercise  the exercise for which a submission should be saved
      * @param user      the user that wants to submit
+     * @param withGracePeriod whether the grace period should be taken into account or not
      * @return true if it is not an exam of if it is an exam and the submission is in time and the exercise is part of
      *         the user's student exam
      */
-    public boolean isAllowedToSubmitDuringExam(Exercise exercise, User user) {
+    public boolean isAllowedToSubmitDuringExam(Exercise exercise, User user, boolean withGracePeriod) {
         if (isExamSubmission(exercise)) {
             // Get the student exam if it was not passed to the function
             Exam exam = exercise.getExerciseGroup().getExam();
@@ -91,7 +92,7 @@ public class ExamSubmissionService {
             }
 
             // Check that the submission is in time
-            return isSubmissionInTime(exercise, studentExam);
+            return isSubmissionInTime(exercise, studentExam, withGracePeriod);
         }
         return true;
     }
@@ -155,14 +156,12 @@ public class ExamSubmissionService {
         return exercise.isExamExercise();
     }
 
-    private boolean isSubmissionInTime(Exercise exercise, StudentExam studentExam) {
-        // TODO: we might want to add a grace period here. If so we have to adjust the dueDate checks in the submission
-        // services (e.g. in TextSubmissionService::handleTextSubmission())
+    private boolean isSubmissionInTime(Exercise exercise, StudentExam studentExam, boolean withGracePeriod) {
         // The attributes of the exam (e.g. startDate) are missing. Therefore we need to load it.
         Exam exam = examRepository.findByIdElseThrow(exercise.getExerciseGroup().getExam().getId());
-        ZonedDateTime calculatedEndDate = exam.getEndDate();
+        ZonedDateTime calculatedEndDate = withGracePeriod ? exam.getEndDate().plusSeconds(exam.getGracePeriod()) : exam.getEndDate();
         if (studentExam.getWorkingTime() != null && studentExam.getWorkingTime() > 0) {
-            calculatedEndDate = studentExam.getIndividualEndDate();
+            calculatedEndDate = withGracePeriod ? studentExam.getIndividualEndDateWithGracePeriod() : studentExam.getIndividualEndDate();
         }
         return exam.getStartDate().isBefore(ZonedDateTime.now()) && calculatedEndDate.isAfter(ZonedDateTime.now());
     }

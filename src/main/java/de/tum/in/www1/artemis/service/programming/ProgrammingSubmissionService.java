@@ -43,10 +43,10 @@ public class ProgrammingSubmissionService extends SubmissionService {
     private final Logger log = LoggerFactory.getLogger(ProgrammingSubmissionService.class);
 
     @Value("${artemis.git.name}")
-    private String ARTEMIS_GIT_NAME;
+    private String artemisGitName;
 
     @Value("${artemis.git.email}")
-    private String ARTEMIS_GIT_EMAIL;
+    private String artemisGitEmail;
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
@@ -111,11 +111,9 @@ public class ProgrammingSubmissionService extends SubmissionService {
      */
     public ProgrammingSubmission notifyPush(Long participationId, Object requestBody) throws EntityNotFoundException, IllegalStateException, IllegalArgumentException {
         Participation participation = participationRepository.findByIdWithLegalSubmissionsElseThrow(participationId);
-        if (!(participation instanceof ProgrammingExerciseParticipation)) {
+        if (!(participation instanceof ProgrammingExerciseParticipation programmingExerciseParticipation)) {
             throw new EntityNotFoundException("Programming Exercise Participation", participationId);
         }
-
-        ProgrammingExerciseParticipation programmingExerciseParticipation = (ProgrammingExerciseParticipation) participation;
 
         // if the commit is made by the Artemis user and contains the commit message "Setup" (use a constant to determine this), we should ignore this
         // and we should not create a new submission here
@@ -137,9 +135,9 @@ public class ProgrammingSubmissionService extends SubmissionService {
             throw new IllegalStateException(
                     "Submission for participation id " + participationId + " in branch " + commit.getBranch() + " will be ignored! Only the master branch is considered");
         }
-        if (commit.getAuthorName() != null && commit.getAuthorName().equalsIgnoreCase(ARTEMIS_GIT_NAME) && commit.getAuthorEmail() != null
-                && commit.getAuthorEmail().equalsIgnoreCase(ARTEMIS_GIT_EMAIL) && commit.getMessage() != null && commit.getMessage().equals(SETUP_COMMIT_MESSAGE)) {
-            // if the commit was made by Artemis (this means it is a setup commit), we ignore this as well
+        if (artemisGitName.equalsIgnoreCase(commit.getAuthorName()) && artemisGitEmail.equalsIgnoreCase(commit.getAuthorEmail())
+                && SETUP_COMMIT_MESSAGE.equals(commit.getMessage())) {
+            // if the commit was made by Artemis and the message is "Setup" (this means it is an empty setup commit), we ignore this as well and do not create a submission!
             throw new IllegalStateException("Submission for participation id " + participationId + " based on an empty setup commit by Artemis will be ignored!");
         }
 
@@ -199,7 +197,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
             var optionalStudent = ((ProgrammingExerciseStudentParticipation) programmingExerciseParticipation).getStudent();
             Optional<User> optionalStudentWithGroups = optionalStudent.isPresent() ? userRepository.findOneWithGroupsAndAuthoritiesByLogin(optionalStudent.get().getLogin())
                     : Optional.empty();
-            if (optionalStudentWithGroups.isPresent() && !examSubmissionService.isAllowedToSubmitDuringExam(programmingExercise, optionalStudentWithGroups.get())) {
+            if (optionalStudentWithGroups.isPresent() && !examSubmissionService.isAllowedToSubmitDuringExam(programmingExercise, optionalStudentWithGroups.get(), true)) {
                 final String message = "The student " + optionalStudentWithGroups.get().getLogin()
                         + " just illegally submitted code after the allowed individual due date (including the grace period) in the participation "
                         + programmingExerciseParticipation.getId() + " for the exam programming exercise " + programmingExercise.getId();
@@ -247,13 +245,9 @@ public class ProgrammingSubmissionService extends SubmissionService {
     }
 
     private Optional<ProgrammingSubmission> findLatestPendingSubmissionForParticipation(final long participationId, final boolean isGraded) {
-        Optional<ProgrammingSubmission> optionalSubmission;
-        if (isGraded) {
-            optionalSubmission = programmingSubmissionRepository.findGradedByParticipationIdOrderBySubmissionDateDesc(participationId, PageRequest.of(0, 1)).stream().findFirst();
-        }
-        else {
-            optionalSubmission = programmingSubmissionRepository.findFirstByParticipationIdOrderBySubmissionDateDesc(participationId);
-        }
+        final var optionalSubmission = isGraded
+                ? programmingSubmissionRepository.findGradedByParticipationIdOrderBySubmissionDateDesc(participationId, PageRequest.of(0, 1)).stream().findFirst()
+                : programmingSubmissionRepository.findFirstByParticipationIdOrderBySubmissionDateDesc(participationId);
 
         if (optionalSubmission.isEmpty() || optionalSubmission.get().getLatestResult() != null) {
             // This is not an error case, it is very likely that there is no pending submission for a participation.
@@ -610,7 +604,8 @@ public class ProgrammingSubmissionService extends SubmissionService {
         List<Submission> submissions;
         if (examMode) {
             var participations = this.studentParticipationRepository.findAllByParticipationExerciseIdAndResultAssessorAndCorrectionRoundIgnoreTestRuns(exerciseId, tutor);
-            submissions = participations.stream().map(StudentParticipation::findLatestSubmission).filter(Optional::isPresent).map(Optional::get)
+            // Latest submission might be illegal
+            submissions = participations.stream().map(StudentParticipation::findLatesLegalOrIllegalSubmission).filter(Optional::isPresent).map(Optional::get)
                     // filter out the submissions that don't have a result (but a null value) for the correctionRound
                     .filter(submission -> submission.hasResultForCorrectionRound(correctionRound)).collect(toList());
         }
@@ -642,13 +637,13 @@ public class ProgrammingSubmissionService extends SubmissionService {
     public List<ProgrammingSubmission> getProgrammingSubmissions(long exerciseId, boolean submittedOnly, boolean examMode) {
         List<StudentParticipation> participations;
         if (examMode) {
-            participations = studentParticipationRepository.findAllWithEagerLegalSubmissionsAndEagerResultsAndEagerAssessorByExerciseIdIgnoreTestRuns(exerciseId);
+            participations = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseIdIgnoreTestRuns(exerciseId);
         }
         else {
-            participations = studentParticipationRepository.findAllWithEagerLegalSubmissionsAndEagerResultsAndEagerAssessorByExerciseId(exerciseId);
+            participations = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseId(exerciseId);
         }
         List<ProgrammingSubmission> submissions = new ArrayList<>();
-        participations.stream().peek(participation -> participation.getExercise().setStudentParticipations(null)).map(StudentParticipation::findLatestSubmission)
+        participations.stream().peek(participation -> participation.getExercise().setStudentParticipations(null)).map(StudentParticipation::findLatesLegalOrIllegalSubmission)
                 // filter out non submitted submissions if the flag is set to true
                 .filter(submission -> submission.isPresent() && (!submittedOnly || submission.get().isSubmitted()))
                 .forEach(submission -> submissions.add((ProgrammingSubmission) submission.get()));
