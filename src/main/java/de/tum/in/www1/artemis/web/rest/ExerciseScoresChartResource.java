@@ -1,19 +1,5 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import java.time.ZonedDateTime;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
-import java.util.stream.Collectors;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RestController;
-
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
@@ -23,6 +9,19 @@ import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ExerciseScoresChartService;
 import de.tum.in.www1.artemis.web.rest.dto.ExerciseScoresDTO;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.time.ZonedDateTime;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Controller to provides endpoints to query the necessary data for the exercise-scores-chart.component.ts in the client
@@ -73,9 +72,11 @@ public class ExerciseScoresChartResource {
     }
 
     private Set<Exercise> removeNotVisibleAndUnfinishedExercise(Set<Exercise> exercises) {
-        return exercises.parallelStream().filter(Exercise::isVisibleToStudents)
-                .filter(exercise -> Objects.isNull(exercise.getDueDate()) || ZonedDateTime.now().isAfter(exercise.getDueDate())).filter(Exercise::isAssessmentDueDateOver)
-                .collect(Collectors.toSet());
+        return exercises.parallelStream()
+            .filter(Exercise::isVisibleToStudents)
+            .filter(exercise -> Objects.isNull(exercise.getDueDate()) || ZonedDateTime.now().isAfter(exercise.getDueDate()))
+            .filter(Exercise::isAssessmentDueDateOver)
+            .collect(Collectors.toSet());
     }
 
     public static final class EndpointConstants {
