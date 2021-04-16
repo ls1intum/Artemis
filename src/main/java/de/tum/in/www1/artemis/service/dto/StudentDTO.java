@@ -60,10 +60,12 @@ public class StudentDTO {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o)
+        if (this == o) {
             return true;
-        if (o == null || getClass() != o.getClass())
+        }
+        if (o == null || getClass() != o.getClass()) {
             return false;
+        }
         StudentDTO that = (StudentDTO) o;
         return Objects.equals(registrationNumber, that.registrationNumber) || Objects.equals(login, that.login);
     }

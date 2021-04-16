@@ -21,6 +21,7 @@ import { SortService } from 'app/shared/service/sort.service';
 import { getCourseFromExercise } from 'app/entities/exercise.model';
 import { ProgrammingExerciseEditSelectedComponent } from 'app/exercises/programming/manage/programming-exercise-edit-selected.component';
 import { ProgrammingAssessmentRepoExportDialogComponent } from 'app/exercises/programming/assess/repo-export/programming-assessment-repo-export-dialog.component';
+import { ProgrammingExerciseParticipationType } from 'app/entities/programming-exercise-participation.model';
 
 @Component({
     selector: 'jhi-programming-exercise',
@@ -33,7 +34,8 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
     FeatureToggle = FeatureToggle;
     orionState: OrionState;
     selectedProgrammingExercises: ProgrammingExercise[];
-
+    solutionParticipationType = ProgrammingExerciseParticipationType.SOLUTION;
+    templateParticipationType = ProgrammingExerciseParticipationType.TEMPLATE;
     constructor(
         private programmingExerciseService: ProgrammingExerciseService,
         private courseExerciseService: CourseExerciseService,
