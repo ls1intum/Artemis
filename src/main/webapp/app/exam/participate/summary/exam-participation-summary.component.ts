@@ -7,7 +7,6 @@ import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { Exam } from 'app/entities/exam.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { SubmissionType } from 'app/entities/submission.model';
-import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 
 @Component({
@@ -40,10 +39,6 @@ export class ExamParticipationSummaryComponent implements OnInit {
 
     testRunConduction = false;
 
-    exercise: Exercise;
-
-    icon: IconProp;
-
     examWithOnlyIdAndStudentReviewPeriod: Exam;
 
     constructor(private route: ActivatedRoute, private serverDateService: ArtemisServerDateService) {}
@@ -58,13 +53,10 @@ export class ExamParticipationSummaryComponent implements OnInit {
         // courseId is not part of the exam or the exercise
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
         this.setExamWithOnlyIdAndStudentReviewPeriod();
-        this.setIcon(this.exercise.type);
     }
 
-    setIcon(exerciseType?: ExerciseType) {
-        if (exerciseType) {
-            this.icon = getIcon(exerciseType) as IconProp;
-        }
+    getIcon(exerciseType: ExerciseType) {
+        return getIcon(exerciseType);
     }
 
     asProgrammingExercise(exercise: Exercise): ProgrammingExercise {
