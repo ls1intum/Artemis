@@ -14,6 +14,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.DomainObject;
+import de.tum.in.www1.artemis.domain.GradingScale;
 import de.tum.in.www1.artemis.domain.User;
 
 @Entity
@@ -98,6 +99,10 @@ public class Exam extends DomainObject {
 
     @Column(name = "course_name")
     private String courseName;
+
+    @OneToOne(mappedBy = "exam", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonIgnoreProperties("exam")
+    private GradingScale gradingScale;
 
     @ManyToOne
     @JoinColumn(name = "course_id")
@@ -287,6 +292,14 @@ public class Exam extends DomainObject {
 
     public void setCourse(Course course) {
         this.course = course;
+    }
+
+    public GradingScale getGradingScale() {
+        return gradingScale;
+    }
+
+    public void setGradingScale(GradingScale gradingScale) {
+        this.gradingScale = gradingScale;
     }
 
     public List<ExerciseGroup> getExerciseGroups() {
