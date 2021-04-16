@@ -16,6 +16,7 @@ public interface JenkinsXmlConfigBuilder {
      * @param testRepositoryURL The URL of the repository containing all exercise tests
      * @param assignmentRepositoryURL The URL of the assignment repository, i.e. template or participation repo
      * @param isStaticCodeAnalysisEnabled Flag which determines whether a build plan with or without static code analysis is created
+     * @param isSequentialRuns Should activate sequential test runs options
      * @return The parsed XML document containing the Jenkins build config
      */
     Document buildBasicConfig(ProgrammingLanguage programmingLanguage, VcsRepositoryUrl testRepositoryURL, VcsRepositoryUrl assignmentRepositoryURL,
