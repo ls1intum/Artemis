@@ -161,7 +161,6 @@ export const examManagementRoute: Routes = [
             authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.examManagement.title',
             requestOptions: {
-                withStudents: true,
                 withExerciseGroups: true,
             },
         },

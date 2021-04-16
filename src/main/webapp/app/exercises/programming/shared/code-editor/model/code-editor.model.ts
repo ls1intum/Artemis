@@ -31,7 +31,7 @@ export class RenameFileChange extends FileChange {
     }
 }
 
-export type FileSubmission = { [fileName: string]: string | null };
+export type FileSubmission = { [fileName: string]: string | undefined };
 
 /**
  * Enumeration defining domain type.

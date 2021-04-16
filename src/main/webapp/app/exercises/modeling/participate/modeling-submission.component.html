@@ -5,7 +5,7 @@
     <jhi-button
         submitbutton
         class="guided-tour submission-button"
-        [disabled]="(!isActive && !isLate) || !submission || !!result"
+        [disabled]="(!isActive && !isLate) || !submission || !!result || (isLate && submission.submitted)"
         [title]="!isLate ? 'entity.action.submit' : 'entity.action.submitDeadlineMissed'"
         (onClick)="submit()"
         [isLoading]="isSaving"
@@ -32,7 +32,7 @@
 
         <jhi-fullscreen>
             <div class="row flex-grow-1">
-                <div *ngIf="submission && (isActive || isLate) && !result" class="col-12 editor-large">
+                <div *ngIf="submission && (isActive || isLate) && !result && (!isLate || !submission.submitted)" class="col-12 editor-large">
                     <jhi-modeling-editor
                         [umlModel]="umlModel"
                         [diagramType]="modelingExercise.diagramType"
@@ -47,7 +47,7 @@
                         (receiveSubmission)="onReceiveSubmissionFromTeam($event)"
                     ></jhi-team-submission-sync>
                 </div>
-                <div *ngIf="(!isActive || result) && modelingExercise" class="col-9">
+                <div *ngIf="(!isActive || result) && modelingExercise && (!isLate || submission.submitted)" class="col-9">
                     <div class="flex flex-column h-100">
                         <jhi-modeling-assessment
                             [model]="umlModel"

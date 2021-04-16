@@ -75,7 +75,7 @@
                         <div class="btn-group flex-btn-group-container">
                             <button
                                 type="submit"
-                                (click)="openForPractice(quizExercise.id)"
+                                (click)="openForPractice(quizExercise.id!)"
                                 class="btn btn-warning btn-sm mr-1 mb-1"
                                 *ngIf="quizExercise.status === QuizStatus.CLOSED"
                             >
@@ -85,7 +85,7 @@
                             <button
                                 id="instructor-quiz-start-{{ quizExercise.id }}"
                                 type="submit"
-                                (click)="startQuiz(quizExercise.id)"
+                                (click)="startQuiz(quizExercise.id!)"
                                 class="btn btn-warning btn-sm mr-1 mb-1"
                                 *ngIf="quizExercise.status === QuizStatus.VISIBLE"
                             >
@@ -95,7 +95,7 @@
                             <button
                                 id="quiz-set-visible-{{ quizExercise.id }}"
                                 type="submit"
-                                (click)="showQuiz(quizExercise.id)"
+                                (click)="showQuiz(quizExercise.id!)"
                                 class="btn btn-warning btn-sm mr-1 mb-1"
                                 *ngIf="quizExercise.status === QuizStatus.HIDDEN"
                             >
@@ -135,7 +135,7 @@
                                 </a>
                                 <a
                                     *ngIf="quizExercise.isAtLeastTutor"
-                                    [routerLink]="['/course-management', quizExercise.course.id, 'exercises', quizExercise.id, 'scores']"
+                                    [routerLink]="['/course-management', quizExercise.course?.id, 'exercises', quizExercise.id, 'scores']"
                                     class="btn btn-info btn-sm mr-1 mb-1"
                                 >
                                     <fa-icon [icon]="'table'"></fa-icon>
@@ -146,7 +146,7 @@
                                 <button
                                     *ngIf="quizExercise.isAtLeastInstructor"
                                     type="submit"
-                                    (click)="exportQuizById(quizExercise.id, true)"
+                                    (click)="exportQuizById(quizExercise.id!, true)"
                                     class="btn btn-warning btn-sm mr-1 mb-1"
                                 >
                                     <fa-icon [icon]="'file-export'"></fa-icon>
@@ -176,10 +176,10 @@
                                 <button
                                     *ngIf="quizExercise.isAtLeastInstructor"
                                     jhiDeleteButton
-                                    [entityTitle]="quizExercise.title"
+                                    [entityTitle]="quizExercise.title || ''"
                                     [actionType]="ActionType.Reset"
                                     deleteConfirmationText="artemisApp.exercise.delete.typeNameToConfirm"
-                                    (delete)="resetQuizExercise(quizExercise.id)"
+                                    (delete)="resetQuizExercise(quizExercise.id!)"
                                     [dialogError]="dialogError$"
                                     deleteQuestion="artemisApp.quizExercise.reset.question"
                                     class="mb-1"
@@ -189,10 +189,10 @@
                                 <button
                                     *ngIf="quizExercise.isAtLeastInstructor"
                                     jhiDeleteButton
-                                    [entityTitle]="quizExercise.title"
+                                    [entityTitle]="quizExercise.title || ''"
                                     deleteQuestion="artemisApp.quizExercise.delete.question"
                                     deleteConfirmationText="artemisApp.exercise.delete.typeNameToConfirm"
-                                    (delete)="deleteQuizExercise(quizExercise.id)"
+                                    (delete)="deleteQuizExercise(quizExercise.id!)"
                                     [dialogError]="dialogError$"
                                     id="delete-quiz-{{ quizExercise.id }}"
                                     class="mb-1"

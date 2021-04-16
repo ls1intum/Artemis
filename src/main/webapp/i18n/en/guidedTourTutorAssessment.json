@@ -72,7 +72,7 @@
             "addAssessment": {
                 "headline": "Assess Example Submission",
                 "content": "Now you can start assessing this text exercise.",
-                "task": "Mark the text of one software pattern and click on the <tt>Assess</tt> button. Do the same for the remaining two patterns. In the end you should have three highlighted text blocks."
+                "task": "Mark the text of one software pattern and assess it. Do the same for the remaining two patterns. In the end you should have three highlighted text blocks."
             },
             "addScore": {
                 "headline": "Add Points",

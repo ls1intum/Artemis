@@ -9,7 +9,7 @@ export class MockCodeEditorRepositoryFileService implements ICodeEditorRepositor
     createFile = (fileName: string) => Observable.empty();
     createFolder = (fileName: string) => Observable.empty();
     updateFileContent = (fileName: string) => Observable.empty();
-    updateFiles = (fileUpdates: Array<{ fileName: string; fileContent: string }>) => Observable.of({ fileName: null });
+    updateFiles = (fileUpdates: Array<{ fileName: string; fileContent: string }>) => Observable.of({ fileName: undefined });
     renameFile = (fileName: string) => Observable.empty();
     deleteFile = (fileName: string) => Observable.empty();
 }

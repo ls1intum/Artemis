@@ -80,7 +80,7 @@ export class GuidedTourService {
         // Retrieve the guided tour setting from the account service after the user is logged in
         this.accountService.getAuthenticationState().subscribe((user: User | undefined) => {
             if (user) {
-                this.guidedTourSettings = user ? user.guidedTourSettings : [];
+                this.guidedTourSettings = user.guidedTourSettings ? user.guidedTourSettings : [];
             }
         });
 
