@@ -4,6 +4,7 @@ import { PlagiarismSubmission } from 'app/exercises/shared/plagiarism/types/Plag
 import { ModelingSubmissionElement } from 'app/exercises/shared/plagiarism/types/modeling/ModelingSubmissionElement';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
+import { UMLModel } from '@ls1intum/apollon';
 
 @Component({
     selector: 'jhi-modeling-submission-viewer',
@@ -15,7 +16,7 @@ export class ModelingSubmissionViewerComponent implements OnChanges {
     @Input() plagiarismSubmission: PlagiarismSubmission<ModelingSubmissionElement>;
 
     public loading: boolean;
-    public submission: ModelingSubmission;
+    public submissionModel: UMLModel;
 
     constructor(private modelingSubmissionService: ModelingSubmissionService) {}
 
@@ -28,9 +29,7 @@ export class ModelingSubmissionViewerComponent implements OnChanges {
             this.modelingSubmissionService.getSubmission(currentPlagiarismSubmission.submissionId).subscribe(
                 (submission: ModelingSubmission) => {
                     this.loading = false;
-
-                    submission.model = JSON.parse(submission.model!);
-                    this.submission = submission;
+                    this.submissionModel = JSON.parse(submission.model!) as UMLModel;
                 },
                 () => {
                     this.loading = false;

@@ -15,7 +15,7 @@ export class CodeEditorFileBrowserCreateNodeComponent implements AfterViewInit {
     @Input() createFileType: FileType;
     @Input() folder: string;
     @Output() onCreateFile = new EventEmitter<string>();
-    @Output() onClearCreatingFile = new EventEmitter<void>();
+    @Output() onClearCreatingFile = new EventEmitter<Event>();
 
     createFile(event: any) {
         if (!event.target.value) {

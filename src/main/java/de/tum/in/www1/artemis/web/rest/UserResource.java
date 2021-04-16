@@ -188,6 +188,11 @@ public class UserResource {
         }
         // limit search results to 25 users (larger result sizes would impact performance and are not useful for specific user searches)
         final Page<UserDTO> page = userRepository.searchAllUsersByLoginOrName(PageRequest.of(0, 25), loginOrName);
+        page.forEach(user -> {
+            // remove some values which are not needed in the client
+            user.setLangKey(null);
+            user.setLastNotificationRead(null);
+        });
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
         return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
     }
