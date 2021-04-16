@@ -5,6 +5,7 @@ import static de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException.NO
 import java.security.Principal;
 import java.time.ZonedDateTime;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Consumer;
 
 import javax.annotation.Nullable;
@@ -31,6 +32,31 @@ public class AuthorizationCheckService {
 
     public AuthorizationCheckService(UserRepository userRepository) {
         this.userRepository = userRepository;
+    }
+
+    /**
+     * Checks if the currently logged in user is at least an editor in the course of the given exercise.
+     * The course is identified from either {@link Exercise#course(Course)} or {@link Exam#getCourse()}
+     *
+     * @param exercise belongs to a course that will be checked for permission rights
+     * @return true if the currently logged in user is at least an editor (also if the user is instructor or admin), false otherwise
+     */
+    public boolean isAtLeastEditorForExercise(@NotNull Exercise exercise) {
+        return isAtLeastEditorInCourse(exercise.getCourseViaExerciseGroupOrCourseMember(), null);
+    }
+
+    /**
+     * Checks if the currently logged in user is at least an editor in the course of the given exercise.
+     * The course is identified from either {@link Exercise#course(Course)} or {@link Exam#getCourse()}
+     * Throws an AccessForbiddenException if the user has no access which returns a 403
+     *
+     * @param exercise belongs to a course that will be checked for permission rights
+     * @param user the user whose permissions should be checked
+     */
+    private void checkIsAtLeastEditorForExerciseElseThrow(@NotNull Exercise exercise, @Nullable User user) {
+        if (!isAtLeastEditorInCourse(exercise.getCourseViaExerciseGroupOrCourseMember(), user)) {
+            throw new AccessForbiddenException("Exercise", exercise.getId());
+        }
     }
 
     /**
@@ -125,6 +151,38 @@ public class AuthorizationCheckService {
             user = userRepository.getUserWithGroupsAndAuthorities();
         }
         return isStudentInCourse(exercise.getCourseViaExerciseGroupOrCourseMember(), user) || isAtLeastTeachingAssistantForExercise(exercise, user);
+    }
+
+    /**
+     * Checks if the passed user is at least an editor in the given course.
+     * Throws an AccessForbiddenException if the user has no access which returns a 403
+     *
+     * @param course the course that needs to be checked
+     * @param user the user whose permissions should be checked
+     */
+    private void checkIsAtLeastEditorInCourseElseThrow(@NotNull Course course, @Nullable User user) {
+        if (!isAtLeastEditorInCourse(course, user)) {
+            throw new AccessForbiddenException("Course", course.getId());
+        }
+    }
+
+    /**
+     * Checks if the passed user is at least an editor in the given course.
+     *
+     * @param course the course that needs to be checked
+     * @param user the user whose permissions should be checked
+     * @return true if the passed user is at least an editor in the course (also if the user is instructor or admin), false otherwise
+     */
+    public boolean isAtLeastEditorInCourse(@NotNull Course course, @Nullable User user) {
+
+        Set<String> userGroups = user==null?null:user.getGroups();
+
+        if (user == null || user.getGroups() == null) {
+            // only retrieve the user and the groups if the user is null or the groups are missing (to save performance)
+            user = userRepository.getUserWithGroupsAndAuthorities();
+        }
+
+        return userGroups.contains(course.getInstructorGroupName()) || userGroups.contains(course.getEditorGroupName()) || isAdmin(user);
     }
 
     /**
@@ -232,6 +290,7 @@ public class AuthorizationCheckService {
         Consumer<User> consumer = switch (role) {
             case ADMIN -> this::checkIsAdminElseThrow;
             case INSTRUCTOR -> userOrNull -> checkIsAtLeastInstructorForExerciseElseThrow(exercise, userOrNull);
+            case EDITOR -> userOrNull -> checkIsAtLeastEditorForExerciseElseThrow(exercise, userOrNull);
             case TEACHING_ASSISTANT -> userOrNull -> checkIsAtLeastTeachingAssistantForExerciseElseThrow(exercise, userOrNull);
             case STUDENT -> userOrNull -> checkIsAtLeastStudentForExerciseElseThrow(exercise, userOrNull);
             // anonymous users never have access to exercises, so we have to throw an exception
@@ -253,6 +312,7 @@ public class AuthorizationCheckService {
         Consumer<User> consumer = switch (role) {
             case ADMIN -> this::checkIsAdminElseThrow;
             case INSTRUCTOR -> userOrNull -> checkIsAtLeastInstructorInCourseElseThrow(course, userOrNull);
+            case EDITOR -> userOrNull -> checkIsAtLeastEditorInCourseElseThrow(course, userOrNull);
             case TEACHING_ASSISTANT -> userOrNull -> checkIsAtLeastTeachingAssistantInCourseElseThrow(course, userOrNull);
             case STUDENT -> userOrNull -> checkIsAtLeastStudentInCourseElseThrow(course, userOrNull);
             // anonymous users never have access to courses, so we have to throw an exception

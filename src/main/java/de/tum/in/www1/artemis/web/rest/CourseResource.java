@@ -1091,6 +1091,20 @@ public class CourseResource {
     }
 
     /**
+     * GET /courses/:courseId/editors : Returns all users that belong to the editor group of the course
+     *
+     * @param courseId the id of the course
+     * @return list of users with status 200 (OK)
+     */
+    @GetMapping(value = "/courses/{courseId}/editors")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
+    public ResponseEntity<List<User>> getAllEditorsInCourse(@PathVariable Long courseId) {
+        log.debug("REST request to get all editors in course : {}", courseId);
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        return getAllUsersInGroup(course, course.getEditorGroupName());
+    }
+
+    /**
      * GET /courses/:courseId/instructors : Returns all users that belong to the instructor group of the course
      *
      * @param courseId the id of the course
@@ -1165,6 +1179,21 @@ public class CourseResource {
     }
 
     /**
+     * Post /courses/:courseId/editors/:editorLogin : Add the given user to the editors of the course so that the student can access the course administration
+     *
+     * @param courseId   the id of the course
+     * @param editorLogin the login of the user who should get editor access
+     * @return empty ResponseEntity with status 200 (OK) or with status 404 (Not Found)
+     */
+    @PostMapping(value = "/courses/{courseId}/editors/{editorLogin:" + Constants.LOGIN_REGEX + "}")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
+    public ResponseEntity<Void> addEditorToCourse(@PathVariable Long courseId, @PathVariable String editorLogin) {
+        log.debug("REST request to add {} as editors to course : {}", editorLogin, courseId);
+        var course = courseRepository.findByIdElseThrow(courseId);
+        return addUserToCourseGroup(editorLogin, userRepository.getUserWithGroupsAndAuthorities(), course, course.getEditorGroupName());
+    }
+
+    /**
      * Post /courses/:courseId/instructors/:instructorLogin : Add the given user to the instructors of the course so that the student can access the course administration
      *
      * @param courseId        the id of the course
@@ -1231,6 +1260,21 @@ public class CourseResource {
         log.debug("REST request to remove {} as tutor from course : {}", tutorLogin, courseId);
         var course = courseRepository.findByIdElseThrow(courseId);
         return removeUserFromCourseGroup(tutorLogin, userRepository.getUserWithGroupsAndAuthorities(), course, course.getTeachingAssistantGroupName());
+    }
+
+    /**
+     * DELETE /courses/:courseId/editors/:editorsLogin : Remove the given user from the editors of the course so that the editors cannot access the course administration any more
+     *
+     * @param courseId   the id of the course
+     * @param editorLogin the login of the user who should lose student access
+     * @return empty ResponseEntity with status 200 (OK) or with status 404 (Not Found)
+     */
+    @DeleteMapping(value = "/courses/{courseId}/editors/{editorLogin:" + Constants.LOGIN_REGEX + "}")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
+    public ResponseEntity<Void> removeEditorFromCourse(@PathVariable Long courseId, @PathVariable String editorLogin) {
+        log.debug("REST request to remove {} as editor from course : {}", editorLogin, courseId);
+        var course = courseRepository.findByIdElseThrow(courseId);
+        return removeUserFromCourseGroup(editorLogin, userRepository.getUserWithGroupsAndAuthorities(), course, course.getEditorGroupName());
     }
 
     /**

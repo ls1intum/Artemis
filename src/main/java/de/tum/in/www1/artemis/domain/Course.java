@@ -56,6 +56,10 @@ public class Course extends DomainObject {
     @JsonView(QuizView.Before.class)
     private String teachingAssistantGroupName;
 
+    @Column(name = "editor_group_name")
+    @JsonView(QuizView.Before.class)
+    private String editorGroupName;
+
     @Column(name = "instructor_group_name")
     @JsonView(QuizView.Before.class)
     private String instructorGroupName;
@@ -202,6 +206,14 @@ public class Course extends DomainObject {
 
     public void setTeachingAssistantGroupName(String teachingAssistantGroupName) {
         this.teachingAssistantGroupName = teachingAssistantGroupName;
+    }
+
+    public String getEditorGroupName() {
+        return editorGroupName;
+    }
+
+    public void setEditorGroupName(String editorGroupName) {
+        this.editorGroupName = editorGroupName;
     }
 
     public String getInstructorGroupName() {
