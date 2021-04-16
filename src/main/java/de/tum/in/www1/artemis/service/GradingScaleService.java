@@ -98,12 +98,17 @@ public class GradingScaleService {
      * @return true if the grade steps map to a valid grading scale and false otherwise
      */
     private boolean gradeStepSetMapsToValidGradingScale(Set<GradeStep> gradeSteps) {
+        // all grade steps should have distinct names
         if (gradeSteps.stream().map(GradeStep::getGradeName).distinct().count() != gradeSteps.size()) {
             return false;
         }
+        // sort by lower bound percentage
         List<GradeStep> sortedGradeSteps = gradeSteps.stream().sorted(Comparator.comparingDouble(GradeStep::getLowerBoundPercentage)).collect(Collectors.toList());
+        // check if all pairs of the sorted grade steps have valid adjacency
         boolean validAdjacency = IntStream.range(0, sortedGradeSteps.size() - 1).allMatch(i -> GradeStep.checkValidAdjacency(sortedGradeSteps.get(i), sortedGradeSteps.get(i + 1)));
+        // first step should start from and include 0
         boolean validFirstElement = sortedGradeSteps.get(0).isLowerBoundInclusive() && sortedGradeSteps.get(0).getLowerBoundPercentage() == 0;
+        // last step should end with and include 100
         boolean validLastElement = sortedGradeSteps.get(sortedGradeSteps.size() - 1).isUpperBoundInclusive()
                 && sortedGradeSteps.get(sortedGradeSteps.size() - 1).getUpperBoundPercentage() == 100;
         return validAdjacency && validFirstElement && validLastElement;
