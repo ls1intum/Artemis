@@ -1,9 +1,9 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Component, Input } from '@angular/core';
 import { Submission } from 'app/entities/submission.model';
 import { TextSubmission } from 'app/entities/text-submission.model';
 
 @Component({
-    selector: 'language-table-cell',
+    selector: 'jhi-language-table-cell',
     templateUrl: './language-table-cell.component.html',
 })
 export class LanguageTableCellComponent {
