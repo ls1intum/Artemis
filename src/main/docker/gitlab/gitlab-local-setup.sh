@@ -1,4 +1,3 @@
-
 #!/bin/bash
 
 # Enter the personal access token of the admin user
