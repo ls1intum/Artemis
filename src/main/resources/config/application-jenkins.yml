@@ -16,7 +16,11 @@ jenkins:
     # Instead the user will be called "user <loginname>".
     use-pseudonyms: false
 
-    # You can override the CI and VCS urls that are used internally by Artemis.
+    # You can override the CI and VCS URLs that are used internally by Artemis.
+    # This is useful when the internal communication between Jenkins and Gitlab is
+    # different to how clients should access those services.
+    # The client-facing URLs (e.g. for the repository clone URL, link to the build plans)
+    # will still be constructed from the ones defined in application-artemis.yml.
     internal-urls:
         # Override the ci url used e.g in Gitlab as the webhook url.
         ci-url: # http://jenkins:8080
