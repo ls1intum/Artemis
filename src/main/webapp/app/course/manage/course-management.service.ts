@@ -49,7 +49,7 @@ export class CourseManagementService {
             .post<Course>(this.resourceUrl, copy, { observe: 'response' })
             .pipe(
                 map((res: EntityResponseType) => this.convertDateFromServer(res)),
-                map((res: EntityResponseType) => this.convertExerciseCategoriesFromServer(res)),
+                tap((res: EntityResponseType) => this.convertExerciseCategoriesFromServer(res)),
             );
     }
 
@@ -63,7 +63,7 @@ export class CourseManagementService {
             .put<Course>(this.resourceUrl, copy, { observe: 'response' })
             .pipe(
                 map((res: EntityResponseType) => this.convertDateFromServer(res)),
-                map((res: EntityResponseType) => this.convertExerciseCategoriesFromServer(res)),
+                tap((res: EntityResponseType) => this.convertExerciseCategoriesFromServer(res)),
             );
     }
 
@@ -77,7 +77,7 @@ export class CourseManagementService {
             .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)))
             .pipe(
                 map((res: EntityResponseType) => this.checkAccessRightsCourse(res)),
-                map((res: EntityResponseType) => this.convertExerciseCategoriesFromServer(res)),
+                tap((res: EntityResponseType) => this.convertExerciseCategoriesFromServer(res)),
             );
     }
 
@@ -100,7 +100,7 @@ export class CourseManagementService {
             .get<Course>(`${this.resourceUrl}/${courseId}/with-exercises`, { observe: 'response' })
             .pipe(
                 map((res: EntityResponseType) => this.convertDateFromServer(res)),
-                map((res: EntityResponseType) => this.convertExerciseCategoriesFromServer(res)),
+                tap((res: EntityResponseType) => this.convertExerciseCategoriesFromServer(res)),
             );
     }
 
@@ -113,7 +113,7 @@ export class CourseManagementService {
             .get<Course>(`${this.resourceUrl}/${courseId}/with-exercises-and-relevant-participations`, { observe: 'response' })
             .pipe(
                 map((res: EntityResponseType) => this.convertDateFromServer(res)),
-                map((res: EntityResponseType) => this.convertExerciseCategoriesFromServer(res)),
+                tap((res: EntityResponseType) => this.convertExerciseCategoriesFromServer(res)),
             );
     }
 
@@ -126,7 +126,7 @@ export class CourseManagementService {
             .get<Course>(`${this.resourceUrl}/${courseId}/with-organizations`, { observe: 'response' })
             .pipe(
                 map((res: EntityResponseType) => this.convertDateFromServer(res)),
-                map((res: EntityResponseType) => this.convertExerciseCategoriesFromServer(res)),
+                tap((res: EntityResponseType) => this.convertExerciseCategoriesFromServer(res)),
             );
     }
 
@@ -152,11 +152,11 @@ export class CourseManagementService {
             .get<Course>(`${this.resourceUrl}/${courseId}/for-dashboard`, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)))
             .pipe(map((res: EntityResponseType) => this.checkAccessRightsCourse(res)))
+            .pipe(map((res: EntityResponseType) => this.setParticipationStatusForExercisesInCourse(res)))
             .pipe(
-                map((res: EntityResponseType) => this.setParticipationStatusForExercisesInCourse(res)),
-                map((res: EntityResponseType) => this.convertExerciseCategoriesFromServer(res)),
-            )
-            .pipe(tap((res: EntityResponseType) => this.courseWasUpdated(res.body)));
+                tap((res: EntityResponseType) => this.convertExerciseCategoriesFromServer(res)),
+                tap((res: EntityResponseType) => this.courseWasUpdated(res.body)),
+            );
     }
 
     courseWasUpdated(course: Course | null): void {
@@ -210,7 +210,7 @@ export class CourseManagementService {
             .get<Course>(url, { observe: 'response' })
             .pipe(
                 map((res: EntityResponseType) => this.convertDateFromServer(res)),
-                map((res: EntityResponseType) => this.convertExerciseCategoriesFromServer(res)),
+                tap((res: EntityResponseType) => this.convertExerciseCategoriesFromServer(res)),
             );
     }
 
@@ -482,11 +482,10 @@ export class CourseManagementService {
      * @param res the response
      * @private
      */
-    private convertExerciseCategoriesFromServer(res: EntityResponseType): EntityResponseType {
+    private convertExerciseCategoriesFromServer(res: EntityResponseType): void {
         if (res.body && res.body.exercises) {
             res.body.exercises.forEach((exercise) => this.exerciseService.parseExerciseCategories(exercise));
         }
-        return res;
     }
 
     /**
