@@ -134,7 +134,7 @@ This is ideal as a quickstart for developers. For a more detailed setup, see `Ma
 
    ::
 
-        docker-compose -f src/main/docker/gitlab-jenkins-mysql.yml up --build
+        docker-compose -f src/main/docker/gitlab-jenkins-mysql.yml up --build -d
 
    The file uses the `GITLAB_OMNIBUS_CONFIG` environment variable to configure the Gitlab instance after the container is started.
    It disables prometheus monitoring, sets the ssh port to ``2222``, and adjusts the monitoring endpoint whitelist by default.
