@@ -18,7 +18,7 @@ jenkins:
 
     # You can override the CI and VCS urls that are used internally by Artemis.
     internal-urls:
-        # Override the ci url used e.g in Gitlab as the websocket url.
+        # Override the ci url used e.g in Gitlab as the webhook url.
         ci-url: # http://jenkins:8080
         # Overrides the vcs url used e.g as the Gitlab checkout url in Jenkins build plans
         vcs-url: # http://gitlab:80
