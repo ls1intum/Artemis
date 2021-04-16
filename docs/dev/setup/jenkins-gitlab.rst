@@ -160,7 +160,8 @@ This is ideal as a quickstart for developers. For a more detailed setup, see `Ma
 
         docker exec -it gitlab /bin/sh -c "sh /gitlab-local-setup.sh"
 
-6. You're done! Follow the `Automated Jenkins Server Setup Setup <#automated-jenkins-server-setup>`__ section for configuring Jenkins.
+6. You're done! Follow the `Automated Jenkins Server Setup <#automated-jenkins-server-setup>`__ section for configuring Jenkins.
+    There you can skip steps 4 and 5.
 
 Manual Gitlab Server Setup
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
