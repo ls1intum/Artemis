@@ -476,10 +476,10 @@ public class ExamResource {
      */
     @PostMapping(value = "/courses/{courseId}/exams/{examId}/students/{studentLogin:" + Constants.LOGIN_REGEX + "}")
     @PreAuthorize("hasRole('INSTRUCTOR')")
-    public ResponseEntity<Void> addStudentToExam(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable String studentLogin) {
+    public ResponseEntity<StudentDTO> addStudentToExam(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable String studentLogin) {
         log.debug("REST request to add {} as student to exam : {}", studentLogin, examId);
 
-        Optional<ResponseEntity<Void>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccessForInstructor(courseId, examId);
+        Optional<ResponseEntity<StudentDTO>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccessForInstructor(courseId, examId);
         if (courseAndExamAccessFailure.isPresent()) {
             return courseAndExamAccessFailure.get();
         }
@@ -487,17 +487,20 @@ public class ExamResource {
         var course = courseRepository.findByIdElseThrow(courseId);
         var exam = examRepository.findByIdWithRegisteredUsersElseThrow(examId);
 
-        Optional<User> student = userRepository.findOneWithGroupsAndAuthoritiesByLogin(studentLogin);
-        if (student.isEmpty()) {
-            return notFound();
-        }
+        var student = userRepository.findOneWithGroupsAndAuthoritiesByLogin(studentLogin)
+                .orElseThrow(() -> new EntityNotFoundException("User with login: \"" + studentLogin + "\" does not exist"));
 
-        if (student.get().getGroups().contains(exam.getCourse().getInstructorGroupName()) || authCheckService.isAdmin(student.get())) {
+        if (student.getGroups().contains(exam.getCourse().getInstructorGroupName()) || authCheckService.isAdmin(student)) {
             return forbidden("exam", "cannotRegisterInstructor", "You cannot register instructors or administrators to exams.");
         }
 
-        examRegistrationService.registerStudentToExam(course, exam, student.get());
-        return ResponseEntity.ok().body(null);
+        examRegistrationService.registerStudentToExam(course, exam, student);
+        var studentDto = new StudentDTO();
+        studentDto.setRegistrationNumber(student.getRegistrationNumber());
+        studentDto.setFirstName(student.getFirstName());
+        studentDto.setLastName(student.getLastName());
+        studentDto.setLogin(student.getLogin());
+        return ResponseEntity.ok().body(studentDto);
     }
 
     /**
