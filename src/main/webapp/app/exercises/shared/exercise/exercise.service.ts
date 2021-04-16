@@ -128,18 +128,34 @@ export class ExerciseService {
     }
 
     /**
-     * Return all exercises of input exercises that are due in delayInDays or 7 days if not specified
-     * @param { Exercise[] } exercises - Considered exercises
-     * @param { number} delayInDays - If set, amount of days that are considered
+     * Returns all exercises of the given exercises parameter which have no due date or a due date in the future within delayInDays days
+     * The returned exercises are sorted by due date, with the earliest due date being sorted first, and no due date sorted last
+     *
+     * @param { Exercise[] } exercises - The exercises to filter and sort
+     * @param { number } delayInDays - The amount of days an exercise can be due into the future, defaults to seven
      */
-    getNextExerciseForDays(exercises?: Exercise[], delayInDays = 7) {
-        if (!exercises) {
-            return undefined;
-        }
-        return exercises.find((exercise) => {
-            const dueDate = exercise.dueDate!;
-            return moment().isBefore(dueDate) && moment().add(delayInDays, 'day').isSameOrAfter(dueDate);
-        })!;
+    getNextExercisesForDays(exercises: Exercise[], delayInDays = 7): Exercise[] {
+        return exercises
+            .filter((exercise) => {
+                if (!exercise.dueDate) {
+                    return true;
+                }
+
+                const dueDate = exercise.dueDate!;
+                return moment().isBefore(dueDate) && moment().add(delayInDays, 'day').isSameOrAfter(dueDate);
+            })
+            .sort((exerciseA: Exercise, exerciseB: Exercise) => {
+                if (!exerciseA.dueDate) {
+                    // If A has no due date, sort B first
+                    return 1;
+                } else if (!exerciseB.dueDate) {
+                    // If B has no due date, sort A first
+                    return -1;
+                } else {
+                    // Sort the one with the next due date first
+                    return exerciseA.dueDate.isBefore(exerciseB.dueDate) ? -1 : 1;
+                }
+            });
     }
 
     /**
