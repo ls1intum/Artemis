@@ -154,7 +154,7 @@ This is ideal as a quickstart for developers. For a more detailed setup, see `Ma
 4. You now need to generate an admin access token. Navigate to ``http://localhost:8081/-/profile/personal_access_tokens`` and generate a token with all scopes.
    Copy this token into the ``ADMIN_PERSONAL_ACCESS_TOKEN`` field in the ``src/main/docker/gitlab/gitlab-local-setup.sh`` file.
 
-5. Run the following command and copy the generated access tokens into the Artemis configuration ``application-local.yml`` file.
+5. Run the following command and copy the generated access tokens into the Artemis configuration ``application-local.yml`` and ``jenkins-casc-config.yml`` files. 
 
    ::
 
