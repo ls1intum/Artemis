@@ -424,8 +424,8 @@ export class TeamsImportDialogComponent implements OnInit, OnDestroy {
         return team;
     }
 
-    get sampleErrorStudentLoginsForLegend() {
-        return this.sampleTeamForLegend.students!.map((student) => student.login);
+    get sampleErrorStudentLoginsForLegend(): string[] {
+        return this.sampleTeamForLegend.students!.map((student) => student.login).filter((login) => login !== undefined) as string[];
     }
 
     get showLegend() {
