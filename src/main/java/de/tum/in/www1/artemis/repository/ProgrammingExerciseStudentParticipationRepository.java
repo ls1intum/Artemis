@@ -31,16 +31,14 @@ public interface ProgrammingExerciseStudentParticipationRepository extends JpaRe
             left join fetch pr.feedbacks
             left join fetch pr.submission
             where p.id = :participationId
-            and (pr.id = (select max(prr.id) from p.results prr
-                left join prr.submission prrs
-                where (prrs.type <> 'ILLEGAL' or prrs.type is null)
-                    and (prr.assessmentType = 'AUTOMATIC'
-                        or (prr.completionDate IS NOT NULL
-                            and (p.exercise.assessmentDueDate IS NULL
-                            OR p.exercise.assessmentDueDate < :#{#dateTime}))))
-            or pr.id IS NULL)
+                and (pr.id = (select max(prr.id) from p.results prr
+                    where (prr.assessmentType = 'AUTOMATIC'
+                            or (prr.completionDate IS NOT NULL
+                                and (p.exercise.assessmentDueDate IS NULL
+                                OR p.exercise.assessmentDueDate < :#{#dateTime}))))
+                    or pr.id IS NULL)
             """)
-    Optional<ProgrammingExerciseStudentParticipation> findByIdWithLatestResultAndFeedbacksAndRelatedLegalSubmissions(@Param("participationId") Long participationId,
+    Optional<ProgrammingExerciseStudentParticipation> findByIdWithLatestResultAndFeedbacksAndRelatedSubmissions(@Param("participationId") Long participationId,
             @Param("dateTime") ZonedDateTime dateTime);
 
     /**
@@ -93,7 +91,7 @@ public interface ProgrammingExerciseStudentParticipationRepository extends JpaRe
         return findById(participationId).orElseThrow(() -> new EntityNotFoundException("Programming Exercise Student Participation", participationId));
     }
 
-    default Optional<ProgrammingExerciseStudentParticipation> findStudentParticipationWithLatestResultAndFeedbacksAndRelatedLegalSubmissions(Long participationId) {
-        return findByIdWithLatestResultAndFeedbacksAndRelatedLegalSubmissions(participationId, ZonedDateTime.now());
+    default Optional<ProgrammingExerciseStudentParticipation> findStudentParticipationWithLatestResultAndFeedbacksAndRelatedSubmissions(Long participationId) {
+        return findByIdWithLatestResultAndFeedbacksAndRelatedSubmissions(participationId, ZonedDateTime.now());
     }
 }

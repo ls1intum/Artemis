@@ -53,7 +53,7 @@
             *ngIf="exercise?.id"
             [exerciseTestCases]="exerciseTestCases"
             [exerciseHints]="exerciseHints"
-            [problemStatement]="exercise.problemStatement"
+            [problemStatement]="exercise.problemStatement || ''"
             [taskRegex]="taskRegex"
             (problemStatementAnalysis)="onAnalysisUpdate($event)"
             class="editable-instruction-container__status__testcase"

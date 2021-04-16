@@ -102,14 +102,13 @@ describe('Overview Component', () => {
                     guidedTourService = TestBed.inject(GuidedTourService);
                     exerciseService = TestBed.inject(ExerciseService);
 
-                    spyOn(courseCardComponent, 'displayTotalRelativeScore').and.returnValue(of());
                     spyOn(navBarComponentFixture.componentInstance, 'ngOnInit').and.callFake(() => {
                         navBarComponent.currAccount = user;
                     });
 
                     spyOn<any>(guidedTourComponent, 'subscribeToDotChanges').and.returnValue(of());
 
-                    spyOn(exerciseService, 'getNextExerciseForDays').and.returnValue(of());
+                    spyOn(exerciseService, 'getNextExercisesForDays').and.returnValue(of());
                     spyOn(guidedTourService, 'init').and.returnValue(of());
                     spyOn<any>(guidedTourService, 'updateGuidedTourSettings').and.returnValue(of());
 

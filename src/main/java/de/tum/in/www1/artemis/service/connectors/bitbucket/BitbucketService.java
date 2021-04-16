@@ -598,6 +598,7 @@ public class BitbucketService extends AbstractVersionControlService {
         // we are interested in the toHash
         Commit commit = new Commit();
         try {
+            // TODO: use a DTO (e.g. something similar to CommitDTO)
             final var commitData = new ObjectMapper().convertValue(requestBody, JsonNode.class);
             var lastChange = commitData.get("changes").get(0);
             var ref = lastChange.get("ref");

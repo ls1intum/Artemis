@@ -8,6 +8,8 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { hasParticipationChanged } from 'app/overview/participation-utils';
 import { ProgrammingExerciseParticipationType } from 'app/entities/programming-exercise-participation.model';
 import { findLatestResult } from 'app/shared/util/utils';
+import { SolutionProgrammingExerciseParticipation } from 'app/entities/participation/solution-programming-exercise-participation.model';
+import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
 
 @Component({
     selector: 'jhi-programming-exercise-instructor-status',
@@ -19,7 +21,7 @@ export class ProgrammingExerciseInstructorStatusComponent implements OnChanges, 
     @Input()
     participationType: ProgrammingExerciseParticipationType;
     @Input()
-    participation: Participation;
+    participation: SolutionProgrammingExerciseParticipation | TemplateProgrammingExerciseParticipation | Participation;
     @Input()
     exercise: ProgrammingExercise;
 

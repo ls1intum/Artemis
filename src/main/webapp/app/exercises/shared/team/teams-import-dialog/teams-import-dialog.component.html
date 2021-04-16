@@ -52,7 +52,7 @@
             </div>
             <jhi-team-exercise-search
                 id="teamExercises"
-                [course]="exercise.course"
+                [course]="exercise.course!"
                 [ignoreExercises]="[exercise]"
                 (selectExercise)="onSelectSourceExercise($event)"
                 (searching)="searchingExercises = $event"
@@ -86,7 +86,7 @@
                             <div class="team-name">{{ team.shortName }}</div>
                             <jhi-team-students-list
                                 class="team-students"
-                                [students]="team.students"
+                                [students]="team.students || []"
                                 [errorStudentLogins]="problematicLogins"
                                 [withRegistrationNumber]="true"
                                 [errorStudentRegistrationNumbers]="problematicRegistrationNumbers"
@@ -115,7 +115,7 @@
                             <div>
                                 <div class="list-group-item--teams" [class.has-success]="true">
                                     <div class="team-name">{{ 'artemisApp.team.sourceTeams.legend.teamShortName' | artemisTranslate }}1</div>
-                                    <jhi-team-students-list class="team-students" [students]="sampleTeamForLegend.students"> </jhi-team-students-list>
+                                    <jhi-team-students-list class="team-students" [students]="sampleTeamForLegend.students || []"> </jhi-team-students-list>
                                 </div>
                                 <div class="label-with-tooltip">
                                     <label jhiTranslate="artemisApp.team.sourceTeams.legend.items.conflictFreeTeam.label">Conflict-free team</label>
@@ -125,7 +125,7 @@
                             <div>
                                 <div class="list-group-item--teams" [class.has-error]="true">
                                     <div class="team-name">{{ 'artemisApp.team.sourceTeams.legend.teamShortName' | artemisTranslate }}2</div>
-                                    <jhi-team-students-list class="team-students" [students]="sampleTeamForLegend.students"> </jhi-team-students-list>
+                                    <jhi-team-students-list class="team-students" [students]="sampleTeamForLegend.students || []"> </jhi-team-students-list>
                                 </div>
                                 <div class="label-with-tooltip">
                                     <label jhiTranslate="artemisApp.team.sourceTeams.legend.items.teamShortNameConflict.label">Team short name conflict</label>
@@ -137,7 +137,7 @@
                                     <div class="team-name">{{ 'artemisApp.team.sourceTeams.legend.teamShortName' | artemisTranslate }}3</div>
                                     <jhi-team-students-list
                                         class="team-students"
-                                        [students]="sampleTeamForLegend.students"
+                                        [students]="sampleTeamForLegend.students || []"
                                         [errorStudentLogins]="sampleErrorStudentLoginsForLegend"
                                     >
                                     </jhi-team-students-list>
@@ -248,7 +248,7 @@
                 jhiDeleteButton
                 [renderButtonText]="false"
                 [renderButtonStyle]="false"
-                [entityTitle]="exercise.title"
+                [entityTitle]="exercise.title || ''"
                 deleteQuestion="artemisApp.team.purgeConfirmationDialog.question"
                 deleteConfirmationText="artemisApp.team.purgeConfirmationDialog.typeNameToConfirm"
                 (delete)="purgeAndImportTeams()"
