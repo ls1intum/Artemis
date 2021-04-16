@@ -17,6 +17,7 @@ import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseTestCaseDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
+import de.tum.in.www1.artemis.web.rest.errors.ErrorConstants;
 
 @Service
 public class ProgrammingExerciseTestCaseService {
@@ -87,6 +88,8 @@ public class ProgrammingExerciseTestCaseService {
             matchingTestCase.setVisibility(programmingExerciseTestCaseDTO.getVisibility());
             matchingTestCase.setBonusMultiplier(programmingExerciseTestCaseDTO.getBonusMultiplier());
             matchingTestCase.setBonusPoints(programmingExerciseTestCaseDTO.getBonusPoints());
+
+            validateTestCase(matchingTestCase);
             updatedTests.add(matchingTestCase);
         }
 
@@ -100,6 +103,17 @@ public class ProgrammingExerciseTestCaseService {
         // At least one test was updated with a new weight or runAfterDueDate flag. We use this flag to inform the instructor about outdated student results.
         programmingSubmissionService.setTestCasesChangedAndTriggerTestCaseUpdate(exerciseId);
         return updatedTests;
+    }
+
+    private static void validateTestCase(ProgrammingExerciseTestCase testCase) {
+        if (testCase.getWeight() == null || testCase.getBonusMultiplier() == null || testCase.getBonusPoints() == null || testCase.getVisibility() == null) {
+            throw new BadRequestAlertException(ErrorConstants.PARAMETERIZED_TYPE, "Test case " + testCase.getTestName() + " must not have settings that are null.",
+                    "TestCaseGrading", "settingNull", Map.of("testCase", testCase.getTestName()));
+        }
+        if (testCase.getWeight() < 0 || testCase.getBonusMultiplier() < 0 || testCase.getBonusPoints() < 0) {
+            throw new BadRequestAlertException(ErrorConstants.PARAMETERIZED_TYPE, "Test case " + testCase.getTestName() + " must not have settings set to negative numbers.",
+                    "TestCaseGrading", "settingNegative", Map.of("testCase", testCase.getTestName()));
+        }
     }
 
     /**
