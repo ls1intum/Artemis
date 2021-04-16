@@ -4,6 +4,6 @@ declare module 'showdown-katex' {
 }
 
 declare module 'showdown-highlight' {
-    const main: () => ShowDownExtension;
+    const main: ({ pre: boolean }) => ShowDownExtension;
     export = main;
 }
