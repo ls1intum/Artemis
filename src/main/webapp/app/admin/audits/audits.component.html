@@ -49,7 +49,6 @@
                     </td>
                     <td>{{ audit.type }}</td>
                     <td>
-                        <span *ngIf="audit.data?.sessionId">{{ audit.data.sessionId }}</span>
                         <span *ngIf="audit.data?.remoteAddress"><span jhiTranslate="audits.table.data.remoteAddress">Remote Address</span> {{ audit.data.remoteAddress }}</span>
                     </td>
                 </tr>
