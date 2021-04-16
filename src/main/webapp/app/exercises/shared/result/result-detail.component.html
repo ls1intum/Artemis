@@ -39,7 +39,7 @@
                 <hr />
             </div>
             <!-- Always show failed build logs first -->
-            <ng-container *ngTemplateOutlet="buildLogs?.length ? buildLogsContainer : undefined"></ng-container>
+            <ng-container *ngTemplateOutlet="buildLogs?.length ? buildLogsContainer : null"></ng-container>
             <hr *ngIf="buildLogs?.length" />
             <div class="feedback-list">
                 <div *ngFor="let feedback of filteredFeedbackList; last as isLast" [ngClass]="['feedback-item', getClassNameForFeedbackItem(feedback)]">
