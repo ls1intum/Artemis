@@ -82,7 +82,12 @@ export class ExerciseScoresChartComponent implements AfterViewInit, OnDestroy {
         // we calculate the chart width depending on the number of exercises we have to show. If you look into
         // exercise-scores-chart.component.scss you will see that we show a horizontal navigation bar when the
         // chart has reached a certain width
-        const chartWidth = 80 * this.exerciseScores.length;
+        let chartWidth = 80 * this.exerciseScores.length;
+
+        if (chartWidth < 1200) {
+            chartWidth = 1200;
+        }
+
         this.chartDiv.nativeElement.setAttribute('style', `width: ${chartWidth}px;`);
         this.chartInstance.resize();
         // we show all the exercises ordered by their release data
