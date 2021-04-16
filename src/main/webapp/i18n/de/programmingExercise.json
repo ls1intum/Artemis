@@ -142,7 +142,9 @@
                     "updated": "Die Testfälle wurden erfolgreich gespeichert.",
                     "couldNotBeUpdated": "Die folgenden Testfälle konnten nicht gespeichert werden: {{testCases}}.",
                     "weightSumError": "Die Summe aller Testfall-Gewichte beträgt 0 oder weniger. Bitte stelle mindestens ein Testfall-Gewicht größer als 0 ein.",
-                    "showInactive": "Inaktive Testfälle anzeigen"
+                    "showInactive": "Inaktive Testfälle anzeigen",
+                    "settingNull": "Der Testfall {{testCase}} darf keine Einstellungen haben, die null sind.",
+                    "settingNegative": "Der Testfall {{testCase}} darf keine Einstellungen mit negativen Zahlen haben."
                 },
                 "categories": {
                     "title": "Code-Analyse-Kategorien",
