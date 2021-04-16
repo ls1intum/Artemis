@@ -13,7 +13,6 @@ import { iconsAsHTML } from 'app/utils/icons.utils';
 import { Exam } from 'app/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
-import { StudentDTO } from 'app/entities/student-dto.model';
 
 const cssClasses = {
     alreadyRegistered: 'already-registered',
