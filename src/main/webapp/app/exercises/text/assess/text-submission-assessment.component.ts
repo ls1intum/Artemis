@@ -9,7 +9,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
-import { Result, setFeedbackCorrectionRoundTag } from 'app/entities/result.model';
+import { handleFeedbackCorrectionRoundTag, Result } from 'app/entities/result.model';
 import { Complaint } from 'app/entities/complaint.model';
 import { ComplaintResponse } from 'app/entities/complaint-response.model';
 import { ComplaintService } from 'app/complaints/complaint.service';
@@ -190,9 +190,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         // track feedback in athene
         this.assessmentsService.trackAssessment(this.submission, 'start');
 
-        if (this.correctionRound > 0 && this.submission?.results && this.submission.results.length > 1) {
-            setFeedbackCorrectionRoundTag(this.submission!.results![0], this.submission!.results![1]);
-        }
+        handleFeedbackCorrectionRoundTag(this.correctionRound, this.submission);
     }
 
     private updateUrlIfNeeded() {
@@ -360,6 +358,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         this.assessmentsAreValid = (hasReferencedFeedback && this.unreferencedFeedback.length === 0) || hasUnreferencedFeedback;
 
         this.totalScore = this.computeTotalScore(this.assessments);
+        handleFeedbackCorrectionRoundTag(this.correctionRound, this.submission!);
     }
 
     private prepareTextBlocksAndFeedbacks(): void {

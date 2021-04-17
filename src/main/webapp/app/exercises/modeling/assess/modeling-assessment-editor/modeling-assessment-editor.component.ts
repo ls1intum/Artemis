@@ -17,7 +17,7 @@ import { ResultService } from 'app/exercises/shared/result/result.service';
 import { ModelingExercise, UMLDiagramType } from 'app/entities/modeling-exercise.model';
 import { ModelingExerciseService } from 'app/exercises/modeling/manage/modeling-exercise.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { Result, setFeedbackCorrectionRoundTag } from 'app/entities/result.model';
+import { handleFeedbackCorrectionRoundTag, Result } from 'app/entities/result.model';
 import { ModelingSubmissionService } from 'app/exercises/modeling/participate/modeling-submission.service';
 import { Feedback, FeedbackHighlightColor, FeedbackType } from 'app/entities/feedback.model';
 import { Complaint, ComplaintType } from 'app/entities/complaint.model';
@@ -190,9 +190,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         this.checkPermissions();
         this.validateFeedback();
 
-        if (this.correctionRound > 0 && this.submission?.results && this.submission.results.length > 1) {
-            setFeedbackCorrectionRoundTag(this.submission!.results![0], this.submission!.results![1]);
-        }
+        handleFeedbackCorrectionRoundTag(this.correctionRound, this.submission);
 
         this.isLoading = false;
     }
@@ -446,6 +444,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         const hasUnreferencedFeedback = Feedback.haveCreditsAndComments(this.unreferencedFeedback);
         // When unreferenced feedback is set, it has to be valid (score + detailed text)
         this.assessmentsAreValid = (hasReferencedFeedback && this.unreferencedFeedback.length === 0) || hasUnreferencedFeedback;
+        handleFeedbackCorrectionRoundTag(this.correctionRound, this.submission!);
     }
 
     navigateBack() {
