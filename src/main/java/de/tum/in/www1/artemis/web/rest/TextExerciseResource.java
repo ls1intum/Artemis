@@ -562,11 +562,9 @@ public class TextExerciseResource {
      *
      * @param exerciseId          ID of the exercise for which to detect plagiarism
      * @param similarityThreshold ignore comparisons whose similarity is below this threshold (%)
-     * @param minimumScore        consider only submissions whose score is greater or equal to this
-     *                            value
-     * @param minimumSize         consider only submissions whose size is greater or equal to this
-     *                            value
-     * @return the result of the JPlag plagiarism detection
+     * @param minimumScore        consider only submissions whose score is greater or equal to this value
+     * @param minimumSize         consider only submissions whose size is greater or equal to this value
+     * @return the ResponseEntity with status 200 (OK) and the list of at most 500 pair-wise submissions with a similarity above the given threshold (e.g. 50%).
      */
     @GetMapping("/text-exercises/{exerciseId}/check-plagiarism")
     @PreAuthorize("hasRole('INSTRUCTOR')")
