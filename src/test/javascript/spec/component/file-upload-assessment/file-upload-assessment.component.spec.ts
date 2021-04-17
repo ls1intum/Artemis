@@ -195,7 +195,7 @@ describe('FileUploadAssessmentComponent', () => {
             stub(complaintService, 'findByResultId').returns(of({ body: complaint } as EntityResponseType));
             comp.submission = submission;
             setLatestSubmissionResult(comp.submission, result);
-            let handleFeedbackStub = stub(submissionService, 'handleFeedbackCorrectionRoundTag');
+            const handleFeedbackStub = stub(submissionService, 'handleFeedbackCorrectionRoundTag');
 
             fixture.detectChanges();
             expect(comp.result).to.equal(result);
@@ -289,7 +289,7 @@ describe('FileUploadAssessmentComponent', () => {
 
     it('should add a feedback', () => {
         expect(comp.unreferencedFeedback.length).to.equal(0);
-        let handleFeedbackStub = stub(submissionService, 'handleFeedbackCorrectionRoundTag');
+        const handleFeedbackStub = stub(submissionService, 'handleFeedbackCorrectionRoundTag');
 
         comp.addFeedback();
         expect(comp.unreferencedFeedback.length).to.equal(1);

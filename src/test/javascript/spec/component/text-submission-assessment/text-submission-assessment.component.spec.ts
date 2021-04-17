@@ -189,7 +189,7 @@ describe('TextSubmissionAssessmentComponent', () => {
     it('should save the assessment with correct parameters', function () {
         textAssessmentService = fixture.debugElement.injector.get(TextAssessmentService);
         component['setPropertiesFromServerResponse'](participation);
-        let handleFeedbackStub = stub(submissionService, 'handleFeedbackCorrectionRoundTag');
+        const handleFeedbackStub = stub(submissionService, 'handleFeedbackCorrectionRoundTag');
 
         fixture.detectChanges();
 

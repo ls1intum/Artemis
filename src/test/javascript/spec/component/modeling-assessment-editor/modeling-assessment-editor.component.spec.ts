@@ -148,7 +148,7 @@ describe('ModelingAssessmentEditorComponent', () => {
             const complaint = <Complaint>{ id: 1, complaintText: 'Why only 80%?', result };
             complaintStub.returns(of({ body: complaint } as HttpResponse<Complaint>));
 
-            let handleFeedbackStub = stub(submissionService, 'handleFeedbackCorrectionRoundTag');
+            const handleFeedbackStub = stub(submissionService, 'handleFeedbackCorrectionRoundTag');
 
             component.ngOnInit();
             tick(500);
@@ -409,7 +409,7 @@ describe('ModelingAssessmentEditorComponent', () => {
         component.modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined);
         component.modelingExercise.maxPoints = 5;
         component.modelingExercise.bonusPoints = 5;
-        let handleFeedbackStub = stub(submissionService, 'handleFeedbackCorrectionRoundTag');
+        const handleFeedbackStub = stub(submissionService, 'handleFeedbackCorrectionRoundTag');
         component.onFeedbackChanged(feedbacks);
         expect(component.referencedFeedback).to.have.lengthOf(1);
         expect(component.totalScore).to.be.equal(3);
