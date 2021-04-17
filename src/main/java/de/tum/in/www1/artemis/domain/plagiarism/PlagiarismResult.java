@@ -5,6 +5,7 @@ import static java.util.Comparator.*;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.persistence.*;
 
@@ -102,6 +103,8 @@ public abstract class PlagiarismResult<E extends PlagiarismSubmissionElement> ex
      * @param size the size to which the comparisons should be limited, e.g. 500
      */
     public void sortAndLimit(int size) {
-        this.comparisons = getComparisons().stream().sorted(reverseOrder()).limit(size).collect(Collectors.toSet());
+        // we have to use an intermediate variable here, otherwise the compiler complaints due to generics and type erasing
+        Stream<PlagiarismComparison<E>> stream = getComparisons().stream().sorted(reverseOrder()).limit(size);
+        this.comparisons = stream.collect(Collectors.toSet());
     }
 }
