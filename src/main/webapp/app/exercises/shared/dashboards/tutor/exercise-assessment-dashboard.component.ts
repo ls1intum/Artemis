@@ -643,8 +643,4 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
             }
         }
     }
-
-    asTextSubmission(submission: Submission): TextSubmission {
-        return submission as TextSubmission;
-    }
 }
