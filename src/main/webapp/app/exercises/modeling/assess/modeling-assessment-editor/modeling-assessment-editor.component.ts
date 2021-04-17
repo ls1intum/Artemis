@@ -17,7 +17,7 @@ import { ResultService } from 'app/exercises/shared/result/result.service';
 import { ModelingExercise, UMLDiagramType } from 'app/entities/modeling-exercise.model';
 import { ModelingExerciseService } from 'app/exercises/modeling/manage/modeling-exercise.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { handleFeedbackCorrectionRoundTag, Result } from 'app/entities/result.model';
+import { Result } from 'app/entities/result.model';
 import { ModelingSubmissionService } from 'app/exercises/modeling/participate/modeling-submission.service';
 import { Feedback, FeedbackHighlightColor, FeedbackType } from 'app/entities/feedback.model';
 import { Complaint, ComplaintType } from 'app/entities/complaint.model';
@@ -28,6 +28,7 @@ import { StructuredGradingCriterionService } from 'app/exercises/shared/structur
 import { getSubmissionResultByCorrectionRound, getSubmissionResultById } from 'app/entities/submission.model';
 import { getExerciseDashboardLink, getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
 import { ExerciseType } from 'app/entities/exercise.model';
+import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
 
 @Component({
     selector: 'jhi-modeling-assessment-editor',
@@ -83,6 +84,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         private translateService: TranslateService,
         private complaintService: ComplaintService,
         private structuredGradingCriterionService: StructuredGradingCriterionService,
+        private submissionService: SubmissionService,
     ) {
         translateService.get('modelingAssessmentEditor.messages.confirmCancel').subscribe((text) => (this.cancelConfirmationText = text));
     }
@@ -190,7 +192,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         this.checkPermissions();
         this.validateFeedback();
 
-        handleFeedbackCorrectionRoundTag(this.correctionRound, this.submission);
+        this.submissionService.handleFeedbackCorrectionRoundTag(this.correctionRound, this.submission);
 
         this.isLoading = false;
     }
@@ -444,7 +446,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         const hasUnreferencedFeedback = Feedback.haveCreditsAndComments(this.unreferencedFeedback);
         // When unreferenced feedback is set, it has to be valid (score + detailed text)
         this.assessmentsAreValid = (hasReferencedFeedback && this.unreferencedFeedback.length === 0) || hasUnreferencedFeedback;
-        handleFeedbackCorrectionRoundTag(this.correctionRound, this.submission!);
+        this.submissionService.handleFeedbackCorrectionRoundTag(this.correctionRound, this.submission!);
     }
 
     navigateBack() {

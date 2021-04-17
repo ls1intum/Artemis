@@ -21,13 +21,14 @@ import { ResultService } from 'app/exercises/shared/result/result.service';
 import { FileUploadSubmission } from 'app/entities/file-upload-submission.model';
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { handleFeedbackCorrectionRoundTag, Result } from 'app/entities/result.model';
+import { Result } from 'app/entities/result.model';
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
 import { assessmentNavigateBack } from 'app/exercises/shared/navigate-back.util';
 import { ExerciseType, getCourseFromExercise } from 'app/entities/exercise.model';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { getLatestSubmissionResult, getSubmissionResultById } from 'app/entities/submission.model';
 import { getExerciseDashboardLink, getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
+import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
 
 @Component({
     providers: [FileUploadAssessmentsService],
@@ -86,6 +87,7 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
         private complaintService: ComplaintService,
         private fileService: FileService,
         public structuredGradingCriterionService: StructuredGradingCriterionService,
+        public submissionService: SubmissionService,
     ) {
         this.assessmentsAreValid = false;
         translateService.get('artemisApp.assessment.messages.confirmCancel').subscribe((text) => (this.cancelConfirmationText = text));
@@ -216,7 +218,7 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
         this.checkPermissions();
         this.validateAssessment();
 
-        handleFeedbackCorrectionRoundTag(this.correctionRound, this.submission);
+        this.submissionService.handleFeedbackCorrectionRoundTag(this.correctionRound, this.submission);
 
         this.busy = false;
         this.isLoading = false;
@@ -390,7 +392,7 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
             }
         }
 
-        handleFeedbackCorrectionRoundTag(this.correctionRound, this.submission);
+        this.submissionService.handleFeedbackCorrectionRoundTag(this.correctionRound, this.submission);
     }
 
     downloadFile(filePath: string) {

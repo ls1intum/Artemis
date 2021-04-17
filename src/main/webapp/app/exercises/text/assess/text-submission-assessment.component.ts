@@ -9,7 +9,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
-import { handleFeedbackCorrectionRoundTag, Result } from 'app/entities/result.model';
+import { Result } from 'app/entities/result.model';
 import { Complaint } from 'app/entities/complaint.model';
 import { ComplaintResponse } from 'app/entities/complaint-response.model';
 import { ComplaintService } from 'app/complaints/complaint.service';
@@ -30,6 +30,7 @@ import {
 import { TextAssessmentBaseComponent } from 'app/exercises/text/assess/text-assessment-base.component';
 import { getExerciseDashboardLink, getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
 import { ExerciseType } from 'app/entities/exercise.model';
+import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
 
 @Component({
     selector: 'jhi-text-submission-assessment',
@@ -97,6 +98,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         private complaintService: ComplaintService,
         translateService: TranslateService,
         protected structuredGradingCriterionService: StructuredGradingCriterionService,
+        private submissionService: SubmissionService,
     ) {
         super(jhiAlertService, accountService, assessmentsService, structuredGradingCriterionService);
         translateService.get('artemisApp.textAssessment.confirmCancel').subscribe((text) => (this.cancelConfirmationText = text));
@@ -190,7 +192,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         // track feedback in athene
         this.assessmentsService.trackAssessment(this.submission, 'start');
 
-        handleFeedbackCorrectionRoundTag(this.correctionRound, this.submission);
+        this.submissionService.handleFeedbackCorrectionRoundTag(this.correctionRound, this.submission);
     }
 
     private updateUrlIfNeeded() {
@@ -358,7 +360,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         this.assessmentsAreValid = (hasReferencedFeedback && this.unreferencedFeedback.length === 0) || hasUnreferencedFeedback;
 
         this.totalScore = this.computeTotalScore(this.assessments);
-        handleFeedbackCorrectionRoundTag(this.correctionRound, this.submission!);
+        this.submissionService.handleFeedbackCorrectionRoundTag(this.correctionRound, this.submission!);
     }
 
     private prepareTextBlocksAndFeedbacks(): void {
