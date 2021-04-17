@@ -22,13 +22,13 @@ public class GradingScale extends DomainObject {
     @Column(name = "grade_type")
     private GradeType gradeType = GradeType.NONE; // default
 
-    @OneToOne
+    @OneToOne()
     @JoinColumn(name = "course_id")
     @JsonIgnoreProperties("gradingScale")
     @JsonIgnore
     private Course course;
 
-    @OneToOne
+    @OneToOne()
     @JoinColumn(name = "exam_id")
     @JsonIgnoreProperties("gradingScale")
     @JsonIgnore

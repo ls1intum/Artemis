@@ -43,10 +43,8 @@ public class GradingScaleIntegrationTest extends AbstractSpringIntegrationBamboo
         exam = database.addExamWithExerciseGroup(course, true);
         courseGradingScale = new GradingScale();
         courseGradingScale.setCourse(course);
-        course.setGradingScale(courseGradingScale);
         examGradingScale = new GradingScale();
         examGradingScale.setExam(exam);
-        exam.setGradingScale(examGradingScale);
         gradeSteps = new HashSet<>();
         courseGradingScale.setGradeSteps(gradeSteps);
         examGradingScale.setGradeSteps(gradeSteps);
