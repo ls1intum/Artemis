@@ -16,8 +16,8 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 public interface StudentQuestionAnswerRepository extends JpaRepository<StudentQuestionAnswer, Long> {
 
     @NotNull
-    default StudentQuestionAnswer findByAnswerIdElseThrow(long studentQuestionId) {
-        return findById(studentQuestionId).orElseThrow(() -> new EntityNotFoundException("Student Question Answer", studentQuestionId));
+    default StudentQuestionAnswer findByIdElseThrow(long answerId) {
+        return findById(answerId).orElseThrow(() -> new EntityNotFoundException("Student Question Answer", answerId));
     }
 
 }

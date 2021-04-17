@@ -35,7 +35,7 @@ public class StudentQuestionAnswerResource {
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
-    private final StudentQuestionAnswerRepository studentQuestionAnswerRepository;
+    private final StudentQuestionAnswerRepository answerRepository;
 
     private final CourseRepository courseRepository;
 
@@ -49,10 +49,10 @@ public class StudentQuestionAnswerResource {
 
     private final SingleUserNotificationService singleUserNotificationService;
 
-    public StudentQuestionAnswerResource(StudentQuestionAnswerRepository studentQuestionAnswerRepository, GroupNotificationService groupNotificationService,
+    public StudentQuestionAnswerResource(StudentQuestionAnswerRepository answerRepository, GroupNotificationService groupNotificationService,
             SingleUserNotificationService singleUserNotificationService, AuthorizationCheckService authorizationCheckService, UserRepository userRepository,
             CourseRepository courseRepository, StudentQuestionRepository studentQuestionRepository) {
-        this.studentQuestionAnswerRepository = studentQuestionAnswerRepository;
+        this.answerRepository = answerRepository;
         this.courseRepository = courseRepository;
         this.studentQuestionRepository = studentQuestionRepository;
         this.groupNotificationService = groupNotificationService;
@@ -87,7 +87,7 @@ public class StudentQuestionAnswerResource {
         }
         // answer to approved if written by an instructor
         studentQuestionAnswer.setTutorApproved(this.authorizationCheckService.isAtLeastInstructorInCourse(course, user));
-        StudentQuestionAnswer result = studentQuestionAnswerRepository.save(studentQuestionAnswer);
+        StudentQuestionAnswer result = answerRepository.save(studentQuestionAnswer);
         if (result.getQuestion().getExercise() != null) {
             groupNotificationService.notifyTutorAndInstructorGroupAboutNewAnswerForExercise(result);
             singleUserNotificationService.notifyUserAboutNewAnswerForExercise(result);
@@ -117,12 +117,12 @@ public class StudentQuestionAnswerResource {
             throw new BadRequestAlertException("Invalid id", ENTITY_NAME, "idnull");
         }
         courseRepository.findByIdElseThrow(courseId);
-        StudentQuestionAnswer existingStudentQuestionAnswer = studentQuestionAnswerRepository.findByAnswerIdElseThrow(studentQuestionAnswer.getId());
-        if (!existingStudentQuestionAnswer.getQuestion().getCourse().getId().equals(courseId)) {
+        var existingAnswer = answerRepository.findByIdElseThrow(studentQuestionAnswer.getId());
+        if (!existingAnswer.getQuestion().getCourse().getId().equals(courseId)) {
             return badRequest("courseId", "400", "PathVariable courseId doesn't match courseId of the StudentQuestionAnswer in the body");
         }
-        mayUpdateOrDeleteStudentQuestionAnswerElseThrow(existingStudentQuestionAnswer, user);
-        StudentQuestionAnswer result = studentQuestionAnswerRepository.save(studentQuestionAnswer);
+        mayUpdateOrDeleteStudentQuestionAnswerElseThrow(existingAnswer, user);
+        StudentQuestionAnswer result = answerRepository.save(studentQuestionAnswer);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, studentQuestionAnswer.getId().toString())).body(result);
     }
 
@@ -137,15 +137,15 @@ public class StudentQuestionAnswerResource {
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Void> deleteStudentQuestionAnswer(@PathVariable Long courseId, @PathVariable Long answerId) {
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        StudentQuestionAnswer studentQuestionAnswer = studentQuestionAnswerRepository.findByAnswerIdElseThrow(answerId);
+        var existingAnswer = answerRepository.findByIdElseThrow(answerId);
         courseRepository.findByIdElseThrow(courseId);
-        Course course = studentQuestionAnswer.getQuestion().getCourse();
+        Course course = existingAnswer.getQuestion().getCourse();
         String entity = "";
-        if (studentQuestionAnswer.getQuestion().getLecture() != null) {
-            entity = "lecture with id: " + studentQuestionAnswer.getQuestion().getLecture().getId();
+        if (existingAnswer.getQuestion().getLecture() != null) {
+            entity = "lecture with id: " + existingAnswer.getQuestion().getLecture().getId();
         }
-        else if (studentQuestionAnswer.getQuestion().getExercise() != null) {
-            entity = "exercise with id: " + studentQuestionAnswer.getQuestion().getExercise().getId();
+        else if (existingAnswer.getQuestion().getExercise() != null) {
+            entity = "exercise with id: " + existingAnswer.getQuestion().getExercise().getId();
         }
         if (course == null) {
             return ResponseEntity.badRequest().build();
@@ -153,9 +153,9 @@ public class StudentQuestionAnswerResource {
         if (!course.getId().equals(courseId)) {
             return badRequest("courseId", "400", "PathVariable courseId doesnt match courseId of the StudentQuestionAnswer that should be deleted");
         }
-        mayUpdateOrDeleteStudentQuestionAnswerElseThrow(studentQuestionAnswer, user);
-        log.info("StudentQuestionAnswer deleted by " + user.getLogin() + ". Answer: " + studentQuestionAnswer.getAnswerText() + " for " + entity);
-        studentQuestionAnswerRepository.deleteById(answerId);
+        mayUpdateOrDeleteStudentQuestionAnswerElseThrow(existingAnswer, user);
+        log.info("StudentQuestionAnswer deleted by " + user.getLogin() + ". Answer: " + existingAnswer.getAnswerText() + " for " + entity);
+        answerRepository.deleteById(answerId);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, answerId.toString())).build();
     }
 
