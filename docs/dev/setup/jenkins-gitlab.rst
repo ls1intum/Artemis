@@ -154,7 +154,7 @@ This is ideal as a quickstart for developers. For a more detailed setup, see `Ma
 4. You now need to generate an admin access token. Navigate to ``http://localhost:8081/-/profile/personal_access_tokens`` and generate a token with all scopes.
    Copy this token into the ``ADMIN_PERSONAL_ACCESS_TOKEN`` field in the ``src/main/docker/gitlab/gitlab-local-setup.sh`` file.
 
-5. Run the following command and copy the generated access tokens into the Artemis configuration ``application-local.yml`` and ``jenkins-casc-config.yml`` files. 
+5. Run the following command and copy the generated access tokens into the Artemis configuration ``application-local.yml`` and ``jenkins-casc-config.yml`` files.
 
    ::
 
@@ -461,12 +461,12 @@ If you already have a Gitlab and Mysql instance running, you can comment out all
                 username: artemis_admin
                 password: artemis-admin
             version-control:
-                url: http://172.33.0.2:8081
+                url: http://localhost:8081
                 user: artemis_admin
                 password: artemis_admin
                 ci-token: # generated in step 9
             continuous-integration:
-                url: http://172.33.0.3:8080
+                url: http://localhost:8080
                 user: artemis_admin
                 password: artemis_admin
                 vcs-credentials: artemis_gitlab_admin_credentials
@@ -474,7 +474,16 @@ If you already have a Gitlab and Mysql instance running, you can comment out all
                 artemis-authentication-token-value: artemis_admin
                 secret-push-token: # generated in step 8
 
-10. You're done. You can now run Artemis with the Gitlab/Jenkins environment.
+10. Open the ``src/main/resources/config/appliciation-jenkins.yml`` and change the following:
+
+.. code:: yaml
+
+    jenkins:
+        internal-urls:
+            ci-url: http://jenkins:8080
+            vcs-url: http://gitlab:80
+
+11. You're done. You can now run Artemis with the Gitlab/Jenkins environment.
 
 Manual Jenkins Server Setup
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
