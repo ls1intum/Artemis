@@ -42,7 +42,6 @@ import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
-import de.tum.in.www1.artemis.service.plagiarism.PlagiarismService;
 import de.tum.in.www1.artemis.service.programming.*;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.RepositoryExportOptionsDTO;
@@ -79,8 +78,6 @@ public class ProgrammingExerciseResource {
     private final Optional<VersionControlService> versionControlService;
 
     private final ExerciseService exerciseService;
-
-    private final PlagiarismService plagiarismService;
 
     private final PlagiarismResultRepository plagiarismResultRepository;
 
@@ -123,7 +120,7 @@ public class ProgrammingExerciseResource {
     public ProgrammingExerciseResource(ProgrammingExerciseRepository programmingExerciseRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
             CourseService courseService, Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService,
             ExerciseService exerciseService, ProgrammingExerciseService programmingExerciseService, StudentParticipationRepository studentParticipationRepository,
-            PlagiarismService plagiarismService, PlagiarismResultRepository plagiarismResultRepository, ProgrammingExerciseImportService programmingExerciseImportService,
+            PlagiarismResultRepository plagiarismResultRepository, ProgrammingExerciseImportService programmingExerciseImportService,
             ProgrammingExerciseExportService programmingExerciseExportService, StaticCodeAnalysisService staticCodeAnalysisService,
             GradingCriterionRepository gradingCriterionRepository, ProgrammingLanguageFeatureService programmingLanguageFeatureService, TemplateUpgradePolicy templateUpgradePolicy,
             CourseRepository courseRepository, GitService gitService) {
@@ -134,7 +131,6 @@ public class ProgrammingExerciseResource {
         this.continuousIntegrationService = continuousIntegrationService;
         this.versionControlService = versionControlService;
         this.exerciseService = exerciseService;
-        this.plagiarismService = plagiarismService;
         this.programmingExerciseService = programmingExerciseService;
         this.studentParticipationRepository = studentParticipationRepository;
         this.plagiarismResultRepository = plagiarismResultRepository;
@@ -990,7 +986,7 @@ public class ProgrammingExerciseResource {
         log.debug("REST request to get the latest plagiarism result for the programming exercise with id: {}", exerciseId);
         var programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, programmingExercise, null);
-        var plagiarismResult = plagiarismResultRepository.findFirstByExerciseIdOrderByLastModifiedDateDescElseThrow(programmingExercise.getId());
+        var plagiarismResult = plagiarismResultRepository.findFirstByExerciseIdOrderByLastModifiedDateDescOrNull(programmingExercise.getId());
         return ResponseEntity.ok((TextPlagiarismResult) plagiarismResult);
     }
 
@@ -1024,7 +1020,8 @@ public class ProgrammingExerciseResource {
         }
 
         TextPlagiarismResult result = programmingExerciseExportService.checkPlagiarism(exerciseId, similarityThreshold, minimumScore);
-        plagiarismService.savePlagiarismResultAndRemovePrevious(result);
+        result.sortAndLimit(500);
+        plagiarismResultRepository.savePlagiarismResultAndRemovePrevious(result);
         return ResponseEntity.ok(result);
     }
 
