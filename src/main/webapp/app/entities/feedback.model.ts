@@ -37,7 +37,7 @@ export class Feedback implements BaseEntity {
     public referenceType?: string; // this string needs to follow UMLModelElementType in Apollon in typings.d.ts
     public referenceId?: string;
 
-    public copiedFeedback?: boolean; // helper attribute, only calculated locally on the client
+    public copiedFeedbackId?: number; // helper attribute, only calculated locally on the client
 
     constructor() {
         this.credits = 0;

@@ -42,21 +42,39 @@ export class Result implements BaseEntity {
 
 /**
  * Sets the transient property copiedFeedback for feedbacks when comparing a submissions results of two correction rounds
- * @param firstResult
- * @param secondResult
+ * copiedFeedback indicates if the feedback is directly copied and unmodified compared to the first correction round
+ *
+ * @param correctionRound current correction round
+ * @param submission current submission
  */
-export function setFeedbackCorrectionRoundTag(firstResult: Result, secondResult: Result) {
-    secondResult.feedbacks!.forEach((secondFeedback) => {
-        firstResult.feedbacks!.forEach((firstFeedback) => {
-            if (
-                secondFeedback.type === firstFeedback.type &&
-                secondFeedback.credits === firstFeedback.credits &&
-                secondFeedback.detailText === firstFeedback.detailText &&
-                secondFeedback.reference === firstFeedback.reference &&
-                secondFeedback.text === firstFeedback.text
-            ) {
-                secondFeedback.copiedFeedback = true;
-            }
+export function handleFeedbackCorrectionRoundTag(correctionRound: number, submission: Submission) {
+    if (correctionRound > 0 && submission?.results && submission.results.length > 1) {
+        const firstResult = submission!.results![0] as Result;
+        const secondCorrectionFeedback1 = submission!.results![1].feedbacks as Feedback[];
+        secondCorrectionFeedback1!.forEach((secondFeedback) => {
+            firstResult.feedbacks!.forEach((firstFeedback) => {
+                if (
+                    secondFeedback.copiedFeedbackId === undefined &&
+                    secondFeedback.type === firstFeedback.type &&
+                    secondFeedback.credits === firstFeedback.credits &&
+                    secondFeedback.detailText === firstFeedback.detailText &&
+                    secondFeedback.reference === firstFeedback.reference &&
+                    secondFeedback.text === firstFeedback.text
+                ) {
+                    secondFeedback.copiedFeedbackId = firstFeedback.id;
+                } else if (
+                    secondFeedback.copiedFeedbackId === firstFeedback.id &&
+                    !(
+                        secondFeedback.type === firstFeedback.type &&
+                        secondFeedback.credits === firstFeedback.credits &&
+                        secondFeedback.detailText === firstFeedback.detailText &&
+                        secondFeedback.reference === firstFeedback.reference &&
+                        secondFeedback.text === firstFeedback.text
+                    )
+                ) {
+                    secondFeedback.copiedFeedbackId = undefined;
+                }
+            });
         });
-    });
+    }
 }
