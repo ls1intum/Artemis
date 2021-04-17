@@ -6,7 +6,6 @@ buildscript {
         mavenLocal()
         mavenCentral()
         maven { url "https://repo.spring.io/plugins-release" }
-        jcenter()
     }
     dependencies {
         classpath "io.spring.gradle:propdeps-plugin:0.0.10.RELEASE"
@@ -149,7 +148,6 @@ configurations {
 repositories {
     mavenLocal()
     mavenCentral()
-    jcenter()
 }
 
 dependencies {
