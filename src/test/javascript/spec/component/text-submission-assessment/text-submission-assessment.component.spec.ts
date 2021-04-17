@@ -4,6 +4,7 @@ import { ArtemisAssessmentSharedModule } from 'app/assessment/assessment-shared.
 import { ArtemisTestModule } from '../../test.module';
 import { By } from '@angular/platform-browser';
 import { Observable, of } from 'rxjs';
+import { stub } from 'sinon';
 import { HttpResponse } from '@angular/common/http';
 import { AssessmentLayoutComponent } from 'app/assessment/assessment-layout/assessment-layout.component';
 import { AssessmentInstructionsModule } from 'app/assessment/assessment-instructions/assessment-instructions.module';
@@ -34,11 +35,13 @@ import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { ComplaintResponse } from 'app/entities/complaint-response.model';
 import { JhiAlertService } from 'ng-jhipster';
 import { RouterTestingModule } from '@angular/router/testing';
+import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
 
 describe('TextSubmissionAssessmentComponent', () => {
     let component: TextSubmissionAssessmentComponent;
     let fixture: ComponentFixture<TextSubmissionAssessmentComponent>;
     let textAssessmentService: TextAssessmentService;
+    let submissionService: SubmissionService;
 
     const exercise = {
         id: 20,
@@ -148,6 +151,8 @@ describe('TextSubmissionAssessmentComponent', () => {
     beforeEach(() => {
         fixture = TestBed.createComponent(TextSubmissionAssessmentComponent);
         component = fixture.componentInstance;
+        submissionService = TestBed.inject(SubmissionService);
+
         fixture.detectChanges();
     });
 
@@ -184,6 +189,8 @@ describe('TextSubmissionAssessmentComponent', () => {
     it('should save the assessment with correct parameters', function () {
         textAssessmentService = fixture.debugElement.injector.get(TextAssessmentService);
         component['setPropertiesFromServerResponse'](participation);
+        let handleFeedbackStub = stub(submissionService, 'handleFeedbackCorrectionRoundTag');
+
         fixture.detectChanges();
 
         const result = getLatestSubmissionResult(submission);
@@ -208,6 +215,7 @@ describe('TextSubmissionAssessmentComponent', () => {
             [component.textBlockRefs[0].feedback!, textBlockRef.feedback!],
             [component.textBlockRefs[0].block!, textBlockRef.block!],
         );
+        expect(handleFeedbackStub).toHaveBeenCalled();
     });
 
     it('should display error when complaint resolved but assessment invalid', () => {

@@ -44,6 +44,7 @@ import { ComplaintResponse } from 'app/entities/complaint-response.model';
 import * as sinon from 'sinon';
 import { HttpErrorResponse } from '@angular/common/http';
 import { JhiAlertService } from 'ng-jhipster';
+import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
 
 chai.use(sinonChai);
 
@@ -61,6 +62,7 @@ describe('FileUploadAssessmentComponent', () => {
     let router: Router;
     let navigateByUrlStub: SinonStub;
     let alertService: JhiAlertService;
+    let submissionService: SubmissionService;
 
     const exercise = { id: 20, type: ExerciseType.FILE_UPLOAD, maxPoints: 100, bonusPoints: 0 } as FileUploadExercise;
     const map1 = new Map<string, Object>().set('testRun', true).set('correction-round', 1);
@@ -114,6 +116,7 @@ describe('FileUploadAssessmentComponent', () => {
                 accountService = TestBed.inject(AccountService);
                 complaintService = TestBed.inject(ComplaintService);
                 alertService = TestBed.inject(JhiAlertService);
+                submissionService = TestBed.inject(SubmissionService);
                 getFileUploadSubmissionForExerciseWithoutAssessmentStub = stub(
                     fileUploadSubmissionService,
                     'getFileUploadSubmissionForExerciseForCorrectionRoundWithoutAssessment',
@@ -192,6 +195,7 @@ describe('FileUploadAssessmentComponent', () => {
             stub(complaintService, 'findByResultId').returns(of({ body: complaint } as EntityResponseType));
             comp.submission = submission;
             setLatestSubmissionResult(comp.submission, result);
+            let handleFeedbackStub = stub(submissionService, 'handleFeedbackCorrectionRoundTag');
 
             fixture.detectChanges();
             expect(comp.result).to.equal(result);
@@ -199,6 +203,7 @@ describe('FileUploadAssessmentComponent', () => {
             expect(comp.complaint).to.equal(complaint);
             expect(comp.result!.feedbacks?.length === 0).to.equal(true);
             expect(comp.busy).to.be.false;
+            expect(handleFeedbackStub).to.have.been.called;
         }));
 
         it('should load optimal submission', () => {
@@ -284,9 +289,12 @@ describe('FileUploadAssessmentComponent', () => {
 
     it('should add a feedback', () => {
         expect(comp.unreferencedFeedback.length).to.equal(0);
+        let handleFeedbackStub = stub(submissionService, 'handleFeedbackCorrectionRoundTag');
+
         comp.addFeedback();
         expect(comp.unreferencedFeedback.length).to.equal(1);
         expect(comp.totalScore).to.equal(0);
+        expect(handleFeedbackStub).to.have.been.called;
     });
 
     it('should delete a feedback', () => {
