@@ -185,15 +185,17 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
      * Predicate used to filter results by the current filter prop setting
      * @param result Result for which to evaluate the predicate
      */
-    filterResultByProp = (result: Result) => {
+    filterResultByProp = (result: Result): boolean => {
         switch (this.resultCriteria.filterProp) {
             case FilterProp.SUCCESSFUL:
-                return result.successful;
+                return !!result.successful;
             case FilterProp.UNSUCCESSFUL:
                 return !result.successful;
             case FilterProp.BUILD_FAILED:
                 return (
-                    result.submission && result.submission.submissionExerciseType === SubmissionExerciseType.PROGRAMMING && (result.submission as ProgrammingSubmission).buildFailed
+                    !!result.submission &&
+                    result.submission.submissionExerciseType === SubmissionExerciseType.PROGRAMMING &&
+                    !!(result.submission as ProgrammingSubmission).buildFailed
                 );
             case FilterProp.MANUAL:
                 return Result.isManualResult(result);
@@ -312,7 +314,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
      *
      * @param result
      */
-    searchResultFormatter = (result: Result) => {
+    searchResultFormatter = (result: Result): string => {
         const participation = result.participation as StudentParticipation;
         if (participation.student) {
             const { login, name } = participation.student;
@@ -320,6 +322,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
         } else if (participation.team) {
             return formatTeamAsSearchResult(participation.team);
         }
+        return '';
     };
 
     /**
