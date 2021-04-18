@@ -396,11 +396,13 @@ public class ModelingExerciseResource {
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, modelingExercise, null);
         long start = System.nanoTime();
         ModelingPlagiarismResult result = modelingPlagiarismDetectionService.compareSubmissions(modelingExercise, similarityThreshold / 100, minimumSize, minimumScore);
-        log.info("Finished >> modelingPlagiarismDetectionService.compareSubmissions call << in {}", TimeLogUtil.formatDurationFrom(start));
+        log.info("Finished modelingPlagiarismDetectionService.compareSubmissions call for {} comparisons in {}", result.getComparisons().size(),
+                TimeLogUtil.formatDurationFrom(start));
         result.sortAndLimit(500);
+        log.info("Limited number of comparisons to {} to avoid performance issues when saving to database", result.getComparisons().size());
         start = System.nanoTime();
         plagiarismResultRepository.savePlagiarismResultAndRemovePrevious(result);
-        log.info("Finished >> plagiarismResultRepository.savePlagiarismResultAndRemovePrevious call << in {}", TimeLogUtil.formatDurationFrom(start));
+        log.info("Finished plagiarismResultRepository.savePlagiarismResultAndRemovePrevious call in {}", TimeLogUtil.formatDurationFrom(start));
         return ResponseEntity.ok(result);
     }
 }

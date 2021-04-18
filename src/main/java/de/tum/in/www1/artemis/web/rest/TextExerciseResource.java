@@ -28,6 +28,7 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.service.plagiarism.TextPlagiarismDetectionService;
+import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SubmissionExportOptionsDTO;
@@ -574,9 +575,14 @@ public class TextExerciseResource {
         if (!authCheckService.isAtLeastInstructorForExercise(textExercise)) {
             return forbidden();
         }
+        long start = System.nanoTime();
         TextPlagiarismResult result = textPlagiarismDetectionService.checkPlagiarism(textExercise, similarityThreshold, minimumScore, minimumSize);
+        log.info("Finished textPlagiarismDetectionService.checkPlagiarism call for {} comparisons in {}", result.getComparisons().size(), TimeLogUtil.formatDurationFrom(start));
         result.sortAndLimit(500);
+        log.info("Limited number of comparisons to {} to avoid performance issues when saving to database", result.getComparisons().size());
+        start = System.nanoTime();
         plagiarismResultRepository.savePlagiarismResultAndRemovePrevious(result);
+        log.info("Finished plagiarismResultRepository.savePlagiarismResultAndRemovePrevious call in {}", TimeLogUtil.formatDurationFrom(start));
         return ResponseEntity.ok(result);
     }
 }
