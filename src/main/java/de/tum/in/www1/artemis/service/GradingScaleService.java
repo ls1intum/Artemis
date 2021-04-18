@@ -78,7 +78,7 @@ public class GradingScaleService {
      * @param gradeSteps the grade steps to be checked
      */
     private void checkGradeStepValidity(Set<GradeStep> gradeSteps) {
-        if (gradeSteps != null) {
+        if (gradeSteps != null && !gradeSteps.isEmpty()) {
             if (!gradeSteps.stream().allMatch(GradeStep::isValid)) {
                 throw new BadRequestAlertException("Not all grade steps are following the correct format.", "gradeStep", "invalidFormat");
             }
@@ -113,16 +113,4 @@ public class GradingScaleService {
                 && sortedGradeSteps.get(sortedGradeSteps.size() - 1).getUpperBoundPercentage() == 100;
         return validAdjacency && validFirstElement && validLastElement;
     }
-
-    /**
-     * Deletes a grading scale and all its grade steps
-     *
-     * @param gradingScale the grading scale which will be deleted
-     */
-    public void delete(GradingScale gradingScale) {
-        List<GradeStep> gradeSteps = gradeStepRepository.findByGradingScaleId(gradingScale.getId());
-        gradeStepRepository.deleteInBatch(gradeSteps);
-        gradingScaleRepository.deleteInBatch(List.of(gradingScale));
-    }
-
 }
