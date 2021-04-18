@@ -67,23 +67,28 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
 
     private final JenkinsJobService jenkinsJobService;
 
+    private final JenkinsInternalUrlService jenkinsInternalUrlService;
+
     // Pattern of the DateTime that is included in the logs received from Jenkins
     private final DateTimeFormatter logDateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssX");
 
     public JenkinsService(@Qualifier("jenkinsRestTemplate") RestTemplate restTemplate, JenkinsServer jenkinsServer, ProgrammingSubmissionRepository programmingSubmissionRepository,
             ProgrammingExerciseRepository programmingExerciseRepository, FeedbackRepository feedbackRepository,
             @Qualifier("shortTimeoutJenkinsRestTemplate") RestTemplate shortTimeoutRestTemplate, BuildLogEntryService buildLogService,
-            JenkinsBuildPlanService jenkinsBuildPlanService, JenkinsJobService jenkinsJobService) {
+            JenkinsBuildPlanService jenkinsBuildPlanService, JenkinsJobService jenkinsJobService, JenkinsInternalUrlService jenkinsInternalUrlService) {
         super(programmingSubmissionRepository, feedbackRepository, buildLogService, restTemplate, shortTimeoutRestTemplate);
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.jenkinsServer = jenkinsServer;
         this.jenkinsBuildPlanService = jenkinsBuildPlanService;
         this.jenkinsJobService = jenkinsJobService;
+        this.jenkinsInternalUrlService = jenkinsInternalUrlService;
     }
 
     @Override
     public void createBuildPlanForExercise(ProgrammingExercise exercise, String planKey, VcsRepositoryUrl repositoryURL, VcsRepositoryUrl testRepositoryURL,
             VcsRepositoryUrl solutionRepositoryURL) {
+        repositoryURL = jenkinsInternalUrlService.toInternalVcsUrl(repositoryURL);
+        testRepositoryURL = jenkinsInternalUrlService.toInternalVcsUrl(testRepositoryURL);
         jenkinsBuildPlanService.createBuildPlanForExercise(exercise, planKey, repositoryURL, testRepositoryURL);
     }
 
@@ -280,8 +285,9 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
          * (TESTEXC-SOLUTION) would be: TESTEXC » TESTEXC-SOLUTION #3 ==> This would mean that at index 2, we have the actual job/plan key, i.e. TESTEXC-SOLUTION
          */
         if (nameParams.length != 4) {
-            log.error("Can't extract planKey from requestBody! Not a test notification result!: " + new ObjectMapper().writeValueAsString(requestBody));
-            throw new JenkinsException("Can't extract planKey from requestBody! Not a test notification result!: " + new ObjectMapper().writeValueAsString(requestBody));
+            var requestBodyString = new ObjectMapper().writeValueAsString(requestBody);
+            log.error("Can't extract planKey from requestBody! Not a test notification result!: {}", requestBodyString);
+            throw new JenkinsException("Can't extract planKey from requestBody! Not a test notification result!: " + requestBodyString);
         }
 
         return nameParams[2];
@@ -304,7 +310,8 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
 
     @Override
     public Optional<String> getWebHookUrl(String projectKey, String buildPlanId) {
-        return Optional.of(serverUrl + "/project/" + projectKey + "/" + buildPlanId);
+        var urlString = serverUrl + "/project/" + projectKey + "/" + buildPlanId;
+        return Optional.of(jenkinsInternalUrlService.toInternalCiUrl(urlString));
     }
 
     @Override

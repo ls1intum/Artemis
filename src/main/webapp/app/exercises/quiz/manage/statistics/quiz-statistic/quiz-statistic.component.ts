@@ -2,7 +2,7 @@ import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { HttpResponse } from '@angular/common/http';
-import { Chart, ChartAnimationOptions, ChartOptions, LinearTickOptions } from 'chart.js';
+import { Chart, ChartAnimationOptions, ChartOptions, ChartType, LinearTickOptions } from 'chart.js';
 import { Subscription } from 'rxjs/Subscription';
 import { QuizStatisticUtil } from 'app/exercises/quiz/shared/quiz-statistic-util.service';
 import { AccountService } from 'app/core/auth/account.service';
@@ -10,7 +10,7 @@ import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
 import { Authority } from 'app/shared/constants/authority.constants';
-import { BaseChartDirective } from 'ng2-charts';
+import { BaseChartDirective, Color } from 'ng2-charts';
 
 /**
  * this interface is adapted from chart.js
@@ -146,8 +146,8 @@ export class QuizStatisticComponent implements OnInit, OnDestroy, DataSetProvide
 
     labels: string[] = [];
     data: number[] = [];
-    colors: string[] = [];
-    chartType = 'bar';
+    colors: Color[] = [];
+    chartType: ChartType = 'bar';
     datasets: DataSet[] = [];
 
     label: string[] = [];
@@ -289,7 +289,7 @@ export class QuizStatisticComponent implements OnInit, OnDestroy, DataSetProvide
 
         // load data into the chart
         this.labels = this.label;
-        this.colors = this.backgroundColor;
+        this.colors = this.backgroundColor.map((backgroundColor) => ({ backgroundColor }));
 
         // add Text for last label based on the language
         const lastLabel = this.translateService.instant('showStatistic.quizStatistic.average');
@@ -333,7 +333,7 @@ export class QuizStatisticComponent implements OnInit, OnDestroy, DataSetProvide
      * updates the chart by setting the data set, re-calculating the height and calling update on the chart view child
      */
     updateChart() {
-        this.datasets = [{ data: this.data, backgroundColor: this.colors }];
+        this.datasets = [{ data: this.data, backgroundColor: this.colors.map((color) => color.backgroundColor as string) }];
         // recalculate the height of the chart because rated/unrated might have changed or new results might have appeared
         const height = calculateHeightOfChart(this);
         // add Axes-labels based on selected language

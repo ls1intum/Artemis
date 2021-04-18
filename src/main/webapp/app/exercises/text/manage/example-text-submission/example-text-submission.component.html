@@ -86,14 +86,15 @@
     <jhi-score-display
         left-header
         *ngIf="state.ui === UIStates.ASSESSMENT"
-        [maxPoints]="exercise?.maxPoints"
+        [maxPoints]="exercise?.maxPoints || 0"
         [score]="totalScore"
-        [maxBonusPoints]="exercise?.bonusPoints"
+        [maxBonusPoints]="exercise?.bonusPoints || 0"
     ></jhi-score-display>
     <jhi-text-assessment-area
         left-body
+        class="guided-tour-assessment-editor guided-tour-complete-assessment-editor"
         *ngIf="state.ui === UIStates.ASSESSMENT"
-        [submission]="submission"
+        [submission]="submission!"
         [(textBlockRefs)]="textBlockRefs"
         [readOnly]="readOnly || (!isAtLeastInstructor && !toComplete)"
         (textBlockRefsChange)="validateFeedback()"

@@ -59,6 +59,7 @@ import { Result } from 'app/entities/result.model';
 import { Exam } from 'app/entities/exam.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { SecondCorrectionEnableButtonComponent } from 'app/exercises/shared/dashboards/tutor/second-correction-button/second-correction-enable-button.component';
+import { LanguageTableCellComponent } from 'app/exercises/shared/dashboards/tutor/language-table-cell/language-table-cell.component';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -195,6 +196,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
                 MockComponent(CollapsableAssessmentInstructionsComponent),
                 MockComponent(AssessmentInstructionsComponent),
                 MockComponent(StructuredGradingInstructionsAssessmentLayoutComponent),
+                MockComponent(LanguageTableCellComponent),
             ],
             providers: [
                 JhiLanguageHelper,
@@ -345,17 +347,6 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         expect(comp.calculateSubmissionStatus(modelingSubmission)).to.be.equal('DRAFT');
     });
 
-    describe('test languages', () => {
-        it('should call languge unknown', () => {
-            expect(comp.language(modelingSubmission)).to.be.equal('UNKNOWN');
-        });
-
-        it('should call languge correct', () => {
-            expect(comp.language(textSubmission)).to.be.equal('UNKNOWN');
-            expect(comp.language(textSubmissionAssessed)).to.be.equal(Language.GERMAN);
-        });
-    });
-
     it('should call hasBeenCompletedByTutor', () => {
         comp.exampleSubmissionsCompletedByTutor = [{ id: 1 }, { id: 2 }];
         expect(comp.hasBeenCompletedByTutor(1)).to.equal(true);
@@ -413,11 +404,6 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         const openAssessmentEditor = stub(comp, 'openAssessmentEditor');
         comp.viewComplaint(complaint);
         expect(openAssessmentEditor).to.have.been.called;
-    });
-
-    it('should return asProgrammingExercise', () => {
-        const castedExercise = comp.asProgrammingExercise(exercise);
-        expect(castedExercise).to.be.equal(exercise as ProgrammingExercise);
     });
 
     describe('openExampleSubmission', () => {

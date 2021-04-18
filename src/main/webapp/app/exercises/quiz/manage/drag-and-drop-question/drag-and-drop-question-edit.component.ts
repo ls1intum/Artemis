@@ -761,7 +761,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Quiz
      * (question text, explanation, hint)
      * @param domainCommands - containing markdownText with the corresponding domainCommand {DomainCommand} identifier
      */
-    domainCommandsFound(domainCommands: [string, DomainCommand][]): void {
+    domainCommandsFound(domainCommands: [string, DomainCommand | null][]): void {
         this.cleanupQuestion();
         for (const [text, command] of domainCommands) {
             if (command === null && text.length > 0) {

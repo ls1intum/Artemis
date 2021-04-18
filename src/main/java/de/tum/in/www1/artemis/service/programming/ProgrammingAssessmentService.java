@@ -4,14 +4,10 @@ import java.util.*;
 
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.Feedback;
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.Result;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.LtiService;
 import de.tum.in.www1.artemis.service.exam.ExamDateService;
@@ -43,19 +39,8 @@ public class ProgrammingAssessmentService extends AssessmentService {
         result.setAssessor(user);
         result.setCompletionDate(null);
 
-        // Avoid hibernate exception
-        List<Feedback> savedFeedbacks = new ArrayList<>();
-        result.getFeedbacks().forEach(feedback -> {
-            feedback.setResult(null);
-            feedback = feedbackRepository.save(feedback);
-            feedback.setResult(result);
-            savedFeedbacks.add(feedback);
-        });
+        Result finalResult = resultService.storeFeedbackInResult(result, result.getFeedbacks(), true);
 
-        Result finalResult = result;
-        finalResult.setFeedbacks(savedFeedbacks);
-        // Note: This also saves the feedback objects in the database because of the 'cascade = CascadeType.ALL' option.
-        finalResult = resultRepository.save(finalResult);
         finalResult.setParticipation(participation);
         return finalResult;
     }

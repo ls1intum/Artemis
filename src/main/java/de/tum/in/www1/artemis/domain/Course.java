@@ -11,10 +11,7 @@ import javax.persistence.*;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonView;
+import com.fasterxml.jackson.annotation.*;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
@@ -271,7 +268,7 @@ public class Course extends DomainObject {
     }
 
     public Boolean isOnlineCourse() {
-        return onlineCourse == null ? false : onlineCourse;
+        return Boolean.TRUE.equals(onlineCourse);
     }
 
     public void setOnlineCourse(Boolean onlineCourse) {
@@ -387,10 +384,9 @@ public class Course extends DomainObject {
         return lectures;
     }
 
-    public Course addLectures(Lecture lecture) {
+    public void addLectures(Lecture lecture) {
         this.lectures.add(lecture);
         lecture.setCourse(this);
-        return this;
     }
 
     public void setLectures(Set<Lecture> lectures) {

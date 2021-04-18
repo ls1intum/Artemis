@@ -20,7 +20,7 @@
                 [studentQuestion]="studentQuestion"
                 [user]="currentUser"
                 [isAtLeastTutorInCourse]="isAtLeastTutorInCourse"
-                [selectedStudentQuestion]="selectedStudentQuestion"
+                [selectedStudentQuestion]="selectedStudentQuestion!"
                 (interactQuestionRow)="interactQuestion($event)"
                 *ngFor="let studentQuestion of studentQuestions"
             ></jhi-student-question-row>

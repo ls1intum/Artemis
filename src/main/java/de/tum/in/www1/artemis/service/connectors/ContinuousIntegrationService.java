@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.service.connectors;
 
-import static de.tum.in.www1.artemis.config.Constants.ASSIGNMENT_DIRECTORY;
-import static de.tum.in.www1.artemis.config.Constants.ASSIGNMENT_REPO_NAME;
+import static de.tum.in.www1.artemis.config.Constants.*;
 
 import java.util.List;
 import java.util.Optional;
@@ -288,7 +287,7 @@ public interface ContinuousIntegrationService {
      */
     static String getDockerImageName(ProgrammingLanguage language) {
         return switch (language) {
-            case JAVA, KOTLIN -> "ls1tum/artemis-maven-template:java16-1";
+            case JAVA, KOTLIN -> "ls1tum/artemis-maven-template:java16-2";
             case PYTHON -> "ls1tum/artemis-python-docker:latest";
             case C -> "ls1tum/artemis-c-docker:latest";
             case HASKELL -> "tumfpv/fpv-stack:8.8.4";

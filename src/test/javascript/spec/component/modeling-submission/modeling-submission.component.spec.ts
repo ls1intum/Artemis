@@ -151,9 +151,10 @@ describe('Component Tests', () => {
             expect(submitButton.attributes['ng-reflect-disabled']).to.be.equal('true');
         });
 
-        it('should allow to submit after the deadline if the initialization date is after the due date', () => {
+        it('should allow to submit after the deadline if the initialization date is after the due date and not submitted', () => {
             submission.participation!.initializationDate = moment().add(1, 'days');
             (<StudentParticipation>submission.participation).exercise!.dueDate = moment();
+            submission.submitted = false;
             sinon.replace(service, 'getLatestSubmissionForModelingEditor', sinon.fake.returns(of(submission)));
 
             fixture.detectChanges();
@@ -162,6 +163,7 @@ describe('Component Tests', () => {
             const submitButton = debugElement.query(By.css('jhi-button'));
             expect(submitButton).to.exist;
             expect(submitButton.attributes['ng-reflect-disabled']).to.be.equal('false');
+            submission.submitted = true;
         });
 
         it('should not allow to submit if there is a result and no due date', () => {

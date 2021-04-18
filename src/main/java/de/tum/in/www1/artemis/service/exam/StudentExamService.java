@@ -7,6 +7,7 @@ import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 
+import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.PageRequest;
@@ -157,7 +158,7 @@ public class StudentExamService {
             try {
                 if (exercise.getStudentParticipations() != null && exercise.getStudentParticipations().size() == 1) {
                     var studentParticipation = exercise.getStudentParticipations().iterator().next();
-                    var latestSubmission = programmingSubmissionRepository.findLatestSubmissionForParticipation(studentParticipation.getId(), PageRequest.of(0, 1)).stream()
+                    var latestSubmission = programmingSubmissionRepository.findLatestLegalSubmissionForParticipation(studentParticipation.getId(), PageRequest.of(0, 1)).stream()
                             .findFirst();
                     latestSubmission.ifPresent(programmingSubmission -> studentParticipation.setSubmissions(Set.of(programmingSubmission)));
                 }
@@ -226,7 +227,7 @@ public class StudentExamService {
                             submissionVersionService.saveVersionForIndividual(submission, currentUser.getLogin());
                         }
                         catch (Exception ex) {
-                            log.error("Submission version could not be saved: " + ex);
+                            log.error("Submission version could not be saved", ex);
                         }
                     }
                 }
@@ -268,6 +269,7 @@ public class StudentExamService {
 
     /**
      * Assess the modeling-, file upload and text submissions of an exam which are empty.
+     * Also sets the state of all participations for all student exams which were submitted to FINISHED
      *
      * @param exam the exam
      * @param assessor the assessor should be the instructor making the call
@@ -287,7 +289,13 @@ public class StudentExamService {
         for (final var user : exercisesOfUser.keySet()) {
             final var studentParticipations = studentParticipationRepository.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(user.getId(),
                     exercisesOfUser.get(user));
-            for (final var studentParticipation : studentParticipations) {
+            for (var studentParticipation : studentParticipations) {
+                // even if the student did not submit anything for a specific exercise (the InitializationState is therefore only INITIALIZED)
+                // we want to set it to FINISHED as the exam was handed in.
+                if (studentParticipation.getInitializationState().equals(InitializationState.INITIALIZED)) {
+                    studentParticipation.setInitializationState(InitializationState.FINISHED);
+                    studentParticipationRepository.save(studentParticipation);
+                }
                 final var latestSubmission = studentParticipation.findLatestSubmission();
                 if (latestSubmission.isPresent() && latestSubmission.get().isEmpty()) {
                     for (int correctionRound = 0; correctionRound < exam.getNumberOfCorrectionRoundsInExam(); correctionRound++) {
@@ -419,8 +427,7 @@ public class StudentExamService {
             if (studentParticipations.stream().noneMatch(studentParticipation -> studentParticipation.getParticipant().equals(student)
                     && studentParticipation.getInitializationState() != null && studentParticipation.getInitializationState().hasCompletedState(InitializationState.INITIALIZED))) {
                 try {
-                    if (exercise instanceof ProgrammingExercise) {
-                        // TODO: we should try to move this out of the for-loop into the method which calls this method.
+                    if (exercise instanceof ProgrammingExercise && !Hibernate.isInitialized(((ProgrammingExercise) exercise).getTemplateParticipation())) {
                         // Load lazy property
                         final var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exercise.getId());
                         ((ProgrammingExercise) exercise).setTemplateParticipation(programmingExercise.getTemplateParticipation());

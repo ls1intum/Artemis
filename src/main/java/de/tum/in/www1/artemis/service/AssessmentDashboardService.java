@@ -1,9 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -16,10 +13,7 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.assessment.dashboard.ExerciseMapEntry;
 import de.tum.in.www1.artemis.domain.enumeration.TutorParticipationStatus;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
-import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
-import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
-import de.tum.in.www1.artemis.repository.ResultRepository;
-import de.tum.in.www1.artemis.repository.SubmissionRepository;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
 
@@ -67,11 +61,11 @@ public class AssessmentDashboardService {
         Set<Exercise> nonProgrammingExerciseIds = exercises.stream().filter(exercise -> !(exercise instanceof ProgrammingExercise)).collect(Collectors.toSet());
 
         complaintService.calculateNrOfOpenComplaints(exercises, examMode);
-        log.info("Finished >> complaintService.calculateNrOfOpenComplaints all << in " + TimeLogUtil.formatDurationFrom(start));
+        log.info("Finished >> complaintService.calculateNrOfOpenComplaints all << in {}", TimeLogUtil.formatDurationFrom(start));
         start = System.nanoTime();
 
         calculateNumberOfSubmissions(programmingExerciseIds, nonProgrammingExerciseIds, examMode);
-        log.info("Finished >> assessmentDashboardService.calculateNumberOfSubmissions all << in " + TimeLogUtil.formatDurationFrom(start));
+        log.info("Finished >> assessmentDashboardService.calculateNumberOfSubmissions all << in {}", TimeLogUtil.formatDurationFrom(start));
         start = System.nanoTime();
 
         // NOTE: similar to calculateNumberOfSubmissions the number of assessments could be calculated outside of the loop for a performance boost.
@@ -83,14 +77,14 @@ public class AssessmentDashboardService {
 
             if (exercise instanceof ProgrammingExercise) {
                 totalNumberOfAssessments = new DueDateStat(programmingExerciseRepository.countAssessmentsByExerciseIdSubmitted(exercise.getId(), examMode), 0L);
-                log.info("Finished >> programmingExerciseRepository.countAssessmentsByExerciseIdSubmitted << call for exercise " + exercise.getId() + " in "
-                        + TimeLogUtil.formatDurationFrom(start));
+                log.info("Finished >> programmingExerciseRepository.countAssessmentsByExerciseIdSubmitted << call for exercise {} in {}", exercise.getId(),
+                        TimeLogUtil.formatDurationFrom(start));
                 start = System.nanoTime();
             }
             else {
                 totalNumberOfAssessments = resultRepository.countNumberOfFinishedAssessmentsForExercise(exercise.getId(), examMode);
-                log.info("Finished >> resultRepository.countNumberOfFinishedAssessmentsForExercise << call for exercise " + exercise.getId() + " in "
-                        + TimeLogUtil.formatDurationFrom(start));
+                log.info("Finished >> resultRepository.countNumberOfFinishedAssessmentsForExercise << call for exercise {} in {}", exercise.getId(),
+                        TimeLogUtil.formatDurationFrom(start));
                 start = System.nanoTime();
             }
 
@@ -99,8 +93,8 @@ public class AssessmentDashboardService {
                 // set number of corrections specific to each correction round
                 int numberOfCorrectionRounds = exercise.getExerciseGroup().getExam().getNumberOfCorrectionRoundsInExam();
                 numberOfAssessmentsOfCorrectionRounds = resultRepository.countNumberOfFinishedAssessmentsForExamExerciseForCorrectionRounds(exercise, numberOfCorrectionRounds);
-                log.info("Finished >> resultRepository.countNumberOfFinishedAssessmentsForExamExerciseForCorrectionRounds << call for exercise " + exercise.getId() + " in "
-                        + TimeLogUtil.formatDurationFrom(start));
+                log.info("Finished >> resultRepository.countNumberOfFinishedAssessmentsForExamExerciseForCorrectionRounds << call for exercise {} in {}", exercise.getId(),
+                        TimeLogUtil.formatDurationFrom(start));
                 start = System.nanoTime();
             }
             else {
@@ -113,8 +107,7 @@ public class AssessmentDashboardService {
             start = System.nanoTime();
             Set<ExampleSubmission> exampleSubmissions = exampleSubmissionRepository.findAllWithResultByExerciseId(exercise.getId());
 
-            log.info("Finished >> exampleSubmissionRepository.findAllWithResultByExerciseId << call for course " + exercise.getId() + " in "
-                    + TimeLogUtil.formatDurationFrom(start));
+            log.info("Finished >> exampleSubmissionRepository.findAllWithResultByExerciseId << call for course {} in {}", exercise.getId(), TimeLogUtil.formatDurationFrom(start));
             start = System.nanoTime();
 
             // Do not provide example submissions without any assessment
@@ -129,9 +122,9 @@ public class AssessmentDashboardService {
                     });
             exercise.setTutorParticipations(Collections.singleton(tutorParticipation));
 
-            log.info("Finished >> assessmentDashboardLoopIteration << call for exercise " + exercise.getId() + " in " + TimeLogUtil.formatDurationFrom(start2));
+            log.info("Finished >> assessmentDashboardLoopIteration << call for exercise {} in {}", exercise.getId(), TimeLogUtil.formatDurationFrom(start2));
         }
-        log.info("Finished >> generateStatisticsForExercisesForAssessmentDashboard << call in " + TimeLogUtil.formatDurationFrom(startComplete));
+        log.info("Finished >> generateStatisticsForExercisesForAssessmentDashboard << call in {}", TimeLogUtil.formatDurationFrom(startComplete));
     }
 
     /**

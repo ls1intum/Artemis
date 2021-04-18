@@ -453,4 +453,8 @@ export class MarkdownEditorComponent implements AfterViewInit {
             }
         });
     }
+
+    markdownTextChange(value: {}) {
+        this.markdownChange.emit(value as string);
+    }
 }

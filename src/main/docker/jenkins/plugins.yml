@@ -1,0 +1,12 @@
+# Third-party plugins required by Artemis.
+plugins:
+  - artifactId: matrix-auth
+  - artifactId: docker-workflow
+  - artifactId: gitlab-plugin
+  - artifactId: pipeline-maven
+  - artifactId: timestamper
+  - artifactId: configuration-as-code
+  - artifactId: ws-cleanup
+  - artifactId: test-notifications
+    source:
+        url: https://github.com/ls1intum/jenkins-server-notification-plugin/releases/latest/download/test-notifications.hpi

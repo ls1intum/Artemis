@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.authentication;
 
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
+import static org.assertj.core.api.AssertionsForClassTypes.*;
 
 import java.util.HashMap;
 import java.util.List;
@@ -39,13 +38,13 @@ public class UserSaml2IntegrationTest extends AbstractSpringIntegrationSaml2Test
     private static final String STUDENT_PASSWORD = "test123";
 
     @Autowired
-    TokenProvider tokenProvider;
+    private TokenProvider tokenProvider;
 
     @Autowired
-    UserRepository userRepository;
+    private UserRepository userRepository;
 
     @Autowired
-    PasswordService passwordService;
+    private PasswordService passwordService;
 
     /**
      * This test checks the creation of a new SAML2 authenticated user.

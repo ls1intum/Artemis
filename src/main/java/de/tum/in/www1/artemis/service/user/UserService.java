@@ -1,14 +1,10 @@
 package de.tum.in.www1.artemis.service.user;
 
 import static de.tum.in.www1.artemis.domain.Authority.ADMIN_AUTHORITY;
-import static de.tum.in.www1.artemis.security.AuthoritiesConstants.ADMIN;
-import static de.tum.in.www1.artemis.security.AuthoritiesConstants.USER;
+import static de.tum.in.www1.artemis.security.Role.*;
 
 import java.time.Instant;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -26,10 +22,7 @@ import de.tum.in.www1.artemis.domain.GuidedTourSetting;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
 import de.tum.in.www1.artemis.exception.UsernameAlreadyUsedException;
-import de.tum.in.www1.artemis.repository.AuthorityRepository;
-import de.tum.in.www1.artemis.repository.GuidedTourSettingsRepository;
-import de.tum.in.www1.artemis.repository.StudentScoreRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.connectors.CIUserManagementService;
@@ -114,15 +107,15 @@ public class UserService {
                 SecurityUtils.setAuthorizationObject();
                 Optional<User> existingInternalAdmin = userRepository.findOneWithGroupsAndAuthoritiesByLogin(artemisInternalAdminUsername.get());
                 if (existingInternalAdmin.isPresent()) {
-                    log.info("Update internal admin user " + artemisInternalAdminUsername.get());
+                    log.info("Update internal admin user {}", artemisInternalAdminUsername.get());
                     existingInternalAdmin.get().setPassword(passwordService.encodePassword(artemisInternalAdminPassword.get()));
                     // needs to be mutable --> new HashSet<>(Set.of(...))
-                    existingInternalAdmin.get().setAuthorities(new HashSet<>(Set.of(ADMIN_AUTHORITY, new Authority(USER))));
+                    existingInternalAdmin.get().setAuthorities(new HashSet<>(Set.of(ADMIN_AUTHORITY, new Authority(STUDENT.getAuthority()))));
                     saveUser(existingInternalAdmin.get());
                     updateUserInConnectorsAndAuthProvider(existingInternalAdmin.get(), existingInternalAdmin.get().getLogin(), existingInternalAdmin.get().getGroups());
                 }
                 else {
-                    log.info("Create internal admin user " + artemisInternalAdminUsername.get());
+                    log.info("Create internal admin user {}", artemisInternalAdminUsername.get());
                     ManagedUserVM userDto = new ManagedUserVM();
                     userDto.setLogin(artemisInternalAdminUsername.get());
                     userDto.setPassword(artemisInternalAdminPassword.get());
@@ -134,14 +127,14 @@ public class UserService {
                     userDto.setCreatedBy("system");
                     userDto.setLastModifiedBy("system");
                     // needs to be mutable --> new HashSet<>(Set.of(...))
-                    userDto.setAuthorities(new HashSet<>(Set.of(ADMIN, USER)));
+                    userDto.setAuthorities(new HashSet<>(Set.of(ADMIN.getAuthority(), STUDENT.getAuthority())));
                     userDto.setGroups(new HashSet<>());
                     userCreationService.createUser(userDto);
                 }
             }
         }
         catch (Exception ex) {
-            log.error("An error occurred after application startup when creating or updating the admin user or in the LDAP search: " + ex.getMessage(), ex);
+            log.error("An error occurred after application startup when creating or updating the admin user or in the LDAP search", ex);
         }
     }
 
@@ -188,7 +181,7 @@ public class UserService {
      */
     public User saveUser(User user) {
         clearUserCaches(user);
-        log.debug("Save user " + user);
+        log.debug("Save user {}", user);
         return userRepository.save(user);
     }
 
@@ -241,7 +234,7 @@ public class UserService {
         // new user gets registration key
         newUser.setActivationKey(RandomUtil.generateActivationKey());
         Set<Authority> authorities = new HashSet<>();
-        authorityRepository.findById(USER).ifPresent(authorities::add);
+        authorityRepository.findById(STUDENT.getAuthority()).ifPresent(authorities::add);
         newUser.setAuthorities(authorities);
         saveUser(newUser);
         // we need to save first so that the user can be found in the database in the subsequent method
@@ -284,7 +277,7 @@ public class UserService {
             Optional<LdapUserDto> ldapUserOptional = ldapUserService.get().findByRegistrationNumber(registrationNumber);
             if (ldapUserOptional.isPresent()) {
                 LdapUserDto ldapUser = ldapUserOptional.get();
-                log.info("Ldap User " + ldapUser.getUsername() + " has registration number: " + ldapUser.getRegistrationNumber());
+                log.info("Ldap User {} has registration number: {}", ldapUser.getUsername(), ldapUser.getRegistrationNumber());
 
                 // handle edge case, the user already exists in Artemis, but for some reason does not have a registration number or it is wrong
                 if (StringUtils.hasText(ldapUser.getUsername())) {
@@ -305,7 +298,7 @@ public class UserService {
                 return Optional.of(user);
             }
             else {
-                log.warn("Ldap User with registration number " + registrationNumber + " not found");
+                log.warn("Ldap User with registration number {} not found", registrationNumber);
             }
         }
         return Optional.empty();
@@ -453,9 +446,9 @@ public class UserService {
      * @param groupName the group that should be removed from all existing users
      */
     public void removeGroupFromUsers(String groupName) {
-        log.info("Remove group " + groupName + " from users");
+        log.info("Remove group {} from users", groupName);
         List<User> users = userRepository.findAllInGroupWithAuthorities(groupName);
-        log.info("Found " + users.size() + " users with group " + groupName);
+        log.info("Found {} users with group {}", users.size(), groupName);
         for (User user : users) {
             user.getGroups().remove(groupName);
             saveUser(user);
@@ -488,7 +481,7 @@ public class UserService {
      * @param group the group
      */
     private void addUserToGroupInternal(User user, String group) {
-        log.debug("Add user " + user.getLogin() + " to group " + group);
+        log.debug("Add user {} to group {}", user.getLogin(), group);
         if (!user.getGroups().contains(group)) {
             user.getGroups().add(group);
             user.setAuthorities(authorityService.buildAuthorities(user));
@@ -520,7 +513,7 @@ public class UserService {
      * @param group the group
      */
     private void removeUserFromGroupInternal(User user, String group) {
-        log.info("Remove user " + user.getLogin() + " from group " + group);
+        log.info("Remove user {} from group {}", user.getLogin(), group);
         if (user.getGroups().contains(group)) {
             user.getGroups().remove(group);
             user.setAuthorities(authorityService.buildAuthorities(user));

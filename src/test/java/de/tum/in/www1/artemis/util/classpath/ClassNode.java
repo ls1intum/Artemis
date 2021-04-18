@@ -54,7 +54,6 @@ public class ClassNode extends ClassPathNode {
     }
 
     @Override
-    @SuppressWarnings("unchecked")
     public <N, C extends N, P extends N> C mapTreeAdvanced(Function<ClassNode, C> classMapper, TriFunction<PackageNode, Stream<P>, Stream<C>, P> packageMapper) {
         return classMapper.apply(this);
     }

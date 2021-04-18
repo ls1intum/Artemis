@@ -53,5 +53,6 @@ export class AttachmentUnitComponent implements OnInit {
                     return 'file';
             }
         }
+        return 'file';
     }
 }

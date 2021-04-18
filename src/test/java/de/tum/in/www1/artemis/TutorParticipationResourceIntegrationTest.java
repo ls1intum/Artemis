@@ -64,7 +64,7 @@ public class TutorParticipationResourceIntegrationTest extends AbstractSpringInt
             exercise.setTitle("Patterns in Software Engineering");
             exerciseRepository.save(exercise);
         }
-        request.delete("/api/guided-tour/exercises/" + exercise.getId() + "/exampleSubmission", HttpStatus.OK);
+        request.delete("/api/guided-tour/exercises/" + exercise.getId() + "/example-submission", HttpStatus.OK);
         assertThat(tutorParticipationRepository.findAll().size()).as("Removed tutor participation").isEqualTo(4);
     }
 
@@ -73,18 +73,18 @@ public class TutorParticipationResourceIntegrationTest extends AbstractSpringInt
     public void testRemoveTutorParticipationForGuidedTour_noMatchingExercise() throws Exception {
         exercise.setTitle("Patterns in Software Engineering");
         exerciseRepository.save(exercise);
-        request.delete("/api/guided-tour/exercises/" + exercise.getId() + "/exampleSubmission", HttpStatus.OK);
+        request.delete("/api/guided-tour/exercises/" + exercise.getId() + "/example-submission", HttpStatus.OK);
         assertThat(tutorParticipationRepository.findAll().size()).as("Does not remove tutor participation with wrong assessedExercise").isEqualTo(5);
     }
 
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
     public void testRemoveTutorParticipationForGuidedTour_forbidden() throws Exception {
-        request.delete("/api/guided-tour/exercises/" + exercise.getId() + "/exampleSubmission", HttpStatus.FORBIDDEN);
+        request.delete("/api/guided-tour/exercises/" + exercise.getId() + "/example-submission", HttpStatus.FORBIDDEN);
 
         exercise.setTitle("Patterns in Software Engineering");
         exerciseRepository.save(exercise);
-        request.delete("/api/guided-tour/exercises/" + exercise.getId() + "/exampleSubmission", HttpStatus.OK);
+        request.delete("/api/guided-tour/exercises/" + exercise.getId() + "/example-submission", HttpStatus.OK);
         assertThat(tutorParticipationRepository.findAll().size()).as("Does not remove tutor participation with wrong assessedExercise").isEqualTo(5);
     }
 }
