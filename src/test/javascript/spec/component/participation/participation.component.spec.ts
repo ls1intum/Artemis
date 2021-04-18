@@ -130,7 +130,7 @@ describe('ParticipationComponent', () => {
         // Returns undefined for no student and no team
         participation.student = undefined;
         participation.team = undefined;
-        expect(component.searchResultFormatter(participation)).to.be.undefined;
+        expect(component.searchResultFormatter(participation)).to.equal('123');
     });
 
     it('should return student login, team short name, or empty from participation', () => {
