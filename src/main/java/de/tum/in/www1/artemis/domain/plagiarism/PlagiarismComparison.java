@@ -18,7 +18,7 @@ import jplag.JPlagComparison;
  */
 @Entity
 @Table(name = "plagiarism_comparison")
-public class PlagiarismComparison<E extends PlagiarismSubmissionElement> extends DomainObject implements Comparable {
+public class PlagiarismComparison<E extends PlagiarismSubmissionElement> extends DomainObject implements Comparable<PlagiarismComparison<E>> {
 
     /**
      * The result this comparison belongs to.
@@ -129,7 +129,7 @@ public class PlagiarismComparison<E extends PlagiarismSubmissionElement> extends
     }
 
     @Override
-    public int compareTo(@NotNull Object o) {
-        return Double.compare(similarity, ((PlagiarismComparison) o).similarity);
+    public int compareTo(@NotNull PlagiarismComparison<E> otherComparison) {
+        return Double.compare(similarity, otherComparison.similarity);
     }
 }
