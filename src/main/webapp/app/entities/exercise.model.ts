@@ -15,6 +15,7 @@ import { DueDateStat } from 'app/course/dashboards/instructor-course-dashboard/d
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { LearningGoal } from 'app/entities/learningGoal.model';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
+import { ExerciseCategory } from 'app/entities/exercise-category.model';
 
 export enum DifficultyLevel {
     EASY = 'EASY',
@@ -59,12 +60,6 @@ export enum ParticipationStatus {
     EXERCISE_MISSED = 'exercise-missed',
 }
 
-export interface ExerciseCategory {
-    exerciseId: number;
-    category: string;
-    color: string;
-}
-
 export abstract class Exercise implements BaseEntity {
     public id?: number;
     public problemStatement?: string;
@@ -81,7 +76,7 @@ export abstract class Exercise implements BaseEntity {
     public mode?: ExerciseMode = ExerciseMode.INDIVIDUAL; // default value
     public includedInOverallScore?: IncludedInOverallScore = IncludedInOverallScore.INCLUDED_COMPLETELY; // default value
     public teamAssignmentConfig?: TeamAssignmentConfig;
-    public categories?: string[];
+    public categories?: ExerciseCategory[];
     public type?: ExerciseType;
 
     public teams?: Team[];

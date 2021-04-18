@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, OnInit } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
@@ -52,10 +52,11 @@ export interface ExampleSubmissionQueryParams {
     styles: ['jhi-collapsable-assessment-instructions { max-height: 100vh }'],
     providers: [CourseManagementService],
 })
-export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewInit {
+export class ExerciseAssessmentDashboardComponent implements OnInit {
     readonly round = round;
     exercise: Exercise;
     modelingExercise: ModelingExercise;
+    programmingExercise: ProgrammingExercise;
     courseId: number;
     exam?: Exam;
     examId: number;
@@ -174,13 +175,6 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
     }
 
     /**
-     * Notifies the guided tour service that this component has loaded
-     */
-    ngAfterViewInit(): void {
-        this.guidedTourService.componentPageLoaded();
-    }
-
-    /**
      * Loads all information from the server regarding this exercise that is needed for the tutor exercise dashboard
      */
     loadAll() {
@@ -208,6 +202,9 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
                     case ExerciseType.FILE_UPLOAD:
                         const fileUploadExercise = this.exercise as FileUploadExercise;
                         this.formattedSampleSolution = this.artemisMarkdown.safeHtmlForMarkdown(fileUploadExercise.sampleSolution);
+                        break;
+                    case ExerciseType.PROGRAMMING:
+                        this.programmingExercise = this.exercise as ProgrammingExercise;
                         break;
                 }
 
@@ -245,6 +242,8 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
                 if ((!this.exercise.dueDate || this.exercise.dueDate.isBefore(Date.now())) && !this.exercise.teamMode && !this.isTestRun) {
                     this.getSubmissionWithoutAssessmentForAllCorrectionrounds();
                 }
+                // load the guided tour step only after everything else on the page is loaded
+                this.guidedTourService.componentPageLoaded();
             },
             (response: string) => this.onError(response),
         );
@@ -605,14 +604,6 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
         submission.participation = complaint.result?.participation;
         // numberOfAssessmentsOfCorrectionRounds size is the number of correction rounds
         this.openAssessmentEditor(submission, this.numberOfAssessmentsOfCorrectionRounds.length - 1);
-    }
-
-    /**
-     * Casts an Exercise to a ProgrammingExercise
-     * @param exercise Exercise to cast
-     */
-    asProgrammingExercise(exercise: Exercise) {
-        return exercise as ProgrammingExercise;
     }
 
     toggleSecondCorrection() {

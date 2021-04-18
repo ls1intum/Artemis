@@ -26,9 +26,7 @@ import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.exam.ExamDateService;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
-import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
 import de.tum.in.www1.artemis.web.rest.dto.StatsForDashboardDTO;
-import de.tum.in.www1.artemis.web.rest.dto.TutorLeaderboardDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
@@ -60,23 +58,13 @@ public class ExerciseResource {
 
     private final TutorParticipationService tutorParticipationService;
 
-    private final SubmissionRepository submissionRepository;
-
     private final ExamDateService examDateService;
-
-    private final TutorLeaderboardService tutorLeaderboardService;
-
-    private final ProgrammingExerciseRepository programmingExerciseRepository;
 
     private final GradingCriterionRepository gradingCriterionRepository;
 
     private final ComplaintRepository complaintRepository;
 
-    private final ComplaintResponseRepository complaintResponseRepository;
-
     private final ExampleSubmissionRepository exampleSubmissionRepository;
-
-    private final ResultRepository resultRepository;
 
     public ExerciseResource(ExerciseService exerciseService, ParticipationService participationService, UserRepository userRepository, ExamDateService examDateService,
             AuthorizationCheckService authCheckService, TutorParticipationService tutorParticipationService, ExampleSubmissionRepository exampleSubmissionRepository,
@@ -90,14 +78,9 @@ public class ExerciseResource {
         this.tutorParticipationService = tutorParticipationService;
         this.exampleSubmissionRepository = exampleSubmissionRepository;
         this.complaintRepository = complaintRepository;
-        this.submissionRepository = submissionRepository;
-        this.complaintResponseRepository = complaintResponseRepository;
-        this.tutorLeaderboardService = tutorLeaderboardService;
-        this.programmingExerciseRepository = programmingExerciseRepository;
         this.gradingCriterionRepository = gradingCriterionRepository;
         this.examDateService = examDateService;
         this.exerciseRepository = exerciseRepository;
-        this.resultRepository = resultRepository;
     }
 
     /**
@@ -231,94 +214,9 @@ public class ExerciseResource {
             return forbidden();
         }
 
-        StatsForDashboardDTO stats = populateCommonStatistics(exercise, exercise.isExamExercise());
+        StatsForDashboardDTO stats = exerciseService.populateCommonStatistics(exercise, exercise.isExamExercise());
 
         return ResponseEntity.ok(stats);
-    }
-
-    /**
-     * Given an exercise exerciseId, it creates an object node with numberOfSubmissions, totalNumberOfAssessments, numberOfComplaints and numberOfMoreFeedbackRequests, that are used by both
-     * stats for assessment dashboard and for instructor dashboard
-     * TODO: refactor and improve this method
-     *
-     * @param exercise - the exercise we are interested in
-     * @param examMode - flag to determine if test run submissions should be deducted from the statistics
-     * @return a object node with the stats
-     */
-    private StatsForDashboardDTO populateCommonStatistics(Exercise exercise, boolean examMode) {
-        final Long exerciseId = exercise.getId();
-        StatsForDashboardDTO stats = new StatsForDashboardDTO();
-
-        Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
-
-        DueDateStat numberOfSubmissions;
-        DueDateStat totalNumberOfAssessments;
-
-        if (exercise instanceof ProgrammingExercise) {
-            numberOfSubmissions = new DueDateStat(programmingExerciseRepository.countLegalSubmissionsByExerciseIdSubmitted(exerciseId, examMode), 0L);
-            totalNumberOfAssessments = new DueDateStat(programmingExerciseRepository.countAssessmentsByExerciseIdSubmitted(exerciseId, examMode), 0L);
-        }
-        else {
-            numberOfSubmissions = submissionRepository.countSubmissionsForExercise(exerciseId, examMode);
-            totalNumberOfAssessments = resultRepository.countNumberOfFinishedAssessmentsForExercise(exerciseId, examMode);
-        }
-
-        stats.setNumberOfSubmissions(numberOfSubmissions);
-        stats.setTotalNumberOfAssessments(totalNumberOfAssessments);
-
-        final DueDateStat[] numberOfAssessmentsOfCorrectionRounds;
-        int numberOfCorrectionRounds = 1;
-        if (examMode) {
-            // set number of corrections specific to each correction round
-            numberOfCorrectionRounds = exercise.getExerciseGroup().getExam().getNumberOfCorrectionRoundsInExam();
-            numberOfAssessmentsOfCorrectionRounds = resultRepository.countNumberOfFinishedAssessmentsForExamExerciseForCorrectionRounds(exercise, numberOfCorrectionRounds);
-        }
-        else {
-            // no examMode here, so correction rounds defaults to 1 and is the same as totalNumberOfAssessments
-            numberOfAssessmentsOfCorrectionRounds = new DueDateStat[] { totalNumberOfAssessments };
-        }
-
-        stats.setNumberOfAssessmentsOfCorrectionRounds(numberOfAssessmentsOfCorrectionRounds);
-
-        final DueDateStat[] numberOfLockedAssessmentByOtherTutorsOfCorrectionRound;
-        numberOfLockedAssessmentByOtherTutorsOfCorrectionRound = resultRepository.countNumberOfLockedAssessmentsByOtherTutorsForExamExerciseForCorrectionRounds(exercise,
-                numberOfCorrectionRounds, userRepository.getUserWithGroupsAndAuthorities());
-        stats.setNumberOfLockedAssessmentByOtherTutorsOfCorrectionRound(numberOfLockedAssessmentByOtherTutorsOfCorrectionRound);
-
-        final DueDateStat numberOfAutomaticAssistedAssessments = resultRepository.countNumberOfAutomaticAssistedAssessmentsForExercise(exerciseId);
-        stats.setNumberOfAutomaticAssistedAssessments(numberOfAutomaticAssistedAssessments);
-
-        final long numberOfMoreFeedbackRequests = complaintRepository.countComplaintsByExerciseIdAndComplaintType(exerciseId, ComplaintType.MORE_FEEDBACK);
-        stats.setNumberOfMoreFeedbackRequests(numberOfMoreFeedbackRequests);
-
-        long numberOfComplaints;
-        if (examMode) {
-            numberOfComplaints = complaintRepository.countByResultParticipationExerciseIdAndComplaintTypeIgnoreTestRuns(exerciseId, ComplaintType.COMPLAINT);
-        }
-        else {
-            numberOfComplaints = complaintRepository.countComplaintsByExerciseIdAndComplaintType(exerciseId, ComplaintType.COMPLAINT);
-        }
-        stats.setNumberOfComplaints(numberOfComplaints);
-
-        long numberOfComplaintResponses = complaintResponseRepository.countComplaintResponseByExerciseIdAndComplaintTypeAndSubmittedTimeIsNotNull(exerciseId,
-                ComplaintType.COMPLAINT);
-
-        stats.setNumberOfOpenComplaints(numberOfComplaints - numberOfComplaintResponses);
-
-        long numberOfMoreFeedbackComplaintResponses = complaintResponseRepository.countComplaintResponseByExerciseIdAndComplaintTypeAndSubmittedTimeIsNotNull(exerciseId,
-                ComplaintType.MORE_FEEDBACK);
-
-        stats.setNumberOfOpenMoreFeedbackRequests(numberOfMoreFeedbackRequests - numberOfMoreFeedbackComplaintResponses);
-
-        List<TutorLeaderboardDTO> leaderboardEntries = tutorLeaderboardService.getExerciseLeaderboard(exercise);
-        stats.setTutorLeaderboardEntries(leaderboardEntries);
-        final long totalNumberOfAssessmentLocks = submissionRepository.countLockedSubmissionsByExerciseId(exerciseId);
-        stats.setTotalNumberOfAssessmentLocks(totalNumberOfAssessmentLocks);
-
-        stats.setFeedbackRequestEnabled(course.getComplaintsEnabled());
-        stats.setFeedbackRequestEnabled(course.getRequestMoreFeedbackEnabled());
-
-        return stats;
     }
 
     /**
@@ -334,7 +232,7 @@ public class ExerciseResource {
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
 
-        StatsForDashboardDTO stats = populateCommonStatistics(exercise, exercise.isExamExercise());
+        StatsForDashboardDTO stats = exerciseService.populateCommonStatistics(exercise, exercise.isExamExercise());
         long numberOfOpenComplaints = complaintRepository.countComplaintsByExerciseIdAndComplaintType(exerciseId, ComplaintType.COMPLAINT);
         stats.setNumberOfOpenComplaints(numberOfOpenComplaints);
 

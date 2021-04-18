@@ -57,7 +57,7 @@
         jhiDeleteButton
         [buttonSize]="ButtonSize.MEDIUM"
         [actionType]="ActionType.Cleanup"
-        [entityTitle]="course.title"
+        [entityTitle]="course.title!"
         deleteQuestion="artemisApp.course.cleanup.question"
         (delete)="cleanupCourse()"
         [dialogError]="dialogError$"

@@ -572,4 +572,40 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
         }
         return totalPoints;
     }
+
+    /**
+     * Get the latest result from the database by participation id together with the list of feedback items.
+     *
+     * @param participationId the id of the participation to load from the database
+     * @param withSubmission determines whether the submission should also be fetched
+     * @return an optional result (might exist or not).
+     */
+    default Optional<Result> findLatestResultWithFeedbacksForParticipation(Long participationId, boolean withSubmission) {
+        if (withSubmission) {
+            return findFirstWithSubmissionAndFeedbacksByParticipationIdOrderByCompletionDateDesc(participationId);
+        }
+        else {
+            return findFirstWithFeedbacksByParticipationIdOrderByCompletionDateDesc(participationId);
+        }
+    }
+
+    /**
+     * Get a result from the database by its id,
+     *
+     * @param resultId the id of the result to load from the database
+     * @return the result
+     */
+    default Result findOne(long resultId) {
+        return findById(resultId).orElseThrow(() -> new EntityNotFoundException("Result", resultId));
+    }
+
+    /**
+     * Get a result from the database by its id together with the associated submission and the list of feedback items.
+     *
+     * @param resultId the id of the result to load from the database
+     * @return the result with submission and feedback list
+     */
+    default Result findOneWithEagerSubmissionAndFeedback(long resultId) {
+        return findWithEagerSubmissionAndFeedbackById(resultId).orElseThrow(() -> new EntityNotFoundException("Result with id: \"" + resultId + "\" does not exist"));
+    }
 }

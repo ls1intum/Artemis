@@ -19,7 +19,7 @@ import { Exercise } from 'app/entities/exercise.model';
 export class ComplaintsComponent implements OnInit {
     @Input() exercise: Exercise;
     @Input() resultId: number;
-    @Input() examId: number;
+    @Input() examId?: number;
     @Input() allowedComplaints: number; // the number of complaints that a student can still submit in the course
     @Input() maxComplaintsPerCourse: number;
     @Input() complaintType: ComplaintType;
