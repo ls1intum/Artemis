@@ -17,7 +17,10 @@
                 [navigateTo]="'learningGoalManagement'"
             ></jhi-learning-goals-popover>
         </div>
-        <div class="col-9 mx-auto col-md-7 offset-md-2" [ngSwitch]="lectureUnit.type">
+        <div class="col-1 my-auto mx-auto">
+            <jhi-lecture-unit-more-info-popup [lectureUnit]="lectureUnit"></jhi-lecture-unit-more-info-popup>
+        </div>
+        <div class="col-8 mx-auto col-md-7 offset-md-1" [ngSwitch]="lectureUnit.type">
             <jhi-exercise-unit *ngSwitchCase="LectureUnitType.EXERCISE" [exerciseUnit]="lectureUnit" [isPresentationMode]="true" [course]="lecture.course!"></jhi-exercise-unit>
             <jhi-attachment-unit *ngSwitchCase="LectureUnitType.ATTACHMENT" [attachmentUnit]="lectureUnit"></jhi-attachment-unit>
             <jhi-video-unit *ngSwitchCase="LectureUnitType.VIDEO" [videoUnit]="lectureUnit"></jhi-video-unit>
@@ -60,7 +63,7 @@
 
     <!-- Unit Creation Card Row-->
     <div class="row">
-        <div class="col-10 col-md-8 offset-md-2 mx-auto">
+        <div class="col-12 mx-auto">
             <jhi-unit-creation-card></jhi-unit-creation-card>
         </div>
     </div>
