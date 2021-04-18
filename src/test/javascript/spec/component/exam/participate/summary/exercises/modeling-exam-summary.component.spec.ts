@@ -55,7 +55,7 @@ describe('ModelingExamSummaryComponent', () => {
         expect(modelingEditorComponent.diagramType).to.equal(UMLDiagramType.ClassDiagram);
         expect(modelingEditorComponent.umlModel).to.deep.equal({ model: true });
         expect(modelingEditorComponent.readOnly).to.equal(true);
-        expect(modelingEditorComponent.withExplanation).to.equal(mockSubmission.explanationText);
+        expect(modelingEditorComponent.withExplanation).to.equal(!!mockSubmission.explanationText);
         expect(modelingEditorComponent.explanation).to.equal(mockSubmission.explanationText);
     });
 });

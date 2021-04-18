@@ -70,7 +70,7 @@ export class ComplaintService implements IComplaintService {
      * @param complaint
      * @param examId the Id of the exam
      */
-    create(complaint: Complaint, examId: number): Observable<EntityResponseType> {
+    create(complaint: Complaint, examId?: number): Observable<EntityResponseType> {
         const copy = this.convertDateFromClient(complaint);
         if (examId) {
             return this.http

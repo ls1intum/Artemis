@@ -461,8 +461,8 @@ public class DatabaseUtilService {
         return courseRepo.save(course);
     }
 
-    public List<Course> createCoursesWithExercisesAndLecturesAndLectureUnits(boolean withParticiptions) throws Exception {
-        List<Course> courses = this.createCoursesWithExercisesAndLectures(withParticiptions);
+    public List<Course> createCoursesWithExercisesAndLecturesAndLectureUnits(boolean withParticipations) throws Exception {
+        List<Course> courses = this.createCoursesWithExercisesAndLectures(withParticipations);
         Course course1 = this.courseRepo.findByIdWithExercisesAndLecturesElseThrow(courses.get(0).getId());
         Lecture lecture1 = course1.getLectures().stream().findFirst().get();
         TextExercise textExercise = textExerciseRepository.findByCourseId(course1.getId()).stream().findFirst().get();
@@ -731,7 +731,7 @@ public class DatabaseUtilService {
         studentQuestion4.setVisibleForStudents(true);
         studentQuestion4.setAuthor(getUserByLoginWithoutAuthorities("student2"));
         studentQuestionRepository.save(studentQuestion4);
-        studentQuestions.add(studentQuestion2);
+        studentQuestions.add(studentQuestion4);
 
         return studentQuestions;
     }
@@ -2060,14 +2060,14 @@ public class DatabaseUtilService {
         return submission;
     }
 
-    private Result generateResult(Submission submission, User currentUser) {
+    public Result generateResult(Submission submission, User assessor) {
         Result result = new Result();
         result = resultRepo.save(result);
         result.setSubmission(submission);
         result.completionDate(pastTimestamp);
         result.resultString("3 of 10 points");
         result.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
-        result.setAssessor(currentUser);
+        result.setAssessor(assessor);
         return result;
     }
 
@@ -3078,6 +3078,40 @@ public class DatabaseUtilService {
         params.add("minimumScore", String.valueOf(minimumScore));
         params.add("minimumSize", String.valueOf(minimumSize));
         return params;
+    }
+
+    @NotNull
+    public Set<GradeStep> generateGradeStepSet(GradingScale gradingScale, boolean valid) {
+        GradeStep gradeStep1 = new GradeStep();
+        GradeStep gradeStep2 = new GradeStep();
+        GradeStep gradeStep3 = new GradeStep();
+
+        gradeStep1.setGradingScale(gradingScale);
+        gradeStep2.setGradingScale(gradingScale);
+        gradeStep3.setGradingScale(gradingScale);
+
+        gradeStep1.setPassingGrade(false);
+        gradeStep1.setGradeName("Fail");
+        gradeStep1.setLowerBoundPercentage(0);
+        gradeStep1.setUpperBoundPercentage(60);
+
+        gradeStep2.setPassingGrade(true);
+        gradeStep2.setGradeName("Pass");
+        gradeStep2.setLowerBoundPercentage(60);
+        if (valid) {
+            gradeStep2.setUpperBoundPercentage(90);
+        }
+        else {
+            gradeStep2.setUpperBoundPercentage(80);
+        }
+
+        gradeStep3.setPassingGrade(true);
+        gradeStep3.setGradeName("Excellent");
+        gradeStep3.setLowerBoundPercentage(90);
+        gradeStep3.setUpperBoundPercentage(100);
+        gradeStep3.setUpperBoundInclusive(true);
+
+        return Set.of(gradeStep1, gradeStep2, gradeStep3);
     }
 
     public Course createCourseWithTestModelingAndFileUploadExercisesAndSubmissions() throws Exception {

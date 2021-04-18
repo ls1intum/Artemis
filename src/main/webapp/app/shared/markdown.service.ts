@@ -138,7 +138,7 @@ export class ArtemisMarkdownService {
             tables: true,
             openLinksInNewWindow: true,
             backslashEscapesHTMLTags: true,
-            extensions: [...extensions, showdownKatex(), showdownHighlight(), ...addCSSClass],
+            extensions: [...extensions, showdownKatex(), showdownHighlight({ pre: true }), ...addCSSClass],
         });
         const html = converter.makeHtml(markdownText);
         const purifyParameters = {};

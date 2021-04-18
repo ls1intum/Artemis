@@ -61,6 +61,8 @@ public class TextAssessmentResource extends AssessmentResource {
 
     private final GradingCriterionRepository gradingCriterionRepository;
 
+    private final FeedbackRepository feedbackRepository;
+
     private final FeedbackConflictRepository feedbackConflictRepository;
 
     public TextAssessmentResource(AuthorizationCheckService authCheckService, TextAssessmentService textAssessmentService, TextBlockService textBlockService,
@@ -68,7 +70,7 @@ public class TextAssessmentResource extends AssessmentResource {
             TextSubmissionService textSubmissionService, WebsocketMessagingService messagingService, ExerciseRepository exerciseRepository, ResultRepository resultRepository,
             GradingCriterionRepository gradingCriterionRepository, Optional<AtheneTrackingTokenProvider> atheneTrackingTokenProvider, ExamService examService,
             Optional<AutomaticTextAssessmentConflictService> automaticTextAssessmentConflictService, FeedbackConflictRepository feedbackConflictRepository,
-            ExampleSubmissionRepository exampleSubmissionRepository, SubmissionRepository submissionRepository) {
+            ExampleSubmissionRepository exampleSubmissionRepository, SubmissionRepository submissionRepository, FeedbackRepository feedbackRepository) {
         super(authCheckService, userRepository, exerciseRepository, textAssessmentService, resultRepository, examService, messagingService, exampleSubmissionRepository,
                 submissionRepository);
 
@@ -81,6 +83,7 @@ public class TextAssessmentResource extends AssessmentResource {
         this.atheneTrackingTokenProvider = atheneTrackingTokenProvider;
         this.automaticTextAssessmentConflictService = automaticTextAssessmentConflictService;
         this.feedbackConflictRepository = feedbackConflictRepository;
+        this.feedbackRepository = feedbackRepository;
     }
 
     /**
@@ -262,16 +265,9 @@ public class TextAssessmentResource extends AssessmentResource {
 
         log.debug("REST request to get data for tutors text assessment submission: {}", submissionId);
 
-        final Optional<TextSubmission> optionalTextSubmission = textSubmissionRepository.findByIdWithEagerParticipationExerciseResultAssessor(submissionId);
-        if (optionalTextSubmission.isEmpty()) {
-            return ResponseEntity.badRequest()
-                    .headers(HeaderUtil.createFailureAlert(applicationName, true, "textSubmission", "textSubmissionNotFound", "No Submission was found for the given ID."))
-                    .body(null);
-        }
-
-        final TextSubmission textSubmission = optionalTextSubmission.get();
+        final var textSubmission = textSubmissionRepository.findByIdWithParticipationExerciseResultAssessorElseThrow(submissionId);
         final Participation participation = textSubmission.getParticipation();
-        final TextExercise exercise = (TextExercise) participation.getExercise();
+        final var exercise = participation.getExercise();
         final User user = userRepository.getUserWithGroupsAndAuthorities();
         checkAuthorization(exercise, user);
         final boolean isAtLeastInstructorForExercise = authCheckService.isAtLeastInstructorForExercise(exercise, user);
@@ -359,11 +355,10 @@ public class TextAssessmentResource extends AssessmentResource {
         final ExampleSubmission exampleSubmission = exampleSubmissionRepository.findBySubmissionIdWithResultsElseThrow(submissionId);
         Submission submission = exampleSubmission.getSubmission();
 
-        if (!(submission instanceof TextSubmission)) {
+        if (!(submission instanceof final TextSubmission textSubmission)) {
             return ResponseEntity.badRequest().body(null);
         }
 
-        final TextSubmission textSubmission = (TextSubmission) submission;
         final var textBlocks = textBlockService.findAllBySubmissionId(textSubmission.getId());
         textSubmission.setBlocks(textBlocks);
         if (textSubmission.getBlocks() == null || textSubmission.getBlocks().isEmpty()) {
@@ -374,7 +369,7 @@ public class TextAssessmentResource extends AssessmentResource {
         if (!Boolean.TRUE.equals(exampleSubmission.isUsedForTutorial()) || authCheckService.isAtLeastInstructorForExercise(textExercise, user)) {
             result = textSubmission.getLatestResult();
             if (result != null) {
-                final List<Feedback> assessments = textAssessmentService.getAssessmentsForResult(result);
+                final List<Feedback> assessments = feedbackRepository.findByResult(result);
                 result.setFeedbacks(assessments);
             }
         }
