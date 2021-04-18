@@ -12,13 +12,7 @@
                 "video": "Video",
                 "file": "Datei"
             },
-            "releaseDate": "Veröffentlichungsdatum",
-            "detailPopup": {
-                "title": "Eigenschaften",
-                "releaseDateNotSet": "Kein Veröffentlichungsdatum gesetzt!",
-                "releaseDateSet": "Veröffentlichkeitsdatum: ",
-                "attachmentVersion": "Dateiversion: "
-            }
+            "releaseDate": "Veröffentlichungsdatum"
         },
         "textUnit": {
             "created": "Eine neue Texteinheit erstellt",

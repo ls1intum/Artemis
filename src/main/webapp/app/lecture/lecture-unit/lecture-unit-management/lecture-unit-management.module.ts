@@ -20,7 +20,6 @@ import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown
 import { LectureUnitLayoutComponent } from './lecture-unit-layout/lecture-unit-layout.component';
 import { ArtemisLearningGoalsModule } from 'app/course/learning-goals/learning-goal.module';
 import { ArtemisLectureUnitsModule } from 'app/overview/course-lectures/lecture-units.module';
-import { LectureUnitMoreInfoPopupComponent } from './lecture-unit-more-info-popup/lecture-unit-more-info-popup.component';
 
 @NgModule({
     imports: [
@@ -47,7 +46,6 @@ import { LectureUnitMoreInfoPopupComponent } from './lecture-unit-more-info-popu
         TextUnitFormComponent,
         EditTextUnitComponent,
         LectureUnitLayoutComponent,
-        LectureUnitMoreInfoPopupComponent,
     ],
 })
 export class ArtemisLectureUnitManagementModule {}
