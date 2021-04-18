@@ -266,7 +266,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
         this.updateParticipation(submission.participation as StudentParticipation);
     }
 
-    onTextEditorTab(editor: HTMLTextAreaElement, event: KeyboardEvent) {
+    onTextEditorTab(editor: HTMLTextAreaElement, event: Event) {
         event.preventDefault();
         const value = editor.value;
         const start = editor.selectionStart;

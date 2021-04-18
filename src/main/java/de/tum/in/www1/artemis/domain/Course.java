@@ -123,10 +123,6 @@ public class Course extends DomainObject {
     @Column(name = "course_archive_path")
     private String courseArchivePath;
 
-    @OneToOne(mappedBy = "course", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    @JsonIgnoreProperties("course")
-    private GradingScale gradingScale;
-
     @OneToMany(mappedBy = "course", fetch = FetchType.LAZY)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonIgnoreProperties("course")
@@ -272,7 +268,7 @@ public class Course extends DomainObject {
     }
 
     public Boolean isOnlineCourse() {
-        return onlineCourse == null ? false : onlineCourse;
+        return Boolean.TRUE.equals(onlineCourse);
     }
 
     public void setOnlineCourse(Boolean onlineCourse) {
@@ -370,14 +366,6 @@ public class Course extends DomainObject {
         this.presentationScore = presentationScore;
     }
 
-    public GradingScale getGradingScale() {
-        return gradingScale;
-    }
-
-    public void setGradingScale(GradingScale gradingScale) {
-        this.gradingScale = gradingScale;
-    }
-
     public Set<Exercise> getExercises() {
         return exercises;
     }
@@ -396,10 +384,9 @@ public class Course extends DomainObject {
         return lectures;
     }
 
-    public Course addLectures(Lecture lecture) {
+    public void addLectures(Lecture lecture) {
         this.lectures.add(lecture);
         lecture.setCourse(this);
-        return this;
     }
 
     public void setLectures(Set<Lecture> lectures) {

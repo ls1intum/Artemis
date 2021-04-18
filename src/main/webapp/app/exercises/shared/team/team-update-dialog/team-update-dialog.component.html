@@ -83,7 +83,7 @@
             <jhi-team-owner-search
                 id="teamOwner"
                 [inputDisabled]="!exercise.isAtLeastInstructor"
-                [course]="exercise.course"
+                [course]="exercise.course!"
                 [exercise]="exercise"
                 [team]="team"
                 (selectOwner)="onSelectOwner($event)"
@@ -111,10 +111,10 @@
             </div>
             <jhi-team-student-search
                 id="teamStudents"
-                [course]="exercise.course"
+                [course]="exercise.course!"
                 [exercise]="exercise"
                 [team]="team"
-                [studentsFromPendingTeam]="pendingTeam.students"
+                [studentsFromPendingTeam]="pendingTeam.students || []"
                 (selectStudent)="onAddStudent($event)"
                 (searching)="searchingStudents = $event"
                 (searchQueryTooShort)="searchingStudentsQueryTooShort = $event"

@@ -1,6 +1,6 @@
 <div class="row justify-content-center">
     <div class="col-lg-8 col-sm-12">
-        <form name="editForm" role="form" novalidate (ngSubmit)="save()" #editForm="ngForm" (keydown.enter)="($event.target.tagName == 'TEXTAREA')">
+        <form name="editForm" role="form" novalidate (ngSubmit)="save()" #editForm="ngForm" (keydown.enter)="isEventInsideTextArea($event)">
             <h4 *ngIf="!programmingExercise.id" id="jhi-programming-exercise-heading-create" jhiTranslate="artemisApp.programmingExercise.home.generateLabel">
                 Generate new Programming Exercise
             </h4>
@@ -90,7 +90,7 @@
                         (ngModelChange)="select.value = onProgrammingLanguageChange($event)"
                         name="programmingLanguage"
                         id="field_programmingLanguage"
-                        [disabled]="isImport || programmingExercise.id"
+                        [disabled]="isImport || !!programmingExercise.id"
                     >
                         <option value="JAVA" *ngIf="supportsJava">Java</option>
                         <option value="PYTHON" *ngIf="supportsPython">Python</option>
@@ -114,7 +114,7 @@
                         (ngModelChange)="select.value = onProjectTypeChange($event)"
                         name="projectType"
                         id="field_projectType"
-                        [disabled]="isImport || programmingExercise.id"
+                        [disabled]="isImport || !!programmingExercise.id"
                     >
                         <option value="ECLIPSE" *ngIf="projectTypes.includes(ProjectType.ECLIPSE)">Eclipse</option>
                         <option value="MAVEN" *ngIf="projectTypes.includes(ProjectType.MAVEN)">Maven</option>
@@ -152,7 +152,7 @@
                 <div class="form-group">
                     <label class="form-control-label">{{ 'artemisApp.exercise.includedInOverallScoreLabel' | artemisTranslate }}</label>
                     <div>
-                        <jhi-included-in-overall-score-picker [(includedInOverallScore)]="programmingExercise.includedInOverallScore"></jhi-included-in-overall-score-picker>
+                        <jhi-included-in-overall-score-picker [(includedInOverallScore)]="programmingExercise.includedInOverallScore!"></jhi-included-in-overall-score-picker>
                     </div>
                 </div>
                 <div class="row">
@@ -163,8 +163,8 @@
                                 required
                                 type="number"
                                 class="form-control"
-                                customMin="1"
-                                customMax="9999"
+                                [customMin]="1"
+                                [customMax]="9999"
                                 name="points"
                                 id="field_points"
                                 [(ngModel)]="programmingExercise.maxPoints"
@@ -182,8 +182,8 @@
                                 type="number"
                                 [required]="programmingExercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_COMPLETELY"
                                 class="form-control"
-                                customMin="0"
-                                customMax="9999"
+                                [customMin]="0"
+                                [customMax]="9999"
                                 name="bonusPoints"
                                 id="field_bonusPoints"
                                 [(ngModel)]="programmingExercise.bonusPoints"
@@ -206,7 +206,7 @@
                             class="form-check-input custom-control-input"
                             id="field_staticCodeAnalysisEnabled"
                             name="staticCodeAnalysisEnabled"
-                            [disabled]="programmingExercise.sequentialTestRuns || (!isImport && programmingExercise.id)"
+                            [disabled]="!!programmingExercise.sequentialTestRuns || (!isImport && !!programmingExercise.id)"
                             [(ngModel)]="programmingExercise.staticCodeAnalysisEnabled"
                             (change)="onStaticCodeAnalysisChanged()"
                         />
@@ -267,17 +267,17 @@
                         </ngb-alert>
                         <jhi-programming-exercise-instructions
                             [exercise]="programmingExercise"
-                            [participation]="programmingExercise.templateParticipation"
+                            [participation]="programmingExercise.templateParticipation!"
                             [personalParticipation]="false"
                         >
                         </jhi-programming-exercise-instructions>
                     </ng-container>
                     <jhi-programming-exercise-editable-instructions
                         *ngIf="problemStatementLoaded && templateParticipationResultLoaded && !isImport"
-                        [participation]="programmingExercise.templateParticipation"
+                        [participation]="programmingExercise.templateParticipation!"
                         [(exercise)]="programmingExercise"
-                        [showStatus]="programmingExercise?.id"
-                        [editMode]="programmingExercise?.id"
+                        [showStatus]="!!programmingExercise?.id"
+                        [editMode]="!!programmingExercise?.id"
                         (hasUnsavedChanges)="hasUnsavedChanges = $event"
                         [forceRender]="rerenderSubject.asObservable()"
                         class="form__editable-instructions"
@@ -303,7 +303,7 @@
                                 type="checkbox"
                                 name="sequentialTestRuns"
                                 id="field_sequentialTestRuns"
-                                [disabled]="!!programmingExercise.id || programmingExercise.staticCodeAnalysisEnabled"
+                                [disabled]="!!programmingExercise.id || !!programmingExercise.staticCodeAnalysisEnabled"
                                 [(ngModel)]="programmingExercise.sequentialTestRuns"
                                 checked
                             />

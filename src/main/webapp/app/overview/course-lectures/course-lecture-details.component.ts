@@ -74,8 +74,8 @@ export class CourseLectureDetailsComponent implements OnInit {
         return attachment.link.split('.').pop()!;
     }
 
-    downloadAttachment(downloadUrl: string): void {
-        if (!this.isDownloadingLink) {
+    downloadAttachment(downloadUrl?: string): void {
+        if (!this.isDownloadingLink && downloadUrl) {
             this.isDownloadingLink = downloadUrl;
             this.fileService.downloadFileWithAccessToken(downloadUrl);
             this.isDownloadingLink = undefined;
