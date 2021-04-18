@@ -119,7 +119,7 @@ describe('ParticipationComponent', () => {
 
     it('should format student login or team name from participation', () => {
         const student: User = { guidedTourSettings: [], id: 1, login: 'student', name: 'Max' };
-        const participation: StudentParticipation = { student };
+        const participation: StudentParticipation = { id: 123, student };
         expect(component.searchResultFormatter(participation)).to.equal(`${student.login} (${student.name})`);
 
         const team: Team = { name: 'Team', shortName: 'T', students: [student] };
@@ -136,7 +136,7 @@ describe('ParticipationComponent', () => {
     it('should return student login, team short name, or empty from participation', () => {
         const student: User = { guidedTourSettings: [], id: 1, login: 'student', name: 'Max' };
         const team: Team = { name: 'Team', shortName: 'T', students: [student] };
-        const participation: StudentParticipation = { student, team };
+        const participation: StudentParticipation = { id: 123, student, team };
 
         expect(component.searchTextFromParticipation(participation)).to.be.equal(student.login);
 
