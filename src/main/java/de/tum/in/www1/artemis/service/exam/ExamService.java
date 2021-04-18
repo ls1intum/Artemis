@@ -90,8 +90,6 @@ public class ExamService {
 
     private final GroupNotificationService groupNotificationService;
 
-    private final GradingScaleService gradingScaleService;
-
     private final GradingScaleRepository gradingScaleRepository;
 
     public ExamService(ExamRepository examRepository, StudentExamRepository studentExamRepository, ExamQuizService examQuizService, ExerciseService exerciseService,
@@ -99,7 +97,7 @@ public class ExamService {
             StudentParticipationRepository studentParticipationRepository, ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository,
             UserRepository userRepository, ProgrammingExerciseRepository programmingExerciseRepository, QuizExerciseRepository quizExerciseRepository,
             ResultRepository resultRepository, SubmissionRepository submissionRepository, CourseExamExportService courseExamExportService, GitService gitService,
-            GroupNotificationService groupNotificationService, GradingScaleService gradingScaleService, GradingScaleRepository gradingScaleRepository) {
+            GroupNotificationService groupNotificationService, GradingScaleRepository gradingScaleRepository) {
         this.examRepository = examRepository;
         this.studentExamRepository = studentExamRepository;
         this.userRepository = userRepository;
@@ -118,7 +116,6 @@ public class ExamService {
         this.courseExamExportService = courseExamExportService;
         this.groupNotificationService = groupNotificationService;
         this.gitService = gitService;
-        this.gradingScaleService = gradingScaleService;
         this.gradingScaleRepository = gradingScaleRepository;
     }
 
@@ -186,7 +183,7 @@ public class ExamService {
     private void deleteGradingScaleOfExam(Exam exam) {
         // delete exam grading scale if it exists
         Optional<GradingScale> gradingScale = gradingScaleRepository.findByExamId(exam.getId());
-        gradingScale.ifPresent(gradingScaleService::delete);
+        gradingScale.ifPresent(gradingScaleRepository::delete);
     }
 
     /**

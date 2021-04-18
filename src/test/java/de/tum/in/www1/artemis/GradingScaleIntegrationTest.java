@@ -75,7 +75,7 @@ public class GradingScaleIntegrationTest extends AbstractSpringIntegrationBamboo
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGetGradingScaleForCourse() throws Exception {
-        courseGradingScale.setGradeSteps(null);
+        courseGradingScale.setGradeSteps(Set.of());
         gradingScaleRepository.save(courseGradingScale);
 
         GradingScale foundGradingScale = request.get("/api/courses/" + course.getId() + "/grading-scale", HttpStatus.OK, GradingScale.class);
@@ -102,7 +102,7 @@ public class GradingScaleIntegrationTest extends AbstractSpringIntegrationBamboo
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGetGradingScaleForExam() throws Exception {
-        examGradingScale.setGradeSteps(null);
+        examGradingScale.setGradeSteps(Set.of());
         gradingScaleRepository.save(examGradingScale);
 
         GradingScale foundGradingScale = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale", HttpStatus.OK, GradingScale.class);
@@ -131,7 +131,7 @@ public class GradingScaleIntegrationTest extends AbstractSpringIntegrationBamboo
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testSaveGradingScaleForCourseGradeStepsAreNotSet() throws Exception {
-        courseGradingScale.setGradeSteps(null);
+        courseGradingScale.setGradeSteps(Set.of());
 
         request.post("/api/courses/" + course.getId() + "/grading-scale", courseGradingScale, HttpStatus.BAD_REQUEST);
     }
@@ -157,7 +157,7 @@ public class GradingScaleIntegrationTest extends AbstractSpringIntegrationBamboo
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testSaveGradingScaleForExamGradeStepsAreNotSet() throws Exception {
-        examGradingScale.setGradeSteps(null);
+        examGradingScale.setGradeSteps(Set.of());
 
         request.post("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale", examGradingScale, HttpStatus.BAD_REQUEST);
     }
