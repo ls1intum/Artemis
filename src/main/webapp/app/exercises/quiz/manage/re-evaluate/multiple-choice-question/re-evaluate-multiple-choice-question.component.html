@@ -87,7 +87,7 @@
             </div>
         </div>
     </div>
-    <div class="answer-border" dnd-sortable-container [sortableData]="question.answerOptions">
+    <div class="answer-border" dnd-sortable-container [sortableData]="question.answerOptions || []">
         <div class="answer-border" *ngFor="let answer of question.answerOptions; let i = index" dnd-sortable [sortableIndex]="i">
             <div class="question-options">
                 <span class="answer-handle re-evaluate-order-button text-center" style="width: 5%" dnd-sortable-handle>
