@@ -19,6 +19,7 @@ import {
 } from 'app/overview/course-score-calculation.service';
 import { InitializationState } from 'app/entities/participation/participation.model';
 import { round } from 'app/shared/util/utils';
+import { ChartType } from 'chart.js';
 
 const QUIZ_EXERCISE_COLOR = '#17a2b8';
 const PROGRAMMING_EXERCISE_COLOR = '#fd7e14';
@@ -75,8 +76,8 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
 
     // this is not an actual exercise, it contains more entries
     // TODO: use a proper type here
-    groupedExercises: any[][] = [];
-    doughnutChartColors = [QUIZ_EXERCISE_COLOR, PROGRAMMING_EXERCISE_COLOR, MODELING_EXERCISE_COLOR, TEXT_EXERCISE_COLOR, FILE_UPLOAD_EXERCISE_COLOR, 'rgba(0, 0, 0, 0.5)'];
+    groupedExercises: any[] = [];
+    doughnutChartColors: any[] = [QUIZ_EXERCISE_COLOR, PROGRAMMING_EXERCISE_COLOR, MODELING_EXERCISE_COLOR, TEXT_EXERCISE_COLOR, FILE_UPLOAD_EXERCISE_COLOR, 'rgba(0, 0, 0, 0.5)'];
 
     public doughnutChartLabels: string[] = ['Quiz Points', 'Programming Points', 'Modeling Points', 'Text Points', 'File Upload Points', 'Missing Points'];
     public exerciseTitles: object = {
@@ -146,9 +147,9 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
             },
         },
     };
-    public barChartType = 'horizontalBar';
+    public barChartType: ChartType = 'horizontalBar';
 
-    public doughnutChartType = 'doughnut';
+    public doughnutChartType: ChartType = 'doughnut';
     public totalScoreOptions: object = {
         cutoutPercentage: 75,
         scaleShowVerticalLines: false,
