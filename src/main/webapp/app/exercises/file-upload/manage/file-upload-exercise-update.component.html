@@ -48,7 +48,7 @@
                             labelName="{{ 'artemisApp.exercise.dueDate' | artemisTranslate }}"
                             [(ngModel)]="fileUploadExercise.dueDate"
                             name="dueDate"
-                            [error]="fileUploadExercise.dueDateError"
+                            [error]="fileUploadExercise.dueDateError!"
                             (valueChange)="validateDate()"
                         ></jhi-date-time-picker>
                         <span *ngIf="fileUploadExercise.dueDateError" class="invalid-feedback">{{ 'artemisApp.exercise.dueDateError' | artemisTranslate }}</span>
@@ -57,7 +57,7 @@
                 <div class="form-group-narrow" *ngIf="!isExamMode">
                     <jhi-date-time-picker
                         name="assessmentDueDate"
-                        [error]="fileUploadExercise.assessmentDueDateError"
+                        [error]="fileUploadExercise.assessmentDueDateError!"
                         labelName="{{ 'artemisApp.exercise.assessmentDueDate' | artemisTranslate }}"
                         (valueChange)="validateDate()"
                         [(ngModel)]="fileUploadExercise.assessmentDueDate"
@@ -67,7 +67,7 @@
                 <div class="form-group">
                     <label class="form-control-label">{{ 'artemisApp.exercise.includedInOverallScoreLabel' | artemisTranslate }}</label>
                     <div>
-                        <jhi-included-in-overall-score-picker [(includedInOverallScore)]="fileUploadExercise.includedInOverallScore"></jhi-included-in-overall-score-picker>
+                        <jhi-included-in-overall-score-picker [(includedInOverallScore)]="fileUploadExercise.includedInOverallScore!"></jhi-included-in-overall-score-picker>
                     </div>
                 </div>
                 <div class="row">
@@ -78,8 +78,8 @@
                                 required
                                 type="number"
                                 class="form-control"
-                                customMin="1"
-                                customMax="9999"
+                                [customMin]="1"
+                                [customMax]="9999"
                                 name="points"
                                 id="field_points"
                                 [(ngModel)]="fileUploadExercise.maxPoints"
@@ -91,14 +91,14 @@
                         </div>
                     </div>
                     <div class="col">
-                        <div class="form-group" [hidden]="fileUploadExercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY">
+                        <div class="form-group" [hidden]="fileUploadExercise.includedInOverallScore! !== IncludedInOverallScore.INCLUDED_COMPLETELY">
                             <label class="form-control-label" jhiTranslate="artemisApp.exercise.bonusPoints" for="field_bonusPoints">Bonus Points</label>
                             <input
                                 type="number"
                                 [required]="fileUploadExercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_COMPLETELY"
                                 class="form-control"
-                                customMin="0"
-                                customMax="9999"
+                                [customMin]="0"
+                                [customMax]="9999"
                                 name="bonusPoints"
                                 id="field_bonusPoints"
                                 [(ngModel)]="fileUploadExercise.bonusPoints"

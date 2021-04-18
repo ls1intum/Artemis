@@ -52,6 +52,7 @@ import { MockCodeEditorBuildLogService } from '../../helpers/mocks/service/mock-
 import { ArtemisProgrammingParticipationModule } from 'app/exercises/programming/participate/programming-participation.module';
 import { CodeEditorContainerComponent } from 'app/exercises/programming/shared/code-editor/container/code-editor-container.component';
 import { omit } from 'lodash';
+import { ProgrammingLanguage } from 'app/entities/programming-exercise.model';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -214,7 +215,7 @@ describe('CodeEditorContainerIntegration', () => {
 
         // build output
         expect(getBuildLogsStub).to.have.been.calledOnce;
-        expect(container.buildOutput.rawBuildLogs.extractErrors()).to.deep.equal(extractedBuildLogErrors);
+        expect(container.buildOutput.rawBuildLogs.extractErrors(ProgrammingLanguage.JAVA)).to.deep.equal(extractedBuildLogErrors);
         expect(container.buildOutput.isBuilding).to.be.false;
 
         // instructions
@@ -291,7 +292,7 @@ describe('CodeEditorContainerIntegration', () => {
 
         // build output
         expect(getBuildLogsStub).to.have.been.calledOnce;
-        expect(container.buildOutput.rawBuildLogs.extractErrors()).to.deep.equal(extractedBuildLogErrors);
+        expect(container.buildOutput.rawBuildLogs.extractErrors(ProgrammingLanguage.JAVA)).to.deep.equal(extractedBuildLogErrors);
         expect(container.buildOutput.isBuilding).to.be.false;
 
         // instructions

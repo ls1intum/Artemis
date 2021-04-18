@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.stream.Collectors;
 
+import org.apache.http.HttpStatus;
+import org.apache.http.client.HttpResponseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -18,10 +20,7 @@ import org.w3c.dom.Document;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.offbytwo.jenkins.JenkinsServer;
 
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.exception.JenkinsException;
 import de.tum.in.www1.artemis.repository.UserRepository;
@@ -95,6 +94,7 @@ public class JenkinsBuildPlanService {
             case JAVA, KOTLIN, PYTHON, C, HASKELL, SWIFT -> jenkinsBuildPlanCreator;
             case VHDL -> throw new UnsupportedOperationException("VHDL templates are not available for Jenkins.");
             case ASSEMBLER -> throw new UnsupportedOperationException("Assembler templates are not available for Jenkins.");
+            case OCAML -> throw new UnsupportedOperationException("OCaml templates are not available for Jenkins.");
         };
     }
 
@@ -146,7 +146,17 @@ public class JenkinsBuildPlanService {
      */
     public void deleteBuildPlan(String projectKey, String planKey) {
         try {
-            jenkinsServer.deleteJob(jenkinsJobService.getFolderJob(projectKey), planKey, useCrumb);
+            var folderJob = jenkinsJobService.getFolderJob(projectKey);
+            if (folderJob != null) {
+                jenkinsServer.deleteJob(folderJob, planKey, useCrumb);
+            }
+        }
+        catch (HttpResponseException e) {
+            // We don't throw an exception if the build doesn't exist in Jenkins (404 status)
+            if (e.getStatusCode() != HttpStatus.SC_NOT_FOUND) {
+                log.error(e.getMessage(), e);
+                throw new JenkinsException("Error while trying to delete job in Jenkins: " + planKey, e);
+            }
         }
         catch (IOException e) {
             log.error(e.getMessage(), e);
@@ -179,7 +189,7 @@ public class JenkinsBuildPlanService {
             return isJobBuilding ? ContinuousIntegrationService.BuildStatus.BUILDING : ContinuousIntegrationService.BuildStatus.INACTIVE;
         }
         catch (NullPointerException | HttpClientErrorException e) {
-            log.error("Error while trying to fetch build status from Jenkins for " + planKey + ":" + e.getMessage());
+            log.error("Error while trying to fetch build status from Jenkins for {}: {}", planKey, e.getMessage());
             return ContinuousIntegrationService.BuildStatus.INACTIVE;
         }
     }

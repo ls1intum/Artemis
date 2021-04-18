@@ -1,8 +1,11 @@
 package de.tum.in.www1.artemis.domain.plagiarism.modeling;
 
+import javax.persistence.Entity;
+
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismSubmissionElement;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
 
+@Entity
 public class ModelingSubmissionElement extends PlagiarismSubmissionElement {
 
     private String modelElementId;

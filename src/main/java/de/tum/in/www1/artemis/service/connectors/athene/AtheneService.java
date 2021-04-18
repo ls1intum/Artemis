@@ -1,14 +1,12 @@
 package de.tum.in.www1.artemis.service.connectors.athene;
 
 import static de.tum.in.www1.artemis.config.Constants.ATHENE_RESULT_API_PATH;
-import static java.util.stream.Collectors.toList;
-import static java.util.stream.Collectors.toMap;
+import static java.util.stream.Collectors.*;
 
 import java.util.*;
 
 import javax.validation.constraints.NotNull;
 
-import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -20,11 +18,8 @@ import org.springframework.web.client.RestTemplate;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.exception.NetworkingError;
-import de.tum.in.www1.artemis.repository.TextBlockRepository;
-import de.tum.in.www1.artemis.repository.TextClusterRepository;
-import de.tum.in.www1.artemis.repository.TextExerciseRepository;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.TextAssessmentQueueService;
-import de.tum.in.www1.artemis.service.TextSubmissionService;
 import de.tum.in.www1.artemis.web.rest.dto.AtheneDTO;
 
 @Service
@@ -47,17 +42,17 @@ public class AtheneService {
 
     private final TextExerciseRepository textExerciseRepository;
 
-    private final TextSubmissionService textSubmissionService;
+    private final TextSubmissionRepository textSubmissionRepository;
 
     private final AtheneConnector<RequestDTO, ResponseDTO> connector;
 
     // Contains tasks submitted to Athene and currently processing
     private final List<Long> runningAtheneTasks = new ArrayList<>();
 
-    public AtheneService(TextSubmissionService textSubmissionService, TextBlockRepository textBlockRepository, TextClusterRepository textClusterRepository,
+    public AtheneService(TextSubmissionRepository textSubmissionRepository, TextBlockRepository textBlockRepository, TextClusterRepository textClusterRepository,
             TextExerciseRepository textExerciseRepository, TextAssessmentQueueService textAssessmentQueueService,
             @Qualifier("atheneRestTemplate") RestTemplate atheneRestTemplate) {
-        this.textSubmissionService = textSubmissionService;
+        this.textSubmissionRepository = textSubmissionRepository;
         this.textBlockRepository = textBlockRepository;
         this.textClusterRepository = textClusterRepository;
         this.textExerciseRepository = textExerciseRepository;
@@ -142,23 +137,23 @@ public class AtheneService {
      * @param maxRetries number of retries before the request will be canceled
      */
     public void submitJob(TextExercise exercise, int maxRetries) {
-        log.debug("Start Athene Service for Text Exercise \"" + exercise.getTitle() + "\" (#" + exercise.getId() + ").");
+        log.debug("Start Athene Service for Text Exercise '{}' (#{}).", exercise.getTitle(), exercise.getId());
 
         // Find all submissions for Exercise
         // We only support english languages so far, to prevent corruption of the clustering
-        List<TextSubmission> textSubmissions = textSubmissionService.getTextSubmissionsWithTextBlocksByExerciseIdAndLanguage(exercise.getId(), Language.ENGLISH);
+        List<TextSubmission> textSubmissions = textSubmissionRepository.getTextSubmissionsWithTextBlocksByExerciseIdAndLanguage(exercise.getId(), Language.ENGLISH);
 
         // Athene only works with 10 or more submissions
         if (textSubmissions.size() < 10) {
             return;
         }
 
-        log.info("Calling Remote Service to calculate automatic feedback for " + textSubmissions.size() + " submissions.");
+        log.info("Calling Remote Service to calculate automatic feedback for {} submissions.", textSubmissions.size());
 
         try {
             final RequestDTO request = new RequestDTO(exercise.getId(), textSubmissions, artemisServerUrl + ATHENE_RESULT_API_PATH + exercise.getId());
             ResponseDTO response = connector.invokeWithRetry(atheneUrl + "/submit", request, maxRetries);
-            log.info("Remote Service to calculate automatic feedback responded: " + response.detail);
+            log.info("Remote Service to calculate automatic feedback responded: {}", response.detail);
 
             // Register task for exercise as running, AtheneResource calls finishTask on result receive
             startTask(exercise.getId());
@@ -201,11 +196,11 @@ public class AtheneService {
      */
     public List<TextBlock> parseTextBlocks(List<AtheneDTO.TextBlockDTO> blocks, Long exerciseId) {
         // Create submissionsMap for lookup
-        List<TextSubmission> submissions = textSubmissionService.getTextSubmissionsWithTextBlocksByExerciseId(exerciseId);
+        List<TextSubmission> submissions = textSubmissionRepository.getTextSubmissionsWithTextBlocksByExerciseId(exerciseId);
         Map<Long, TextSubmission> submissionsMap = submissions.stream().collect(toMap(/* Key: */ Submission::getId, /* Value: */ submission -> submission));
 
         // Map textBlocks to submissions
-        List<TextBlock> textBlocks = new LinkedList();
+        List<TextBlock> textBlocks = new LinkedList<>();
         for (AtheneDTO.TextBlockDTO textBlockDTO : blocks) {
             // Convert DTO-TextBlock (including the submissionId) to TextBlock Entity
             TextBlock newBlock = new TextBlock();
@@ -217,7 +212,6 @@ public class AtheneService {
 
             // take the corresponding TextSubmission and add the text blocks.
             // The addBlocks method also sets the submission in the textBlock
-            Hibernate.initialize(submissionsMap.get(textBlockDTO.getSubmissionId()).addBlock(newBlock));
             submissionsMap.get(textBlockDTO.getSubmissionId()).addBlock(newBlock);
             textBlocks.add(newBlock);
         }
@@ -240,7 +234,7 @@ public class AtheneService {
         // Find exercise, which the clusters belong to
         Optional<TextExercise> optionalTextExercise = textExerciseRepository.findById(exerciseId);
         if (optionalTextExercise.isEmpty()) {
-            log.error("Error while processing Athene clusters. Exercise with id " + exerciseId + " not found", new Error());
+            log.error("Error while processing Athene clusters. Exercise with id {} not found", exerciseId);
             return;
         }
         TextExercise textExercise = optionalTextExercise.get();

@@ -16,6 +16,7 @@ import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.LtiService;
 import de.tum.in.www1.artemis.service.exam.ExamAccessService;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
+import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseGradingService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingSubmissionService;
 import de.tum.in.www1.artemis.service.scheduled.ProgrammingExerciseScheduleService;
@@ -51,6 +52,9 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
     protected ProgrammingSubmissionService programmingSubmissionService;
 
     @SpyBean
+    protected ProgrammingExerciseGradingService programmingExerciseGradingService;
+
+    @SpyBean
     protected ExamAccessService examAccessService;
 
     @SpyBean
@@ -60,7 +64,10 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
     protected ProgrammingExerciseScheduleService programmingExerciseScheduleService;
 
     @SpyBean
-    protected ProgrammingExerciseParticipationService programmingExerciseParticipationServiceSpy;
+    protected ProgrammingExerciseParticipationService programmingExerciseParticipationService;
+
+    @SpyBean
+    protected ScoreService scoreService;
 
     @SpyBean
     protected UrlService urlService;
@@ -73,7 +80,7 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
 
     public void resetSpyBeans() {
         Mockito.reset(ltiService, gitService, groupNotificationService, websocketMessagingService, plantUmlService, messagingTemplate, programmingSubmissionService,
-                examAccessService, instanceMessageSendService, programmingExerciseScheduleService, programmingExerciseParticipationServiceSpy, urlService);
+                examAccessService, instanceMessageSendService, programmingExerciseScheduleService, programmingExerciseParticipationService, urlService, scoreService);
     }
 
     @Override

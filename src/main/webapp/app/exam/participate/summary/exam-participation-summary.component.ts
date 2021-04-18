@@ -6,6 +6,8 @@ import { ActivatedRoute } from '@angular/router';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { Exam } from 'app/entities/exam.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
+import { SubmissionType } from 'app/entities/submission.model';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 
 @Component({
     selector: 'jhi-exam-participation-summary',
@@ -21,6 +23,7 @@ export class ExamParticipationSummaryComponent implements OnInit {
     readonly FILE_UPLOAD = ExerciseType.FILE_UPLOAD;
     readonly AssessmentType = AssessmentType;
     readonly IncludedInOverallScore = IncludedInOverallScore;
+    readonly SUBMISSION_TYPE_ILLEGAL = SubmissionType.ILLEGAL;
 
     @Input()
     studentExam: StudentExam;
@@ -54,6 +57,10 @@ export class ExamParticipationSummaryComponent implements OnInit {
 
     getIcon(exerciseType: ExerciseType) {
         return getIcon(exerciseType);
+    }
+
+    asProgrammingExercise(exercise: Exercise): ProgrammingExercise {
+        return exercise as ProgrammingExercise;
     }
 
     get resultsPublished() {

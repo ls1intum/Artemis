@@ -64,7 +64,6 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
 
     // Difference between server and client time
     timeDifference = 0;
-    // outstandingWebsocketResponses = 0;
 
     runningTimeouts = new Array<any>(); // actually the function type setTimeout(): (handler: any, timeout?: any, ...args: any[]): number
 
@@ -170,10 +169,6 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
             clearTimeout(timeout);
         });
 
-        // at the moment, this is always enabled
-        // disable automatic websocket reconnect
-        // this.jhiWebsocketService.disableReconnect();
-
         if (this.submissionChannel) {
             this.jhiWebsocketService.unsubscribe('/user' + this.submissionChannel);
         }
@@ -189,8 +184,12 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
         if (this.onDisconnected) {
             this.jhiWebsocketService.unbind('disconnect', this.onDisconnected);
         }
-        this.subscription.unsubscribe();
-        this.subscriptionData.unsubscribe();
+        if (this.subscription) {
+            this.subscription.unsubscribe();
+        }
+        if (this.subscriptionData) {
+            this.subscriptionData.unsubscribe();
+        }
     }
 
     /**
@@ -219,11 +218,6 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
         });
         this.onDisconnected = () => {
             this.disconnected = true;
-            // if (this.outstandingWebsocketResponses > 0) {
-            //     this.outstandingWebsocketResponses = 0;
-            //     this.isSaving = false;
-            //     this.unsavedChanges = true;
-            // }
         };
         this.jhiWebsocketService.bind('disconnect', () => {
             this.onDisconnected();
@@ -332,7 +326,6 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
 
             // save answers (submissions) through websocket
             this.sendWebsocket = (submission: QuizSubmission) => {
-                // this.outstandingWebsocketResponses++;
                 this.jhiWebsocketService.send(this.submissionChannel, submission);
             };
         }
@@ -512,11 +505,8 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
 
     /**
      * updates the model according to UI state (reverse of applySubmission):
-     *
      * Creates the submission from the user's selection
-     * this needs to be done when we want to send the submission
-     * either for saving (through websocket)
-     * or for submitting (through REST call)
+     * this needs to be done when we want to send the submission either for saving (through websocket) or for submitting (through REST call)
      */
     applySelection() {
         // convert the selection dictionary (key: questionID, value: Array of selected answerOptions / mappings)
@@ -657,8 +647,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Transfer additional information (explanations, correct answers) from
-     * the given full quiz exercise to quizExercise.
+     * Transfer additional information (explanations, correct answers) from the given full quiz exercise to quizExercise.
      * This method is typically invoked after the quiz has ended and makes sure that the (random) order of the quiz
      * questions and answer options for the particular user is respected
      *
@@ -783,45 +772,14 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
             jhiAlert.msg = errorMessage;
             this.unsavedChanges = true;
             this.isSubmitting = false;
-            // if (this.outstandingWebsocketResponses > 0) {
-            //     this.outstandingWebsocketResponses--;
-            // }
-            // if (this.outstandingWebsocketResponses === 0) {
-            //     this.isSaving = false;
-            // }
         }
-        // if (quizSubmission.submitted) {
-        //     // this.outstandingWebsocketResponses = 0;
-        //     this.isSaving = false;
-        //     this.unsavedChanges = false;
-        //     this.isSubmitting = false;
-        //     this.submission = quizSubmission;
-        //     this.updateSubmissionTime();
-        //     this.applySubmission();
-        // } else if (this.outstandingWebsocketResponses === 0) {
-        //     this.isSaving = false;
-        //     this.unsavedChanges = false;
-        //     this.submission = quizSubmission;
-        //     this.updateSubmissionTime();
-        //     this.applySubmission();
-        // } else {
-        //     this.outstandingWebsocketResponses--;
-        //     if (this.outstandingWebsocketResponses === 0) {
-        //         this.isSaving = false;
-        //         this.unsavedChanges = false;
-        //         if (quizSubmission) {
-        //             this.submission.submissionDate = quizSubmission.submissionDate;
-        //             this.updateSubmissionTime();
-        //         }
-        //     }
-        // }
     }
 
     /**
-     * Checks if the student has interacted with each question of the quiz
-     * for a Multiple Choice Questions it checks if an answer option was selected
-     * for a Drag and Drop Questions it checks if at least one mapping has been made
-     * for a Short Answer Questions it checks if at least one field has been clicked in
+     * Checks if the student has interacted with each question of the quiz:
+     * - for a Multiple Choice Questions it checks if an answer option was selected
+     * - for a Drag and Drop Questions it checks if at least one mapping has been made
+     * - for a Short Answer Questions it checks if at least one field has been clicked in
      * @return {boolean} true when student interacted with every question, false when not with every questions has an interaction
      */
     areAllQuestionsAnswered(): boolean {

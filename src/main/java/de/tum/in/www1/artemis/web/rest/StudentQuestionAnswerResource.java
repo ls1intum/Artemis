@@ -1,10 +1,9 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.badRequest;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,18 +12,14 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.StudentQuestion;
-import de.tum.in.www1.artemis.domain.StudentQuestionAnswer;
-import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.repository.CourseRepository;
-import de.tum.in.www1.artemis.repository.StudentQuestionAnswerRepository;
-import de.tum.in.www1.artemis.repository.StudentQuestionRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.security.Role;
+import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.GroupNotificationService;
+import de.tum.in.www1.artemis.service.SingleUserNotificationService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
-import io.github.jhipster.web.util.ResponseUtil;
 
 /**
  * REST controller for managing StudentQuestionAnswer.
@@ -40,7 +35,7 @@ public class StudentQuestionAnswerResource {
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
-    private final StudentQuestionAnswerRepository studentQuestionAnswerRepository;
+    private final StudentQuestionAnswerRepository answerRepository;
 
     private final CourseRepository courseRepository;
 
@@ -50,14 +45,14 @@ public class StudentQuestionAnswerResource {
 
     private final UserRepository userRepository;
 
-    GroupNotificationService groupNotificationService;
+    private final GroupNotificationService groupNotificationService;
 
-    SingleUserNotificationService singleUserNotificationService;
+    private final SingleUserNotificationService singleUserNotificationService;
 
-    public StudentQuestionAnswerResource(StudentQuestionAnswerRepository studentQuestionAnswerRepository, GroupNotificationService groupNotificationService,
+    public StudentQuestionAnswerResource(StudentQuestionAnswerRepository answerRepository, GroupNotificationService groupNotificationService,
             SingleUserNotificationService singleUserNotificationService, AuthorizationCheckService authorizationCheckService, UserRepository userRepository,
             CourseRepository courseRepository, StudentQuestionRepository studentQuestionRepository) {
-        this.studentQuestionAnswerRepository = studentQuestionAnswerRepository;
+        this.answerRepository = answerRepository;
         this.courseRepository = courseRepository;
         this.studentQuestionRepository = studentQuestionRepository;
         this.groupNotificationService = groupNotificationService;
@@ -72,11 +67,11 @@ public class StudentQuestionAnswerResource {
      * @param courseId the id of the course the answer belongs to
      * @param studentQuestionAnswer the studentQuestionAnswer to create
      * @return the ResponseEntity with status 201 (Created) and with body the new studentQuestionAnswer, or with status 400 (Bad Request) if the studentQuestionAnswer has already
-     *         an ID
+     *         an ID or there are inconsistencies within the data
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("courses/{courseId}/student-question-answers")
-    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<StudentQuestionAnswer> createStudentQuestionAnswer(@PathVariable Long courseId, @RequestBody StudentQuestionAnswer studentQuestionAnswer)
             throws URISyntaxException {
         log.debug("REST request to save StudentQuestionAnswer : {}", studentQuestionAnswer);
@@ -84,20 +79,15 @@ public class StudentQuestionAnswerResource {
         if (studentQuestionAnswer.getId() != null) {
             throw new BadRequestAlertException("A new studentQuestionAnswer cannot already have an ID", ENTITY_NAME, "idexists");
         }
-        var course = courseRepository.findByIdElseThrow(courseId);
-        if (!this.authorizationCheckService.isAtLeastStudentInCourse(course, user)) {
-            return forbidden();
-        }
-        Optional<StudentQuestion> optionalStudentQuestion = studentQuestionRepository.findById(studentQuestionAnswer.getQuestion().getId());
-        if (optionalStudentQuestion.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
-        if (!optionalStudentQuestion.get().getCourse().getId().equals(courseId)) {
-            return forbidden();
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
+        StudentQuestion studentQuestion = studentQuestionRepository.findByIdElseThrow(studentQuestionAnswer.getQuestion().getId());
+        if (!studentQuestion.getCourse().getId().equals(courseId)) {
+            return badRequest("courseId", "400", "PathVariable courseId doesn't match courseId of the StudentQuestionAnswer in the body that should be added");
         }
         // answer to approved if written by an instructor
         studentQuestionAnswer.setTutorApproved(this.authorizationCheckService.isAtLeastInstructorInCourse(course, user));
-        StudentQuestionAnswer result = studentQuestionAnswerRepository.save(studentQuestionAnswer);
+        StudentQuestionAnswer result = answerRepository.save(studentQuestionAnswer);
         if (result.getQuestion().getExercise() != null) {
             groupNotificationService.notifyTutorAndInstructorGroupAboutNewAnswerForExercise(result);
             singleUserNotificationService.notifyUserAboutNewAnswerForExercise(result);
@@ -119,7 +109,7 @@ public class StudentQuestionAnswerResource {
      *         or with status 500 (Internal Server Error) if the studentQuestionAnswer couldn't be updated
      */
     @PutMapping("courses/{courseId}/student-question-answers")
-    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<StudentQuestionAnswer> updateStudentQuestionAnswer(@PathVariable Long courseId, @RequestBody StudentQuestionAnswer studentQuestionAnswer) {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         log.debug("REST request to update StudentQuestionAnswer : {}", studentQuestionAnswer);
@@ -127,100 +117,58 @@ public class StudentQuestionAnswerResource {
             throw new BadRequestAlertException("Invalid id", ENTITY_NAME, "idnull");
         }
         courseRepository.findByIdElseThrow(courseId);
-        Optional<StudentQuestionAnswer> optionalStudentQuestionAnswer = studentQuestionAnswerRepository.findById(studentQuestionAnswer.getId());
-        if (optionalStudentQuestionAnswer.isEmpty()) {
-            return ResponseEntity.notFound().build();
+        var existingAnswer = answerRepository.findByIdElseThrow(studentQuestionAnswer.getId());
+        if (!existingAnswer.getQuestion().getCourse().getId().equals(courseId)) {
+            return badRequest("courseId", "400", "PathVariable courseId doesn't match courseId of the StudentQuestionAnswer in the body");
         }
-        if (!optionalStudentQuestionAnswer.get().getQuestion().getCourse().getId().equals(courseId)) {
-            return forbidden();
-        }
-        if (mayUpdateOrDeleteStudentQuestionAnswer(optionalStudentQuestionAnswer.get(), user)) {
-            StudentQuestionAnswer result = studentQuestionAnswerRepository.save(studentQuestionAnswer);
-            return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, studentQuestionAnswer.getId().toString())).body(result);
-        }
-        else {
-            return forbidden();
-        }
-    }
-
-    /**
-     * GET /courses/{courseId}/question-answers/:id : get the "id" questionAnswer.
-     *
-     * @param courseId the id of the course the answer belongs to
-     * @param id the id of the questionAnswer to retrieve
-     * @return the ResponseEntity with status 200 (OK) and with body the questionAnswer, or with status 404 (Not Found)
-     */
-    @GetMapping("courses/{courseId}/student-question-answers/{id}")
-    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<StudentQuestionAnswer> getStudentQuestionAnswer(@PathVariable Long courseId, @PathVariable Long id) {
-        log.debug("REST request to get StudentQuestionAnswer : {}", id);
-        User user = this.userRepository.getUserWithGroupsAndAuthorities();
-        var course = courseRepository.findByIdElseThrow(courseId);
-        if (!this.authorizationCheckService.isAtLeastStudentInCourse(course, user)) {
-            return forbidden();
-        }
-        Optional<StudentQuestionAnswer> questionAnswer = studentQuestionAnswerRepository.findById(id);
-        if (questionAnswer.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
-        if (!questionAnswer.get().getQuestion().getCourse().getId().equals(courseId)) {
-            return forbidden();
-        }
-        return ResponseUtil.wrapOrNotFound(questionAnswer);
+        mayUpdateOrDeleteStudentQuestionAnswerElseThrow(existingAnswer, user);
+        StudentQuestionAnswer result = answerRepository.save(studentQuestionAnswer);
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, studentQuestionAnswer.getId().toString())).body(result);
     }
 
     /**
      * DELETE /courses/{courseId}/question-answers/:id : delete the "id" questionAnswer.
      *
      * @param courseId the id of the course the answer belongs to
-     * @param id the id of the questionAnswer to delete
-     * @return the ResponseEntity with status 200 (OK)
+     * @param answerId the id of the questionAnswer to delete
+     * @return the ResponseEntity with status 200 (OK) or 400 (Bad Request) if theres inconsistencies within the data
      */
-    @DeleteMapping("courses/{courseId}/student-question-answers/{id}")
-    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Void> deleteStudentQuestionAnswer(@PathVariable Long courseId, @PathVariable Long id) {
+    @DeleteMapping("courses/{courseId}/student-question-answers/{answerId}")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<Void> deleteStudentQuestionAnswer(@PathVariable Long courseId, @PathVariable Long answerId) {
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        Optional<StudentQuestionAnswer> optionalStudentQuestionAnswer = studentQuestionAnswerRepository.findById(id);
-        if (optionalStudentQuestionAnswer.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
+        var existingAnswer = answerRepository.findByIdElseThrow(answerId);
         courseRepository.findByIdElseThrow(courseId);
-        StudentQuestionAnswer studentQuestionAnswer = optionalStudentQuestionAnswer.get();
-        Course course = studentQuestionAnswer.getQuestion().getCourse();
+        Course course = existingAnswer.getQuestion().getCourse();
         String entity = "";
-        if (studentQuestionAnswer.getQuestion().getLecture() != null) {
-            entity = "lecture with id: " + studentQuestionAnswer.getQuestion().getLecture().getId();
+        if (existingAnswer.getQuestion().getLecture() != null) {
+            entity = "lecture with id: " + existingAnswer.getQuestion().getLecture().getId();
         }
-        else if (studentQuestionAnswer.getQuestion().getExercise() != null) {
-            entity = "exercise with id: " + studentQuestionAnswer.getQuestion().getExercise().getId();
+        else if (existingAnswer.getQuestion().getExercise() != null) {
+            entity = "exercise with id: " + existingAnswer.getQuestion().getExercise().getId();
         }
         if (course == null) {
             return ResponseEntity.badRequest().build();
         }
         if (!course.getId().equals(courseId)) {
-            return forbidden();
+            return badRequest("courseId", "400", "PathVariable courseId doesnt match courseId of the StudentQuestionAnswer that should be deleted");
         }
-        if (mayUpdateOrDeleteStudentQuestionAnswer(studentQuestionAnswer, user)) {
-            log.info("StudentQuestionAnswer deleted by " + user.getLogin() + ". Answer: " + studentQuestionAnswer.getAnswerText() + " for " + entity, user.getLogin());
-            studentQuestionAnswerRepository.deleteById(id);
-            return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, id.toString())).build();
-        }
-        else {
-            return forbidden();
-        }
+        mayUpdateOrDeleteStudentQuestionAnswerElseThrow(existingAnswer, user);
+        log.info("StudentQuestionAnswer deleted by " + user.getLogin() + ". Answer: " + existingAnswer.getAnswerText() + " for " + entity);
+        answerRepository.deleteById(answerId);
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, answerId.toString())).build();
     }
 
     /**
-     * Check if user can update or delete StudentQuestionAnswer
+     * Check if user can update or delete StudentQuestionAnswer, if not throws an AccessForbiddenException
      *
      * @param studentQuestionAnswer studentQuestionAnswer for which to check
      * @param user user for which to check
-     * @return Boolean if StudentQuestionAnswer can updated or deleted
      */
-    private boolean mayUpdateOrDeleteStudentQuestionAnswer(StudentQuestionAnswer studentQuestionAnswer, User user) {
+    private void mayUpdateOrDeleteStudentQuestionAnswerElseThrow(StudentQuestionAnswer studentQuestionAnswer, User user) {
         Course course = studentQuestionAnswer.getQuestion().getCourse();
-        Boolean hasCourseTAAccess = authorizationCheckService.isAtLeastTeachingAssistantInCourse(course, user);
-        Boolean isUserAuthor = user.getId().equals(studentQuestionAnswer.getAuthor().getId());
-        return hasCourseTAAccess || isUserAuthor;
+        if (!user.getId().equals(studentQuestionAnswer.getAuthor().getId())) {
+            authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, user);
+        }
     }
 }

@@ -9,9 +9,9 @@
     <div
         class="alert"
         *ngFor="let singleFeedback of feedback"
-        [class.positive-feedback]="singleFeedback?.credits > 0"
-        [class.negative-feedback]="singleFeedback?.credits < 0"
-        [class.neutral-feedback]="singleFeedback?.credits === 0"
+        [class.positive-feedback]="singleFeedback?.credits && singleFeedback.credits! > 0"
+        [class.negative-feedback]="singleFeedback?.credits && singleFeedback.credits! < 0"
+        [class.neutral-feedback]="singleFeedback?.credits && singleFeedback.credits! === 0"
     >
         <strong>
             <span>{{ round(singleFeedback.credits, 1) + ' Points: ' }}</span>

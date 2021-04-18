@@ -1,12 +1,14 @@
 package de.tum.in.www1.artemis.domain;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.Set;
 
 import javax.persistence.*;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+
 import de.tum.in.www1.artemis.domain.enumeration.Language;
 
 /**
@@ -80,10 +82,9 @@ public class TextSubmission extends Submission {
         return blocks;
     }
 
-    public TextSubmission addBlock(TextBlock textBlock) {
+    public void addBlock(TextBlock textBlock) {
         this.blocks.add(textBlock);
         textBlock.setSubmission(this);
-        return this;
     }
 
     public void setBlocks(Set<TextBlock> textBlocks) {

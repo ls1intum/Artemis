@@ -9,7 +9,7 @@ export class DurationPipe implements PipeTransform {
      * @param endDate The end date time of the event. Must be convertible to moment().
      * @returns string 'HH:mm'
      */
-    transform(startDate: Date | moment.Moment | string | number | null, endDate: Date | moment.Moment | string | number | null): string {
+    transform(startDate: Date | moment.Moment | string | number | null | undefined, endDate: Date | moment.Moment | string | number | null | undefined): string {
         if (!endDate || !moment(endDate).isValid() || !startDate || !moment(startDate).isValid()) {
             return '';
         }

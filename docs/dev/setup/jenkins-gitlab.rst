@@ -127,7 +127,21 @@ GitLab
 Gitlab Server Setup
 ~~~~~~~~~~~~~~~~~~~
 
-1. Pull the latest GitLab Docker image
+GitLab provides no possibility to set a users password via API without forcing the user to change it afterwards (see `Issue 19141 <https://gitlab.com/gitlab-org/gitlab/-/issues/19141>`__).
+Therefore, you may want to patch the official gitlab docker image.
+Thus, you can use the following Dockerfile:
+
+.. code:: dockerfile
+
+    FROM gitlab/gitlab-ce:latest
+    RUN sed -i '/^.*user_params\[:password_expires_at\] = Time.current if admin_making_changes_for_another_user.*$/s/^/#/' /opt/gitlab/embedded/service/gitlab-rails/lib/api/users.rb
+
+
+This dockerfile disables the mechanism that sets the password to expired state after changed via API.
+If you want to use this custom image, you have to build the image and replace all occurances of ``gitlab/gitlab-ce:latest`` in the following instructions by your chosen image name.
+
+
+1. Pull the latest GitLab Docker image (only if you don't use your custom gitlab image)
 
    ::
 
@@ -342,8 +356,89 @@ You can also remove all old images using ``docker image prune -a``
 Jenkins
 -------
 
-Jenkins Server Setup
-~~~~~~~~~~~~~~~~~~~~
+Automated Jenkins Server Setup
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The following steps describe how to deploy a pre-configured version of the Jenkins server.
+This is ideal as a quickstart for developers. For a more detailed setup, see `Manual Jenkins Server Setup <#manual-jenkins-server-setup>`__.
+
+1. Open the dockerfile located at ``src/main/docker/jenkins/Dockerfile`` or ``src/main/docker/jenkins/swift/Dockerfile`` (in case you want to additionally install Swift/SwiftLint).
+
+2. Uncomment the line which installs the docker client. Jenkins uses build agents to build code. The automated setup configures a local agent running from within Jenkins container.
+
+3. Uncomment the line that disables the first-time setup wizard and save the dockerfile:
+
+::
+
+       ENV JAVA_OPTS -Djenkins.install.runSetupWizard=false
+
+4. Create a new access token in Gitlab named ``Jenkins`` and give it **api** and **read_repository** rights.
+
+5. Open the ``src/main/docker/jenkins/jenkins-casc-config.yml`` file with an editor and insert the generated token, the gitlab admin username, and password:
+
+.. code:: yaml
+
+   credentials:
+    system:
+        domainCredentials:
+            - credentials:
+                - gitLabApiTokenImpl:
+                    apiToken: your.api.token
+            - usernamePassword:
+                id: artemis_gitlab_admin_credentials
+                scope: GLOBAL
+                username: your.gitlab.admin.username
+                password: your.gitlab.admin.password
+
+
+6. Navigate to the bottom of the file and set the url of your Gitlab instance. This is typically the ip address or hostname of the Gitlab container.
+
+.. code:: yaml
+
+    unclassified:
+      gitlabconnectionconfig:
+        connections:
+          - apiTokenId: artemis_gitlab_api_token
+            url: your.gitlab.url
+
+7. You can now deploy Jenkins. A ``src/main/docker/gitlab-jenkins-mysql.yml`` file is provided which deploys the Jenkins, Gitlab, and Mysql containers bound to static ip addresses. You can deploy them by running:
+
+::
+
+       docker-compose -f src/main/docker/gitlab-jenkins-mysql.yml up --build
+
+If you already have a Gitlab and Mysql instance running, you can comment out all services except for jenkins and then run the docker-compose file.
+
+8. You need to generate the `ci-token` and `secret-push-token`. Please follow the `Gitlab to Jenkins push notification token <##gitlab-to-jenkins-push-notification-token>`__ steps.
+
+9. The `application-local.yml` must be adapted with the values configured in ``jenkins-casc-config.yml``:
+
+.. code:: yaml
+
+    artemis:
+        user-management:
+            use-external: false
+            internal-admin:
+                username: artemis_admin
+                password: artemis-admin
+            version-control:
+                url: http://172.33.0.2:8081
+                user: artemis_admin
+                password: artemis_admin
+                ci-token: # generated in step 9
+            continuous-integration:
+                url: http://172.33.0.3:8080
+                user: artemis_admin
+                password: artemis_admin
+                vcs-credentials: artemis_gitlab_admin_credentials
+                artemis-authentication-token-key: artemis_notification_plugin_token
+                artemis-authentication-token-value: artemis_admin
+                secret-push-token: # generated in step 8
+
+10. You're done. You can now run Artemis with the Gitlab/Jenkins environment.
+
+Manual Jenkins Server Setup
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 1. Pull the latest Jenkins LTS Docker image
 
@@ -464,6 +559,10 @@ Start Jenkins
 Required Jenkins Plugins
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
+**Note:** The custom Jenkins dockerfile takes advantage of the `Plugin Installation Manager Tool for Jenkins <https://github.com/jenkinsci/plugin-installation-manager-tool>`__ to automatically
+install the plugins listed below. If you used the dockerfile, you can skip these steps and `Server Notification Plugin <#server-notification-plugin>`__. The list of plugins is maintained in ``src/main/docker/jenkins/plugins.yml``.
+
+
 You will need to install the following plugins (apart from the
 recommended ones that got installed during the setup process):
 
@@ -478,7 +577,7 @@ recommended ones that got installed during the setup process):
 
     **Note:** This is a suite of plugins that will install multiple plugins
 
-4. `Pipeline Maven <https://plugins.jenkins.io/pipeline-maven/>`__ to use maven within the pipelines.
+4. `Pipeline Maven <https://plugins.jenkins.io/pipeline-maven/>`__ to use maven within the pipelines. If you want to use docker for your build agents you may also need to install `Docker Pipeline <https://plugins.jenkins.io/docker-workflow/>`__ .
 
 5. `Matrix Authorization Strategy Plugin <https://plugins.jenkins.io/matrix-auth/>`__ for configuring permissions for users on a project and build plan level (Matrix Authorization Strategy might already be installed).
 
@@ -1072,65 +1171,61 @@ If you haven’t done so, generate the DH param file:
    resolver <if you have any, specify them here> valid=300s;
    resolver_timeout 5s;
 
-#Deployment Artemis / GitLab / Jenkins using Docker on Local machine
+Deployment Artemis / GitLab / Jenkins using Docker on Local machine
+-------------------------------------------------------------------
 
 Execute the following steps in addition to the ones described above:
 
 Preparation
------------
+~~~~~~~~~~~
 
 1. Create a Docker network named “artemis” with
-   ``docker network create artemis``
+   ``docker network create artemis``.
 
 .. _gitlab-1:
 
 Gitlab
-------
+~~~~~~
 
 1. Add the Gitlab container to the created network with
-   ``docker network connect artemis gitlab``
+   ``docker network connect artemis gitlab``.
 2. Get the URL of the Gitlab container with the first IP returned by
-   ``docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' gitlab``
+   ``docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' gitlab``.
 3. Use this IP in the ``application-artemis.yml`` file at
-   ``artemis.version-control.url``
+   ``artemis.version-control.url``.
 
 .. _jenkins-2:
 
 Jenkins
--------
+~~~~~~~
 
 1. Add the Jenkins container to the created network with
-   ``docker network connect artemis jenkins``
+   ``docker network connect artemis jenkins``.
 2. Get the URL of the Gitlab container with the first IP returned by
-   ``docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' jenkins``
+   ``docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' jenkins``.
 3. Use this IP in the ``application-artemis.yml`` file at
-   ``artemis.continuous-integration.url``
+   ``artemis.continuous-integration.url``.
 
 .. _artemis-1:
 
 Artemis
--------
+~~~~~~~
 
-1. In ``docker-compose.yml``
+1. In ``docker-compose.yml``:
 
-   1. Make sure to use unique ports, e.g. 8080 for Artemis, 8081 for Gitlab and 8082 for Jenkins
-   2. Change the SPRING_PROFILES_ACTIVE to dev,jenkins,gitlab,artemis
+   1. Make sure to use unique ports, e.g. 8080 for Artemis, 8081 for Gitlab and 8082 for Jenkins.
+   2. Change the ``SPRING_PROFILES_ACTIVE`` environment variable to ``dev,jenkins,gitlab,artemis,scheduling``.
 
-2. In ``src/main/resources/config/application-dev.yml``
+2. In ``src/main/resources/config/application-dev.yml`` at ``server:`` use ``port: 8080`` for Artemis.
 
-   1. At ``spring.profiles.active:`` add ``& gitlab & jenkins``
-   2. At ``spring.liquibase:`` add the new property
-      ``change-log: classpath:config/liquibase/master.xml``
-   3. At ``server:`` use port 8080 for Artemis
-
-3. Run ``docker-compose up``
+3. Run ``docker-compose up``.
 
 4. After the container has been deployed run
-   ``docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' artemis_artemis-server``
+   ``docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' artemis_artemis-server``
    and copy the first resulting IP.
 
 5. In ``src/main/resources/config/application-dev.yml`` at ``server:``
-   at ``url:`` paste the copied IP
+   at ``url:`` paste the copied IP with the port number, e.g. ``url: http://172.33.0.1:8080``.
 
 6. Stop the Artemis docker container with Control-C and re-run
-   ``docker-compose up``
+   ``docker-compose up``.

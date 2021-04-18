@@ -193,6 +193,9 @@ public abstract class Exercise extends DomainObject {
     @Transient
     private Long numberOfParticipationsTransient; // used for instructor exam checklist
 
+    @Transient
+    private Boolean testRunParticipationsExistTransient;
+
     public String getTitle() {
         return title;
     }
@@ -372,6 +375,14 @@ public abstract class Exercise extends DomainObject {
         this.studentParticipations = studentParticipations;
     }
 
+    public Boolean getTestRunParticipationsExist() {
+        return testRunParticipationsExistTransient;
+    }
+
+    public void setTestRunParticipationsExist(Boolean testRunParticipationsExistTransient) {
+        this.testRunParticipationsExistTransient = testRunParticipationsExistTransient;
+    }
+
     /**
      * This method exists for serialization. The utility method getCourseViaExerciseGroupOrCourseMember should be used
      * to get a course for the exercise.
@@ -476,6 +487,19 @@ public abstract class Exercise extends DomainObject {
             return Boolean.FALSE;
         }
         return ZonedDateTime.now().isAfter(getDueDate());
+    }
+
+    /**
+     * Checks if the due date is in the future. Returns true, if no due date is set.
+     *
+     * @return true if the due date is in the future, otherwise false
+     */
+    @JsonIgnore
+    public boolean isBeforeDueDate() {
+        if (dueDate == null) {
+            return true;
+        }
+        return ZonedDateTime.now().isBefore(dueDate);
     }
 
     public Set<LearningGoal> getLearningGoals() {

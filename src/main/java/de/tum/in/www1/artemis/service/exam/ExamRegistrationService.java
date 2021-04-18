@@ -16,10 +16,7 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
-import de.tum.in.www1.artemis.repository.CourseRepository;
-import de.tum.in.www1.artemis.repository.ExamRepository;
-import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
 import de.tum.in.www1.artemis.service.user.UserService;
@@ -39,7 +36,7 @@ public class ExamRegistrationService {
 
     private final ParticipationService participationService;
 
-    private final StudentExamService studentExamService;
+    private final StudentExamRepository studentExamRepository;
 
     private final AuditEventRepository auditEventRepository;
 
@@ -50,7 +47,7 @@ public class ExamRegistrationService {
     private final StudentParticipationRepository studentParticipationRepository;
 
     public ExamRegistrationService(ExamRepository examRepository, UserService userService, ParticipationService participationService, UserRepository userRepository,
-            AuditEventRepository auditEventRepository, CourseRepository courseRepository, StudentExamService studentExamService,
+            AuditEventRepository auditEventRepository, CourseRepository courseRepository, StudentExamRepository studentExamRepository,
             StudentParticipationRepository studentParticipationRepository) {
         this.examRepository = examRepository;
         this.userService = userService;
@@ -58,7 +55,7 @@ public class ExamRegistrationService {
         this.participationService = participationService;
         this.auditEventRepository = auditEventRepository;
         this.courseRepository = courseRepository;
-        this.studentExamService = studentExamService;
+        this.studentExamRepository = studentExamRepository;
         this.studentParticipationRepository = studentParticipationRepository;
     }
 
@@ -118,10 +115,10 @@ public class ExamRegistrationService {
                     continue;
                 }
 
-                log.warn("User with registration number '" + registrationNumber + "' and login '" + login + "' not found in Artemis user database nor found in (TUM) LDAP");
+                log.warn("User with registration number '{}' and login '{}' not found in Artemis user database nor found in (TUM) LDAP", registrationNumber, login);
             }
             catch (Exception ex) {
-                log.warn("Error while processing user with registration number " + registrationNumber + ": " + ex.getMessage(), ex);
+                log.warn("Error while processing user with registration number " + registrationNumber, ex);
             }
 
             notFoundStudentsDTOs.add(studentDto);
@@ -138,7 +135,7 @@ public class ExamRegistrationService {
             }
             AuditEvent auditEvent = new AuditEvent(currentUser.getLogin(), Constants.ADD_USER_TO_EXAM, userData);
             auditEventRepository.add(auditEvent);
-            log.info("User " + currentUser.getLogin() + " has added multiple users " + studentDTOs + " to the exam " + exam.getTitle() + " with id " + exam.getId());
+            log.info("User {} has added multiple users {} to the exam {} with id {}", currentUser.getLogin(), studentDTOs, exam.getTitle(), exam.getId());
         }
         catch (Exception ex) {
             log.warn("Could not add audit event to audit log", ex);
@@ -187,7 +184,7 @@ public class ExamRegistrationService {
         User currentUser = userRepository.getUserWithGroupsAndAuthorities();
         AuditEvent auditEvent = new AuditEvent(currentUser.getLogin(), Constants.ADD_USER_TO_EXAM, "exam=" + exam.getTitle(), "student=" + student.getLogin());
         auditEventRepository.add(auditEvent);
-        log.info("User " + currentUser.getLogin() + " has added user " + student.getLogin() + " to the exam " + exam.getTitle() + " with id " + exam.getId());
+        log.info("User {} has added user {} to the exam {} with id {}", currentUser.getLogin(), student.getLogin(), exam.getTitle(), exam.getId());
     }
 
     /**
@@ -205,28 +202,28 @@ public class ExamRegistrationService {
         examRepository.save(exam);
 
         // The student exam might already be generated, then we need to delete it
-        Optional<StudentExam> optionalStudentExam = studentExamService.findOneWithExercisesByUserIdAndExamIdOptional(student.getId(), exam.getId());
-        optionalStudentExam.ifPresent(studentExam -> this.removeStudentExam(studentExam, deleteParticipationsAndSubmission));
+        Optional<StudentExam> optionalStudentExam = studentExamRepository.findWithExercisesByUserIdAndExamId(student.getId(), exam.getId());
+        optionalStudentExam.ifPresent(studentExam -> removeStudentExam(studentExam, deleteParticipationsAndSubmission));
 
         User currentUser = userRepository.getUserWithGroupsAndAuthorities();
         AuditEvent auditEvent = new AuditEvent(currentUser.getLogin(), Constants.REMOVE_USER_FROM_EXAM, "exam=" + exam.getTitle(), "user=" + student.getLogin());
         auditEventRepository.add(auditEvent);
-        log.info("User " + currentUser.getLogin() + " has removed user " + student.getLogin() + " from the exam " + exam.getTitle() + " with id " + exam.getId()
-                + ". This also deleted a potentially existing student exam with all its participations and submissions.");
+        log.info("User {} has removed user {} from the exam {} with id {}. This also deleted a potentially existing student exam with all its participations and submissions.",
+                currentUser.getLogin(), student.getLogin(), exam.getTitle(), exam.getId());
     }
 
     private void removeStudentExam(StudentExam studentExam, boolean deleteParticipationsAndSubmission) {
 
         // Optionally delete participations and submissions
         if (deleteParticipationsAndSubmission) {
-            List<StudentParticipation> participations = studentParticipationRepository.findByStudentExamWithEagerSubmissionsResult(studentExam);
+            List<StudentParticipation> participations = studentParticipationRepository.findByStudentExamWithEagerSubmissionsResult(studentExam, false);
             for (var participation : participations) {
                 participationService.delete(participation.getId(), true, true);
             }
         }
 
         // Delete the student exam
-        studentExamService.deleteStudentExam(studentExam.getId());
+        studentExamRepository.deleteById(studentExam.getId());
     }
 
     /**
@@ -246,14 +243,14 @@ public class ExamRegistrationService {
         examRepository.save(exam);
 
         // remove all students exams
-        Set<StudentExam> studentExams = studentExamService.findAllWithExercisesByExamId(examId);
-        studentExams.forEach(studentExam -> this.removeStudentExam(studentExam, deleteParticipationsAndSubmission));
+        Set<StudentExam> studentExams = studentExamRepository.findAllWithExercisesByExamId(examId);
+        studentExams.forEach(studentExam -> removeStudentExam(studentExam, deleteParticipationsAndSubmission));
 
         User currentUser = userRepository.getUserWithGroupsAndAuthorities();
         AuditEvent auditEvent = new AuditEvent(currentUser.getLogin(), Constants.REMOVE_ALL_USERS_FROM_EXAM, "exam=" + exam.getTitle());
         auditEventRepository.add(auditEvent);
-        log.info("User " + currentUser.getLogin() + " has removed all users from the exam " + exam.getTitle() + " with id " + exam.getId()
-                + ". This also deleted potentially existing student exams with all its participations and submissions.");
+        log.info("User {} has removed all users from the exam {} with id {}. This also deleted potentially existing student exams with all its participations and submissions.",
+                currentUser.getLogin(), exam.getTitle(), exam.getId());
     }
 
     /**

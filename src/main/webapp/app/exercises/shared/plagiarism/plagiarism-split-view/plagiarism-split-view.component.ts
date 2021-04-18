@@ -64,34 +64,48 @@ export class PlagiarismSplitViewComponent implements AfterViewInit, OnChanges, O
     }
 
     parseTextMatches({ submissionA, submissionB, matches }: PlagiarismComparison<TextSubmissionElement>) {
-        this.matchesA = new Map();
-        this.matchesB = new Map();
+        const matchesA = matches
+            .map((match) => ({
+                start: match.startA,
+                length: match.length,
+            }))
+            .sort((a, b) => a.start - b.start);
 
-        matches.forEach(({ startA, startB, length }) => {
-            const fileA = submissionA.elements[startA].file || 'none';
-            const fileB = submissionB.elements[startB].file || 'none';
+        const matchesB = matches
+            .map((match) => ({
+                start: match.startB,
+                length: match.length,
+            }))
+            .sort((a, b) => a.start - b.start);
 
-            if (!this.matchesA.has(fileA)) {
-                this.matchesA.set(fileA, []);
+        this.matchesA = this.mapMatchesToElements(matchesA, submissionA);
+        this.matchesB = this.mapMatchesToElements(matchesB, submissionB);
+    }
+
+    /**
+     * Create a map of file names to matches elements.
+     * @param matches list of objects containing the index and length of matched elements
+     * @param submission the submission to map the elements of
+     */
+    mapMatchesToElements(matches: { start: number; length: number }[], submission: PlagiarismSubmission<TextSubmissionElement>) {
+        const filesToMatchedElements = new Map();
+
+        matches.forEach(({ start, length }) => {
+            const file = submission.elements[start].file || 'none';
+
+            if (!filesToMatchedElements.has(file)) {
+                filesToMatchedElements.set(file, []);
             }
 
-            if (!this.matchesB.has(fileB)) {
-                this.matchesB.set(fileB, []);
-            }
+            const fileMatches = filesToMatchedElements.get(file)!;
 
-            const fileMatchesA = this.matchesA.get(fileA)!;
-            const fileMatchesB = this.matchesB.get(fileB)!;
-
-            fileMatchesA.push({
-                from: submissionA.elements[startA],
-                to: submissionA.elements[startA + length - 1],
-            });
-
-            fileMatchesB.push({
-                from: submissionB.elements[startB],
-                to: submissionB.elements[startB + length - 1],
+            fileMatches.push({
+                from: submission.elements[start],
+                to: submission.elements[start + length - 1],
             });
         });
+
+        return filesToMatchedElements;
     }
 
     getModelingSubmissionA() {

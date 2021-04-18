@@ -22,6 +22,6 @@ public class Context {
 
     /// Runs the configured sort algorithm.
     public func sort() {
-        sortAlgorithm.performSort(&self.dates)
+        self.dates = sortAlgorithm.performSort(self.dates)
     }
 }

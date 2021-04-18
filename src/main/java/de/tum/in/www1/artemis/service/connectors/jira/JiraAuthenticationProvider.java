@@ -4,7 +4,9 @@ import static de.tum.in.www1.artemis.config.Constants.ARTEMIS_GROUP_DEFAULT_PREF
 
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -15,14 +17,8 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.authentication.InternalAuthenticationServiceException;
-import org.springframework.security.authentication.ProviderNotFoundException;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.http.*;
+import org.springframework.security.authentication.*;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.stereotype.Component;
@@ -189,7 +185,7 @@ public class JiraAuthenticationProvider extends ArtemisAuthenticationProviderImp
     @Override
     public void addUserToGroup(User user, String group) throws ArtemisAuthenticationException {
         // then we also make sure to add it into JIRA so that the synchronization during the next login does not remove the group again
-        log.info("Add user " + user.getLogin() + " to group " + group + " in JIRA");
+        log.info("Add user {} to group {} in JIRA", user.getLogin(), group);
         if (!isGroupAvailable(group)) {
             throw new IllegalArgumentException("Jira does not have a group: " + group);
         }
@@ -204,27 +200,27 @@ public class JiraAuthenticationProvider extends ArtemisAuthenticationProviderImp
                 // ignore the error if the user is already in the group
                 return;
             }
-            log.error("Could not add user " + user.getLogin() + " to JIRA group " + group + ". Error: " + e.getMessage());
+            log.error("Could not add user {} to JIRA group {}. Error: {}", user.getLogin(), group, e.getMessage());
             throw new ArtemisAuthenticationException("Error while adding " + user.getLogin() + " to JIRA group " + group, e);
         }
     }
 
     @Override
     public void createUserInExternalUserManagement(User user) {
-        log.info("Try to create user " + user.getLogin() + " in JIRA");
+        log.info("Try to create user {} in JIRA", user.getLogin());
         final var body = new JiraUserDTO(user.getLogin(), user.getLogin(), user.getName(), user.getEmail(), List.of("jira-software"));
         HttpEntity<?> entity = new HttpEntity<>(body);
         try {
             restTemplate.exchange(jiraUrl + "/rest/api/2/user", HttpMethod.POST, entity, Void.class);
-            log.info("Creating user " + user.getLogin() + " was successful");
+            log.info("Creating user {} was successful", user.getLogin());
         }
         catch (HttpClientErrorException e) {
             // ignore the error if the user cannot be created, this can e.g. happen if the user already exists in the external user management system
             if (e.getStatusCode().equals(HttpStatus.BAD_REQUEST) && e.getResponseBodyAsString().contains("user with that username already exists")) {
-                log.info("User " + user.getLogin() + " already exists in JIRA");
+                log.info("User {} already exists in JIRA", user.getLogin());
             }
             else {
-                log.warn("Could not create user " + user.getLogin() + " in JIRA. Error: " + e.getMessage());
+                log.warn("Could not create user {} in JIRA. Error: {}", user.getLogin(), e.getMessage());
             }
         }
     }
@@ -236,7 +232,7 @@ public class JiraAuthenticationProvider extends ArtemisAuthenticationProviderImp
 
     @Override
     public void createGroup(String groupName) {
-        log.info("Create group " + groupName + " in JIRA");
+        log.info("Create group {} in JIRA", groupName);
         final var body = new JiraUserDTO(groupName);
         HttpEntity<?> entity = new HttpEntity<>(body);
         try {
@@ -256,7 +252,7 @@ public class JiraAuthenticationProvider extends ArtemisAuthenticationProviderImp
         if (!groupName.startsWith(ARTEMIS_GROUP_DEFAULT_PREFIX)) {
             return;
         }
-        log.info("Delete group " + groupName + " in JIRA");
+        log.info("Delete group {} in JIRA", groupName);
         try {
             restTemplate.exchange(jiraUrl + "/rest/api/2/group?groupname=" + groupName, HttpMethod.DELETE, null, Void.class);
         }
@@ -265,7 +261,7 @@ public class JiraAuthenticationProvider extends ArtemisAuthenticationProviderImp
                 // ignore the error if the group does not exist
             }
             else {
-                log.error("Could not delete group " + groupName + " in JIRA. Error: " + e.getMessage());
+                log.error("Could not delete group {} in JIRA. Error: {}", groupName, e.getMessage());
             }
         }
     }
@@ -294,7 +290,7 @@ public class JiraAuthenticationProvider extends ArtemisAuthenticationProviderImp
             }
         }
         catch (HttpClientErrorException e) {
-            log.warn("JIRA group " + group + " does not exit");
+            log.warn("JIRA group {} does not exit", group);
             if (e.getStatusCode().equals(HttpStatus.NOT_FOUND)) {
                 return false;
             }

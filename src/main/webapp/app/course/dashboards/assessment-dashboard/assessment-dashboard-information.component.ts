@@ -9,6 +9,8 @@ export class AssessmentDashboardInformationComponent {
     @Input() isExamMode: boolean;
     @Input() numberOfTutorAssessments: number;
     @Input() courseId: number;
+    @Input() complaintsEnabled: boolean;
+    @Input() feedbackRequestEnabled: boolean;
     @Input() tutorId: number;
     @Input() numberOfTutorComplaints: number;
     @Input() numberOfTutorMoreFeedbackRequests: number;

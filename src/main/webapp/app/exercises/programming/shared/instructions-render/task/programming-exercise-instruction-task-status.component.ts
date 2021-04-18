@@ -34,6 +34,8 @@ export class ProgrammingExerciseInstructionTaskStatusComponent {
     notExecutedTests: string[];
     failedTests: string[];
 
+    hasMessage: boolean;
+
     constructor(
         private programmingExerciseInstructionService: ProgrammingExerciseInstructionService,
         private appRef: ApplicationRef,
@@ -51,6 +53,20 @@ export class ProgrammingExerciseInstructionTaskStatusComponent {
         this.successfulTests = successfulTests;
         this.notExecutedTests = notExecutedTests;
         this.failedTests = failedTests;
+        this.hasMessage = this.hasTestMessage(tests);
+    }
+
+    /**
+     * Checks if any of the feedbacks have a detailText associated to them.
+     * @param tests the feedback names this should be checked for
+     * @private
+     */
+    private hasTestMessage(tests: string[]): boolean {
+        if (!this.latestResult || !this.latestResult.feedbacks) {
+            return false;
+        }
+        const feedbacks = this.latestResult.feedbacks;
+        return tests.some((test) => feedbacks.find((feedback) => feedback.text === test && feedback.detailText));
     }
 
     /**

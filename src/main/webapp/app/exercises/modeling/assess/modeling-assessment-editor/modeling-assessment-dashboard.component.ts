@@ -248,25 +248,6 @@ export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
         return getLinkToSubmissionAssessment(ExerciseType.MODELING, this.courseId, this.exerciseId, submissionId, this.examId, this.exerciseGroupId);
     }
 
-    getParticipationsRouterLink(participationId: number): string[] {
-        if (!!this.examId) {
-            return [
-                '/course-management',
-                this.courseId.toString(),
-                'exams',
-                this.examId.toString(),
-                'exercise-groups',
-                this.exerciseGroupId.toString(),
-                'exercises',
-                this.exerciseId.toString(),
-                'participations',
-                participationId.toString(),
-            ];
-        } else {
-            return ['/course-management', this.courseId.toString(), 'exercises', this.exerciseId.toString(), 'participations', participationId.toString(), 'submissions'];
-        }
-    }
-
     private navigateToNextRandomOptimalSubmission(): void {
         const randomInt = Math.floor(Math.random() * this.nextOptimalSubmissionIds.length);
         const url = getLinkToSubmissionAssessment(

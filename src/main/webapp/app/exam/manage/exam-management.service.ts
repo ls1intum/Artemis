@@ -65,6 +65,16 @@ export class ExamManagementService {
     }
 
     /**
+     * Fetches the title of the exam with the given id
+     *
+     * @param examId the id of the exam
+     * @return the title of the exam in an HttpResponse, or an HttpErrorResponse on error
+     */
+    getTitle(examId: number): Observable<HttpResponse<string>> {
+        return this.http.get(`api/exams/${examId}/title`, { observe: 'response', responseType: 'text' });
+    }
+
+    /**
      * Find all scores of an exam.
      * @param courseId The id of the course.
      * @param examId The id of the exam.
@@ -165,8 +175,8 @@ export class ExamManagementService {
      * @param examId The id of the exam to which to add the student
      * @param studentLogin Login of the student
      */
-    addStudentToExam(courseId: number, examId: number, studentLogin: string): Observable<HttpResponse<any>> {
-        return this.http.post<any>(`${this.resourceUrl}/${courseId}/exams/${examId}/students/${studentLogin}`, { observe: 'response' });
+    addStudentToExam(courseId: number, examId: number, studentLogin: string): Observable<HttpResponse<StudentDTO>> {
+        return this.http.post<StudentDTO>(`${this.resourceUrl}/${courseId}/exams/${examId}/students/${studentLogin}`, undefined, { observe: 'response' });
     }
 
     /**
@@ -177,7 +187,7 @@ export class ExamManagementService {
      * @return studentDtos of students that were not found in the system
      */
     addStudentsToExam(courseId: number, examId: number, studentDtos: StudentDTO[]): Observable<HttpResponse<StudentDTO[]>> {
-        return this.http.post<any>(`${this.resourceUrl}/${courseId}/exams/${examId}/students`, studentDtos, { observe: 'response' });
+        return this.http.post<StudentDTO[]>(`${this.resourceUrl}/${courseId}/exams/${examId}/students`, studentDtos, { observe: 'response' });
     }
 
     /**
@@ -384,5 +394,27 @@ export class ExamManagementService {
                     }),
                 ),
             );
+    }
+
+    /**
+     * Downloads the exam archive of the specified examId. Returns an error
+     * if the archive does not exist.
+     * @param courseId
+     * @param examId The id of the exam
+     */
+    downloadExamArchive(courseId: number, examId: number): Observable<HttpResponse<Blob>> {
+        return this.http.get(`${this.resourceUrl}/${courseId}/exams/${examId}/download-archive`, {
+            observe: 'response',
+            responseType: 'blob',
+        });
+    }
+
+    /**
+     * Archives the exam of the specified examId.
+     * @param courseId the id of the course of the exam
+     * @param examId The id of the exam to archive
+     */
+    archiveExam(courseId: number, examId: number): Observable<HttpResponse<any>> {
+        return this.http.put(`${this.resourceUrl}/${courseId}/exams/${examId}/archive`, {}, { observe: 'response' });
     }
 }

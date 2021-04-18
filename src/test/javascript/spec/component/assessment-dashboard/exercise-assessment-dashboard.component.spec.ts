@@ -59,6 +59,7 @@ import { Result } from 'app/entities/result.model';
 import { Exam } from 'app/entities/exam.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { SecondCorrectionEnableButtonComponent } from 'app/exercises/shared/dashboards/tutor/second-correction-button/second-correction-enable-button.component';
+import { LanguageTableCellComponent } from 'app/exercises/shared/dashboards/tutor/language-table-cell/language-table-cell.component';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -156,10 +157,15 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         { inTime: 1, late: 1 },
         { inTime: 8, late: 0 },
     ];
+    const numberOfLockedAssessmentByOtherTutorsOfCorrectionRound = [
+        { inTime: 2, late: 0 },
+        { inTime: 7, late: 0 },
+    ];
     const stats = {
         numberOfSubmissions: { inTime: 12, late: 5 },
         totalNumberOfAssessments: { inTime: 9, late: 1 },
         numberOfAssessmentsOfCorrectionRounds,
+        numberOfLockedAssessmentByOtherTutorsOfCorrectionRound,
     } as StatsForDashboard;
     const lockLimitErrorResponse = new HttpErrorResponse({ error: { errorKey: 'lockedSubmissionsLimitReached' } });
     const router = new MockRouter();
@@ -190,6 +196,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
                 MockComponent(CollapsableAssessmentInstructionsComponent),
                 MockComponent(AssessmentInstructionsComponent),
                 MockComponent(StructuredGradingInstructionsAssessmentLayoutComponent),
+                MockComponent(LanguageTableCellComponent),
             ],
             providers: [
                 JhiLanguageHelper,
@@ -308,6 +315,8 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         sinon.assert.calledWith(modelingSubmissionStubWithoutAssessment.getCall(1), modelingExercise.id, undefined, 1);
         expect(comp.numberOfAssessmentsOfCorrectionRounds[0].inTime).to.equal(1);
         expect(comp.numberOfAssessmentsOfCorrectionRounds[1].inTime).to.equal(8);
+        expect(comp.numberOfLockedAssessmentByOtherTutorsOfCorrectionRound[0].inTime).to.equal(2);
+        expect(comp.numberOfLockedAssessmentByOtherTutorsOfCorrectionRound[1].inTime).to.equal(7);
         expect(comp.totalAssessmentPercentage.inTime).to.equal(75);
         expect(comp.totalAssessmentPercentage.late).to.equal(20);
         expect(comp.submissionsByCorrectionRound?.get(1)!.length).to.equal(0);
@@ -336,17 +345,6 @@ describe('ExerciseAssessmentDashboardComponent', () => {
     it('should calculateStatus DRAFT', () => {
         expect(modelingSubmission.latestResult).to.be.undefined;
         expect(comp.calculateSubmissionStatus(modelingSubmission)).to.be.equal('DRAFT');
-    });
-
-    describe('test languages', () => {
-        it('should call languge unknown', () => {
-            expect(comp.language(modelingSubmission)).to.be.equal('UNKNOWN');
-        });
-
-        it('should call languge correct', () => {
-            expect(comp.language(textSubmission)).to.be.equal('UNKNOWN');
-            expect(comp.language(textSubmissionAssessed)).to.be.equal(Language.GERMAN);
-        });
     });
 
     it('should call hasBeenCompletedByTutor', () => {
@@ -406,11 +404,6 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         const openAssessmentEditor = stub(comp, 'openAssessmentEditor');
         comp.viewComplaint(complaint);
         expect(openAssessmentEditor).to.have.been.called;
-    });
-
-    it('should return asProgrammingExercise', () => {
-        const castedExercise = comp.asProgrammingExercise(exercise);
-        expect(castedExercise).to.be.equal(exercise as ProgrammingExercise);
     });
 
     describe('openExampleSubmission', () => {

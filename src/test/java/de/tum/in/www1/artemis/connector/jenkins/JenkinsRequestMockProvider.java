@@ -1,9 +1,9 @@
 package de.tum.in.www1.artemis.connector.jenkins;
 
 import static de.tum.in.www1.artemis.util.FileUtils.loadFileFromResources;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
-import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
-import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.*;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withStatus;
 
 import java.io.IOException;
@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.http.client.HttpResponseException;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
@@ -434,15 +435,20 @@ public class JenkinsRequestMockProvider {
     public void mockDeleteBuildPlan(String projectKey, String planName, boolean shouldFail) throws IOException {
         mockGetFolderJob(projectKey, new FolderJob());
         if (shouldFail) {
-            doThrow(IOException.class).when(jenkinsServer).deleteJob(any(FolderJob.class), eq(planName), eq(useCrumb));
+            doThrow(new HttpResponseException(400, "Bad Request")).when(jenkinsServer).deleteJob(any(FolderJob.class), eq(planName), eq(useCrumb));
         }
         else {
             doNothing().when(jenkinsServer).deleteJob(any(FolderJob.class), eq(planName), eq(useCrumb));
         }
     }
 
-    public void mockDeleteBuildPlanProject(String projectKey) throws IOException {
-        doNothing().when(jenkinsServer).deleteJob(projectKey, useCrumb);
+    public void mockDeleteBuildPlanProject(String projectKey, boolean shouldFail) throws IOException {
+        if (shouldFail) {
+            doThrow(new HttpResponseException(400, "Bad Request")).when(jenkinsServer).deleteJob(projectKey, useCrumb);
+        }
+        else {
+            doNothing().when(jenkinsServer).deleteJob(projectKey, useCrumb);
+        }
     }
 
     public void mockGetBuildStatus(String projectKey, String planName, boolean planExistsInCi, boolean planIsActive, boolean planIsBuilding, boolean failToGetLastBuild)

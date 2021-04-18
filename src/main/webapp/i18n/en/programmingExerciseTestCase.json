@@ -18,7 +18,12 @@
             "testName": "Test Name",
             "weight": "Weight",
             "active": "Active",
-            "exercise": "Exercise"
+            "exercise": "Exercise",
+            "visibility": {
+                "Always": "Always",
+                "AfterDueDate": "After Due Date",
+                "Never": "Never"
+            }
         }
     }
 }

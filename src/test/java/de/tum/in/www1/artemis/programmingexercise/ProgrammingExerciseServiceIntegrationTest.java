@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.programmingexercise;
 
-import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource.Endpoints.IMPORT;
-import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource.Endpoints.ROOT;
+import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource.Endpoints.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.stream.Collectors;
@@ -140,7 +139,7 @@ public class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringInt
     public void testInstructorGetsResultsOnlyFromOwningCourses() throws Exception {
         final var search = database.configureSearch("");
         final var result = request.get(BASE_RESOURCE, HttpStatus.OK, SearchResultPageDTO.class, database.exerciseSearchMapping(search));
-        assertThat(result.getResultsOnPage()).isEmpty();
+        assertThat(result.getResultsOnPage()).isNullOrEmpty();
     }
 
     @Test
@@ -167,7 +166,7 @@ public class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringInt
 
         final var searchSwift = database.configureSearch("Swift");
         final var resultSwift = request.get(BASE_RESOURCE, HttpStatus.OK, SearchResultPageDTO.class, database.exerciseSearchMapping(searchSwift));
-        assertThat(resultSwift.getResultsOnPage()).isEmpty();
+        assertThat(resultSwift.getResultsOnPage()).isNullOrEmpty();
     }
 
     @Test

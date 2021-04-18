@@ -4,6 +4,8 @@ import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import org.jetbrains.annotations.NotNull;
+
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.*;
@@ -19,7 +21,7 @@ import de.tum.in.www1.artemis.domain.notification.SystemNotification;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.*;
-import de.tum.in.www1.artemis.security.AuthoritiesConstants;
+import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildLogDTO;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildPlanDTO;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildResultNotificationDTO;
@@ -281,7 +283,7 @@ public class ModelFactory {
     public static Team generateTeamForExercise(Exercise exercise, String name, String shortName, String loginPrefix, int numberOfStudents, User owner, String creatorLogin,
             String registrationPrefix) {
         List<User> students = generateActivatedUsersWithRegistrationNumber(shortName + loginPrefix, new String[] { "tumuser", "testgroup" },
-                Set.of(new Authority(AuthoritiesConstants.USER)), numberOfStudents, shortName + registrationPrefix);
+                Set.of(new Authority(Role.STUDENT.getAuthority())), numberOfStudents, shortName + registrationPrefix);
 
         Team team = new Team();
         team.setName(name);
@@ -567,19 +569,15 @@ public class ModelFactory {
 
     public static List<Feedback> generateFeedback() {
         List<Feedback> feedbacks = new ArrayList<>();
-        Feedback positiveFeedback = new Feedback();
-        positiveFeedback.setCredits(2D);
+        Feedback positiveFeedback = createPositiveFeedback(FeedbackType.AUTOMATIC);
         positiveFeedback.setReference("theory");
-        positiveFeedback.setType(FeedbackType.AUTOMATIC);
         feedbacks.add(positiveFeedback);
         Feedback positiveFeedback2 = new Feedback();
         positiveFeedback2.setCredits(1D);
         positiveFeedback2.setReference("theory2");
         positiveFeedback2.setType(FeedbackType.AUTOMATIC);
         feedbacks.add(positiveFeedback2);
-        Feedback negativeFeedback = new Feedback();
-        negativeFeedback.setCredits(-1D);
-        negativeFeedback.setDetailText("Bad solution");
+        Feedback negativeFeedback = createNegativeFeedback(FeedbackType.AUTOMATIC);
         negativeFeedback.setReference("practice");
         negativeFeedback.setType(FeedbackType.AUTOMATIC);
         feedbacks.add(negativeFeedback);
@@ -588,15 +586,9 @@ public class ModelFactory {
 
     public static List<Feedback> generateManualFeedback() {
         List<Feedback> feedbacks = new ArrayList<>();
-        Feedback positiveFeedback = new Feedback();
-        positiveFeedback.setCredits(2D);
-        positiveFeedback.setText("good");
-        positiveFeedback.setType(FeedbackType.MANUAL);
+        Feedback positiveFeedback = createPositiveFeedback(FeedbackType.MANUAL);
         feedbacks.add(positiveFeedback);
-        Feedback negativeFeedback = new Feedback();
-        negativeFeedback.setCredits(-1D);
-        negativeFeedback.setText("bad");
-        negativeFeedback.setType(FeedbackType.MANUAL);
+        Feedback negativeFeedback = createNegativeFeedback(FeedbackType.MANUAL);
         feedbacks.add(negativeFeedback);
         Feedback unrefFeedback = new Feedback();
         unrefFeedback.setCredits(-1D);
@@ -604,6 +596,24 @@ public class ModelFactory {
         unrefFeedback.setType(FeedbackType.MANUAL_UNREFERENCED);
         feedbacks.add(unrefFeedback);
         return feedbacks;
+    }
+
+    @NotNull
+    public static Feedback createPositiveFeedback(FeedbackType type) {
+        Feedback positiveFeedback = new Feedback();
+        positiveFeedback.setCredits(2D);
+        positiveFeedback.setText("good");
+        positiveFeedback.setType(type);
+        return positiveFeedback;
+    }
+
+    @NotNull
+    public static Feedback createNegativeFeedback(FeedbackType type) {
+        Feedback negativeFeedback = new Feedback();
+        negativeFeedback.setCredits(-1D);
+        negativeFeedback.setText("bad");
+        negativeFeedback.setType(type);
+        return negativeFeedback;
     }
 
     public static List<Feedback> generateStaticCodeAnalysisFeedbackList(int numOfFeedback) {
@@ -801,7 +811,7 @@ public class ModelFactory {
             var testcase = new TestCaseDTO();
             testcase.setName(name);
             testcase.setClassname("Class");
-            var error = new ErrorOrFailureDTO();
+            var error = new TestCaseDetailMessageDTO();
             error.setMessage(name + " error message");
             testcase.setErrors(List.of(error));
             return testcase;
@@ -821,6 +831,85 @@ public class ModelFactory {
         notification.setSuccessful(successfulTestNames.size());
         notification.setFailures(failedTestNames.size());
         notification.setRunDate(ZonedDateTime.now());
+        return notification;
+    }
+
+    /**
+     * Creates a dummy DTO with custom feedbacks used by Jenkins, which notifies about new programming exercise results.
+     *
+     * Uses {@link #generateTestResultDTO(String, List, List, ProgrammingLanguage, boolean)} as basis.
+     * Then adds a new {@link TestsuiteDTO} with name "CustomFeedbacks" to it.
+     * This Testsuite has four {@link TestCaseDTO}s:
+     * <ul>
+     *     <li>CustomSuccessMessage: successful test with a message</li>
+     *     <li>CustomSuccessNoMessage: successful test without message</li>
+     *     <li>CustomFailedMessage: failed test with a message</li>
+     * </ul>
+     *
+     * @param repoName name of the repository
+     * @param successfulTestNames names of successful tests
+     * @param failedTestNames names of failed tests
+     * @param programmingLanguage programming language to use
+     * @param enableStaticAnalysisReports should the notification include static analysis reports
+     * @return TestResultDTO with dummy data
+     */
+    public static TestResultsDTO generateTestResultsDTOWithCustomFeedback(String repoName, List<String> successfulTestNames, List<String> failedTestNames,
+            ProgrammingLanguage programmingLanguage, boolean enableStaticAnalysisReports) {
+        var notification = generateTestResultDTO(repoName, successfulTestNames, failedTestNames, programmingLanguage, enableStaticAnalysisReports);
+
+        var testSuite = new TestsuiteDTO();
+        testSuite.setName("customFeedbacks");
+        testSuite.setErrors(0);
+        testSuite.setSkipped(0);
+        testSuite.setFailures(failedTestNames.size());
+        testSuite.setTests(successfulTestNames.size() + failedTestNames.size());
+
+        final List<TestCaseDTO> testCases = new ArrayList<>();
+
+        // successful with message
+        {
+            var testCase = new TestCaseDTO();
+            testCase.setName("CustomSuccessMessage");
+            var successInfo = new TestCaseDetailMessageDTO();
+            successInfo.setMessage("Successful test with message");
+            testCase.setSuccessInfos(List.of(successInfo));
+            testCases.add(testCase);
+        }
+
+        // successful without message
+        {
+            var testCase = new TestCaseDTO();
+            testCase.setName("CustomSuccessNoMessage");
+            var successInfo = new TestCaseDetailMessageDTO();
+            testCase.setSuccessInfos(List.of(successInfo));
+            testCases.add(testCase);
+        }
+
+        // failed with message
+        {
+            var testCase = new TestCaseDTO();
+            testCase.setName("CustomFailedMessage");
+            var failedInfo = new TestCaseDetailMessageDTO();
+            failedInfo.setMessage("Failed test with message");
+            testCase.setFailures(List.of(failedInfo));
+            testCases.add(testCase);
+        }
+
+        // failed without message
+        {
+            var testCase = new TestCaseDTO();
+            testCase.setName("CustomFailedNoMessage");
+            var failedInfo = new TestCaseDetailMessageDTO();
+            testCase.setFailures(List.of(failedInfo));
+            testCases.add(testCase);
+        }
+
+        testSuite.setTestCases(testCases);
+
+        var results = new ArrayList<>(notification.getResults());
+        results.add(testSuite);
+        notification.setResults(results);
+
         return notification;
     }
 
@@ -1026,11 +1115,33 @@ public class ModelFactory {
         // Create Submissions with id's 0 - count
         List<TextSubmission> textSubmissions = new ArrayList<>();
         for (int i = 0; i < count; i++) {
-            TextSubmission s = new TextSubmission((long) i).text(submissionTexts[i]);
-            s.setLanguage(Language.ENGLISH);
-            textSubmissions.add(s);
+            TextSubmission textSubmission = new TextSubmission((long) i).text(submissionTexts[i]);
+            textSubmission.setLanguage(Language.ENGLISH);
+            textSubmissions.add(textSubmission);
         }
 
         return textSubmissions;
+    }
+
+    /**
+     *
+     * Generate an example organization entity
+     * @param name of organization
+     * @param shortName of organization
+     * @param url of organization
+     * @param description of organization
+     * @param logoUrl of organization
+     * @param emailPattern of organization
+     * @return An organization entity
+     */
+    public static Organization generateOrganization(String name, String shortName, String url, String description, String logoUrl, String emailPattern) {
+        Organization organization = new Organization();
+        organization.setName(name);
+        organization.setShortName(shortName);
+        organization.setUrl(url);
+        organization.setDescription(description);
+        organization.setLogoUrl(logoUrl);
+        organization.setEmailPattern(emailPattern);
+        return organization;
     }
 }

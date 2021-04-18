@@ -17,7 +17,7 @@ import de.tum.in.www1.artemis.domain.Repository;
 public class BambooServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
-    ContinuousIntegrationTestService continuousIntegrationTestService;
+    private ContinuousIntegrationTestService continuousIntegrationTestService;
 
     /**
      * This method initializes the test case by setting up a local repo
@@ -104,7 +104,6 @@ public class BambooServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
     @Test
     @WithMockUser(username = "student1")
     public void testHealthException() throws Exception {
-
         continuousIntegrationTestService.testHealthException();
     }
 }

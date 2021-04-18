@@ -22,32 +22,21 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
-import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.service.exam.ExamService;
 
 public class SubmissionServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
-    CourseService courseService;
+    private ExamRepository examRepository;
 
     @Autowired
-    ExamService examService;
+    private ResultRepository resultRepository;
 
     @Autowired
-    ExamRepository examRepository;
+    private SubmissionService submissionService;
 
     @Autowired
-    ResultRepository resultRepository;
-
-    @Autowired
-    StudentParticipationRepository studentParticipationRepository;
-
-    @Autowired
-    SubmissionService submissionService;
-
-    @Autowired
-    UserRepository userRepository;
+    private UserRepository userRepository;
 
     private User student1;
 
@@ -55,15 +44,11 @@ public class SubmissionServiceTest extends AbstractSpringIntegrationBambooBitbuc
 
     private User tutor2;
 
-    private Course course;
-
     private TextExercise examTextExercise;
 
     private ModelingExercise examModelingExercise;
 
     private ProgrammingExercise examProgrammingExercise;
-
-    private Exam exam;
 
     private Submission submission1;
 
@@ -95,8 +80,8 @@ public class SubmissionServiceTest extends AbstractSpringIntegrationBambooBitbuc
         tutor1 = users.get(2);
         tutor2 = users.get(3);
 
-        course = database.createCourse();
-        exam = database.addExam(course);
+        Course course = database.createCourse();
+        Exam exam = database.addExam(course);
 
         exam.setNumberOfCorrectionRoundsInExam(2);
         exam = examRepository.save(exam);

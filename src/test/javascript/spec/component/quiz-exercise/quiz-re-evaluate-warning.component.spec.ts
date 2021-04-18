@@ -10,7 +10,7 @@ import { Course } from 'app/entities/course.model';
 import { NgbActiveModal, NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
-import { restore, SinonStub, spy, stub } from 'sinon';
+import { restore, stub } from 'sinon';
 import { ReEvaluateMultipleChoiceQuestionComponent } from 'app/exercises/quiz/manage/re-evaluate/multiple-choice-question/re-evaluate-multiple-choice-question.component';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { ReEvaluateDragAndDropQuestionComponent } from 'app/exercises/quiz/manage/re-evaluate/drag-and-drop-question/re-evaluate-drag-and-drop-question.component';
@@ -30,7 +30,6 @@ describe('QuizExercise Re-evaluate Warning Component', () => {
     let comp: QuizReEvaluateWarningComponent;
     let fixture: ComponentFixture<QuizReEvaluateWarningComponent>;
     let quizService: QuizExerciseService;
-    let quizServiceFindSpy: SinonStub;
 
     const course = { id: 123 } as Course;
     const quizExercise = new QuizExercise(course, undefined);
@@ -59,9 +58,10 @@ describe('QuizExercise Re-evaluate Warning Component', () => {
         const quizQuestion1 = new MultipleChoiceQuestion();
         const quizQuestion2 = new DragAndDropQuestion();
         quizExercise.quizQuestions = [quizQuestion1, quizQuestion2];
+
         // initial value
         comp.quizExercise = quizExercise;
-        quizServiceFindSpy = stub(quizService, 'find').returns(of(new HttpResponse({ body: quizExercise })));
+        stub(quizService, 'find').returns(of(new HttpResponse({ body: quizExercise })));
     });
 
     afterEach(() => {

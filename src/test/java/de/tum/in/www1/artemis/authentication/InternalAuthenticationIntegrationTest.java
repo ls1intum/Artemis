@@ -1,16 +1,15 @@
 package de.tum.in.www1.artemis.authentication;
 
+import static de.tum.in.www1.artemis.domain.Authority.*;
 import static de.tum.in.www1.artemis.util.ModelFactory.USER_PASSWORD;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
 
 import java.time.ZonedDateTime;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -25,12 +24,11 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.in.www1.artemis.AbstractSpringIntegrationJenkinsGitlabTest;
 import de.tum.in.www1.artemis.connector.gitlab.GitlabRequestMockProvider;
 import de.tum.in.www1.artemis.domain.Authority;
-import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.ArtemisInternalAuthenticationProvider;
-import de.tum.in.www1.artemis.security.AuthoritiesConstants;
+import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.jwt.TokenProvider;
 import de.tum.in.www1.artemis.service.user.PasswordService;
 import de.tum.in.www1.artemis.util.ModelFactory;
@@ -54,19 +52,19 @@ public class InternalAuthenticationIntegrationTest extends AbstractSpringIntegra
     private CourseRepository courseRepository;
 
     @Autowired
-    protected ProgrammingExerciseRepository programmingExerciseRepository;
+    private ProgrammingExerciseRepository programmingExerciseRepository;
 
     @Autowired
-    protected UserRepository userRepository;
+    private UserRepository userRepository;
 
     @Autowired
-    protected LtiUserIdRepository ltiUserIdRepository;
+    private LtiUserIdRepository ltiUserIdRepository;
 
     @Autowired
-    protected LtiOutcomeUrlRepository ltiOutcomeUrlRepository;
+    private LtiOutcomeUrlRepository ltiOutcomeUrlRepository;
 
     @Autowired
-    protected AuthorityRepository authorityRepository;
+    private AuthorityRepository authorityRepository;
 
     @Autowired
     private GitlabRequestMockProvider gitlabRequestMockProvider;
@@ -84,26 +82,24 @@ public class InternalAuthenticationIntegrationTest extends AbstractSpringIntegra
 
     private static final String USERNAME = "student1";
 
-    protected ProgrammingExercise programmingExercise;
+    private ProgrammingExercise programmingExercise;
 
-    protected Course course;
-
-    protected LtiLaunchRequestDTO ltiLaunchRequest;
+    private LtiLaunchRequestDTO ltiLaunchRequest;
 
     @BeforeEach
     public void setUp() {
         jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsServer);
 
         database.addUsers(1, 0, 0);
-        course = database.addCourseWithOneProgrammingExercise();
+        database.addCourseWithOneProgrammingExercise();
         programmingExercise = programmingExerciseRepository.findAllWithEagerParticipations().get(0);
         ltiLaunchRequest = AuthenticationIntegrationTestHelper.setupDefaultLtiLaunchRequest();
         doReturn(null).when(ltiService).verifyRequest(any());
 
-        final var userAuthority = new Authority(AuthoritiesConstants.USER);
-        final var instructorAuthority = new Authority(AuthoritiesConstants.INSTRUCTOR);
-        final var adminAuthority = new Authority(AuthoritiesConstants.ADMIN);
-        final var taAuthority = new Authority(AuthoritiesConstants.TEACHING_ASSISTANT);
+        final var userAuthority = new Authority(Role.STUDENT.getAuthority());
+        final var instructorAuthority = new Authority(Role.INSTRUCTOR.getAuthority());
+        final var adminAuthority = new Authority(Role.ADMIN.getAuthority());
+        final var taAuthority = new Authority(Role.TEACHING_ASSISTANT.getAuthority());
         authorityRepository.saveAll(List.of(userAuthority, instructorAuthority, adminAuthority, taAuthority));
 
         student = userRepository.findOneWithGroupsAndAuthoritiesByLogin(USERNAME).get();
@@ -167,9 +163,8 @@ public class InternalAuthenticationIntegrationTest extends AbstractSpringIntegra
         assertThat(updatedStudent.getGroups()).as("User is registered for course").contains(course1.getStudentGroupName());
     }
 
-    @Test
-    @WithMockUser(value = "admin", roles = "ADMIN")
-    public void createUserWithInternalUserManagementAndAutomatedTutorialGroupsAssignment() throws Exception {
+    @NotNull
+    private User createUserWithRestApi(Set<Authority> authorities) throws Exception {
         gitlabRequestMockProvider.enableMockingOfRequests();
         gitlabRequestMockProvider.mockGetUserID();
         database.addTutorialCourse();
@@ -178,79 +173,57 @@ public class InternalAuthenticationIntegrationTest extends AbstractSpringIntegra
         student.setLogin("user1");
         student.setPassword("foobar");
         student.setEmail("user1@secret.invalid");
-        Set<Authority> authorities = new HashSet<>();
-        authorities.add(new Authority(AuthoritiesConstants.USER));
-
         student.setAuthorities(authorities);
 
         var exercises = programmingExerciseRepository.findAllByInstructorOrTAGroupNameIn(student.getGroups());
+        assertThat(exercises).hasSize(0);
         jenkinsRequestMockProvider.mockCreateUser(student, false, false, false);
 
-        final var response = request.postWithResponseBody("/api/users", new ManagedUserVM(student), User.class, HttpStatus.CREATED);
-        assertThat(response).isNotNull();
+        final var user = request.postWithResponseBody("/api/users", new ManagedUserVM(student), User.class, HttpStatus.CREATED);
+        assertThat(user).isNotNull();
+        return user;
+    }
 
-        assertThat(response.getGroups().contains(tutorialGroupStudents.get())).as("The student's tutorial group has been added to the student").isTrue();
-        assertThat(response.getGroups().contains(tutorialGroupTutors.get())).as("The tutor's tutorial group has not been added to the student").isFalse();
-        assertThat(response.getGroups().contains(tutorialGroupInstructors.get())).as("The instructor's tutorial group has not been added to the student").isFalse();
+    private void assertUserGroups(User user, boolean students, boolean tutors, boolean instructors) {
+        if (students) {
+            assertThat(user.getGroups()).contains(tutorialGroupStudents.get());
+        }
+        else {
+            assertThat(user.getGroups()).doesNotContain(tutorialGroupStudents.get());
+        }
+        if (tutors) {
+            assertThat(user.getGroups()).contains(tutorialGroupTutors.get());
+        }
+        else {
+            assertThat(user.getGroups()).doesNotContain(tutorialGroupTutors.get());
+        }
+        if (instructors) {
+            assertThat(user.getGroups()).contains(tutorialGroupInstructors.get());
+        }
+        else {
+            assertThat(user.getGroups()).doesNotContain(tutorialGroupInstructors.get());
+        }
+    }
 
+    @Test
+    @WithMockUser(value = "admin", roles = "ADMIN")
+    public void createUserWithInternalUserManagementAndAutomatedTutorialGroupsAssignment() throws Exception {
+        final User user = createUserWithRestApi(Set.of(USER_AUTHORITY));
+        assertUserGroups(user, true, false, false);
     }
 
     @Test
     @WithMockUser(value = "admin", roles = "ADMIN")
     public void createTutorWithInternalUserManagementAndAutomatedTutorialGroupsAssignment() throws Exception {
-        gitlabRequestMockProvider.enableMockingOfRequests();
-        gitlabRequestMockProvider.mockGetUserID();
-        database.addTutorialCourse();
-
-        student.setId(null);
-        student.setLogin("tutor1");
-        student.setPassword("foobar");
-        student.setEmail("btutor1@secret.invalid");
-        Set<Authority> authorities = new HashSet<>();
-        authorities.add(new Authority(AuthoritiesConstants.USER));
-        authorities.add(new Authority(AuthoritiesConstants.TEACHING_ASSISTANT));
-
-        student.setAuthorities(authorities);
-
-        var exercises = programmingExerciseRepository.findAllByInstructorOrTAGroupNameIn(student.getGroups());
-        jenkinsRequestMockProvider.mockCreateUser(student, false, false, false);
-
-        final var response = request.postWithResponseBody("/api/users", new ManagedUserVM(student), User.class, HttpStatus.CREATED);
-        assertThat(response).isNotNull();
-
-        assertThat(response.getGroups().contains(tutorialGroupStudents.get())).as("The student's tutorial group has been added to the teaching assistant").isTrue();
-        assertThat(response.getGroups().contains(tutorialGroupTutors.get())).as("The tutor's tutorial group has been added to the teaching assistant").isTrue();
-        assertThat(response.getGroups().contains(tutorialGroupInstructors.get())).as("The instructor's tutorial group has not been added to the teaching assistant").isFalse();
+        final User user = createUserWithRestApi(Set.of(USER_AUTHORITY, TA_AUTHORITY));
+        assertUserGroups(user, true, true, false);
     }
 
     @Test
     @WithMockUser(value = "admin", roles = "ADMIN")
     public void createInstructorWithInternalUserManagementAndAutomatedTutorialGroupsAssignment() throws Exception {
-        gitlabRequestMockProvider.enableMockingOfRequests();
-        gitlabRequestMockProvider.mockGetUserID();
-        database.addTutorialCourse();
-
-        student.setId(null);
-        student.setLogin("instructor1");
-        student.setPassword("foobar");
-        student.setEmail("instructor1@secret.invalid");
-        Set<Authority> authorities = new HashSet<>();
-        authorities.add(new Authority(AuthoritiesConstants.USER));
-        authorities.add(new Authority(AuthoritiesConstants.TEACHING_ASSISTANT));
-        authorities.add(new Authority(AuthoritiesConstants.INSTRUCTOR));
-
-        student.setAuthorities(authorities);
-
-        var exercises = programmingExerciseRepository.findAllByInstructorOrTAGroupNameIn(student.getGroups());
-        jenkinsRequestMockProvider.mockCreateUser(student, false, false, false);
-
-        final var response = request.postWithResponseBody("/api/users", new ManagedUserVM(student), User.class, HttpStatus.CREATED);
-        assertThat(response).isNotNull();
-
-        assertThat(response.getGroups().contains(tutorialGroupStudents.get())).as("The student's tutorial group has been added to the instructor").isTrue();
-        assertThat(response.getGroups().contains(tutorialGroupTutors.get())).as("The tutor's tutorial group has been added to the instructor").isTrue();
-        assertThat(response.getGroups().contains(tutorialGroupInstructors.get())).as("The instructor's tutorial group has been added to the instructor").isTrue();
-
+        final User user = createUserWithRestApi(Set.of(USER_AUTHORITY, TA_AUTHORITY, INSTRUCTOR_AUTHORITY));
+        assertUserGroups(user, true, true, true);
     }
 
     @Test

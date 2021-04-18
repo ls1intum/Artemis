@@ -1,7 +1,9 @@
 package de.tum.in.www1.artemis.service.connectors.bitbucket.dto;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class BitbucketBranchProtectionDTO {
 
     @JsonProperty("type")
@@ -36,6 +38,7 @@ public class BitbucketBranchProtectionDTO {
         this.matcher = matcher;
     }
 
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public static final class MatcherDTO {
 
         private String displayId;
@@ -92,6 +95,7 @@ public class BitbucketBranchProtectionDTO {
         }
     }
 
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public static final class TypeDTO {
 
         private String id;

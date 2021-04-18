@@ -10,7 +10,8 @@
             "KOTLIN": "Kotlin",
             "VHDL": "VHDL",
             "ASSEMBLER": "Assembler",
-            "SWIFT": "Swift"
+            "SWIFT": "Swift",
+            "OCAML": "OCaml"
         }
     }
 }

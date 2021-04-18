@@ -8,8 +8,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import javax.persistence.EntityManager;
-
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -39,76 +37,65 @@ import de.tum.in.www1.artemis.web.rest.dto.IndividualLearningGoalProgress;
 public class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
-    TeamRepository teamRepository;
+    private CourseRepository courseRepository;
 
     @Autowired
-    CourseRepository courseRepository;
+    private LectureRepository lectureRepository;
 
     @Autowired
-    LectureRepository lectureRepository;
+    private ExerciseRepository exerciseRepository;
 
     @Autowired
-    ExerciseRepository exerciseRepository;
+    private ParticipationService participationService;
 
     @Autowired
-    ParticipationService participationService;
+    private UserRepository userRepository;
 
     @Autowired
-    UserRepository userRepository;
+    private SubmissionRepository submissionRepository;
 
     @Autowired
-    StudentParticipationRepository studentParticipationRepository;
+    private ResultRepository resultRepository;
 
     @Autowired
-    SubmissionRepository submissionRepository;
+    private TextUnitRepository textUnitRepository;
 
     @Autowired
-    ResultRepository resultRepository;
+    private ExerciseUnitRepository exerciseUnitRepository;
 
     @Autowired
-    EntityManager entityManager;
+    private LearningGoalRepository learningGoalRepository;
 
     @Autowired
-    TextUnitRepository textUnitRepository;
+    private LectureUnitRepository lectureUnitRepository;
 
-    @Autowired
-    ExerciseUnitRepository exerciseUnitRepository;
+    private Long idOfCourse;
 
-    @Autowired
-    LearningGoalRepository learningGoalRepository;
+    private Long idOfLearningGoal;
 
-    @Autowired
-    LectureUnitRepository lectureUnitRepository;
+    private Long idOfLectureOne;
 
-    Long idOfCourse;
+    private Long idOfTextUnitOfLectureOne;
 
-    Long idOfLearningGoal;
+    private Long idOfExerciseUnitTextOfLectureOne;
 
-    Long idOfLectureOne;
+    private Long idOfExerciseUnitModelingOfLectureOne;
 
-    Long idOfTextUnitOfLectureOne;
+    private Long idOfLectureTwo;
 
-    Long idOfExerciseUnitTextOfLectureOne;
+    private Long idOfTextUnitOfLectureTwo;
 
-    Long idOfExerciseUnitModelingOfLectureOne;
+    private Long idOfExerciseUnitTextOfLectureTwo;
 
-    Long idOfExerciseUnitTeamTextOfLectureOne;
+    private Long idOfExerciseUnitModelingOfLectureTwo;
 
-    Long idOfLectureTwo;
+    private Long idOfTextExercise;
 
-    Long idOfTextUnitOfLectureTwo;
+    private Long idOfModelingExercise;
 
-    Long idOfExerciseUnitTextOfLectureTwo;
+    private Long idOfTeamTextExercise;
 
-    Long idOfExerciseUnitModelingOfLectureTwo;
-
-    Long idOfTextExercise;
-
-    Long idOfModelingExercise;
-
-    Long idOfTeamTextExercise;
-
-    List<Team> teams;
+    private List<Team> teams;
 
     @AfterEach
     public void resetDatabase() {
@@ -116,7 +103,7 @@ public class LearningGoalIntegrationTest extends AbstractSpringIntegrationBamboo
     }
 
     @BeforeEach
-    public void setupTestScenario() throws Exception {
+    public void setupTestScenario() {
         ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
         // creating the users student1-student5, tutor1-tutor10 and instructors1-instructor10
         this.database.addUsers(5, 10, 10);
@@ -188,7 +175,6 @@ public class LearningGoalIntegrationTest extends AbstractSpringIntegrationBamboo
         ExerciseUnit teamTextExerciseUnit = new ExerciseUnit();
         teamTextExerciseUnit.setExercise(textTeamExercise);
         teamTextExerciseUnit = exerciseUnitRepository.save(teamTextExerciseUnit);
-        idOfExerciseUnitTeamTextOfLectureOne = teamTextExerciseUnit.getId();
 
         List<LectureUnit> lectureUnitsOfLectureOne = List.of(textUnit, textExerciseUnit, modelingExerciseUnit, teamTextExerciseUnit);
         Lecture lectureOne = lectureRepository.findByIdWithStudentQuestionsAndLectureUnitsAndLearningGoals(idOfLectureOne).get();

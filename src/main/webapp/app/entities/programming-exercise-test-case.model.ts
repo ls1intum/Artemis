@@ -1,6 +1,12 @@
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { BaseEntity } from 'app/shared/model/base-entity';
 
+export enum Visibility {
+    Always = 'ALWAYS',
+    AfterDueDate = 'AFTER_DUE_DATE',
+    Never = 'NEVER',
+}
+
 export class ProgrammingExerciseTestCase implements BaseEntity {
     id?: number;
     testName?: string;
@@ -8,6 +14,6 @@ export class ProgrammingExerciseTestCase implements BaseEntity {
     bonusMultiplier?: number;
     bonusPoints?: number;
     active?: boolean;
-    afterDueDate?: boolean;
+    visibility?: Visibility;
     exercise?: ProgrammingExercise;
 }

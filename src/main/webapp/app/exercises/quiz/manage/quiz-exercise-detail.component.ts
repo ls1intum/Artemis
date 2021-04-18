@@ -16,7 +16,7 @@ import { Location } from '@angular/common';
 import { JhiAlertService } from 'ng-jhipster';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { QuizQuestion, QuizQuestionType, ScoringType } from 'app/entities/quiz/quiz-question.model';
-import { Exercise, ExerciseCategory, IncludedInOverallScore } from 'app/entities/exercise.model';
+import { Exercise, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { AnswerOption } from 'app/entities/quiz/answer-option.model';
 import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
 import { ShortAnswerQuestion } from 'app/entities/quiz/short-answer-question.model';
@@ -45,6 +45,7 @@ import { DragAndDropQuestionEditComponent } from 'app/exercises/quiz/manage/drag
 import { MultipleChoiceQuestionEditComponent } from 'app/exercises/quiz/manage/multiple-choice-question/multiple-choice-question-edit.component';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { ShortAnswerQuestionEditComponent } from 'app/exercises/quiz/manage/short-answer-question/short-answer-question-edit.component';
+import { ExerciseCategory } from 'app/entities/exercise-category.model';
 
 export interface Reason {
     translateKey: string;
@@ -202,6 +203,9 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
             this.quizExerciseService.find(quizId).subscribe((response: HttpResponse<QuizExercise>) => {
                 this.quizExercise = response.body!;
                 this.init();
+                if (this.isExamMode && this.quizExercise.testRunParticipationsExist) {
+                    this.jhiAlertService.warning(this.translateService.instant('artemisApp.quizExercise.edit.testRunSubmissionsExist'));
+                }
             });
         }
         // TODO: we should try to avoid calling this.init() above more than once
@@ -236,7 +240,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
             this.quizExercise.exerciseGroup = this.exerciseGroup;
         }
         if (!this.isExamMode) {
-            this.exerciseCategories = this.exerciseService.convertExerciseCategoriesFromServer(this.quizExercise);
+            this.exerciseCategories = this.quizExercise.categories || [];
             this.courseService.findAllCategoriesOfCourse(this.quizExercise.course!.id!).subscribe(
                 (res: HttpResponse<string[]>) => {
                     this.existingCategories = this.exerciseService.convertExerciseCategoriesAsStringFromServer(res.body!);
@@ -263,7 +267,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
      * @param categories the new categories
      */
     updateCategories(categories: ExerciseCategory[]) {
-        this.quizExercise.categories = categories.map((el) => JSON.stringify(el));
+        this.quizExercise.categories = categories;
         this.cacheValidation();
     }
 
@@ -617,7 +621,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
      * @param categoriesSaved the categories that are saved
      * @returns {boolean} true if the used and saved categories are identical.
      */
-    areCategoriesIdentical(categoriesUsed?: string[], categoriesSaved?: string[]): boolean {
+    areCategoriesIdentical(categoriesUsed?: ExerciseCategory[], categoriesSaved?: ExerciseCategory[]): boolean {
         return JSON.stringify(categoriesUsed || []).toLowerCase() === JSON.stringify(categoriesSaved || []).toLowerCase();
     }
 
@@ -707,12 +711,15 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
 
         const maxPointsReachableInQuiz = this.quizExercise.quizQuestions?.map((quizQuestion) => quizQuestion.points ?? 0).reduce((a, b) => a + b, 0);
 
+        const noTestRunExists = !this.isExamMode || !this.quizExercise.testRunParticipationsExist;
+
         return (
             isGenerallyValid &&
             areAllQuestionsValid === true &&
             this.isEmpty(this.invalidFlaggedQuestions) &&
             maxPointsReachableInQuiz !== undefined &&
-            maxPointsReachableInQuiz > 0
+            maxPointsReachableInQuiz > 0 &&
+            noTestRunExists
         );
     }
 
@@ -844,6 +851,12 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
         if (!this.quizExercise.quizQuestions || this.quizExercise.quizQuestions.length === 0) {
             invalidReasons.push({
                 translateKey: 'artemisApp.quizExercise.invalidReasons.noQuestion',
+                translateValues: {},
+            });
+        }
+        if (this.isExamMode && this.quizExercise.testRunParticipationsExist) {
+            invalidReasons.push({
+                translateKey: 'artemisApp.quizExercise.edit.testRunSubmissionsExist',
                 translateValues: {},
             });
         }

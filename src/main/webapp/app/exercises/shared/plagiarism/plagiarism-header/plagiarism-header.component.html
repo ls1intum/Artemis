@@ -7,11 +7,6 @@
     </div>
 
     <div class="plagiarism-header-right">
-        <div class="plagiarism-warning">
-            <fa-icon [icon]="'exclamation-triangle'"></fa-icon>
-            <span>{{ 'artemisApp.plagiarism.warning' | artemisTranslate }}</span>
-        </div>
-
         <button class="btn btn-success btn-sm" (click)="confirmPlagiarism()" data-qa="confirm-plagiarism-button">
             {{ 'artemisApp.plagiarism.confirm' | artemisTranslate }}
         </button>

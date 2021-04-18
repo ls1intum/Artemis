@@ -1,6 +1,7 @@
 import { Component, Input } from '@angular/core';
 import { ParticipantScoreAverageDTO } from 'app/shared/participant-scores/participant-scores.service';
 import { round } from 'app/shared/util/utils';
+import { BaseEntity } from 'app/shared/model/base-entity';
 
 @Component({
     selector: 'jhi-participant-scores-average-table',
@@ -13,7 +14,8 @@ export class ParticipantScoresAverageTableComponent {
     @Input()
     isLoading = false;
 
-    extractParticipantName = (participantScoreAverageDTO: ParticipantScoreAverageDTO) => {
-        return participantScoreAverageDTO.userName ? String(participantScoreAverageDTO.userName) : String(participantScoreAverageDTO.teamName);
+    extractParticipantName = (participantScoreAverageDTO: BaseEntity) => {
+        const castedDTO = participantScoreAverageDTO as ParticipantScoreAverageDTO;
+        return castedDTO.userName ? String(castedDTO.userName) : String(castedDTO.teamName);
     };
 }

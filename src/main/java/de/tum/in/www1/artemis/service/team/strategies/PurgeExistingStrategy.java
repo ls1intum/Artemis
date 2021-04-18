@@ -14,7 +14,6 @@ public class PurgeExistingStrategy extends TeamImportStrategy {
 
     public PurgeExistingStrategy(TeamRepository teamRepository, ParticipationService participationService) {
         super(teamRepository);
-
         this.participationService = participationService;
     }
 

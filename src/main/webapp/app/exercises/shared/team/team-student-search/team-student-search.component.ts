@@ -26,7 +26,7 @@ export class TeamStudentSearchComponent {
     @Output() searching = new EventEmitter<boolean>();
     @Output() searchQueryTooShort = new EventEmitter<boolean>();
     @Output() searchFailed = new EventEmitter<boolean>();
-    @Output() searchNoResults = new EventEmitter<string | null>();
+    @Output() searchNoResults = new EventEmitter<string | undefined>();
 
     inputDisplayValue: string;
 
@@ -53,13 +53,13 @@ export class TeamStudentSearchComponent {
             tap(() => {
                 this.searchQueryTooShort.emit(false);
                 this.searchFailed.emit(false);
-                this.searchNoResults.emit(null);
+                this.searchNoResults.emit(undefined);
             }),
             tap(() => this.searching.emit(true)),
             switchMap((loginOrName) => {
                 if (loginOrName.length < 3) {
                     this.searchQueryTooShort.emit(true);
-                    return combineLatest([of(loginOrName), of(null)]);
+                    return combineLatest([of(loginOrName), of(undefined)]);
                 }
                 return combineLatest([
                     of(loginOrName),
@@ -69,14 +69,14 @@ export class TeamStudentSearchComponent {
                         .pipe(
                             catchError(() => {
                                 this.searchFailed.emit(true);
-                                return of(null);
+                                return of(undefined);
                             }),
                         ),
                 ]);
             }),
             tap(() => this.searching.emit(false)),
             tap(([loginOrName, users]) => {
-                // "Query too short" (no request performed) or "Search request failed" => {users} will be null
+                // "Query too short" (no request performed) or "Search request failed" => {users} will be undefined
                 // "Successful search request" => {users} will be an array (length 0 if no students were found)
                 if (users && users.length === 0) {
                     this.searchNoResults.emit(loginOrName);
@@ -99,10 +99,10 @@ export class TeamStudentSearchComponent {
         if (this.studentsFromPendingTeam.map((s) => s.id).includes(user.id)) {
             // If a student is already part of the pending team, they cannot (!) be added again
             return false;
-        } else if (user.assignedTeamId === null) {
+        } else if (!user.assignedTeamId) {
             // If a student is not yet assigned to any team, they can be added
             return true;
-        } else if (this.team.id === undefined) {
+        } else if (!this.team.id) {
             // If a student is assigned to an existing team but this team is just being created, they cannot (!) be added
             return false;
         }

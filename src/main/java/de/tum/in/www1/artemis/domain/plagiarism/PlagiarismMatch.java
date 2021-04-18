@@ -1,20 +1,26 @@
 package de.tum.in.www1.artemis.domain.plagiarism;
 
+import javax.persistence.Column;
+import javax.persistence.Embeddable;
+
 import jplag.Match;
 
 /**
  * A `PlagiarismMatch` is a sequence of identical elements of both submissions.
  */
+@Embeddable
 public class PlagiarismMatch {
 
     /**
      * Index of the first element of submission A that is part of this match.
      */
+    @Column(name = "start_a")
     private int startA;
 
     /**
      * Index of the first element of submission B that is part of this match.
      */
+    @Column(name = "start_b")
     private int startB;
 
     /**

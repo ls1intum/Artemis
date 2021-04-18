@@ -28,6 +28,7 @@ import { Result } from 'app/entities/result.model';
 import { StaticCodeAnalysisIssue } from 'app/entities/static-code-analysis-issue.model';
 import { Feedback, FeedbackType, STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER } from 'app/entities/feedback.model';
 import { Annotation } from 'app/exercises/programming/shared/code-editor/ace/code-editor-ace.component';
+import { ProgrammingLanguage } from 'app/entities/programming-exercise.model';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -140,7 +141,7 @@ describe('CodeEditorBuildOutputComponent', () => {
         expect(getBuildLogsStub).to.have.been.calledOnce;
         expect(subscribeForLatestResultOfParticipationStub).to.have.been.calledOnceWithExactly(participation.id, true);
         expect(comp.rawBuildLogs).to.deep.equal(BuildLogEntryArray.fromBuildLogs(buildLogs));
-        expect(comp.rawBuildLogs.extractErrors()).to.deep.equal(expectedBuildLogErrors);
+        expect(comp.rawBuildLogs.extractErrors(ProgrammingLanguage.JAVA)).to.deep.equal(expectedBuildLogErrors);
 
         const buildLogIsBuildingHtml = debugElement.query(By.css('.is-building'));
         expect(buildLogIsBuildingHtml).not.to.exist;
@@ -203,7 +204,7 @@ describe('CodeEditorBuildOutputComponent', () => {
         expect(getBuildLogsStub).to.have.been.calledOnceWithExactly();
         expect(getFeedbackDetailsForResultStub).to.not.have.been.called;
         expect(comp.rawBuildLogs).to.deep.equal(BuildLogEntryArray.fromBuildLogs(buildLogs));
-        expect(comp.rawBuildLogs.extractErrors()).to.deep.equal(expectedBuildLogErrors);
+        expect(comp.rawBuildLogs.extractErrors(ProgrammingLanguage.JAVA)).to.deep.equal(expectedBuildLogErrors);
 
         const buildLogIsBuildingHtml = debugElement.query(By.css('.is-building'));
         expect(buildLogIsBuildingHtml).not.to.exist;
@@ -229,7 +230,7 @@ describe('CodeEditorBuildOutputComponent', () => {
         expect(getBuildLogsStub).to.have.been.calledOnceWithExactly();
         expect(getFeedbackDetailsForResultStub).to.not.have.been.called;
         expect(comp.rawBuildLogs).to.deep.equal(BuildLogEntryArray.fromBuildLogs(buildLogs));
-        expect(comp.rawBuildLogs.extractErrors()).to.deep.equal(expectedBuildLogErrors);
+        expect(comp.rawBuildLogs.extractErrors(ProgrammingLanguage.JAVA)).to.deep.equal(expectedBuildLogErrors);
 
         const buildLogIsBuildingHtml = debugElement.query(By.css('.is-building'));
         expect(buildLogIsBuildingHtml).not.to.exist;

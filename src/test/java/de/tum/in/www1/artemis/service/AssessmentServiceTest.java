@@ -28,24 +28,24 @@ import de.tum.in.www1.artemis.util.ModelFactory;
 public class AssessmentServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
-    ExerciseRepository exerciseRepository;
+    private ExerciseRepository exerciseRepository;
 
     @Autowired
-    CourseRepository courseRepository;
+    private CourseRepository courseRepository;
 
     @Autowired
-    ResultRepository resultRepository;
+    private ResultRepository resultRepository;
 
     @Autowired
-    AssessmentService assessmentService;
+    private AssessmentService assessmentService;
 
-    ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
+    private final ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
 
-    ZonedDateTime futureTimestamp = ZonedDateTime.now().plusDays(5);
+    private final ZonedDateTime futureTimestamp = ZonedDateTime.now().plusDays(5);
 
-    ZonedDateTime futureFutureTimestamp = ZonedDateTime.now().plusDays(8);
+    private final ZonedDateTime futureFutureTimestamp = ZonedDateTime.now().plusDays(8);
 
-    Course course1 = new Course();
+    private Course course1 = new Course();
 
     @AfterEach
     public void tearDown() {
@@ -151,8 +151,7 @@ public class AssessmentServiceTest extends AbstractSpringIntegrationBambooBitbuc
         result.setFeedbacks(feedbacks);
         submissionWithoutResult.addResult(result);
 
-        var calculatedScore = assessmentService.calculateTotalPoints(feedbacks);
-        assessmentService.submitResult(result, exercise, calculatedScore);
+        resultRepository.submitResult(result, exercise);
         resultRepository.save(result);
 
         assertThat(result.getResultString()).isEqualTo("6 of 7 points");
@@ -173,8 +172,7 @@ public class AssessmentServiceTest extends AbstractSpringIntegrationBambooBitbuc
         result.setFeedbacks(feedbacks);
         submissionWithoutResult.addResult(result);
 
-        var calculatedScore = assessmentService.calculateTotalPoints(feedbacks);
-        assessmentService.submitResult(result, exercise, calculatedScore);
+        resultRepository.submitResult(result, exercise);
         resultRepository.save(result);
 
         assertThat(result.getResultString()).isEqualTo("6 of 7 points");
@@ -195,11 +193,73 @@ public class AssessmentServiceTest extends AbstractSpringIntegrationBambooBitbuc
         result.setFeedbacks(feedbacks);
         submissionWithoutResult.addResult(result);
 
-        var calculatedScore = assessmentService.calculateTotalPoints(feedbacks);
-        assessmentService.submitResult(result, exercise, calculatedScore);
+        resultRepository.submitResult(result, exercise);
         resultRepository.save(result);
 
         assertThat(result.getResultString()).isEqualTo("6 of 7 points");
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testRatedAfterSubmitResultWithDueDateEqualsSubmissionDateOfResult() {
+        TextExercise exercise = createTextExerciseWithSGI(course1);
+        Submission submissionWithoutResult = new TextSubmission();
+        submissionWithoutResult.setSubmissionDate(futureTimestamp);
+        submissionWithoutResult = database.addSubmission(exercise, submissionWithoutResult, "student1");
+        database.addSubmission((StudentParticipation) submissionWithoutResult.getParticipation(), submissionWithoutResult);
+
+        List<Feedback> feedbacks = createFeedback(exercise);
+        var result = new Result();
+        result.setSubmission(submissionWithoutResult);
+        result.setFeedbacks(feedbacks);
+        submissionWithoutResult.addResult(result);
+
+        resultRepository.submitResult(result, exercise);
+        resultRepository.save(result);
+
+        assertThat(result.isRated()).isTrue();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testNotRatedAfterSubmitResultWithDueDateBeforeSubmissionDateOfResult() {
+        TextExercise exercise = createTextExerciseWithSGI(course1);
+        Submission submissionWithoutResult = new TextSubmission();
+        submissionWithoutResult.setSubmissionDate(futureFutureTimestamp);
+        submissionWithoutResult = database.addSubmission(exercise, submissionWithoutResult, "student1");
+        database.addSubmission((StudentParticipation) submissionWithoutResult.getParticipation(), submissionWithoutResult);
+
+        List<Feedback> feedbacks = createFeedback(exercise);
+        var result = new Result();
+        result.setSubmission(submissionWithoutResult);
+        result.setFeedbacks(feedbacks);
+        submissionWithoutResult.addResult(result);
+
+        resultRepository.submitResult(result, exercise);
+        resultRepository.save(result);
+
+        assertThat(result.isRated()).isFalse();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testRatedAfterSubmitResultWithDueDateBeforeSubmissionDateOfResult() {
+        TextExercise exercise = createTextExerciseWithSGI(course1);
+        Submission submissionWithoutResult = new TextSubmission();
+        submissionWithoutResult.setSubmissionDate(pastTimestamp);
+        submissionWithoutResult = database.addSubmission(exercise, submissionWithoutResult, "student1");
+        database.addSubmission((StudentParticipation) submissionWithoutResult.getParticipation(), submissionWithoutResult);
+
+        List<Feedback> feedbacks = createFeedback(exercise);
+        var result = new Result();
+        result.setSubmission(submissionWithoutResult);
+        result.setFeedbacks(feedbacks);
+        submissionWithoutResult.addResult(result);
+
+        resultRepository.submitResult(result, exercise);
+        resultRepository.save(result);
+
+        assertThat(result.isRated()).isTrue();
     }
 
     @Test

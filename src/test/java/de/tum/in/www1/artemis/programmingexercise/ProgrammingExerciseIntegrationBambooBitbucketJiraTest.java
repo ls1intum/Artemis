@@ -18,11 +18,11 @@ import de.tum.in.www1.artemis.service.ProgrammingExerciseIntegrationServiceTest;
 class ProgrammingExerciseIntegrationBambooBitbucketJiraTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
-    ProgrammingExerciseIntegrationServiceTest programmingExerciseIntegrationServiceTest;
+    private ProgrammingExerciseIntegrationServiceTest programmingExerciseIntegrationServiceTest;
 
     @BeforeEach
     void initTestCase() throws Exception {
-        bitbucketRequestMockProvider.enableMockingOfRequests();
+        bitbucketRequestMockProvider.enableMockingOfRequests(true);
         bambooRequestMockProvider.enableMockingOfRequests(true);
         programmingExerciseIntegrationServiceTest.setup(this, versionControlService);
     }
@@ -423,7 +423,7 @@ class ProgrammingExerciseIntegrationBambooBitbucketJiraTest extends AbstractSpri
     }
 
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    @ParameterizedTest
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     // It should fail for all ProgrammingExercises except Haskell
     @EnumSource(value = ProgrammingLanguage.class, names = { "HASKELL" }, mode = EnumSource.Mode.EXCLUDE)
     public void createProgrammingExercise_checkoutSolutionRepositoryProgrammingLanguageNotSupported_badRequest(ProgrammingLanguage programmingLanguage) throws Exception {
@@ -502,7 +502,7 @@ class ProgrammingExerciseIntegrationBambooBitbucketJiraTest extends AbstractSpri
         programmingExerciseIntegrationServiceTest.importProgrammingExercise_staticCodeAnalysisMustBeSet_badRequest();
     }
 
-    @ParameterizedTest
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @CsvSource({ "false, false", "true, false", "false, true", })
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void importProgrammingExercise_scaChanged_badRequest(boolean recreateBuildPlan, boolean updateTemplate) throws Exception {
@@ -675,5 +675,35 @@ class ProgrammingExerciseIntegrationBambooBitbucketJiraTest extends AbstractSpri
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void unlockAllRepositories() throws Exception {
         programmingExerciseIntegrationServiceTest.unlockAllRepositories();
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testCheckPlagiarism() throws Exception {
+        programmingExerciseIntegrationServiceTest.testCheckPlagiarism();
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testCheckPlagiarismJplagReport() throws Exception {
+        programmingExerciseIntegrationServiceTest.testCheckPlagiarismJplagReport();
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testGetPlagiarismResult() throws Exception {
+        programmingExerciseIntegrationServiceTest.testGetPlagiarismResult();
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testGetPlagiarismResultWithoutResult() throws Exception {
+        programmingExerciseIntegrationServiceTest.testGetPlagiarismResultWithoutResult();
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testGetPlagiarismResultWithoutExercise() throws Exception {
+        programmingExerciseIntegrationServiceTest.testGetPlagiarismResultWithoutExercise();
     }
 }

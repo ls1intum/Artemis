@@ -30,10 +30,10 @@
             <button
                 *jhiHasAnyAuthority="['ROLE_INSTRUCTOR', 'ROLE_ADMIN']"
                 jhiDeleteButton
-                [entityTitle]="learningGoal.title"
+                [entityTitle]="learningGoal.title || ''"
                 [deleteQuestion]="'artemisApp.learningGoal.learningGoalCard.delete.question'"
                 [deleteConfirmationText]="'artemisApp.learningGoal.learningGoalCard.delete.typeNameToConfirm'"
-                (delete)="deleteLearningGoal(learningGoal.id)"
+                (delete)="deleteLearningGoal(learningGoal.id!)"
                 [dialogError]="dialogError$"
             >
                 <fa-icon [icon]="'times'"></fa-icon>

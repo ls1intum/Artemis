@@ -60,8 +60,9 @@ export class ExamResolve implements Resolve<Exam> {
         const courseId = route.params['courseId'] ? route.params['courseId'] : undefined;
         const examId = route.params['examId'] ? route.params['examId'] : undefined;
         const withStudents = route.data['requestOptions'] ? route.data['requestOptions'].withStudents : false;
+        const withExerciseGroups = route.data['requestOptions'] ? route.data['requestOptions'].withExerciseGroups : false;
         if (courseId && examId) {
-            return this.examManagementService.find(courseId, examId, withStudents).pipe(
+            return this.examManagementService.find(courseId, examId, withStudents, withExerciseGroups).pipe(
                 filter((response: HttpResponse<Exam>) => response.ok),
                 map((exam: HttpResponse<Exam>) => exam.body!),
             );
@@ -160,7 +161,7 @@ export const examManagementRoute: Routes = [
             authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.examManagement.title',
             requestOptions: {
-                withStudents: true,
+                withExerciseGroups: true,
             },
         },
         canActivate: [UserRouteAccessService],
@@ -617,6 +618,25 @@ export const examManagementRoute: Routes = [
         },
         resolve: {
             studentParticipationId: StudentParticipationResolver,
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
+        path: ':examId/exercise-groups/:exerciseGroupId/file-upload-exercises/:exerciseId/submissions/:submissionId/assessments/:resultId',
+        component: FileUploadAssessmentComponent,
+        data: {
+            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.TA],
+            pageTitle: 'artemisApp.fileUploadExercise.home.title',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
+        path: ':examId/exercise-groups/:exerciseGroupId/modeling-exercises/:exerciseId/submissions/:submissionId/assessments/:resultId',
+        component: ModelingAssessmentEditorComponent,
+        data: {
+            authorities: [Authority.ADMIN, Authority.INSTRUCTOR],
+            usePathForBreadcrumbs: true,
+            pageTitle: 'artemisApp.apollonDiagram.detail.title',
         },
         canActivate: [UserRouteAccessService],
     },

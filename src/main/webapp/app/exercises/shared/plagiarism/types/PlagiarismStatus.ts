@@ -5,15 +5,15 @@ export enum PlagiarismStatus {
     /**
      * Plagiarism has been confirmed by an instructor.
      */
-    CONFIRMED = 'confirmed',
+    CONFIRMED = 'CONFIRMED',
 
     /**
      * Plagiarism has been denied by an instructor.
      */
-    DENIED = 'denied',
+    DENIED = 'DENIED',
 
     /**
      * The incident has not been reviewed yet.
      */
-    NONE = 'none',
+    NONE = 'NONE',
 }

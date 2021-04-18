@@ -17,7 +17,7 @@ import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 public class ProgrammingExerciseIntegrationJenkinsGitlabTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 
     @Autowired
-    ProgrammingExerciseIntegrationServiceTest programmingExerciseIntegrationServiceTest;
+    private ProgrammingExerciseIntegrationServiceTest programmingExerciseIntegrationServiceTest;
 
     @BeforeEach
     void initTestCase() throws Exception {
@@ -89,6 +89,30 @@ public class ProgrammingExerciseIntegrationJenkinsGitlabTest extends AbstractSpr
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void testProgrammingExerciseDelete_failToDeleteBuildPlan() throws Exception {
         programmingExerciseIntegrationServiceTest.testProgrammingExerciseDelete_failToDeleteBuildPlan();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    void testProgrammingExerciseDelete_buildPlanDoesntExist() throws Exception {
+        programmingExerciseIntegrationServiceTest.testProgrammingExerciseDelete_buildPlanDoesntExist();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    void testProgrammingExerciseDelete_failToDeleteCiProject() throws Exception {
+        programmingExerciseIntegrationServiceTest.testProgrammingExerciseDelete_failToDeleteCiProject();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    void testProgrammingExerciseDelete_failToDeleteVcsProject() throws Exception {
+        programmingExerciseIntegrationServiceTest.testProgrammingExerciseDelete_failToDeleteVcsProject();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    void testProgrammingExerciseDelete_failToDeleteVcsRepositories() throws Exception {
+        programmingExerciseIntegrationServiceTest.testProgrammingExerciseDelete_failToDeleteVcsRepositories();
     }
 
     @Test
@@ -428,9 +452,9 @@ public class ProgrammingExerciseIntegrationJenkinsGitlabTest extends AbstractSpr
     }
 
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    @ParameterizedTest
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     // It should fail for all ProgrammingExercises except Haskell
-    @EnumSource(value = ProgrammingLanguage.class, names = { "HASKELL", "KOTLIN", "VHDL", "ASSEMBLER" }, mode = EnumSource.Mode.EXCLUDE)
+    @EnumSource(value = ProgrammingLanguage.class, names = { "HASKELL", "KOTLIN", "VHDL", "ASSEMBLER", "OCAML" }, mode = EnumSource.Mode.EXCLUDE)
     public void createProgrammingExercise_checkoutSolutionRepositoryProgrammingLanguageNotSupported_badRequest(ProgrammingLanguage programmingLanguage) throws Exception {
         programmingExerciseIntegrationServiceTest.createProgrammingExercise_checkoutSolutionRepositoryProgrammingLanguageNotSupported_badRequest(programmingLanguage);
     }
@@ -507,7 +531,7 @@ public class ProgrammingExerciseIntegrationJenkinsGitlabTest extends AbstractSpr
         programmingExerciseIntegrationServiceTest.importProgrammingExercise_staticCodeAnalysisMustBeSet_badRequest();
     }
 
-    @ParameterizedTest
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @CsvSource({ "false, false", "true, false", "false, true", })
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void importProgrammingExercise_scaChanged_badRequest(boolean recreateBuildPlan, boolean updateTemplate) throws Exception {
@@ -680,5 +704,35 @@ public class ProgrammingExerciseIntegrationJenkinsGitlabTest extends AbstractSpr
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void unlockAllRepositories() throws Exception {
         programmingExerciseIntegrationServiceTest.unlockAllRepositories();
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testCheckPlagiarism() throws Exception {
+        programmingExerciseIntegrationServiceTest.testCheckPlagiarism();
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testCheckPlagiarismJplagReport() throws Exception {
+        programmingExerciseIntegrationServiceTest.testCheckPlagiarismJplagReport();
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testGetPlagiarismResult() throws Exception {
+        programmingExerciseIntegrationServiceTest.testGetPlagiarismResult();
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testGetPlagiarismResultWithoutResult() throws Exception {
+        programmingExerciseIntegrationServiceTest.testGetPlagiarismResultWithoutResult();
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testGetPlagiarismResultWithoutExercise() throws Exception {
+        programmingExerciseIntegrationServiceTest.testGetPlagiarismResultWithoutExercise();
     }
 }
