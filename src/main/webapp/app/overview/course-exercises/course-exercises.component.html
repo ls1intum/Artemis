@@ -1,7 +1,7 @@
 <div class="row">
     <div class="col-12 col-lg-8">
         <div class="mt-3 position-relative" *ngIf="course">
-            <div class="exercise-controls" *ngIf="course?.exercises.length > 0">
+            <div class="exercise-controls" *ngIf="course!.exercises && course!.exercises.length > 0">
                 <div class="d-flex align-items-center mr-2">
                     <label class="d-flex align-items-center mb-0 mr-2">
                         <input (change)="toggleFilters([filterType.OVERDUE])" [checked]="activeFilters.has(filterType.OVERDUE)" type="checkbox" />
@@ -89,7 +89,7 @@
                 </div>
                 <div class="collapsed"></div>
             </div>
-            <div *ngIf="course?.exercises.length === 0">
+            <div *ngIf="course?.exercises && course!.exercises!.length === 0">
                 <div class="row">
                     <div class="col">
                         {{ 'artemisApp.courseOverview.exerciseList.noExercises' | artemisTranslate }}
