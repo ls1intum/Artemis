@@ -77,7 +77,7 @@ export class MarkdownEditorComponent implements AfterViewInit {
     @Input() markdown?: string;
     @Input() editorMode = EditorMode.NONE;
     @Input() showLineNumbers = false;
-    @Output() markdownChange = new EventEmitter<{}>();
+    @Output() markdownChange = new EventEmitter<string>();
     @Output() html = new EventEmitter<SafeHtml | null>();
 
     /** default colors for the markdown editor*/
@@ -452,5 +452,9 @@ export class MarkdownEditorComponent implements AfterViewInit {
                 );
             }
         });
+    }
+
+    markdownTextChange(value: {}) {
+        this.markdownChange.emit(value as string);
     }
 }
