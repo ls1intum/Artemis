@@ -3,6 +3,7 @@ const CopyWebpackPlugin = require('copy-webpack-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const AngularCompilerPlugin = require('@ngtools/webpack').AngularCompilerPlugin;
 const MergeJsonWebpackPlugin = require("merge-jsons-webpack-plugin");
+const WorkboxPlugin = require('workbox-webpack-plugin');
 
 const utils = require('./utils.js');
 
@@ -17,8 +18,8 @@ module.exports = (options) => ({
         children: false
     },
     performance: {
-        maxEntrypointSize: 1024*1024,
-        maxAssetSize: 1024*1024,
+        maxEntrypointSize: 1024 * 1024,
+        maxAssetSize: 1024 * 1024,
     },
     module: {
         rules: [
@@ -56,7 +57,7 @@ module.exports = (options) => ({
                 }
             },
             // Ignore warnings about System.import in Angular
-            { test: /[\/\\]@angular[\/\\].+\.js$/, parser: { system: true } },
+            {test: /[\/\\]@angular[\/\\].+\.js$/, parser: {system: true}},
         ]
     },
     plugins: [
@@ -76,17 +77,17 @@ module.exports = (options) => ({
         }),
         new CopyWebpackPlugin({
             patterns: [
-                { from: './src/main/webapp/content/', to: 'content' },
-                { from: './src/main/resources/public/images/favicon.ico', to: 'public/images/favicon.ico' },
-                { from: './src/main/webapp/manifest.webapp', to: 'manifest.webapp' },
-                { from: './src/main/webapp/robots.txt', to: 'robots.txt' },
+                {from: './src/main/webapp/content/', to: 'content'},
+                {from: './src/main/resources/public/images/favicon.ico', to: 'public/images/favicon.ico'},
+                {from: './src/main/webapp/manifest.webapp', to: 'manifest.webapp'},
+                {from: './src/main/webapp/robots.txt', to: 'robots.txt'},
             ],
         }),
         new MergeJsonWebpackPlugin({
             output: {
                 groupBy: [
-                    { pattern: "./src/main/webapp/i18n/en/*.json", fileName: "./i18n/en.json" },
-                    { pattern: "./src/main/webapp/i18n/de/*.json", fileName: "./i18n/de.json" }
+                    {pattern: "./src/main/webapp/i18n/en/*.json", fileName: "./i18n/en.json"},
+                    {pattern: "./src/main/webapp/i18n/de/*.json", fileName: "./i18n/de.json"}
                 ]
             }
         }),
@@ -101,6 +102,35 @@ module.exports = (options) => ({
             mainPath: utils.root('src/main/webapp/app/app.main.ts'),
             tsConfigPath: utils.root('tsconfig.app.json'),
             sourceMap: true
+        }),
+        new WorkboxPlugin.GenerateSW({
+            clientsClaim: true,
+            skipWaiting: true,
+            runtimeCaching: [
+                {
+                    urlPattern: /\.(?:cc|js|html)$/,
+                    handler: "StaleWhileRevalidate",
+                    options: {
+                        cacheName: "artemisCache",
+                        expiration: {
+                            maxAgeSeconds: 60 * 60 * 24
+                        },
+                        broadcastUpdate: {
+                            channelName: "update-artemisCache"
+                        }
+                    }
+                },
+                {
+                    urlPattern: /\.(?:png|jpg|svg|jpeg|gif|eot|ttf|woff|woff2)$/,
+                    handler: "StaleWhileRevalidate",
+                    options: {
+                        cacheName: "assetCache",
+                        broadcastUpdate: {
+                            channelName: "update-assetCache"
+                        }
+                    }
+                }
+            ]
         })
     ]
 });
