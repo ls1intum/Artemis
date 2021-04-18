@@ -98,5 +98,6 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
             },
             (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         );
+        this.router.navigate(['/course-management']);
     }
 }

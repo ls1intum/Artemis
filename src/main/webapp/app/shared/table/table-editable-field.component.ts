@@ -6,20 +6,7 @@ import { Component, ElementRef, Input, ViewChild } from '@angular/core';
 @Component({
     selector: 'jhi-table-editable-field',
     styles: ['.table-editable-field {display: flex; align-items: center}', '.table-editable-field__input {flex: 2 1 auto;}'],
-    template: `
-        <div class="table-editable-field">
-            <input
-                #editingInput
-                [id]="id"
-                class="table-editable-field__input form-control mr-2"
-                (blur)="sendValueUpdate($event)"
-                (keyup.enter)="sendValueUpdate($event)"
-                [value]="inputValue"
-                (input)="inputValue = $event.target.value"
-                type="text"
-            />
-        </div>
-    `,
+    templateUrl: './table-editable-field.component.html',
 })
 export class TableEditableFieldComponent {
     @ViewChild('editingInput', { static: false }) editingInput: ElementRef;
@@ -39,5 +26,9 @@ export class TableEditableFieldComponent {
      */
     sendValueUpdate(event: any) {
         this.inputValue = this.onValueUpdate(event.target.value);
+    }
+
+    storeInputValue(event: any) {
+        this.inputValue = event.target.value;
     }
 }

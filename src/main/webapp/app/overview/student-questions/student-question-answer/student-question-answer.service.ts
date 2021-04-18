@@ -43,25 +43,13 @@ export class StudentQuestionAnswerService {
     }
 
     /**
-     * find studentQuestionAnswer by id
-     * @param {number} courseId
-     * @param {number} id
-     * @return {Observable<EntityResponseType>}
-     */
-    find(courseId: number, id: number): Observable<EntityResponseType> {
-        return this.http
-            .get<StudentQuestionAnswer>(`${this.resourceUrl}${courseId}/student-question-answers/${id}`, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
-    }
-
-    /**
      * delete studentQuestionAnswer by id
      * @param {number} courseId
-     * @param {number} id
+     * @param {number} answerId
      * @return {Observable<HttpResponse<any>>}
      */
-    delete(courseId: number, id: number): Observable<HttpResponse<any>> {
-        return this.http.delete<any>(`${this.resourceUrl}${courseId}/student-question-answers/${id}`, { observe: 'response' });
+    delete(courseId: number, answerId: number): Observable<HttpResponse<any>> {
+        return this.http.delete<any>(`${this.resourceUrl}${courseId}/student-question-answers/${answerId}`, { observe: 'response' });
     }
 
     /**
