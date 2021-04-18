@@ -1,10 +1,13 @@
 package de.tum.in.www1.artemis.domain;
 
+import java.util.HashSet;
 import java.util.Set;
 
 import javax.persistence.*;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import org.hibernate.annotations.Cache;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
+
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -15,6 +18,7 @@ import de.tum.in.www1.artemis.domain.exam.Exam;
  */
 @Entity
 @Table(name = "grading_scale")
+@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class GradingScale extends DomainObject {
 
@@ -24,19 +28,16 @@ public class GradingScale extends DomainObject {
 
     @OneToOne
     @JoinColumn(name = "course_id")
-    @JsonIgnoreProperties("gradingScale")
-    @JsonIgnore
     private Course course;
 
     @OneToOne
     @JoinColumn(name = "exam_id")
-    @JsonIgnoreProperties("gradingScale")
-    @JsonIgnore
     private Exam exam;
 
     @OneToMany(mappedBy = "gradingScale", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
-    @JsonIgnoreProperties("gradingScale")
-    private Set<GradeStep> gradeSteps;
+    @JsonIgnoreProperties(value = "gradingScale", allowSetters = true)
+    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+    private Set<GradeStep> gradeSteps = new HashSet<>();
 
     public GradeType getGradeType() {
         return gradeType;

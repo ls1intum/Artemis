@@ -49,9 +49,7 @@ public class GradeStepIntegrationTest extends AbstractSpringIntegrationBambooBit
         courseGradingScale = new GradingScale();
         examGradingScale = new GradingScale();
         gradeSteps = new HashSet<>();
-        course.setGradingScale(courseGradingScale);
         courseGradingScale.setCourse(course);
-        exam.setGradingScale(examGradingScale);
         examGradingScale.setExam(exam);
         courseGradingScale.setGradeSteps(gradeSteps);
         examGradingScale.setGradeSteps(gradeSteps);
