@@ -116,7 +116,7 @@ export class MultipleChoiceQuestionEditComponent implements OnInit, QuizQuestion
      *    about the changes within the question and to cacheValidation() since the assigned values have changed
      * @param domainCommands containing tuples of [text, domainCommandIdentifiers]
      */
-    domainCommandsFound(domainCommands: [string, DomainCommand][]): void {
+    domainCommandsFound(domainCommands: [string, DomainCommand | null][]): void {
         this.cleanupQuestion();
         let currentAnswerOption;
 

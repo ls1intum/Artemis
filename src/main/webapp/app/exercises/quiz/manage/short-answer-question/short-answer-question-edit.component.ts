@@ -61,7 +61,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
     questionMoveDown = new EventEmitter();
 
     /** Ace Editor configuration constants **/
-    questionEditorText = '';
+    questionEditorText: any = '';
     questionEditorMode = 'markdown';
     questionEditorAutoUpdate = true;
     showVisualMode: boolean;

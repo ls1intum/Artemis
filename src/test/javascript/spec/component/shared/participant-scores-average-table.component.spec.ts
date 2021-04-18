@@ -14,6 +14,8 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { ArtemisTestModule } from '../../test.module';
 import { ParticipantScoreAverageDTO } from 'app/shared/participant-scores/participant-scores.service';
 import { By } from '@angular/platform-browser';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe.ts';
+import { BaseEntity } from 'app/shared/model/base-entity';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -25,7 +27,7 @@ describe('ParticipantScoresAverageTable', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, ArtemisDataTableModule, NgxDatatableModule, NgbTooltipModule, TranslateModule.forRoot()],
-            declarations: [ParticipantScoresAverageTableComponent, MockPipe(TranslatePipe), MockDirective(JhiTranslateDirective)],
+            declarations: [ParticipantScoresAverageTableComponent, MockPipe(TranslatePipe), MockDirective(JhiTranslateDirective), MockPipe(ArtemisTranslatePipe)],
             providers: [
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 {
@@ -80,8 +82,9 @@ describe('ParticipantScoresAverageTable', () => {
         participantScoreAverageDTO.averageScore = 5;
         participantScoreAverageDTO.averagePoints = 12;
         participantScoreAverageDTO.averageRatedPoints = 20;
+        let castedParticipantScoreAverageDTO = participantScoreAverageDTO as BaseEntity;
 
-        expect(component.extractParticipantName(participantScoreAverageDTO)).to.equal(participantScoreAverageDTO.userName);
+        expect(component.extractParticipantName(castedParticipantScoreAverageDTO)).to.equal(participantScoreAverageDTO.userName);
 
         participantScoreAverageDTO = new ParticipantScoreAverageDTO();
         participantScoreAverageDTO.averageRatedScore = 10;
@@ -89,7 +92,8 @@ describe('ParticipantScoresAverageTable', () => {
         participantScoreAverageDTO.teamName = 'testTeam';
         participantScoreAverageDTO.averageRatedPoints = 20;
         participantScoreAverageDTO.averagePoints = 12;
+        castedParticipantScoreAverageDTO = participantScoreAverageDTO as BaseEntity;
 
-        expect(component.extractParticipantName(participantScoreAverageDTO)).to.equal(participantScoreAverageDTO.teamName);
+        expect(component.extractParticipantName(castedParticipantScoreAverageDTO)).to.equal(participantScoreAverageDTO.teamName);
     });
 });

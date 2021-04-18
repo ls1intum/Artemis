@@ -6,7 +6,6 @@ buildscript {
         mavenLocal()
         mavenCentral()
         maven { url "https://repo.spring.io/plugins-release" }
-        jcenter()
     }
     dependencies {
         classpath "io.spring.gradle:propdeps-plugin:0.0.10.RELEASE"
@@ -28,7 +27,7 @@ plugins {
 }
 
 group = "de.tum.in.www1.artemis"
-version = "4.11.4"
+version = "4.11.6"
 description = "Interactive Learning with Individual Feedback"
 
 sourceCompatibility=16
@@ -125,7 +124,7 @@ jacocoTestCoverageVerification {
                 counter = "INSTRUCTION"
                 value = "COVEREDRATIO"
                 // TODO: in the future the following value should become at least 0.90
-                minimum = 0.873
+                minimum = 0.874
             }
             limit {
                 counter = "CLASS"
@@ -149,7 +148,6 @@ configurations {
 repositories {
     mavenLocal()
     mavenCentral()
-    jcenter()
 }
 
 dependencies {
