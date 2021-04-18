@@ -2,7 +2,6 @@ import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { SERVER_API_URL } from 'app/app.constants';
 import { Observable } from 'rxjs';
-import { BaseEntity } from '../model/base-entity';
 
 export class ParticipantScoreDTO {
     public id?: number;
