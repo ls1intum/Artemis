@@ -7,10 +7,11 @@ import { FileUploadExerciseService } from './file-upload-exercise.service';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { Exercise, ExerciseCategory, IncludedInOverallScore } from 'app/entities/exercise.model';
+import { Exercise, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { EditorMode } from 'app/shared/markdown-editor/markdown-editor.component';
 import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command';
 import { navigateBackFromExerciseUpdate } from 'app/utils/navigation.utils';
+import { ExerciseCategory } from 'app/entities/exercise-category.model';
 
 @Component({
     selector: 'jhi-file-upload-exercise-update',
@@ -55,7 +56,7 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
             this.fileUploadExercise = fileUploadExercise;
             this.isExamMode = this.fileUploadExercise.exerciseGroup !== undefined;
             if (!this.isExamMode) {
-                this.exerciseCategories = this.exerciseService.convertExerciseCategoriesFromServer(this.fileUploadExercise);
+                this.exerciseCategories = this.fileUploadExercise.categories || [];
                 this.courseService.findAllCategoriesOfCourse(this.fileUploadExercise.course!.id!).subscribe(
                     (categoryRes: HttpResponse<string[]>) => {
                         this.existingCategories = this.exerciseService.convertExerciseCategoriesAsStringFromServer(categoryRes.body!);
@@ -100,7 +101,7 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
      * @param categories list of exercies categories
      */
     updateCategories(categories: ExerciseCategory[]) {
-        this.fileUploadExercise.categories = categories.map((el) => JSON.stringify(el));
+        this.fileUploadExercise.categories = categories;
     }
 
     private subscribeToSaveResponse(result: Observable<HttpResponse<FileUploadExercise>>) {

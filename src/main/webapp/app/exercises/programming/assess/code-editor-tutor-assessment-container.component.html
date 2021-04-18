@@ -19,12 +19,12 @@
     [submitBusy]="submitBusy"
     [cancelBusy]="cancelBusy"
     [nextSubmissionBusy]="nextSubmissionBusy"
-    [isTeamMode]="exercise?.teamMode"
+    [isTeamMode]="!!exercise?.teamMode"
     [isAssessor]="isAssessor"
     [isTestRun]="isTestRun"
     [exerciseDashboardLink]="exerciseDashboardLink"
     [isAtLeastInstructor]="isAtLeastInstructor"
-    [isIllegalSubmission]="submission && submission.type === SUBMISSION_TYPE_ILLEGAL"
+    [isIllegalSubmission]="!!submission && submission.type! === SUBMISSION_TYPE_ILLEGAL"
     [canOverride]="canOverride"
     [result]="manualResult"
     [assessmentsAreValid]="assessmentsAreValid"
@@ -67,9 +67,9 @@
         </div>
         <div editorToolbar>
             <jhi-programming-assessment-repo-export
-                [exerciseId]="exercise.id"
+                [exerciseId]="exercise.id!"
                 [singleParticipantMode]="true"
-                [participationIdList]="[participation?.id]"
+                [participationIdList]="participation ? [participation!.id!] : []"
             ></jhi-programming-assessment-repo-export>
             <a
                 class="ml-2 mr-5"
@@ -91,12 +91,13 @@
                 [short]="true"
                 class="mr-1"
             ></jhi-result>
-            <jhi-exercise-hint-student *ngIf="exercise" [exerciseId]="exercise.id" [exerciseHints]="exercise.exerciseHints" class="mr-2"></jhi-exercise-hint-student>
+            <jhi-exercise-hint-student *ngIf="exercise" [exerciseId]="exercise.id!" [exerciseHints]="exercise.exerciseHints" class="mr-2"></jhi-exercise-hint-student>
         </div>
         <jhi-assessment-instructions
+            *ngIf="exercise"
             editorSidebar
             class="card-body markdown-preview instructions-wrapper__content overflow-auto"
-            [exercise]="exercise"
+            [exercise]="exercise!"
             [programmingParticipation]="participation"
         ></jhi-assessment-instructions>
         <div class="mt-3" editorBottom>
