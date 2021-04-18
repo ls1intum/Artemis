@@ -8,6 +8,7 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 import { CourseStatisticsDataSet } from 'app/overview/course-statistics/course-statistics.component';
 import { CachingStrategy } from 'app/shared/image/secured-image.component';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
+import { Color } from 'ng2-charts';
 
 @Component({
     selector: 'jhi-overview-course-card',
@@ -32,7 +33,7 @@ export class CourseCardComponent implements OnChanges {
     totalReachableScore: number;
     totalAbsoluteScore: number;
 
-    doughnutChartColors = ['limegreen', 'red'];
+    doughnutChartColors: any[] = ['limegreen', 'red'];
     doughnutChartLabels: string[] = ['Achieved Points', 'Missing Points'];
     doughnutChartData: CourseStatisticsDataSet[] = [
         {
