@@ -119,7 +119,8 @@
                         <label class="form-control-label">{{ 'artemisApp.exercise.includedInOverallScoreLabel' | artemisTranslate }}</label>
                         <div>
                             <jhi-included-in-overall-score-picker
-                                [includedInOverallScore]="quizExercise.includedInOverallScore"
+                                *ngIf="quizExercise.includedInOverallScore"
+                                [includedInOverallScore]="quizExercise.includedInOverallScore!"
                                 (includedInOverallScoreChange)="includedInOverallScoreChange($event)"
                             ></jhi-included-in-overall-score-picker>
                         </div>
@@ -399,7 +400,7 @@
                         <tbody>
                             <tr *ngFor="let question of existingQuestions">
                                 <td width="55%">{{ question.title }}</td>
-                                <td width="30%">{{ question.exercise.title }}</td>
+                                <td width="30%">{{ question.exercise?.title }}</td>
                                 <td width="10%" class="mb-0">
                                     <h5><span *ngIf="question.type === MULTIPLE_CHOICE" class="badge badge-info align-text-top">MC</span></h5>
                                     <h5><span *ngIf="question.type === DRAG_AND_DROP" class="badge badge-warning align-text-top">DnD</span></h5>
@@ -484,7 +485,7 @@
                         <tbody>
                             <tr *ngFor="let question of existingQuestions">
                                 <td width="55%">{{ question.title }}</td>
-                                <td width="30%">{{ question.exercise.title }}</td>
+                                <td width="30%">{{ question.exercise?.title }}</td>
                                 <td width="10%" class="mb-0">
                                     <h5><span *ngIf="question.type === MULTIPLE_CHOICE" class="badge badge-info align-text-top">MC</span></h5>
                                     <h5><span *ngIf="question.type === DRAG_AND_DROP" class="badge badge-warning align-text-top">DnD</span></h5>

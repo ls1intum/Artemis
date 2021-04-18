@@ -1,3 +1,4 @@
+import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { DomainTagCommand } from 'app/shared/markdown-editor/domainCommands/domainTag.command';
 import { addTextAtCursor } from 'app/shared/util/markdown-util';
 
@@ -6,7 +7,7 @@ import { addTextAtCursor } from 'app/shared/util/markdown-util';
  * Uses an e-function as the example.
  */
 export class KatexCommand extends DomainTagCommand {
-    buttonIcon = 'equals';
+    buttonIcon = 'equals' as IconProp;
     buttonTranslationString = 'artemisApp.markdownEditor.commands.katex';
     execute(): void {
         const text = `${this.getOpeningIdentifier()}e^{\\frac{1}{4} y^2}${this.getClosingIdentifier()}`;
