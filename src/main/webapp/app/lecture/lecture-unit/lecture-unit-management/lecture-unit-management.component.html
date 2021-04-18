@@ -18,8 +18,21 @@
             ></jhi-learning-goals-popover>
         </div>
         <div class="col-9 mx-auto col-md-7 offset-md-2" [ngSwitch]="lectureUnit.type">
+            <span class="badge badge-info">
+                {{
+                    lectureUnit.releaseDate
+                        ? ('artemisApp.lectureUnit.details.releaseDateSet' | artemisTranslate) + (lectureUnit.releaseDate | artemisDate)
+                        : ('artemisApp.lectureUnit.details.releaseDateNotSet' | artemisTranslate)
+                }}
+            </span>
+
             <jhi-exercise-unit *ngSwitchCase="LectureUnitType.EXERCISE" [exerciseUnit]="lectureUnit" [isPresentationMode]="true" [course]="lecture.course!"></jhi-exercise-unit>
-            <jhi-attachment-unit *ngSwitchCase="LectureUnitType.ATTACHMENT" [attachmentUnit]="lectureUnit"></jhi-attachment-unit>
+            <div *ngSwitchCase="LectureUnitType.ATTACHMENT">
+                <span class="badge badge-info">
+                    {{ ('artemisApp.lectureUnit.details.attachmentVersion' | artemisTranslate) + getAttachmentVersion(lectureUnit) }}
+                </span>
+                <jhi-attachment-unit [attachmentUnit]="lectureUnit"></jhi-attachment-unit>
+            </div>
             <jhi-video-unit *ngSwitchCase="LectureUnitType.VIDEO" [videoUnit]="lectureUnit"></jhi-video-unit>
             <jhi-text-unit *ngSwitchCase="LectureUnitType.TEXT" [textUnit]="lectureUnit"></jhi-text-unit>
         </div>
