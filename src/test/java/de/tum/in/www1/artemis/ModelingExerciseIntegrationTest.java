@@ -561,10 +561,8 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBa
     public void testGetPlagiarismResultWithoutResult() throws Exception {
         final Course course = database.addCourseWithOneModelingExercise();
         ModelingExercise modelingExercise = modelingExerciseRepository.findByCourseId(course.getId()).get(0);
-
-        ModelingPlagiarismResult result = request.get("/api/modeling-exercises/" + modelingExercise.getId() + "/plagiarism-result", HttpStatus.NOT_FOUND,
-                ModelingPlagiarismResult.class);
-        assertThat(result).isNull();
+        var result = request.get("/api/modeling-exercises/" + modelingExercise.getId() + "/plagiarism-result", HttpStatus.OK, String.class);
+        assertThat(result).isNullOrEmpty();
     }
 
     @Test
