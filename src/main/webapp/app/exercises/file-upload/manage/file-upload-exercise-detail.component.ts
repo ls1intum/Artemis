@@ -50,9 +50,6 @@ export class FileUploadExerciseDetailComponent implements OnInit, OnDestroy {
                 (fileUploadExerciseResponse: HttpResponse<FileUploadExercise>) => {
                     this.fileUploadExercise = fileUploadExerciseResponse.body!;
                     this.isExamExercise = this.fileUploadExercise.exerciseGroup !== undefined;
-                    if (this.fileUploadExercise.categories) {
-                        this.fileUploadExercise.categories = this.fileUploadExercise.categories.map((category) => JSON.parse(category));
-                    }
                 },
                 (res: HttpErrorResponse) => this.onError(res),
             );

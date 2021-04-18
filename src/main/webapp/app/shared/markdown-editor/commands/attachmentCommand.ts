@@ -1,7 +1,8 @@
+import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { Command } from './command';
 
 export class AttachmentCommand extends Command {
-    buttonIcon = 'image';
+    buttonIcon = 'image' as IconProp;
     buttonTranslationString = 'artemisApp.multipleChoiceQuestion.editor.imageUpload';
 
     /**

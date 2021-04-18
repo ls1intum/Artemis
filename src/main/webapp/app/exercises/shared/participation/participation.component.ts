@@ -257,6 +257,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         } else if (participation.team) {
             return formatTeamAsSearchResult(participation.team);
         }
+        return `${participation.id!}`;
     };
 
     /**
