@@ -1,13 +1,13 @@
 import { Component, Input, OnChanges } from '@angular/core';
-import { Course } from 'app/entities/course.model';
 import { ActivatedRoute, Router } from '@angular/router';
+import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
-import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
+import { Course } from 'app/entities/course.model';
 import { Exercise, getIcon, getIconTooltip } from 'app/entities/exercise.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
 import { CourseStatisticsDataSet } from 'app/overview/course-statistics/course-statistics.component';
 import { CachingStrategy } from 'app/shared/image/secured-image.component';
-import { IconProp } from '@fortawesome/fontawesome-svg-core';
 
 @Component({
     selector: 'jhi-overview-course-card',
@@ -32,7 +32,7 @@ export class CourseCardComponent implements OnChanges {
     totalReachableScore: number;
     totalAbsoluteScore: number;
 
-    doughnutChartColors = ['limegreen', 'red'];
+    doughnutChartColors: any[] = ['limegreen', 'red'];
     doughnutChartLabels: string[] = ['Achieved Points', 'Missing Points'];
     doughnutChartData: CourseStatisticsDataSet[] = [
         {

@@ -1,11 +1,12 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { QuizQuestion } from 'app/entities/quiz/quiz-question.model';
 import { ShortAnswerQuestion } from 'app/entities/quiz/short-answer-question.model';
 
 @Component({
     selector: 'jhi-re-evaluate-short-answer-question',
     template: `
         <jhi-short-answer-question-edit
-            [question]="question"
+            [question]="shortAnswerQuestion"
             [questionIndex]="questionIndex"
             [reEvaluationInProgress]="true"
             (questionUpdated)="questionUpdated.emit()"
@@ -18,8 +19,11 @@ import { ShortAnswerQuestion } from 'app/entities/quiz/short-answer-question.mod
     providers: [],
 })
 export class ReEvaluateShortAnswerQuestionComponent {
-    @Input()
-    question: ShortAnswerQuestion;
+    shortAnswerQuestion: ShortAnswerQuestion;
+
+    @Input() set question(question: QuizQuestion) {
+        this.shortAnswerQuestion = question as ShortAnswerQuestion;
+    }
     @Input()
     questionIndex: number;
 
