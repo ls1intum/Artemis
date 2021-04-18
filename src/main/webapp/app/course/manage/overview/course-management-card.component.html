@@ -195,6 +195,7 @@
             *ngIf="course.isAtLeastTutor"
             [routerLink]="['/course-management', course.id, 'assessment-dashboard']"
             class="btn btn-info mr-1 mb-1"
+            [class]="isGuidedTour ? 'guided-tour-assessment-dashboard-btn' : ''"
             [ngbTooltip]="'entity.action.assessmentDashboard' | artemisTranslate"
             [class.guided-tour]="isGuidedTour"
         >

@@ -257,12 +257,12 @@ public class ProgrammingExerciseGradingService {
 
         ArrayList<Result> updatedResults = new ArrayList<>();
 
-        templateProgrammingExerciseParticipationRepository.findWithEagerResultsAndFeedbacksByProgrammingExerciseId(exercise.getId())
+        templateProgrammingExerciseParticipationRepository.findWithEagerResultsAndFeedbacksAndSubmissionsByProgrammingExerciseId(exercise.getId())
                 .flatMap(p -> Optional.ofNullable(p.findLatestResult())).ifPresent(result -> {
                     calculateScoreForResult(testCases, testCases, result, exercise);
                     updatedResults.add(result);
                 });
-        solutionProgrammingExerciseParticipationRepository.findWithEagerResultsAndFeedbacksByProgrammingExerciseId(exercise.getId())
+        solutionProgrammingExerciseParticipationRepository.findWithEagerResultsAndFeedbacksAndSubmissionsByProgrammingExerciseId(exercise.getId())
                 .flatMap(p -> Optional.ofNullable(p.findLatestResult())).ifPresent(result -> {
                     calculateScoreForResult(testCases, testCases, result, exercise);
                     updatedResults.add(result);

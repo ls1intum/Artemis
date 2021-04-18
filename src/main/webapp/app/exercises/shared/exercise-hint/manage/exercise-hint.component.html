@@ -11,7 +11,7 @@
     <div class="alert alert-warning" *ngIf="exerciseHints?.length === 0">
         <span jhiTranslate="artemisApp.exerciseHint.home.notFound">No exerciseHints found</span>
     </div>
-    <div class="table-responsive" *ngIf="exerciseHints?.length > 0">
+    <div class="table-responsive" *ngIf="exerciseHints && exerciseHints.length > 0">
         <table class="table table-striped">
             <thead>
                 <tr>
@@ -44,9 +44,9 @@
                             </a>
                             <button
                                 jhiDeleteButton
-                                [entityTitle]="exerciseHint.title"
+                                [entityTitle]="exerciseHint.title!"
                                 deleteQuestion="artemisApp.exerciseHint.delete.question"
-                                (delete)="deleteExerciseHint(exerciseHint.id)"
+                                (delete)="deleteExerciseHint(exerciseHint.id!)"
                                 [dialogError]="dialogError$"
                             >
                                 <fa-icon [icon]="'times'"></fa-icon>

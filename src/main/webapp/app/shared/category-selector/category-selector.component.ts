@@ -1,7 +1,7 @@
 import { Component, EventEmitter, Input, OnChanges, Output, ViewChild, ViewEncapsulation } from '@angular/core';
-import { ExerciseCategory } from 'app/entities/exercise.model';
 import { ColorSelectorComponent } from 'app/shared/color-selector/color-selector.component';
 import { TagModel } from 'ngx-chips/core/accessor';
+import { ExerciseCategory } from 'app/entities/exercise-category.model';
 
 const DEFAULT_COLORS = ['#6ae8ac', '#9dca53', '#94a11c', '#691b0b', '#ad5658', '#1b97ca', '#0d3cc2', '#0ab84f'];
 

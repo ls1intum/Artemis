@@ -4,6 +4,7 @@ import { LayoutService } from 'app/shared/breakpoints/layout.service';
 import { CustomBreakpointNames } from 'app/shared/breakpoints/breakpoints.service';
 import * as moment from 'moment';
 import { Moment } from 'moment';
+import { IconProp } from '@fortawesome/fontawesome-svg-core';
 
 @Component({
     selector: 'jhi-exam-navigation-bar',
@@ -24,7 +25,7 @@ export class ExamNavigationBarComponent implements OnInit {
 
     criticalTime = moment.duration(5, 'minutes');
 
-    icon: string;
+    icon: IconProp;
 
     constructor(private layoutService: LayoutService) {}
 

@@ -7,8 +7,6 @@ import { enterFullscreen, exitFullscreen, isFullScreen } from 'app/shared/util/f
     styleUrls: ['./fullscreen.scss'],
 })
 export class FullscreenComponent {
-    buttonIcon = 'compress';
-
     @Input()
     position: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right' = 'top-right';
 

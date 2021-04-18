@@ -6,6 +6,7 @@ import { CorrectOptionCommand } from 'app/shared/markdown-editor/domainCommands/
 import { IncorrectOptionCommand } from 'app/shared/markdown-editor/domainCommands/incorrectOptionCommand';
 import { escapeStringForUseInRegex } from 'app/shared/util/global.utils';
 import { cloneDeep } from 'lodash';
+import { EditorMode } from 'app/shared/markdown-editor/markdown-editor.component';
 
 @Component({
     selector: 'jhi-re-evaluate-multiple-choice-question',
@@ -27,7 +28,7 @@ export class ReEvaluateMultipleChoiceQuestionComponent {
     @Output()
     questionMoveDown = new EventEmitter<object>();
 
-    editorMode = 'markdown';
+    editorMode = EditorMode.NONE;
 
     // Create Backup Question for resets
     @Input()
