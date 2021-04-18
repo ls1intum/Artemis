@@ -19,6 +19,8 @@
             "assessmentDueDateIsOver": "Die Einreichungsfrist der Bewertung ist vorbei, die nächste Einreichung wird direkt veröffentlicht",
             "differenceActivate": "Aktiviere Diff-Ansicht",
             "differenceDeactivate": "Deaktiviere Diff-View",
+            "highlightAssessmentDiffTooltipOn": "Markiere die Korrekturrunde in welchem jedes Feedback erstellt oder bearbeitet wurde",
+            "highlightAssessmentDiffTooltipOff": "Deaktiviere Markierung der Korrekturrunde",
             "button": {
                 "overrideAssessment": "Bewertung überschreiben",
                 "nextSubmission": "Nächste Abgabe bewerten",
