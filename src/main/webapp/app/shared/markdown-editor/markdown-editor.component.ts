@@ -442,11 +442,9 @@ export class MarkdownEditorComponent implements AfterViewInit {
             } else {
                 this.fileUploaderService.uploadMarkdownFile(file).then(
                     (res) => {
-                        let textToAdd;
-                        if (extension === 'pdf') {
-                            textToAdd = `[${file.name}](${res.path})\n`;
-                        } else {
-                            textToAdd = `![${file.name}](${res.path})\n`;
+                        let textToAdd = `[${file.name}](${res.path})\n`;
+                        if (extension !== 'pdf') {
+                            textToAdd = '!' + textToAdd;
                         }
 
                         aceEditor.insert(textToAdd);
