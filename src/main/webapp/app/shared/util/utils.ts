@@ -106,3 +106,21 @@ export const checkForMissingTranslationKey = (alert: JhiAlert) => {
         Sentry.captureException(new Error('Unknown translation key: ' + alert.msg));
     }
 };
+/**
+ * Splits a camel case string into individual words and combines them to a new string separated by spaces
+ */
+export const splitCamelCase = (word: string) => {
+    const output = [];
+    const regex = /[A-Z]/;
+    for (let i = 0; i < word.length; i += 1) {
+        if (i === 0) {
+            output.push(word[i].toUpperCase());
+        } else {
+            if (i > 0 && regex.test(word[i])) {
+                output.push(' ');
+            }
+            output.push(word[i]);
+        }
+    }
+    return output.join('');
+};
