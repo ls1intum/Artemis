@@ -41,6 +41,7 @@ export class CourseCardComponent implements OnChanges {
         },
     ];
     totalScoreOptions: object = {
+        animation: false,
         cutoutPercentage: 75,
         scaleShowVerticalLines: false,
         responsive: false,
