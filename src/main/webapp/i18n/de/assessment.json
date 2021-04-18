@@ -17,10 +17,14 @@
             "moreFeedbackRequest": "Du musst auf die Feedback Anfrage antworten.",
             "assessmentReadOnlyHandledComplaint": "Die Beschwerde über deine Bewertung wurde bearbeitet.",
             "assessmentDueDateIsOver": "Die Einreichungsfrist der Bewertung ist vorbei, die nächste Einreichung wird direkt veröffentlicht",
-            "differenceActivate": "Aktiviere Diff-Ansicht",
-            "differenceDeactivate": "Deaktiviere Diff-View",
-            "highlightAssessmentDiffTooltipOn": "Markiere die Korrekturrunde in welchem jedes Feedback erstellt oder bearbeitet wurde",
-            "highlightAssessmentDiffTooltipOff": "Deaktiviere Markierung der Korrekturrunde",
+            "diffView": {
+                "differenceActivate": "Aktiviere Diff-Ansicht",
+                "differenceDeactivate": "Deaktiviere Diff-View",
+                "highlightAssessmentDiffTooltipOn": "Markiere die Korrekturrunde in welchem jedes Feedback erstellt oder bearbeitet wurde",
+                "highlightAssessmentDiffTooltipOff": "Deaktiviere Markierung der Korrekturrunde",
+                "correctionRoundDiffFirst": "First correction round",
+                "correctionRoundDiffSecond": "Second correction round"
+            },
             "button": {
                 "overrideAssessment": "Bewertung überschreiben",
                 "nextSubmission": "Nächste Abgabe bewerten",
