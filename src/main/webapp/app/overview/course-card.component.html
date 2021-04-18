@@ -29,7 +29,7 @@
 
     <div class="card-body">
         <a class="stretched-link" [routerLink]="['/courses', course.id!]"></a>
-        <div class="chart-container" *ngIf="exerciseCount > 0 && totalReachableScore > 0">
+        <div class="chart-container" *ngIf="exerciseCount > 0 && (totalReachableScore > 0 || totalAbsoluteScore > 0); else noStatistic">
             <div class="chart-text">
                 <h2 class="text-center">{{ totalRelativeScore }}%</h2>
                 <h5 class="text-center points">{{ totalAbsoluteScore }} / {{ totalReachableScore }} Pts</h5>
@@ -48,6 +48,9 @@
                 [chartType]="'doughnut'"
             ></canvas>
         </div>
+        <ng-template #noStatistic>
+            <h6 jhiTranslate="artemisApp.studentDashboard.noStatistics">No statistics available</h6>
+        </ng-template>
     </div>
 
     <div class="card-footer text-muted" *ngIf="nextRelevantExercise">
