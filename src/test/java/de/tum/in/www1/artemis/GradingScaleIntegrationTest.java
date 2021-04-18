@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
 
 import org.junit.jupiter.api.AfterEach;
@@ -43,10 +44,8 @@ public class GradingScaleIntegrationTest extends AbstractSpringIntegrationBamboo
         exam = database.addExamWithExerciseGroup(course, true);
         courseGradingScale = new GradingScale();
         courseGradingScale.setCourse(course);
-        course.setGradingScale(courseGradingScale);
         examGradingScale = new GradingScale();
         examGradingScale.setExam(exam);
-        exam.setGradingScale(examGradingScale);
         gradeSteps = new HashSet<>();
         courseGradingScale.setGradeSteps(gradeSteps);
         examGradingScale.setGradeSteps(gradeSteps);
@@ -76,7 +75,7 @@ public class GradingScaleIntegrationTest extends AbstractSpringIntegrationBamboo
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGetGradingScaleForCourse() throws Exception {
-        courseGradingScale.setGradeSteps(null);
+        courseGradingScale.setGradeSteps(Set.of());
         gradingScaleRepository.save(courseGradingScale);
 
         GradingScale foundGradingScale = request.get("/api/courses/" + course.getId() + "/grading-scale", HttpStatus.OK, GradingScale.class);
@@ -103,7 +102,7 @@ public class GradingScaleIntegrationTest extends AbstractSpringIntegrationBamboo
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGetGradingScaleForExam() throws Exception {
-        examGradingScale.setGradeSteps(null);
+        examGradingScale.setGradeSteps(Set.of());
         gradingScaleRepository.save(examGradingScale);
 
         GradingScale foundGradingScale = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale", HttpStatus.OK, GradingScale.class);
@@ -132,7 +131,7 @@ public class GradingScaleIntegrationTest extends AbstractSpringIntegrationBamboo
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testSaveGradingScaleForCourseGradeStepsAreNotSet() throws Exception {
-        courseGradingScale.setGradeSteps(null);
+        courseGradingScale.setGradeSteps(Set.of());
 
         request.post("/api/courses/" + course.getId() + "/grading-scale", courseGradingScale, HttpStatus.BAD_REQUEST);
     }
@@ -158,7 +157,7 @@ public class GradingScaleIntegrationTest extends AbstractSpringIntegrationBamboo
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testSaveGradingScaleForExamGradeStepsAreNotSet() throws Exception {
-        examGradingScale.setGradeSteps(null);
+        examGradingScale.setGradeSteps(Set.of());
 
         request.post("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale", examGradingScale, HttpStatus.BAD_REQUEST);
     }
@@ -369,6 +368,38 @@ public class GradingScaleIntegrationTest extends AbstractSpringIntegrationBamboo
     }
 
     /**
+     * Test delete request for course should delete the grading scale of that course as well
+     *
+     * @throws Exception
+     */
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    public void testDeleteCourseDeletesGradingScale() throws Exception {
+        gradingScaleRepository.save(courseGradingScale);
+
+        request.delete("/api/courses/" + course.getId(), HttpStatus.OK);
+
+        Optional<GradingScale> foundGradingScale = gradingScaleRepository.findByCourseId(course.getId());
+        assertThat(foundGradingScale).isEmpty();
+    }
+
+    /**
+     * Test delete request for exam should delete the grading scale of that exam as well
+     *
+     * @throws Exception
+     */
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testDeleteExamDeletesGradingScale() throws Exception {
+        gradingScaleRepository.save(examGradingScale);
+
+        request.delete("/api/courses/" + course.getId() + "/exams/" + exam.getId(), HttpStatus.OK);
+
+        Optional<GradingScale> foundGradingScale = gradingScaleRepository.findByExamId(exam.getId());
+        assertThat(foundGradingScale).isEmpty();
+    }
+
+    /**
      * Test if a grade step is contained in a grade step set
      *
      * @param gradeSteps the grade step set
@@ -385,7 +416,7 @@ public class GradingScaleIntegrationTest extends AbstractSpringIntegrationBamboo
     }
 
     /**
-     * Tests if two grade steps are equal by comaparing all attributes but the ids and grading scales
+     * Tests if two grade steps are equal by comparing all attributes but the ids and grading scales
      *
      * @param gradeStep1 the first grade step
      * @param gradeStep2 the second grade step

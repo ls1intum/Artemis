@@ -9,8 +9,8 @@
                         #aceEditor
                         [mode]="aceEditorOptions.mode"
                         [autoUpdateContent]="aceEditorOptions.autoUpdateContent"
-                        [(text)]="markdown"
-                        (textChange)="markdownChange.emit($event)"
+                        [text]="markdown || ''"
+                        (textChange)="markdownTextChange($event)"
                         class="form-control markdown-editor__content"
                         [class.file-input]="enableFileUpload"
                         (dragover)="enableFileUpload ? $event.preventDefault() : ''"

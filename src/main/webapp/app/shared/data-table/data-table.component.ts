@@ -240,7 +240,7 @@ export class DataTableComponent implements OnInit, OnChanges {
      *
      * @param paging Number of entities per page
      */
-    setEntitiesPerPage = (paging: number) => {
+    setEntitiesPerPage = (paging: PagingValue) => {
         this.isRendering = true;
         setTimeout(() => {
             this.pagingValue = paging;
