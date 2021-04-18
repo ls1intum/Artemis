@@ -19,11 +19,11 @@
             "assessmentDueDateIsOver": "Die Einreichungsfrist der Bewertung ist vorbei, die nächste Einreichung wird direkt veröffentlicht",
             "diffView": {
                 "differenceActivate": "Aktiviere Diff-Ansicht",
-                "differenceDeactivate": "Deaktiviere Diff-View",
+                "differenceDeactivate": "Deaktiviere Diff-Ansicht",
                 "highlightAssessmentDiffTooltipOn": "Markiere die Korrekturrunde in welchem jedes Feedback erstellt oder bearbeitet wurde",
                 "highlightAssessmentDiffTooltipOff": "Deaktiviere Markierung der Korrekturrunde",
-                "correctionRoundDiffFirst": "First correction round",
-                "correctionRoundDiffSecond": "Second correction round"
+                "correctionRoundDiffFirst": "Erste Korrekturrunde",
+                "correctionRoundDiffSecond": "Zweite Korrekturrunde"
             },
             "button": {
                 "overrideAssessment": "Bewertung überschreiben",

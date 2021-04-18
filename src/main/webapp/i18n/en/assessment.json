@@ -22,8 +22,8 @@
                 "differenceDeactivate": "Deactivate Diff-View",
                 "highlightAssessmentDiffTooltipOn": "Highlight the correction round in which every feedback it was created or modified",
                 "highlightAssessmentDiffTooltipOff": "Deactivate highlighting of correction rounds",
-                "correctionRoundDiffFirst": "Erste Korrekturrunde",
-                "correctionRoundDiffSecond": "Zweite Korrekturrunde"
+                "correctionRoundDiffFirst": "First correction round",
+                "correctionRoundDiffSecond": "Second correction round"
             },
             "button": {
                 "overrideAssessment": "Override Assessment",
