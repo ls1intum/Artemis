@@ -18,6 +18,7 @@ import { ResultDetailComponent } from 'app/exercises/shared/result/result-detail
 import { Result } from 'app/entities/result.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { round } from 'app/shared/util/utils';
+import { IconProp } from '@fortawesome/fontawesome-svg-core';
 
 /**
  * Enumeration object representing the possible options that
@@ -59,7 +60,7 @@ export class ResultComponent implements OnInit, OnChanges {
     ParticipationType = ParticipationType;
     textColorClass: string;
     hasFeedback: boolean;
-    resultIconClass: string[];
+    resultIconClass: IconProp;
     resultString: string;
     templateStatus: ResultTemplateStatus;
     submission?: Submission;
@@ -345,7 +346,7 @@ export class ResultComponent implements OnInit, OnChanges {
      * Get the icon type for the result icon as an array
      *
      */
-    getResultIconClass(): string[] {
+    getResultIconClass(): IconProp {
         const result = this.result!;
         if (result.score == undefined) {
             if (result.successful) {
