@@ -4,7 +4,7 @@
         [textBlockRef]="ref"
         [selected]="selectedRef === ref"
         [readOnly]="readOnly"
-        [isConflictingFeedback]="isConflictingFeedbackMap?.get(ref)"
+        [isConflictingFeedback]="!!isConflictingFeedbackMap?.get(ref)"
         [conflictType]="conflictTypeMap?.get(ref)"
         [conflictMode]="conflictMode"
         [isLeftConflictingFeedback]="isLeftConflictingFeedback"
