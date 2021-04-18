@@ -18,6 +18,7 @@ import { ArtemisModelingEditorModule } from 'app/exercises/modeling/shared/model
 import { ArtemisTutorParticipationGraphModule } from 'app/shared/dashboards/tutor-participation-graph/tutor-participation-graph.module';
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { SecondCorrectionEnableButtonComponent } from 'app/exercises/shared/dashboards/tutor/second-correction-button/second-correction-enable-button.component';
+import { LanguageTableCellComponent } from 'app/exercises/shared/dashboards/tutor/language-table-cell/language-table-cell.component';
 
 const ENTITY_STATES = [...exerciseAssessmentDashboardRoute];
 
@@ -40,8 +41,8 @@ const ENTITY_STATES = [...exerciseAssessmentDashboardRoute];
         ArtemisTutorParticipationGraphModule,
         ArtemisMarkdownModule,
     ],
-    declarations: [ExerciseAssessmentDashboardComponent, SecondCorrectionEnableButtonComponent],
+    declarations: [ExerciseAssessmentDashboardComponent, SecondCorrectionEnableButtonComponent, LanguageTableCellComponent],
     providers: [],
-    exports: [SecondCorrectionEnableButtonComponent],
+    exports: [SecondCorrectionEnableButtonComponent, LanguageTableCellComponent],
 })
 export class ArtemisExerciseAssessmentDashboardModule {}

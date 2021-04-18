@@ -172,7 +172,7 @@ export class CourseExamArchiveButtonComponent implements OnInit, OnDestroy {
     }
 
     canDownloadArchive() {
-        let hasArchive = false;
+        let hasArchive: boolean;
         if (this.archiveMode === 'Exam' && this.exam) {
             hasArchive = (this.exam.examArchivePath?.length ?? 0) > 0;
         } else {

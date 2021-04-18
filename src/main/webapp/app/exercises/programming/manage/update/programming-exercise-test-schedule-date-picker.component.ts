@@ -16,10 +16,10 @@ import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 })
 export class ProgrammingExerciseTestScheduleDatePickerComponent implements ControlValueAccessor {
     @ViewChild('dateInput', { static: false }) dateInput: ElementRef;
-    @Input() selectedDate: Date | null;
-    @Input() startAt: Moment | null;
-    @Input() min: Moment;
-    @Input() max: Moment;
+    @Input() selectedDate?: Date;
+    @Input() startAt?: Moment;
+    @Input() min?: Moment;
+    @Input() max?: Moment;
     @Input() label: string;
     @Input() tooltipText: string;
     @Output() onDateReset = new EventEmitter();

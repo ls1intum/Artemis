@@ -118,7 +118,7 @@ export class TextAssessmentAreaComponent implements OnChanges {
      * If it is in conflict mode and right assessment area, emit feedback id since it is a selected conflict.
      * @param ref - selected TextBlockRef
      */
-    didSelectRef(ref: TextBlockRef): void {
+    didSelectRef(ref?: TextBlockRef): void {
         this.selectedRef = ref;
         if (this.conflictMode && !this.isLeftConflictingFeedback) {
             this.didSelectConflictingFeedback.emit(ref?.feedback?.id);

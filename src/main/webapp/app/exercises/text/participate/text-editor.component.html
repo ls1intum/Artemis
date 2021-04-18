@@ -51,7 +51,7 @@
                 ></textarea>
                 <jhi-team-submission-sync
                     *ngIf="textExercise?.teamMode"
-                    [exerciseType]="textExercise.type"
+                    [exerciseType]="textExercise.type!"
                     [submission$]="submissionStream$"
                     [participation]="participation"
                     (receiveSubmission)="onReceiveSubmissionFromTeam($event)"
@@ -73,9 +73,9 @@
                         <hr />
                     </div>
                     <jhi-additional-feedback
-                        *ngIf="unreferencedFeedback?.length > 0"
+                        *ngIf="unreferencedFeedback && unreferencedFeedback!.length > 0"
                         class="col-xl-8 alert unreferencedFeedback"
-                        [feedback]="unreferencedFeedback"
+                        [feedback]="unreferencedFeedback || []"
                         [additional]="true"
                     >
                     </jhi-additional-feedback>

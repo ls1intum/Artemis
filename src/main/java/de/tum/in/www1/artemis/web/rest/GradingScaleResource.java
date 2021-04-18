@@ -108,7 +108,7 @@ public class GradingScaleResource {
         if (existingGradingScale.isPresent()) {
             return badRequest(ENTITY_NAME, "gradingScaleAlreadyExists", "A grading scale already exists for the selected course");
         }
-        else if (gradingScale.getGradeSteps() == null) {
+        else if (gradingScale.getGradeSteps() == null || gradingScale.getGradeSteps().isEmpty()) {
             return badRequest(ENTITY_NAME, "noGradeSteps", "A grading scale must contain grade steps");
         }
         else if (gradingScale.getId() != null) {
@@ -141,13 +141,13 @@ public class GradingScaleResource {
         if (existingGradingScale.isPresent()) {
             return badRequest(ENTITY_NAME, "gradingScaleAlreadyExists", "A grading scale already exists for the selected exam");
         }
-        else if (gradingScale.getGradeSteps() == null) {
+        else if (gradingScale.getGradeSteps() == null || gradingScale.getGradeSteps().isEmpty()) {
             return badRequest(ENTITY_NAME, "noGradeSteps", "A grading scale must contain grade steps");
         }
         else if (gradingScale.getId() != null) {
             return badRequest(ENTITY_NAME, "gradingScaleHasId", "A grading scale can't contain a predefined id");
         }
-        Exam exam = examRepository.findById(examId).orElseThrow();
+        Exam exam = examRepository.findByIdElseThrow(examId);
         gradingScale.setExam(exam);
 
         GradingScale savedGradingScale = gradingScaleService.saveGradingScale(gradingScale);
@@ -209,7 +209,7 @@ public class GradingScaleResource {
         Course course = courseRepository.findByIdElseThrow(courseId);
         GradingScale gradingScale = gradingScaleRepository.findByCourseIdOrElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
-        gradingScaleService.delete(gradingScale);
+        gradingScaleRepository.delete(gradingScale);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, "")).build();
     }
 
@@ -227,7 +227,7 @@ public class GradingScaleResource {
         Course course = courseRepository.findByIdElseThrow(courseId);
         GradingScale gradingScale = gradingScaleRepository.findByExamIdOrElseThrow(examId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
-        gradingScaleService.delete(gradingScale);
+        gradingScaleRepository.delete(gradingScale);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, "")).build();
     }
 

@@ -11,9 +11,10 @@ import { AccountService } from 'app/core/auth/account.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
-import { Exercise, ExerciseCategory, ExerciseType, getIcon, getIconTooltip, IncludedInOverallScore } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType, getIcon, getIconTooltip, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { participationStatus } from 'app/exercises/shared/exercise/exercise-utils';
+import { ExerciseCategory } from 'app/entities/exercise-category.model';
 
 @Component({
     selector: 'jhi-course-exercise-row',
@@ -83,7 +84,7 @@ export class CourseExerciseRowComponent implements OnInit, OnDestroy {
             quizExercise.isPracticeModeAvailable = quizExercise.isPlannedToStart && quizExercise.isOpenForPractice && moment(this.exercise.dueDate!).isBefore(moment());
             this.exercise = quizExercise;
         }
-        this.exerciseCategories = this.exerciseService.convertExerciseCategoriesFromServer(this.exercise);
+        this.exerciseCategories = this.exercise.categories || [];
     }
 
     ngOnDestroy() {
