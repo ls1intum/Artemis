@@ -212,6 +212,7 @@ describe('ParticipationComponent', () => {
         } as Exercise;
 
         const participation = {
+            id: 123,
             student: { id: 1 },
             exercise: exercise1,
         } as StudentParticipation;
