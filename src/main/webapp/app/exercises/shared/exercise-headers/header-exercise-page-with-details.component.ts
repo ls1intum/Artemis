@@ -16,7 +16,7 @@ export class HeaderExercisePageWithDetailsComponent implements OnInit, OnChanges
     @Input() public exercise: Exercise;
     @Input() public onBackClick: () => void; // TODO: This can be removed once we are happy with the breadcrumb navigation
     @Input() public title: string;
-    @Input() public exam: Exam | null;
+    @Input() public exam?: Exam;
     @Input() public isTestRun = false;
     @Input() public displayBackButton = true; // TODO: This can be removed once we are happy with the breadcrumb navigation
 
