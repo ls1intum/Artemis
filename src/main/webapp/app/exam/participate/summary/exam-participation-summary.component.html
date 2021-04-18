@@ -12,7 +12,7 @@
         </button>
     </h2>
 </div>
-<jhi-exam-information [exam]="studentExam.exam" [studentExam]="studentExam"></jhi-exam-information>
+<jhi-exam-information [exam]="studentExam.exam!" [studentExam]="studentExam"></jhi-exam-information>
 <div class="mb-4 text-center" *ngIf="studentExam && studentExam.exam && isBeforeStudentReviewEnd() && isAfterStudentReviewStart()">
     <a class="btn btn-success" style="cursor: default; pointer-events: none">
         {{ 'artemisApp.exam.studentReviewEnabled' | artemisTranslate }}
@@ -26,7 +26,7 @@
     <div class="question card">
         <div class="question-options card-header question-card-header">
             <h5>
-                &nbsp;<fa-icon [icon]="getIcon(exercise.type)"></fa-icon>&nbsp;
+                &nbsp;<fa-icon *ngIf="exercise && exercise.type" [icon]="getIcon(exercise.type)"></fa-icon>&nbsp;
                 <span jhiTranslate="artemisApp.exam.exercise" [translateValues]="{ nr: i + 1 }">Exercise {{ i + 1 }}</span>
             </h5>
             <div
@@ -44,14 +44,14 @@
             <button
                 id="{{ 'toggleCollapseExerciseButton-' + i }}"
                 class="btn btn-light question-collapse"
-                (click)="toggleCollapseExercise(exercise.id)"
-                [attr.aria-expanded]="!isCollapsed(exercise.id)"
-                [attr.aria-controls]="isCollapsed(exercise.id)"
+                (click)="toggleCollapseExercise(exercise.id!)"
+                [attr.aria-expanded]="!isCollapsed(exercise.id!)"
+                [attr.aria-controls]="isCollapsed(exercise.id!)"
             >
-                <fa-icon size="2x" [icon]="isCollapsed(exercise.id) ? 'angle-right' : 'angle-down'"></fa-icon>
+                <fa-icon size="2x" [icon]="isCollapsed(exercise.id!) ? 'angle-right' : 'angle-down'"></fa-icon>
             </button>
         </div>
-        <div class="card-body question-card-body" [ngbCollapse]="isCollapsed(exercise.id)">
+        <div class="card-body question-card-body" [ngbCollapse]="isCollapsed(exercise.id!)">
             <div *ngIf="exercise.type !== QUIZ && exercise.type !== PROGRAMMING && resultsPublished">
                 <a *ngIf="exercise.studentParticipations?.length" class="btn btn-primary float-right" [routerLink]="generateLink(exercise)">
                     <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>
@@ -72,7 +72,7 @@
             <jhi-programming-exercise-instructions
                 *ngIf="exercise.problemStatement && exercise.type === PROGRAMMING"
                 [exercise]="exercise"
-                [participation]="exercise.templateParticipation"
+                [participation]="asProgrammingExercise(exercise).templateParticipation!"
             ></jhi-programming-exercise-instructions>
             <ng-container *ngIf="exercise.type !== PROGRAMMING">
                 <!-- Show submission of student - if no submission found -> display that student did not participate -->
@@ -81,30 +81,30 @@
                 >
                     <!-- Text Exercise -->
                     <ng-container *ngIf="exercise.type === TEXT">
-                        <jhi-text-exam-summary [submission]="getSubmissionForExercise(exercise)"></jhi-text-exam-summary>
+                        <jhi-text-exam-summary [submission]="getSubmissionForExercise(exercise)!"></jhi-text-exam-summary>
                     </ng-container>
                     <!-- Modeling Exercise -->
                     <ng-container *ngIf="exercise.type === MODELING">
-                        <jhi-modeling-exam-summary [exercise]="exercise" [submission]="getSubmissionForExercise(exercise)"></jhi-modeling-exam-summary>
+                        <jhi-modeling-exam-summary [exercise]="exercise" [submission]="getSubmissionForExercise(exercise)!"></jhi-modeling-exam-summary>
                     </ng-container>
                     <!-- Quiz Exercise -->
                     <ng-container *ngIf="exercise.type === QUIZ">
                         <jhi-quiz-exam-summary
                             [exercise]="exercise"
-                            [exam]="studentExam.exam"
-                            [submission]="getSubmissionForExercise(exercise)"
-                            [resultsPublished]="resultsPublished"
+                            [exam]="studentExam.exam!"
+                            [submission]="getSubmissionForExercise(exercise)!"
+                            [resultsPublished]="!!resultsPublished"
                         ></jhi-quiz-exam-summary>
                     </ng-container>
                     <!-- File Upload Exercise -->
                     <ng-container *ngIf="exercise.type === FILE_UPLOAD">
-                        <jhi-file-upload-exam-summary [submission]="getSubmissionForExercise(exercise)"></jhi-file-upload-exam-summary>
+                        <jhi-file-upload-exam-summary [submission]="getSubmissionForExercise(exercise)!"></jhi-file-upload-exam-summary>
                     </ng-container>
                     <jhi-complaint-interactions
                         *ngIf="getSubmissionForExercise(exercise) && exercise.type !== QUIZ && isAfterStudentReviewStart()"
                         class="mb-2 mt-2 ml-3"
                         [exercise]="exercise"
-                        [participation]="getParticipationForExercise(exercise)"
+                        [participation]="getParticipationForExercise(exercise)!"
                         [exam]="examWithOnlyIdAndStudentReviewPeriod"
                         [testRun]="isTestRun"
                     >
@@ -117,15 +117,15 @@
                     <!-- Programming Exercise -->
                     <jhi-programming-exam-summary
                         [exercise]="exercise"
-                        [participation]="getParticipationForExercise(exercise)"
-                        [submission]="getSubmissionForExercise(exercise)"
+                        [participation]="getParticipationForExercise(exercise)!"
+                        [submission]="getSubmissionForExercise(exercise)!"
                     ></jhi-programming-exam-summary>
                 </ng-container>
                 <jhi-complaint-interactions
                     *ngIf="exercise.assessmentType === AssessmentType.SEMI_AUTOMATIC && getSubmissionForExercise(exercise) && isAfterStudentReviewStart()"
                     class="mb-2 mt-2 ml-3"
                     [exercise]="exercise"
-                    [participation]="getParticipationForExercise(exercise)"
+                    [participation]="getParticipationForExercise(exercise)!"
                     [exam]="examWithOnlyIdAndStudentReviewPeriod"
                     [testRun]="isTestRun"
                 >
