@@ -36,7 +36,10 @@
             </div>
             <canvas
                 baseChart
+                [routerLink]="['/courses', course.id!]"
                 id="score-chart"
+                height="150"
+                width="150"
                 [legend]="false"
                 [datasets]="doughnutChartData"
                 [options]="totalScoreOptions"
