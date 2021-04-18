@@ -47,7 +47,7 @@ export class ExerciseHintStudentDialogComponent {
 })
 export class ExerciseHintStudentComponent implements OnInit, OnDestroy {
     @Input() exerciseId: number;
-    @Input() exerciseHints: ExerciseHint[] | null;
+    @Input() exerciseHints?: ExerciseHint[];
     protected ngbModalRef: NgbModalRef | null;
 
     constructor(protected exerciseHintService: ExerciseHintService, protected activatedRoute: ActivatedRoute, protected router: Router, protected modalService: NgbModal) {}

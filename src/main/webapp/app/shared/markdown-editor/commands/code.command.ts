@@ -1,7 +1,8 @@
+import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { Command } from './command';
 
 export class CodeCommand extends Command {
-    buttonIcon = 'code';
+    buttonIcon = 'code' as IconProp;
     buttonTranslationString = 'artemisApp.multipleChoiceQuestion.editor.code';
 
     /**

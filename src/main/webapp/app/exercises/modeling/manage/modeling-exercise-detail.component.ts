@@ -47,9 +47,6 @@ export class ModelingExerciseDetailComponent implements OnInit, OnDestroy {
             if (this.modelingExercise.sampleSolutionModel && this.modelingExercise.sampleSolutionModel !== '') {
                 this.sampleSolutionUML = JSON.parse(this.modelingExercise.sampleSolutionModel);
             }
-            if (this.modelingExercise.categories) {
-                this.modelingExercise.categories = this.modelingExercise.categories.map((category) => JSON.parse(category));
-            }
         });
     }
 

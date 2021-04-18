@@ -24,6 +24,7 @@ import * as sinon from 'sinon';
 import * as sinonChai from 'sinon-chai';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { ArtemisTestModule } from '../../../test.module';
+import { StudentDTO } from 'app/entities/student-dto.model';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -94,9 +95,10 @@ describe('ExamStudentsComponent', () => {
 
     it('should handle auto-complete for unregistered user', () => {
         const user3 = { id: 3, login: 'user3' } as User;
+        const student3 = { login: 'user3', registrationNumber: '1234567' } as StudentDTO;
         const callbackSpy = sinon.spy();
         const flashSpy = sinon.spy(component, 'flashRowClass');
-        const examServiceStub = sinon.stub(examManagementService, 'addStudentToExam').returns(of(new HttpResponse()));
+        const examServiceStub = sinon.stub(examManagementService, 'addStudentToExam').returns(of(new HttpResponse({ body: student3 })));
         fixture.detectChanges();
 
         component.onAutocompleteSelect(user3, callbackSpy);
