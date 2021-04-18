@@ -4,7 +4,8 @@ exercises
 */
 
 .chart-wrapper {
-    width: 1200px;
+    width: 100%;
+    max-width: 1200px;
     overflow-x: auto;
 }
 
