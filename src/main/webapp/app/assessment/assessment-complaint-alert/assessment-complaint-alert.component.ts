@@ -12,5 +12,5 @@ import { Complaint, ComplaintType } from 'app/entities/complaint.model';
 export class AssessmentComplaintAlertComponent {
     ComplaintType = ComplaintType;
 
-    @Input() complaint: Complaint;
+    @Input() complaint?: Complaint;
 }
