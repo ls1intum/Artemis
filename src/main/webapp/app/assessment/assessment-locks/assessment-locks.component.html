@@ -45,8 +45,8 @@
                                 [routerLink]="[
                                     '/course-management',
                                     courseId,
-                                    submission.participation.exercise.type + '-exercises',
-                                    submission.participation.exercise.id,
+                                    submission.participation!.exercise!.type + '-exercises',
+                                    submission.participation!.exercise!.id!,
                                     'submissions',
                                     submission.id,
                                     'assessment'
