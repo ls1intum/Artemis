@@ -1,16 +1,14 @@
 package de.tum.in.www1.artemis.service;
 
 import java.time.ZonedDateTime;
-import java.util.HashSet;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
-import de.tum.in.www1.artemis.repository.LearningGoalRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.LectureUnitRepository;
 
@@ -21,42 +19,16 @@ public class LectureService {
 
     private final AuthorizationCheckService authCheckService;
 
-    private final LearningGoalRepository learningGoalRepository;
-
     private final LectureUnitRepository lectureUnitRepository;
 
-    public LectureService(LectureRepository lectureRepository, AuthorizationCheckService authCheckService, LearningGoalRepository learningGoalRepository,
-            LectureUnitRepository lectureUnitRepository) {
+    private final LectureUnitService lectureUnitService;
+
+    public LectureService(LectureRepository lectureRepository, AuthorizationCheckService authCheckService, LectureUnitRepository lectureUnitRepository,
+            LectureUnitService lectureUnitService) {
         this.lectureRepository = lectureRepository;
         this.authCheckService = authCheckService;
-        this.learningGoalRepository = learningGoalRepository;
         this.lectureUnitRepository = lectureUnitRepository;
-    }
-
-    public Lecture save(Lecture lecture) {
-        return lectureRepository.save(lecture);
-    }
-
-    public Optional<Lecture> findByIdWithStudentQuestionsAndLectureModules(Long lectureId) {
-        return lectureRepository.findByIdWithStudentQuestionsAndLectureUnitsAndLearningGoals(lectureId);
-    }
-
-    /**
-     * Finds all lectures connected to a course with the associated attachments
-     * @param courseId if of the course
-     * @return set of lectures connected to the course with associated attachments
-     */
-    public Set<Lecture> findAllByCourseIdWithAttachments(Long courseId) {
-        return lectureRepository.findAllByCourseIdWithAttachments(courseId);
-    }
-
-    /**
-     * Finds all lectures connected to a course with the associated lecture units and attachments
-     * @param courseId id of the course
-     * @return set of lectures connected to the course with associated lecture units and attachments
-     */
-    public Set<Lecture> findAllByCourseIdWithAttachmentsAndLectureUnits(Long courseId) {
-        return lectureRepository.findAllByCourseIdWithAttachmentsAndLectureUnits(courseId);
+        this.lectureUnitService = lectureUnitService;
     }
 
     /**
@@ -109,31 +81,20 @@ public class LectureService {
             return;
         }
         Lecture lectureToDelete = lectureToDeleteOptional.get();
-
+        // Hibernate sometimes adds null into the list of lecture units to keep the order, to prevent a NullPointerException we have to filter them
+        List<LectureUnit> lectureUnits = lectureToDelete.getLectureUnits().stream().filter(Objects::nonNull).collect(Collectors.toList());
         // update associated learning goals
-        for (LectureUnit lectureUnit : lectureToDelete.getLectureUnits()) {
+        for (LectureUnit lectureUnit : lectureUnits) {
             Optional<LectureUnit> lectureUnitFromDbOptional = lectureUnitRepository.findByIdWithLearningGoalsBidirectional(lectureUnit.getId());
-
             if (lectureUnitFromDbOptional.isPresent()) {
                 LectureUnit lectureUnitFromDb = lectureUnitFromDbOptional.get();
                 Set<LearningGoal> associatedLearningGoals = new HashSet<>(lectureUnitFromDb.getLearningGoals());
                 for (LearningGoal learningGoal : associatedLearningGoals) {
-                    Optional<LearningGoal> learningGoalFromDbOptional = learningGoalRepository.findByIdWithLectureUnitsBidirectional(learningGoal.getId());
-                    if (learningGoalFromDbOptional.isPresent()) {
-                        LearningGoal learningGoalFromDb = learningGoalFromDbOptional.get();
-                        learningGoalFromDb.removeLectureUnit(lectureUnitFromDb);
-                        learningGoalRepository.save(learningGoalFromDb);
-                    }
-
+                    lectureUnitService.disconnectLectureUnitAndLearningGoal(lectureUnit, learningGoal);
                 }
             }
         }
-        Optional<Lecture> lectureToDeleteUpdatedOptional = lectureRepository.findByIdWithStudentQuestionsAndLectureUnitsAndLearningGoals(lecture.getId());
-        if (lectureToDeleteUpdatedOptional.isEmpty()) {
-            return;
-        }
-
-        lectureRepository.delete(lectureToDeleteUpdatedOptional.get());
+        lectureRepository.deleteById(lectureToDelete.getId());
     }
 
 }

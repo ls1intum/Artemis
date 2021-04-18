@@ -2,7 +2,7 @@
 <nav *ngIf="loadingState === LOADING_STATE.INITIALIZING || loadingState === LOADING_STATE.FETCHING_FAILED" class="card">
     <div class="card-body">
         <span *ngIf="loadingState === LOADING_STATE.INITIALIZING">
-            <fa-icon [icon]="'circle-notch'" spin="true"></fa-icon>
+            <fa-icon [icon]="'circle-notch'" [spin]="true"></fa-icon>
             <span jhiTranslate="artemisApp.editor.fetchingParticipation"> Your participation is being loaded... </span>
         </span>
         <span *ngIf="loadingState === LOADING_STATE.FETCHING_FAILED">
@@ -14,7 +14,7 @@
 
 <jhi-code-editor-container
     *ngIf="exercise"
-    [participation]="selectedParticipation"
+    [participation]="selectedParticipation!"
     [buildable]="selectedRepository !== REPOSITORY.TEST"
     (onResizeEditorInstructions)="onResizeEditorInstructions()"
 >
@@ -31,8 +31,8 @@
         <jhi-programming-exercise-instructor-exercise-status
             class="mr-2"
             [exercise]="exercise"
-            [templateParticipation]="exercise?.templateParticipation"
-            [solutionParticipation]="exercise?.solutionParticipation"
+            [templateParticipation]="exercise?.templateParticipation!"
+            [solutionParticipation]="exercise?.solutionParticipation!"
         ></jhi-programming-exercise-instructor-exercise-status>
         <!-- repository select -->
         <div ngbDropdown class="d-inline-block mr-2">
@@ -61,8 +61,8 @@
                         loadingState === LOADING_STATE.DELETING_ASSIGNMENT_REPO ||
                         !exercise ||
                         !exercise.studentParticipations ||
-                        !exercise.studentParticipations.length ||
-                        (exercise.studentParticipations.length && !repositoryUrl(exercise.studentParticipations![0]))
+                        !exercise.studentParticipations!.length ||
+                        (exercise.studentParticipations!.length > 0 && !repositoryUrl(exercise.studentParticipations![0]))
                     "
                     (click)="selectAssignmentParticipation()"
                     ngbDropdownItem
@@ -119,7 +119,7 @@
         <jhi-updating-result
             *ngIf="selectedParticipation && selectedRepository !== REPOSITORY.TEST"
             [exercise]="exercise"
-            [participation]="selectedParticipation"
+            [participation]="selectedParticipation!"
             [showUngradedResults]="true"
             [showTestNames]="true"
             [showGradedBadge]="selectedRepository === REPOSITORY.ASSIGNMENT"
@@ -131,12 +131,12 @@
             class="mr-3"
             *ngIf="selectedRepository !== REPOSITORY.TEST"
             [exercise]="exercise"
-            [participation]="selectedParticipation"
+            [participation]="selectedParticipation!"
             [btnSize]="ButtonSize.MEDIUM"
         ></jhi-programming-exercise-student-trigger-build-button>
         <jhi-exercise-hint-student
             *ngIf="exercise && this.selectedRepository === REPOSITORY.ASSIGNMENT"
-            [exerciseId]="exercise.id"
+            [exerciseId]="exercise.id!"
             [exerciseHints]="exercise.exerciseHints"
             class="mr-2"
         >
@@ -145,8 +145,8 @@
     <jhi-programming-exercise-editable-instructions
         editorSidebar
         [(exercise)]="exercise"
-        [(participation)]="selectedRepository !== REPOSITORY.TEST ? selectedParticipation : exercise.templateParticipation"
-        [templateParticipation]="exercise.templateParticipation"
+        [(participation)]="selectedRepository !== REPOSITORY.TEST ? selectedParticipation! : exercise.templateParticipation!"
+        [templateParticipation]="exercise.templateParticipation!"
         [enableResize]="false"
         class="instructions-wrapper__content card-body p-0"
     >

@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram;
 
+import java.io.Serializable;
 import java.util.List;
 
 import javax.annotation.Nullable;
@@ -11,7 +12,7 @@ import de.tum.in.www1.artemis.service.compass.umlmodel.Similarity;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
 import de.tum.in.www1.artemis.service.compass.utils.CompassConfiguration;
 
-public class UMLClass extends UMLElement {
+public class UMLClass extends UMLElement implements Serializable {
 
     public enum UMLClassType {
         CLASS, ABSTRACT_CLASS, ENUMERATION, INTERFACE

@@ -1,7 +1,7 @@
 <div *ngIf="exercise">
     <h2>
         <span *ngIf="exercise.course">{{ exercise.course?.title }} - {{ exercise.title }}</span>
-        <span *ngIf="exercise.exerciseGroup">{{ exercise.exerciseGroup?.exam.title }} - {{ exercise.title }}</span>
+        <span *ngIf="exercise.exerciseGroup">{{ exercise.exerciseGroup?.exam?.title }} - {{ exercise.title }}</span>
         <small jhiTranslate="artemisApp.exercise.resultCount" [translateValues]="{ resultsLength: filteredResultsSize }">results</small>
     </h2>
     <jhi-alert></jhi-alert>
@@ -36,10 +36,29 @@
         </div>
         <div class="d-flex justify-content-end">
             <div class="button-toolbar">
-                <a [routerLink]="['/course-management', course.id, 'exercises', exercise.id, 'participations']" class="btn btn-primary btn-sm mr-1">
+                <a *ngIf="!exercise.exerciseGroup" [routerLink]="['/course-management', course.id, 'exercises', exercise.id, 'participations']" class="btn btn-primary btn-sm mr-1">
                     <fa-icon [icon]="'list-alt'"></fa-icon>
                     <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.participations">Participations</span>
                 </a>
+                <a
+                    *ngIf="exercise.exerciseGroup"
+                    [routerLink]="[
+                        '/course-management',
+                        course.id,
+                        'exams',
+                        exercise.exerciseGroup!.exam!.id!,
+                        'exercise-groups',
+                        exercise.exerciseGroup!.id!,
+                        'exercises',
+                        exercise.id,
+                        'participations'
+                    ]"
+                    class="btn btn-primary btn-sm mr-1"
+                >
+                    <fa-icon [icon]="'list-alt'"></fa-icon>
+                    <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.participations">Participations</span>
+                </a>
+
                 <button class="btn btn-info btn-sm mr-1" (click)="exportNames()">
                     <fa-icon [icon]="'download'"></fa-icon>
                     <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.exportNames">Export Names</span>
@@ -50,12 +69,12 @@
                 </button>
                 <jhi-programming-assessment-repo-export
                     *ngIf="exercise.type === ExerciseType.PROGRAMMING"
-                    [exerciseId]="exercise.id"
+                    [exerciseId]="exercise.id!"
                     class="mr-1"
                 ></jhi-programming-assessment-repo-export>
                 <jhi-exercise-submission-export
                     *ngIf="exercise.type === ExerciseType.TEXT || exercise.type === ExerciseType.MODELING || exercise.type == ExerciseType.FILE_UPLOAD"
-                    [exerciseId]="exercise.id"
+                    [exerciseId]="exercise.id!"
                     [exerciseType]="exercise.type"
                     class="mr-1"
                 ></jhi-exercise-submission-export>
@@ -116,7 +135,7 @@
                     </ng-template>
                     <ng-template ngx-datatable-cell-template let-value="value">
                         <span *ngIf="exercise.isAtLeastInstructor">
-                            <a [routerLink]="['..', 'participations', value.id, 'submissions']">
+                            <a [routerLink]="getExerciseParticipationsLink(value.id)">
                                 {{ value.student?.name || value.team?.name }}
                             </a>
                         </span>
@@ -161,6 +180,8 @@
                     </ng-template>
                 </ngx-datatable-column>
 
+                <!-- Last Result -->
+
                 <ngx-datatable-column prop="" [resizeable]="false" [sortable]="true" [minWidth]="200" [width]="300">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" (click)="controls.onSort('score')">
@@ -194,7 +215,7 @@
                     </ng-template>
                     <ng-template ngx-datatable-cell-template let-value="value">
                         <div class="w-100 text-center">
-                            <a *ngIf="exercise.isAtLeastInstructor; else displayTextOnly" [routerLink]="['..', 'participations', value.id, 'submissions']">
+                            <a *ngIf="exercise.isAtLeastInstructor; else displayTextOnly" [routerLink]="getExerciseParticipationsLink(value.id)">
                                 {{ value.submissionCount }}
                             </a>
                             <ng-template #displayTextOnly>
@@ -226,7 +247,7 @@
                             <fa-icon [icon]="'code-branch'" class="mr-1"></fa-icon>
                             Repository
                         </a>
-                        <button class="btn btn-primary btn-sm mr-1" jhiBuildPlanButton [projectKey]="projectKey()" [buildPlanId]="buildPlanId(value)">
+                        <button class="btn btn-primary btn-sm mr-1" jhiBuildPlanButton [projectKey]="projectKey()" [buildPlanId]="buildPlanId(value)!">
                             <fa-icon class="mr-1" [icon]="['far', 'file-code']"></fa-icon>
                             Build plan
                         </button>
@@ -248,10 +269,19 @@
                             {{ 'artemisApp.programmingSubmission.view' | artemisTranslate }}
                         </a>
                         <a
-                            *ngIf="exercise.exerciseGroup && newManualResultAllowed && exercise.exerciseGroup.exam?.numberOfCorrectionRoundsInExam < 2"
+                            *ngIf="
+                                exercise.exerciseGroup &&
+                                newManualResultAllowed &&
+                                exercise.exerciseGroup!.exam?.numberOfCorrectionRoundsInExam !== undefined &&
+                                exercise.exerciseGroup!.exam!.numberOfCorrectionRoundsInExam! < 2
+                            "
                             [routerLink]="[
                                 '/course-management',
-                                exercise.exerciseGroup?.exam.course.id,
+                                exercise.exerciseGroup!.exam!.course!.id,
+                                'exams',
+                                exercise.exerciseGroup!.exam!.id,
+                                'exercise-groups',
+                                exercise.exerciseGroup!.id,
                                 'programming-exercises',
                                 exercise.id,
                                 'code-editor',
@@ -283,10 +313,18 @@
                             {{ 'artemisApp.fileUploadSubmission.view' | artemisTranslate }}
                         </a>
                         <a
-                            *ngIf="exercise.exerciseGroup && exercise.exerciseGroup.exam?.numberOfCorrectionRoundsInExam < 2"
+                            *ngIf="
+                                exercise.exerciseGroup &&
+                                exercise.exerciseGroup!.exam?.numberOfCorrectionRoundsInExam !== undefined &&
+                                exercise.exerciseGroup!.exam!.numberOfCorrectionRoundsInExam! < 2
+                            "
                             [routerLink]="[
                                 '/course-management',
-                                exercise.exerciseGroup?.exam.course.id,
+                                exercise.exerciseGroup!.exam!.course!.id,
+                                'exams',
+                                exercise.exerciseGroup!.exam!.id,
+                                'exercise-groups',
+                                exercise.exerciseGroup!.id,
                                 'file-upload-exercises',
                                 exercise.id,
                                 'submissions',
@@ -313,10 +351,18 @@
                             {{ 'artemisApp.modelingSubmission.view' | artemisTranslate }}
                         </a>
                         <a
-                            *ngIf="exercise.exerciseGroup && exercise.exerciseGroup.exam?.numberOfCorrectionRoundsInExam < 2"
+                            *ngIf="
+                                exercise.exerciseGroup &&
+                                exercise.exerciseGroup!.exam?.numberOfCorrectionRoundsInExam !== undefined &&
+                                exercise.exerciseGroup!.exam!.numberOfCorrectionRoundsInExam! < 2
+                            "
                             [routerLink]="[
                                 '/course-management',
-                                exercise.exerciseGroup?.exam.course.id,
+                                exercise.exerciseGroup!.exam!.course!.id,
+                                'exams',
+                                exercise.exerciseGroup!.exam!.id,
+                                'exercise-groups',
+                                exercise.exerciseGroup!.id,
                                 'modeling-exercises',
                                 exercise.id,
                                 'submissions',
@@ -343,10 +389,18 @@
                             {{ 'artemisApp.textSubmission.view' | artemisTranslate }}
                         </a>
                         <a
-                            *ngIf="exercise.exerciseGroup && exercise.exerciseGroup.exam?.numberOfCorrectionRoundsInExam < 2"
+                            *ngIf="
+                                exercise.exerciseGroup &&
+                                exercise.exerciseGroup!.exam?.numberOfCorrectionRoundsInExam !== undefined &&
+                                exercise.exerciseGroup!.exam!.numberOfCorrectionRoundsInExam! < 2
+                            "
                             [routerLink]="[
                                 '/course-management',
-                                exercise.exerciseGroup?.exam.course.id,
+                                exercise.exerciseGroup!.exam!.course!.id,
+                                'exams',
+                                exercise.exerciseGroup!.exam!.id,
+                                'exercise-groups',
+                                exercise.exerciseGroup!.id,
                                 'text-exercises',
                                 exercise.id,
                                 'submissions',

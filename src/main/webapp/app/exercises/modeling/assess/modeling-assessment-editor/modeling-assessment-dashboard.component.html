@@ -21,7 +21,7 @@
         </div>
     </div>
     <h4>
-        <small [ngStyle]="assessedSubmissions === submissions.length && submissions.length > 0 && { color: '#5cb85c' }">
+        <small [ngStyle]="assessedSubmissions === submissions.length && submissions.length > 0 ? { color: '#5cb85c' } : {}">
             <strong>Progress: {{ (assessedSubmissions / submissions.length) * 100 | number: '0.0-0' }} % </strong>({{ assessedSubmissions }} out of
             {{ submissions.length }} submitted models assessed)
         </small>
@@ -54,10 +54,10 @@
                 </tr>
             </thead>
             <tbody>
-                <tr *ngFor="let submission of optimalSubmissions; let i = index" [ngStyle]="submission.optimal && { 'font-weight': 'bold' }">
+                <tr *ngFor="let submission of optimalSubmissions; let i = index" [ngStyle]="submission.optimal ? { 'font-weight': 'bold' } : {}">
                     <td>{{ i + 1 }}</td>
                     <td *ngIf="exercise.isAtLeastInstructor">
-                        {{ submission.participation.participantName }}
+                        {{ submission.participation?.participantName || '' }}
                     </td>
                     <td>
                         <span *ngIf="submission.latestResult && submission.latestResult!.assessor">{{ submission.latestResult!.assessor!.name }} (lock)</span>
@@ -70,7 +70,7 @@
                                 canOverrideAssessments
                             "
                             [queryParams]="{ optimal: false, hideBackButton: true }"
-                            [routerLink]="['/course-management', exercise.course?.id, 'modeling-exercises', exercise.id, 'submissions', submission.id, 'assessment']"
+                            [routerLink]="getAssessmentRouterLink(submission.id!)"
                             class="btn btn-success btn-sm"
                         >
                             <fa-icon [fixedWidth]="true" [icon]="'folder-open'"></fa-icon>&nbsp;Assess model
@@ -148,22 +148,39 @@
                 </tr>
             </thead>
             <tbody>
-                <tr *ngFor="let submission of otherSubmissions; let i = index" [ngStyle]="submission.optimal && { 'font-weight': 'bold' }">
+                <tr *ngFor="let submission of otherSubmissions; let i = index" [ngStyle]="submission.optimal ? { 'font-weight': 'bold' } : {}">
                     <td>{{ i + 1 }}</td>
                     <td *ngIf="exercise.isAtLeastInstructor">
-                        {{ submission.participation.participantName }}
+                        {{ submission.participation?.participantName || '' }}
                     </td>
                     <td>{{ submission.submissionDate | artemisDate }}</td>
                     <td>
-                        <jhi-result [participation]="submission.participation"></jhi-result>
+                        <jhi-result [participation]="submission.participation!"></jhi-result>
                     </td>
                     <td>
-                        <ng-container *ngIf="submission.participation.submissions">
+                        <ng-container *ngIf="submission.participation?.submissions">
                             <a
-                                *ngIf="exercise.isAtLeastInstructor"
-                                [routerLink]="['/course-management', courseId, 'exercises', exercise.id, 'participations', submission.participation.id, 'submissions']"
+                                *ngIf="exercise.isAtLeastInstructor && !examId"
+                                [routerLink]="['/course-management', courseId, 'exercises', exercise.id, 'participations', submission.participation!.id!, 'submissions']"
                             >
-                                {{ submission.participation.submissions.length }}
+                                {{ submission.participation!.submissions?.length || '0' }}
+                            </a>
+                            <a
+                                *ngIf="exercise.isAtLeastInstructor && !!examId"
+                                [routerLink]="[
+                                    '/course-management',
+                                    courseId,
+                                    'exams',
+                                    examId,
+                                    'exercise-groups',
+                                    exerciseGroupId,
+                                    'exercises',
+                                    exercise.id,
+                                    'participations',
+                                    submission.participation!.id!
+                                ]"
+                            >
+                                {{ submission.participation?.submissions?.length || '0' }}
                             </a>
                         </ng-container>
                     </td>
@@ -173,7 +190,7 @@
                     </td>
                     <td>{{ submission.latestResult && submission.latestResult!.assessmentType }}</td>
                     <td>
-                        <div *ngIf="submission.results?.length > 1 && submission.results[0].assessor">{{ submission.results[0].assessor!.name }}</div>
+                        <div *ngIf="submission.results && submission.results!.length > 1 && submission.results[0]!.assessor">{{ submission.results[0]!.assessor!.name }}</div>
                         <div *ngIf="submission.latestResult && submission.latestResult!.assessor">{{ submission.latestResult!.assessor!.name }}</div>
                     </td>
 
@@ -185,7 +202,7 @@
                                     *ngIf="!submission.latestResult"
                                     [class.disabled]="busy"
                                     [queryParams]="{ optimal: false, hideBackButton: true }"
-                                    [routerLink]="getAssessmentLink(submission.id)"
+                                    [routerLink]="getAssessmentLink(submission.id!)"
                                     class="btn btn-success btn-sm mb-1"
                                 >
                                     <fa-icon [fixedWidth]="true" [icon]="'folder-open'"></fa-icon>&nbsp;{{ 'artemisApp.assessment.dashboard.actions.assess' | artemisTranslate }}
@@ -194,7 +211,7 @@
                                     *ngIf="submission.latestResult"
                                     [class.disabled]="busy"
                                     [queryParams]="{ optimal: false, hideBackButton: true }"
-                                    [routerLink]="getAssessmentLink(submission.id)"
+                                    [routerLink]="getAssessmentLink(submission.id!)"
                                     class="btn btn-primary btn-sm mb-1"
                                 >
                                     <fa-icon [fixedWidth]="true" [icon]="'folder-open'"></fa-icon>&nbsp;{{ 'artemisApp.assessment.dashboard.actions.open' | artemisTranslate }}
@@ -209,7 +226,7 @@
                                         *ngIf="submission.results[correctionRound].completionDate"
                                         [class.disabled]="busy"
                                         [queryParams]="{ optimal: false, hideBackButton: true, 'correction-round': correctionRound }"
-                                        [routerLink]="getAssessmentLink(submission.id)"
+                                        [routerLink]="getAssessmentLink(submission.id!)"
                                         class="btn btn-primary btn-sm mb-1"
                                     >
                                         <fa-icon [fixedWidth]="true" [icon]="'folder-open'"></fa-icon>&nbsp;
@@ -223,7 +240,7 @@
                                             <a
                                                 [class.disabled]="busy"
                                                 [queryParams]="{ 'correction-round': correctionRound }"
-                                                [routerLink]="getAssessmentLink(submission.id)"
+                                                [routerLink]="getAssessmentLink(submission.id!)"
                                                 class="btn btn-warning btn-sm mb-1"
                                             >
                                                 <fa-icon [fixedWidth]="true" [icon]="'edit'"></fa-icon>&nbsp;
@@ -253,7 +270,7 @@
                                     "
                                     [class.disabled]="busy"
                                     [queryParams]="{ 'correction-round': submission.results ? submission.results.length : 0 }"
-                                    [routerLink]="getAssessmentLink(submission.id)"
+                                    [routerLink]="getAssessmentLink(submission.id!)"
                                     class="btn btn-success btn-sm mb-1"
                                 >
                                     <fa-icon [fixedWidth]="true" [icon]="'folder-open'"></fa-icon>

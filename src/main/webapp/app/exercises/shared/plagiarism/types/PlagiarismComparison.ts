@@ -8,6 +8,11 @@ import { PlagiarismSubmissionElement } from 'app/exercises/shared/plagiarism/typ
  */
 export class PlagiarismComparison<E extends PlagiarismSubmissionElement> {
     /**
+     * Unique identifier of the comparison.
+     */
+    id: number;
+
+    /**
      * First submission involved in this comparison.
      */
     submissionA: PlagiarismSubmission<E>;

@@ -8,6 +8,8 @@
     [isTeamMode]="isTeamMode"
     [isAssessor]="isAssessor"
     [isTestRun]="isTestRun"
+    [isIllegalSubmission]="isIllegalSubmission"
+    [exerciseDashboardLink]="exerciseDashboardLink"
     [isAtLeastInstructor]="isAtLeastInstructor"
     [canOverride]="canOverride"
     [assessmentsAreValid]="assessmentsAreValid"
@@ -36,4 +38,5 @@
     [submission]="submission"
     [isTestRun]="isTestRun"
     (updateAssessmentAfterComplaint)="updateAssessmentAfterComplaint.emit($event)"
+    [isAtLeastInstructor]="isAtLeastInstructor"
 ></jhi-complaints-for-tutor-form>

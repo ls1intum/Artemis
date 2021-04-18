@@ -6,6 +6,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import java.io.File;
 import java.net.URI;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -41,6 +42,10 @@ public class RequestUtilService {
     public RequestUtilService(MockMvc mvc, ObjectMapper mapper) {
         this.mvc = mvc;
         this.mapper = mapper;
+    }
+
+    public MockMvc getMvc() {
+        return mvc;
     }
 
     public <T, R> R postWithMultipartFile(String path, T paramValue, String paramName, MockMultipartFile file, Class<R> responseType, HttpStatus expectedStatus) throws Exception {
@@ -323,6 +328,21 @@ public class RequestUtilService {
 
     public <T> T get(String path, HttpStatus expectedStatus, Class<T> responseType, MultiValueMap<String, String> params) throws Exception {
         return get(path, expectedStatus, responseType, params, new HttpHeaders());
+    }
+
+    public File getFile(String path, HttpStatus expectedStatus, MultiValueMap<String, String> params) throws Exception {
+        MvcResult res = mvc.perform(MockMvcRequestBuilders.get(new URI(path)).params(params).headers(new HttpHeaders())).andExpect(status().is(expectedStatus.value())).andReturn();
+        restoreSecurityContext();
+        if (!expectedStatus.is2xxSuccessful()) {
+            assertThat(res.getResponse().containsHeader("location")).as("no location header on failed request").isFalse();
+            return null;
+        }
+
+        String tmpDirectory = System.getProperty("java.io.tmpdir");
+        var filename = res.getResponse().getHeader("filename");
+        var tmpFile = Files.createFile(Path.of(tmpDirectory, filename));
+        Files.write(tmpFile, res.getResponse().getContentAsByteArray());
+        return tmpFile.toFile();
     }
 
     @SuppressWarnings("unchecked")

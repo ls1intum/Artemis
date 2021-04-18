@@ -50,33 +50,9 @@ export class FileUploadExerciseDetailComponent implements OnInit, OnDestroy {
                 (fileUploadExerciseResponse: HttpResponse<FileUploadExercise>) => {
                     this.fileUploadExercise = fileUploadExerciseResponse.body!;
                     this.isExamExercise = this.fileUploadExercise.exerciseGroup !== undefined;
-                    if (this.fileUploadExercise.categories) {
-                        this.fileUploadExercise.categories = this.fileUploadExercise.categories.map((category) => JSON.parse(category));
-                    }
                 },
                 (res: HttpErrorResponse) => this.onError(res),
             );
-    }
-
-    /**
-     * Returns the route for editing the exercise. Exam and course exercises have different routes.
-     */
-    getEditRoute() {
-        if (this.isExamExercise) {
-            return [
-                '/course-management',
-                this.fileUploadExercise.exerciseGroup?.exam?.course?.id,
-                'exams',
-                this.fileUploadExercise.exerciseGroup?.exam?.id,
-                'exercise-groups',
-                this.fileUploadExercise.exerciseGroup?.id,
-                'file-upload-exercises',
-                this.fileUploadExercise.id,
-                'edit',
-            ];
-        } else {
-            return ['/course-management', this.fileUploadExercise.course?.id, 'file-upload-exercises', this.fileUploadExercise.id, 'edit'];
-        }
     }
 
     /**

@@ -9,6 +9,7 @@ export const enum SubmissionType {
     INSTRUCTOR = 'INSTRUCTOR',
     EXTERNAL = 'EXTERNAL',
     TEST = 'TEST',
+    ILLEGAL = 'ILLEGAL',
 }
 
 // IMPORTANT NOTICE: The following strings have to be consistent with the ones defined in Submission.java
@@ -74,6 +75,17 @@ export function getSubmissionResultByCorrectionRound(submission: Submission | un
         return submission.results[correctionRound];
     }
     return undefined;
+}
+
+/**
+ * Used to access a submissions result for a specific id
+ *
+ * @param submission
+ * @param resultId
+ * @returns the results or undefined if submission or the result for the requested id is undefined
+ */
+export function getSubmissionResultById(submission: Submission | undefined, resultId: number): Result | undefined {
+    return submission?.results?.find((result) => result.id === resultId);
 }
 
 /**

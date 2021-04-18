@@ -11,7 +11,6 @@ export const routes: Routes = [
         component: FileUploadSubmissionComponent,
         data: {
             authorities: [Authority.USER],
-            usePathForBreadcrumbs: true,
             pageTitle: 'artemisApp.fileUploadExercise.home.title',
         },
         canActivate: [UserRouteAccessService],

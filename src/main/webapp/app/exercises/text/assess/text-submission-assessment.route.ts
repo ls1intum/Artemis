@@ -44,6 +44,10 @@ export class StudentParticipationResolver implements Resolve<StudentParticipatio
     resolve(route: ActivatedRouteSnapshot) {
         const submissionId = Number(route.paramMap.get('submissionId'));
         const correctionRound = Number(route.queryParamMap.get('correction-round'));
+        const resultId = Number(route.paramMap.get('resultId'));
+        if (resultId) {
+            return this.textAssessmentService.getFeedbackDataForExerciseSubmission(submissionId, undefined, resultId).catch(() => Observable.of(undefined));
+        }
         if (submissionId) {
             return this.textAssessmentService.getFeedbackDataForExerciseSubmission(submissionId, correctionRound).catch(() => Observable.of(undefined));
         }
@@ -76,7 +80,7 @@ export const textSubmissionAssessmentRoutes: Routes = [
         component: TextAssessmentDashboardComponent,
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.TA],
-            pageTitle: 'assessmentDashboard.title',
+            pageTitle: 'artemisApp.assessmentDashboard.home.title',
         },
         canActivate: [UserRouteAccessService],
     },
@@ -98,6 +102,19 @@ export const textSubmissionAssessmentRoutes: Routes = [
         component: TextSubmissionAssessmentComponent,
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.TA],
+            pageTitle: 'artemisApp.textAssessment.title',
+        },
+        resolve: {
+            studentParticipation: StudentParticipationResolver,
+        },
+        runGuardsAndResolvers: 'paramsChange',
+        canActivate: [UserRouteAccessService],
+    },
+    {
+        path: 'submissions/:submissionId/assessments/:resultId',
+        component: TextSubmissionAssessmentComponent,
+        data: {
+            authorities: [Authority.ADMIN, Authority.INSTRUCTOR],
             pageTitle: 'artemisApp.textAssessment.title',
         },
         resolve: {

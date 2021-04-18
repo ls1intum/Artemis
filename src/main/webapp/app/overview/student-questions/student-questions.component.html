@@ -20,7 +20,7 @@
                 [studentQuestion]="studentQuestion"
                 [user]="currentUser"
                 [isAtLeastTutorInCourse]="isAtLeastTutorInCourse"
-                [selectedStudentQuestion]="selectedStudentQuestion"
+                [selectedStudentQuestion]="selectedStudentQuestion!"
                 (interactQuestionRow)="interactQuestion($event)"
                 *ngFor="let studentQuestion of studentQuestions"
             ></jhi-student-question-row>
@@ -57,11 +57,7 @@
             <!-- new question button -->
             <div class="row" *ngIf="!isEditMode">
                 <div class="col-12">
-                    <button
-                        class="btn btn-sm btn-outline-secondary"
-                        [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.addNewQuestion' | artemisTranslate"
-                        (click)="isEditMode = true"
-                    >
+                    <button class="btn btn-sm btn-outline-secondary" (click)="isEditMode = true">
                         <fa-icon [icon]="'plus'"></fa-icon>
                         <span class="d-none d-md-inline">{{ 'artemisApp.courseOverview.exerciseDetails.faq.addNewQuestion' | artemisTranslate }}</span>
                     </button>

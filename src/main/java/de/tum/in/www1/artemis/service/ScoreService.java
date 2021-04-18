@@ -14,12 +14,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.Result;
-import de.tum.in.www1.artemis.domain.Team;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.Participation;
-import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.scores.ParticipantScore;
 import de.tum.in.www1.artemis.domain.scores.StudentScore;
@@ -169,9 +165,7 @@ public class ScoreService {
         }
         Participation participation = participationOptional.get();
 
-        boolean isStudentParticipation = participation.getClass().equals(StudentParticipation.class)
-                || participation.getClass().equals(ProgrammingExerciseStudentParticipation.class);
-        if (!isStudentParticipation) {
+        if (!(participation instanceof StudentParticipation)) {
             return Optional.empty();
         }
         return Optional.of((StudentParticipation) participation);
@@ -283,13 +277,14 @@ public class ScoreService {
         if (participantScore.getClass().equals(StudentScore.class)) {
             StudentScore studentScore = (StudentScore) participantScore;
             resultOrdered = resultRepository
-                    .getResultsOrderedByParticipationIdSubmissionIdResultIdDescForStudent(participantScore.getExercise().getId(), studentScore.getUser().getId()).stream()
+                    .getResultsOrderedByParticipationIdLegalSubmissionIdResultIdDescForStudent(participantScore.getExercise().getId(), studentScore.getUser().getId()).stream()
                     .filter(r -> !participantScore.getLastResult().equals(r)).collect(Collectors.toList());
         }
         else {
             TeamScore teamScore = (TeamScore) participantScore;
-            resultOrdered = resultRepository.getResultsOrderedByParticipationIdSubmissionIdResultIdDescForTeam(participantScore.getExercise().getId(), teamScore.getTeam().getId())
-                    .stream().filter(r -> !participantScore.getLastResult().equals(r)).collect(Collectors.toList());
+            resultOrdered = resultRepository
+                    .getResultsOrderedByParticipationIdLegalSubmissionIdResultIdDescForTeam(participantScore.getExercise().getId(), teamScore.getTeam().getId()).stream()
+                    .filter(r -> !participantScore.getLastResult().equals(r)).collect(Collectors.toList());
         }
         // the new last result (result with highest id of submission with highest id) will be at the beginning of the list
         return resultOrdered.isEmpty() ? Optional.empty() : Optional.of(resultOrdered.get(0));
@@ -307,13 +302,13 @@ public class ScoreService {
         if (participantScore.getClass().equals(StudentScore.class)) {
             StudentScore studentScore = (StudentScore) participantScore;
             ratedResultsOrdered = resultRepository
-                    .getRatedResultsOrderedByParticipationIdSubmissionIdResultIdDescForStudent(participantScore.getExercise().getId(), studentScore.getUser().getId()).stream()
+                    .getRatedResultsOrderedByParticipationIdLegalSubmissionIdResultIdDescForStudent(participantScore.getExercise().getId(), studentScore.getUser().getId()).stream()
                     .filter(r -> !participantScore.getLastRatedResult().equals(r)).collect(Collectors.toList());
         }
         else {
             TeamScore teamScore = (TeamScore) participantScore;
             ratedResultsOrdered = resultRepository
-                    .getRatedResultsOrderedByParticipationIdSubmissionIdResultIdDescForTeam(participantScore.getExercise().getId(), teamScore.getTeam().getId()).stream()
+                    .getRatedResultsOrderedByParticipationIdLegalSubmissionIdResultIdDescForTeam(participantScore.getExercise().getId(), teamScore.getTeam().getId()).stream()
                     .filter(r -> !participantScore.getLastRatedResult().equals(r)).collect(Collectors.toList());
         }
         // the new last rated result (rated result with highest id of submission with highest id) will be at the beginning of the list

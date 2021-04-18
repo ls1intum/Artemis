@@ -112,6 +112,23 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
         });
     }
 
+    getExerciseParticipationsLink(participationId: number): string[] {
+        return !!this.exercise.exerciseGroup
+            ? [
+                  '/course-management',
+                  this.course.id!.toString(),
+                  'exams',
+                  this.exercise.exerciseGroup!.exam!.id!.toString(),
+                  'exercise-groups',
+                  this.exercise.exerciseGroup!.id!.toString(),
+                  'exercises',
+                  this.exercise.id!.toString(),
+                  'participations',
+                  participationId.toString(),
+              ]
+            : ['/course-management', this.course.id!.toString(), 'exercises', this.exercise.id!.toString(), 'participations', participationId.toString(), 'submissions'];
+    }
+
     /**
      * We need to preload the pending submissions here, otherwise every updating-result would trigger a single REST call.
      * Will return immediately if the exercise is not of type PROGRAMMING.
@@ -168,15 +185,17 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
      * Predicate used to filter results by the current filter prop setting
      * @param result Result for which to evaluate the predicate
      */
-    filterResultByProp = (result: Result) => {
+    filterResultByProp = (result: Result): boolean => {
         switch (this.resultCriteria.filterProp) {
             case FilterProp.SUCCESSFUL:
-                return result.successful;
+                return !!result.successful;
             case FilterProp.UNSUCCESSFUL:
                 return !result.successful;
             case FilterProp.BUILD_FAILED:
                 return (
-                    result.submission && result.submission.submissionExerciseType === SubmissionExerciseType.PROGRAMMING && (result.submission as ProgrammingSubmission).buildFailed
+                    !!result.submission &&
+                    result.submission.submissionExerciseType === SubmissionExerciseType.PROGRAMMING &&
+                    !!(result.submission as ProgrammingSubmission).buildFailed
                 );
             case FilterProp.MANUAL:
                 return Result.isManualResult(result);
@@ -295,7 +314,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
      *
      * @param result
      */
-    searchResultFormatter = (result: Result) => {
+    searchResultFormatter = (result: Result): string => {
         const participation = result.participation as StudentParticipation;
         if (participation.student) {
             const { login, name } = participation.student;
@@ -303,6 +322,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
         } else if (participation.team) {
             return formatTeamAsSearchResult(participation.team);
         }
+        return '';
     };
 
     /**

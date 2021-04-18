@@ -2,8 +2,7 @@ package de.tum.in.www1.artemis.programmingexercise;
 
 import static de.tum.in.www1.artemis.config.Constants.NEW_RESULT_RESOURCE_PATH;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 
 import java.util.Arrays;
 import java.util.List;
@@ -18,6 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.test.context.support.WithMockUser;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -31,8 +31,6 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.connectors.jenkins.dto.TestResultsDTO;
 import de.tum.in.www1.artemis.util.ModelFactory;
-import de.tum.in.www1.artemis.web.rest.ProgrammingSubmissionResource;
-import de.tum.in.www1.artemis.web.rest.ResultResource;
 
 public class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 
@@ -40,37 +38,16 @@ public class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends 
     private String ARTEMIS_AUTHENTICATION_TOKEN_VALUE;
 
     @Autowired
-    ProgrammingExerciseRepository exerciseRepo;
+    private ProgrammingSubmissionRepository submissionRepository;
 
     @Autowired
-    ProgrammingSubmissionResource programmingSubmissionResource;
+    private ProgrammingExerciseStudentParticipationRepository studentParticipationRepository;
 
     @Autowired
-    ResultResource resultResource;
+    private ProgrammingExerciseRepository programmingExerciseRepository;
 
     @Autowired
-    ProgrammingSubmissionRepository submissionRepository;
-
-    @Autowired
-    ParticipationRepository participationRepository;
-
-    @Autowired
-    ProgrammingExerciseStudentParticipationRepository studentParticipationRepository;
-
-    @Autowired
-    SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository;
-
-    @Autowired
-    TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository;
-
-    @Autowired
-    ProgrammingExerciseRepository programmingExerciseRepository;
-
-    @Autowired
-    ResultRepository resultRepository;
-
-    @Autowired
-    BuildLogEntryRepository buildLogEntryRepository;
+    private ResultRepository resultRepository;
 
     private ProgrammingExercise exercise;
 
@@ -82,11 +59,11 @@ public class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends 
         database.addUsers(3, 2, 2);
         database.addCourseWithOneProgrammingExerciseAndTestCases();
 
-        exercise = programmingExerciseRepository.findAllWithEagerParticipationsAndSubmissions().get(0);
+        exercise = programmingExerciseRepository.findAllWithEagerParticipationsAndLegalSubmissions().get(0);
         database.addStudentParticipationForProgrammingExercise(exercise, "student1");
         database.addStudentParticipationForProgrammingExercise(exercise, "student2");
 
-        exercise = programmingExerciseRepository.findAllWithEagerParticipationsAndSubmissions().get(0);
+        exercise = programmingExerciseRepository.findAllWithEagerParticipationsAndLegalSubmissions().get(0);
     }
 
     @AfterEach
@@ -101,13 +78,14 @@ public class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends 
                 .flatMap(programmingLanguage -> Stream.of(Arguments.of(programmingLanguage, true), Arguments.of(programmingLanguage, false)));
     }
 
-    @ParameterizedTest
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @MethodSource("shouldSavebuildLogsOnStudentParticipationArguments")
+    @WithMockUser(username = "student1", roles = "USER")
     void shouldNotReceiveBuildLogsOnStudentParticipationWithoutResult(ProgrammingLanguage programmingLanguage, boolean enableStaticCodeAnalysis) throws Exception {
         // Precondition: Database has participation and a programming submission.
         String userLogin = "student1";
         database.addCourseWithOneProgrammingExercise(enableStaticCodeAnalysis, programmingLanguage);
-        ProgrammingExercise exercise = programmingExerciseRepository.findAllWithEagerParticipationsAndSubmissions().get(1);
+        ProgrammingExercise exercise = programmingExerciseRepository.findAllWithEagerParticipationsAndLegalSubmissions().get(1);
         var participation = database.addStudentParticipationForProgrammingExercise(exercise, userLogin);
         var submission = database.createProgrammingSubmission(participation, false);
 
@@ -123,13 +101,14 @@ public class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends 
         assertNoNewSubmissions(submission);
     }
 
-    @ParameterizedTest
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @MethodSource("shouldSavebuildLogsOnStudentParticipationArguments")
+    @WithMockUser(username = "student1", roles = "USER")
     void shouldNotReceiveBuildLogsOnStudentParticipationWithoutSubmissionNorResult(ProgrammingLanguage programmingLanguage, boolean enableStaticCodeAnalysis) throws Exception {
         // Precondition: Database has participation without result and a programming
         String userLogin = "student1";
         database.addCourseWithOneProgrammingExercise(enableStaticCodeAnalysis, programmingLanguage);
-        ProgrammingExercise exercise = programmingExerciseRepository.findAllWithEagerParticipationsAndSubmissions().get(1);
+        ProgrammingExercise exercise = programmingExerciseRepository.findAllWithEagerParticipationsAndLegalSubmissions().get(1);
         var participation = database.addStudentParticipationForProgrammingExercise(exercise, userLogin);
 
         // Call programming-exercises/new-result which do not include build log entries yet
@@ -198,11 +177,11 @@ public class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends 
         request.postWithoutLocation("/api" + NEW_RESULT_RESOURCE_PATH, alteredObj, HttpStatus.OK, httpHeaders);
     }
 
-    private TestResultsDTO createJenkinsNewResultNotification(String projectKey, String loginName, ProgrammingLanguage programmingLanguage, List<String> successfullTests) {
+    private TestResultsDTO createJenkinsNewResultNotification(String projectKey, String loginName, ProgrammingLanguage programmingLanguage, List<String> successfulTests) {
         var repoName = (projectKey + "-" + loginName).toUpperCase();
         // The full name is specified as <FOLDER NAME> » <JOB NAME> <Build Number>
         var fullName = exercise.getProjectKey() + " » " + repoName + " #3";
-        var notification = ModelFactory.generateTestResultDTO(repoName, successfullTests, List.of(), programmingLanguage, false);
+        var notification = ModelFactory.generateTestResultDTO(repoName, successfulTests, List.of(), programmingLanguage, false);
         notification.setFullName(fullName);
         return notification;
     }

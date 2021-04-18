@@ -16,13 +16,12 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
+import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.exam.ExamDateService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
-import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Service
 public class SubmissionService {
@@ -145,7 +144,8 @@ public class SubmissionService {
         List<T> submissions;
         if (examMode) {
             var participations = this.studentParticipationRepository.findAllByParticipationExerciseIdAndResultAssessorAndCorrectionRoundIgnoreTestRuns(exerciseId, tutor);
-            submissions = participations.stream().map(StudentParticipation::findLatestSubmission).filter(Optional::isPresent).map(Optional::get).map(submission -> (T) submission)
+            submissions = participations.stream().map(StudentParticipation::findLatesLegalOrIllegalSubmission).filter(Optional::isPresent).map(Optional::get)
+                    .map(submission -> (T) submission)
                     .filter(submission -> submission.getResults().size() - 1 >= correctionRound && submission.getResults().get(correctionRound) != null).collect(toList());
         }
         else {
@@ -184,8 +184,8 @@ public class SubmissionService {
             participations = studentParticipationRepository.findByExerciseIdWithLatestSubmissionWithoutManualResults(exercise.getId());
         }
 
-        List<Submission> submissionsWithoutResult = participations.stream().map(StudentParticipation::findLatestSubmission).filter(Optional::isPresent).map(Optional::get)
-                .collect(Collectors.toList());
+        List<Submission> submissionsWithoutResult = participations.stream().map(Participation::findLatesLegalOrIllegalSubmission).filter(Optional::isPresent).map(Optional::get)
+                .collect(toList());
 
         if (correctionRound > 0) {
             // remove submission if user already assessed first correction round
@@ -205,27 +205,20 @@ public class SubmissionService {
     }
 
     /**
-     * Get the submission with the given id from the database. The submission is loaded together with its results and the assessors. Throws an EntityNotFoundException if no
-     * submission could be found for the given id.
+     * Get all currently locked submissions for all users in the given exam.
+     * These are all submissions for which users started, but did not yet finish the assessment.
      *
-     * @param submissionId the id of the submission that should be loaded from the database
-     * @return the submission with the given id
+     * @param examId  - the exam id
+     * @param user    - the user trying to access the locked submissions
+     * @return        - list of submissions that have locked results in the exam
      */
-    public Submission findOneWithEagerResults(long submissionId) {
-        return submissionRepository.findWithEagerResultsAndAssessorById(submissionId)
-                .orElseThrow(() -> new EntityNotFoundException("Submission with id \"" + submissionId + "\" does not exist"));
-    }
+    public List<Submission> getLockedSubmissions(Long examId, User user) {
+        List<Submission> submissions = submissionRepository.getLockedSubmissionsAndResultsByExamId(examId);
 
-    /**
-     * Get the submission with the given id from the database. The submission is loaded together with its result, the feedback of the result and the assessor of the
-     * result. Throws an EntityNotFoundException if no submission could be found for the given id.
-     *
-     * @param submissionId the id of the submission that should be loaded from the database
-     * @return the submission with the given id
-     */
-    public Submission findOneWithEagerResultAndFeedback(long submissionId) {
-        return submissionRepository.findWithEagerResultAndFeedbackById(submissionId)
-                .orElseThrow(() -> new EntityNotFoundException("Submission with id \"" + submissionId + "\" does not exist"));
+        for (Submission submission : submissions) {
+            hideDetails(submission, user);
+        }
+        return submissions;
     }
 
     /**
@@ -485,29 +478,28 @@ public class SubmissionService {
      *
      * @param exercise course exercise or exam exercise that is checked
      */
-    public void checkIfExerciseDueDateIsReached(Exercise exercise) throws AccessForbiddenException {
+    public void checkIfExerciseDueDateIsReached(Exercise exercise) {
         final boolean isExamMode = exercise.isExamExercise();
         // Tutors cannot start assessing submissions if the exercise due date hasn't been reached yet
         if (isExamMode) {
             ZonedDateTime latestIndividualExamEndDate = examDateService.getLatestIndividualExamEndDate(exercise.getExerciseGroup().getExam());
             if (latestIndividualExamEndDate != null && latestIndividualExamEndDate.isAfter(ZonedDateTime.now())) {
-                log.debug("The due date of exercise '" + exercise.getTitle() + "' has not been reached yet.");
+                log.debug("The due date of exercise '{}' has not been reached yet.", exercise.getTitle());
                 throw new AccessForbiddenException("The due date of exercise '" + exercise.getTitle() + "' has not been reached yet.");
             }
         }
         else {
             // special check for programming exercises as they use buildAndTestStudentSubmissionAfterDueDate instead of dueDate
-            if (exercise instanceof ProgrammingExercise) {
-                ProgrammingExercise programmingExercise = (ProgrammingExercise) exercise;
+            if (exercise instanceof ProgrammingExercise programmingExercise) {
                 if (programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null
                         && programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate().isAfter(ZonedDateTime.now())) {
-                    log.debug("The due date to build and test of exercise '" + exercise.getTitle() + "' has not been reached yet.");
+                    log.debug("The due date to build and test of exercise '{}' has not been reached yet.", exercise.getTitle());
                     throw new AccessForbiddenException("The due date to build and test of exercise '" + exercise.getTitle() + "' has not been reached yet.");
                 }
             }
 
             if (exercise.getDueDate() != null && exercise.getDueDate().isAfter(ZonedDateTime.now())) {
-                log.debug("The due date of exercise '" + exercise.getTitle() + "' has not been reached yet.");
+                log.debug("The due date of exercise '{}' has not been reached yet.", exercise.getTitle());
                 throw new AccessForbiddenException("The due date of exercise '" + exercise.getTitle() + "' has not been reached yet.");
             }
         }
@@ -532,9 +524,11 @@ public class SubmissionService {
             participations = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseId(exerciseId);
         }
         List<T> submissions = new ArrayList<>();
+        // we don't have illegal submissions for other exercises than programming
         participations.stream().peek(participation -> participation.getExercise().setStudentParticipations(null)).map(StudentParticipation::findLatestSubmission)
                 // filter out non submitted submissions if the flag is set to true
                 .filter(submission -> submission.isPresent() && (!submittedOnly || submission.get().isSubmitted())).forEach(submission -> submissions.add((T) submission.get()));
         return submissions;
     }
+
 }

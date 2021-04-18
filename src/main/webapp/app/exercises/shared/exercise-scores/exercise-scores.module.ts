@@ -32,5 +32,6 @@ import { SubmissionExportDialogComponent } from 'app/exercises/shared/submission
         ArtemisSharedComponentModule,
     ],
     declarations: [ExerciseScoresComponent, SubmissionExportButtonComponent, SubmissionExportDialogComponent],
+    exports: [SubmissionExportButtonComponent],
 })
 export class ArtemisExerciseScoresModule {}

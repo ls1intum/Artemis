@@ -1,8 +1,7 @@
-# In order to get the correct console output we need to execute the command within the assignment directory
-# save student's assignment to root
+# Delete possible old Sources and replace with student's assignment Sources
 rm -rf Sources
 mv assignment/Sources .
-# delete and create the assignment dir from scratch
+# Delete and create the assignment directory from scratch
 rm -rf assignment
 mkdir assignment
 cp -R Sources assignment
@@ -10,13 +9,14 @@ cp -R Sources assignment
 cp -R Tests assignment
 cp Package.swift assignment
 
-echo "---------- swift build ----------"
+# In order to get the correct console output we need to execute the command within the assignment directory
+# swift build
 cd assignment
 swift build || error=true
 
 if [ ! $error ]
 then
-    echo "---------- swift test ----------"
+    # swift test
     swift test || true
 fi
 

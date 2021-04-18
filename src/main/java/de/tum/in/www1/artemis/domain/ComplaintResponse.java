@@ -27,7 +27,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class ComplaintResponse extends AbstractAuditingEntity {
 
-    @Column(name = "response_text")
+    @Column(name = "response_text", length = 2000)
     @Size(max = 2000)
     private String responseText;
 

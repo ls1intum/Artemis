@@ -6,13 +6,15 @@ public class BubbleSort: SortStrategy {
 
      - Parameter input: the List of Dates to be sorted
     */
-    public func performSort(_ input: inout [Date]) {
-        for i in (0 ..< input.count).reversed() {
-            for j in 0 ..< i where input[j] > input[j + 1] {
-                    let temp: Date! = input[j]
-                    input[j] = input[j + 1]
-                    input[j + 1] = temp
+    public func performSort(_ input: [Date]) -> [Date] {
+        var sortedInput = input
+        for i in (0 ..< sortedInput.count).reversed() {
+            for j in 0 ..< i where sortedInput[j] > sortedInput[j + 1] {
+                    let temp: Date! = sortedInput[j]
+                    sortedInput[j] = sortedInput[j + 1]
+                    sortedInput[j + 1] = temp
             }
         }
+        return sortedInput
     }
 }

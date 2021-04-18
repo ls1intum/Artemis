@@ -1,0 +1,42 @@
+{
+    "organizationManagement": {
+        "title": "Organisationsverwaltung",
+        "name": "Name",
+        "shortName": "Kurz Name",
+        "url": "URL",
+        "description": "Beschreibung",
+        "logoUrl": "Logo URL",
+        "users": "Benutzer",
+        "courses": "Kurse",
+        "emailPattern": "Email Muster",
+        "delete": {
+            "question": "Soll die Organisation <strong>{{ title }}</strong> wirklich gelöscht werden?"
+        },
+        "addLabel": "Organisation hinzufügen",
+        "addOrEditLabel": "Organisation hinzufügen oder bearbeiten",
+        "detail": {
+            "title": "Organisation"
+        },
+        "userSearch": {
+            "usersPerPage": "{{number}} Benutzer pro Seite",
+            "showAllUsers": "Alle Benutzer anzeigen",
+            "searchForUsers": "Benutzer zu dieser Organisation hinzufügen durch Suchen nach Login oder Namen",
+            "searchNoResults": "Keine Benutzer gefunden",
+            "removeFromOrganization": {
+                "modalQuestion": "Soll der Nutzer mit dem Login <strong>{{ title }}</strong> wirklich aus dieser Organisation entfernt werden?"
+            }
+        },
+        "modalSelector": {
+            "select": "Auswählen",
+            "title": "Organisationen"
+        },
+        "patternChangeWarning": "Beim ändern des Emailmusters, wird eine Neuzuweisung der Nutzern zu dieser Organisation ausgeführt"
+    },
+    "artemisApp": {
+        "organization": {
+            "updated": "Organization updated!",
+            "deleted": "Organization deleted!",
+            "created": "Organization created!"
+        }
+    }
+}

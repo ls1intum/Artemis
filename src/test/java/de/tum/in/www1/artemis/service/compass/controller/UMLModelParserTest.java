@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.service.compass.controller;
 
 import static com.google.gson.JsonParser.parseString;
 import static de.tum.in.www1.artemis.service.compass.umlmodel.activity.UMLActivityNode.UMLActivityNodeType.*;
-import static de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLClass.UMLClassType;
 import static de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLRelationship.UMLRelationshipType.*;
 import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -11,7 +10,6 @@ import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.util.ResourceUtils;
 
@@ -23,12 +21,9 @@ import de.tum.in.www1.artemis.service.compass.umlmodel.activity.UMLActivity;
 import de.tum.in.www1.artemis.service.compass.umlmodel.activity.UMLActivityNode;
 import de.tum.in.www1.artemis.service.compass.umlmodel.activity.UMLControlFlow;
 import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.*;
+import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLClass.UMLClassType;
 
-class UMLModelParserTest {
-
-    @BeforeEach
-    void setUp() {
-    }
+public class UMLModelParserTest {
 
     @Test
     void buildModelFromJSON_classDiagram() throws Exception {

@@ -1,5 +1,6 @@
 import { PlagiarismComparison } from './PlagiarismComparison';
 import { PlagiarismSubmissionElement } from 'app/exercises/shared/plagiarism/types/PlagiarismSubmissionElement';
+import { Exercise } from 'app/entities/exercise.model';
 
 /**
  * Base result of any automatic plagiarism detection.
@@ -16,9 +17,9 @@ export abstract class PlagiarismResult<E extends PlagiarismSubmissionElement> {
     duration: number;
 
     /**
-     * ID of the exercise for which plagiarism was detected.
+     * Exercise for which plagiarism was detected.
      */
-    exerciseId: number;
+    exercise: Exercise;
 
     /**
      * 10-element array representing the similarity distribution of the detected comparisons.

@@ -5,9 +5,9 @@
         <div class="d-flex align-items-center ml-auto">
             <ng-content select="[editorToolbar]"></ng-content>
             <jhi-code-editor-actions
-                *ngIf="!isTutorAssessment"
+                *ngIf="!isTutorAssessment || commitState === CommitState.CONFLICT"
                 [buildable]="buildable"
-                [disableActions]="!editable"
+                [disableActions]="!editable && (!isTutorAssessment || commitState !== CommitState.CONFLICT)"
                 [unsavedFiles]="unsavedFiles"
                 [(editorState)]="editorState"
                 [(commitState)]="commitState"
@@ -34,16 +34,16 @@
     ></jhi-code-editor-file-browser>
     <jhi-code-editor-ace
         editorCenter
-        [selectedFile]="selectedFile"
-        [sessionId]="participation ? participation.id : 'test'"
+        [selectedFile]="selectedFile!"
+        [sessionId]="participation ? participation.id! : 'test'"
         [annotations]="annotations"
         [commitState]="commitState"
         [editorState]="editorState"
-        [feedbacks]="participation?.results?.length > 0 ? participation.results![0].feedbacks : undefined"
+        [feedbacks]="participation?.results && participation.results!.length > 0 && participation.results![0].feedbacks ? participation.results![0].feedbacks! : undefined"
         [readOnlyManualFeedback]="readOnlyManualFeedback"
         [isTutorAssessment]="isTutorAssessment"
         (onFileContentChange)="onFileContentChange($event)"
-        (onUpdateFeedback)="updateFeedback($event)"
+        (onUpdateFeedback)="updateFeedback($event!)"
         (onError)="onError($event)"
         (onFileLoad)="fileLoad($event)"
     >

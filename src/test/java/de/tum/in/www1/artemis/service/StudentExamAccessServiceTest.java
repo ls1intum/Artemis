@@ -20,23 +20,19 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.repository.CourseRepository;
-import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
 import de.tum.in.www1.artemis.service.exam.StudentExamAccessService;
 
 public class StudentExamAccessServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
-    StudentExamAccessService studentExamAccessService;
+    private StudentExamAccessService studentExamAccessService;
 
     @Autowired
-    StudentExamRepository studentExamRepository;
+    private StudentExamRepository studentExamRepository;
 
     @Autowired
-    ExamRepository examRepository;
-
-    @Autowired
-    CourseRepository courseRepository;
+    private CourseRepository courseRepository;
 
     private List<User> users;
 

@@ -12,7 +12,7 @@
         </span>
         <span class="mx-2" *ngIf="studentExam && studentExam.workingTime">
             <strong class="font-weight-bold">{{ 'artemisApp.exam.durationWithFormat' | artemisTranslate }}:</strong>
-            {{ studentExam.workingTime | artemisDurationFromSeconds }}
+            {{ studentExam.workingTime || 0 | artemisDurationFromSeconds }}
         </span>
     </div>
     <div class="mb-2">

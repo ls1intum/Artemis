@@ -7,7 +7,7 @@
         <dt><span jhiTranslate="userManagement.login">Login</span></dt>
         <dd>
             <span>{{ user.login }}</span>
-            <jhi-boolean [value]="user.activated" [textTrue]="'userManagement.activated' | artemisTranslate" [textFalse]="'userManagement.deactivated' | artemisTranslate">
+            <jhi-boolean [value]="user.activated || false" [textTrue]="'userManagement.activated' | artemisTranslate" [textFalse]="'userManagement.deactivated' | artemisTranslate">
             </jhi-boolean>
         </dd>
         <dt><span jhiTranslate="userManagement.firstName">First Name</span></dt>

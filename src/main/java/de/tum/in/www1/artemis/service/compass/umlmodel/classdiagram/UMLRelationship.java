@@ -1,9 +1,9 @@
 package de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram;
 
 import static de.tum.in.www1.artemis.service.compass.strategy.NameSimilarity.nameEqualsSimilarity;
-import static de.tum.in.www1.artemis.service.compass.utils.CompassConfiguration.RELATION_MULTIPLICITY_WEIGHT;
-import static de.tum.in.www1.artemis.service.compass.utils.CompassConfiguration.RELATION_ROLE_WEIGHT;
+import static de.tum.in.www1.artemis.service.compass.utils.CompassConfiguration.*;
 
+import java.io.Serializable;
 import java.util.Objects;
 
 import com.google.common.base.CaseFormat;
@@ -12,7 +12,7 @@ import de.tum.in.www1.artemis.service.compass.umlmodel.Similarity;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
 import de.tum.in.www1.artemis.service.compass.utils.CompassConfiguration;
 
-public class UMLRelationship extends UMLElement {
+public class UMLRelationship extends UMLElement implements Serializable {
 
     public enum UMLRelationshipType {
 

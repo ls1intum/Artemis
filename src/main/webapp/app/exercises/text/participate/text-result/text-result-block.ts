@@ -1,3 +1,4 @@
+import { IconName, IconProp } from '@fortawesome/fontawesome-svg-core';
 import { Feedback } from 'app/entities/feedback.model';
 import { TextBlock } from 'app/entities/text-block.model';
 import { convertToHtmlLinebreaks, escapeString } from 'app/utils/text.utils';
@@ -43,14 +44,25 @@ export class TextResultBlock {
         return this.feedbackType && this.feedbackType !== FeedbackType.BLANK ? `text-with-feedback ${this.feedbackType}-feedback` : '';
     }
 
-    get icon() {
+    get icon(): IconProp | undefined {
         switch (this.feedbackType) {
             case FeedbackType.POSITIVE:
                 return 'check';
             case FeedbackType.NEGATIVE:
                 return 'times';
             case FeedbackType.NEUTRAL:
-                return 'dot';
+                return 'circle';
+        }
+    }
+
+    get circleIcon(): IconName | undefined {
+        switch (this.feedbackType) {
+            case FeedbackType.POSITIVE:
+                return 'check-circle';
+            case FeedbackType.NEGATIVE:
+                return 'times-circle';
+            case FeedbackType.NEUTRAL:
+                return 'dot-circle';
         }
     }
 

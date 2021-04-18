@@ -33,7 +33,7 @@ public class RoundingUtil {
         return (float) roundToNDecimalPlaces(number, 1);
     }
 
-    private static double roundToNDecimalPlaces(double number, int numberOfDecimalPlaces) {
+    public static double roundToNDecimalPlaces(double number, int numberOfDecimalPlaces) {
         return new BigDecimal(String.valueOf(number)).setScale(numberOfDecimalPlaces, RoundingMode.HALF_UP).doubleValue();
     }
 

@@ -5,12 +5,6 @@ import { Router } from '@angular/router';
 import { NgbCollapse, NgbDropdown } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { ApollonDiagram } from 'app/entities/apollon-diagram.model';
-import { Course } from 'app/entities/course.model';
-import { Exam } from 'app/entities/exam.model';
-import { ExerciseHint } from 'app/entities/exercise-hint.model';
-import { Exercise } from 'app/entities/exercise.model';
-import { Lecture } from 'app/entities/lecture.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { ApollonDiagramService } from 'app/exercises/quiz/manage/apollon-diagrams/apollon-diagram.service';
 import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/manage/exercise-hint.service';
@@ -23,7 +17,7 @@ import { ActiveMenuDirective } from 'app/shared/layouts/navbar/active-menu.direc
 import { NavbarComponent } from 'app/shared/layouts/navbar/navbar.component';
 import { LoadingNotificationComponent } from 'app/shared/notification/loading-notification/loading-notification.component';
 import { NotificationSidebarComponent } from 'app/shared/notification/notification-sidebar/notification-sidebar.component';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe.ts';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import * as chai from 'chai';
 import { JhiTranslateDirective } from 'ng-jhipster';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
@@ -115,10 +109,10 @@ describe('NavbarComponent', () => {
                 component = fixture.componentInstance;
 
                 const courseManagementService = fixture.debugElement.injector.get(CourseManagementService);
-                courseManagementStub = sinon.stub(courseManagementService, 'find').returns(of({ body: { title: 'Test Course' } as Course } as HttpResponse<Course>));
+                courseManagementStub = sinon.stub(courseManagementService, 'getTitle').returns(of({ body: 'Test Course' } as HttpResponse<string>));
 
                 const exerciseService = fixture.debugElement.injector.get(ExerciseService);
-                exerciseStub = sinon.stub(exerciseService, 'find').returns(of({ body: { title: 'Test Exercise' } as Exercise } as HttpResponse<Exercise>));
+                exerciseStub = sinon.stub(exerciseService, 'getTitle').returns(of({ body: 'Test Exercise' } as HttpResponse<string>));
             });
     });
 
@@ -283,7 +277,7 @@ describe('NavbarComponent', () => {
             router.setUrl(testUrl);
 
             const hintService = fixture.debugElement.injector.get(ExerciseHintService);
-            const hintsStub = sinon.stub(hintService, 'find').returns(of({ body: { title: 'Exercise Hint' } as ExerciseHint } as HttpResponse<ExerciseHint>));
+            const hintsStub = sinon.stub(hintService, 'getTitle').returns(of({ body: 'Exercise Hint' } as HttpResponse<string>));
 
             fixture.detectChanges();
 
@@ -409,7 +403,7 @@ describe('NavbarComponent', () => {
             router.setUrl(testUrl);
 
             const lectureService = fixture.debugElement.injector.get(LectureService);
-            const lectureStub = sinon.stub(lectureService, 'find').returns(of({ body: { title: 'Test Lecture' } as Lecture } as HttpResponse<Lecture>));
+            const lectureStub = sinon.stub(lectureService, 'getTitle').returns(of({ body: 'Test Lecture' } as HttpResponse<string>));
 
             fixture.detectChanges();
 
@@ -444,7 +438,7 @@ describe('NavbarComponent', () => {
             router.setUrl(testUrl);
 
             const apollonDiagramService = fixture.debugElement.injector.get(ApollonDiagramService);
-            const apollonStub = sinon.stub(apollonDiagramService, 'find').returns(of({ body: { title: 'Apollon Diagram' } as ApollonDiagram } as HttpResponse<ApollonDiagram>));
+            const apollonStub = sinon.stub(apollonDiagramService, 'getTitle').returns(of({ body: 'Apollon Diagram' } as HttpResponse<string>));
 
             fixture.detectChanges();
 
@@ -469,20 +463,30 @@ describe('NavbarComponent', () => {
             router.setUrl(testUrl);
 
             const examService = fixture.debugElement.injector.get(ExamManagementService);
-            const examStub = sinon.stub(examService, 'find').returns(of({ body: { title: 'Test Exam' } as Exam } as HttpResponse<Exam>));
+            const examStub = sinon.stub(examService, 'getTitle').returns(of({ body: 'Test Exam' } as HttpResponse<string>));
 
             fixture.detectChanges();
 
             expect(courseManagementStub).to.have.been.calledWith(1);
-            expect(examStub).to.have.been.calledWith(1, 2);
+            expect(examStub).to.have.been.calledWith(2);
 
             const exerciseGroupsCrumb = {
                 label: 'artemisApp.examManagement.exerciseGroups',
                 translate: true,
                 uri: '/course-management/1/exams/2/exercise-groups/',
             };
+            const exercisesCrumb = {
+                label: 'artemisApp.course.exercises',
+                translate: true,
+                uri: '/course-management/1/exams/2/exercise-groups/3/quiz-exercises/',
+            };
+            const createCrumb = {
+                label: 'global.generic.create',
+                translate: true,
+                uri: '/course-management/1/exams/2/exercise-groups/3/quiz-exercises/new/',
+            };
 
-            expect(component.breadcrumbs.length).to.equal(5);
+            expect(component.breadcrumbs.length).to.equal(7);
 
             // Use matching here to ignore non-semantic differences between objects
             sinon.assert.match(component.breadcrumbs[0], courseManagementCrumb);
@@ -490,6 +494,8 @@ describe('NavbarComponent', () => {
             sinon.assert.match(component.breadcrumbs[2], { label: 'artemisApp.examManagement.title', translate: true, uri: '/course-management/1/exams/' } as MockBreadcrumb);
             sinon.assert.match(component.breadcrumbs[3], { label: 'Test Exam', translate: false, uri: '/course-management/1/exams/2/' } as MockBreadcrumb);
             sinon.assert.match(component.breadcrumbs[4], exerciseGroupsCrumb);
+            sinon.assert.match(component.breadcrumbs[5], exercisesCrumb);
+            sinon.assert.match(component.breadcrumbs[6], createCrumb);
         });
     });
 });

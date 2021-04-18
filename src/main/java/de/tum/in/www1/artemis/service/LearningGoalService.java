@@ -12,10 +12,7 @@ import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.scores.StudentScore;
 import de.tum.in.www1.artemis.domain.scores.TeamScore;
-import de.tum.in.www1.artemis.repository.ExerciseRepository;
-import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
-import de.tum.in.www1.artemis.repository.StudentScoreRepository;
-import de.tum.in.www1.artemis.repository.TeamScoreRepository;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.web.rest.dto.CourseExerciseStatisticsDTO;
 import de.tum.in.www1.artemis.web.rest.dto.CourseLearningGoalProgress;
 import de.tum.in.www1.artemis.web.rest.dto.IndividualLearningGoalProgress;
@@ -196,7 +193,7 @@ public class LearningGoalService {
                 .findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(user.getId(), individualExercises);
 
         // 2nd: fetch participations, submissions and results for team exercises
-        List<StudentParticipation> participationsOfTeamExercises = studentParticipationRepository.findByStudentIdAndTeamExercisesWithEagerSubmissionsResult(user.getId(),
+        List<StudentParticipation> participationsOfTeamExercises = studentParticipationRepository.findByStudentIdAndTeamExercisesWithEagerLegalSubmissionsResult(user.getId(),
                 teamExercises);
 
         // 3rd: merge both into one list for further processing

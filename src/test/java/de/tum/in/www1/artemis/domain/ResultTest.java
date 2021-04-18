@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.domain;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -11,6 +12,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.domain.enumeration.Visibility;
+import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.service.AssessmentService;
 
 public class ResultTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -19,8 +22,13 @@ public class ResultTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
 
     List<Feedback> feedbackList;
 
+    Double offsetByTenThousandth = 0.0001;
+
     @Autowired
     AssessmentService assessmentService;
+
+    @Autowired
+    ResultRepository resultRepository;
 
     @BeforeEach
     public void setUp() throws Exception {
@@ -42,12 +50,12 @@ public class ResultTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
         double maxPoints = 7.0;
         result.setFeedbacks(feedbackList);
 
-        Double calculatedPoints = assessmentService.calculateTotalPoints(feedbackList);
-        double totalPoints = assessmentService.calculateTotalPoints(calculatedPoints, maxPoints);
+        double calculatedPoints = resultRepository.calculateTotalPoints(feedbackList);
+        double totalPoints = resultRepository.constrainToRange(calculatedPoints, maxPoints);
         result.setScore(totalPoints, maxPoints);
         result.setResultString(totalPoints, maxPoints);
 
-        assertThat(result.getScore()).isEqualTo(5.0 / maxPoints * 100, Offset.offset(0.00001));
+        assertThat(result.getScore()).isEqualTo(5.0 / maxPoints * 100, Offset.offset(offsetByTenThousandth));
         assertThat(result.getResultString()).isEqualToIgnoringCase("5 of 7 points");
     }
 
@@ -55,8 +63,8 @@ public class ResultTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
     public void evaluateFeedback_totalScoreGreaterMaxScore() {
         result.setFeedbacks(feedbackList);
 
-        Double calculatePoints = assessmentService.calculateTotalPoints(feedbackList);
-        double totalPoints = assessmentService.calculateTotalPoints(calculatePoints, 4.0);
+        double calculatePoints = resultRepository.calculateTotalPoints(feedbackList);
+        double totalPoints = resultRepository.constrainToRange(calculatePoints, 4.0);
         result.setScore(totalPoints, 4.0);
         result.setResultString(totalPoints, 4.0);
 
@@ -75,12 +83,34 @@ public class ResultTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
         feedbackList = Arrays.asList(feedback1, feedback2, feedback3);
         result.setFeedbacks(feedbackList);
 
-        Double calculatePoints = assessmentService.calculateTotalPoints(feedbackList);
-        double totalPoints = assessmentService.calculateTotalPoints(calculatePoints, 7.0);
+        double calculatePoints = resultRepository.calculateTotalPoints(feedbackList);
+        double totalPoints = resultRepository.constrainToRange(calculatePoints, 7.0);
         result.setScore(totalPoints, 7.0);
         result.setResultString(totalPoints, 7.0);
 
         assertThat(result.getScore()).isEqualTo(0);
         assertThat(result.getResultString()).isEqualToIgnoringCase("0 of 7 points");
+    }
+
+    @Test
+    public void filterSensitiveFeedbacksAfterDueDate() {
+        Feedback feedback1 = new Feedback().visibility(Visibility.ALWAYS);
+        Feedback feedback2 = new Feedback().visibility(Visibility.AFTER_DUE_DATE);
+        Feedback feedback3 = new Feedback().visibility(Visibility.NEVER);
+        result.setFeedbacks(new ArrayList<>(List.of(feedback1, feedback2, feedback3)));
+
+        result.filterSensitiveFeedbacks(false);
+        assertThat(result.getFeedbacks()).isEqualTo(List.of(feedback1, feedback2));
+    }
+
+    @Test
+    public void filterSensitiveFeedbacksBeforeDueDate() {
+        Feedback feedback1 = new Feedback().visibility(Visibility.ALWAYS);
+        Feedback feedback2 = new Feedback().visibility(Visibility.AFTER_DUE_DATE);
+        Feedback feedback3 = new Feedback().visibility(Visibility.NEVER);
+        result.setFeedbacks(new ArrayList<>(List.of(feedback1, feedback2, feedback3)));
+
+        result.filterSensitiveFeedbacks(true);
+        assertThat(result.getFeedbacks()).isEqualTo(List.of(feedback1));
     }
 }

@@ -139,8 +139,11 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
         if (!this.allRegisteredUsers.map((u) => u.id).includes(user.id) && user.login) {
             this.isTransitioning = true;
             this.examManagementService.addStudentToExam(this.courseId, this.exam.id!, user.login).subscribe(
-                () => {
+                (student) => {
                     this.isTransitioning = false;
+
+                    // make sure the registration number is set in the user object
+                    user.visibleRegistrationNumber = student.body!.registrationNumber;
 
                     // Add newly registered user to the list of all registered users for the exam
                     this.allRegisteredUsers.push(user);
@@ -171,6 +174,19 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
         this.examManagementService.removeStudentFromExam(this.courseId, this.exam.id!, user.login!, $event.deleteParticipationsAndSubmission).subscribe(
             () => {
                 this.allRegisteredUsers = this.allRegisteredUsers.filter((u) => u.login !== user.login);
+                this.dialogErrorSource.next('');
+            },
+            (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+        );
+    }
+
+    /**
+     * Unregister all students from the exam
+     */
+    removeAllStudents($event: { [key: string]: boolean }) {
+        this.examManagementService.removeAllStudentsFromExam(this.courseId, this.exam.id!, $event.deleteParticipationsAndSubmission).subscribe(
+            () => {
+                this.allRegisteredUsers = [];
                 this.dialogErrorSource.next('');
             },
             (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),

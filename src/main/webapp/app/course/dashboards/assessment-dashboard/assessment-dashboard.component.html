@@ -35,7 +35,7 @@
 
 <jhi-alert></jhi-alert>
 <div
-    *ngIf="isTestRun && exam?.numberOfCorrectionRoundsInExam > 1"
+    *ngIf="isTestRun && exam?.numberOfCorrectionRoundsInExam && exam!.numberOfCorrectionRoundsInExam! > 1"
     style="margin-top: 1em"
     class="alert alert-warning"
     jhiTranslate="artemisApp.examManagement.testRun.secondCorrectionHint"
@@ -48,9 +48,11 @@
         <div class="container-fluid">
             <jhi-assessment-dashboard-information
                 [isExamMode]="isExamMode"
+                [feedbackRequestEnabled]="course.requestMoreFeedbackEnabled!"
+                [complaintsEnabled]="course.complaintsEnabled!"
                 [numberOfTutorAssessments]="numberOfTutorAssessments"
                 [courseId]="courseId"
-                [tutorId]="tutor.id"
+                [tutorId]="tutor.id!"
                 [numberOfTutorComplaints]="numberOfTutorComplaints"
                 [numberOfTutorMoreFeedbackRequests]="numberOfTutorMoreFeedbackRequests"
                 [numberOfAssessmentLocks]="numberOfAssessmentLocks"
@@ -108,37 +110,37 @@
                         <span>{{ exercise.title }}</span>
                         <span
                             class="badge badge-warning"
-                            *ngIf="!exercise.visibleToStudents"
+                            *ngIf="!asQuizExercise(exercise).visibleToStudents"
                             placement="right"
                             ngbTooltip="Only visible to teaching assistants and instructors. Release date: {{ exercise.releaseDate | artemisDate }}"
                         >
                             {{ 'artemisApp.assessmentDashboard.notReleased' | artemisTranslate }}</span
                         >
-                        <span class="badge badge-success" [hidden]="!exercise.isActiveQuiz">Live</span>
+                        <span class="badge badge-success" [hidden]="!asQuizExercise(exercise).isActiveQuiz">Live</span>
                     </td>
-                    <td *ngIf="!isTestRun">
+                    <td *ngIf="!isTestRun && exercise.tutorParticipations && exercise.tutorParticipations![0]">
                         <jhi-tutor-participation-graph
                             [exercise]="exercise"
                             [class.guided-tour]="exercise === exerciseForGuidedTour"
-                            [tutorParticipation]="exercise.tutorParticipations[0]"
+                            [tutorParticipation]="exercise.tutorParticipations![0]"
                             [numberOfSubmissions]="exercise.numberOfSubmissions"
                             [totalNumberOfAssessments]="exercise.totalNumberOfAssessments"
-                            [numberOfComplaints]="exercise.numberOfComplaints"
-                            [numberOfOpenComplaints]="exercise.numberOfOpenComplaints"
-                            [numberOfMoreFeedbackRequests]="exercise.numberOfMoreFeedbackRequests"
-                            [numberOfOpenMoreFeedbackRequests]="exercise.numberOfOpenMoreFeedbackRequests"
+                            [numberOfComplaints]="exercise.numberOfComplaints || 0"
+                            [numberOfOpenComplaints]="exercise.numberOfOpenComplaints || 0"
+                            [numberOfMoreFeedbackRequests]="exercise.numberOfMoreFeedbackRequests || 0"
+                            [numberOfOpenMoreFeedbackRequests]="exercise.numberOfOpenMoreFeedbackRequests || 0"
                             [numberOfAssessmentsOfCorrectionRounds]="exercise.numberOfAssessmentsOfCorrectionRounds"
                         >
                         </jhi-tutor-participation-graph>
                     </td>
                     <td *ngIf="!isExamMode">
                         <span placement="right" [hidden]="!exercise.dueDate" ngbTooltip="{{ exercise.dueDate | artemisDate }}">
-                            {{ exercise.dueDate | amTimeAgo }}
+                            {{ exercise.dueDate | artemisTimeAgo }}
                         </span>
                     </td>
                     <td *ngIf="!isExamMode">
                         <span placement="right" [hidden]="!exercise.assessmentDueDate" ngbTooltip="{{ exercise.assessmentDueDate | artemisDate }}">
-                            {{ exercise.assessmentDueDate | amTimeAgo }}
+                            {{ exercise.assessmentDueDate | artemisTimeAgo }}
                         </span>
                     </td>
 
@@ -167,15 +169,18 @@
                         </ng-template>
 
                         <ng-container *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']">
-                            <ng-container class="col-lg-3 col-md-6 col-sm-6" *ngIf="isAtLeastInstructor && isExamMode && !isTestRun && exam?.numberOfCorrectionRoundsInExam > 1">
+                            <ng-container
+                                class="col-lg-3 col-md-6 col-sm-6"
+                                *ngIf="isAtLeastInstructor && isExamMode && !isTestRun && exam?.numberOfCorrectionRoundsInExam && exam!.numberOfCorrectionRoundsInExam! > 1"
+                            >
                                 <jhi-second-correction-enable-button
                                     class="mr-1"
-                                    (ngModelChange)="toggleSecondCorrection(exercise.id)"
-                                    [(secondCorrectionEnabled)]="exercise.secondCorrectionEnabled"
-                                    [(toggelingSecondCorrectionButton)]="toggelingSecondCorrectionButton"
+                                    (ngModelChange)="toggleSecondCorrection(exercise.id!)"
+                                    [secondCorrectionEnabled]="exercise.secondCorrectionEnabled"
+                                    [toggelingSecondCorrectionButton]="toggelingSecondCorrectionButton"
                                 ></jhi-second-correction-enable-button>
                             </ng-container>
-                            <a class="btn btn-primary btn-sm" [routerLink]="['/course-management', courseId, exercise.type + '-exercises', exercise.id, 'assessment']">
+                            <a class="btn btn-primary btn-sm" *ngIf="isAtLeastInstructor" [routerLink]="getSubmissionsLinkForExercise(exercise)">
                                 <span jhiTranslate="artemisApp.assessmentDashboard.submissions">Submissions</span>
                             </a>
                         </ng-container>
@@ -187,5 +192,5 @@
 
     <h2 *ngIf="!isExamMode">{{ 'artemisApp.instructorCourseDashboard.tutorLeaderboard.courseTitle' | artemisTranslate }}</h2>
 
-    <jhi-tutor-leaderboard *ngIf="!isExamMode" [tutorsData]="stats.tutorLeaderboardEntries" [course]="course"></jhi-tutor-leaderboard>
+    <jhi-tutor-leaderboard [exam]="exam" [tutorsData]="stats.tutorLeaderboardEntries" [course]="course"></jhi-tutor-leaderboard>
 </div>

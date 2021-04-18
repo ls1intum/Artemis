@@ -1,0 +1,6 @@
+dune-project
+test-reports
+_build
+*.exe
+*.cmi
+*.cmo

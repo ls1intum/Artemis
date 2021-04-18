@@ -21,7 +21,7 @@
                 <span *ngIf="!hasFeedback" [ngbTooltip]="resultTooltip" container="body">
                     {{ result.resultString }}
                 </span>
-                <span *ngIf="!short"> ({{ result.completionDate! | amTimeAgo }}) </span>
+                <span *ngIf="!short"> ({{ result.completionDate! | artemisTimeAgo }}) </span>
                 <!-- TODO in the future we should make sure that result.submission.submissionDate is used here, because submissionDate and completionDate can be different for certain exercise types -->
             </span>
             <span *ngIf="hasBuildArtifact() && participation.type === ParticipationType.PROGRAMMING">

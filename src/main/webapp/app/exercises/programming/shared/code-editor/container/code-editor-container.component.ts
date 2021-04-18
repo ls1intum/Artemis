@@ -32,6 +32,7 @@ import { Feedback } from 'app/entities/feedback.model';
     templateUrl: './code-editor-container.component.html',
 })
 export class CodeEditorContainerComponent implements ComponentCanDeactivate {
+    readonly CommitState = CommitState;
     @ViewChild(CodeEditorGridComponent, { static: false }) grid: CodeEditorGridComponent;
 
     @ViewChild(CodeEditorFileBrowserComponent, { static: false }) fileBrowser: CodeEditorFileBrowserComponent;
@@ -209,8 +210,8 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate {
      * Used by other components to display errors.
      * The error must already be provided translated by the emitting component.
      */
-    onError(error: string) {
-        this.jhiAlertService.error(`artemisApp.editor.errors.${error}`);
+    onError(error: any) {
+        this.jhiAlertService.error(`artemisApp.editor.errors.${error as string}`);
     }
 
     /**

@@ -14,6 +14,7 @@ export enum ProgrammingLanguage {
     VHDL = 'VHDL',
     ASSEMBLER = 'ASSEMBLER',
     SWIFT = 'SWIFT',
+    OCAML = 'OCAML',
 }
 
 export enum ProjectType {

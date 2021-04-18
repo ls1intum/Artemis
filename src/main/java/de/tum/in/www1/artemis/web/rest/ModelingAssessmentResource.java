@@ -15,10 +15,10 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
-import de.tum.in.www1.artemis.repository.ExerciseRepository;
-import de.tum.in.www1.artemis.repository.ResultRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.service.AssessmentService;
+import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 import de.tum.in.www1.artemis.service.compass.CompassService;
 import de.tum.in.www1.artemis.service.exam.ExamService;
 import de.tum.in.www1.artemis.web.rest.errors.ErrorConstants;
@@ -40,22 +40,22 @@ public class ModelingAssessmentResource extends AssessmentResource {
 
     private final CompassService compassService;
 
-    private final ModelingExerciseService modelingExerciseService;
+    private final ModelingExerciseRepository modelingExerciseRepository;
 
     private final AuthorizationCheckService authCheckService;
 
-    private final ModelingSubmissionService modelingSubmissionService;
+    private final ModelingSubmissionRepository modelingSubmissionRepository;
 
     public ModelingAssessmentResource(AuthorizationCheckService authCheckService, UserRepository userRepository, CompassService compassService,
-            ModelingExerciseService modelingExerciseService, AssessmentService assessmentService, ModelingSubmissionService modelingSubmissionService,
-            ExampleSubmissionService exampleSubmissionService, WebsocketMessagingService messagingService, ExerciseRepository exerciseRepository, ResultRepository resultRepository,
-            ExamService examService) {
-        super(authCheckService, userRepository, exerciseRepository, modelingSubmissionService, assessmentService, resultRepository, examService, messagingService,
-                exampleSubmissionService);
+            ModelingExerciseRepository modelingExerciseRepository, AssessmentService assessmentService, ModelingSubmissionRepository modelingSubmissionRepository,
+            ExampleSubmissionRepository exampleSubmissionRepository, WebsocketMessagingService messagingService, ExerciseRepository exerciseRepository,
+            ResultRepository resultRepository, ExamService examService, SubmissionRepository submissionRepository) {
+        super(authCheckService, userRepository, exerciseRepository, assessmentService, resultRepository, examService, messagingService, exampleSubmissionRepository,
+                submissionRepository);
         this.compassService = compassService;
-        this.modelingExerciseService = modelingExerciseService;
+        this.modelingExerciseRepository = modelingExerciseRepository;
         this.authCheckService = authCheckService;
-        this.modelingSubmissionService = modelingSubmissionService;
+        this.modelingSubmissionRepository = modelingSubmissionRepository;
     }
 
     /**
@@ -65,7 +65,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
      * @return the assessment of the given submission
      */
     @GetMapping("/modeling-submissions/{submissionId}/result")
-    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Result> getAssessmentBySubmissionId(@PathVariable Long submissionId) {
         return super.getAssessmentBySubmissionId(submissionId);
     }
@@ -78,7 +78,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
      * @return the result linked to the example submission
      */
     @GetMapping("/exercise/{exerciseId}/modeling-submissions/{submissionId}/example-assessment")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('TA')")
     public ResponseEntity<Result> getModelingExampleAssessment(@PathVariable long exerciseId, @PathVariable long submissionId) {
         log.debug("REST request to get example assessment for tutors text assessment: {}", submissionId);
         return super.getExampleAssessment(exerciseId, submissionId);
@@ -97,10 +97,10 @@ public class ModelingAssessmentResource extends AssessmentResource {
     @ApiResponses({ @ApiResponse(code = 200, message = PUT_SUBMIT_ASSESSMENT_200_REASON, response = Result.class),
             @ApiResponse(code = 403, message = ErrorConstants.REQ_403_REASON), @ApiResponse(code = 404, message = ErrorConstants.REQ_404_REASON) })
     @PutMapping("/modeling-submissions/{submissionId}/result/{resultId}/assessment")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('TA')")
     public ResponseEntity<Result> saveModelingAssessment(@PathVariable long submissionId, @PathVariable long resultId,
             @RequestParam(value = "submit", defaultValue = "false") boolean submit, @RequestBody List<Feedback> feedbacks) {
-        Submission submission = submissionService.findOneWithEagerResultAndFeedback(submissionId);
+        Submission submission = submissionRepository.findOneWithEagerResultAndFeedback(submissionId);
         ModelingExercise exercise = (ModelingExercise) submission.getParticipation().getExercise();
 
         ResponseEntity<Result> response = super.saveAssessment(submission, submit, feedbacks, resultId);
@@ -123,7 +123,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
     @ApiResponses({ @ApiResponse(code = 200, message = PUT_SUBMIT_ASSESSMENT_200_REASON, response = Result.class),
             @ApiResponse(code = 403, message = ErrorConstants.REQ_403_REASON), @ApiResponse(code = 404, message = ErrorConstants.REQ_404_REASON) })
     @PutMapping("/modeling-submissions/{exampleSubmissionId}/example-assessment")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('TA')")
     public ResponseEntity<Result> saveModelingExampleAssessment(@PathVariable long exampleSubmissionId, @RequestBody List<Feedback> feedbacks) {
         log.debug("REST request to save modeling example assessment : {}", exampleSubmissionId);
         return super.saveExampleAssessment(exampleSubmissionId, feedbacks);
@@ -141,14 +141,13 @@ public class ModelingAssessmentResource extends AssessmentResource {
     @ApiResponses({ @ApiResponse(code = 200, message = POST_ASSESSMENT_AFTER_COMPLAINT_200_REASON, response = Result.class),
             @ApiResponse(code = 403, message = ErrorConstants.REQ_403_REASON), @ApiResponse(code = 404, message = ErrorConstants.REQ_404_REASON) })
     @PutMapping("/modeling-submissions/{submissionId}/assessment-after-complaint")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('TA')")
     public ResponseEntity<Result> updateModelingAssessmentAfterComplaint(@PathVariable Long submissionId, @RequestBody AssessmentUpdate assessmentUpdate) {
         log.debug("REST request to update the assessment of submission {} after complaint.", submissionId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        ModelingSubmission modelingSubmission = modelingSubmissionService.findOneWithEagerResultAndFeedback(submissionId);
-        StudentParticipation studentParticipation = (StudentParticipation) modelingSubmission.getParticipation();
-        long exerciseId = studentParticipation.getExercise().getId();
-        ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
+        ModelingSubmission modelingSubmission = modelingSubmissionRepository.findOneWithEagerResultAndFeedback(submissionId);
+        long exerciseId = modelingSubmission.getParticipation().getExercise().getId();
+        ModelingExercise modelingExercise = modelingExerciseRepository.findByIdElseThrow(exerciseId);
         checkAuthorization(modelingExercise, user);
 
         Result result = assessmentService.updateAssessmentAfterComplaint(modelingSubmission.getLatestResult(), modelingExercise, assessmentUpdate);
@@ -157,14 +156,14 @@ public class ModelingAssessmentResource extends AssessmentResource {
             compassService.addAssessment(exerciseId, submissionId, result.getFeedbacks());
         }
 
+        var participation = result.getParticipation();
         // remove circular dependencies if the results of the participation are there
-        if (result.getParticipation() != null && Hibernate.isInitialized(result.getParticipation().getResults()) && result.getParticipation().getResults() != null) {
-            result.getParticipation().setResults(null);
+        if (participation != null && Hibernate.isInitialized(participation.getResults()) && participation.getResults() != null) {
+            participation.setResults(null);
         }
 
-        if (result.getParticipation() != null && result.getParticipation() instanceof StudentParticipation
-                && !authCheckService.isAtLeastInstructorForExercise(modelingExercise, user)) {
-            ((StudentParticipation) result.getParticipation()).setParticipant(null);
+        if (participation instanceof StudentParticipation studentParticipation && !authCheckService.isAtLeastInstructorForExercise(modelingExercise, user)) {
+            studentParticipation.setParticipant(null);
         }
 
         return ResponseEntity.ok(result);
@@ -178,7 +177,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
      * @return 200 Ok response if canceling was successful, 403 Forbidden if current user is not the assessor of the submission
      */
     @PutMapping("/modeling-submissions/{submissionId}/cancel-assessment")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('TA')")
     public ResponseEntity<Void> cancelAssessment(@PathVariable Long submissionId) {
         return super.cancelAssessment(submissionId);
     }

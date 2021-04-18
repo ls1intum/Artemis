@@ -3,6 +3,9 @@
     <div class="row-container mr-2">
         <span *ngIf="!isTestRun" jhiTranslate="artemisApp.assessment.assessment">Assessment</span>
         <span *ngIf="isTestRun" jhiTranslate="artemisApp.assessment.testRunAssessment">Test Run Assessment</span>
+        <span *ngIf="isIllegalSubmission" class="badge badge-danger ml-3" style="font-size: 65%" jhiTranslate="artemisApp.assessment.assessmentIllegalSubmission">
+            Warning: You are viewing an illegal submission.
+        </span>
     </div>
     <jhi-alert></jhi-alert>
     <ngb-alert
@@ -104,5 +107,9 @@
             <fa-icon *ngIf="nextSubmissionBusy" [icon]="'spinner'" [spin]="true">&nbsp;</fa-icon>
             <span jhiTranslate="artemisApp.assessment.button.nextSubmission"> Next Submission</span>
         </button>
+
+        <a [routerLink]="exerciseDashboardLink" class="btn ml-2 btn-info">
+            <span class="d-none d-md-inline" jhiTranslate="entity.action.exerciseDashboard">Exercise dashboard</span>
+        </a>
     </div>
 </h3>

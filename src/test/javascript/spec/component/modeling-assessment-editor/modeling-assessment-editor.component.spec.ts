@@ -2,6 +2,7 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { Router } from '@angular/router';
+import { RouterTestingModule } from '@angular/router/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { AssessmentHeaderComponent } from 'app/assessment/assessment-header/assessment-header.component';
 import { AssessmentLayoutComponent } from 'app/assessment/assessment-layout/assessment-layout.component';
@@ -57,7 +58,7 @@ describe('ModelingAssessmentEditorComponent', () => {
 
     beforeEach(fakeAsync(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, ArtemisModelingAssessmentEditorModule],
+            imports: [ArtemisTestModule, ArtemisModelingAssessmentEditorModule, RouterTestingModule],
             declarations: [],
             providers: [
                 JhiLanguageHelper,
@@ -413,27 +414,30 @@ describe('ModelingAssessmentEditorComponent', () => {
             const course = new Course();
             component.modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined);
             component.modelingExercise.id = 1;
-            // spyOn(router, 'navigateByUrl').and.returnValue(Promise.resolve(true));
-            const routerSpy = stub(router, 'navigateByUrl').returns(Promise.resolve(true));
+
+            const routerStub = stub(router, 'navigate');
             const modelingSubmission: ModelingSubmission = { id: 1 };
             const fake = sinon.fake.returns(of(modelingSubmission));
             sinon.replace(modelingSubmissionService, 'getModelingSubmissionForExerciseForCorrectionRoundWithoutAssessment', fake);
+
             component.ngOnInit();
+
             const correctionRound = 1;
             const courseId = 1;
             const exerciseId = 1;
             component.correctionRound = correctionRound;
             component.courseId = courseId;
             component.modelingExercise = { id: exerciseId } as Exercise;
-            let url = `/course-management/${courseId}/modeling-exercises/${exerciseId}/submissions/${modelingSubmission.id}/assessment`;
-            url += `?correction-round=${correctionRound}`;
+            component.exerciseId = exerciseId;
+            const url = ['/course-management', courseId.toString(), 'modeling-exercises', exerciseId.toString(), 'submissions', modelingSubmission.id!.toString(), 'assessment'];
+            const queryParams = { queryParams: { 'correction-round': correctionRound } };
+
             tick(500);
             component.assessNext();
             tick(500);
+
             expect(fake).to.have.been.calledOnce;
-            sinon.assert.calledWith(routerSpy.getCall(0), '/', { skipLocationChange: true });
-            expect(routerSpy).to.have.been.calledTwice;
-            sinon.assert.calledWith(routerSpy.getCall(1), url);
+            expect(routerStub).to.have.been.calledWith(url, queryParams);
         }));
 
         it('throw error while assessNext', fakeAsync(() => {

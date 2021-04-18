@@ -16,15 +16,12 @@ import org.springframework.web.bind.annotation.*;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
-import de.tum.in.www1.artemis.repository.ExerciseRepository;
-import de.tum.in.www1.artemis.repository.ResultRepository;
-import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 import de.tum.in.www1.artemis.service.connectors.LtiService;
 import de.tum.in.www1.artemis.service.exam.ExamService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingAssessmentService;
-import de.tum.in.www1.artemis.service.programming.ProgrammingSubmissionService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -39,20 +36,20 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
 
     private final ProgrammingAssessmentService programmingAssessmentService;
 
-    private final ProgrammingSubmissionService programmingSubmissionService;
+    private final ProgrammingSubmissionRepository programmingSubmissionRepository;
 
     private final LtiService ltiService;
 
     private final StudentParticipationRepository studentParticipationRepository;
 
     public ProgrammingAssessmentResource(AuthorizationCheckService authCheckService, UserRepository userRepository, ProgrammingAssessmentService programmingAssessmentService,
-            ProgrammingSubmissionService programmingSubmissionService, ExerciseRepository exerciseRepository, ResultRepository resultRepository, ExamService examService,
+            ProgrammingSubmissionRepository programmingSubmissionRepository, ExerciseRepository exerciseRepository, ResultRepository resultRepository, ExamService examService,
             WebsocketMessagingService messagingService, LtiService ltiService, StudentParticipationRepository studentParticipationRepository,
-            ExampleSubmissionService exampleSubmissionService) {
-        super(authCheckService, userRepository, exerciseRepository, programmingSubmissionService, programmingAssessmentService, resultRepository, examService, messagingService,
-                exampleSubmissionService);
+            ExampleSubmissionRepository exampleSubmissionRepository, SubmissionRepository submissionRepository) {
+        super(authCheckService, userRepository, exerciseRepository, programmingAssessmentService, resultRepository, examService, messagingService, exampleSubmissionRepository,
+                submissionRepository);
         this.programmingAssessmentService = programmingAssessmentService;
-        this.programmingSubmissionService = programmingSubmissionService;
+        this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.ltiService = ltiService;
         this.studentParticipationRepository = studentParticipationRepository;
     }
@@ -66,11 +63,11 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
      */
     @ResponseStatus(HttpStatus.OK)
     @PutMapping("/programming-submissions/{submissionId}/assessment-after-complaint")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('TA')")
     public ResponseEntity<Result> updateProgrammingManualResultAfterComplaint(@RequestBody AssessmentUpdate assessmentUpdate, @PathVariable long submissionId) {
         log.debug("REST request to update the assessment of manual result for submission {} after complaint.", submissionId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        ProgrammingSubmission programmingSubmission = programmingSubmissionService.findByIdWithEagerResultsFeedbacksAssessor(submissionId);
+        ProgrammingSubmission programmingSubmission = programmingSubmissionRepository.findByIdWithResultsFeedbacksAssessor(submissionId);
         ProgrammingExercise programmingExercise = (ProgrammingExercise) programmingSubmission.getParticipation().getExercise();
         checkAuthorization(programmingExercise, user);
         if (!programmingExercise.areManualResultsAllowed()) {
@@ -101,7 +98,7 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
      * @return 200 Ok response if canceling was successful, 403 Forbidden if current user is not the assessor of the submission
      */
     @PutMapping("/programming-submissions/{submissionId}/cancel-assessment")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('TA')")
     public ResponseEntity<Void> cancelAssessment(@PathVariable Long submissionId) {
         return super.cancelAssessment(submissionId);
     }
@@ -116,11 +113,11 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
      */
     @ResponseStatus(HttpStatus.OK)
     @PutMapping("/participations/{participationId}/manual-results")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('TA')")
     public ResponseEntity<Result> saveProgrammingAssessment(@PathVariable Long participationId, @RequestParam(value = "submit", defaultValue = "false") boolean submit,
             @RequestBody Result newManualResult) {
         log.debug("REST request to save a new result : {}", newManualResult);
-        final var participation = studentParticipationRepository.findByIdWithSubmissionsResultsFeedbackElseThrow(participationId);
+        final var participation = studentParticipationRepository.findByIdWithResultsElseThrow(participationId);
 
         User user = userRepository.getUserWithGroupsAndAuthorities();
 
@@ -142,7 +139,7 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
 
         final var isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(programmingExercise, user);
         if (!assessmentService.isAllowedToCreateOrOverrideResult(existingManualResult, programmingExercise, participation, user, isAtLeastInstructor)) {
-            log.debug("The user " + user.getLogin() + " is not allowed to override the assessment for the participation " + participation.getId() + " for User " + user.getLogin());
+            log.debug("The user {} is not allowed to override the assessment for the participation {} for User {}", user.getLogin(), participation.getId(), user.getLogin());
             return forbidden("assessment", "assessmentSaveNotAllowed", "The user is not allowed to override the assessment");
         }
 
@@ -189,7 +186,7 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
         savedResult.setSubmission(submission);
 
         if (submit) {
-            newManualResult = programmingAssessmentService.submitManualAssessment(existingManualResult.getId());
+            newManualResult = resultRepository.submitManualAssessment(existingManualResult.getId());
         }
         // remove information about the student for tutors to ensure double-blind assessment
         if (!isAtLeastInstructor) {

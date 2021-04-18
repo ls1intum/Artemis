@@ -49,11 +49,11 @@
                     <span class="d-none d-md-inline" jhiTranslate="entity.action.view">View</span>
                 </a>
                 <a [routerLink]="['/course-management', courseId, 'exercises', exercise.id, 'scores']" class="btn btn-info btn-sm mr-1">
-                    <fa-icon [icon]="'eye'"></fa-icon>
+                    <fa-icon [icon]="'table'"></fa-icon>
                     <span class="d-none d-md-inline" jhiTranslate="entity.action.scores">Scores</span>
                 </a>
                 <a *ngIf="exerciseRouterLink" [routerLink]="[exerciseRouterLink]" class="btn btn-primary btn-sm mr-1">
-                    <fa-icon [icon]="['far', 'list-alt']"></fa-icon>
+                    <fa-icon [icon]="'book'"></fa-icon>
                     <span class="d-none d-md-inline" jhiTranslate="artemisApp.courseOverview.exerciseDetails.instructorActions.submissions">Submissions</span>
                 </a>
                 <a
@@ -77,7 +77,7 @@
                     [routerLink]="['/course-management', courseId, 'programming-exercises', exercise.id, 'grading', 'test-cases']"
                     class="btn btn-info btn-sm mr-1"
                 >
-                    <fa-icon [icon]="'pencil-alt'"></fa-icon>
+                    <fa-icon [icon]="'file-signature'"></fa-icon>
                     <span class="d-none d-md-inline" jhiTranslate="artemisApp.programmingExercise.configureGrading.shortTitle">Grading</span>
                 </a>
                 <a
@@ -86,7 +86,7 @@
                     [routerLink]="['/course-management', courseId, exercise.type + '-exercises', exercise.id, 'edit']"
                     class="btn btn-primary btn-sm mr-1"
                 >
-                    <fa-icon [icon]="'pencil-alt'"></fa-icon>
+                    <fa-icon [icon]="'wrench'"></fa-icon>
                     <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
                 </a>
                 <a
@@ -94,7 +94,7 @@
                     [routerLink]="['/course-management', courseId, 'quiz-exercises', exercise.id, 're-evaluate']"
                     class="btn btn-primary btn-sm mr-1"
                 >
-                    <fa-icon [icon]="'pencil-alt'"></fa-icon>
+                    <fa-icon [icon]="'wrench'"></fa-icon>
                     <span class="d-none d-md-inline" jhiTranslate="entity.action.re-evaluate">Re-evaluate</span>
                 </a>
             </div>
@@ -111,16 +111,16 @@
                     jhiBuildPlanButton
                     buttonIcon="external-link-alt"
                     [buttonLabel]="'artemisApp.exerciseActions.goToBuildPlan' | artemisTranslate"
-                    [buttonLoading]="exercise.loading"
+                    [buttonLoading]="exercise!.loading!"
                     [hideLabelMobile]="false"
                     [projectKey]="projectKey()"
-                    [buildPlanId]="buildPlanId(exercise.studentParticipations![0])"
+                    [buildPlanId]="buildPlanId(exercise.studentParticipations![0])!"
                     *ngIf="publishBuildPlanUrl() && buildPlanActive()"
                 ></button>
                 <jhi-programming-exercise-instructions
                     *ngIf="exercise"
                     [exercise]="exercise"
-                    [participation]="exercise.studentParticipations && exercise.studentParticipations[0]"
+                    [participation]="exercise.studentParticipations! && exercise.studentParticipations![0]"
                     [personalParticipation]="true"
                 >
                 </jhi-programming-exercise-instructions>
@@ -135,17 +135,23 @@
             </ng-template>
             <!-- PROBLEM STATEMENT END -->
             <!-- RESULTS START -->
-            <div class="row mb-2 mt-2 align-items-baseline d-none d-md-flex" *ngIf="showResults && (sortedHistoryResult?.length > 1 || !latestRatedResult?.rated)">
+            <div
+                class="row mb-2 mt-2 align-items-baseline d-none d-md-flex"
+                *ngIf="showResults && ((sortedHistoryResult && sortedHistoryResult.length > 1) || !latestRatedResult?.rated)"
+            >
                 <div class="col-auto">
                     <h3>{{ 'artemisApp.courseOverview.exerciseDetails.recentResults' | artemisTranslate }}</h3>
                 </div>
             </div>
-            <div class="row mb-2 d-none d-md-flex" *ngIf="showResults && sortedHistoryResult?.length > 1">
+            <div class="row mb-2 d-none d-md-flex" *ngIf="showResults && sortedHistoryResult && sortedHistoryResult!.length > 1">
                 <div class="col-12 col-md-12">
                     <jhi-result-history [results]="sortedHistoryResult" [showPreviousDivider]="hasMoreResults" [maxScore]="exercise.maxPoints"></jhi-result-history>
                 </div>
             </div>
-            <div class="row justify-content-between" *ngIf="showResults && !latestRatedResult?.rated && studentParticipation?.results?.length === 1">
+            <div
+                class="row justify-content-between"
+                *ngIf="showResults && !latestRatedResult?.rated && studentParticipation?.results && studentParticipation!.results!.length === 1"
+            >
                 <div class="col">
                     <h4>
                         <span class="badge w-100 badge-info">
@@ -154,10 +160,12 @@
                     </h4>
                 </div>
                 <div class="col text-left">
-                    <jhi-result [result]="studentParticipation!.results![0]" [participation]="studentParticipation" showUngradedResults="true" short="true"></jhi-result>
+                    <jhi-result [result]="studentParticipation!.results![0]" [participation]="studentParticipation!" [showUngradedResults]="true" [short]="true"></jhi-result>
                 </div>
                 <div class="col text-left d-none d-md-flex">
-                    <h6 [ngbTooltip]="studentParticipation!.results![0].completionDate | artemisDate">({{ studentParticipation!.results![0].completionDate! | amTimeAgo }})</h6>
+                    <h6 [ngbTooltip]="studentParticipation!.results![0].completionDate | artemisDate">
+                        ({{ studentParticipation!.results![0].completionDate! | artemisTimeAgo }})
+                    </h6>
                 </div>
             </div>
             <div class="row mb-2 mt-2 align-items-baseline" *ngIf="showMoreResults && showResults">
@@ -181,10 +189,10 @@
                                 </h4>
                             </div>
                             <div class="col text-left">
-                                <jhi-result [result]="result" [participation]="exercise.studentParticipations![0]" showUngradedResults="true" short="true"></jhi-result>
+                                <jhi-result [result]="result" [participation]="exercise.studentParticipations![0]" [showUngradedResults]="true" [short]="true"></jhi-result>
                             </div>
                             <div class="col text-left d-none d-md-flex">
-                                <h6 [ngbTooltip]="result.completionDate | artemisDate">({{ result.completionDate! | amTimeAgo }})</h6>
+                                <h6 [ngbTooltip]="result.completionDate | artemisDate">({{ result.completionDate! | artemisTimeAgo }})</h6>
                             </div>
                         </div>
                     </div>
@@ -193,7 +201,7 @@
                     </div>
                 </div>
             </div>
-            <div class="row mb-2 mt-2 align-items-baseline" *ngIf="showResults && studentParticipation?.results?.length > 1">
+            <div class="row mb-2 mt-2 align-items-baseline" *ngIf="showResults && studentParticipation?.results && studentParticipation!.results!.length > 1">
                 <div class="col-auto">
                     <a class="text-primary" (click)="showMoreResults = !showMoreResults">{{
                         showMoreResults
@@ -218,7 +226,7 @@
                 "
                 class="mb-2 mt-2 ml-3"
                 [exercise]="exercise"
-                [participation]="studentParticipation"
+                [participation]="studentParticipation!"
                 [result]="latestRatedResult"
             >
             </jhi-complaint-interactions>

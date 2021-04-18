@@ -13,6 +13,12 @@ public interface InstanceMessageSendService {
     void sendProgrammingExerciseSchedule(Long exerciseId);
 
     /**
+     * Send a message to the main server that a programming exercise was deleted and the scheduling should be cancelled
+     * @param exerciseId the id of the exercise that should be no longer be scheduled
+     */
+    void sendProgrammingExerciseScheduleCancel(Long exerciseId);
+
+    /**
      * Send a message to the main server that a text exercise was created or updated and a (re-)scheduling has to be performed
      * @param exerciseId the id of the exercise that should be scheduled
      */

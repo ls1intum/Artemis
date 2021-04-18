@@ -24,7 +24,6 @@ export class ExamManagementComponent implements OnInit, OnDestroy {
     exams: Exam[];
     isAtLeastInstructor = false;
     isAtLeastTutor = false;
-    examIdToExamInformation: Map<number, ExamInformationDTO> = new Map();
     predicate: string;
     ascending: boolean;
     eventSubscriber: Subscription;
@@ -82,7 +81,9 @@ export class ExamManagementComponent implements OnInit, OnDestroy {
                 this.exams.forEach((exam) => {
                     this.examManagementService
                         .getLatestIndividualEndDateOfExam(this.course.id!, exam.id!)
-                        .subscribe((examInformationDTORes: HttpResponse<ExamInformationDTO>) => this.examIdToExamInformation.set(exam.id!, examInformationDTORes.body!));
+                        .subscribe(
+                            (examInformationDTORes: HttpResponse<ExamInformationDTO>) => (exam.latestIndividualEndDate = examInformationDTORes.body!.latestIndividualEndDate),
+                        );
                 });
             },
             (res: HttpErrorResponse) => onError(this.jhiAlertService, res),
@@ -125,10 +126,10 @@ export class ExamManagementComponent implements OnInit, OnDestroy {
         this.sortService.sortByProperty(this.exams, this.predicate, this.ascending);
     }
 
-    examHasFinished(examId: number): boolean {
-        if (this.examIdToExamInformation.has(examId)) {
-            return this.examIdToExamInformation.get(examId)!.latestIndividualEndDate.isBefore(moment());
+    examHasFinished(exam: Exam): boolean {
+        if (exam.latestIndividualEndDate) {
+            return exam.latestIndividualEndDate.isBefore(moment());
         }
-        return true;
+        return false;
     }
 }
