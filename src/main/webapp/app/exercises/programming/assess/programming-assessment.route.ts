@@ -1,12 +1,8 @@
-import { Injectable, NgModule } from '@angular/core';
-import { ActivatedRouteSnapshot, Resolve, RouterModule, Routes } from '@angular/router';
+import { NgModule } from '@angular/core';
+import { RouterModule, Routes } from '@angular/router';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { CodeEditorTutorAssessmentContainerComponent } from 'app/exercises/programming/assess/code-editor-tutor-assessment-container.component';
 import { Authority } from 'app/shared/constants/authority.constants';
-import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
-import { Observable } from 'rxjs';
-import { catchError, map } from 'rxjs/operators';
-import { JhiAlertService } from 'ng-jhipster';
 import { ProgrammingAssessmentDashboardComponent } from 'app/exercises/programming/assess/programming-assessment-dashboard/programming-assessment-dashboard.component';
 
 @Injectable({ providedIn: 'root' })
@@ -74,27 +70,11 @@ export const routes: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: ':courseId/programming-exercises/:exerciseId/code-editor/new/assessment',
+        path: ':courseId/programming-exercises/:exerciseId/submissions/:submissionId/assessment',
         component: CodeEditorTutorAssessmentContainerComponent,
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.TA],
             pageTitle: 'artemisApp.programmingExercise.home.title',
-        },
-        resolve: {
-            studentParticipationId: NewStudentParticipationResolver,
-        },
-        runGuardsAndResolvers: 'always',
-        canActivate: [UserRouteAccessService],
-    },
-    {
-        path: ':courseId/programming-exercises/:exerciseId/code-editor/:participationId/assessment',
-        component: CodeEditorTutorAssessmentContainerComponent,
-        data: {
-            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.TA],
-            pageTitle: 'artemisApp.programmingExercise.home.title',
-        },
-        resolve: {
-            studentParticipationId: StudentParticipationResolver,
         },
         canActivate: [UserRouteAccessService],
     },
