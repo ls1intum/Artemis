@@ -39,4 +39,5 @@ public class FileUploadExercise extends Exercise {
     public String toString() {
         return "FileUploadExercise{" + "id=" + getId() + "}";
     }
+
 }
