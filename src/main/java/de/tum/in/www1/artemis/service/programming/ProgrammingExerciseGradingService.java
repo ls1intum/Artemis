@@ -20,7 +20,10 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.CategoryState;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
-import de.tum.in.www1.artemis.domain.participation.*;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.GroupNotificationService;
@@ -60,12 +63,14 @@ public class ProgrammingExerciseGradingService {
 
     private final GroupNotificationService groupNotificationService;
 
+    private final FeedbackRepository feedbackRepository;
+
     public ProgrammingExerciseGradingService(ProgrammingExerciseTestCaseService testCaseService, ProgrammingSubmissionService programmingSubmissionService,
             StudentParticipationRepository studentParticipationRepository, ResultRepository resultRepository, Optional<ContinuousIntegrationService> continuousIntegrationService,
             SimpMessageSendingOperations messagingTemplate, StaticCodeAnalysisService staticCodeAnalysisService, ProgrammingAssessmentService programmingAssessmentService,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
-            AuditEventRepository auditEventRepository, GroupNotificationService groupNotificationService) {
+            AuditEventRepository auditEventRepository, GroupNotificationService groupNotificationService, FeedbackRepository feedbackRepository) {
         this.testCaseService = testCaseService;
         this.programmingSubmissionService = programmingSubmissionService;
         this.studentParticipationRepository = studentParticipationRepository;
@@ -79,6 +84,7 @@ public class ProgrammingExerciseGradingService {
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.auditEventRepository = auditEventRepository;
         this.groupNotificationService = groupNotificationService;
+        this.feedbackRepository = feedbackRepository;
     }
 
     /**
@@ -165,10 +171,16 @@ public class ProgrammingExerciseGradingService {
         latestSemiAutomaticResult.getFeedbacks().removeIf(feedback -> feedback != null && feedback.getType() == FeedbackType.AUTOMATIC);
 
         // copy all feedback from the automatic result
-        for (Feedback feedback : newAutomaticResult.getFeedbacks()) {
-            Feedback newFeedback = feedback.copyFeedback();
-            latestSemiAutomaticResult.addFeedback(newFeedback);
-        }
+        List<Feedback> copiedFeedbacks = newAutomaticResult.getFeedbacks().stream().map(Feedback::copyFeedback).collect(Collectors.toList());
+        List<Feedback> savedFeedbacks = new ArrayList<>();
+        // Note: We have to store the feedbacks in this way to prevent an ordered column error that sometimes can occur
+        copiedFeedbacks.forEach(feedback -> {
+            feedback.setResult(null);
+            feedback = feedbackRepository.saveAndFlush(feedback);
+            feedback.setResult(latestSemiAutomaticResult);
+            savedFeedbacks.add(feedback);
+        });
+        latestSemiAutomaticResult.setFeedbacks(savedFeedbacks);
 
         String resultString = updateManualResultString(newAutomaticResult.getResultString(), latestSemiAutomaticResult, programmingExercise);
         latestSemiAutomaticResult.setResultString(resultString);
