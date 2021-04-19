@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import java.util.ArrayList;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
@@ -10,6 +12,7 @@ import de.tum.in.www1.artemis.domain.enumeration.GraphType;
 import de.tum.in.www1.artemis.domain.enumeration.SpanType;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.web.rest.dto.CourseManagementStatisticsDTO;
+import de.tum.in.www1.artemis.web.rest.dto.ExerciseManagementStatisticsDTO;
 
 /**
  * REST controller for managing statistics.
@@ -58,7 +61,7 @@ public class StatisticsResource {
     }
 
     /**
-     * GET management/statistics/course-statistics : get the data for the doughnut graphs in the course statistics
+     * GET management/statistics/course-statistics : get the data for the average score graph in the course statistics
      *
      * @param courseId    the id of the course for which the data should be fetched
      * @return the ResponseEntity with status 200 (OK) and the data in body, or status 404 (Not Found)
@@ -67,5 +70,24 @@ public class StatisticsResource {
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<CourseManagementStatisticsDTO> getCourseStatistics(@RequestParam Long courseId) {
         return ResponseEntity.ok(this.service.getCourseStatistics(courseId));
+    }
+
+    /**
+     * GET management/statistics/exercise-statistics : get the data for the score distribution in the exercise statistics
+     *
+     * @param exerciseId    the id of the exercise for which the data should be fetched
+     * @return the ResponseEntity with status 200 (OK) and the data in body, or status 404 (Not Found)
+     */
+    @GetMapping("management/statistics/exercise-statistics")
+    @PreAuthorize("hasRole('TA')")
+    public ResponseEntity<ExerciseManagementStatisticsDTO> getExerciseStatistics(@RequestParam Long exerciseId) {
+        ExerciseManagementStatisticsDTO temp = new ExerciseManagementStatisticsDTO();
+        temp.setAverageScoreOfExercise(exerciseId / 100.0);
+        var test = new ArrayList<Double>();
+        for (int i = 0; i < 10; i++) {
+            test.add(10 + i * 10.0);
+        }
+        temp.setScoreDistribution(test);
+        return ResponseEntity.ok(temp);
     }
 }

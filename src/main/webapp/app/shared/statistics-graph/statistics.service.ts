@@ -4,6 +4,7 @@ import { Observable } from 'rxjs/Observable';
 import { SERVER_API_URL } from 'app/app.constants';
 import { Graphs, SpanType } from 'app/entities/statistics.model';
 import { CourseManagementStatisticsDTO } from 'app/course/manage/course-management-statistics-dto';
+import { ExerciseStatisticsDTO } from 'app/exercises/text/manage/statistics/exercise-statistics-dto';
 
 @Injectable({ providedIn: 'root' })
 export class StatisticsService {
@@ -40,5 +41,13 @@ export class StatisticsService {
     getCourseStatistics(courseId: number): Observable<CourseManagementStatisticsDTO> {
         const params = new HttpParams().set('courseId', '' + courseId);
         return this.http.get<CourseManagementStatisticsDTO>(`${this.resourceUrl}course-statistics`, { params });
+    }
+
+    /**
+     * Sends a GET request to retrieve data needed for the exercise statistics
+     */
+    getExerciseStatistics(exerciseId: number): Observable<ExerciseStatisticsDTO> {
+        const params = new HttpParams().set('exerciseId', '' + exerciseId);
+        return this.http.get<ExerciseStatisticsDTO>(`${this.resourceUrl}exercise-statistics`, { params });
     }
 }

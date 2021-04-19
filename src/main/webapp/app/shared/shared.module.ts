@@ -26,6 +26,7 @@ import { ResizeableContainerComponent } from './resizeable-container/resizeable-
 import { TranslatePipe } from '@ngx-translate/core';
 import { StatisticsGraphComponent } from 'app/shared/statistics-graph/statistics-graph.component';
 import { StatisticsAverageScoreGraphComponent } from 'app/shared/statistics-graph/statistics-average-score-graph.component';
+import { StatisticsScoreDistributionGraphComponent } from 'app/shared/statistics-graph/statistics-score-distribution-graph.component';
 
 @NgModule({
     imports: [ArtemisSharedLibsModule, ArtemisSharedCommonModule, ArtemisSharedPipesModule],
@@ -50,6 +51,7 @@ import { StatisticsAverageScoreGraphComponent } from 'app/shared/statistics-grap
         ArtemisTimeAgoPipe,
         StatisticsGraphComponent,
         StatisticsAverageScoreGraphComponent,
+        StatisticsScoreDistributionGraphComponent,
     ],
     entryComponents: [DeleteDialogComponent],
     exports: [
@@ -78,6 +80,7 @@ import { StatisticsAverageScoreGraphComponent } from 'app/shared/statistics-grap
         ArtemisTimeAgoPipe,
         StatisticsGraphComponent,
         StatisticsAverageScoreGraphComponent,
+        StatisticsScoreDistributionGraphComponent,
     ],
     providers: [ArtemisDatePipe, TranslatePipe],
 })

@@ -195,6 +195,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         tutor_exam_dashboard: 'artemisApp.examManagement.assessmentDashboard',
         organization_management: 'organizationManagement.title',
         course_statistics: 'statistics.course_statistics_title',
+        exercise_statistics: 'exercise-statistics.title',
     };
 
     /**

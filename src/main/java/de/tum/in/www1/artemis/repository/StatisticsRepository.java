@@ -15,6 +15,7 @@ import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.GraphType;
 import de.tum.in.www1.artemis.domain.enumeration.SpanType;
+import de.tum.in.www1.artemis.domain.enumeration.StatisticsView;
 import de.tum.in.www1.artemis.domain.statistics.CourseStatisticsAverageScore;
 import de.tum.in.www1.artemis.domain.statistics.StatisticsEntry;
 
@@ -339,17 +340,18 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
      * @param startDate The startDate of which the data should be fetched
      * @param endDate The endDate of which the data should be fetched
      * @param graphType the type of graph the data should be fetched for (see GraphType.java)
-     * @param courseId the courseId which is null for a user statistics call and contains the courseId for the course statistics
+     * @param entityId the entityId which is null for a user statistics call and contains the Id for the other statistics pages
      * @return the return value of the processed database call which returns a list of entries
      */
-    default List<StatisticsEntry> getNumberOfEntriesPerTimeSlot(SpanType span, ZonedDateTime startDate, ZonedDateTime endDate, GraphType graphType, Long courseId) {
-        var exerciseIds = courseId != null ? findExerciseIdsByCourseId(courseId) : null;
+    default List<StatisticsEntry> getNumberOfEntriesPerTimeSlot(SpanType span, ZonedDateTime startDate, ZonedDateTime endDate, GraphType graphType, StatisticsView view,
+            Long entityId) {
+        var exerciseIds = entityId != null ? findExerciseIdsByCourseId(entityId) : null;
         switch (graphType) {
             case SUBMISSIONS -> {
-                return courseId == null ? getTotalSubmissions(startDate, endDate) : getTotalSubmissionsForCourse(startDate, endDate, exerciseIds);
+                return entityId == null ? getTotalSubmissions(startDate, endDate) : getTotalSubmissionsForCourse(startDate, endDate, exerciseIds);
             }
             case ACTIVE_USERS -> {
-                List<StatisticsEntry> result = courseId == null ? getActiveUsers(startDate, endDate) : getActiveUsersForCourse(startDate, endDate, exerciseIds);
+                List<StatisticsEntry> result = entityId == null ? getActiveUsers(startDate, endDate) : getActiveUsersForCourse(startDate, endDate, exerciseIds);
                 return filterDuplicatedUsers(span, result, startDate, graphType);
             }
             case LOGGED_IN_USERS -> {
@@ -359,35 +361,35 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
                 return filterDuplicatedUsers(span, result, startDate, graphType);
             }
             case RELEASED_EXERCISES -> {
-                return courseId == null ? getReleasedExercises(startDate, endDate) : getReleasedExercisesForCourse(startDate, endDate, exerciseIds);
+                return entityId == null ? getReleasedExercises(startDate, endDate) : getReleasedExercisesForCourse(startDate, endDate, exerciseIds);
             }
             case EXERCISES_DUE -> {
-                return courseId == null ? getExercisesDue(startDate, endDate) : getExercisesDueForCourse(startDate, endDate, exerciseIds);
+                return entityId == null ? getExercisesDue(startDate, endDate) : getExercisesDueForCourse(startDate, endDate, exerciseIds);
             }
             case CONDUCTED_EXAMS -> {
-                return courseId == null ? getConductedExams(startDate, endDate) : getConductedExamsForCourse(startDate, endDate, courseId);
+                return entityId == null ? getConductedExams(startDate, endDate) : getConductedExamsForCourse(startDate, endDate, entityId);
             }
             case EXAM_PARTICIPATIONS -> {
-                return courseId == null ? getExamParticipations(startDate, endDate) : getExamParticipationsForCourse(startDate, endDate, courseId);
+                return entityId == null ? getExamParticipations(startDate, endDate) : getExamParticipationsForCourse(startDate, endDate, entityId);
             }
             case EXAM_REGISTRATIONS -> {
-                return courseId == null ? getExamRegistrations(startDate, endDate) : getExamRegistrationsForCourse(startDate, endDate, courseId);
+                return entityId == null ? getExamRegistrations(startDate, endDate) : getExamRegistrationsForCourse(startDate, endDate, entityId);
             }
             case ACTIVE_TUTORS -> {
-                List<StatisticsEntry> result = courseId == null ? getActiveTutors(startDate, endDate) : getActiveTutorsForCourse(startDate, endDate, exerciseIds);
+                List<StatisticsEntry> result = entityId == null ? getActiveTutors(startDate, endDate) : getActiveTutorsForCourse(startDate, endDate, exerciseIds);
                 return filterDuplicatedUsers(span, result, startDate, graphType);
             }
             case CREATED_RESULTS -> {
-                return courseId == null ? getCreatedResults(startDate, endDate) : getCreatedResultsForCourse(startDate, endDate, exerciseIds);
+                return entityId == null ? getCreatedResults(startDate, endDate) : getCreatedResultsForCourse(startDate, endDate, exerciseIds);
             }
             case CREATED_FEEDBACKS -> {
-                return courseId == null ? getResultFeedbacks(startDate, endDate) : getResultFeedbacksForCourse(startDate, endDate, exerciseIds);
+                return entityId == null ? getResultFeedbacks(startDate, endDate) : getResultFeedbacksForCourse(startDate, endDate, exerciseIds);
             }
             case QUESTIONS_ASKED -> {
-                return courseId != null ? getQuestionsAskedForCourse(startDate, endDate, courseId) : new ArrayList<>();
+                return entityId != null ? getQuestionsAskedForCourse(startDate, endDate, entityId) : new ArrayList<>();
             }
             case QUESTIONS_ANSWERED -> {
-                return courseId != null ? getQuestionsAnsweredForCourse(startDate, endDate, courseId) : new ArrayList<>();
+                return entityId != null ? getQuestionsAnsweredForCourse(startDate, endDate, entityId) : new ArrayList<>();
             }
             default -> {
                 return new ArrayList<>();
