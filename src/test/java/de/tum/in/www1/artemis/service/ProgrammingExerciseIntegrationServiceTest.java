@@ -1323,10 +1323,8 @@ public class ProgrammingExerciseIntegrationServiceTest {
     public void testGetPlagiarismResultWithoutResult() throws Exception {
         database.addCourseWithOneProgrammingExercise();
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findAllWithEagerTemplateAndSolutionParticipations().get(0);
-
-        TextPlagiarismResult result = request.get("/api/programming-exercises/" + programmingExercise.getId() + "/plagiarism-result", HttpStatus.NOT_FOUND,
-                TextPlagiarismResult.class);
-        assertThat(result).isNull();
+        var result = request.get("/api/programming-exercises/" + programmingExercise.getId() + "/plagiarism-result", HttpStatus.OK, String.class);
+        assertThat(result).isNullOrEmpty();
     }
 
     public void testGetPlagiarismResultWithoutExercise() throws Exception {
