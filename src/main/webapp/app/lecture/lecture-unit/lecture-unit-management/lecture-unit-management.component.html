@@ -20,8 +20,8 @@
         <div class="col-9 mx-auto col-md-7 offset-md-2" [ngSwitch]="lectureUnit.type">
             <span class="badge badge-info">
                 {{
-                    lectureUnit.releaseDate
-                        ? ('artemisApp.lectureUnit.details.releaseDateSet' | artemisTranslate) + (lectureUnit.releaseDate | artemisDate)
+                    getLectureUnitReleaseDate(lectureUnit)
+                        ? ('artemisApp.lectureUnit.details.releaseDateSet' | artemisTranslate) + (getLectureUnitReleaseDate(lectureUnit) | artemisDate)
                         : ('artemisApp.lectureUnit.details.releaseDateNotSet' | artemisTranslate)
                 }}
             </span>

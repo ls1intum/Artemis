@@ -205,16 +205,23 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
         }
     }
 
+    getLectureUnitReleaseDate(lectureUnit: LectureUnit) {
+        switch (lectureUnit.type) {
+            case LectureUnitType.ATTACHMENT:
+                return (<AttachmentUnit>lectureUnit)?.attachment?.releaseDate || undefined;
+            case LectureUnitType.EXERCISE:
+                return (<ExerciseUnit>lectureUnit)?.exercise?.releaseDate || undefined;
+            default:
+                return lectureUnit.releaseDate || undefined;
+        }
+    }
+
     getAttachmentVersion(lectureUnit: LectureUnit) {
-        if (lectureUnit.type !== LectureUnitType.ATTACHMENT) {
-            return undefined;
-        } else {
-            const attachmentUnit = lectureUnit as AttachmentUnit;
-            if (attachmentUnit.attachment?.version) {
-                return attachmentUnit.attachment.version.toString();
-            } else {
+        switch (lectureUnit.type) {
+            case LectureUnitType.ATTACHMENT:
+                return (<AttachmentUnit>lectureUnit)?.attachment?.version || undefined;
+            default:
                 return undefined;
-            }
         }
     }
 }
