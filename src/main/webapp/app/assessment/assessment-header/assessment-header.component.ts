@@ -34,6 +34,7 @@ export class AssessmentHeaderComponent {
     @Input() complaintHandled = false;
     @Input() assessmentsAreValid: boolean;
     @Input() hasAssessmentDueDatePassed: boolean;
+    @Input() isProgrammingExercise = false; // remove once diff view activated for programming exercises
 
     @Output() save = new EventEmitter<void>();
     @Output() submit = new EventEmitter<void>();

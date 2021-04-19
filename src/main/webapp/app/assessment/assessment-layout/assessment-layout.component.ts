@@ -42,6 +42,7 @@ export class AssessmentLayoutComponent {
     @Input() exercise?: Exercise;
     @Input() submission?: Submission;
     @Input() hasAssessmentDueDatePassed: boolean;
+    @Input() isProgrammingExercise: boolean; // remove once diff view activated for programming exercises
 
     private _highlightDifferences: boolean;
 
