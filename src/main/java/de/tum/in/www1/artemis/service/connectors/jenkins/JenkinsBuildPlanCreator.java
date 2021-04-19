@@ -86,8 +86,8 @@ public class JenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
     }
 
     public String getPipelineScript(ProgrammingLanguage programmingLanguage, VcsRepositoryUrl testRepositoryURL, VcsRepositoryUrl assignmentRepositoryURL,
-            boolean isStaticCodeAnalysisEnabled) {
-        var pipelinePath = getResourcePath(programmingLanguage, isStaticCodeAnalysisEnabled);
+            boolean isStaticCodeAnalysisEnabled, boolean isSequentialRuns) {
+        var pipelinePath = getResourcePath(programmingLanguage, isStaticCodeAnalysisEnabled, isSequentialRuns);
         var replacements = getReplacements(programmingLanguage, testRepositoryURL, assignmentRepositoryURL, isStaticCodeAnalysisEnabled);
         return replacePipelineScriptParameters(pipelinePath, replacements);
     }
@@ -112,17 +112,19 @@ public class JenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
         return replacements;
     }
 
-    private String[] getResourcePath(ProgrammingLanguage programmingLanguage, boolean isStaticCodeAnalysisEnabled) {
-        final var buildPlan = isStaticCodeAnalysisEnabled ? "Jenkinsfile-staticCodeAnalysis" : "Jenkinsfile";
-        return new String[] { "templates", "jenkins", programmingLanguage.name().toLowerCase(), buildPlan };
+    private String[] getResourcePath(ProgrammingLanguage programmingLanguage, boolean isStaticCodeAnalysisEnabled, boolean isSequentialRuns) {
+        final var pipelineScriptFilename = isStaticCodeAnalysisEnabled ? "Jenkinsfile-staticCodeAnalysis" : "Jenkinsfile";
+        final var regularOrSequentialDir = isSequentialRuns ? "sequentialRuns" : "regularRuns";
+        final var programmingLanguageName = programmingLanguage.name().toLowerCase();
+        return new String[] { "templates", "jenkins", programmingLanguageName, regularOrSequentialDir, pipelineScriptFilename };
     }
 
     @Override
     public Document buildBasicConfig(ProgrammingLanguage programmingLanguage, VcsRepositoryUrl testRepositoryURL, VcsRepositoryUrl assignmentRepositoryURL,
-            boolean isStaticCodeAnalysisEnabled) {
+            boolean isStaticCodeAnalysisEnabled, boolean isSequentialRuns) {
         final var resourcePath = Paths.get("templates", "jenkins", "config.xml");
 
-        String pipeLineScript = getPipelineScript(programmingLanguage, testRepositoryURL, assignmentRepositoryURL, isStaticCodeAnalysisEnabled);
+        String pipeLineScript = getPipelineScript(programmingLanguage, testRepositoryURL, assignmentRepositoryURL, isStaticCodeAnalysisEnabled, isSequentialRuns);
         pipeLineScript = pipeLineScript.replace("'", "&apos;");
         pipeLineScript = pipeLineScript.replace("<", "&lt;");
         pipeLineScript = pipeLineScript.replace(">", "&gt;");
