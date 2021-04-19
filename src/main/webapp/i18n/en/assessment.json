@@ -20,7 +20,7 @@
             "diffView": {
                 "differenceActivate": "Activate Diff-View",
                 "differenceDeactivate": "Deactivate Diff-View",
-                "highlightAssessmentDiffTooltipOn": "Highlight the correction round in which every feedback it was created or modified",
+                "highlightAssessmentDiffTooltipOn": "Highlight the correction round in which the feedback was created or modified",
                 "highlightAssessmentDiffTooltipOff": "Deactivate highlighting of correction rounds",
                 "correctionRoundDiffFirst": "First correction round",
                 "correctionRoundDiffSecond": "Second correction round"
