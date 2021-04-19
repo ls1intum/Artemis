@@ -1,6 +1,6 @@
-******
+***********
 Code Review
-******
+***********
 
 STEPS
 ======
@@ -13,7 +13,7 @@ STEPS
 * `Commit Early, Commit Often, Perfect Later, Publish Once <https://speakerdeck.com/lemiorhan/10-git-anti-patterns-you-should-be-aware-of>`_.
 
 1. Start Implementation -> only Developer
-========================================
+=========================================
 
 * `Open draft pull request. <https://docs.github.com/en/github/collaborating-with-issues-and-pull-requests/creating-a-pull-request>`_ Allows for code related questions and discussions.
 
@@ -39,7 +39,7 @@ STEPS
 * Submit your comments and status (Approve or Request Changes) using GitHub.
 
 4. Respond to review- > Developer & Reviewer
-=====================
+============================================
 
 Developer
 =========
