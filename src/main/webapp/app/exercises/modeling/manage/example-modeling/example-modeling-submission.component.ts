@@ -124,6 +124,7 @@ export class ExampleModelingSubmissionComponent implements OnInit {
                     this.result = result;
                     this.feedbacks = this.result.feedbacks || [];
                 }
+                this.checkScoreBoundaries();
             });
         });
     }
