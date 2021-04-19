@@ -54,4 +54,11 @@ public interface TeamScoreRepository extends JpaRepository<TeamScore, Long> {
             """)
     List<Object[]> getAchievedPointsOfTeams(@Param("exercises") Set<Exercise> exercises);
 
+    @Query("""
+                    SELECT t
+                    FROM TeamScore t LEFT JOIN FETCH t.exercise
+                    WHERE t.exercise IN :exercises AND :user MEMBER OF t.team.students
+            """)
+    List<TeamScore> findAllByExerciseAndUserWithEagerExercise(@Param("exercises") Set<Exercise> exercises, @Param("user") User user);
+
 }
