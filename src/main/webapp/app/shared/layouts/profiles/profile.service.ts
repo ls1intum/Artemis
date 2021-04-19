@@ -49,7 +49,6 @@ export class ProfileService {
                         profileInfo.sshKeysURL = data.sshKeysURL;
                         profileInfo.externalUserManagementName = data.externalUserManagementName;
                         profileInfo.externalUserManagementURL = data.externalUserManagementURL;
-                        profileInfo.imprint = data.imprint;
                         profileInfo.contact = data.contact;
                         profileInfo.registrationEnabled = data.registrationEnabled;
                         profileInfo.needsToAcceptTerms = data.needsToAcceptTerms;

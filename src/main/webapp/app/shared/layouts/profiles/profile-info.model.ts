@@ -17,7 +17,6 @@ export class ProfileInfo {
     public sshKeysURL: string;
     public externalUserManagementURL: string;
     public externalUserManagementName: string;
-    public imprint: string;
     public contact: string;
     public testServer?: boolean;
     public allowedMinimumOrionVersion: string;
