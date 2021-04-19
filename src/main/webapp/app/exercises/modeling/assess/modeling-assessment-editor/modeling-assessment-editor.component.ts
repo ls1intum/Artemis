@@ -128,7 +128,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
                 this.handleReceivedSubmission(submission);
             },
             (error: HttpErrorResponse) => {
-                this.handeErrorResponse(error);
+                this.handleErrorResponse(error);
             },
         );
     }
@@ -143,7 +143,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
                 this.location.go(newUrl);
             },
             (error: HttpErrorResponse) => {
-                this.handeErrorResponse(error);
+                this.handleErrorResponse(error);
             },
         );
     }
@@ -268,7 +268,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         return !this.isAtLeastInstructor && !!this.complaint && this.isAssessor;
     }
 
-    private handeErrorResponse(error: HttpErrorResponse): void {
+    private handleErrorResponse(error: HttpErrorResponse): void {
         this.loadingInitialSubmission = false;
         this.submission = undefined;
 
@@ -424,7 +424,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
             },
             (error: HttpErrorResponse) => {
                 this.nextSubmissionBusy = false;
-                this.handeErrorResponse(error);
+                this.handleErrorResponse(error);
             },
         );
     }

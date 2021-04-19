@@ -88,57 +88,6 @@ public class ProgrammingExerciseParticipationResource {
     }
 
     /**
-     * Get the given student participation with the manual result of the given correctionRound and its feedbacks.
-     *
-     * @param participationId for which to retrieve the student participation with result and feedbacks.
-     * @param correctionRound of the result that the participation must have, otherwise notFound is returned
-     * @return the ResponseEntity with status 200 (OK) and the participation with its results in the body.
-     */
-    @GetMapping("/programming-exercise-participations/{participationId}/student-participation-with-result-and-feedbacks-for/{correctionRound}/correction-round")
-    @PreAuthorize("hasRole('TA')")
-    public ResponseEntity<Participation> getParticipationWithManualResultByCorrectionRoundForStudentParticipation(@PathVariable Long participationId,
-            @PathVariable int correctionRound) {
-        Optional<ProgrammingExerciseStudentParticipation> participation = programmingExerciseStudentParticipationRepository
-                .findByIdWithAllManualOrSemiAutomaticResultsAndFeedbacksAndRelatedSubmissionAndAssessor(participationId);
-        if (participation.isEmpty()) {
-            return notFound();
-        }
-        if (!programmingExerciseParticipationService.canAccessParticipation(participation.get())) {
-            return forbidden();
-        }
-
-        // Fetch template and solution participation into exercise of participation
-        ProgrammingExercise exercise = (ProgrammingExercise) participation.get().getExercise();
-        exercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exercise.getId());
-
-        // Fetch grading criterion into exercise of participation
-        List<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exercise.getId());
-        exercise.setGradingCriteria(gradingCriteria);
-
-        // Set exercise back to participation
-        participation.get().setExercise(exercise);
-
-        // get the result which belongs to the specific correctionround and set it as the single result in the participation
-        List<Result> results = new ArrayList<>(participation.get().getResults());
-
-        // usually this should not be necessary, but just in case the participation's results come in a wrong order this is important
-        results.sort((r1, r2) -> r1.getId().compareTo(r2.getId()));
-
-        if (results.size() > correctionRound) {
-            Result resultOfCorrectionRound = results.get(correctionRound);
-            Set<Result> resultSet = new HashSet<>();
-
-            resultSet.add(resultOfCorrectionRound);
-            participation.get().setResults(resultSet);
-        }
-        else {
-            return notFound();
-        }
-
-        return ResponseEntity.ok(participation.get());
-    }
-
-    /**
      * Get the latest result for a given programming exercise participation including it's result.
      *
      * @param participationId for which to retrieve the programming exercise participation with latest result and feedbacks.
