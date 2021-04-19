@@ -52,6 +52,7 @@ export class ProfileService {
                         profileInfo.imprint = data.imprint;
                         profileInfo.contact = data.contact;
                         profileInfo.registrationEnabled = data.registrationEnabled;
+                        profileInfo.needsToAcceptTerms = data.needsToAcceptTerms;
                         profileInfo.allowedEmailPattern = data.allowedEmailPattern;
                         profileInfo.allowedEmailPatternReadable = data.allowedEmailPatternReadable;
                         profileInfo.allowedLdapUsernamePattern = data.allowedLdapUsernamePattern;

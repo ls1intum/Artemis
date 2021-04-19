@@ -22,6 +22,7 @@ export class ProfileInfo {
     public testServer?: boolean;
     public allowedMinimumOrionVersion: string;
     public registrationEnabled?: boolean;
+    public needsToAcceptTerms?: boolean;
     public allowedEmailPattern?: string;
     public allowedEmailPatternReadable?: string;
     public allowedLdapUsernamePattern?: string;
