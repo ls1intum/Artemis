@@ -1,4 +1,5 @@
 import { ElementRef } from '@angular/core';
+import { IconProp } from '@fortawesome/fontawesome-svg-core';
 
 /**
  * abstract class for all commands - default and domain commands of Artemis
@@ -6,7 +7,7 @@ import { ElementRef } from '@angular/core';
  * domain commands: Artemis customized commands
  */
 export abstract class Command {
-    buttonIcon: string;
+    buttonIcon: IconProp;
     buttonTranslationString: string;
     protected aceEditor: any;
     protected markdownWrapper: ElementRef;

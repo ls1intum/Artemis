@@ -317,6 +317,10 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
             this.modelingSubmissionService.update(this.submission, this.modelingExercise.id!).subscribe(
                 (response) => {
                     this.submission = response.body!;
+                    if (this.submission.model) {
+                        this.umlModel = JSON.parse(this.submission.model);
+                        this.hasElements = this.umlModel.elements && this.umlModel.elements.length !== 0;
+                    }
                     this.submissionChange.next(this.submission);
                     this.participation = this.submission.participation as StudentParticipation;
                     this.participation.exercise = this.modelingExercise;

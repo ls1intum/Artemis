@@ -687,9 +687,8 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     public void testGetPlagiarismResultWithoutResult() throws Exception {
         final Course course = database.addCourseWithOneReleasedTextExercise();
         TextExercise textExercise = textExerciseRepository.findByCourseId(course.getId()).get(0);
-
-        TextPlagiarismResult result = request.get("/api/text-exercises/" + textExercise.getId() + "/plagiarism-result", HttpStatus.NOT_FOUND, TextPlagiarismResult.class);
-        assertThat(result).isNull();
+        var result = request.get("/api/text-exercises/" + textExercise.getId() + "/plagiarism-result", HttpStatus.OK, String.class);
+        assertThat(result).isNullOrEmpty();
     }
 
     @Test

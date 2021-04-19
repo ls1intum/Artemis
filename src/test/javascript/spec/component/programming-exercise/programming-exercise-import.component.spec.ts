@@ -19,6 +19,8 @@ import { SearchResult } from 'app/shared/table/pageable-table';
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { MockProgrammingExercisePagingService } from '../../helpers/mocks/service/mock-programming-exercise-paging.service';
 import { ArtemisSharedPipesModule } from 'app/shared/pipes/shared-pipes.module';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { MockPipe } from 'ng-mocks';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -37,7 +39,7 @@ describe('ProgrammingExerciseImportComponent', () => {
     beforeEach(async () => {
         return TestBed.configureTestingModule({
             imports: [TranslateModule.forRoot(), ArtemisTestModule, ArtemisSharedCommonModule, FeatureToggleModule, ArtemisSharedPipesModule],
-            declarations: [ProgrammingExerciseImportComponent, ButtonComponent],
+            declarations: [ProgrammingExerciseImportComponent, ButtonComponent, MockPipe(ArtemisTranslatePipe)],
             providers: [
                 DifferencePipe,
                 { provide: ProgrammingExercisePagingService, useClass: MockProgrammingExercisePagingService },

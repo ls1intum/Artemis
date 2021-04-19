@@ -1,9 +1,10 @@
 import { Component, Input, OnChanges, OnInit, ViewEncapsulation } from '@angular/core';
 import * as moment from 'moment';
-import { Exercise, ExerciseCategory, getIcon, IncludedInOverallScore } from 'app/entities/exercise.model';
+import { Exercise, getIcon, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ButtonType } from 'app/shared/components/button.component';
+import { ExerciseCategory } from 'app/entities/exercise-category.model';
 
 @Component({
     selector: 'jhi-header-participation-page',
@@ -30,7 +31,7 @@ export class HeaderParticipationPageComponent implements OnInit, OnChanges {
      */
     ngOnInit(): void {
         this.setExerciseStatusBadge();
-        this.exerciseCategories = this.exerciseService.convertExerciseCategoriesFromServer(this.exercise);
+        this.exerciseCategories = this.exercise.categories || [];
     }
 
     /**
@@ -52,7 +53,7 @@ export class HeaderParticipationPageComponent implements OnInit, OnChanges {
      */
     ngOnChanges(): void {
         this.setExerciseStatusBadge();
-        this.exerciseCategories = this.exerciseService.convertExerciseCategoriesFromServer(this.exercise);
+        this.exerciseCategories = this.exercise.categories || [];
     }
 
     private setExerciseStatusBadge(): void {

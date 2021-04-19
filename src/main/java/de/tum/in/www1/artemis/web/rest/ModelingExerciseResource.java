@@ -29,7 +29,7 @@ import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.compass.CompassService;
 import de.tum.in.www1.artemis.service.plagiarism.ModelingPlagiarismDetectionService;
-import de.tum.in.www1.artemis.service.plagiarism.PlagiarismService;
+import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SubmissionExportOptionsDTO;
@@ -59,8 +59,6 @@ public class ModelingExerciseResource {
 
     private final ExerciseService exerciseService;
 
-    private final PlagiarismService plagiarismService;
-
     private final PlagiarismResultRepository plagiarismResultRepository;
 
     private final ModelingExerciseImportService modelingExerciseImportService;
@@ -79,10 +77,9 @@ public class ModelingExerciseResource {
 
     public ModelingExerciseResource(ModelingExerciseRepository modelingExerciseRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
             CourseRepository courseRepository, ModelingExerciseService modelingExerciseService, PlagiarismResultRepository plagiarismResultRepository,
-            ModelingExerciseImportService modelingExerciseImportService, PlagiarismService plagiarismService, SubmissionExportService modelingSubmissionExportService,
-            GroupNotificationService groupNotificationService, CompassService compassService, ExerciseService exerciseService,
-            GradingCriterionRepository gradingCriterionRepository, ModelingPlagiarismDetectionService modelingPlagiarismDetectionService,
-            ExampleSubmissionRepository exampleSubmissionRepository) {
+            ModelingExerciseImportService modelingExerciseImportService, SubmissionExportService modelingSubmissionExportService, GroupNotificationService groupNotificationService,
+            CompassService compassService, ExerciseService exerciseService, GradingCriterionRepository gradingCriterionRepository,
+            ModelingPlagiarismDetectionService modelingPlagiarismDetectionService, ExampleSubmissionRepository exampleSubmissionRepository) {
         this.modelingExerciseRepository = modelingExerciseRepository;
         this.modelingExerciseService = modelingExerciseService;
         this.plagiarismResultRepository = plagiarismResultRepository;
@@ -90,7 +87,6 @@ public class ModelingExerciseResource {
         this.modelingSubmissionExportService = modelingSubmissionExportService;
         this.userRepository = userRepository;
         this.courseRepository = courseRepository;
-        this.plagiarismService = plagiarismService;
         this.authCheckService = authCheckService;
         this.compassService = compassService;
         this.groupNotificationService = groupNotificationService;
@@ -375,7 +371,7 @@ public class ModelingExerciseResource {
         log.debug("REST request to get the latest plagiarism result for the modeling exercise with id: {}", exerciseId);
         ModelingExercise modelingExercise = modelingExerciseRepository.findByIdWithStudentParticipationsSubmissionsResultsElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, modelingExercise, null);
-        var plagiarismResult = plagiarismResultRepository.findFirstByExerciseIdOrderByLastModifiedDateDescElseThrow(modelingExercise.getId());
+        var plagiarismResult = plagiarismResultRepository.findFirstByExerciseIdOrderByLastModifiedDateDescOrNull(modelingExercise.getId());
         return ResponseEntity.ok((ModelingPlagiarismResult) plagiarismResult);
     }
 
@@ -390,8 +386,7 @@ public class ModelingExerciseResource {
      *                            value
      * @param minimumSize         consider only submissions whose size is greater or equal to this
      *                            value
-     * @return the ResponseEntity with status 200 (OK) and the list of pair-wise submission
-     * similarities above a threshold of 80%.
+     * @return the ResponseEntity with status 200 (OK) and the list of at most 500 pair-wise submissions with a similarity above the given threshold (e.g. 50%).
      */
     @GetMapping("/modeling-exercises/{exerciseId}/check-plagiarism")
     @PreAuthorize("hasRole('INSTRUCTOR')")
@@ -399,8 +394,15 @@ public class ModelingExerciseResource {
             @RequestParam int minimumSize) {
         var modelingExercise = modelingExerciseRepository.findByIdWithStudentParticipationsSubmissionsResultsElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, modelingExercise, null);
+        long start = System.nanoTime();
         ModelingPlagiarismResult result = modelingPlagiarismDetectionService.compareSubmissions(modelingExercise, similarityThreshold / 100, minimumSize, minimumScore);
-        plagiarismService.savePlagiarismResultAndRemovePrevious(result);
+        log.info("Finished modelingPlagiarismDetectionService.compareSubmissions call for {} comparisons in {}", result.getComparisons().size(),
+                TimeLogUtil.formatDurationFrom(start));
+        result.sortAndLimit(500);
+        log.info("Limited number of comparisons to {} to avoid performance issues when saving to database", result.getComparisons().size());
+        start = System.nanoTime();
+        plagiarismResultRepository.savePlagiarismResultAndRemovePrevious(result);
+        log.info("Finished plagiarismResultRepository.savePlagiarismResultAndRemovePrevious call in {}", TimeLogUtil.formatDurationFrom(start));
         return ResponseEntity.ok(result);
     }
 }

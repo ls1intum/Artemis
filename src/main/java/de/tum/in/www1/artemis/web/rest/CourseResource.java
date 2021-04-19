@@ -1127,11 +1127,15 @@ public class CourseResource {
      */
     @NotNull
     public ResponseEntity<List<User>> getAllUsersInGroup(Course course, String groupName) {
-        User user = userRepository.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
-            return forbidden();
-        }
-        return ResponseEntity.ok().body(userRepository.findAllInGroupWithAuthorities(groupName));
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
+        var usersInGroup = userRepository.findAllInGroup(groupName);
+        usersInGroup.forEach(user -> {
+            // remove some values which are not needed in the client
+            user.setLastNotificationRead(null);
+            user.setActivationKey(null);
+            user.setLangKey(null);
+        });
+        return ResponseEntity.ok().body(usersInGroup);
     }
 
     /**

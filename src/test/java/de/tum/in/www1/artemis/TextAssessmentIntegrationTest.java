@@ -1011,8 +1011,19 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
         final var exerciseWithParticipation = optionalFetchedExercise.get();
         studentParticipation = exerciseWithParticipation.getStudentParticipations().stream().iterator().next();
 
-        // request to manually assess latest submission (correction round: 0)
+        database.changeUser("instructor1");
+        // check properties set
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("withExerciseGroups", "true");
+        Exam examReturned = request.get("/api/courses/" + exam.getCourse().getId() + "/exams/" + exam.getId(), HttpStatus.OK, Exam.class, params);
+        examReturned.getExerciseGroups().get(0).getExercises().forEach(exerciseExamReturned -> {
+            assertThat(exerciseExamReturned.getNumberOfParticipations()).isNotNull();
+            assertThat(exerciseExamReturned.getNumberOfParticipations()).isEqualTo(1);
+        });
+        database.changeUser("tutor1");
+
+        // request to manually assess latest submission (correction round: 0)
+        params = new LinkedMultiValueMap<>();
         params.add("lock", "true");
         params.add("correction-round", "0");
         TextSubmission submissionWithoutFirstAssessment = request.get("/api/exercises/" + exerciseWithParticipation.getId() + "/text-submission-without-assessment", HttpStatus.OK,
@@ -1067,7 +1078,7 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
         assertThat(fetchedParticipation.findLatestResult()).isEqualTo(firstSubmittedManualResult);
 
         var databaseRelationshipStateOfResultsOverSubmission = studentParticipationRepository
-                .findAllWithEagerLegalSubmissionsAndEagerResultsAndEagerAssessorByExerciseId(exercise.getId());
+                .findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseId(exercise.getId());
         assertThat(databaseRelationshipStateOfResultsOverSubmission.size()).isEqualTo(1);
         fetchedParticipation = databaseRelationshipStateOfResultsOverSubmission.get(0);
         assertThat(fetchedParticipation.getSubmissions().size()).isEqualTo(1);
@@ -1104,8 +1115,7 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
         assertThat(fetchedParticipation.getResults().stream().filter(x -> x.getCompletionDate() == null).findFirst().get())
                 .isEqualTo(submissionWithoutSecondAssessment.getLatestResult());
 
-        databaseRelationshipStateOfResultsOverSubmission = studentParticipationRepository
-                .findAllWithEagerLegalSubmissionsAndEagerResultsAndEagerAssessorByExerciseId(exercise.getId());
+        databaseRelationshipStateOfResultsOverSubmission = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseId(exercise.getId());
         assertThat(databaseRelationshipStateOfResultsOverSubmission.size()).isEqualTo(1);
         fetchedParticipation = databaseRelationshipStateOfResultsOverSubmission.get(0);
         assertThat(fetchedParticipation.getSubmissions().size()).isEqualTo(1);

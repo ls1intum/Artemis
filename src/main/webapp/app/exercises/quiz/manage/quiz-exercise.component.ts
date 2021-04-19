@@ -58,8 +58,8 @@ export class QuizExerciseComponent extends ExerciseComponent {
      * Get the id of the quiz exercise
      * @param item the quiz exercise of which the id should be returned
      */
-    trackId(item: QuizExercise) {
-        return item.id;
+    trackId(index: number, item: QuizExercise) {
+        return item.id!;
     }
 
     protected getChangeEventName(): string {
