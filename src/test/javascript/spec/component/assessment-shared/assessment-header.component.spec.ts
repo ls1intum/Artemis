@@ -204,4 +204,24 @@ describe('AssessmentHeaderComponent', () => {
         const nextSubmissionButtonSpan = fixture.debugElement.query(By.css('[jhiTranslate$=nextSubmission]'));
         expect(nextSubmissionButtonSpan).toBeFalsy();
     });
+
+    it('should set highlightDifferences to true', () => {
+        component.highlightDifferences = false;
+        spyOn(component.highlightDifferencesChange, 'emit');
+
+        component.toggleHighlightDifferences();
+
+        expect(component.highlightDifferencesChange.emit).toHaveBeenCalled();
+        expect(component.highlightDifferences).toEqual(true);
+    });
+
+    it('should set highlightDifferences to false', () => {
+        component.highlightDifferences = true;
+        spyOn(component.highlightDifferencesChange, 'emit');
+
+        component.toggleHighlightDifferences();
+
+        expect(component.highlightDifferencesChange.emit).toHaveBeenCalled();
+        expect(component.highlightDifferences).toEqual(false);
+    });
 });

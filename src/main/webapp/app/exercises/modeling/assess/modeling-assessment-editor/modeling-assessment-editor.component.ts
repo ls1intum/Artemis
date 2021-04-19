@@ -28,6 +28,7 @@ import { StructuredGradingCriterionService } from 'app/exercises/shared/structur
 import { getSubmissionResultByCorrectionRound, getSubmissionResultById } from 'app/entities/submission.model';
 import { getExerciseDashboardLink, getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
 import { ExerciseType } from 'app/entities/exercise.model';
+import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
 
 @Component({
     selector: 'jhi-modeling-assessment-editor',
@@ -65,6 +66,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     correctionRound = 0;
     resultId: number;
     loadingInitialSubmission = true;
+    highlightDifferences = false;
 
     private cancelConfirmationText: string;
 
@@ -82,6 +84,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         private translateService: TranslateService,
         private complaintService: ComplaintService,
         private structuredGradingCriterionService: StructuredGradingCriterionService,
+        private submissionService: SubmissionService,
     ) {
         translateService.get('modelingAssessmentEditor.messages.confirmCancel').subscribe((text) => (this.cancelConfirmationText = text));
     }
@@ -188,6 +191,9 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         }
         this.checkPermissions();
         this.validateFeedback();
+
+        this.submissionService.handleFeedbackCorrectionRoundTag(this.correctionRound, this.submission);
+
         this.isLoading = false;
     }
 
@@ -440,6 +446,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         const hasUnreferencedFeedback = Feedback.haveCreditsAndComments(this.unreferencedFeedback);
         // When unreferenced feedback is set, it has to be valid (score + detailed text)
         this.assessmentsAreValid = (hasReferencedFeedback && this.unreferencedFeedback.length === 0) || hasUnreferencedFeedback;
+        this.submissionService.handleFeedbackCorrectionRoundTag(this.correctionRound, this.submission!);
     }
 
     navigateBack() {

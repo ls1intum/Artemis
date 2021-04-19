@@ -42,6 +42,7 @@
         [feedbacks]="participation?.results && participation.results!.length > 0 && participation.results![0].feedbacks ? participation.results![0].feedbacks! : []"
         [readOnlyManualFeedback]="readOnlyManualFeedback"
         [isTutorAssessment]="isTutorAssessment"
+        [highlightDifferences]="highlightDifferences"
         (onFileContentChange)="onFileContentChange($event)"
         (onUpdateFeedback)="updateFeedback($event!)"
         (onError)="onError($event)"
