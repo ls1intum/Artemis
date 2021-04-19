@@ -19,7 +19,7 @@
             "assessmentDueDateIsOver": "Assessment Due Date is over, the assessment will be published immediately after submitting",
             "diffView": {
                 "differenceActivate": "Activate Diff View",
-                "differenceDeactivate": "Deactivate Diff-View",
+                "differenceDeactivate": "Deactivate Diff View",
                 "highlightAssessmentDiffTooltipOn": "Highlight the correction round in which the feedback was created or modified",
                 "highlightAssessmentDiffTooltipOff": "Deactivate highlighting of correction rounds",
                 "correctionRoundDiffFirst": "First correction round",
