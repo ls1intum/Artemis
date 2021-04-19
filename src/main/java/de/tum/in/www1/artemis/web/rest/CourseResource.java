@@ -45,6 +45,7 @@ import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.CIUserManagementService;
 import de.tum.in.www1.artemis.service.connectors.VcsUserManagementService;
+import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 import de.tum.in.www1.artemis.web.rest.dto.*;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
@@ -606,6 +607,7 @@ public class CourseResource {
     @GetMapping("/courses/{courseId}/stats-for-assessment-dashboard")
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<StatsForDashboardDTO> getStatsForAssessmentDashboard(@PathVariable long courseId) {
+        long startRestCall = System.nanoTime();
         Course course = courseRepository.findByIdElseThrow(courseId);
 
         long start = System.currentTimeMillis();
@@ -679,6 +681,7 @@ public class CourseResource {
 
         stats.setTutorLeaderboardEntries(leaderboardEntries);
 
+        log.error("Finished > getStatsForAssessmentDashboard < call for course {} in {}", course.getId(), TimeLogUtil.formatDurationFrom(startRestCall));
         return ResponseEntity.ok(stats);
     }
 
