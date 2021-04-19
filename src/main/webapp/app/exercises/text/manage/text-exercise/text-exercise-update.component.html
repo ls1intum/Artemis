@@ -205,7 +205,13 @@
             <fa-icon [icon]="'ban'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
         </button>
 
-        <button type="submit" (click)="save()" class="btn btn-primary" id="submit-entity">
+        <button
+            type="submit"
+            (click)="save()"
+            class="btn btn-primary"
+            id="submit-entity"
+            [disabled]="editForm.form.invalid || isSaving || textExercise.dueDateError || textExercise.assessmentDueDateError"
+        >
             <fa-icon [icon]="'save'"></fa-icon>
             <span *ngIf="isImport" jhiTranslate="artemisApp.textExercise.submitButton.import">Import</span>
             <span *ngIf="!isImport && textExercise.id" jhiTranslate="artemisApp.textExercise.submitButton.save">Save</span>

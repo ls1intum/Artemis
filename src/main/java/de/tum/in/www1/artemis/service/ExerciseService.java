@@ -742,7 +742,7 @@ public class ExerciseService {
      */
     public void validateScoreSettings(Exercise exercise) {
         // Check if max score is set
-        if (exercise.getMaxPoints() == null || exercise.getMaxPoints() == 0) {
+        if (exercise.getMaxPoints() == null || exercise.getMaxPoints() <= 0) {
             throw new BadRequestAlertException("The max score needs to be greater than 0", "Exercise", "maxScoreInvalid");
         }
 
