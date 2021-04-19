@@ -298,10 +298,6 @@ describe('QuizExercise Management Detail Component', () => {
         describe('init', () => {
             let exerciseServiceCategoriesAsStringStub: SinonStub;
             let courseServiceStub: SinonStub;
-            const testExerciseCategories = [
-                { exerciseId: 1, category: 'category1', color: 'color1' },
-                { exerciseId: 2, category: 'category2', color: 'color2' },
-            ];
             const testExistingCategories = [
                 { exerciseId: 1, category: 'eCategory1', color: 'eColor1' },
                 { exerciseId: 2, category: 'eCategory2', color: 'eColor2' },

@@ -2,16 +2,16 @@
     <div class="card-header text-white" [routerLink]="['/courses', course.id!]" [ngStyle]="{ backgroundColor: course.color || ARTEMIS_DEFAULT_COLOR }">
         <a class="stretched-link" [routerLink]="['/courses', course.id!]"></a>
         <div class="container">
-            <div class="row">
-                <div class="col image-col">
+            <div class="row d-flex">
+                <div class="col-2 header-col image-col">
                     <jhi-secured-image *ngIf="course.courseIcon" [cachingStrategy]="CachingStrategy.LOCAL_STORAGE" [src]="course.courseIcon"></jhi-secured-image>
                 </div>
-                <div class="col title-col">
+                <div class="col-8 header-col title-col">
                     <h5 class="card-title text-center">
                         {{ course.title }}
                     </h5>
                 </div>
-                <div class="col course-info-col">
+                <div class="col-2 header-col course-info-col">
                     <div class="course-info-amounts">
                         <span *ngIf="exerciseCount === 0">Exercises: {{ exerciseCount }}</span>
                         <a *ngIf="exerciseCount > 0" [routerLink]="['/courses', course.id!, 'exercises']">Exercises: {{ exerciseCount }}</a>
@@ -29,14 +29,17 @@
 
     <div class="card-body">
         <a class="stretched-link" [routerLink]="['/courses', course.id!]"></a>
-        <div class="chart-container" *ngIf="exerciseCount > 0 && totalReachableScore > 0">
+        <div class="chart-container" *ngIf="exerciseCount > 0 && (totalReachableScore > 0 || totalAbsoluteScore > 0); else noStatistic">
             <div class="chart-text">
                 <h2 class="text-center">{{ totalRelativeScore }}%</h2>
                 <h5 class="text-center points">{{ totalAbsoluteScore }} / {{ totalReachableScore }} Pts</h5>
             </div>
             <canvas
                 baseChart
+                [routerLink]="['/courses', course.id!]"
                 id="score-chart"
+                height="150"
+                width="150"
                 [legend]="false"
                 [datasets]="doughnutChartData"
                 [options]="totalScoreOptions"
@@ -45,6 +48,9 @@
                 [chartType]="'doughnut'"
             ></canvas>
         </div>
+        <ng-template #noStatistic>
+            <h6 jhiTranslate="artemisApp.studentDashboard.noStatistics">No statistics available</h6>
+        </ng-template>
     </div>
 
     <div class="card-footer text-muted" *ngIf="nextRelevantExercise">
