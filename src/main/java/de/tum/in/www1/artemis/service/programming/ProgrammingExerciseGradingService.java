@@ -20,7 +20,10 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.CategoryState;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
-import de.tum.in.www1.artemis.domain.participation.*;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.GroupNotificationService;
@@ -44,6 +47,8 @@ public class ProgrammingExerciseGradingService {
 
     private final ResultRepository resultRepository;
 
+    private final FeedbackRepository feedbackRepository;
+
     private final StudentParticipationRepository studentParticipationRepository;
 
     private final StaticCodeAnalysisService staticCodeAnalysisService;
@@ -62,8 +67,8 @@ public class ProgrammingExerciseGradingService {
 
     public ProgrammingExerciseGradingService(ProgrammingExerciseTestCaseService testCaseService, ProgrammingSubmissionService programmingSubmissionService,
             StudentParticipationRepository studentParticipationRepository, ResultRepository resultRepository, Optional<ContinuousIntegrationService> continuousIntegrationService,
-            SimpMessageSendingOperations messagingTemplate, StaticCodeAnalysisService staticCodeAnalysisService, ProgrammingAssessmentService programmingAssessmentService,
-            TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
+            SimpMessageSendingOperations messagingTemplate, FeedbackRepository feedbackRepository, StaticCodeAnalysisService staticCodeAnalysisService,
+            ProgrammingAssessmentService programmingAssessmentService, TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
             AuditEventRepository auditEventRepository, GroupNotificationService groupNotificationService) {
         this.testCaseService = testCaseService;
@@ -72,6 +77,7 @@ public class ProgrammingExerciseGradingService {
         this.continuousIntegrationService = continuousIntegrationService;
         this.resultRepository = resultRepository;
         this.messagingTemplate = messagingTemplate;
+        this.feedbackRepository = feedbackRepository;
         this.staticCodeAnalysisService = staticCodeAnalysisService;
         this.programmingAssessmentService = programmingAssessmentService;
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
@@ -165,10 +171,22 @@ public class ProgrammingExerciseGradingService {
         latestSemiAutomaticResult.getFeedbacks().removeIf(feedback -> feedback != null && feedback.getType() == FeedbackType.AUTOMATIC);
 
         // copy all feedback from the automatic result
+        ArrayList<Feedback> copiedFeedbacks = new ArrayList<>();
         for (Feedback feedback : newAutomaticResult.getFeedbacks()) {
-            Feedback newFeedback = feedback.copyFeedback();
-            latestSemiAutomaticResult.addFeedback(newFeedback);
+            copiedFeedbacks.add(feedback.copyFeedback());
         }
+
+        List<Feedback> savedFeedbacks = new ArrayList<>();
+        copiedFeedbacks.forEach(feedback -> {
+            // cut association to parent object
+            feedback.setResult(null);
+            // persist the child object without an association to the parent object.
+            feedback = feedbackRepository.saveAndFlush(feedback);
+            // restore the association to the parent object
+            feedback.setResult(latestSemiAutomaticResult);
+            savedFeedbacks.add(feedback);
+        });
+        latestSemiAutomaticResult.setFeedbacks(savedFeedbacks);
 
         String resultString = updateManualResultString(newAutomaticResult.getResultString(), latestSemiAutomaticResult, programmingExercise);
         latestSemiAutomaticResult.setResultString(resultString);
