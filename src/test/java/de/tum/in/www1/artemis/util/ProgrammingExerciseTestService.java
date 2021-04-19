@@ -244,8 +244,10 @@ public class ProgrammingExerciseTestService {
     }
 
     // TEST
-    public void createProgrammingExercise_sequential_validExercise_created() throws Exception {
+    public void createProgrammingExercise_sequential_validExercise_created(ProgrammingLanguage programmingLanguage) throws Exception {
+        exercise = ModelFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course, programmingLanguage);
         exercise.setSequentialTestRuns(true);
+        setupRepositoryMocks(exercise, exerciseRepo, solutionRepo, testRepo);
         mockDelegate.mockConnectorRequestsForSetup(exercise, false);
         validateProgrammingExercise(request.postWithResponseBody(ROOT + SETUP, exercise, ProgrammingExercise.class, HttpStatus.CREATED));
     }
