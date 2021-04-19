@@ -2,16 +2,16 @@
     <div class="card-header text-white" [routerLink]="['/courses', course.id!]" [ngStyle]="{ backgroundColor: course.color || ARTEMIS_DEFAULT_COLOR }">
         <a class="stretched-link" [routerLink]="['/courses', course.id!]"></a>
         <div class="container">
-            <div class="row">
-                <div class="col image-col">
+            <div class="row d-flex">
+                <div class="col-2 header-col image-col">
                     <jhi-secured-image *ngIf="course.courseIcon" [cachingStrategy]="CachingStrategy.LOCAL_STORAGE" [src]="course.courseIcon"></jhi-secured-image>
                 </div>
-                <div class="col title-col">
+                <div class="col-8 header-col title-col">
                     <h5 class="card-title text-center">
                         {{ course.title }}
                     </h5>
                 </div>
-                <div class="col course-info-col">
+                <div class="col-2 header-col course-info-col">
                     <div class="course-info-amounts">
                         <span *ngIf="exerciseCount === 0">Exercises: {{ exerciseCount }}</span>
                         <a *ngIf="exerciseCount > 0" [routerLink]="['/courses', course.id!, 'exercises']">Exercises: {{ exerciseCount }}</a>
