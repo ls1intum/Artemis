@@ -192,6 +192,10 @@ public class UserResource {
             // remove some values which are not needed in the client
             user.setLangKey(null);
             user.setLastNotificationRead(null);
+            user.setLastModifiedBy(null);
+            user.setLastModifiedDate(null);
+            user.setCreatedBy(null);
+            user.setCreatedDate(null);
         });
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
         return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
