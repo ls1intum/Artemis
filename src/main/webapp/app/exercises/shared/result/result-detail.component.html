@@ -46,8 +46,9 @@
                     <span>{{ feedback.category }}</span>
                     <span class="feedback-points" *ngIf="feedback.credits">{{ feedback.credits.toFixed(1) }}P</span>
                     <span class="feedback-title" *ngIf="feedback.title">{{ feedback.title }}</span>
-                    <p *ngIf="feedback.text">{{ feedback.text }}</p>
-                    <p *ngElse>No feedback available</p>
+                    <jhi-feedback-collapse [text]="feedback.text"></jhi-feedback-collapse>
+                    <!-- <p *ngIf="feedback.text">{{ feedback.text }}</p>
+                    <p *ngElse>No feedback available</p> -->
                 </div>
             </div>
         </div>

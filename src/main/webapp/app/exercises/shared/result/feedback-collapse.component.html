@@ -1,0 +1,17 @@
+<p *ngIf="!text; else content">No feedback available!</p>
+<ng-template #content>
+    <p *ngIf="text.length < smallFeedbackCharacterLimit; else big">
+        {{ text }}
+    </p>
+    <ng-template #big>
+        <div *ngIf="isCollapsed; else closed">
+            {{ text.substring(0, 30) }} ... <button (click)="isCollapsed = !isCollapsed">Open</button>
+            <!-- TODO: prettier buttons-->
+        </div>
+        <ng-template #closed>
+            <button (click)="isCollapsed = !isCollapsed">Close</button>
+            <div>{{ text }}</div>
+        </ng-template>
+        &nbsp;
+    </ng-template>
+</ng-template>
