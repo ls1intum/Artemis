@@ -681,7 +681,7 @@ public class CourseResource {
 
         stats.setTutorLeaderboardEntries(leaderboardEntries);
 
-        log.error("Finished > getStatsForAssessmentDashboard < call for course {} in {}", course.getId(), TimeLogUtil.formatDurationFrom(startRestCall));
+        log.info("Finished > getStatsForAssessmentDashboard < call for course {} in {}", course.getId(), TimeLogUtil.formatDurationFrom(startRestCall));
         return ResponseEntity.ok(stats);
     }
 

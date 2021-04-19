@@ -13,6 +13,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.assessment.dashboard.RatedCount;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.leaderboard.tutor.TutorLeaderboardAssessments;
 import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
@@ -123,14 +124,14 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
      * @return an array with 2 elements: count of rated (in time) and unrated (late) assessments of a course
      */
     @Query("""
-            SELECT count(r)
+            SELECT new de.tum.in.www1.artemis.domain.assessment.dashboard.RatedCount(r.rated, count(r))
             FROM Result r join r.participation p
             WHERE r.completionDate is not null
                 AND r.assessor is not null
                 AND p.exercise.id IN :exerciseIds
                 GROUP BY r.rated
             """)
-    long[] countAssessmentsByExerciseIdsAndRated(@Param("exerciseIds") Set<Long> exerciseIds);
+    List<RatedCount> countAssessmentsByExerciseIdsAndRated(@Param("exerciseIds") Set<Long> exerciseIds);
 
     /**
      * Load a result from the database by its id together with the associated submission and the list of feedback items.
@@ -426,8 +427,18 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
      * @return a number of assessments for the course
      */
     default DueDateStat countNumberOfAssessments(Set<Long> exerciseIds) {
-        var numberOfAssessments = countAssessmentsByExerciseIdsAndRated(exerciseIds);
-        return new DueDateStat(numberOfAssessments[0], numberOfAssessments[1]);
+        var ratedCounts = countAssessmentsByExerciseIdsAndRated(exerciseIds);
+        long inTime = 0;
+        long late = 0;
+        for (var ratedCount : ratedCounts) {
+            if (ratedCount.rated()) {
+                inTime = ratedCount.count();
+            }
+            else {
+                late = ratedCount.count();
+            }
+        }
+        return new DueDateStat(inTime, late);
     }
 
     @Query("""
