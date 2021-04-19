@@ -1,7 +1,8 @@
+import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { Command } from 'app/shared/markdown-editor/commands/command';
 
 export class HeadingThreeCommand extends Command {
-    buttonIcon = 'heading';
+    buttonIcon = 'heading' as IconProp;
     buttonTranslationString = 'artemisApp.multipleChoiceQuestion.editor.headingThree';
 
     /**

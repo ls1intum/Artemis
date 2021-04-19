@@ -72,7 +72,7 @@
             "addAssessment": {
                 "headline": "Beispielabgabe bewerten",
                 "content": "In diesem Schritt fängst du mit der Bewertung der Abgabe an. Befolge dafür die folgende Anleitung:",
-                "task": "Markiere den Text eines Software Patterns und klicke auf <tt>Bewerten</tt>. Wiederhole diesen Schritt für die übrigen zwei Patterns. Am Ende solltest du drei markierte Textblöcke haben."
+                "task": "Markiere den Text eines Software Patterns und klicke und bewerte ihn. Wiederhole diesen Schritt für die übrigen zwei Patterns. Am Ende solltest du drei markierte Textblöcke haben."
             },
             "addScore": {
                 "headline": "Punktzahl hinzufügen",

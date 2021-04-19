@@ -235,7 +235,7 @@
                                     [additionalChecks]="
                                         exercise.type === ExerciseType.PROGRAMMING
                                             ? { deleteBuildPlan: 'artemisApp.participation.deleteBuildPlan', deleteRepository: 'artemisApp.participation.deleteRepository' }
-                                            : null
+                                            : undefined
                                     "
                                 >
                                     <fa-icon [icon]="'times'"></fa-icon>

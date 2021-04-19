@@ -1,4 +1,5 @@
 import { Component, HostBinding, Input } from '@angular/core';
+import { IconProp } from '@fortawesome/fontawesome-svg-core';
 
 @Component({
     /* tslint:disable-next-line component-selector */
@@ -8,7 +9,7 @@ import { Component, HostBinding, Input } from '@angular/core';
 })
 export class ExerciseActionButtonComponent {
     @Input() buttonVisible = true;
-    @Input() buttonIcon: string;
+    @Input() buttonIcon: IconProp;
     @Input() buttonLabel: string;
     @Input() buttonLoading = false;
     @Input() hideLabelMobile = true;

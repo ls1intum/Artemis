@@ -50,10 +50,10 @@
             <tbody>
                 <tr *ngFor="let modelingExercise of modelingExercises; trackBy: trackId">
                     <td>
-                        <a [routerLink]="['/course-management', modelingExercise.course.id, 'modeling-exercises', modelingExercise.id]">{{ modelingExercise.id }}</a>
+                        <a [routerLink]="['/course-management', modelingExercise.course?.id, 'modeling-exercises', modelingExercise.id]">{{ modelingExercise.id }}</a>
                     </td>
                     <td>
-                        <a [routerLink]="['/course-management', modelingExercise.course.id, 'modeling-exercises', modelingExercise.id]">{{ modelingExercise.title }}</a>
+                        <a [routerLink]="['/course-management', modelingExercise.course?.id, 'modeling-exercises', modelingExercise.id]">{{ modelingExercise.title }}</a>
                     </td>
                     <td>{{ modelingExercise.releaseDate | artemisDate }}</td>
                     <td>{{ modelingExercise.dueDate | artemisDate }}</td>
@@ -67,7 +67,7 @@
                         <div class="btn-group flex-btn-group-container">
                             <a
                                 *ngIf="modelingExercise.isAtLeastTutor"
-                                [routerLink]="['/course-management', modelingExercise.course.id, 'modeling-exercises', modelingExercise.id, 'scores']"
+                                [routerLink]="['/course-management', modelingExercise.course?.id, 'modeling-exercises', modelingExercise.id, 'scores']"
                                 class="btn btn-info btn-sm mr-1"
                             >
                                 <fa-icon [icon]="'table'"></fa-icon>
@@ -91,7 +91,7 @@
                             </a>
                             <a
                                 *ngIf="modelingExercise.teamMode && modelingExercise.isAtLeastTutor"
-                                [routerLink]="['/course-management', modelingExercise.course.id, 'modeling-exercises', modelingExercise.id, 'teams']"
+                                [routerLink]="['/course-management', modelingExercise.course?.id, 'modeling-exercises', modelingExercise.id, 'teams']"
                                 class="btn btn-primary btn-sm mr-1"
                             >
                                 <fa-icon [icon]="'users'"></fa-icon>
@@ -99,7 +99,7 @@
                             </a>
                             <a
                                 *ngIf="modelingExercise.isAtLeastInstructor"
-                                [routerLink]="['/course-management', modelingExercise.course.id, 'modeling-exercises', modelingExercise.id, 'edit']"
+                                [routerLink]="['/course-management', modelingExercise.course?.id, 'modeling-exercises', modelingExercise.id, 'edit']"
                                 class="btn btn-warning btn-sm mr-1"
                             >
                                 <fa-icon [icon]="'wrench'"></fa-icon>
@@ -108,10 +108,10 @@
                             <button
                                 *ngIf="modelingExercise.isAtLeastInstructor"
                                 jhiDeleteButton
-                                [entityTitle]="modelingExercise.title"
+                                [entityTitle]="modelingExercise.title || ''"
                                 deleteQuestion="artemisApp.exercise.delete.question"
                                 deleteConfirmationText="artemisApp.exercise.delete.typeNameToConfirm"
-                                (delete)="deleteModelingExercise(modelingExercise.id)"
+                                (delete)="deleteModelingExercise(modelingExercise.id!)"
                                 [dialogError]="dialogError$"
                             >
                                 <fa-icon [icon]="'times'"></fa-icon>

@@ -8,7 +8,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,10 +22,15 @@ import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.*;
+import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
+import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
+import de.tum.in.www1.artemis.domain.enumeration.TutorParticipationStatus;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
-import de.tum.in.www1.artemis.domain.participation.*;
+import de.tum.in.www1.artemis.domain.participation.Participation;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.programmingexercise.MockDelegate;
 import de.tum.in.www1.artemis.repository.*;
@@ -1287,8 +1295,7 @@ public class CourseTestService {
 
     // Test
     public void testGetCourseTitleForNonExistingCourse() throws Exception {
-        // No course with id 10 was created
-        request.get("/api/courses/10/title", HttpStatus.NOT_FOUND, String.class);
+        request.get("/api/courses/12312412321/title", HttpStatus.NOT_FOUND, String.class);
     }
 
     // Test
@@ -1381,7 +1388,7 @@ public class CourseTestService {
         final var teamExerciseId = teamExerciseNotEnded.getId();
         var teamStudents = new HashSet<User>();
         teamStudents.add(student);
-        var team = database.createTeam(teamStudents, instructor, teamExerciseNotEnded);
+        var team = database.createTeam(teamStudents, instructor, teamExerciseNotEnded, "team");
         database.addTeamParticipationForExercise(teamExerciseNotEnded, team.getId());
 
         instructorsCourse.addExercises(teamExerciseNotEnded);

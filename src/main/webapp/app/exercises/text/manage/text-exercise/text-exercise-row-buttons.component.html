@@ -40,7 +40,7 @@
     <button
         *ngIf="exercise.isAtLeastInstructor"
         jhiDeleteButton
-        [entityTitle]="exercise.title"
+        [entityTitle]="exercise.title || ''"
         deleteQuestion="artemisApp.exercise.delete.question"
         deleteConfirmationText="artemisApp.exercise.delete.typeNameToConfirm"
         (delete)="deleteExercise()"

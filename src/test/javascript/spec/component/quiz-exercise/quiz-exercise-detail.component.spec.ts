@@ -298,7 +298,6 @@ describe('QuizExercise Management Detail Component', () => {
         beforeEach(configureFixtureAndServices);
 
         describe('init', () => {
-            let exerciseServiceCategoriesStub: SinonStub;
             let exerciseServiceCategoriesAsStringStub: SinonStub;
             let courseServiceStub: SinonStub;
             const testExerciseCategories = [
@@ -313,8 +312,6 @@ describe('QuizExercise Management Detail Component', () => {
             let alertServiceStub: SinonStub;
             beforeEach(() => {
                 comp.course = course;
-                exerciseServiceCategoriesStub = stub(exerciseService, 'convertExerciseCategoriesFromServer');
-                exerciseServiceCategoriesStub.returns(testExerciseCategories);
                 courseServiceStub = stub(courseManagementService, 'findAllCategoriesOfCourse');
                 courseServiceStub.returns(
                     of(
@@ -334,8 +331,6 @@ describe('QuizExercise Management Detail Component', () => {
                 expect(prepareEntitySpy).to.have.been.calledWith(comp.quizExercise);
                 expect(comp.savedEntity).to.deep.equal(new QuizExercise(undefined, undefined));
                 expect(comp.quizExercise.course).to.deep.equal(course);
-                expect(exerciseServiceCategoriesStub).to.have.been.calledWith(comp.quizExercise);
-                expect(comp.exerciseCategories).to.deep.equal(testExerciseCategories);
                 expect(courseServiceStub).to.have.been.calledWith(course.id);
             });
             it('should set entity to quiz exercise if quiz exercise defined', () => {
@@ -431,7 +426,7 @@ describe('QuizExercise Management Detail Component', () => {
                 comp.quizExercise = quizExercise;
                 const exerciseCategory1 = { exerciseId: 1, category: 'category1', color: 'color1' };
                 const exerciseCategory2 = { exerciseId: 1, category: 'category1', color: 'color1' };
-                const expected = [JSON.stringify(exerciseCategory1), JSON.stringify(exerciseCategory2)];
+                const expected = [exerciseCategory1, exerciseCategory2];
                 comp.updateCategories([exerciseCategory1, exerciseCategory2]);
                 expect(comp.quizExercise.categories).to.deep.equal(expected);
             });

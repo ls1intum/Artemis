@@ -1,11 +1,11 @@
-<jhi-header-exercise-page-with-details [exercise]="exercise" [exam]="exam" [isTestRun]="isTestRun" [displayBackButton]="false">
+<jhi-header-exercise-page-with-details *ngIf="exercise" [exercise]="exercise" [exam]="exam" [isTestRun]="isTestRun" [displayBackButton]="false">
     <span *ngIf="!isTestRun" pagetitle>{{ 'artemisApp.exerciseAssessmentDashboard.pageHeader' | artemisTranslate }} {{ exercise?.title }}</span>
     <span *ngIf="isTestRun" pagetitle>{{ 'artemisApp.exerciseAssessmentDashboard.testRunPageHeader' | artemisTranslate }} {{ exercise?.title }}</span>
 </jhi-header-exercise-page-with-details>
 
 <jhi-alert></jhi-alert>
 
-<div *ngIf="exercise !== undefined">
+<div *ngIf="exercise">
     <div class="row my-3 justify-content-around">
         <div class="col-lg-5 col-md-6 col-sm-6 text-center" *ngIf="!isTestRun">
             <p class="h3">{{ 'artemisApp.exerciseAssessmentDashboard.yourStatus' | artemisTranslate }}:</p>
@@ -22,12 +22,15 @@
             >
             </jhi-tutor-participation-graph>
         </div>
-        <div class="col-lg-3 col-md-6 col-sm-6 align-self-center" *ngIf="isAtLeastInstructor && exam?.numberOfCorrectionRoundsInExam > 1 && isExamMode && !isTestRun">
+        <div
+            class="col-lg-3 col-md-6 col-sm-6 align-self-center"
+            *ngIf="isAtLeastInstructor && exam?.numberOfCorrectionRoundsInExam && exam!.numberOfCorrectionRoundsInExam! > 1 && isExamMode && !isTestRun"
+        >
             <ng-container *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']">
                 <jhi-second-correction-enable-button
                     (ngModelChange)="toggleSecondCorrection()"
-                    [(secondCorrectionEnabled)]="secondCorrectionEnabled"
-                    [(toggelingSecondCorrectionButton)]="toggelingSecondCorrectionButton"
+                    [secondCorrectionEnabled]="secondCorrectionEnabled"
+                    [toggelingSecondCorrectionButton]="toggelingSecondCorrectionButton"
                 ></jhi-second-correction-enable-button>
                 <a class="btn btn-primary btn-sm ml-1" [routerLink]="getSubmissionsLinkForExercise(exercise)">
                     <span jhiTranslate="artemisApp.assessmentDashboard.submissions">Submissions</span>
@@ -111,8 +114,8 @@
             <!-- Programming exercises have a couple of custom render modules, so we load the instructions component here.-->
             <ng-template #programmingInstructions>
                 <jhi-programming-exercise-instructions
-                    [exercise]="asProgrammingExercise(exercise)"
-                    [participation]="asProgrammingExercise(exercise).templateParticipation"
+                    [exercise]="programmingExercise"
+                    [participation]="programmingExercise.templateParticipation!"
                     [personalParticipation]="false"
                 ></jhi-programming-exercise-instructions>
             </ng-template>
@@ -132,7 +135,7 @@
 
         <div class="col-12" *ngIf="exercise.type === ExerciseType.PROGRAMMING">
             <h4>{{ 'artemisApp.exerciseAssessmentDashboard.exampleSolution' | artemisTranslate }}</h4>
-            <a jhiSecureLink [href]="asProgrammingExercise(exercise).solutionParticipation!.repositoryUrl">
+            <a jhiSecureLink [href]="programmingExercise.solutionParticipation?.repositoryUrl || ''">
                 <jhi-button jhiTranslate="artemisApp.exerciseAssessmentDashboard.programmingExercise.exampleSolution"> Example solution repository </jhi-button>
             </a>
         </div>
@@ -142,7 +145,10 @@
 
             <p [innerHTML]="formattedGradingInstructions"></p>
         </div>
-        <jhi-structured-grading-instructions-assessment-layout [readonly]="true" [criteria]="exercise.gradingCriteria"></jhi-structured-grading-instructions-assessment-layout>
+        <jhi-structured-grading-instructions-assessment-layout
+            [readonly]="true"
+            [criteria]="exercise.gradingCriteria || []"
+        ></jhi-structured-grading-instructions-assessment-layout>
     </div>
 
     <div class="col-12 text-center" *ngIf="tutorParticipationStatus === NOT_PARTICIPATED && !isTestRun">
@@ -195,11 +201,11 @@
                             <button
                                 class="btn btn-link review-example-submission"
                                 [class.guided-tour]="exercise === exerciseForGuidedTour"
-                                (click)="openExampleSubmission(exampleSubmission.id, true, false)"
+                                (click)="openExampleSubmission(exampleSubmission.id!, true, false)"
                             >
                                 {{ 'artemisApp.exerciseAssessmentDashboard.reviewExampleSubmission' | artemisTranslate }} {{ i + 1 }}
                             </button>
-                            <fa-icon [icon]="'check-circle'" *ngIf="hasBeenCompletedByTutor(exampleSubmission.id)"></fa-icon>
+                            <fa-icon [icon]="'check-circle'" *ngIf="hasBeenCompletedByTutor(exampleSubmission.id!)"></fa-icon>
                         </li>
                     </ul>
                 </div>
@@ -226,11 +232,11 @@
                             <button
                                 class="btn btn-link assess-example-submission"
                                 [class.guided-tour]="exercise === exerciseForGuidedTour"
-                                (click)="openExampleSubmission(exampleSubmission.id, false, true)"
+                                (click)="openExampleSubmission(exampleSubmission.id!, false, true)"
                             >
                                 {{ 'artemisApp.exerciseAssessmentDashboard.assessExampleSubmission' | artemisTranslate }} {{ i + 1 }}
                             </button>
-                            <fa-icon [icon]="'check-circle'" *ngIf="hasBeenCompletedByTutor(exampleSubmission.id)"></fa-icon>
+                            <fa-icon [icon]="'check-circle'" *ngIf="hasBeenCompletedByTutor(exampleSubmission.id!)"></fa-icon>
                         </li>
                     </ul>
                 </div>
@@ -255,8 +261,10 @@
                         <table
                             class="table table-striped exercise-table"
                             *ngIf="
-                                (unassessedSubmissionByCorrectionRound && unassessedSubmissionByCorrectionRound.get(correctionRound)?.id > 0) ||
-                                    submissionsByCorrectionRound.get(correctionRound)?.length > 0;
+                                (unassessedSubmissionByCorrectionRound &&
+                                    unassessedSubmissionByCorrectionRound!.get(correctionRound) &&
+                                    unassessedSubmissionByCorrectionRound!.get(correctionRound)!.id! > 0) ||
+                                    (submissionsByCorrectionRound.get(correctionRound) && submissionsByCorrectionRound.get(correctionRound)!.length > 0);
                                 else noSubmissions
                             "
                         >
@@ -278,20 +286,21 @@
                                     <td>
                                         <jhi-result
                                             [result]="getSubmissionResultByCorrectionRound(submission, correctionRound)"
-                                            [participation]="submission.participation"
+                                            [participation]="submission.participation!"
                                         ></jhi-result>
                                     </td>
                                     <td>
                                         {{ calculateSubmissionStatus(submission, correctionRound) }}
                                     </td>
                                     <td>
-                                        <span *ngIf="submission.results[correctionRound] != undefined && submission.results[correctionRound]!.score != undefined"
-                                            >{{ round(submission.results[correctionRound]!.score) }} %</span
+                                        <span
+                                            *ngIf="
+                                                !!submission.results && submission.results[correctionRound] != undefined && submission.results[correctionRound]!.score != undefined
+                                            "
+                                            >{{ round(submission.results![correctionRound]!.score) }} %</span
                                         >
                                     </td>
-                                    <td *ngIf="exercise.type === ExerciseType.TEXT">
-                                        {{ 'artemisApp.exerciseAssessmentDashboard.languages.' + (submission.language ? submission.language : 'UNKNOWN') | artemisTranslate }}
-                                    </td>
+                                    <jhi-language-table-cell *ngIf="exercise.type === ExerciseType.TEXT" [submission]="submission"></jhi-language-table-cell>
                                     <td>
                                         <ng-container *ngIf="(isTestRun && complaints.length === 0) || !isTestRun">
                                             <ng-container>
@@ -306,7 +315,7 @@
                                                 </button>
                                                 <ng-template #continueButton>
                                                     <button
-                                                        *ngIf="submission?.results[correctionRound]"
+                                                        *ngIf="!!submission.results && !!submission.results[correctionRound]"
                                                         (click)="openAssessmentEditor(submission, correctionRound)"
                                                         class="btn btn-primary btn-sm"
                                                     >
@@ -321,7 +330,8 @@
                                 <ng-container
                                     *ngIf="
                                         unassessedSubmissionByCorrectionRound &&
-                                        unassessedSubmissionByCorrectionRound.get(correctionRound)?.id > 0 &&
+                                        unassessedSubmissionByCorrectionRound!.get(correctionRound) &&
+                                        unassessedSubmissionByCorrectionRound!.get(correctionRound)!.id! > 0 &&
                                         !exercise.teamMode &&
                                         !isTestRun
                                     "
@@ -333,19 +343,18 @@
                                         <td></td>
                                         <td>{{ 'artemisApp.exerciseAssessmentDashboard.new' | artemisTranslate }}</td>
                                         <td></td>
-                                        <td *ngIf="exercise.type === ExerciseType.TEXT">
-                                            {{
-                                                'artemisApp.exerciseAssessmentDashboard.languages.' + language(unassessedSubmissionByCorrectionRound.get(correctionRound)!)
-                                                    | artemisTranslate
-                                            }}
-                                        </td>
+                                        <jhi-language-table-cell
+                                            *ngIf="exercise.type === ExerciseType.TEXT"
+                                            [submission]="unassessedSubmissionByCorrectionRound.get(correctionRound)!"
+                                        ></jhi-language-table-cell>
+
                                         <td>
                                             <button
-                                                class="btn btn-success btn-sm"
+                                                class="btn btn-success btn-sm guided-tour-new-assessment-btn"
                                                 (click)="openAssessmentEditor('new', correctionRound)"
                                                 [disabled]="exercise === exerciseForGuidedTour || openingAssessmentEditorForNewSubmission"
                                                 [class.guided-tour]="exercise === exerciseForGuidedTour"
-                                                [ngStyle]="exercise === exerciseForGuidedTour && { cursor: 'not-allowed' }"
+                                                [ngStyle]="exercise === exerciseForGuidedTour ? { cursor: 'not-allowed' } : {}"
                                             >
                                                 <fa-icon *ngIf="openingAssessmentEditorForNewSubmission" [icon]="'spinner'" [spin]="true"></fa-icon>
                                                 <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>
@@ -358,12 +367,15 @@
                         </table>
                         <ng-container
                             *ngIf="
+                                isExamMode &&
                                 !(
                                     unassessedSubmissionByCorrectionRound &&
-                                    unassessedSubmissionByCorrectionRound.get(correctionRound)?.id > 0 &&
+                                    unassessedSubmissionByCorrectionRound!.get(correctionRound) &&
+                                    unassessedSubmissionByCorrectionRound!.get(correctionRound)!.id! > 0 &&
                                     !exercise.teamMode &&
                                     !isTestRun
-                                ) && numberOfSubmissions.inTime != roundState.inTime
+                                ) &&
+                                numberOfSubmissions.inTime != roundState.inTime
                             "
                         >
                             <div class="alert alert-info">
@@ -387,7 +399,7 @@
                     </div>
                 </ng-container>
                 <div class="alert alert-info" *ngIf="correctionRound == 1">
-                    {{ 'artemisApp.exerciseAssessmentDashboard.noSubmissionsBecauseFirstAssessedByYourself' | translate }}
+                    {{ 'artemisApp.exerciseAssessmentDashboard.noSubmissionsBecauseFirstAssessedByYourself' | artemisTranslate }}
                 </div>
                 <ng-template #noSubmissions>
                     <jhi-assessment-warning [exercise]="exercise"></jhi-assessment-warning>
@@ -408,7 +420,7 @@
                 </h4>
                 <fa-icon [icon]="'question-circle'" [ngbTooltip]="'artemisApp.exerciseAssessmentDashboard.complaintHint' | artemisTranslate"></fa-icon>
                 <div class="table-responsive">
-                    <table class="table table-striped exercise-table" *ngIf="complaints?.length > 0; else noComplaints">
+                    <table class="table table-striped exercise-table" *ngIf="complaints && complaints!.length > 0; else noComplaints">
                         <thead>
                             <tr>
                                 <th>#</th>
@@ -423,7 +435,7 @@
                                 <td>{{ i + 1 }}</td>
                                 <td>{{ complaint.submittedTime | artemisDate }}</td>
                                 <td>
-                                    <jhi-result [result]="complaint.result" [participation]="complaint.result.participation"></jhi-result>
+                                    <jhi-result [result]="complaint.result" [participation]="complaint.result!.participation!"></jhi-result>
                                 </td>
                                 <td>
                                     {{ calculateComplaintStatus(complaint) }}
@@ -467,7 +479,7 @@
                 </h4>
                 <fa-icon [icon]="'question-circle'" [ngbTooltip]="'artemisApp.exerciseAssessmentDashboard.moreFeedbackRequestHint' | artemisTranslate"></fa-icon>
                 <div class="table-responsive">
-                    <table class="table table-striped exercise-table" *ngIf="moreFeedbackRequests?.length > 0; else noComplaints">
+                    <table class="table table-striped exercise-table" *ngIf="moreFeedbackRequests && moreFeedbackRequests!.length > 0; else noComplaints">
                         <thead>
                             <tr>
                                 <th>#</th>

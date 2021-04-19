@@ -73,7 +73,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
     });
 
     beforeEach(() => {
-        component.question = question;
+        component.shortAnswerQuestion = question;
         component.questionIndex = 0;
         component.reEvaluationInProgress = false;
 
@@ -86,7 +86,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
 
     it('should initialize with different question texts', () => {
         // test spots concatenated to other words
-        component.question.text = 'This is a[-spot 12]regarding this question.\nAnother [-spot 8] is in the line above';
+        component.shortAnswerQuestion.text = 'This is a[-spot 12]regarding this question.\nAnother [-spot 8] is in the line above';
         component.ngOnInit();
 
         let expectedTextParts = [
@@ -96,7 +96,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
         expect(component.textParts).to.deep.equal(expectedTextParts);
 
         // test a long method with multiple indentations and concatenated words
-        component.question.text =
+        component.shortAnswerQuestion.text =
             'Enter your long question if needed\n\n' +
             'Select a part of the[-spot 6]and click on Add Spot to automatically [-spot 9]an input field and the corresponding[-spot 16]\n\n' +
             'You can define a input field like this: This [-spot 1] an [-spot 2] field.\n' +
@@ -158,7 +158,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
         expect(component.textParts).to.deep.equal(expectedTextParts);
 
         // tests simple indentation
-        component.question.text =
+        component.shortAnswerQuestion.text =
             '[-spot 5]\n' + '    [-spot 6]\n' + '        [-spot 7]\n' + '            [-spot 8]\n' + '                [-spot 9]\n' + '                    [-spot 10]';
 
         component.ngOnInit();
@@ -167,7 +167,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
         expect(component.textParts).to.deep.equal(expectedTextParts);
 
         // classic java main method test
-        component.question.text =
+        component.shortAnswerQuestion.text =
             '[-spot 1] class [-spot 2] {\n' +
             '    public static void main([-spot 3][] args){\n' +
             '        System.out.println("This is the [-spot 4] method");\n' +
@@ -186,7 +186,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
         expect(component.textParts).to.deep.equal(expectedTextParts);
 
         // test multiple line parameter for method header
-        component.question.text =
+        component.shortAnswerQuestion.text =
             'private[-spot 1] methodCallWithMultipleLineParameter (\n' +
             '    int number,\n' +
             '    [-spot 2] secondNumber,\n' +
@@ -209,7 +209,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
         expect(component.textParts).to.deep.equal(expectedTextParts);
 
         // test nested arrays
-        component.question.text =
+        component.shortAnswerQuestion.text =
             'const manyArrayFields = [\n' + "    ['test1'],\n" + "    ['test2'],\n" + "    ['[-spot 1]'],\n" + "    ['middleField'],\n" + "    ['[-spot 2]'],\n" + '];';
 
         component.ngOnInit();
@@ -226,7 +226,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
         expect(component.textParts).to.deep.equal(expectedTextParts);
 
         // test textual enumeration
-        component.question.text =
+        component.shortAnswerQuestion.text =
             'If we want a enumeration, we can also [-spot 1] this:\n' +
             '- first major point\n' +
             '    - first not so major point\n' +
@@ -267,22 +267,22 @@ describe('ShortAnswerQuestionEditComponent', () => {
         const mapping1 = new ShortAnswerMapping(spot2, shortAnswerSolution1);
         const mapping2 = new ShortAnswerMapping(spot3, shortAnswerSolution1);
         const alternativeMapping = new ShortAnswerMapping(new ShortAnswerSpot(), new ShortAnswerSolution());
-        component.question.correctMappings = [mapping1, mapping2, alternativeMapping];
+        component.shortAnswerQuestion.correctMappings = [mapping1, mapping2, alternativeMapping];
         const event = { dragData: shortAnswerSolution1 };
 
         fixture.detectChanges();
         component.onDragDrop(spot, event);
 
         const expectedMapping = new ShortAnswerMapping(spot, shortAnswerSolution1);
-        expect(component.question.correctMappings.pop()).to.deep.equal(expectedMapping);
+        expect(component.shortAnswerQuestion.correctMappings.pop()).to.deep.equal(expectedMapping);
         expect(questionUpdatedSpy).to.have.been.calledOnce;
     });
 
     it('should setup question editor', () => {
-        component.question.spots = [spot1, spot2];
+        component.shortAnswerQuestion.spots = [spot1, spot2];
         const mapping1 = new ShortAnswerMapping(spot1, shortAnswerSolution1);
         const mapping2 = new ShortAnswerMapping(spot2, shortAnswerSolution2);
-        component.question.correctMappings = [mapping1, mapping2];
+        component.shortAnswerQuestion.correctMappings = [mapping1, mapping2];
 
         fixture.detectChanges();
 
@@ -314,18 +314,18 @@ describe('ShortAnswerQuestionEditComponent', () => {
     });
 
     it('should add and delete text solution', () => {
-        component.question.spots = [spot1, spot2];
+        component.shortAnswerQuestion.spots = [spot1, spot2];
         const mapping1 = new ShortAnswerMapping(spot1, shortAnswerSolution1);
         const mapping2 = new ShortAnswerMapping(spot2, shortAnswerSolution2);
-        component.question.correctMappings = [mapping1, mapping2];
+        component.shortAnswerQuestion.correctMappings = [mapping1, mapping2];
 
         component.addTextSolution();
 
-        expect(component.question.solutions!.length).to.equal(3); // 2 -> 3
+        expect(component.shortAnswerQuestion.solutions!.length).to.equal(3); // 2 -> 3
 
         component.deleteSolution(shortAnswerSolution2);
 
-        expect(component.question.solutions!.length).to.equal(2); // 3 -> 2
+        expect(component.shortAnswerQuestion.solutions!.length).to.equal(2); // 3 -> 2
     });
 
     it('should add spot at cursor visual mode', () => {
@@ -396,8 +396,8 @@ describe('ShortAnswerQuestionEditComponent', () => {
         spyOn(artemisMarkdown, 'markdownForHtml').and.returnValue(markdownHelper);
         const questionUpdated = sinon.spy(component.questionUpdated, 'emit');
 
-        component.question.spots = [spot1, spot2];
-        component.question.correctMappings = [new ShortAnswerMapping(spot1, shortAnswerSolution1), new ShortAnswerMapping(spot2, shortAnswerSolution2)];
+        component.shortAnswerQuestion.spots = [spot1, spot2];
+        component.shortAnswerQuestion.correctMappings = [new ShortAnswerMapping(spot1, shortAnswerSolution1), new ShortAnswerMapping(spot2, shortAnswerSolution2)];
         fixture.detectChanges();
 
         component.addSpotAtCursorVisualMode();
@@ -414,14 +414,14 @@ describe('ShortAnswerQuestionEditComponent', () => {
     });
 
     it('should toggle preview', () => {
-        component.question.text = 'This is the text of a question';
+        component.shortAnswerQuestion.text = 'This is the text of a question';
         component.showVisualMode = false;
-        component.question.spots = [spot1, spot2];
-        component.question.correctMappings = [];
+        component.shortAnswerQuestion.spots = [spot1, spot2];
+        component.shortAnswerQuestion.correctMappings = [];
         let mapping = new ShortAnswerMapping(spot1, shortAnswerSolution1);
-        component.question.correctMappings.push(mapping);
+        component.shortAnswerQuestion.correctMappings.push(mapping);
         mapping = new ShortAnswerMapping(spot2, shortAnswerSolution2);
-        component.question.correctMappings.push(mapping);
+        component.shortAnswerQuestion.correctMappings.push(mapping);
 
         component.togglePreview();
         expect(component.textParts.length).to.equal(1);
@@ -457,28 +457,28 @@ describe('ShortAnswerQuestionEditComponent', () => {
 
         component.resetQuestion();
 
-        expect(component.question.title).to.equal(backup.title);
-        expect(component.question.text).to.equal(backup.text);
+        expect(component.shortAnswerQuestion.title).to.equal(backup.title);
+        expect(component.shortAnswerQuestion.text).to.equal(backup.text);
     });
 
     it('should reset spot', () => {
         component.backupQuestion.spots = [spot1, spot2];
         const modifiedSpot = cloneDeep(spot1);
         modifiedSpot.spotNr = 10; // initial spotNr was 0
-        component.question.spots = [modifiedSpot, spot2];
+        component.shortAnswerQuestion.spots = [modifiedSpot, spot2];
 
         component.resetSpot(modifiedSpot);
 
-        expect(component.question.spots[0].spotNr).to.equal(0);
+        expect(component.shortAnswerQuestion.spots[0].spotNr).to.equal(0);
     });
 
     it('should delete spot', () => {
-        component.question.spots = [spot1, spot2];
+        component.shortAnswerQuestion.spots = [spot1, spot2];
 
         component.deleteSpot(spot1);
 
-        expect(component.question.spots.length).to.equal(1);
-        expect(component.question.spots[0]).to.deep.equal(spot2);
+        expect(component.shortAnswerQuestion.spots.length).to.equal(1);
+        expect(component.shortAnswerQuestion.spots[0]).to.deep.equal(spot2);
     });
 
     it('should set question text', () => {
@@ -501,7 +501,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
 
         component.toggleExactMatchCheckbox(true);
 
-        expect(component.question.similarityValue).to.equal(100);
+        expect(component.shortAnswerQuestion.similarityValue).to.equal(100);
         expect(questionUpdated).to.be.calledOnce;
     });
 });

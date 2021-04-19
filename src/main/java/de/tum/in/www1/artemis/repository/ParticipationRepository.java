@@ -41,7 +41,7 @@ public interface ParticipationRepository extends JpaRepository<Participation, Lo
             WHERE p.id = :#{#participationId}
                 AND (s.type <> 'ILLEGAL' OR s.type IS NULL)
             """)
-    Optional<Participation> findWithEagerLegalSubmissionsById(Long participationId);
+    Optional<Participation> findWithEagerLegalSubmissionsById(@Param("participationId") Long participationId);
 
     @NotNull
     default Participation findByIdWithLegalSubmissionsElseThrow(long participationId) {

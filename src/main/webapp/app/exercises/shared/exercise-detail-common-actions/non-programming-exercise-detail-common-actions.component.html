@@ -25,13 +25,13 @@
     </a>
 
     <!-- Export submissions -->
-    <jhi-exercise-submission-export [exerciseId]="exercise.id" [exerciseType]="exercise.type" class="mr-1"></jhi-exercise-submission-export>
+    <jhi-exercise-submission-export [exerciseId]="exercise.id!" [exerciseType]="exercise.type!" class="mr-1"></jhi-exercise-submission-export>
 
     <!-- Delete exercise -->
     <button
         *ngIf="exercise.isAtLeastInstructor"
         jhiDeleteButton
-        [entityTitle]="exercise.title"
+        [entityTitle]="exercise.title || ''"
         deleteQuestion="artemisApp.exercise.delete.question"
         deleteConfirmationText="artemisApp.exercise.delete.typeNameToConfirm"
         (delete)="deleteExercise()"

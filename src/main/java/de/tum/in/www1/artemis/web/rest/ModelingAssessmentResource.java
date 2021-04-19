@@ -146,9 +146,8 @@ public class ModelingAssessmentResource extends AssessmentResource {
         log.debug("REST request to update the assessment of submission {} after complaint.", submissionId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         ModelingSubmission modelingSubmission = modelingSubmissionRepository.findOneWithEagerResultAndFeedback(submissionId);
-        StudentParticipation studentParticipation = (StudentParticipation) modelingSubmission.getParticipation();
-        long exerciseId = studentParticipation.getExercise().getId();
-        ModelingExercise modelingExercise = modelingExerciseRepository.findOne(exerciseId);
+        long exerciseId = modelingSubmission.getParticipation().getExercise().getId();
+        ModelingExercise modelingExercise = modelingExerciseRepository.findByIdElseThrow(exerciseId);
         checkAuthorization(modelingExercise, user);
 
         Result result = assessmentService.updateAssessmentAfterComplaint(modelingSubmission.getLatestResult(), modelingExercise, assessmentUpdate);
@@ -157,14 +156,14 @@ public class ModelingAssessmentResource extends AssessmentResource {
             compassService.addAssessment(exerciseId, submissionId, result.getFeedbacks());
         }
 
+        var participation = result.getParticipation();
         // remove circular dependencies if the results of the participation are there
-        if (result.getParticipation() != null && Hibernate.isInitialized(result.getParticipation().getResults()) && result.getParticipation().getResults() != null) {
-            result.getParticipation().setResults(null);
+        if (participation != null && Hibernate.isInitialized(participation.getResults()) && participation.getResults() != null) {
+            participation.setResults(null);
         }
 
-        if (result.getParticipation() != null && result.getParticipation() instanceof StudentParticipation
-                && !authCheckService.isAtLeastInstructorForExercise(modelingExercise, user)) {
-            ((StudentParticipation) result.getParticipation()).setParticipant(null);
+        if (participation instanceof StudentParticipation studentParticipation && !authCheckService.isAtLeastInstructorForExercise(modelingExercise, user)) {
+            studentParticipation.setParticipant(null);
         }
 
         return ResponseEntity.ok(result);
