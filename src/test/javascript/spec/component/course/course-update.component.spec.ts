@@ -232,7 +232,7 @@ describe('Course Management Update Component', () => {
             const fileList = ({
                 0: file,
                 length: 1,
-                item: (index: number) => file,
+                item: () => file,
             } as unknown) as FileList;
             const event = { target: { files: fileList } };
             comp.setCourseImage(event);
