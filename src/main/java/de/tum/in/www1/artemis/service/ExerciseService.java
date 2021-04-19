@@ -666,7 +666,7 @@ public class ExerciseService {
      */
     private void setAverageScoreForStatisticsDTO(CourseManagementOverviewExerciseStatisticsDTO exerciseStatisticsDTO, Map<Long, Double> averageScoreById, Exercise exercise) {
         if (exercise instanceof QuizExercise) {
-            var averageScore = participantScoreRepository.findAverageScoreForExercises(exercise.getId());
+            var averageScore = participantScoreRepository.findAverageScoreForExercise(exercise.getId());
             exerciseStatisticsDTO.setAverageScoreInPercent(averageScore != null ? averageScore : 0.0);
         }
         else {

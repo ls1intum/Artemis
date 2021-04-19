@@ -48,6 +48,8 @@ import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { ArtemisCourseParticipantScoresModule } from 'app/course/course-participant-scores/course-participant-scores.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { CourseManagementStatisticsComponent } from 'app/course/manage/course-management-statistics.component';
+import { CourseDetailDoughnutChartComponent } from 'app/course/manage/course-detail-doughnut-chart.component';
+import { CourseDetailBarChartComponent } from 'app/course/manage/course-detail-bar-chart.component';
 
 @NgModule({
     imports: [
@@ -101,6 +103,8 @@ import { CourseManagementStatisticsComponent } from 'app/course/manage/course-ma
         CourseManagementCardComponent,
         CourseManagementExerciseRowComponent,
         CourseManagementOverviewStatisticsComponent,
+        CourseDetailDoughnutChartComponent,
+        CourseDetailBarChartComponent,
     ],
 })
 export class ArtemisCourseManagementModule {}

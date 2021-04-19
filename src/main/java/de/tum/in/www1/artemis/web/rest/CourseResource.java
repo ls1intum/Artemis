@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.web.rest;
 
 import static de.tum.in.www1.artemis.config.Constants.SHORT_NAME_PATTERN;
+import static de.tum.in.www1.artemis.service.util.RoundingUtil.round;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 import static java.time.ZonedDateTime.now;
 
@@ -35,6 +36,7 @@ import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
+import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
@@ -113,13 +115,16 @@ public class CourseResource {
 
     private final ResultRepository resultRepository;
 
+    private final ParticipantScoreRepository participantScoreRepository;
+
     public CourseResource(UserRepository userRepository, CourseService courseService, CourseRepository courseRepository, ExerciseService exerciseService,
             AuthorizationCheckService authCheckService, TutorParticipationRepository tutorParticipationRepository, Environment env,
             ArtemisAuthenticationProvider artemisAuthenticationProvider, ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository,
             SubmissionService submissionService, ComplaintService complaintService, TutorLeaderboardService tutorLeaderboardService,
             ProgrammingExerciseRepository programmingExerciseRepository, AuditEventRepository auditEventRepository, StudentParticipationRepository studentParticipationRepository,
             Optional<VcsUserManagementService> optionalVcsUserManagementService, AssessmentDashboardService assessmentDashboardService, ExerciseRepository exerciseRepository,
-            SubmissionRepository submissionRepository, ResultRepository resultRepository, Optional<CIUserManagementService> optionalCiUserManagementService) {
+            SubmissionRepository submissionRepository, ResultRepository resultRepository, Optional<CIUserManagementService> optionalCiUserManagementService,
+            ParticipantScoreRepository participantScoreRepository) {
         this.courseService = courseService;
         this.courseRepository = courseRepository;
         this.exerciseService = exerciseService;
@@ -142,6 +147,7 @@ public class CourseResource {
         this.submissionRepository = submissionRepository;
         this.resultRepository = resultRepository;
         this.studentParticipationRepository = studentParticipationRepository;
+        this.participantScoreRepository = participantScoreRepository;
     }
 
     /**
@@ -944,8 +950,8 @@ public class CourseResource {
             var amountOfStudentsInCourse = Math.toIntExact(userRepository.countUserInGroup(studentsGroup));
             courseDTO.setExerciseDTOS(exerciseService.getStatisticsForCourseManagementOverview(courseId, amountOfStudentsInCourse));
 
-            var exerciseIds = exerciseRepository.getExerciseIdsByCourseId(courseId);
-            courseDTO.setActiveStudents(courseService.getActiveStudents(exerciseIds));
+            var exerciseIds = exerciseRepository.findAllIdsByCourseId(courseId);
+            courseDTO.setActiveStudents(courseService.getActiveStudents(exerciseIds, 0));
             courseDTOs.add(courseDTO);
         }
 
@@ -1296,5 +1302,100 @@ public class CourseResource {
             }
         }
         return isMember;
+    }
+
+    /**
+     * GET /courses/:courseId : get the "id" course.
+     *
+     * @param courseId the id of the course to retrieve
+     * @return the ResponseEntity with status 200 (OK) and with body the course, or with status 404 (Not Found)
+     */
+    @GetMapping("/courses/{courseId}/management-detail")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<CourseManagementDetailViewDTO> getCourseDTOForDetailView(@PathVariable Long courseId) {
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
+            return forbidden();
+        }
+        var exercises = exerciseRepository.findAllExercisesByCourseId(courseId);
+        var includedExercises = exercises.stream().filter(Exercise::isCourseExercise)
+                .filter(exercise -> !exercise.getIncludedInOverallScore().equals(IncludedInOverallScore.NOT_INCLUDED)).collect(Collectors.toSet());
+        var averageScoreForCourse = participantScoreRepository.findAvgScore(includedExercises);
+
+        Set<Long> exerciseIdsOfCourse = includedExercises.stream().map(Exercise::getId).collect(Collectors.toSet());
+        CourseManagementDetailViewDTO dto = courseService.getStatsForDetailView(courseId, exerciseIdsOfCourse);
+        if (authCheckService.isAtLeastInstructorInCourse(course, user)) {
+            dto.setIsAtLeastInstructor(true);
+        }
+        else {
+            dto.setIsAtLeastInstructor(false);
+        }
+        // Only counting assessments and submissions which are handed in in time
+        long numberOfAssessments = resultRepository.countNumberOfAssessments(exerciseIdsOfCourse).getInTime();
+        dto.setCurrentAbsoluteAssessments(numberOfAssessments);
+        long numberOfSubmissions = submissionRepository.countByCourseIdSubmittedBeforeDueDate(courseId)
+                + programmingExerciseRepository.countAllSubmissionsByExerciseIdsSubmitted(exerciseIdsOfCourse);
+        dto.setCurrentMaxAssessments(numberOfSubmissions);
+        if (numberOfSubmissions > 0) {
+            dto.setCurrentPercentageAssessments(Math.round(numberOfAssessments * 1000.0 / numberOfSubmissions) / 10.0);
+        }
+        else {
+            dto.setCurrentPercentageAssessments(100.0);
+        }
+
+        // Complaints
+        long numberOfAnsweredComplaints = complaintResponseRepository
+                .countByComplaint_Result_Participation_Exercise_Course_Id_AndComplaint_ComplaintType_AndSubmittedTimeIsNotNull(courseId, ComplaintType.COMPLAINT);
+        dto.setCurrentAbsoluteComplaints(numberOfAnsweredComplaints);
+        long numberOfComplaints = complaintService.countComplaintsByCourseId(courseId);
+        dto.setCurrentMaxComplaints(numberOfComplaints);
+        if (numberOfComplaints > 0) {
+            dto.setCurrentPercentageComplaints(Math.round(numberOfAnsweredComplaints * 1000.0 / numberOfComplaints) / 10.0);
+        }
+        else {
+            dto.setCurrentPercentageComplaints(100.0);
+        }
+
+        // More Feedback Requests
+        long numberOfAnsweredFeedbackRequests = complaintResponseRepository
+                .countByComplaint_Result_Participation_Exercise_Course_Id_AndComplaint_ComplaintType_AndSubmittedTimeIsNotNull(courseId, ComplaintType.MORE_FEEDBACK);
+        dto.setCurrentAbsoluteMoreFeedbacks(numberOfAnsweredFeedbackRequests);
+        long numberOfMoreFeedbackRequests = complaintService.countMoreFeedbackRequestsByCourseId(courseId);
+        dto.setCurrentMaxMoreFeedbacks(numberOfMoreFeedbackRequests);
+        if (numberOfMoreFeedbackRequests > 0) {
+            dto.setCurrentPercentageMoreFeedbacks(Math.round(numberOfAnsweredFeedbackRequests * 1000.0 / numberOfMoreFeedbackRequests) / 10.0);
+        }
+        else {
+            dto.setCurrentPercentageMoreFeedbacks(100.0);
+        }
+        // Average Student Score
+        ZonedDateTime now = ZonedDateTime.now();
+        var reachablePoints = courseRepository.getMaxReachablePointsInCourse(courseId, now);
+        double maxPointsAchievableInCourse = reachablePoints != null ? reachablePoints : 0.0;
+        dto.setCurrentMaxAverageScore(maxPointsAchievableInCourse);
+        dto.setCurrentAbsoluteAverageScore(round((averageScoreForCourse / 100.0) * maxPointsAchievableInCourse));
+        if (maxPointsAchievableInCourse > 0.0) {
+            dto.setCurrentPercentageAverageScore(round(averageScoreForCourse));
+        }
+        else {
+            dto.setCurrentPercentageAverageScore(0.0);
+        }
+
+        return ResponseEntity.ok(dto);
+    }
+
+    /**
+     * GET /courses/:courseId/statistics : Get the active students for this particular course
+     *
+     * @param courseId the id of the course
+     * @param periodIndex an index indicating which time period, 0 is current week, -1 is one week in the past, -2 is two weeks in the past ...
+     * @return the ResponseEntity with status 200 (OK) and the data in body, or status 404 (Not Found)
+     */
+    @GetMapping(value = "/courses/{courseId}/statistics")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Integer[]> getActiveStudentsForCourseDetailView(@PathVariable Long courseId, @RequestParam Integer periodIndex) {
+        var exerciseIds = exerciseRepository.findAllIdsByCourseId(courseId);
+        return ResponseEntity.ok(courseService.getActiveStudents(exerciseIds, periodIndex));
     }
 }

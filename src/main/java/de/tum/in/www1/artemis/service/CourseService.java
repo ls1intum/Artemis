@@ -30,6 +30,7 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.exam.ExamService;
 import de.tum.in.www1.artemis.service.user.UserService;
+import de.tum.in.www1.artemis.web.rest.dto.CourseManagementDetailViewDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 
 /**
@@ -302,13 +303,14 @@ public class CourseService {
      * @param exerciseIds the ids to get the active students for
      * @return An Integer array containing active students for each index. An index corresponds to a week
      */
-    public Integer[] getActiveStudents(List<Long> exerciseIds) {
+    public Integer[] getActiveStudents(Set<Long> exerciseIds, Integer periodIndex) {
         ZonedDateTime now = ZonedDateTime.now();
         LocalDateTime localStartDate = now.toLocalDateTime().with(DayOfWeek.MONDAY);
         LocalDateTime localEndDate = now.toLocalDateTime().with(DayOfWeek.SUNDAY);
         ZoneId zone = now.getZone();
-        ZonedDateTime startDate = localStartDate.atZone(zone).minusWeeks(3).withHour(0).withMinute(0).withSecond(0).withNano(0);
-        ZonedDateTime endDate = localEndDate.atZone(zone).withHour(23).withMinute(59).withSecond(59);
+        ZonedDateTime startDate = localStartDate.atZone(zone).minusWeeks(3 + (4 * (-periodIndex))).withHour(0).withMinute(0).withSecond(0).withNano(0);
+        ZonedDateTime endDate = periodIndex != 0 ? localEndDate.atZone(zone).minusWeeks(4 * (-periodIndex)).withHour(23).withMinute(59).withSecond(59)
+                : localEndDate.atZone(zone).withHour(23).withMinute(59).withSecond(59);
 
         List<Map<String, Object>> outcome = courseRepository.getActiveStudents(exerciseIds, startDate, endDate);
         List<Map<String, Object>> distinctOutcome = removeDuplicateActiveUserRows(outcome, startDate);
@@ -390,6 +392,25 @@ public class CourseService {
         LocalDate localDate = date.toLocalDate();
         TemporalField weekOfYear = WeekFields.of(DayOfWeek.MONDAY, 4).weekOfWeekBasedYear();
         return localDate.get(weekOfYear);
+    }
+
+    /**
+     * Fetches Course Management Detail View data from repository and returns a DTO
+     *
+     * @param courseId id of the course
+     * @return The DTO for the course management detail view
+     */
+    public CourseManagementDetailViewDTO getStatsForDetailView(Long courseId, Set<Long> exerciseIds) {
+        var dto = new CourseManagementDetailViewDTO();
+        var course = this.courseRepository.findByIdElseThrow(courseId);
+        dto.setCourse(course);
+
+        dto.setNumberOfStudentsInCourse(Math.toIntExact(userRepository.countUserInGroup(course.getStudentGroupName())));
+        dto.setNumberOfTeachingAssistantsInCourse(Math.toIntExact(userRepository.countUserInGroup(course.getTeachingAssistantGroupName())));
+        dto.setNumberOfInstructorsInCourse(Math.toIntExact(userRepository.countUserInGroup(course.getInstructorGroupName())));
+
+        dto.setActiveStudents(getActiveStudents(exerciseIds, 0));
+        return dto;
     }
 
     /**
