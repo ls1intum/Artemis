@@ -13,7 +13,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.assessment.dashboard.RatedCount;
+import de.tum.in.www1.artemis.domain.assessment.dashboard.ResultCount;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.leaderboard.tutor.TutorLeaderboardAssessments;
 import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
@@ -124,14 +124,14 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
      * @return an array with 2 elements: count of rated (in time) and unrated (late) assessments of a course
      */
     @Query("""
-            SELECT new de.tum.in.www1.artemis.domain.assessment.dashboard.RatedCount(r.rated, count(r))
+            SELECT new de.tum.in.www1.artemis.domain.assessment.dashboard.ResultCount(r.rated, count(r))
             FROM Result r join r.participation p
             WHERE r.completionDate is not null
                 AND r.assessor is not null
                 AND p.exercise.id IN :exerciseIds
                 GROUP BY r.rated
             """)
-    List<RatedCount> countAssessmentsByExerciseIdsAndRated(@Param("exerciseIds") Set<Long> exerciseIds);
+    List<ResultCount> countAssessmentsByExerciseIdsAndRated(@Param("exerciseIds") Set<Long> exerciseIds);
 
     /**
      * Load a result from the database by its id together with the associated submission and the list of feedback items.
@@ -431,12 +431,13 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
         long inTime = 0;
         long late = 0;
         for (var ratedCount : ratedCounts) {
-            if (ratedCount.rated()) {
+            if (Boolean.TRUE.equals(ratedCount.rated())) {
                 inTime = ratedCount.count();
             }
-            else {
+            else if (Boolean.FALSE.equals(ratedCount.rated())) {
                 late = ratedCount.count();
             }
+            // we are not interested in results with rated is null even if the database would return such
         }
         return new DueDateStat(inTime, late);
     }
