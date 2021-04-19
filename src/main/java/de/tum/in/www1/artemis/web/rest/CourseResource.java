@@ -1134,6 +1134,11 @@ public class CourseResource {
             user.setLastNotificationRead(null);
             user.setActivationKey(null);
             user.setLangKey(null);
+            user.setLastNotificationRead(null);
+            user.setLastModifiedBy(null);
+            user.setLastModifiedDate(null);
+            user.setCreatedBy(null);
+            user.setCreatedDate(null);
         });
         return ResponseEntity.ok().body(usersInGroup);
     }
