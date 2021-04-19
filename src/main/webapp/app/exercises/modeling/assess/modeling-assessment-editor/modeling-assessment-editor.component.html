@@ -19,6 +19,8 @@
     (cancel)="onCancelAssessment()"
     (nextSubmission)="assessNext()"
     (updateAssessmentAfterComplaint)="onUpdateAssessmentAfterComplaint($event)"
+    [(highlightDifferences)]="highlightDifferences"
+    [correctionRound]="correctionRound"
 >
     <ng-container *ngIf="submission; then assessment; else noSubmission"></ng-container>
 </jhi-assessment-layout>
@@ -53,7 +55,12 @@
 
     <div class="row mt-3">
         <div class="col-md-6">
-            <jhi-unreferenced-feedback [(feedbacks)]="unreferencedFeedback" (feedbacksChange)="validateFeedback()" [readOnly]="readOnly"></jhi-unreferenced-feedback>
+            <jhi-unreferenced-feedback
+                [(feedbacks)]="unreferencedFeedback"
+                (feedbacksChange)="validateFeedback()"
+                [readOnly]="readOnly"
+                [highlightDifferences]="highlightDifferences"
+            ></jhi-unreferenced-feedback>
         </div>
         <div class="col-md-6" *ngIf="(hasAutomaticFeedback || highlightMissingFeedback) && !result?.completionDate">
             <h4 jhiTranslate="modelingAssessmentEditor.highlightingColors.title">Highlighting Color(s)</h4>

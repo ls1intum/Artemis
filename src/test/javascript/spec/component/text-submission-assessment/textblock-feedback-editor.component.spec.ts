@@ -10,6 +10,7 @@ import { MockComponent } from 'ng-mocks';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
 import { FeedbackConflict } from 'app/entities/feedback-conflict';
+import { AssessmentCorrectionRoundBadgeComponent } from 'app/assessment/assessment-detail/assessment-correction-round-badge/assessment-correction-round-badge.component';
 
 describe('TextblockFeedbackEditorComponent', () => {
     let component: TextblockFeedbackEditorComponent;
@@ -21,7 +22,7 @@ describe('TextblockFeedbackEditorComponent', () => {
     beforeEach(async () => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, ArtemisSharedModule, TranslateModule.forRoot(), ArtemisConfirmIconModule],
-            declarations: [TextblockFeedbackEditorComponent],
+            declarations: [TextblockFeedbackEditorComponent, AssessmentCorrectionRoundBadgeComponent],
         })
             .overrideModule(ArtemisTestModule, {
                 remove: {
