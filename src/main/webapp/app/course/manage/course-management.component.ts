@@ -37,7 +37,6 @@ export class CourseManagementComponent implements OnInit, OnDestroy, AfterViewIn
     courseForGuidedTour?: Course;
 
     constructor(
-        private courseService: CourseManagementService,
         private examService: ExamManagementService,
         private lectureService: LectureService,
         private courseManagementService: CourseManagementService,
@@ -50,7 +49,7 @@ export class CourseManagementComponent implements OnInit, OnDestroy, AfterViewIn
      * loads all courses from courseService
      */
     loadAll() {
-        this.courseService.getCourseOverview({ onlyActive: this.showOnlyActive }).subscribe(
+        this.courseManagementService.getCourseOverview({ onlyActive: this.showOnlyActive }).subscribe(
             (res: HttpResponse<Course[]>) => {
                 this.courses = res.body!;
                 this.courseForGuidedTour = this.guidedTourService.enableTourForCourseOverview(this.courses, tutorAssessmentTour, true);

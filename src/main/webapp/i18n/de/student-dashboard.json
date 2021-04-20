@@ -6,6 +6,7 @@
             "exerciseTitleWithoutDueDate": "Aktuelle Übung von \"{{ course }}\":",
             "examTitle": "Aktuelle Prüfung von \"{{ course }}\":",
             "cardTitle": "Deine insgesamte Punktzahl:",
+            "noStatistics": "Keine Statistik verfügbar",
             "cardNoExerciseLabel": "Keine Übung geplant",
             "cardExerciseLabel": "Nächste Übung:",
             "register": {
