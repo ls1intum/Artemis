@@ -5,8 +5,10 @@
         {{ text.substring(0, 50) }} ...
     </div>
     <ng-template #opened>
-        <button (click)="isCollapsed = !isCollapsed"><fa-icon [icon]="'angle-down'"></fa-icon></button>
-        {{ text }}
+        <div>
+            <button (click)="isCollapsed = !isCollapsed"><fa-icon [icon]="'angle-down'"></fa-icon></button>
+            {{ text }}
+        </div>
     </ng-template>
     &nbsp;
 </ng-template>
