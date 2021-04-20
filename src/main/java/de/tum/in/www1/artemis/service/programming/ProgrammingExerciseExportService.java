@@ -16,9 +16,7 @@ import java.util.stream.Stream;
 
 import javax.validation.constraints.NotNull;
 import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
@@ -34,7 +32,6 @@ import org.springframework.util.FileSystemUtils;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.xml.sax.InputSource;
-import org.xml.sax.SAXException;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.Submission;
@@ -133,7 +130,7 @@ public class ProgrammingExerciseExportService {
             zipFileService.createZipFile(pathToZippedExercise, zipFilePathsNonNull, false);
             return pathToZippedExercise;
         }
-        catch (IOException e) {
+        catch (Exception e) {
             var error = "Failed to export programming exercise " + exercise.getId() + " because the zip file " + pathToStoreZipFile + " could not be created: " + e.getMessage();
             log.info(error);
             exportErrors.add(error);
@@ -187,18 +184,11 @@ public class ProgrammingExerciseExportService {
                 return new File(zippedRepo.toString());
             }
         }
-        catch (InterruptedException | GitAPIException | GitException ex) {
-            var error = "Failed to export instructor repository " + repositoryType + " for programming exercise '" + exercise.getTitle() + "' (id: " + exercise.getId()
-                    + ") because the repository couldn't be downloaded. ";
+        catch (Exception ex) {
+            var error = "Failed to export instructor repository " + repositoryType + " for programming exercise '" + exercise.getTitle() + "' (id: " + exercise.getId() + ")";
             log.info(error);
             exportErrors.add(error);
         }
-        catch (IOException e) {
-            var error = "Failed to export instructor repository " + repositoryType + "because the zip file couldn't be created: " + e.getMessage();
-            log.error(error);
-            exportErrors.add(error);
-        }
-
         return null;
     }
 
@@ -253,7 +243,7 @@ public class ProgrammingExerciseExportService {
                     zippedRepos.add(zippedRepo);
                 }
             }
-            catch (IOException | GitAPIException | GitException | InterruptedException e) {
+            catch (Exception e) {
                 var error = "Failed to export the student repository with participation: " + participation.getId() + " for programming exercise '" + programmingExercise.getTitle()
                         + "' (id: " + programmingExercise.getId() + ") because the repository couldn't be downloaded. ";
                 exportErrors.add(error);
@@ -268,12 +258,9 @@ public class ProgrammingExerciseExportService {
      * @param repositoryUrl The url of the repository to zip
      * @param zipFilename   The name of the zip file
      * @return The path to the zip file.
-     * @throws GitAPIException      if the repos don't exist
-     * @throws GitException if the repos don't exist
-     * @throws InterruptedException something went wrong
-     * @throws IOException something went wrong
+     * @throws Exception if the zip file couldn't be created
      */
-    private Path createZipForRepository(VcsRepositoryUrl repositoryUrl, String zipFilename) throws GitAPIException, GitException, InterruptedException, IOException {
+    private Path createZipForRepository(VcsRepositoryUrl repositoryUrl, String zipFilename) throws Exception {
         var repoProjectPath = fileService.getUniquePathString(repoDownloadClonePath);
         Repository repository = null;
 
@@ -336,19 +323,29 @@ public class ProgrammingExerciseExportService {
      * @param programmingExercise     The programming exercise for the participation
      * @param participation           The participation, for which the repository should get zipped
      * @param repositoryExportOptions The options, that should get applied to the zipeed repo
+     * @throws Exception if errors occurred during zipping
      * @return The checked out and zipped repository
      */
     private Path createZipForRepositoryWithParticipation(final ProgrammingExercise programmingExercise, final ProgrammingExerciseStudentParticipation participation,
-            final RepositoryExportOptionsDTO repositoryExportOptions) throws IOException, GitAPIException, InterruptedException {
+            final RepositoryExportOptionsDTO repositoryExportOptions) throws Exception {
         if (participation.getVcsRepositoryUrl() == null) {
             log.warn("Ignore participation {} for export, because its repository URL is null", participation.getId());
             return null;
         }
-        final var targetPath = fileService.getUniquePathString(repoDownloadClonePath);
+
+        String targetPath = null;
         Repository repository = null;
         try {
+            // Contruct a unique path that will contain repo contents
+            targetPath = fileService.getUniquePathString(repoDownloadClonePath);
+
             // Checkout the repository
             repository = gitService.getOrCheckoutRepository(participation, targetPath);
+            if (repository == null) {
+                log.warn("Cannot checkout repository for participation id: {}", participation.getId());
+                return null;
+            }
+
             gitService.resetToOriginMaster(repository);
 
             if (repositoryExportOptions.isFilterLateSubmissions() && repositoryExportOptions.getFilterLateSubmissionsDate() != null) {
@@ -356,18 +353,18 @@ public class ProgrammingExerciseExportService {
             }
 
             if (repositoryExportOptions.isAddParticipantName()) {
-                log.debug("Adding student or team name to participation {}", participation.toString());
+                log.debug("Adding student or team name to participation {}", participation);
                 addParticipantIdentifierToProjectName(repository, programmingExercise, participation);
             }
 
             if (repositoryExportOptions.isCombineStudentCommits()) {
-                log.debug("Combining commits for participation {}", participation.toString());
+                log.debug("Combining commits for participation {}", participation);
                 gitService.combineAllStudentCommits(repository, programmingExercise);
             }
 
             if (repositoryExportOptions.isNormalizeCodeStyle()) {
                 try {
-                    log.debug("Normalizing code style for participation {}", participation.toString());
+                    log.debug("Normalizing code style for participation {}", participation);
                     fileService.normalizeLineEndingsDirectory(repository.getLocalPath().toString());
                     fileService.convertToUTF8Directory(repository.getLocalPath().toString());
                 }
@@ -377,15 +374,19 @@ public class ProgrammingExerciseExportService {
             }
 
             log.debug("Create temporary zip file for repository {}", repository.getLocalPath().toString());
-            Path zippedRepoFile = gitService.zipRepositoryWithParticipation(repository, targetPath, repositoryExportOptions.isHideStudentNameInZippedFolder());
-
-            // if repository is not closed, it causes weird IO issues when trying to delete the repository again
-            // java.io.IOException: Unable to delete file: ...\.git\objects\pack\...
-            repository.close();
-
-            return zippedRepoFile;
+            return gitService.zipRepositoryWithParticipation(repository, targetPath, repositoryExportOptions.isHideStudentNameInZippedFolder());
+        }
+        catch (Exception e) {
+            log.error("Cannot create zip for participation id {} because the repo download clone path is invalid.", participation.getId());
+            return null;
         }
         finally {
+            // if repository is not closed, it causes weird IO issues when trying to delete the repository again
+            // java.io.IOException: Unable to delete file: ...\.git\objects\pack\...
+            if (repository != null) {
+                repository.close();
+            }
+
             deleteTempLocalRepository(repository);
             fileService.scheduleForDirectoryDeletion(Path.of(targetPath), 5);
         }
@@ -482,9 +483,9 @@ public class ProgrammingExerciseExportService {
      * @param minimumScore          consider only submissions whose score is greater or equal to this value
      * @return a zip file that can be returned to the client
      * @throws ExitException is thrown if JPlag exits unexpectedly
-     * @throws IOException   is thrown for file handling errors
+     * @throws Exception   is thrown for file handling errors
      */
-    public File checkPlagiarismWithJPlagReport(long programmingExerciseId, float similarityThreshold, int minimumScore) throws ExitException, IOException {
+    public File checkPlagiarismWithJPlagReport(long programmingExerciseId, float similarityThreshold, int minimumScore) throws ExitException, Exception {
         long start = System.nanoTime();
 
         final var programmingExercise = programmingExerciseRepository.findWithAllParticipationsById(programmingExerciseId).get();
@@ -716,23 +717,25 @@ public class ProgrammingExerciseExportService {
         try {
             gitService.stageAllChanges(repository);
             gitService.commit(repository, "Add participant identifier (student login or team short name) to project name");
-            // if repo is not closed, it causes weird IO issues when trying to delete the repo again
-            // java.io.IOException: Unable to delete file: ...\.git\objects\pack\...
-            repository.close();
         }
         catch (GitAPIException ex) {
             log.error("Cannot stage or commit to the repository " + repository.getLocalPath(), ex);
         }
+        finally {
+            // if repo is not closed, it causes weird IO issues when trying to delete the repo again
+            // java.io.IOException: Unable to delete file: ...\.git\objects\pack\...
+            repository.close();
+        }
     }
 
     private void addParticipantIdentifierToMavenProjectName(Repository repo, String participantIdentifier, String pomFilePath) {
-        File pomFile = new File(pomFilePath);
-        // check if file exists and full file name is pom.xml and not just the file ending.
-        if (!pomFile.exists() || !pomFile.getName().equals("pom.xml")) {
-            return;
-        }
-
         try {
+            File pomFile = new File(pomFilePath);
+            // check if file exists and full file name is pom.xml and not just the file ending.
+            if (!pomFile.exists() || !pomFile.getName().equals("pom.xml")) {
+                return;
+            }
+
             // 1- Build the doc from the XML file
             Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(new InputSource(pomFile.getPath()));
             doc.setXmlStandalone(true);
@@ -756,19 +759,19 @@ public class ProgrammingExerciseExportService {
             xformer.transform(new DOMSource(doc), new StreamResult(new File(pomFile.getPath())));
 
         }
-        catch (SAXException | IOException | ParserConfigurationException | TransformerException | XPathException ex) {
+        catch (Exception ex) {
             log.error("Cannot rename pom.xml file in " + repo.getLocalPath(), ex);
         }
     }
 
     private void addParticipantIdentifierToEclipseProjectName(Repository repo, String participantIdentifier, String eclipseProjectFilePath) {
-        File eclipseProjectFile = new File(eclipseProjectFilePath);
-        // Check if file exists and full file name is .project and not just the file ending.
-        if (!eclipseProjectFile.exists() || !eclipseProjectFile.getName().equals(".project")) {
-            return;
-        }
-
         try {
+            File eclipseProjectFile = new File(eclipseProjectFilePath);
+            // Check if file exists and full file name is .project and not just the file ending.
+            if (!eclipseProjectFile.exists() || !eclipseProjectFile.getName().equals(".project")) {
+                return;
+            }
+
             // 1- Build the doc from the XML file
             Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(new InputSource(eclipseProjectFile.getPath()));
             doc.setXmlStandalone(true);
@@ -787,7 +790,7 @@ public class ProgrammingExerciseExportService {
             xformer.transform(new DOMSource(doc), new StreamResult(new File(eclipseProjectFile.getPath())));
 
         }
-        catch (SAXException | IOException | ParserConfigurationException | TransformerException | XPathException ex) {
+        catch (Exception ex) {
             log.error("Cannot rename .project file in " + repo.getLocalPath(), ex);
         }
     }
@@ -799,12 +802,12 @@ public class ProgrammingExerciseExportService {
      * @return A list of all file names under the given path
      */
     private List<String> listAllFilesInPath(Path path) {
-        List<String> allRepoFiles = null;
+        List<String> allRepoFiles = Collections.emptyList();
         try (Stream<Path> walk = Files.walk(path)) {
             allRepoFiles = walk.filter(Files::isRegularFile).map(Path::toString).filter(s -> !s.contains(".git")).collect(Collectors.toList());
         }
-        catch (IOException e) {
-            e.printStackTrace();
+        catch (IOException | SecurityException e) {
+            log.error("Cannot list all files in path {}: {}", path, e.getMessage());
         }
         return allRepoFiles;
     }

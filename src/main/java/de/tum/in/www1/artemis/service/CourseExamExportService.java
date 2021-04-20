@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.service;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
@@ -22,6 +23,7 @@ import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseExportService;
 import de.tum.in.www1.artemis.web.rest.dto.SubmissionExportOptionsDTO;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
  * Service Implementation for exporting courses and exams.
@@ -179,12 +181,17 @@ public class CourseExamExportService {
      * @param exportErrors List of failures that occurred during the export
      */
     private void exportCourseExams(String notificationTopic, Course course, String outputDir, List<String> exportErrors) {
-        Path examsDir = Path.of(outputDir, "exams");
+        Path examsDir = null;
         try {
+            examsDir = Path.of(outputDir, "exams");
             Files.createDirectory(examsDir);
-            List<Exam> exams = examRepository.findByCourseId(course.getId());
-            exams.forEach(exam -> exportExam(notificationTopic, exam.getId(), examsDir.toString(), exportErrors));
 
+            List<Exam> exams = examRepository.findByCourseId(course.getId());
+            Path finalExamsDir = examsDir;
+            exams.forEach(exam -> exportExam(notificationTopic, exam.getId(), finalExamsDir.toString(), exportErrors));
+        }
+        catch (InvalidPathException e) {
+            logMessageAndAppendToList("The path of the course's exams directory is invalid.", exportErrors);
         }
         catch (IOException e) {
             logMessageAndAppendToList("Failed to create course exams directory " + examsDir + ".", exportErrors);
@@ -199,13 +206,22 @@ public class CourseExamExportService {
      * @param exportErrors List of failures that occurred during the export
      */
     private void exportExam(String notificationTopic, long examId, String outputDir, List<String> exportErrors) {
-        var exam = examRepository.findByIdElseThrow(examId);
-        Path examDir = Path.of(outputDir, exam.getId() + "-" + exam.getTitle());
+        Path examDir = null;
         try {
+            // Create exam directory.
+            var exam = examRepository.findByIdElseThrow(examId);
+            examDir = Path.of(outputDir, exam.getId() + "-" + exam.getTitle());
             Files.createDirectory(examDir);
+
             // We retrieve every exercise from each exercise group and flatten the list.
             var exercises = examRepository.findAllExercisesByExamId(examId);
             exportExercises(notificationTopic, exercises, examDir.toString(), exportErrors);
+        }
+        catch (EntityNotFoundException e) {
+            logMessageAndAppendToList("The exam with id " + examId + "doesn't exist.", exportErrors);
+        }
+        catch (InvalidPathException e) {
+            logMessageAndAppendToList("The path of the exam directory is invalid.", exportErrors);
         }
         catch (IOException e) {
             logMessageAndAppendToList("Failed to create exam directory " + examDir + ".", exportErrors);
@@ -228,6 +244,7 @@ public class CourseExamExportService {
             exportedExercises.addAndGet(1);
             notifyUserAboutExerciseExportState(notificationTopic, CourseExamExportState.RUNNING, exportedExercises + "/" + exercises.size() + " done");
 
+            // Export programming exercise
             if (exercise instanceof ProgrammingExercise) {
                 programmingExerciseExportService.exportProgrammingExercise((ProgrammingExercise) exercise, outputDir, exportErrors);
                 return;
@@ -291,18 +308,20 @@ public class CourseExamExportService {
      * @return The path to the zip file
      */
     private Optional<Path> createCourseZipFile(Path courseDirPath, Path outputDirPath, List<String> exportErrors) {
-        var zippedFile = Path.of(outputDirPath.toString(), courseDirPath.getFileName() + ".zip");
+        var zipFileName = courseDirPath.getFileName() + ".zip";
         try {
+            var zippedFile = Path.of(outputDirPath.toString(), zipFileName);
+
             // Create course output directory if it doesn't exist
             Files.createDirectories(outputDirPath);
-            log.info("Created the directory {} because it didn't exist.", outputDirPath.toString());
+            log.info("Created the directory {} because it didn't exist.", outputDirPath);
 
             zipFileService.createZipFileWithFolderContent(zippedFile, courseDirPath);
             log.info("Successfully created zip file at: {}", zippedFile);
             return Optional.of(zippedFile);
         }
-        catch (IOException e) {
-            logMessageAndAppendToList("Failed to create zip file at " + zippedFile + ".", exportErrors);
+        catch (Exception e) {
+            logMessageAndAppendToList("Failed to create zip file" + zipFileName + " at " + outputDirPath + ".", exportErrors);
             return Optional.empty();
         }
         finally {

@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.service.connectors;
 
 import static de.tum.in.www1.artemis.config.Constants.*;
 
-import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Optional;
 
@@ -121,7 +120,7 @@ public abstract class AbstractVersionControlService implements VersionControlSer
                     FileUtils.deleteDirectory(localPath.toFile());
                 }
             }
-            catch (IOException ex) {
+            catch (Exception ex) {
                 // ignore
                 log.error("Could not delete directory of the failed cloned repository in: {}", localPath);
             }

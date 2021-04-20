@@ -563,8 +563,9 @@ public class FileService implements DisposableBean {
      *
      * @param startPath the path where the start directory is located
      * @throws IOException if an issue occurs on file access for the normalizing of the line endings.
+     * @throws RuntimeException if an issue occured during runtime
      */
-    public void normalizeLineEndingsDirectory(String startPath) throws IOException {
+    public void normalizeLineEndingsDirectory(String startPath) throws IOException, RuntimeException {
         log.debug("Normalizing file endings in directory {}", startPath);
         File directory = new File(startPath);
         if (!directory.exists() || !directory.isDirectory()) {
@@ -588,8 +589,9 @@ public class FileService implements DisposableBean {
      *
      * @param filePath the path where the file is located
      * @throws IOException if an issue occurs on file access for the normalizing of the line endings.
+     * @throws RuntimeException if an issue occured during the runtime
      */
-    public void normalizeLineEndings(String filePath) throws IOException {
+    public void normalizeLineEndings(String filePath) throws IOException, RuntimeException {
         log.debug("Normalizing line endings in file {}", filePath);
         // https://stackoverflow.com/questions/3776923/how-can-i-normalize-the-eol-character-in-java
         Path replaceFilePath = Paths.get(filePath);
@@ -607,8 +609,9 @@ public class FileService implements DisposableBean {
      *
      * @param startPath the path where the start directory is located
      * @throws IOException if an issue occurs on file access when converting to UTF-8.
+     * @throws RuntimeException if an error occured during runtime
      */
-    public void convertToUTF8Directory(String startPath) throws IOException {
+    public void convertToUTF8Directory(String startPath) throws IOException, RuntimeException {
         log.debug("Converting files in directory {} to UTF-8", startPath);
         File directory = new File(startPath);
         if (!directory.exists() || !directory.isDirectory()) {
@@ -710,8 +713,10 @@ public class FileService implements DisposableBean {
      *
      * @param path the original path, e.g. /opt/artemis/repos-download
      * @return the unique path as string, e.g. /opt/artemis/repos-download/1609579674868
+     * @throws SecurityException in case of security violation
+     * @throws InvalidPathException if the path is invalid
      */
-    public String getUniquePathString(String path) {
+    public String getUniquePathString(String path) throws SecurityException, InvalidPathException {
         return getUniquePath(path).toString();
     }
 
@@ -721,14 +726,16 @@ public class FileService implements DisposableBean {
      *
      * @param path the original path, e.g. /opt/artemis/repos-download
      * @return the unique path, e.g. /opt/artemis/repos-download/1609579674868
+     * @throws SecurityException in case of security violation
+     * @throws InvalidPathException if the path is invalid
      */
-    public Path getUniquePath(String path) {
+    public Path getUniquePath(String path) throws SecurityException, InvalidPathException {
         var uniquePath = Paths.get(path, String.valueOf(System.currentTimeMillis()));
         if (!Files.exists(uniquePath) && Files.isDirectory(uniquePath)) {
             try {
                 Files.createDirectories(uniquePath);
             }
-            catch (IOException e) {
+            catch (Exception e) {
                 log.warn("could not create the directories for the path {}", uniquePath);
             }
         }
