@@ -121,7 +121,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
      * counts the number of assessments of a course, which are either rated or not rated
      *
      * @param exerciseIds - the exercises of the course
-     * @return an array with 2 elements: count of rated (in time) and unrated (late) assessments of a course
+     * @return a list with 3 elements: count of rated (in time) and unrated (late) assessments of a course and count of assessments without rating (null)
      */
     @Query("""
             SELECT new de.tum.in.www1.artemis.domain.assessment.dashboard.ResultCount(r.rated, count(r))
