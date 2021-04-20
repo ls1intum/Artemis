@@ -217,7 +217,7 @@ public class AuthorizationCheckService {
             // only retrieve the user and the groups if the user is null or the groups are missing (to save performance)
             user = userRepository.getUserWithGroupsAndAuthorities();
         }
-        return user.getGroups().contains(course.getInstructorGroupName()) || user.getGroups().contains(course.getTeachingAssistantGroupName()) || isAdmin(user);
+        return isTeachingAssistantInCourse(course, user) || isInstructorInCourse(course, user) || isAdmin(user);
     }
 
     /**
@@ -245,8 +245,8 @@ public class AuthorizationCheckService {
             // only retrieve the user and the groups if the user is null or the groups are missing (to save performance)
             user = userRepository.getUserWithGroupsAndAuthorities();
         }
-        return user.getGroups().contains(course.getInstructorGroupName()) || user.getGroups().contains(course.getTeachingAssistantGroupName())
-                || user.getGroups().contains(course.getStudentGroupName()) || isAdmin(user);
+        return isStudentInCourse(course, user) || isTeachingAssistantInCourse(course, user)
+            || isInstructorInCourse(course, user) || isAdmin(user);
     }
 
     /**
