@@ -1,4 +1,4 @@
-    package de.tum.in.www1.artemis;
+package de.tum.in.www1.artemis;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
