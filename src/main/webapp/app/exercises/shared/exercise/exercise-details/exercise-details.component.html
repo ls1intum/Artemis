@@ -107,6 +107,6 @@
 <ng-container *ngIf="isExamExercise === false && exercise.course?.onlineCourse === true && exercise.isAtLeastInstructor === true">
     <dt><span jhiTranslate="artemisApp.exerciseLtiConfiguration.lti">LTI</span></dt>
     <dd>
-        <a [routerLink]="['/course-management', exercise.course?.id, 'exercises', exercise.id, 'lti-configuration']">LTI Configuration</a>
+        <a [routerLink]="['/course-management', exercise.course?.id, exercise.type + '-exercises', exercise.id, 'lti-configuration']">LTI Configuration</a>
     </dd>
 </ng-container>
