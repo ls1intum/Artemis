@@ -189,15 +189,17 @@ public class ResultService {
 
     /**
      * Save the feedback to the result with a workaround for Hibernate exceptions.
-     *
+     * <p>
      * With ordered collections (like result and feedback here), we have to be very careful with the way we persist the objects in the database.
      * We must first persist the child object without a relation to the parent object. Then, we recreate the association and persist the parent object.
-     * @param result the result with should be saved with the given feedback
-     * @param feedbackList new feedback items which should be saved to the feedback
-     * @param shouldSaveResult whether the result should be saved or not
+     *
+     * @param result                 the result with should be saved with the given feedback
+     * @param feedbackList           new feedback items which should be saved to the feedback
+     * @param shouldSaveResult       whether the result should be saved or not
+     * @param shouldReplaceFeedbacks whether the feedbacks should be completely replaced or just added to the existing
      * @return the saved result
      */
-    public Result storeFeedbackInResult(Result result, List<Feedback> feedbackList, boolean shouldSaveResult) {
+    public Result storeFeedbackInResult(Result result, List<Feedback> feedbackList, boolean shouldSaveResult, boolean shouldReplaceFeedbacks) {
         // Avoid hibernate exception
         List<Feedback> savedFeedbacks = new ArrayList<>();
         feedbackList.forEach(feedback -> {
@@ -210,7 +212,15 @@ public class ResultService {
             savedFeedbacks.add(feedback);
         });
 
-        result.setFeedbacks(savedFeedbacks);
+        if (shouldReplaceFeedbacks) {
+            result.setFeedbacks(savedFeedbacks);
+        }
+        else {
+            for (Feedback feedback : savedFeedbacks) {
+                result.addFeedback(feedback);
+            }
+        }
+
         if (shouldSaveResult) {
             // Note: This also saves the feedback objects in the database because of the 'cascade = CascadeType.ALL' option.
             return resultRepository.save(result);
