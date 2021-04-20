@@ -2,7 +2,7 @@
 <ng-template #longText>
     <div *ngIf="isCollapsed; else opened">
         <button (click)="isCollapsed = !isCollapsed"><fa-icon [icon]="'angle-right'"></fa-icon></button>
-        {{ text.substring(0, 50) }} ...
+        {{ text.substring(0, 100) }} ...
     </div>
     <ng-template #opened>
         <div>
