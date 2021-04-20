@@ -13,6 +13,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.assessment.dashboard.ResultCount;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.leaderboard.tutor.TutorLeaderboardAssessments;
 import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
@@ -120,23 +121,17 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
      * counts the number of assessments of a course, which are either rated or not rated
      *
      * @param exerciseIds - the exercises of the course
-     * @param rated     - only counts assessments which are either rated or not rated
-     * @return count of rated/unrated assessments of a course
+     * @return a list with 3 elements: count of rated (in time) and unrated (late) assessments of a course and count of assessments without rating (null)
      */
     @Query("""
-            SELECT
-                count(r)
-            FROM
-                Result r join r.participation p join p.exercise e
-            WHERE
-                r.completionDate is not null
-                and r.assessor is not null
-                and r.rated = :rated
-                and e.id IN :exerciseIds
+            SELECT new de.tum.in.www1.artemis.domain.assessment.dashboard.ResultCount(r.rated, count(r))
+            FROM Result r join r.participation p
+            WHERE r.completionDate is not null
+                AND r.assessor is not null
+                AND p.exercise.id IN :exerciseIds
+                GROUP BY r.rated
             """)
-    Long countAssessmentsByCourseIdAndRated(@Param("exerciseIds") Set<Long> exerciseIds, @Param("rated") boolean rated);
-
-    List<Result> findAllByParticipation_Exercise_CourseId(Long courseId);
+    List<ResultCount> countAssessmentsByExerciseIdsAndRated(@Param("exerciseIds") Set<Long> exerciseIds);
 
     /**
      * Load a result from the database by its id together with the associated submission and the list of feedback items.
@@ -148,13 +143,12 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
     Optional<Result> findWithEagerSubmissionAndFeedbackById(long resultId);
 
     @Query("""
-                SELECT COUNT(DISTINCT p) FROM StudentParticipation p left join p.results r
-                WHERE p.exercise.id = :exerciseId
+            SELECT COUNT(DISTINCT p) FROM StudentParticipation p JOIN p.results r JOIN p.exercise e
+            WHERE e.id = :exerciseId
                 AND r.assessor IS NOT NULL
                 AND r.rated = TRUE
                 AND r.completionDate IS NOT NULL
-                AND (p.exercise.dueDate IS NULL
-                    OR r.submission.submissionDate <= p.exercise.dueDate)
+                AND (e.dueDate IS NULL OR r.submission.submissionDate <= e.dueDate)
             """)
     long countNumberOfFinishedAssessmentsForExercise(@Param("exerciseId") Long exerciseId);
 
@@ -173,16 +167,14 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
     long countNumberOfRatedResultsForExercise(@Param("exerciseId") Long exerciseId);
 
     @Query("""
-            SELECT COUNT(DISTINCT p) FROM StudentParticipation p
-            left join p.results r
-            WHERE p.exercise.id = :exerciseId
-            AND p.testRun = FALSE
-            AND r.assessor IS NOT NULL
-            AND r.rated = TRUE
-            AND r.submission.submitted = TRUE
-            AND r.completionDate IS NOT NULL
-            AND (p.exercise.dueDate IS NULL
-                OR r.submission.submissionDate <= p.exercise.dueDate)
+            SELECT COUNT(DISTINCT p) FROM StudentParticipation p JOIN p.results r JOIN p.exercise e
+            WHERE e.id = :exerciseId
+                AND p.testRun = FALSE
+                AND r.assessor IS NOT NULL
+                AND r.rated = TRUE
+                AND r.submission.submitted = TRUE
+                AND r.completionDate IS NOT NULL
+                AND (e.dueDate IS NULL OR r.submission.submissionDate <= e.dueDate)
             """)
     long countNumberOfFinishedAssessmentsForExerciseIgnoreTestRuns(@Param("exerciseId") Long exerciseId);
 
@@ -431,13 +423,23 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
     /**
      * Given a courseId, return the number of assessments for that course that have been completed (e.g. no draft!)
      *
-     * !! this is very slow - 3787 ms TODO improve
-     *
      * @param exerciseIds - the exercise ids of the course we are interested in
      * @return a number of assessments for the course
      */
     default DueDateStat countNumberOfAssessments(Set<Long> exerciseIds) {
-        return new DueDateStat(countAssessmentsByCourseIdAndRated(exerciseIds, true), countAssessmentsByCourseIdAndRated(exerciseIds, false));
+        var ratedCounts = countAssessmentsByExerciseIdsAndRated(exerciseIds);
+        long inTime = 0;
+        long late = 0;
+        for (var ratedCount : ratedCounts) {
+            if (Boolean.TRUE.equals(ratedCount.rated())) {
+                inTime = ratedCount.count();
+            }
+            else if (Boolean.FALSE.equals(ratedCount.rated())) {
+                late = ratedCount.count();
+            }
+            // we are not interested in results with rated is null even if the database would return such
+        }
+        return new DueDateStat(inTime, late);
     }
 
     @Query("""

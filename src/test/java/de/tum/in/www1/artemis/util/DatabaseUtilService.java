@@ -2455,6 +2455,23 @@ public class DatabaseUtilService {
         return resultRepo.findWithEagerSubmissionAndFeedbackAndAssessorById(result.getId()).get();
     }
 
+    public Result addModelingAssessmentForSubmission(ModelingExercise exercise, ModelingSubmission submission, String login, boolean submit) throws Exception {
+        Feedback feedback1 = feedbackRepo.save(new Feedback().detailText("detail1"));
+        Feedback feedback2 = feedbackRepo.save(new Feedback().detailText("detail2"));
+        List<Feedback> feedbacks = new ArrayList<>();
+        feedbacks.add(feedback1);
+        feedbacks.add(feedback2);
+
+        Result result = assessmentService.saveManualAssessment(submission, feedbacks, null);
+        result.setParticipation(submission.getParticipation().results(null));
+        result.setAssessor(getUserByLogin(login));
+        resultRepo.save(result);
+        if (submit) {
+            assessmentService.submitManualAssessment(result.getId(), exercise, submission.getSubmissionDate());
+        }
+        return resultRepo.findWithEagerSubmissionAndFeedbackAndAssessorById(result.getId()).get();
+    }
+
     public ExampleSubmission addExampleSubmission(ExampleSubmission exampleSubmission) {
         Submission submission;
         if (exampleSubmission.getSubmission() instanceof ModelingSubmission) {
