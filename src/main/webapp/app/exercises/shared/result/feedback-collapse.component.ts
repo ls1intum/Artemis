@@ -6,7 +6,7 @@ import { Component, Input } from '@angular/core';
     templateUrl: './feedback-collapse.component.html',
 })
 export class FeedbackCollapseComponent {
-    @Input() text = '';
+    @Input() text: string;
     smallFeedbackCharacterLimit = 200;
     isCollapsed = true;
 }

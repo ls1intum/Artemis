@@ -4,12 +4,12 @@
         {{ text }}
     </p>
     <ng-template #big>
-        <div *ngIf="isCollapsed; else closed">
+        <div *ngIf="isCollapsed; else opened">
             {{ text.substring(0, 30) }} ...
             <button (click)="isCollapsed = !isCollapsed">Open</button>
             <!-- TODO: prettier buttons-->
         </div>
-        <ng-template #closed>
+        <ng-template #opened>
             <button (click)="isCollapsed = !isCollapsed">Close</button>
             <!-- TODO: prettier buttons-->
             <p>{{ text }}</p>
