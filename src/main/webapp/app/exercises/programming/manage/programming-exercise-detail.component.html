@@ -32,7 +32,7 @@
 
                 <a
                     *ngIf="programmingExercise.course !== undefined"
-                    [routerLink]="['/course-management', programmingExercise.course.id, 'exercises', programmingExercise.id, 'participations']"
+                    [routerLink]="['/course-management', programmingExercise.course.id, 'programming-exercises', programmingExercise.id, 'participations']"
                     class="btn btn-primary btn-sm mr-1"
                     style="margin-bottom: 10px"
                 >
@@ -41,7 +41,7 @@
                 </a>
                 <a
                     *ngIf="programmingExercise.course !== undefined"
-                    [routerLink]="['/course-management', programmingExercise.course.id, 'exercises', programmingExercise.id, 'scores']"
+                    [routerLink]="['/course-management', programmingExercise.course.id, 'programming-exercises', programmingExercise.id, 'scores']"
                     class="btn btn-info btn-sm mr-1"
                     style="margin-bottom: 10px"
                 >
@@ -61,7 +61,7 @@
 
                 <a
                     *ngIf="programmingExercise.isAtLeastInstructor && programmingExercise.course !== undefined"
-                    [routerLink]="['/course-management', programmingExercise.course?.id, 'exercises', programmingExercise.id, 'hints']"
+                    [routerLink]="['/course-management', programmingExercise.course?.id, 'programming-exercises', programmingExercise.id, 'hints']"
                     class="btn btn-info btn-sm mr-1"
                     style="margin-bottom: 10px"
                 >
@@ -315,7 +315,7 @@
                         [routerLink]="[
                             '/course-management',
                             programmingExercise.course.id,
-                            'exercises',
+                            'programming-exercises',
                             programmingExercise.id,
                             'participations',
                             programmingExercise.templateParticipation?.id,
@@ -357,7 +357,7 @@
                         [routerLink]="[
                             '/course-management',
                             programmingExercise.course.id,
-                            'exercises',
+                            'programming-exercises',
                             programmingExercise.id,
                             'participations',
                             programmingExercise.solutionParticipation?.id,
