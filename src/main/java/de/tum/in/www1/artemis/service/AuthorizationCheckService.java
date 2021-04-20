@@ -5,7 +5,6 @@ import static de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException.NO
 import java.security.Principal;
 import java.time.ZonedDateTime;
 import java.util.Optional;
-import java.util.Set;
 import java.util.function.Consumer;
 
 import javax.annotation.Nullable;
@@ -43,6 +42,18 @@ public class AuthorizationCheckService {
      */
     public boolean isAtLeastEditorForExercise(@NotNull Exercise exercise) {
         return isAtLeastEditorInCourse(exercise.getCourseViaExerciseGroupOrCourseMember(), null);
+    }
+
+    /**
+     * Checks if the currently logged in user is at least an editor in the course of the given exercise.
+     * The course is identified from either exercise.course or exercise.exerciseGroup.exam.course
+     *
+     * @param exercise belongs to a course that will be checked for permission rights
+     * @param user the user whose permissions should be checked
+     * @return true if the currently logged in user is at least an editor, false otherwise
+     */
+    public boolean isAtLeastEditorForExercise(@NotNull Exercise exercise, @Nullable User user) {
+        return isAtLeastEditorInCourse(exercise.getCourseViaExerciseGroupOrCourseMember(), user);
     }
 
     /**
@@ -171,18 +182,14 @@ public class AuthorizationCheckService {
      *
      * @param course the course that needs to be checked
      * @param user the user whose permissions should be checked
-     * @return true if the passed user is at least an editor in the course (also if the user is instructor or admin), false otherwise
+     * @return true if the passed user is at least an editor in the course, false otherwise
      */
     public boolean isAtLeastEditorInCourse(@NotNull Course course, @Nullable User user) {
-
-        Set<String> userGroups = user==null?null:user.getGroups();
-
         if (user == null || user.getGroups() == null) {
             // only retrieve the user and the groups if the user is null or the groups are missing (to save performance)
             user = userRepository.getUserWithGroupsAndAuthorities();
         }
-
-        return userGroups.contains(course.getInstructorGroupName()) || userGroups.contains(course.getEditorGroupName()) || isAdmin(user);
+        return user.getGroups().contains(course.getEditorGroupName()) || isAdmin(user);
     }
 
     /**
