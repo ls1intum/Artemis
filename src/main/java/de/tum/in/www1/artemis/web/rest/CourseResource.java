@@ -1314,28 +1314,21 @@ public class CourseResource {
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<CourseManagementDetailViewDTO> getCourseDTOForDetailView(@PathVariable Long courseId) {
         Course course = courseRepository.findByIdElseThrow(courseId);
-        User user = userRepository.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
-            return forbidden();
-        }
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, null);
 
         var exercises = exerciseRepository.findAllExercisesByCourseId(courseId);
         var includedExercises = exercises.stream().filter(Exercise::isCourseExercise)
                 .filter(exercise -> !exercise.getIncludedInOverallScore().equals(IncludedInOverallScore.NOT_INCLUDED)).collect(Collectors.toSet());
         var averageScoreForCourse = participantScoreRepository.findAvgScore(includedExercises);
+        averageScoreForCourse = averageScoreForCourse != null ? averageScoreForCourse : 0.0;
 
         Set<Long> exerciseIdsOfCourse = includedExercises.stream().map(Exercise::getId).collect(Collectors.toSet());
         CourseManagementDetailViewDTO dto = courseService.getStatsForDetailView(courseId, exerciseIdsOfCourse);
 
-        // user is tutor, otherwise this statement would not be executed
-        dto.setIsAtLeastTutor(true);
-        dto.setIsAtLeastInstructor(authCheckService.isAtLeastInstructorInCourse(course, user));
-
         // Only counting assessments and submissions which are handed in in time
         long numberOfAssessments = resultRepository.countNumberOfAssessments(exerciseIdsOfCourse).getInTime();
         dto.setCurrentAbsoluteAssessments(numberOfAssessments);
-        long numberOfSubmissions = submissionRepository.countByCourseIdSubmittedBeforeDueDate(courseId)
-                + programmingExerciseRepository.countAllSubmissionsByExerciseIdsSubmitted(exerciseIdsOfCourse);
+        long numberOfSubmissions = submissionRepository.countByCourseIdSubmittedBeforeDueDate(courseId);
         dto.setCurrentMaxAssessments(numberOfSubmissions);
         if (numberOfSubmissions > 0) {
             dto.setCurrentPercentageAssessments(Math.round(numberOfAssessments * 1000.0 / numberOfSubmissions) / 10.0);

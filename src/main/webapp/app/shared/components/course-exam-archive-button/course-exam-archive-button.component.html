@@ -42,12 +42,26 @@
             </button>
         </div>
     </ng-template>
-    <button *ngIf="canArchive()" [disabled]="isBeingArchived" type="button" class="btn btn-warning mr-1 mb-1" (click)="openArchiveWarningModal(archiveWarningPopup)">
+    <button
+        *ngIf="canArchive()"
+        [disabled]="isBeingArchived"
+        type="button"
+        [ngClass]="archiveMode === 'Course' ? 'ml-1' : 'mr-1 mb-1'"
+        class="btn btn-warning"
+        (click)="openArchiveWarningModal(archiveWarningPopup)"
+    >
         <fa-icon [hidden]="!isBeingArchived" [spin]="true" [icon]="'circle-notch'"></fa-icon>
         <fa-icon [hidden]="isBeingArchived" [icon]="'archive'"></fa-icon>&nbsp;
         <span>{{ archiveButtonText }}</span>
     </button>
-    <button *ngIf="canDownloadArchive()" [disabled]="isBeingArchived" type="button" class="btn btn-primary mr-1 mb-1" (click)="downloadArchive()">
+    <button
+        *ngIf="canDownloadArchive()"
+        [disabled]="isBeingArchived"
+        type="button"
+        [ngClass]="archiveMode === 'Course' ? 'ml-1' : 'mr-1 mb-1'"
+        class="btn btn-warning"
+        (click)="downloadArchive()"
+    >
         <fa-icon [icon]="'download'"></fa-icon>&nbsp;
         <span jhiTranslate="artemisApp.courseExamArchive.downloadArchive">Download Archive</span>
     </button>

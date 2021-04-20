@@ -83,16 +83,20 @@ export class CourseManagementService {
     }
 
     /**
-     * gets course information required for the course mangement detail page
+     * gets course information required for the course management detail page
      * @param courseId the id of the course of which the detailed data should be fetched
      */
     getCourseForDetailView(courseId: number): Observable<HttpResponse<CourseManagementDetailViewDto>> {
-        return this.http.get<CourseManagementDetailViewDto>(`${this.resourceUrl}/${courseId}/management-detail`, { observe: 'response' });
-        // .pipe((res: HttpResponse<CourseManagementDetailViewDto>) => this.checkAndSetCourseRights(res)));
+        return this.http
+            .get<CourseManagementDetailViewDto>(`${this.resourceUrl}/${courseId}/management-detail`, { observe: 'response' })
+            .pipe(
+                filter((res: HttpResponse<CourseManagementDetailViewDto>) => !!res.body),
+                tap((res: HttpResponse<CourseManagementDetailViewDto>) => this.checkAndSetCourseRights(res.body!.course)),
+                tap((res: HttpResponse<CourseManagementDetailViewDto>) => this.setCourseDates(res.body!.course)),
+            );
     }
 
     getStatisticsData(courseId: number, periodIndex: number): Observable<number[]> {
-        // return of([Math.floor(Math.random() * 100 + courseId), Math.floor(Math.random() * 100 + periodIndex), Math.floor(Math.random() * 100), Math.floor(Math.random() * 100)]);
         const params = new HttpParams().set('periodIndex', '' + periodIndex);
         return this.http.get<number[]>(`${this.resourceUrl}/${courseId}/statistics`, { params });
     }

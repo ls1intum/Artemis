@@ -1,9 +1,6 @@
 package de.tum.in.www1.artemis.web.rest.dto;
 
-import java.util.List;
-
 import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.Exercise;
 
 public class CourseManagementDetailViewDTO {
 
@@ -14,10 +11,6 @@ public class CourseManagementDetailViewDTO {
     private Integer numberOfTeachingAssistantsInCourse;
 
     private Integer numberOfInstructorsInCourse;
-
-    private Boolean isAtLeastInstructor;
-
-    private Boolean isAtLeastTutor;
 
     // Total Assessment
     private Double currentPercentageAssessments;
@@ -49,10 +42,6 @@ public class CourseManagementDetailViewDTO {
 
     private Integer[] activeStudents;
 
-    private List<Exercise> exerciseDetails;
-
-    private List<CourseManagementOverviewExerciseStatisticsDTO> exercisesStatistics;
-
     public Integer getNumberOfStudentsInCourse() {
         return numberOfStudentsInCourse;
     }
@@ -75,14 +64,6 @@ public class CourseManagementDetailViewDTO {
 
     public void setNumberOfInstructorsInCourse(Integer numberOfInstructorsInCourse) {
         this.numberOfInstructorsInCourse = numberOfInstructorsInCourse;
-    }
-
-    public Boolean getIsAtLeastInstructor() {
-        return isAtLeastInstructor;
-    }
-
-    public void setIsAtLeastInstructor(Boolean atLeastInstructor) {
-        isAtLeastInstructor = atLeastInstructor;
     }
 
     public Double getCurrentPercentageAssessments() {
@@ -189,35 +170,11 @@ public class CourseManagementDetailViewDTO {
         this.activeStudents = activeStudents;
     }
 
-    public List<Exercise> getExerciseDetails() {
-        return exerciseDetails;
-    }
-
-    public void setExerciseDetails(List<Exercise> exerciseDetails) {
-        this.exerciseDetails = exerciseDetails;
-    }
-
-    public List<CourseManagementOverviewExerciseStatisticsDTO> getExercisesStatistics() {
-        return exercisesStatistics;
-    }
-
-    public void setExercisesStatistics(List<CourseManagementOverviewExerciseStatisticsDTO> exercisesStatistics) {
-        this.exercisesStatistics = exercisesStatistics;
-    }
-
     public Course getCourse() {
         return course;
     }
 
     public void setCourse(Course course) {
         this.course = course;
-    }
-
-    public Boolean getIsAtLeastTutor() {
-        return isAtLeastTutor;
-    }
-
-    public void setIsAtLeastTutor(Boolean atLeastTutor) {
-        isAtLeastTutor = atLeastTutor;
     }
 }
