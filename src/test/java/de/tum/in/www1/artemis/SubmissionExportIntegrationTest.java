@@ -51,6 +51,8 @@ public class SubmissionExportIntegrationTest extends AbstractSpringIntegrationBa
 
     private FileUploadSubmission fileUploadSubmission3;
 
+    private long NOT_EXISTING_EXERCISE_ID = 5489218954L;
+
     @BeforeEach
     public void initTestCase() {
         List<User> users = database.addUsers(3, 1, 1);
@@ -146,6 +148,39 @@ public class SubmissionExportIntegrationTest extends AbstractSpringIntegrationBa
         request.post("/api/text-exercises/" + textExercise.getId() + "/export-submissions", baseExportOptions, HttpStatus.BAD_REQUEST);
         request.post("/api/modeling-exercises/" + modelingExercise.getId() + "/export-submissions", baseExportOptions, HttpStatus.BAD_REQUEST);
         request.post("/api/file-upload-exercises/" + fileUploadExercise.getId() + "/export-submissions", baseExportOptions, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testNoSubmissionsForStudent_asInstructorNotInGroup() throws Exception {
+        baseExportOptions.setExportAllParticipants(false);
+        baseExportOptions.setParticipantIdentifierList("nonexistentstudent");
+        Course course = textExercise.getCourseViaExerciseGroupOrCourseMember();
+        course.setInstructorGroupName("abc");
+        database.saveCourse(course);
+        request.post("/api/text-exercises/" + textExercise.getId() + "/export-submissions", baseExportOptions, HttpStatus.FORBIDDEN);
+        request.post("/api/modeling-exercises/" + modelingExercise.getId() + "/export-submissions", baseExportOptions, HttpStatus.FORBIDDEN);
+        request.post("/api/file-upload-exercises/" + fileUploadExercise.getId() + "/export-submissions", baseExportOptions, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testNoSubmissionsForStudent_asTutor() throws Exception {
+        baseExportOptions.setExportAllParticipants(true);
+        baseExportOptions.setParticipantIdentifierList("nonexistentstudent");
+        request.post("/api/text-exercises/" + textExercise.getId() + "/export-submissions", baseExportOptions, HttpStatus.FORBIDDEN);
+        request.post("/api/modeling-exercises/" + modelingExercise.getId() + "/export-submissions", baseExportOptions, HttpStatus.FORBIDDEN);
+        request.post("/api/file-upload-exercises/" + fileUploadExercise.getId() + "/export-submissions", baseExportOptions, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testWrongExerciseId_asInstructor() throws Exception {
+        baseExportOptions.setExportAllParticipants(false);
+        baseExportOptions.setParticipantIdentifierList("nonexistentstudent");
+        request.post("/api/text-exercises/" + NOT_EXISTING_EXERCISE_ID + "/export-submissions", baseExportOptions, HttpStatus.NOT_FOUND);
+        request.post("/api/modeling-exercises/" + NOT_EXISTING_EXERCISE_ID + "/export-submissions", baseExportOptions, HttpStatus.NOT_FOUND);
+        request.post("/api/file-upload-exercises/" + NOT_EXISTING_EXERCISE_ID + "/export-submissions", baseExportOptions, HttpStatus.NOT_FOUND);
     }
 
     @Test
