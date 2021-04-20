@@ -1,19 +1,19 @@
 <div class="row justify-content-center">
     <div class="col-12">
-        <div *ngIf="course">
+        <div *ngIf="courseDTO">
             <div class="course-info-bar" [class.course-info-bar--ide]="isOrion">
                 <div class="row">
                     <div class="col general-info">
-                        <h3>{{ course.title }}</h3>
-                        <h4 class="d-none d-sm-inline">{{ course.description || ('artemisApp.courseOverview.noDescription' | artemisTranslate) }}</h4>
+                        <h3>{{ courseDTO.course.title }}</h3>
+                        <h4 class="d-none d-sm-inline">{{ courseDTO.course.description || ('artemisApp.courseOverview.noDescription' | artemisTranslate) }}</h4>
                         <h4 class="d-sm-none">{{ 'artemisApp.courseOverview.noDescription' | artemisTranslate }}</h4>
                         <h6 class="d-sm-none">{{ 'artemisApp.courseOverview.showMore' | artemisTranslate }}</h6>
                         <h6 class="d-sm-none">{{ 'artemisApp.courseOverview.showLess' | artemisTranslate }}</h6>
                     </div>
                     <div class="col-4 d-none d-md-flex justify-content-end course-icon">
                         <jhi-secured-image
-                            *ngIf="course.courseIcon"
-                            [src]="course.courseIcon"
+                            *ngIf="courseDTO.course.courseIcon"
+                            [src]="courseDTO.course.courseIcon"
                             [cachingStrategy]="CachingStrategy.LOCAL_STORAGE"
                             [alt]="'artemisApp.courseOverview.noCourseIcon' | artemisTranslate"
                         >
@@ -23,40 +23,43 @@
             </div>
             <jhi-alert></jhi-alert>
             <div class="tab-bar tab-bar-course-overview">
-                <a [routerLink]="['/course-management', course.id, 'exams']" class="tab-item exams">
+                <a [routerLink]="['/course-management', courseDTO.course.id, 'exams']" class="tab-item exams">
                     <b jhiTranslate="artemisApp.courseOverview.menu.exams">Exams</b>
                 </a>
-                <a [routerLink]="['/course-management', course.id, 'exercises']" class="tab-item exercises">
+                <a [routerLink]="['/course-management', courseDTO.course.id, 'exercises']" class="tab-item exercises">
                     <b jhiTranslate="artemisApp.courseOverview.menu.exercises">Exercise</b>
                 </a>
-                <a [routerLink]="['/course-management', course.id, 'lectures']" class="tab-item lectures">
+                <a [routerLink]="['/course-management', courseDTO.course.id, 'lectures']" class="tab-item lectures">
                     <b jhiTranslate="artemisApp.courseOverview.menu.lectures">Lectures</b>
                 </a>
-                <a *ngIf="course.isAtLeastInstructor" [routerLink]="['/course-management', course.id, 'course-statistics']" class="tab-item statistics">
+                <a *ngIf="courseDTO.isAtLeastInstructor" [routerLink]="['/course-management', courseDTO.course.id, 'course-statistics']" class="tab-item statistics">
                     <b jhiTranslate="artemisApp.courseOverview.menu.statistics">Statistics</b>
                 </a>
-                <a *ngIf="course.isAtLeastInstructor" [routerLink]="['/course-management', course.id, 'goal-management']" class="tab-item learningGoals">
+                <a *ngIf="courseDTO.isAtLeastInstructor" [routerLink]="['/course-management', courseDTO.course.id, 'goal-management']" class="tab-item learningGoals">
                     <b jhiTranslate="artemisApp.learningGoal.learningGoalButton">Learning Goals</b>
                 </a>
-                <a *ngIf="course.isAtLeastInstructor" [routerLink]="['/course-management', course.id, 'scores']" class="tab-item scores">
+                <a *ngIf="courseDTO.isAtLeastInstructor" [routerLink]="['/course-management', courseDTO.course.id, 'scores']" class="tab-item scores">
                     <b jhiTranslate="entity.action.scores">Scores</b>
                 </a>
-                <a [routerLink]="['/course-management', course.id, 'tutor-dashboard']" class="tab-item assessmentDashboard">
+                <a [routerLink]="['/course-management', courseDTO.course.id, 'tutor-dashboard']" class="tab-item assessmentDashboard">
                     <b jhiTranslate="entity.action.assessmentDashboard">Assessment Dashboard</b>
                 </a>
-                <a *ngIf="course.isAtLeastInstructor" [routerLink]="['/course-management', course.id, 'instructor-dashboard']" class="tab-item instructorDashboard">
+                <a *ngIf="courseDTO.isAtLeastInstructor" [routerLink]="['/course-management', courseDTO.course.id, 'instructor-dashboard']" class="tab-item instructorDashboard">
                     <b jhiTranslate="artemisApp.course.instructorDashboard">Instructor Dashboard</b>
+                </a>
+                <a *ngIf="courseDTO.isAtLeastInstructor" [routerLink]="['/course-management', courseDTO.course.id, 'participant-scores']" class="tab-item participantScore">
+                    <b jhiTranslate="artemisApp.participantScores.pageTitle">Learning Goals</b>
                 </a>
                 <div class="ml-auto">
                     <a
-                        *ngIf="course?.studentQuestionsEnabled && course?.isAtLeastTutor"
-                        [routerLink]="['/course-management', course?.id, 'questions']"
+                        *ngIf="courseDTO.course.studentQuestionsEnabled && courseDTO?.isAtLeastTutor"
+                        [routerLink]="['/course-management', courseDTO?.course.id, 'questions']"
                         class="btn btn-primary btn-md ml-1"
                     >
                         <fa-icon [icon]="'comment'"></fa-icon>
                         <span jhiTranslate="entity.action.questionsAndAnswers">Q&A</span>
                     </a>
-                    <a *ngIf="course.isAtLeastInstructor" [routerLink]="['/course-management', course.id, 'edit']" class="btn btn-warning btn-md ml-1">
+                    <a *ngIf="courseDTO.isAtLeastInstructor" [routerLink]="['/course-management', courseDTO.course.id, 'edit']" class="btn btn-warning btn-md ml-1">
                         <fa-icon [icon]="'wrench'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.edit">Edit</span>
                     </a>
                     <button
@@ -64,10 +67,10 @@
                         *jhiHasAnyAuthority="['ROLE_ADMIN']"
                         [buttonSize]="ButtonSize.MEDIUM"
                         jhiDeleteButton
-                        [entityTitle]="course.title"
+                        [entityTitle]="courseDTO.course.title || ''"
                         deleteQuestion="artemisApp.course.delete.question"
                         deleteConfirmationText="artemisApp.course.delete.typeNameToConfirm"
-                        (delete)="deleteCourse(course.id)"
+                        (delete)="deleteCourse(courseDTO.course.id!)"
                         [dialogError]="dialogError$"
                     >
                         <fa-icon [icon]="'times'"></fa-icon>
@@ -80,229 +83,168 @@
                         <jhi-course-detail-doughnut-chart
                             class="col-md-6"
                             [doughnutChartTitle]="firstTitle"
-                            [currentPercentage]="course.currentPercentageAssessments"
-                            [currentAbsolute]="course.currentAbsoluteAssessments"
-                            [currentMax]="course.currentMaxAssessments"
+                            [currentPercentage]="courseDTO.currentPercentageAssessments"
+                            [currentAbsolute]="courseDTO.currentAbsoluteAssessments"
+                            [currentMax]="courseDTO.currentMaxAssessments"
                         ></jhi-course-detail-doughnut-chart>
                         <jhi-course-detail-doughnut-chart
                             class="col-md-6"
                             [doughnutChartTitle]="secondTitle"
-                            [currentPercentage]="course.currentPercentageComplaints"
-                            [currentAbsolute]="course.currentAbsoluteComplaints"
-                            [currentMax]="course.currentMaxComplaints"
+                            [currentPercentage]="courseDTO.currentPercentageComplaints"
+                            [currentAbsolute]="courseDTO.currentAbsoluteComplaints"
+                            [currentMax]="courseDTO.currentMaxComplaints"
                         ></jhi-course-detail-doughnut-chart>
                     </div>
                     <div class="row my-3">
                         <jhi-course-detail-doughnut-chart
                             class="col-md-6"
                             [doughnutChartTitle]="thirdTitle"
-                            [currentPercentage]="course.currentPercentageMoreFeedbacks"
-                            [currentAbsolute]="course.currentAbsoluteMoreFeedbacks"
-                            [currentMax]="course.currentMaxMoreFeedbacks"
+                            [currentPercentage]="courseDTO.currentPercentageMoreFeedbacks"
+                            [currentAbsolute]="courseDTO.currentAbsoluteMoreFeedbacks"
+                            [currentMax]="courseDTO.currentMaxMoreFeedbacks"
                         ></jhi-course-detail-doughnut-chart>
                         <jhi-course-detail-doughnut-chart
                             class="col-md-6"
                             [doughnutChartTitle]="fourthTitle"
-                            [currentPercentage]="course.currentPercentageAverageScore"
-                            [currentAbsolute]="course.currentAbsoluteAverageScore"
-                            [currentMax]="course.currentMaxAverageScore"
+                            [currentPercentage]="courseDTO.currentPercentageAverageScore"
+                            [currentAbsolute]="courseDTO.currentAbsoluteAverageScore"
+                            [currentMax]="courseDTO.currentMaxAverageScore"
                         ></jhi-course-detail-doughnut-chart>
                     </div>
                 </div>
                 <jhi-course-detail-bar-chart
                     class="col-md-8"
-                    [courseId]="course.id"
-                    [numberOfStudentsInCourse]="course.numberOfStudentsInCourse"
-                    [initialStats]="course.activeStudents"
+                    [courseId]="courseDTO.course.id!"
+                    [numberOfStudentsInCourse]="courseDTO.numberOfStudentsInCourse"
+                    [initialStats]="courseDTO.activeStudents"
                 ></jhi-course-detail-bar-chart>
             </div>
-
-            <div>
-                <a *ngIf="course.isAtLeastInstructor" [routerLink]="['/course-management', course.id, 'edit']" class="btn btn-warning mr-1 mb-1">
-                    <fa-icon [icon]="'wrench'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.edit">Edit</span>
-                </a>
-
-                <a *ngIf="course.isAtLeastInstructor" [routerLink]="['/course-management', course.id, 'goal-management']" class="btn btn-primary mr-1 mb-1">
-                    <fa-icon [icon]="'flag'"></fa-icon>
-                    <span [innerHTML]="'artemisApp.learningGoal.learningGoalButton' | artemisTranslate" class="d-none d-md-inline"></span>
-                </a>
-
-                <a
-                    *ngIf="course?.studentQuestionsEnabled && course?.isAtLeastTutor"
-                    [routerLink]="['/course-management', course?.id, 'questions']"
-                    class="btn btn-primary mr-1 mb-1"
-                >
-                    <fa-icon [icon]="'comment'"></fa-icon>
-                    <span jhiTranslate="entity.action.questionsAndAnswers">Q&A</span>
-                </a>
-
-                <button (click)="registerForCourse()" *ngIf="course.registrationEnabled" class="btn btn-warning mr-1 mb-1" type="button">
-                    <fa-icon [icon]="'user-plus'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.registerForCourse">Register</span>
-                </button>
-
-                <a [routerLink]="['/course-management', course.id, 'exercises']" class="btn btn-primary mr-1 mb-1">
-                    <fa-icon [icon]="'list-alt'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.exercise">Exercises</span>
-                </a>
-                <a *ngIf="course.isAtLeastInstructor" [routerLink]="['/course-management', course.id, 'lectures']" class="btn btn-primary mr-1 mb-1">
-                    <fa-icon [icon]="'list-alt'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.lecture">Lectures</span>
-                </a>
-                <a *ngIf="course.isAtLeastInstructor" [routerLink]="['/course-management', course.id, 'scores']" class="btn btn-info mr-1 mb-1">
-                    <fa-icon [icon]="'eye'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.scores">Scores</span>
-                </a>
-                <a [routerLink]="['/course-management', course.id, 'exams']" class="btn btn-info mr-1 mb-1"> <fa-icon [icon]="'list-alt'"></fa-icon>&nbsp;<span>Exams</span> </a>
-                <a [routerLink]="['/course-management', course.id, 'tutor-dashboard']" class="btn btn-info mr-1 mb-1">
-                    <fa-icon [icon]="'th-list'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.assessmentDashboard">Assessment Dashboard</span>
-                </a>
-                <a *ngIf="course.isAtLeastInstructor" [routerLink]="['/course-management', course.id, 'instructor-dashboard']" class="btn btn-info mr-1 mb-1">
-                    <fa-icon [icon]="'th-list'"></fa-icon>&nbsp;<span jhiTranslate="artemisApp.course.instructorDashboard">Instructor Dashboard</span>
-                </a>
-                <ng-template #archiveCourseWarningPopup let-modal>
-                    <div class="modal-header">
-                        <h4 class="modal-title"><span [jhiTranslate]="'artemisApp.course.archive.popup.title'">Confirm Archive Course Operation</span></h4>
-                        <button type="button" class="close" aria-label="Close" (click)="modal.dismiss()">
-                            <span aria-hidden="true">&times;</span>
-                        </button>
-                    </div>
-                    <div class="modal-body">
-                        <p [jhiTranslate]="'artemisApp.course.archive.popup.question'" [translateValues]="{ title: course.title }">Are you sure you want to archive the course?</p>
-                        <p [jhiTranslate]="'artemisApp.course.archive.popup.statement1'">
-                            The process will compress all student code repositories, file upload exercises, modeling exercises, and text exercises for exercises and exams.
-                        </p>
-                        <p [jhiTranslate]="'artemisApp.course.archive.popup.statement2'">
-                            This process can take several hours depending on the number of students and programming exercises and will take up many server resources. Please start
-                            this process only once when the server load is low (e.g. early in the morning)
-                        </p>
-                        <p [jhiTranslate]="'artemisApp.course.archive.popup.footerStatement'">
-                            You will receive a notification when the process is finished. Then you can download the archive as zip file on this page.
-                        </p>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-warning" (click)="modal.close('archive')">Archive Course</button>
-                    </div>
-                </ng-template>
-                <button
-                    *ngIf="canArchiveCourse()"
-                    [disabled]="courseIsBeingArchived"
-                    type="button"
-                    class="btn btn-warning mr-1 mb-1"
-                    (click)="openArchieCourseModal(archiveCourseWarningPopup)"
-                >
-                    <fa-icon [hidden]="!courseIsBeingArchived" [spin]="true" [icon]="'circle-notch'"></fa-icon>
-                    <fa-icon [hidden]="courseIsBeingArchived" [icon]="'archive'"></fa-icon>&nbsp;
-                    <span>{{ archiveCourseButtonText }}</span>
-                </button>
-                <button *ngIf="canDownloadArchive()" [disabled]="courseIsBeingArchived" type="button" class="btn btn-primary mr-1 mb-1" (click)="downloadCourseArchive()">
-                    <fa-icon [icon]="'download'"></fa-icon>&nbsp;
-                    <span jhiTranslate="artemisApp.course.archive.downloadCourseArchive">Download Course Archive</span>
-                </button>
-                <button
-                    class="mb-1"
-                    *ngIf="canCleanupCourse()"
-                    [disabled]="courseIsBeingArchived"
-                    jhiDeleteButton
-                    [buttonSize]="ButtonSize.MEDIUM"
-                    [actionType]="ActionType.Cleanup"
-                    [entityTitle]="course.title"
-                    deleteQuestion="artemisApp.course.cleanup.question"
-                    (delete)="cleanupCourse()"
-                    [dialogError]="dialogError$"
-                    deleteConfirmationText="artemisApp.course.delete.typeNameToConfirm"
-                >
-                    <fa-icon [icon]="'eraser'"></fa-icon>
-                </button>
-                <button
-                    class="mb-1"
-                    *jhiHasAnyAuthority="['ROLE_ADMIN']"
-                    [buttonSize]="ButtonSize.MEDIUM"
-                    jhiDeleteButton
-                    [entityTitle]="course.title"
-                    deleteQuestion="artemisApp.course.delete.question"
-                    deleteConfirmationText="artemisApp.course.delete.typeNameToConfirm"
-                    (delete)="deleteCourse(course.id!)"
-                    [dialogError]="dialogError$"
-                >
-                    <fa-icon [icon]="'times'"></fa-icon>
-                </button>
-            </div>
-            <hr />
-            <div>
-                <jhi-secured-image *ngIf="course.courseIcon" [cachingStrategy]="CachingStrategy.LOCAL_STORAGE" [src]="course.courseIcon"></jhi-secured-image>
-                <h2><span jhiTranslate="artemisApp.course.detail.title">Course</span> {{ course.id }}</h2>
-            </div>
-            <hr />
-            <jhi-alert></jhi-alert>
-            <jhi-alert-error></jhi-alert-error>
-            <dl class="row-md jh-entity-details">
-                <dt><span jhiTranslate="artemisApp.course.title">Title</span></dt>
-                <dd>
-                    <span>{{ course.title }}</span>
-                </dd>
-                <dt><span jhiTranslate="artemisApp.course.shortName">Short Name</span></dt>
-                <dd>
-                    <span>{{ course.shortName }}</span>
-                </dd>
-                <div *ngIf="course.isAtLeastInstructor">
-                    <dt><span jhiTranslate="artemisApp.course.studentGroupName">Student Group Name</span></dt>
-                    <dd>
-                        <a [routerLink]="['/course-management', course.id, 'groups', 'students']"> {{ course.studentGroupName }} ({{ course.numberOfStudentsInCourse }})</a>
-                    </dd>
-                    <dt><span jhiTranslate="artemisApp.course.teachingAssistantGroupName">Teaching Assistant Group Name</span></dt>
-                    <dd>
-                        <a [routerLink]="['/course-management', course.id, 'groups', 'tutors']">
-                            {{ course.teachingAssistantGroupName }} ({{ course.numberOfTeachingAssistantsInCourse }})</a
-                        >
-                    </dd>
-                    <dt><span jhiTranslate="artemisApp.course.instructorGroupName">Instructor Group Name</span></dt>
-                    <dd>
-                        <a [routerLink]="['/course-management', course.id, 'groups', 'instructors']">
-                            {{ course.instructorGroupName }} ({{ course.numberOfInstructorsInCourse }})</a
-                        >
-                    </dd>
-                </div>
-                <div *ngIf="!course.isAtLeastInstructor">
-                    <dt><span jhiTranslate="artemisApp.course.studentGroupName">Student Group Name</span></dt>
-                    <dd>
-                        <span>{{ course.studentGroupName }}</span>
-                    </dd>
-                    <dt><span jhiTranslate="artemisApp.course.teachingAssistantGroupName">Teaching Assistant Group Name</span></dt>
-                    <dd>
-                        <span>{{ course.teachingAssistantGroupName }}</span>
-                    </dd>
-                    <dt><span jhiTranslate="artemisApp.course.instructorGroupName">Instructor Group Name</span></dt>
-                    <dd>
-                        <span>{{ course.instructorGroupName }}</span>
-                    </dd>
-                </div>
-                <dt><span jhiTranslate="artemisApp.course.startDate">Start Date</span></dt>
-                <dd>
-                    <span>{{ course.startDate | artemisDate }}</span>
-                </dd>
-                <dt><span jhiTranslate="artemisApp.course.endDate">End Date</span></dt>
-                <dd>
-                    <span>{{ course.endDate | artemisDate }}</span>
-                </dd>
-                <dt><span jhiTranslate="artemisApp.course.semester">Semester</span></dt>
-                <dd>
-                    <span *ngIf="course.semester && course.semester !== ''">{{ course.semester }}</span>
-                    <span *ngIf="!course.semester || course.semester === ''">{{ 'global.generic.unset' | artemisTranslate }}</span>
-                </dd>
-                <dt><span jhiTranslate="artemisApp.course.testCourse.title">Test Course</span></dt>
-                <dd>
-                    <span *ngIf="course.testCourse">{{ 'global.generic.yes' | artemisTranslate }}</span>
-                    <span *ngIf="!course.testCourse">{{ 'global.generic.no' | artemisTranslate }}</span>
-                </dd>
-                <dt><span jhiTranslate="artemisApp.course.presentationScoreEnabled.title">Presentation Score Enabled</span></dt>
-                <dd>
-                    <span *ngIf="course.presentationScore !== 0">{{ 'global.generic.yes' | artemisTranslate }}</span>
-                    <span *ngIf="course.presentationScore === 0">{{ 'global.generic.no' | artemisTranslate }}</span>
-                </dd>
-                <ng-container *ngIf="course.presentationScore !== 0">
-                    <dt><span jhiTranslate="artemisApp.course.presentationScore">Presentation Score</span></dt>
-                    <dd>
-                        <span>{{ course.presentationScore }}</span>
-                    </dd>
-                </ng-container>
-            </dl>
+            <button (click)="registerForCourse()" *ngIf="courseDTO.course.registrationEnabled" class="btn btn-warning mr-1 mb-1" type="button">
+                <fa-icon [icon]="'user-plus'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.registerForCourse">Register</span>
+            </button>
+            <button
+                class="mb-1"
+                *jhiHasAnyAuthority="['ROLE_ADMIN']"
+                [buttonSize]="ButtonSize.MEDIUM"
+                jhiDeleteButton
+                [entityTitle]="courseDTO.course.title || ''"
+                deleteQuestion="artemisApp.course.delete.question"
+                deleteConfirmationText="artemisApp.course.delete.typeNameToConfirm"
+                (delete)="deleteCourse(courseDTO.course.id!)"
+                [dialogError]="dialogError$"
+            >
+                <fa-icon [icon]="'times'"></fa-icon>
+            </button>
         </div>
+        <hr />
+        <div>
+            <jhi-secured-image *ngIf="courseDTO.course.courseIcon" [cachingStrategy]="CachingStrategy.LOCAL_STORAGE" [src]="courseDTO.course.courseIcon"></jhi-secured-image>
+            <h2><span jhiTranslate="artemisApp.course.detail.title">Course</span> {{ courseDTO.course.id }}</h2>
+        </div>
+        <hr />
+        <jhi-alert></jhi-alert>
+        <jhi-alert-error></jhi-alert-error>
+        <dl class="row-md jh-entity-details">
+            <dt><span jhiTranslate="artemisApp.course.title">Title</span></dt>
+            <dd>
+                <span>{{ courseDTO.course.title }}</span>
+            </dd>
+            <dt><span jhiTranslate="artemisApp.course.shortName">Short Name</span></dt>
+            <dd>
+                <span>{{ courseDTO.course.shortName }}</span>
+            </dd>
+            <div *ngIf="courseDTO.isAtLeastInstructor">
+                <dt><span jhiTranslate="artemisApp.course.studentGroupName">Student Group Name</span></dt>
+                <dd>
+                    <a [routerLink]="['/course-management', courseDTO.course.id, 'groups', 'students']">
+                        {{ courseDTO.course.studentGroupName }} ({{ courseDTO.numberOfStudentsInCourse }})</a
+                    >
+                </dd>
+                <dt><span jhiTranslate="artemisApp.course.teachingAssistantGroupName">Teaching Assistant Group Name</span></dt>
+                <dd>
+                    <a [routerLink]="['/course-management', courseDTO.course.id, 'groups', 'tutors']">
+                        {{ courseDTO.course.teachingAssistantGroupName }} ({{ courseDTO.numberOfTeachingAssistantsInCourse }})</a
+                    >
+                </dd>
+                <dt><span jhiTranslate="artemisApp.course.instructorGroupName">Instructor Group Name</span></dt>
+                <dd>
+                    <a [routerLink]="['/course-management', courseDTO.course.id, 'groups', 'instructors']">
+                        {{ courseDTO.course.instructorGroupName }} ({{ courseDTO.numberOfInstructorsInCourse }})</a
+                    >
+                </dd>
+            </div>
+            <div *ngIf="!courseDTO.isAtLeastInstructor">
+                <dt><span jhiTranslate="artemisApp.course.studentGroupName">Student Group Name</span></dt>
+                <dd>
+                    <span>{{ courseDTO.course.studentGroupName }}</span>
+                </dd>
+                <dt><span jhiTranslate="artemisApp.course.teachingAssistantGroupName">Teaching Assistant Group Name</span></dt>
+                <dd>
+                    <span>{{ courseDTO.course.teachingAssistantGroupName }}</span>
+                </dd>
+                <dt><span jhiTranslate="artemisApp.course.instructorGroupName">Instructor Group Name</span></dt>
+                <dd>
+                    <span>{{ courseDTO.course.instructorGroupName }}</span>
+                </dd>
+            </div>
+            <dt><span jhiTranslate="artemisApp.course.startDate">Start Date</span></dt>
+            <dd>
+                <span>{{ courseDTO.course.startDate | artemisDate }}</span>
+            </dd>
+            <dt><span jhiTranslate="artemisApp.course.endDate">End Date</span></dt>
+            <dd>
+                <span>{{ courseDTO.course.endDate | artemisDate }}</span>
+            </dd>
+            <dt><span jhiTranslate="artemisApp.course.semester">Semester</span></dt>
+            <dd>
+                <span *ngIf="courseDTO.course.semester && courseDTO.course.semester !== ''">{{ courseDTO.course.semester }}</span>
+                <span *ngIf="!courseDTO.course.semester || courseDTO.course.semester === ''">{{ 'global.generic.unset' | artemisTranslate }}</span>
+            </dd>
+            <dt><span jhiTranslate="artemisApp.course.testCourse.title">Test Course</span></dt>
+            <dd>
+                <span *ngIf="courseDTO.course.testCourse">{{ 'global.generic.yes' | artemisTranslate }}</span>
+                <span *ngIf="!courseDTO.course.testCourse">{{ 'global.generic.no' | artemisTranslate }}</span>
+            </dd>
+            <dt><span jhiTranslate="artemisApp.course.onlineCourse.title">Online Course</span></dt>
+            <dd>
+                <span *ngIf="courseDTO.course.onlineCourse">{{ 'global.generic.yes' | artemisTranslate }}</span>
+                <span *ngIf="!courseDTO.course.onlineCourse">{{ 'global.generic.no' | artemisTranslate }}</span>
+            </dd>
+            <dt><span jhiTranslate="artemisApp.course.presentationScoreEnabled.title">Presentation Score Enabled</span></dt>
+            <dd>
+                <span *ngIf="courseDTO.course.presentationScore !== 0">{{ 'global.generic.yes' | artemisTranslate }}</span>
+                <span *ngIf="courseDTO.course.presentationScore === 0">{{ 'global.generic.no' | artemisTranslate }}</span>
+            </dd>
+            <ng-container *ngIf="courseDTO.course.presentationScore !== 0">
+                <dt><span jhiTranslate="artemisApp.course.presentationScore">Presentation Score</span></dt>
+                <dd>
+                    <span>{{ courseDTO.course.presentationScore }}</span>
+                </dd>
+            </ng-container>
+            <ng-container *ngIf="courseDTO.course.maxComplaints !== 0">
+                <dt><span jhiTranslate="artemisApp.course.maxComplaints.title">Maximum amount of complaints per student</span></dt>
+                <dd>
+                    <span>{{ courseDTO.course.maxComplaints }}</span>
+                </dd>
+            </ng-container>
+            <ng-container *ngIf="courseDTO.course.maxTeamComplaints !== 0">
+                <dt><span jhiTranslate="artemisApp.course.maxTeamComplaints.title">Maximum amount of complaints per team</span></dt>
+                <dd>
+                    <span>{{ courseDTO.course.maxTeamComplaints }}</span>
+                </dd>
+            </ng-container>
+            <ng-container *ngIf="courseDTO.course.maxComplaintTimeDays !== 0">
+                <dt><span jhiTranslate="artemisApp.course.maxComplaintTimeDays.title">Deadline for complaints in days after result date</span></dt>
+                <dd>
+                    <span>{{ courseDTO.course.maxComplaintTimeDays }}</span>
+                </dd>
+            </ng-container>
+            <ng-container *ngIf="courseDTO.course.maxRequestMoreFeedbackTimeDays !== 0">
+                <dt><span jhiTranslate="artemisApp.course.maxRequestMoreFeedbackTimeDays.title">Deadline for more feedback requests in days after result date</span></dt>
+                <dd>
+                    <span>{{ courseDTO.course.maxRequestMoreFeedbackTimeDays }}</span>
+                </dd>
+            </ng-container>
+        </dl>
     </div>
 </div>

@@ -1318,6 +1318,7 @@ public class CourseResource {
         if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
             return forbidden();
         }
+
         var exercises = exerciseRepository.findAllExercisesByCourseId(courseId);
         var includedExercises = exercises.stream().filter(Exercise::isCourseExercise)
                 .filter(exercise -> !exercise.getIncludedInOverallScore().equals(IncludedInOverallScore.NOT_INCLUDED)).collect(Collectors.toSet());
@@ -1325,12 +1326,11 @@ public class CourseResource {
 
         Set<Long> exerciseIdsOfCourse = includedExercises.stream().map(Exercise::getId).collect(Collectors.toSet());
         CourseManagementDetailViewDTO dto = courseService.getStatsForDetailView(courseId, exerciseIdsOfCourse);
-        if (authCheckService.isAtLeastInstructorInCourse(course, user)) {
-            dto.setIsAtLeastInstructor(true);
-        }
-        else {
-            dto.setIsAtLeastInstructor(false);
-        }
+
+        // user is tutor, otherwise this statement would not be executed
+        dto.setIsAtLeastTutor(true);
+        dto.setIsAtLeastInstructor(authCheckService.isAtLeastInstructorInCourse(course, user));
+
         // Only counting assessments and submissions which are handed in in time
         long numberOfAssessments = resultRepository.countNumberOfAssessments(exerciseIdsOfCourse).getInTime();
         dto.setCurrentAbsoluteAssessments(numberOfAssessments);
@@ -1341,7 +1341,7 @@ public class CourseResource {
             dto.setCurrentPercentageAssessments(Math.round(numberOfAssessments * 1000.0 / numberOfSubmissions) / 10.0);
         }
         else {
-            dto.setCurrentPercentageAssessments(100.0);
+            dto.setCurrentPercentageAssessments(0.0);
         }
 
         // Complaints
@@ -1354,7 +1354,7 @@ public class CourseResource {
             dto.setCurrentPercentageComplaints(Math.round(numberOfAnsweredComplaints * 1000.0 / numberOfComplaints) / 10.0);
         }
         else {
-            dto.setCurrentPercentageComplaints(100.0);
+            dto.setCurrentPercentageComplaints(0.0);
         }
 
         // More Feedback Requests
@@ -1367,7 +1367,7 @@ public class CourseResource {
             dto.setCurrentPercentageMoreFeedbacks(Math.round(numberOfAnsweredFeedbackRequests * 1000.0 / numberOfMoreFeedbackRequests) / 10.0);
         }
         else {
-            dto.setCurrentPercentageMoreFeedbacks(100.0);
+            dto.setCurrentPercentageMoreFeedbacks(0.0);
         }
         // Average Student Score
         ZonedDateTime now = ZonedDateTime.now();

@@ -90,7 +90,7 @@ describe('Course Management Detail Component', () => {
 
             fixture.detectChanges();
             comp.ngOnInit();
-            expect(comp.course).to.deep.equal(course);
+            expect(comp.courseDTO).to.deep.equal(course);
             expect(registerSpy).to.have.been.called;
         });
     });

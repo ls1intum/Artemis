@@ -1,23 +1,9 @@
-import { Moment } from 'moment';
 import { CourseManagementOverviewExerciseStatisticsDTO } from 'app/course/manage/overview/course-management-overview-exercise-statistics-dto.model';
 import { Exercise } from 'app/entities/exercise.model';
+import { Course } from 'app/entities/course.model';
 
 export class CourseManagementDetailViewDto {
-    id: number;
-    presentationScore: number;
-    semester: string;
-    startDate: Moment;
-    endDate: Moment;
-    description: string;
-    courseIcon: string;
-    title: string;
-    testCourse: boolean;
-    shortName: string;
-    color: string;
-
-    studentGroupName: string;
-    teachingAssistantGroupName: string;
-    instructorGroupName: string;
+    course: Course;
     numberOfStudentsInCourse: number;
     numberOfTeachingAssistantsInCourse: number;
     numberOfInstructorsInCourse: number;

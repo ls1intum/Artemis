@@ -36,8 +36,8 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
     public refreshingCourse = false;
 
     CachingStrategy = CachingStrategy;
-    course: CourseManagementDetailViewDto;
-    oldCourse: Course; // TODO Delete when handling the course archival
+    courseDTO: CourseManagementDetailViewDto;
+    course: Course;
     private eventSubscriber: Subscription;
 
     courseIsBeingArchived = false;
@@ -73,7 +73,8 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
             courseId = params['courseId'];
         });
         this.courseService.getCourseForDetailView(courseId).subscribe((courseResponse: HttpResponse<CourseManagementDetailViewDto>) => {
-            this.course = courseResponse.body!;
+            this.courseDTO = courseResponse.body!;
+            this.course = this.courseDTO.course;
             // this.registerChangeInCourses();
             this.registerCourseArchiveWebsocket();
         });
@@ -91,14 +92,14 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
      */
     registerChangeInCourses() {
         this.eventSubscriber = this.eventManager.subscribe('courseListModification', () => {
-            this.courseService.find(this.course.id).subscribe((courseResponse: HttpResponse<Course>) => {
-                this.oldCourse = courseResponse.body!;
+            this.courseService.find(this.courseDTO.course.id!).subscribe((courseResponse: HttpResponse<Course>) => {
+                this.course = courseResponse.body!;
             });
         });
     }
 
     private registerCourseArchiveWebsocket() {
-        const topic = CourseDetailComponent.getCourseArchiveStateTopic(this.course.id);
+        const topic = CourseDetailComponent.getCourseArchiveStateTopic(this.courseDTO.course.id!);
         this.websocketService.subscribe(topic);
         this.websocketService
             .receive(topic)
@@ -125,10 +126,10 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
      * Register for the currently loaded course.
      */
     registerForCourse() {
-        this.courseService.registerForCourse(this.course.id).subscribe(
+        this.courseService.registerForCourse(this.courseDTO.course.id!).subscribe(
             (userResponse) => {
                 if (userResponse.body != undefined) {
-                    const message = 'Registered user for course ' + this.course.title;
+                    const message = 'Registered user for course ' + this.courseDTO.course.title;
                     const jhiAlert = this.jhiAlertService.info(message);
                     jhiAlert.msg = message;
                 }
@@ -151,7 +152,7 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
         }
         // this.eventManager.destroy(this.eventSubscriber);
         this.dialogErrorSource.unsubscribe();
-        this.websocketService.unsubscribe(CourseDetailComponent.getCourseArchiveStateTopic(this.course.id));
+        this.websocketService.unsubscribe(CourseDetailComponent.getCourseArchiveStateTopic(this.courseDTO.course.id!));
     }
 
     private static getCourseArchiveStateTopic(courseId: number) {
@@ -160,8 +161,8 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
 
     canArchiveCourse() {
         // A course can only be archived if it's over.
-        const isCourseOver = this.course.endDate?.isBefore(moment()) ?? false;
-        return this.course.isAtLeastInstructor && isCourseOver;
+        const isCourseOver = this.courseDTO.course.endDate?.isBefore(moment()) ?? false;
+        return this.courseDTO.isAtLeastInstructor && isCourseOver;
     }
 
     /**
@@ -180,30 +181,30 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
     }
 
     archiveCourse() {
-        this.courseService.archiveCourse(this.course.id).subscribe();
+        this.courseService.archiveCourse(this.courseDTO.course.id!).subscribe();
     }
 
     downloadCourseArchive() {
-        this.courseService.downloadCourseArchive(this.course.id).subscribe(
+        this.courseService.downloadCourseArchive(this.courseDTO.course.id!).subscribe(
             (response) => downloadZipFileFromResponse(response),
             () => this.jhiAlertService.error('artemisApp.course.archive.archiveDownloadError'),
         );
     }
 
     canDownloadArchive() {
-        const hasArchive = !!this.course.courseArchivePath && this.course.courseArchivePath.length > 0;
+        const hasArchive = !!this.courseDTO.courseArchivePath && this.courseDTO.courseArchivePath.length > 0;
         // You can only download one if the path to the archive is present
-        return this.course.isAtLeastInstructor && hasArchive;
+        return this.courseDTO.isAtLeastInstructor && hasArchive;
     }
 
     canCleanupCourse() {
         // A course can only be cleaned up if the course has been archived.
-        const canCleanup = !!this.course.courseArchivePath && this.course.courseArchivePath.length > 0;
-        return this.course.isAtLeastInstructor && canCleanup;
+        const canCleanup = !!this.courseDTO.courseArchivePath && this.courseDTO.courseArchivePath.length > 0;
+        return this.courseDTO.isAtLeastInstructor && canCleanup;
     }
 
     cleanupCourse() {
-        this.courseService.cleanupCourse(this.course.id).subscribe(
+        this.courseService.cleanupCourse(this.courseDTO.course.id!).subscribe(
             () => {
                 this.jhiAlertService.success('artemisApp.programmingExercise.cleanup.successMessage');
                 this.dialogErrorSource.next('');
