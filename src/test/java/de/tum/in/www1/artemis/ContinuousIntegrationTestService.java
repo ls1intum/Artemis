@@ -56,7 +56,7 @@ public class ContinuousIntegrationTestService {
         this.mockDelegate = mockDelegate;
         this.continuousIntegrationService = continuousIntegrationService;
 
-        database.addUsers(2, 0, 0);
+        database.addUsers(2, 0, 0, 0);
         database.addCourseWithOneProgrammingExercise();
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findAll().get(0);
 

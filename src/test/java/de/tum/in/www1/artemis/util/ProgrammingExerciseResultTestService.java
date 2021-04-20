@@ -85,7 +85,7 @@ public class ProgrammingExerciseResultTestService {
     private ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipationStaticCodeAnalysis;
 
     public void setup() {
-        database.addUsers(10, 2, 2);
+        database.addUsers(10, 2, 0, 2);
         setupForProgrammingLanguage(ProgrammingLanguage.JAVA);
     }
 

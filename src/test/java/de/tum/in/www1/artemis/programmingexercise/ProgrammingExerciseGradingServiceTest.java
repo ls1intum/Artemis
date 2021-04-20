@@ -69,7 +69,7 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
 
     @BeforeEach
     public void setUp() {
-        database.addUsers(5, 1, 1);
+        database.addUsers(5, 1, 0, 1);
         database.addCourseWithOneProgrammingExerciseAndTestCases();
 
         programmingExerciseSCAEnabled = database.addCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories();

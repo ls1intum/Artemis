@@ -47,7 +47,7 @@ public class NotificationResourceIntegrationTest extends AbstractSpringIntegrati
 
     @BeforeEach
     public void initTestCase() {
-        users = database.addUsers(2, 1, 1);
+        users = database.addUsers(2, 1, 0, 1);
         course1 = database.addCourseWithOneReleasedTextExercise();
         course2 = database.addCourseWithOneReleasedTextExercise();
         systemNotificationRepository.deleteAll();

@@ -40,7 +40,7 @@ public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegr
 
     @BeforeEach
     public void setUp() {
-        database.addUsers(5, 1, 1);
+        database.addUsers(5, 1, 0, 1);
         database.addCourseWithOneProgrammingExerciseAndTestCases();
         var programmingExercises = programmingExerciseRepository.findAllWithEagerTemplateAndSolutionParticipations();
         programmingExercise = programmingExercises.get(0);

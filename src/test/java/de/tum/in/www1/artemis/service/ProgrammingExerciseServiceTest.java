@@ -26,7 +26,7 @@ class ProgrammingExerciseServiceTest extends AbstractSpringIntegrationBambooBitb
 
     @BeforeEach
     void init() {
-        database.addUsers(0, 0, 2);
+        database.addUsers(0, 0, 0, 2);
         database.addCourseWithOneProgrammingExercise();
         database.addCourseWithOneProgrammingExercise();
 

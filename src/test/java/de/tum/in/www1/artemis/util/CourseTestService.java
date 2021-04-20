@@ -84,6 +84,8 @@ public class CourseTestService {
 
     private final int numberOfTutors = 5;
 
+    private final int numberOfEditors = 0;
+
     private final int numberOfInstructors = 1;
 
     private MockDelegate mockDelegate;
@@ -94,7 +96,7 @@ public class CourseTestService {
         this.mockDelegate = mockDelegate;
         this.groupNotificationService = groupNotificationService;
 
-        database.addUsers(numberOfStudents, numberOfTutors, numberOfInstructors);
+        database.addUsers(numberOfStudents, numberOfTutors, numberOfEditors, numberOfInstructors);
 
         // Add users that are not in the course
         userRepo.save(ModelFactory.generateActivatedUser("tutor6"));

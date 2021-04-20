@@ -40,7 +40,7 @@ public class FileUploadExerciseIntegrationTest extends AbstractSpringIntegration
 
     @BeforeEach
     public void initTestCase() {
-        database.addUsers(1, 1, 1);
+        database.addUsers(1, 1, 0, 1);
     }
 
     @AfterEach

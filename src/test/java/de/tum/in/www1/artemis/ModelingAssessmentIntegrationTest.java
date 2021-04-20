@@ -96,7 +96,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
 
     @BeforeEach
     public void initTestCase() throws Exception {
-        database.addUsers(6, 2, 1);
+        database.addUsers(6, 2, 0, 1);
         this.course = database.addCourseWithDifferentModelingExercises();
         classExercise = database.findModelingExerciseWithTitle(course.getExercises(), "ClassDiagram");
         activityExercise = database.findModelingExerciseWithTitle(course.getExercises(), "ActivityDiagram");

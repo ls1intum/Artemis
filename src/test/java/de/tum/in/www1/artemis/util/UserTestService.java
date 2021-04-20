@@ -62,12 +62,14 @@ public class UserTestService {
 
     private final int numberOfTutors = 1;
 
+    private final int numberOfEditors = 1;
+
     private final int numberOfInstructors = 1;
 
     public void setup(MockDelegate mockDelegate) throws Exception {
         this.mockDelegate = mockDelegate;
 
-        List<User> users = database.addUsers(numberOfStudents, numberOfTutors, numberOfInstructors);
+        List<User> users = database.addUsers(numberOfStudents, numberOfTutors, numberOfEditors, numberOfInstructors);
         student = users.get(0);
         users.forEach(user -> cacheManager.getCache(UserRepository.USERS_CACHE).evict(user.getLogin()));
     }

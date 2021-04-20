@@ -50,7 +50,7 @@ public class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     @BeforeEach
     public void initTestCase() {
-        database.addUsers(2, 2, 1);
+        database.addUsers(2, 2, 0, 1);
     }
 
     @AfterEach

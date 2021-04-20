@@ -40,7 +40,7 @@ public class ApollonDiagramResourceIntegrationTest extends AbstractSpringIntegra
 
     @BeforeEach
     public void initTestCase() {
-        database.addUsers(1, 1, 1);
+        database.addUsers(1, 1, 0,1);
         userRepo.save(ModelFactory.generateActivatedUser("tutor2"));
         userRepo.save(ModelFactory.generateActivatedUser("instructor2"));
 

@@ -146,7 +146,8 @@ public class ProgrammingExerciseTestService {
     private MockDelegate mockDelegate;
 
     public List<User> setupTestUsers(int numberOfStudents, int numberOfTutors, int numberOfInstructors) {
-        return database.addUsers(ProgrammingExerciseTestService.numberOfStudents + numberOfStudents, numberOfTutors + 1, numberOfInstructors + 1);
+        // TODO EDITOR
+        return database.addUsers(ProgrammingExerciseTestService.numberOfStudents + numberOfStudents, numberOfTutors + 1, 0, numberOfInstructors + 1);
     }
 
     public void setup(MockDelegate mockDelegate, VersionControlService versionControlService, ContinuousIntegrationService continuousIntegrationService) throws Exception {

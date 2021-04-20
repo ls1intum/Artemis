@@ -90,7 +90,7 @@ public class InternalAuthenticationIntegrationTest extends AbstractSpringIntegra
     public void setUp() {
         jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsServer);
 
-        database.addUsers(1, 0, 0);
+        database.addUsers(1, 0, 0, 0);
         database.addCourseWithOneProgrammingExercise();
         programmingExercise = programmingExerciseRepository.findAllWithEagerParticipations().get(0);
         ltiLaunchRequest = AuthenticationIntegrationTestHelper.setupDefaultLtiLaunchRequest();

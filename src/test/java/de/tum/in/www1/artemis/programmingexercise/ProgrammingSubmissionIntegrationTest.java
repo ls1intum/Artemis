@@ -52,7 +52,7 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
 
     @BeforeEach
     public void init() {
-        database.addUsers(10, 2, 2);
+        database.addUsers(10, 2, 0, 2);
         database.addCourseWithOneProgrammingExerciseAndTestCases();
 
         exercise = programmingExerciseRepository.findAllWithEagerParticipationsAndLegalSubmissions().get(0);

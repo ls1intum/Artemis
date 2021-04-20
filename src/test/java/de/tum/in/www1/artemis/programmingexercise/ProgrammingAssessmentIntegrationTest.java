@@ -73,7 +73,7 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
 
     @BeforeEach
     void initTestCase() {
-        database.addUsers(3, 2, 2);
+        database.addUsers(3, 2, 0, 2);
         database.addCourseWithOneProgrammingExerciseAndTestCases();
         programmingExercise = programmingExerciseRepository.findAllWithEagerParticipations().get(0);
         programmingExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);

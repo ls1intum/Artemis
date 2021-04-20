@@ -49,7 +49,7 @@ public class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationB
     @BeforeEach
     public void initTestCase() throws Exception {
         // creating the users student1-student5, tutor1-tutor10 and instructors1-instructor10
-        this.database.addUsers(5, 10, 10);
+        this.database.addUsers(5, 10, 0, 10);
         // Add users that are not in the course
         userRepository.save(ModelFactory.generateActivatedUser("student42"));
         userRepository.save(ModelFactory.generateActivatedUser("tutor42"));

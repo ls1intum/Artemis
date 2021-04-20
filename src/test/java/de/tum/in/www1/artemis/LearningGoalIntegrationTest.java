@@ -106,7 +106,7 @@ public class LearningGoalIntegrationTest extends AbstractSpringIntegrationBamboo
     public void setupTestScenario() {
         ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
         // creating the users student1-student5, tutor1-tutor10 and instructors1-instructor10
-        this.database.addUsers(5, 10, 10);
+        this.database.addUsers(5, 10, 0, 10);
 
         // Add users that are not in the course
         userRepository.save(ModelFactory.generateActivatedUser("student42"));
