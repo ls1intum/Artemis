@@ -86,8 +86,8 @@ export class InstructorExerciseDashboardComponent implements OnInit {
 
         this.exerciseService.getStatsForInstructors(exerciseId).subscribe(
             (res: HttpResponse<StatsForDashboard>) => {
-                this.sortService.sortByProperty(this.stats.tutorLeaderboardEntries, 'points', false);
                 this.stats = StatsForDashboard.from(Object.assign({}, this.stats, res.body));
+                this.sortService.sortByProperty(this.stats.tutorLeaderboardEntries, 'points', false);
                 this.setStatistics();
             },
             (response: string) => this.onError(response),

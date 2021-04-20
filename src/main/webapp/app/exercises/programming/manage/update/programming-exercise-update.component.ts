@@ -190,8 +190,8 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
                     if (this.isImport) {
                         this.createProgrammingExerciseForImport(params);
                     } else {
-                        if (params['courseId'] && params['examId'] && params['groupId']) {
-                            this.exerciseGroupService.find(params['courseId'], params['examId'], params['groupId']).subscribe((res) => {
+                        if (params['courseId'] && params['examId'] && params['exerciseGroupId']) {
+                            this.exerciseGroupService.find(params['courseId'], params['examId'], params['exerciseGroupId']).subscribe((res) => {
                                 this.isExamMode = true;
                                 this.programmingExercise.exerciseGroup = res.body!;
                             });
@@ -258,8 +258,8 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         this.isImport = true;
         this.originalStaticCodeAnalysisEnabled = this.programmingExercise.staticCodeAnalysisEnabled;
         // The source exercise is injected via the Resolver. The route parameters determine the target exerciseGroup or course
-        if (params['courseId'] && params['examId'] && params['groupId']) {
-            this.exerciseGroupService.find(params['courseId'], params['examId'], params['groupId']).subscribe((res) => {
+        if (params['courseId'] && params['examId'] && params['exerciseGroupId']) {
+            this.exerciseGroupService.find(params['courseId'], params['examId'], params['exerciseGroupId']).subscribe((res) => {
                 this.programmingExercise.exerciseGroup = res.body!;
                 // Set course to undefined if a normal exercise is imported
                 this.programmingExercise.course = undefined;
