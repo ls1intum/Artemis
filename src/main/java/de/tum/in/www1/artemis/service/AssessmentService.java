@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -118,26 +117,6 @@ public class AssessmentService {
         else {
             return resultRepository.submitResult(originalResult, exercise);
         }
-    }
-
-    /**
-     * With ordered collections (like result and feedback here),
-     * we have to be very careful with the way we persist the objects in the database.
-     * We must first persist the child object without a relation to the parent object.
-     * Then, we recreate the association and persist the parent object.
-     */
-    private void storeAssociatedFeedbackInDatabase(Result originalResult) {
-        List<Feedback> savedFeedbacks = new ArrayList<>();
-        originalResult.getFeedbacks().forEach(feedback -> {
-            // cut association to parent object
-            feedback.setResult(null);
-            // persist the child object without an association to the parent object.
-            feedback = feedbackRepository.saveAndFlush(feedback);
-            // restore the association to the parent object
-            feedback.setResult(originalResult);
-            savedFeedbacks.add(feedback);
-        });
-        originalResult.setFeedbacks(savedFeedbacks);
     }
 
     /**
