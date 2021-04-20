@@ -2,11 +2,11 @@
 <ng-template #longText>
     <div *ngIf="isCollapsed; else opened">
         {{ text.substring(0, 30) }} ...
-        <button (click)="isCollapsed = !isCollapsed">Open</button>
+        <button (click)="isCollapsed = !isCollapsed"><fa-icon [icon]="'angle-up'"></fa-icon></button>
         <!-- TODO: prettier buttons-->
     </div>
     <ng-template #opened>
-        <button (click)="isCollapsed = !isCollapsed">Close</button>
+        <button (click)="isCollapsed = !isCollapsed"><fa-icon [icon]="'angle-down'"></fa-icon></button>
         <!-- TODO: prettier buttons-->
         <p>{{ text }}</p>
     </ng-template>
