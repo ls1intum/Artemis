@@ -71,9 +71,11 @@ public class ZipFileService {
 
     private void copyToZipFile(ZipOutputStream zipOutputStream, Path path, ZipEntry zipEntry) {
         try {
-            zipOutputStream.putNextEntry(zipEntry);
-            Files.copy(path, zipOutputStream);
-            zipOutputStream.closeEntry();
+            if (Files.exists(path)) {
+                zipOutputStream.putNextEntry(zipEntry);
+                Files.copy(path, zipOutputStream);
+                zipOutputStream.closeEntry();
+            }
         }
         catch (IOException e) {
             log.error("Create zip file error", e);
