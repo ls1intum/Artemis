@@ -1,19 +1,14 @@
-<p *ngIf="!text; else content">No feedback available!</p>
-<ng-template #content>
-    <p *ngIf="text.length < smallFeedbackCharacterLimit; else big">
-        {{ text }}
-    </p>
-    <ng-template #big>
-        <div *ngIf="isCollapsed; else opened">
-            {{ text.substring(0, 30) }} ...
-            <button (click)="isCollapsed = !isCollapsed">Open</button>
-            <!-- TODO: prettier buttons-->
-        </div>
-        <ng-template #opened>
-            <button (click)="isCollapsed = !isCollapsed">Close</button>
-            <!-- TODO: prettier buttons-->
-            <p>{{ text }}</p>
-        </ng-template>
-        &nbsp;
+<p *ngIf="text.length < smallFeedbackCharacterLimit; else longText">{{ text }}</p>
+<ng-template #longText>
+    <div *ngIf="isCollapsed; else opened">
+        {{ text.substring(0, 30) }} ...
+        <button (click)="isCollapsed = !isCollapsed">Open</button>
+        <!-- TODO: prettier buttons-->
+    </div>
+    <ng-template #opened>
+        <button (click)="isCollapsed = !isCollapsed">Close</button>
+        <!-- TODO: prettier buttons-->
+        <p>{{ text }}</p>
     </ng-template>
+    &nbsp;
 </ng-template>
