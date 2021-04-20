@@ -36,7 +36,7 @@ public class OrganizationIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @BeforeEach
     public void initTestCase() {
-        users = database.addUsers(1, 1, 1);
+        users = database.addUsers(1, 1, 0, 1);
         bitbucketRequestMockProvider.enableMockingOfRequests();
         bambooRequestMockProvider.enableMockingOfRequests();
     }

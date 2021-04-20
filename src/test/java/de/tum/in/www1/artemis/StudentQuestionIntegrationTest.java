@@ -40,7 +40,7 @@ public class StudentQuestionIntegrationTest extends AbstractSpringIntegrationBam
 
     @BeforeEach
     public void initTestCase() {
-        database.addUsers(5, 5, 1);
+        database.addUsers(5, 5, 0, 1);
     }
 
     @AfterEach

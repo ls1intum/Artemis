@@ -55,7 +55,7 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @BeforeEach
     public void initTestCase() {
-        database.addUsers(2, 1, 1);
+        database.addUsers(2, 1, 0, 1);
         database.addInstructor("other-instructors", "instructorother");
     }
 
