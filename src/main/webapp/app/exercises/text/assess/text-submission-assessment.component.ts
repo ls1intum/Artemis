@@ -30,6 +30,7 @@ import {
 import { TextAssessmentBaseComponent } from 'app/exercises/text/assess/text-assessment-base.component';
 import { getExerciseDashboardLink, getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
 import { ExerciseType } from 'app/entities/exercise.model';
+import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
 
 @Component({
     selector: 'jhi-text-submission-assessment',
@@ -62,6 +63,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
     correctionRound: number;
     resultId: number;
     loadingInitialSubmission = true;
+    highlightDifferences = false;
 
     /*
      * Non-resetted properties:
@@ -96,6 +98,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         private complaintService: ComplaintService,
         translateService: TranslateService,
         protected structuredGradingCriterionService: StructuredGradingCriterionService,
+        private submissionService: SubmissionService,
     ) {
         super(jhiAlertService, accountService, assessmentsService, structuredGradingCriterionService);
         translateService.get('artemisApp.textAssessment.confirmCancel').subscribe((text) => (this.cancelConfirmationText = text));
@@ -127,6 +130,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         this.isAtLeastInstructor = false;
         this.assessmentsAreValid = false;
         this.noNewSubmissions = false;
+        this.highlightDifferences = false;
     }
 
     /**
@@ -187,6 +191,8 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
 
         // track feedback in athene
         this.assessmentsService.trackAssessment(this.submission, 'start');
+
+        this.submissionService.handleFeedbackCorrectionRoundTag(this.correctionRound, this.submission);
     }
 
     private updateUrlIfNeeded() {
@@ -354,6 +360,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         this.assessmentsAreValid = (hasReferencedFeedback && this.unreferencedFeedback.length === 0) || hasUnreferencedFeedback;
 
         this.totalScore = this.computeTotalScore(this.assessments);
+        this.submissionService.handleFeedbackCorrectionRoundTag(this.correctionRound, this.submission!);
     }
 
     private prepareTextBlocksAndFeedbacks(): void {

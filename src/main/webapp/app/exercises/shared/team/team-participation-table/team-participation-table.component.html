@@ -77,7 +77,7 @@
                 <ng-template ngx-datatable-cell-template let-value="row">
                     <ng-container *ngIf="value.participation; else participationIdUnavailable">
                         <div *ngIf="exercise.isAtLeastInstructor; else displayId">
-                            <a [routerLink]="['/course-management', course.id, 'exercises', value.id, 'participations', value.participation.id, 'submissions']">
+                            <a [routerLink]="['/course-management', course.id, exercise.type + '-exercises', value.id, 'participations', value.participation.id, 'submissions']">
                                 {{ value.participation.id }}
                             </a>
                         </div>
@@ -127,7 +127,7 @@
                         <ng-container *ngIf="value.participation; else submissionCountUnavailable">
                             <a
                                 *ngIf="exercise.isAtLeastInstructor; else displayTextOnly"
-                                [routerLink]="['/course-management', course.id, 'exercises', value.id, 'participations', value.participation.id, 'submissions']"
+                                [routerLink]="['/course-management', course.id, exercise.type + '-exercises', value.id, 'participations', value.participation.id, 'submissions']"
                             >
                                 {{ value.participation.submissionCount }}
                             </a>

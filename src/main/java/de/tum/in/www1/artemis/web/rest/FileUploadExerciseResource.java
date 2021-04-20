@@ -118,11 +118,12 @@ public class FileUploadExerciseResource {
 
     private boolean isFilePatternValid(FileUploadExercise exercise) {
         // a file ending should consist of a comma separated list of 1-5 characters / digits
-        var filePattern = exercise.getFilePattern().toLowerCase().replaceAll("\\s+", "");
-        var allowedFileEndings = filePattern.split(",");
-        if (allowedFileEndings.length == 0) {
+        // when an empty string "" is passed in the exercise the file-pattern is null when it arrives in the rest endpoint
+        if (exercise.getFilePattern() == null) {
             return false;
         }
+        var filePattern = exercise.getFilePattern().toLowerCase().replaceAll("\\s+", "");
+        var allowedFileEndings = filePattern.split(",");
         var isValid = true;
         for (var allowedFileEnding : allowedFileEndings) {
             isValid = isValid && FILE_ENDING_PATTERN.matcher(allowedFileEnding).matches();
