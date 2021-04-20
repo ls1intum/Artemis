@@ -30,8 +30,8 @@ export class FileUploadExerciseResolve implements Resolve<FileUploadExercise> {
                 map((fileUploadExercise: HttpResponse<FileUploadExercise>) => fileUploadExercise.body!),
             );
         } else if (route.params['courseId']) {
-            if (route.params['examId'] && route.params['groupId']) {
-                return this.exerciseGroupService.find(route.params['courseId'], route.params['examId'], route.params['groupId']).pipe(
+            if (route.params['examId'] && route.params['exerciseGroupId']) {
+                return this.exerciseGroupService.find(route.params['courseId'], route.params['examId'], route.params['exerciseGroupId']).pipe(
                     filter((res) => !!res.body),
                     map((exerciseGroup: HttpResponse<ExerciseGroup>) => {
                         const fileUploadExercise = new FileUploadExercise(undefined, exerciseGroup.body!);
