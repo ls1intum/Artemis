@@ -1,6 +1,9 @@
 package de.tum.in.www1.artemis;
 
 import static org.assertj.core.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
 
 import java.io.File;
 import java.io.IOException;
@@ -9,9 +12,12 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.zip.ZipFile;
 
+import de.tum.in.www1.artemis.service.FileUploadSubmissionExportService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
+import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
@@ -50,6 +56,9 @@ public class SubmissionExportIntegrationTest extends AbstractSpringIntegrationBa
     private FileUploadSubmission fileUploadSubmission2;
 
     private FileUploadSubmission fileUploadSubmission3;
+
+    @SpyBean
+    private FileUploadSubmissionExportService fileUploadSubmissionExportService;
 
     private long NOT_EXISTING_EXERCISE_ID = 5489218954L;
 
@@ -205,6 +214,23 @@ public class SubmissionExportIntegrationTest extends AbstractSpringIntegrationBa
         File fileUploadUip = request.postWithResponseBodyFile("/api/file-upload-exercises/" + fileUploadExercise.getId() + "/export-submissions", baseExportOptions, HttpStatus.OK);
         assertZipContains(fileUploadUip, fileUploadSubmission1, fileUploadSubmission2, fileUploadSubmission3);
     }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testExportAll_IOException() throws Exception {
+        doThrow(IOException.class).when(fileUploadSubmissionExportService).exportStudentSubmissions(any(),any());
+        request.postWithResponseBodyFile("/api/file-upload-exercises/" + fileUploadExercise.getId() + "/export-submissions", baseExportOptions, HttpStatus.BAD_REQUEST);
+
+/*
+        File modelingZip = request.postWithResponseBodyFile("/api/modeling-exercises/" + modelingExercise.getId() + "/export-submissions", baseExportOptions, HttpStatus.OK);
+        assertZipContains(modelingZip, modelingSubmission1, modelingSubmission2, modelingSubmission3);
+
+        File textZip = request.postWithResponseBodyFile("/api/text-exercises/" + textExercise.getId() + "/export-submissions", baseExportOptions, HttpStatus.OK);
+        assertZipContains(textZip, textSubmission1, textSubmission2, textSubmission3);
+  */
+
+    }
+
 
     private void assertZipContains(File file, Submission... submissions) {
         try {
