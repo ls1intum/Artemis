@@ -853,8 +853,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
     private void cancelAssessment(HttpStatus expectedStatus) throws Exception {
         modelingSubmission = ModelFactory.generateModelingSubmission(FileUtils.loadFileFromResources("test-data/model-submission/example-activity-diagram.json"), true);
         modelingSubmission = database.addModelingSubmission(activityExercise, modelingSubmission, "student1");
-        modelingAssessment = database.addModelingAssessmentForSubmission(activityExercise, modelingSubmission, "test-data/model-assessment/example-activity-assessment.json",
-                "tutor1", false);
+        modelingAssessment = database.addModelingAssessmentForSubmission(activityExercise, modelingSubmission, "tutor1", false);
         request.put(API_MODELING_SUBMISSIONS + modelingSubmission.getId() + "/cancel-assessment", null, expectedStatus);
     }
 
