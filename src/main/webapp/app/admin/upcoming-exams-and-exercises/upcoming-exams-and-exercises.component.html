@@ -26,7 +26,7 @@
                 <tr *ngFor="let exercise of upcomingExercises; trackBy: trackByExercise">
                     <td>
                         <span class="bold">
-                            <a [routerLink]="['/course-management', exercise.course?.id, 'exercises', exercise.id]">{{ exercise.title }}</a>
+                            <a [routerLink]="['/course-management', exercise.course?.id, exercise.type + '-exercises', exercise.id]">{{ exercise.title }}</a>
                         </span>
                     </td>
                     <td *ngIf="exercise.course as course; else noExerciseCourse">
