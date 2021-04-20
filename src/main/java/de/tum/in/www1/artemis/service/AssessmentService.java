@@ -102,7 +102,7 @@ public class AssessmentService {
         // persist feedback before result to prevent "null index column for collection" error
         resultService.storeFeedbackInResult(originalResult, originalResult.getFeedbacks(), false);
         if (exercise instanceof ProgrammingExercise) {
-            double points = ((ProgrammingAssessmentService) this).calculateTotalScore(originalResult);
+            double points = resultRepository.calculateTotalPointsForProgrammingExercise(originalResult);
             originalResult.setScore(points, exercise.getMaxPoints());
             /*
              * Result string has following structure e.g: "1 of 13 passed, 2 issues, 10 of 100 points" The last part of the result string has to be updated, as the points the
@@ -252,8 +252,8 @@ public class AssessmentService {
     public Result submitManualAssessment(long resultId, Exercise exercise, ZonedDateTime submissionDate) {
         Result result = resultRepository.findWithEagerSubmissionAndFeedbackAndAssessorById(resultId)
                 .orElseThrow(() -> new EntityNotFoundException("No result for the given resultId could be found"));
-        result.setRatedIfNotExceeded(exercise.getDueDate(), submissionDate);
-        result.setCompletionDate(ZonedDateTime.now());
+        // result.setRatedIfNotExceeded(exercise.getDueDate(), submissionDate);
+        // result.setCompletionDate(ZonedDateTime.now());
         result = resultRepository.submitResult(result, exercise);
         // Note: we always need to report the result (independent of the assessment due date) over LTI, otherwise it might never become visible in the external system
         ltiService.onNewResult((StudentParticipation) result.getParticipation());
@@ -283,15 +283,28 @@ public class AssessmentService {
             result.setHasComplaint(false);
         }
 
-        result.setExampleResult(submission.isExampleSubmission());
-        result.setAssessmentType(AssessmentType.MANUAL);
-        User user = userRepository.getUser();
-        result.setAssessor(user);
+        if (!(submission instanceof ProgrammingSubmission)) {
+            result.setExampleResult(submission.isExampleSubmission());
+        }
+
+        if (result.getAssessor() == null) {
+            User user = userRepository.getUser();
+            result.setAssessor(user);
+        }
+
         // first save the feedback (that is not yet in the database) to prevent null index exception
         var savedFeedbackList = feedbackRepository.saveFeedbacks(feedbackList);
         result.updateAllFeedbackItems(savedFeedbackList, false);
-        // Note: this boolean flag is only used for programming exercises
-        result.setHasFeedback(false);
+
+        if (submission instanceof ProgrammingSubmission) {
+            result.setHasFeedback(true);
+            result.setRated(true);
+        }
+        else {
+            // Note: this boolean flag is only used for programming exercises
+            result.setHasFeedback(false);
+        }
+
         result.determineAssessmentType();
 
         if (result.getSubmission() == null) {

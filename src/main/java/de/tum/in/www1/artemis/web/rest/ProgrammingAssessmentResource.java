@@ -2,8 +2,7 @@ package de.tum.in.www1.artemis.web.rest;
 
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
-import java.time.ZonedDateTime;
-import java.util.Comparator;
+import java.util.List;
 
 import org.hibernate.Hibernate;
 import org.slf4j.Logger;
@@ -14,7 +13,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
@@ -22,8 +20,6 @@ import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 import de.tum.in.www1.artemis.service.connectors.LtiService;
 import de.tum.in.www1.artemis.service.exam.ExamService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingAssessmentService;
-import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
-import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /** REST controller for managing ProgrammingAssessment. */
 @RestController
@@ -38,8 +34,6 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
 
     private final ProgrammingSubmissionRepository programmingSubmissionRepository;
 
-    private final LtiService ltiService;
-
     private final StudentParticipationRepository studentParticipationRepository;
 
     public ProgrammingAssessmentResource(AuthorizationCheckService authCheckService, UserRepository userRepository, ProgrammingAssessmentService programmingAssessmentService,
@@ -47,10 +41,9 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
             WebsocketMessagingService messagingService, LtiService ltiService, StudentParticipationRepository studentParticipationRepository,
             ExampleSubmissionRepository exampleSubmissionRepository, SubmissionRepository submissionRepository) {
         super(authCheckService, userRepository, exerciseRepository, programmingAssessmentService, resultRepository, examService, messagingService, exampleSubmissionRepository,
-                submissionRepository);
+                submissionRepository, ltiService);
         this.programmingAssessmentService = programmingAssessmentService;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
-        this.ltiService = ltiService;
         this.studentParticipationRepository = studentParticipationRepository;
     }
 
@@ -106,99 +99,31 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
     /**
      * Save or submit feedback for programming exercise.
      *
-     * @param participationId the id of the participation that should be sent to the client
+     * @param submissionId the id of the submission
      * @param submit       defines if assessment is submitted or saved
-     * @param newManualResult    result with list of feedbacks to be saved to the database
+     * @param feedbacks    list of feedbacks to be saved to the database
+     * @param resultId      id of the manual result
      * @return the result saved to the database
      */
     @ResponseStatus(HttpStatus.OK)
-    @PutMapping("/participations/{participationId}/manual-results")
+    // @PutMapping("/participations/{participationId}/manual-results")
+    @PutMapping("/programming-submissions/{submissionId}/result/{resultId}/assessment")
     @PreAuthorize("hasRole('TA')")
-    public ResponseEntity<Result> saveProgrammingAssessment(@PathVariable Long participationId, @RequestParam(value = "submit", defaultValue = "false") boolean submit,
-            @RequestBody Result newManualResult) {
-        log.debug("REST request to save a new result : {}", newManualResult);
-        final var participation = studentParticipationRepository.findByIdWithResultsElseThrow(participationId);
+    public ResponseEntity<Result> saveProgrammingAssessment(@PathVariable long submissionId, @PathVariable long resultId,
+            @RequestParam(value = "submit", defaultValue = "false") boolean submit, @RequestBody List<Feedback> feedbacks) {
 
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        Submission submission = submissionRepository.findOneWithEagerResultAndFeedback(submissionId);
+        // Resultstring has to be calculated on server as well as score
+        // add that result has always to be rated
+        // if score of 100% then set also result successful
 
-        // based on the locking mechanism we take the most recent manual result
-        Result existingManualResult = participation.getResults().stream().filter(Result::isManual).max(Comparator.comparing(Result::getId))
-                .orElseThrow(() -> new EntityNotFoundException("Manual result for participation with id " + participationId + " does not exist"));
+        var response = super.saveAssessment(submission, submit, feedbacks, resultId);
 
-        // prevent that tutors create multiple manual results
-        newManualResult.setId(existingManualResult.getId());
-        // load assessor
-        existingManualResult = resultRepository.findWithEagerSubmissionAndFeedbackAndAssessorById(existingManualResult.getId()).get();
+        /*
+         * if (submit) { newManualResult = resultRepository.submitManualAssessment(existingManualResult.getId()); }
+         */
 
-        // make sure that the participation and submission cannot be manipulated on the client side
-        newManualResult.setParticipation(participation);
-        newManualResult.setSubmission(existingManualResult.getSubmission());
-
-        var programmingExercise = (ProgrammingExercise) participation.getExercise();
-        checkAuthorization(programmingExercise, user);
-
-        final var isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(programmingExercise, user);
-        if (!assessmentService.isAllowedToCreateOrOverrideResult(existingManualResult, programmingExercise, participation, user, isAtLeastInstructor)) {
-            log.debug("The user {} is not allowed to override the assessment for the participation {} for User {}", user.getLogin(), participation.getId(), user.getLogin());
-            return forbidden("assessment", "assessmentSaveNotAllowed", "The user is not allowed to override the assessment");
-        }
-
-        if (!programmingExercise.areManualResultsAllowed()) {
-            return forbidden("assessment", "assessmentSaveNotAllowed", "Creating manual results is disabled for this exercise!");
-        }
-
-        if (Boolean.FALSE.equals(newManualResult.isRated())) {
-            throw new BadRequestAlertException("Result is not rated", ENTITY_NAME, "resultNotRated");
-        }
-        if (newManualResult.getResultString() == null) {
-            throw new BadRequestAlertException("Result string is required.", ENTITY_NAME, "resultStringNull");
-        }
-        else if (newManualResult.getResultString().length() > 255) {
-            throw new BadRequestAlertException("Result string is too long.", ENTITY_NAME, "resultStringNull");
-        }
-        else if (newManualResult.getScore() == null) {
-            throw new BadRequestAlertException("Score is required.", ENTITY_NAME, "scoreNull");
-        }
-        else if (newManualResult.getScore() < 100 && newManualResult.isSuccessful()) {
-            throw new BadRequestAlertException("Only result with score 100% can be successful.", ENTITY_NAME, "scoreAndSuccessfulNotMatching");
-        }
-        // All not automatically generated result must have a detail text
-        else if (!newManualResult.getFeedbacks().isEmpty()
-                && newManualResult.getFeedbacks().stream().anyMatch(feedback -> feedback.getType() == FeedbackType.MANUAL_UNREFERENCED && feedback.getDetailText() == null)) {
-            throw new BadRequestAlertException("In case tutor feedback is present, a feedback detail text is mandatory.", ENTITY_NAME, "feedbackDetailTextNull");
-        }
-        else if (!newManualResult.getFeedbacks().isEmpty() && newManualResult.getFeedbacks().stream().anyMatch(feedback -> feedback.getCredits() == null)) {
-            throw new BadRequestAlertException("In case feedback is present, a feedback must contain points.", ENTITY_NAME, "feedbackCreditsNull");
-        }
-
-        // TODO: move this logic into a service
-
-        // make sure that the submission cannot be manipulated on the client side
-        var submission = (ProgrammingSubmission) existingManualResult.getSubmission();
-        newManualResult.setSubmission(submission);
-        newManualResult.setHasComplaint(existingManualResult.getHasComplaint().isPresent() && existingManualResult.getHasComplaint().get());
-        newManualResult = programmingAssessmentService.saveManualAssessment(newManualResult);
-
-        if (submission.getParticipation() == null) {
-            newManualResult.setParticipation(submission.getParticipation());
-        }
-        var savedResult = resultRepository.save(newManualResult);
-        savedResult.setSubmission(submission);
-
-        if (submit) {
-            newManualResult = resultRepository.submitManualAssessment(existingManualResult.getId());
-        }
-        // remove information about the student for tutors to ensure double-blind assessment
-        if (!isAtLeastInstructor) {
-            ((StudentParticipation) newManualResult.getParticipation()).filterSensitiveInformation();
-        }
-        // Note: we always need to report the result over LTI, otherwise it might never become visible in the external system
-        ltiService.onNewResult((StudentParticipation) newManualResult.getParticipation());
-        if (submit && ((newManualResult.getParticipation()).getExercise().getAssessmentDueDate() == null
-                || newManualResult.getParticipation().getExercise().getAssessmentDueDate().isBefore(ZonedDateTime.now()))) {
-            messagingService.broadcastNewResult(newManualResult.getParticipation(), newManualResult);
-        }
-        return ResponseEntity.ok(newManualResult);
+        return response;
     }
 
     @Override

@@ -15,6 +15,7 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.AssessmentService;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
+import de.tum.in.www1.artemis.service.connectors.LtiService;
 import de.tum.in.www1.artemis.service.exam.ExamService;
 
 /**
@@ -35,9 +36,9 @@ public class FileUploadAssessmentResource extends AssessmentResource {
     public FileUploadAssessmentResource(AuthorizationCheckService authCheckService, AssessmentService assessmentService, UserRepository userRepository,
             FileUploadExerciseRepository fileUploadExerciseRepository, FileUploadSubmissionRepository fileUploadSubmissionRepository, WebsocketMessagingService messagingService,
             ExerciseRepository exerciseRepository, ResultRepository resultRepository, ExamService examService, ExampleSubmissionRepository exampleSubmissionRepository,
-            SubmissionRepository submissionRepository) {
+            SubmissionRepository submissionRepository, LtiService ltiService) {
         super(authCheckService, userRepository, exerciseRepository, assessmentService, resultRepository, examService, messagingService, exampleSubmissionRepository,
-                submissionRepository);
+                submissionRepository, ltiService);
         this.fileUploadExerciseRepository = fileUploadExerciseRepository;
         this.fileUploadSubmissionRepository = fileUploadSubmissionRepository;
     }

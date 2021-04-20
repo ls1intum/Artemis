@@ -605,7 +605,7 @@ public class ProgrammingExerciseGradingService {
     private String updateManualResultString(String resultString, Result result, ProgrammingExercise exercise) {
         // Calculate different scores for totalScore calculation and add points and maxScore to result string
         double maxScore = exercise.getMaxPoints();
-        double points = programmingAssessmentService.calculateTotalScore(result);
+        double points = resultRepository.calculateTotalPointsForProgrammingExercise(result);
         result.setScore(points, maxScore);
         return resultString + ", " + result.createResultString(points, maxScore);
     }

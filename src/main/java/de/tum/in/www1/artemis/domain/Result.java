@@ -141,6 +141,10 @@ public class Result extends DomainObject {
         return formatter.format(pointsRounded) + " of " + formatter.format(maxPoints) + " points";
     }
 
+    public String createResultStringForProgramming(double totalPoints, double maxPoints) {
+        return resultString + ", " + createResultString(totalPoints, maxPoints);
+    }
+
     public ZonedDateTime getCompletionDate() {
         return completionDate;
     }

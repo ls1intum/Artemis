@@ -10,12 +10,14 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AssessmentService;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
+import de.tum.in.www1.artemis.service.connectors.LtiService;
 import de.tum.in.www1.artemis.service.exam.ExamService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
@@ -41,9 +43,11 @@ public abstract class AssessmentResource {
 
     protected final SubmissionRepository submissionRepository;
 
+    private final LtiService ltiService;
+
     public AssessmentResource(AuthorizationCheckService authCheckService, UserRepository userRepository, ExerciseRepository exerciseRepository, AssessmentService assessmentService,
             ResultRepository resultRepository, ExamService examService, WebsocketMessagingService messagingService, ExampleSubmissionRepository exampleSubmissionRepository,
-            SubmissionRepository submissionRepository) {
+            SubmissionRepository submissionRepository, LtiService ltiService) {
         this.authCheckService = authCheckService;
         this.userRepository = userRepository;
         this.exerciseRepository = exerciseRepository;
@@ -53,6 +57,7 @@ public abstract class AssessmentResource {
         this.messagingService = messagingService;
         this.exampleSubmissionRepository = exampleSubmissionRepository;
         this.submissionRepository = submissionRepository;
+        this.ltiService = ltiService;
     }
 
     abstract String getEntityName();
@@ -111,6 +116,21 @@ public abstract class AssessmentResource {
             return forbidden("assessment", "assessmentSaveNotAllowed", "The user is not allowed to override the assessment");
         }
 
+        if (exercise instanceof ProgrammingExercise programmingExercise) {
+            if (!programmingExercise.areManualResultsAllowed()) {
+                return forbidden("assessment", "assessmentSaveNotAllowed", "Creating manual results is disabled for this exercise!");
+            }
+            // All not automatically generated result must have a detail text
+            // TODO: put this check above
+            else if (!feedbackList.isEmpty()
+                    && feedbackList.stream().anyMatch(feedback -> feedback.getType() == FeedbackType.MANUAL_UNREFERENCED && feedback.getDetailText() == null)) {
+                throw new BadRequestAlertException("In case tutor feedback is present, a feedback detail text is mandatory.", "programmingAssessment", "feedbackDetailTextNull");
+            }
+            else if (!feedbackList.isEmpty() && feedbackList.stream().anyMatch(feedback -> feedback.getCredits() == null)) {
+                throw new BadRequestAlertException("In case feedback is present, a feedback must contain points.", "programmingAssessment", "feedbackCreditsNull");
+            }
+        }
+
         Result result = assessmentService.saveManualAssessment(submission, feedbackList, resultId);
         if (submit) {
             result = assessmentService.submitManualAssessment(result.getId(), exercise, submission.getSubmissionDate());
@@ -119,6 +139,11 @@ public abstract class AssessmentResource {
         // remove information about the student for tutors to ensure double-blind assessment
         if (!isAtLeastInstructor) {
             participation.filterSensitiveInformation();
+        }
+
+        if (exercise instanceof ProgrammingExercise) {
+            // Note: we always need to report the result over LTI, otherwise it might never become visible in the external system
+            ltiService.onNewResult((StudentParticipation) participation);
         }
         if (submit && (participation.getExercise().getAssessmentDueDate() == null || participation.getExercise().getAssessmentDueDate().isBefore(ZonedDateTime.now()))) {
             messagingService.broadcastNewResult(result.getParticipation(), result);

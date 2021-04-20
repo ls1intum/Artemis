@@ -20,6 +20,7 @@ import de.tum.in.www1.artemis.service.AssessmentService;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 import de.tum.in.www1.artemis.service.compass.CompassService;
+import de.tum.in.www1.artemis.service.connectors.LtiService;
 import de.tum.in.www1.artemis.service.exam.ExamService;
 import de.tum.in.www1.artemis.web.rest.errors.ErrorConstants;
 import io.swagger.annotations.ApiResponse;
@@ -49,9 +50,9 @@ public class ModelingAssessmentResource extends AssessmentResource {
     public ModelingAssessmentResource(AuthorizationCheckService authCheckService, UserRepository userRepository, CompassService compassService,
             ModelingExerciseRepository modelingExerciseRepository, AssessmentService assessmentService, ModelingSubmissionRepository modelingSubmissionRepository,
             ExampleSubmissionRepository exampleSubmissionRepository, WebsocketMessagingService messagingService, ExerciseRepository exerciseRepository,
-            ResultRepository resultRepository, ExamService examService, SubmissionRepository submissionRepository) {
+            ResultRepository resultRepository, ExamService examService, SubmissionRepository submissionRepository, LtiService ltiService) {
         super(authCheckService, userRepository, exerciseRepository, assessmentService, resultRepository, examService, messagingService, exampleSubmissionRepository,
-                submissionRepository);
+                submissionRepository, ltiService);
         this.compassService = compassService;
         this.modelingExerciseRepository = modelingExerciseRepository;
         this.authCheckService = authCheckService;
