@@ -5,6 +5,7 @@ import static org.mockito.Mockito.*;
 
 import java.util.List;
 
+import de.tum.in.www1.artemis.security.Role;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -36,7 +37,7 @@ public class ExerciseGroupIntegrationTest extends AbstractSpringIntegrationBambo
 
     @BeforeEach
     public void initTestCase() {
-        database.addUsers(1, 1, 0, 1);
+        database.addUsers(1, 1, 1, 1);
         course1 = database.addEmptyCourse();
         exam1 = database.addExamWithExerciseGroup(course1, true);
         exam2 = database.addExamWithExerciseGroup(course1, true);
@@ -86,21 +87,21 @@ public class ExerciseGroupIntegrationTest extends AbstractSpringIntegrationBambo
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testUpdateExerciseGroup_asInstructor() throws Exception {
+    @WithMockUser(username = "editor1", roles = "EDITOR")
+    public void testUpdateExerciseGroup_asEditor() throws Exception {
         ExerciseGroup exerciseGroup = ModelFactory.generateExerciseGroup(true, exam1);
         exerciseGroup.setExam(null);
         request.put("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exerciseGroups", exerciseGroup, HttpStatus.CONFLICT);
         request.put("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exerciseGroups", exerciseGroup1, HttpStatus.OK);
-        verify(examAccessService, times(1)).checkCourseAndExamAndExerciseGroupAccess(course1.getId(), exam1.getId(), exerciseGroup1.getId());
+        verify(examAccessService, times(1)).checkCourseAndExamAndExerciseGroupAccess(Role.EDITOR, course1.getId(), exam1.getId(), exerciseGroup1.getId());
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testGetExerciseGroup_asInstructor() throws Exception {
+    @WithMockUser(username = "editor1", roles = "EDITOR")
+    public void testGetExerciseGroup_asEditor() throws Exception {
         ExerciseGroup result = request.get("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exerciseGroups/" + exerciseGroup1.getId(), HttpStatus.OK,
                 ExerciseGroup.class);
-        verify(examAccessService, times(1)).checkCourseAndExamAndExerciseGroupAccess(course1.getId(), exam1.getId(), exerciseGroup1.getId());
+        verify(examAccessService, times(1)).checkCourseAndExamAndExerciseGroupAccess(Role.EDITOR, course1.getId(), exam1.getId(), exerciseGroup1.getId());
         assertThat(result.getExam()).isEqualTo(exam1);
     }
 
