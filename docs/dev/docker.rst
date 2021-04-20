@@ -12,11 +12,13 @@ To reduce the needed time of each test run, these docker containers already cont
 There are currently docker containers for:
 
 - Maven (Java and Kotlin): https://github.com/ls1intum/artemis-maven-docker
-- Something  with jdk and yarn: https://github.com/ls1intum/docker-jdk-node-yarn
 - OCaml: https://github.com/ls1intum/artemis-ocaml-docker
 - Python: https://github.com/ls1intum/artemis-python-docker
-- Something with OpenJDK: https://github.com/ls1intum/docker-openjdk-node
 - C: https://github.com/ls1intum/artemis-c-docker
+- Haskell (external): https://github.com/lukasstevens/docker-fpv-stack
+- Swift (external): https://github.com/norio-nomura/docker-swiftlint
+- Assembler (external): https://hub.docker.com/r/tizianleonhardt/era-artemis-assembler
+- VHDL (external): https://hub.docker.com/r/tizianleonhardt/era-artemis-vhdl
 
 Steps for Updating the DockerBuilds used in Artemis
 ---------------------------------------------------
