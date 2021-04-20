@@ -71,6 +71,34 @@ public class AuthorizationCheckService {
     }
 
     /**
+     * Checks if the passed user is at least an editor in the given course.
+     * Throws an AccessForbiddenException if the user has no access which returns a 403
+     *
+     * @param course the course that needs to be checked
+     * @param user the user whose permissions should be checked
+     */
+    private void checkIsAtLeastEditorInCourseElseThrow(@NotNull Course course, @Nullable User user) {
+        if (!isAtLeastEditorInCourse(course, user)) {
+            throw new AccessForbiddenException("Course", course.getId());
+        }
+    }
+
+    /**
+     * Checks if the passed user is at least an editor in the given course.
+     *
+     * @param course the course that needs to be checked
+     * @param user the user whose permissions should be checked
+     * @return true if the passed user is at least an editor in the course, false otherwise
+     */
+    public boolean isAtLeastEditorInCourse(@NotNull Course course, @Nullable User user) {
+        if (user == null || user.getGroups() == null) {
+            // only retrieve the user and the groups if the user is null or the groups are missing (to save performance)
+            user = userRepository.getUserWithGroupsAndAuthorities();
+        }
+        return isEditorInCourse(course, user) || isInstructorInCourse(course, user) || isAdmin(user);
+    }
+
+    /**
      * Given any type of exercise, the method returns if the current user is at least TA for the course the exercise belongs to. If exercise is not present, it will return false,
      * because the optional will be empty, and therefore `isPresent()` will return false This is due how `filter` works: If a value is present, apply the provided mapping function
      * to it, and if the result is non-null, return an Optional describing the result. Otherwise return an empty Optional.
@@ -162,34 +190,6 @@ public class AuthorizationCheckService {
             user = userRepository.getUserWithGroupsAndAuthorities();
         }
         return isStudentInCourse(exercise.getCourseViaExerciseGroupOrCourseMember(), user) || isAtLeastTeachingAssistantForExercise(exercise, user);
-    }
-
-    /**
-     * Checks if the passed user is at least an editor in the given course.
-     * Throws an AccessForbiddenException if the user has no access which returns a 403
-     *
-     * @param course the course that needs to be checked
-     * @param user the user whose permissions should be checked
-     */
-    private void checkIsAtLeastEditorInCourseElseThrow(@NotNull Course course, @Nullable User user) {
-        if (!isAtLeastEditorInCourse(course, user)) {
-            throw new AccessForbiddenException("Course", course.getId());
-        }
-    }
-
-    /**
-     * Checks if the passed user is at least an editor in the given course.
-     *
-     * @param course the course that needs to be checked
-     * @param user the user whose permissions should be checked
-     * @return true if the passed user is at least an editor in the course, false otherwise
-     */
-    public boolean isAtLeastEditorInCourse(@NotNull Course course, @Nullable User user) {
-        if (user == null || user.getGroups() == null) {
-            // only retrieve the user and the groups if the user is null or the groups are missing (to save performance)
-            user = userRepository.getUserWithGroupsAndAuthorities();
-        }
-        return user.getGroups().contains(course.getEditorGroupName()) || isAdmin(user);
     }
 
     /**
@@ -369,6 +369,21 @@ public class AuthorizationCheckService {
             user = userRepository.getUserWithGroupsAndAuthorities();
         }
         return user.getGroups().contains(course.getInstructorGroupName());
+    }
+
+    /**
+     * checks if the passed user is editor in the given course
+     *
+     * @param course the course that needs to be checked
+     * @param user the user whose permissions should be checked
+     * @return true, if user is an editor of this course, otherwise false
+     */
+    public boolean isEditorInCourse(@NotNull Course course, @Nullable User user) {
+        if (user == null || user.getGroups() == null) {
+            // only retrieve the user and the groups if the user is null or the groups are missing (to save performance)
+            user = userRepository.getUserWithGroupsAndAuthorities();
+        }
+        return user.getGroups().contains(course.getEditorGroupName());
     }
 
     /**
