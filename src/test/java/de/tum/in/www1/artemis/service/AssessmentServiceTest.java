@@ -55,7 +55,7 @@ public class AssessmentServiceTest extends AbstractSpringIntegrationBambooBitbuc
     @BeforeEach
     public void init() {
         database.addUsers(2, 2, 0, 1);
-        course1 = ModelFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "tumuser", "tutor", "instructor");
+        course1 = ModelFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         course1.setRegistrationEnabled(true);
         courseRepository.save(course1);
     }

@@ -374,7 +374,7 @@ public class ModelFactory {
     }
 
     public static Course generateCourse(Long id, ZonedDateTime startDate, ZonedDateTime endDate, Set<Exercise> exercises) {
-        return generateCourse(id, startDate, endDate, exercises, null, null, null);
+        return generateCourse(id, startDate, endDate, exercises, null, null, null, null);
     }
 
     public static TextSubmission generateTextSubmission(String text, Language language, boolean submitted) {

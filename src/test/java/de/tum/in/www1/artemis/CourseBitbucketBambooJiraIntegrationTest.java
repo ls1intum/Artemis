@@ -318,7 +318,7 @@ public class CourseBitbucketBambooJiraIntegrationTest extends AbstractSpringInte
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     public void testUpdateCourse_withExternalUserManagement_vcsUserManagementHasNotBeenCalled() throws Exception {
-        var course = ModelFactory.generateCourse(1L, null, null, new HashSet<>(), "tumuser", "tutor", "instructor");
+        var course = ModelFactory.generateCourse(1L, null, null, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         course = courseTestService.getCourseRepo().save(course);
 
         request.put("/api/courses", course, HttpStatus.OK);
