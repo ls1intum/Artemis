@@ -12,6 +12,7 @@
         (didChange)="textBlockRefsChangeEmit()"
         (didDelete)="removeTextBlockRef($event)"
         (onConflictsClicked)="onConflictsClicked.emit($event)"
+        [highlightDifferences]="highlightDifferences"
     ></jhi-textblock-assessment-card>
 </ng-container>
 <ng-template #manualTextBlockSelection>
