@@ -28,6 +28,7 @@ import { ExerciseType, getCourseFromExercise } from 'app/entities/exercise.model
 import { Authority } from 'app/shared/constants/authority.constants';
 import { getLatestSubmissionResult, getSubmissionResultById } from 'app/entities/submission.model';
 import { getExerciseDashboardLink, getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
+import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
 
 @Component({
     providers: [FileUploadAssessmentsService],
@@ -66,6 +67,7 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
     exerciseGroupId: number;
     exerciseDashboardLink: string[];
     loadingInitialSubmission = true;
+    highlightDifferences = false;
 
     private cancelConfirmationText: string;
 
@@ -85,6 +87,7 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
         private complaintService: ComplaintService,
         private fileService: FileService,
         public structuredGradingCriterionService: StructuredGradingCriterionService,
+        public submissionService: SubmissionService,
     ) {
         this.assessmentsAreValid = false;
         translateService.get('artemisApp.assessment.messages.confirmCancel').subscribe((text) => (this.cancelConfirmationText = text));
@@ -214,6 +217,9 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
 
         this.checkPermissions();
         this.validateAssessment();
+
+        this.submissionService.handleFeedbackCorrectionRoundTag(this.correctionRound, this.submission);
+
         this.busy = false;
         this.isLoading = false;
     }
@@ -385,6 +391,8 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
                 this.totalScore = 0;
             }
         }
+
+        this.submissionService.handleFeedbackCorrectionRoundTag(this.correctionRound, this.submission);
     }
 
     downloadFile(filePath: string) {

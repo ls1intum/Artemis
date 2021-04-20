@@ -28,7 +28,7 @@ export class TeamOwnerSearchComponent implements OnInit {
     @Output() searching = new EventEmitter<boolean>();
     @Output() searchQueryTooShort = new EventEmitter<boolean>();
     @Output() searchFailed = new EventEmitter<boolean>();
-    @Output() searchNoResults = new EventEmitter<string | null>();
+    @Output() searchNoResults = new EventEmitter<string | undefined>();
 
     owner: User;
     ownerOptions: User[] = [];
@@ -79,7 +79,7 @@ export class TeamOwnerSearchComponent implements OnInit {
 
         return merge(text$, inputFocus$, clicksWithClosedPopup$).pipe(
             tap(() => {
-                this.searchNoResults.emit(null);
+                this.searchNoResults.emit(undefined);
             }),
             switchMap((loginOrName) => {
                 this.searchFailed.emit(false);
@@ -92,7 +92,7 @@ export class TeamOwnerSearchComponent implements OnInit {
             switchMap(([loginOrName, ownerOptions]) => {
                 // Filter list of all owner options by the search term
                 const match = (user: User) => this.searchMatchesUser(loginOrName, user);
-                return combineLatest([of(loginOrName), of(ownerOptions === null ? ownerOptions : ownerOptions.filter(match))]);
+                return combineLatest([of(loginOrName), of(!ownerOptions ? ownerOptions : ownerOptions.filter(match))]);
             }),
             tap(([loginOrName, ownerOptions]) => {
                 if (ownerOptions && ownerOptions.length === 0) {
@@ -120,7 +120,7 @@ export class TeamOwnerSearchComponent implements OnInit {
                 catchError(() => {
                     this.ownerOptionsLoaded = false;
                     this.searchFailed.emit(true);
-                    return of(null);
+                    return of(undefined);
                 }),
             );
     }

@@ -23,11 +23,15 @@ export class FileUploadExerciseService {
      */
     create(fileUploadExercise: FileUploadExercise): Observable<EntityResponseType> {
         let copy = this.exerciseService.convertDateFromClient(fileUploadExercise);
-        copy = this.formatFilePattern(copy);
+        copy = FileUploadExerciseService.formatFilePattern(copy);
         copy = this.exerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
+        copy.categories = this.exerciseService.stringifyExerciseCategories(copy);
         return this.http
             .post<FileUploadExercise>(this.resourceUrl, copy, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res)));
+            .pipe(
+                map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res)),
+                map((res: EntityResponseType) => this.exerciseService.convertExerciseCategoriesFromServer(res)),
+            );
     }
 
     /**
@@ -39,11 +43,15 @@ export class FileUploadExerciseService {
     update(fileUploadExercise: FileUploadExercise, exerciseId: number, req?: any): Observable<EntityResponseType> {
         const options = createRequestOption(req);
         let copy = this.exerciseService.convertDateFromClient(fileUploadExercise);
-        copy = this.formatFilePattern(copy);
+        copy = FileUploadExerciseService.formatFilePattern(copy);
         copy = this.exerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
+        copy.categories = this.exerciseService.stringifyExerciseCategories(copy);
         return this.http
             .put<FileUploadExercise>(`${this.resourceUrl}/${exerciseId}`, copy, { params: options, observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res)));
+            .pipe(
+                map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res)),
+                map((res: EntityResponseType) => this.exerciseService.convertExerciseCategoriesFromServer(res)),
+            );
     }
 
     /**
@@ -53,7 +61,10 @@ export class FileUploadExerciseService {
     find(exerciseId: number): Observable<EntityResponseType> {
         return this.http
             .get<FileUploadExercise>(`${this.resourceUrl}/${exerciseId}`, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res)));
+            .pipe(
+                map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res)),
+                map((res: EntityResponseType) => this.exerciseService.convertExerciseCategoriesFromServer(res)),
+            );
     }
 
     /**
@@ -64,7 +75,10 @@ export class FileUploadExerciseService {
         const options = createRequestOption(req);
         return this.http
             .get<FileUploadExercise[]>(this.resourceUrl, { params: options, observe: 'response' })
-            .pipe(map((res: EntityArrayResponseType) => this.exerciseService.convertDateArrayFromServer(res)));
+            .pipe(
+                map((res: EntityArrayResponseType) => this.exerciseService.convertDateArrayFromServer(res)),
+                map((res: EntityArrayResponseType) => this.exerciseService.convertExerciseCategoryArrayFromServer(res)),
+            );
     }
 
     /**
@@ -75,7 +89,7 @@ export class FileUploadExerciseService {
         return this.http.delete(`${this.resourceUrl}/${exerciseId}`, { observe: 'response' });
     }
 
-    private formatFilePattern(fileUploadExercise: FileUploadExercise): FileUploadExercise {
+    private static formatFilePattern(fileUploadExercise: FileUploadExercise): FileUploadExercise {
         fileUploadExercise.filePattern = fileUploadExercise.filePattern!.replace(/\s/g, '').toLowerCase();
         return fileUploadExercise;
     }

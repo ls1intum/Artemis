@@ -23,6 +23,7 @@ public class GradingCriterion extends DomainObject {
     @OneToMany(mappedBy = "gradingCriterion", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     @JsonIgnoreProperties(value = "gradingCriterion", allowSetters = true)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+    // TODO: this should actually be a set and not a list, because the relationship is not ordered
     private List<GradingInstruction> structuredGradingInstructions = new ArrayList<>();
 
     @ManyToOne
@@ -43,10 +44,9 @@ public class GradingCriterion extends DomainObject {
         return structuredGradingInstructions;
     }
 
-    public GradingCriterion addStructuredGradingInstructions(GradingInstruction structuredGradingInstruction) {
+    public void addStructuredGradingInstructions(GradingInstruction structuredGradingInstruction) {
         this.structuredGradingInstructions.add(structuredGradingInstruction);
         structuredGradingInstruction.setGradingCriterion(this);
-        return this;
     }
 
     /**

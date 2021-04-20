@@ -32,6 +32,9 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
     codeLine: number;
     @Input()
     readOnly: boolean;
+    @Input()
+    highlightDifferences: boolean;
+
     @Output()
     onUpdateFeedback = new EventEmitter<Feedback>();
     @Output()

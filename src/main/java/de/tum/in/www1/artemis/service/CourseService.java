@@ -71,10 +71,12 @@ public class CourseService {
 
     private final LearningGoalRepository learningGoalRepository;
 
+    private final GradingScaleRepository gradingScaleRepository;
+
     public CourseService(CourseRepository courseRepository, ExerciseService exerciseService, AuthorizationCheckService authCheckService, UserRepository userRepository,
             LectureService lectureService, GroupNotificationRepository groupNotificationRepository, ExerciseGroupRepository exerciseGroupRepository,
             AuditEventRepository auditEventRepository, UserService userService, LearningGoalRepository learningGoalRepository, GroupNotificationService groupNotificationService,
-            ExamService examService, ExamRepository examRepository, CourseExamExportService courseExamExportService) {
+            ExamService examService, ExamRepository examRepository, CourseExamExportService courseExamExportService, GradingScaleRepository gradingScaleRepository) {
         this.courseRepository = courseRepository;
         this.exerciseService = exerciseService;
         this.authCheckService = authCheckService;
@@ -89,6 +91,7 @@ public class CourseService {
         this.examService = examService;
         this.examRepository = examRepository;
         this.courseExamExportService = courseExamExportService;
+        this.gradingScaleRepository = gradingScaleRepository;
     }
 
     /**
@@ -165,6 +168,7 @@ public class CourseService {
      *     <li>All GroupNotifications of the course, see {@link GroupNotificationRepository#delete}</li>
      *     <li>All default groups created by Artemis, see {@link UserService#deleteGroup}</li>
      *     <li>All Exams, see {@link ExamService#delete}</li>
+     *     <li>The Grading Scale if such exists, see {@link GradingScaleRepository#delete}</li>
      * </ul>
      *
      * @param course the course to be deleted
@@ -178,7 +182,14 @@ public class CourseService {
         deleteNotificationsOfCourse(course);
         deleteDefaultGroups(course);
         deleteExamsOfCourse(course);
+        deleteGradingScaleOfCourse(course);
         courseRepository.deleteById(course.getId());
+    }
+
+    private void deleteGradingScaleOfCourse(Course course) {
+        // delete course grading scale if it exists
+        Optional<GradingScale> gradingScale = gradingScaleRepository.findByCourseId(course.getId());
+        gradingScale.ifPresent(gradingScaleRepository::delete);
     }
 
     private void deleteExamsOfCourse(Course course) {

@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, OnInit } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
@@ -52,7 +52,7 @@ export interface ExampleSubmissionQueryParams {
     styles: ['jhi-collapsable-assessment-instructions { max-height: 100vh }'],
     providers: [CourseManagementService],
 })
-export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewInit {
+export class ExerciseAssessmentDashboardComponent implements OnInit {
     readonly round = round;
     exercise: Exercise;
     modelingExercise: ModelingExercise;
@@ -175,13 +175,6 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
     }
 
     /**
-     * Notifies the guided tour service that this component has loaded
-     */
-    ngAfterViewInit(): void {
-        this.guidedTourService.componentPageLoaded();
-    }
-
-    /**
      * Loads all information from the server regarding this exercise that is needed for the tutor exercise dashboard
      */
     loadAll() {
@@ -249,6 +242,8 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
                 if ((!this.exercise.dueDate || this.exercise.dueDate.isBefore(Date.now())) && !this.exercise.teamMode && !this.isTestRun) {
                     this.getSubmissionWithoutAssessmentForAllCorrectionrounds();
                 }
+                // load the guided tour step only after everything else on the page is loaded
+                this.guidedTourService.componentPageLoaded();
             },
             (response: string) => this.onError(response),
         );
@@ -589,7 +584,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
         }
 
         this.openingAssessmentEditorForNewSubmission = true;
-        const submissionId: number | 'new' = submission === 'new' ? 'new' : this.exercise.type === ExerciseType.PROGRAMMING ? submission.participation!.id! : submission.id!;
+        const submissionId: number | 'new' = submission === 'new' ? 'new' : submission.id!;
         const url = getLinkToSubmissionAssessment(this.exercise.type!, this.courseId, this.exerciseId, submissionId, this.examId, this.exerciseGroupId);
         if (this.isTestRun) {
             await this.router.navigate(url, { queryParams: { testRun: this.isTestRun, 'correction-round': correctionRound } });
@@ -605,8 +600,6 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
      */
     viewComplaint(complaint: Complaint) {
         const submission: Submission = complaint.result?.submission!;
-        // For programming exercises we need the participationId
-        submission.participation = complaint.result?.participation;
         // numberOfAssessmentsOfCorrectionRounds size is the number of correction rounds
         this.openAssessmentEditor(submission, this.numberOfAssessmentsOfCorrectionRounds.length - 1);
     }

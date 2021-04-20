@@ -31,18 +31,6 @@ describe('StudentQuestionAnswer Service', () => {
     });
 
     describe('Service methods', () => {
-        it('should find a StudentQuestionAnswer', async () => {
-            const returnedFromService = { ...elemDefault };
-            service
-                .find(1, 123)
-                .pipe(take(1))
-                .subscribe((resp) => (expectedResult = resp));
-
-            const req = httpMock.expectOne({ method: 'GET' });
-            req.flush(returnedFromService);
-            expect(expectedResult.body).to.deep.equal(elemDefault);
-        });
-
         it('should create a StudentQuestionAnswer', async () => {
             const returnedFromService = { ...elemDefault, id: 0 };
             const expected = { ...returnedFromService };

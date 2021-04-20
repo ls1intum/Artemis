@@ -589,6 +589,7 @@ public class ProgrammingExercise extends Exercise {
 
     /**
      * This checks if the current result has a completion date and if the assessment is over
+     *
      * @param result The current result
      * @return true if the result is manual and the assessment is over or it is an automatic result, false otherwise
      */

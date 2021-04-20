@@ -235,28 +235,6 @@ public class StudentQuestionAnswerIntegrationTest extends AbstractSpringIntegrat
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testGetStudentQuestionAnswer() throws Exception {
-        StudentQuestionAnswer studentQuestionAnswer = createStudentQuestionAnswersOnServer().get(0);
-
-        StudentQuestionAnswer returnedStudentQuestionAnswer = request.get(
-                "/api/courses/" + studentQuestionAnswer.getQuestion().getCourse().getId() + "/student-question-answers/" + studentQuestionAnswer.getId(), HttpStatus.OK,
-                StudentQuestionAnswer.class);
-        assertThat(returnedStudentQuestionAnswer).isEqualTo(studentQuestionAnswer);
-    }
-
-    @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testGetStudentQuestionAnswerWithWrongCourseId() throws Exception {
-        StudentQuestionAnswer studentQuestionAnswer = createStudentQuestionAnswersOnServer().get(0);
-        Course dummyCourse = database.createCourse();
-
-        StudentQuestionAnswer returnedStudentQuestionAnswer = request.get("/api/courses/" + dummyCourse.getId() + "/student-question-answers/" + studentQuestionAnswer.getId(),
-                HttpStatus.BAD_REQUEST, StudentQuestionAnswer.class);
-        assertThat(returnedStudentQuestionAnswer).isNull();
-    }
-
-    @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void deleteStudentQuestionAnswer_asInstructor() throws Exception {
         List<StudentQuestionAnswer> answers = createStudentQuestionAnswersOnServer();
         StudentQuestionAnswer studentQuestionAnswer_tutor1 = answers.get(0);

@@ -41,7 +41,7 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy, OnChanges 
     @Output()
     isBuildingChange = new EventEmitter<boolean>();
     @Output()
-    onSavedFiles = new EventEmitter<{ [fileName: string]: string | null }>();
+    onSavedFiles = new EventEmitter<{ [fileName: string]: string | undefined }>();
     @Output()
     onRefreshFiles = new EventEmitter();
     @Output()

@@ -23,7 +23,7 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
     @Input() highlightedElements: Map<string, string>; // map elementId -> highlight color
     @Input() centeredElementId: string;
     @Input() feedbacks: Feedback[] = [];
-    @Input() diagramType: UMLDiagramType;
+    @Input() diagramType?: UMLDiagramType;
     @Input() maxScore: number;
     @Input() maxBonusPoints = 0;
     @Input() totalScore: number;
@@ -32,6 +32,8 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
     @Input() readOnly = false;
     @Input() enablePopups = true;
     @Input() displayPoints = true;
+    @Input() highlightDifferences: boolean;
+
     @Output() feedbackChanged = new EventEmitter<Feedback[]>();
     @Output() selectionChanged = new EventEmitter<Selection>();
 
@@ -122,7 +124,7 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
             mode: ApollonMode.Assessment,
             readonly: this.readOnly,
             model: this.model,
-            type: this.diagramType,
+            type: this.diagramType || UMLDiagramType.ClassDiagram,
             enablePopups: this.enablePopups,
         });
         this.apollonEditor.subscribeToSelectionChange((selection: Selection) => {

@@ -1,8 +1,11 @@
 package de.tum.in.www1.artemis.domain.plagiarism;
 
+import static java.util.Comparator.*;
+
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.persistence.*;
 
@@ -26,7 +29,7 @@ public abstract class PlagiarismResult<E extends PlagiarismSubmissionElement> ex
      * List of detected comparisons whose similarity is above the specified threshold.
      */
     @OneToMany(mappedBy = "plagiarismResult", cascade = CascadeType.ALL, orphanRemoval = true, targetEntity = PlagiarismComparison.class)
-    protected Set<PlagiarismComparison<E>> comparisons;
+    protected Set<PlagiarismComparison<E>> comparisons = new HashSet<>();
 
     /**
      * Duration of the plagiarism detection run in milliseconds.
@@ -78,7 +81,7 @@ public abstract class PlagiarismResult<E extends PlagiarismSubmissionElement> ex
     }
 
     public List<Integer> getSimilarityDistribution() {
-        return this.similarityDistribution.entrySet().stream().sorted(Comparator.comparingInt(Entry::getKey)).map(Entry::getValue).collect(Collectors.toList());
+        return this.similarityDistribution.entrySet().stream().sorted(comparingInt(Entry::getKey)).map(Entry::getValue).collect(Collectors.toList());
     }
 
     /**
@@ -93,5 +96,15 @@ public abstract class PlagiarismResult<E extends PlagiarismSubmissionElement> ex
         for (int i = 0; i < similarityDistribution.length; i++) {
             this.similarityDistribution.put(i, similarityDistribution[i]);
         }
+    }
+
+    /**
+     * sort after the comparisons with the highest similarity and limit the number of comparisons to size to prevent too many plagiarism results
+     * @param size the size to which the comparisons should be limited, e.g. 500
+     */
+    public void sortAndLimit(int size) {
+        // we have to use an intermediate variable here, otherwise the compiler complaints due to generics and type erasing
+        Stream<PlagiarismComparison<E>> stream = getComparisons().stream().sorted(reverseOrder()).limit(size);
+        this.comparisons = stream.collect(Collectors.toSet());
     }
 }

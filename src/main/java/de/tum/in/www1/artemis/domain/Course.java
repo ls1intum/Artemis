@@ -280,7 +280,7 @@ public class Course extends DomainObject {
     }
 
     public Boolean isOnlineCourse() {
-        return onlineCourse == null ? false : onlineCourse;
+        return Boolean.TRUE.equals(onlineCourse);
     }
 
     public void setOnlineCourse(Boolean onlineCourse) {
@@ -396,10 +396,9 @@ public class Course extends DomainObject {
         return lectures;
     }
 
-    public Course addLectures(Lecture lecture) {
+    public void addLectures(Lecture lecture) {
         this.lectures.add(lecture);
         lecture.setCourse(this);
-        return this;
     }
 
     public void setLectures(Set<Lecture> lectures) {

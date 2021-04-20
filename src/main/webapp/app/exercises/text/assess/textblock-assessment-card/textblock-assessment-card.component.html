@@ -15,8 +15,8 @@
 <!-- Display Feedback Editor -->
 <jhi-textblock-feedback-editor
     *ngIf="textBlockRef.feedback || selected"
-    [textBlock]="textBlockRef.block"
-    [feedback]="textBlockRef.feedback"
+    [textBlock]="textBlockRef.block!"
+    [feedback]="textBlockRef.feedback!"
     [class.active]="selected"
     class="guided-tour-text-assessment"
     (click)="select(false)"
@@ -31,4 +31,5 @@
     [conflictMode]="conflictMode"
     [isLeftConflictingFeedback]="isLeftConflictingFeedback"
     [isSelectedConflict]="conflictMode && isConflictingFeedback && !isLeftConflictingFeedback && selected"
+    [highlightDifferences]="highlightDifferences"
 ></jhi-textblock-feedback-editor>

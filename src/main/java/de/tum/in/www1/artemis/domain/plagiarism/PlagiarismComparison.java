@@ -5,6 +5,8 @@ import java.util.stream.Collectors;
 
 import javax.persistence.*;
 
+import org.jetbrains.annotations.NotNull;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import de.tum.in.www1.artemis.domain.DomainObject;
@@ -16,7 +18,7 @@ import jplag.JPlagComparison;
  */
 @Entity
 @Table(name = "plagiarism_comparison")
-public class PlagiarismComparison<E extends PlagiarismSubmissionElement> extends DomainObject {
+public class PlagiarismComparison<E extends PlagiarismSubmissionElement> extends DomainObject implements Comparable<PlagiarismComparison<E>> {
 
     /**
      * The result this comparison belongs to.
@@ -124,5 +126,10 @@ public class PlagiarismComparison<E extends PlagiarismSubmissionElement> extends
 
     public void setStatus(PlagiarismStatus status) {
         this.status = status;
+    }
+
+    @Override
+    public int compareTo(@NotNull PlagiarismComparison<E> otherComparison) {
+        return Double.compare(similarity, otherComparison.similarity);
     }
 }
