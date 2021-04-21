@@ -43,7 +43,7 @@ Updating can only be done with access to the account on Dockerhub. If you need a
 5. Go back to the repository of the docker container in GitHub and create a new Tag
 
    - Click "Releases" on the right on the front page of that repository
-   - Then create a new release with the button called "Draft release" and give it the same name as from step 4
+   - Then create a new release with the button called "Draft release" and give it the same name as in step 4
 6. Wait for the build in Dockerhub of the newly created Tag
 7. Change the docker image used in Artemis to the newly created tag: `ContinuousIntegrationService.java <https://github.com/ls1intum/Artemis/blob/develop/src/main/java/de/tum/in/www1/artemis/service/connectors/ContinuousIntegrationService.java>`_
 8. If the used docker container should also be changed for already created exercises you have to change the build plan of that exercise
