@@ -724,7 +724,7 @@ public class GitService {
 
             reset(repository, commitHash);
         }
-        catch (Exception ex) {
+        catch (GitAPIException ex) {
             log.warn("Cannot filter the repo {} due to the following exception: {}", repository.getLocalPath(), ex.getMessage());
         }
         finally {

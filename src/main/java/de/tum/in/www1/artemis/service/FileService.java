@@ -711,10 +711,8 @@ public class FileService implements DisposableBean {
      *
      * @param path the original path, e.g. /opt/artemis/repos-download
      * @return the unique path as string, e.g. /opt/artemis/repos-download/1609579674868
-     * @throws SecurityException in case of security violation
-     * @throws InvalidPathException if the path is invalid
      */
-    public String getUniquePathString(String path) throws SecurityException, InvalidPathException {
+    public String getUniquePathString(String path) {
         return getUniquePath(path).toString();
     }
 
@@ -724,16 +722,14 @@ public class FileService implements DisposableBean {
      *
      * @param path the original path, e.g. /opt/artemis/repos-download
      * @return the unique path, e.g. /opt/artemis/repos-download/1609579674868
-     * @throws SecurityException in case of security violation
-     * @throws InvalidPathException if the path is invalid
      */
-    public Path getUniquePath(String path) throws SecurityException, InvalidPathException {
+    public Path getUniquePath(String path) {
         var uniquePath = Paths.get(path, String.valueOf(System.currentTimeMillis()));
         if (!Files.exists(uniquePath) && Files.isDirectory(uniquePath)) {
             try {
                 Files.createDirectories(uniquePath);
             }
-            catch (Exception e) {
+            catch (IOException e) {
                 log.warn("could not create the directories for the path {}", uniquePath);
             }
         }
