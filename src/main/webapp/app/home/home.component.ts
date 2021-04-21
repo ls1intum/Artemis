@@ -27,7 +27,8 @@ export class HomeComponent implements OnInit, AfterViewChecked {
     modalRef: NgbModalRef;
     password: string;
     rememberMe = true;
-    acceptTerms = true;
+    userAcceptTerms = false; // in case this is activated (see application-artemis.yml), users have to actively click into it
+    needsToAcceptTerms = false;
     username: string;
     captchaRequired = false;
     credentials: Credentials;
@@ -83,6 +84,7 @@ export class HomeComponent implements OnInit, AfterViewChecked {
                     this.errorMessageUsername = 'home.errors.tumWarning';
                 }
                 this.isRegistrationEnabled = profileInfo.registrationEnabled || false;
+                this.needsToAcceptTerms = profileInfo.needsToAcceptTerms || false;
                 this.showResetPasswordLink = this.isRegistrationEnabled || profileInfo.saml2?.enablePassword || false;
             }
         });
