@@ -57,9 +57,9 @@ public class ZipFileService {
      * @param zipFilePath     path where the zip file should be saved
      * @param contentRootPath a path to a folder: all content in this folder (and in any subfolders) will be included in the zip file
      * @return the path of the newly created zip file for further processing
-     * @throws Exception if an error occurred while zipping
+     * @throws IOException if an error occurred while zipping
      */
-    public Path createZipFileWithFolderContent(Path zipFilePath, Path contentRootPath) throws Exception {
+    public Path createZipFileWithFolderContent(Path zipFilePath, Path contentRootPath) throws IOException {
         try (ZipOutputStream zipOutputStream = new ZipOutputStream(Files.newOutputStream(zipFilePath))) {
             Files.walk(contentRootPath).filter(path -> !Files.isDirectory(path) && Files.exists(path)).forEach(path -> {
                 ZipEntry zipEntry = new ZipEntry(contentRootPath.relativize(path).toString());

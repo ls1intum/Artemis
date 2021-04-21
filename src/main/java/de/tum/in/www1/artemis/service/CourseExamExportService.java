@@ -185,13 +185,6 @@ public class CourseExamExportService {
         try {
             examsDir = Path.of(outputDir, "exams");
             Files.createDirectory(examsDir);
-
-            List<Exam> exams = examRepository.findByCourseId(course.getId());
-            Path finalExamsDir = examsDir;
-            exams.forEach(exam -> exportExam(notificationTopic, exam.getId(), finalExamsDir.toString(), exportErrors));
-        }
-        catch (InvalidPathException e) {
-            logMessageAndAppendToList("The path of the course's exams directory is invalid.", exportErrors);
         }
         catch (IOException e) {
             logMessageAndAppendToList("Failed to create course exams directory " + examsDir + ".", exportErrors);
@@ -320,7 +313,7 @@ public class CourseExamExportService {
             log.info("Successfully created zip file at: {}", zippedFile);
             return Optional.of(zippedFile);
         }
-        catch (Exception e) {
+        catch (IOException e) {
             logMessageAndAppendToList("Failed to create zip file" + zipFileName + " at " + outputDirPath + ".", exportErrors);
             return Optional.empty();
         }

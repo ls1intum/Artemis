@@ -563,9 +563,8 @@ public class FileService implements DisposableBean {
      *
      * @param startPath the path where the start directory is located
      * @throws IOException if an issue occurs on file access for the normalizing of the line endings.
-     * @throws RuntimeException if an issue occured during runtime
      */
-    public void normalizeLineEndingsDirectory(String startPath) throws IOException, RuntimeException {
+    public void normalizeLineEndingsDirectory(String startPath) throws IOException {
         log.debug("Normalizing file endings in directory {}", startPath);
         File directory = new File(startPath);
         if (!directory.exists() || !directory.isDirectory()) {
@@ -609,9 +608,8 @@ public class FileService implements DisposableBean {
      *
      * @param startPath the path where the start directory is located
      * @throws IOException if an issue occurs on file access when converting to UTF-8.
-     * @throws RuntimeException if an error occured during runtime
      */
-    public void convertToUTF8Directory(String startPath) throws IOException, RuntimeException {
+    public void convertToUTF8Directory(String startPath) throws IOException {
         log.debug("Converting files in directory {} to UTF-8", startPath);
         File directory = new File(startPath);
         if (!directory.exists() || !directory.isDirectory()) {

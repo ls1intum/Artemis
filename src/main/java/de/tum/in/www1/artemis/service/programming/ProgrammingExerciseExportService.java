@@ -130,7 +130,7 @@ public class ProgrammingExerciseExportService {
             zipFileService.createZipFile(pathToZippedExercise, zipFilePathsNonNull, false);
             return pathToZippedExercise;
         }
-        catch (Exception e) {
+        catch (IOException e) {
             var error = "Failed to export programming exercise " + exercise.getId() + " because the zip file " + pathToStoreZipFile + " could not be created: " + e.getMessage();
             log.info(error);
             exportErrors.add(error);
@@ -184,7 +184,7 @@ public class ProgrammingExerciseExportService {
                 return new File(zippedRepo.toString());
             }
         }
-        catch (Exception ex) {
+        catch (IOException | GitAPIException | InterruptedException ex) {
             var error = "Failed to export instructor repository " + repositoryType + " for programming exercise '" + exercise.getTitle() + "' (id: " + exercise.getId() + ")";
             log.info(error);
             exportErrors.add(error);
@@ -243,7 +243,7 @@ public class ProgrammingExerciseExportService {
                     zippedRepos.add(zippedRepo);
                 }
             }
-            catch (Exception e) {
+            catch (IOException e) {
                 var error = "Failed to export the student repository with participation: " + participation.getId() + " for programming exercise '" + programmingExercise.getTitle()
                         + "' (id: " + programmingExercise.getId() + ") because the repository couldn't be downloaded. ";
                 exportErrors.add(error);
@@ -258,9 +258,11 @@ public class ProgrammingExerciseExportService {
      * @param repositoryUrl The url of the repository to zip
      * @param zipFilename   The name of the zip file
      * @return The path to the zip file.
-     * @throws Exception if the zip file couldn't be created
+     * @throws IOException if the zip file couldn't be created
+     * @throws GitAPIException if the repo couldn't get checked out
+     * @throws InterruptedException if the repo couldn't get checked out
      */
-    private Path createZipForRepository(VcsRepositoryUrl repositoryUrl, String zipFilename) throws Exception {
+    private Path createZipForRepository(VcsRepositoryUrl repositoryUrl, String zipFilename) throws IOException, GitAPIException, InterruptedException {
         var repoProjectPath = fileService.getUniquePathString(repoDownloadClonePath);
         Repository repository = null;
 
@@ -323,11 +325,11 @@ public class ProgrammingExerciseExportService {
      * @param programmingExercise     The programming exercise for the participation
      * @param participation           The participation, for which the repository should get zipped
      * @param repositoryExportOptions The options, that should get applied to the zipeed repo
-     * @throws Exception if errors occurred during zipping
      * @return The checked out and zipped repository
+     * @throws IOException if zip file creation failed
      */
     private Path createZipForRepositoryWithParticipation(final ProgrammingExercise programmingExercise, final ProgrammingExerciseStudentParticipation participation,
-            final RepositoryExportOptionsDTO repositoryExportOptions) throws Exception {
+            final RepositoryExportOptionsDTO repositoryExportOptions) throws IOException {
         if (participation.getVcsRepositoryUrl() == null) {
             log.warn("Ignore participation {} for export, because its repository URL is null", participation.getId());
             return null;
@@ -336,7 +338,7 @@ public class ProgrammingExerciseExportService {
         String targetPath = null;
         Repository repository = null;
         try {
-            // Contruct a unique path that will contain repo contents
+            // Construct a unique path that will contain repo contents
             targetPath = fileService.getUniquePathString(repoDownloadClonePath);
 
             // Checkout the repository
@@ -368,7 +370,7 @@ public class ProgrammingExerciseExportService {
                     fileService.normalizeLineEndingsDirectory(repository.getLocalPath().toString());
                     fileService.convertToUTF8Directory(repository.getLocalPath().toString());
                 }
-                catch (Exception ex) {
+                catch (IOException ex) {
                     log.warn("Cannot normalize code style in the repository {} due to the following exception: {}", repository.getLocalPath(), ex.getMessage());
                 }
             }
@@ -376,7 +378,7 @@ public class ProgrammingExerciseExportService {
             log.debug("Create temporary zip file for repository {}", repository.getLocalPath().toString());
             return gitService.zipRepositoryWithParticipation(repository, targetPath, repositoryExportOptions.isHideStudentNameInZippedFolder());
         }
-        catch (Exception e) {
+        catch (InterruptedException | GitAPIException | GitException e) {
             log.error("Cannot create zip for participation id {} because the repo download clone path is invalid.", participation.getId());
             return null;
         }
@@ -660,7 +662,7 @@ public class ProgrammingExerciseExportService {
             try {
                 gitService.deleteLocalRepository(repository);
             }
-            catch (Exception ex) {
+            catch (IOException ex) {
                 log.warn("Could not delete temporary repository {}: {}", repository.getLocalPath().toString(), ex.getMessage());
             }
         }

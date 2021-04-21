@@ -8,7 +8,6 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
-import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Instant;
@@ -328,11 +327,9 @@ public class GitService {
      * @return the repository if it could be checked out.
      * @throws InterruptedException if the repository could not be checked out.
      * @throws GitAPIException      if the repository could not be checked out.
-     * @throws InvalidPathException if the local path of repo is invalid
      * @throws GitException         if the same repository is attempted to be cloned multiple times.
      */
-    public Repository getOrCheckoutRepository(VcsRepositoryUrl repoUrl, String targetPath, boolean pullOnGet)
-            throws InterruptedException, GitAPIException, InvalidPathException, GitException {
+    public Repository getOrCheckoutRepository(VcsRepositoryUrl repoUrl, String targetPath, boolean pullOnGet) throws InterruptedException, GitAPIException, GitException {
         Path localPath = getLocalPathOfRepo(targetPath, repoUrl);
         return getOrCheckoutRepository(repoUrl, localPath, pullOnGet);
     }
@@ -397,7 +394,7 @@ public class GitService {
                 Git result = Git.cloneRepository().setTransportConfigCallback(sshCallback).setURI(gitUriAsString).setDirectory(localPath.toFile()).call();
                 result.close();
             }
-            catch (Exception e) {
+            catch (IOException | URISyntaxException e) {
                 log.error("Exception during clone", e);
                 // cleanup the folder to avoid problems in the future.
                 // 'deleteQuietly' is the same as 'deleteDirectory' but is not throwing an exception, thus we avoid a try-catch block.
@@ -434,9 +431,8 @@ public class GitService {
      * @param targetPath target directory
      * @param targetUrl  url of the repository
      * @return path of the local file system
-     * @throws InvalidPathException if the local path of repo is invalid
      */
-    public Path getLocalPathOfRepo(String targetPath, VcsRepositoryUrl targetUrl) throws InvalidPathException {
+    public Path getLocalPathOfRepo(String targetPath, VcsRepositoryUrl targetUrl) {
         return Paths.get(targetPath, folderNameForRepositoryUrl(targetUrl));
     }
 
@@ -479,7 +475,7 @@ public class GitService {
             cachedRepositories.put(localPath, repository);
             return repository;
         }
-        catch (Exception ex) {
+        catch (IOException ex) {
             log.warn("Cannot get existing checkout out repository by local path: " + ex.getMessage());
             return null;
         }
@@ -915,7 +911,7 @@ public class GitService {
      * @param repository Local Repository Object.
      * @throws IOException if the deletion of the repository failed.
      */
-    public void deleteLocalRepository(Repository repository) throws Exception {
+    public void deleteLocalRepository(Repository repository) throws IOException {
         Path repoPath = repository.getLocalPath();
         cachedRepositories.remove(repoPath);
         // if repository is not closed, it causes weird IO issues when trying to delete the repository again
@@ -968,9 +964,9 @@ public class GitService {
      * @param targetPath      path where the repo is located on disk
      * @param hideStudentName option to hide the student name for the zip file
      * @return path to zip file.
-     * @throws Exception if the zipping process failed.
+     * @throws IOException if the zipping process failed.
      */
-    public Path zipRepositoryWithParticipation(Repository repo, String targetPath, boolean hideStudentName) throws Exception {
+    public Path zipRepositoryWithParticipation(Repository repo, String targetPath, boolean hideStudentName) throws IOException {
         var exercise = repo.getParticipation().getProgrammingExercise();
         var courseShortName = exercise.getCourseViaExerciseGroupOrCourseMember().getShortName();
         var participation = (ProgrammingExerciseStudentParticipation) repo.getParticipation();
@@ -1001,9 +997,9 @@ public class GitService {
      * @param zipFilename   the name of the zipped file
      * @param targetPath    path where the repo is located on disk
      * @return path to the zip file
-     * @throws Exception if the zipping process failed.
+     * @throws IOException if the zipping process failed.
      */
-    public Path zipRepository(Path repoLocalPath, String zipFilename, String targetPath) throws Exception {
+    public Path zipRepository(Path repoLocalPath, String zipFilename, String targetPath) throws IOException {
         // Strip slashes from name
         var zipFilenameWithoutSlash = zipFilename.replaceAll("\\s", "");
 
