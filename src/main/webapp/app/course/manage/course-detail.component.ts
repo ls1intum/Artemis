@@ -6,7 +6,6 @@ import { JhiEventManager } from 'ng-jhipster';
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from './course-management.service';
 import { CachingStrategy } from 'app/shared/image/secured-image.component';
-import { JhiAlertService } from 'ng-jhipster';
 import { isOrion } from 'app/shared/orion/orion';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { Subject } from 'rxjs';
@@ -36,13 +35,7 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
     dialogError$ = this.dialogErrorSource.asObservable();
     paramSub: Subscription;
 
-    constructor(
-        private eventManager: JhiEventManager,
-        private courseService: CourseManagementService,
-        private route: ActivatedRoute,
-        private router: Router,
-        private jhiAlertService: JhiAlertService,
-    ) {}
+    constructor(private eventManager: JhiEventManager, private courseService: CourseManagementService, private route: ActivatedRoute, private router: Router) {}
 
     /**
      * On init load the course information and subscribe to listen for changes in courses.

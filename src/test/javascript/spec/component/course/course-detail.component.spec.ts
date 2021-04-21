@@ -1,6 +1,6 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
-import { of, throwError } from 'rxjs';
+import { of } from 'rxjs';
 import { ArtemisTestModule } from '../../test.module';
 import { CourseDetailComponent } from 'app/course/manage/course-detail.component';
 import { TranslateService } from '@ngx-translate/core';
@@ -11,7 +11,6 @@ import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.s
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import * as moment from 'moment';
-import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import * as sinon from 'sinon';
@@ -25,23 +24,51 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { CourseExamArchiveButtonComponent } from 'app/shared/components/course-exam-archive-button/course-exam-archive-button.component';
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
+import { HttpResponse } from '@angular/common/http';
 import { JhiEventManager } from 'ng-jhipster';
+import { CourseDetailDoughnutChartComponent } from 'app/course/manage/course-detail-doughnut-chart.component';
+import { CourseDetailBarChartComponent } from 'app/course/manage/course-detail-bar-chart.component';
+import { CourseManagementDetailViewDto } from 'app/course/manage/course-management-detail-view-dto.model';
+import { RouterTestingModule } from '@angular/router/testing';
 
 chai.use(sinonChai);
 const expect = chai.expect;
 
 describe('Course Management Detail Component', () => {
-    let comp: CourseDetailComponent;
+    let component: CourseDetailComponent;
     let fixture: ComponentFixture<CourseDetailComponent>;
     let courseService: CourseManagementService;
     let eventManager: JhiEventManager;
-    let alertService: JhiAlertService;
+
+    const route = { params: of({ courseId: 1 }) };
     const course = { id: 123, title: 'Course Title', isAtLeastInstructor: true, endDate: moment().subtract(5, 'minutes'), courseArchivePath: 'some-path' };
+    const dtoMock = {
+        course,
+        numberOfStudentsInCourse: 100,
+        numberOfTeachingAssistantsInCourse: 5,
+        numberOfInstructorsInCourse: 10,
+        // assessments
+        currentPercentageAssessments: 50,
+        currentAbsoluteAssessments: 10,
+        currentMaxAssessments: 20,
+        // complaints
+        currentPercentageComplaints: 60,
+        currentAbsoluteComplaints: 6,
+        currentMaxComplaints: 10,
+        // feedback Request
+        currentPercentageMoreFeedbacks: 70,
+        currentAbsoluteMoreFeedbacks: 14,
+        currentMaxMoreFeedbacks: 20,
+        // average score
+        currentPercentageAverageScore: 90,
+        currentAbsoluteAverageScore: 90,
+        currentMaxAverageScore: 100,
+        activeStudents: [4, 10, 14, 35],
+    } as CourseManagementDetailViewDto;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [ArtemisTestModule, RouterTestingModule.withRoutes([])],
             declarations: [
                 CourseDetailComponent,
                 MockComponent(SecuredImageComponent),
@@ -54,9 +81,11 @@ describe('Course Management Detail Component', () => {
                 MockDirective(JhiTranslateDirective),
                 MockComponent(CourseExamArchiveButtonComponent),
                 MockDirective(HasAnyAuthorityDirective),
+                MockComponent(CourseDetailDoughnutChartComponent),
+                MockComponent(CourseDetailBarChartComponent),
             ],
             providers: [
-                { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
+                { provide: ActivatedRoute, useValue: route },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: TranslateService, useClass: MockTranslateService },
@@ -66,17 +95,16 @@ describe('Course Management Detail Component', () => {
             ],
         }).compileComponents();
         fixture = TestBed.createComponent(CourseDetailComponent);
-        comp = fixture.componentInstance;
+        component = fixture.componentInstance;
         courseService = fixture.debugElement.injector.get(CourseManagementService);
-        alertService = TestBed.inject(JhiAlertService);
         eventManager = fixture.debugElement.injector.get(JhiEventManager);
     });
 
     beforeEach(fakeAsync(() => {
-        const route = TestBed.inject(ActivatedRoute);
-        route.data = of({ course });
+        const getStub = sinon.stub(courseService, 'getCourseForDetailView');
+        getStub.returns(of(new HttpResponse({ body: dtoMock })));
 
-        comp.ngOnInit();
+        component.ngOnInit();
         tick();
     }));
 
@@ -84,46 +112,18 @@ describe('Course Management Detail Component', () => {
         sinon.restore();
     });
 
-    describe('OnInit for course that has an archive', () => {
-        it('Should call registerChangeInCourses on init', () => {
-            const registerSpy = sinon.spy(comp, 'registerChangeInCourses');
+    it('Should call registerChangeInCourses on init', () => {
+        const registerSpy = sinon.spy(component, 'registerChangeInCourses');
 
-            fixture.detectChanges();
-            comp.ngOnInit();
-            expect(comp.courseDTO).to.deep.equal(course);
-            expect(registerSpy).to.have.been.called;
-        });
-    });
-
-    describe('Register for course', () => {
-        it('should alert user if registration is successful', () => {
-            const registerStub = sinon.stub(courseService, 'registerForCourse');
-            const alertStub = sinon.stub(alertService, 'info');
-
-            registerStub.returns(of(new HttpResponse({ body: { guidedTourSettings: [] } })));
-
-            comp.registerForCourse();
-
-            expect(registerStub).to.have.been.calledWith(course.id);
-            expect(alertStub).to.have.been.calledWith(`Registered user for course ${course.title}`);
-        });
-
-        it('should alert user if registration fails', () => {
-            const registerStub = sinon.stub(courseService, 'registerForCourse');
-            const alertStub = sinon.stub(alertService, 'error');
-            const headers = new HttpHeaders().append('X-artemisApp-message', 'errorMessage');
-
-            registerStub.returns(throwError(new HttpErrorResponse({ headers })));
-
-            comp.registerForCourse();
-
-            expect(registerStub).to.have.been.calledWith(course.id);
-            expect(alertStub).to.have.been.calledWith(`errorMessage`);
-        });
+        fixture.detectChanges();
+        component.ngOnInit();
+        expect(component.courseDTO).to.deep.equal(dtoMock);
+        expect(component.course).to.deep.equal(dtoMock.course);
+        expect(registerSpy).to.have.been.called;
     });
 
     it('should destroy event subscriber onDestroy', () => {
-        comp.ngOnDestroy();
+        component.ngOnDestroy();
         expect(eventManager.destroy).to.have.been.called;
     });
 
@@ -132,7 +132,7 @@ describe('Course Management Detail Component', () => {
         deleteStub.returns(of(new HttpResponse({})));
 
         const courseId = 444;
-        comp.deleteCourse(courseId);
+        component.deleteCourse(courseId);
 
         expect(deleteStub).to.have.been.calledWith(courseId);
         expect(eventManager.broadcast).to.have.been.calledWith({
