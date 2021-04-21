@@ -1329,7 +1329,7 @@ public class CourseResource {
         CourseManagementDetailViewDTO dto = courseService.getStatsForDetailView(courseId, exerciseIdsOfCourse);
 
         // Only counting assessments and submissions which are handed in in time
-        long numberOfAssessments = resultRepository.countNumberOfAssessments(exerciseIdsOfCourse).getInTime();
+        long numberOfAssessments = resultRepository.countNumberOfAssessments(exerciseIdsOfCourse).inTime();
         dto.setCurrentAbsoluteAssessments(numberOfAssessments);
         long numberOfSubmissions = submissionRepository.countByCourseIdSubmittedBeforeDueDate(courseId);
         dto.setCurrentMaxAssessments(numberOfSubmissions);
