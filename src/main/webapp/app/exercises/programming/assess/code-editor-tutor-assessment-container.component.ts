@@ -289,7 +289,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     save(): void {
         this.saveBusy = true;
         this.avoidCircularStructure();
-        this.manualResultService.saveAssessment(this.participation.id!, this.manualResult!, undefined).subscribe(
+        this.manualResultService.saveAssessment(this.manualResult!.id!, this.manualResult!.feedbacks!, this.submission!.id!, undefined).subscribe(
             (response) => this.handleSaveOrSubmitSuccessWithAlert(response, 'artemisApp.textAssessment.saveSuccessful'),
             (error: HttpErrorResponse) => this.onError(`error.${error?.error?.errorKey}`),
         );
@@ -301,7 +301,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     submit(): void {
         this.submitBusy = true;
         this.avoidCircularStructure();
-        this.manualResultService.saveAssessment(this.participation.id!, this.manualResult!, true).subscribe(
+        this.manualResultService.saveAssessment(this.manualResult!.id!, this.manualResult!.feedbacks!, this.submission!.id!, true).subscribe(
             (response) => this.handleSaveOrSubmitSuccessWithAlert(response, 'artemisApp.textAssessment.submitSuccessful'),
             (error: HttpErrorResponse) => this.onError(`error.${error?.error?.errorKey}`),
         );
@@ -451,11 +451,11 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         return !this.isAtLeastInstructor && !!this.complaint && this.isAssessor;
     }
 
-    private handleSaveOrSubmitSuccessWithAlert(response: HttpResponse<Result>, translationKey: string): void {
+    private handleSaveOrSubmitSuccessWithAlert(response: Result, translationKey: string): void {
         if (!this.participation.results) {
             this.participation.results = [];
         }
-        this.participation.results![0] = this.manualResult = response.body!;
+        this.participation.results![0] = this.manualResult = response;
         this.jhiAlertService.clear();
         this.jhiAlertService.success(translationKey);
         this.saveBusy = this.submitBusy = false;

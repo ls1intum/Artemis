@@ -15,22 +15,17 @@ export class ProgrammingAssessmentManualResultService {
 
     /**
      * Saves a new manual result and stores it in the server
-     * @param {number} participationId - Id of the participation
-     * @param {Result} result - The result to be created and sent to the server
+     * @param {number} submissionId - Id of the participation
+     * @param {number} resultId - The result to be created and sent to the server
      * @param {submit} submit - Indicates whether submit or save is called
      */
-    // TODO: make consistent with other *.assessment.service.ts file
-    saveAssessment(participationId: number, result: Result, submit = false): Observable<EntityResponseType> {
+    saveAssessment(resultId: number, feedbacks: Feedback[], submissionId: number, submit = false): Observable<Result> {
         let params = new HttpParams();
         if (submit) {
             params = params.set('submit', 'true');
         }
-
-        const url = `${this.resourceUrl}/participations/${participationId}/manual-results`;
-        const copy = this.resultService.convertDateFromClient(result);
-        return this.http
-            .put<Result>(url, copy, { params, observe: 'response' })
-            .map((res: EntityResponseType) => this.resultService.convertDateFromServer(res));
+        const url = `${this.resourceUrl}/programming-submissions/${submissionId}/result/${resultId}/assessment`;
+        return this.http.put<Result>(url, feedbacks, { params });
     }
 
     /**
