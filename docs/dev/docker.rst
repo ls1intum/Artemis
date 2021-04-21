@@ -11,14 +11,14 @@ To reduce the time required for each test run, these docker containers already i
 
 There are currently docker containers for:
 
-- Maven (Java and Kotlin): https://github.com/ls1intum/artemis-maven-docker
-- OCaml: https://github.com/ls1intum/artemis-ocaml-docker
-- Python: https://github.com/ls1intum/artemis-python-docker
-- C: https://github.com/ls1intum/artemis-c-docker
-- Haskell (external): https://github.com/lukasstevens/docker-fpv-stack
-- Swift (external): https://github.com/norio-nomura/docker-swiftlint
-- Assembler (external): https://hub.docker.com/r/tizianleonhardt/era-artemis-assembler
-- VHDL (external): https://hub.docker.com/r/tizianleonhardt/era-artemis-vhdl
+- `Maven (Java and Kotlin) <https://github.com/ls1intum/artemis-maven-docker>`_
+- `OCaml <https://github.com/ls1intum/artemis-ocaml-docker>`_
+- `Python <https://github.com/ls1intum/artemis-python-docker>`_
+- `C <https://github.com/ls1intum/artemis-c-docker>`_
+- `Haskell <https://github.com/lukasstevens/docker-fpv-stack>`_ (external)
+- `Swift <https://github.com/norio-nomura/docker-swiftlint>`_ (external)
+- `Assembler <https://hub.docker.com/r/tizianleonhardt/era-artemis-assembler>`_ (external)
+- `VHDL <https://hub.docker.com/r/tizianleonhardt/era-artemis-vhdl>`_ (external)
 
 Steps for Updating the DockerBuilds used in Artemis
 ---------------------------------------------------
