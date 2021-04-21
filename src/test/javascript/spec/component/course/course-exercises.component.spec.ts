@@ -98,7 +98,7 @@ describe('CourseExercisesComponent', () => {
                 course.exercises = [exercise];
                 spyOn(service, 'getCourseUpdates').and.returnValue(of(course));
                 spyOn(translateService, 'onLangChange').and.returnValue(of(new Subject()));
-                spyOn(localStorageService, 'retrieve').and.returnValue('OVERDUE,NEEDS_WORK');
+                spyOn(localStorageService, 'retrieve').and.returnValue('OVERDUE,NEEDS_WORK,UNRELEASED');
                 courseCalculationSpy = stub(courseCalculation, 'getCourse').returns(course);
 
                 fixture.detectChanges();
@@ -186,7 +186,7 @@ describe('CourseExercisesComponent', () => {
 
         component.toggleFilters(filters);
 
-        expect(component.activeFilters).to.deep.equal(new Set().add(ExerciseFilter.NEEDS_WORK));
+        expect(component.activeFilters).to.deep.equal(new Set().add(ExerciseFilter.NEEDS_WORK).add(ExerciseFilter.UNRELEASED));
         expect(Object.keys(component.weeklyExercisesGrouped)).to.deep.equal(['2021-01-17', '2021-01-10', 'noDate']);
         expect(component.weeklyIndexKeys).to.deep.equal(['2021-01-17', '2021-01-10', 'noDate']);
         expect(component.exerciseCountMap.get('modeling')).to.equal(9);

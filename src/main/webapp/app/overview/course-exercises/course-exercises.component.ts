@@ -20,6 +20,7 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 export enum ExerciseFilter {
     OVERDUE = 'OVERDUE',
     NEEDS_WORK = 'NEEDS_WORK',
+    UNRELEASED = 'UNRELEASED',
 }
 
 export enum ExerciseSortingOrder {
@@ -171,10 +172,12 @@ export class CourseExercisesComponent implements OnInit, OnChanges, OnDestroy {
     private applyFiltersAndOrder() {
         const needsWorkFilterActive = this.activeFilters.has(ExerciseFilter.NEEDS_WORK);
         const overdueFilterActive = this.activeFilters.has(ExerciseFilter.OVERDUE);
+        const unreleasedFilterActive = this.activeFilters.has(ExerciseFilter.UNRELEASED);
         const filtered = this.course?.exercises?.filter(
             (exercise) =>
                 (!needsWorkFilterActive || this.needsWork(exercise)) &&
                 (!exercise.dueDate || !overdueFilterActive || exercise.dueDate.isAfter(moment(new Date()))) &&
+                (!exercise.releaseDate || !unreleasedFilterActive || exercise.releaseDate.isBefore(moment(new Date()))) &&
                 (!isOrion || exercise.type === ExerciseType.PROGRAMMING),
         );
         this.groupExercises(filtered);
