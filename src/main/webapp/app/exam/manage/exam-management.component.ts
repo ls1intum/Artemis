@@ -23,6 +23,7 @@ export class ExamManagementComponent implements OnInit, OnDestroy {
     course: Course;
     exams: Exam[];
     isAtLeastInstructor = false;
+    isAtLeastEditor = false;
     isAtLeastTutor = false;
     predicate: string;
     ascending: boolean;
@@ -53,6 +54,7 @@ export class ExamManagementComponent implements OnInit, OnDestroy {
             (res: HttpResponse<Course>) => {
                 this.course = res.body!;
                 this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.course);
+                this.isAtLeastEditor = this.accountService.isAtLeastEditorInCourse(this.course);
                 this.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(this.course);
                 this.loadAllExamsForCourse();
                 this.registerChangeInExams();

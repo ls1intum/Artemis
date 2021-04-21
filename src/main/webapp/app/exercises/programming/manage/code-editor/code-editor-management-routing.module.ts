@@ -9,6 +9,7 @@ import { Authority } from 'app/shared/constants/authority.constants';
 const routes: Routes = [
     {
         path: 'test',
+        // TODO: EDITOR
         component: CodeEditorInstructorContainerComponent,
         data: {
             authorities: [Authority.INSTRUCTOR, Authority.ADMIN],

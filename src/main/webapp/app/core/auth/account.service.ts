@@ -173,6 +173,14 @@ export class AccountService implements IAccountService {
     }
 
     /**
+     * checks if the currently logged in user is at least editor in the given course
+     * @param course
+     */
+    isAtLeastEditorInCourse(course?: Course): boolean {
+        return this.hasGroup(course?.instructorGroupName) || this.hasGroup(course?.editorGroupName) || this.hasAnyAuthorityDirect([Authority.ADMIN]);
+    }
+
+    /**
      * checks if the currently logged in user is at least instructor in the given course
      * @param course
      */
@@ -186,6 +194,14 @@ export class AccountService implements IAccountService {
      */
     isAtLeastTutorForExercise(exercise?: Exercise): boolean {
         return this.isAtLeastTutorInCourse(exercise?.course || exercise?.exerciseGroup?.exam?.course);
+    }
+
+    /**
+     * checks if the currently logged in user is at least editor for the exercise (directly) in the course or the exercise in the exam in the course
+     * @param exercise
+     */
+    isAtLeastEditorForExercise(exercise?: Exercise): boolean {
+        return this.isAtLeastEditorInCourse(exercise?.course || exercise?.exerciseGroup?.exam?.course);
     }
 
     /**
