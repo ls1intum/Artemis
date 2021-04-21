@@ -140,8 +140,9 @@ public class GitLabUserManagementService implements VcsUserManagementService {
     }
 
     @Override
-    public void updateCoursePermissions(Course updatedCourse, String oldInstructorGroup, String oldTeachingAssistantGroup) {
-        if (oldInstructorGroup.equals(updatedCourse.getInstructorGroupName()) && oldTeachingAssistantGroup.equals(updatedCourse.getTeachingAssistantGroupName())) {
+    public void updateCoursePermissions(Course updatedCourse, String oldInstructorGroup, String oldEditorGroup, String oldTeachingAssistantGroup) {
+        if (oldInstructorGroup.equals(updatedCourse.getInstructorGroupName()) && oldEditorGroup.equals(updatedCourse.getEditorGroupName())
+            && oldTeachingAssistantGroup.equals(updatedCourse.getTeachingAssistantGroupName())) {
             // Do nothing if the group names didn't change
             return;
         }
@@ -155,14 +156,20 @@ public class GitLabUserManagementService implements VcsUserManagementService {
         updateOldGroupMembers(exercises, oldInstructors, updatedCourse.getInstructorGroupName(), updatedCourse.getTeachingAssistantGroupName(), REPORTER, false);
         final var processedUsers = new HashSet<>(oldInstructors);
 
+        // Update the old editor of the group
+        final var oldEditors = userRepository.findAllUserInGroupAndNotIn(oldEditorGroup, processedUsers);
+        // doUpgrade=true, because these users should be upgraded from TA to editor, if possible.
+        updateOldGroupMembers(exercises, oldEditors, updatedCourse.getEditorGroupName(), updatedCourse.getEditorGroupName(), DEVELOPER, true);
+        processedUsers.addAll(oldEditors);
+
         // Update the old teaching assistant of the group
-        final var oldTeachingAssistants = userRepository.findAllUserInGroupAndNotIn(oldTeachingAssistantGroup, oldInstructors);
-        // doUpgrade=true, because these users should be upgraded from TA to instructor, if possible.
+        final var oldTeachingAssistants = userRepository.findAllUserInGroupAndNotIn(oldTeachingAssistantGroup, processedUsers);
+        // doUpgrade=true, because these users should be upgraded from TA to editor, if possible.
         updateOldGroupMembers(exercises, oldTeachingAssistants, updatedCourse.getTeachingAssistantGroupName(), updatedCourse.getInstructorGroupName(), MAINTAINER, true);
         processedUsers.addAll(oldTeachingAssistants);
 
         // Now, we only have to add all users that have not been updated yet AND that are part of one of the new groups
-        // Find all NEW instructors, that did not belong to the old TAs or instructors
+        // Find all NEW instructors that did not belong to the old instructors or editors or TAs
         final var remainingInstructors = userRepository.findAllUserInGroupAndNotIn(updatedCourse.getInstructorGroupName(), processedUsers);
         remainingInstructors.forEach(user -> {
             final var userId = getUserId(user.getLogin());
@@ -170,7 +177,15 @@ public class GitLabUserManagementService implements VcsUserManagementService {
         });
         processedUsers.addAll(remainingInstructors);
 
-        // Find all NEW TAs that did not belong to the old TAs or instructors
+        // Find all NEW editors that did not belong to the old instructors or editors or TAs
+        final var remainingEditors = userRepository.findAllUserInGroupAndNotIn(updatedCourse.getEditorGroupName(), processedUsers);
+        remainingEditors.forEach(user -> {
+            final var userId = getUserId(user.getLogin());
+            addUserToGroups(userId, exercises, DEVELOPER);
+        });
+        processedUsers.addAll(remainingEditors);
+
+        // Find all NEW TAs that did not belong to the old instructors or editors or TAs
         final var remainingTeachingAssistants = userRepository.findAllUserInGroupAndNotIn(updatedCourse.getTeachingAssistantGroupName(), processedUsers);
         remainingTeachingAssistants.forEach(user -> {
             final var userId = getUserId(user.getLogin());
@@ -185,8 +200,11 @@ public class GitLabUserManagementService implements VcsUserManagementService {
      * can be upgraded, i.e. from instructor to TA, this will also be done.
      * All cases:
      * <ul>
+     *     <li>DOWNGRADE from instructor to editor</li>
      *     <li>DOWNGRADE from instructor to TA</li>
+     *     <li>DOWNGRADE from editor to TA</li>
      *     <li>STAY instructor, because other group name is valid for newInstructorGroup</li>
+     *     <li>UPGRADE from editor to instructor</li>
      *     <li>UPGRADE from TA to instructor</li>
      *     <li>REMOVAL from GitLab group, because no valid active group is present</li>
      * </ul>
@@ -194,9 +212,9 @@ public class GitLabUserManagementService implements VcsUserManagementService {
      * @param exercises              All exercises for the updated course
      * @param users                  All user in the old group
      * @param newGroupName           The name of the new group, e.g. "newInstructors"
-     * @param alternativeGroupName   The name of the other group (instructor or TA), e.g. "newTeachingAssistant"
+     * @param alternativeGroupName   The name of the other group (instructor, editor or TA), e.g. "newTeachingAssistant"
      * @param alternativeAccessLevel The access level for the alternative group, e.g. REPORTER for TAs
-     * @param doUpgrade              True, if the alternative group would be an upgrade. This is the case if the old group was TA, so the new instructor group would be better (if applicable)
+     * @param doUpgrade              True, if the alternative group would be an upgrade. This is the case if the old group was TA or editor, so the new instructor group would be better (if applicable)
      */
     private void updateOldGroupMembers(List<ProgrammingExercise> exercises, List<User> users, String newGroupName, String alternativeGroupName, AccessLevel alternativeAccessLevel,
             boolean doUpgrade) {

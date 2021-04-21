@@ -46,7 +46,8 @@ public interface VcsUserManagementService {
      *
      * @param updatedCourse             The updated course with the new permissions
      * @param oldInstructorGroup        The old instructor group name
+     * @param oldEditorGroup            The old editor group name
      * @param oldTeachingAssistantGroup The old teaching assistant group name
      */
-    void updateCoursePermissions(Course updatedCourse, String oldInstructorGroup, String oldTeachingAssistantGroup);
+    void updateCoursePermissions(Course updatedCourse, String oldInstructorGroup, String oldEditorGroup, String oldTeachingAssistantGroup);
 }
