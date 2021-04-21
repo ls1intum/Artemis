@@ -274,13 +274,8 @@ public class ProgrammingExerciseExportService {
             repository = gitService.getOrCheckoutRepository(repositoryUrl, repoProjectPath, true);
             gitService.resetToOriginMaster(repository);
 
-            // Zip it
-            Path zippedRepo = gitService.zipRepository(repository.getLocalPath(), zipFilename, repoProjectPath);
-
-            // if repository is not closed, it causes weird IO issues when trying to delete the repository again
-            // java.io.IOException: Unable to delete file: ...\.git\objects\pack\...
-            repository.close();
-            return zippedRepo;
+            // Zip it and return the path to the file
+            return gitService.zipRepository(repository.getLocalPath(), zipFilename, repoProjectPath);
         }
         finally {
             deleteTempLocalRepository(repository);
