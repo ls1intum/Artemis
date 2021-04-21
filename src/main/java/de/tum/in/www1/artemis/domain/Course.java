@@ -163,6 +163,9 @@ public class Course extends DomainObject {
     private Long numberOfInstructorsTransient;
 
     @Transient
+    private Long numberOfEditorsTransient;
+
+    @Transient
     private Long numberOfTeachingAssistantsTransient;
 
     @Transient
@@ -234,6 +237,10 @@ public class Course extends DomainObject {
         return ARTEMIS_GROUP_DEFAULT_PREFIX + getShortName() + "-tutors";
     }
 
+    @JsonIgnore
+    public String getDefaultEditorGroupName() {
+        return ARTEMIS_GROUP_DEFAULT_PREFIX + getShortName() + "-editors";
+    }
     @JsonIgnore
     public String getDefaultInstructorGroupName() {
         return ARTEMIS_GROUP_DEFAULT_PREFIX + getShortName() + "-instructors";
@@ -486,14 +493,19 @@ public class Course extends DomainObject {
     @Override
     public String toString() {
         return "Course{" + "id=" + getId() + ", title='" + getTitle() + "'" + ", description='" + getDescription() + "'" + ", shortName='" + getShortName() + "'"
-                + ", studentGroupName='" + getStudentGroupName() + "'" + ", teachingAssistantGroupName='" + getTeachingAssistantGroupName() + "'" + ", instructorGroupName='"
-                + getInstructorGroupName() + "'" + ", startDate='" + getStartDate() + "'" + ", endDate='" + getEndDate() + "'" + ", semester='" + getSemester() + "'" + "'"
+                + ", studentGroupName='" + getStudentGroupName() + "'" + ", teachingAssistantGroupName='" + getTeachingAssistantGroupName() + "'"
+                + ", editorGroupName='" + getEditorGroupName() + "'" + ", instructorGroupName='" + getInstructorGroupName() + "'"
+                + ", startDate='" + getStartDate() + "'" + ", endDate='" + getEndDate() + "'" + ", semester='" + getSemester() + "'" + "'"
                 + ", onlineCourse='" + isOnlineCourse() + "'" + ", color='" + getColor() + "'" + ", courseIcon='" + getCourseIcon() + "'" + ", registrationEnabled='"
                 + isRegistrationEnabled() + "'" + "'" + ", presentationScore='" + getPresentationScore() + "}";
     }
 
     public void setNumberOfInstructors(Long numberOfInstructors) {
         this.numberOfInstructorsTransient = numberOfInstructors;
+    }
+
+    public void setNumberOfEditors(Long numberOfEditors) {
+        this.numberOfEditorsTransient = numberOfEditors;
     }
 
     public void setNumberOfTeachingAssistants(Long numberOfTeachingAssistants) {
@@ -506,6 +518,10 @@ public class Course extends DomainObject {
 
     public Long getNumberOfInstructors() {
         return this.numberOfInstructorsTransient;
+    }
+
+    public Long getNumberOfEditors() {
+        return this.numberOfEditorsTransient;
     }
 
     public Long getNumberOfTeachingAssistants() {
