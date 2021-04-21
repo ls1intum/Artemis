@@ -16,6 +16,7 @@ import { LocalStorageService } from 'ngx-webstorage';
 import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 
 export enum ExerciseFilter {
     OVERDUE = 'OVERDUE',
@@ -177,7 +178,10 @@ export class CourseExercisesComponent implements OnInit, OnChanges, OnDestroy {
             (exercise) =>
                 (!needsWorkFilterActive || this.needsWork(exercise)) &&
                 (!exercise.dueDate || !overdueFilterActive || exercise.dueDate.isAfter(moment(new Date()))) &&
-                (!exercise.releaseDate || !unreleasedFilterActive || exercise.releaseDate.isBefore(moment(new Date()))) &&
+                (!exercise.releaseDate ||
+                    !unreleasedFilterActive ||
+                    (exercise.type === ExerciseType.QUIZ && (exercise as QuizExercise).visibleToStudents) ||
+                    exercise.releaseDate.isBefore(moment(new Date()))) &&
                 (!isOrion || exercise.type === ExerciseType.PROGRAMMING),
         );
         this.groupExercises(filtered);
