@@ -44,8 +44,11 @@ export class TextExerciseService {
      * (like the old ID) will be handled by the server.
      */
     import(adaptedSourceTextExercise: TextExercise) {
+        let copy = this.exerciseService.convertDateFromClient(adaptedSourceTextExercise);
+        copy = this.exerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
+        copy.categories = this.exerciseService.stringifyExerciseCategories(copy);
         return this.http
-            .post<TextExercise>(`${this.resourceUrl}/import/${adaptedSourceTextExercise.id}`, adaptedSourceTextExercise, { observe: 'response' })
+            .post<TextExercise>(`${this.resourceUrl}/import/${adaptedSourceTextExercise.id}`, copy, { observe: 'response' })
             .pipe(
                 map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res)),
                 map((res: EntityResponseType) => this.exerciseService.convertExerciseCategoriesFromServer(res)),
