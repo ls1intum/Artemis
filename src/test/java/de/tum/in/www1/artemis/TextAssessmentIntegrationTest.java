@@ -931,6 +931,17 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
     }
 
     @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void retrieveConflictingTextSubmissions_automaticAssessmentDisabled() throws Exception {
+        List<TextSubmission> textSubmissions = prepareTextSubmissionsWithFeedbackAndConflicts();
+        textExercise.setAssessmentType(AssessmentType.MANUAL);
+        exerciseRepo.save(textExercise);
+        List<TextSubmission> conflictingTextSubmissions = request.getList("/api/text-assessments/submission/" + textSubmissions.get(0).getId() + "/feedback/"
+                + textSubmissions.get(0).getLatestResult().getFeedbacks().get(0).getId() + "/feedback-conflicts", HttpStatus.BAD_REQUEST, TextSubmission.class);
+        assertThat(conflictingTextSubmissions).isNull();
+    }
+
+    @Test
     @WithMockUser(value = "tutor2", roles = "TA")
     public void retrieveConflictingTextSubmissions_otherTutorForbidden() throws Exception {
         List<TextSubmission> textSubmissions = prepareTextSubmissionsWithFeedbackAndConflicts();
