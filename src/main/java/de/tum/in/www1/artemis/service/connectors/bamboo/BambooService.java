@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service.connectors.bamboo;
 
 import static de.tum.in.www1.artemis.config.Constants.*;
 
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
@@ -12,6 +13,7 @@ import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 import org.apache.commons.lang.StringEscapeUtils;
+import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -121,7 +123,7 @@ public class BambooService extends AbstractContinuousIntegrationService {
                     }
                 }
             }
-            catch (Exception ex) {
+            catch (GitAPIException | IOException | InterruptedException | NullPointerException ex) {
                 log.error("Exception while doing empty commit", ex);
             }
         }

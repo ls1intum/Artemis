@@ -16,7 +16,9 @@ import java.util.stream.Stream;
 
 import javax.validation.constraints.NotNull;
 import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
@@ -32,6 +34,7 @@ import org.springframework.util.FileSystemUtils;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.Submission;
@@ -485,9 +488,9 @@ public class ProgrammingExerciseExportService {
      * @param minimumScore          consider only submissions whose score is greater or equal to this value
      * @return a zip file that can be returned to the client
      * @throws ExitException is thrown if JPlag exits unexpectedly
-     * @throws Exception   is thrown for file handling errors
+     * @throws IOException is created the zip failed
      */
-    public File checkPlagiarismWithJPlagReport(long programmingExerciseId, float similarityThreshold, int minimumScore) throws ExitException, Exception {
+    public File checkPlagiarismWithJPlagReport(long programmingExerciseId, float similarityThreshold, int minimumScore) throws ExitException, IOException {
         long start = System.nanoTime();
 
         final var programmingExercise = programmingExerciseRepository.findWithAllParticipationsById(programmingExerciseId).get();
@@ -761,7 +764,7 @@ public class ProgrammingExerciseExportService {
             xformer.transform(new DOMSource(doc), new StreamResult(new File(pomFile.getPath())));
 
         }
-        catch (Exception ex) {
+        catch (SAXException | IOException | ParserConfigurationException | TransformerException | XPathException ex) {
             log.error("Cannot rename pom.xml file in " + repo.getLocalPath(), ex);
         }
     }
@@ -792,7 +795,7 @@ public class ProgrammingExerciseExportService {
             xformer.transform(new DOMSource(doc), new StreamResult(new File(eclipseProjectFile.getPath())));
 
         }
-        catch (Exception ex) {
+        catch (SAXException | IOException | ParserConfigurationException | TransformerException | XPathException ex) {
             log.error("Cannot rename .project file in " + repo.getLocalPath(), ex);
         }
     }

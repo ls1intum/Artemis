@@ -935,7 +935,7 @@ public class GitService {
                 deleteLocalRepository(repo);
             }
         }
-        catch (Exception e) {
+        catch (InterruptedException | IOException | GitAPIException e) {
             log.error("Error while deleting local repository", e);
         }
     }
