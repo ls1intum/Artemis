@@ -9,7 +9,6 @@ import { createRequestOption } from 'app/shared/util/request-util';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { TextPlagiarismResult } from 'app/exercises/shared/plagiarism/types/text/TextPlagiarismResult';
 import { PlagiarismOptions } from 'app/exercises/shared/plagiarism/types/PlagiarismOptions';
-import { ExerciseCategory } from 'app/entities/exercise-category.model';
 
 export type EntityResponseType = HttpResponse<TextExercise>;
 export type EntityArrayResponseType = HttpResponse<TextExercise[]>;
@@ -64,7 +63,7 @@ export class TextExerciseService {
         const options = createRequestOption(req);
         let copy = this.exerciseService.convertDateFromClient(textExercise);
         copy = this.exerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
-        copy.categories = textExercise.categories?.map((category) => JSON.stringify(category) as ExerciseCategory);
+        copy.categories = this.exerciseService.stringifyExerciseCategories(copy);
         return this.http
             .put<TextExercise>(this.resourceUrl, copy, { params: options, observe: 'response' })
             .pipe(
