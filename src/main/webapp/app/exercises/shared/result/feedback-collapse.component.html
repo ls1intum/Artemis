@@ -1,0 +1,9 @@
+<p *ngIf="text.length < smallCharacterLimit; else longText">{{ text }}</p>
+<ng-template #longText>
+    <mat-expansion-panel (opened)="isCollapsed = false" (closed)="isCollapsed = true">
+        <mat-expansion-panel-header>
+            <mat-panel-description> {{ isCollapsed ? text.substring(0, 80) : ' ' }}</mat-panel-description>
+        </mat-expansion-panel-header>
+        <p>{{ text }}</p>
+    </mat-expansion-panel>
+</ng-template>

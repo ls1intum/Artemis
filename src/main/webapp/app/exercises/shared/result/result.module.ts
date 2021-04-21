@@ -8,9 +8,10 @@ import { UpdatingResultComponent } from 'app/exercises/shared/result/updating-re
 import { ResultComponent } from 'app/exercises/shared/result/result.component';
 import { ResultDetailComponent } from 'app/exercises/shared/result/result-detail.component';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+import { MatExpansionModule } from '@angular/material/expansion';
 
 @NgModule({
-    imports: [ArtemisSharedModule, MomentModule, ArtemisProgrammingExerciseActionsModule, ArtemisSharedComponentModule],
+    imports: [ArtemisSharedModule, MomentModule, ArtemisProgrammingExerciseActionsModule, ArtemisSharedComponentModule, MatExpansionModule],
     declarations: [ResultComponent, UpdatingResultComponent, ResultDetailComponent, ResultHistoryComponent, SubmissionResultStatusComponent],
     exports: [ResultComponent, UpdatingResultComponent, ResultDetailComponent, ResultHistoryComponent, SubmissionResultStatusComponent],
 })
