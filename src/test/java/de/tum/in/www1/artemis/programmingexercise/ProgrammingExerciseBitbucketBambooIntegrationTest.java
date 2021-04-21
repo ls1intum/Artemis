@@ -48,10 +48,11 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
         bambooRequestMockProvider.reset();
     }
 
-    @Test
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @EnumSource(value = ProgrammingLanguage.class, names = { "VHDL", "ASSEMBLER", "C", "OCAML" }, mode = EnumSource.Mode.EXCLUDE)
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void createProgrammingExercise_sequential_validExercise_created() throws Exception {
-        programmingExerciseTestService.createProgrammingExercise_sequential_validExercise_created();
+    public void createProgrammingExercise_sequential_validExercise_created(ProgrammingLanguage programmingLanguage) throws Exception {
+        programmingExerciseTestService.createProgrammingExercise_sequential_validExercise_created(programmingLanguage);
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
