@@ -588,9 +588,8 @@ public class FileService implements DisposableBean {
      *
      * @param filePath the path where the file is located
      * @throws IOException if an issue occurs on file access for the normalizing of the line endings.
-     * @throws RuntimeException if an issue occured during the runtime
      */
-    public void normalizeLineEndings(String filePath) throws IOException, RuntimeException {
+    public void normalizeLineEndings(String filePath) throws IOException {
         log.debug("Normalizing line endings in file {}", filePath);
         // https://stackoverflow.com/questions/3776923/how-can-i-normalize-the-eol-character-in-java
         Path replaceFilePath = Paths.get(filePath);
