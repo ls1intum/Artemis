@@ -97,7 +97,7 @@ export class ExerciseScoresExportButtonComponent {
                 const encodedUri = encodeURI(csvContent);
                 const link = document.createElement('a');
                 link.setAttribute('href', encodedUri);
-                link.setAttribute('download', 'results-scores.csv');
+                link.setAttribute('download', `${exercise.shortName}-results-scores.csv`);
                 document.body.appendChild(link); // Required for FF
                 link.click();
             });
