@@ -3,7 +3,6 @@ package de.tum.in.www1.artemis.service;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
@@ -23,7 +22,6 @@ import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseExportService;
 import de.tum.in.www1.artemis.web.rest.dto.SubmissionExportOptionsDTO;
-import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
  * Service Implementation for exporting courses and exams.
@@ -88,24 +86,17 @@ public class CourseExamExportService {
             return Optional.empty();
         }
 
-        try {
-            // Export course exercises and exams
-            exportCourseExercises(notificationTopic, course, courseDirPath.toString(), exportErrors);
-            exportCourseExams(notificationTopic, course, courseDirPath.toString(), exportErrors);
+        // Export course exercises and exams
+        exportCourseExercises(notificationTopic, course, courseDirPath.toString(), exportErrors);
+        exportCourseExams(notificationTopic, course, courseDirPath.toString(), exportErrors);
 
-            // Zip them together
-            var exportedCoursePath = createCourseZipFile(courseDirPath.getParent(), Path.of(outputDir), exportErrors);
+        // Zip them together
+        var exportedCoursePath = createCourseZipFile(courseDirPath.getParent(), Path.of(outputDir), exportErrors);
 
-            log.info("Successfully exported course {}. The zip file is located at: {}", course.getId(), exportedCoursePath);
-            return exportedCoursePath;
-        }
-        catch (Exception e) {
-            logMessageAndAppendToList("Failed to export the entire course " + course.getTitle() + ": " + e.getMessage(), exportErrors);
-            return Optional.empty();
-        }
-        finally {
-            notifyUserAboutExerciseExportState(notificationTopic, CourseExamExportState.COMPLETED, "");
-        }
+        notifyUserAboutExerciseExportState(notificationTopic, CourseExamExportState.COMPLETED, "");
+        log.info("Successfully exported course {}. The zip file is located at: {}", course.getId(), exportedCoursePath);
+        return exportedCoursePath;
+
     }
 
     /**
@@ -134,23 +125,15 @@ public class CourseExamExportService {
             return Optional.empty();
         }
 
-        try {
-            // Export exam exercises
-            var exercises = examRepository.findAllExercisesByExamId(exam.getId());
-            exportExercises(notificationTopic, exercises, examDirPath.toString(), exportErrors);
+        // Export exam exercises
+        var exercises = examRepository.findAllExercisesByExamId(exam.getId());
+        exportExercises(notificationTopic, exercises, examDirPath.toString(), exportErrors);
 
-            var exportedExamPath = createCourseZipFile(examDirPath.getParent(), Path.of(outputDir), exportErrors);
+        var exportedExamPath = createCourseZipFile(examDirPath.getParent(), Path.of(outputDir), exportErrors);
 
-            log.info("Successfully exported exam {}. The zip file is located at: {}", exam.getId(), exportedExamPath);
-            return exportedExamPath;
-        }
-        catch (Exception e) {
-            logMessageAndAppendToList("Failed to export the exam " + exam.getTitle() + ": " + e.getMessage(), exportErrors);
-            return Optional.empty();
-        }
-        finally {
-            notifyUserAboutExerciseExportState(notificationTopic, CourseExamExportState.COMPLETED, "");
-        }
+        notifyUserAboutExerciseExportState(notificationTopic, CourseExamExportState.COMPLETED, "");
+        log.info("Successfully exported exam {}. The zip file is located at: {}", exam.getId(), exportedExamPath);
+        return exportedExamPath;
     }
 
     /**
@@ -185,6 +168,10 @@ public class CourseExamExportService {
         try {
             examsDir = Path.of(outputDir, "exams");
             Files.createDirectory(examsDir);
+
+            List<Exam> exams = examRepository.findByCourseId(course.getId());
+            Path finalExamsDir = examsDir;
+            exams.forEach(exam -> exportExam(notificationTopic, exam.getId(), finalExamsDir.toString(), exportErrors));
         }
         catch (IOException e) {
             logMessageAndAppendToList("Failed to create course exams directory " + examsDir + ".", exportErrors);
@@ -209,12 +196,6 @@ public class CourseExamExportService {
             // We retrieve every exercise from each exercise group and flatten the list.
             var exercises = examRepository.findAllExercisesByExamId(examId);
             exportExercises(notificationTopic, exercises, examDir.toString(), exportErrors);
-        }
-        catch (EntityNotFoundException e) {
-            logMessageAndAppendToList("The exam with id " + examId + "doesn't exist.", exportErrors);
-        }
-        catch (InvalidPathException e) {
-            logMessageAndAppendToList("The path of the exam directory is invalid.", exportErrors);
         }
         catch (IOException e) {
             logMessageAndAppendToList("Failed to create exam directory " + examDir + ".", exportErrors);
