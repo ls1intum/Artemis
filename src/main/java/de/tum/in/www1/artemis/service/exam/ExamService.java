@@ -477,7 +477,7 @@ public class ExamService {
                 if (totalNumberOfAssessmentsFinished[i] == null) {
                     totalNumberOfAssessmentsFinished[i] = 0L;
                 }
-                totalNumberOfAssessmentsFinished[i] += dateStats[i].getInTime();
+                totalNumberOfAssessmentsFinished[i] += dateStats[i].inTime();
             }
         }
         for (Long numberOfComplaints : numberOfComplaintsOpenByExercise) {

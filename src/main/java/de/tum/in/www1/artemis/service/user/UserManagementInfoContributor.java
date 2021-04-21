@@ -13,6 +13,9 @@ import de.tum.in.www1.artemis.config.Constants;
 @Component
 public class UserManagementInfoContributor implements InfoContributor {
 
+    @Value("${artemis.user-management.accept-terms:#{null}}")
+    private Optional<Boolean> needsToAcceptTerms;
+
     @Value("${artemis.user-management.registration.enabled:#{null}}")
     private Optional<Boolean> registrationEnabled;
 
@@ -34,6 +37,7 @@ public class UserManagementInfoContributor implements InfoContributor {
     @Override
     public void contribute(Info.Builder builder) {
         builder.withDetail(Constants.REGISTRATION_ENABLED, registrationEnabled.orElse(Boolean.FALSE));
+        builder.withDetail(Constants.NEEDS_TO_ACCEPT_TERMS, needsToAcceptTerms.orElse(Boolean.FALSE));
         allowedEmailPattern.ifPresent(pattern -> builder.withDetail(Constants.ALLOWED_EMAIL_PATTERN, pattern.toString()));
         allowedEmailPatternReadable.ifPresent(patternReadable -> builder.withDetail(Constants.ALLOWED_EMAIL_PATTERN_READABLE, patternReadable));
         allowedLdapUsernamePattern.ifPresent(pattern -> builder.withDetail(Constants.ALLOWED_LDAP_USERNAME_PATTERN, pattern));
