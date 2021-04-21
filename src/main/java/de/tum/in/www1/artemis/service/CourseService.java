@@ -301,6 +301,7 @@ public class CourseService {
      * Get the active students for these particular exercise ids
      *
      * @param exerciseIds the ids to get the active students for
+     * @param periodIndex the deviation from the current time
      * @return An Integer array containing active students for each index. An index corresponds to a week
      */
     public Integer[] getActiveStudents(Set<Long> exerciseIds, Integer periodIndex) {
@@ -398,6 +399,7 @@ public class CourseService {
      * Fetches Course Management Detail View data from repository and returns a DTO
      *
      * @param courseId id of the course
+     * @param exerciseIds the ids of the exercises of the course
      * @return The DTO for the course management detail view
      */
     public CourseManagementDetailViewDTO getStatsForDetailView(Long courseId, Set<Long> exerciseIds) {

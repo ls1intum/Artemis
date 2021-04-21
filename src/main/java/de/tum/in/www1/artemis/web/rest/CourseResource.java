@@ -1314,7 +1314,7 @@ public class CourseResource {
      * @return the ResponseEntity with status 200 (OK) and with body the course, or with status 404 (Not Found)
      */
     @GetMapping("/courses/{courseId}/management-detail")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('TA')")
     public ResponseEntity<CourseManagementDetailViewDTO> getCourseDTOForDetailView(@PathVariable Long courseId) {
         Course course = courseRepository.findByIdElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, null);
@@ -1366,8 +1366,7 @@ public class CourseResource {
             dto.setCurrentPercentageMoreFeedbacks(0.0);
         }
         // Average Student Score
-        ZonedDateTime now = ZonedDateTime.now();
-        var reachablePoints = courseRepository.getMaxReachablePointsInCourse(courseId, now);
+        var reachablePoints = courseRepository.getMaxReachablePointsInCourse(courseId, now());
         double maxPointsAchievableInCourse = reachablePoints != null ? reachablePoints : 0.0;
         dto.setCurrentMaxAverageScore(maxPointsAchievableInCourse);
         dto.setCurrentAbsoluteAverageScore(round((averageScoreForCourse / 100.0) * maxPointsAchievableInCourse));
@@ -1389,7 +1388,7 @@ public class CourseResource {
      * @return the ResponseEntity with status 200 (OK) and the data in body, or status 404 (Not Found)
      */
     @GetMapping(value = "/courses/{courseId}/statistics")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('TA')")
     public ResponseEntity<Integer[]> getActiveStudentsForCourseDetailView(@PathVariable Long courseId, @RequestParam Integer periodIndex) {
         var exerciseIds = exerciseRepository.findAllIdsByCourseId(courseId);
         return ResponseEntity.ok(courseService.getActiveStudents(exerciseIds, periodIndex));
