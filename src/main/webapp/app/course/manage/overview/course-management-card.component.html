@@ -50,6 +50,16 @@
                 {{ 'artemisApp.course.tutors' | artemisTranslate }}
             </a>
 
+            <a [routerLink]="['/course-management', course.id, 'groups', 'editors']" *ngIf="courseWithUsers.numberOfEditors !== undefined && courseWithUsers.numberOfEditors === 1">
+                {{ courseWithUsers.numberOfEditors }} {{ 'artemisApp.course.editor' | artemisTranslate }}
+            </a>
+            <a [routerLink]="['/course-management', course.id, 'groups', 'editors']" *ngIf="courseWithUsers.numberOfEditors !== undefined && courseWithUsers.numberOfEditors !== 1">
+                {{ courseWithUsers.numberOfEditors }} {{ 'artemisApp.course.editors' | artemisTranslate }}
+            </a>
+            <a [routerLink]="['/course-management', course.id, 'groups', 'editors']" *ngIf="courseWithUsers.numberOfEditors === undefined">
+                {{ 'artemisApp.course.editors' | artemisTranslate }}
+            </a>
+
             <a
                 [routerLink]="['/course-management', course.id, 'groups', 'instructors']"
                 *ngIf="courseWithUsers.numberOfInstructors !== undefined && courseWithUsers.numberOfInstructors === 1"

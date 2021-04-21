@@ -91,6 +91,9 @@ export class CourseUpdateComponent implements OnInit {
                     if (!this.course.teachingAssistantGroupName) {
                         this.course.teachingAssistantGroupName = 'artemis-dev';
                     }
+                    if (!this.course.editorGroupName) {
+                        this.course.editorGroupName = 'artemis-dev';
+                    }
                     if (!this.course.instructorGroupName) {
                         this.course.instructorGroupName = 'artemis-dev';
                     }
@@ -110,6 +113,7 @@ export class CourseUpdateComponent implements OnInit {
                 customizeGroupNames: new FormControl(this.customizeGroupNames),
                 studentGroupName: new FormControl(this.course.studentGroupName),
                 teachingAssistantGroupName: new FormControl(this.course.teachingAssistantGroupName),
+                editorGroupName: new FormControl(this.course.editorGroupName),
                 instructorGroupName: new FormControl(this.course.instructorGroupName),
                 description: new FormControl(this.course.description),
                 organizations: new FormControl(this.courseOrganizations),
