@@ -75,6 +75,9 @@ public class InternalAuthenticationIntegrationTest extends AbstractSpringIntegra
     @Value("${info.guided-tour.course-group-tutors:#{null}}")
     private Optional<String> tutorialGroupTutors;
 
+    @Value("${info.guided-tour.course-group-editors:#{null}}")
+    private Optional<String> tutorialGroupEditors;
+
     @Value("${info.guided-tour.course-group-instructors:#{null}}")
     private Optional<String> tutorialGroupInstructors;
 
@@ -184,7 +187,7 @@ public class InternalAuthenticationIntegrationTest extends AbstractSpringIntegra
         return user;
     }
 
-    private void assertUserGroups(User user, boolean students, boolean tutors, boolean instructors) {
+    private void assertUserGroups(User user, boolean students, boolean tutors, boolean editors, boolean instructors) {
         if (students) {
             assertThat(user.getGroups()).contains(tutorialGroupStudents.get());
         }
@@ -196,6 +199,12 @@ public class InternalAuthenticationIntegrationTest extends AbstractSpringIntegra
         }
         else {
             assertThat(user.getGroups()).doesNotContain(tutorialGroupTutors.get());
+        }
+        if (editors) {
+            assertThat(user.getGroups()).contains(tutorialGroupEditors.get());
+        }
+        else {
+            assertThat(user.getGroups()).doesNotContain(tutorialGroupEditors.get());
         }
         if (instructors) {
             assertThat(user.getGroups()).contains(tutorialGroupInstructors.get());
@@ -209,21 +218,28 @@ public class InternalAuthenticationIntegrationTest extends AbstractSpringIntegra
     @WithMockUser(value = "admin", roles = "ADMIN")
     public void createUserWithInternalUserManagementAndAutomatedTutorialGroupsAssignment() throws Exception {
         final User user = createUserWithRestApi(Set.of(USER_AUTHORITY));
-        assertUserGroups(user, true, false, false);
+        assertUserGroups(user, true, false, false,false);
     }
 
     @Test
     @WithMockUser(value = "admin", roles = "ADMIN")
     public void createTutorWithInternalUserManagementAndAutomatedTutorialGroupsAssignment() throws Exception {
         final User user = createUserWithRestApi(Set.of(USER_AUTHORITY, TA_AUTHORITY));
-        assertUserGroups(user, true, true, false);
+        assertUserGroups(user, true, true,false,  false);
+    }
+
+    @Test
+    @WithMockUser(value = "admin", roles = "ADMIN")
+    public void createEditorWithInternalUserManagementAndAutomatedTutorialGroupsAssignment() throws Exception {
+        final User user = createUserWithRestApi(Set.of(USER_AUTHORITY, TA_AUTHORITY, EDITOR_AUTHORITY));
+        assertUserGroups(user, true, true,true,  false);
     }
 
     @Test
     @WithMockUser(value = "admin", roles = "ADMIN")
     public void createInstructorWithInternalUserManagementAndAutomatedTutorialGroupsAssignment() throws Exception {
-        final User user = createUserWithRestApi(Set.of(USER_AUTHORITY, TA_AUTHORITY, INSTRUCTOR_AUTHORITY));
-        assertUserGroups(user, true, true, true);
+        final User user = createUserWithRestApi(Set.of(USER_AUTHORITY, TA_AUTHORITY, EDITOR_AUTHORITY, INSTRUCTOR_AUTHORITY));
+        assertUserGroups(user, true, true, true, true);
     }
 
     @Test

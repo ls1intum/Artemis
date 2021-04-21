@@ -35,6 +35,8 @@ public class Authority implements Serializable {
 
     public static Authority INSTRUCTOR_AUTHORITY = new Authority(Role.INSTRUCTOR.getAuthority());
 
+    public static Authority EDITOR_AUTHORITY = new Authority(Role.EDITOR.getAuthority());
+
     public static Authority TA_AUTHORITY = new Authority(Role.TEACHING_ASSISTANT.getAuthority());
 
     public static Authority USER_AUTHORITY = new Authority(Role.STUDENT.getAuthority());

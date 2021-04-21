@@ -40,6 +40,9 @@ public class UserCreationService {
     @Value("${info.guided-tour.course-group-tutors:#{null}}")
     private Optional<String> tutorialGroupTutors;
 
+    @Value("${info.guided-tour.course-group-editors:#{null}}")
+    private Optional<String> tutorialGroupEditors;
+
     @Value("${info.guided-tour.course-group-instructors:#{null}}")
     private Optional<String> tutorialGroupInstructors;
 
@@ -294,7 +297,7 @@ public class UserCreationService {
      * @param user the userDTO to add to the groups to
      */
     private void addTutorialGroups(ManagedUserVM user) {
-        if (tutorialGroupInstructors.isPresent() || tutorialGroupTutors.isPresent() || tutorialGroupStudents.isPresent()) {
+        if (tutorialGroupInstructors.isPresent() || tutorialGroupEditors.isPresent() || tutorialGroupTutors.isPresent() || tutorialGroupStudents.isPresent()) {
             Set<String> groupsToAdd = new HashSet<>();
             if (tutorialGroupStudents.isPresent() && courseRepository.findCourseByStudentGroupName(tutorialGroupStudents.get()) != null) {
                 groupsToAdd.add(tutorialGroupStudents.get());
@@ -302,6 +305,10 @@ public class UserCreationService {
             if (tutorialGroupTutors.isPresent() && user.getAuthorities().contains(TEACHING_ASSISTANT.getAuthority())
                     && courseRepository.findCourseByTeachingAssistantGroupName(tutorialGroupTutors.get()) != null) {
                 groupsToAdd.add(tutorialGroupTutors.get());
+            }
+            if (tutorialGroupEditors.isPresent() && user.getAuthorities().contains(EDITOR.getAuthority())
+                && courseRepository.findCourseByEditorGroupName(tutorialGroupEditors.get()) != null) {
+                groupsToAdd.add(tutorialGroupEditors.get());
             }
             if (tutorialGroupInstructors.isPresent() && user.getAuthorities().contains(INSTRUCTOR.getAuthority())
                     && courseRepository.findCourseByInstructorGroupName(tutorialGroupInstructors.get()) != null) {

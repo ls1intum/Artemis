@@ -41,6 +41,9 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     @Query("select distinct course from Course course where course.teachingAssistantGroupName like :#{#name}")
     Course findCourseByTeachingAssistantGroupName(@Param("name") String name);
 
+    @Query("select distinct course from Course course where course.editorGroupName like :#{#name}")
+    Course findCourseByEditorGroupName(@Param("name") String name);
+
     @Query("""
             SELECT DISTINCT c FROM Course c
             WHERE (c.startDate <= :#{#now}
