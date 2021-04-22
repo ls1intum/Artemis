@@ -49,9 +49,9 @@ export class ProfileService {
                         profileInfo.sshKeysURL = data.sshKeysURL;
                         profileInfo.externalUserManagementName = data.externalUserManagementName;
                         profileInfo.externalUserManagementURL = data.externalUserManagementURL;
-                        profileInfo.imprint = data.imprint;
                         profileInfo.contact = data.contact;
                         profileInfo.registrationEnabled = data.registrationEnabled;
+                        profileInfo.needsToAcceptTerms = data.needsToAcceptTerms;
                         profileInfo.allowedEmailPattern = data.allowedEmailPattern;
                         profileInfo.allowedEmailPatternReadable = data.allowedEmailPatternReadable;
                         profileInfo.allowedLdapUsernamePattern = data.allowedLdapUsernamePattern;
@@ -59,7 +59,6 @@ export class ProfileService {
                         profileInfo.accountName = data.accountName;
                         profileInfo.versionControlUrl = data.versionControlUrl;
                         profileInfo.programmingLanguageFeatures = data.programmingLanguageFeatures;
-                        profileInfo.enabledMultipleOrganizations = data.enabledMultipleOrganizations;
 
                         return profileInfo;
                     }),
