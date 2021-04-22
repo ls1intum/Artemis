@@ -19,6 +19,7 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.jwt.AtheneTrackingTokenProvider;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.exam.ExamService;
@@ -349,9 +350,7 @@ public class TextAssessmentResource extends AssessmentResource {
         final var textExercise = textExerciseRepository.findByIdElseThrow(exerciseId);
 
         // If the user is not at least a tutor for this exercise, return error
-        if (!authCheckService.isAtLeastTeachingAssistantForExercise(textExercise, user)) {
-            return forbidden();
-        }
+       authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, textExercise, user);
         final ExampleSubmission exampleSubmission = exampleSubmissionRepository.findBySubmissionIdWithResultsElseThrow(submissionId);
         Submission submission = exampleSubmission.getSubmission();
 
