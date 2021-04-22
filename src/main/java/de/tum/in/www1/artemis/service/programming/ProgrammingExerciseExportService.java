@@ -187,7 +187,7 @@ public class ProgrammingExerciseExportService {
                 return new File(zippedRepo.toString());
             }
         }
-        catch (IOException | GitAPIException | InterruptedException ex) {
+        catch (IOException | GitAPIException | GitException | InterruptedException ex) {
             var error = "Failed to export instructor repository " + repositoryType + " for programming exercise '" + exercise.getTitle() + "' (id: " + exercise.getId() + ")";
             log.info(error);
             exportErrors.add(error);
@@ -265,7 +265,7 @@ public class ProgrammingExerciseExportService {
      * @throws GitAPIException if the repo couldn't get checked out
      * @throws InterruptedException if the repo couldn't get checked out
      */
-    private Path createZipForRepository(VcsRepositoryUrl repositoryUrl, String zipFilename) throws IOException, GitAPIException, InterruptedException {
+    private Path createZipForRepository(VcsRepositoryUrl repositoryUrl, String zipFilename) throws IOException, GitAPIException, GitException, InterruptedException {
         var repoProjectPath = fileService.getUniquePathString(repoDownloadClonePath);
         Repository repository = null;
 
@@ -657,9 +657,6 @@ public class ProgrammingExerciseExportService {
             catch (IOException ex) {
                 log.warn("Could not delete temporary repository {}: {}", repository.getLocalPath().toString(), ex.getMessage());
             }
-        }
-        else {
-            log.error("Cannot delete temp local repository because the passed repository is null");
         }
     }
 

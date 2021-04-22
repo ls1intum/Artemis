@@ -93,7 +93,9 @@ public class CourseExamExportService {
         // Zip them together
         var exportedCoursePath = createCourseZipFile(courseDirPath.getParent(), Path.of(outputDir), exportErrors);
 
-        notifyUserAboutExerciseExportState(notificationTopic, CourseExamExportState.COMPLETED, "");
+        var exportState = exportErrors.isEmpty() ? CourseExamExportState.COMPLETED : CourseExamExportState.COMPLETED_WITH_WARNINGS;
+        notifyUserAboutExerciseExportState(notificationTopic, exportState, exportErrors);
+
         log.info("Successfully exported course {}. The zip file is located at: {}", course.getId(), exportedCoursePath);
         return exportedCoursePath;
 
@@ -131,7 +133,9 @@ public class CourseExamExportService {
 
         var exportedExamPath = createCourseZipFile(examDirPath.getParent(), Path.of(outputDir), exportErrors);
 
-        notifyUserAboutExerciseExportState(notificationTopic, CourseExamExportState.COMPLETED, "");
+        var exportState = exportErrors.isEmpty() ? CourseExamExportState.COMPLETED : CourseExamExportState.COMPLETED_WITH_WARNINGS;
+        notifyUserAboutExerciseExportState(notificationTopic, exportState, exportErrors);
+
         log.info("Successfully exported exam {}. The zip file is located at: {}", exam.getId(), exportedExamPath);
         return exportedExamPath;
     }
@@ -216,7 +220,7 @@ public class CourseExamExportService {
         exercises.forEach(exercise -> {
             // Notify the user after the progress
             exportedExercises.addAndGet(1);
-            notifyUserAboutExerciseExportState(notificationTopic, CourseExamExportState.RUNNING, exportedExercises + "/" + exercises.size() + " done");
+            notifyUserAboutExerciseExportState(notificationTopic, CourseExamExportState.RUNNING, List.of(exportedExercises + "/" + exercises.size() + " done"));
 
             // Export programming exercise
             if (exercise instanceof ProgrammingExercise) {
@@ -313,16 +317,16 @@ public class CourseExamExportService {
      *
      * @param topic The topic to send the notification to
      * @param exportState The export state
-     * @param progress progress message
+     * @param messages  optional messages to send
      */
-    private void notifyUserAboutExerciseExportState(String topic, CourseExamExportState exportState, String progress) {
-        Map<String, String> message = new HashMap<>();
-        message.put("exportState", exportState.toString());
-        message.put("progress", progress);
+    private void notifyUserAboutExerciseExportState(String topic, CourseExamExportState exportState, List<String> messages) {
+        Map<String, String> payload = new HashMap<>();
+        payload.put("exportState", exportState.toString());
+        payload.put("message", String.join("\n", messages));
 
         var mapper = new ObjectMapper();
         try {
-            websocketMessagingService.sendMessage(topic, mapper.writeValueAsString(message));
+            websocketMessagingService.sendMessage(topic, mapper.writeValueAsString(payload));
         }
         catch (IOException e) {
             log.info("Couldn't notify the user about the exercise export state for topic {}: {}", topic, e.getMessage());
