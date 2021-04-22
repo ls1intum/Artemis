@@ -13,6 +13,7 @@ import { Moment } from 'moment';
 export class ProgrammingExerciseLifecycleComponent implements OnInit {
     @Input() exercise: ProgrammingExercise;
     @Input() isExamMode: boolean;
+    @Input() readOnly: boolean;
 
     readonly assessmentType = AssessmentType;
 
