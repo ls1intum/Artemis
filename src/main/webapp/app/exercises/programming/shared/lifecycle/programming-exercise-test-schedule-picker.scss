@@ -55,6 +55,11 @@
         background-color: orange;
     }
 
+    &--disabled {
+        pointer-events: none;
+        cursor: default;
+    }
+
     &.btn-light {
         border-color: #3e8acc;
         border-width: 2px;
