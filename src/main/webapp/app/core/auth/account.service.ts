@@ -24,6 +24,8 @@ export interface IAccountService {
     identity: (force?: boolean) => Promise<User | undefined>;
     isAtLeastTutorInCourse: (course: Course) => boolean;
     isAtLeastTutorForExercise: (exercise?: Exercise) => boolean;
+    isAtLeastEditorInCourse: (course: Course) => boolean;
+    isAtLeastEditorForExercise: (exercise?: Exercise) => boolean;
     isAtLeastInstructorForExercise: (exercise?: Exercise) => boolean;
     isAtLeastInstructorInCourse: (course: Course) => boolean;
     isAuthenticated: () => boolean;
@@ -169,7 +171,12 @@ export class AccountService implements IAccountService {
      * @param course
      */
     isAtLeastTutorInCourse(course?: Course): boolean {
-        return this.hasGroup(course?.instructorGroupName) || this.hasGroup(course?.teachingAssistantGroupName) || this.hasAnyAuthorityDirect([Authority.ADMIN]);
+        return (
+            this.hasGroup(course?.instructorGroupName) ||
+            this.hasGroup(course?.editorGroupName) ||
+            this.hasGroup(course?.teachingAssistantGroupName) ||
+            this.hasAnyAuthorityDirect([Authority.ADMIN])
+        );
     }
 
     /**

@@ -6,7 +6,7 @@
         <button
             jhiOrionFilter
             [showInOrionWindow]="false"
-            *ngIf="course && course.isAtLeastInstructor"
+            *ngIf="course && course.isAtLeastEditor"
             id="jh-import-entity"
             class="btn btn-primary float-right jh-create-entity create-programming-exercise mr-1"
             [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
@@ -18,7 +18,7 @@
         <a
             jhiOrionFilter
             [showInOrionWindow]="false"
-            *ngIf="course && course.isAtLeastInstructor"
+            *ngIf="course && course.isAtLeastEditor"
             id="jh-create-entity"
             class="btn btn-primary float-right jh-create-entity create-programming-exercise mr-1"
             [jhiFeatureToggleLink]="FeatureToggle.PROGRAMMING_EXERCISES"
@@ -35,7 +35,7 @@
         <table class="table table-striped">
             <thead>
                 <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" [callback]="sortRows.bind(this)">
-                    <th *ngIf="course.isAtLeastInstructor" class="d-none d-md-table-cell"></th>
+                    <th *ngIf="course.isAtLeastEditor" class="d-none d-md-table-cell"></th>
                     <th class="d-none d-md-table-cell" jhiSortBy="id"><span jhiTranslate="global.field.id">ID</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>
                     <th jhiSortBy="title"><span jhiTranslate="artemisApp.exercise.title">Title</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>
                     <th class="d-none d-md-table-cell" jhiSortBy="shortName">
@@ -190,7 +190,7 @@
                             *ngIf="
                                 orionState.inInstructorView &&
                                     orionState.opened === programmingExercise.id &&
-                                    programmingExercise.isAtLeastInstructor &&
+                                    programmingExercise.isAtLeastEditor &&
                                     programmingExercise.templateParticipation;
                                 else importAsInstructor
                             "
@@ -201,7 +201,7 @@
                         </jhi-ide-button>
                         <ng-template #importAsInstructor>
                             <jhi-ide-button
-                                *ngIf="programmingExercise.isAtLeastInstructor && programmingExercise.templateParticipation"
+                                *ngIf="programmingExercise.isAtLeastEditor && programmingExercise.templateParticipation"
                                 [buttonLabel]="'entity.action.editInIntelliJ' | artemisTranslate"
                                 [buttonLoading]="orionState.cloning"
                                 [smallButton]="false"
@@ -267,7 +267,7 @@
                                 <a
                                     [jhiFeatureToggleLink]="FeatureToggle.PROGRAMMING_EXERCISES"
                                     [attr.disabled]="false"
-                                    *ngIf="programmingExercise.isAtLeastInstructor && programmingExercise.templateParticipation"
+                                    *ngIf="programmingExercise.isAtLeastEditor && programmingExercise.templateParticipation"
                                     jhiOrionFilter
                                     [showInOrionWindow]="false"
                                     [routerLink]="[
@@ -287,7 +287,7 @@
                                     </div>
                                 </a>
                                 <a
-                                    *ngIf="programmingExercise.isAtLeastInstructor"
+                                    *ngIf="programmingExercise.isAtLeastEditor"
                                     [routerLink]="['/course-management', courseId, 'programming-exercises', programmingExercise.id, 'edit']"
                                     class="btn btn-warning btn-sm mr-1 mb-1"
                                     style="display: flex; justify-content: center; align-items: center"

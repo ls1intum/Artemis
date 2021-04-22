@@ -1,5 +1,5 @@
 <ng-container *ngIf="exercise">
-    <a *ngIf="exercise.isAtLeastInstructor" [routerLink]="getEditRoute()" class="btn btn-warning btn-sm mr-1">
+    <a *ngIf="exercise.isAtLeastEditor" [routerLink]="getEditRoute()" class="btn btn-warning btn-sm mr-1">
         <fa-icon [icon]="'wrench'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.edit"> Edit</span>
     </a>
 

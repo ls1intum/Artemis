@@ -106,6 +106,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
                     .pipe(take(1))
                     .subscribe(() => (this.isLoading = false));
                 this.exercise.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(this.course || this.exercise.exerciseGroup!.exam!.course);
+                this.exercise.isAtLeastEditor = this.accountService.isAtLeastEditorInCourse(this.course || this.exercise.exerciseGroup!.exam!.course);
                 this.exercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.course || this.exercise.exerciseGroup!.exam!.course);
                 this.newManualResultAllowed = areManualResultsAllowed(this.exercise);
             });

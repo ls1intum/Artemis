@@ -57,7 +57,7 @@
     participations, we pass a hardcoded number. The code editor component will load the proper ProgrammingExercise, choose
     a participation and update the url displayed in the browser -->
     <a
-        *ngIf="course.isAtLeastInstructor && exercise.type === exerciseType.PROGRAMMING"
+        *ngIf="course.isAtLeastEditor && exercise.type === exerciseType.PROGRAMMING"
         [routerLink]="['/course-management', course.id, 'programming-exercises', exercise.id, 'code-editor', -1]"
         class="btn btn-warning btn-sm mr-1"
     >
@@ -66,7 +66,7 @@
     </a>
 
     <a
-        *ngIf="course.isAtLeastInstructor && exercise.type === exerciseType.QUIZ"
+        *ngIf="course.isAtLeastEditor && exercise.type === exerciseType.QUIZ"
         [routerLink]="['/course-management', course.id, 'quiz-exercises', exercise.id, 'preview']"
         class="btn btn-success btn-sm mr-1"
     >
@@ -75,7 +75,7 @@
     </a>
 
     <a
-        *ngIf="course.isAtLeastInstructor && exercise.type === exerciseType.QUIZ"
+        *ngIf="course.isAtLeastEditor && exercise.type === exerciseType.QUIZ"
         [routerLink]="['/course-management', course.id, 'quiz-exercises', exercise.id, 'solution']"
         class="btn btn-success btn-sm mr-1"
     >
@@ -83,7 +83,7 @@
         <span class="d-none d-md-inline" jhiTranslate="artemisApp.quizExercise.solution">Solution</span>
     </a>
 
-    <button *ngIf="course.isAtLeastInstructor && exercise.type === exerciseType.QUIZ" class="btn btn-warning btn-sm mr-1" (click)="exportQuizById(true)">
+    <button *ngIf="course.isAtLeastEditor && exercise.type === exerciseType.QUIZ" class="btn btn-warning btn-sm mr-1" (click)="exportQuizById(true)">
         <fa-icon [icon]="'file-export'"></fa-icon>
         <span class="d-none d-md-inline" jhiTranslate="entity.action.export">Export</span>
     </button>
@@ -120,7 +120,7 @@
     </ng-container>
 
     <a
-        *ngIf="course.isAtLeastInstructor && exercise.type !== exerciseType.QUIZ"
+        *ngIf="course.isAtLeastEditor && exercise.type !== exerciseType.QUIZ"
         [routerLink]="['/course-management', course.id, 'exams', exam.id, 'exercise-groups', exerciseGroupId, exercise.type + '-exercises', exercise.id, 'edit']"
         class="btn btn-warning btn-sm mr-1"
     >
