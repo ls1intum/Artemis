@@ -37,7 +37,7 @@
   dependencies:
     tslib "^2.0.0"
 
-"@angular/cdk@^11.2.9":
+"@angular/cdk@11.2.9":
   version "11.2.9"
   resolved "https://registry.yarnpkg.com/@angular/cdk/-/cdk-11.2.9.tgz#30ba78a323a6dd19c03972ebf091056d75ba0ade"
   integrity sha512-3gHobkgCQIJ4kJFkqexaKramI6k4OZ0/Vw5qvabGhpwWtICvrrfZyRejJzhecYKOcw+hiJNoDqP9TVNfkLme9g==
@@ -146,13 +146,6 @@
     "@babel/core" "7.8.3"
     glob "7.1.2"
     yargs "^16.2.0"
-
-"@angular/material@^11.2.9":
-  version "11.2.9"
-  resolved "https://registry.yarnpkg.com/@angular/material/-/material-11.2.9.tgz#f74535029f5c246f33649706cda75d29ccd84cb9"
-  integrity sha512-Pe1aScSX8fMOSs5hfF/V7NCJn9pt/60rFmwYxgtFser4BcJrO0Moz4eqxhNcR0PjiCQgKJpjjPxBept2+o5N5A==
-  dependencies:
-    tslib "^2.0.0"
 
 "@angular/platform-browser-dynamic@11.2.10":
   version "11.2.10"
