@@ -63,6 +63,7 @@
             "startDate": "Start",
             "endDate": "End",
             "semester": "Semester",
+            "gradingSystem": "Grading System",
             "testCourse": {
                 "title": "Test Course",
                 "description": "Activate this checkbox for courses used for testing.",
