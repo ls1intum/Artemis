@@ -381,12 +381,6 @@ public class ProgrammingExerciseExportService {
             return null;
         }
         finally {
-            // if repository is not closed, it causes weird IO issues when trying to delete the repository again
-            // java.io.IOException: Unable to delete file: ...\.git\objects\pack\...
-            if (repository != null) {
-                repository.close();
-            }
-
             deleteTempLocalRepository(repository);
             fileService.scheduleForDirectoryDeletion(Path.of(targetPath), 5);
         }
