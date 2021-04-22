@@ -20,7 +20,7 @@
                 "baseReposBuildPlans": "Alle Template-, Lösungs- und Test-Repositories sowie Build-Pläne löschen (Achtung: Dies kann NICHT rückgängig gemacht werden!). Es wird empfohlen die Repositories und Build-Pläne erst zu sichern!"
             },
             "cleanup": {
-                "successMessage": "Die Bereinigung war erfolgreich. Alle Build-Pläne wurden gelöscht. Die Studenten können ihre Teilnahme wieder aufnehmen.",
+                "successMessageRepos": "Die Bereinigung war erfolgreich. Alle Build-Pläne wurden gelöscht. Die Studenten können ihre Teilnahme wieder aufnehmen.",
                 "successMessageWithRepositories": "Die Bereinigung verlief erfolgreich. Alle Build-Pläne und Repositories wurden gelöscht. Alle Beteiligungen wurden als abgeschlossen gekennzeichnet."
             },
             "reset": {
@@ -188,6 +188,7 @@
             },
             "export": {
                 "downloadRepo": "Repo Herunterladen",
+                "downloadExercise": "Programmierübung herunterladen",
                 "downloadAllStudents": "Oder lade die Repositories aller Studenten herunter",
                 "downloadAllTeams": "Oder lade die Repositories aller Teams herunter",
                 "filterLateSubmissions": "Verspätete Abgaben herausfiltern",
@@ -197,7 +198,8 @@
                 "addTeamOrStudentName": "Namen der Teams/Studenten zum Projekt hinzufügen (erlaubt es mehrere Projekte gleichzeitig in Eclipse zu importieren)",
                 "combineStudentCommits": "Alle Änderungen des Studenten in einem Commit zusammenfassen (um das Review zu vereinfachen)",
                 "normalizeCodeStyle": "Code-Style normalisieren (Zeilenumbrüche, Kodierung)",
-                "successMessage": "Die Repositories wurden erfolgreich exportiert. Die generierte zip-Datei wird jetzt heruntergeladen."
+                "successMessageRepos": "Die Repositories wurden erfolgreich exportiert. Die generierte zip-Datei wird jetzt heruntergeladen.",
+                "successMessageExercise": "Die Programmierübung wurde erfolgreich exportiert. Die generierte zip-Datei wird jetzt heruntergeladen."
             },
             "resubmitOnFailedSubmission": "Die letzte Abgabe konnte nicht bewertet werden. Klicke den Button um die Abgabe erneut bewerten zu lassen. Diese Aktion führt einen neuen Build aus, der die Abgabe testet.",
             "resubmit": "Die letzte Abgabe erneut bewerten. Diese Aktion führt einen Build auf dem Repository der Teilnahme aus ohne einen Commit zu machen.",

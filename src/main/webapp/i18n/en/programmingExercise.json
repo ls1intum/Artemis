@@ -20,7 +20,7 @@
                 "baseReposBuildPlans": "Additionally delete template, solution and test repos and build plans (Be careful: this can NOT be undone!). Before you activate this option, we recommend that you backup these build plans and repos first!"
             },
             "cleanup": {
-                "successMessage": "Cleanup was successful. All build plans have been deleted. Students can resume their participation.",
+                "successMessageRepos": "Cleanup was successful. All build plans have been deleted. Students can resume their participation.",
                 "successMessageWithRepositories": "Cleanup was successful. All build plans and repositories have been deleted. All participations have been marked as Finished."
             },
             "reset": {
@@ -188,6 +188,7 @@
             },
             "export": {
                 "downloadRepo": "Download Repo",
+                "downloadExercise": "Download Exercise",
                 "downloadAllStudents": "Or download the repositories of all students",
                 "downloadAllTeams": "Or download the repositories of all teams",
                 "filterLateSubmissions": "Filter late submissions",
@@ -197,7 +198,8 @@
                 "addTeamOrStudentName": "Add team/student name to project (allows to import multiple projects into Eclipse at the same time)",
                 "combineStudentCommits": "Combine all student changes into one commit (to simplify the review)",
                 "normalizeCodeStyle": "Normalize code style (line endings, encoding)",
-                "successMessage": "Export of repos was successful. The exported zip file with all repositories is currently being downloaded."
+                "successMessageRepos": "Export of repos was successful. The exported zip file with all repositories is currently being downloaded.",
+                "successMessageExercise": "Export of exercise was successful. The exported zip file with all exercise material is currently being downloaded."
             },
             "resubmitOnFailedSubmission": "The result for the last submission of this participation could not be generated. Click the button to submit again. This will trigger a new build run that tests the last submission.",
             "resubmit": "Resubmit the last submission. This will execute a build run on the participation's repository without making a commit.",
