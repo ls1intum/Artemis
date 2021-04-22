@@ -1991,7 +1991,8 @@ public class DatabaseUtilService {
             var currentUser = tutors.get(i % 4);
 
             if ((i % 3) == 0) {
-                ModelingExercise modelingExercise = ModelFactory.generateModelingExercise(pastTimestamp, pastTimestamp, futureTimestamp, DiagramType.ClassDiagram, course);
+                ModelingExercise modelingExercise = ModelFactory.generateModelingExercise(pastTimestamp, pastTimestamp.plusHours(1), futureTimestamp, DiagramType.ClassDiagram,
+                        course);
                 modelingExercise.setTitle("Modeling" + i);
                 course.addExercises(modelingExercise);
                 course = courseRepo.save(course);
@@ -2013,7 +2014,7 @@ public class DatabaseUtilService {
 
             }
             else if ((i % 3) == 1) {
-                TextExercise textExercise = ModelFactory.generateTextExercise(pastTimestamp, pastTimestamp, futureTimestamp, course);
+                TextExercise textExercise = ModelFactory.generateTextExercise(pastTimestamp, pastTimestamp.plusHours(1), futureTimestamp, course);
                 textExercise.setTitle("Text" + i);
                 course.addExercises(textExercise);
                 course = courseRepo.save(course);
@@ -2031,7 +2032,7 @@ public class DatabaseUtilService {
                 }
             }
             else if ((i % 3) == 2) {
-                FileUploadExercise fileUploadExercise = ModelFactory.generateFileUploadExercise(pastTimestamp, pastTimestamp, futureTimestamp, "png,pdf", course);
+                FileUploadExercise fileUploadExercise = ModelFactory.generateFileUploadExercise(pastTimestamp, pastTimestamp.plusHours(1), futureTimestamp, "png,pdf", course);
                 fileUploadExercise.setTitle("FileUpload" + i);
                 course.addExercises(fileUploadExercise);
                 course = courseRepo.save(course);
@@ -2068,6 +2069,7 @@ public class DatabaseUtilService {
         result.resultString("3 of 10 points");
         result.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         result.setAssessor(assessor);
+        result.setRated(true);
         return result;
     }
 

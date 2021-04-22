@@ -418,6 +418,9 @@ public class ModelFactory {
     public static FileUploadSubmission generateFileUploadSubmissionWithFile(boolean submitted, String filePath) {
         FileUploadSubmission fileUploadSubmission = generateFileUploadSubmission(submitted);
         fileUploadSubmission.setFilePath(filePath);
+        if (submitted) {
+            fileUploadSubmission.setSubmissionDate(ZonedDateTime.now().minusDays(1));
+        }
         return fileUploadSubmission;
     }
 

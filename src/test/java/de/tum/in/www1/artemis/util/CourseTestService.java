@@ -35,6 +35,7 @@ import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.programmingexercise.MockDelegate;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.GroupNotificationService;
+import de.tum.in.www1.artemis.web.rest.dto.CourseManagementDetailViewDTO;
 import de.tum.in.www1.artemis.web.rest.dto.CourseManagementOverviewStatisticsDTO;
 import de.tum.in.www1.artemis.web.rest.dto.StatsForDashboardDTO;
 
@@ -79,6 +80,9 @@ public class CourseTestService {
 
     @Autowired
     private SubmissionRepository submissionRepository;
+
+    @Autowired
+    private ComplaintRepository complaintRepo;
 
     private final int numberOfStudents = 8;
 
@@ -846,7 +850,7 @@ public class CourseTestService {
         assertThat(stats.getTutorLeaderboardEntries().get(1).getNumberOfComplaintResponses()).isEqualTo(0);
         assertThat(stats.getTutorLeaderboardEntries().get(2).getNumberOfComplaintResponses()).isEqualTo(0);
         assertThat(stats.getTutorLeaderboardEntries().get(3).getNumberOfComplaintResponses()).isEqualTo(0);
-        // 9 exercises, for each one there are 5 complaintResponese
+        // 9 exercises, for each one there are 5 complaintResponses
         assertThat(stats.getTutorLeaderboardEntries().get(4).getNumberOfComplaintResponses()).isEqualTo(9 * 5);
     }
 
@@ -1516,5 +1520,83 @@ public class CourseTestService {
         // The one specific exercise should not be included
         var statisticsOptional = exerciseDTOS.stream().filter(exercise -> exercise.getExerciseId().equals(exerciseId)).findFirst();
         assertThat(statisticsOptional.isEmpty()).isTrue();
+    }
+
+    // Test
+    public void testGetCourseManagementDetailData() throws Exception {
+        // add courses with exercises
+
+        var course = database.createCoursesWithExercisesAndLectures(true).get(0);
+
+        // String validModel = FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
+        // Course course = database.addCourseWithExercisesAndSubmissions(5, 8, 4, 3, true, 2, validModel);
+
+        var student = ModelFactory.generateActivatedUser("user1");
+        // Fetch and update an instructor
+        var instructor = database.getUserByLogin("instructor1");
+        var groups = new HashSet<String>();
+        groups.add("instructor");
+        instructor.setGroups(groups);
+
+        userRepo.save(instructor);
+        userRepo.save(student);
+
+        var releaseDate = ZonedDateTime.now().minusDays(7);
+        var dueDate = ZonedDateTime.now().minusDays(2);
+        var assessmentDueDate = ZonedDateTime.now().minusDays(1);
+        var exerciseAssessmentDone = ModelFactory.generateTextExercise(releaseDate, dueDate, assessmentDueDate, course);
+        exerciseAssessmentDone.setMaxPoints(5.0);
+        exerciseAssessmentDone = exerciseRepo.save(exerciseAssessmentDone);
+
+        // Add a single participation to that exercise
+        final var exerciseId = exerciseAssessmentDone.getId();
+        var result = database.createParticipationSubmissionAndResult(exerciseId, student, 5.0, 0.0, 60, true);
+        result.setAssessor(instructor);
+        resultRepo.saveAndFlush(result);
+
+        course.addExercises(exerciseAssessmentDone);
+
+        courseRepo.save(course);
+
+        /*
+         * Complaint complaint = new Complaint().complaintType(ComplaintType.COMPLAINT); Complaint feedbackRequest = new Complaint().complaintType(ComplaintType.MORE_FEEDBACK);
+         * complaint.setResult(result); feedbackRequest.setResult(result); complaint = complaintRepo.save(complaint); feedbackRequest = complaintRepo.save(feedbackRequest);
+         */
+
+        // createInitialEmptyResponse
+
+        // API call
+        var courseDTO = request.get("/api/courses/" + course.getId() + "/management-detail", HttpStatus.OK, CourseManagementDetailViewDTO.class);
+
+        // Check results
+        assertThat(courseDTO).isNotNull();
+
+        assertThat(courseDTO.getActiveStudents().length).isEqualTo(4);
+        assertThat(courseDTO.getCourse()).isEqualTo(course);
+
+        // number of users in course
+        assertThat(courseDTO.getNumberOfStudentsInCourse()).isEqualTo(8);
+        assertThat(courseDTO.getNumberOfTeachingAssistantsInCourse()).isEqualTo(5);
+        assertThat(courseDTO.getNumberOfInstructorsInCourse()).isEqualTo(1);
+
+        // Assessments
+        assertThat(courseDTO.getCurrentPercentageAssessments()).isEqualTo(33.3);
+        assertThat(courseDTO.getCurrentAbsoluteAssessments()).isEqualTo(1);
+        assertThat(courseDTO.getCurrentMaxAssessments()).isEqualTo(3);
+
+        // Complaints
+        assertThat(courseDTO.getCurrentPercentageComplaints()).isEqualTo(0);
+        assertThat(courseDTO.getCurrentAbsoluteComplaints()).isEqualTo(0);
+        assertThat(courseDTO.getCurrentMaxComplaints()).isEqualTo(0);
+
+        // More feedback requests
+        assertThat(courseDTO.getCurrentPercentageMoreFeedbacks()).isEqualTo(0);
+        assertThat(courseDTO.getCurrentAbsoluteMoreFeedbacks()).isEqualTo(0);
+        assertThat(courseDTO.getCurrentMaxMoreFeedbacks()).isEqualTo(0);
+
+        // Average Score
+        assertThat(courseDTO.getCurrentPercentageAverageScore()).isEqualTo(60);
+        assertThat(courseDTO.getCurrentAbsoluteAverageScore()).isEqualTo(3);
+        assertThat(courseDTO.getCurrentMaxAverageScore()).isEqualTo(5);
     }
 }
