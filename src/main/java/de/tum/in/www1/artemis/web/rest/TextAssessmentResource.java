@@ -411,9 +411,9 @@ public class TextAssessmentResource extends AssessmentResource {
                     "textAssessmentConflict", "AutomaticTextAssessmentConflictServiceNotFound");
         }
 
-        final boolean isAtLeastInstructorForExercise = authCheckService.isAtLeastInstructorForExercise(textExercise, user);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, textExercise, user);
 
-        if (result != null && result.getAssessor() != null && !result.getAssessor().getLogin().equals(user.getLogin()) && !isAtLeastInstructorForExercise) {
+        if (result != null && result.getAssessor() != null && !result.getAssessor().getLogin().equals(user.getLogin())) {
             return forbidden();
         }
 
@@ -456,9 +456,9 @@ public class TextAssessmentResource extends AssessmentResource {
         final User firstAssessor = feedbackConflict.getFirstFeedback().getResult().getAssessor();
         final User secondAssessor = feedbackConflict.getSecondFeedback().getResult().getAssessor();
 
-        final boolean isAtLeastInstructorForExercise = authCheckService.isAtLeastInstructorForExercise(textExercise, user);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, textExercise, user);
 
-        if (!isAtLeastInstructorForExercise && !firstAssessor.getLogin().equals(user.getLogin()) && !secondAssessor.getLogin().equals(user.getLogin())) {
+        if (!firstAssessor.getLogin().equals(user.getLogin()) && !secondAssessor.getLogin().equals(user.getLogin())) {
             return forbidden();
         }
 
