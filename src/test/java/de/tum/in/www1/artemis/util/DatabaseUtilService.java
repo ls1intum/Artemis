@@ -3237,4 +3237,8 @@ public class DatabaseUtilService {
         programmingExerciseStudentParticipationRepo.save(programmingExerciseStudentParticipation2);
         return course;
     }
+
+    public Course saveCourse(Course course) {
+        return courseRepo.save(course);
+    }
 }
