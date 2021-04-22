@@ -410,10 +410,8 @@ public class TextAssessmentResource extends AssessmentResource {
             throw new BadRequestAlertException("Automatic assessments are not enabled for this text exercise or text assessment conflict service is not available!",
                     "textAssessmentConflict", "AutomaticTextAssessmentConflictServiceNotFound");
         }
-
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, textExercise, user);
-
-        if (result != null && result.getAssessor() != null && !result.getAssessor().getLogin().equals(user.getLogin())) {
+        final boolean isInstructorForExercise = authCheckService.isAtLeastInstructorForExercise(textExercise, user);
+        if (result != null && result.getAssessor() != null && !result.getAssessor().getLogin().equals(user.getLogin()) && !isInstructorForExercise) {
             return forbidden();
         }
 
@@ -456,9 +454,9 @@ public class TextAssessmentResource extends AssessmentResource {
         final User firstAssessor = feedbackConflict.getFirstFeedback().getResult().getAssessor();
         final User secondAssessor = feedbackConflict.getSecondFeedback().getResult().getAssessor();
 
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, textExercise, user);
+        final boolean isInstructorForExercise = authCheckService.isAtLeastInstructorForExercise(textExercise, user);
 
-        if (!firstAssessor.getLogin().equals(user.getLogin()) && !secondAssessor.getLogin().equals(user.getLogin())) {
+        if (!firstAssessor.getLogin().equals(user.getLogin()) && !secondAssessor.getLogin().equals(user.getLogin()) && !isInstructorForExercise) {
             return forbidden();
         }
 
