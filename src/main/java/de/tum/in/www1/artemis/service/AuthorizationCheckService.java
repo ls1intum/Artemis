@@ -217,7 +217,7 @@ public class AuthorizationCheckService {
             // only retrieve the user and the groups if the user is null or the groups are missing (to save performance)
             user = userRepository.getUserWithGroupsAndAuthorities();
         }
-        return isTeachingAssistantInCourse(course, user) || isInstructorInCourse(course, user) || isAdmin(user);
+        return isTeachingAssistantInCourse(course, user) || isEditorInCourse(course, user) || isInstructorInCourse(course, user) || isAdmin(user);
     }
 
     /**
@@ -245,8 +245,8 @@ public class AuthorizationCheckService {
             // only retrieve the user and the groups if the user is null or the groups are missing (to save performance)
             user = userRepository.getUserWithGroupsAndAuthorities();
         }
-        return isStudentInCourse(course, user) || isTeachingAssistantInCourse(course, user)
-            || isInstructorInCourse(course, user) || isAdmin(user);
+        return isStudentInCourse(course, user) || isTeachingAssistantInCourse(course, user) || isEditorInCourse(course, user) || isInstructorInCourse(course, user)
+                || isAdmin(user);
     }
 
     /**
@@ -402,7 +402,7 @@ public class AuthorizationCheckService {
     }
 
     /**
-     * checks if the currently logged in user is only a student of this course. This means the user is NOT a tutor, NOT an instructor and NOT an ADMIN
+     * checks if the currently logged in user is only a student of this course. This means the user is NOT a tutor, NOT an editor, NOT an instructor and NOT an ADMIN
      *
      * @param course the course that needs to be checked
      * @param user the user whose permissions should be checked

@@ -29,6 +29,9 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     @Query("select distinct course.teachingAssistantGroupName from Course course")
     Set<String> findAllTeachingAssistantGroupNames();
 
+    @Query("select distinct course.editorGroupName from Course course")
+    Set<String> findAllEditorGroupNames();
+
     @Query("select distinct course.instructorGroupName from Course course")
     Set<String> findAllInstructorGroupNames();
 
@@ -182,7 +185,7 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
             SELECT c
             FROM Course c
             WHERE (c.endDate IS NULL OR :#{#now} IS NULL OR c.endDate >= :#{#now})
-                AND (:isAdmin = TRUE OR c.teachingAssistantGroupName IN :userGroups OR c.instructorGroupName IN :userGroups)
+                AND (:isAdmin = TRUE OR c.teachingAssistantGroupName IN :userGroups OR c.editorGroupName IN :userGroups OR c.instructorGroupName IN :userGroups)
             """)
     List<Course> getAllCoursesForManagementOverview(@Param("now") ZonedDateTime now, @Param("isAdmin") boolean isAdmin, @Param("userGroups") List<String> userGroups);
 
