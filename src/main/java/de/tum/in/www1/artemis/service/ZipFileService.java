@@ -61,15 +61,10 @@ public class ZipFileService {
      */
     public Path createZipFileWithFolderContent(Path zipFilePath, Path contentRootPath) throws IOException {
         try (ZipOutputStream zipOutputStream = new ZipOutputStream(Files.newOutputStream(zipFilePath))) {
-            try {
-                Files.walk(contentRootPath).filter(path -> Files.isReadable(path) && !Files.isDirectory(path)).forEach(path -> {
-                    ZipEntry zipEntry = new ZipEntry(contentRootPath.relativize(path).toString());
-                    copyToZipFile(zipOutputStream, path, zipEntry);
-                });
-            }
-            catch (IOException e) {
-
-            }
+            Files.walk(contentRootPath).filter(path -> Files.isReadable(path) && !Files.isDirectory(path)).forEach(path -> {
+                ZipEntry zipEntry = new ZipEntry(contentRootPath.relativize(path).toString());
+                copyToZipFile(zipOutputStream, path, zipEntry);
+            });
             return zipFilePath;
         }
     }

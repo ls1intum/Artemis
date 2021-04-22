@@ -1008,6 +1008,17 @@ public class GitService {
 
         Path zipFilePath = Paths.get(targetPath, "zippedRepos", zipFilenameWithoutSlash);
         Files.createDirectories(Paths.get(targetPath, "zippedRepos"));
+
+        // Remove lock file from git carbage collections
+        Files.walk(repoLocalPath).filter(path -> path.endsWith("gc.log.lock")).forEach(path -> {
+            try {
+                Files.deleteIfExists(path);
+            }
+            catch (IOException ignored) {
+                log.error("Cannot delete gc.log.lock from {}", path);
+            }
+        });
+
         return zipFileService.createZipFileWithFolderContent(zipFilePath, repoLocalPath);
     }
 
