@@ -229,7 +229,8 @@ public class CourseExamExportService {
             notifyUserAboutExerciseExportState(notificationTopic, CourseExamExportState.RUNNING, exportedExercises + "/" + exercises.size() + " done");
 
             if (exercise instanceof ProgrammingExercise) {
-                programmingExerciseExportService.exportProgrammingExercise((ProgrammingExercise) exercise, outputDir, exportErrors);
+                // download the repositories template, solution, tests and students' repositories
+                programmingExerciseExportService.exportProgrammingExerciseRepositories((ProgrammingExercise) exercise, true, outputDir, exportErrors);
                 return;
             }
 

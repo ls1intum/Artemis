@@ -22,7 +22,10 @@ import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
-import javax.xml.xpath.*;
+import javax.xml.xpath.XPath;
+import javax.xml.xpath.XPathConstants;
+import javax.xml.xpath.XPathException;
+import javax.xml.xpath.XPathFactory;
 
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -36,8 +39,10 @@ import org.w3c.dom.Node;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.Repository;
 import de.tum.in.www1.artemis.domain.Submission;
+import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
@@ -54,7 +59,10 @@ import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 import de.tum.in.www1.artemis.web.rest.dto.RepositoryExportOptionsDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
-import jplag.*;
+import jplag.ExitException;
+import jplag.JPlag;
+import jplag.JPlagOptions;
+import jplag.JPlagResult;
 import jplag.options.LanguageOption;
 import jplag.reporting.Report;
 
@@ -62,10 +70,6 @@ import jplag.reporting.Report;
 public class ProgrammingExerciseExportService {
 
     private final Logger log = LoggerFactory.getLogger(ProgrammingExerciseExportService.class);
-
-    // The downloaded repos should be cloned into another path in order to not interfere with the repo used by the student
-    @Value("${artemis.repo-download-clone-path}")
-    private String repoDownloadClonePath;
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
@@ -81,6 +85,10 @@ public class ProgrammingExerciseExportService {
 
     private final ScheduledExecutorService executor = Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors());
 
+    // The downloaded repos should be cloned into another path in order to not interfere with the repo used by the student
+    @Value("${artemis.repo-download-clone-path}")
+    private String repoDownloadClonePath;
+
     public ProgrammingExerciseExportService(ProgrammingExerciseRepository programmingExerciseRepository, StudentParticipationRepository studentParticipationRepository,
             FileService fileService, GitService gitService, ZipFileService zipFileService, UrlService urlService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
@@ -92,30 +100,82 @@ public class ProgrammingExerciseExportService {
     }
 
     /**
-     * Export a programming exercise by creating a zip file. The zip file includes all student, template, solution,
-     * and tests repositories.
+     * Export programming exercise for instructors including instructor repositories, problem statement (.md) and exercise detail (.json).
      *
-     * @param exercise           the programming exercise
-     * @param pathToStoreZipFile The path to a directory that will be used to store the zipped programming exercise.
-     * @param exportErrors       List of failures that occurred during the export
+     * @param exercise     the programming exercise
+     * @param exportErrors List of failures that occurred during the export
      * @return the path to the zip file
      */
-    public Path exportProgrammingExercise(ProgrammingExercise exercise, String pathToStoreZipFile, List<String> exportErrors) {
-        // Will contain the zipped files. Note that there can be null elements
-        // because e.g exportStudentRepositories returns null if student repositories don't
-        // exist.
+    public Path exportInstructorProgrammingExercise(ProgrammingExercise exercise, List<String> exportErrors) {
+        // Will contain the zipped files for instructor repositories template, solution and tests and if the students' repositories if `includingStudentRepos`is true
+        var zipFiles = new ArrayList<File>();
+        var timestamp = ZonedDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-Hmss"));
+        var exportedExerciseZipFileName = exercise.getCourseViaExerciseGroupOrCourseMember().getShortName() + "-" + exercise.getTitle() + "-" + exercise.getId() + "-" + timestamp
+                + ".zip";
+
+        // Add the exported zipFolder containing template, solution, and tests repositories
+        zipFiles.add(exportProgrammingExerciseRepositories(exercise, false, "", exportErrors).toFile());
+
+        // Add the exported problem statement as .md file
+        String problemStatementFileExtension = ".md";
+        String problemStatementFileName = "Problem-Statement" + "-" + exercise.getShortName() + problemStatementFileExtension;
+
+        Path problemStatementExportPath = Path.of(repoDownloadClonePath, problemStatementFileName);
+        zipFiles.add(fileService.writeStringToFile(exercise.getProblemStatement(), problemStatementExportPath).toFile());
+
+        // Add the programming exercise characteristics as .json file
+        String exerciseDetailsFileExtension = ".json";
+        String exerciseDetailsFileName = "Exercise-Details" + "-" + exercise.getShortName() + exerciseDetailsFileExtension;
+
+        Path exerciseDetailsExportPath = Path.of(repoDownloadClonePath, exerciseDetailsFileName);
+        zipFiles.add(fileService.writeObjectToJsonFile(exercise, exerciseDetailsExportPath).toFile());
+
+        // Get the file path of each zip file.
+        var zipFilePaths = zipFiles.stream().map(File::toPath).collect(Collectors.toList());
+        var pathToZippedExercise = Path.of(repoDownloadClonePath, exportedExerciseZipFileName);
+
+        try {
+            // Zip the repositories zipFolder, the problem statement and the exercise characteristics.
+            zipFileService.createZipFile(pathToZippedExercise, zipFilePaths, false);
+            return pathToZippedExercise;
+        }
+        catch (IOException e) {
+            var error = "Failed to export programming exercise " + exercise.getId() + " because the zip file " + pathToZippedExercise + " could not be created: " + e.getMessage();
+            log.info(error);
+            exportErrors.add(error);
+            return null;
+        }
+        finally {
+            // Delete the zipped repo files since we don't need those anymore.
+            zipFilePaths.forEach(zipFilePath -> fileService.scheduleForDeletion(zipFilePath, 1));
+        }
+    }
+
+    /**
+     * Export instructor repositories and optionally students' repositories in a zip file.
+     *
+     * @param exercise              the programming exercise
+     * @param includingStudentRepos flag for including the students repos as well
+     * @param pathToStoreZipFile    The path to a directory that will be used to store the zipped programming exercise.
+     * @param exportErrors          List of failures that occurred during the export
+     * @return the path to the zip file
+     */
+    public Path exportProgrammingExerciseRepositories(ProgrammingExercise exercise, Boolean includingStudentRepos, String pathToStoreZipFile, List<String> exportErrors) {
+        // Will contain the zipped files for instructor repositories template, solution and tests and if the students' repositories if `includingStudentRepos`is true
         var zipFiles = new ArrayList<File>();
 
-        // Lazy load student participations and set the export options.
-        var studentParticipations = studentParticipationRepository.findByExerciseId(exercise.getId()).stream()
-                .map(studentParticipation -> (ProgrammingExerciseStudentParticipation) studentParticipation).collect(Collectors.toList());
-        var exportOptions = new RepositoryExportOptionsDTO();
-        exportOptions.setHideStudentNameInZippedFolder(false);
+        if (includingStudentRepos) {
+            // Lazy load student participations and set the export options.
+            var studentParticipations = studentParticipationRepository.findByExerciseId(exercise.getId()).stream()
+                    .map(studentParticipation -> (ProgrammingExerciseStudentParticipation) studentParticipation).collect(Collectors.toList());
+            var exportOptions = new RepositoryExportOptionsDTO();
+            exportOptions.setHideStudentNameInZippedFolder(false);
 
-        // Export student repositories
-        var studentZipFilePaths = exportStudentRepositories(exercise, studentParticipations, exportOptions, exportErrors).stream().filter(Objects::nonNull).map(Path::toFile)
-                .collect(Collectors.toList());
-        zipFiles.addAll(studentZipFilePaths);
+            // Export student repositories
+            var studentZipFilePaths = exportStudentRepositories(exercise, studentParticipations, exportOptions, exportErrors).stream().filter(Objects::nonNull).map(Path::toFile)
+                    .collect(Collectors.toList());
+            zipFiles.addAll(studentZipFilePaths);
+        }
 
         // Export the template, solution, and tests repositories
         zipFiles.add(exportInstructorRepositoryForExercise(exercise.getId(), RepositoryType.TEMPLATE, exportErrors));
@@ -126,7 +186,7 @@ public class ProgrammingExerciseExportService {
         var zipFilePathsNonNull = zipFiles.stream().filter(Objects::nonNull).map(File::toPath).collect(Collectors.toList());
 
         try {
-            // Zip the student and instructor repos together.
+            // Zip instructor repos together.
             var timestamp = ZonedDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-Hmss"));
             var filename = exercise.getCourseViaExerciseGroupOrCourseMember().getShortName() + "-" + exercise.getTitle() + "-" + exercise.getId() + "-" + timestamp + ".zip";
             var pathToZippedExercise = Path.of(pathToStoreZipFile, filename);
@@ -269,9 +329,9 @@ public class ProgrammingExerciseExportService {
      * @param zipFilename   The name of the zip file
      * @return The path to the zip file.
      * @throws GitAPIException      if the repos don't exist
-     * @throws GitException if the repos don't exist
+     * @throws GitException         if the repos don't exist
      * @throws InterruptedException something went wrong
-     * @throws IOException something went wrong
+     * @throws IOException          something went wrong
      */
     private Path createZipForRepository(VcsRepositoryUrl repositoryUrl, String zipFilename) throws GitAPIException, GitException, InterruptedException, IOException {
         var repoProjectPath = fileService.getUniquePathString(repoDownloadClonePath);

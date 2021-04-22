@@ -5,7 +5,10 @@ import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 import java.io.*;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.time.ZonedDateTime;
 import java.util.Collection;
 import java.util.Map;
@@ -19,6 +22,7 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.filefilter.FileFilterUtils;
 import org.apache.commons.io.filefilter.IOFileFilter;
 import org.apache.commons.lang3.math.NumberUtils;
+import org.codehaus.jackson.map.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.DisposableBean;
@@ -733,5 +737,42 @@ public class FileService implements DisposableBean {
             }
         }
         return uniquePath;
+    }
+
+    // TODO: write docs and test
+
+    /**
+     * @param
+     * @return Path to the written file
+     */
+    public Path writeStringToFile(String stringToWrite, Path path) {
+        try {
+            var fos = new FileOutputStream(path.toString());
+            var outStream = new OutputStreamWriter(fos, StandardCharsets.UTF_8);
+            outStream.write(stringToWrite);
+            outStream.close();
+        }
+        catch (IOException e) {
+            log.warn("Could not write given string in file {}.", path);
+        }
+        return path;
+    }
+
+    // TODO: write docs and test
+    // TODO: only serializable objects
+
+    /**
+     * @param
+     * @return Path to the written file
+     */
+    public Path writeObjectToJsonFile(Object object, Path path) {
+        ObjectMapper mapper = new ObjectMapper();
+        try {
+            mapper.writeValue(new File(path.toString()), object);
+        }
+        catch (IOException e) {
+            log.warn("could not write given object in file {}", path);
+        }
+        return path;
     }
 }
