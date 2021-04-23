@@ -261,7 +261,7 @@ public class QuizExerciseResource {
             // Get the course over the exercise group
             Course course = quizExercise.getExerciseGroup().getExam().getCourse();
 
-            if (!authCheckService.isAtLeastInstructorInCourse(course, null)) {
+            if (!authCheckService.isAtLeastEditorInCourse(course, null)) {
                 return forbidden();
             }
             exerciseService.checkTestRunsExist(quizExercise);
