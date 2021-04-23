@@ -177,6 +177,7 @@ describe('Course Management Update Component', () => {
                 requestMoreFeedbackEnabled: new FormControl(entity.requestMoreFeedbackEnabled),
                 maxRequestMoreFeedbackTimeDays: new FormControl(entity.maxRequestMoreFeedbackTimeDays),
                 isAtLeastTutor: new FormControl(entity.isAtLeastTutor),
+                isAtLeastEditor: new FormControl(entity.isAtLeastEditor),
                 isAtLeastInstructor: new FormControl(entity.isAtLeastInstructor),
             });
             // WHEN
@@ -205,6 +206,7 @@ describe('Course Management Update Component', () => {
                 requestMoreFeedbackEnabled: new FormControl(entity.requestMoreFeedbackEnabled),
                 maxRequestMoreFeedbackTimeDays: new FormControl(entity.maxRequestMoreFeedbackTimeDays),
                 isAtLeastTutor: new FormControl(entity.isAtLeastTutor),
+                isAtLeastEditor: new FormControl(entity.isAtLeastEditor),
                 isAtLeastInstructor: new FormControl(entity.isAtLeastInstructor),
             }); // mocking reactive form
             // WHEN
