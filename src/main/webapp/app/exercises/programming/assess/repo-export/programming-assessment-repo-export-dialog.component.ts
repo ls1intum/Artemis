@@ -31,6 +31,7 @@ export class ProgrammingAssessmentRepoExportDialogComponent implements OnInit {
     repositoryExportOptions: RepositoryExportOptions;
     isLoading = false;
     isRepoExportForMultipleExercises: boolean;
+    isAtLeastInstructor?: boolean;
 
     constructor(
         private exerciseService: ExerciseService,
@@ -57,6 +58,7 @@ export class ProgrammingAssessmentRepoExportDialogComponent implements OnInit {
                 .pipe(
                     tap(({ body: exercise }) => {
                         this.exercise = exercise!;
+                        this.isAtLeastInstructor = this.exercise.isAtLeastInstructor;
                     }),
                     catchError((err) => {
                         this.jhiAlertService.error(err);
@@ -69,6 +71,7 @@ export class ProgrammingAssessmentRepoExportDialogComponent implements OnInit {
                 });
         } else {
             this.isLoading = false;
+            this.isAtLeastInstructor = this.selectedProgrammingExercises.every((exercise: ProgrammingExercise) => exercise.isAtLeastInstructor);
         }
     }
 

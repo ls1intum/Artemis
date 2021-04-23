@@ -15,9 +15,11 @@
                 <fa-icon [fixedWidth]="true" [icon]="'folder-open'"></fa-icon>&nbsp;Assess next submission
             </button>
             <button (click)="refresh()" [disabled]="busy" class="btn btn-primary btn-sm mr-1"><fa-icon [fixedWidth]="true" [icon]="'sync'"></fa-icon>&nbsp;Refresh</button>
-            <button (click)="resetOptimality()" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']" [disabled]="busy" class="btn btn-primary btn-sm mr-1">
-                <fa-icon [fixedWidth]="true" [icon]="'sync'"></fa-icon>&nbsp;Reset assessment order
-            </button>
+            <ng-container *ngIf="course.isAtLeastInstructor">
+                <button (click)="resetOptimality()" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']" [disabled]="busy" class="btn btn-primary btn-sm mr-1">
+                    <fa-icon [fixedWidth]="true" [icon]="'sync'"></fa-icon>&nbsp;Reset assessment order
+                </button>
+            </ng-container>
         </div>
     </div>
     <h4>
@@ -205,7 +207,7 @@
                     <td *ngFor="let item of [].constructor(numberOfCorrectionrounds); let correctionRound = index">
                         <span *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']">
                             <!-- exercise without exam-->
-                            <span *ngIf="exercise.type === ExerciseType.MODELING && submission && exercise.course">
+                            <span *ngIf="course.isAtLeastInstructor && exercise.type === ExerciseType.MODELING && submission && exercise.course">
                                 <a
                                     *ngIf="!submission.latestResult"
                                     [class.disabled]="busy"
