@@ -38,6 +38,18 @@ public class UserBambooBitbucketJiraIntegrationTest extends AbstractSpringIntegr
     }
 
     @Test
+    @WithMockUser(value = "admin", roles = "ADMIN")
+    public void updateUserInvalidId() throws Exception {
+        userTestService.updateUserInvalidId();
+    }
+
+    @Test
+    @WithMockUser(value = "admin", roles = "ADMIN")
+    public void updateUserExistingEmail() throws Exception {
+        userTestService.updateUserExistingEmail();
+    }
+
+    @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     public void updateUser_withNullPassword_oldPasswordNotChanged() throws Exception {
         userTestService.updateUser_withNullPassword_oldPasswordNotChanged();
@@ -66,6 +78,24 @@ public class UserBambooBitbucketJiraIntegrationTest extends AbstractSpringIntegr
     @WithMockUser(username = "admin", roles = "ADMIN")
     public void createUser_asAdmin_isSuccessful() throws Exception {
         userTestService.createUser_asAdmin_isSuccessful();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    public void createUser_asAdmin_hasId() throws Exception {
+        userTestService.createUser_asAdmin_hasId();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    public void createUser_asAdmin_existingLogin() throws Exception {
+        userTestService.createUser_asAdmin_existingLogin();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    public void createUser_asAdmin_existingEmail() throws Exception {
+        userTestService.createUser_asAdmin_existingEmail();
     }
 
     @Test
