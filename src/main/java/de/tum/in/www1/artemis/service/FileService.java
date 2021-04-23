@@ -739,10 +739,11 @@ public class FileService implements DisposableBean {
         return uniquePath;
     }
 
-    // TODO: write docs and test
-
     /**
-     * @param
+     * Write a given string into a file at a given path
+     *
+     * @param stringToWrite     The string that will be written into a file
+     * @param path              The path where the file will be written to
      * @return Path to the written file
      */
     public Path writeStringToFile(String stringToWrite, Path path) {
@@ -758,11 +759,11 @@ public class FileService implements DisposableBean {
         return path;
     }
 
-    // TODO: write docs and test
-    // TODO: only serializable objects
-
     /**
-     * @param
+     * Serializes and object to json format and writes into file at a given path
+     *
+     * @param object    The object that is serialized and written into a json file
+     * @param path      The path where the file will be written to
      * @return Path to the written file
      */
     public Path writeObjectToJsonFile(Object object, Path path) {
@@ -771,7 +772,7 @@ public class FileService implements DisposableBean {
             mapper.writeValue(new File(path.toString()), object);
         }
         catch (IOException e) {
-            log.warn("could not write given object in file {}", path);
+            log.warn("Could not write given object in file {}", path);
         }
         return path;
     }
