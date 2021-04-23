@@ -289,16 +289,43 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
+    public void getComplaintsByCourseIdTutorIsNotTutorForCourse() throws Exception {
+        complaint.setParticipant(database.getUserByLogin("student1"));
+        complaintRepo.save(complaint);
+        course.setInstructorGroupName("test");
+        course.setTeachingAssistantGroupName("test");
+        courseRepository.save(course);
+
+        final var params = new LinkedMultiValueMap<String, String>();
+        params.add("complaintType", ComplaintType.COMPLAINT.name());
+        request.getList("/api/courses/" + modelingExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/complaints", HttpStatus.FORBIDDEN, Complaint.class, params);
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
     public void getComplaintsByCourseId_tutor_sensitiveDataHidden() throws Exception {
         complaint.setParticipant(database.getUserByLogin("student1"));
         complaintRepo.save(complaint);
-
         final var params = new LinkedMultiValueMap<String, String>();
         params.add("complaintType", ComplaintType.COMPLAINT.name());
         final var complaints = request.getList("/api/courses/" + modelingExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/complaints", HttpStatus.OK, Complaint.class,
                 params);
 
         complaints.forEach(c -> checkComplaintContainsNoSensitiveData(c, true));
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void getComplaintsForAssessmentDashboardTutorIsNotTutorForCourse() throws Exception {
+        complaint.setParticipant(database.getUserByLogin("student1"));
+        complaintRepo.save(complaint);
+        course.setInstructorGroupName("test");
+        course.setTeachingAssistantGroupName("test");
+        courseRepository.save(course);
+
+        final var params = new LinkedMultiValueMap<String, String>();
+        params.add("complaintType", ComplaintType.COMPLAINT.name());
+        request.getList("/api/exercises/" + modelingExercise.getId() + "/complaints-for-assessment-dashboard", HttpStatus.FORBIDDEN, Complaint.class, params);
     }
 
     @Test
@@ -318,6 +345,23 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
             assertThat(participation.getExercise()).as("No additional exercise information").isNull();
             assertThat(compl.getResultBeforeComplaint()).as("No old result information").isNull();
         });
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void getComplaintsForAssessmentDashboardTestRunTutorIsNotTutorForCourse() throws Exception {
+        User instructor = database.getUserByLogin("instructor1");
+        complaint.setParticipant(instructor);
+        complaint.getResult().setAssessor(instructor);
+        resultRepo.save(complaint.getResult());
+        complaint = complaintRepo.save(complaint);
+        course.setInstructorGroupName("test");
+        course.setTeachingAssistantGroupName("test");
+        courseRepository.save(course);
+
+        final var params = new LinkedMultiValueMap<String, String>();
+        params.add("complaintType", ComplaintType.COMPLAINT.name());
+        request.getList("/api/exercises/" + modelingExercise.getId() + "/complaints-for-test-run-dashboard", HttpStatus.FORBIDDEN, Complaint.class, params);
     }
 
     @Test
@@ -515,6 +559,19 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
+    public void getComplaintsByExerciseIdTutorIsNotTutorForCourse() throws Exception {
+        complaint.setParticipant(database.getUserByLogin("student1"));
+        complaintRepo.save(complaint);
+        course.setInstructorGroupName("test");
+        course.setTeachingAssistantGroupName("test");
+        courseRepository.save(course);
+        final var params = new LinkedMultiValueMap<String, String>();
+        params.add("complaintType", ComplaintType.COMPLAINT.name());
+        request.getList("/api/exercises/" + complaint.getResult().getParticipation().getExercise().getId() + "/complaints", HttpStatus.FORBIDDEN, Complaint.class, params);
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
     public void getComplaintsByExerciseId_tutor_sensitiveDataHidden() throws Exception {
         complaint.setParticipant(database.getUserByLogin("student1"));
         complaintRepo.save(complaint);
@@ -552,6 +609,21 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
         complaint.setParticipant(database.getUserByLogin("student1"));
         complaintRepo.save(complaint);
         request.get("/api/courses/" + modelingExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/allowed-complaints?teamMode=true", HttpStatus.BAD_REQUEST, Long.class);
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void getMoreFeedbackRequestsForAssessmentDashboardTutorIsNotTutorForCourse() throws Exception {
+        complaint.setParticipant(database.getUserByLogin("student1"));
+        moreFeedbackRequest.setAccepted(true);
+        complaintRepo.save(moreFeedbackRequest);
+        course.setInstructorGroupName("test");
+        course.setTeachingAssistantGroupName("test");
+        courseRepository.save(course);
+
+        final var params = new LinkedMultiValueMap<String, String>();
+        params.add("complaintType", ComplaintType.MORE_FEEDBACK.name());
+        request.getList("/api/exercises/" + modelingExercise.getId() + "/more-feedback-for-assessment-dashboard", HttpStatus.FORBIDDEN, Complaint.class, params);
     }
 
     @Test
@@ -634,6 +706,20 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
         final String url = "/api/complaints/exam/{examId}".replace("{examId}", String.valueOf(examId));
         request.post(url, examExerciseComplaint, HttpStatus.BAD_REQUEST);
 
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testGetComplaintsByCourseIdAndExamIdTutorIsNotTutorForCourse() throws Exception {
+        final TextExercise examExercise = database.addCourseExamWithReviewDatesExerciseGroupWithOneTextExercise();
+        final long examId = examExercise.getExerciseGroup().getExam().getId();
+        final long courseId = examExercise.getExerciseGroup().getExam().getCourse().getId();
+        Course course = examExercise.getExerciseGroup().getExam().getCourse();
+        course.setInstructorGroupName("test");
+        course.setTeachingAssistantGroupName("test");
+        courseRepository.save(course);
+
+        request.getList("/api/courses/" + courseId + "/exams/" + examId + "/complaints", HttpStatus.FORBIDDEN, Complaint.class);
     }
 
     @Test
