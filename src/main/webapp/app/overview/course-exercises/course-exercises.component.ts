@@ -178,10 +178,7 @@ export class CourseExercisesComponent implements OnInit, OnChanges, OnDestroy {
             (exercise) =>
                 (!needsWorkFilterActive || this.needsWork(exercise)) &&
                 (!exercise.dueDate || !overdueFilterActive || exercise.dueDate.isAfter(moment(new Date()))) &&
-                (!exercise.releaseDate ||
-                    !unreleasedFilterActive ||
-                    (exercise.type === ExerciseType.QUIZ && (exercise as QuizExercise).visibleToStudents) ||
-                    exercise.releaseDate.isBefore(moment(new Date()))) &&
+                (!exercise.releaseDate || !unreleasedFilterActive || (exercise as QuizExercise).visibleToStudents) &&
                 (!isOrion || exercise.type === ExerciseType.PROGRAMMING),
         );
         this.groupExercises(filtered);
