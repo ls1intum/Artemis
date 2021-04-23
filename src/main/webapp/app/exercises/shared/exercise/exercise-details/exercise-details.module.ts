@@ -10,6 +10,7 @@ import { ArtemisExerciseModule } from 'app/exercises/shared/exercise/exercise.mo
 import { exercisePopupRoute } from 'app/exercises/shared/exercise/exercise.route';
 import { ArtemisProgrammingExerciseInstructionsRenderModule } from 'app/exercises/programming/shared/instructions-render/programming-exercise-instructions-render.module';
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
+import { ArtemisProgrammingExerciseLifecycleModule } from 'app/exercises/programming/shared/lifecycle/programming-exercise-lifecycle.module';
 
 const ENTITY_STATES = [...exercisePopupRoute];
 
@@ -23,6 +24,7 @@ const ENTITY_STATES = [...exercisePopupRoute];
         AssessmentInstructionsModule,
         RouterModule.forChild(ENTITY_STATES),
         ArtemisMarkdownModule,
+        ArtemisProgrammingExerciseLifecycleModule,
     ],
     declarations: [ExerciseDetailsComponent],
     exports: [ExerciseDetailsComponent],

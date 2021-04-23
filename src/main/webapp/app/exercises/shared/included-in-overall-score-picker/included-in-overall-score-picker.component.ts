@@ -10,7 +10,7 @@ export class IncludedInOverallScorePickerComponent {
     readonly IncludedInOverallScore = IncludedInOverallScore;
 
     @Input()
-    includedInOverallScore: IncludedInOverallScore;
+    includedInOverallScore: IncludedInOverallScore | undefined;
     @Output()
     includedInOverallScoreChange = new EventEmitter();
 
