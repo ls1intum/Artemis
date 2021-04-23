@@ -29,7 +29,6 @@ import de.tum.in.www1.artemis.repository.ComplaintRepository;
 import de.tum.in.www1.artemis.repository.ComplaintResponseRepository;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
-import de.tum.in.www1.artemis.service.ComplaintService;
 import de.tum.in.www1.artemis.util.FileUtils;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
@@ -46,9 +45,6 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
 
     @Autowired
     private CourseRepository courseRepository;
-
-    @Autowired
-    private ComplaintService complaintService;
 
     @Autowired
     private ObjectMapper mapper;
