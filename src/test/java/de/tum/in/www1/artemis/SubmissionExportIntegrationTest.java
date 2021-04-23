@@ -1,6 +1,8 @@
 package de.tum.in.www1.artemis;
 
 import static org.assertj.core.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
 
 import java.io.File;
 import java.io.IOException;
@@ -12,6 +14,7 @@ import java.util.zip.ZipFile;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
@@ -20,6 +23,7 @@ import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.service.FileUploadSubmissionExportService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.dto.SubmissionExportOptionsDTO;
 
@@ -50,6 +54,11 @@ public class SubmissionExportIntegrationTest extends AbstractSpringIntegrationBa
     private FileUploadSubmission fileUploadSubmission2;
 
     private FileUploadSubmission fileUploadSubmission3;
+
+    @SpyBean
+    private FileUploadSubmissionExportService fileUploadSubmissionExportService;
+
+    private long NOT_EXISTING_EXERCISE_ID = 5489218954L;
 
     @BeforeEach
     public void initTestCase() {
@@ -150,6 +159,39 @@ public class SubmissionExportIntegrationTest extends AbstractSpringIntegrationBa
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testNoSubmissionsForStudent_asInstructorNotInGroup() throws Exception {
+        baseExportOptions.setExportAllParticipants(false);
+        baseExportOptions.setParticipantIdentifierList("nonexistentstudent");
+        Course course = textExercise.getCourseViaExerciseGroupOrCourseMember();
+        course.setInstructorGroupName("abc");
+        database.saveCourse(course);
+        request.post("/api/text-exercises/" + textExercise.getId() + "/export-submissions", baseExportOptions, HttpStatus.FORBIDDEN);
+        request.post("/api/modeling-exercises/" + modelingExercise.getId() + "/export-submissions", baseExportOptions, HttpStatus.FORBIDDEN);
+        request.post("/api/file-upload-exercises/" + fileUploadExercise.getId() + "/export-submissions", baseExportOptions, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testNoSubmissionsForStudent_asTutor() throws Exception {
+        baseExportOptions.setExportAllParticipants(true);
+        baseExportOptions.setParticipantIdentifierList("nonexistentstudent");
+        request.post("/api/text-exercises/" + textExercise.getId() + "/export-submissions", baseExportOptions, HttpStatus.FORBIDDEN);
+        request.post("/api/modeling-exercises/" + modelingExercise.getId() + "/export-submissions", baseExportOptions, HttpStatus.FORBIDDEN);
+        request.post("/api/file-upload-exercises/" + fileUploadExercise.getId() + "/export-submissions", baseExportOptions, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testWrongExerciseId_asInstructor() throws Exception {
+        baseExportOptions.setExportAllParticipants(false);
+        baseExportOptions.setParticipantIdentifierList("nonexistentstudent");
+        request.post("/api/text-exercises/" + NOT_EXISTING_EXERCISE_ID + "/export-submissions", baseExportOptions, HttpStatus.NOT_FOUND);
+        request.post("/api/modeling-exercises/" + NOT_EXISTING_EXERCISE_ID + "/export-submissions", baseExportOptions, HttpStatus.NOT_FOUND);
+        request.post("/api/file-upload-exercises/" + NOT_EXISTING_EXERCISE_ID + "/export-submissions", baseExportOptions, HttpStatus.NOT_FOUND);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testNoSubmissionsForDate_asInstructor() throws Exception {
         baseExportOptions.setFilterLateSubmissions(true);
         baseExportOptions.setFilterLateSubmissionsDate(ZonedDateTime.now().minusDays(2));
@@ -169,6 +211,20 @@ public class SubmissionExportIntegrationTest extends AbstractSpringIntegrationBa
 
         File fileUploadUip = request.postWithResponseBodyFile("/api/file-upload-exercises/" + fileUploadExercise.getId() + "/export-submissions", baseExportOptions, HttpStatus.OK);
         assertZipContains(fileUploadUip, fileUploadSubmission1, fileUploadSubmission2, fileUploadSubmission3);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testExportAll_IOException() throws Exception {
+        doThrow(IOException.class).when(fileUploadSubmissionExportService).exportStudentSubmissions(any(), any());
+        request.postWithResponseBodyFile("/api/file-upload-exercises/" + fileUploadExercise.getId() + "/export-submissions", baseExportOptions, HttpStatus.BAD_REQUEST);
+
+        /*
+         * File modelingZip = request.postWithResponseBodyFile("/api/modeling-exercises/" + modelingExercise.getId() + "/export-submissions", baseExportOptions, HttpStatus.OK);
+         * assertZipContains(modelingZip, modelingSubmission1, modelingSubmission2, modelingSubmission3); File textZip = request.postWithResponseBodyFile("/api/text-exercises/" +
+         * textExercise.getId() + "/export-submissions", baseExportOptions, HttpStatus.OK); assertZipContains(textZip, textSubmission1, textSubmission2, textSubmission3);
+         */
+
     }
 
     private void assertZipContains(File file, Submission... submissions) {
