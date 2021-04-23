@@ -467,6 +467,7 @@ public class CourseResource {
         for (Course course : courses) {
             course.setNumberOfInstructors(userRepository.countUserInGroup(course.getInstructorGroupName()));
             course.setNumberOfTeachingAssistants(userRepository.countUserInGroup(course.getTeachingAssistantGroupName()));
+            course.setNumberOfEditors(userRepository.countUserInGroup(course.getEditorGroupName()));
             course.setNumberOfStudents(userRepository.countUserInGroup(course.getStudentGroupName()));
         }
         long end = System.currentTimeMillis();
@@ -715,6 +716,7 @@ public class CourseResource {
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, null);
         course.setNumberOfInstructors(userRepository.countUserInGroup(course.getInstructorGroupName()));
         course.setNumberOfTeachingAssistants(userRepository.countUserInGroup(course.getTeachingAssistantGroupName()));
+        course.setNumberOfEditors(userRepository.countUserInGroup(course.getEditorGroupName()));
         course.setNumberOfStudents(userRepository.countUserInGroup(course.getStudentGroupName()));
         return ResponseUtil.wrapOrNotFound(Optional.of(course));
     }
