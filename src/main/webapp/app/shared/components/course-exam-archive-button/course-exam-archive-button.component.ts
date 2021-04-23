@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, Input, OnDestroy, OnInit, TemplateRef } from '@angular/core';
+import { ChangeDetectorRef, Component, Input, OnDestroy, OnInit, TemplateRef, ViewChild } from '@angular/core';
 import { JhiAlertService } from 'ng-jhipster';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
@@ -16,8 +16,8 @@ import { Subject } from 'rxjs';
 import { AccountService } from 'app/core/auth/account.service';
 
 export type CourseExamArchiveState = {
-    exportState: 'COMPLETED' | 'RUNNING';
-    progress: string;
+    exportState: 'COMPLETED' | 'RUNNING' | 'COMPLETED_WITH_WARNINGS';
+    message: string;
 };
 
 @Component({
@@ -38,8 +38,12 @@ export class CourseExamArchiveButtonComponent implements OnInit, OnDestroy {
     @Input()
     exam?: Exam;
 
+    @ViewChild('archiveCompleteWithWarningsModal', { static: false })
+    archiveCompleteWithWarningsModal: TemplateRef<any>;
+
     isBeingArchived = false;
     archiveButtonText = '';
+    archiveWarnings: string[] = [];
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
@@ -90,13 +94,16 @@ export class CourseExamArchiveButtonComponent implements OnInit, OnDestroy {
     }
 
     handleArchiveStateChanges(courseArchiveState: CourseExamArchiveState) {
-        const { exportState, progress } = courseArchiveState;
+        const { exportState, message } = courseArchiveState;
         this.isBeingArchived = exportState === 'RUNNING';
-        this.archiveButtonText = exportState === 'RUNNING' ? progress : this.getArchiveButtonText();
+        this.archiveButtonText = exportState === 'RUNNING' ? message : this.getArchiveButtonText();
 
         if (exportState === 'COMPLETED') {
             this.jhiAlertService.success(this.getArchiveSuccessText());
             this.reloadCourseOrExam();
+        } else if (exportState === 'COMPLETED_WITH_WARNINGS') {
+            this.archiveWarnings = message.split('\n');
+            this.openModal(this.archiveCompleteWithWarningsModal);
         }
     }
 
@@ -148,15 +155,13 @@ export class CourseExamArchiveButtonComponent implements OnInit, OnDestroy {
         return this.accountService.isAtLeastInstructorInCourse(this.course) && isOver;
     }
 
-    /**
-     *
-     * @param archiveCourseWarningPopup
-     */
-    openArchiveWarningModal(archiveCourseWarningPopup: TemplateRef<any>) {
-        this.modalService.open(archiveCourseWarningPopup).result.then(
+    openModal(modalRef: TemplateRef<any>) {
+        this.modalService.open(modalRef).result.then(
             (result: string) => {
                 if (result === 'archive') {
                     this.archive();
+                } else {
+                    this.reloadCourseOrExam();
                 }
             },
             () => {},
