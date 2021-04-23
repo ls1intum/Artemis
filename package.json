@@ -9,7 +9,6 @@
     ],
     "dependencies": {
         "@angular/animations": "11.2.10",
-        "@angular/cdk": "11.2.9",
         "@angular/common": "11.2.10",
         "@angular/compiler": "11.2.10",
         "@angular/core": "11.2.10",
@@ -79,6 +78,7 @@
         "zone.js": "0.11.4"
     },
     "devDependencies": {
+        "@angular/cdk": "11.2.9",
         "@angular/cli": "11.2.9",
         "@angular/compiler-cli": "11.2.10",
         "@angular/language-service": "11.2.10",
