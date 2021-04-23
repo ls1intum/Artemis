@@ -22,6 +22,7 @@ export class ProgrammingExerciseTestScheduleDatePickerComponent implements Contr
     @Input() max?: Moment;
     @Input() label: string;
     @Input() tooltipText: string;
+    @Input() readOnly: boolean;
     @Output() onDateReset = new EventEmitter();
 
     _onChange: any = () => {};
