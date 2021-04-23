@@ -201,7 +201,7 @@ public class CourseResource {
                 artemisAuthenticationProvider.createGroup(course.getEditorGroupName());
             }
             else {
-                checkIfGroupsExists(course.getTeachingAssistantGroupName());
+                checkIfGroupsExists(course.getEditorGroupName());
             }
 
             if (course.getInstructorGroupName() == null) {

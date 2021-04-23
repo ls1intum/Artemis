@@ -207,7 +207,7 @@ public class QuizExerciseResource {
     public List<QuizExercise> getQuizExercisesForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all QuizExercises for the course with id : {}", courseId);
         var course = courseRepository.findByIdElseThrow(courseId);
-        if (!authCheckService.isAtLeastInstructorInCourse(course, null)) {
+        if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, null)) {
             throw new AccessForbiddenException(NOT_ALLOWED);
         }
         var quizExercises = quizExerciseRepository.findByCourseId(courseId);
