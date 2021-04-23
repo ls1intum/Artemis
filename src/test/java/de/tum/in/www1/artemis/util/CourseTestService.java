@@ -224,6 +224,7 @@ public class CourseTestService {
         Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>());
         course.setStudentGroupName("StudentGroupName");
         course.setTeachingAssistantGroupName("TeachingAssistantGroupName");
+        course.setEditorGroupName("EditorGroupName");
         course.setInstructorGroupName("InstructorGroupName");
         request.post("/api/courses", course, HttpStatus.CREATED);
         List<Course> repoContent = courseRepo.findAll();
@@ -279,6 +280,9 @@ public class CourseTestService {
             }
             if (course.getTeachingAssistantGroupName().startsWith(ARTEMIS_GROUP_DEFAULT_PREFIX)) {
                 mockDelegate.mockDeleteGroupInUserManagement(course.getTeachingAssistantGroupName());
+            }
+            if (course.getEditorGroupName().startsWith(ARTEMIS_GROUP_DEFAULT_PREFIX)) {
+                mockDelegate.mockDeleteGroupInUserManagement(course.getEditorGroupName());
             }
             if (course.getInstructorGroupName().startsWith(ARTEMIS_GROUP_DEFAULT_PREFIX)) {
                 mockDelegate.mockDeleteGroupInUserManagement(course.getInstructorGroupName());
@@ -555,7 +559,7 @@ public class CourseTestService {
     // Test
     public void testGetCoursesAccurateTimezoneEvaluation() throws Exception {
         Course courseActive = ModelFactory.generateCourse(1L, ZonedDateTime.now().minusMinutes(25), ZonedDateTime.now().plusMinutes(25), new HashSet<>(), "tumuser", "tutor",
-            "editor", "instructor");
+                "editor", "instructor");
         Course courseNotActivePast = ModelFactory.generateCourse(2L, ZonedDateTime.now().minusDays(5), ZonedDateTime.now().minusMinutes(25), new HashSet<>(), "tumuser", "tutor",
                 "editor", "instructor");
         Course courseNotActiveFuture = ModelFactory.generateCourse(3L, ZonedDateTime.now().plusMinutes(25), ZonedDateTime.now().plusDays(5), new HashSet<>(), "tumuser", "tutor",

@@ -184,7 +184,12 @@ export class AccountService implements IAccountService {
      * @param course
      */
     isAtLeastEditorInCourse(course?: Course): boolean {
-        return this.hasGroup(course?.instructorGroupName) || this.hasGroup(course?.editorGroupName) || this.hasAnyAuthorityDirect([Authority.ADMIN]);
+        return (
+            this.hasGroup(course?.instructorGroupName) ||
+            this.hasGroup(course?.editorGroupName) ||
+            this.hasGroup(course?.teachingAssistantGroupName) ||
+            this.hasAnyAuthorityDirect([Authority.ADMIN])
+        );
     }
 
     /**
