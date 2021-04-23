@@ -1,5 +1,6 @@
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { round } from 'app/shared/util/utils';
+import { JhiAlertService } from 'ng-jhipster';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { Injectable, Component, Input } from '@angular/core';
@@ -27,7 +28,7 @@ export class ExerciseScoresExportButtonComponent {
     @Input() exercises: Exercise[] = []; // Used to export multiple scores together
     @Input() exercise: Exercise | ProgrammingExercise;
 
-    constructor(private resultService: ResultService, private momentDiff: DifferencePipe) {}
+    constructor(private resultService: ResultService, private momentDiff: DifferencePipe, private jhiAlertService: JhiAlertService) {}
 
     /**
      * Fetches all results for an exercise and assigns them to the results in this component
@@ -71,6 +72,11 @@ export class ExerciseScoresExportButtonComponent {
             this.getResults().subscribe((data) => {
                 const rows: string[] = [];
                 const results = data.body || [];
+                if (results.length === 0) {
+                    this.jhiAlertService.warning(`artemisApp.exercise.exportResultsEmptyError`, { exercise: exercise.title });
+                    window.scroll(0, 0);
+                    return;
+                }
                 results.forEach((result, index) => {
                     const studentParticipation = result.participation! as StudentParticipation;
                     const { participantName, participantIdentifier } = studentParticipation;
