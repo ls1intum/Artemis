@@ -96,7 +96,7 @@
         *ngIf="state.ui === UIStates.ASSESSMENT"
         [submission]="submission!"
         [(textBlockRefs)]="textBlockRefs"
-        [readOnly]="readOnly || (!isAtLeastInstructor && !toComplete)"
+        [readOnly]="readOnly || (!isAtLeastEditor && !toComplete)"
         (textBlockRefsChange)="validateFeedback()"
         (textBlockRefsAddedRemoved)="recalculateTextBlockRefs()"
     ></jhi-text-assessment-area>
