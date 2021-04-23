@@ -285,7 +285,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
                         .findByIdWithTemplateAndSolutionParticipationElseThrow(exercise.getId());
                 gitService.combineAllCommitsOfRepositoryIntoOne(programmingExerciseWithTemplateParticipation.getTemplateParticipation().getVcsRepositoryUrl());
                 log.debug("Combined template repository commits of programming exercise {}.", programmingExerciseWithTemplateParticipation.getId());
-                groupNotificationService.notifyInstructorGroupAboutExerciseUpdate(programmingExerciseWithTemplateParticipation,
+                groupNotificationService.notifyEditorAndInstructorGroupAboutExerciseUpdate(programmingExerciseWithTemplateParticipation,
                         Constants.PROGRAMMING_EXERCISE_SUCCESSFUL_COMBINE_OF_TEMPLATE_COMMITS);
             }
             catch (InterruptedException e) {
@@ -373,11 +373,11 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
                     throw new EntityNotFoundException("programming exercise not found with id " + programmingExerciseId);
                 }
                 if (numberOfFailedLockOperations > 0) {
-                    groupNotificationService.notifyInstructorGroupAboutExerciseUpdate(programmingExercise.get(),
+                    groupNotificationService.notifyEditorAndInstructorGroupAboutExerciseUpdate(programmingExercise.get(),
                             Constants.PROGRAMMING_EXERCISE_FAILED_LOCK_OPERATIONS_NOTIFICATION + numberOfFailedLockOperations);
                 }
                 else {
-                    groupNotificationService.notifyInstructorGroupAboutExerciseUpdate(programmingExercise.get(),
+                    groupNotificationService.notifyEditorAndInstructorGroupAboutExerciseUpdate(programmingExercise.get(),
                             Constants.PROGRAMMING_EXERCISE_SUCCESSFUL_LOCK_OPERATION_NOTIFICATION);
                 }
 
@@ -389,11 +389,11 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
                     List<ProgrammingExerciseStudentParticipation> failedStashOperations = stashChangesInAllStudentRepositories(programmingExerciseId, condition);
                     long numberOfFailedStashOperations = failedStashOperations.size();
                     if (numberOfFailedStashOperations > 0) {
-                        groupNotificationService.notifyInstructorGroupAboutExerciseUpdate(programmingExercise.get(),
+                        groupNotificationService.notifyEditorAndInstructorGroupAboutExerciseUpdate(programmingExercise.get(),
                                 Constants.PROGRAMMING_EXERCISE_FAILED_STASH_OPERATIONS_NOTIFICATION + numberOfFailedStashOperations);
                     }
                     else {
-                        groupNotificationService.notifyInstructorGroupAboutExerciseUpdate(programmingExercise.get(),
+                        groupNotificationService.notifyEditorAndInstructorGroupAboutExerciseUpdate(programmingExercise.get(),
                                 Constants.PROGRAMMING_EXERCISE_SUCCESSFUL_STASH_OPERATION_NOTIFICATION);
                     }
                 }
@@ -439,11 +439,11 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
                     throw new EntityNotFoundException("programming exercise not found with id " + programmingExerciseId);
                 }
                 if (numberOfFailedUnlockOperations > 0) {
-                    groupNotificationService.notifyInstructorGroupAboutExerciseUpdate(programmingExercise.get(),
+                    groupNotificationService.notifyEditorAndInstructorGroupAboutExerciseUpdate(programmingExercise.get(),
                             Constants.PROGRAMMING_EXERCISE_FAILED_UNLOCK_OPERATIONS_NOTIFICATION + failedUnlockOperations.size());
                 }
                 else {
-                    groupNotificationService.notifyInstructorGroupAboutExerciseUpdate(programmingExercise.get(),
+                    groupNotificationService.notifyEditorAndInstructorGroupAboutExerciseUpdate(programmingExercise.get(),
                             Constants.PROGRAMMING_EXERCISE_SUCCESSFUL_UNLOCK_OPERATION_NOTIFICATION);
                 }
 
