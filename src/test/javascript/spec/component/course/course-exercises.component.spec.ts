@@ -182,11 +182,11 @@ describe('CourseExercisesComponent', () => {
         component.course!.exercises![component.course!.exercises!.length] = new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined) as Exercise;
 
         component.activeFilters.clear();
-        component.activeFilters.add(ExerciseFilter.OVERDUE);
+        component.activeFilters.add(ExerciseFilter.OVERDUE).add(ExerciseFilter.UNRELEASED);
 
         component.toggleFilters(filters);
 
-        expect(component.activeFilters).to.deep.equal(new Set().add(ExerciseFilter.NEEDS_WORK).add(ExerciseFilter.UNRELEASED));
+        expect(component.activeFilters).to.deep.equal(new Set().add(ExerciseFilter.NEEDS_WORK));
         expect(Object.keys(component.weeklyExercisesGrouped)).to.deep.equal(['2021-01-17', '2021-01-10', 'noDate']);
         expect(component.weeklyIndexKeys).to.deep.equal(['2021-01-17', '2021-01-10', 'noDate']);
         expect(component.exerciseCountMap.get('modeling')).to.equal(9);
@@ -200,6 +200,9 @@ describe('CourseExercisesComponent', () => {
             component.course!.exercises[i] = newExercise;
         }
 
+        // Add unreleased exercise filter, so toggleFilters does not activate
+        // this filter.
+        component.activeFilters.add(ExerciseFilter.UNRELEASED);
         component.toggleFilters(filters);
 
         expect(component.upcomingExercises.length).to.equal(5);
