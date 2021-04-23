@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { HttpResponse } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { JhiAlertService } from 'ng-jhipster';
@@ -7,6 +8,9 @@ import { ApollonDiagramService } from 'app/exercises/quiz/manage/apollon-diagram
 import { ApollonDiagram } from 'app/entities/apollon-diagram.model';
 import { UMLDiagramType } from 'app/entities/modeling-exercise.model';
 import { SortService } from 'app/shared/service/sort.service';
+import { AccountService } from 'app/core/auth/account.service';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { Course } from 'app/entities/course.model';
 
 @Component({
     selector: 'jhi-apollon-diagram-list',
@@ -18,6 +22,7 @@ export class ApollonDiagramListComponent implements OnInit {
     predicate: string;
     reverse: boolean;
     courseId: number;
+    isAtLeastInstructor = false;
 
     constructor(
         private apollonDiagramsService: ApollonDiagramService,
@@ -25,6 +30,8 @@ export class ApollonDiagramListComponent implements OnInit {
         private modalService: NgbModal,
         private sortService: SortService,
         private route: ActivatedRoute,
+        private courseService: CourseManagementService,
+        private accountService: AccountService,
     ) {
         this.predicate = 'id';
         this.reverse = true;
@@ -35,6 +42,9 @@ export class ApollonDiagramListComponent implements OnInit {
      */
     ngOnInit() {
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
+        this.courseService.find(this.courseId).subscribe((courseResponse: HttpResponse<Course>) => {
+            this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(courseResponse.body!);
+        });
         this.apollonDiagramsService.getDiagramsByCourse(this.courseId).subscribe(
             (response) => {
                 this.apollonDiagrams = response.body!;
