@@ -11,6 +11,7 @@ import { ExerciseUnitService } from 'app/lecture/lecture-unit/lecture-unit-manag
 import { ExerciseUnit } from 'app/entities/lecture-unit/exerciseUnit.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { Course } from 'app/entities/course.model';
+import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -35,6 +36,7 @@ describe('ExerciseUnitService', () => {
                         return res;
                     },
                 }),
+                MockProvider(ExerciseService),
             ],
         });
         expectedResult = {} as HttpResponse<ExerciseUnit>;
