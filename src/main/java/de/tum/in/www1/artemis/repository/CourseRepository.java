@@ -26,26 +26,26 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 @Repository
 public interface CourseRepository extends JpaRepository<Course, Long> {
 
-    @Query("select distinct course.teachingAssistantGroupName from Course course")
-    Set<String> findAllTeachingAssistantGroupNames();
+    @Query("select distinct course.instructorGroupName from Course course")
+    Set<String> findAllInstructorGroupNames();
 
     @Query("select distinct course.editorGroupName from Course course")
     Set<String> findAllEditorGroupNames();
 
-    @Query("select distinct course.instructorGroupName from Course course")
-    Set<String> findAllInstructorGroupNames();
+    @Query("select distinct course.teachingAssistantGroupName from Course course")
+    Set<String> findAllTeachingAssistantGroupNames();
 
     @Query("select distinct course from Course course where course.instructorGroupName like :#{#name}")
     Course findCourseByInstructorGroupName(@Param("name") String name);
 
-    @Query("select distinct course from Course course where course.studentGroupName like :#{#name}")
-    Course findCourseByStudentGroupName(@Param("name") String name);
+    @Query("select distinct course from Course course where course.editorGroupName like :#{#name}")
+    Course findCourseByEditorGroupName(@Param("name") String name);
 
     @Query("select distinct course from Course course where course.teachingAssistantGroupName like :#{#name}")
     Course findCourseByTeachingAssistantGroupName(@Param("name") String name);
 
-    @Query("select distinct course from Course course where course.editorGroupName like :#{#name}")
-    Course findCourseByEditorGroupName(@Param("name") String name);
+    @Query("select distinct course from Course course where course.studentGroupName like :#{#name}")
+    Course findCourseByStudentGroupName(@Param("name") String name);
 
     @Query("""
             SELECT DISTINCT c FROM Course c
@@ -130,11 +130,12 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     String getCourseTitle(@Param("courseId") Long courseId);
 
     @Query("""
-            select distinct c
-            from Course c left join fetch c.exercises e
-            where c.instructorGroupName in :#{#userGroups} and TYPE(e) = QuizExercise
+            SELECT DISTINCT c
+            FROM Course c LEFT JOIN FETCH c.exercises e
+            WHERE (c.instructorGroupName IN :#{#userGroups} OR c.editorGroupName IN :#{#userGroups})
+                AND TYPE(e) = QuizExercise
             """)
-    List<Course> getCoursesWithQuizExercisesForWhichUserHasInstructorAccess(@Param("userGroups") List<String> userGroups);
+    List<Course> getCoursesWithQuizExercisesForWhichUserHasEditorAccess(@Param("userGroups") List<String> userGroups);
 
     @Query("""
             select distinct c

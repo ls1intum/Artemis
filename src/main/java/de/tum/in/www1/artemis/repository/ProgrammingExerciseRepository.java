@@ -164,12 +164,12 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
                 pe.id IN (
                     SELECT coursePe.id
                     FROM ProgrammingExercise coursePe
-                    WHERE coursePe.course.instructorGroupName IN :groups
+                    WHERE (coursePe.course.instructorGroupName IN :groups OR coursePe.course.editorGroupName IN :groups)
                         AND (coursePe.title LIKE %:partialTitle% OR coursePe.course.title LIKE %:partialCourseTitle%)
                 ) OR pe.id IN (
                     SELECT examPe.id
                     FROM ProgrammingExercise examPe
-                    WHERE examPe.exerciseGroup.exam.course.instructorGroupName IN :groups
+                    WHERE (examPe.exerciseGroup.exam.course.instructorGroupName IN :groups OR examPe.exerciseGroup.exam.course.editorGroupName IN :groups)
                         AND (examPe.title LIKE %:partialTitle% OR examPe.exerciseGroup.exam.course.title LIKE %:partialCourseTitle%)
                 )
             )
@@ -401,10 +401,17 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
 
     List<ProgrammingExercise> findAllByCourse_InstructorGroupNameIn(Set<String> groupNames);
 
+    List<ProgrammingExercise> findAllByCourse_EditorGroupNameIn(Set<String> groupNames);
+
     List<ProgrammingExercise> findAllByCourse_TeachingAssistantGroupNameIn(Set<String> groupNames);
 
-    @Query("SELECT pe FROM ProgrammingExercise pe WHERE pe.course.instructorGroupName IN :#{#groupNames} OR pe.course.teachingAssistantGroupName IN :#{#groupNames}")
-    List<ProgrammingExercise> findAllByInstructorOrTAGroupNameIn(@Param("groupNames") Set<String> groupNames);
+    @Query("""
+            SELECT pe FROM ProgrammingExercise pe
+            WHERE pe.course.instructorGroupName IN :#{#groupNames}
+                OR pe.course.editorGroupName IN :#{#groupNames}
+                OR pe.course.teachingAssistantGroupName IN :#{#groupNames}
+                    """)
+    List<ProgrammingExercise> findAllByInstructorOrEditorOrTAGroupNameIn(@Param("groupNames") Set<String> groupNames);
 
     List<ProgrammingExercise> findAllByCourse(Course course);
 

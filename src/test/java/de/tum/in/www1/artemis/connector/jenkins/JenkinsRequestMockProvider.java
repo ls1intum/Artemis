@@ -340,7 +340,7 @@ public class JenkinsRequestMockProvider {
             return;
         }
 
-        var exercises = programmingExerciseRepository.findAllByInstructorOrTAGroupNameIn(groupsToRemove);
+        var exercises = programmingExerciseRepository.findAllByInstructorOrEditorOrTAGroupNameIn(groupsToRemove);
         for (ProgrammingExercise exercise : exercises) {
             var folderName = exercise.getProjectKey();
             mockRemovePermissionsFromUserOfFolder(folderName, shouldFail);
@@ -370,7 +370,7 @@ public class JenkinsRequestMockProvider {
     }
 
     public void mockAddUsersToGroups(String login, Set<String> groups, boolean shouldfail) throws IOException {
-        var exercises = programmingExerciseRepository.findAllByInstructorOrTAGroupNameIn(groups);
+        var exercises = programmingExerciseRepository.findAllByInstructorOrEditorOrTAGroupNameIn(groups);
         for (ProgrammingExercise exercise : exercises) {
             var jobName = exercise.getProjectKey();
             var course = exercise.getCourseViaExerciseGroupOrCourseMember();

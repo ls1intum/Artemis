@@ -178,7 +178,7 @@ public class InternalAuthenticationIntegrationTest extends AbstractSpringIntegra
         student.setEmail("user1@secret.invalid");
         student.setAuthorities(authorities);
 
-        var exercises = programmingExerciseRepository.findAllByInstructorOrTAGroupNameIn(student.getGroups());
+        var exercises = programmingExerciseRepository.findAllByInstructorOrEditorOrTAGroupNameIn(student.getGroups());
         assertThat(exercises).hasSize(0);
         jenkinsRequestMockProvider.mockCreateUser(student, false, false, false);
 

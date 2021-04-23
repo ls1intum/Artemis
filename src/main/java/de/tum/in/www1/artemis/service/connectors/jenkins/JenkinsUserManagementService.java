@@ -223,7 +223,7 @@ public class JenkinsUserManagementService implements CIUserManagementService {
      */
     @Override
     public void addUserToGroups(String userLogin, Set<String> groups) throws ContinuousIntegrationException {
-        var exercises = programmingExerciseRepository.findAllByInstructorOrTAGroupNameIn(groups);
+        var exercises = programmingExerciseRepository.findAllByInstructorOrEditorOrTAGroupNameIn(groups);
         exercises.forEach(exercise -> {
             // The exercise's project key is also the name of the Jenkins job that groups all build plans
             // for students, solution, and template.
@@ -264,7 +264,7 @@ public class JenkinsUserManagementService implements CIUserManagementService {
     @Override
     public void removeUserFromGroups(String userLogin, Set<String> groups) throws ContinuousIntegrationException {
         // Remove all permissions assigned to the user for each exercise that belongs to the specified groups.
-        var exercises = programmingExerciseRepository.findAllByInstructorOrTAGroupNameIn(groups);
+        var exercises = programmingExerciseRepository.findAllByInstructorOrEditorOrTAGroupNameIn(groups);
         exercises.forEach(exercise -> {
             try {
                 // The exercise's projectkey is also the name of the Jenkins folder job which groups the student's, solution,

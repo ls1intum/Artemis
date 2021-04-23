@@ -292,7 +292,7 @@ public class GitlabRequestMockProvider {
 
         // Add as member to new groups
         if (addedGroups != null && !addedGroups.isEmpty()) {
-            final var exercisesWithAddedGroups = programmingExerciseRepository.findAllByInstructorOrTAGroupNameIn(addedGroups);
+            final var exercisesWithAddedGroups = programmingExerciseRepository.findAllByInstructorOrEditorOrTAGroupNameIn(addedGroups);
             for (final var exercise : exercisesWithAddedGroups) {
                 final var accessLevel = addedGroups.contains(exercise.getCourseViaExerciseGroupOrCourseMember().getInstructorGroupName()) ? MAINTAINER : GUEST;
                 doReturn(new Member()).when(groupApi).addMember(eq(exercise.getProjectKey()), anyInt(), eq(accessLevel));
@@ -301,7 +301,7 @@ public class GitlabRequestMockProvider {
 
         // Update/remove old groups
         if (removedGroups != null && !removedGroups.isEmpty()) {
-            final var exercisesWithOutdatedGroups = programmingExerciseRepository.findAllByInstructorOrTAGroupNameIn(removedGroups);
+            final var exercisesWithOutdatedGroups = programmingExerciseRepository.findAllByInstructorOrEditorOrTAGroupNameIn(removedGroups);
             for (final var exercise : exercisesWithOutdatedGroups) {
                 // If the the user is still in another group for the exercise (TA -> INSTRUCTOR or INSTRUCTOR -> TA),
                 // then we have to add him as a member with the new access level
@@ -345,9 +345,12 @@ public class GitlabRequestMockProvider {
         // Add user to existing exercises
         if (user.getGroups() != null && user.getGroups().size() > 0) {
             final var instructorExercises = programmingExerciseRepository.findAllByCourse_InstructorGroupNameIn(user.getGroups());
+            final var editorExercises = programmingExerciseRepository.findAllByCourse_EditorGroupNameIn(user.getGroups()).stream()
+                    .filter(programmingExercise -> !instructorExercises.contains(programmingExercise)).collect(Collectors.toList());
             final var teachingAssistantExercises = programmingExerciseRepository.findAllByCourse_TeachingAssistantGroupNameIn(user.getGroups()).stream()
                     .filter(programmingExercise -> !instructorExercises.contains(programmingExercise)).collect(Collectors.toList());
             mockAddUserToGroups(userId, instructorExercises, MAINTAINER);
+            mockAddUserToGroups(userId, editorExercises, DEVELOPER);
             mockAddUserToGroups(userId, teachingAssistantExercises, GUEST);
         }
     }

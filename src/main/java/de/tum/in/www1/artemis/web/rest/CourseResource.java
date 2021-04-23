@@ -440,7 +440,7 @@ public class CourseResource {
      * @return the list of courses
      */
     @GetMapping("/courses/courses-with-quiz")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @PreAuthorize("hasRole('EDITOR')")
     public List<Course> getAllCoursesWithQuizExercises() {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         if (authCheckService.isAdmin(user)) {
@@ -448,7 +448,7 @@ public class CourseResource {
         }
         else {
             var userGroups = new ArrayList<>(user.getGroups());
-            return courseRepository.getCoursesWithQuizExercisesForWhichUserHasInstructorAccess(userGroups);
+            return courseRepository.getCoursesWithQuizExercisesForWhichUserHasEditorAccess(userGroups);
         }
     }
 
