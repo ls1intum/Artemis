@@ -51,6 +51,17 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
     }
 
     @Test
+    public void registerAccountOverlongPassword() throws Exception {
+        // setup user
+        User user = ModelFactory.generateActivatedUser("ab123cd");
+        ManagedUserVM userVM = new ManagedUserVM(user);
+        userVM.setPassword("e".repeat(ManagedUserVM.PASSWORD_MAX_LENGTH + 1));
+
+        // make request
+        request.postWithoutLocation("/api/register", userVM, HttpStatus.BAD_REQUEST, null);
+    }
+
+    @Test
     public void activateAccount() throws Exception {
         // create unactivated user in repo
         String testActivationKey = "testActivationKey";
