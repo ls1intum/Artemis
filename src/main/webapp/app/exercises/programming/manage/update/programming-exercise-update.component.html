@@ -163,7 +163,7 @@
                 <div class="form-group">
                     <label class="form-control-label">{{ 'artemisApp.exercise.includedInOverallScoreLabel' | artemisTranslate }}</label>
                     <div>
-                        <jhi-included-in-overall-score-picker [(includedInOverallScore)]="programmingExercise.includedInOverallScore!"></jhi-included-in-overall-score-picker>
+                        <jhi-included-in-overall-score-picker [(includedInOverallScore)]="programmingExercise.includedInOverallScore"></jhi-included-in-overall-score-picker>
                     </div>
                 </div>
                 <div class="row">
@@ -330,9 +330,10 @@
                             <input
                                 class="form-check-input"
                                 type="checkbox"
-                                name="heckoutSolutionRepository"
+                                name="checkoutSolutionRepository"
                                 id="field_checkoutSolutionRepository"
                                 [(ngModel)]="programmingExercise.checkoutSolutionRepository"
+                                checked
                             />
                             <span jhiTranslate="artemisApp.programmingExercise.checkoutSolutionRepository.title">Checkout Solution repository</span>
                             <jhi-help-icon placement="top" text="artemisApp.programmingExercise.checkoutSolutionRepository.description"></jhi-help-icon>

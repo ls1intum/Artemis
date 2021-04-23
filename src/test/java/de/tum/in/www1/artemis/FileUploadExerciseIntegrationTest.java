@@ -237,7 +237,7 @@ public class FileUploadExerciseIntegrationTest extends AbstractSpringIntegration
     public void getFileUploadExerciseFails_wrongId() throws Exception {
         Course course = database.addCourseWithThreeFileUploadExercise();
         request.get("/api/file-upload-exercises/" + 555555, HttpStatus.NOT_FOUND, FileUploadExercise.class);
-      }
+    }
 
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
@@ -246,7 +246,7 @@ public class FileUploadExerciseIntegrationTest extends AbstractSpringIntegration
         course.setInstructorGroupName("new-instructor-group-name");
         courseRepo.save(course);
         for (var exercise : course.getExercises()) {
-           request.get("/api/file-upload-exercises/" + exercise.getId(), HttpStatus.FORBIDDEN, FileUploadExercise.class);
+            request.get("/api/file-upload-exercises/" + exercise.getId(), HttpStatus.FORBIDDEN, FileUploadExercise.class);
         }
     }
 
@@ -306,8 +306,8 @@ public class FileUploadExerciseIntegrationTest extends AbstractSpringIntegration
         FileUploadExercise fileUploadExercise = database.findFileUploadExerciseWithTitle(course.getExercises(), "released");
         fileUploadExercise.setDueDate(ZonedDateTime.now().plusDays(10));
 
-        FileUploadExercise receivedFileUploadExercise = request.putWithResponseBody("/api/file-upload-exercises/" + fileUploadExercise.getId() + "?notificationText=notification", fileUploadExercise,
-                FileUploadExercise.class, HttpStatus.OK);
+        FileUploadExercise receivedFileUploadExercise = request.putWithResponseBody("/api/file-upload-exercises/" + fileUploadExercise.getId() + "?notificationText=notification",
+                fileUploadExercise, FileUploadExercise.class, HttpStatus.OK);
         assertThat(receivedFileUploadExercise.getDueDate().equals(ZonedDateTime.now().plusDays(10)));
         assertThat(receivedFileUploadExercise.getCourseViaExerciseGroupOrCourseMember()).as("course was set for normal exercise").isNotNull();
         assertThat(receivedFileUploadExercise.getExerciseGroup()).as("exerciseGroup was not set for normal exercise").isNull();
@@ -323,7 +323,7 @@ public class FileUploadExerciseIntegrationTest extends AbstractSpringIntegration
         course.setInstructorGroupName("new-instructor-group-name");
         courseRepo.save(course);
         FileUploadExercise receivedFileUploadExercise = request.putWithResponseBody("/api/file-upload-exercises/" + fileUploadExercise.getId(), fileUploadExercise,
-            FileUploadExercise.class, HttpStatus.FORBIDDEN);
+                FileUploadExercise.class, HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -386,6 +386,7 @@ public class FileUploadExerciseIntegrationTest extends AbstractSpringIntegration
         database.changeUser("instructor1");
         assertThat(receivedFileUploadExercises.size() == courseRepo.findAllActiveWithEagerExercisesAndLectures(ZonedDateTime.now()).get(0).getExercises().size());
     }
+
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void getAllFileUploadExercisesForCourseFails_InstructorNotInGroup() throws Exception {
@@ -394,7 +395,7 @@ public class FileUploadExerciseIntegrationTest extends AbstractSpringIntegration
         courseRepo.save(course);
         long courseID = courseRepo.findAllActiveWithEagerExercisesAndLectures(ZonedDateTime.now()).get(0).getId();
         request.getList("/api/courses/" + courseID + "/file-upload-exercises", HttpStatus.FORBIDDEN, FileUploadExercise.class);
-  }
+    }
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
