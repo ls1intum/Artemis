@@ -58,13 +58,13 @@ public class UserTestService {
 
     private User student;
 
-    private final int numberOfStudents = 50;
+    private final static int numberOfStudents = 50;
 
-    private final int numberOfTutors = 1;
+    private final static int numberOfTutors = 1;
 
-    private final int numberOfEditors = 1;
+    private final static int numberOfEditors = 1;
 
-    private final int numberOfInstructors = 1;
+    private final static int numberOfInstructors = 1;
 
     public void setup(MockDelegate mockDelegate) throws Exception {
         this.mockDelegate = mockDelegate;

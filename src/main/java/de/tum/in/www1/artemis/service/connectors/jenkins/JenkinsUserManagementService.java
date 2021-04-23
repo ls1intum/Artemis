@@ -279,7 +279,8 @@ public class JenkinsUserManagementService implements CIUserManagementService {
     }
 
     @Override
-    public void updateCoursePermissions(Course updatedCourse, String oldInstructorGroup, String oldEditorGroup, String oldTeachingAssistantGroup) throws ContinuousIntegrationException {
+    public void updateCoursePermissions(Course updatedCourse, String oldInstructorGroup, String oldEditorGroup, String oldTeachingAssistantGroup)
+            throws ContinuousIntegrationException {
         var newInstructorGroup = updatedCourse.getInstructorGroupName();
         var newEditorGroup = updatedCourse.getEditorGroupName();
         var newTeachingAssistangGroup = updatedCourse.getTeachingAssistantGroupName();

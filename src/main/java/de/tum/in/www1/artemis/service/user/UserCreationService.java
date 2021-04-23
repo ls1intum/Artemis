@@ -307,7 +307,7 @@ public class UserCreationService {
                 groupsToAdd.add(tutorialGroupTutors.get());
             }
             if (tutorialGroupEditors.isPresent() && user.getAuthorities().contains(EDITOR.getAuthority())
-                && courseRepository.findCourseByEditorGroupName(tutorialGroupEditors.get()) != null) {
+                    && courseRepository.findCourseByEditorGroupName(tutorialGroupEditors.get()) != null) {
                 groupsToAdd.add(tutorialGroupEditors.get());
             }
             if (tutorialGroupInstructors.isPresent() && user.getAuthorities().contains(INSTRUCTOR.getAuthority())

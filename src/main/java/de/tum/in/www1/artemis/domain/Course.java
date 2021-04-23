@@ -241,6 +241,7 @@ public class Course extends DomainObject {
     public String getDefaultEditorGroupName() {
         return ARTEMIS_GROUP_DEFAULT_PREFIX + getShortName() + "-editors";
     }
+
     @JsonIgnore
     public String getDefaultInstructorGroupName() {
         return ARTEMIS_GROUP_DEFAULT_PREFIX + getShortName() + "-instructors";
@@ -493,11 +494,10 @@ public class Course extends DomainObject {
     @Override
     public String toString() {
         return "Course{" + "id=" + getId() + ", title='" + getTitle() + "'" + ", description='" + getDescription() + "'" + ", shortName='" + getShortName() + "'"
-                + ", studentGroupName='" + getStudentGroupName() + "'" + ", teachingAssistantGroupName='" + getTeachingAssistantGroupName() + "'"
-                + ", editorGroupName='" + getEditorGroupName() + "'" + ", instructorGroupName='" + getInstructorGroupName() + "'"
-                + ", startDate='" + getStartDate() + "'" + ", endDate='" + getEndDate() + "'" + ", semester='" + getSemester() + "'" + "'"
-                + ", onlineCourse='" + isOnlineCourse() + "'" + ", color='" + getColor() + "'" + ", courseIcon='" + getCourseIcon() + "'" + ", registrationEnabled='"
-                + isRegistrationEnabled() + "'" + "'" + ", presentationScore='" + getPresentationScore() + "}";
+                + ", studentGroupName='" + getStudentGroupName() + "'" + ", teachingAssistantGroupName='" + getTeachingAssistantGroupName() + "'" + ", editorGroupName='"
+                + getEditorGroupName() + "'" + ", instructorGroupName='" + getInstructorGroupName() + "'" + ", startDate='" + getStartDate() + "'" + ", endDate='" + getEndDate()
+                + "'" + ", semester='" + getSemester() + "'" + "'" + ", onlineCourse='" + isOnlineCourse() + "'" + ", color='" + getColor() + "'" + ", courseIcon='"
+                + getCourseIcon() + "'" + ", registrationEnabled='" + isRegistrationEnabled() + "'" + "'" + ", presentationScore='" + getPresentationScore() + "}";
     }
 
     public void setNumberOfInstructors(Long numberOfInstructors) {

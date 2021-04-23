@@ -142,7 +142,7 @@ public class GitLabUserManagementService implements VcsUserManagementService {
     @Override
     public void updateCoursePermissions(Course updatedCourse, String oldInstructorGroup, String oldEditorGroup, String oldTeachingAssistantGroup) {
         if (oldInstructorGroup.equals(updatedCourse.getInstructorGroupName()) && oldEditorGroup.equals(updatedCourse.getEditorGroupName())
-            && oldTeachingAssistantGroup.equals(updatedCourse.getTeachingAssistantGroupName())) {
+                && oldTeachingAssistantGroup.equals(updatedCourse.getTeachingAssistantGroupName())) {
             // Do nothing if the group names didn't change
             return;
         }

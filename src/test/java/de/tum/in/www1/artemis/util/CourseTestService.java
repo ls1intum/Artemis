@@ -80,13 +80,13 @@ public class CourseTestService {
     @Autowired
     private SubmissionRepository submissionRepository;
 
-    private final int numberOfStudents = 8;
+    private final static int numberOfStudents = 8;
 
-    private final int numberOfTutors = 5;
+    private final static int numberOfTutors = 5;
 
-    private final int numberOfEditors = 0;
+    private final static int numberOfEditors = 0;
 
-    private final int numberOfInstructors = 1;
+    private final static int numberOfInstructors = 1;
 
     private MockDelegate mockDelegate;
 

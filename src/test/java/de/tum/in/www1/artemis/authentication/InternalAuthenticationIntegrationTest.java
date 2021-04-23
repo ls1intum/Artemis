@@ -218,21 +218,21 @@ public class InternalAuthenticationIntegrationTest extends AbstractSpringIntegra
     @WithMockUser(value = "admin", roles = "ADMIN")
     public void createUserWithInternalUserManagementAndAutomatedTutorialGroupsAssignment() throws Exception {
         final User user = createUserWithRestApi(Set.of(USER_AUTHORITY));
-        assertUserGroups(user, true, false, false,false);
+        assertUserGroups(user, true, false, false, false);
     }
 
     @Test
     @WithMockUser(value = "admin", roles = "ADMIN")
     public void createTutorWithInternalUserManagementAndAutomatedTutorialGroupsAssignment() throws Exception {
         final User user = createUserWithRestApi(Set.of(USER_AUTHORITY, TA_AUTHORITY));
-        assertUserGroups(user, true, true,false,  false);
+        assertUserGroups(user, true, true, false, false);
     }
 
     @Test
     @WithMockUser(value = "admin", roles = "ADMIN")
     public void createEditorWithInternalUserManagementAndAutomatedTutorialGroupsAssignment() throws Exception {
         final User user = createUserWithRestApi(Set.of(USER_AUTHORITY, TA_AUTHORITY, EDITOR_AUTHORITY));
-        assertUserGroups(user, true, true,true,  false);
+        assertUserGroups(user, true, true, true, false);
     }
 
     @Test

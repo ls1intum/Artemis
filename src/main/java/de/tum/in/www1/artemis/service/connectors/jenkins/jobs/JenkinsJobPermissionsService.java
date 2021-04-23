@@ -35,7 +35,8 @@ public class JenkinsJobPermissionsService {
      * @param jobName the name of the Jenkins job
      * @throws IOException exception thrown when retrieving/updating the Jenkins folder failed
      */
-    public void addInstructorAndEditorAndTAPermissionsToUsersForJob(Set<String> taLogins, Set<String> editorLogins, Set<String> instructorLogins, String folderName, String jobName) throws IOException {
+    public void addInstructorAndEditorAndTAPermissionsToUsersForJob(Set<String> taLogins, Set<String> editorLogins, Set<String> instructorLogins, String folderName, String jobName)
+            throws IOException {
         var jobConfig = jenkinsJobService.getJobConfig(folderName, jobName);
         if (jobConfig == null) {
             // Job doesn't exist so do nothing.
@@ -67,7 +68,8 @@ public class JenkinsJobPermissionsService {
      * @param folderName the name of the Jenkins folder
      * @throws IOException exception thrown when retrieving/updating the Jenkins folder failed
      */
-    public void addInstructorAndEditorAndTAPermissionsToUsersForFolder(Set<String> taLogins, Set<String> editorLogins, Set<String> instructorLogins, String folderName) throws IOException {
+    public void addInstructorAndEditorAndTAPermissionsToUsersForFolder(Set<String> taLogins, Set<String> editorLogins, Set<String> instructorLogins, String folderName)
+            throws IOException {
         var folderConfig = jenkinsJobService.getFolderConfig(folderName);
         if (folderConfig == null) {
             // Job doesn't exist so do nothing.
