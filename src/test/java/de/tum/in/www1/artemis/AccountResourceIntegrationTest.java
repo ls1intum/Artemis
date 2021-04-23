@@ -51,11 +51,36 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
     }
 
     @Test
-    public void registerAccountOverlongPassword() throws Exception {
+    public void registerAccountTooLongPassword() throws Exception {
         // setup user
         User user = ModelFactory.generateActivatedUser("ab123cd");
         ManagedUserVM userVM = new ManagedUserVM(user);
         userVM.setPassword("e".repeat(ManagedUserVM.PASSWORD_MAX_LENGTH + 1));
+
+        // make request
+        request.postWithoutLocation("/api/register", userVM, HttpStatus.BAD_REQUEST, null);
+    }
+
+    @Test
+    public void registerAccountTooShortPassword() throws Exception {
+        // setup user
+        User user = ModelFactory.generateActivatedUser("ab123cd");
+        ManagedUserVM userVM = new ManagedUserVM(user);
+        userVM.setPassword("e".repeat(Math.max(0, ManagedUserVM.PASSWORD_MIN_LENGTH - 1)));
+
+        // make request
+        request.postWithoutLocation("/api/register", userVM, HttpStatus.BAD_REQUEST, null);
+    }
+
+    /**
+     * This test assumes the validEmailPattern will never match "-"
+     */
+    @Test
+    public void registerAccountInvalidEmail() throws Exception {
+        // setup user
+        User user = ModelFactory.generateActivatedUser("ab123cd");
+        user.setEmail("-");
+        ManagedUserVM userVM = new ManagedUserVM(user);
 
         // make request
         request.postWithoutLocation("/api/register", userVM, HttpStatus.BAD_REQUEST, null);
@@ -77,6 +102,7 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
 
         // check result
         Optional<User> updatedUser = userRepo.findById(user.getId());
+        assertThat(updatedUser).isPresent();
         assertThat(updatedUser.get()).isNotNull();
         assertThat(updatedUser.get().getActivated()).isTrue();
         assertThat(updatedUser.get().getActivationKey()).isNull();
@@ -128,7 +154,7 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
         userCreationService.createUser(new ManagedUserVM(user));
 
         // make request
-        Map response = request.get("/api/account/password", HttpStatus.OK, Map.class);
+        @SuppressWarnings("rawtypes") Map response = request.get("/api/account/password", HttpStatus.OK, Map.class);
         assertThat(response.get("password")).isNotNull();
         assertThat(response.get("password")).isNotEqualTo("");
     }
@@ -147,8 +173,9 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
         request.put("/api/account", new UserDTO(createdUser), HttpStatus.OK);
 
         // check if update successful
-        User updatedUser = userRepo.findOneByLogin("authenticateduser").get();
-        assertThat(updatedUser.getFirstName()).isEqualTo(updatedFirstName);
+        Optional<User> updatedUser = userRepo.findOneByLogin("authenticateduser");
+        assertThat(updatedUser).isPresent();
+        assertThat(updatedUser.get().getFirstName()).isEqualTo(updatedFirstName);
     }
 
     @Test
@@ -165,8 +192,9 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
         request.postWithoutLocation("/api/account/change-password", pwChange, HttpStatus.OK, null);
 
         // check if update successful
-        User updatedUser = userRepo.findOneByLogin("authenticateduser").get();
-        assertThat(passwordService.decryptPassword(updatedUser.getPassword())).isEqualTo(updatedPassword);
+        Optional<User> updatedUser = userRepo.findOneByLogin("authenticateduser");
+        assertThat(updatedUser).isPresent();
+        assertThat(passwordService.decryptPassword(updatedUser.get().getPassword())).isEqualTo(updatedPassword);
     }
 
     @Test
@@ -192,8 +220,9 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
         request.postWithoutLocation("/api/account/reset-password/init", createdUser.getEmail(), HttpStatus.OK, null);
 
         // check user data
-        User userPasswordResetInit = userRepo.findOneByLogin("authenticateduser").get();
-        String resetKey = userPasswordResetInit.getResetKey();
+        Optional<User> userPasswordResetInit = userRepo.findOneByLogin("authenticateduser");
+        assertThat(userPasswordResetInit).isPresent();
+        String resetKey = userPasswordResetInit.get().getResetKey();
 
         // finish password reset
         String newPassword = "password";
@@ -205,8 +234,9 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
         request.postWithoutLocation("/api/account/reset-password/finish", finishResetData, HttpStatus.OK, null);
 
         // get updated user
-        User userPasswordResetFinished = userRepo.findOneByLogin("authenticateduser").get();
-        assertThat(passwordService.decryptPassword(userPasswordResetFinished.getPassword())).isEqualTo(newPassword);
+        Optional<User> userPasswordResetFinished = userRepo.findOneByLogin("authenticateduser");
+        assertThat(userPasswordResetFinished).isPresent();
+        assertThat(passwordService.decryptPassword(userPasswordResetFinished.get().getPassword())).isEqualTo(newPassword);
     }
 
 }
