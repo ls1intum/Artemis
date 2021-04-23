@@ -20,8 +20,8 @@ import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { DndModule } from 'ng2-dnd';
 import * as sinon from 'sinon';
 import * as sinonChai from 'sinon-chai';
-import { MockNgbModalService } from '../helpers/mocks/service/mock-ngb-modal.service';
-import { ArtemisTestModule } from '../test.module';
+import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
+import { ArtemisTestModule } from '../../test.module';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -145,11 +145,11 @@ describe('MultipleChoiceQuestionEditComponent', () => {
         expect(component.showMultipleChoiceQuestionPreview).to.be.true;
     });
 
-    it('should prepare for save', () => {
+    it('should detect changes in markdown', () => {
         const spy = sinon.spy(component.questionUpdated, 'emit');
 
         fixture.detectChanges();
-        component.prepareForSave();
+        component.changesInMarkdown();
 
         expectCleanupQuestion();
         expect(spy).to.have.been.called;
