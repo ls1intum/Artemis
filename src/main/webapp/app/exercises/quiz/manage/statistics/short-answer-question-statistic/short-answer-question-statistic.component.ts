@@ -94,6 +94,7 @@ export class ShortAnswerQuestionStatisticComponent extends QuestionStatisticComp
         // set label and backgroundcolor based on the spots
         this.question.spots!.forEach((spot, i) => {
             this.labels.push(this.getLetter(i) + '.');
+            this.solutionLabels.push(this.getLetter(i) + '.');
             this.backgroundColors.push(blueColor);
             this.backgroundSolutionColors.push(greenColor);
         });
