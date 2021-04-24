@@ -89,6 +89,10 @@ public class ProgrammingExerciseExportService {
     @Value("${artemis.repo-download-clone-path}")
     private String repoDownloadClonePath;
 
+    // The downloaded repos should be cloned into another path in order to not interfere with the repo used by the student
+    @Value("${artemis.programming-exercise-export-path}")
+    private String programmingExerciseExportPath;
+
     public ProgrammingExerciseExportService(ProgrammingExerciseRepository programmingExerciseRepository, StudentParticipationRepository studentParticipationRepository,
             FileService fileService, GitService gitService, ZipFileService zipFileService, UrlService urlService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
@@ -107,35 +111,48 @@ public class ProgrammingExerciseExportService {
      * @return the path to the zip file
      */
     public Path exportInstructorProgrammingExercise(ProgrammingExercise exercise, List<String> exportErrors) {
-        // Will contain the zipped files for instructor repositories template, solution and tests and if the students' repositories if `includingStudentRepos`is true
+        // Create export directory for programming exercises
+        var exportPath = Path.of(programmingExerciseExportPath);
+        try {
+            Files.createDirectories(exportPath);
+        }
+        catch (IOException e) {
+            var error = "Failed to create temporary directory for exporting programming exercise " + exercise.getId() + " at path " + exportPath + " : " + e.getMessage();
+            log.info(error);
+            exportErrors.add(error);
+            return null;
+        }
+
+        // List to add files that should be contained in the zip folder of exported programming exercise:
+        // i.e., readme, problem statement, exercise details, instructor repositories
         var zipFiles = new ArrayList<File>();
+
+        // Add the exported zip folder containing template, solution, and tests repositories
+        zipFiles.add(exportProgrammingExerciseRepositories(exercise, false, programmingExerciseExportPath, exportErrors).toFile());
+
+        // Add problem statement as .md file
+        var problemStatementFileExtension = ".md";
+        var problemStatementFileName = "Problem-Statement" + "-" + exercise.getTitle() + problemStatementFileExtension;
+        var problemStatementExportPath = Path.of(programmingExerciseExportPath, problemStatementFileName);
+        zipFiles.add(fileService.writeStringToFile(exercise.getProblemStatement(), problemStatementExportPath).toFile());
+
+        // Add programming exercise details (object) as .json file
+        var exerciseDetailsFileExtension = ".json";
+        var exerciseDetailsFileName = "Exercise-Details" + "-" + exercise.getTitle() + exerciseDetailsFileExtension;
+        var exerciseDetailsExportPath = Path.of(programmingExerciseExportPath, exerciseDetailsFileName);
+        zipFiles.add(fileService.writeObjectToJsonFile(exercise, exerciseDetailsExportPath).toFile());
+
+        // Setup path to store the zip file for the exported programming exercise
         var timestamp = ZonedDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-Hmss"));
         var exportedExerciseZipFileName = exercise.getCourseViaExerciseGroupOrCourseMember().getShortName() + "-" + exercise.getTitle() + "-" + exercise.getId() + "-" + timestamp
                 + ".zip";
+        var pathToZippedExercise = Path.of(programmingExerciseExportPath, exportedExerciseZipFileName);
 
-        // Add the exported zipFolder containing template, solution, and tests repositories
-        zipFiles.add(exportProgrammingExerciseRepositories(exercise, false, "", exportErrors).toFile());
-
-        // Add the exported problem statement as .md file
-        String problemStatementFileExtension = ".md";
-        String problemStatementFileName = "Problem-Statement" + "-" + exercise.getShortName() + problemStatementFileExtension;
-
-        Path problemStatementExportPath = Path.of(repoDownloadClonePath, problemStatementFileName);
-        zipFiles.add(fileService.writeStringToFile(exercise.getProblemStatement(), problemStatementExportPath).toFile());
-
-        // Add the programming exercise characteristics as .json file
-        String exerciseDetailsFileExtension = ".json";
-        String exerciseDetailsFileName = "Exercise-Details" + "-" + exercise.getShortName() + exerciseDetailsFileExtension;
-
-        Path exerciseDetailsExportPath = Path.of(repoDownloadClonePath, exerciseDetailsFileName);
-        zipFiles.add(fileService.writeObjectToJsonFile(exercise, exerciseDetailsExportPath).toFile());
-
-        // Get the file path of each zip file.
+        // Get the file path of each file to be included, i.e. each entry in the zipFiles list
         var zipFilePaths = zipFiles.stream().map(File::toPath).collect(Collectors.toList());
-        var pathToZippedExercise = Path.of(repoDownloadClonePath, exportedExerciseZipFileName);
 
         try {
-            // Zip the repositories zipFolder, the problem statement and the exercise characteristics.
+            // Create the zip folder of the exported programming exercise
             zipFileService.createZipFile(pathToZippedExercise, zipFilePaths, false);
             return pathToZippedExercise;
         }
@@ -146,7 +163,7 @@ public class ProgrammingExerciseExportService {
             return null;
         }
         finally {
-            // Delete the zipped repo files since we don't need those anymore.
+            // Delete the files that are now duplicated in the zip folder of the exported programming exercise
             zipFilePaths.forEach(zipFilePath -> fileService.scheduleForDeletion(zipFilePath, 1));
         }
     }
@@ -161,7 +178,8 @@ public class ProgrammingExerciseExportService {
      * @return the path to the zip file
      */
     public Path exportProgrammingExerciseRepositories(ProgrammingExercise exercise, Boolean includingStudentRepos, String pathToStoreZipFile, List<String> exportErrors) {
-        // Will contain the zipped files for instructor repositories template, solution and tests and if the students' repositories if `includingStudentRepos`is true
+        // List to add files that should be contained in the zip folder of exported programming exercise:
+        // i.e., student repositories (if `includingStudentRepos` is true, instructor repositories template, solution and tests
         var zipFiles = new ArrayList<File>();
 
         if (includingStudentRepos) {
