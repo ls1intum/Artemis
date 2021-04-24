@@ -272,7 +272,7 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @Test
     @WithMockUser(value = "instructor1", roles = "TA")
-    public void updateTextExercise_forbidden() throws Exception {
+    public void updateTextExercise_asTutor_forbidden() throws Exception {
         final Course course = database.addCourseWithOneReleasedTextExercise();
         TextExercise textExercise = textExerciseRepository.findByCourseId(course.getId()).get(0);
 
@@ -471,6 +471,14 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         List<TextExercise> textExercises = request.getList("/api/courses/" + course.getId() + "/text-exercises/", HttpStatus.OK, TextExercise.class);
 
         assertThat(textExercises.size()).as("text exercises for course were retrieved").isEqualTo(1);
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "USER")
+    public void getAllTextExercisesForCourse_asUser_forbidden() throws Exception {
+        final Course course = database.addCourseWithOneReleasedTextExercise();
+
+       request.getList("/api/courses/" + course.getId() + "/text-exercises/", HttpStatus.FORBIDDEN, TextExercise.class);
     }
 
     @Test
