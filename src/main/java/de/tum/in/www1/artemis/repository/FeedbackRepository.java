@@ -9,7 +9,12 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -39,6 +44,9 @@ public interface FeedbackRepository extends JpaRepository<Feedback, Long> {
     List<Feedback> findByResult(Result result);
 
     List<Feedback> findByReferenceInAndResult_Submission_Participation_Exercise(List<String> references, Exercise exercise);
+
+    @Query("select count(fd.id) from Feedback fd where fd.gradingInstruction.id in :gradingInstructionsId")
+    long findFeedbackCountByStructuredGradingInstructionIds(@Param("gradingInstructionsId") List<Long> gradingInstructionsId);
 
     /**
      * Delete all feedbacks that belong to the given result
@@ -151,6 +159,11 @@ public interface FeedbackRepository extends JpaRepository<Feedback, Long> {
         feedback.setPositive(successful);
 
         return feedback;
+    }
+
+    default Long findFeedbackByStructuredGradingInstructionId(List<GradingCriterion> gradingCriteria) {
+        List<Long> list = gradingCriteria.stream().flatMap( gradingCriterion ->  gradingCriterion.getStructuredGradingInstructions().stream()).map(GradingInstruction::getId).collect(Collectors.toList());
+        return findFeedbackCountByStructuredGradingInstructionIds(list);
     }
 
     /**
