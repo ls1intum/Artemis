@@ -316,17 +316,18 @@
                         ngbTooltip="{{ 'artemisApp.course.registrationEnabled.description' | artemisTranslate }}"
                     ></fa-icon>
                 </div>
-                <div class="form-group" *ngIf="course.registrationEnabled">
+                <div class="form-group" id="field_registrationConfirmationMessage" *ngIf="course.registrationEnabled">
                     <label class="form-control-label" jhiTranslate="artemisApp.course.registrationConfirmationMessage" for="field_registrationConfirmationMessage"
                         >Registration Confirmation Message</label
                     >
-                    <input
-                        type="text"
-                        class="form-control"
-                        name="registrationConfirmationMessage"
-                        id="field_registrationConfirmationMessage"
-                        formControlName="registrationConfirmationMessage"
-                    />
+                    <jhi-markdown-editor
+                        class="markdown-editor"
+                        [domainCommands]="domainCommandsStudentRegistrationConfirmationMessage"
+                        [(markdown)]="course.registrationConfirmationMessage"
+                        (markdownChange)="updateRegistrationConfirmationMessage($event)"
+                        [editorMode]="EditorMode.LATEX"
+                    >
+                    </jhi-markdown-editor>
                 </div>
                 <div class="form-check">
                     <input type="checkbox" class="form-check-input" [checked]="course.presentationScore !== 0" (change)="this.changePresentationScoreInput()" />
