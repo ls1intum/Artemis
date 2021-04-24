@@ -131,7 +131,7 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
-    public void createTextExercise_setExerciseTitle_badRequest() throws Exception {
+    public void createTextExercise_setExerciseTitleNull_badRequest() throws Exception {
         final Course course = database.addCourseWithOneReleasedTextExercise();
         TextExercise textExercise = textExerciseRepository.findByCourseId(course.getId()).get(0);
 
@@ -147,14 +147,13 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         TextExercise textExercise = textExerciseRepository.findByCourseId(course.getId()).get(0);
 
         textExercise.dueDate(null);
-        assertThat(textExercise.getAssessmentDueDate()).isNotNull();
 
         request.postWithResponseBody("/api/text-exercises/", textExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
     @WithMockUser(value = "instructor1", roles = "TA")
-    public void createTextExercise_forbidden() throws Exception {
+    public void createTextExercise_asTutor_forbidden() throws Exception {
         final Course course = database.addCourseWithOneReleasedTextExercise();
         TextExercise textExercise = textExerciseRepository.findByCourseId(course.getId()).get(0);
 
