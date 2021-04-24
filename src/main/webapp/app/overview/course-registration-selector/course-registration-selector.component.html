@@ -1,5 +1,5 @@
-<div *ngIf="true">
-    <div class="col-12 col-sm-auto" *ngIf="true">
+<div *ngIf="courses">
+    <div class="col-12 col-sm-auto" *ngIf="!showCourseSelection && !addedSuccessful && userIsAllowedToRegister">
         <button class="btn btn-primary" [disabled]="loading" (click)="startRegistration()">
             <span *ngIf="!loading">{{ 'artemisApp.studentDashboard.register.signUp' | artemisTranslate }}</span>
             <fa-icon [icon]="'spinner'" [spin]="true" *ngIf="loading"></fa-icon>
@@ -9,13 +9,13 @@
         <fa-icon [icon]="'check-circle'"></fa-icon>
         {{ 'artemisApp.studentDashboard.register.registerSuccessful' | artemisTranslate }}
     </div>
-    <div class="col-12 col-sm-auto" *ngIf="true">
+    <div class="col-12 col-sm-auto" *ngIf="showCourseSelection && coursesToSelect.length > 0 && userIsAllowedToRegister">
         <select class="form-control" id="field_course" name="course" [(ngModel)]="courseToRegister">
             <option [ngValue]="undefined" selected disabled>{{ 'artemisApp.studentDashboard.register.pleaseSelectCourse' | artemisTranslate }}</option>
             <option [ngValue]="course" *ngFor="let course of coursesToSelect; trackBy: trackCourseById">{{ course.title }}</option>
         </select>
     </div>
-    <div class="col-12 col-sm-auto" *ngIf="true">
+    <div class="col-12 col-sm-auto" *ngIf="showCourseSelection && coursesToSelect.length > 0 && userIsAllowedToRegister">
         <div class="btn-group">
             <jhi-confirm-button
                 *ngIf="courseToRegister && courseToRegister.registrationConfirmationMessage"

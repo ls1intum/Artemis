@@ -412,6 +412,10 @@ export class CourseUpdateComponent implements OnInit {
         this.courseOrganizations = this.courseOrganizations.filter((o) => o.id !== organization.id);
     }
 
+    /**
+     * Updates registrationConfirmationMessage on markdown change
+     * @param message new registrationConfirmationMessage
+     */
     updateRegistrationConfirmationMessage(message: string) {
         this.courseForm.controls['registrationConfirmationMessage'].setValue(message);
     }
