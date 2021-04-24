@@ -65,7 +65,7 @@ export class ProgrammingExercise extends Exercise {
         this.allowOfflineIde = true; // default value
         this.programmingLanguage = ProgrammingLanguage.JAVA; // default value
         this.noVersionControlAndContinuousIntegrationAvailable = false; // default value
-        this.checkoutSolutionRepository = true; // default value
+        this.checkoutSolutionRepository = false; // default value
         this.projectType = ProjectType.ECLIPSE; // default value
         this.showTestNamesToStudents = false; // default value
     }
