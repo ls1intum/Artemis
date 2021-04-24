@@ -375,6 +375,11 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         // Select the correct pattern
         this.setPackageNamePattern(language);
         this.selectedProgrammingLanguage = language;
+        if (language === ProgrammingLanguage.HASKELL) {
+            this.programmingExercise.checkoutSolutionRepository = true;
+        } else {
+            this.programmingExercise.checkoutSolutionRepository = false;
+        }
         return language;
     }
 
