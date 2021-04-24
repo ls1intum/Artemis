@@ -448,7 +448,7 @@ public class CourseResource {
         }
         else {
             var userGroups = new ArrayList<>(user.getGroups());
-            return courseRepository.getCoursesWithQuizExercisesForWhichUserHasEditorAccess(userGroups);
+            return courseRepository.getCoursesWithQuizExercisesForWhichUserHasAtLeastEditorAccess(userGroups);
         }
     }
 

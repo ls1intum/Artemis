@@ -135,7 +135,7 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
             WHERE (c.instructorGroupName IN :#{#userGroups} OR c.editorGroupName IN :#{#userGroups})
                 AND TYPE(e) = QuizExercise
             """)
-    List<Course> getCoursesWithQuizExercisesForWhichUserHasEditorAccess(@Param("userGroups") List<String> userGroups);
+    List<Course> getCoursesWithQuizExercisesForWhichUserHasAtLeastEditorAccess(@Param("userGroups") List<String> userGroups);
 
     @Query("""
             select distinct c
