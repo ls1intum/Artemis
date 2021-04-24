@@ -106,8 +106,8 @@ public class ExerciseGroupIntegrationTest extends AbstractSpringIntegrationBambo
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testGetExerciseGroupsForExam_asInstructor() throws Exception {
+    @WithMockUser(username = "editor1", roles = "EDITOR")
+    public void testGetExerciseGroupsForExam_asEditor() throws Exception {
         List<ExerciseGroup> result = request.getList("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exerciseGroups", HttpStatus.OK, ExerciseGroup.class);
         verify(examAccessService, times(1)).checkCourseAndExamAccessForEditor(course1.getId(), exam1.getId());
         assertThat(result.size()).isEqualTo(1);
@@ -122,5 +122,11 @@ public class ExerciseGroupIntegrationTest extends AbstractSpringIntegrationBambo
         request.delete("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exerciseGroups/" + exerciseGroup1.getId(), HttpStatus.OK);
         verify(examAccessService, times(1)).checkCourseAndExamAndExerciseGroupAccess(course1.getId(), exam1.getId(), exerciseGroup1.getId());
         assertThat(textExerciseRepository.findById(textExercise1.getId()).isEmpty()).isTrue();
+    }
+
+    @Test
+    @WithMockUser(username = "editor1", roles = "EDITOR")
+    public void testDeleteExerciseGroup_asEditor() throws Exception {
+        request.delete("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exerciseGroups/" + exerciseGroup1.getId(), HttpStatus.FORBIDDEN);
     }
 }

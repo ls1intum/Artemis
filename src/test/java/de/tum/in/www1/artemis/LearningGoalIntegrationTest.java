@@ -331,6 +331,12 @@ public class LearningGoalIntegrationTest extends AbstractSpringIntegrationBamboo
     }
 
     @Test
+    @WithMockUser(username = "editor1", roles = "EDITOR")
+    public void testAll_asEditor() throws Exception {
+        this.testAllPreAuthorize();
+    }
+
+    @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void getLearningGoal_asInstructor_shouldReturnLearningGoal() throws Exception {
         LearningGoal learningGoal = request.get("/api/courses/" + idOfCourse + "/goals/" + idOfLearningGoal, HttpStatus.OK, LearningGoal.class);
