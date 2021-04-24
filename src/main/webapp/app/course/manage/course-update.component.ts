@@ -357,11 +357,13 @@ export class CourseUpdateComponent implements OnInit {
             this.customizeGroupNames = true;
             this.courseForm.controls['studentGroupName'].setValue('artemis-dev');
             this.courseForm.controls['teachingAssistantGroupName'].setValue('artemis-dev');
+            this.courseForm.controls['editorGroupName'].setValue('artemis-dev');
             this.courseForm.controls['instructorGroupName'].setValue('artemis-dev');
         } else {
             this.customizeGroupNames = false;
             this.courseForm.controls['studentGroupName'].setValue(undefined);
             this.courseForm.controls['teachingAssistantGroupName'].setValue(undefined);
+            this.courseForm.controls['editorGroupName'].setValue(undefined);
             this.courseForm.controls['instructorGroupName'].setValue(undefined);
         }
     }
