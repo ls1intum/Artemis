@@ -26,8 +26,8 @@ export class ModelingExerciseResolver implements Resolve<ModelingExercise> {
                 map((modelingExercise: HttpResponse<ModelingExercise>) => modelingExercise.body!),
             );
         } else if (route.params['courseId']) {
-            if (route.params['examId'] && route.params['groupId']) {
-                return this.exerciseGroupService.find(route.params['courseId'], route.params['examId'], route.params['groupId']).pipe(
+            if (route.params['examId'] && route.params['exerciseGroupId']) {
+                return this.exerciseGroupService.find(route.params['courseId'], route.params['examId'], route.params['exerciseGroupId']).pipe(
                     filter((res) => !!res.body),
                     map((exerciseGroup: HttpResponse<ExerciseGroup>) => new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, exerciseGroup.body || undefined)),
                 );
