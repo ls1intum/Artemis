@@ -8,7 +8,7 @@
         position: relative;
         display: flex;
         cursor: pointer;
-        height: 75px;
+        height: 100px;
 
         .card-title {
             margin-bottom: 0;
@@ -44,9 +44,6 @@
             z-index: 1;
 
             div {
-                display: flex;
-                flex-direction: row;
-
                 div {
                     padding-right: 7px;
 
