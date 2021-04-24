@@ -35,7 +35,7 @@ class ProgrammingExerciseGitlabJenkinsIntegrationTest extends AbstractSpringInte
 
     @BeforeEach
     void setup() throws Exception {
-        programmingExerciseTestService.setupTestUsers(0, 0, 0);
+        programmingExerciseTestService.setupTestUsers(0, 0, 0, 0);
         programmingExerciseTestService.setup(this, versionControlService, continuousIntegrationService);
         jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsServer);
         gitlabRequestMockProvider.enableMockingOfRequests();
