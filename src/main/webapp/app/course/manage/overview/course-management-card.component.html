@@ -18,63 +18,81 @@
         </div>
 
         <div *ngIf="courseWithUsers && course.isAtLeastInstructor" class="float-right card-groups">
-            <a
-                [routerLink]="['/course-management', course.id, 'groups', 'students']"
-                *ngIf="courseWithUsers.numberOfStudents !== undefined && courseWithUsers.numberOfStudents === 1"
-            >
-                {{ courseWithUsers.numberOfStudents }} {{ 'artemisApp.course.student' | artemisTranslate }}
-            </a>
-            <a
-                [routerLink]="['/course-management', course.id, 'groups', 'students']"
-                *ngIf="courseWithUsers.numberOfStudents !== undefined && courseWithUsers.numberOfStudents !== 1"
-            >
-                {{ courseWithUsers.numberOfStudents }} {{ 'artemisApp.course.students' | artemisTranslate }}
-            </a>
-            <a [routerLink]="['/course-management', course.id, 'groups', 'students']" *ngIf="courseWithUsers.numberOfStudents === undefined">
-                {{ 'artemisApp.course.students' | artemisTranslate }}
-            </a>
+            <div>
+                <div>
+                    <a
+                        [routerLink]="['/course-management', course.id, 'groups', 'students']"
+                        *ngIf="courseWithUsers.numberOfStudents !== undefined && courseWithUsers.numberOfStudents === 1"
+                    >
+                        {{ courseWithUsers.numberOfStudents }} {{ 'artemisApp.course.student' | artemisTranslate }}
+                    </a>
+                    <a
+                        [routerLink]="['/course-management', course.id, 'groups', 'students']"
+                        *ngIf="courseWithUsers.numberOfStudents !== undefined && courseWithUsers.numberOfStudents !== 1"
+                    >
+                        {{ courseWithUsers.numberOfStudents }} {{ 'artemisApp.course.students' | artemisTranslate }}
+                    </a>
+                    <a [routerLink]="['/course-management', course.id, 'groups', 'students']" *ngIf="courseWithUsers.numberOfStudents === undefined">
+                        {{ 'artemisApp.course.students' | artemisTranslate }}
+                    </a>
+                </div>
 
-            <a
-                [routerLink]="['/course-management', course.id, 'groups', 'tutors']"
-                *ngIf="courseWithUsers.numberOfTeachingAssistants !== undefined && courseWithUsers.numberOfTeachingAssistants === 1"
-            >
-                {{ courseWithUsers.numberOfTeachingAssistants }} {{ 'artemisApp.course.tutor' | artemisTranslate }}
-            </a>
-            <a
-                [routerLink]="['/course-management', course.id, 'groups', 'tutors']"
-                *ngIf="courseWithUsers.numberOfTeachingAssistants !== undefined && courseWithUsers.numberOfTeachingAssistants !== 1"
-            >
-                {{ courseWithUsers.numberOfTeachingAssistants }} {{ 'artemisApp.course.tutors' | artemisTranslate }}
-            </a>
-            <a [routerLink]="['/course-management', course.id, 'groups', 'tutors']" *ngIf="courseWithUsers.numberOfTeachingAssistants === undefined">
-                {{ 'artemisApp.course.tutors' | artemisTranslate }}
-            </a>
+                <div>
+                    <a
+                        [routerLink]="['/course-management', course.id, 'groups', 'tutors']"
+                        *ngIf="courseWithUsers.numberOfTeachingAssistants !== undefined && courseWithUsers.numberOfTeachingAssistants === 1"
+                    >
+                        {{ courseWithUsers.numberOfTeachingAssistants }} {{ 'artemisApp.course.tutor' | artemisTranslate }}
+                    </a>
+                    <a
+                        [routerLink]="['/course-management', course.id, 'groups', 'tutors']"
+                        *ngIf="courseWithUsers.numberOfTeachingAssistants !== undefined && courseWithUsers.numberOfTeachingAssistants !== 1"
+                    >
+                        {{ courseWithUsers.numberOfTeachingAssistants }} {{ 'artemisApp.course.tutors' | artemisTranslate }}
+                    </a>
+                    <a [routerLink]="['/course-management', course.id, 'groups', 'tutors']" *ngIf="courseWithUsers.numberOfTeachingAssistants === undefined">
+                        {{ 'artemisApp.course.tutors' | artemisTranslate }}
+                    </a>
+                </div>
+            </div>
 
-            <a [routerLink]="['/course-management', course.id, 'groups', 'editors']" *ngIf="courseWithUsers.numberOfEditors !== undefined && courseWithUsers.numberOfEditors === 1">
-                {{ courseWithUsers.numberOfEditors }} {{ 'artemisApp.course.editor' | artemisTranslate }}
-            </a>
-            <a [routerLink]="['/course-management', course.id, 'groups', 'editors']" *ngIf="courseWithUsers.numberOfEditors !== undefined && courseWithUsers.numberOfEditors !== 1">
-                {{ courseWithUsers.numberOfEditors }} {{ 'artemisApp.course.editors' | artemisTranslate }}
-            </a>
-            <a [routerLink]="['/course-management', course.id, 'groups', 'editors']" *ngIf="courseWithUsers.numberOfEditors === undefined">
-                {{ 'artemisApp.course.editors' | artemisTranslate }}
-            </a>
+            <div>
+                <div>
+                    <a
+                        [routerLink]="['/course-management', course.id, 'groups', 'editors']"
+                        *ngIf="courseWithUsers.numberOfEditors !== undefined && courseWithUsers.numberOfEditors === 1"
+                    >
+                        {{ courseWithUsers.numberOfEditors }} {{ 'artemisApp.course.editor' | artemisTranslate }}
+                    </a>
+                    <a
+                        [routerLink]="['/course-management', course.id, 'groups', 'editors']"
+                        *ngIf="courseWithUsers.numberOfEditors !== undefined && courseWithUsers.numberOfEditors !== 1"
+                    >
+                        {{ courseWithUsers.numberOfEditors }} {{ 'artemisApp.course.editors' | artemisTranslate }}
+                    </a>
+                    <a [routerLink]="['/course-management', course.id, 'groups', 'editors']" *ngIf="courseWithUsers.numberOfEditors === undefined">
+                        {{ 'artemisApp.course.editors' | artemisTranslate }}
+                    </a>
+                </div>
 
-            <a
-                [routerLink]="['/course-management', course.id, 'groups', 'instructors']"
-                *ngIf="courseWithUsers.numberOfInstructors !== undefined && courseWithUsers.numberOfInstructors === 1"
-            >
-                {{ courseWithUsers.numberOfInstructors }} {{ 'artemisApp.course.instructor' | artemisTranslate }}
-            </a>
-            <a
-                [routerLink]="['/course-management', course.id, 'groups', 'instructors']"
-                *ngIf="courseWithUsers.numberOfInstructors !== undefined && courseWithUsers.numberOfInstructors !== 1"
-            >
-                {{ courseWithUsers.numberOfInstructors }} {{ 'artemisApp.course.instructors' | artemisTranslate }}
-            </a>
-            <a [routerLink]="['/course-management', course.id, 'groups', 'instructors']" *ngIf="courseWithUsers.numberOfInstructors === undefined">
-                {{ 'artemisApp.course.instructors' | artemisTranslate }}
-            </a>
+                <div>
+                    <a
+                        [routerLink]="['/course-management', course.id, 'groups', 'instructors']"
+                        *ngIf="courseWithUsers.numberOfInstructors !== undefined && courseWithUsers.numberOfInstructors === 1"
+                    >
+                        {{ courseWithUsers.numberOfInstructors }} {{ 'artemisApp.course.instructor' | artemisTranslate }}
+                    </a>
+                    <a
+                        [routerLink]="['/course-management', course.id, 'groups', 'instructors']"
+                        *ngIf="courseWithUsers.numberOfInstructors !== undefined && courseWithUsers.numberOfInstructors !== 1"
+                    >
+                        {{ courseWithUsers.numberOfInstructors }} {{ 'artemisApp.course.instructors' | artemisTranslate }}
+                    </a>
+                    <a [routerLink]="['/course-management', course.id, 'groups', 'instructors']" *ngIf="courseWithUsers.numberOfInstructors === undefined">
+                        {{ 'artemisApp.course.instructors' | artemisTranslate }}
+                    </a>
+                </div>
+            </div>
         </div>
     </div>
 

@@ -36,15 +36,23 @@
         .card-groups {
             white-space: nowrap;
             display: flex;
-            padding-right: 15px;
+            padding-right: 8px;
             padding-top: 5px;
             padding-bottom: 5px;
             flex-direction: column;
             align-self: center;
             z-index: 1;
 
-            a {
-                color: white;
+            div {
+                display: flex;
+                flex-direction: row;
+
+                div {
+                    padding-right: 7px;
+                    a {
+                        color: white;
+                    }
+                }
             }
         }
 
