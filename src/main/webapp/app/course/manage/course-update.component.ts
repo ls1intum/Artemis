@@ -22,7 +22,6 @@ import { Organization } from 'app/entities/organization.model';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
 import { OrganizationSelectorComponent } from 'app/shared/organization-selector/organization-selector.component';
-import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command';
 
 @Component({
     selector: 'jhi-course-update',
@@ -50,7 +49,6 @@ export class CourseUpdateComponent implements OnInit {
     presentationScorePattern = /^[0-9]{0,4}$/; // makes sure that the presentation score is a positive natural integer greater than 0 and not too large
     courseOrganizations: Organization[];
     EditorMode = EditorMode;
-    domainCommandsStudentRegistrationConfirmationMessage = [new KatexCommand()];
 
     constructor(
         private courseService: CourseManagementService,
