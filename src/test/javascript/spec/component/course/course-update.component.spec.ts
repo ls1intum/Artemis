@@ -130,12 +130,14 @@ describe('Course Management Update Component', () => {
             expect(comp.customizeGroupNames).to.equal(true);
             expect(comp.course.studentGroupName).to.equal('artemis-dev');
             expect(comp.course.teachingAssistantGroupName).to.equal('artemis-dev');
+            expect(comp.course.editorGroupName).to.equal('artemis-dev');
             expect(comp.course.instructorGroupName).to.equal('artemis-dev');
             expect(comp.courseForm.get(['id'])?.value).to.equal(course.id);
             expect(comp.courseForm.get(['title'])?.value).to.equal(course.title);
             expect(comp.shortName.value).to.equal(course.shortName);
             expect(comp.courseForm.get(['studentGroupName'])?.value).to.equal(course.studentGroupName);
             expect(comp.courseForm.get(['teachingAssistantGroupName'])?.value).to.equal(course.teachingAssistantGroupName);
+            expect(comp.courseForm.get(['editorGroupName'])?.value).to.equal(course.editorGroupName);
             expect(comp.courseForm.get(['instructorGroupName'])?.value).to.equal(course.instructorGroupName);
             expect(comp.courseForm.get(['startDate'])?.value).to.equal(course.startDate);
             expect(comp.courseForm.get(['endDate'])?.value).to.equal(course.endDate);
@@ -382,17 +384,20 @@ describe('Course Management Update Component', () => {
             comp.courseForm = new FormGroup({
                 studentGroupName: new FormControl('noname'),
                 teachingAssistantGroupName: new FormControl('noname'),
+                editorGroupName: new FormControl('noname'),
                 instructorGroupName: new FormControl('noname'),
             });
             comp.customizeGroupNames = false;
             comp.changeCustomizeGroupNames();
             expect(comp.courseForm.controls['studentGroupName'].value).to.equal('artemis-dev');
             expect(comp.courseForm.controls['teachingAssistantGroupName'].value).to.equal('artemis-dev');
+            expect(comp.courseForm.controls['editorGroupName'].value).to.equal('artemis-dev');
             expect(comp.courseForm.controls['instructorGroupName'].value).to.equal('artemis-dev');
             expect(comp.customizeGroupNames).to.equal(true);
             comp.changeCustomizeGroupNames();
             expect(comp.courseForm.controls['studentGroupName'].value).to.equal(undefined);
             expect(comp.courseForm.controls['teachingAssistantGroupName'].value).to.equal(undefined);
+            expect(comp.courseForm.controls['editorGroupName'].value).to.equal(undefined);
             expect(comp.courseForm.controls['instructorGroupName'].value).to.equal(undefined);
             expect(comp.customizeGroupNames).to.equal(false);
         });
