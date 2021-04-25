@@ -85,11 +85,15 @@ public class ProgrammingExerciseExportService {
 
     private final ScheduledExecutorService executor = Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors());
 
+    public static final String EXPORTED_EXERCISE_DETAILS_FILE_PREFIX = "Exercise-Details";
+
+    public static final String EXPORTED_EXERCISE_PROBLEM_STATEMENT_FILE_PREFIX = "Problem-Statement";
+
     // The downloaded repos should be cloned into another path in order to not interfere with the repo used by the student
     @Value("${artemis.repo-download-clone-path}")
     private String repoDownloadClonePath;
 
-    // The downloaded repos should be cloned into another path in order to not interfere with the repo used by the student
+    // The downloaded exercise should be exported to a dedicated path
     @Value("${artemis.programming-exercise-export-path}")
     private String programmingExerciseExportPath;
 
@@ -132,20 +136,20 @@ public class ProgrammingExerciseExportService {
 
         // Add problem statement as .md file
         var problemStatementFileExtension = ".md";
-        var problemStatementFileName = "Problem-Statement" + "-" + exercise.getTitle() + problemStatementFileExtension;
+        var problemStatementFileName = EXPORTED_EXERCISE_PROBLEM_STATEMENT_FILE_PREFIX + "-" + exercise.getTitle() + problemStatementFileExtension;
         var problemStatementExportPath = Path.of(programmingExerciseExportPath, problemStatementFileName);
         zipFiles.add(fileService.writeStringToFile(exercise.getProblemStatement(), problemStatementExportPath).toFile());
 
         // Add programming exercise details (object) as .json file
         var exerciseDetailsFileExtension = ".json";
-        var exerciseDetailsFileName = "Exercise-Details" + "-" + exercise.getTitle() + exerciseDetailsFileExtension;
+        var exerciseDetailsFileName = EXPORTED_EXERCISE_DETAILS_FILE_PREFIX + "-" + exercise.getTitle() + exerciseDetailsFileExtension;
         var exerciseDetailsExportPath = Path.of(programmingExerciseExportPath, exerciseDetailsFileName);
         zipFiles.add(fileService.writeObjectToJsonFile(exercise, exerciseDetailsExportPath).toFile());
 
         // Setup path to store the zip file for the exported programming exercise
         var timestamp = ZonedDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-Hmss"));
-        var exportedExerciseZipFileName = exercise.getCourseViaExerciseGroupOrCourseMember().getShortName() + "-" + exercise.getTitle() + "-" + exercise.getId() + "-" + timestamp
-                + ".zip";
+        var exportedExerciseZipFileName = "Material-" + exercise.getCourseViaExerciseGroupOrCourseMember().getShortName() + "-" + exercise.getTitle() + "-" + exercise.getId() + "-"
+                + timestamp + ".zip";
         var pathToZippedExercise = Path.of(programmingExerciseExportPath, exportedExerciseZipFileName);
 
         // Get the file path of each file to be included, i.e. each entry in the zipFiles list
@@ -179,7 +183,7 @@ public class ProgrammingExerciseExportService {
      */
     public Path exportProgrammingExerciseRepositories(ProgrammingExercise exercise, Boolean includingStudentRepos, String pathToStoreZipFile, List<String> exportErrors) {
         // List to add files that should be contained in the zip folder of exported programming exercise:
-        // i.e., student repositories (if `includingStudentRepos` is true, instructor repositories template, solution and tests
+        // i.e., student repositories (if `includingStudentRepos` is true), instructor repositories template, solution and tests
         var zipFiles = new ArrayList<File>();
 
         if (includingStudentRepos) {
