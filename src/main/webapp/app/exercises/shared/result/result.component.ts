@@ -230,7 +230,6 @@ export class ResultComponent implements OnInit, OnChanges {
     /**
      * Gets the build result string.
      */
-    // TODO: 0/0 Score
     buildResultString() {
         if (this.submission && this.submission.submissionExerciseType === SubmissionExerciseType.PROGRAMMING && (this.submission as ProgrammingSubmission).buildFailed) {
             const isManualResult = this.result?.assessmentType !== AssessmentType.AUTOMATIC;

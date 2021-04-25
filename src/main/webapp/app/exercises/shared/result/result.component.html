@@ -25,7 +25,7 @@
                         <span class="guided-tour result" (click)="showDetails(result)" [ngbTooltip]="resultTooltip" container="body">{{ resultString }}</span>
                     </span>
                 </ng-container>
-                <ng-container *ngIf="!onlyShowSuccessfulCompileStatus">
+                <ng-container *ngIf="onlyShowSuccessfulCompileStatus">
                     <span jhiTranslate="artemisApp.editor.buildSuccessful">Build successful</span>
                 </ng-container>
                 <span *ngIf="!hasFeedback" [ngbTooltip]="resultTooltip" container="body">
