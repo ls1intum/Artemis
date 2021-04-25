@@ -413,6 +413,14 @@ export class CourseUpdateComponent implements OnInit {
     removeOrganizationFromCourse(organization: Organization) {
         this.courseOrganizations = this.courseOrganizations.filter((o) => o.id !== organization.id);
     }
+
+    /**
+     * Updates registrationConfirmationMessage on markdown change
+     * @param message new registrationConfirmationMessage
+     */
+    updateRegistrationConfirmationMessage(message: string) {
+        this.courseForm.controls['registrationConfirmationMessage'].setValue(message);
+    }
 }
 
 const CourseValidator: ValidatorFn = (formGroup: FormGroup) => {

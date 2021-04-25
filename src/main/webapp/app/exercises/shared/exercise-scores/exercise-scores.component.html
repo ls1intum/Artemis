@@ -168,9 +168,12 @@
                             {{ value.team.shortName }}
                         </a>
                         <ng-template #defaultMode>
-                            <a [routerLink]="['/admin', 'user-management', value.student.login]">
+                            <a *ngIf="isAdmin; else showLogin" [routerLink]="['/admin', 'user-management', value.student.login]">
                                 {{ value.student.login }}
                             </a>
+                            <ng-template #showLogin>
+                                {{ value.student.login }}
+                            </ng-template>
                         </ng-template>
                     </ng-template>
                 </ngx-datatable-column>

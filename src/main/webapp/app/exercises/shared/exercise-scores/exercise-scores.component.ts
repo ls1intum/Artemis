@@ -72,6 +72,8 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
 
     isLoading: boolean;
 
+    isAdmin = false;
+
     constructor(
         private route: ActivatedRoute,
         private momentDiff: DifferencePipe,
@@ -109,6 +111,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
                 this.exercise.isAtLeastEditor = this.accountService.isAtLeastEditorInCourse(this.course || this.exercise.exerciseGroup!.exam!.course);
                 this.exercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.course || this.exercise.exerciseGroup!.exam!.course);
                 this.newManualResultAllowed = areManualResultsAllowed(this.exercise);
+                this.isAdmin = this.accountService.isAdmin();
             });
         });
     }
