@@ -4,6 +4,7 @@
 
 artemis:
     course-archives-path: ./exports/server-integration-test/courses         # a folder in which archived courses and exams are stored.
+    programming-exercise-export-path: ./exports/server-integration-test/programming-exercises         # a folder in which downloaded programming exercises are stored.
     repo-clone-path: ./repos/server-integration-test
     repo-download-clone-path: ./repos-download/server-integration-test
     encryption-password: fake-password
