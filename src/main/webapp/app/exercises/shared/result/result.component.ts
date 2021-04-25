@@ -142,7 +142,7 @@ export class ResultComponent implements OnInit, OnChanges {
             this.textColorClass = this.getTextColorClass();
             this.resultIconClass = this.getResultIconClass();
         } else if (this.result && (this.result.score || this.result.score === 0) && (this.result.rated || this.result.rated == undefined || this.showUngradedResults)) {
-            this.onlyShowSuccessfulCompileStatus = this.getOnlyShowSuccesfullCompileStatus();
+            this.onlyShowSuccessfulCompileStatus = this.getOnlyShowSuccessfulCompileStatus();
             this.textColorClass = this.getTextColorClass();
             this.hasFeedback = this.getHasFeedback();
             this.resultIconClass = this.getResultIconClass();
@@ -319,7 +319,11 @@ export class ResultComponent implements OnInit, OnChanges {
         }
     }
 
-    getOnlyShowSuccesfullCompileStatus(): boolean {
+    /**
+     * Checks if only compilation was tested. This is the case, when a successful result is present with 0 of 0 passed tests
+     *
+     */
+    getOnlyShowSuccessfulCompileStatus(): boolean {
         return (
             this.templateStatus !== ResultTemplateStatus.NO_RESULT &&
             this.templateStatus !== ResultTemplateStatus.IS_BUILDING &&
@@ -334,7 +338,6 @@ export class ResultComponent implements OnInit, OnChanges {
      *
      * @return {string} the css class
      */
-    // TODO: 0/0 Score
     getTextColorClass() {
         if (this.templateStatus === ResultTemplateStatus.LATE) {
             return 'result--late';

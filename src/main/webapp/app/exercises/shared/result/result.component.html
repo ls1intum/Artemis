@@ -12,7 +12,6 @@
     <ng-container *ngSwitchCase="ResultTemplateStatus.HAS_RESULT">
         <ng-container *ngIf="result"
             ><!-- we need to make sure that result is not null, otherwise the compiler complains below -->
-            <!-- TODO: 0/0 Score -->
             <span [ngClass]="textColorClass" class="guided-tour">
                 <fa-icon [icon]="resultIconClass" size="lg"></fa-icon>
                 <ng-container *ngIf="!onlyShowSuccessfulCompileStatus">
