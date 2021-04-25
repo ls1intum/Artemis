@@ -135,7 +135,7 @@ export class ExampleModelingSubmissionComponent implements OnInit {
         if (this.isNewSubmission) {
             this.createNewExampleModelingSubmission();
         } else {
-            this.updateExampleModelingSubmission();
+            this.updateAssessmentExplanationAndExampleAssessment();
         }
     }
 
