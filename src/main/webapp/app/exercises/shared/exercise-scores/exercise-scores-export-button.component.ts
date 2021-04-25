@@ -4,14 +4,8 @@ import { JhiAlertService } from 'ng-jhipster';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { Injectable, Component, Input } from '@angular/core';
-import { Result } from 'app/entities/result.model';
-import { ParticipationType } from 'app/entities/participation/participation.model';
-import { addUserIndependentRepositoryUrl } from 'app/overview/participation-utils';
-import { HttpResponse } from '@angular/common/http';
-import { tap } from 'rxjs/operators';
+
 import { ResultService } from 'app/exercises/shared/result/result.service';
-import { DifferencePipe } from 'ngx-moment';
-import { Moment } from 'moment';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 
 @Component({
@@ -28,37 +22,7 @@ export class ExerciseScoresExportButtonComponent {
     @Input() exercises: Exercise[] = []; // Used to export multiple scores together
     @Input() exercise: Exercise | ProgrammingExercise;
 
-    constructor(private resultService: ResultService, private momentDiff: DifferencePipe, private jhiAlertService: JhiAlertService) {}
-
-    /**
-     * Fetches all results for an exercise and assigns them to the results in this component
-     */
-    getResults() {
-        return this.resultService
-            .getResultsForExercise(this.exercise.id!, {
-                withSubmissions: this.exercise.type === ExerciseType.MODELING,
-            })
-            .pipe(
-                tap((res: HttpResponse<Result[]>) => {
-                    return res.body!.map((result) => {
-                        result.participation!.results = [result];
-                        (result.participation! as StudentParticipation).exercise = this.exercise;
-                        if (result.participation!.type === ParticipationType.PROGRAMMING) {
-                            addUserIndependentRepositoryUrl(result.participation!);
-                        }
-                        result.durationInMinutes = this.durationInMinutes(
-                            result.completionDate!,
-                            result.participation!.initializationDate ? result.participation!.initializationDate : this.exercise.releaseDate!,
-                        );
-                        // Nest submission into participation so that it is available for the result component
-                        if (result.participation && result.submission) {
-                            result.participation.submissions = [result.submission];
-                        }
-                        return result;
-                    });
-                }),
-            );
-    }
+    constructor(private resultService: ResultService, private jhiAlertService: JhiAlertService) {}
 
     /**
      * Exports the exercise results as a csv file
@@ -69,7 +33,7 @@ export class ExerciseScoresExportButtonComponent {
         }
         this.exercises.forEach((exercise) => {
             this.exercise = exercise;
-            this.getResults().subscribe((data) => {
+            this.resultService.getResults(exercise).subscribe((data) => {
                 const rows: string[] = [];
                 const results = data.body || [];
                 if (results.length === 0) {
@@ -108,9 +72,5 @@ export class ExerciseScoresExportButtonComponent {
                 link.click();
             });
         });
-    }
-
-    private durationInMinutes(completionDate: Moment, initializationDate: Moment) {
-        return this.momentDiff.transform(completionDate, initializationDate, 'minutes');
     }
 }

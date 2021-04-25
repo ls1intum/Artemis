@@ -5,10 +5,16 @@ import { SERVER_API_URL } from 'app/app.constants';
 import * as moment from 'moment';
 import { isMoment } from 'moment';
 import { Result } from '../../../entities/result.model';
+import { Moment } from 'moment';
 import { createRequestOption } from 'app/shared/util/request-util';
 import { Feedback } from 'app/entities/feedback.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { ParticipationType } from 'app/entities/participation/participation.model';
+import { addUserIndependentRepositoryUrl } from 'app/overview/participation-utils';
+import { DifferencePipe } from 'ngx-moment';
+import { tap } from 'rxjs/operators';
 
 export type EntityResponseType = HttpResponse<Result>;
 export type EntityArrayResponseType = HttpResponse<Result[]>;
@@ -29,7 +35,7 @@ export class ResultService implements IResultService {
     private submissionResourceUrl = SERVER_API_URL + 'api/submissions';
     private participationResourceUrl = SERVER_API_URL + 'api/participations';
 
-    constructor(private http: HttpClient, private exerciseService: ExerciseService) {}
+    constructor(private http: HttpClient, private exerciseService: ExerciseService, private momentDiff: DifferencePipe) {}
 
     find(resultId: number): Observable<EntityResponseType> {
         return this.http
@@ -116,5 +122,40 @@ export class ResultService implements IResultService {
             }
         }
         return participation;
+    }
+
+    /**
+     * Fetches all results for an exercise and returns them
+     */
+    getResults(exercise: Exercise) {
+        return this.getResultsForExercise(exercise.id!, {
+            withSubmissions: exercise.type === ExerciseType.MODELING,
+        }).pipe(
+            tap((res: HttpResponse<Result[]>) => {
+                return res.body!.map((result) => {
+                    result.participation!.results = [result];
+                    (result.participation! as StudentParticipation).exercise = exercise;
+                    if (result.participation!.type === ParticipationType.PROGRAMMING) {
+                        addUserIndependentRepositoryUrl(result.participation!);
+                    }
+                    result.durationInMinutes = this.durationInMinutes(
+                        result.completionDate!,
+                        result.participation!.initializationDate ? result.participation!.initializationDate : exercise.releaseDate!,
+                    );
+                    // Nest submission into participation so that it is available for the result component
+                    if (result.participation && result.submission) {
+                        result.participation.submissions = [result.submission];
+                    }
+                    return result;
+                });
+            }),
+        );
+    }
+
+    /**
+     * Utility function
+     */
+    private durationInMinutes(completionDate: Moment, initializationDate: Moment) {
+        return this.momentDiff.transform(completionDate, initializationDate, 'minutes');
     }
 }

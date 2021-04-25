@@ -27,7 +27,6 @@ import { SubmissionExerciseType } from 'app/entities/submission.model';
 import { formatTeamAsSearchResult } from 'app/exercises/shared/team/team.utils';
 import { AccountService } from 'app/core/auth/account.service';
 import { defaultLongDateTimeFormat } from 'app/shared/pipes/artemis-date.pipe';
-import { ExerciseScoresExportButtonComponent } from 'app/exercises/shared/exercise-scores/exercise-scores-export-button.component';
 
 /**
  * Filter properties for a result
@@ -78,7 +77,6 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
         private resultService: ResultService,
         private profileService: ProfileService,
         private programmingSubmissionService: ProgrammingSubmissionService,
-        private exportResultButtonComponent: ExerciseScoresExportButtonComponent,
     ) {
         this.resultCriteria = {
             filterProp: FilterProp.ALL,
@@ -99,9 +97,8 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
             forkJoin(findCourse, findExercise).subscribe(([courseRes, exerciseRes]) => {
                 this.course = courseRes.body!;
                 this.exercise = exerciseRes.body!;
-                this.exportResultButtonComponent.exercise = this.exercise;
                 // After both calls are done, the loading flag is removed. If the exercise is not a programming exercise, only the result call is needed.
-                zip(this.exportResultButtonComponent.getResults(), this.loadAndCacheProgrammingExerciseSubmissionState())
+                zip(this.resultService.getResults(this.exercise), this.loadAndCacheProgrammingExerciseSubmissionState())
                     .pipe(take(1))
                     .subscribe((results) => {
                         this.results = results[0].body || [];
@@ -279,7 +276,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
     refresh() {
         this.isLoading = true;
         this.results = [];
-        this.exportResultButtonComponent.getResults().subscribe((results) => {
+        this.resultService.getResults(this.exercise).subscribe((results) => {
             this.results = results.body || [];
             this.isLoading = false;
         });
