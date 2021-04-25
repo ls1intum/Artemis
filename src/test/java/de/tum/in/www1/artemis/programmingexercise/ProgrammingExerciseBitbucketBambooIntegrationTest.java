@@ -286,4 +286,16 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
     public void testDownloadCourseArchiveAsInstructor() throws Exception {
         programmingExerciseTestService.testDownloadCourseArchiveAsInstructor();
     }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    public void testAutomaticCleanUpBuildPlans() throws Exception {
+        programmingExerciseTestService.automaticCleanupBuildPlans();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    public void testAutomaticCleanupGitRepositories() throws Exception {
+        programmingExerciseTestService.automaticCleanupGitRepositories();
+    }
 }

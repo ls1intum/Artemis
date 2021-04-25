@@ -48,6 +48,7 @@ import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildResultDTO;
 import de.tum.in.www1.artemis.service.programming.ProgrammingLanguageFeature;
+import de.tum.in.www1.artemis.service.scheduled.AutomaticProgrammingExerciseCleanupService;
 import de.tum.in.www1.artemis.service.user.PasswordService;
 import de.tum.in.www1.artemis.util.GitUtilService.MockFileRepositoryUrl;
 import de.tum.in.www1.artemis.web.rest.ParticipationResource;
@@ -104,7 +105,10 @@ public class ProgrammingExerciseTestService {
     private PasswordService passwordService;
 
     @Autowired
-    ZipFileTestUtilService zipFileTestUtilService;
+    private ZipFileTestUtilService zipFileTestUtilService;
+
+    @Autowired
+    private AutomaticProgrammingExerciseCleanupService automaticProgrammingExerciseCleanupService;
 
     @Value("${artemis.lti.user-prefix-edx:#{null}}")
     private Optional<String> userPrefixEdx;
@@ -1132,6 +1136,51 @@ public class ProgrammingExerciseTestService {
             // We cannot compare exception messages because each vcs has their own. Maybe simply checking that the exception is not empty is enough?
             assertThat(e.getMessage()).isNotEmpty();
         }
+    }
+
+    // TEST
+    public void automaticCleanupBuildPlans() throws Exception {
+        exercise = programmingExerciseRepository.save(exercise);
+
+        // SuccessfulLatestResultAfter1Days
+        var participation1 = createProgrammingParticipationWithSubmissionAndResult(exercise, "student1", 100D, ZonedDateTime.now().minusDays(2L));
+        // UnsuccessfulLatestResultAfter5Days
+        var participation2 = createProgrammingParticipationWithSubmissionAndResult(exercise, "student2", 80D, ZonedDateTime.now().minusDays(6L));
+
+        // TODO: add more examples to cover all cases of cleaned up build plans (in particular exam exercises)
+
+        // TODO: mock that the build plan exists
+
+        mockDelegate.mockDeleteBuildPlan(exercise.getProjectKey(), exercise.getProjectKey() + "-" + participation1.getParticipantIdentifier().toUpperCase(), false);
+        mockDelegate.mockDeleteBuildPlan(exercise.getProjectKey(), exercise.getProjectKey() + "-" + participation2.getParticipantIdentifier().toUpperCase(), false);
+        automaticProgrammingExerciseCleanupService.cleanupBuildPlansOnContinuousIntegrationServer();
+
+        assertThat(programmingExerciseStudentParticipationRepository.findByIdElseThrow(participation1.getId()).getBuildPlanId()).isNull();
+        assertThat(programmingExerciseStudentParticipationRepository.findByIdElseThrow(participation2.getId()).getBuildPlanId()).isNull();
+    }
+
+    private ProgrammingExerciseStudentParticipation createProgrammingParticipationWithSubmissionAndResult(ProgrammingExercise exercise, String studentLogin, double score,
+            ZonedDateTime submissionDate) {
+        var programmingSubmission = ModelFactory.generateProgrammingSubmission(true, "abcde", SubmissionType.MANUAL, submissionDate);
+        programmingSubmission = database.addProgrammingSubmission(exercise, programmingSubmission, studentLogin);
+        database.addResultToParticipation(AssessmentType.AUTOMATIC, submissionDate, programmingSubmission.getParticipation(), score >= 100D, true, 100D);
+        return (ProgrammingExerciseStudentParticipation) programmingSubmission.getParticipation();
+    }
+
+    // TEST
+    public void automaticCleanupGitRepositories() throws Exception {
+        exercise.setReleaseDate(ZonedDateTime.now().minusWeeks(10L));
+        exercise.setDueDate(ZonedDateTime.now().minusWeeks(10L).plusDays(5L));
+        exercise = programmingExerciseRepository.save(exercise);
+
+        var participation1 = createProgrammingParticipationWithSubmissionAndResult(exercise, "student1", 100D, ZonedDateTime.now().minusDays(2L));
+        var participation2 = createProgrammingParticipationWithSubmissionAndResult(exercise, "student2", 80D, ZonedDateTime.now().minusDays(6L));
+
+        // TODO: do we need to mock something here for the deletion of the git repos?
+
+        automaticProgrammingExerciseCleanupService.cleanupGitRepositoriesOnArtemisServer();
+
+        // TODO: verify that the delete method for the git repo was invoked
     }
 
     private void structureOracle(ProgrammingExercise programmingExercise) throws Exception {

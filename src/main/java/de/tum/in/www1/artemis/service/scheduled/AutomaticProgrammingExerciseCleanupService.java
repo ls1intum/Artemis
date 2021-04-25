@@ -56,6 +56,12 @@ public class AutomaticProgrammingExerciseCleanupService {
      */
     @Scheduled(cron = "0 0 3 * * *") // execute this every night at 3:00:00 am
     public void cleanup() {
+        Collection<String> activeProfiles = Arrays.asList(env.getActiveProfiles());
+        if (!activeProfiles.contains(JHipsterConstants.SPRING_PROFILE_PRODUCTION)) {
+            // only execute this on production server, i.e. when the prod profile is active
+            // NOTE: if you want to test this locally, please comment it out, but do not commit the changes
+            return;
+        }
         try {
             cleanupBuildPlansOnContinuousIntegrationServer();
         }
@@ -75,7 +81,7 @@ public class AutomaticProgrammingExerciseCleanupService {
      */
     public void cleanupGitRepositoriesOnArtemisServer() {
         SecurityUtils.setAuthorizationObject();
-        // we are specifically interested in one whole day 8 weeks ago
+        // we are specifically interested in exercises older than 8 weeks
         var endDate2 = ZonedDateTime.now().minusWeeks(8).truncatedTo(ChronoUnit.DAYS);
         // NOTE: for now we would like to cover more cases to also cleanup older repositories
         var endDate1 = endDate2.minusYears(1).truncatedTo(ChronoUnit.DAYS);
@@ -106,14 +112,7 @@ public class AutomaticProgrammingExerciseCleanupService {
     /**
      *  Cleans up old build plans on the continuous integration server
      */
-    private void cleanupBuildPlansOnContinuousIntegrationServer() {
-        Collection<String> activeProfiles = Arrays.asList(env.getActiveProfiles());
-        if (!activeProfiles.contains(JHipsterConstants.SPRING_PROFILE_PRODUCTION)) {
-            // only execute this on production server, i.e. when the prod profile is active
-            // NOTE: if you want to test this locally, please comment it out, but do not commit the changes
-            return;
-        }
-
+    public void cleanupBuildPlansOnContinuousIntegrationServer() {
         long start = System.currentTimeMillis();
         log.info("Find build plans for potential cleanup");
 

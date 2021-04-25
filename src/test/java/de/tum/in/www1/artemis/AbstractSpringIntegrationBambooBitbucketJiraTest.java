@@ -3,7 +3,7 @@ package de.tum.in.www1.artemis;
 import static de.tum.in.www1.artemis.config.Constants.*;
 import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.*;
 import static de.tum.in.www1.artemis.util.TestConstants.COMMIT_HASH_OBJECT_ID;
-import static io.github.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
+import static io.github.jhipster.config.JHipsterConstants.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -410,8 +410,7 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
 
     @Override
     public void mockDeleteBuildPlan(String projectKey, String planName, boolean shouldFail) throws Exception {
-        // var planKey = (projectKey + "-" + planName).toUpperCase();
-        bambooRequestMockProvider.mockDeleteBambooBuildPlan(planName, false);
+        bambooRequestMockProvider.mockDeleteBambooBuildPlan(planName, !shouldFail);
     }
 
     @Override
