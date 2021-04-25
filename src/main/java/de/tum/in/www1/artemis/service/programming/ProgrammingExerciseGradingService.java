@@ -258,12 +258,12 @@ public class ProgrammingExerciseGradingService {
         ArrayList<Result> updatedResults = new ArrayList<>();
 
         templateProgrammingExerciseParticipationRepository.findWithEagerResultsAndFeedbacksAndSubmissionsByProgrammingExerciseId(exercise.getId())
-                .flatMap(p -> Optional.ofNullable(p.findLatestResult())).ifPresent(result -> {
+                .flatMap(p -> Optional.ofNullable(p.findLatestLegalResult())).ifPresent(result -> {
                     calculateScoreForResult(testCases, testCases, result, exercise);
                     updatedResults.add(result);
                 });
         solutionProgrammingExerciseParticipationRepository.findWithEagerResultsAndFeedbacksAndSubmissionsByProgrammingExerciseId(exercise.getId())
-                .flatMap(p -> Optional.ofNullable(p.findLatestResult())).ifPresent(result -> {
+                .flatMap(p -> Optional.ofNullable(p.findLatestLegalResult())).ifPresent(result -> {
                     calculateScoreForResult(testCases, testCases, result, exercise);
                     updatedResults.add(result);
                 });
@@ -274,7 +274,7 @@ public class ProgrammingExerciseGradingService {
         List<StudentParticipation> participations = studentParticipationRepository.findByExerciseIdWithLatestAutomaticResultAndFeedbacks(exercise.getId());
 
         for (StudentParticipation studentParticipation : participations) {
-            Result result = studentParticipation.findLatestResult();
+            Result result = studentParticipation.findLatestLegalResult();
             if (result != null) {
                 calculateScoreForResult(testCases, testCasesForCurrentDate, result, exercise);
                 updatedResults.add(result);
@@ -284,7 +284,7 @@ public class ProgrammingExerciseGradingService {
         // Update also manual results
         List<StudentParticipation> participationsWithManualResult = studentParticipationRepository.findByExerciseIdWithManualResultAndFeedbacks(exercise.getId());
         for (StudentParticipation studentParticipation : participationsWithManualResult) {
-            Result result = studentParticipation.findLatestResult();
+            Result result = studentParticipation.findLatestLegalResult();
             if (result != null) {
                 calculateScoreForResult(testCases, testCasesForCurrentDate, result, exercise);
                 updatedResults.add(result);

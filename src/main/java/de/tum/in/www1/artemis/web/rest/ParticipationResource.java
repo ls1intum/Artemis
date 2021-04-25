@@ -208,7 +208,7 @@ public class ParticipationResource {
         // Load results of participation as they are not contained in the current object
         participation = studentParticipationRepository.findByIdWithResultsElseThrow(participation.getId());
 
-        Result result = participation.findLatestResult();
+        Result result = participation.findLatestLegalResult();
         if (result != null) {
             participation.setResults(Set.of(result));
         }
