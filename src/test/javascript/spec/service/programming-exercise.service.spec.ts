@@ -18,12 +18,14 @@ import * as moment from 'moment';
 import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { Result } from 'app/entities/result.model';
+import { SERVER_API_URL } from 'app/app.constants';
 
 describe('ProgrammingExercise Service', () => {
     let injector: TestBed;
     let service: ProgrammingExerciseService;
     let httpMock: HttpTestingController;
     let elemDefault: ProgrammingExercise;
+    const resourceUrl = SERVER_API_URL + 'api/programming-exercises';
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [
@@ -161,6 +163,16 @@ describe('ProgrammingExercise Service', () => {
 
             const req = httpMock.expectOne({ method: 'DELETE' });
             req.flush({ status: 200 });
+        });
+
+        it('should download instructor material of a ProgrammingExercise', async () => {
+            const expectedBlob = new Blob(['abc', 'cfe']);
+            service.exportInstructorExercise(123).subscribe((resp) => {
+                expect(resp.body).toMatchObject(expectedBlob);
+                expect(resp.status).toBe(200);
+            });
+            const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/123/export-instructor-exercise` });
+            req.flush(expectedBlob);
         });
     });
 
