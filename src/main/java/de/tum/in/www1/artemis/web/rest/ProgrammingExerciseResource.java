@@ -770,11 +770,11 @@ public class ProgrammingExerciseResource {
      * @throws IOException if something during the zip process went wrong
      */
     @GetMapping(Endpoints.EXPORT_INSTRUCTOR_EXERCISE)
-    @PreAuthorize("hasRole('TA')")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
     @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
     public ResponseEntity<Resource> exportInstructorExercise(@PathVariable long exerciseId) throws IOException {
         var programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, programmingExercise, null);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, programmingExercise, null);
 
         long start = System.nanoTime();
         var path = programmingExerciseExportService.exportInstructorProgrammingExercise(programmingExercise, new ArrayList<>());
