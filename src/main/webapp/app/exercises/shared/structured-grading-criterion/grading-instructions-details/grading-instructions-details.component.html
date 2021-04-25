@@ -1,3 +1,4 @@
+<div *ngIf="!exercise.gradingInstructionFeedbackUsed">
 <jhi-markdown-editor
     #markdownEditor
     style="height: 350px"
@@ -38,3 +39,39 @@
     </ng-container>
     <!-- End of Preview-->
 </jhi-markdown-editor>
+</div>
+
+<div class="edit-sqi" *ngIf="exercise.gradingInstructionFeedbackUsed">
+<div class="grading-instructions-update-border">
+    <div *ngFor="let criteria of exercise.gradingCriteria">
+        <label class="font-weight-bold" [innerHTML]="criteria!.title! | htmlForMarkdown"></label>
+        <div *ngFor="let instruction of criteria.structuredGradingInstructions">
+            <div class="instructions">
+                <jhi-markdown-editor
+                    #markdownEditor
+                    [markdown]="generateInstructionText(instruction)"
+                    [editorMode]="editorMode"
+                    [metaCommands]="[]"
+                    [defaultCommands]="[]"
+                    [headerCommands]="[]"
+                    [domainCommands]="[]"
+                    [colorCommands]="[]"
+                    [showEditButton]="false"
+                    [showPreviewButton]="false"
+                    (markdownChange)="onAnswerOptionChange($event, instruction, criteria)"
+                    class="editor"
+                    style="width: 65%"
+                ></jhi-markdown-editor>
+                <div class="form-group text-center" style="width: 25%">
+                    <span class="re-evaluate-button" (click)="resetInstruction(instruction, criteria)">
+                        <fa-icon [icon]="'undo'" size="2x"></fa-icon>
+                    </span>
+                    <span class="re-evaluate-button" (click)="deleteInstruction(instruction, criteria)">
+                        <fa-icon [icon]="'trash'" size="2x"></fa-icon>
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</div>

@@ -11,9 +11,13 @@ import { GradingInstructionCommand } from 'app/shared/markdown-editor/domainComm
 import { InstructionDescriptionCommand } from 'app/shared/markdown-editor/domainCommands/instructionDescription.command';
 import { GradingCriterionCommand } from 'app/shared/markdown-editor/domainCommands/gradingCriterionCommand';
 import { Exercise } from 'app/entities/exercise.model';
+import { EditorMode } from 'app/shared/markdown-editor/markdown-editor.component';
+import { cloneDeep } from 'lodash';
+
 @Component({
     selector: 'jhi-grading-instructions-details',
     templateUrl: './grading-instructions-details.component.html',
+    styleUrls: ['./grading-instructions-details.component.scss'],
 })
 export class GradingInstructionsDetailsComponent implements OnInit {
     /** Ace Editor configuration constants **/
@@ -24,6 +28,9 @@ export class GradingInstructionsDetailsComponent implements OnInit {
     exercise: Exercise;
     private instructions: GradingInstruction[];
     private criteria: GradingCriterion[];
+
+    editorMode = EditorMode.NONE;
+    backupExercise: Exercise;
 
     gradingCriterionCommand = new GradingCriterionCommand();
     gradingInstructionCommand = new GradingInstructionCommand();
@@ -47,6 +54,7 @@ export class GradingInstructionsDetailsComponent implements OnInit {
 
     ngOnInit() {
         this.criteria = this.exercise.gradingCriteria || [];
+        this.backupExercise = cloneDeep(this.exercise);
         this.questionEditorText = this.generateMarkdown();
     }
 
@@ -88,26 +96,32 @@ export class GradingInstructionsDetailsComponent implements OnInit {
             criterion.structuredGradingInstructions = this.instructions;
         }
         for (const instruction of criterion.structuredGradingInstructions) {
-            markdownText +=
-                GradingInstructionCommand.identifier +
-                '\n' +
-                '\t' +
-                this.generateCreditsText(instruction) +
-                '\n' +
-                '\t' +
-                this.generateGradingScaleText(instruction) +
-                '\n' +
-                '\t' +
-                this.generateInstructionDescriptionText(instruction) +
-                '\n' +
-                '\t' +
-                this.generateInstructionFeedback(instruction) +
-                '\n' +
-                '\t' +
-                this.generateUsageCount(instruction) +
-                '\n' +
-                '\n';
+            markdownText = this.generateInstructionText(instruction);
         }
+        return markdownText;
+    }
+
+    generateInstructionText(instruction: GradingInstruction): string {
+        let markdownText = '';
+        markdownText +=
+            GradingInstructionCommand.identifier +
+            '\n' +
+            '\t' +
+            this.generateCreditsText(instruction) +
+            '\n' +
+            '\t' +
+            this.generateGradingScaleText(instruction) +
+            '\n' +
+            '\t' +
+            this.generateInstructionDescriptionText(instruction) +
+            '\n' +
+            '\t' +
+            this.generateInstructionFeedback(instruction) +
+            '\n' +
+            '\t' +
+            this.generateUsageCount(instruction) +
+            '\n' +
+            '\n';
         return markdownText;
     }
 
@@ -284,5 +298,57 @@ export class GradingInstructionsDetailsComponent implements OnInit {
         this.criteria = [];
         this.exercise.gradingCriteria = [];
         this.createSubInstructionCommands(domainCommands);
+    }
+
+    /**
+     * parse the new text, hint and explanation using the markdown service and assign it to the passed answer
+     * @param {string} text
+     * @param {GradingInstruction} instruction
+     * @param {GradingCriterion} criteria
+     */
+    onAnswerOptionChange(text: string, instruction: GradingInstruction, criteria: GradingCriterion): void {
+        // const criteriaIndex = this.exercise.gradingCriteria!.findIndex((gradingCriteria) => {
+        //     return gradingCriteria.id === criteria.id;
+        // });
+        // const instructionIndex = this.exercise.gradingCriteria![criteriaIndex].structuredGradingInstructions.findIndex((sgi) => {
+        //     return sgi.id === instruction.id;
+        // });
+        // // this.parseAnswerMarkdown(text, this.question.answerOptions![answerIndex!]);
+    }
+
+    /**
+     * Resets the whole instruction
+     * @param instruction {GradingInstruction} the instruction, which will be reset
+     * @param criteria {GradingCriterion} the criteria, which includes the instruction that will be reset
+     */
+    resetInstruction(instruction: GradingInstruction, criteria: GradingCriterion) {
+        const criteriaIndex = this.exercise.gradingCriteria!.findIndex((gradingCriteria) => {
+            return gradingCriteria.id === criteria.id;
+        });
+        const instructionIndex = this.exercise.gradingCriteria![criteriaIndex].structuredGradingInstructions.findIndex((sgi) => {
+            return sgi.id === instruction.id;
+        });
+
+        const backupCriteriaIndex = this.backupExercise.gradingCriteria!.findIndex((gradingCriteria) => {
+            return gradingCriteria.id === criteria.id;
+        });
+        const backupInstructionIndex = this.backupExercise.gradingCriteria![criteriaIndex].structuredGradingInstructions.findIndex((sgi) => {
+            return sgi.id === instruction.id;
+        });
+
+        this.exercise.gradingCriteria![criteriaIndex].structuredGradingInstructions![instructionIndex] = cloneDeep(
+            this.backupExercise.gradingCriteria![backupCriteriaIndex].structuredGradingInstructions![backupInstructionIndex],
+        );
+    }
+
+    /**
+     * Delete the instruction
+     * @param instruction {GradingInstruction} the instruction which should be deleted
+     * @param criteria {GradingCriterion} the criteria, which includes the instruction that will be reset
+     */
+    deleteInstruction(instruction: GradingInstruction, criteria: GradingCriterion) {
+        const criteriaIndex = this.exercise.gradingCriteria!.indexOf(criteria);
+        const instructionIndex = this.exercise.gradingCriteria![criteriaIndex].structuredGradingInstructions.indexOf(instruction);
+        this.exercise.gradingCriteria![criteriaIndex].structuredGradingInstructions.splice(instructionIndex, 1);
     }
 }
