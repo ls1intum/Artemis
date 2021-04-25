@@ -86,24 +86,19 @@ public class CourseExamExportService {
             return Optional.empty();
         }
 
-        try {
-            // Export course exercises and exams
-            exportCourseExercises(notificationTopic, course, courseDirPath.toString(), exportErrors);
-            exportCourseExams(notificationTopic, course, courseDirPath.toString(), exportErrors);
+        // Export course exercises and exams
+        exportCourseExercises(notificationTopic, course, courseDirPath.toString(), exportErrors);
+        exportCourseExams(notificationTopic, course, courseDirPath.toString(), exportErrors);
 
-            // Zip them together
-            var exportedCoursePath = createCourseZipFile(courseDirPath.getParent(), Path.of(outputDir), exportErrors);
+        // Zip them together
+        var exportedCoursePath = createCourseZipFile(courseDirPath.getParent(), Path.of(outputDir), exportErrors);
 
-            log.info("Successfully exported course {}. The zip file is located at: {}", course.getId(), exportedCoursePath);
-            return exportedCoursePath;
-        }
-        catch (Exception e) {
-            logMessageAndAppendToList("Failed to export the entire course " + course.getTitle() + ": " + e.getMessage(), exportErrors);
-            return Optional.empty();
-        }
-        finally {
-            notifyUserAboutExerciseExportState(notificationTopic, CourseExamExportState.COMPLETED, "");
-        }
+        var exportState = exportErrors.isEmpty() ? CourseExamExportState.COMPLETED : CourseExamExportState.COMPLETED_WITH_WARNINGS;
+        notifyUserAboutExerciseExportState(notificationTopic, exportState, exportErrors);
+
+        log.info("Successfully exported course {}. The zip file is located at: {}", course.getId(), exportedCoursePath);
+        return exportedCoursePath;
+
     }
 
     /**
@@ -132,23 +127,17 @@ public class CourseExamExportService {
             return Optional.empty();
         }
 
-        try {
-            // Export exam exercises
-            var exercises = examRepository.findAllExercisesByExamId(exam.getId());
-            exportExercises(notificationTopic, exercises, examDirPath.toString(), exportErrors);
+        // Export exam exercises
+        var exercises = examRepository.findAllExercisesByExamId(exam.getId());
+        exportExercises(notificationTopic, exercises, examDirPath.toString(), exportErrors);
 
-            var exportedExamPath = createCourseZipFile(examDirPath.getParent(), Path.of(outputDir), exportErrors);
+        var exportedExamPath = createCourseZipFile(examDirPath.getParent(), Path.of(outputDir), exportErrors);
 
-            log.info("Successfully exported exam {}. The zip file is located at: {}", exam.getId(), exportedExamPath);
-            return exportedExamPath;
-        }
-        catch (Exception e) {
-            logMessageAndAppendToList("Failed to export the exam " + exam.getTitle() + ": " + e.getMessage(), exportErrors);
-            return Optional.empty();
-        }
-        finally {
-            notifyUserAboutExerciseExportState(notificationTopic, CourseExamExportState.COMPLETED, "");
-        }
+        var exportState = exportErrors.isEmpty() ? CourseExamExportState.COMPLETED : CourseExamExportState.COMPLETED_WITH_WARNINGS;
+        notifyUserAboutExerciseExportState(notificationTopic, exportState, exportErrors);
+
+        log.info("Successfully exported exam {}. The zip file is located at: {}", exam.getId(), exportedExamPath);
+        return exportedExamPath;
     }
 
     /**
@@ -179,12 +168,14 @@ public class CourseExamExportService {
      * @param exportErrors List of failures that occurred during the export
      */
     private void exportCourseExams(String notificationTopic, Course course, String outputDir, List<String> exportErrors) {
-        Path examsDir = Path.of(outputDir, "exams");
+        Path examsDir = null;
         try {
+            examsDir = Path.of(outputDir, "exams");
             Files.createDirectory(examsDir);
-            List<Exam> exams = examRepository.findByCourseId(course.getId());
-            exams.forEach(exam -> exportExam(notificationTopic, exam.getId(), examsDir.toString(), exportErrors));
 
+            List<Exam> exams = examRepository.findByCourseId(course.getId());
+            Path finalExamsDir = examsDir;
+            exams.forEach(exam -> exportExam(notificationTopic, exam.getId(), finalExamsDir.toString(), exportErrors));
         }
         catch (IOException e) {
             logMessageAndAppendToList("Failed to create course exams directory " + examsDir + ".", exportErrors);
@@ -199,10 +190,13 @@ public class CourseExamExportService {
      * @param exportErrors List of failures that occurred during the export
      */
     private void exportExam(String notificationTopic, long examId, String outputDir, List<String> exportErrors) {
-        var exam = examRepository.findByIdElseThrow(examId);
-        Path examDir = Path.of(outputDir, exam.getId() + "-" + exam.getTitle());
+        Path examDir = null;
         try {
+            // Create exam directory.
+            var exam = examRepository.findByIdElseThrow(examId);
+            examDir = Path.of(outputDir, exam.getId() + "-" + exam.getTitle());
             Files.createDirectory(examDir);
+
             // We retrieve every exercise from each exercise group and flatten the list.
             var exercises = examRepository.findAllExercisesByExamId(examId);
             exportExercises(notificationTopic, exercises, examDir.toString(), exportErrors);
@@ -226,8 +220,9 @@ public class CourseExamExportService {
         exercises.forEach(exercise -> {
             // Notify the user after the progress
             exportedExercises.addAndGet(1);
-            notifyUserAboutExerciseExportState(notificationTopic, CourseExamExportState.RUNNING, exportedExercises + "/" + exercises.size() + " done");
+            notifyUserAboutExerciseExportState(notificationTopic, CourseExamExportState.RUNNING, List.of(exportedExercises + "/" + exercises.size() + " done"));
 
+            // Export programming exercise
             if (exercise instanceof ProgrammingExercise) {
                 // download the repositories template, solution, tests and students' repositories
                 programmingExerciseExportService.exportProgrammingExerciseRepositories((ProgrammingExercise) exercise, true, outputDir, exportErrors);
@@ -292,18 +287,20 @@ public class CourseExamExportService {
      * @return The path to the zip file
      */
     private Optional<Path> createCourseZipFile(Path courseDirPath, Path outputDirPath, List<String> exportErrors) {
-        var zippedFile = Path.of(outputDirPath.toString(), courseDirPath.getFileName() + ".zip");
+        var zipFileName = courseDirPath.getFileName() + ".zip";
         try {
+            var zippedFile = Path.of(outputDirPath.toString(), zipFileName);
+
             // Create course output directory if it doesn't exist
             Files.createDirectories(outputDirPath);
-            log.info("Created the directory {} because it didn't exist.", outputDirPath.toString());
+            log.info("Created the directory {} because it didn't exist.", outputDirPath);
 
             zipFileService.createZipFileWithFolderContent(zippedFile, courseDirPath);
             log.info("Successfully created zip file at: {}", zippedFile);
             return Optional.of(zippedFile);
         }
         catch (IOException e) {
-            logMessageAndAppendToList("Failed to create zip file at " + zippedFile + ".", exportErrors);
+            logMessageAndAppendToList("Failed to create zip file" + zipFileName + " at " + outputDirPath + ".", exportErrors);
             return Optional.empty();
         }
         finally {
@@ -321,16 +318,16 @@ public class CourseExamExportService {
      *
      * @param topic The topic to send the notification to
      * @param exportState The export state
-     * @param progress progress message
+     * @param messages  optional messages to send
      */
-    private void notifyUserAboutExerciseExportState(String topic, CourseExamExportState exportState, String progress) {
-        Map<String, String> message = new HashMap<>();
-        message.put("exportState", exportState.toString());
-        message.put("progress", progress);
+    private void notifyUserAboutExerciseExportState(String topic, CourseExamExportState exportState, List<String> messages) {
+        Map<String, String> payload = new HashMap<>();
+        payload.put("exportState", exportState.toString());
+        payload.put("message", String.join("\n", messages));
 
         var mapper = new ObjectMapper();
         try {
-            websocketMessagingService.sendMessage(topic, mapper.writeValueAsString(message));
+            websocketMessagingService.sendMessage(topic, mapper.writeValueAsString(payload));
         }
         catch (IOException e) {
             log.info("Couldn't notify the user about the exercise export state for topic {}: {}", topic, e.getMessage());

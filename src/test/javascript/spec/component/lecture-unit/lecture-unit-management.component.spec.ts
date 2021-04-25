@@ -31,6 +31,7 @@ import { By } from '@angular/platform-browser';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { LearningGoal } from 'app/entities/learningGoal.model';
 import { UnitCreationCardComponent } from 'app/lecture/lecture-unit/lecture-unit-management/unit-creation-card/unit-creation-card.component';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -73,6 +74,7 @@ describe('LectureUnitManagementComponent', () => {
                 MockComponent(UnitCreationCardComponent),
                 LearningGoalsPopoverStubComponent,
                 MockPipe(ArtemisTranslatePipe),
+                MockPipe(ArtemisDatePipe),
                 MockComponent(ExerciseUnitComponent),
                 MockComponent(AttachmentUnitComponent),
                 MockComponent(VideoUnitComponent),
