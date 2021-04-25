@@ -81,15 +81,19 @@ public class AutomaticProgrammingExerciseCleanupService {
      */
     public void cleanupGitRepositoriesOnArtemisServer() {
         SecurityUtils.setAuthorizationObject();
+        log.info("Cleanup git repositories on Artemis server");
         // we are specifically interested in exercises older than 8 weeks
         var endDate2 = ZonedDateTime.now().minusWeeks(8).truncatedTo(ChronoUnit.DAYS);
         // NOTE: for now we would like to cover more cases to also cleanup older repositories
         var endDate1 = endDate2.minusYears(1).truncatedTo(ChronoUnit.DAYS);
 
         // Cleanup all student repos in the REPOS folder (based on the student participations) 8 weeks after the exercise due date
-        var programmingExercises = programmingExerciseRepository.findAllWithStudentParticipationByRecentEndDate(endDate1, endDate2);
-        log.info("Found {} programming exercise to clean local student repositories: {}", programmingExercises.size(),
-                programmingExercises.stream().map(ProgrammingExercise::getProjectKey).collect(Collectors.joining(", ")));
+        log.info("Search for exercises with due date from " + endDate1 + " until " + endDate2);
+        var programmingExercises = programmingExerciseRepository.findAllWithStudentParticipationByRecentDueDate(endDate1, endDate2);
+        programmingExercises.addAll(programmingExerciseRepository.findAllWithStudentParticipationByRecentExamEndDate(endDate1, endDate2));
+        log.info("Found {} programming exercises {} to clean {} local student repositories", programmingExercises.size(),
+                programmingExercises.stream().map(ProgrammingExercise::getProjectKey).collect(Collectors.joining(", ")),
+                programmingExercises.stream().mapToLong(programmingExercise -> programmingExercise.getStudentParticipations().size()).sum());
         for (var programmingExercise : programmingExercises) {
             for (var studentParticipation : programmingExercise.getStudentParticipations()) {
                 var programmingExerciseParticipation = (ProgrammingExerciseStudentParticipation) studentParticipation;
@@ -97,8 +101,10 @@ public class AutomaticProgrammingExerciseCleanupService {
             }
         }
 
-        // Cleanup template, tests and solution repos in the REPOS folder 8 weeks after the course is over
+        // Cleanup template, tests and solution repos in the REPOS folder 8 weeks after the course or exam is over
+        log.info("Search for exercises with course or exam date from " + endDate1 + " until " + endDate2);
         programmingExercises = programmingExerciseRepository.findAllByRecentCourseEndDate(endDate1, endDate2);
+        programmingExercises.addAll(programmingExerciseRepository.findAllByRecentExamEndDate(endDate1, endDate2));
         log.info("Found {} programming exercise to clean local template, test and solution: {}", programmingExercises.size(),
                 programmingExercises.stream().map(ProgrammingExercise::getProjectKey).collect(Collectors.joining(", ")));
         for (var programmingExercise : programmingExercises) {

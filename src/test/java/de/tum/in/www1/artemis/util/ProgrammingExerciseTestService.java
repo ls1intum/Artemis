@@ -83,6 +83,9 @@ public class ProgrammingExerciseTestService {
     private CourseRepository courseRepository;
 
     @Autowired
+    private ExamRepository examRepository;
+
+    @Autowired
     private StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository;
 
     @Autowired
@@ -119,7 +122,7 @@ public class ProgrammingExerciseTestService {
 
     public ProgrammingExercise examExercise;
 
-    public static final int numberOfStudents = 2;
+    public static final int numberOfStudents = 11;
 
     public static final String studentLogin = "student1";
 
@@ -1141,46 +1144,113 @@ public class ProgrammingExerciseTestService {
     // TEST
     public void automaticCleanupBuildPlans() throws Exception {
         exercise = programmingExerciseRepository.save(exercise);
+        examExercise = programmingExerciseRepository.save(examExercise);
+
+        var exercise2 = ModelFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(5), ZonedDateTime.now().minusDays(4), course);
+        exercise2.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().plusDays(1));
+        exercise2 = programmingExerciseRepository.save(exercise2);
+
+        var exercise3 = ModelFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(5), ZonedDateTime.now().minusDays(4), course);
+        exercise3.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().minusDays(3));
+        exercise3 = programmingExerciseRepository.save(exercise3);
+
+        // Note participationXa will always be cleaned up, while participationXb will NOT be cleaned up
 
         // SuccessfulLatestResultAfter1Days
-        var participation1 = createProgrammingParticipationWithSubmissionAndResult(exercise, "student1", 100D, ZonedDateTime.now().minusDays(2L));
+        var participation1a = createProgrammingParticipationWithSubmissionAndResult(exercise, "student1", 100D, ZonedDateTime.now().minusDays(2), true);
+        var participation1b = createProgrammingParticipationWithSubmissionAndResult(exercise, "student2", 100D, ZonedDateTime.now().minusHours(6), true);
         // UnsuccessfulLatestResultAfter5Days
-        var participation2 = createProgrammingParticipationWithSubmissionAndResult(exercise, "student2", 80D, ZonedDateTime.now().minusDays(6L));
+        var participation2a = createProgrammingParticipationWithSubmissionAndResult(exercise, "student3", 80D, ZonedDateTime.now().minusDays(6), true);
+        var participation2b = createProgrammingParticipationWithSubmissionAndResult(exercise, "student4", 80D, ZonedDateTime.now().minusDays(4), true);
+        // NoResultAfter3Days
+        var participation3a = createProgrammingParticipationWithSubmissionAndResult(exercise, "student5", 80D, ZonedDateTime.now().minusDays(6), false);
+        participation3a.setInitializationDate(ZonedDateTime.now().minusDays(4));
+        var participation3b = createProgrammingParticipationWithSubmissionAndResult(exercise, "student6", 80D, ZonedDateTime.now().minusDays(6), false);
+        participation3b.setInitializationDate(ZonedDateTime.now().minusDays(2));
+
+        var participation4b = createProgrammingParticipationWithSubmissionAndResult(examExercise, "student7", 80D, ZonedDateTime.now().minusDays(6), false);
+        var participation5b = createProgrammingParticipationWithSubmissionAndResult(examExercise, "student8", 80D, ZonedDateTime.now().minusDays(6), false);
+        participation5b.setBuildPlanId(null);
+        var participation6b = createProgrammingParticipationWithSubmissionAndResult(examExercise, "student9", 80D, ZonedDateTime.now().minusDays(6), false);
+        participation6b.setParticipant(null);
+
+        var participation7a = createProgrammingParticipationWithSubmissionAndResult(exercise3, "student10", 80D, ZonedDateTime.now().minusDays(4), true);
+        var participation7b = createProgrammingParticipationWithSubmissionAndResult(exercise2, "student11", 80D, ZonedDateTime.now().minusDays(4), true);
+
+        programmingExerciseStudentParticipationRepository.saveAll(Set.of(participation3a, participation3b, participation5b, participation6b));
 
         // TODO: add more examples to cover all cases of cleaned up build plans (in particular exam exercises)
 
         // TODO: mock that the build plan exists
 
-        mockDelegate.mockDeleteBuildPlan(exercise.getProjectKey(), exercise.getProjectKey() + "-" + participation1.getParticipantIdentifier().toUpperCase(), false);
-        mockDelegate.mockDeleteBuildPlan(exercise.getProjectKey(), exercise.getProjectKey() + "-" + participation2.getParticipantIdentifier().toUpperCase(), false);
+        mockDelegate.mockDeleteBuildPlan(exercise.getProjectKey(), exercise.getProjectKey() + "-" + participation1a.getParticipantIdentifier().toUpperCase(), false);
+        mockDelegate.mockDeleteBuildPlan(exercise.getProjectKey(), exercise.getProjectKey() + "-" + participation2a.getParticipantIdentifier().toUpperCase(), false);
+        mockDelegate.mockDeleteBuildPlan(exercise.getProjectKey(), exercise.getProjectKey() + "-" + participation3a.getParticipantIdentifier().toUpperCase(), false);
+        mockDelegate.mockDeleteBuildPlan(exercise.getProjectKey(), exercise3.getProjectKey() + "-" + participation7a.getParticipantIdentifier().toUpperCase(), false);
         automaticProgrammingExerciseCleanupService.cleanupBuildPlansOnContinuousIntegrationServer();
 
-        assertThat(programmingExerciseStudentParticipationRepository.findByIdElseThrow(participation1.getId()).getBuildPlanId()).isNull();
-        assertThat(programmingExerciseStudentParticipationRepository.findByIdElseThrow(participation2.getId()).getBuildPlanId()).isNull();
+        assertThat(programmingExerciseStudentParticipationRepository.findByIdElseThrow(participation1a.getId()).getBuildPlanId()).isNull();
+        assertThat(programmingExerciseStudentParticipationRepository.findByIdElseThrow(participation1b.getId()).getBuildPlanId()).isNotNull();
+
+        assertThat(programmingExerciseStudentParticipationRepository.findByIdElseThrow(participation2a.getId()).getBuildPlanId()).isNull();
+        assertThat(programmingExerciseStudentParticipationRepository.findByIdElseThrow(participation2b.getId()).getBuildPlanId()).isNotNull();
+
+        assertThat(programmingExerciseStudentParticipationRepository.findByIdElseThrow(participation3a.getId()).getBuildPlanId()).isNull();
+        assertThat(programmingExerciseStudentParticipationRepository.findByIdElseThrow(participation3b.getId()).getBuildPlanId()).isNotNull();
+
+        assertThat(programmingExerciseStudentParticipationRepository.findByIdElseThrow(participation4b.getId()).getBuildPlanId()).isNotNull();
+        assertThat(programmingExerciseStudentParticipationRepository.findByIdElseThrow(participation5b.getId()).getBuildPlanId()).isNull(); // was already null before
+        assertThat(programmingExerciseStudentParticipationRepository.findByIdElseThrow(participation6b.getId()).getBuildPlanId()).isNotNull();
+
+        assertThat(programmingExerciseStudentParticipationRepository.findByIdElseThrow(participation7a.getId()).getBuildPlanId()).isNull();
+        assertThat(programmingExerciseStudentParticipationRepository.findByIdElseThrow(participation7b.getId()).getBuildPlanId()).isNotNull();
+
     }
 
     private ProgrammingExerciseStudentParticipation createProgrammingParticipationWithSubmissionAndResult(ProgrammingExercise exercise, String studentLogin, double score,
-            ZonedDateTime submissionDate) {
+            ZonedDateTime submissionDate, boolean withResult) {
         var programmingSubmission = ModelFactory.generateProgrammingSubmission(true, "abcde", SubmissionType.MANUAL, submissionDate);
         programmingSubmission = database.addProgrammingSubmission(exercise, programmingSubmission, studentLogin);
-        database.addResultToParticipation(AssessmentType.AUTOMATIC, submissionDate, programmingSubmission.getParticipation(), score >= 100D, true, 100D);
+        if (withResult) {
+            database.addResultToParticipation(AssessmentType.AUTOMATIC, submissionDate, programmingSubmission.getParticipation(), score >= 100D, true, 100D);
+        }
         return (ProgrammingExerciseStudentParticipation) programmingSubmission.getParticipation();
     }
 
     // TEST
     public void automaticCleanupGitRepositories() throws Exception {
-        exercise.setReleaseDate(ZonedDateTime.now().minusWeeks(10L));
-        exercise.setDueDate(ZonedDateTime.now().minusWeeks(10L).plusDays(5L));
+        var startDate = ZonedDateTime.now().minusWeeks(15L);
+        var endDate = startDate.plusDays(5L);
+        exercise.setReleaseDate(startDate);
+        exercise.setDueDate(endDate);
         exercise = programmingExerciseRepository.save(exercise);
+        exercise.getCourseViaExerciseGroupOrCourseMember().setStartDate(startDate);
+        exercise.getCourseViaExerciseGroupOrCourseMember().setEndDate(endDate);
+        courseRepository.save(exercise.getCourseViaExerciseGroupOrCourseMember());
 
-        var participation1 = createProgrammingParticipationWithSubmissionAndResult(exercise, "student1", 100D, ZonedDateTime.now().minusDays(2L));
-        var participation2 = createProgrammingParticipationWithSubmissionAndResult(exercise, "student2", 80D, ZonedDateTime.now().minusDays(6L));
+        examExercise = programmingExerciseRepository.save(examExercise);
+        examExercise.getExerciseGroup().getExam().setStartDate(startDate);
+        examExercise.getExerciseGroup().getExam().setEndDate(endDate);
+        examRepository.save(examExercise.getExerciseGroup().getExam());
 
-        // TODO: do we need to mock something here for the deletion of the git repos?
+        var allProgrammingExercises = programmingExerciseRepository.findAll();
+        assertThat(allProgrammingExercises).hasSize(2);
+        for (var programmingExercise : allProgrammingExercises) {
+            System.out.println("Exercise due date: " + programmingExercise.getDueDate());
+            System.out.println("Course end date: " + programmingExercise.getCourseViaExerciseGroupOrCourseMember().getEndDate());
+            if (programmingExercise.isExamExercise()) {
+                System.out.println("Exam end date: " + programmingExercise.getExerciseGroup().getExam().getEndDate());
+            }
+        }
+
+        createProgrammingParticipationWithSubmissionAndResult(exercise, "student1", 100D, ZonedDateTime.now().minusDays(2L), false);
+        createProgrammingParticipationWithSubmissionAndResult(exercise, "student2", 80D, ZonedDateTime.now().minusDays(6L), false);
+
+        createProgrammingParticipationWithSubmissionAndResult(examExercise, "student3", 100D, ZonedDateTime.now().minusDays(2L), false);
+        createProgrammingParticipationWithSubmissionAndResult(examExercise, "student4", 80D, ZonedDateTime.now().minusDays(6L), false);
 
         automaticProgrammingExerciseCleanupService.cleanupGitRepositoriesOnArtemisServer();
-
-        // TODO: verify that the delete method for the git repo was invoked
+        // Note: at the moment, we cannot easily assert something here, it might be possible to verify mocks on gitService, in case we could define it as SpyBean
     }
 
     private void structureOracle(ProgrammingExercise programmingExercise) throws Exception {
