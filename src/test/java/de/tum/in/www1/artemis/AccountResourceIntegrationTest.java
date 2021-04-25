@@ -20,12 +20,16 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.util.LinkedMultiValueMap;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.regex.Pattern;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+/**
+ * Tests {@link AccountResource}. Several Tests rely on overwriting AccountResource.registrationEnabled and other attributes with reflections. Any changes to the internal structure will cause these tests to fail.
+ */
 public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
     @Autowired
     private AccountResource accountResource;
@@ -42,10 +46,6 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
     @AfterEach
     public void resetDatabase() {
         database.resetDatabase();
-    }
-
-    private void testWithRegistrationDisabled(Executable test) throws Throwable {
-        testWithChangedConfig("registrationEnabled", Optional.of(Boolean.FALSE), test);
     }
 
     /**
@@ -65,7 +65,10 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
         } finally {
             ReflectionTestUtils.setField(accountResource, configName, oldValue);
         }
+    }
 
+    private void testWithRegistrationDisabled(Executable test) throws Throwable {
+        testWithChangedConfig("registrationEnabled", Optional.of(Boolean.FALSE), test);
     }
 
     @Test
@@ -114,6 +117,20 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
         });
     }
 
+
+    @Test
+    public void registerAccountRegistrationConfigEmpty() throws Throwable {
+        testWithChangedConfig("registrationEnabled", Optional.empty(), () -> {
+            // setup user
+            User user = ModelFactory.generateActivatedUser("ab123cd");
+            ManagedUserVM userVM = new ManagedUserVM(user);
+            userVM.setPassword("password");
+
+            // make request
+            request.postWithoutLocation("/api/register", userVM, HttpStatus.FORBIDDEN, null);
+        });
+    }
+
     @Test
     public void registerAccountInvalidEmail() throws Throwable {
         // Inject email-pattern to be independent of the config
@@ -122,9 +139,25 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
             User user = ModelFactory.generateActivatedUser("ab123cd");
             user.setEmail("-");
             ManagedUserVM userVM = new ManagedUserVM(user);
+            userVM.setPassword("password");
 
             // make request
             request.postWithoutLocation("/api/register", userVM, HttpStatus.BAD_REQUEST, null);
+        });
+    }
+
+    @Test
+    public void registerAccountEmptyEmailPattern() throws Throwable {
+        // Inject email-pattern to be independent of the config
+        testWithChangedConfig("allowedEmailPattern", Optional.empty(), () -> {
+            // setup user
+            User user = ModelFactory.generateActivatedUser("ab123cd");
+            user.setEmail("-");
+            ManagedUserVM userVM = new ManagedUserVM(user);
+            userVM.setPassword("password");
+
+            // make request
+            request.postWithoutLocation("/api/register", userVM, HttpStatus.CREATED, null);
         });
     }
 
@@ -249,6 +282,33 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
     }
 
     @Test
+    public void saveAccountWithoutLogin() throws Exception {
+        // create user in repo
+        User user = ModelFactory.generateActivatedUser("authenticateduser");
+        User createdUser = userCreationService.createUser(new ManagedUserVM(user));
+        // update FirstName
+        String updatedFirstName = "UpdatedFirstName";
+        createdUser.setFirstName(updatedFirstName);
+
+        // make request
+        request.put("/api/account", new UserDTO(createdUser), HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    @Test
+    @WithMockUser(username = "authenticateduser")
+    public void saveAccountEmailInUse() throws Exception {
+        List<User> users = database.addUsers(1, 0, 0);
+        // create user in repo
+        User user = ModelFactory.generateActivatedUser("authenticateduser");
+        User createdUser = userCreationService.createUser(new ManagedUserVM(user));
+        // update Email to one already used
+        createdUser.setEmail(users.get(0).getEmail());
+
+        // make request
+        request.put("/api/account", new UserDTO(createdUser), HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
     @WithMockUser(username = "authenticateduser")
     public void changePassword() throws Exception {
         // create user in repo
@@ -285,7 +345,39 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
 
     @Test
     @WithMockUser(username = "authenticateduser")
-    public void invalidPassword() throws Exception {
+    public void changePasswordSaml2Disabled() throws Throwable {
+        testWithChangedConfig("saml2EnablePassword", Optional.of(Boolean.FALSE), () -> {
+            // create user in repo
+            User user = ModelFactory.generateActivatedUser("authenticateduser");
+            User createdUser = userCreationService.createUser(new ManagedUserVM(user));
+            // Password Data
+            String updatedPassword = "12345678password-reset-init.component.spec.ts";
+
+            PasswordChangeDTO pwChange = new PasswordChangeDTO(passwordService.decryptPassword(createdUser.getPassword()), updatedPassword);
+            // make request
+            request.postWithoutLocation("/api/account/change-password", pwChange, HttpStatus.FORBIDDEN, null);
+        });
+    }
+
+    @Test
+    @WithMockUser(username = "authenticateduser")
+    public void changePasswordSaml2ConfigEmpty() throws Throwable {
+        testWithChangedConfig("saml2EnablePassword", Optional.empty(), () -> {
+            // create user in repo
+            User user = ModelFactory.generateActivatedUser("authenticateduser");
+            User createdUser = userCreationService.createUser(new ManagedUserVM(user));
+            // Password Data
+            String updatedPassword = "12345678password-reset-init.component.spec.ts";
+
+            PasswordChangeDTO pwChange = new PasswordChangeDTO(passwordService.decryptPassword(createdUser.getPassword()), updatedPassword);
+            // make request
+            request.postWithoutLocation("/api/account/change-password", pwChange, HttpStatus.FORBIDDEN, null);
+        });
+    }
+
+    @Test
+    @WithMockUser(username = "authenticateduser")
+    public void changePasswordInvalidPassword() throws Exception {
         User user = ModelFactory.generateActivatedUser("authenticateduser");
         User createdUser = userCreationService.createUser(new ManagedUserVM(user));
         String updatedPassword = "123";
@@ -293,7 +385,6 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
         PasswordChangeDTO pwChange = new PasswordChangeDTO(passwordService.decryptPassword(createdUser.getPassword()), updatedPassword);
         // make request
         request.postWithoutLocation("/api/account/change-password", pwChange, HttpStatus.BAD_REQUEST, null);
-
     }
 
     @Test
@@ -306,7 +397,7 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
         request.postWithoutLocation("/api/account/reset-password/init", createdUser.getEmail(), HttpStatus.OK, null);
 
         // check user data
-        Optional<User> userPasswordResetInit = userRepo.findOneByLogin("authenticateduser");
+        Optional<User> userPasswordResetInit = userRepo.findOneByEmailIgnoreCase(createdUser.getEmail());
         assertThat(userPasswordResetInit).isPresent();
         String resetKey = userPasswordResetInit.get().getResetKey();
 
@@ -327,7 +418,7 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
 
     @Test
     @WithMockUser("authenticateduser")
-    public void passwordResetRegistrationDisabled() throws Throwable {
+    public void passwordResetInitRegistrationDisabled() throws Throwable {
         testWithRegistrationDisabled(() -> {
             // create user in repo
             User user = ModelFactory.generateActivatedUser("authenticateduser");
@@ -337,4 +428,24 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
         });
     }
 
+    @Test
+    @WithMockUser("authenticateduser")
+    public void passwordResetInitSaml2Disabled() throws Throwable {
+        testWithChangedConfig("saml2EnablePassword", Optional.of(Boolean.FALSE), () -> {
+            // create user in repo
+            User user = ModelFactory.generateActivatedUser("authenticateduser");
+            User createdUser = userCreationService.createUser(new ManagedUserVM(user));
+            // attempt password reset
+            request.postWithoutLocation("/api/account/reset-password/init", createdUser.getEmail(), HttpStatus.FORBIDDEN, null);
+        });
+    }
+
+    @Test
+    @WithMockUser("authenticateduser")
+    public void passwordResetFinishRegistrationDisabled() throws Throwable {
+        testWithRegistrationDisabled(() -> {
+            KeyAndPasswordVM finishResetData = new KeyAndPasswordVM();
+            request.postWithoutLocation("/api/account/reset-password/finish", finishResetData, HttpStatus.FORBIDDEN, null);
+        });
+    }
 }
