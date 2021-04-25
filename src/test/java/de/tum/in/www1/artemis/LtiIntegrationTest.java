@@ -97,6 +97,19 @@ public class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         this.checkExceptions();
     }
 
+    @Test
+    @WithMockUser(value = "student3", roles = "USER")
+    void launchAsOldStudent() throws Exception {
+        Long exerciseId = programmingExercise.getId();
+        Long courseId = programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId();
+        URI header = request.post("/api/lti/launch/" + exerciseId, requestBody, HttpStatus.FOUND, MediaType.APPLICATION_FORM_URLENCODED, false);
+
+        assertTrue(header.toString().contains("?welcome&jwt="));
+        assertTrue(header.toString().contains("/courses/" + courseId + "/exercises/" + exerciseId));
+
+        this.checkExceptions();
+    }
+
     private void checkExceptions() throws Exception {
         request.postWithoutLocation("/api/lti/launch/" + programmingExercise.getId() + 1, requestBody, HttpStatus.NOT_FOUND, new HttpHeaders());
 
@@ -112,5 +125,11 @@ public class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     void exerciseLtiConfiguration() throws Exception {
         request.get("/api/lti/configuration/" + programmingExercise.getId(), HttpStatus.OK, ExerciseLtiConfigurationDTO.class);
         request.get("/api/lti/configuration/1234254354", HttpStatus.NOT_FOUND, ExerciseLtiConfigurationDTO.class);
+    }
+
+    @Test
+    @WithMockUser(value = "student3", roles = "USER")
+    void exerciseLtiConfigurationAsStudent() throws Exception {
+        request.get("/api/lti/configuration/" + programmingExercise.getId(), HttpStatus.FORBIDDEN, ExerciseLtiConfigurationDTO.class);
     }
 }
