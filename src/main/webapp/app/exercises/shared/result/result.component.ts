@@ -64,6 +64,7 @@ export class ResultComponent implements OnInit, OnChanges {
     resultString: string;
     templateStatus: ResultTemplateStatus;
     submission?: Submission;
+    onlyShowSuccessfulCompileStatus: boolean;
 
     resultTooltip: string;
 
@@ -141,6 +142,7 @@ export class ResultComponent implements OnInit, OnChanges {
             this.textColorClass = this.getTextColorClass();
             this.resultIconClass = this.getResultIconClass();
         } else if (this.result && (this.result.score || this.result.score === 0) && (this.result.rated || this.result.rated == undefined || this.showUngradedResults)) {
+            this.onlyShowSuccessfulCompileStatus = this.getOnlyShowSuccesfullCompileStatus();
             this.textColorClass = this.getTextColorClass();
             this.hasFeedback = this.getHasFeedback();
             this.resultIconClass = this.getResultIconClass();
@@ -228,6 +230,7 @@ export class ResultComponent implements OnInit, OnChanges {
     /**
      * Gets the build result string.
      */
+    // TODO: 0/0 Score
     buildResultString() {
         if (this.submission && this.submission.submissionExerciseType === SubmissionExerciseType.PROGRAMMING && (this.submission as ProgrammingSubmission).buildFailed) {
             const isManualResult = this.result?.assessmentType !== AssessmentType.AUTOMATIC;
@@ -317,14 +320,28 @@ export class ResultComponent implements OnInit, OnChanges {
         }
     }
 
+    getOnlyShowSuccesfullCompileStatus(): boolean {
+        return (
+            this.templateStatus !== ResultTemplateStatus.NO_RESULT &&
+            this.templateStatus !== ResultTemplateStatus.IS_BUILDING &&
+            this.result != undefined &&
+            this.result!.resultString != undefined &&
+            this.result!.resultString === '0 of 0 passed'
+        );
+    }
+
     /**
      * Get the css class for the entire text as a string
      *
      * @return {string} the css class
      */
+    // TODO: 0/0 Score
     getTextColorClass() {
         if (this.templateStatus === ResultTemplateStatus.LATE) {
             return 'result--late';
+        }
+        if (this.onlyShowSuccessfulCompileStatus) {
+            return 'text-success';
         }
         const result = this.result!;
         if (result.score == undefined) {
