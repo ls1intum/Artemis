@@ -282,19 +282,6 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
     }
 
     @Test
-    public void saveAccountWithoutLogin() throws Exception {
-        // create user in repo
-        User user = ModelFactory.generateActivatedUser("authenticateduser");
-        User createdUser = userCreationService.createUser(new ManagedUserVM(user));
-        // update FirstName
-        String updatedFirstName = "UpdatedFirstName";
-        createdUser.setFirstName(updatedFirstName);
-
-        // make request
-        request.put("/api/account", new UserDTO(createdUser), HttpStatus.INTERNAL_SERVER_ERROR);
-    }
-
-    @Test
     @WithMockUser(username = "authenticateduser")
     public void saveAccountEmailInUse() throws Exception {
         List<User> users = database.addUsers(1, 0, 0);
@@ -346,32 +333,36 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
     @Test
     @WithMockUser(username = "authenticateduser")
     public void changePasswordSaml2Disabled() throws Throwable {
-        testWithChangedConfig("saml2EnablePassword", Optional.of(Boolean.FALSE), () -> {
-            // create user in repo
-            User user = ModelFactory.generateActivatedUser("authenticateduser");
-            User createdUser = userCreationService.createUser(new ManagedUserVM(user));
-            // Password Data
-            String updatedPassword = "12345678password-reset-init.component.spec.ts";
+        testWithRegistrationDisabled(() -> {
+            testWithChangedConfig("saml2EnablePassword", Optional.of(Boolean.FALSE), () -> {
+                // create user in repo
+                User user = ModelFactory.generateActivatedUser("authenticateduser");
+                User createdUser = userCreationService.createUser(new ManagedUserVM(user));
+                // Password Data
+                String updatedPassword = "12345678password-reset-init.component.spec.ts";
 
-            PasswordChangeDTO pwChange = new PasswordChangeDTO(passwordService.decryptPassword(createdUser.getPassword()), updatedPassword);
-            // make request
-            request.postWithoutLocation("/api/account/change-password", pwChange, HttpStatus.FORBIDDEN, null);
+                PasswordChangeDTO pwChange = new PasswordChangeDTO(passwordService.decryptPassword(createdUser.getPassword()), updatedPassword);
+                // make request
+                request.postWithoutLocation("/api/account/change-password", pwChange, HttpStatus.FORBIDDEN, null);
+            });
         });
     }
 
     @Test
     @WithMockUser(username = "authenticateduser")
     public void changePasswordSaml2ConfigEmpty() throws Throwable {
-        testWithChangedConfig("saml2EnablePassword", Optional.empty(), () -> {
-            // create user in repo
-            User user = ModelFactory.generateActivatedUser("authenticateduser");
-            User createdUser = userCreationService.createUser(new ManagedUserVM(user));
-            // Password Data
-            String updatedPassword = "12345678password-reset-init.component.spec.ts";
+        testWithRegistrationDisabled(() -> {
+            testWithChangedConfig("saml2EnablePassword", Optional.empty(), () -> {
+                // create user in repo
+                User user = ModelFactory.generateActivatedUser("authenticateduser");
+                User createdUser = userCreationService.createUser(new ManagedUserVM(user));
+                // Password Data
+                String updatedPassword = "12345678password-reset-init.component.spec.ts";
 
-            PasswordChangeDTO pwChange = new PasswordChangeDTO(passwordService.decryptPassword(createdUser.getPassword()), updatedPassword);
-            // make request
-            request.postWithoutLocation("/api/account/change-password", pwChange, HttpStatus.FORBIDDEN, null);
+                PasswordChangeDTO pwChange = new PasswordChangeDTO(passwordService.decryptPassword(createdUser.getPassword()), updatedPassword);
+                // make request
+                request.postWithoutLocation("/api/account/change-password", pwChange, HttpStatus.FORBIDDEN, null);
+            });
         });
     }
 
@@ -431,12 +422,14 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
     @Test
     @WithMockUser("authenticateduser")
     public void passwordResetInitSaml2Disabled() throws Throwable {
-        testWithChangedConfig("saml2EnablePassword", Optional.of(Boolean.FALSE), () -> {
-            // create user in repo
-            User user = ModelFactory.generateActivatedUser("authenticateduser");
-            User createdUser = userCreationService.createUser(new ManagedUserVM(user));
-            // attempt password reset
-            request.postWithoutLocation("/api/account/reset-password/init", createdUser.getEmail(), HttpStatus.FORBIDDEN, null);
+        testWithRegistrationDisabled(() -> {
+            testWithChangedConfig("saml2EnablePassword", Optional.of(Boolean.FALSE), () -> {
+                // create user in repo
+                User user = ModelFactory.generateActivatedUser("authenticateduser");
+                User createdUser = userCreationService.createUser(new ManagedUserVM(user));
+                // attempt password reset
+                request.postWithoutLocation("/api/account/reset-password/init", createdUser.getEmail(), HttpStatus.FORBIDDEN, null);
+            });
         });
     }
 
