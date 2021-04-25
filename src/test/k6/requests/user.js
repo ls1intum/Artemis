@@ -1,5 +1,5 @@
 import { USERS } from './endpoints.js';
-import { addUserToInstructorsInCourse, addUserToStudentsInCourse } from './course.js';
+import { addUserToInstructorsInCourse, addUserToStudentsInCourse, addUserToTutorsInCourse } from './course.js';
 import { login } from './requests.js';
 
 export function getUser(artemis, i, baseUsername) {
@@ -18,17 +18,27 @@ export function updateUser(artemis, user) {
     }
 }
 
-export function newUser(artemis, i, baseUsername, basePassword, studentGroupName, instructorGroupName) {
+export function newUser(artemis, i, baseUsername, basePassword, studentGroupName, instructorGroupName, withTutors, tutorGroupName) {
     const username = baseUsername.replace('USERID', i);
     const password = basePassword.replace('USERID', i);
     let authorities = ['ROLE_USER'];
     if (i === 1) {
         authorities = ['ROLE_USER', 'ROLE_INSTRUCTOR'];
     }
+    if (withTutors) {
+        if (i === 2 || i === 3) {
+            authorities = ['ROLE_USER', 'ROLE_TA'];
+        }
+    }
 
     let groups = [studentGroupName];
     if (i === 1) {
         groups = [studentGroupName, instructorGroupName];
+    }
+    if (withTutors) {
+        if (i === 2 || i === 3) {
+            groups = [studentGroupName, tutorGroupName];
+        }
     }
 
     const user = {
@@ -56,23 +66,27 @@ export function newUser(artemis, i, baseUsername, basePassword, studentGroupName
     return JSON.parse(res[0].body).id;
 }
 
-export function updateUserWithGroup(artemis, i, baseUsername, course) {
+export function updateUserWithGroup(artemis, i, baseUsername, course, tutor) {
     const username = baseUsername.replace('USERID', i);
-    addUserToStudentsInCourse(artemis, username, course.id);
+    if (!tutor) {
+        addUserToTutorsInCourse(artemis, username, course.id);
+    } else {
+        addUserToStudentsInCourse(artemis, username, course.id);
+    }
 
     if (i === 1) {
         addUserToInstructorsInCourse(artemis, username, course.id);
     }
 }
 
-export function createUsersIfNeeded(artemis, baseUsername, basePassword, adminUsername, adminPassword, course, userOffset) {
+export function createUsersIfNeeded(artemis, baseUsername, basePassword, adminUsername, adminPassword, course, userOffset, withTutors) {
     const shouldCreateUsers = __ENV.CREATE_USERS === true || __ENV.CREATE_USERS === 'true';
     const iterations = parseInt(__ENV.ITERATIONS);
 
     if (shouldCreateUsers) {
         console.log('Try to create ' + iterations + ' users');
         for (let i = 1; i <= iterations; i++) {
-            let userId = newUser(artemis, i + userOffset, baseUsername, basePassword, course.studentGroupName, course.instructorGroupName);
+            let userId = newUser(artemis, i + userOffset, baseUsername, basePassword, course.studentGroupName, course.instructorGroupName, withTutors, course.tutorGroupName);
             if (userId === -1) {
                 // the creation was not successful, most probably because the user already exists, we need to update the group of the user
                 updateUserWithGroup(artemis, i, baseUsername, course);
@@ -87,6 +101,32 @@ export function createUsersIfNeeded(artemis, baseUsername, basePassword, adminUs
         artemis = login(adminUsername, adminPassword);
         for (let i = 1; i <= iterations; i++) {
             updateUserWithGroup(artemis, i + userOffset, baseUsername, course);
+        }
+    }
+}
+
+export function createTutorsIfNeeded(artemis, baseUsername, basePassword, adminUsername, adminPassword, course, userOffset) {
+    const shouldCreateUsers = __ENV.CREATE_USERS === true || __ENV.CREATE_USERS === 'true';
+    const iterations = parseInt(__ENV.ITERATIONS);
+
+    if (shouldCreateUsers) {
+        console.log('Try to create ' + iterations + ' users');
+        for (let i = 1; i <= iterations; i++) {
+            let userId = newUser(artemis, i + userOffset, baseUsername, basePassword, course.tutorGroupName, course.instructorGroupName);
+            if (userId === -1) {
+                // the creation was not successful, most probably because the user already exists, we need to update the group of the user
+                updateUserWithGroup(artemis, i, baseUsername, course, true);
+            }
+        }
+    } else {
+        console.log('Do not create users, assume the user exists in the external system, will update their groups');
+        for (let i = 1; i <= iterations; i++) {
+            // we need to login once with the user, so that the user is synced and available for the update with the groups
+            login(baseUsername.replace('USERID', i + userOffset), basePassword.replace('USERID', i + userOffset));
+        }
+        artemis = login(adminUsername, adminPassword);
+        for (let i = 1; i <= iterations; i++) {
+            updateUserWithGroup(artemis, i + userOffset, baseUsername, course, true);
         }
     }
 }
