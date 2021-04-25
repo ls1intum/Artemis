@@ -168,7 +168,7 @@ public class AutomaticProgrammingExerciseCleanupService {
                 }
             }
 
-            Result result = participation.findLatestLegalOrIllegalResult();
+            Result result = participation.findLatestResult();
             // 2nd case: delete the build plan 3 days after the participation was initialized in case there is no result
             if (result == null) {
                 if (participation.getInitializationDate() != null && participation.getInitializationDate().plusDays(3).isBefore(now())) {
