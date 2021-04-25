@@ -740,6 +740,21 @@ public class FileService implements DisposableBean {
     }
 
     /**
+     * create a directory at a given path
+     *
+     * @param path the original path, e.g. /opt/artemis/repos-download
+     */
+    public void createDirectory(Path path) {
+        try {
+            Files.createDirectories(path);
+        }
+        catch (IOException e) {
+            var error = "Failed to create temporary directory at path " + path + " : " + e.getMessage();
+            log.info(error);
+        }
+    }
+
+    /**
      * Write a given string into a file at a given path
      *
      * @param stringToWrite     The string that will be written into a file

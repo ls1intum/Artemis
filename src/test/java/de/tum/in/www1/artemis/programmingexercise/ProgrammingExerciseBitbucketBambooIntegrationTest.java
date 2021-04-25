@@ -2,6 +2,8 @@ package de.tum.in.www1.artemis.programmingexercise;
 
 import static de.tum.in.www1.artemis.programmingexercise.ProgrammingSubmissionConstants.BITBUCKET_REQUEST;
 import static de.tum.in.www1.artemis.util.ProgrammingExerciseTestService.studentLogin;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -16,12 +18,15 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
+import de.tum.in.www1.artemis.service.ZipFileService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingLanguageFeatureService;
 import de.tum.in.www1.artemis.util.ProgrammingExerciseTestService;
 
@@ -32,6 +37,9 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
 
     @Autowired
     private ProgrammingLanguageFeatureService programmingLanguageFeatureService;
+
+    @SpyBean
+    private ZipFileService zipFileService;
 
     @BeforeEach
     public void setup() throws Exception {
@@ -291,6 +299,13 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
     @WithMockUser(username = "student1", roles = "USER")
     public void exportInstructorProgrammingExerciseAsStudent_forbidden() throws Exception {
         programmingExerciseTestService.exportInstructorProgrammingExercise_forbidden();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void exportInstructorProgrammingExercise_IOException() throws Exception {
+        doThrow(IOException.class).when(zipFileService).createZipFile(any(), any(), any());
+        request.get("/api/programming-exercises/" + programmingExerciseTestService.exercise.getId() + "/export-instructor-exercise", HttpStatus.BAD_REQUEST, String.class);
     }
 
     @Test

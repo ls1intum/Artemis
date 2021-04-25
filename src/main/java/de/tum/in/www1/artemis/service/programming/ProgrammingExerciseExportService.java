@@ -109,15 +109,7 @@ public class ProgrammingExerciseExportService {
     public Path exportInstructorProgrammingExercise(ProgrammingExercise exercise, List<String> exportErrors) {
         // Create export directory for programming exercises
         var exportPath = Path.of(programmingExerciseExportPath);
-        try {
-            Files.createDirectories(exportPath);
-        }
-        catch (IOException e) {
-            var error = "Failed to create temporary directory for exporting programming exercise " + exercise.getId() + " at path " + exportPath + " : " + e.getMessage();
-            log.info(error);
-            exportErrors.add(error);
-            return null;
-        }
+        fileService.createDirectory(exportPath);
 
         // List to add files that should be contained in the zip folder of exported programming exercise:
         // i.e., readme, problem statement, exercise details, instructor repositories
