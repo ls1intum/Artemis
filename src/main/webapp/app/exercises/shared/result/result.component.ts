@@ -364,6 +364,9 @@ export class ResultComponent implements OnInit, OnChanges {
      */
     getResultIconClass(): IconProp {
         const result = this.result!;
+        if (this.onlyShowSuccessfulCompileStatus) {
+            return ['far', 'check-circle'];
+        }
         if (result.score == undefined) {
             if (result.successful) {
                 return ['far', 'check-circle'];
