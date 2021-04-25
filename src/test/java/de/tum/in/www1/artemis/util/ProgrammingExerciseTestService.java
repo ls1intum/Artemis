@@ -2,6 +2,8 @@ package de.tum.in.www1.artemis.util;
 
 import static de.tum.in.www1.artemis.config.Constants.PROGRAMMING_SUBMISSION_RESOURCE_API_PATH;
 import static de.tum.in.www1.artemis.domain.enumeration.ExerciseMode.TEAM;
+import static de.tum.in.www1.artemis.service.programming.ProgrammingExerciseExportService.EXPORTED_EXERCISE_DETAILS_FILE_PREFIX;
+import static de.tum.in.www1.artemis.service.programming.ProgrammingExerciseExportService.EXPORTED_EXERCISE_PROBLEM_STATEMENT_FILE_PREFIX;
 import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource.Endpoints.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
@@ -773,7 +775,6 @@ public class ProgrammingExerciseTestService {
 
         zip = exportInstructorRepository("TESTS", sourceTestRepo.localRepoFile.toPath(), HttpStatus.OK);
         assertThat(zip).isNotNull();
-
     }
 
     // Test
@@ -796,6 +797,53 @@ public class ProgrammingExerciseTestService {
         var url = "/api/programming-exercises/" + exercise.getId() + "/export-instructor-repository/" + repositoryType;
         // return request.postWithResponseBodyFile(url, null, expectedStatus);
         return request.get(url, expectedStatus, String.class);
+    }
+
+    // Test
+    public void exportInstructorProgrammingExercise_shouldReturnFile() throws Exception {
+        var zip = exportInstructorProgrammingExercise(HttpStatus.OK);
+        // Assure, that the zip folder is already created and not 'in creation' which would lead to a failure when extracting it in the next step
+        await().until(zip::exists);
+        assertThat(zip).isNotNull();
+
+        // Recursively unzip the exported file, to make sure there is no erroneous content
+        zipFileTestUtilService.extractZipFileRecursively(zip.getAbsolutePath());
+        var extractedZipDir = zip.getPath().substring(0, zip.getPath().length() - 4);
+
+        // Check that the contents we created exist in the unzipped exported folder
+        var filenames = Files.walk(Path.of(extractedZipDir)).filter(Files::isRegularFile).map(Path::getFileName).collect(Collectors.toList());
+        assertThat(filenames.stream().anyMatch((filename) -> filename.toString().matches(".*-exercise.zip"))).isTrue();
+        assertThat(filenames.stream().anyMatch((filename) -> filename.toString().matches(".*-solution.zip"))).isTrue();
+        assertThat(filenames.stream().anyMatch((filename) -> filename.toString().matches(".*-tests.zip"))).isTrue();
+        assertThat(filenames.stream().anyMatch((filename) -> filename.toString().matches(EXPORTED_EXERCISE_PROBLEM_STATEMENT_FILE_PREFIX + ".*.md"))).isTrue();
+        assertThat(filenames.stream().anyMatch((filename) -> filename.toString().matches(EXPORTED_EXERCISE_DETAILS_FILE_PREFIX + ".*.json"))).isTrue();
+    }
+
+    public void exportInstructorProgrammingExercise_forbidden() throws Exception {
+        exportInstructorProgrammingExercise(HttpStatus.FORBIDDEN);
+    }
+
+    private java.io.File exportInstructorProgrammingExercise(HttpStatus expectedStatus) throws Exception {
+        exercise = programmingExerciseRepository.save(exercise);
+        exercise = database.addTemplateParticipationForProgrammingExercise(exercise);
+        exercise = database.addSolutionParticipationForProgrammingExercise(exercise);
+        database.addTestCasesToProgrammingExercise(exercise);
+        exercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationById(exercise.getId()).get();
+
+        // Mock template repo
+        var templateRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(sourceExerciseRepo.localRepoFile.toPath(), null);
+        doReturn(templateRepository).when(gitService).getOrCheckoutRepository(eq(exercise.getRepositoryURL(RepositoryType.TEMPLATE)), anyString(), anyBoolean());
+
+        // Mock solution repo
+        var solutionRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(sourceSolutionRepo.localRepoFile.toPath(), null);
+        doReturn(solutionRepository).when(gitService).getOrCheckoutRepository(eq(exercise.getRepositoryURL(RepositoryType.SOLUTION)), anyString(), anyBoolean());
+
+        // Mock tests repo
+        var testsRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(sourceTestRepo.localRepoFile.toPath(), null);
+        doReturn(testsRepository).when(gitService).getOrCheckoutRepository(eq(exercise.getRepositoryURL(RepositoryType.TESTS)), anyString(), anyBoolean());
+
+        var url = "/api/programming-exercises/" + exercise.getId() + "/export-instructor-exercise";
+        return request.getFile(url, expectedStatus, new LinkedMultiValueMap<>());
     }
 
     // Test
@@ -857,11 +905,10 @@ public class ProgrammingExerciseTestService {
         assertThat(archive).isNotNull();
         assertThat(archive).exists();
 
-        // Extract the archive
         zipFileTestUtilService.extractZipFileRecursively(archive.getAbsolutePath());
         String extractedArchiveDir = archive.getPath().substring(0, archive.getPath().length() - 4);
 
-        // Check that the dummy files we created exist in the archivie.
+        // Check that the dummy files we created exist in the archive.
         var filenames = Files.walk(Path.of(extractedArchiveDir)).filter(Files::isRegularFile).map(Path::getFileName).collect(Collectors.toList());
         assertThat(filenames).contains(Path.of("HelloWorld.java"));
         assertThat(filenames).contains(Path.of("Template.java"));
