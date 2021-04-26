@@ -105,6 +105,17 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
     }
 
     @Test
+    public void registerAccountEmptyPassword() throws Exception {
+        // setup user
+        User user = ModelFactory.generateActivatedUser("ab123cd");
+        ManagedUserVM userVM = new ManagedUserVM(user);
+        userVM.setPassword("");
+
+        // make request
+        request.postWithoutLocation("/api/register", userVM, HttpStatus.BAD_REQUEST, null);
+    }
+
+    @Test
     public void registerAccountRegistrationDisabled() throws Throwable {
         testWithRegistrationDisabled(() -> {
             // setup user
@@ -116,7 +127,6 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
             request.postWithoutLocation("/api/register", userVM, HttpStatus.FORBIDDEN, null);
         });
     }
-
 
     @Test
     public void registerAccountRegistrationConfigEmpty() throws Throwable {
@@ -440,5 +450,13 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
             KeyAndPasswordVM finishResetData = new KeyAndPasswordVM();
             request.postWithoutLocation("/api/account/reset-password/finish", finishResetData, HttpStatus.FORBIDDEN, null);
         });
+    }
+
+    @Test
+    @WithMockUser("authenticateduser")
+    public void passwordResetFinishInvalidPassword() throws Throwable {
+        KeyAndPasswordVM finishResetData = new KeyAndPasswordVM();
+        finishResetData.setNewPassword("");
+        request.postWithoutLocation("/api/account/reset-password/finish", finishResetData, HttpStatus.BAD_REQUEST, null);
     }
 }
