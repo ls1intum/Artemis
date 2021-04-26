@@ -327,9 +327,7 @@ export class ResultComponent implements OnInit, OnChanges {
         return (
             this.templateStatus !== ResultTemplateStatus.NO_RESULT &&
             this.templateStatus !== ResultTemplateStatus.IS_BUILDING &&
-            this.result != undefined &&
-            this.result!.resultString != undefined &&
-            this.result!.resultString === '0 of 0 passed'
+            this.result?.resultString? === '0 of 0 passed'
         );
     }
 
