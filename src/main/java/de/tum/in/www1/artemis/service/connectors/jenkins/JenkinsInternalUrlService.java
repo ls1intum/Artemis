@@ -73,7 +73,7 @@ public class JenkinsInternalUrlService {
      * @param internalUrl the internal url
      * @return the manipulated url
      */
-    private String replaceUrl(String urlToReplace, URL internalUrl) {
+    public String replaceUrl(String urlToReplace, URL internalUrl) {
         if (urlToReplace == null) {
             return urlToReplace;
         }
