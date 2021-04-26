@@ -107,4 +107,9 @@ public abstract class PlagiarismResult<E extends PlagiarismSubmissionElement> ex
         Stream<PlagiarismComparison<E>> stream = getComparisons().stream().sorted(reverseOrder()).limit(size);
         this.comparisons = stream.collect(Collectors.toSet());
     }
+
+    @Override
+    public String toString() {
+        return "PlagiarismResult{" + "comparisons=" + comparisons + ", duration=" + duration + ", similarityDistribution=" + similarityDistribution + '}';
+    }
 }

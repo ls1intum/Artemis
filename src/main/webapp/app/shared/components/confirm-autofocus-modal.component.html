@@ -4,7 +4,8 @@
         <span aria-hidden="true">&times;</span>
     </button>
 </div>
-<div class="modal-body">
+<div *ngIf="textIsMarkdown === true" class="modal-body" [innerHTML]="text | htmlForMarkdown"></div>
+<div *ngIf="textIsMarkdown === false" class="modal-body">
     <p *ngIf="translateText === true" style="white-space: pre-line">{{ text | artemisTranslate }}</p>
     <p *ngIf="translateText !== true" style="white-space: pre-line">{{ text }}</p>
 </div>
