@@ -72,6 +72,7 @@ public class JenkinsJobService {
      * @return the folder job
      */
     public FolderJob getFolderJob(String folderName) {
+        log.info("getFolderJob: " + folderName);
         try {
             final var job = jenkinsServer.getJob(folderName);
             if (job == null) {
