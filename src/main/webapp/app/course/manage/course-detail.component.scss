@@ -19,6 +19,7 @@ jhi-secured-image {
     min-height: 60px;
     margin: 0 -1.25rem;
     $padding-y: 11px;
+
     padding-top: $padding-y;
     padding-bottom: $padding-y;
     border-bottom: 1px solid #979797;
@@ -35,9 +36,9 @@ jhi-secured-image {
     }
 }
 
-.tab-bar-course-overview {
+.tab-bar-course-detail {
     // ensure enough vertical space below for absolutely positioned exercise controls
-    // when tab bar is shown on course overview page
+    // when tab bar is shown on course detail page
     @media (max-width: 750px) {
         min-height: 100px;
         padding-bottom: 40px;

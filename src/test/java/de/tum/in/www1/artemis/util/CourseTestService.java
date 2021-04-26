@@ -80,9 +80,6 @@ public class CourseTestService {
     @Autowired
     private ComplaintRepository complaintRepo;
 
-    @Autowired
-    private ComplaintResponseRepository complaintResponseRepository;
-
     private final int numberOfStudents = 8;
 
     private final int numberOfTutors = 5;
