@@ -586,4 +586,4 @@ Now, instead of mocking the whole Service we can just mock this static method, l
 
 What you notice here is that we can avoid the use of a Bean and also test deeper. Important to mention is that you need to close the mock at the end of the test again.
 
-For a real examples where a SpyBean was replace with a static mock look `here. <https://github.com/ls1intum/Artemis/commit/4843137aa01cfdf27ea019400c48df00df36ed45>`_
+For a real example where a SpyBean was replaced with a static mock look at the SubmissionExportIntegrationTest.java in `here. <https://github.com/ls1intum/Artemis/commit/4843137aa01cfdf27ea019400c48df00df36ed45>`_
