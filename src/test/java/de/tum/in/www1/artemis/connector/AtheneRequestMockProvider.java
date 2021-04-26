@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.connector.athene;
+package de.tum.in.www1.artemis.connector;
 
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.*;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.*;
