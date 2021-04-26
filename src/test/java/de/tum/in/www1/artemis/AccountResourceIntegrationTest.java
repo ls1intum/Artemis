@@ -1,15 +1,11 @@
 package de.tum.in.www1.artemis;
 
-import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.service.dto.PasswordChangeDTO;
-import de.tum.in.www1.artemis.service.dto.UserDTO;
-import de.tum.in.www1.artemis.service.user.PasswordService;
-import de.tum.in.www1.artemis.service.user.UserCreationService;
-import de.tum.in.www1.artemis.util.ModelFactory;
-import de.tum.in.www1.artemis.web.rest.AccountResource;
-import de.tum.in.www1.artemis.web.rest.vm.KeyAndPasswordVM;
-import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
+import static org.assertj.core.api.Assertions.assertThat;
+
+import java.util.Map;
+import java.util.Optional;
+import java.util.regex.Pattern;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.function.Executable;
@@ -20,16 +16,22 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.util.LinkedMultiValueMap;
 
-import java.util.Map;
-import java.util.Optional;
-import java.util.regex.Pattern;
-
-import static org.assertj.core.api.Assertions.assertThat;
+import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.service.dto.PasswordChangeDTO;
+import de.tum.in.www1.artemis.service.dto.UserDTO;
+import de.tum.in.www1.artemis.service.user.PasswordService;
+import de.tum.in.www1.artemis.service.user.UserCreationService;
+import de.tum.in.www1.artemis.util.ModelFactory;
+import de.tum.in.www1.artemis.web.rest.AccountResource;
+import de.tum.in.www1.artemis.web.rest.vm.KeyAndPasswordVM;
+import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
 
 /**
  * Tests {@link AccountResource}. Several Tests rely on overwriting AccountResource.registrationEnabled and other attributes with reflections. Any changes to the internal structure will cause these tests to fail.
  */
 public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+
     @Autowired
     private AccountResource accountResource;
 
@@ -61,7 +63,8 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
 
         try {
             test.execute();
-        } finally {
+        }
+        finally {
             ReflectionTestUtils.setField(accountResource, configName, oldValue);
         }
     }
@@ -250,7 +253,8 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
         userCreationService.createUser(new ManagedUserVM(user));
 
         // make request
-        @SuppressWarnings("rawtypes") Map response = request.get("/api/account/password", HttpStatus.OK, Map.class);
+        @SuppressWarnings("rawtypes")
+        Map response = request.get("/api/account/password", HttpStatus.OK, Map.class);
         assertThat(response.get("password")).isNotNull();
         assertThat(response.get("password")).isNotEqualTo("");
     }
@@ -389,7 +393,7 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
     }
 
     @Test
-    //@WithMockUser("authenticateduser")
+    // @WithMockUser("authenticateduser")
     public void passwordReset() throws Exception {
         // create user in repo
         User user = ModelFactory.generateActivatedUser("authenticateduser");
