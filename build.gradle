@@ -262,6 +262,7 @@ dependencies {
     testImplementation "com.tngtech.archunit:archunit-junit5-api:0.18.0"
     testRuntimeOnly "com.tngtech.archunit:archunit-junit5-engine:0.18.0"
     testImplementation "org.mockito:mockito-core:${mockito_version}"
+    testImplementation "org.mockito:mockito-inline:${mockito_version}"
     testImplementation "org.mockito:mockito-junit-jupiter:${mockito_version}"
     testImplementation "org.hamcrest:hamcrest-library:2.2"
     testImplementation "com.h2database:h2:1.4.200"
