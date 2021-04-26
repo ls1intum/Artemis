@@ -545,7 +545,7 @@ And https://howtodoinjava.com/best-practices/unit-testing-best-practices-junit-r
 23. Avoid using @MockBean
 =========================
 
-Do not use the ``@SpyBean`` or ``@MockBean`` annotation unless absolutely necessary. If you want to see more in detail why, take a look `here. <https://www.baeldung.com/spring-tests>`_
+Do not use the ``@SpyBean`` or ``@MockBean`` annotation unless absolutely necessary, or possibly in an abstract Superclass. If you want to see more in detail why, take a look `here. <https://www.baeldung.com/spring-tests>`_
 Basically every time @MockBean appears in a class, the ApplicationContext cache gets marked as dirty, hence the runner will clean the cache after the test-class is done and restarts the application context.
 This leads to a large overhead, which makes the tests tend to take a lot more time.
 
