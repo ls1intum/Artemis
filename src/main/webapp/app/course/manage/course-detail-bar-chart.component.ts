@@ -52,8 +52,12 @@ export class CourseDetailBarChartComponent implements OnChanges {
         }
         this.initialStatsReceived = true;
         this.createLabels();
-        for (const value of this.initialStats) {
-            this.dataForSpanType.push(Math.round((value / this.numberOfStudentsInCourse) * 100));
+        if (this.numberOfStudentsInCourse > 0) {
+            for (const value of this.initialStats) {
+                this.dataForSpanType.push(Math.round((value / this.numberOfStudentsInCourse) * 100));
+            }
+        } else {
+            this.dataForSpanType = new Array(this.initialStats.length).fill(0);
         }
         this.chartData = [
             {

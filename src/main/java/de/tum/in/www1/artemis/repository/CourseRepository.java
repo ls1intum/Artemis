@@ -170,7 +170,8 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     /**
      * Fetches the maximum amount of points a student could possibly get at the moment
      *
-     * @param courseId - courseId of the course
+     * @param courseId - id of the course
+     * @param now - the current time in ZonedDateTime format
      * @return max points
      */
     @Query("""
