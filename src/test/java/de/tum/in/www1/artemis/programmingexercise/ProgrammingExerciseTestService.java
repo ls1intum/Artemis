@@ -110,7 +110,7 @@ public class ProgrammingExerciseTestService {
     @Autowired
     private ZipFileTestUtilService zipFileTestUtilService;
 
-    @Autowired
+    @Autowired(required = false)
     private AutomaticProgrammingExerciseCleanupService automaticProgrammingExerciseCleanupService;
 
     @Value("${artemis.lti.user-prefix-edx:#{null}}")
