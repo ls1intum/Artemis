@@ -1651,5 +1651,16 @@ public class CourseTestService {
         assertThat(courseDTO.getCurrentPercentageAverageScore()).isEqualTo(60);
         assertThat(courseDTO.getCurrentAbsoluteAverageScore()).isEqualTo(3);
         assertThat(courseDTO.getCurrentMaxAverageScore()).isEqualTo(5);
+
+        // Active Users
+        int periodIndex = 0;
+        LinkedMultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
+        parameters.add("periodIndex", "" + periodIndex);
+
+        var activeStudents = request.get("/api/courses/" + course.getId() + "/statistics", HttpStatus.OK, Integer[].class, parameters);
+
+        assertThat(activeStudents).isNotNull();
+        assertThat(activeStudents.length).isEqualTo(4);
+
     }
 }
