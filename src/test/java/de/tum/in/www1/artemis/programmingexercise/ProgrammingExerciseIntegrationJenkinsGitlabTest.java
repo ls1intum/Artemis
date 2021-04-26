@@ -1,5 +1,8 @@
 package de.tum.in.www1.artemis.programmingexercise;
 
+import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource.Endpoints.*;
+import static org.assertj.core.api.Assertions.assertThat;
+
 import java.io.IOException;
 
 import org.junit.jupiter.api.AfterEach;
@@ -13,11 +16,15 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationJenkinsGitlabTest;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
+import de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource;
 
 public class ProgrammingExerciseIntegrationJenkinsGitlabTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 
     @Autowired
     private ProgrammingExerciseIntegrationServiceTest programmingExerciseIntegrationServiceTest;
+
+    @Autowired
+    private ProgrammingExerciseResource programmingExerciseResource;
 
     @BeforeEach
     void initTestCase() throws Exception {
@@ -281,6 +288,28 @@ public class ProgrammingExerciseIntegrationJenkinsGitlabTest extends AbstractSpr
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void createProgrammingExercise_failToCheckIfProjectExistsInCi() throws Exception {
         programmingExerciseIntegrationServiceTest.createProgrammingExercise_failToCheckIfProjectExistsInCi();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void createProgrammingExercise_jenkinsJobIsNullOrUrlEmpty() throws Exception {
+        var programmingExercise = programmingExerciseIntegrationServiceTest.programmingExercise;
+        programmingExercise.setId(null);
+        programmingExercise.setTitle("unique-title");
+        programmingExercise.setShortName("testuniqueshortname");
+        gitlabRequestMockProvider.mockCheckIfProjectExists(programmingExercise, false);
+        jenkinsRequestMockProvider.mockCheckIfProjectExistsJobIsNull(programmingExercise);
+
+        var existsOpt = programmingExerciseResource.checkIfProjectExists(programmingExercise);
+        assertThat(existsOpt).isEmpty();
+
+        jenkinsRequestMockProvider.mockCheckIfProjectExistsJobUrlEmptyOrNull(programmingExercise, true);
+        existsOpt = programmingExerciseResource.checkIfProjectExists(programmingExercise);
+        assertThat(existsOpt).isEmpty();
+
+        jenkinsRequestMockProvider.mockCheckIfProjectExistsJobUrlEmptyOrNull(programmingExercise, false);
+        existsOpt = programmingExerciseResource.checkIfProjectExists(programmingExercise);
+        assertThat(existsOpt).isEmpty();
     }
 
     @Test

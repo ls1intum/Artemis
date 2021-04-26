@@ -181,6 +181,16 @@ public class JenkinsRequestMockProvider {
         }
     }
 
+    public void mockCheckIfProjectExistsJobIsNull(ProgrammingExercise exercise) throws IOException {
+        doReturn(null).when(jenkinsServer).getJob(exercise.getProjectKey());
+    }
+
+    public void mockCheckIfProjectExistsJobUrlEmptyOrNull(ProgrammingExercise exercise, boolean urlEmpty) throws IOException {
+        var job = mock(JobWithDetails.class);
+        doReturn(job).when(jenkinsServer).getJob(exercise.getProjectKey());
+        doReturn(urlEmpty ? "" : null).when(job).getUrl();
+    }
+
     public void mockCopyBuildPlan(String sourceProjectKey, String targetProjectKey) throws IOException {
         mockGetJobXmlForBuildPlanWith(sourceProjectKey, "<xml></xml>");
         mockSaveJobXml(targetProjectKey);
@@ -237,7 +247,7 @@ public class JenkinsRequestMockProvider {
         mockCopyBuildPlan(projectKey, projectKey);
     }
 
-    private void mockGetJob(String projectKey, String jobName, JobWithDetails jobToReturn, boolean getJobFails) throws IOException {
+    public void mockGetJob(String projectKey, String jobName, JobWithDetails jobToReturn, boolean getJobFails) throws IOException {
         final var folder = new FolderJob();
         mockGetFolderJob(projectKey, folder);
         if (!getJobFails) {
@@ -254,14 +264,15 @@ public class JenkinsRequestMockProvider {
         doReturn(com.google.common.base.Optional.of(folderJobToReturn)).when(jenkinsServer).getFolderJob(jobWithDetails);
     }
 
-    public BuildWithDetails mockGetLatestBuildLogs(ProgrammingExerciseStudentParticipation participation) throws IOException {
+    public BuildWithDetails mockGetLatestBuildLogs(ProgrammingExerciseStudentParticipation participation, boolean useLegacyLogs) throws IOException {
         String projectKey = participation.getProgrammingExercise().getProjectKey();
         String buildPlanId = participation.getBuildPlanId();
 
         final var job = mock(JobWithDetails.class);
         mockGetJob(projectKey, buildPlanId, job, false);
 
-        final var buildLogResponse = loadFileFromResources("test-data/jenkins-response/failed-build-log.html");
+        var buildLogFile = useLegacyLogs ? "legacy-failed-build-log.html" : "failed-build-log.html";
+        final var buildLogResponse = loadFileFromResources("test-data/jenkins-response/" + buildLogFile);
 
         final var build = mock(Build.class);
         doReturn(build).when(job).getLastBuild();
@@ -495,4 +506,7 @@ public class JenkinsRequestMockProvider {
         }
     }
 
+    public void mockGivePlanPermissionsThrowException(String projectKey, String projectKey1) throws IOException {
+        doThrow(IOException.class).when(jenkinsJobPermissionsService).addInstructorAndTAPermissionsToUsersForJob(any(), any(), eq(projectKey), eq(projectKey1));
+    }
 }
