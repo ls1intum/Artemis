@@ -1218,7 +1218,7 @@ public class ProgrammingExerciseTestService {
     }
 
     // TEST
-    public void automaticCleanupGitRepositories() throws Exception {
+    public void automaticCleanupGitRepositories() {
         var startDate = ZonedDateTime.now().minusWeeks(15L);
         var endDate = startDate.plusDays(5L);
         exercise.setReleaseDate(startDate);
