@@ -509,18 +509,13 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void testGetResultsForExamExercise() throws Exception {
         var now = ZonedDateTime.now();
-        for (int i = 1; i <= 10; i++) {
+        for (int i = 1; i <= 5; i++) {
             ModelingSubmission modelingSubmission = new ModelingSubmission();
-            modelingSubmission.model("Text");
+            modelingSubmission.model("Testingsubmission");
             modelingSubmission.submitted(true);
-            modelingSubmission.submissionDate(now.minusHours(3));
+            modelingSubmission.submissionDate(now.minusHours(2));
             database.addSubmission(this.examModelingExercise, modelingSubmission, "student" + i);
-            if (i % 3 == 0) {
-                database.addResultToSubmission(modelingSubmission, AssessmentType.MANUAL, database.getUserByLogin("instructor1"), 10D, true);
-            }
-            else if (i % 4 == 0) {
-                database.addResultToSubmission(modelingSubmission, AssessmentType.SEMI_AUTOMATIC, database.getUserByLogin("instructor1"), 20D, true);
-            }
+            database.addResultToSubmission(modelingSubmission, AssessmentType.MANUAL, database.getUserByLogin("instructor1"), 12D, true);
         }
 
         // empty participation with submission
@@ -540,7 +535,6 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
 
         List<Result> results = request.getList("/api/exercises/" + this.examModelingExercise.getId() + "/results", HttpStatus.OK, Result.class);
         assertThat(results).hasSize(5);
-        // TODO: check additional values
     }
 
     @Test
