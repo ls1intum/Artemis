@@ -27,6 +27,7 @@ import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.treewalk.CanonicalTreeParser;
 import org.jetbrains.annotations.NotNull;
+import org.mockito.MockedStatic;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -821,6 +822,13 @@ public class ProgrammingExerciseTestService {
 
     public void exportInstructorProgrammingExercise_forbidden() throws Exception {
         exportInstructorProgrammingExercise(HttpStatus.FORBIDDEN);
+    }
+
+    public void exportInstructorProgrammingExercise_IOException() throws Exception {
+        MockedStatic<Files> mockedFiles = mockStatic(Files.class);
+        mockedFiles.when(() -> Files.newOutputStream(any())).thenThrow(IOException.class);
+        request.get("/api/programming-exercises/" + exercise.getId() + "/export-instructor-exercise", HttpStatus.BAD_REQUEST, String.class);
+        mockedFiles.close();
     }
 
     private java.io.File exportInstructorProgrammingExercise(HttpStatus expectedStatus) throws Exception {

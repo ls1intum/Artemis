@@ -281,6 +281,12 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
     }
 
     @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void exportInstructorProgrammingExercise_IOException() throws Exception {
+        programmingExerciseTestService.exportInstructorProgrammingExercise_IOException();
+    }
+
+    @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     public void exportInstructorProgrammingExerciseAsTutor_forbidden() throws Exception {
         programmingExerciseTestService.exportInstructorProgrammingExercise_forbidden();
