@@ -26,8 +26,8 @@ import org.springframework.test.context.TestPropertySource;
 
 import com.offbytwo.jenkins.JenkinsServer;
 
-import de.tum.in.www1.artemis.connector.gitlab.GitlabRequestMockProvider;
-import de.tum.in.www1.artemis.connector.jenkins.JenkinsRequestMockProvider;
+import de.tum.in.www1.artemis.connector.GitlabRequestMockProvider;
+import de.tum.in.www1.artemis.connector.JenkinsRequestMockProvider;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.participation.AbstractBaseProgrammingExerciseParticipation;
