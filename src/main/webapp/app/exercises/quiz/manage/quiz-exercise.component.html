@@ -49,7 +49,7 @@
                     <td *ngIf="!quizIsOver(quizExercise) || !quizExercise.isAtLeastEditor">
                         <a [routerLink]="['/course-management', quizExercise.course?.id, 'quiz-exercises', quizExercise.id, 'edit']">{{ quizExercise.id }}</a>
                     </td>
-                    <td *ngIf="quizIsOver(quizExercise) && quizExercise.isAtLeastInstructor">
+                    <td *ngIf="quizIsOver(quizExercise) && quizExercise.isAtLeastEditor">
                         <a [routerLink]="['/course-management', quizExercise.course?.id, 'quiz-exercises', quizExercise.id, 're-evaluate']">{{ quizExercise.id }}</a>
                     </td>
                     <td>{{ quizExercise.title }}</td>
