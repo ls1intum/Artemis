@@ -163,9 +163,10 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void createTextExercise_setAssessmentDueDateWithoutExerciseDueDate_badRequest() throws Exception {
-        TextExercise textExercise = new TextExercise();
-        textExercise.setTitle("Test Text Exercise");
-        textExercise.setAssessmentDueDate(ZonedDateTime.now());
+        final Course course = database.addCourseWithOneReleasedTextExercise();
+        TextExercise textExercise = textExerciseRepository.findByCourseId(course.getId()).get(0);
+        textExercise.setId(null);
+        textExercise.setDueDate(null);
 
         request.postWithResponseBody("/api/text-exercises/", textExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
     }
