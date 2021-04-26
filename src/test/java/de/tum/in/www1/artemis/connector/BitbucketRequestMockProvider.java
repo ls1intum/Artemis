@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.connector.bitbucket;
+package de.tum.in.www1.artemis.connector;
 
 import static org.hamcrest.text.MatchesPattern.matchesPattern;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.*;
