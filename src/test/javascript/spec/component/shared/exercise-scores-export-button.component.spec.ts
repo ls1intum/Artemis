@@ -57,9 +57,7 @@ describe('ExerciseScoresExportButtonComponent', () => {
             imports: [ArtemisTestModule],
             declarations: [ExerciseScoresExportButtonComponent],
             providers: [DifferencePipe, { provide: TranslateService, useClass: MockTranslateService }],
-        })
-            .overrideTemplate(ExerciseScoresExportButtonComponent, '')
-            .compileComponents();
+        }).compileComponents();
 
         fixture = TestBed.createComponent(ExerciseScoresExportButtonComponent);
         component = fixture.componentInstance;
@@ -68,31 +66,12 @@ describe('ExerciseScoresExportButtonComponent', () => {
 
     afterEach(async () => {
         jest.clearAllMocks();
+        sinon.restore();
     });
-
-    it('should load results', fakeAsync(() => {
-        // GIVEN
-        component.exercise = exercise1;
-        spyOn(resultService, 'getResultsForExercise').and.returnValue(of(new HttpResponse({ body: [result1, result2] })));
-
-        // WHEN
-        let results = [];
-
-        component.getResults().subscribe((data) => {
-            results = data.body || [];
-        });
-
-        fixture.detectChanges();
-        tick();
-
-        // THEN
-        expect(component).to.be.ok;
-        expect(results.length).to.be.equal(2);
-    }));
 
     it('should export results for one exercise', fakeAsync(() => {
         // GIVEN
-        const getResultsStub = sinon.stub(component, 'getResults').returns(of(new HttpResponse({ body: [result1, result2] })));
+        const getResultsStub = sinon.stub(resultService, 'getResults').returns(of(new HttpResponse({ body: [result1, result2] })));
         component.exercise = exercise1;
 
         // WHEN
@@ -105,7 +84,7 @@ describe('ExerciseScoresExportButtonComponent', () => {
 
     it('should export results for multiple exercise', fakeAsync(() => {
         // GIVEN
-        const getResultsStub = sinon.stub(component, 'getResults').returns(of(new HttpResponse({ body: [result1, result2] })));
+        const getResultsStub = sinon.stub(resultService, 'getResults').returns(of(new HttpResponse({ body: [result1, result2] })));
         component.exercises = [exercise1, exercise2];
 
         // WHEN
