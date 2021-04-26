@@ -133,23 +133,10 @@ public class ProgrammingExerciseExportService {
         var pathToZippedExercise = Path.of(repoDownloadClonePath, exportedExerciseZipFileName);
 
         // Get the file path of each file to be included, i.e. each entry in the zipFiles list
-        var zipFilePaths = zipFiles.stream().map(File::toPath).collect(Collectors.toList());
+        var includedFilePaths = zipFiles.stream().map(File::toPath).collect(Collectors.toList());
 
-        try {
-            // Create the zip folder of the exported programming exercise
-            zipFileService.createZipFile(pathToZippedExercise, zipFilePaths, false);
-            return pathToZippedExercise;
-        }
-        catch (IOException e) {
-            var error = "Failed to export programming exercise " + exercise.getId() + " because the zip file " + pathToZippedExercise + " could not be created: " + e.getMessage();
-            log.info(error);
-            exportErrors.add(error);
-            return null;
-        }
-        finally {
-            // Delete the files that are now duplicated in the zip folder of the exported programming exercise
-            zipFilePaths.forEach(zipFilePath -> fileService.scheduleForDeletion(zipFilePath, 1));
-        }
+        // Create the zip folder of the exported programming exercise and return the path to the created folder
+        return zipFilesAndCleanUp(pathToZippedExercise, includedFilePaths, false, exportErrors);
     }
 
     /**
@@ -167,43 +154,58 @@ public class ProgrammingExerciseExportService {
         var zipFiles = new ArrayList<File>();
 
         if (includingStudentRepos) {
-            // Lazy load student participations and set the export options.
+            // Lazy load student participation and set the export options
             var studentParticipations = studentParticipationRepository.findByExerciseId(exercise.getId()).stream()
                     .map(studentParticipation -> (ProgrammingExerciseStudentParticipation) studentParticipation).collect(Collectors.toList());
             var exportOptions = new RepositoryExportOptionsDTO();
             exportOptions.setHideStudentNameInZippedFolder(false);
 
-            // Export student repositories
+            // Export student repositories and add them to list
             var studentZipFilePaths = exportStudentRepositories(exercise, studentParticipations, exportOptions, exportErrors).stream().filter(Objects::nonNull).map(Path::toFile)
                     .collect(Collectors.toList());
             zipFiles.addAll(studentZipFilePaths);
         }
 
-        // Export the template, solution, and tests repositories
+        // Export the template, solution, and tests repositories and add them to list
         zipFiles.add(exportInstructorRepositoryForExercise(exercise.getId(), RepositoryType.TEMPLATE, exportErrors));
         zipFiles.add(exportInstructorRepositoryForExercise(exercise.getId(), RepositoryType.SOLUTION, exportErrors));
         zipFiles.add(exportInstructorRepositoryForExercise(exercise.getId(), RepositoryType.TESTS, exportErrors));
 
-        // Remove null elements and get the file path of each zip file.
-        var zipFilePathsNonNull = zipFiles.stream().filter(Objects::nonNull).map(File::toPath).collect(Collectors.toList());
+        // Setup path to store the zip file for the exported repositories
+        var timestamp = ZonedDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-Hmss"));
+        var filename = exercise.getCourseViaExerciseGroupOrCourseMember().getShortName() + "-" + exercise.getTitle() + "-" + exercise.getId() + "-" + timestamp + ".zip";
+        var pathToZippedExercise = Path.of(pathToStoreZipFile, filename);
 
+        // Remove null elements and get the file path of each file to be included, i.e. each entry in the zipFiles list
+        var includedFilePathsNotNull = zipFiles.stream().filter(Objects::nonNull).map(File::toPath).collect(Collectors.toList());
+
+        // Create the zip folder of the exported programming exercise and return the path to the created folder
+        return zipFilesAndCleanUp(pathToZippedExercise, includedFilePathsNotNull, false, exportErrors);
+    }
+
+    /**
+     * Creates a zip folder of a given list of file paths and afterwards schedule deletion of files that are zipped
+     *
+     * @param pathToZippedExercise      Path to where the resulting zip folder is located
+     * @param includedFilePaths         List of paths including all files to be included in the created zip folder
+     * @param createDirsInZipFile       configuration parameter for called createZipFile method
+     * @param exportErrors              List of failures that occurred during the export
+     * @return Path to a zip folder
+     */
+    private Path zipFilesAndCleanUp(Path pathToZippedExercise, List<Path> includedFilePaths, Boolean createDirsInZipFile, List<String> exportErrors) {
         try {
-            // Zip instructor repos
-            var timestamp = ZonedDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-Hmss"));
-            var filename = exercise.getCourseViaExerciseGroupOrCourseMember().getShortName() + "-" + exercise.getTitle() + "-" + exercise.getId() + "-" + timestamp + ".zip";
-            var pathToZippedExercise = Path.of(pathToStoreZipFile, filename);
-            zipFileService.createZipFile(pathToZippedExercise, zipFilePathsNonNull, false);
+            zipFileService.createZipFile(pathToZippedExercise, includedFilePaths, createDirsInZipFile);
             return pathToZippedExercise;
         }
         catch (IOException e) {
-            var error = "Failed to export programming exercise " + exercise.getId() + " because the zip file " + pathToStoreZipFile + " could not be created: " + e.getMessage();
+            var error = "Failed to export programming exercise because the zip file " + pathToZippedExercise + " could not be created: " + e.getMessage();
             log.info(error);
             exportErrors.add(error);
             return null;
         }
         finally {
-            // Delete the zipped repo files since we don't need those anymore.
-            zipFilePathsNonNull.forEach(zipFilePath -> fileService.scheduleForDeletion(zipFilePath, 1));
+            // Delete the files that are now duplicated in the zip folder of the exported programming exercise
+            includedFilePaths.forEach(zipFilePath -> fileService.scheduleForDeletion(zipFilePath, 1));
         }
     }
 
