@@ -53,6 +53,9 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     @Autowired
     private PlagiarismComparisonRepository plagiarismComparisonRepository;
 
+    @Autowired
+    private CourseRepository courseRepository;
+
     @BeforeEach
     public void initTestCase() {
         database.addUsers(2, 1, 1);
@@ -108,6 +111,26 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     }
 
     @Test
+    @WithMockUser(value = "tutor1", roles = "INSTRUCTOR")
+    public void deleteTextExercise_notFound() throws Exception {
+        TextExercise textExercise = new TextExercise();
+        textExercise.setId(111L);
+
+        request.delete("/api/text-exercises/" + textExercise.getId(), HttpStatus.NOT_FOUND);
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void deleteTextExercise_isNotAtLeastAnInstructor_forbidden() throws Exception {
+        final Course course = database.addCourseWithOneReleasedTextExercise();
+        TextExercise textExercise = textExerciseRepository.findByCourseId(course.getId()).get(0);
+        course.setInstructorGroupName("test");
+        courseRepository.save(course);
+
+        request.delete("/api/text-exercises/" + textExercise.getId(), HttpStatus.FORBIDDEN);
+    }
+
+    @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void createTextExercise() throws Exception {
         final Course course = database.addCourseWithOneReleasedTextExercise();
@@ -132,10 +155,7 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void createTextExercise_setExerciseTitleNull_badRequest() throws Exception {
-        final Course course = database.addCourseWithOneReleasedTextExercise();
-        TextExercise textExercise = textExerciseRepository.findByCourseId(course.getId()).get(0);
-
-        textExercise.setTitle(null);
+        TextExercise textExercise = new TextExercise();
 
         request.postWithResponseBody("/api/text-exercises/", textExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
     }
@@ -143,19 +163,21 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void createTextExercise_setAssessmentDueDateWithoutExerciseDueDate_badRequest() throws Exception {
-        final Course course = database.addCourseWithOneReleasedTextExercise();
-        TextExercise textExercise = textExerciseRepository.findByCourseId(course.getId()).get(0);
-
-        textExercise.dueDate(null);
+        TextExercise textExercise = new TextExercise();
+        textExercise.setTitle("Test Text Exercise");
+        textExercise.setAssessmentDueDate(ZonedDateTime.now());
 
         request.postWithResponseBody("/api/text-exercises/", textExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
-    @WithMockUser(value = "instructor1", roles = "TA")
-    public void createTextExercise_asTutor_forbidden() throws Exception {
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void createTextExercise_isNotAtLeastAnInstructor_forbidden() throws Exception {
         final Course course = database.addCourseWithOneReleasedTextExercise();
         TextExercise textExercise = textExerciseRepository.findByCourseId(course.getId()).get(0);
+        course.setInstructorGroupName("test");
+        courseRepository.save(course);
+        textExercise.setId(null);
 
         request.postWithResponseBody("/api/text-exercises/", textExercise, TextExercise.class, HttpStatus.FORBIDDEN);
     }
@@ -271,10 +293,12 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     }
 
     @Test
-    @WithMockUser(value = "instructor1", roles = "TA")
-    public void updateTextExercise_asTutor_forbidden() throws Exception {
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void updateTextExercise_isNotAtLeastAnInstructor_forbidden() throws Exception {
         final Course course = database.addCourseWithOneReleasedTextExercise();
         TextExercise textExercise = textExerciseRepository.findByCourseId(course.getId()).get(0);
+        course.setInstructorGroupName("test");
+        courseRepository.save(course);
 
         request.putWithResponseBody("/api/text-exercises/", textExercise, TextExercise.class, HttpStatus.FORBIDDEN);
     }
@@ -474,11 +498,22 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     }
 
     @Test
-    @WithMockUser(value = "tutor1", roles = "USER")
-    public void getAllTextExercisesForCourse_asUser_forbidden() throws Exception {
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void getAllTextExercisesForCourse_isNotAtLeastTeachingAssistantInCourse_forbidden() throws Exception {
         final Course course = database.addCourseWithOneReleasedTextExercise();
+        course.setTeachingAssistantGroupName("test");
+        courseRepository.save(course);
 
        request.getList("/api/courses/" + course.getId() + "/text-exercises/", HttpStatus.FORBIDDEN, TextExercise.class);
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void getTextExercise_notFound() throws Exception {
+        TextExercise textExercise = new TextExercise();
+        textExercise.setId(111L);
+
+        request.get("/api/text-exercises/" + textExercise.getId(), HttpStatus.NOT_FOUND, TextExercise.class);
     }
 
     @Test
@@ -515,10 +550,12 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     }
 
     @Test
-    @WithMockUser(value = "student1", roles = "USER")
-    public void getTextExerciseAsStudent() throws Exception {
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void getTextExercise_isNotAtleastTeachingAssistant_forbidden() throws Exception {
         final Course course = database.addCourseWithOneReleasedTextExercise();
         TextExercise textExercise = textExerciseRepository.findByCourseId(course.getId()).get(0);
+        course.setTeachingAssistantGroupName("test");
+        courseRepository.save(course);
         request.get("/api/text-exercises/" + textExercise.getId(), HttpStatus.FORBIDDEN, TextExercise.class);
     }
 
@@ -730,6 +767,16 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testCheckPlagiarism_isNotAtLeastInstructor_forbidden() throws Exception {
+        final Course course = database.addCourseWithOneReleasedTextExercise();
+        TextExercise textExercise = textExerciseRepository.findByCourseId(course.getId()).get(0);
+        course.setInstructorGroupName("test");
+        courseRepository.save(course);
+        request.get("/api/text-exercises/" + textExercise.getId() + "/check-plagiarism", HttpStatus.FORBIDDEN, TextPlagiarismResult.class, database.getDefaultPlagiarismOptions());
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void testGetPlagiarismResult() throws Exception {
         final Course course = database.addCourseWithOneReleasedTextExercise();
         TextExercise textExercise = textExerciseRepository.findByCourseId(course.getId()).get(0);
@@ -754,5 +801,15 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     public void testGetPlagiarismResultWithoutExercise() throws Exception {
         TextPlagiarismResult result = request.get("/api/text-exercises/" + 1 + "/plagiarism-result", HttpStatus.NOT_FOUND, TextPlagiarismResult.class);
         assertThat(result).isNull();
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testGetPlagiarismResult_isNotAtLeastInstructor_forbidden() throws Exception {
+        final Course course = database.addCourseWithOneReleasedTextExercise();
+        TextExercise textExercise = textExerciseRepository.findByCourseId(course.getId()).get(0);
+        course.setInstructorGroupName("test");
+        courseRepository.save(course);
+        request.get("/api/text-exercises/" + textExercise.getId() + "/plagiarism-result", HttpStatus.FORBIDDEN, String.class);
     }
 }
