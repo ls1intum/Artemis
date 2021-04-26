@@ -61,6 +61,3 @@ artemis:
         url: http://localhost
         base64-secret: YWVuaXF1YWRpNWNlaXJpNmFlbTZkb283dXphaVF1b29oM3J1MWNoYWlyNHRoZWUzb2huZ2FpM211bGVlM0VpcAo=
         token-validity-in-seconds: 10800
-    external-system-request:
-        batch-size: 1  # wait the time below after 1 requests (make it easier to test the corresponding code)
-        batch-waiting-time: 5   # 5ms (make the tests faster)

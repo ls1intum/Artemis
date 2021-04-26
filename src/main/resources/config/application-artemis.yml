@@ -91,6 +91,3 @@ artemis:
         token-validity-in-seconds: 10800
     apollon:
         conversion-service-url: http://localhost:8080
-    external-system-request:
-        batch-size: 50  # wait the time below after 50 requests
-        batch-waiting-time: 30000   # in ms = 30s
