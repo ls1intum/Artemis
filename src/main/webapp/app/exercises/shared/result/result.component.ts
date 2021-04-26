@@ -324,11 +324,7 @@ export class ResultComponent implements OnInit, OnChanges {
      *
      */
     getOnlyShowSuccessfulCompileStatus(): boolean {
-        return (
-            this.templateStatus !== ResultTemplateStatus.NO_RESULT &&
-            this.templateStatus !== ResultTemplateStatus.IS_BUILDING &&
-            this.result?.resultString? === '0 of 0 passed'
-        );
+        return this.templateStatus !== ResultTemplateStatus.NO_RESULT && this.templateStatus !== ResultTemplateStatus.IS_BUILDING && this.result?.resultString === '0 of 0 passed';
     }
 
     /**
