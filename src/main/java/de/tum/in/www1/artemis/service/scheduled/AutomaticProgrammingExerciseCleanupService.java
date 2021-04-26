@@ -11,6 +11,7 @@ import java.util.stream.Collectors;
 import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.env.Environment;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -41,6 +42,12 @@ public class AutomaticProgrammingExerciseCleanupService {
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
     private final GitService gitService;
+
+    @Value("${artemis.external-system-request.batch-size}")
+    private int externalSystemRequestBatchSize;
+
+    @Value("${artemis.external-system-request.batch-waiting-time}")
+    private int externalSystemRequestBatchWaitingTime;
 
     public AutomaticProgrammingExerciseCleanupService(Environment env, ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
             ParticipationService participationService, ProgrammingExerciseRepository programmingExerciseRepository, GitService gitService) {
@@ -132,12 +139,9 @@ public class AutomaticProgrammingExerciseCleanupService {
 
         for (ProgrammingExerciseStudentParticipation participation : allParticipationsWithBuildPlanId) {
 
-            if (participation.getBuildPlanId() == null) {
-                // already cleaned up
-                continue;
-            }
-            if (participation.getParticipant() == null) {
-                // we only want to clean up build plans of students or teams (NOT template or solution build plans)
+            if (participation.getBuildPlanId() == null || participation.getParticipant() == null) {
+                // NOTE: based on the query above, this code is not reachable. We check it anyway to be 100% sure such participations won't be processed
+                // already cleaned up or we only want to clean up build plans of students or teams (NOT template or solution build plans)
                 continue;
             }
 
@@ -213,10 +217,10 @@ public class AutomaticProgrammingExerciseCleanupService {
 
         int index = 0;
         for (ProgrammingExerciseStudentParticipation participation : actualParticipationsToClean) {
-            if (index > 0 && index % EXTERNAL_SYSTEM_REQUEST_BATCH_SIZE == 0) {
+            if (index > 0 && index % externalSystemRequestBatchSize == 0) {
                 try {
-                    log.info("Sleep for {}s during cleanupBuildPlansOnContinuousIntegrationServer", EXTERNAL_SYSTEM_REQUEST_BATCH_WAIT_TIME_MS / 1000);
-                    Thread.sleep(EXTERNAL_SYSTEM_REQUEST_BATCH_WAIT_TIME_MS);
+                    log.info("Sleep for {}s during cleanupBuildPlansOnContinuousIntegrationServer", externalSystemRequestBatchWaitingTime / 1000);
+                    Thread.sleep(externalSystemRequestBatchWaitingTime);
                 }
                 catch (InterruptedException ex) {
                     log.error("Exception encountered when pausing before cleaning up build plans", ex);

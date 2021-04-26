@@ -3,7 +3,6 @@ package de.tum.in.www1.artemis.programmingexercise;
 import static de.tum.in.www1.artemis.programmingexercise.ProgrammingExerciseTestService.studentLogin;
 import static de.tum.in.www1.artemis.programmingexercise.ProgrammingSubmissionConstants.GITLAB_REQUEST;
 
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.stream.Stream;
 
@@ -41,7 +40,7 @@ class ProgrammingExerciseGitlabJenkinsIntegrationTest extends AbstractSpringInte
     }
 
     @AfterEach
-    void tearDown() throws IOException {
+    void tearDown() throws Exception {
         programmingExerciseTestService.tearDown();
         gitlabRequestMockProvider.reset();
         jenkinsRequestMockProvider.reset();
@@ -297,7 +296,7 @@ class ProgrammingExerciseGitlabJenkinsIntegrationTest extends AbstractSpringInte
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
-    public void testAutomaticCleanupGitRepositories() throws Exception {
+    public void testAutomaticCleanupGitRepositories() {
         programmingExerciseTestService.automaticCleanupGitRepositories();
     }
 

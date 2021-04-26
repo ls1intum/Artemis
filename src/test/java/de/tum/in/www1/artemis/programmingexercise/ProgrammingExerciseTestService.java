@@ -122,7 +122,7 @@ public class ProgrammingExerciseTestService {
 
     public ProgrammingExercise examExercise;
 
-    public static final int numberOfStudents = 11;
+    public static final int numberOfStudents = 12;
 
     public static final String studentLogin = "student1";
 
@@ -179,7 +179,7 @@ public class ProgrammingExerciseTestService {
         setupRepositoryMocksParticipant(exercise, teamShortName, studentTeamRepo);
     }
 
-    public void tearDown() throws IOException {
+    public void tearDown() throws Exception {
         database.resetDatabase();
         exerciseRepo.resetLocalRepo();
         testRepo.resetLocalRepo();
@@ -1154,6 +1154,10 @@ public class ProgrammingExerciseTestService {
         exercise3.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().minusDays(3));
         exercise3 = programmingExerciseRepository.save(exercise3);
 
+        var exercise4 = ModelFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(5), ZonedDateTime.now().minusDays(4), course);
+        exercise4.setPublishBuildPlanUrl(true);
+        exercise4 = programmingExerciseRepository.save(exercise4);
+
         // Note participationXa will always be cleaned up, while participationXb will NOT be cleaned up
 
         // SuccessfulLatestResultAfter1Days
@@ -1171,11 +1175,14 @@ public class ProgrammingExerciseTestService {
         var participation4b = createProgrammingParticipationWithSubmissionAndResult(examExercise, "student7", 80D, ZonedDateTime.now().minusDays(6), false);
         var participation5b = createProgrammingParticipationWithSubmissionAndResult(examExercise, "student8", 80D, ZonedDateTime.now().minusDays(6), false);
         participation5b.setBuildPlanId(null);
+
         var participation6b = createProgrammingParticipationWithSubmissionAndResult(examExercise, "student9", 80D, ZonedDateTime.now().minusDays(6), false);
         participation6b.setParticipant(null);
 
         var participation7a = createProgrammingParticipationWithSubmissionAndResult(exercise3, "student10", 80D, ZonedDateTime.now().minusDays(4), true);
         var participation7b = createProgrammingParticipationWithSubmissionAndResult(exercise2, "student11", 80D, ZonedDateTime.now().minusDays(4), true);
+
+        var participation8b = createProgrammingParticipationWithSubmissionAndResult(exercise4, "student12", 100D, ZonedDateTime.now().minusDays(6), true);
 
         programmingExerciseStudentParticipationRepository.saveAll(Set.of(participation3a, participation3b, participation5b, participation6b));
 
@@ -1183,6 +1190,7 @@ public class ProgrammingExerciseTestService {
         mockDelegate.mockDeleteBuildPlan(exercise.getProjectKey(), exercise.getProjectKey() + "-" + participation2a.getParticipantIdentifier().toUpperCase(), false);
         mockDelegate.mockDeleteBuildPlan(exercise.getProjectKey(), exercise.getProjectKey() + "-" + participation3a.getParticipantIdentifier().toUpperCase(), false);
         mockDelegate.mockDeleteBuildPlan(exercise3.getProjectKey(), exercise3.getProjectKey() + "-" + participation7a.getParticipantIdentifier().toUpperCase(), false);
+        automaticProgrammingExerciseCleanupService.cleanup(); // this call won't do it, because of the missing profile, we execute it anyway to cover at least some code
         automaticProgrammingExerciseCleanupService.cleanupBuildPlansOnContinuousIntegrationServer();
 
         assertThat(programmingExerciseStudentParticipationRepository.findByIdElseThrow(participation1a.getId()).getBuildPlanId()).isNull();
@@ -1201,6 +1209,7 @@ public class ProgrammingExerciseTestService {
         assertThat(programmingExerciseStudentParticipationRepository.findByIdElseThrow(participation7a.getId()).getBuildPlanId()).isNull();
         assertThat(programmingExerciseStudentParticipationRepository.findByIdElseThrow(participation7b.getId()).getBuildPlanId()).isNotNull();
 
+        assertThat(programmingExerciseStudentParticipationRepository.findByIdElseThrow(participation8b.getId()).getBuildPlanId()).isNotNull();
     }
 
     private ProgrammingExerciseStudentParticipation createProgrammingParticipationWithSubmissionAndResult(ProgrammingExercise exercise, String studentLogin, double score,
