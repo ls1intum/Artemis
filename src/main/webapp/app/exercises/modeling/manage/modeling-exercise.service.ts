@@ -73,8 +73,11 @@ export class ModelingExerciseService {
      * (like the old ID) will be handled by the server.
      */
     import(adaptedSourceModelingExercise: ModelingExercise) {
+        let copy = this.exerciseService.convertDateFromClient(adaptedSourceModelingExercise);
+        copy = this.exerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
+        copy.categories = this.exerciseService.stringifyExerciseCategories(copy);
         return this.http
-            .post<ModelingExercise>(`${this.resourceUrl}/import/${adaptedSourceModelingExercise.id}`, adaptedSourceModelingExercise, { observe: 'response' })
+            .post<ModelingExercise>(`${this.resourceUrl}/import/${adaptedSourceModelingExercise.id}`, copy, { observe: 'response' })
             .pipe(
                 map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res)),
                 map((res: EntityResponseType) => this.exerciseService.convertExerciseCategoriesFromServer(res)),

@@ -67,4 +67,9 @@ public class PlagiarismMatch {
     public void setLength(int length) {
         this.length = length;
     }
+
+    @Override
+    public String toString() {
+        return "PlagiarismMatch{" + "startA=" + startA + ", startB=" + startB + ", length=" + length + '}';
+    }
 }

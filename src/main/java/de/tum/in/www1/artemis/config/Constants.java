@@ -173,6 +173,8 @@ public final class Constants {
 
     public static final String REGISTRATION_ENABLED = "registrationEnabled";
 
+    public static final String NEEDS_TO_ACCEPT_TERMS = "needsToAcceptTerms";
+
     public static final String ALLOWED_EMAIL_PATTERN = "allowedEmailPattern";
 
     public static final String ALLOWED_EMAIL_PATTERN_READABLE = "allowedEmailPatternReadable";

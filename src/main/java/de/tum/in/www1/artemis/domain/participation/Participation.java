@@ -185,29 +185,29 @@ public abstract class Participation extends DomainObject implements Participatio
      * @return the latest result or null
      */
     @Nullable
+    public Result findLatestLegalResult() {
+        return findLatestResult(true);
+    }
+
+    @Nullable
     public Result findLatestResult() {
         return findLatestResult(false);
     }
 
-    @Nullable
-    public Result findLatestLegalOrIllegalResult() {
-        return findLatestResult(true);
-    }
-
     /**
-     * Like findLatestResult() but with the possibility to include illegal submissions,
+     * Like findLatestLegalResult() but with the possibility to include illegal submissions,
      *
-     * @param includeIllegalResults should illegal submissions be included in the search
+     * @param filterIllegalResults should illegal submissions be excluded in the search
      * @return the latest result or null
      */
     @Nullable
-    private Result findLatestResult(boolean includeIllegalResults) {
+    private Result findLatestResult(boolean filterIllegalResults) {
         Set<Result> results = this.results;
         if (results == null || results.size() == 0) {
             return null;
         }
 
-        if (!includeIllegalResults) {
+        if (filterIllegalResults) {
             // Filter out results that belong to an illegal submission (if the submission exists).
             results = results.stream().filter(result -> result.getSubmission() == null || !SubmissionType.ILLEGAL.equals(result.getSubmission().getType()))
                     .collect(Collectors.toSet());

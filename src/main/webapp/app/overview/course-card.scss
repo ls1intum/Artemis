@@ -9,7 +9,7 @@
         justify-content: center;
         align-items: center;
 
-        .col {
+        .header-col {
             height: 80px;
             display: flex;
             align-items: center;
@@ -79,7 +79,10 @@
         }
 
         canvas {
+            cursor: pointer;
             z-index: 1;
+            width: 150px;
+            height: 150px;
         }
     }
 
@@ -133,6 +136,10 @@
             }
         }
     }
+}
+
+.container {
+    max-width: unset;
 }
 
 jhi-secured-image {

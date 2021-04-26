@@ -8,7 +8,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,10 +22,15 @@ import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.*;
+import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
+import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
+import de.tum.in.www1.artemis.domain.enumeration.TutorParticipationStatus;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
-import de.tum.in.www1.artemis.domain.participation.*;
+import de.tum.in.www1.artemis.domain.participation.Participation;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.programmingexercise.MockDelegate;
 import de.tum.in.www1.artemis.repository.*;
@@ -598,25 +606,25 @@ public class CourseTestService {
         for (Course testCourse : testCourses) {
             Course course = request.get("/api/courses/" + testCourse.getId() + "/for-assessment-dashboard", HttpStatus.OK, Course.class);
             for (Exercise exercise : course.getExercises()) {
-                assertThat(exercise.getTotalNumberOfAssessments().getInTime()).as("Number of in-time assessments is correct").isZero();
-                assertThat(exercise.getTotalNumberOfAssessments().getLate()).as("Number of late assessments is correct").isZero();
+                assertThat(exercise.getTotalNumberOfAssessments().inTime()).as("Number of in-time assessments is correct").isZero();
+                assertThat(exercise.getTotalNumberOfAssessments().late()).as("Number of late assessments is correct").isZero();
                 assertThat(exercise.getTutorParticipations().size()).as("Tutor participation was created").isEqualTo(1);
                 // Mock data contains exactly two submissions for the modeling exercise
                 if (exercise instanceof ModelingExercise) {
-                    assertThat(exercise.getNumberOfSubmissions().getInTime()).as("Number of in-time submissions is correct").isEqualTo(2);
+                    assertThat(exercise.getNumberOfSubmissions().inTime()).as("Number of in-time submissions is correct").isEqualTo(2);
                 }
                 // Mock data contains exactly one submission for the text exercise
                 if (exercise instanceof TextExercise) {
-                    assertThat(exercise.getNumberOfSubmissions().getInTime()).as("Number of in-time submissions is correct").isEqualTo(1);
+                    assertThat(exercise.getNumberOfSubmissions().inTime()).as("Number of in-time submissions is correct").isEqualTo(1);
                 }
                 // Mock data contains no submissions for the file upload and programming exercise
                 if (exercise instanceof FileUploadExercise || exercise instanceof ProgrammingExercise) {
-                    assertThat(exercise.getNumberOfSubmissions().getInTime()).as("Number of in-time submissions is correct").isEqualTo(0);
+                    assertThat(exercise.getNumberOfSubmissions().inTime()).as("Number of in-time submissions is correct").isEqualTo(0);
                 }
 
-                assertThat(exercise.getNumberOfSubmissions().getLate()).as("Number of late submissions is correct").isEqualTo(0);
+                assertThat(exercise.getNumberOfSubmissions().late()).as("Number of late submissions is correct").isEqualTo(0);
                 assertThat(exercise.getNumberOfAssessmentsOfCorrectionRounds().length).isEqualTo(1L);
-                assertThat(exercise.getNumberOfAssessmentsOfCorrectionRounds()[0].getInTime()).isEqualTo(0L);
+                assertThat(exercise.getNumberOfAssessmentsOfCorrectionRounds()[0].inTime()).isEqualTo(0L);
                 // Check tutor participation
                 if (exercise.getTutorParticipations().size() > 0) {
                     TutorParticipation tutorParticipation = exercise.getTutorParticipations().iterator().next();
@@ -626,12 +634,12 @@ public class CourseTestService {
 
             StatsForDashboardDTO stats = request.get("/api/courses/" + testCourse.getId() + "/stats-for-assessment-dashboard", HttpStatus.OK, StatsForDashboardDTO.class);
             long numberOfInTimeSubmissions = course.getId().equals(testCourses.get(0).getId()) ? 3 : 0; // course 1 has 3 submissions, course 2 has 0 submissions
-            assertThat(stats.getNumberOfSubmissions().getInTime()).as("Number of in-time submissions is correct").isEqualTo(numberOfInTimeSubmissions);
-            assertThat(stats.getNumberOfSubmissions().getLate()).as("Number of latte submissions is correct").isEqualTo(0);
-            assertThat(stats.getTotalNumberOfAssessments().getInTime()).as("Number of in-time assessments is correct").isEqualTo(0);
-            assertThat(stats.getTotalNumberOfAssessments().getLate()).as("Number of late assessments is correct").isEqualTo(0);
+            assertThat(stats.getNumberOfSubmissions().inTime()).as("Number of in-time submissions is correct").isEqualTo(numberOfInTimeSubmissions);
+            assertThat(stats.getNumberOfSubmissions().late()).as("Number of latte submissions is correct").isEqualTo(0);
+            assertThat(stats.getTotalNumberOfAssessments().inTime()).as("Number of in-time assessments is correct").isEqualTo(0);
+            assertThat(stats.getTotalNumberOfAssessments().late()).as("Number of late assessments is correct").isEqualTo(0);
             assertThat(stats.getNumberOfAssessmentsOfCorrectionRounds().length).isEqualTo(1L);
-            assertThat(stats.getNumberOfAssessmentsOfCorrectionRounds()[0].getInTime()).isEqualTo(0L);
+            assertThat(stats.getNumberOfAssessmentsOfCorrectionRounds()[0].inTime()).isEqualTo(0L);
             assertThat(stats.getTutorLeaderboardEntries().size()).as("Number of tutor leaderboard entries is correct").isEqualTo(5);
 
             StatsForDashboardDTO stats2 = request.get("/api/courses/" + testCourse.getId() + "/stats-for-instructor-dashboard", isInstructor ? HttpStatus.OK : HttpStatus.FORBIDDEN,
@@ -1380,7 +1388,7 @@ public class CourseTestService {
         final var teamExerciseId = teamExerciseNotEnded.getId();
         var teamStudents = new HashSet<User>();
         teamStudents.add(student);
-        var team = database.createTeam(teamStudents, instructor, teamExerciseNotEnded);
+        var team = database.createTeam(teamStudents, instructor, teamExerciseNotEnded, "team");
         database.addTeamParticipationForExercise(teamExerciseNotEnded, team.getId());
 
         instructorsCourse.addExercises(teamExerciseNotEnded);

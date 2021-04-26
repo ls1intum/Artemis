@@ -25,6 +25,7 @@ import { CourseExamArchiveButtonComponent, CourseExamArchiveState } from 'app/sh
 import { Exam } from 'app/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { AccountService } from 'app/core/auth/account.service';
+import { NgbModalRef } from '@ng-bootstrap/ng-bootstrap/modal/modal-ref';
 
 describe('Course Exam Archive Button Component', () => {
     let comp: CourseExamArchiveButtonComponent;
@@ -61,6 +62,18 @@ describe('Course Exam Archive Button Component', () => {
         courseManagementService = TestBed.inject(CourseManagementService);
         examManagementService = TestBed.inject(ExamManagementService);
         accountService = TestBed.inject(AccountService);
+    });
+
+    describe('OnInit without required properties', () => {
+        beforeEach(() => {
+            comp.archiveMode = 'Course';
+        });
+
+        it('should just return', fakeAsync(() => {
+            comp.ngOnInit();
+            tick();
+            expect(comp.archiveButtonText).toEqual('');
+        }));
     });
 
     describe('OnInit for not instructor', () => {
@@ -177,12 +190,28 @@ describe('Course Exam Archive Button Component', () => {
 
             sinon.stub(courseManagementService, 'find').returns(of(new HttpResponse({ status: 200, body: course })));
 
-            const archiveState: CourseExamArchiveState = { exportState: 'COMPLETED', progress: '' };
+            const archiveState: CourseExamArchiveState = { exportState: 'COMPLETED', message: '' };
             comp.handleArchiveStateChanges(archiveState);
 
             expect(comp.isBeingArchived).toBe(false);
             expect(comp.archiveButtonText).toEqual(comp.getArchiveButtonText());
             expect(alertServiceSpy).toBeCalled();
+            expect(comp.course).toBeDefined();
+        }));
+
+        it('should display warning and reload course on archive complete with warnings', fakeAsync(() => {
+            const modalService = TestBed.inject(NgbModal);
+
+            sinon.stub(courseManagementService, 'find').returns(of(new HttpResponse({ status: 200, body: course })));
+            const ngModalRef: NgbModalRef = { result: Promise.resolve('') } as any;
+            sinon.stub(modalService, 'open').returns(ngModalRef);
+
+            const archiveState: CourseExamArchiveState = { exportState: 'COMPLETED_WITH_WARNINGS', message: 'warning 1\nwarning 2' };
+            comp.handleArchiveStateChanges(archiveState);
+
+            expect(comp.isBeingArchived).toBe(false);
+            expect(comp.archiveButtonText).toEqual(comp.getArchiveButtonText());
+            expect(comp.archiveWarnings).toEqual(archiveState.message.split('\n'));
             expect(comp.course).toBeDefined();
         }));
     });
@@ -245,7 +274,7 @@ describe('Course Exam Archive Button Component', () => {
 
             sinon.stub(examManagementService, 'find').returns(of(new HttpResponse({ status: 200, body: exam })));
 
-            const archiveState: CourseExamArchiveState = { exportState: 'COMPLETED', progress: '' };
+            const archiveState: CourseExamArchiveState = { exportState: 'COMPLETED', message: '' };
             comp.handleArchiveStateChanges(archiveState);
 
             expect(comp.isBeingArchived).toBe(false);

@@ -91,7 +91,7 @@
                     <!-- Complaints about all assessments: -->
                     <li *ngIf="!isExamMode && complaintsEnabled">
                         <a [routerLink]="['/course-management', courseId, 'complaints']">
-                            <strong> {{ 'artemisApp.assessmentDashboard.totalComplaints' | translate }}:</strong> {{ numberOfTutorComplaints }}
+                            <strong> {{ 'artemisApp.assessmentDashboard.totalComplaints' | translate }}:</strong> {{ numberOfComplaints }}
                         </a>
                     </li>
                     <li *ngIf="!isExamMode && feedbackRequestEnabled">

@@ -41,6 +41,7 @@ import { MockAccountService } from '../../helpers/mocks/service/mock-account.ser
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { ArtemisTestModule } from '../../test.module';
+import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -55,6 +56,7 @@ describe('ModelingAssessmentEditorComponent', () => {
     let modelingSubmissionStub: SinonStub;
     let complaintStub: SinonStub;
     let router: any;
+    let submissionService: SubmissionService;
 
     beforeEach(fakeAsync(() => {
         TestBed.configureTestingModule({
@@ -76,6 +78,7 @@ describe('ModelingAssessmentEditorComponent', () => {
                 modelingSubmissionService = TestBed.inject(ModelingSubmissionService);
                 complaintService = TestBed.inject(ComplaintService);
                 router = TestBed.inject(Router);
+                submissionService = TestBed.inject(SubmissionService);
                 mockAuth = (fixture.debugElement.injector.get(AccountService) as any) as MockAccountService;
                 mockAuth.hasAnyAuthorityDirect([]);
                 mockAuth.identity();
@@ -145,12 +148,15 @@ describe('ModelingAssessmentEditorComponent', () => {
             const complaint = <Complaint>{ id: 1, complaintText: 'Why only 80%?', result };
             complaintStub.returns(of({ body: complaint } as HttpResponse<Complaint>));
 
+            const handleFeedbackStub = stub(submissionService, 'handleFeedbackCorrectionRoundTag');
+
             component.ngOnInit();
             tick(500);
             expect(modelingSubmissionStub).to.have.been.calledOnce;
             expect(component.isLoading).to.be.false;
             expect(component.complaint).to.deep.equal(complaint);
             modelingSubmissionStub.restore();
+            expect(handleFeedbackStub).to.have.been.called;
         }));
 
         it('wrongly call ngOnInit and throw exception', fakeAsync(() => {
@@ -403,10 +409,11 @@ describe('ModelingAssessmentEditorComponent', () => {
         component.modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined);
         component.modelingExercise.maxPoints = 5;
         component.modelingExercise.bonusPoints = 5;
-
+        const handleFeedbackStub = stub(submissionService, 'handleFeedbackCorrectionRoundTag');
         component.onFeedbackChanged(feedbacks);
         expect(component.referencedFeedback).to.have.lengthOf(1);
         expect(component.totalScore).to.be.equal(3);
+        expect(handleFeedbackStub).to.have.been.calledOnce;
     }));
 
     describe('test assessNext', () => {
