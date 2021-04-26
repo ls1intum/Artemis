@@ -566,7 +566,7 @@ Here is an example how to replace a ``@SpyBean``. We wanted to test a catch case
     }
 
 This, as mentioned above, we should really avoid.
-Instead we can use Static Mocks. When we look deeper in the ``export()`` method we find that there is a call of ``File.newOutputStream(..)``.
+Instead we can use `Static Mocks <https://asolntsev.github.io/en/2020/07/11/mockito-static-methods/>`_. When we look deeper in the ``export()`` method we find that there is a call of ``File.newOutputStream(..)``.
 Now, instead of mocking the whole Service we can just mock this static method, like this:
 
 .. code-block:: java
