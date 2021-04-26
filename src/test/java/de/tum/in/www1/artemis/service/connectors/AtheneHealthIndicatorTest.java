@@ -10,7 +10,7 @@ import org.springframework.boot.actuate.health.Health;
 import org.springframework.boot.actuate.health.Status;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
-import de.tum.in.www1.artemis.connector.athene.AtheneRequestMockProvider;
+import de.tum.in.www1.artemis.connector.AtheneRequestMockProvider;
 import de.tum.in.www1.artemis.service.connectors.athene.AtheneHealthIndicator;
 
 public class AtheneHealthIndicatorTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
