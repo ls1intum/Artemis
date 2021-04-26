@@ -92,7 +92,7 @@ describe('Exam Management Component', () => {
         const responseFakeExams = { body: [exam] } as HttpResponse<Exam[]>;
         sinon.replace(service, 'findAllExamsForCourse', sinon.fake.returns(of(responseFakeExams)));
 
-        //WHEN
+        // WHEN
         comp.ngOnInit();
 
         // THEN
@@ -137,7 +137,7 @@ describe('Exam Management Component', () => {
         const responseFakeExams = { body: [exam] } as HttpResponse<Exam[]>;
         sinon.replace(service, 'findAllExamsForCourse', sinon.fake.returns(of(responseFakeExams)));
 
-        let examInformationDTO = new ExamInformationDTO();
+        const examInformationDTO = new ExamInformationDTO();
         examInformationDTO.latestIndividualEndDate = moment();
         const responseFakeLatestIndividualEndDateOfExam = { body: examInformationDTO } as HttpResponse<ExamInformationDTO>;
         sinon.replace(service, 'getLatestIndividualEndDateOfExam', sinon.fake.returns(of(responseFakeLatestIndividualEndDateOfExam)));
