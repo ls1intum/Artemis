@@ -1240,13 +1240,6 @@ public class ProgrammingExerciseTestService {
 
         var allProgrammingExercises = programmingExerciseRepository.findAll();
         assertThat(allProgrammingExercises).hasSize(2);
-        for (var programmingExercise : allProgrammingExercises) {
-            System.out.println("Exercise due date: " + programmingExercise.getDueDate());
-            System.out.println("Course end date: " + programmingExercise.getCourseViaExerciseGroupOrCourseMember().getEndDate());
-            if (programmingExercise.isExamExercise()) {
-                System.out.println("Exam end date: " + programmingExercise.getExerciseGroup().getExam().getEndDate());
-            }
-        }
 
         createProgrammingParticipationWithSubmissionAndResult(exercise, "student1", 100D, ZonedDateTime.now().minusDays(2L), false);
         createProgrammingParticipationWithSubmissionAndResult(exercise, "student2", 80D, ZonedDateTime.now().minusDays(6L), false);
