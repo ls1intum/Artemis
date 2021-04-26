@@ -21,7 +21,6 @@ import de.tum.in.www1.artemis.domain.quiz.DragItem;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.FilePathService;
-import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.FileResource;
 
@@ -38,9 +37,6 @@ public class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     @Autowired
     private QuizQuestionRepository quizQuestionRepository;
-
-    @Autowired
-    private FileService fileService;
 
     @Autowired
     private FileResource fileResource;

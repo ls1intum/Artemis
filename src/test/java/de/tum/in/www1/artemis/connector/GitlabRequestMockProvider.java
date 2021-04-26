@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.connector.gitlab;
+package de.tum.in.www1.artemis.connector;
 
 import static org.gitlab4j.api.models.AccessLevel.*;
 import static org.mockito.ArgumentMatchers.*;

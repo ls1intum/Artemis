@@ -154,4 +154,10 @@ public class PlagiarismSubmission<E extends PlagiarismSubmissionElement> extends
     public void setScore(Double score) {
         this.score = score;
     }
+
+    @Override
+    public String toString() {
+        return "PlagiarismSubmission{" + "submissionId=" + submissionId + ", studentLogin='" + studentLogin + '\'' + ", elements=" + elements + ", size=" + size + ", score="
+                + score + '}';
+    }
 }

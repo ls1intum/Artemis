@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.service;
+package de.tum.in.www1.artemis.programmingexercise;
 
 import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.*;
 import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource.Endpoints.*;
@@ -28,7 +28,6 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.StoredConfig;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -48,8 +47,9 @@ import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismComparison;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismStatus;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextPlagiarismResult;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextSubmissionElement;
-import de.tum.in.www1.artemis.programmingexercise.MockDelegate;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.service.FileService;
+import de.tum.in.www1.artemis.service.UrlService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
@@ -67,10 +67,10 @@ public class ProgrammingExerciseIntegrationServiceTest {
     @Value("${artemis.repo-download-clone-path}")
     private String repoDownloadClonePath;
 
-    @SpyBean
+    @Autowired  // this will be a SpyBean because it was configured as SpyBean in the super class of the actual test class (see AbstractArtemisIntegrationTest)
     private FileService fileService;
 
-    @Autowired
+    @Autowired  // this will be a SpyBean because it was configured as SpyBean in the super class of the actual test class (see AbstractArtemisIntegrationTest)
     private UrlService urlService;
 
     @Autowired
@@ -94,7 +94,7 @@ public class ProgrammingExerciseIntegrationServiceTest {
     @Autowired
     private RequestUtilService request;
 
-    @Autowired
+    @Autowired  // this will be a SpyBean because it was configured as SpyBean in the super class of the actual test class (see AbstractArtemisIntegrationTest)
     private GitService gitService;
 
     private Course course;
@@ -123,11 +123,12 @@ public class ProgrammingExerciseIntegrationServiceTest {
 
     private MockDelegate mockDelegate;
 
+    // this will be a SpyBean because it was configured as SpyBean in the super class of the actual test class (see AbstractArtemisIntegrationTest)
     private VersionControlService versionControlService;
 
     public void setup(MockDelegate mockDelegate, VersionControlService versionControlService) throws Exception {
         this.mockDelegate = mockDelegate;
-        this.versionControlService = versionControlService;
+        this.versionControlService = versionControlService; // this can be used like a SpyBean
 
         database.addUsers(3, 2, 0, 2);
         course = database.addCourseWithOneProgrammingExerciseAndTestCases();

@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.util;
+package de.tum.in.www1.artemis.programmingexercise;
 
 import static de.tum.in.www1.artemis.config.Constants.PROGRAMMING_SUBMISSION_RESOURCE_API_PATH;
 import static de.tum.in.www1.artemis.domain.enumeration.ExerciseMode.TEAM;
@@ -39,7 +39,6 @@ import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.participation.Participant;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.exception.VersionControlException;
-import de.tum.in.www1.artemis.programmingexercise.MockDelegate;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.ParticipationService;
@@ -49,6 +48,7 @@ import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildResultDTO;
 import de.tum.in.www1.artemis.service.programming.ProgrammingLanguageFeature;
 import de.tum.in.www1.artemis.service.user.PasswordService;
+import de.tum.in.www1.artemis.util.*;
 import de.tum.in.www1.artemis.util.GitUtilService.MockFileRepositoryUrl;
 import de.tum.in.www1.artemis.web.rest.ParticipationResource;
 
@@ -121,9 +121,9 @@ public class ProgrammingExerciseTestService {
 
     public static final String teamShortName = "team1";
 
-    public static final String REPOBASEURL = "/api/repository/";
+    public static final String REPO_BASE_URL = "/api/repository/";
 
-    public static final String PARTICIPATIONBASEURL = "/api/participations/";
+    public static final String PARTICIPATION_BASE_URL = "/api/participations/";
 
     public LocalRepository exerciseRepo = new LocalRepository();
 
@@ -932,7 +932,7 @@ public class ProgrammingExerciseTestService {
         var logs = List.of(log1, log2, log3, log4, log5, log6, log7, log8, log9, log10);
         // get the failed build log
         mockDelegate.mockGetBuildLogs(participation, logs);
-        var buildLogs = request.get(REPOBASEURL + participation.getId() + "/buildlogs", HttpStatus.OK, List.class);
+        var buildLogs = request.get(REPO_BASE_URL + participation.getId() + "/buildlogs", HttpStatus.OK, List.class);
 
         assertThat(participation.getInitializationState()).as("Participation should be initialized").isEqualTo(InitializationState.INITIALIZED);
         // some build logs have been filtered out
@@ -953,7 +953,7 @@ public class ProgrammingExerciseTestService {
         mockDelegate.resetMockProvider();
         mockDelegate.mockRetrieveArtifacts(participation);
 
-        var artifact = request.get(PARTICIPATIONBASEURL + participation.getId() + "/buildArtifact", HttpStatus.OK, byte[].class);
+        var artifact = request.get(PARTICIPATION_BASE_URL + participation.getId() + "/buildArtifact", HttpStatus.OK, byte[].class);
 
         assertThat(participation.getInitializationState()).as("Participation should be initialized").isEqualTo(InitializationState.INITIALIZED);
         assertThat(artifact).as("No build artifact available for this plan").isEmpty();
