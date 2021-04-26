@@ -496,7 +496,12 @@ public class BambooRequestMockProvider {
 
     public void mockDeleteBambooBuildPlan(String planKey, boolean buildPlanExists) throws URISyntaxException, JsonProcessingException {
 
-        mockGetBuildPlan(planKey, new BambooBuildPlanDTO(planKey), false);
+        if (buildPlanExists) {
+            mockGetBuildPlan(planKey, new BambooBuildPlanDTO(planKey), false);
+        }
+        else {
+            mockGetBuildPlan(planKey, null, false);
+        }
         if (!buildPlanExists) {
             return;
         }
