@@ -172,4 +172,23 @@ public class JenkinsServiceTest extends AbstractSpringIntegrationJenkinsGitlabTe
         });
         assertThat(exception.getMessage()).startsWith("Cannot give assign permissions to plan");
     }
+
+    @Test
+    @WithMockUser(roles = "INSTRUCTOR", username = "instructor1")
+    public void testDeleteBuildPlan() throws Exception {
+        var programmingExercise = continuousIntegrationTestService.programmingExercise;
+        database.addTemplateParticipationForProgrammingExercise(programmingExercise);
+        database.addSolutionParticipationForProgrammingExercise(programmingExercise);
+        database.addTestCasesToProgrammingExercise(programmingExercise);
+
+        jenkinsRequestMockProvider.mockCreateProjectForExercise(programmingExercise, false);
+        jenkinsRequestMockProvider.mockCopyBuildPlan(programmingExercise.getProjectKey(), programmingExercise.getProjectKey());
+        jenkinsRequestMockProvider.mockCopyBuildPlan(programmingExercise.getProjectKey(), programmingExercise.getProjectKey());
+        jenkinsRequestMockProvider.mockGivePlanPermissionsThrowException(programmingExercise.getProjectKey(), programmingExercise.getProjectKey());
+
+        Exception exception = assertThrows(JenkinsException.class, () -> {
+            programmingExerciseImportService.importBuildPlans(programmingExercise, programmingExercise);
+        });
+        assertThat(exception.getMessage()).startsWith("Cannot give assign permissions to plan");
+    }
 }

@@ -453,6 +453,16 @@ public class JenkinsRequestMockProvider {
         }
     }
 
+    public void mockDeleteBuildPlanNotFound(String projectKey, String planName) throws IOException {
+        mockGetFolderJob(projectKey, new FolderJob());
+        doThrow(new HttpResponseException(404, "Not found")).when(jenkinsServer).deleteJob(any(FolderJob.class), eq(planName), eq(useCrumb));
+    }
+
+    public void mockDeleteBuildPlanFailWithException(String projectKey, String planName) throws IOException {
+        mockGetFolderJob(projectKey, new FolderJob());
+        doThrow(new IOException("IOException")).when(jenkinsServer).deleteJob(any(FolderJob.class), eq(planName), eq(useCrumb));
+    }
+
     public void mockDeleteBuildPlanProject(String projectKey, boolean shouldFail) throws IOException {
         if (shouldFail) {
             doThrow(new HttpResponseException(400, "Bad Request")).when(jenkinsServer).deleteJob(projectKey, useCrumb);
