@@ -20,7 +20,6 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.util.LinkedMultiValueMap;
 
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.regex.Pattern;
@@ -35,7 +34,7 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
     private AccountResource accountResource;
 
     @Autowired
-    private UserRepository userRepo;
+    private UserRepository userRepository;
 
     @Autowired
     private UserCreationService userCreationService;
@@ -178,7 +177,7 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
         User user = ModelFactory.generateActivatedUser("ab123cd");
         user.setActivated(false);
         user.setActivationKey(testActivationKey);
-        user = userRepo.save(user);
+        user = userRepository.save(user);
 
         // make request
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
@@ -186,7 +185,7 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
         request.get("/api/activate", HttpStatus.OK, String.class, params);
 
         // check result
-        Optional<User> updatedUser = userRepo.findById(user.getId());
+        Optional<User> updatedUser = userRepository.findById(user.getId());
         assertThat(updatedUser).isPresent();
         assertThat(updatedUser.get()).isNotNull();
         assertThat(updatedUser.get().getActivated()).isTrue();
@@ -231,7 +230,7 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
     public void getAccount() throws Exception {
         // create user in repo
         User user = ModelFactory.generateActivatedUser("authenticateduser");
-        userRepo.save(user);
+        userRepository.save(user);
         UserDTO account = request.get("/api/account", HttpStatus.OK, UserDTO.class);
         assertThat(account).isNotNull();
     }
@@ -270,7 +269,7 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
         request.put("/api/account", new UserDTO(createdUser), HttpStatus.OK);
 
         // check if update successful
-        Optional<User> updatedUser = userRepo.findOneByLogin("authenticateduser");
+        Optional<User> updatedUser = userRepository.findOneByLogin("authenticateduser");
         assertThat(updatedUser).isPresent();
         assertThat(updatedUser.get().getFirstName()).isEqualTo(updatedFirstName);
     }
@@ -294,12 +293,13 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
     @Test
     @WithMockUser(username = "authenticateduser")
     public void saveAccountEmailInUse() throws Exception {
-        List<User> users = database.addUsers(1, 0, 0);
         // create user in repo
         User user = ModelFactory.generateActivatedUser("authenticateduser");
         User createdUser = userCreationService.createUser(new ManagedUserVM(user));
+        User userSameEmail = ModelFactory.generateActivatedUser("sameemail");
+        User createdUserSameEmail = userCreationService.createUser(new ManagedUserVM(userSameEmail));
         // update Email to one already used
-        createdUser.setEmail(users.get(0).getEmail());
+        createdUser.setEmail(createdUserSameEmail.getEmail());
 
         // make request
         request.put("/api/account", new UserDTO(createdUser), HttpStatus.BAD_REQUEST);
@@ -319,7 +319,7 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
         request.postWithoutLocation("/api/account/change-password", pwChange, HttpStatus.OK, null);
 
         // check if update successful
-        Optional<User> updatedUser = userRepo.findOneByLogin("authenticateduser");
+        Optional<User> updatedUser = userRepository.findOneByLogin("authenticateduser");
         assertThat(updatedUser).isPresent();
         assertThat(passwordService.decryptPassword(updatedUser.get().getPassword())).isEqualTo(updatedPassword);
     }
@@ -389,16 +389,17 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
     }
 
     @Test
-    @WithMockUser("authenticateduser")
+    //@WithMockUser("authenticateduser")
     public void passwordReset() throws Exception {
         // create user in repo
         User user = ModelFactory.generateActivatedUser("authenticateduser");
         User createdUser = userCreationService.createUser(new ManagedUserVM(user));
+
         // init password reset
         request.postWithoutLocation("/api/account/reset-password/init", createdUser.getEmail(), HttpStatus.OK, null);
 
         // check user data
-        Optional<User> userPasswordResetInit = userRepo.findOneByEmailIgnoreCase(createdUser.getEmail());
+        Optional<User> userPasswordResetInit = userRepository.findOneByEmailIgnoreCase(createdUser.getEmail());
         assertThat(userPasswordResetInit).isPresent();
         String resetKey = userPasswordResetInit.get().getResetKey();
 
@@ -412,7 +413,7 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
         request.postWithoutLocation("/api/account/reset-password/finish", finishResetData, HttpStatus.OK, null);
 
         // get updated user
-        Optional<User> userPasswordResetFinished = userRepo.findOneByLogin("authenticateduser");
+        Optional<User> userPasswordResetFinished = userRepository.findOneByLogin("authenticateduser");
         assertThat(userPasswordResetFinished).isPresent();
         assertThat(passwordService.decryptPassword(userPasswordResetFinished.get().getPassword())).isEqualTo(newPassword);
     }
@@ -458,5 +459,13 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
         KeyAndPasswordVM finishResetData = new KeyAndPasswordVM();
         finishResetData.setNewPassword("");
         request.postWithoutLocation("/api/account/reset-password/finish", finishResetData, HttpStatus.BAD_REQUEST, null);
+    }
+
+    @Test
+    @WithMockUser("authenticateduser")
+    public void passwordResetFinishInvalidKey() throws Throwable {
+        KeyAndPasswordVM finishResetData = new KeyAndPasswordVM();
+        finishResetData.setNewPassword("password");
+        request.postWithoutLocation("/api/account/reset-password/finish", finishResetData, HttpStatus.FORBIDDEN, null);
     }
 }
