@@ -40,5 +40,5 @@
         <fa-icon [icon]="'times'"></fa-icon>
     </button>
 
-    <jhi-external-submission [exercise]="exercise"></jhi-external-submission>
+    <jhi-external-submission *ngIf="exercise.isAtLeastInstructor" [exercise]="exercise"></jhi-external-submission>
 </ng-container>
