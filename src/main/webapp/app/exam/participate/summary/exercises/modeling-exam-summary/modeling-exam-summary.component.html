@@ -1,9 +1,9 @@
 <div *ngIf="umlModel || explanation; else noSubmission" class="editor-outline-background">
     <jhi-modeling-editor
         [readOnly]="true"
-        [diagramType]="exercise.diagramType || null"
+        [diagramType]="exercise.diagramType"
         [umlModel]="umlModel"
-        [withExplanation]="explanation"
+        [withExplanation]="!!explanation"
         [explanation]="explanation"
     ></jhi-modeling-editor>
 </div>

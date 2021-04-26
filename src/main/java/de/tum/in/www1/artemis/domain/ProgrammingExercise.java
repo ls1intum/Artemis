@@ -16,10 +16,7 @@ import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.*;
 
 import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.participation.Participation;
@@ -435,7 +432,7 @@ public class ProgrammingExercise extends Exercise {
             return new VcsRepositoryUrl(testRepositoryUrl);
         }
         catch (MalformedURLException e) {
-            log.warn("Cannot create URL for testRepositoryUrl: " + testRepositoryUrl + " due to the following error: " + e.getMessage());
+            log.warn("Cannot create URL for testRepositoryUrl: {} due to the following error: {}", testRepositoryUrl, e.getMessage());
         }
         return null;
     }
@@ -592,6 +589,7 @@ public class ProgrammingExercise extends Exercise {
 
     /**
      * This checks if the current result has a completion date and if the assessment is over
+     *
      * @param result The current result
      * @return true if the result is manual and the assessment is over or it is an automatic result, false otherwise
      */

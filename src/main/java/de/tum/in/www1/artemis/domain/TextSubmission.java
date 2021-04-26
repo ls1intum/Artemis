@@ -1,12 +1,14 @@
 package de.tum.in.www1.artemis.domain;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.Set;
 
 import javax.persistence.*;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+
 import de.tum.in.www1.artemis.domain.enumeration.Language;
 
 /**
@@ -97,5 +99,13 @@ public class TextSubmission extends Submission {
     @Override
     public String toString() {
         return "TextSubmission{" + "id=" + getId() + ", text='" + getExcerpt() + "'" + ", language='" + getLanguage() + "'" + "}";
+    }
+
+    public int countWords() {
+        if (text == null || text.isEmpty()) {
+            return 0;
+        }
+        String[] words = text.split("\\s+");
+        return words.length;
     }
 }

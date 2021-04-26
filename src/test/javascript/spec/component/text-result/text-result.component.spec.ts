@@ -141,7 +141,7 @@ describe('TextResultComponent', () => {
         textResultBlock = new TextResultBlock(textBlock, feedbacks[2]);
 
         expect(textResultBlock.cssClass).to.equal('text-with-feedback neutral-feedback');
-        expect(textResultBlock.icon).to.equal('dot');
+        expect(textResultBlock.icon).to.equal('circle');
         expect(textResultBlock.iconCssClass).to.equal('feedback-icon neutral-feedback');
         expect(textResultBlock.feedbackCssClass).to.equal('alert alert-secondary');
 

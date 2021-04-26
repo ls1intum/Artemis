@@ -1,11 +1,8 @@
 package de.tum.in.www1.artemis;
 
-import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.SOLUTION;
-import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.TEMPLATE;
-import static de.tum.in.www1.artemis.util.TestConstants.COMMIT_HASH_OBJECT_ID;
-import static de.tum.in.www1.artemis.util.TestConstants.COMMIT_HASH_STRING;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.fail;
+import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.*;
+import static de.tum.in.www1.artemis.util.TestConstants.*;
+import static org.assertj.core.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -887,7 +884,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
                     bambooRequestMockProvider.mockTriggerBuild((ProgrammingExerciseParticipation) participation);
                     request.postWithoutLocation("/api/programming-submissions/" + participation.getId() + "/trigger-build", null, HttpStatus.OK, new HttpHeaders());
                     Optional<ProgrammingSubmission> programmingSubmission = programmingSubmissionRepository
-                            .findFirstByParticipationIdOrderBySubmissionDateDesc(participation.getId());
+                            .findFirstByParticipationIdOrderByLegalSubmissionDateDesc(participation.getId());
                     assertThat(programmingSubmission).isPresent();
                     participation.getSubmissions().add(programmingSubmission.get());
                     continue;
@@ -1287,7 +1284,8 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
                 bambooRequestMockProvider.enableMockingOfRequests(true);
                 bambooRequestMockProvider.mockTriggerBuild((ProgrammingExerciseParticipation) participation);
                 request.postWithoutLocation("/api/programming-submissions/" + participation.getId() + "/trigger-build", null, HttpStatus.OK, new HttpHeaders());
-                Optional<ProgrammingSubmission> programmingSubmission = programmingSubmissionRepository.findFirstByParticipationIdOrderBySubmissionDateDesc(participation.getId());
+                Optional<ProgrammingSubmission> programmingSubmission = programmingSubmissionRepository
+                        .findFirstByParticipationIdOrderByLegalSubmissionDateDesc(participation.getId());
                 programmingSubmission.ifPresent(submission -> participation.getSubmissions().add(submission));
                 continue;
             }
@@ -1444,7 +1442,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         var exam = database.addExam(course1);
         exam = database.addTextModelingProgrammingExercisesToExam(exam, false, false);
         var testRun = database.setupTestRunForExamWithExerciseGroupsForInstructor(exam, instructor, exam.getExerciseGroups());
-        var participations = studentParticipationRepository.findByExerciseIdAndStudentIdWithEagerSubmissions(testRun.getExercises().get(0).getId(), instructor.getId());
+        var participations = studentParticipationRepository.findByExerciseIdAndStudentIdWithEagerLegalSubmissions(testRun.getExercises().get(0).getId(), instructor.getId());
         assertThat(participations).isNotEmpty();
         participationService.delete(participations.get(0).getId(), false, false);
         request.delete("/api/courses/" + exam.getCourse().getId() + "/exams/" + exam.getId() + "/test-run/" + testRun.getId(), HttpStatus.OK);

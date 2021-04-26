@@ -29,13 +29,13 @@ public class UserJenkinsGitlabIntegrationTest extends AbstractSpringIntegrationJ
     private boolean usePseudonymsGitlab;
 
     @Autowired
-    UserTestService userTestService;
+    private UserTestService userTestService;
 
     @Autowired
-    JenkinsUserManagementService jenkinsUserManagementService;
+    private JenkinsUserManagementService jenkinsUserManagementService;
 
     @Autowired
-    GitLabUserManagementService gitLabUserManagementService;
+    private GitLabUserManagementService gitLabUserManagementService;
 
     @BeforeEach
     public void setUp() throws Exception {
@@ -53,6 +53,18 @@ public class UserJenkinsGitlabIntegrationTest extends AbstractSpringIntegrationJ
     @WithMockUser(value = "admin", roles = "ADMIN")
     public void updateUser_asAdmin_isSuccessful() throws Exception {
         userTestService.updateUser_asAdmin_isSuccessful();
+    }
+
+    @Test
+    @WithMockUser(value = "admin", roles = "ADMIN")
+    public void updateUserInvalidId() throws Exception {
+        userTestService.updateUserInvalidId();
+    }
+
+    @Test
+    @WithMockUser(value = "admin", roles = "ADMIN")
+    public void updateUserExistingEmail() throws Exception {
+        userTestService.updateUserExistingEmail();
     }
 
     @Test
@@ -112,6 +124,24 @@ public class UserJenkinsGitlabIntegrationTest extends AbstractSpringIntegrationJ
     @WithMockUser(username = "admin", roles = "ADMIN")
     public void createUser_asAdmin_isSuccessful() throws Exception {
         userTestService.createUser_asAdmin_isSuccessful();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    public void createUser_asAdmin_hasId() throws Exception {
+        userTestService.createUser_asAdmin_hasId();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    public void createUser_asAdmin_existingLogin() throws Exception {
+        userTestService.createUser_asAdmin_existingLogin();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    public void createUser_asAdmin_existingEmail() throws Exception {
+        userTestService.createUser_asAdmin_existingEmail();
     }
 
     @Test

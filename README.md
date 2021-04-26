@@ -31,6 +31,7 @@ Artemis also supports an exam mode now. You can find more information on [Exam m
 * [How to set up your local development environment](docs/dev/setup.rst)
 * [Server coding and design guidelines](docs/dev/guidelines/server.rst)
 * [Client coding and design guidelines](docs/dev/guidelines/client.rst)
+* [Code Review Guidelines](docs/dev/guidelines/code-review.rst)
 
 ### Documentation
 

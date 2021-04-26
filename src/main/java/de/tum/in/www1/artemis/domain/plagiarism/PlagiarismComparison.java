@@ -3,28 +3,22 @@ package de.tum.in.www1.artemis.domain.plagiarism;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import javax.persistence.CascadeType;
-import javax.persistence.CollectionTable;
-import javax.persistence.ElementCollection;
-import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
-import javax.persistence.Table;
+import javax.persistence.*;
 
-import jplag.JPlagComparison;
+import org.jetbrains.annotations.NotNull;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextSubmissionElement;
+import jplag.JPlagComparison;
 
 /**
  * Pair of compared student submissions whose similarity is above a certain threshold.
  */
 @Entity
 @Table(name = "plagiarism_comparison")
-public class PlagiarismComparison<E extends PlagiarismSubmissionElement> extends DomainObject {
+public class PlagiarismComparison<E extends PlagiarismSubmissionElement> extends DomainObject implements Comparable<PlagiarismComparison<E>> {
 
     /**
      * The result this comparison belongs to.
@@ -132,5 +126,10 @@ public class PlagiarismComparison<E extends PlagiarismSubmissionElement> extends
 
     public void setStatus(PlagiarismStatus status) {
         this.status = status;
+    }
+
+    @Override
+    public int compareTo(@NotNull PlagiarismComparison<E> otherComparison) {
+        return Double.compare(similarity, otherComparison.similarity);
     }
 }

@@ -72,6 +72,8 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
 
     isLoading: boolean;
 
+    isAdmin = false;
+
     constructor(
         private route: ActivatedRoute,
         private momentDiff: DifferencePipe,
@@ -108,6 +110,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
                 this.exercise.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(this.course || this.exercise.exerciseGroup!.exam!.course);
                 this.exercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.course || this.exercise.exerciseGroup!.exam!.course);
                 this.newManualResultAllowed = areManualResultsAllowed(this.exercise);
+                this.isAdmin = this.accountService.isAdmin();
             });
         });
     }
@@ -121,12 +124,20 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
                   this.exercise.exerciseGroup!.exam!.id!.toString(),
                   'exercise-groups',
                   this.exercise.exerciseGroup!.id!.toString(),
-                  'exercises',
+                  this.exercise.type + '-exercises',
                   this.exercise.id!.toString(),
                   'participations',
                   participationId.toString(),
               ]
-            : ['/course-management', this.course.id!.toString(), 'exercises', this.exercise.id!.toString(), 'participations', participationId.toString(), 'submissions'];
+            : [
+                  '/course-management',
+                  this.course.id!.toString(),
+                  this.exercise.type + '-exercises',
+                  this.exercise.id!.toString(),
+                  'participations',
+                  participationId.toString(),
+                  'submissions',
+              ];
     }
 
     /**
@@ -185,15 +196,17 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
      * Predicate used to filter results by the current filter prop setting
      * @param result Result for which to evaluate the predicate
      */
-    filterResultByProp = (result: Result) => {
+    filterResultByProp = (result: Result): boolean => {
         switch (this.resultCriteria.filterProp) {
             case FilterProp.SUCCESSFUL:
-                return result.successful;
+                return !!result.successful;
             case FilterProp.UNSUCCESSFUL:
                 return !result.successful;
             case FilterProp.BUILD_FAILED:
                 return (
-                    result.submission && result.submission.submissionExerciseType === SubmissionExerciseType.PROGRAMMING && (result.submission as ProgrammingSubmission).buildFailed
+                    !!result.submission &&
+                    result.submission.submissionExerciseType === SubmissionExerciseType.PROGRAMMING &&
+                    !!(result.submission as ProgrammingSubmission).buildFailed
                 );
             case FilterProp.MANUAL:
                 return Result.isManualResult(result);
@@ -312,7 +325,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
      *
      * @param result
      */
-    searchResultFormatter = (result: Result) => {
+    searchResultFormatter = (result: Result): string => {
         const participation = result.participation as StudentParticipation;
         if (participation.student) {
             const { login, name } = participation.student;
@@ -320,6 +333,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
         } else if (participation.team) {
             return formatTeamAsSearchResult(participation.team);
         }
+        return '';
     };
 
     /**

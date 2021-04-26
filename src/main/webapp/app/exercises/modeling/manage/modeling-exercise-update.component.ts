@@ -8,13 +8,14 @@ import { ModelingExerciseService } from './modeling-exercise.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ExampleSubmissionService } from 'app/exercises/shared/example-submission/example-submission.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { Exercise, ExerciseCategory, ExerciseMode, IncludedInOverallScore } from 'app/entities/exercise.model';
+import { Exercise, ExerciseMode, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { EditorMode } from 'app/shared/markdown-editor/markdown-editor.component';
 import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { switchMap, tap } from 'rxjs/operators';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { navigateBackFromExerciseUpdate } from 'app/utils/navigation.utils';
+import { ExerciseCategory } from 'app/entities/exercise-category.model';
 
 @Component({
     selector: 'jhi-modeling-exercise-update',
@@ -79,7 +80,7 @@ export class ModelingExerciseUpdateComponent implements OnInit {
                 switchMap(() => this.activatedRoute.params),
                 tap((params) => {
                     if (!this.isExamMode) {
-                        this.exerciseCategories = this.exerciseService.convertExerciseCategoriesFromServer(this.modelingExercise);
+                        this.exerciseCategories = this.modelingExercise.categories || [];
                         if (!!this.modelingExercise.course) {
                             this.courseService.findAllCategoriesOfCourse(this.modelingExercise.course!.id!).subscribe(
                                 (categoryRes: HttpResponse<string[]>) => {
@@ -105,7 +106,7 @@ export class ModelingExerciseUpdateComponent implements OnInit {
                     if (this.isImport) {
                         if (this.isExamMode) {
                             // The target exerciseGroupId where we want to import into
-                            const exerciseGroupId = params['groupId'];
+                            const exerciseGroupId = params['exerciseGroupId'];
                             const courseId = params['courseId'];
                             const examId = params['examId'];
 
@@ -137,7 +138,7 @@ export class ModelingExerciseUpdateComponent implements OnInit {
      * @param categories list of exercise categories
      */
     updateCategories(categories: ExerciseCategory[]): void {
-        this.modelingExercise.categories = categories.map((el) => JSON.stringify(el));
+        this.modelingExercise.categories = categories;
     }
 
     /**

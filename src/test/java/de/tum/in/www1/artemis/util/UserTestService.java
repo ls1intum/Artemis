@@ -20,7 +20,7 @@ import de.tum.in.www1.artemis.programmingexercise.MockDelegate;
 import de.tum.in.www1.artemis.repository.AuthorityRepository;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.security.AuthoritiesConstants;
+import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.dto.UserDTO;
 import de.tum.in.www1.artemis.service.user.PasswordService;
 import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
@@ -129,7 +129,7 @@ public class UserTestService {
         final var newLastName = "Wayne";
         final var newImageUrl = "foobar.png";
         final var newLangKey = "DE";
-        final var newAuthorities = Set.of(AuthoritiesConstants.TEACHING_ASSISTANT).stream().map(authorityRepository::findById).filter(Optional::isPresent).map(Optional::get)
+        final var newAuthorities = Set.of(Role.TEACHING_ASSISTANT.getAuthority()).stream().map(authorityRepository::findById).filter(Optional::isPresent).map(Optional::get)
                 .collect(Collectors.toSet());
         final var oldGroups = student.getGroups();
         student.setAuthorities(newAuthorities);
@@ -178,6 +178,31 @@ public class UserTestService {
 
         assertThat(userInDB.getLogin()).isEqualTo(student.getLogin());
         assertThat(userInDB.getId()).isEqualTo(student.getId());
+    }
+
+    // Test
+    public void updateUserInvalidId() throws Exception {
+        long oldId = student.getId();
+        student.setId(oldId + 1);
+        mockDelegate.mockUpdateUserInUserManagement(student.getLogin(), student, student.getGroups());
+
+        request.put("/api/users", new ManagedUserVM(student), HttpStatus.BAD_REQUEST);
+        final var userInDB = userRepository.findById(oldId).get();
+        assertThat(userInDB).isNotEqualTo(student);
+        assertThat(userRepository.findById(oldId + 1)).isNotEqualTo(student);
+    }
+
+    // Test
+    public void updateUserExistingEmail() throws Exception {
+        long oldId = student.getId();
+        student.setId(oldId + 1);
+        student.setEmail("newEmail@testing.user");
+        mockDelegate.mockUpdateUserInUserManagement(student.getLogin(), student, student.getGroups());
+
+        request.put("/api/users", new ManagedUserVM(student), HttpStatus.BAD_REQUEST);
+        final var userInDB = userRepository.findById(oldId).get();
+        assertThat(userInDB).isNotEqualTo(student);
+        assertThat(userRepository.findById(oldId + 1)).isNotEqualTo(student);
     }
 
     // Test
@@ -235,6 +260,53 @@ public class UserTestService {
 
         assertThat(student).as("New user is equal to request response").isEqualTo(response);
         assertThat(student).as("New user is equal to new user in DB").isEqualTo(userInDB);
+    }
+
+    // Test
+    public void createUser_asAdmin_hasId() throws Exception {
+        student.setId((long) 1337);
+        student.setLogin("batman");
+        student.setPassword("foobar");
+        student.setEmail("batman@secret.invalid");
+
+        mockDelegate.mockCreateUserInUserManagement(student, false);
+
+        final var response = request.postWithResponseBody("/api/users", new ManagedUserVM(student), User.class, HttpStatus.BAD_REQUEST);
+        assertThat(response).isNull();
+    }
+
+    // Test
+    public void createUser_asAdmin_existingLogin() throws Exception {
+        student.setId(null);
+        student.setLogin("batman");
+        student.setPassword("foobar");
+        student.setEmail("batman@secret.invalid");
+
+        mockDelegate.mockCreateUserInUserManagement(student, false);
+
+        final var response = request.postWithResponseBody("/api/users", new ManagedUserVM(student), User.class, HttpStatus.CREATED);
+        assertThat(response).isNotNull();
+
+        User student2 = new User();
+        student2.setId(null);
+        student2.setLogin("batman");
+        student2.setPassword("barfoo");
+        student2.setEmail("batman2@secret.stillinvalid");
+
+        final var response2 = request.postWithResponseBody("/api/users", new ManagedUserVM(student2), User.class, HttpStatus.BAD_REQUEST);
+        assertThat(response2).isNull();
+    }
+
+    // Test
+    public void createUser_asAdmin_existingEmail() throws Exception {
+        student.setId(null);
+        student.setLogin("batman");
+        student.setPassword("foobar");
+
+        mockDelegate.mockCreateUserInUserManagement(student, false);
+
+        final var response = request.postWithResponseBody("/api/users", new ManagedUserVM(student), User.class, HttpStatus.BAD_REQUEST);
+        assertThat(response).isNull();
     }
 
     // Test

@@ -28,7 +28,7 @@ public abstract class ProgrammingLanguageFeatureService {
         ProgrammingLanguageFeature programmingLanguageFeature = programmingLanguageFeatures.get(programmingLanguage);
 
         if (programmingLanguageFeature == null) {
-            log.error("ProgrammingLanguage " + programmingLanguage + " does not have ProgrammingLanguageFeature");
+            log.error("ProgrammingLanguage {} does not have ProgrammingLanguageFeature", programmingLanguage);
             throw new IllegalArgumentException("ProgrammingLanguage " + programmingLanguage + " does not have ProgrammingLanguageFeature");
         }
         return programmingLanguageFeature;

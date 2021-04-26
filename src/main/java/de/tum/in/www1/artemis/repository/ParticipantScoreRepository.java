@@ -2,10 +2,7 @@ package de.tum.in.www1.artemis.repository;
 
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 import org.jetbrains.annotations.NotNull;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -19,15 +16,16 @@ import org.springframework.transaction.annotation.Transactional;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.scores.ParticipantScore;
+import de.tum.in.www1.artemis.web.rest.dto.ExerciseScoresAggregatedInformation;
 
 @Repository
 public interface ParticipantScoreRepository extends JpaRepository<ParticipantScore, Long> {
 
-    List<ParticipantScore> removeAllByExerciseId(Long exerciseId);
+    void removeAllByExerciseId(Long exerciseId);
 
-    List<ParticipantScore> removeAllByLastResultId(Long lastResultId);
+    void removeAllByLastResultId(Long lastResultId);
 
-    List<ParticipantScore> removeAllByLastRatedResultId(Long lastResultId);
+    void removeAllByLastRatedResultId(Long lastResultId);
 
     @EntityGraph(type = LOAD, attributePaths = { "exercise", "lastResult", "lastRatedResult" })
     Optional<ParticipantScore> findParticipantScoreByLastRatedResult(Result result);
@@ -88,6 +86,14 @@ public interface ParticipantScoreRepository extends JpaRepository<ParticipantSco
             """)
     Double findAverageScoreForExercises(@Param("exerciseId") Long exerciseId);
 
+    @Query("""
+            SELECT p.exercise.id AS exerciseId, AVG(p.lastPoints) AS averagePoints
+            FROM ParticipantScore p
+            WHERE p.exercise IN :exercises
+            GROUP BY p.exercise.id
+            """)
+    List<Map<String, Object>> findAvgPointsForExercises(@Param("exercises") Set<Exercise> exercises);
+
     @Transactional(propagation = Propagation.REQUIRES_NEW) // ok because of delete
     default void deleteAllByExerciseIdTransactional(Long exerciseId) {
         this.removeAllByExerciseId(exerciseId);
@@ -98,4 +104,14 @@ public interface ParticipantScoreRepository extends JpaRepository<ParticipantSco
         this.removeAllByLastResultId(resultId);
         this.removeAllByLastRatedResultId(resultId);
     }
+
+    @Query("""
+                    SELECT new de.tum.in.www1.artemis.web.rest.dto.ExerciseScoresAggregatedInformation(p.exercise.id, AVG(p.lastRatedScore), MAX(p.lastRatedScore))
+                    FROM ParticipantScore p
+                    WHERE p.exercise IN :exercises
+                    GROUP BY p.exercise
+
+            """)
+    List<ExerciseScoresAggregatedInformation> getAggregatedExerciseScoresInformation(@Param("exercises") Set<Exercise> exercises);
+
 }

@@ -28,7 +28,7 @@ export class TutorParticipationService {
      * @return The new tutor participation
      */
     create(tutorParticipation: TutorParticipation, exerciseId: number): Observable<HttpResponse<TutorParticipation>> {
-        return this.http.post<TutorParticipation>(`${this.resourceUrl}/${exerciseId}/tutorParticipations`, tutorParticipation, {
+        return this.http.post<TutorParticipation>(`${this.resourceUrl}/${exerciseId}/tutor-participations`, tutorParticipation, {
             observe: 'response',
         });
     }
@@ -42,16 +42,17 @@ export class TutorParticipationService {
      * @param exerciseId The ID of the exercise of the tutor participation
      */
     assessExampleSubmission(exampleSubmission: ExampleSubmission, exerciseId: number) {
-        return this.http.post<TutorParticipation>(`${this.resourceUrl}/${exerciseId}/exampleSubmission`, exampleSubmission, { observe: 'response' });
+        return this.http.post<TutorParticipation>(`${this.resourceUrl}/${exerciseId}/assess-example-submission`, exampleSubmission, { observe: 'response' });
     }
 
     /**
      * Deletes the tutor participation of the current user for the guided tour
+     * @param course the course of the exercise
      * @param exercise  exercise with tutor participation
      */
     deleteTutorParticipationForGuidedTour(course: Course, exercise: Exercise) {
         if (course && this.accountService.isAtLeastTutorInCourse(course)) {
-            return this.http.delete<void>(`api/guided-tour/exercises/${exercise.id}/exampleSubmission`);
+            return this.http.delete<void>(`api/guided-tour/exercises/${exercise.id}/example-submission`);
         }
         return new Observable();
     }

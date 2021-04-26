@@ -13,11 +13,9 @@ import org.hibernate.annotations.DiscriminatorOptions;
 
 import com.fasterxml.jackson.annotation.*;
 
-import de.tum.in.www1.artemis.domain.DomainObject;
-import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.Result;
-import de.tum.in.www1.artemis.domain.Submission;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
+import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.view.QuizView;
 
 /**
@@ -136,18 +134,6 @@ public abstract class Participation extends DomainObject implements Participatio
         this.testRun = testRun;
     }
 
-    /**
-     *
-     * @return exercise object
-     */
-    public abstract Exercise getExercise();
-
-    /**
-     *
-     * @param exercise that will be set
-     */
-    public abstract void setExercise(Exercise exercise);
-
     public Set<Result> getResults() {
         return results;
     }
@@ -199,13 +185,37 @@ public abstract class Participation extends DomainObject implements Participatio
      * @return the latest result or null
      */
     @Nullable
+    public Result findLatestLegalResult() {
+        return findLatestResult(true);
+    }
+
+    @Nullable
     public Result findLatestResult() {
+        return findLatestResult(false);
+    }
+
+    /**
+     * Like findLatestLegalResult() but with the possibility to include illegal submissions,
+     *
+     * @param filterIllegalResults should illegal submissions be excluded in the search
+     * @return the latest result or null
+     */
+    @Nullable
+    private Result findLatestResult(boolean filterIllegalResults) {
         Set<Result> results = this.results;
         if (results == null || results.size() == 0) {
             return null;
         }
+
+        if (filterIllegalResults) {
+            // Filter out results that belong to an illegal submission (if the submission exists).
+            results = results.stream().filter(result -> result.getSubmission() == null || !SubmissionType.ILLEGAL.equals(result.getSubmission().getType()))
+                    .collect(Collectors.toSet());
+        }
+
         List<Result> sortedResultsWithCompletionDate = results.stream().filter(r -> r.getCompletionDate() != null)
                 .sorted((r1, r2) -> r2.getCompletionDate().compareTo(r1.getCompletionDate())).collect(Collectors.toList());
+
         if (sortedResultsWithCompletionDate.size() == 0) {
             return null;
         }
@@ -213,7 +223,8 @@ public abstract class Participation extends DomainObject implements Participatio
     }
 
     /**
-     * Finds the latest submission for the participation. Checks if the participation has any submissions. If there are no submissions, return null. Otherwise sort the submissions
+     * Finds the latest legal submission for the participation. Legal means that ILLEGAL submissions (exam exercise submissions after the end date)
+     * are not used. Checks if the participation has any submissions. If there are no submissions, return null. Otherwise sort the submissions
      * by submission date and return the first. WARNING: The submissions of the participation might not be loaded because of Hibernate and therefore, the function might return
      * null, although the participation has submissions. This might not be high-performance, so use it at your own risk.
      *
@@ -221,9 +232,34 @@ public abstract class Participation extends DomainObject implements Participatio
      * @return the latest submission or null
      */
     public <T extends Submission> Optional<T> findLatestSubmission() {
+        return findLatestSubmission(false);
+    }
+
+    /**
+     * Finds the latest legal or illegal submission or null if non exist.
+     *
+     * @param <T> submission type
+     * @return the latest submission or null
+     */
+    public <T extends Submission> Optional<T> findLatesLegalOrIllegalSubmission() {
+        return findLatestSubmission(true);
+    }
+
+    /**
+     * Like findLatestSubmission() but with the possibility to include illegal submissions,
+     *
+     * @param <T> submission type
+     * @param includeIllegalSubmissions should the function include illegal submission
+     * @return the latest submission or null
+     */
+    private <T extends Submission> Optional<T> findLatestSubmission(boolean includeIllegalSubmissions) {
         Set<Submission> submissions = this.submissions;
         if (submissions == null || submissions.size() == 0) {
             return Optional.empty();
+        }
+
+        if (!includeIllegalSubmissions) {
+            submissions = submissions.stream().filter(submission -> !SubmissionType.ILLEGAL.equals(submission.getType())).collect(Collectors.toSet());
         }
 
         return (Optional<T>) submissions.stream().max((s1, s2) -> {

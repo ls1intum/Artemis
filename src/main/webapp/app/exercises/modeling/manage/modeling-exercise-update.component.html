@@ -43,7 +43,7 @@
             <div class="form-group-narrow flex-grow-1 ml-3">
                 <jhi-date-time-picker
                     name="dueDate"
-                    [error]="modelingExercise.dueDateError"
+                    [error]="!!modelingExercise.dueDateError"
                     labelName="{{ 'artemisApp.exercise.dueDate' | artemisTranslate }}"
                     (valueChange)="validateDate()"
                     [(ngModel)]="modelingExercise.dueDate"
@@ -54,7 +54,7 @@
         <div class="form-group-narrow" *ngIf="!isExamMode">
             <jhi-date-time-picker
                 name="assessmentDueDate"
-                [error]="modelingExercise.assessmentDueDateError"
+                [error]="!!modelingExercise.assessmentDueDateError"
                 labelName="{{ 'artemisApp.exercise.assessmentDueDate' | artemisTranslate }}"
                 (valueChange)="validateDate()"
                 [(ngModel)]="modelingExercise.assessmentDueDate"
@@ -75,8 +75,8 @@
                         type="number"
                         required
                         class="form-control"
-                        customMin="1"
-                        customMax="9999"
+                        [customMin]="1"
+                        [customMax]="9999"
                         name="points"
                         id="field_points"
                         [(ngModel)]="modelingExercise.maxPoints"
@@ -94,8 +94,8 @@
                         type="number"
                         [required]="modelingExercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_COMPLETELY"
                         class="form-control"
-                        customMin="0"
-                        customMax="9999"
+                        [customMin]="0"
+                        [customMax]="9999"
                         name="bonusPoints"
                         id="field_bonusPoints"
                         [(ngModel)]="modelingExercise.bonusPoints"
@@ -114,7 +114,7 @@
         <div class="form-group-narrow">
             <label class="form-control-label" jhiTranslate="artemisApp.modelingExercise.diagramType" for="field_diagramType">Diagram Type</label>
             <select
-                [disabled]="isImport || modelingExercise.id"
+                [disabled]="isImport || !!modelingExercise.id"
                 class="form-control"
                 name="diagramType"
                 [(ngModel)]="modelingExercise.diagramType"
@@ -232,12 +232,12 @@
                     </button>
                     <fa-icon *ngIf="exampleSubmission.usedForTutorial" [icon]="'chalkboard-teacher'" style="margin-left: 10px" title="Used for tutorial"></fa-icon>
                     <fa-icon
-                        *ngIf="exampleSubmission.submission?.result?.exampleResult"
+                        *ngIf="exampleSubmission.submission?.latestResult?.exampleResult"
                         [icon]="'check-circle'"
                         style="margin-left: 10px"
                         title="An assessment is available"
                     ></fa-icon>
-                    <button *ngIf="!isImport" class="btn btn-danger" (click)="deleteExampleSubmission(exampleSubmission.id, i)">
+                    <button *ngIf="!isImport" class="btn btn-danger" (click)="deleteExampleSubmission(exampleSubmission.id!, i)">
                         <fa-icon [icon]="'ban'"></fa-icon>
                     </button>
                 </li>

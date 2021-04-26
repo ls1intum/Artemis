@@ -135,6 +135,10 @@
             }
         },
         "courseStatistics": {
+            "statistics": "Statistiken",
+            "course": "Kurs",
+            "courseAverage": "Kursdurchschnitt",
+            "exerciseAverage": "Aufgabendurchschnitt",
             "amountOfStudents": "# an Studenten",
             "activeStudents": "Aktive Studenten"
         }

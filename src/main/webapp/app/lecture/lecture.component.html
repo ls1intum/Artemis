@@ -58,10 +58,10 @@
                                 <button
                                     jhiDeleteButton
                                     *ngIf="lecture.isAtLeastInstructor"
-                                    [entityTitle]="lecture.title"
+                                    [entityTitle]="lecture.title || ''"
                                     deleteQuestion="artemisApp.lecture.delete.question"
                                     deleteConfirmationText="artemisApp.lecture.delete.typeNameToConfirm"
-                                    (delete)="deleteLecture(lecture.id)"
+                                    (delete)="deleteLecture(lecture.id!)"
                                     [dialogError]="dialogError$"
                                 >
                                     <fa-icon [icon]="'times'"></fa-icon>

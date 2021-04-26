@@ -11,18 +11,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import de.tum.in.www1.artemis.domain.GradingCriterion;
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
-import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
-import de.tum.in.www1.artemis.repository.GradingCriterionRepository;
-import de.tum.in.www1.artemis.repository.ParticipationRepository;
-import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
-import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
-import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingSubmissionService;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -39,7 +33,7 @@ public class ProgrammingExerciseParticipationResource {
 
     private final ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
 
-    private final ResultService resultService;
+    private final ResultRepository resultRepository;
 
     private final ProgrammingSubmissionService submissionService;
 
@@ -49,14 +43,14 @@ public class ProgrammingExerciseParticipationResource {
 
     private final GradingCriterionRepository gradingCriterionRepository;
 
-    public ProgrammingExerciseParticipationResource(ProgrammingExerciseParticipationService programmingExerciseParticipationService,
+    public ProgrammingExerciseParticipationResource(ProgrammingExerciseParticipationService programmingExerciseParticipationService, ResultRepository resultRepository,
             ParticipationRepository participationRepository, ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
-            ResultService resultService, ProgrammingSubmissionService submissionService, ProgrammingExerciseRepository programmingExerciseRepository,
-            AuthorizationCheckService authCheckService, GradingCriterionRepository gradingCriterionRepository) {
+            ProgrammingSubmissionService submissionService, ProgrammingExerciseRepository programmingExerciseRepository, AuthorizationCheckService authCheckService,
+            GradingCriterionRepository gradingCriterionRepository) {
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.participationRepository = participationRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
-        this.resultService = resultService;
+        this.resultRepository = resultRepository;
         this.submissionService = submissionService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.authCheckService = authCheckService;
@@ -70,7 +64,7 @@ public class ProgrammingExerciseParticipationResource {
      * @return the ResponseEntity with status 200 (OK) and the participation with its latest result in the body.
      */
     @GetMapping("/programming-exercise-participations/{participationId}/student-participation-with-latest-result-and-feedbacks")
-    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Participation> getParticipationWithLatestResultForStudentParticipation(@PathVariable Long participationId) {
         Optional<ProgrammingExerciseStudentParticipation> participation = programmingExerciseStudentParticipationRepository
                 .findStudentParticipationWithLatestResultAndFeedbacksAndRelatedSubmissions(participationId);
@@ -94,57 +88,6 @@ public class ProgrammingExerciseParticipationResource {
     }
 
     /**
-     * Get the given student participation with the manual result of the given correctionRound and its feedbacks.
-     *
-     * @param participationId for which to retrieve the student participation with result and feedbacks.
-     * @param correctionRound of the result that the participation must have, otherwise notFound is returned
-     * @return the ResponseEntity with status 200 (OK) and the participation with its results in the body.
-     */
-    @GetMapping("/programming-exercise-participations/{participationId}/student-participation-with-result-and-feedbacks-for/{correctionRound}/correction-round")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Participation> getParticipationWithManualResultByCorrectionRoundForStudentParticipation(@PathVariable Long participationId,
-            @PathVariable int correctionRound) {
-        Optional<ProgrammingExerciseStudentParticipation> participation = programmingExerciseStudentParticipationRepository
-                .findByIdWithAllManualOrSemiAutomaticResultsAndFeedbacksAndRelatedSubmissionAndAssessor(participationId);
-        if (participation.isEmpty()) {
-            return notFound();
-        }
-        if (!programmingExerciseParticipationService.canAccessParticipation(participation.get())) {
-            return forbidden();
-        }
-
-        // Fetch template and solution participation into exercise of participation
-        ProgrammingExercise exercise = (ProgrammingExercise) participation.get().getExercise();
-        exercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exercise.getId());
-
-        // Fetch grading criterion into exercise of participation
-        List<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exercise.getId());
-        exercise.setGradingCriteria(gradingCriteria);
-
-        // Set exercise back to participation
-        participation.get().setExercise(exercise);
-
-        // get the result which belongs to the specific correctionround and set it as the single result in the participation
-        List<Result> results = new ArrayList<>(participation.get().getResults());
-
-        // usually this should not be necessary, but just in case the participation's results come in a wrong order this is important
-        results.sort((r1, r2) -> r1.getId().compareTo(r2.getId()));
-
-        if (results.size() > correctionRound) {
-            Result resultOfCorrectionRound = results.get(correctionRound);
-            Set<Result> resultSet = new HashSet<>();
-
-            resultSet.add(resultOfCorrectionRound);
-            participation.get().setResults(resultSet);
-        }
-        else {
-            return notFound();
-        }
-
-        return ResponseEntity.ok(participation.get());
-    }
-
-    /**
      * Get the latest result for a given programming exercise participation including it's result.
      *
      * @param participationId for which to retrieve the programming exercise participation with latest result and feedbacks.
@@ -152,20 +95,15 @@ public class ProgrammingExerciseParticipationResource {
      * @return the ResponseEntity with status 200 (OK) and the latest result with feedbacks in its body, 404 if the participation can't be found or 403 if the user is not allowed to access the participation.
      */
     @GetMapping(value = "/programming-exercise-participations/{participationId}/latest-result-with-feedbacks")
-    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Result> getLatestResultWithFeedbacksForProgrammingExerciseParticipation(@PathVariable Long participationId,
             @RequestParam(defaultValue = "false") boolean withSubmission) {
-        Participation participation = participationRepository.findByIdElseThrow(participationId);
-        if (!(participation instanceof ProgrammingExerciseParticipation)) {
-            return badRequest();
-        }
-        var programmingParticipation = (ProgrammingExerciseParticipation) participation;
-
-        if (!programmingExerciseParticipationService.canAccessParticipation(programmingParticipation)) {
+        var participation = participationRepository.findByIdElseThrow(participationId);
+        if (!programmingExerciseParticipationService.canAccessParticipation((ProgrammingExerciseParticipation) participation)) {
             return forbidden();
         }
 
-        Optional<Result> result = resultService.findLatestResultWithFeedbacksForParticipation(programmingParticipation.getId(), withSubmission);
+        Optional<Result> result = resultRepository.findLatestResultWithFeedbacksForParticipation(participation.getId(), withSubmission);
         if (result.isPresent() && !authCheckService.isAtLeastTeachingAssistantForExercise(participation.getExercise())) {
             final boolean isBeforeDueDate = participation.getExercise().isBeforeDueDate();
             result.get().filterSensitiveInformation();
@@ -182,9 +120,9 @@ public class ProgrammingExerciseParticipationResource {
      * @return the ResponseEntity with status 200 (OK) with true if there is a result, otherwise false.
      */
     @GetMapping(value = "/programming-exercise-participations/{participationId}/has-result")
-    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Boolean> checkIfParticipationHashResult(@PathVariable Long participationId) {
-        boolean hasResult = resultService.existsByParticipationId(participationId);
+        boolean hasResult = resultRepository.existsByParticipationId(participationId);
         return ResponseEntity.ok(hasResult);
     }
 
@@ -197,7 +135,7 @@ public class ProgrammingExerciseParticipationResource {
      * @return the ResponseEntity with the last pending submission if it exists or null with status Ok (200). Will return notFound (404) if there is no participation for the given id and forbidden (403) if the user is not allowed to access the participation.
      */
     @GetMapping("/programming-exercise-participations/{participationId}/latest-pending-submission")
-    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<ProgrammingSubmission> getLatestPendingSubmission(@PathVariable Long participationId, @RequestParam(defaultValue = "false") boolean lastGraded) {
         Optional<ProgrammingSubmission> submissionOpt;
         try {
@@ -218,7 +156,7 @@ public class ProgrammingExerciseParticipationResource {
      * @return a Map of {[participationId]: ProgrammingSubmission | null}. Will contain an entry for every student participation of the exercise and a submission object if a pending submission exists or null if not.
      */
     @GetMapping("/programming-exercises/{exerciseId}/latest-pending-submissions")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('TA')")
     public ResponseEntity<Map<Long, Optional<ProgrammingSubmission>>> getLatestPendingSubmissionsByExerciseId(@PathVariable Long exerciseId) {
         ProgrammingExercise programmingExercise;
         try {

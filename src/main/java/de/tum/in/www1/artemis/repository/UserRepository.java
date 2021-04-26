@@ -7,14 +7,8 @@ import java.util.*;
 
 import javax.validation.constraints.NotNull;
 
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.jpa.repository.EntityGraph;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Modifying;
-import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.domain.*;
+import org.springframework.data.jpa.repository.*;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
@@ -79,6 +73,9 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @Query("select user from User user where :#{#groupName} member of user.groups")
     List<User> findAllInGroupWithAuthorities(@Param("groupName") String groupName);
 
+    @Query("select user from User user where :#{#groupName} member of user.groups")
+    List<User> findAllInGroup(@Param("groupName") String groupName);
+
     /**
      * Searches for users in a group by their login or full name.
      *
@@ -126,9 +123,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
      *
      * @param page        Pageable related info (e.g. for page size)
      * @param loginOrName Either a login (e.g. ga12abc) or name (e.g. Max Mustermann) by which to search
-     * @return list of found users that match the search criteria
+     * @return            list of found users that match the search criteria
      */
-    @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities" })
     @Query("select user from User user where user.login like :#{#loginOrName}% or concat_ws(' ', user.firstName, user.lastName) like %:#{#loginOrName}%")
     Page<User> searchAllByLoginOrName(Pageable page, @Param("loginOrName") String loginOrName);
 
@@ -175,7 +171,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
      */
     default Page<UserDTO> searchAllUsersByLoginOrName(Pageable pageable, String loginOrName) {
         Page<User> users = searchAllByLoginOrName(pageable, loginOrName);
-        users.forEach(user -> user.setVisibleRegistrationNumber(user.getRegistrationNumber()));
         return users.map(UserDTO::new);
     }
 

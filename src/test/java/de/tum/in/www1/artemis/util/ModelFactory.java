@@ -4,6 +4,8 @@ import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import org.jetbrains.annotations.NotNull;
+
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.*;
@@ -19,7 +21,7 @@ import de.tum.in.www1.artemis.domain.notification.SystemNotification;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.*;
-import de.tum.in.www1.artemis.security.AuthoritiesConstants;
+import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildLogDTO;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildPlanDTO;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildResultNotificationDTO;
@@ -281,7 +283,7 @@ public class ModelFactory {
     public static Team generateTeamForExercise(Exercise exercise, String name, String shortName, String loginPrefix, int numberOfStudents, User owner, String creatorLogin,
             String registrationPrefix) {
         List<User> students = generateActivatedUsersWithRegistrationNumber(shortName + loginPrefix, new String[] { "tumuser", "testgroup" },
-                Set.of(new Authority(AuthoritiesConstants.USER)), numberOfStudents, shortName + registrationPrefix);
+                Set.of(new Authority(Role.STUDENT.getAuthority())), numberOfStudents, shortName + registrationPrefix);
 
         Team team = new Team();
         team.setName(name);
@@ -567,19 +569,15 @@ public class ModelFactory {
 
     public static List<Feedback> generateFeedback() {
         List<Feedback> feedbacks = new ArrayList<>();
-        Feedback positiveFeedback = new Feedback();
-        positiveFeedback.setCredits(2D);
+        Feedback positiveFeedback = createPositiveFeedback(FeedbackType.AUTOMATIC);
         positiveFeedback.setReference("theory");
-        positiveFeedback.setType(FeedbackType.AUTOMATIC);
         feedbacks.add(positiveFeedback);
         Feedback positiveFeedback2 = new Feedback();
         positiveFeedback2.setCredits(1D);
         positiveFeedback2.setReference("theory2");
         positiveFeedback2.setType(FeedbackType.AUTOMATIC);
         feedbacks.add(positiveFeedback2);
-        Feedback negativeFeedback = new Feedback();
-        negativeFeedback.setCredits(-1D);
-        negativeFeedback.setDetailText("Bad solution");
+        Feedback negativeFeedback = createNegativeFeedback(FeedbackType.AUTOMATIC);
         negativeFeedback.setReference("practice");
         negativeFeedback.setType(FeedbackType.AUTOMATIC);
         feedbacks.add(negativeFeedback);
@@ -588,15 +586,9 @@ public class ModelFactory {
 
     public static List<Feedback> generateManualFeedback() {
         List<Feedback> feedbacks = new ArrayList<>();
-        Feedback positiveFeedback = new Feedback();
-        positiveFeedback.setCredits(2D);
-        positiveFeedback.setText("good");
-        positiveFeedback.setType(FeedbackType.MANUAL);
+        Feedback positiveFeedback = createPositiveFeedback(FeedbackType.MANUAL);
         feedbacks.add(positiveFeedback);
-        Feedback negativeFeedback = new Feedback();
-        negativeFeedback.setCredits(-1D);
-        negativeFeedback.setText("bad");
-        negativeFeedback.setType(FeedbackType.MANUAL);
+        Feedback negativeFeedback = createNegativeFeedback(FeedbackType.MANUAL);
         feedbacks.add(negativeFeedback);
         Feedback unrefFeedback = new Feedback();
         unrefFeedback.setCredits(-1D);
@@ -604,6 +596,24 @@ public class ModelFactory {
         unrefFeedback.setType(FeedbackType.MANUAL_UNREFERENCED);
         feedbacks.add(unrefFeedback);
         return feedbacks;
+    }
+
+    @NotNull
+    public static Feedback createPositiveFeedback(FeedbackType type) {
+        Feedback positiveFeedback = new Feedback();
+        positiveFeedback.setCredits(2D);
+        positiveFeedback.setText("good");
+        positiveFeedback.setType(type);
+        return positiveFeedback;
+    }
+
+    @NotNull
+    public static Feedback createNegativeFeedback(FeedbackType type) {
+        Feedback negativeFeedback = new Feedback();
+        negativeFeedback.setCredits(-1D);
+        negativeFeedback.setText("bad");
+        negativeFeedback.setType(type);
+        return negativeFeedback;
     }
 
     public static List<Feedback> generateStaticCodeAnalysisFeedbackList(int numOfFeedback) {

@@ -166,7 +166,10 @@
                         </span>
                     </ng-template>
                     <ng-template ngx-datatable-cell-template let-value="value">
-                        <a routerLink="/admin/user-management/{{ value?.login }}">{{ value?.name }}</a>
+                        <a *ngIf="isAdmin; else showName" routerLink="/admin/user-management/{{ value?.login }}">{{ value?.name }}</a>
+                        <ng-template #showName>
+                            {{ value?.name }}
+                        </ng-template>
                     </ng-template>
                 </ngx-datatable-column>
 
@@ -178,7 +181,7 @@
                         </span>
                     </ng-template>
                     <ng-template ngx-datatable-cell-template let-value="value">
-                        <a [routerLink]="['/course-management', exercise.course?.id, 'exercises', exercise.id, 'teams', value?.id]">
+                        <a [routerLink]="['/course-management', exercise.course?.id, exercise.type + '-exercises', exercise.id, 'teams', value?.id]">
                             {{ value?.name }}
                         </a>
                     </ng-template>
@@ -235,7 +238,7 @@
                                     [additionalChecks]="
                                         exercise.type === ExerciseType.PROGRAMMING
                                             ? { deleteBuildPlan: 'artemisApp.participation.deleteBuildPlan', deleteRepository: 'artemisApp.participation.deleteRepository' }
-                                            : null
+                                            : undefined
                                     "
                                 >
                                     <fa-icon [icon]="'times'"></fa-icon>

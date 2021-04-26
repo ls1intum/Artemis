@@ -16,7 +16,8 @@ import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.leaderboard.tutor.*;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.ComplaintRepository;
+import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.web.rest.ProgrammingExerciseGradingResource;
 import de.tum.in.www1.artemis.web.rest.dto.TutorLeaderboardDTO;
@@ -47,39 +48,35 @@ public class TutorLeaderboardService {
     public List<TutorLeaderboardDTO> getCourseLeaderboard(Course course, Set<Long> exerciseIdsOfCourse) {
 
         List<User> tutors = userRepository.getTutors(course);
-        String groupName = course.getTeachingAssistantGroupName();
 
         long start = System.currentTimeMillis();
         // 2.3s
-        List<TutorLeaderboardAssessments> tutorLeaderboardAssessments = resultRepository.findTutorLeaderboardAssessmentByCourseId(exerciseIdsOfCourse);
+        var tutorLeaderboardAssessments = resultRepository.findTutorLeaderboardAssessmentByCourseId(exerciseIdsOfCourse);
         long end = System.currentTimeMillis();
-        log.info("Finished >>resultRepository.findTutorLeaderboardAssessmentByCourseId<< call for course " + course.getId() + " in " + (end - start) + "ms");
+        log.info("Finished >>resultRepository.findTutorLeaderboardAssessmentByCourseId<< call for course {} in {}ms", course.getId(), end - start);
 
         start = System.currentTimeMillis();
         // 3.0s
-        List<TutorLeaderboardComplaints> tutorLeaderboardComplaints = complaintRepository.findTutorLeaderboardComplaintsByCourseId(groupName, course.getId());
+        var tutorLeaderboardComplaints = complaintRepository.findTutorLeaderboardComplaintsByCourseId(course.getId());
         end = System.currentTimeMillis();
-        log.info("Finished >>complaintRepository.findTutorLeaderboardComplaintsByCourseId<< call for course " + course.getId() + " in " + (end - start) + "ms");
+        log.info("Finished >>complaintRepository.findTutorLeaderboardComplaintsByCourseId<< call for course {} in {}ms", course.getId(), end - start);
 
         start = System.currentTimeMillis();
         // 0.6s
-        List<TutorLeaderboardMoreFeedbackRequests> tutorLeaderboardMoreFeedbackRequests = complaintRepository.findTutorLeaderboardMoreFeedbackRequestsByCourseId(groupName,
-                course.getId());
+        var tutorLeaderboardMoreFeedbackRequests = complaintRepository.findTutorLeaderboardMoreFeedbackRequestsByCourseId(course.getId());
         end = System.currentTimeMillis();
-        log.info("Finished >>complaintRepository.findTutorLeaderboardMoreFeedbackRequestsByCourseId<< call for course " + course.getId() + " in " + (end - start) + "ms");
+        log.info("Finished >>complaintRepository.findTutorLeaderboardMoreFeedbackRequestsByCourseId<< call for course {} in {}ms", course.getId(), end - start);
 
         start = System.currentTimeMillis();
         // 2.3s
-        List<TutorLeaderboardComplaintResponses> tutorLeaderboardComplaintResponses = complaintRepository.findTutorLeaderboardComplaintResponsesByCourseId(groupName,
-                course.getId());
+        var tutorLeaderboardComplaintResponses = complaintRepository.findTutorLeaderboardComplaintResponsesByCourseId(course.getId());
         end = System.currentTimeMillis();
-        log.info("Finished >>complaintRepository.findTutorLeaderboardComplaintResponsesByCourseId<< call for course " + course.getId() + " in " + (end - start) + "ms");
+        log.info("Finished >>complaintRepository.findTutorLeaderboardComplaintResponsesByCourseId<< call for course {} in {}ms", course.getId(), end - start);
 
         start = System.currentTimeMillis();
-        List<TutorLeaderboardAnsweredMoreFeedbackRequests> tutorLeaderboardAnsweredMoreFeedbackRequests = complaintRepository
-                .findTutorLeaderboardAnsweredMoreFeedbackRequestsByCourseId(groupName, course.getId());
+        var tutorLeaderboardAnsweredMoreFeedbackRequests = complaintRepository.findTutorLeaderboardAnsweredMoreFeedbackRequestsByCourseId(course.getId());
         end = System.currentTimeMillis();
-        log.info("Finished >>complaintRepository.findTutorLeaderboardAnsweredMoreFeedbackRequestsByCourseId<< call for course " + course.getId() + " in " + (end - start) + "ms");
+        log.info("Finished >>complaintRepository.findTutorLeaderboardAnsweredMoreFeedbackRequestsByCourseId<< call for course {} in {}ms", course.getId(), end - start);
 
         return aggregateTutorLeaderboardData(tutors, tutorLeaderboardAssessments, tutorLeaderboardComplaints, tutorLeaderboardMoreFeedbackRequests,
                 tutorLeaderboardComplaintResponses, tutorLeaderboardAnsweredMoreFeedbackRequests, false);
@@ -94,21 +91,20 @@ public class TutorLeaderboardService {
      */
     public List<TutorLeaderboardDTO> getExamLeaderboard(Course course, Exam exam) {
 
-        List<User> tutors = userRepository.getTutors(course);
-        String groupName = course.getTeachingAssistantGroupName();
+        var tutors = userRepository.getTutors(course);
 
         long start = System.currentTimeMillis();
-        List<TutorLeaderboardAssessments> tutorLeaderboardAssessments = resultRepository.findTutorLeaderboardAssessmentByExamId(exam.getId());
+        var tutorLeaderboardAssessments = resultRepository.findTutorLeaderboardAssessmentByExamId(exam.getId());
         long end = System.currentTimeMillis();
-        log.info("Finished >>resultRepository.findTutorLeaderboardAssessmentByExamId<< call for exercise " + exam.getId() + " in " + (end - start) + "ms");
+        log.info("Finished >>resultRepository.findTutorLeaderboardAssessmentByExamId<< call for exercise {} in {}ms", exam.getId(), end - start);
         start = System.currentTimeMillis();
-        List<TutorLeaderboardComplaints> tutorLeaderboardComplaints = complaintRepository.findTutorLeaderboardComplaintsByExamId(groupName, exam.getId());
+        var tutorLeaderboardComplaints = complaintRepository.findTutorLeaderboardComplaintsByExamId(exam.getId());
         end = System.currentTimeMillis();
-        log.info("Finished >>complaintRepository.findTutorLeaderboardComplaintsByExamId<< call for exercise " + exam.getId() + " in " + (end - start) + "ms");
+        log.info("Finished >>complaintRepository.findTutorLeaderboardComplaintsByExamId<< call for exercise {} in {}ms", exam.getId(), end - start);
         start = System.currentTimeMillis();
-        List<TutorLeaderboardComplaintResponses> tutorLeaderboardComplaintResponses = complaintRepository.findTutorLeaderboardComplaintResponsesByExamId(groupName, exam.getId());
+        var tutorLeaderboardComplaintResponses = complaintRepository.findTutorLeaderboardComplaintResponsesByExamId(exam.getId());
         end = System.currentTimeMillis();
-        log.info("Finished >>complaintRepository.findTutorLeaderboardComplaintResponsesByExamId<< call for exercise " + exam.getId() + " in " + (end - start) + "ms");
+        log.info("Finished >>complaintRepository.findTutorLeaderboardComplaintResponsesByExamId<< call for exercise {} in {}ms", exam.getId(), end - start);
 
         return aggregateTutorLeaderboardData(tutors, tutorLeaderboardAssessments, tutorLeaderboardComplaints, new ArrayList<>(), tutorLeaderboardComplaintResponses,
                 new ArrayList<>(), true);
@@ -122,32 +118,27 @@ public class TutorLeaderboardService {
      */
     public List<TutorLeaderboardDTO> getExerciseLeaderboard(Exercise exercise) {
 
-        List<User> tutors = userRepository.getTutors(exercise.getCourseViaExerciseGroupOrCourseMember());
-        String groupName = exercise.getCourseViaExerciseGroupOrCourseMember().getTeachingAssistantGroupName();
+        var tutors = userRepository.getTutors(exercise.getCourseViaExerciseGroupOrCourseMember());
         long start = System.currentTimeMillis();
-        List<TutorLeaderboardAssessments> tutorLeaderboardAssessments = resultRepository.findTutorLeaderboardAssessmentByExerciseId(exercise.getId());
+        var tutorLeaderboardAssessments = resultRepository.findTutorLeaderboardAssessmentByExerciseId(exercise.getId());
         long end = System.currentTimeMillis();
-        log.info("Finished >>resultRepository.findTutorLeaderboardAssessmentByExerciseId<< call for exercise " + exercise.getId() + " in " + (end - start) + "ms");
+        log.info("Finished >>resultRepository.findTutorLeaderboardAssessmentByExerciseId<< call for exercise {} in {}ms", exercise.getId(), end - start);
         start = System.currentTimeMillis();
-        List<TutorLeaderboardComplaints> tutorLeaderboardComplaints = complaintRepository.findTutorLeaderboardComplaintsByExerciseId(groupName, exercise.getId());
+        var tutorLeaderboardComplaints = complaintRepository.findTutorLeaderboardComplaintsByExerciseId(exercise.getId());
         end = System.currentTimeMillis();
-        log.info("Finished >>complaintRepository.findTutorLeaderboardComplaintsByExerciseId<< call for exercise " + exercise.getId() + " in " + (end - start) + "ms");
+        log.info("Finished >>complaintRepository.findTutorLeaderboardComplaintsByExerciseId<< call for exercise {} in {}ms", exercise.getId(), end - start);
         start = System.currentTimeMillis();
-        List<TutorLeaderboardMoreFeedbackRequests> tutorLeaderboardMoreFeedbackRequests = complaintRepository.findTutorLeaderboardMoreFeedbackRequestsByExerciseId(groupName,
-                exercise.getId());
+        var tutorLeaderboardMoreFeedbackRequests = complaintRepository.findTutorLeaderboardMoreFeedbackRequestsByExerciseId(exercise.getId());
         end = System.currentTimeMillis();
-        log.info("Finished >>complaintRepository.findTutorLeaderboardMoreFeedbackRequestsByExerciseId<< call for exercise " + exercise.getId() + " in " + (end - start) + "ms");
+        log.info("Finished >>complaintRepository.findTutorLeaderboardMoreFeedbackRequestsByExerciseId<< call for exercise {} in {}ms", exercise.getId(), end - start);
         start = System.currentTimeMillis();
-        List<TutorLeaderboardComplaintResponses> tutorLeaderboardComplaintResponses = complaintRepository.findTutorLeaderboardComplaintResponsesByExerciseId(groupName,
-                exercise.getId());
+        var tutorLeaderboardComplaintResponses = complaintRepository.findTutorLeaderboardComplaintResponsesByExerciseId(exercise.getId());
         end = System.currentTimeMillis();
-        log.info("Finished >>complaintRepository.findTutorLeaderboardComplaintResponsesByExerciseId<< call for exercise " + exercise.getId() + " in " + (end - start) + "ms");
+        log.info("Finished >>complaintRepository.findTutorLeaderboardComplaintResponsesByExerciseId<< call for exercise {} in {}ms", exercise.getId(), end - start);
         start = System.currentTimeMillis();
-        List<TutorLeaderboardAnsweredMoreFeedbackRequests> tutorLeaderboardAnsweredMoreFeedbackRequests = complaintRepository
-                .findTutorLeaderboardAnsweredMoreFeedbackRequestsByExerciseId(groupName, exercise.getId());
+        var tutorLeaderboardAnsweredMoreFeedbackRequests = complaintRepository.findTutorLeaderboardAnsweredMoreFeedbackRequestsByExerciseId(exercise.getId());
         end = System.currentTimeMillis();
-        log.info("Finished >>complaintRepository.findTutorLeaderboardAnsweredMoreFeedbackRequestsByExerciseId<< call for exercise " + exercise.getId() + " in " + (end - start)
-                + "ms");
+        log.info("Finished >>complaintRepository.findTutorLeaderboardAnsweredMoreFeedbackRequestsByExerciseId<< call for exercise {} in {}ms", exercise.getId(), end - start);
 
         return aggregateTutorLeaderboardData(tutors, tutorLeaderboardAssessments, tutorLeaderboardComplaints, tutorLeaderboardMoreFeedbackRequests,
                 tutorLeaderboardComplaintResponses, tutorLeaderboardAnsweredMoreFeedbackRequests, exercise.isExamExercise());

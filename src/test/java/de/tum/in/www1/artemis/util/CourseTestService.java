@@ -12,16 +12,19 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.*;
+import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
+import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
+import de.tum.in.www1.artemis.domain.enumeration.TutorParticipationStatus;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.Participation;
@@ -32,57 +35,50 @@ import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.programmingexercise.MockDelegate;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.GroupNotificationService;
-import de.tum.in.www1.artemis.service.user.UserService;
 import de.tum.in.www1.artemis.web.rest.dto.CourseManagementOverviewStatisticsDTO;
 import de.tum.in.www1.artemis.web.rest.dto.StatsForDashboardDTO;
 
 @Service
 public class CourseTestService {
 
-    @Value("${artemis.course-archives-path}")
-    private String courseArchivesDirPath;
-
     @Autowired
     private DatabaseUtilService database;
 
     @Autowired
-    CourseRepository courseRepo;
+    private CourseRepository courseRepo;
 
     @Autowired
-    ExerciseRepository exerciseRepo;
+    private ExerciseRepository exerciseRepo;
 
     @Autowired
-    LectureRepository lectureRepo;
+    private LectureRepository lectureRepo;
 
     @Autowired
-    ParticipationRepository participationRepo;
+    private ResultRepository resultRepo;
 
     @Autowired
-    SubmissionRepository submissionRepo;
+    private CustomAuditEventRepository auditEventRepo;
 
     @Autowired
-    ResultRepository resultRepo;
+    private UserRepository userRepo;
 
     @Autowired
-    CustomAuditEventRepository auditEventRepo;
+    private NotificationRepository notificationRepo;
 
     @Autowired
-    UserRepository userRepo;
+    private ExamRepository examRepo;
 
     @Autowired
-    UserService userService;
+    private ProgrammingExerciseRepository programmingExerciseRepository;
 
     @Autowired
-    NotificationRepository notificationRepo;
+    private RequestUtilService request;
 
     @Autowired
-    ExamRepository examRepo;
+    private ZipFileTestUtilService zipFileTestUtilService;
 
     @Autowired
-    ProgrammingExerciseRepository programmingExerciseRepository;
-
-    @Autowired
-    protected RequestUtilService request;
+    private SubmissionRepository submissionRepository;
 
     private final int numberOfStudents = 8;
 
@@ -568,8 +564,8 @@ public class CourseTestService {
     public void testGetCourseWithOrganizations() throws Exception {
         Course courseWithOrganization = database.createCourseWithOrganizations();
         Course course = request.get("/api/courses/" + courseWithOrganization.getId() + "/with-organizations", HttpStatus.OK, Course.class);
-        assertThat(course.getOrganizations() == courseWithOrganization.getOrganizations());
-        assertThat(course.getOrganizations().size() > 0);
+        assertThat(course.getOrganizations()).isEqualTo(courseWithOrganization.getOrganizations());
+        assertThat(course.getOrganizations()).isNotEmpty();
     }
 
     // Test
@@ -610,25 +606,25 @@ public class CourseTestService {
         for (Course testCourse : testCourses) {
             Course course = request.get("/api/courses/" + testCourse.getId() + "/for-assessment-dashboard", HttpStatus.OK, Course.class);
             for (Exercise exercise : course.getExercises()) {
-                assertThat(exercise.getTotalNumberOfAssessments().getInTime()).as("Number of in-time assessments is correct").isZero();
-                assertThat(exercise.getTotalNumberOfAssessments().getLate()).as("Number of late assessments is correct").isZero();
+                assertThat(exercise.getTotalNumberOfAssessments().inTime()).as("Number of in-time assessments is correct").isZero();
+                assertThat(exercise.getTotalNumberOfAssessments().late()).as("Number of late assessments is correct").isZero();
                 assertThat(exercise.getTutorParticipations().size()).as("Tutor participation was created").isEqualTo(1);
                 // Mock data contains exactly two submissions for the modeling exercise
                 if (exercise instanceof ModelingExercise) {
-                    assertThat(exercise.getNumberOfSubmissions().getInTime()).as("Number of in-time submissions is correct").isEqualTo(2);
+                    assertThat(exercise.getNumberOfSubmissions().inTime()).as("Number of in-time submissions is correct").isEqualTo(2);
                 }
                 // Mock data contains exactly one submission for the text exercise
                 if (exercise instanceof TextExercise) {
-                    assertThat(exercise.getNumberOfSubmissions().getInTime()).as("Number of in-time submissions is correct").isEqualTo(1);
+                    assertThat(exercise.getNumberOfSubmissions().inTime()).as("Number of in-time submissions is correct").isEqualTo(1);
                 }
                 // Mock data contains no submissions for the file upload and programming exercise
                 if (exercise instanceof FileUploadExercise || exercise instanceof ProgrammingExercise) {
-                    assertThat(exercise.getNumberOfSubmissions().getInTime()).as("Number of in-time submissions is correct").isEqualTo(0);
+                    assertThat(exercise.getNumberOfSubmissions().inTime()).as("Number of in-time submissions is correct").isEqualTo(0);
                 }
 
-                assertThat(exercise.getNumberOfSubmissions().getLate()).as("Number of late submissions is correct").isEqualTo(0);
+                assertThat(exercise.getNumberOfSubmissions().late()).as("Number of late submissions is correct").isEqualTo(0);
                 assertThat(exercise.getNumberOfAssessmentsOfCorrectionRounds().length).isEqualTo(1L);
-                assertThat(exercise.getNumberOfAssessmentsOfCorrectionRounds()[0].getInTime()).isEqualTo(0L);
+                assertThat(exercise.getNumberOfAssessmentsOfCorrectionRounds()[0].inTime()).isEqualTo(0L);
                 // Check tutor participation
                 if (exercise.getTutorParticipations().size() > 0) {
                     TutorParticipation tutorParticipation = exercise.getTutorParticipations().iterator().next();
@@ -638,12 +634,12 @@ public class CourseTestService {
 
             StatsForDashboardDTO stats = request.get("/api/courses/" + testCourse.getId() + "/stats-for-assessment-dashboard", HttpStatus.OK, StatsForDashboardDTO.class);
             long numberOfInTimeSubmissions = course.getId().equals(testCourses.get(0).getId()) ? 3 : 0; // course 1 has 3 submissions, course 2 has 0 submissions
-            assertThat(stats.getNumberOfSubmissions().getInTime()).as("Number of in-time submissions is correct").isEqualTo(numberOfInTimeSubmissions);
-            assertThat(stats.getNumberOfSubmissions().getLate()).as("Number of latte submissions is correct").isEqualTo(0);
-            assertThat(stats.getTotalNumberOfAssessments().getInTime()).as("Number of in-time assessments is correct").isEqualTo(0);
-            assertThat(stats.getTotalNumberOfAssessments().getLate()).as("Number of late assessments is correct").isEqualTo(0);
+            assertThat(stats.getNumberOfSubmissions().inTime()).as("Number of in-time submissions is correct").isEqualTo(numberOfInTimeSubmissions);
+            assertThat(stats.getNumberOfSubmissions().late()).as("Number of latte submissions is correct").isEqualTo(0);
+            assertThat(stats.getTotalNumberOfAssessments().inTime()).as("Number of in-time assessments is correct").isEqualTo(0);
+            assertThat(stats.getTotalNumberOfAssessments().late()).as("Number of late assessments is correct").isEqualTo(0);
             assertThat(stats.getNumberOfAssessmentsOfCorrectionRounds().length).isEqualTo(1L);
-            assertThat(stats.getNumberOfAssessmentsOfCorrectionRounds()[0].getInTime()).isEqualTo(0L);
+            assertThat(stats.getNumberOfAssessmentsOfCorrectionRounds()[0].inTime()).isEqualTo(0L);
             assertThat(stats.getTutorLeaderboardEntries().size()).as("Number of tutor leaderboard entries is correct").isEqualTo(5);
 
             StatsForDashboardDTO stats2 = request.get("/api/courses/" + testCourse.getId() + "/stats-for-instructor-dashboard", isInstructor ? HttpStatus.OK : HttpStatus.FORBIDDEN,
@@ -899,9 +895,9 @@ public class CourseTestService {
         List<Course> testCourses = database.createCoursesWithExercisesAndLectures(true);
         Course course1 = testCourses.get(0);
         Course course2 = testCourses.get(1);
-        Set<String> categories1 = request.get("/api/courses/" + course1.getId() + "/categories", HttpStatus.OK, Set.class);
+        List<String> categories1 = request.getList("/api/courses/" + course1.getId() + "/categories", HttpStatus.OK, String.class);
         assertThat(categories1).as("Correct categories in course1").containsExactlyInAnyOrder("Category", "Modeling", "Quiz", "File", "Text", "Programming");
-        Set<String> categories2 = request.get("/api/courses/" + course2.getId() + "/categories", HttpStatus.OK, Set.class);
+        List<String> categories2 = request.getList("/api/courses/" + course2.getId() + "/categories", HttpStatus.OK, String.class);
         assertThat(categories2).as("No categories in course2").isEmpty();
     }
 
@@ -1173,31 +1169,13 @@ public class CourseTestService {
 
     // Test
     public void testArchiveCourseWithTestModelingAndFileUploadExercises() throws Exception {
-        Course course = database.addCourseWithModelingAndTextAndFileUploadExercise();
-        course.setEndDate(ZonedDateTime.now().minusMinutes(5));
-        course = courseRepo.save(course);
-
-        // Generate submissions
-        var fileUploadExercise = database.findFileUploadExerciseWithTitle(course.getExercises(), "FileUpload");
-        var fileUploadSubmission = ModelFactory.generateFileUploadSubmission(true);
-        database.addFileUploadSubmission(fileUploadExercise, fileUploadSubmission, "student1");
-
-        var textExercise = database.findTextExerciseWithTitle(course.getExercises(), "Text");
-        var textSubmission = ModelFactory.generateTextSubmission("example text", Language.ENGLISH, true);
-        database.saveTextSubmission(textExercise, textSubmission, "student1");
-
-        var modelingExercise = database.findModelingExerciseWithTitle(course.getExercises(), "Modeling");
-        database.createAndSaveParticipationForExercise(modelingExercise, "student1");
-        String emptyActivityModel = FileUtils.loadFileFromResources("test-data/model-submission/empty-activity-diagram.json");
-        ModelingSubmission submission = ModelFactory.generateModelingSubmission(emptyActivityModel, false);
-        database.addSubmission(modelingExercise, submission, "student1");
+        var course = database.createCourseWithTestModelingAndFileUploadExercisesAndSubmissions();
 
         request.put("/api/courses/" + course.getId() + "/archive", null, HttpStatus.OK);
 
-        final var courseId = course.getId();
-        await().until(() -> courseRepo.findById(courseId).get().getCourseArchivePath() != null);
+        await().until(() -> courseRepo.findById(course.getId()).get().getCourseArchivePath() != null);
 
-        var updatedCourse = courseRepo.findById(courseId).get();
+        var updatedCourse = courseRepo.findById(course.getId()).get();
         assertThat(updatedCourse.getCourseArchivePath()).isNotEmpty();
     }
 
@@ -1223,23 +1201,39 @@ public class CourseTestService {
 
     // Test
     public void testDownloadCourseArchiveAsInstructor() throws Exception {
+        submissionRepository.deleteAll();
 
-        // Dummy course archive
-        Path courseArchivePath = Path.of(courseArchivesDirPath, "some-course-archive.zip");
-        if (!Files.exists(courseArchivePath)) {
-            Files.createDirectories(Path.of(courseArchivesDirPath));
-            Files.createFile(courseArchivePath);
-        }
+        // Archive the course and wait until it's complete
+        testArchiveCourseWithTestModelingAndFileUploadExercises();
 
-        // Generate a course that has an archive
-        Course course = database.createCourse();
-        course.setCourseArchivePath(courseArchivePath.toString());
-        course = courseRepo.save(course);
+        var optCourse = courseRepo.findAll().stream().findFirst();
+        assertThat(optCourse).isPresent();
+        var course = optCourse.get();
 
-        var downloadedArchive = request.get("/api/courses/" + course.getId() + "/download-archive", HttpStatus.OK, String.class);
-        assertThat(downloadedArchive).isNotNull();
+        // Download the archive
+        var archive = request.getFile("/api/courses/" + course.getId() + "/download-archive", HttpStatus.OK, new LinkedMultiValueMap<>());
+        assertThat(archive).isNotNull();
+        assertThat(archive).exists();
+        assertThat(archive.getPath().length()).isGreaterThanOrEqualTo(4);
 
-        Files.delete(courseArchivePath);
+        // Extract the archive
+        zipFileTestUtilService.extractZipFileRecursively(archive.getAbsolutePath());
+        String extractedArchiveDir = archive.getPath().substring(0, archive.getPath().length() - 4);
+
+        // We test for the filenames of the submissions since it's the easiest way.
+        // We don't test the directory structure
+        var filenames = Files.walk(Path.of(extractedArchiveDir)).filter(Files::isRegularFile).map(Path::getFileName).collect(Collectors.toList());
+
+        var submissions = submissionRepository.findAll();
+
+        var fileUploadSubmissionId = submissions.stream().filter(submission -> submission instanceof FileUploadSubmission).findFirst().get().getId();
+        assertThat(filenames).contains(Path.of("FileUpload-student1-" + fileUploadSubmissionId + ".png"));
+
+        var textSubmissionId = submissions.stream().filter(submission -> submission instanceof TextSubmission).findFirst().get().getId();
+        assertThat(filenames).contains(Path.of("Text-student1-" + textSubmissionId + ".txt"));
+
+        var modelingSubmission = submissions.stream().filter(submission -> submission instanceof ModelingSubmission).findFirst().get().getId();
+        assertThat(filenames).contains(Path.of("Modeling-student1-" + modelingSubmission + ".json"));
     }
 
     // Test
@@ -1301,8 +1295,7 @@ public class CourseTestService {
 
     // Test
     public void testGetCourseTitleForNonExistingCourse() throws Exception {
-        // No course with id 10 was created
-        request.get("/api/courses/10/title", HttpStatus.NOT_FOUND, String.class);
+        request.get("/api/courses/12312412321/title", HttpStatus.NOT_FOUND, String.class);
     }
 
     // Test
@@ -1395,7 +1388,7 @@ public class CourseTestService {
         final var teamExerciseId = teamExerciseNotEnded.getId();
         var teamStudents = new HashSet<User>();
         teamStudents.add(student);
-        var team = database.createTeam(teamStudents, instructor, teamExerciseNotEnded);
+        var team = database.createTeam(teamStudents, instructor, teamExerciseNotEnded, "team");
         database.addTeamParticipationForExercise(teamExerciseNotEnded, team.getId());
 
         instructorsCourse.addExercises(teamExerciseNotEnded);

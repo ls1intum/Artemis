@@ -3,7 +3,9 @@ package de.tum.in.www1.artemis.service.connectors.bitbucket;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.time.Instant;
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
@@ -29,10 +31,7 @@ import de.tum.in.www1.artemis.exception.BitbucketException;
 import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.UrlService;
-import de.tum.in.www1.artemis.service.connectors.AbstractVersionControlService;
-import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
-import de.tum.in.www1.artemis.service.connectors.GitService;
-import de.tum.in.www1.artemis.service.connectors.VersionControlRepositoryPermission;
+import de.tum.in.www1.artemis.service.connectors.*;
 import de.tum.in.www1.artemis.service.connectors.bitbucket.dto.*;
 import de.tum.in.www1.artemis.service.user.PasswordService;
 
@@ -130,7 +129,7 @@ public class BitbucketService extends AbstractVersionControlService {
      */
     private void protectBranches(String projectKey, String repositorySlug) {
         String baseUrl = bitbucketServerUrl + "/rest/branch-permissions/2.0/projects/" + projectKey + "/repos/" + repositorySlug + "/restrictions";
-        log.debug("Setting up branch protection for repository " + repositorySlug);
+        log.debug("Setting up branch protection for repository {}", repositorySlug);
 
         // Payload according to https://docs.atlassian.com/bitbucket-server/rest/4.2.0/bitbucket-ref-restriction-rest.html
         final var type = new BitbucketBranchProtectionDTO.TypeDTO("PATTERN", "Pattern");
@@ -152,7 +151,7 @@ public class BitbucketService extends AbstractVersionControlService {
             log.error("Exception occurred while protecting repository " + repositorySlug, emAll);
         }
 
-        log.debug("Branch protection for repository " + repositorySlug + " set up");
+        log.debug("Branch protection for repository {} set up", repositorySlug);
     }
 
     @Override
@@ -171,10 +170,10 @@ public class BitbucketService extends AbstractVersionControlService {
     @Override
     public void deleteProject(String projectKey) {
         String baseUrl = bitbucketServerUrl + "/rest/api/latest/projects/" + projectKey;
-        log.info("Try to delete bitbucket project " + projectKey);
+        log.info("Try to delete bitbucket project {}", projectKey);
         try {
             restTemplate.exchange(baseUrl, HttpMethod.DELETE, null, Void.class);
-            log.info("Delete bitbucket project " + projectKey + " was successful");
+            log.info("Delete bitbucket project {} was successful", projectKey);
         }
         catch (Exception e) {
             log.error("Could not delete project", e);
@@ -186,7 +185,7 @@ public class BitbucketService extends AbstractVersionControlService {
         final String projectKey = urlService.getProjectKeyFromRepositoryUrl(repositoryUrl);
         final String repositorySlug = urlService.getRepositorySlugFromRepositoryUrl(repositoryUrl);
         final String baseUrl = bitbucketServerUrl + "/rest/api/latest/projects/" + projectKey + "/repos/" + repositorySlug.toLowerCase();
-        log.info("Delete repository " + baseUrl);
+        log.info("Delete repository {}", baseUrl);
         try {
             restTemplate.exchange(baseUrl, HttpMethod.DELETE, null, Void.class);
         }
@@ -198,7 +197,7 @@ public class BitbucketService extends AbstractVersionControlService {
     @Override
     public VcsRepositoryUrl getCloneRepositoryUrl(String projectKey, String repositorySlug) {
         final var cloneUrl = new BitbucketRepositoryUrl(projectKey, repositorySlug);
-        log.debug("getCloneRepositoryUrl: " + cloneUrl.toString());
+        log.debug("getCloneRepositoryUrl: {}", cloneUrl.toString());
         return cloneUrl;
     }
 
@@ -302,7 +301,7 @@ public class BitbucketService extends AbstractVersionControlService {
                             user = userRepository.getUser();
                         }
                         if (user.getCreatedDate().plusSeconds(90).isAfter(Instant.now())) {
-                            log.warn("Could not give write permissions to user " + username + ", because the user does not yet exist in Bitbucket. Trying again in 5s");
+                            log.warn("Could not give write permissions to user {} because the user does not yet exist in Bitbucket. Trying again in 5s", username);
                             Thread.sleep(5000);
                             // if the last attempt fails, we throw an exception to make sure to exit this method with an exception
                             if (i == MAX_GIVE_PERMISSIONS_RETRIES - 1) {
@@ -325,8 +324,8 @@ public class BitbucketService extends AbstractVersionControlService {
             }
         }
         catch (HttpClientErrorException e) {
-            log.error("Server Error on Bitbucket with message: '" + e.getMessage() + "', body: '" + e.getResponseBodyAsString() + "', headers: '" + e.getResponseHeaders()
-                    + "', status text: '" + e.getStatusText() + "'.");
+            log.error("Server Error on Bitbucket with message: '{}', body: '{}', headers: '{}', status text: '{}'.", e.getMessage(), e.getResponseBodyAsString(),
+                    e.getResponseHeaders(), e.getStatusText());
             log.error("Could not give write permission using " + url, e);
             throw new BitbucketException("Error while giving repository permissions", e);
         }
@@ -395,11 +394,11 @@ public class BitbucketService extends AbstractVersionControlService {
         try {
             // first check that the project key is unique, if the project does not exist, we expect a 404 Not Found status
             var project = getBitbucketProject(projectKey);
-            log.warn("Bitbucket project with key " + projectKey + " already exists: " + project.getName());
+            log.warn("Bitbucket project with key {} already exists: {}", projectKey, project.getName());
             return true;
         }
         catch (HttpClientErrorException e) {
-            log.debug("Bitbucket project " + projectKey + " does not exist");
+            log.debug("Bitbucket project {} does not exist", projectKey);
             if (e.getStatusCode().equals(HttpStatus.NOT_FOUND)) {
                 // only if this is the case, we additionally check that the project name is unique
 
@@ -410,7 +409,7 @@ public class BitbucketService extends AbstractVersionControlService {
                 if (response.getBody() != null && response.getBody().getSize() > 0) {
                     final var exists = response.getBody().getSearchResults().stream().anyMatch(project -> project.getName().equalsIgnoreCase(projectName));
                     if (exists) {
-                        log.warn("Bitbucket project with name" + projectName + " already exists");
+                        log.warn("Bitbucket project with name {} already exists", projectName);
                         return true;
                     }
                 }
@@ -599,6 +598,7 @@ public class BitbucketService extends AbstractVersionControlService {
         // we are interested in the toHash
         Commit commit = new Commit();
         try {
+            // TODO: use a DTO (e.g. something similar to CommitDTO)
             final var commitData = new ObjectMapper().convertValue(requestBody, JsonNode.class);
             var lastChange = commitData.get("changes").get(0);
             var ref = lastChange.get("ref");
@@ -624,7 +624,7 @@ public class BitbucketService extends AbstractVersionControlService {
         }
         catch (Exception e) {
             // silently fail because this step is not absolutely necessary
-            log.error("Error when getting hash of last commit. Will continue, but the following error happened: " + e.getMessage(), e);
+            log.error("Error when getting hash of last commit. Able to continue.", e);
         }
         return commit;
     }

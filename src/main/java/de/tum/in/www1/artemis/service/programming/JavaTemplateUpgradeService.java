@@ -1,16 +1,9 @@
 package de.tum.in.www1.artemis.service.programming;
 
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -31,7 +24,8 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.Repository;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.service.FileService;
+import de.tum.in.www1.artemis.service.RepositoryService;
 import de.tum.in.www1.artemis.service.ResourceLoaderService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 
@@ -127,7 +121,7 @@ public class JavaTemplateUpgradeService implements TemplateUpgradeService {
             programmingExerciseService.commitAndPushRepository(repository, "Template upgraded by Artemis", userRepository.getUser());
         }
         catch (IOException | GitAPIException | InterruptedException | XmlPullParserException exception) {
-            log.error("Updating of template files of repository " + repositoryType.name() + " for exercise " + exercise.getId() + " failed with error:" + exception.getMessage());
+            log.error("Updating of template files of repository {} for exercise {} failed with error: {}", repositoryType.name(), exercise.getId(), exception.getMessage());
             // Rollback by deleting the local repository
             gitService.deleteLocalRepository(exercise.getRepositoryURL(repositoryType));
         }

@@ -1,17 +1,151 @@
 .card {
-    height: 320px;
-    cursor: pointer;
+    min-height: 320px;
+
     .card-header {
-        min-height: 60px;
-        max-height: 100px;
+        position: relative;
+        padding: 0;
+        height: 80px;
         display: flex;
         justify-content: center;
         align-items: center;
+
+        .header-col {
+            height: 80px;
+            display: flex;
+            align-items: center;
+        }
+
+        .image-col {
+            justify-content: flex-start;
+        }
+
+        .title-col {
+            justify-content: center;
+        }
+
+        .course-info-col {
+            justify-content: flex-end;
+
+            .course-info-amounts {
+                display: flex;
+                flex-direction: column;
+                line-height: 20px;
+                white-space: nowrap;
+                z-index: 1;
+
+                a {
+                    color: white;
+                    font-weight: unset;
+                }
+            }
+        }
+
+        .container {
+            height: 80px;
+
+            .row {
+                height: 80px;
+                justify-content: space-between;
+            }
+        }
+
+        .card-title {
+            overflow: hidden;
+            padding-bottom: 1px;
+            max-height: 80px;
+        }
     }
+
     .card-body {
+        position: relative;
         display: flex;
         justify-content: center;
         align-items: center;
         flex-direction: column;
+
+        .chart-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            .chart-text {
+                position: absolute;
+            }
+        }
+
+        .points {
+            display: block;
+            max-width: 11ch;
+        }
+
+        canvas {
+            cursor: pointer;
+            z-index: 1;
+            width: 150px;
+            height: 150px;
+        }
+    }
+
+    .card-footer {
+        position: relative;
+        padding: 0;
+        height: 50px;
+
+        .container {
+            height: 50px;
+
+            .row {
+                height: 50px;
+            }
+        }
+
+        .next-exercise-col {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+
+            .next-exercise-icon {
+                z-index: 1;
+                font-size: large;
+            }
+
+            .next-exercise-title {
+                font-weight: bolder;
+                font-size: large;
+                margin-bottom: 0;
+                display: inline-block;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+                max-width: 40ch;
+                padding-left: 15px;
+            }
+
+            h6 {
+                margin-bottom: 0;
+            }
+        }
+
+        .no-exercise {
+            display: flex;
+            height: 50px;
+            align-items: center;
+
+            h6 {
+                margin-bottom: 0;
+            }
+        }
+    }
+}
+
+.container {
+    max-width: unset;
+}
+
+jhi-secured-image {
+    ::ng-deep img {
+        border-radius: 50%;
+        height: 65px;
+        width: auto;
     }
 }

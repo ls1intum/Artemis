@@ -82,7 +82,8 @@ public final class Constants {
 
     public static final long MAX_NUMBER_OF_LOCKED_SUBMISSIONS_PER_TUTOR = 10;
 
-    public static final long MAX_UPLOAD_FILESIZE_BYTES = 4 * 1024 * 1024; // 4 MB
+    // Note: The values in input.constants.ts (client) need to be the same
+    public static final long MAX_SUBMISSION_FILE_SIZE = 8 * 1024 * 1024; // 8 MB
 
     public static final String TEST_CASES_CHANGED_NOTIFICATION = "The test cases of this programming exercise were updated. The student submissions should be build and tested so that results with the updated settings can be created.";
 
@@ -169,6 +170,8 @@ public final class Constants {
     public static final String EXTERNAL_USER_MANAGEMENT_NAME = "externalUserManagementName";
 
     public static final String REGISTRATION_ENABLED = "registrationEnabled";
+
+    public static final String NEEDS_TO_ACCEPT_TERMS = "needsToAcceptTerms";
 
     public static final String ALLOWED_EMAIL_PATTERN = "allowedEmailPattern";
 

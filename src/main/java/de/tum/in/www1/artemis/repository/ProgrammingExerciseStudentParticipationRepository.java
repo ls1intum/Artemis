@@ -32,17 +32,18 @@ public interface ProgrammingExerciseStudentParticipationRepository extends JpaRe
             left join fetch pr.submission
             where p.id = :participationId
                 and (pr.id = (select max(prr.id) from p.results prr
-                    where prr.assessmentType = 'AUTOMATIC'
-                        or (prr.completionDate IS NOT NULL
-                            and (p.exercise.assessmentDueDate IS NULL
-                            OR p.exercise.assessmentDueDate < :#{#dateTime})))
-                or pr.id IS NULL)
+                    where (prr.assessmentType = 'AUTOMATIC'
+                            or (prr.completionDate IS NOT NULL
+                                and (p.exercise.assessmentDueDate IS NULL
+                                OR p.exercise.assessmentDueDate < :#{#dateTime}))))
+                    or pr.id IS NULL)
             """)
     Optional<ProgrammingExerciseStudentParticipation> findByIdWithLatestResultAndFeedbacksAndRelatedSubmissions(@Param("participationId") Long participationId,
             @Param("dateTime") ZonedDateTime dateTime);
 
     /**
      * Will return the participation with the provided participationId. The participation will come with all it's manual results, submissions, feedbacks and assessors
+     *
      * @param participationId the participation id
      * @return a participation with all it's manual results.
      */

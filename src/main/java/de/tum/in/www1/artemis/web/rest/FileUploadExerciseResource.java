@@ -1,8 +1,7 @@
 package de.tum.in.www1.artemis.web.rest;
 
 import static de.tum.in.www1.artemis.config.Constants.FILE_ENDING_PATTERN;
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.notFound;
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -86,18 +85,14 @@ public class FileUploadExerciseResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("/file-upload-exercises")
-    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<FileUploadExercise> createFileUploadExercise(@RequestBody FileUploadExercise fileUploadExercise) throws URISyntaxException {
         log.debug("REST request to save FileUploadExercise : {}", fileUploadExercise);
         if (fileUploadExercise.getId() != null) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "A new fileUploadExercise cannot already have an ID", "idexists")).body(null);
         }
 
-        // Validate score settings
-        Optional<ResponseEntity<FileUploadExercise>> optionalScoreSettingsError = exerciseService.validateScoreSettings(fileUploadExercise);
-        if (optionalScoreSettingsError.isPresent()) {
-            return optionalScoreSettingsError.get();
-        }
+        exerciseService.validateScoreSettings(fileUploadExercise);
 
         // Validate the new file upload exercise
         validateNewOrUpdatedFileUploadExercise(fileUploadExercise);
@@ -123,11 +118,12 @@ public class FileUploadExerciseResource {
 
     private boolean isFilePatternValid(FileUploadExercise exercise) {
         // a file ending should consist of a comma separated list of 1-5 characters / digits
-        var filePattern = exercise.getFilePattern().toLowerCase().replaceAll("\\s+", "");
-        var allowedFileEndings = filePattern.split(",");
-        if (allowedFileEndings.length == 0) {
+        // when an empty string "" is passed in the exercise the file-pattern is null when it arrives in the rest endpoint
+        if (exercise.getFilePattern() == null) {
             return false;
         }
+        var filePattern = exercise.getFilePattern().toLowerCase().replaceAll("\\s+", "");
+        var allowedFileEndings = filePattern.split(",");
         var isValid = true;
         for (var allowedFileEnding : allowedFileEndings) {
             isValid = isValid && FILE_ENDING_PATTERN.matcher(allowedFileEnding).matches();
@@ -162,7 +158,7 @@ public class FileUploadExerciseResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PutMapping("/file-upload-exercises/{exerciseId}")
-    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<FileUploadExercise> updateFileUploadExercise(@RequestBody FileUploadExercise fileUploadExercise,
             @RequestParam(value = "notificationText", required = false) String notificationText, @PathVariable Long exerciseId) throws URISyntaxException {
         log.debug("REST request to update FileUploadExercise : {}", fileUploadExercise);
@@ -171,12 +167,7 @@ public class FileUploadExerciseResource {
 
         // Validate the updated file upload exercise
         validateNewOrUpdatedFileUploadExercise(fileUploadExercise);
-
-        // Validate score settings
-        Optional<ResponseEntity<FileUploadExercise>> optionalScoreSettingsError = exerciseService.validateScoreSettings(fileUploadExercise);
-        if (optionalScoreSettingsError.isPresent()) {
-            return optionalScoreSettingsError.get();
-        }
+        exerciseService.validateScoreSettings(fileUploadExercise);
 
         // Retrieve the course over the exerciseGroup or the given courseId
         Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(fileUploadExercise);
@@ -209,7 +200,7 @@ public class FileUploadExerciseResource {
      * @return the ResponseEntity with status 200 (OK) and the list of fileUploadExercises in body
      */
     @GetMapping(value = "/courses/{courseId}/file-upload-exercises")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('TA')")
     public ResponseEntity<List<FileUploadExercise>> getFileUploadExercisesForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all ProgrammingExercises for the course with id : {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
@@ -233,7 +224,7 @@ public class FileUploadExerciseResource {
      * @return the ResponseEntity with status 200 (OK) and with body the fileUploadExercise, or with status 404 (Not Found)
      */
     @GetMapping("/file-upload-exercises/{exerciseId}")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('TA')")
     public ResponseEntity<FileUploadExercise> getFileUploadExercise(@PathVariable Long exerciseId) {
         // TODO: Split this route in two: One for normal and one for exam exercises
         log.debug("REST request to get FileUploadExercise : {}", exerciseId);
@@ -273,7 +264,7 @@ public class FileUploadExerciseResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("/file-upload-exercises/{exerciseId}")
-    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Void> deleteFileUploadExercise(@PathVariable Long exerciseId) {
         log.info("REST request to delete FileUploadExercise : {}", exerciseId);
         Optional<FileUploadExercise> optionalFileUploadExercise = fileUploadExerciseRepository.findById(exerciseId);
@@ -309,7 +300,7 @@ public class FileUploadExerciseResource {
      * @return ResponseEntity with status
      */
     @PostMapping("/file-upload-exercises/{exerciseId}/export-submissions")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('TA')")
     public ResponseEntity<Resource> exportSubmissions(@PathVariable long exerciseId, @RequestBody SubmissionExportOptionsDTO submissionExportOptions) {
 
         Optional<FileUploadExercise> optionalFileUploadExercise = fileUploadExerciseRepository.findById(exerciseId);

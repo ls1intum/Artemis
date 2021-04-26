@@ -23,6 +23,7 @@ import { CodeEditorContainerComponent } from 'app/exercises/programming/shared/c
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { getUnreferencedFeedback } from 'app/exercises/shared/result/result-utils';
+import { SubmissionType } from 'app/entities/submission.model';
 
 @Component({
     selector: 'jhi-code-editor-student',
@@ -46,6 +47,7 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy, C
     showEditorInstructions = true;
     latestResult: Result | undefined;
     hasTutorAssessment = false;
+    isIllegalSubmission = false;
 
     constructor(
         private resultService: ResultService,
@@ -77,6 +79,7 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy, C
                         const isEditingAfterDueAllowed = !this.exercise.buildAndTestStudentSubmissionsAfterDueDate && this.exercise.assessmentType === AssessmentType.AUTOMATIC;
                         this.repositoryIsLocked = !isEditingAfterDueAllowed && !!this.exercise.dueDate && dueDateHasPassed;
                         this.latestResult = this.participation.results ? this.participation.results[0] : undefined;
+                        this.isIllegalSubmission = this.latestResult?.submission?.type === SubmissionType.ILLEGAL;
                         this.checkForTutorAssessment(dueDateHasPassed);
                     }),
                     switchMap(() => {
@@ -169,7 +172,10 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy, C
     /**
      * Check whether or not a latestResult exists and if, returns the unreferenced feedback of it
      */
-    get unreferencedFeedback(): Feedback[] | undefined {
-        return this.latestResult ? getUnreferencedFeedback(this.latestResult.feedbacks) : undefined;
+    get unreferencedFeedback(): Feedback[] {
+        if (this.latestResult) {
+            return getUnreferencedFeedback(this.latestResult.feedbacks) ?? [];
+        }
+        return [];
     }
 }

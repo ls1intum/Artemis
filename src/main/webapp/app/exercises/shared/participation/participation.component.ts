@@ -57,6 +57,8 @@ export class ParticipationComponent implements OnInit, OnDestroy {
 
     exerciseSubmissionState: ExerciseSubmissionState;
 
+    isAdmin = false;
+
     isLoading: boolean;
 
     constructor(
@@ -128,6 +130,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         } else if (this.exercise.exerciseGroup) {
             this.exercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.exercise.exerciseGroup.exam?.course!);
         }
+        this.isAdmin = this.accountService.isAdmin();
     }
 
     updateParticipationFilter(newValue: FilterProp) {
@@ -257,6 +260,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         } else if (participation.team) {
             return formatTeamAsSearchResult(participation.team);
         }
+        return `${participation.id!}`;
     };
 
     /**

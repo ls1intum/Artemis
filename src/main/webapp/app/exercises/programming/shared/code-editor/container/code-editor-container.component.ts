@@ -53,6 +53,9 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate {
     highlightFileChanges = false;
     @Input()
     readOnlyManualFeedback = false;
+    @Input()
+    highlightDifferences: boolean;
+
     @Output()
     onResizeEditorInstructions = new EventEmitter<void>();
     @Output()
@@ -210,8 +213,8 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate {
      * Used by other components to display errors.
      * The error must already be provided translated by the emitting component.
      */
-    onError(error: string) {
-        this.jhiAlertService.error(`artemisApp.editor.errors.${error}`);
+    onError(error: any) {
+        this.jhiAlertService.error(`artemisApp.editor.errors.${error as string}`);
     }
 
     /**

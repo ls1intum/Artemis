@@ -1,4 +1,5 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 
 /**
@@ -32,27 +33,13 @@ export enum ButtonSize {
  */
 @Component({
     selector: 'jhi-button',
-    template: `
-        <button
-            [ngClass]="['jhi-btn', 'btn', btnType, btnSize]"
-            [type]="shouldSubmit ? 'submit' : 'button'"
-            ngbTooltip="{{ tooltip | translate }}"
-            container="body"
-            (click)="onClick.emit($event)"
-            [jhiFeatureToggle]="featureToggle"
-            [overwriteDisabled]="disabled || isLoading"
-        >
-            <fa-icon class="jhi-btn__loading" *ngIf="isLoading" icon="circle-notch" [spin]="true" size="sm"></fa-icon>
-            <fa-icon class="jhi-btn__icon" *ngIf="icon && !isLoading" [icon]="icon" size="sm"></fa-icon>
-            <span class="jhi-btn__title" [class.ml-1]="icon || isLoading" *ngIf="title" [jhiTranslate]="title"></span>
-        </button>
-    `,
+    templateUrl: './button.component.html',
 })
 export class ButtonComponent {
     @Input() btnType = ButtonType.PRIMARY;
     @Input() btnSize = ButtonSize.MEDIUM;
     // Fa-icon name.
-    @Input() icon: string;
+    @Input() icon: IconProp;
     // Translation placeholders, will be translated in the component.
     @Input() title: string;
     @Input() tooltip: string;

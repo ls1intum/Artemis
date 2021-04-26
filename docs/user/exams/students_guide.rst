@@ -23,9 +23,9 @@ Prerequisites
 
 - The following prerequisites are only required if your exam contains programming exercises:
 
-    - **Java IDE with JDK 15**
+    - **Java IDE with JDK 16**
 
-        **Recommendation:** Eclipse IDE 2020‑09.
+        **Recommendation:** Eclipse IDE 2021‑03.
 
     - **Git Client**
 

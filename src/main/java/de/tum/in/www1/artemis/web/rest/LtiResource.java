@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.notFound;
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 
 import java.io.IOException;
 import java.time.ZonedDateTime;
@@ -84,7 +83,7 @@ public class LtiResource {
     public void launch(@ModelAttribute LtiLaunchRequestDTO launchRequest, @PathVariable("exerciseId") Long exerciseId, HttpServletRequest request, HttpServletResponse response)
             throws IOException {
 
-        log.info("/lti/launch/" + exerciseId + " with launch request: " + launchRequest);
+        log.info("/lti/launch/{} with launch request: {}", exerciseId, launchRequest);
 
         if (this.LTI_OAUTH_SECRET.isEmpty() || this.LTI_ID.isEmpty() || this.LTI_OAUTH_KEY.isEmpty()) {
             String message = "LTI not configured on this Artemis server. Cannot launch exercise " + exerciseId + ". " + "Please contact an admin or try again.";
@@ -92,13 +91,13 @@ public class LtiResource {
             response.sendError(HttpServletResponse.SC_FORBIDDEN, message);
         }
 
-        log.info("Request header X-Forwarded-Proto: " + request.getHeader("X-Forwarded-Proto"));
-        log.info("Request header X-Forwarded-For: " + request.getHeader("X-Forwarded-For"));
+        log.info("Request header X-Forwarded-Proto: {}", request.getHeader("X-Forwarded-Proto"));
+        log.info("Request header X-Forwarded-For: {}", request.getHeader("X-Forwarded-For"));
 
         if (!request.getRequestURL().toString().startsWith("https")) {
-            log.error("The request url " + request.getRequestURL().toString() + " does not start with 'https'. Verification of the request will most probably fail."
+            log.error("The request url {} does not start with 'https'. Verification of the request will most probably fail."
                     + "Please double check your loadbalancer (e.g. nginx) configuration and your Spring configuration (e.g. application.yml) with respect to proxy_set_header "
-                    + "X-Forwarded-Proto and forward-headers-strategy: native");
+                    + "X-Forwarded-Proto and forward-headers-strategy: native", request.getRequestURL().toString());
         }
 
         log.info("Try to verify LTI Oauth Request");
@@ -121,13 +120,13 @@ public class LtiResource {
         }
 
         Exercise exercise = optionalExercise.get();
-        log.info("found exercise " + exercise.getTitle());
+        log.info("found exercise {}", exercise.getTitle());
         // Handle the launch request using LtiService
         try {
             ltiService.handleLaunchRequest(launchRequest, exercise);
         }
         catch (Exception ex) {
-            log.error("Error during LTI launch request of exercise " + exercise.getTitle() + " for launch request: " + launchRequest + "\nError: ", ex);
+            log.error("Error during LTI launch request of exercise " + exercise.getTitle() + " for launch request: " + launchRequest, ex);
             response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, ex.getMessage());
             return;
         }
@@ -139,12 +138,12 @@ public class LtiResource {
         boolean isNewUser = SecurityUtils.isAuthenticated()
                 && TimeUnit.SECONDS.toMinutes(ZonedDateTime.now().toEpochSecond() - userRepository.getUser().getCreatedDate().toEpochMilli() * 1000) < 15;
 
-        log.info("isNewUser: " + isNewUser);
+        log.info("isNewUser: {}", isNewUser);
 
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String jwt = tokenProvider.createToken(authentication, true);
 
-        log.info("created jwt token: " + jwt);
+        log.info("created jwt token: {}", jwt);
 
         // Note: The following redirect URL has to match the URL in user-route-access-service.ts in the method canActivate(...)
 
@@ -155,7 +154,7 @@ public class LtiResource {
                 + exercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/exercises/" + exercise.getId() + (isNewUser ? "?welcome" : "")
                 + (!SecurityUtils.isAuthenticated() ? "?login" : "") + (isNewUser || !SecurityUtils.isAuthenticated() ? "&" : "") + "jwt=" + jwt;
 
-        log.info("redirect to url: " + redirectUrl);
+        log.info("redirect to url: {}", redirectUrl);
         response.sendRedirect(redirectUrl);
     }
 
@@ -167,7 +166,7 @@ public class LtiResource {
      * @return the ResponseEntity with status 200 (OK) and with body the LTI configuration, or with status 404 (Not Found)
      */
     @GetMapping(value = "/lti/configuration/{exerciseId}", produces = MediaType.APPLICATION_JSON_VALUE)
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('TA')")
     public ResponseEntity<ExerciseLtiConfigurationDTO> exerciseLtiConfiguration(@PathVariable("exerciseId") Long exerciseId, HttpServletRequest request) {
         Optional<Exercise> exercise = exerciseRepository.findById(exerciseId);
         if (exercise.isEmpty()) {

@@ -15,9 +15,12 @@ import { UMLDiagramType } from 'app/entities/modeling-exercise.model';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { HttpResponse } from '@angular/common/http';
 import * as _ from 'lodash';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { AccountService } from 'app/core/auth/account.service';
 
 describe('ApollonDiagramList Component', () => {
     let apollonDiagramService: ApollonDiagramService;
+    let courseService: CourseManagementService;
     let fixture: ComponentFixture<ApollonDiagramListComponent>;
     const sandbox = sinon.createSandbox();
     const course: Course = { id: 123 } as Course;
@@ -34,6 +37,8 @@ describe('ApollonDiagramList Component', () => {
                 MockProvider(SortService),
                 { provide: NgbModal, useClass: MockNgbModalService },
                 { provide: ActivatedRoute, useValue: route },
+                MockProvider(CourseManagementService),
+                MockProvider(AccountService),
             ],
             schemas: [],
         })
@@ -41,7 +46,9 @@ describe('ApollonDiagramList Component', () => {
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(ApollonDiagramListComponent);
-                apollonDiagramService = fixture.debugElement.injector.get(ApollonDiagramService);
+                const injector = fixture.debugElement.injector;
+                apollonDiagramService = injector.get(ApollonDiagramService);
+                courseService = injector.get(CourseManagementService);
             });
     });
 
@@ -51,8 +58,11 @@ describe('ApollonDiagramList Component', () => {
 
     it('ngOnInit', () => {
         const apollonDiagrams: ApollonDiagram[] = [new ApollonDiagram(UMLDiagramType.ClassDiagram, course.id!), new ApollonDiagram(UMLDiagramType.ActivityDiagram, course.id!)];
-        const response: HttpResponse<ApollonDiagram[]> = new HttpResponse({ body: apollonDiagrams });
-        sandbox.stub(apollonDiagramService, 'getDiagramsByCourse').returns(of(response));
+        const diagramResponse: HttpResponse<ApollonDiagram[]> = new HttpResponse({ body: apollonDiagrams });
+        const courseResponse: HttpResponse<Course> = new HttpResponse({ body: course });
+
+        sandbox.stub(apollonDiagramService, 'getDiagramsByCourse').returns(of(diagramResponse));
+        sandbox.stub(courseService, 'find').returns(of(courseResponse));
 
         // test
         fixture.componentInstance.ngOnInit();

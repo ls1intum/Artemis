@@ -8,12 +8,12 @@ import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { Subscription } from 'rxjs';
 import { SafeHtml } from '@angular/platform-browser';
-import { ChartOptions } from 'chart.js';
+import { ChartOptions, ChartType } from 'chart.js';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { CanBecomeInvalid } from 'app/entities/quiz/drop-location.model';
-import { BaseChartDirective } from 'ng2-charts';
+import { BaseChartDirective, Color } from 'ng2-charts';
 
 export const redColor = '#d9534f';
 export const greenColor = '#5cb85c';
@@ -34,7 +34,7 @@ export abstract class QuestionStatisticComponent implements DataSetProvider, OnI
 
     chartLabels: string[] = [];
     data: number[] = [];
-    chartType = 'bar';
+    chartType: ChartType = 'bar';
     datasets: DataSet[] = [];
 
     // TODO: why do we have a second variable for labels?
@@ -59,7 +59,7 @@ export abstract class QuestionStatisticComponent implements DataSetProvider, OnI
 
     backgroundColors: string[] = [];
     backgroundSolutionColors: string[] = [];
-    colors: string[] = [];
+    colors: Color[] = [];
 
     constructor(
         protected route: ActivatedRoute,
@@ -219,7 +219,8 @@ export abstract class QuestionStatisticComponent implements DataSetProvider, OnI
         // if show Solution is true use the label, backgroundColor and Data, which show the solution
         if (this.showSolution) {
             // show Solution: use the backgroundColor which shows the solution
-            this.colors = this.backgroundSolutionColors;
+            this.colors = [{ backgroundColor: this.backgroundSolutionColors }];
+
             if (this.rated) {
                 this.participants = this.questionStatistic.participantsRated!;
                 // if rated is true use the rated Data and add the rated CorrectCounter
@@ -237,7 +238,8 @@ export abstract class QuestionStatisticComponent implements DataSetProvider, OnI
             this.chartLabels = this.solutionLabels;
         } else {
             // don't show Solution: use the backgroundColor which doesn't show the solution
-            this.colors = this.backgroundColors;
+            this.colors = [{ backgroundColor: this.backgroundColors }];
+
             // if rated is true use the rated Data
             if (this.rated) {
                 this.participants = this.questionStatistic.participantsRated!;
@@ -251,7 +253,7 @@ export abstract class QuestionStatisticComponent implements DataSetProvider, OnI
             this.chartLabels = this.labels;
         }
 
-        this.datasets = [{ data: this.data, backgroundColor: this.colors }];
+        this.datasets = [{ data: this.data, backgroundColor: this.colors.map((color) => color.backgroundColor as string) }];
         // recalculate the height of the chart because rated/unrated might have changed or new results might have appeared
         const height = calculateHeightOfChart(this);
         // add Axes-labels based on selected language

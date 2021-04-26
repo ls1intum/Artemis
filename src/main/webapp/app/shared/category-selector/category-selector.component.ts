@@ -1,6 +1,7 @@
 import { Component, EventEmitter, Input, OnChanges, Output, ViewChild, ViewEncapsulation } from '@angular/core';
-import { ExerciseCategory } from 'app/entities/exercise.model';
 import { ColorSelectorComponent } from 'app/shared/color-selector/color-selector.component';
+import { TagModel } from 'ngx-chips/core/accessor';
+import { ExerciseCategory } from 'app/entities/exercise-category.model';
 
 const DEFAULT_COLORS = ['#6ae8ac', '#9dca53', '#94a11c', '#691b0b', '#ad5658', '#1b97ca', '#0d3cc2', '#0ab84f'];
 
@@ -65,9 +66,10 @@ export class CategorySelectorComponent implements OnChanges {
 
     /**
      * set color if not selected and add exerciseCategory
-     * @param {ExerciseCategory} exerciseCategory
+     * @param categoryTag the tag of the exercise category
      */
-    onItemAdded(exerciseCategory: ExerciseCategory) {
+    onItemAdded(categoryTag: TagModel) {
+        const exerciseCategory = categoryTag as ExerciseCategory;
         if (!exerciseCategory.color) {
             const randomIndex = Math.floor(Math.random() * this.categoryColors.length);
             exerciseCategory.color = this.categoryColors[randomIndex];
@@ -80,9 +82,10 @@ export class CategorySelectorComponent implements OnChanges {
      * cancel colorSelector and remove exerciseCategory
      * @param {ExerciseCategory} tagItem
      */
-    onItemRemove(tagItem: ExerciseCategory) {
+    onItemRemove(tagItem: TagModel) {
+        const categoryToRemove = tagItem as ExerciseCategory;
         this.colorSelector.cancelColorSelector();
-        this.exerciseCategories = this.exerciseCategories.filter((el) => el !== tagItem);
+        this.exerciseCategories = this.exerciseCategories.filter((category) => category !== categoryToRemove);
         this.selectedCategories.emit(this.exerciseCategories);
     }
 }
