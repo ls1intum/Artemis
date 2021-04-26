@@ -132,4 +132,9 @@ public class PlagiarismComparison<E extends PlagiarismSubmissionElement> extends
     public int compareTo(@NotNull PlagiarismComparison<E> otherComparison) {
         return Double.compare(similarity, otherComparison.similarity);
     }
+
+    @Override
+    public String toString() {
+        return "PlagiarismComparison{" + "submissionA=" + submissionA + ", submissionB=" + submissionB + ", similarity=" + similarity + ", status=" + status + '}';
+    }
 }
