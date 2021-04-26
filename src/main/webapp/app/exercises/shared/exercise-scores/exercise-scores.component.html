@@ -63,11 +63,11 @@
                     <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.participations">Participations</span>
                 </a>
 
-                <button class="btn btn-info btn-sm mr-1" (click)="exportNames()">
+                <button *ngIf="exercise.isAtLeastInstructor" class="btn btn-info btn-sm mr-1" (click)="exportNames()">
                     <fa-icon [icon]="'download'"></fa-icon>
                     <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.exportNames">Export Names</span>
                 </button>
-                <button class="btn btn-info btn-sm mr-1" (click)="exportResults()">
+                <button *ngIf="exercise.isAtLeastInstructor" class="btn btn-info btn-sm mr-1" (click)="exportResults()">
                     <fa-icon [icon]="'download'"></fa-icon>
                     <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.exportResults">Export Results</span>
                 </button>
