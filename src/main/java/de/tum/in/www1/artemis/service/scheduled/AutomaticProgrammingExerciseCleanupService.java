@@ -1,11 +1,11 @@
 package de.tum.in.www1.artemis.service.scheduled;
 
-import static de.tum.in.www1.artemis.config.Constants.*;
 import static java.time.ZonedDateTime.now;
 
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
 import org.hibernate.Hibernate;
@@ -126,90 +126,109 @@ public class AutomaticProgrammingExerciseCleanupService {
      *  Cleans up old build plans on the continuous integration server
      */
     public void cleanupBuildPlansOnContinuousIntegrationServer() {
-        long start = System.currentTimeMillis();
         log.info("Find build plans for potential cleanup");
 
-        long countAfter1DayAfterBuildAndTestStudentSubmissionsAfterDueDate = 0;
-        long countNoResultAfter3Days = 0;
-        long countSuccessfulLatestResultAfter1Days = 0;
-        long countUnsuccessfulLatestResultAfter5Days = 0;
+        AtomicLong countAfterBuildAndTestDate = new AtomicLong();
+        AtomicLong countNoResult = new AtomicLong();
+        AtomicLong countSuccessfulLatestResult = new AtomicLong();
+        AtomicLong countUnsuccessfulLatestResult = new AtomicLong();
 
-        List<ProgrammingExerciseStudentParticipation> allParticipationsWithBuildPlanId = programmingExerciseStudentParticipationRepository.findAllWithBuildPlanIdWithResults();
         Set<ProgrammingExerciseStudentParticipation> participationsWithBuildPlanToDelete = new HashSet<>();
 
-        for (ProgrammingExerciseStudentParticipation participation : allParticipationsWithBuildPlanId) {
+        programmingExerciseStudentParticipationRepository.findAllWithBuildPlanIdWithResults().forEach(participation -> {
 
             if (participation.getBuildPlanId() == null || participation.getParticipant() == null) {
                 // NOTE: based on the query above, this code is not reachable. We check it anyway to be 100% sure such participations won't be processed
                 // already cleaned up or we only want to clean up build plans of students or teams (NOT template or solution build plans)
-                continue;
+                return;
             }
 
             if (participation.getProgrammingExercise() != null && Hibernate.isInitialized(participation.getProgrammingExercise())) {
                 var programmingExercise = participation.getProgrammingExercise();
 
-                if (programmingExercise.isExamExercise() && programmingExercise.getExerciseGroup().getExam() != null) {
-                    var exam = programmingExercise.getExerciseGroup().getExam();
-                    if (exam.getEndDate().plusDays(1).isAfter(now())) {
-                        // we don't clean up plans that will definitely be executed in the future as part of an exam (and we have 1 day buffer time for exams)
-                        continue;
-                    }
+                if (checkFutureExamExercises(programmingExercise)) {
+                    return;
                 }
 
-                if (programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null) {
-                    if (programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate().isAfter(now())) {
-                        // we don't clean up plans that will definitely be executed in the future
-                        continue;
-                    }
-
-                    // 1st case: delete the build plan 1 day after the build and test student submissions after due date, because then no builds should be executed any more
-                    // and the students repos will be locked anyways.
-                    if (programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate().plusDays(1).isBefore(now())) {
-                        participationsWithBuildPlanToDelete.add(participation);
-                        countAfter1DayAfterBuildAndTestStudentSubmissionsAfterDueDate++;
-                        continue;
-                    }
+                if (checkBuildAndTestExercises(programmingExercise, participation, participationsWithBuildPlanToDelete, countAfterBuildAndTestDate)) {
+                    return;
                 }
 
                 if (Boolean.TRUE.equals(programmingExercise.isPublishBuildPlanUrl())) {
                     // this was an exercise where students needed to configure the build plan, therefore we should not clean it up
-                    continue;
+                    return;
                 }
             }
 
-            Result result = participation.findLatestResult();
-            // 2nd case: delete the build plan 3 days after the participation was initialized in case there is no result
-            if (result == null) {
-                if (participation.getInitializationDate() != null && participation.getInitializationDate().plusDays(3).isBefore(now())) {
+            checkLastResults(participation, participationsWithBuildPlanToDelete, countNoResult, countSuccessfulLatestResult, countUnsuccessfulLatestResult);
+        });
+
+        log.info("Found {} old build plans to delete", participationsWithBuildPlanToDelete.size());
+        log.info("  Found {} build plans at least 1 day older than 'build and test submissions after due date", countAfterBuildAndTestDate);
+        log.info("  Found {} build plans without results 3 days after initialization", countNoResult);
+        log.info("  Found {} build plans with successful latest result is older than 1 day", countSuccessfulLatestResult);
+        log.info("  Found {} build plans with unsuccessful latest result is older than 5 days", countUnsuccessfulLatestResult);
+
+        deleteBuildPlans(participationsWithBuildPlanToDelete);
+    }
+
+    private boolean checkBuildAndTestExercises(ProgrammingExercise programmingExercise, ProgrammingExerciseStudentParticipation participation,
+            Set<ProgrammingExerciseStudentParticipation> participationsWithBuildPlanToDelete, AtomicLong countAfterBuildAndTestDate) {
+        if (programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null) {
+            if (programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate().isAfter(now())) {
+                // we don't clean up plans that will definitely be executed in the future
+                return true;
+            }
+
+            // 1st case: delete the build plan 1 day after the build and test student submissions after due date, because then no builds should be executed any more
+            // and the students repos will be locked anyways.
+            if (programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate().plusDays(1).isBefore(now())) {
+                participationsWithBuildPlanToDelete.add(participation);
+                countAfterBuildAndTestDate.getAndIncrement();
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private void checkLastResults(ProgrammingExerciseStudentParticipation participation, Set<ProgrammingExerciseStudentParticipation> participationsWithBuildPlanToDelete,
+            AtomicLong countNoResult, AtomicLong countSuccessfulLatestResult, AtomicLong countUnsuccessfulLatestResult) {
+        Result result = participation.findLatestResult();
+        // 2nd case: delete the build plan 3 days after the participation was initialized in case there is no result
+        if (result == null) {
+            if (participation.getInitializationDate() != null && participation.getInitializationDate().plusDays(3).isBefore(now())) {
+                participationsWithBuildPlanToDelete.add(participation);
+                countNoResult.getAndIncrement();
+            }
+        }
+        else {
+            // 3rd case: delete the build plan after 1 days in case the latest result is successful
+            if (result.isSuccessful()) {
+                if (result.getCompletionDate() != null && result.getCompletionDate().plusDays(1).isBefore(now())) {
                     participationsWithBuildPlanToDelete.add(participation);
-                    countNoResultAfter3Days++;
+                    countSuccessfulLatestResult.getAndIncrement();
                 }
             }
+            // 4th case: delete the build plan after 5 days in case the latest result is NOT successful
             else {
-                // 3rd case: delete the build plan after 1 days in case the latest result is successful
-                if (result.isSuccessful()) {
-                    if (result.getCompletionDate() != null && result.getCompletionDate().plusDays(1).isBefore(now())) {
-                        participationsWithBuildPlanToDelete.add(participation);
-                        countSuccessfulLatestResultAfter1Days++;
-                    }
-                }
-                // 4th case: delete the build plan after 5 days in case the latest result is NOT successful
-                else {
-                    if (result.getCompletionDate() != null && result.getCompletionDate().plusDays(5).isBefore(now())) {
-                        participationsWithBuildPlanToDelete.add(participation);
-                        countUnsuccessfulLatestResultAfter5Days++;
-                    }
+                if (result.getCompletionDate() != null && result.getCompletionDate().plusDays(5).isBefore(now())) {
+                    participationsWithBuildPlanToDelete.add(participation);
+                    countUnsuccessfulLatestResult.getAndIncrement();
                 }
             }
         }
+    }
 
-        log.info("Found {} participations with build plans in {}ms execution time", allParticipationsWithBuildPlanId.size(), System.currentTimeMillis() - start);
-        log.info("Found {} old build plans to delete", participationsWithBuildPlanToDelete.size());
-        log.info("  Found {} build plans at least 1 day older than 'build and test submissions after due date", countAfter1DayAfterBuildAndTestStudentSubmissionsAfterDueDate);
-        log.info("  Found {} build plans without results 3 days after initialization", countNoResultAfter3Days);
-        log.info("  Found {} build plans with successful latest result is older than 1 day", countSuccessfulLatestResultAfter1Days);
-        log.info("  Found {} build plans with unsuccessful latest result is older than 5 days", countUnsuccessfulLatestResultAfter5Days);
+    private boolean checkFutureExamExercises(ProgrammingExercise programmingExercise) {
+        if (programmingExercise.isExamExercise() && programmingExercise.getExerciseGroup().getExam() != null) {
+            var exam = programmingExercise.getExerciseGroup().getExam();
+            // we don't clean up plans that will definitely be executed in the future as part of an exam (and we have 1 day buffer time for exams)
+            return exam.getEndDate().plusDays(1).isAfter(now());
+        }
+        return false;
+    }
 
+    private void deleteBuildPlans(Set<ProgrammingExerciseStudentParticipation> participationsWithBuildPlanToDelete) {
         // Limit to 5000 deletions per night
         List<ProgrammingExerciseStudentParticipation> actualParticipationsToClean = participationsWithBuildPlanToDelete.stream().limit(5000).collect(Collectors.toList());
         List<String> buildPlanIds = actualParticipationsToClean.stream().map(ProgrammingExerciseStudentParticipation::getBuildPlanId).collect(Collectors.toList());
