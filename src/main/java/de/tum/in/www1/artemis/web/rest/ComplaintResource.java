@@ -354,10 +354,6 @@ public class ComplaintResource {
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
 
-        if (exercise == null) {
-            throw new BadRequestAlertException("The requested exercise does not exist", ENTITY_NAME, "wrongExerciseId");
-        }
-
         boolean isAtLeastTutor = authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user);
         boolean isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(exercise, user);
 

@@ -15,6 +15,7 @@ import { catchError, map, switchMap, tap } from 'rxjs/operators';
 import { UserService } from 'app/core/user/user.service';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 import { iconsAsHTML } from 'app/utils/icons.utils';
+import { AccountService } from 'app/core/auth/account.service';
 
 const cssClasses = {
     alreadyMember: 'already-member',
@@ -42,6 +43,8 @@ export class CourseGroupComponent implements OnInit, OnDestroy {
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
 
+    isAdmin = false;
+
     isLoading = false;
     isSearching = false;
     searchFailed = false;
@@ -56,6 +59,7 @@ export class CourseGroupComponent implements OnInit, OnDestroy {
         private eventManager: JhiEventManager,
         private courseService: CourseManagementService,
         private userService: UserService,
+        private accountService: AccountService,
     ) {}
 
     /**
@@ -78,6 +82,7 @@ export class CourseGroupComponent implements OnInit, OnDestroy {
      */
     loadAll() {
         this.isLoading = true;
+        this.isAdmin = this.accountService.isAdmin();
         this.route.parent!.data.subscribe(({ course }) => {
             this.course = course;
             this.paramSub = this.route.params.subscribe((params) => {

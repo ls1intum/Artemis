@@ -17,11 +17,11 @@ export class ProfileInfo {
     public sshKeysURL: string;
     public externalUserManagementURL: string;
     public externalUserManagementName: string;
-    public imprint: string;
     public contact: string;
     public testServer?: boolean;
     public allowedMinimumOrionVersion: string;
     public registrationEnabled?: boolean;
+    public needsToAcceptTerms?: boolean;
     public allowedEmailPattern?: string;
     public allowedEmailPatternReadable?: string;
     public allowedLdapUsernamePattern?: string;
@@ -30,5 +30,4 @@ export class ProfileInfo {
     public versionControlUrl?: string;
     public programmingLanguageFeatures: ProgrammingLanguageFeature[];
     public saml2?: Saml2Config;
-    public enabledMultipleOrganizations?: boolean;
 }

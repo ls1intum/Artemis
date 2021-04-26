@@ -54,6 +54,9 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
     private TextSubmissionRepository textSubmissionRepository;
 
     @Autowired
+    private ExampleSubmissionRepository exampleSubmissionRepository;
+
+    @Autowired
     private ResultRepository resultRepo;
 
     @Autowired
@@ -130,6 +133,20 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
     public void retrieveParticipationForNonExistingSubmission() throws Exception {
         StudentParticipation participation = request.get("/api/text-assessments/submission/345395769256365", HttpStatus.NOT_FOUND, StudentParticipation.class);
         assertThat(participation).as("participation should not be found").isNull();
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void testDeleteTextExampleAssessment() throws Exception {
+        TextSubmission textSubmission = ModelFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
+        textSubmission.setExampleSubmission(true);
+        textSubmission = database.saveTextSubmissionWithResultAndAssessor(textExercise, textSubmission, "student1", "instructor1");
+        final var exampleSubmission = ModelFactory.generateExampleSubmission(textSubmission, textExercise, true);
+        database.addExampleSubmission(exampleSubmission);
+        request.delete("/api/text-assessments/text-submissions/" + exampleSubmission.getId() + "/example-assessment/feedback", HttpStatus.NO_CONTENT);
+        assertThat(exampleSubmissionRepository.findByIdWithEagerResultAndFeedbackElseThrow(exampleSubmission.getId()).getSubmission().getLatestResult().getFeedbacks()).isEmpty();
+        assertThat(textBlockRepository.findAllWithEagerClusterBySubmissionId(exampleSubmission.getId())).isEmpty();
+
     }
 
     @Test
@@ -914,6 +931,17 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
     }
 
     @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void retrieveConflictingTextSubmissions_automaticAssessmentDisabled() throws Exception {
+        List<TextSubmission> textSubmissions = prepareTextSubmissionsWithFeedbackAndConflicts();
+        textExercise.setAssessmentType(AssessmentType.MANUAL);
+        exerciseRepo.save(textExercise);
+        List<TextSubmission> conflictingTextSubmissions = request.getList("/api/text-assessments/submission/" + textSubmissions.get(0).getId() + "/feedback/"
+                + textSubmissions.get(0).getLatestResult().getFeedbacks().get(0).getId() + "/feedback-conflicts", HttpStatus.BAD_REQUEST, TextSubmission.class);
+        assertThat(conflictingTextSubmissions).isNull();
+    }
+
+    @Test
     @WithMockUser(value = "tutor2", roles = "TA")
     public void retrieveConflictingTextSubmissions_otherTutorForbidden() throws Exception {
         List<TextSubmission> textSubmissions = prepareTextSubmissionsWithFeedbackAndConflicts();
@@ -1077,7 +1105,7 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
         assertThat(fetchedParticipation.getSubmissions().size()).isEqualTo(1);
         assertThat(fetchedParticipation.findLatestSubmission().isPresent()).isTrue();
         assertThat(fetchedParticipation.findLatestSubmission().get()).isEqualTo(submissionWithoutFirstAssessment);
-        assertThat(fetchedParticipation.findLatestResult()).isEqualTo(firstSubmittedManualResult);
+        assertThat(fetchedParticipation.findLatestLegalResult()).isEqualTo(firstSubmittedManualResult);
 
         var databaseRelationshipStateOfResultsOverSubmission = studentParticipationRepository
                 .findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseId(exercise.getId());
