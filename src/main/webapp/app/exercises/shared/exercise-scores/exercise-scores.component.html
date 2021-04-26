@@ -77,7 +77,10 @@
                     class="mr-1"
                 ></jhi-programming-assessment-repo-export>
                 <jhi-exercise-submission-export
-                    *ngIf="exercise.type === ExerciseType.TEXT || exercise.type === ExerciseType.MODELING || exercise.type == ExerciseType.FILE_UPLOAD"
+                    *ngIf="
+                        exercise.isAtLeastInstructor &&
+                        (exercise.type === ExerciseType.TEXT || exercise.type === ExerciseType.MODELING || exercise.type == ExerciseType.FILE_UPLOAD)
+                    "
                     [exerciseId]="exercise.id!"
                     [exerciseType]="exercise.type"
                     class="mr-1"

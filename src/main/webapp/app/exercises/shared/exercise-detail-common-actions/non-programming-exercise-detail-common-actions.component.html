@@ -25,7 +25,7 @@
     </a>
 
     <!-- Export submissions -->
-    <jhi-exercise-submission-export [exerciseId]="exercise.id!" [exerciseType]="exercise.type!" class="mr-1"></jhi-exercise-submission-export>
+    <jhi-exercise-submission-export *ngIf="exercise.isAtLeastInstructor" [exerciseId]="exercise.id!" [exerciseType]="exercise.type!" class="mr-1"></jhi-exercise-submission-export>
 
     <!-- Delete exercise -->
     <button
