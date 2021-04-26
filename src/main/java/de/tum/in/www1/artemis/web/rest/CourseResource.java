@@ -1308,10 +1308,10 @@ public class CourseResource {
     }
 
     /**
-     * GET /courses/:courseId : get the "id" course.
+     * GET /courses/{courseId}/management-detail : Gets the data needed for the course management detail view
      *
-     * @param courseId the id of the course to retrieve
-     * @return the ResponseEntity with status 200 (OK) and with body the course, or with status 404 (Not Found)
+     * @param courseId the id of the course
+     * @return the ResponseEntity with status 200 (OK) and the body, or with status 404 (Not Found)
      */
     @GetMapping("/courses/{courseId}/management-detail")
     @PreAuthorize("hasRole('TA')")
@@ -1344,7 +1344,7 @@ public class CourseResource {
         long numberOfAnsweredComplaints = complaintResponseRepository
                 .countByComplaint_Result_Participation_Exercise_Course_Id_AndComplaint_ComplaintType_AndSubmittedTimeIsNotNull(courseId, ComplaintType.COMPLAINT);
         dto.setCurrentAbsoluteComplaints(numberOfAnsweredComplaints);
-        long numberOfComplaints = complaintService.countComplaintsByCourseId(courseId);
+        long numberOfComplaints = complaintRepository.countByResult_Participation_Exercise_Course_IdAndComplaintType(courseId, ComplaintType.COMPLAINT);
         dto.setCurrentMaxComplaints(numberOfComplaints);
         if (numberOfComplaints > 0) {
             dto.setCurrentPercentageComplaints(Math.round(numberOfAnsweredComplaints * 1000.0 / numberOfComplaints) / 10.0);
@@ -1357,7 +1357,7 @@ public class CourseResource {
         long numberOfAnsweredFeedbackRequests = complaintResponseRepository
                 .countByComplaint_Result_Participation_Exercise_Course_Id_AndComplaint_ComplaintType_AndSubmittedTimeIsNotNull(courseId, ComplaintType.MORE_FEEDBACK);
         dto.setCurrentAbsoluteMoreFeedbacks(numberOfAnsweredFeedbackRequests);
-        long numberOfMoreFeedbackRequests = complaintService.countMoreFeedbackRequestsByCourseId(courseId);
+        long numberOfMoreFeedbackRequests = complaintRepository.countByResult_Participation_Exercise_Course_IdAndComplaintType(courseId, ComplaintType.MORE_FEEDBACK);
         dto.setCurrentMaxMoreFeedbacks(numberOfMoreFeedbackRequests);
         if (numberOfMoreFeedbackRequests > 0) {
             dto.setCurrentPercentageMoreFeedbacks(Math.round(numberOfAnsweredFeedbackRequests * 1000.0 / numberOfMoreFeedbackRequests) / 10.0);
