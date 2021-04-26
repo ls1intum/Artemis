@@ -350,3 +350,240 @@ Please read `the AssertJ documentation <https://assertj.github.io/doc/#assertj-c
 
 
 Some parts of these guidelines are adapted from https://medium.com/@madhupathy/ultimate-clean-code-guide-for-java-spring-based-applications-4d4c9095cc2a
+
+22. General Testing Tips
+========================
+(Adapted from `here <https://confluence.ase.in.tum.de/display/ArTEMiS/Best+Practices+for+writing+Java+Programming+Exercise+Tests+in+Artemis>`_)
+
+Write meaningful comments for your tests.
+These comments should contain information about what is tested specifically, which task from the problem statement is addressed or which TODO (if there are numbered TODOs in the template),
+how many points this test is worth when passed and more if necessary.
+
+.. code-block:: java
+
+    /**
+     * Tests that borrow() in Book successfully sets the available attribute to false
+     * Problem Statement Task 2.1
+     * Worth 1.5 Points (Weight: 1)
+     */
+    @Test
+    public void testBorrowInBook() {
+        // Test Code
+    }
+
+Better yet, for manual correction, make it the display name of the test. This allows the assessors to execute the tests in the IDE, have more meaningful names displayed and count points better.
+
+.. code-block:: java
+
+    @DisplayName("1.5 P | Books can be borrowed successfully")
+    @Test
+    public void testBorrowInBook() {
+        // Test Code
+    }
+
+Use appropriate and descriptive names for test cases. After exams, test names will be used to create statistics. If the tests are called test1, test2, test3, and so on, no one can read those statistics.
+This is the same reason as to why you should not name your variables int a, double b, String c, and so on. For example, if you want to test the method borrow in the class Book, testBorrowInBook() would be an appropriate name for the test case.
+
+.. code-block:: java
+
+    @Test
+    public void testBorrowInBook() {
+        // Test Code
+    }
+
+se appropriate timeouts for test cases and take Bamboo into consideration. For regular test cases, using a ``@StrictTimeout(1)``  annotation is enough. This represents a strict timeout of one second.
+The value type of the strict timeout annotation defaults to seconds, if you need, for some reason, a shorter timeout, something like ``@StrictTimeout(value = 500, unit = TimeUnit.MILLISECONDS)`` works as well.
+
+.. code-block:: java
+
+    @Test
+    @StrictTimeout(1)
+    public void testBorrowInBook() {
+        // Test Code
+    }
+
+
+
+Avoiding assert statements and using conditional fail() calls instead hides confusing information from the students.
+This could be considered bad practice in regular conditions but helps to create fail messages that are less confusing, especially for beginners.
+This also hides information about test implementation details.
+
+.. code-block:: java
+
+    @Test
+    public void testBorrowInBook() {
+        Object book = newInstance("Book", 0, "Some title");
+        invokeMethod(book, "borrow");
+        assertFalse((Boolean) invokeMethod(book, "isAvailable"), "A borrowed book must be unavailable!");
+    }
+
+If the student fails the test, Artemis will display something like org.opentest4j.AssertionFailedError:
+A borrowed book must be unavailable! ==> Expected <false> but was <true>. The part after '==>' should not be shown to the student as it contains implementation detail.
+
+.. code-block:: java
+
+    @Test
+    public void testBorrowInBook() {
+        Object book = newInstance("Book", 0, "Some title");
+        invokeMethod(book, "borrow");
+        if ((Boolean) invokeMethod(book, "isAvailable")) {
+            fail("A borrowed book is not available anymore!");
+        }
+    }
+
+This will just display the message 'org.opentest4j.AssertionFailedError: A borrowed book is not available anymore!', which focuses, except for the first part, on the actual error instead of test internals.
+
+
+
+Students can break everything and will break everything. It is important to write tests that are as independent of the student's code as possible. Avoid direct code references and use reflective operations instead.
+That way if a student modifies the template by accident and the test code would normally not compile, they still get more meaningful feedback than a simple build error.
+
+.. code-block:: java
+
+    @Test
+    public void testBorrowInBook() {
+        Book book = new Book(0, "Some title");
+        book.borrow();
+        if (book.isAvailable()) {
+            fail("A borrowed book must be unavailable!");
+        }
+    }
+
+This will lead to a build error if the student accidentally messes with the Book class. Build errors usually have a cryptic fail message on Artemis and it should be avoided that students see those confusing error messages.
+
+.. code-block:: java
+
+    @Test
+    public void testBorrowInBook() {
+        Object book = newInstance("Book", 0, "Some title");
+        invokeMethod(book, "borrow");
+        if ((Boolean) invokeMethod(book, "isAvailable")) {
+            fail("A borrowed book must be unavailable!");
+        }
+    }
+
+This will lead to an error message like 'The class 'Book' was not found within the submission. Make sure to implement it properly.' Which is clear and tells the student exactly what is wrong with their code.
+
+
+
+Some courses use long package identifiers like 'de.tum.in.ase.pse'. When instantiating objects with reflections,
+the instantiation method usually takes the full canonical name of a class, which is 'de.tum.in.ase.pse.Book' for example.
+To avoid writing out this full canonical name all the time, you can add a constant String attribute representing the base package name at the top of your test class
+
+.. code-block:: java
+
+    private static final String BASE_PACKAGE = "de.tum.in.ase.pse.";
+
+    @Test
+    public void testBorrowInBook() {
+        Object book = newInstance(BASE_PACKAGE + "Book", 0, "Some title");
+        // Test Code
+    }
+
+It is possible that students hardcode values to pass a certain set of tests, therefore you should check whether this is the case or not.
+This is especially important in an exam setting, so students don't get awarded points for a solution that does not fulfill the requirements described in the problem statement. (TODO: Code example)
+
+Avoid relying on a specific order in which students solve the tasks.
+Tests should successfully cover one aspect of the submission without requiring the implementation of a different part of the system even if those aspects are heavily interlinked.
+Example from PSE2021 Broker Pattern: The student is supposed to expand the translate method first and after that the runService method in the following setting:
+
+.. code-block:: java
+
+    public String translate(String word, String language) {
+        return switch (language) {
+            case TranslationService.LANGUAGE_GERMAN -> translateToGerman(word);
+            // TODO: Add a case for the French language
+            default -> throw new IllegalStateException("Illegal language requested: " + language);
+        };
+    }
+
+    public String runService(String serviceName, String parameter) {
+        String result = null;
+        if (serviceName.equals(TranslationService.SERVICE_NAME_TRANSLATION_GERMAN)) {
+            result = translate(parameter, TranslationService.LANGUAGE_GERMAN);
+        }
+        // TODO: Add a case for the French language
+        else {
+            System.out.println("Can't offer service " + serviceName);
+        }
+        return result;
+    }
+
+There are two separate tests, one testing the translation and the other one testing the runService method.
+The test for runService must not assume that the translate method is already implemented correctly. A possible solution for this problem could look like this:
+
+.. code-block:: java
+
+    @Test
+    public void testRunServiceInTranslationServer() {
+        TranslationServer testTranslationServer = new TranslationServer() {
+            public String translate(String word, String language) {
+                return word + ":" + language;
+            }
+        }
+        String expected = "Dog:French";
+        String actual = testTranslationServer.runService("Dog", "French");
+        if(!expected.equals(actual)) fail("Descriptive fail message");
+    }
+
+This test correctly tests if the student added the case for the French language and called the appropriate method with the appropriate parameters. Because the translation method was overridden,
+it doesn't matter whether the student has already completed the previous task or not.
+(If you do that, you should have some way to deal with students that make the class or method final, either via problem statement or test, otherwise students get compilation errors in the test code)
+
+
+Make use of JUnit 5 Features:
+https://junit.org/junit5/docs/current/user-guide/#writing-tests
+https://junit.org/junit5/docs/current/api/org.junit.jupiter.api/org/junit/jupiter/api/Assertions.html
+
+General Testing best practices are found on https://phauer.com/2019/modern-best-practices-testing-java/
+
+Also check out https://www.baeldung.com/spring-tests
+
+And https://howtodoinjava.com/best-practices/unit-testing-best-practices-junit-reference-guide/
+
+
+23. Avoid using @MockBean
+=========================
+
+Do not use the ``@SpyBean`` or ``@MockBean`` annotation unless absolutely necessary. If you want to see more in detail why, take a look `here. <https://www.baeldung.com/spring-tests>`_
+Basically every time @MockBean appears in a class, the ApplicationContext cache gets marked as dirty, hence the runner will clean the cache after the test-class is done and restarts the application context.
+This leads to a large overhead, which makes the tests tend to take a lot more time.
+
+Here is an example how to replace a ``@SpyBean``. We wanted to test a catch case which is only executed if an IOException gets thrown. We did this by mocking the service method and making it throw an Exception.
+
+.. code-block:: java
+
+    public class TestExport extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+        @SpyBean
+        private FileUploadSubmissionExportService fileUploadSubmissionExportService;
+
+        @Test
+        @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+        public void testExportAll_IOException() throws Exception {
+            doThrow(IOException.class).when(fileUploadSubmissionExportService).export(any(), any());
+            request.postWithResponseBodyFile("/api/file-upload-export/" + fileUploadExercise.getId()", HttpStatus.BAD_REQUEST);
+        }
+    }
+
+This, as mentioned above, we should really avoid this.
+Instead we can use Static Mocks. When we look deeper in the ``export()`` method we find that there is a call of ``File.newOutputStream(..)``.
+Now, instead of mocking the whole Service we can just mock this static method, like this:
+
+.. code-block:: java
+
+    public class TestExport extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+        // No beans used anymore
+        @Test
+        @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+        public void testExportAll_IOException() throws Exception {
+            MockedStatic<Files> mockedFiles = mockStatic(Files.class);
+            mockedFiles.when(() -> Files.newOutputStream(any(), any())).thenThrow(IOException.class);
+            request.postWithResponseBodyFile("/api/file-upload-export/" + fileUploadExercise.getId()", HttpStatus.BAD_REQUEST);
+
+            mockedFiles.close();
+        }
+    }
+
+What you notice here is that we can avoid the use of a Bean and also test deeper. Important to mention is that you need to close the mock at the end of the test again.
+
+For a real examples where a SpyBean was replace with a static mock look `here. <https://github.com/ls1intum/Artemis/commit/4843137aa01cfdf27ea019400c48df00df36ed45>`_
