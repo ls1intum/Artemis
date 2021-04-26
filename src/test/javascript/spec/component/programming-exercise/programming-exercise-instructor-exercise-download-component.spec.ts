@@ -49,7 +49,6 @@ describe('ProgrammingExerciseInstructorExerciseDownloadComponent', () => {
 
     it('should download the exercise', () => {
         const spy = sinon.spy(service, 'exportInstructorExercise');
-
         component.exerciseId = 1;
         component.exportExercise();
         expect(spy).callCount(1);

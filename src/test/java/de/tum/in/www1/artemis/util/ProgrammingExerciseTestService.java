@@ -905,10 +905,11 @@ public class ProgrammingExerciseTestService {
         assertThat(archive).isNotNull();
         assertThat(archive).exists();
 
+        // Extract the archive
         zipFileTestUtilService.extractZipFileRecursively(archive.getAbsolutePath());
         String extractedArchiveDir = archive.getPath().substring(0, archive.getPath().length() - 4);
 
-        // Check that the dummy files we created exist in the archive.
+        // Check that the dummy files we created exist in the archive
         var filenames = Files.walk(Path.of(extractedArchiveDir)).filter(Files::isRegularFile).map(Path::getFileName).collect(Collectors.toList());
         assertThat(filenames).contains(Path.of("HelloWorld.java"));
         assertThat(filenames).contains(Path.of("Template.java"));

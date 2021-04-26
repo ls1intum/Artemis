@@ -20,7 +20,7 @@
                 "baseReposBuildPlans": "Alle Template-, Lösungs- und Test-Repositories sowie Build-Pläne löschen (Achtung: Dies kann NICHT rückgängig gemacht werden!). Es wird empfohlen die Repositories und Build-Pläne erst zu sichern!"
             },
             "cleanup": {
-                "successMessageRepos": "Die Bereinigung war erfolgreich. Alle Build-Pläne wurden gelöscht. Die Studenten können ihre Teilnahme wieder aufnehmen.",
+                "successMessage": "Die Bereinigung war erfolgreich. Alle Build-Pläne wurden gelöscht. Die Studenten können ihre Teilnahme wieder aufnehmen.",
                 "successMessageWithRepositories": "Die Bereinigung verlief erfolgreich. Alle Build-Pläne und Repositories wurden gelöscht. Alle Beteiligungen wurden als abgeschlossen gekennzeichnet."
             },
             "reset": {
