@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.service;
 
-import static de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore.*;
 import static de.tum.in.www1.artemis.service.util.RoundingUtil.round;
 
 import java.time.ZonedDateTime;
@@ -736,24 +735,28 @@ public class ExerciseService {
     /**
      * Validates score settings
      * 1. The maxScore needs to be greater than 0
-     * 2. If the IncludedInOverallScore enum is either INCLUDED_AS_BONUS or NOT_INCLUDED, no bonus points are allowed
+     * 2. If the specified amount of bonus points is valid depending on the IncludedInOverallScore value
      *
      * @param exercise exercise to validate
      */
     public void validateScoreSettings(Exercise exercise) {
         // Check if max score is set
-        if (exercise.getMaxPoints() == null || exercise.getMaxPoints() == 0) {
+        if (exercise.getMaxPoints() == null || exercise.getMaxPoints() <= 0) {
             throw new BadRequestAlertException("The max score needs to be greater than 0", "Exercise", "maxScoreInvalid");
-        }
-
-        // Check IncludedInOverallScore
-        if ((exercise.getIncludedInOverallScore() == INCLUDED_AS_BONUS || exercise.getIncludedInOverallScore() == NOT_INCLUDED) && exercise.getBonusPoints() > 0) {
-            throw new BadRequestAlertException("Bonus points are not allowed when the exercise is not included completely", "Exercise", "bonusPointsInvalid");
         }
 
         if (exercise.getBonusPoints() == null) {
             // make sure the default value is set properly
             exercise.setBonusPoints(0.0);
+        }
+
+        // Check IncludedInOverallScore
+        if (exercise.getIncludedInOverallScore() == null) {
+            throw new BadRequestAlertException("The IncludedInOverallScore-property must be set", "Exercise", "includedInOverallScoreNotSet");
+        }
+
+        if (!exercise.getIncludedInOverallScore().validateBonusPoints(exercise.getBonusPoints())) {
+            throw new BadRequestAlertException("The provided bonus points are not allowed", "Exercise", "bonusPointsInvalid");
         }
     }
 }

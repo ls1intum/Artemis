@@ -42,7 +42,7 @@
         <!--
         Only show download all checkbox for instructors & admins.
         -->
-        <ng-container *ngIf="!singleParticipantMode && !isRepoExportForMultipleExercises">
+        <ng-container *ngIf="isAtLeastInstructor && !singleParticipantMode && !isRepoExportForMultipleExercises">
             <div *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']" class="checkbox">
                 <label class="control-label">
                     <input type="checkbox" name="allStudents" [(ngModel)]="repositoryExportOptions.exportAllParticipants" />

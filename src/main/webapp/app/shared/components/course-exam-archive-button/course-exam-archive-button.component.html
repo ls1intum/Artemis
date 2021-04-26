@@ -1,4 +1,27 @@
 <ng-container>
+    <ng-template #archiveCompleteWithWarningsModal let-modal>
+        <div class="modal-header">
+            <h4 class="modal-title">
+                <span *ngIf="archiveMode === 'Course'" [jhiTranslate]="'artemisApp.courseExamArchive.archiveCourseSuccess'">The course has been archived!</span>
+                <span *ngIf="archiveMode === 'Exam'" [jhiTranslate]="'artemisApp.courseExamArchive.archiveExamSuccess'">The exam has been archived!</span>
+            </h4>
+            <button type="button" class="close" aria-label="Close" (click)="modal.dismiss()">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+        <div class="modal-body">
+            <ng-container>
+                <p [jhiTranslate]="'artemisApp.courseExamArchive.archiveSuccessWithWarnings'">The archival process has completed with the following warnings:</p>
+                <br />
+                <ul style="height: 200px; overflow: auto">
+                    <li *ngFor="let item of archiveWarnings">{{ item }}</li>
+                </ul>
+            </ng-container>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-warning" (click)="modal.close()">Close</button>
+        </div>
+    </ng-template>
     <ng-template #archiveWarningPopup let-modal>
         <div class="modal-header">
             <h4 class="modal-title">
@@ -42,26 +65,12 @@
             </button>
         </div>
     </ng-template>
-    <button
-        *ngIf="canArchive()"
-        [disabled]="isBeingArchived"
-        type="button"
-        [ngClass]="archiveMode === 'Course' ? 'ml-1' : 'mr-1 mb-1'"
-        class="btn btn-warning"
-        (click)="openArchiveWarningModal(archiveWarningPopup)"
-    >
+    <button *ngIf="canArchive()" [disabled]="isBeingArchived" type="button" class="btn btn-warning mr-1 mb-1" (click)="openModal(archiveWarningPopup)">
         <fa-icon [hidden]="!isBeingArchived" [spin]="true" [icon]="'circle-notch'"></fa-icon>
         <fa-icon [hidden]="isBeingArchived" [icon]="'archive'"></fa-icon>&nbsp;
         <span>{{ archiveButtonText }}</span>
     </button>
-    <button
-        *ngIf="canDownloadArchive()"
-        [disabled]="isBeingArchived"
-        type="button"
-        [ngClass]="archiveMode === 'Course' ? 'ml-1' : 'mr-1 mb-1'"
-        class="btn btn-warning"
-        (click)="downloadArchive()"
-    >
+    <button *ngIf="canDownloadArchive()" [disabled]="isBeingArchived" type="button" class="btn btn-primary mr-1 mb-1" (click)="downloadArchive()">
         <fa-icon [icon]="'download'"></fa-icon>&nbsp;
         <span jhiTranslate="artemisApp.courseExamArchive.downloadArchive">Download Archive</span>
     </button>

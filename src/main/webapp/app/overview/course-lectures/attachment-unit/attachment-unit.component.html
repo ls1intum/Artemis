@@ -7,7 +7,7 @@
                 *ngIf="!attachmentUnit?.visibleToStudents"
                 class="badge badge-warning ml-2"
                 placement="right"
-                ngbTooltip="{{ 'artemisApp.attachmentUnit.notReleasedTooltip' | artemisTranslate }} {{ attachmentUnit?.releaseDate | artemisDate }}"
+                ngbTooltip="{{ 'artemisApp.attachmentUnit.notReleasedTooltip' | artemisTranslate }} {{ attachmentUnit?.attachment?.releaseDate | artemisDate }}"
             >
                 {{ 'artemisApp.courseOverview.exerciseList.notReleased' | artemisTranslate }}</span
             >

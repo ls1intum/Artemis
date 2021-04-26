@@ -38,14 +38,16 @@
                     <a class="btn btn-primary mr-1" [routerLink]="['/course-management', courseId, 'apollon-diagrams', apollonDiagram.id]" jhiTranslate="entity.action.open">
                         Open
                     </a>
-                    <button
-                        *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']"
-                        class="btn btn-danger mr-1"
-                        (click)="delete(apollonDiagram)"
-                        jhiTranslate="entity.action.delete"
-                    >
-                        Delete
-                    </button>
+                    <ng-container *ngIf="isAtLeastInstructor">
+                        <button
+                            *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']"
+                            class="btn btn-danger mr-1"
+                            (click)="delete(apollonDiagram)"
+                            jhiTranslate="entity.action.delete"
+                        >
+                            Delete
+                        </button>
+                    </ng-container>
                 </td>
             </tr>
         </tbody>

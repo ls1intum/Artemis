@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.connector.jenkins;
+package de.tum.in.www1.artemis.connector;
 
 import static de.tum.in.www1.artemis.util.FileUtils.loadFileFromResources;
 import static org.mockito.ArgumentMatchers.*;

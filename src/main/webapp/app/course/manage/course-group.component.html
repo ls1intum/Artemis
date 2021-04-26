@@ -46,7 +46,10 @@
                         </span>
                     </ng-template>
                     <ng-template ngx-datatable-cell-template let-value="value">
-                        <a routerLink="/admin/user-management/{{ value?.login }}"> {{ value.id }} </a>
+                        <a *ngIf="isAdmin; else showId" routerLink="/admin/user-management/{{ value?.login }}"> {{ value.id }} </a>
+                        <ng-template #showId>
+                            {{ value?.id }}
+                        </ng-template>
                     </ng-template>
                 </ngx-datatable-column>
 
