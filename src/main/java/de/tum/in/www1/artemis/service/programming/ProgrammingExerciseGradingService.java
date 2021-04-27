@@ -173,7 +173,7 @@ public class ProgrammingExerciseGradingService {
 
         // copy all feedback from the automatic result
         List<Feedback> copiedFeedbacks = newAutomaticResult.getFeedbacks().stream().map(Feedback::copyFeedback).collect(Collectors.toList());
-        latestSemiAutomaticResult = resultService.storeFeedbackInResult(latestSemiAutomaticResult, copiedFeedbacks, false, false);
+        latestSemiAutomaticResult = resultService.addFeedbackToResult(latestSemiAutomaticResult, copiedFeedbacks, false);
 
         String resultString = updateManualResultString(newAutomaticResult.getResultString(), latestSemiAutomaticResult, programmingExercise);
         latestSemiAutomaticResult.setResultString(resultString);

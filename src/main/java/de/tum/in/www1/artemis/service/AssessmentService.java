@@ -100,7 +100,7 @@ public class AssessmentService {
         // Update the result that was complained about with the new feedback
         originalResult.updateAllFeedbackItems(assessmentUpdate.getFeedbacks(), exercise instanceof ProgrammingExercise);
         // persist feedback before result to prevent "null index column for collection" error
-        resultService.storeFeedbackInResult(originalResult, originalResult.getFeedbacks(), false, true);
+        resultService.storeFeedbackInResult(originalResult, originalResult.getFeedbacks(), false);
         if (exercise instanceof ProgrammingExercise) {
             double points = ((ProgrammingAssessmentService) this).calculateTotalScore(originalResult);
             originalResult.setScore(points, exercise.getMaxPoints());

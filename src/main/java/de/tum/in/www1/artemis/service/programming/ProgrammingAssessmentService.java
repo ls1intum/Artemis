@@ -39,7 +39,7 @@ public class ProgrammingAssessmentService extends AssessmentService {
         result.setAssessor(user);
         result.setCompletionDate(null);
 
-        Result finalResult = resultService.storeFeedbackInResult(result, result.getFeedbacks(), true, true);
+        Result finalResult = resultService.storeFeedbackInResult(result, result.getFeedbacks(), true);
 
         finalResult.setParticipation(participation);
         return finalResult;
