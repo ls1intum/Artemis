@@ -787,12 +787,12 @@ public class ExamResource {
      * @return the list of exercise groups
      */
     @PutMapping("/courses/{courseId}/exams/{examId}/exercise-groups-order")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<List<ExerciseGroup>> updateOrderOfExerciseGroups(@PathVariable Long courseId, @PathVariable Long examId,
             @RequestBody List<ExerciseGroup> orderedExerciseGroups) {
         log.debug("REST request to update the order of exercise groups of exam : {}", examId);
 
-        Optional<ResponseEntity<List<ExerciseGroup>>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccessForInstructor(courseId, examId);
+        Optional<ResponseEntity<List<ExerciseGroup>>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccessForEditor(courseId, examId);
         if (courseAndExamAccessFailure.isPresent()) {
             return courseAndExamAccessFailure.get();
         }
