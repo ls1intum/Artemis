@@ -113,7 +113,7 @@ public class BambooBuildPlanService {
     }
 
     /**
-     * Set Build Plan Permissions for admins, instructors and teaching assistants.
+     * Set Build Plan Permissions for admins, instructors, editors and teaching assistants.
      *
      * @param programmingExercise a programming exercise with the required
      *                            information to set the needed build plan
@@ -125,8 +125,9 @@ public class BambooBuildPlanService {
         Course course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
 
         final String teachingAssistantGroupName = course.getTeachingAssistantGroupName();
+        final String editorGroupName = course.getEditorGroupName();
         final String instructorGroupName = course.getInstructorGroupName();
-        final PlanPermissions planPermission = generatePlanPermissions(programmingExercise.getProjectKey(), planKey, teachingAssistantGroupName, instructorGroupName,
+        final PlanPermissions planPermission = generatePlanPermissions(programmingExercise.getProjectKey(), planKey, teachingAssistantGroupName, editorGroupName, instructorGroupName,
                 adminGroupName);
         bambooServer.publish(planPermission);
     }
@@ -287,13 +288,16 @@ public class BambooBuildPlanService {
                 .changeDetection(new VcsChangeDetection());
     }
 
-    private PlanPermissions generatePlanPermissions(String bambooProjectKey, String bambooPlanKey, @Nullable String teachingAssistantGroupName, String instructorGroupName,
-            String adminGroupName) {
+    private PlanPermissions generatePlanPermissions(String bambooProjectKey, String bambooPlanKey, @Nullable String teachingAssistantGroupName, @Nullable String editorGroupName,
+                                                    String instructorGroupName, String adminGroupName) {
         var permissions = new Permissions().userPermissions(bambooUser, PermissionType.EDIT, PermissionType.BUILD, PermissionType.CLONE, PermissionType.VIEW, PermissionType.ADMIN)
                 .groupPermissions(adminGroupName, PermissionType.CLONE, PermissionType.BUILD, PermissionType.EDIT, PermissionType.VIEW, PermissionType.ADMIN)
                 .groupPermissions(instructorGroupName, PermissionType.CLONE, PermissionType.BUILD, PermissionType.EDIT, PermissionType.VIEW, PermissionType.ADMIN);
+        if (editorGroupName != null) {
+            permissions = permissions.groupPermissions(instructorGroupName, PermissionType.CLONE, PermissionType.BUILD, PermissionType.EDIT, PermissionType.VIEW, PermissionType.ADMIN);
+        }
         if (teachingAssistantGroupName != null) {
-            permissions = permissions.groupPermissions(teachingAssistantGroupName, PermissionType.BUILD, PermissionType.EDIT, PermissionType.VIEW);
+            permissions = permissions.groupPermissions(teachingAssistantGroupName, PermissionType.VIEW);
         }
         return new PlanPermissions(new PlanIdentifier(bambooProjectKey, bambooPlanKey)).permissions(permissions);
     }
