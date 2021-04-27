@@ -226,85 +226,78 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
     /**
      * Get the number of Complaints for all tutors of a course
      *
-     * @param groupName - name of the tutorgroup
      * @param courseId  - id of the course
      * @return list of TutorLeaderboardComplaints
      */
     @Query("""
             SELECT
             new de.tum.in.www1.artemis.domain.leaderboard.tutor.TutorLeaderboardComplaints(
-                a.id,
+                r.assessor.id,
                 count(c),
                 sum( CASE WHEN (c.accepted = true) THEN 1L ELSE 0L END),
                 sum( CASE WHEN (c.accepted = true) THEN e.maxPoints ELSE 0.0 END)
             )
             FROM
-                Complaint c join c.result r join r.participation p join p.exercise e join e.course co join r.assessor a
+                Complaint c join c.result r join r.participation p join p.exercise e
             WHERE
-                 :#{#groupName} member of a.groups
-                and c.complaintType = 'COMPLAINT'
-                and co.id = :courseId
+                    c.complaintType = 'COMPLAINT'
+                and e.course.id = :courseId
                 and r.completionDate IS NOT NULL
-            GROUP BY a.id
+            GROUP BY r.assessor.id
             """)
-    List<TutorLeaderboardComplaints> findTutorLeaderboardComplaintsByCourseId(@Param("groupName") String groupName, @Param("courseId") long courseId);
+    List<TutorLeaderboardComplaints> findTutorLeaderboardComplaintsByCourseId(@Param("courseId") long courseId);
 
     /**
      * Get the number of Complaints for all tutors of an exercise
      *
-     * @param groupName  - name of the tutorgroup
      * @param exerciseId - id of the exercise
      * @return list of TutorLeaderboardComplaints
      */
     @Query("""
             SELECT
             new de.tum.in.www1.artemis.domain.leaderboard.tutor.TutorLeaderboardComplaints(
-                c.result.assessor.id,
+                r.assessor.id,
                 count(c),
                 sum( CASE WHEN (c.accepted = true ) THEN 1L ELSE 0L END),
                 sum( CASE WHEN (c.accepted = true) THEN e.maxPoints ELSE 0.0 END)
             )
             FROM
-                Complaint c join c.result r join r.participation p join p.exercise e join r.assessor a
+                Complaint c join c.result r join r.participation p join p.exercise e
             WHERE
-                 :#{#groupName} member of a.groups
-                and c.complaintType = 'COMPLAINT'
+                    c.complaintType = 'COMPLAINT'
                 and e.id = :#{#exerciseId}
                 and r.completionDate IS NOT NULL
-            GROUP BY a.id
+            GROUP BY r.assessor.id
             """)
-    List<TutorLeaderboardComplaints> findTutorLeaderboardComplaintsByExerciseId(@Param("groupName") String groupName, @Param("exerciseId") long exerciseId);
+    List<TutorLeaderboardComplaints> findTutorLeaderboardComplaintsByExerciseId(@Param("exerciseId") long exerciseId);
 
     /**
      * Get the number of Complaints for all tutors of an exam
      *
-     * @param groupName  - name of the tutorgroup
      * @param examId     - id of the exercise
      * @return list of TutorLeaderboardComplaints
      */
     @Query("""
             SELECT
             new de.tum.in.www1.artemis.domain.leaderboard.tutor.TutorLeaderboardComplaints(
-                c.result.assessor.id,
+                r.assessor.id,
                 count(c),
                 sum( CASE WHEN (c.accepted = true ) THEN 1L ELSE 0L END),
                 sum( CASE WHEN (c.accepted = true) THEN e.maxPoints ELSE 0.0 END)
             )
             FROM
-                Complaint c join c.result r join r.participation p join p.exercise e join e.exerciseGroup eg join eg.exam ex join r.assessor a
+                Complaint c join c.result r join r.participation p join p.exercise e join e.exerciseGroup eg
             WHERE
-                 :#{#groupName} member of a.groups
-                and c.complaintType = 'COMPLAINT'
-                and ex.id = :#{#examId}
+                    c.complaintType = 'COMPLAINT'
+                and eg.exam.id = :#{#examId}
                 and r.completionDate IS NOT NULL
-            GROUP BY a.id
+            GROUP BY r.assessor.id
             """)
-    List<TutorLeaderboardComplaints> findTutorLeaderboardComplaintsByExamId(@Param("groupName") String groupName, @Param("examId") long examId);
+    List<TutorLeaderboardComplaints> findTutorLeaderboardComplaintsByExamId(@Param("examId") long examId);
 
     /**
      * Get the number of complaintResponses for all tutors assessments of a course
      *
-     * @param groupName  - name of the tutorgroup
      * @param courseId   - id of the exercise
      * @return list of TutorLeaderboardComplaintResponses
      */
@@ -316,21 +309,19 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
                 sum(e.maxPoints)
             )
             FROM
-                Complaint c join c.complaintResponse cr join c.result r join r.participation p join p.exercise e join e.course co join r.assessor a
+                Complaint c join c.complaintResponse cr join c.result r join r.participation p join p.exercise e
             WHERE
                 c.complaintType = 'COMPLAINT'
-                and :#{#groupName} member of a.groups
-                and co.id = :courseId
+                and e.course.id = :courseId
                 and r.completionDate IS NOT NULL
                 and c.accepted IS NOT NULL
             GROUP BY cr.reviewer.id
             """)
-    List<TutorLeaderboardComplaintResponses> findTutorLeaderboardComplaintResponsesByCourseId(@Param("groupName") String groupName, @Param("courseId") long courseId);
+    List<TutorLeaderboardComplaintResponses> findTutorLeaderboardComplaintResponsesByCourseId(@Param("courseId") long courseId);
 
     /**
      * Get the number of complaintResponses for all tutors assessments of an exercise
      *
-     * @param groupName  - name of the tutorgroup
      * @param exerciseId - id of the exercise
      * @return list of TutorLeaderboardComplaintResponses
      */
@@ -342,21 +333,19 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
                  sum(e.maxPoints)
              )
              FROM
-                Complaint c join c.complaintResponse cr join c.result r join r.participation p join p.exercise e join r.assessor a
+                Complaint c join c.complaintResponse cr join c.result r join r.participation p join p.exercise e
              WHERE
                  c.complaintType = 'COMPLAINT'
-                 and :#{#groupName} member of a.groups
                  and e.id = :exerciseId
                  and r.completionDate IS NOT NULL
                  and c.accepted IS NOT NULL
              GROUP BY cr.reviewer.id
              """)
-    List<TutorLeaderboardComplaintResponses> findTutorLeaderboardComplaintResponsesByExerciseId(@Param("groupName") String groupName, @Param("exerciseId") long exerciseId);
+    List<TutorLeaderboardComplaintResponses> findTutorLeaderboardComplaintResponsesByExerciseId(@Param("exerciseId") long exerciseId);
 
     /**
      * Get the number of complaintResponses for all tutors assessments of an exam
      *
-     * @param groupName  - name of the tutorgroup
      * @param examId     - id of the exam
      * @return list of TutorLeaderboardComplaintResponses
      */
@@ -368,100 +357,91 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
                  sum(e.maxPoints)
              )
              FROM
-                Complaint c join c.complaintResponse cr join c.result r join r.participation p join p.exercise e join e.exerciseGroup eg join eg.exam ex  join r.assessor a
+                Complaint c join c.complaintResponse cr join c.result r join r.participation p join p.exercise e join e.exerciseGroup eg
              WHERE
                  c.complaintType = 'COMPLAINT'
-                 and :#{#groupName} member of a.groups
-                 and ex.id = :examId
+                 and eg.exam.id = :examId
                  and r.completionDate IS NOT NULL
                  and c.accepted IS NOT NULL
              GROUP BY cr.reviewer.id
              """)
-    List<TutorLeaderboardComplaintResponses> findTutorLeaderboardComplaintResponsesByExamId(@Param("groupName") String groupName, @Param("examId") long examId);
+    List<TutorLeaderboardComplaintResponses> findTutorLeaderboardComplaintResponsesByExamId(@Param("examId") long examId);
 
     /**
      * Get the number of Feedback Requests for all tutors assessments of a course
      *
-     * @param groupName  - name of the tutorgroup
      * @param courseId   - id of the exercise
      * @return list of TutorLeaderboardMoreFeedbackRequests
      */
     @Query("""
             SELECT
              new de.tum.in.www1.artemis.domain.leaderboard.tutor.TutorLeaderboardMoreFeedbackRequests(
-                 a.id,
+                 r.assessor.id,
                  count(c),
                  sum( CASE WHEN (c.accepted IS NULL) THEN 1L ELSE 0L END),
                  sum( CASE WHEN (c.accepted IS NULL) THEN e.maxPoints ELSE 0.0 END)
              )
              FROM
-                Complaint c join c.result r join r.participation p join p.exercise e join e.course co join r.assessor a
+                Complaint c join c.result r join r.participation p join p.exercise e
              WHERE
                  c.complaintType = 'MORE_FEEDBACK'
-                 and :#{#groupName} member of a.groups
-                 and co.id = :courseId
+                 and e.course.id = :courseId
                  and r.completionDate IS NOT NULL
-             GROUP BY a.id
+             GROUP BY r.assessor.id
              """)
-    List<TutorLeaderboardMoreFeedbackRequests> findTutorLeaderboardMoreFeedbackRequestsByCourseId(@Param("groupName") String groupName, @Param("courseId") long courseId);
+    List<TutorLeaderboardMoreFeedbackRequests> findTutorLeaderboardMoreFeedbackRequestsByCourseId(@Param("courseId") long courseId);
 
     /**
      * Get the number of Feedback Requests for all tutors assessments of an exercise
      *
-     * @param groupName  - name of the tutorgroup
      * @param exerciseId - id of the exercise
      * @return list of TutorLeaderboardMoreFeedbackRequests
      */
     @Query("""
             SELECT
             new de.tum.in.www1.artemis.domain.leaderboard.tutor.TutorLeaderboardMoreFeedbackRequests(
-               a.id,
+                r.assessor.id,
                 count(c),
                 sum( CASE WHEN (c.accepted IS NULL) THEN 1L ELSE 0L END),
                 sum( CASE WHEN (c.accepted IS NULL) THEN e.maxPoints ELSE 0.0 END)
             )
             FROM
-                Complaint c join c.result r join r.participation p join p.exercise e join r.assessor a
+                Complaint c join c.result r join r.participation p join p.exercise e
             WHERE
                 c.complaintType = 'MORE_FEEDBACK'
-                and :#{#groupName} member of a.groups
                 and e.id = :exerciseId
                 and r.completionDate IS NOT NULL
-            GROUP BY a.id
+            GROUP BY r.assessor.id
             """)
-    List<TutorLeaderboardMoreFeedbackRequests> findTutorLeaderboardMoreFeedbackRequestsByExerciseId(@Param("groupName") String groupName, @Param("exerciseId") long exerciseId);
+    List<TutorLeaderboardMoreFeedbackRequests> findTutorLeaderboardMoreFeedbackRequestsByExerciseId(@Param("exerciseId") long exerciseId);
 
     /**
      * Get the number of Feedback Request Responses for all tutors assessments of a course
      *
-     * @param groupName  - name of the tutorgroup
      * @param courseId   - id of the course
      * @return list of TutorLeaderboardAnsweredMoreFeedbackRequests
      */
     @Query("""
             SELECT
             new de.tum.in.www1.artemis.domain.leaderboard.tutor.TutorLeaderboardAnsweredMoreFeedbackRequests(
-                 cr.reviewer.id,
+                cr.reviewer.id,
                 count(c),
                 sum(e.maxPoints)
             )
             FROM
-                Complaint c join c.complaintResponse cr join c.result r join r.participation p join p.exercise e join e.course co join r.assessor a
+                Complaint c join c.complaintResponse cr join c.result r join r.participation p join p.exercise e
             WHERE
                 c.complaintType = 'MORE_FEEDBACK'
-                and :#{#groupName} member of a.groups
-                and co.id = :courseId
+                and e.course.id = :courseId
                 and r.completionDate IS NOT NULL
                 and c.accepted = true
             GROUP BY cr.reviewer.id
             """)
-    List<TutorLeaderboardAnsweredMoreFeedbackRequests> findTutorLeaderboardAnsweredMoreFeedbackRequestsByCourseId(@Param("groupName") String groupName,
-            @Param("courseId") long courseId);
+    List<TutorLeaderboardAnsweredMoreFeedbackRequests> findTutorLeaderboardAnsweredMoreFeedbackRequestsByCourseId(@Param("courseId") long courseId);
 
     /**
      * Get the number of Feedback Request Responses for all tutors assessments of an exercise
      *
-     * @param groupName  - name of the tutorgroup
      * @param exerciseId - id of the exercise
      * @return list of TutorLeaderboardAnsweredMoreFeedbackRequests
      */
@@ -470,18 +450,16 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
             new de.tum.in.www1.artemis.domain.leaderboard.tutor.TutorLeaderboardAnsweredMoreFeedbackRequests(
                 cr.reviewer.id,
                 count(c),
-                sum(c.result.participation.exercise.maxPoints)
+                sum(e.maxPoints)
                 )
             FROM
-                Complaint c join c.complaintResponse cr join c.result r join r.participation p join p.exercise e join r.assessor a
+                Complaint c join c.complaintResponse cr join c.result r join r.participation p join p.exercise e
             WHERE
                 c.complaintType = 'MORE_FEEDBACK'
-                and :#{#groupName} member of a.groups
                 and e.id = :exerciseId
                 and r.completionDate IS NOT NULL
                 and c.accepted = true
             GROUP BY cr.reviewer.id
             """)
-    List<TutorLeaderboardAnsweredMoreFeedbackRequests> findTutorLeaderboardAnsweredMoreFeedbackRequestsByExerciseId(@Param("groupName") String groupName,
-            @Param("exerciseId") long exerciseId);
+    List<TutorLeaderboardAnsweredMoreFeedbackRequests> findTutorLeaderboardAnsweredMoreFeedbackRequestsByExerciseId(@Param("exerciseId") long exerciseId);
 }

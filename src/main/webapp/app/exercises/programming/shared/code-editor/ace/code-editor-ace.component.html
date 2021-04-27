@@ -17,6 +17,7 @@
                 [codeLine]="i"
                 [feedback]="fileFeedbackPerLine[i]"
                 [readOnly]="readOnlyManualFeedback"
+                [highlightDifferences]="highlightDifferences"
                 (onUpdateFeedback)="updateFeedback($event)"
                 (onDeleteFeedback)="deleteFeedback($event)"
                 (onCancelFeedback)="cancelFeedback($event)"

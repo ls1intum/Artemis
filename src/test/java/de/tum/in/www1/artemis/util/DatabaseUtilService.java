@@ -376,14 +376,14 @@ public class DatabaseUtilService {
         return exerciseRepo.save(textExercise);
     }
 
-    public Team createTeam(Set<User> students, User owner, Exercise exercise) {
+    public Team createTeam(Set<User> students, User owner, Exercise exercise, String teamName) {
         Team team = new Team();
         for (User student : students) {
             team.addStudents(student);
         }
         team.setOwner(owner);
-        team.setShortName("team1");
-        team.setName("team1");
+        team.setShortName(teamName);
+        team.setName(teamName);
         team.setExercise(exercise);
         return teamRepo.saveAndFlush(team);
     }
@@ -2443,6 +2443,23 @@ public class DatabaseUtilService {
         return resultRepo.findWithEagerSubmissionAndFeedbackAndAssessorById(result.getId()).get();
     }
 
+    public Result addModelingAssessmentForSubmission(ModelingExercise exercise, ModelingSubmission submission, String login, boolean submit) throws Exception {
+        Feedback feedback1 = feedbackRepo.save(new Feedback().detailText("detail1"));
+        Feedback feedback2 = feedbackRepo.save(new Feedback().detailText("detail2"));
+        List<Feedback> feedbacks = new ArrayList<>();
+        feedbacks.add(feedback1);
+        feedbacks.add(feedback2);
+
+        Result result = assessmentService.saveManualAssessment(submission, feedbacks, null);
+        result.setParticipation(submission.getParticipation().results(null));
+        result.setAssessor(getUserByLogin(login));
+        resultRepo.save(result);
+        if (submit) {
+            assessmentService.submitManualAssessment(result.getId(), exercise, submission.getSubmissionDate());
+        }
+        return resultRepo.findWithEagerSubmissionAndFeedbackAndAssessorById(result.getId()).get();
+    }
+
     public ExampleSubmission addExampleSubmission(ExampleSubmission exampleSubmission) {
         Submission submission;
         if (exampleSubmission.getSubmission() instanceof ModelingSubmission) {
@@ -3217,5 +3234,9 @@ public class DatabaseUtilService {
         programmingExerciseStudentParticipationRepo.save(programmingExerciseStudentParticipation1);
         programmingExerciseStudentParticipationRepo.save(programmingExerciseStudentParticipation2);
         return course;
+    }
+
+    public Course saveCourse(Course course) {
+        return courseRepo.save(course);
     }
 }

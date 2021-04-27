@@ -17,6 +17,7 @@ import { TranslateService } from '@ngx-translate/core';
 import * as moment from 'moment';
 import { Moment } from 'moment';
 import { defaultLongDateTimeFormat } from 'app/shared/pipes/artemis-date.pipe';
+import { AccountService } from 'app/core/auth/account.service';
 
 @Component({
     selector: 'jhi-student-exams',
@@ -37,6 +38,7 @@ export class StudentExamsComponent implements OnInit {
     isExamStarted = false;
     isExamOver = false;
     longestWorkingTime: number;
+    isAdmin = false;
 
     constructor(
         private route: ActivatedRoute,
@@ -46,6 +48,7 @@ export class StudentExamsComponent implements OnInit {
         private jhiAlertService: JhiAlertService,
         private modalService: NgbModal,
         private translateService: TranslateService,
+        private accountService: AccountService,
     ) {}
 
     /**
@@ -60,6 +63,7 @@ export class StudentExamsComponent implements OnInit {
 
     private loadAll() {
         this.paramSub = this.route.params.subscribe(() => {
+            this.isAdmin = this.accountService.isAdmin();
             this.courseService.find(this.courseId).subscribe((courseResponse) => {
                 this.course = courseResponse.body!;
             });

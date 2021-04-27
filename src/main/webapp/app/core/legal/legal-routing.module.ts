@@ -1,11 +1,12 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 
-import { PrivacyComponent } from 'app/core/legal/privacy/privacy.component';
+import { PrivacyComponent } from 'app/core/legal/privacy.component';
+import { ImprintComponent } from 'app/core/legal/imprint.component';
 
 const routes: Routes = [
     {
-        path: 'datenschutz',
+        path: 'privacy',
         children: [
             {
                 path: '',
@@ -22,6 +23,28 @@ const routes: Routes = [
                 data: {
                     authorities: [],
                     pageTitle: 'legal.privacy.title',
+                },
+            },
+        ],
+    },
+    {
+        path: 'imprint',
+        children: [
+            {
+                path: '',
+                pathMatch: 'full',
+                component: ImprintComponent,
+                data: {
+                    authorities: [],
+                    pageTitle: 'legal.imprint.title',
+                },
+            },
+            {
+                path: ':fragment',
+                component: ImprintComponent,
+                data: {
+                    authorities: [],
+                    pageTitle: 'legal.imprint.title',
                 },
             },
         ],

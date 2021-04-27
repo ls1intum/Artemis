@@ -23,7 +23,6 @@ import { JhiAlertService } from 'ng-jhipster';
 import { MockComponent } from 'ng-mocks';
 import { ResultService } from 'app/exercises/shared/result/result.service';
 import { RepositoryFileService } from 'app/exercises/shared/result/repository.service';
-import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ProgrammingAssessmentRepoExportButtonComponent } from 'app/exercises/programming/assess/repo-export/programming-assessment-repo-export-button.component';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
@@ -78,16 +77,15 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
     let programmingAssessmentManualResultService: ProgrammingAssessmentManualResultService;
     let complaintService: ComplaintService;
     let accountService: AccountService;
-    let programmingExerciseParticipationService: ProgrammingExerciseParticipationService;
     let programmingSubmissionService: ProgrammingSubmissionService;
     let programmingExerciseService: ProgrammingExerciseService;
     let repositoryFileService: CodeEditorRepositoryFileService;
 
     let updateAfterComplaintStub: SinonStub;
-    let getStudentParticipationWithResultsStub: SinonStub;
     let findByResultIdStub: SinonStub;
     let getIdentityStub: SinonStub;
     let getProgrammingSubmissionForExerciseWithoutAssessmentStub: SinonStub;
+    let lockAndGetProgrammingSubmissionParticipationStub: SinonStub;
     let findWithParticipationsStub: SinonStub;
 
     const user = <User>{ id: 99, groups: ['instructorGroup'] };
@@ -117,6 +115,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         gradingInstructions: 'Grading Instructions',
         course: <Course>{ instructorGroupName: 'instructorGroup' },
     } as unknown) as ProgrammingExercise;
+
     const participation: ProgrammingExerciseStudentParticipation = new ProgrammingExerciseStudentParticipation();
     participation.results = [result];
     participation.exercise = exercise;
@@ -124,16 +123,20 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
     participation.student = { login: 'student1' } as User;
     participation.repositoryUrl = 'http://student1@bitbucket.ase.in.tum.de/scm/TEST/test-repo-student1.git';
     result.submission!.participation = participation;
+
+    const submission: ProgrammingSubmission = new ProgrammingSubmission();
+    submission.results = [result];
+    submission.participation = participation;
+    submission.id = 1234;
+    submission.latestResult = result;
+
     const unassessedSubmission = new ProgrammingSubmission();
-    const participation2 = new ProgrammingExerciseStudentParticipation();
-    participation2.id = 12;
-    unassessedSubmission.participation = participation2;
+    unassessedSubmission.id = 12;
 
     const afterComplaintResult = new Result();
     afterComplaintResult.score = 100;
 
-    const route = ({ params: of({ participationId: 1 }), queryParamMap: of(convertToParamMap({ testRun: false })) } as any) as ActivatedRoute;
-
+    const route = ({ params: of({ submissionId: 123 }), queryParamMap: of(convertToParamMap({ testRun: false })) } as any) as ActivatedRoute;
     const fileContent = 'This is the content of a file';
     const templateFileSessionReturn: { [fileName: string]: string } = { 'folder/file1': fileContent };
 
@@ -152,7 +155,6 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
             declarations: [MockComponent(ProgrammingAssessmentRepoExportButtonComponent)],
             providers: [
                 ProgrammingAssessmentManualResultService,
-                ProgrammingExerciseParticipationService,
                 ComplaintService,
                 BuildLogService,
                 AccountService,
@@ -178,7 +180,6 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
                 comp = fixture.componentInstance;
                 debugElement = fixture.debugElement;
                 programmingAssessmentManualResultService = debugElement.injector.get(ProgrammingAssessmentManualResultService);
-                programmingExerciseParticipationService = debugElement.injector.get(ProgrammingExerciseParticipationService);
                 programmingSubmissionService = debugElement.injector.get(ProgrammingSubmissionService);
                 complaintService = debugElement.injector.get(ComplaintService);
                 accountService = debugElement.injector.get(AccountService);
@@ -186,8 +187,8 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
                 repositoryFileService = debugElement.injector.get(CodeEditorRepositoryFileService);
 
                 updateAfterComplaintStub = stub(programmingAssessmentManualResultService, 'updateAfterComplaint').returns(of(afterComplaintResult));
-                getStudentParticipationWithResultsStub = stub(programmingExerciseParticipationService, 'getStudentParticipationWithResultOfCorrectionRound').returns(
-                    of(participation).pipe(delay(100)),
+                lockAndGetProgrammingSubmissionParticipationStub = stub(programmingSubmissionService, 'lockAndGetProgrammingSubmissionParticipation').returns(
+                    of(submission).pipe(delay(100)),
                 );
                 findByResultIdStub = stub(complaintService, 'findByResultId').returns(of({ body: complaint } as HttpResponse<Complaint>));
                 getIdentityStub = stub(accountService, 'identity').returns(new Promise((promise) => promise(user)));
@@ -204,7 +205,8 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
     afterEach(fakeAsync(() => {
         updateAfterComplaintStub.restore();
         findByResultIdStub.restore();
-        getStudentParticipationWithResultsStub.restore();
+        lockAndGetProgrammingSubmissionParticipationStub.restore();
+        getProgrammingSubmissionForExerciseWithoutAssessmentStub.restore();
     }));
 
     it('should use jhi-assessment-layout', () => {
@@ -217,7 +219,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         tick(100);
 
         expect(getIdentityStub.calledOnce).to.be.true;
-        expect(getStudentParticipationWithResultsStub.calledOnce).to.be.true;
+        expect(lockAndGetProgrammingSubmissionParticipationStub.calledOnce).to.be.true;
         expect(findByResultIdStub.calledOnce).to.be.true;
         expect(comp.isAssessor).to.be.true;
         expect(comp.complaint).to.exist;
@@ -231,13 +233,25 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         tick(100);
     }));
 
+    it('should lock a new submission', fakeAsync(() => {
+        const activatedRoute: ActivatedRoute = fixture.debugElement.injector.get(ActivatedRoute);
+        activatedRoute.params = of({ submissionId: 'new' });
+        TestBed.inject(ActivatedRoute);
+
+        getProgrammingSubmissionForExerciseWithoutAssessmentStub.returns(of(submission));
+
+        comp.ngOnInit();
+        tick(100);
+        expect(getProgrammingSubmissionForExerciseWithoutAssessmentStub).to.be.calledOnce;
+    }));
+
     it('should not show complaint when result does not have it', fakeAsync(() => {
         result.hasComplaint = false;
         comp.ngOnInit();
         tick(100);
 
         expect(getIdentityStub.calledOnce).to.be.true;
-        expect(getStudentParticipationWithResultsStub.calledOnce).to.be.true;
+        expect(lockAndGetProgrammingSubmissionParticipationStub.calledOnce).to.be.true;
         expect(findByResultIdStub.notCalled).to.be.true;
         expect(comp.complaint).to.not.exist;
         fixture.detectChanges();
@@ -375,7 +389,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         tick(100);
         comp.nextSubmission();
 
-        const url = ['/course-management', courseId.toString(), 'programming-exercises', exercise.id!.toString(), 'code-editor', participation2.id!.toString(), 'assessment'];
+        const url = ['/course-management', courseId.toString(), 'programming-exercises', exercise.id!.toString(), 'submissions', unassessedSubmission.id!.toString(), 'assessment'];
         const queryParams = { queryParams: { 'correction-round': 0 } };
         expect(getProgrammingSubmissionForExerciseWithoutAssessmentStub).to.be.calledOnce;
         expect(routerStub).to.have.been.calledWith(url, queryParams);
