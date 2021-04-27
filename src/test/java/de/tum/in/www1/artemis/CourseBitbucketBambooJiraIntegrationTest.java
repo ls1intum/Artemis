@@ -306,7 +306,7 @@ public class CourseBitbucketBambooJiraIntegrationTest extends AbstractSpringInte
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testAddTutorAndInstructorToCourse_failsToAddUserToGroup() throws Exception {
-        courseTestService.testAddTutorAndInstructorToCourse_failsToAddUserToGroup(HttpStatus.OK);
+        courseTestService.testAddTutorAndEditorAndInstructorToCourse_failsToAddUserToGroup(HttpStatus.OK);
     }
 
     @Test
@@ -353,7 +353,7 @@ public class CourseBitbucketBambooJiraIntegrationTest extends AbstractSpringInte
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testAddStudentOrTutorOrInstructorToCourse() throws Exception {
-        courseTestService.testAddStudentOrTutorOrInstructorToCourse();
+        courseTestService.testAddStudentOrTutorOrEditorOrInstructorToCourse();
     }
 
     @Test
@@ -383,7 +383,7 @@ public class CourseBitbucketBambooJiraIntegrationTest extends AbstractSpringInte
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testRemoveStudentOrTutorOrInstructorFromCourse_WithNonExistingUser() throws Exception {
-        courseTestService.testRemoveStudentOrTutorOrInstructorFromCourse_WithNonExistingUser();
+        courseTestService.testRemoveStudentOrTutorOrEditorOrInstructorFromCourse_WithNonExistingUser();
     }
 
     @Test

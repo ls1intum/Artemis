@@ -84,7 +84,7 @@ public class CourseTestService {
 
     private final static int numberOfTutors = 5;
 
-    private final static int numberOfEditors = 0;
+    private final static int numberOfEditors = 1;
 
     private final static int numberOfInstructors = 1;
 
@@ -1020,10 +1020,10 @@ public class CourseTestService {
     }
 
     // Test
-    public void testAddStudentOrTutorOrInstructorToCourse() throws Exception {
+    public void testAddStudentOrTutorOrEditorOrInstructorToCourse() throws Exception {
         Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         course = courseRepo.save(course);
-        testAddStudentOrTutorOrInstructorToCourse(course, HttpStatus.OK);
+        testAddStudentOrTutorOrEditorOrInstructorToCourse(course, HttpStatus.OK);
 
         // TODO check that the roles have changed accordingly
     }
@@ -1032,14 +1032,14 @@ public class CourseTestService {
     public void testAddStudentOrTutorOrInstructorToCourse_AsInstructorOfOtherCourse_forbidden() throws Exception {
         Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>(), "other-tumuser", "other-tutor", "other-editor", "other-instructor");
         course = courseRepo.save(course);
-        testAddStudentOrTutorOrInstructorToCourse(course, HttpStatus.FORBIDDEN);
+        testAddStudentOrTutorOrEditorOrInstructorToCourse(course, HttpStatus.FORBIDDEN);
     }
 
     // Test
     public void testAddStudentOrTutorOrInstructorToCourse_AsTutor_forbidden() throws Exception {
         Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         course = courseRepo.save(course);
-        testAddStudentOrTutorOrInstructorToCourse(course, HttpStatus.FORBIDDEN);
+        testAddStudentOrTutorOrEditorOrInstructorToCourse(course, HttpStatus.FORBIDDEN);
     }
 
     // Test
@@ -1049,37 +1049,44 @@ public class CourseTestService {
 
         request.postWithoutLocation("/api/courses/" + course.getId() + "/students/maxMustermann", null, HttpStatus.NOT_FOUND, null);
         request.postWithoutLocation("/api/courses/" + course.getId() + "/tutors/maxMustermann", null, HttpStatus.NOT_FOUND, null);
+        request.postWithoutLocation("/api/courses/" + course.getId() + "/editors/maxMustermann", null, HttpStatus.NOT_FOUND, null);
         request.postWithoutLocation("/api/courses/" + course.getId() + "/instructors/maxMustermann", null, HttpStatus.NOT_FOUND, null);
     }
 
-    private void testAddStudentOrTutorOrInstructorToCourse(Course course, HttpStatus httpStatus) throws Exception {
+    private void testAddStudentOrTutorOrEditorOrInstructorToCourse(Course course, HttpStatus httpStatus) throws Exception {
         var student = userRepo.findOneWithGroupsAndAuthoritiesByLogin("student1").get();
         var tutor1 = userRepo.findOneWithGroupsAndAuthoritiesByLogin("tutor1").get();
+        var editor1 = userRepo.findOneWithGroupsAndAuthoritiesByLogin("editor1").get();
         var instructor1 = userRepo.findOneWithGroupsAndAuthoritiesByLogin("instructor1").get();
 
         mockDelegate.mockAddUserToGroupInUserManagement(student, course.getStudentGroupName(), false);
         mockDelegate.mockAddUserToGroupInUserManagement(tutor1, course.getTeachingAssistantGroupName(), false);
+        mockDelegate.mockAddUserToGroupInUserManagement(editor1, course.getEditorGroupName(), false);
         mockDelegate.mockAddUserToGroupInUserManagement(instructor1, course.getInstructorGroupName(), false);
 
         request.postWithoutLocation("/api/courses/" + course.getId() + "/students/student1", null, httpStatus, null);
         request.postWithoutLocation("/api/courses/" + course.getId() + "/tutors/tutor1", null, httpStatus, null);
+        request.postWithoutLocation("/api/courses/" + course.getId() + "/tutors/editor1", null, httpStatus, null);
         request.postWithoutLocation("/api/courses/" + course.getId() + "/instructors/instructor1", null, httpStatus, null);
     }
 
     // Test
-    public void testAddTutorAndInstructorToCourse_failsToAddUserToGroup(HttpStatus expectedFailureCode) throws Exception {
+    public void testAddTutorAndEditorAndInstructorToCourse_failsToAddUserToGroup(HttpStatus expectedFailureCode) throws Exception {
         Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         course = courseRepo.save(course);
         database.addProgrammingExerciseToCourse(course, false);
         course = courseRepo.save(course);
 
         var tutor1 = userRepo.findOneWithGroupsAndAuthoritiesByLogin("tutor1").get();
+        var editor1 = userRepo.findOneWithGroupsAndAuthoritiesByLogin("editor1").get();
         var instructor1 = userRepo.findOneWithGroupsAndAuthoritiesByLogin("instructor1").get();
 
         mockDelegate.mockAddUserToGroupInUserManagement(tutor1, course.getTeachingAssistantGroupName(), true);
+        mockDelegate.mockAddUserToGroupInUserManagement(editor1, course.getEditorGroupName(), true);
         mockDelegate.mockAddUserToGroupInUserManagement(instructor1, course.getInstructorGroupName(), true);
 
         request.postWithoutLocation("/api/courses/" + course.getId() + "/tutors/tutor1", null, expectedFailureCode, null);
+        request.postWithoutLocation("/api/courses/" + course.getId() + "/editors/editor1", null, expectedFailureCode, null);
         request.postWithoutLocation("/api/courses/" + course.getId() + "/instructors/instructor1", null, expectedFailureCode, null);
     }
 
@@ -1099,16 +1106,17 @@ public class CourseTestService {
     public void testRemoveStudentOrTutorOrInstructorFromCourse() throws Exception {
         Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         course = courseRepo.save(course);
-        testRemoveStudentOrTutorOrInstructorFromCourse_forbidden(course, HttpStatus.OK);
+        testRemoveStudentOrTutorOrEditorOrInstructorFromCourse_forbidden(course, HttpStatus.OK);
         // TODO check that the roles have changed accordingly
     }
 
     // Test
-    public void testRemoveStudentOrTutorOrInstructorFromCourse_WithNonExistingUser() throws Exception {
+    public void testRemoveStudentOrTutorOrEditorOrInstructorFromCourse_WithNonExistingUser() throws Exception {
         Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         course = courseRepo.save(course);
         request.delete("/api/courses/" + course.getId() + "/students/maxMustermann", HttpStatus.NOT_FOUND);
         request.delete("/api/courses/" + course.getId() + "/tutors/maxMustermann", HttpStatus.NOT_FOUND);
+        request.delete("/api/courses/" + course.getId() + "/editors/maxMustermann", HttpStatus.NOT_FOUND);
         request.delete("/api/courses/" + course.getId() + "/instructors/maxMustermann", HttpStatus.NOT_FOUND);
     }
 
@@ -1116,30 +1124,33 @@ public class CourseTestService {
     public void testRemoveStudentOrTutorOrInstructorFromCourse_AsInstructorOfOtherCourse_forbidden() throws Exception {
         Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>(), "other-tumuser", "other-tutor", "other-editor", "other-instructor");
         course = courseRepo.save(course);
-        testRemoveStudentOrTutorOrInstructorFromCourse_forbidden(course, HttpStatus.FORBIDDEN);
+        testRemoveStudentOrTutorOrEditorOrInstructorFromCourse_forbidden(course, HttpStatus.FORBIDDEN);
     }
 
     // Test
     public void testRemoveStudentOrTutorOrInstructorFromCourse_AsTutor_forbidden() throws Exception {
         Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         course = courseRepo.save(course);
-        testRemoveStudentOrTutorOrInstructorFromCourse_forbidden(course, HttpStatus.FORBIDDEN);
+        testRemoveStudentOrTutorOrEditorOrInstructorFromCourse_forbidden(course, HttpStatus.FORBIDDEN);
     }
 
-    private void testRemoveStudentOrTutorOrInstructorFromCourse_forbidden(Course course, HttpStatus httpStatus) throws Exception {
+    private void testRemoveStudentOrTutorOrEditorOrInstructorFromCourse_forbidden(Course course, HttpStatus httpStatus) throws Exception {
         // Retrieve users from whom to remove groups
         User student = userRepo.findOneWithGroupsByLogin("student1").get();
         User tutor = userRepo.findOneWithGroupsByLogin("tutor1").get();
+        User editor = userRepo.findOneWithGroupsByLogin("editor1").get();
         User instructor = userRepo.findOneWithGroupsByLogin("instructor1").get();
 
         // Mock remove requests
         mockDelegate.mockRemoveUserFromGroup(student, course.getStudentGroupName(), false);
         mockDelegate.mockRemoveUserFromGroup(tutor, course.getTeachingAssistantGroupName(), false);
+        mockDelegate.mockRemoveUserFromGroup(editor, course.getEditorGroupName(), false);
         mockDelegate.mockRemoveUserFromGroup(instructor, course.getInstructorGroupName(), false);
 
         // Remove users from their group
         request.delete("/api/courses/" + course.getId() + "/students/" + student.getLogin(), httpStatus);
         request.delete("/api/courses/" + course.getId() + "/tutors/" + tutor.getLogin(), httpStatus);
+        request.delete("/api/courses/" + course.getId() + "/editors/" + tutor.getLogin(), httpStatus);
         request.delete("/api/courses/" + course.getId() + "/instructors/" + instructor.getLogin(), httpStatus);
     }
 
