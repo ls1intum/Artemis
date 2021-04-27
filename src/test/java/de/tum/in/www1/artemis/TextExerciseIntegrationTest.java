@@ -114,7 +114,7 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     @WithMockUser(value = "tutor1", roles = "INSTRUCTOR")
     public void deleteTextExercise_notFound() throws Exception {
         TextExercise textExercise = new TextExercise();
-        textExercise.setId(111L);
+        textExercise.setId(114213211L);
 
         request.delete("/api/text-exercises/" + textExercise.getId(), HttpStatus.NOT_FOUND);
     }
@@ -512,7 +512,7 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     @WithMockUser(value = "tutor1", roles = "TA")
     public void getTextExercise_notFound() throws Exception {
         TextExercise textExercise = new TextExercise();
-        textExercise.setId(111L);
+        textExercise.setId(114213211L);
 
         request.get("/api/text-exercises/" + textExercise.getId(), HttpStatus.NOT_FOUND, TextExercise.class);
     }
