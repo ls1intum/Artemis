@@ -397,10 +397,10 @@ public class JenkinsRequestMockProvider {
     public void mockUpdateCoursePermissions(Course updatedCourse, String oldInstructorGroup, String oldTeachingAssistantGroup, boolean failToAddUsers, boolean failToRemoveUsers)
             throws IOException {
         var newInstructorGroup = updatedCourse.getInstructorGroupName();
-        var newTeachingAssistangGroup = updatedCourse.getTeachingAssistantGroupName();
+        var newTeachingAssistantGroup = updatedCourse.getTeachingAssistantGroupName();
 
         // Don't do anything if the groups didn't change
-        if (newInstructorGroup.equals(oldInstructorGroup) && newTeachingAssistangGroup.equals(oldTeachingAssistantGroup)) {
+        if (newInstructorGroup.equals(oldInstructorGroup) && newTeachingAssistantGroup.equals(oldTeachingAssistantGroup)) {
             return;
         }
 
@@ -512,6 +512,6 @@ public class JenkinsRequestMockProvider {
     }
 
     public void mockGivePlanPermissionsThrowException(String projectKey, String projectKey1) throws IOException {
-        doThrow(IOException.class).when(jenkinsJobPermissionsService).addInstructorAndTAPermissionsToUsersForJob(any(), any(), eq(projectKey), eq(projectKey1));
+        doThrow(IOException.class).when(jenkinsJobPermissionsService).addInstructorAndEditorAndTAPermissionsToUsersForJob(any(), any(), any(), eq(projectKey), eq(projectKey1));
     }
 }
