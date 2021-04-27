@@ -275,7 +275,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
         // Apply checks for exam (submission is in time & user's student exam has the exercise)
         // Checks only apply to students, tutors and editors, otherwise template, solution and assignment participation can't be edited using the code editor
         User user = userRepository.getUserWithGroupsAndAuthorities(principal.getName());
-        if (!authCheckService.isAtLeastInstructorForExercise(programmingExerciseParticipation.getProgrammingExercise())
+        if (!authCheckService.isAtLeastEditorForExercise(programmingExerciseParticipation.getProgrammingExercise())
                 && !examSubmissionService.isAllowedToSubmitDuringExam(programmingExerciseParticipation.getProgrammingExercise(), user, false)) {
             FileSubmissionError error = new FileSubmissionError(participationId, "notAllowedExam");
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, error.getMessage(), error);
