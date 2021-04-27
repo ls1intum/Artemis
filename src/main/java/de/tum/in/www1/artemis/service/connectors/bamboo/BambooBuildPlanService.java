@@ -294,7 +294,7 @@ public class BambooBuildPlanService {
                 .groupPermissions(adminGroupName, PermissionType.CLONE, PermissionType.BUILD, PermissionType.EDIT, PermissionType.VIEW, PermissionType.ADMIN)
                 .groupPermissions(instructorGroupName, PermissionType.CLONE, PermissionType.BUILD, PermissionType.EDIT, PermissionType.VIEW, PermissionType.ADMIN);
         if (editorGroupName != null) {
-            permissions = permissions.groupPermissions(instructorGroupName, PermissionType.CLONE, PermissionType.BUILD, PermissionType.EDIT, PermissionType.VIEW, PermissionType.ADMIN);
+            permissions = permissions.groupPermissions(editorGroupName, PermissionType.CLONE, PermissionType.BUILD, PermissionType.EDIT, PermissionType.VIEW, PermissionType.ADMIN);
         }
         if (teachingAssistantGroupName != null) {
             permissions = permissions.groupPermissions(teachingAssistantGroupName, PermissionType.VIEW);
