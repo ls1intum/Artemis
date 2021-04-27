@@ -99,7 +99,7 @@ public class ProgrammingExerciseIntegrationServiceTest {
 
     private Course course;
 
-    private ProgrammingExercise programmingExercise;
+    public ProgrammingExercise programmingExercise;
 
     private ProgrammingExercise programmingExerciseInExam;
 

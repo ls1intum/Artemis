@@ -137,7 +137,7 @@ public class FileResource {
     @PreAuthorize("permitAll()")
     public ResponseEntity<byte[]> getMarkdownFile(@PathVariable String filename) {
         log.debug("REST request to get file : {}", filename);
-        return responseEntityForFilePath(FilePathService.getMarkdownFilePath(), filename);
+        return buildFileResponse(FilePathService.getMarkdownFilePath(), filename);
     }
 
     /**

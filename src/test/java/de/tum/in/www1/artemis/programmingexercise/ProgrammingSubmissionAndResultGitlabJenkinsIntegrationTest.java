@@ -93,7 +93,7 @@ public class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends 
         var notification = createJenkinsNewResultNotification(exercise.getProjectKey(), userLogin, programmingLanguage, List.of());
         postResult(notification);
 
-        var result = assertBuildError(participation.getId(), userLogin);
+        var result = assertBuildError(participation.getId(), userLogin, false);
         assertThat(result.getSubmission().getId()).isEqualTo(submission.getId());
 
         // Call again and assert that no new submissions have been created
@@ -115,10 +115,10 @@ public class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends 
         var notification = createJenkinsNewResultNotification(exercise.getProjectKey(), userLogin, programmingLanguage, List.of());
         postResult(notification);
 
-        assertBuildError(participation.getId(), userLogin);
+        assertBuildError(participation.getId(), userLogin, true);
     }
 
-    private Result assertBuildError(Long participationId, String userLogin) throws Exception {
+    private Result assertBuildError(Long participationId, String userLogin, boolean useLegacyBuildLogs) throws Exception {
         SecurityUtils.setAuthorizationObject();
 
         // Assert that result is linked to the participation
@@ -143,7 +143,7 @@ public class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends 
         assertThat(submissionWithLogs.getBuildLogEntries()).hasSize(0);
 
         // Assert that the build logs can be retrieved from the REST API
-        var buildWithDetails = jenkinsRequestMockProvider.mockGetLatestBuildLogs(studentParticipationRepository.findById(participationId).get());
+        var buildWithDetails = jenkinsRequestMockProvider.mockGetLatestBuildLogs(studentParticipationRepository.findById(participationId).get(), useLegacyBuildLogs);
         database.changeUser(userLogin);
         var receivedLogs = request.get("/api/repository/" + participationId + "/buildlogs", HttpStatus.OK, List.class);
         assertThat(receivedLogs).isNotNull();

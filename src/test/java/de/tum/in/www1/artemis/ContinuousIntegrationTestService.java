@@ -49,6 +49,8 @@ public class ContinuousIntegrationTestService {
 
     private ContinuousIntegrationService continuousIntegrationService;
 
+    public ProgrammingExercise programmingExercise;
+
     /**
      * This method initializes the test case by setting up a local repo
      */
@@ -58,7 +60,7 @@ public class ContinuousIntegrationTestService {
 
         database.addUsers(2, 0, 0, 0);
         database.addCourseWithOneProgrammingExercise();
-        ProgrammingExercise programmingExercise = programmingExerciseRepository.findAll().get(0);
+        programmingExercise = programmingExerciseRepository.findAll().get(0);
 
         // init local repo
         String currentLocalFileName = "currentFileName";
