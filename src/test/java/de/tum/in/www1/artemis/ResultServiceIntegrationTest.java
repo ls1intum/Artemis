@@ -87,8 +87,6 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
 
     private ModelingExercise examModelingExercise;
 
-    private Exam exam;
-
     private SolutionProgrammingExerciseParticipation solutionParticipation;
 
     private ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation;
@@ -112,12 +110,12 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
         modelingExerciseRepository.save(modelingExercise);
         studentParticipation = database.createAndSaveParticipationForExercise(modelingExercise, "student2");
 
-        this.exam = database.addExamWithExerciseGroup(this.course, true);
+        Exam exam = database.addExamWithExerciseGroup(this.course, true);
         this.examModelingExercise = new ModelingExercise();
         this.examModelingExercise.setMaxPoints(100D);
-        this.examModelingExercise.setExerciseGroup(this.exam.getExerciseGroups().get(0));
+        this.examModelingExercise.setExerciseGroup(exam.getExerciseGroups().get(0));
         this.modelingExerciseRepository.save(this.examModelingExercise);
-        this.examRepository.save(this.exam);
+        this.examRepository.save(exam);
 
         Result result = ModelFactory.generateResult(true, 200D).resultString("Good effort!").participation(programmingExerciseStudentParticipation);
         List<Feedback> feedbacks = ModelFactory.generateFeedback().stream().peek(feedback -> feedback.setText("Good work here")).collect(Collectors.toList());
@@ -654,8 +652,8 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void createResultForExternalSubmissionExam() throws Exception {
         Result result = new Result().rated(false);
-        var createdResult = request.postWithResponseBody("/api/exercises/" + this.examModelingExercise.getId() + "/external-submission-results?studentLogin=student1", result,
-                Result.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody("/api/exercises/" + this.examModelingExercise.getId() + "/external-submission-results?studentLogin=student1", result, Result.class,
+                HttpStatus.BAD_REQUEST);
     }
 
     private String externalResultPath(long exerciseId, String studentLogin) {
