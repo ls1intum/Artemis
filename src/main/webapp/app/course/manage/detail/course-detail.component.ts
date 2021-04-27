@@ -4,7 +4,7 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Subscription } from 'rxjs/Subscription';
 import { JhiEventManager } from 'ng-jhipster';
 import { Course } from 'app/entities/course.model';
-import { CourseManagementService } from './course-management.service';
+import { CourseManagementService } from '../course-management.service';
 import { CachingStrategy } from 'app/shared/image/secured-image.component';
 import { isOrion } from 'app/shared/orion/orion';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';

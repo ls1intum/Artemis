@@ -1,21 +1,21 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
-import { ArtemisTestModule } from '../../test.module';
-import { CourseDetailComponent } from 'app/course/manage/course-detail.component';
+import { ArtemisTestModule } from '../../../test.module';
+import { CourseDetailComponent } from 'app/course/manage/detail/course-detail.component';
 import { TranslateService } from '@ngx-translate/core';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe.ts';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
-import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
+import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import * as moment from 'moment';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import * as sinon from 'sinon';
 import { JhiAlertService, JhiTranslateDirective } from 'ng-jhipster';
-import { MockRouterLinkDirective } from '../lecture-unit/lecture-unit-management.component.spec';
+import { MockRouterLinkDirective } from '../../lecture-unit/lecture-unit-management.component.spec';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { AlertComponent } from 'app/shared/alert/alert.component';
 import { AlertErrorComponent } from 'app/shared/alert/alert-error.component';
@@ -26,8 +26,8 @@ import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.dire
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { HttpResponse } from '@angular/common/http';
 import { JhiEventManager } from 'ng-jhipster';
-import { CourseDetailDoughnutChartComponent } from 'app/course/manage/course-detail-doughnut-chart.component';
-import { CourseDetailBarChartComponent } from 'app/course/manage/course-detail-bar-chart.component';
+import { CourseDetailDoughnutChartComponent } from 'app/course/manage/detail/course-detail-doughnut-chart.component';
+import { CourseDetailBarChartComponent } from 'app/course/manage/detail/course-detail-bar-chart.component';
 import { CourseManagementDetailViewDto } from 'app/course/manage/course-management-detail-view-dto.model';
 import { RouterTestingModule } from '@angular/router/testing';
 

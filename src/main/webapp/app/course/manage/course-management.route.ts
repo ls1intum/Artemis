@@ -7,7 +7,7 @@ import { filter, map } from 'rxjs/operators';
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from './course-management.service';
 import { CourseManagementComponent } from './course-management.component';
-import { CourseDetailComponent } from './course-detail.component';
+import { CourseDetailComponent } from './detail/course-detail.component';
 import { CourseUpdateComponent } from './course-update.component';
 import { CourseManagementExercisesComponent } from './course-management-exercises.component';
 import { CourseGroupComponent } from 'app/course/manage/course-group.component';

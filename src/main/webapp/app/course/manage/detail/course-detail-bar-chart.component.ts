@@ -4,7 +4,7 @@ import { Label } from 'ng2-charts';
 import { TranslateService } from '@ngx-translate/core';
 import * as moment from 'moment';
 import { Graphs, SpanType } from 'app/entities/statistics.model';
-import { CourseManagementService } from './course-management.service';
+import { CourseManagementService } from '../course-management.service';
 
 @Component({
     selector: 'jhi-course-detail-bar-chart',
@@ -19,12 +19,10 @@ export class CourseDetailBarChartComponent implements OnChanges {
     initialStats: number[];
     initialStatsReceived = false;
 
-    currentSpan: SpanType;
     graphType: Graphs = Graphs.ACTIVE_STUDENTS;
 
     LEFT = false;
     RIGHT = true;
-    SpanType = SpanType;
     Graphs = Graphs;
 
     // Chart
@@ -37,7 +35,7 @@ export class CourseDetailBarChartComponent implements OnChanges {
     // Data
     barChartLabels: Label[] = [];
     chartData: ChartDataSets[] = [];
-    dataForSpanType: number[] = [];
+    data: number[] = [];
 
     // Left arrow -> decrease, right arrow -> increase
     private currentPeriod = 0;
@@ -54,15 +52,15 @@ export class CourseDetailBarChartComponent implements OnChanges {
         this.createLabels();
         if (this.numberOfStudentsInCourse > 0) {
             for (const value of this.initialStats) {
-                this.dataForSpanType.push(Math.round((value / this.numberOfStudentsInCourse) * 100));
+                this.data.push(Math.round((value / this.numberOfStudentsInCourse) * 100));
             }
         } else {
-            this.dataForSpanType = new Array(this.initialStats.length).fill(0);
+            this.data = new Array(this.initialStats.length).fill(0);
         }
         this.chartData = [
             {
                 label: this.amountOfStudents,
-                data: this.dataForSpanType,
+                data: this.data,
                 backgroundColor: 'rgba(53,61,71,1)',
                 borderColor: 'rgba(53,61,71,1)',
                 fill: false,
@@ -76,11 +74,19 @@ export class CourseDetailBarChartComponent implements OnChanges {
     private reloadChart() {
         this.createLabels();
         this.service.getStatisticsData(this.courseId, this.currentPeriod).subscribe((res: number[]) => {
-            this.dataForSpanType = res;
+            if (this.numberOfStudentsInCourse > 0) {
+                this.data = [];
+                for (const value of res) {
+                    this.data.push(Math.round((value / this.numberOfStudentsInCourse) * 100));
+                }
+            } else {
+                this.data = new Array(res.length).fill(0);
+            }
+            // this.data = res;
             this.chartData = [
                 {
                     label: this.amountOfStudents,
-                    data: this.dataForSpanType,
+                    data: this.data,
                     backgroundColor: 'rgba(53,61,71,1)',
                     borderColor: 'rgba(53,61,71,1)',
                     fill: false,
