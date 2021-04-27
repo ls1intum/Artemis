@@ -1,16 +1,10 @@
 import { RouterTestingModule } from '@angular/router/testing';
-import { TranslateService } from '@ngx-translate/core';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe.ts';
 import * as chai from 'chai';
-import { MockPipe } from 'ng-mocks';
 import { ChartsModule } from 'ng2-charts';
-import { MomentModule } from 'ngx-moment';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import * as sinonChai from 'sinon-chai';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
-import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { ArtemisTestModule } from '../../../test.module';
 import { CourseDetailDoughnutChartComponent } from 'app/course/manage/detail/course-detail-doughnut-chart.component';
 
@@ -21,16 +15,17 @@ describe('CourseDetailDoughnutChartComponent', () => {
     let fixture: ComponentFixture<CourseDetailDoughnutChartComponent>;
     let component: CourseDetailDoughnutChartComponent;
 
-    const initialStats = [26, 47, 78, 66];
+    const absolute = 80;
+    const percentage = 80;
+    const max = 100;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, RouterTestingModule.withRoutes([]), MomentModule, ChartsModule],
-            declarations: [CourseDetailDoughnutChartComponent, MockPipe(ArtemisTranslatePipe)],
+            imports: [ArtemisTestModule, RouterTestingModule.withRoutes([]), ChartsModule],
+            declarations: [CourseDetailDoughnutChartComponent],
             providers: [
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
-                { provide: TranslateService, useClass: MockTranslateService },
             ],
         })
             .compileComponents()
@@ -42,17 +37,19 @@ describe('CourseDetailDoughnutChartComponent', () => {
 
     beforeEach(() => {
         component.doughnutChartTitle = 'Assessments';
-        component.currentPercentage = 80;
-        component.currentAbsolute = 80;
-        component.currentMax = 100;
-    });
-
-    afterEach(() => {
-        jest.clearAllMocks();
+        component.currentPercentage = absolute;
+        component.currentAbsolute = percentage;
+        component.currentMax = max;
     });
 
     it('should initialize', () => {
-        fixture.detectChanges();
-        expect(component).to.be.ok;
+        component.ngOnInit();
+        const expected = [absolute, max - absolute];
+        expect(component.stats).to.deep.equal(expected);
+        expect(component.doughnutChartData[0].data).to.deep.equal(expected);
+
+        component.currentMax = 0;
+        component.ngOnInit();
+        expect(component.doughnutChartData[0].data).to.deep.equal([-1, 0]);
     });
 });

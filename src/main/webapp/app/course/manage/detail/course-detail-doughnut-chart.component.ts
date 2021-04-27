@@ -43,10 +43,11 @@ export class CourseDetailDoughnutChartComponent implements OnInit {
 
     ngOnInit(): void {
         this.stats = [this.currentAbsolute, this.currentMax - this.currentAbsolute];
-        this.doughnutChartData[0].data = this.stats;
         if (this.currentMax === 0) {
             // [0, 0] will lead to the chart not being displayed - is further handled in the option tooltips
             this.doughnutChartData[0].data = [-1, 0];
+        } else {
+            this.doughnutChartData[0].data = this.stats;
         }
     }
 }
