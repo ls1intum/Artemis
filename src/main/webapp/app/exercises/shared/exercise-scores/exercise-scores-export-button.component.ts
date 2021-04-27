@@ -64,6 +64,7 @@ export class ExerciseScoresExportButtonComponent {
                 link.setAttribute('download', `${exercise.shortName}-results-scores.csv`);
                 document.body.appendChild(link); // Required for FF
                 link.click();
+                document.body.removeChild(link);
             });
         });
     }
