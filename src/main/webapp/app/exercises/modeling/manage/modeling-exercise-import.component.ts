@@ -7,7 +7,7 @@ import { SortService } from 'app/shared/service/sort.service';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { ModelingExercisePagingService } from 'app/exercises/modeling/manage/modeling-exercise-paging.service';
 
-enum TableColumn {
+export enum TableColumn {
     ID = 'ID',
     TITLE = 'TITLE',
     COURSE_TITLE = 'COURSE_TITLE',
