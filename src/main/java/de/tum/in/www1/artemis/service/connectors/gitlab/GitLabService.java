@@ -83,7 +83,7 @@ public class GitLabService extends AbstractVersionControlService {
             // Automatically created users
             if ((userPrefixEdx.isPresent() && username.startsWith(userPrefixEdx.get())) || (userPrefixU4I.isPresent() && username.startsWith((userPrefixU4I.get())))) {
                 if (!userExists(username)) {
-                    gitLabUserManagementService.importUser(user);
+                    gitLabUserManagementService.createUser(user);
                 }
             }
             if (allowAccess && !Boolean.FALSE.equals(exercise.isAllowOfflineIde())) {
@@ -331,7 +331,7 @@ public class GitLabService extends AbstractVersionControlService {
         for (final var instructor : instructors) {
             try {
                 final var userId = gitLabUserManagementService.getUserId(instructor.getLogin());
-                gitLabUserManagementService.addUserToGroups(userId, List.of(programmingExercise), MAINTAINER);
+                gitLabUserManagementService.addUserToGroupsOfExercises(userId, List.of(programmingExercise), MAINTAINER);
             }
             catch (GitLabException ignored) {
                 // ignore the exception and continue with the next user, one non existing user or issue here should not prevent the creation of the whole programming exercise
@@ -340,7 +340,7 @@ public class GitLabService extends AbstractVersionControlService {
         for (final var tutor : tutors) {
             try {
                 final var userId = gitLabUserManagementService.getUserId(tutor.getLogin());
-                gitLabUserManagementService.addUserToGroups(userId, List.of(programmingExercise), REPORTER);
+                gitLabUserManagementService.addUserToGroupsOfExercises(userId, List.of(programmingExercise), REPORTER);
             }
             catch (GitLabException ignored) {
                 // ignore the exception and continue with the next user, one non existing user or issue here should not prevent the creation of the whole programming exercise

@@ -321,7 +321,7 @@ public class GitlabRequestMockProvider {
     }
 
     public void mockDeleteVcsUser(String login, boolean shouldFailToDelete) throws GitLabApiException {
-        mockGetUserId(login, true);
+        mockGetUserId(login, true, false);
         if (shouldFailToDelete) {
             doThrow(GitLabApiException.class).when(userApi).deleteUser(anyInt(), eq(true));
         }
@@ -330,8 +330,15 @@ public class GitlabRequestMockProvider {
         }
     }
 
-    private void mockGetUserId(String username, boolean userExists) throws GitLabApiException {
-        if (userExists) {
+    public void mockDeleteVcsUserFailToGetUserId(String login) throws GitLabApiException {
+        mockGetUserId(login, true, true);
+    }
+
+    private void mockGetUserId(String username, boolean userExists, boolean shouldFail) throws GitLabApiException {
+        if (shouldFail) {
+            doThrow(GitLabApiException.class).when(userApi).getUser(username);
+        }
+        else if (userExists) {
             doReturn(new User().withId(1)).when(userApi).getUser(username);
         }
         else {
@@ -350,6 +357,16 @@ public class GitlabRequestMockProvider {
             mockAddUserToGroups(userId, instructorExercises, MAINTAINER);
             mockAddUserToGroups(userId, teachingAssistantExercises, GUEST);
         }
+    }
+
+    public void mockAddUserToGroupsUserExists(de.tum.in.www1.artemis.domain.User user, String projectKey) throws GitLabApiException {
+        var userId = mockGetUserIdCreateIfNotExist(user, false, false);
+        doThrow(new GitLabApiException("Member already exists")).when(groupApi).addMember(eq(projectKey), eq(userId), any(AccessLevel.class));
+    }
+
+    public void mockAddUserToGroupsFails(de.tum.in.www1.artemis.domain.User user, String projectKey) throws GitLabApiException {
+        var userId = mockGetUserIdCreateIfNotExist(user, false, false);
+        doThrow(new GitLabApiException("Oh no")).when(groupApi).addMember(eq(projectKey), eq(userId), any(AccessLevel.class));
     }
 
     private int mockGetUserIdCreateIfNotExist(de.tum.in.www1.artemis.domain.User user, boolean userExists, boolean shouldFail) throws GitLabApiException {
@@ -392,7 +409,7 @@ public class GitlabRequestMockProvider {
         // Find all NEW instructors, that did not belong to the old TAs or instructors
         final var remainingInstructors = userRepository.findAllUserInGroupAndNotIn(updatedCourse.getInstructorGroupName(), processedUsers);
         for (var user : remainingInstructors) {
-            mockGetUserId(user.getLogin(), true);
+            mockGetUserId(user.getLogin(), true, false);
             mockAddUserToGroups(1, exercises, MAINTAINER);
         }
         processedUsers.addAll(remainingInstructors);
@@ -400,7 +417,7 @@ public class GitlabRequestMockProvider {
         // Find all NEW TAs that did not belong to the old TAs or instructors
         final var remainingTeachingAssistants = userRepository.findAllUserInGroupAndNotIn(updatedCourse.getTeachingAssistantGroupName(), processedUsers);
         for (var user : remainingTeachingAssistants) {
-            mockGetUserId(user.getLogin(), true);
+            mockGetUserId(user.getLogin(), true, false);
             mockAddUserToGroups(1, exercises, GUEST);
         }
     }
@@ -408,7 +425,7 @@ public class GitlabRequestMockProvider {
     private void mockUpdateOldGroupMembers(List<ProgrammingExercise> exercises, List<de.tum.in.www1.artemis.domain.User> users, String newGroupName, String alternativeGroupName,
             AccessLevel alternativeAccessLevel, boolean doUpgrade) throws GitLabApiException {
         for (final var user : users) {
-            mockGetUserId(user.getLogin(), true);
+            mockGetUserId(user.getLogin(), true, false);
             final var userId = 1;
             /*
              * Contains the access level of the other group, to which the user currently does NOT belong, IF the user could be in that group E.g. user1(groups=[foo,bar]),
@@ -482,7 +499,7 @@ public class GitlabRequestMockProvider {
 
     public void setRepositoryPermissionsToReadOnly(VcsRepositoryUrl repositoryUrl, String projectKey, Set<de.tum.in.www1.artemis.domain.User> users) throws GitLabApiException {
         for (var user : users) {
-            mockGetUserId(user.getLogin(), true);
+            mockGetUserId(user.getLogin(), true, false);
             final var repositoryId = getPathIDFromRepositoryURL(repositoryUrl);
             doReturn(new Member()).when(projectApi).updateMember(repositoryId, 1, GUEST);
         }

@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.authentication;
 
 import java.io.IOException;
+import java.util.Set;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -188,6 +189,14 @@ public class UserJenkinsGitlabIntegrationTest extends AbstractSpringIntegrationJ
 
     @Test
     @WithMockUser(value = "admin", roles = "ADMIN")
+    public void deleteUser_failToGetUserIdInGitlab() throws Exception {
+        var student = userTestService.student;
+        gitlabRequestMockProvider.mockDeleteVcsUserFailToGetUserId(student.getLogin());
+        request.delete("/api/users/" + student.getLogin(), HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    @Test
+    @WithMockUser(value = "admin", roles = "ADMIN")
     public void deleteUser_doesntExistInUserManagement_isSuccessful() throws Exception {
         userTestService.deleteUser_doesntExistInUserManagement_isSuccessful();
     }
@@ -274,6 +283,39 @@ public class UserJenkinsGitlabIntegrationTest extends AbstractSpringIntegrationJ
     @WithMockUser(username = "admin", roles = "ADMIN")
     public void createUserWithGroups() throws Exception {
         userTestService.createUserWithGroups();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    public void createUserWithGroupsAlreadyExistsInGitlab() throws Exception {
+        var course = database.addEmptyCourse();
+        var programmingExericse = database.addProgrammingExerciseToCourse(course, false);
+
+        var newUser = userTestService.student;
+        newUser.setId(null);
+        newUser.setLogin("batman");
+        newUser.setEmail("foobar@tum.com");
+        newUser.setGroups(Set.of("tutor", "instructor"));
+
+        gitlabRequestMockProvider.mockAddUserToGroupsUserExists(newUser, programmingExericse.getProjectKey());
+        jenkinsRequestMockProvider.mockCreateUser(newUser, false, false, false);
+        request.post("/api/users", new ManagedUserVM(newUser), HttpStatus.CREATED);
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    public void createUserWithGroupsAlreadyFailsInGitlab() throws Exception {
+        var course = database.addEmptyCourse();
+        var programmingExericse = database.addProgrammingExerciseToCourse(course, false);
+
+        var newUser = userTestService.student;
+        newUser.setId(null);
+        newUser.setLogin("batman");
+        newUser.setEmail("foobar@tum.com");
+        newUser.setGroups(Set.of("tutor", "instructor2"));
+
+        gitlabRequestMockProvider.mockAddUserToGroupsFails(newUser, programmingExericse.getProjectKey());
+        request.post("/api/users", new ManagedUserVM(newUser), HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @Test

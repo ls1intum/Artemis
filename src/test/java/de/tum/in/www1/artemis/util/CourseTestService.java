@@ -376,6 +376,16 @@ public class CourseTestService {
         course.setInstructorGroupName("new-instructor-group");
         course.setTeachingAssistantGroupName("new-ta-group");
 
+        // Create instructor in the course
+        var user = ModelFactory.generateActivatedUser("instructor11");
+        user.setGroups(Set.of("new-instructor-group"));
+        userRepo.save(user);
+
+        // Create teaching assisstant in the course
+        user = ModelFactory.generateActivatedUser("teaching-assisstant11");
+        user.setGroups(Set.of("new-ta-group"));
+        userRepo.save(user);
+
         mockDelegate.mockUpdateCoursePermissions(course, oldInstructorGroup, oldTeachingAssistantGroup);
         Course updatedCourse = request.putWithResponseBody("/api/courses", course, Course.class, HttpStatus.OK);
 
