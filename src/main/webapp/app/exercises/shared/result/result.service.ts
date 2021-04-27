@@ -13,7 +13,6 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { ParticipationType } from 'app/entities/participation/participation.model';
 import { addUserIndependentRepositoryUrl } from 'app/overview/participation-utils';
-import { DifferencePipe } from 'ngx-moment';
 import { tap } from 'rxjs/operators';
 
 export type EntityResponseType = HttpResponse<Result>;
@@ -35,7 +34,7 @@ export class ResultService implements IResultService {
     private submissionResourceUrl = SERVER_API_URL + 'api/submissions';
     private participationResourceUrl = SERVER_API_URL + 'api/participations';
 
-    constructor(private http: HttpClient, private exerciseService: ExerciseService, private momentDiff: DifferencePipe) {}
+    constructor(private http: HttpClient, private exerciseService: ExerciseService) {}
 
     find(resultId: number): Observable<EntityResponseType> {
         return this.http
@@ -143,8 +142,8 @@ export class ResultService implements IResultService {
                         result.participation!.initializationDate ? result.participation!.initializationDate : exercise.releaseDate!,
                     );
                     // Nest submission into participation so that it is available for the result component
-                    if (result.participation && result.submission) {
-                        result.participation.submissions = [result.submission];
+                    if (result.submission) {
+                        result.participation!.submissions = [result.submission];
                     }
                     return result;
                 });
@@ -156,6 +155,6 @@ export class ResultService implements IResultService {
      * Utility function
      */
     private durationInMinutes(completionDate: Moment, initializationDate: Moment) {
-        return this.momentDiff.transform(completionDate, initializationDate, 'minutes');
+        return moment(completionDate).diff(initializationDate, 'minutes');
     }
 }

@@ -47,13 +47,7 @@ export class ExerciseScoresExportButtonComponent {
                     const score = round(result.score);
 
                     if (index === 0) {
-                        const nameAndUserNameColumnHeaders = studentParticipation.team ? 'Team Name,Team Short Name' : 'Name,Username';
-                        const optionalStudentsColumnHeader = studentParticipation.team ? ',Students' : '';
-                        if (this.exercise.type !== ExerciseType.PROGRAMMING) {
-                            rows.push(`data:text/csv;charset=utf-8,${nameAndUserNameColumnHeaders},Score${optionalStudentsColumnHeader}`);
-                        } else {
-                            rows.push(`data:text/csv;charset=utf-8,${nameAndUserNameColumnHeaders},Score,Repo Link${optionalStudentsColumnHeader}`);
-                        }
+                        rows.push(this.getHeadersRow(studentParticipation));
                     }
                     const optionalStudentsColumnValue = studentParticipation.team ? `,"${studentParticipation.team?.students?.map((s) => s.name).join(', ')}"` : '';
                     if (this.exercise.type !== ExerciseType.PROGRAMMING) {
@@ -72,5 +66,19 @@ export class ExerciseScoresExportButtonComponent {
                 link.click();
             });
         });
+    }
+
+    /**
+     * Utility method used to retrieve the headers row for CSV creation
+     * @param studentParticipation to create headers for
+     */
+    getHeadersRow(studentParticipation: StudentParticipation) {
+        const nameAndUserNameColumnHeaders = studentParticipation.team ? 'Team Name,Team Short Name' : 'Name,Username';
+        const optionalStudentsColumnHeader = studentParticipation.team ? ',Students' : '';
+        if (this.exercise.type !== ExerciseType.PROGRAMMING) {
+            return `data:text/csv;charset=utf-8,${nameAndUserNameColumnHeaders},Score${optionalStudentsColumnHeader}`;
+        } else {
+            return `data:text/csv;charset=utf-8,${nameAndUserNameColumnHeaders},Score,Repo Link${optionalStudentsColumnHeader}`;
+        }
     }
 }

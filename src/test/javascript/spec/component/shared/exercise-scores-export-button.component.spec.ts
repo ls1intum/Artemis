@@ -65,11 +65,10 @@ describe('ExerciseScoresExportButtonComponent', () => {
     });
 
     afterEach(async () => {
-        jest.clearAllMocks();
         sinon.restore();
     });
 
-    it('should export results for one exercise', fakeAsync(() => {
+    it('should export results for one exercise', () => {
         // GIVEN
         const getResultsStub = sinon.stub(resultService, 'getResults').returns(of(new HttpResponse({ body: [result1, result2] })));
         component.exercise = exercise1;
@@ -80,9 +79,9 @@ describe('ExerciseScoresExportButtonComponent', () => {
 
         // THEN
         expect(getResultsStub).to.have.been.called;
-    }));
+    });
 
-    it('should export results for multiple exercise', fakeAsync(() => {
+    it('should export results for multiple exercise', () => {
         // GIVEN
         const getResultsStub = sinon.stub(resultService, 'getResults').returns(of(new HttpResponse({ body: [result1, result2] })));
         component.exercises = [exercise1, exercise2];
@@ -93,5 +92,5 @@ describe('ExerciseScoresExportButtonComponent', () => {
 
         // THEN
         expect(getResultsStub).to.have.been.calledTwice;
-    }));
+    });
 });
