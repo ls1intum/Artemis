@@ -529,44 +529,45 @@ Manual Jenkins Server Setup
 
        echo "client_max_body_size 16m;" > client_max_body_size.conf
 5. The NGINX default timeout is pretty low. For plagarism check and unlocking student repos for the exam a higher timeout is advisable. Therefore we write our own nginx.conf and load it in the container.
-   ::
-
-       echo "
-        user  nginx;
-        worker_processes  auto;
-
-        error_log  /var/log/nginx/error.log warn;
-        pid        /var/run/nginx.pid;
 
 
-        events {
-            worker_connections  1024;
-        }
+   .. code:: nginx
+
+            user  nginx;
+            worker_processes  auto;
+
+            error_log  /var/log/nginx/error.log warn;
+            pid        /var/run/nginx.pid;
 
 
-        http {
-            include       /etc/nginx/mime.types;
-            default_type  application/octet-stream;
+            events {
+                worker_connections  1024;
+            }
 
-            log_format  main  '$remote_addr - $remote_user [$time_local] "$request" '
-                              '$status $body_bytes_sent "$http_referer" '
-                              '"$http_user_agent" "$http_x_forwarded_for"';
 
-            access_log  /var/log/nginx/access.log  main;
+            http {
+                include       /etc/nginx/mime.types;
+                default_type  application/octet-stream;
 
-            fastcgi_read_timeout 300;
-            proxy_read_timeout 300;
+                log_format  main  '$remote_addr - $remote_user [$time_local] "$request" '
+                                  '$status $body_bytes_sent "$http_referer" '
+                                  '"$http_user_agent" "$http_x_forwarded_for"';
 
-            sendfile        on;
-            #tcp_nopush     on;
+                access_log  /var/log/nginx/access.log  main;
 
-            keepalive_timeout  65;
+                fastcgi_read_timeout 300;
+                proxy_read_timeout 300;
 
-            #gzip  on;
+                sendfile        on;
+                #tcp_nopush     on;
 
-            include /etc/nginx/conf.d/*.conf;
-        }
-        daemon off;" > nginx.conf
+                keepalive_timeout  65;
+
+                #gzip  on;
+
+                include /etc/nginx/conf.d/*.conf;
+            }
+            daemon off
 
 6. Run the NGINX proxy docker container, this will automatically setup
    all reverse proxies and force https on all connections. (This image
