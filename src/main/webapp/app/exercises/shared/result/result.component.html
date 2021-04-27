@@ -18,17 +18,12 @@
                     <span *ngIf="!short" jhiTranslate="artemisApp.result.score">Score</span>
                     {{ round(result.score) }} %,
                 </span>
-                <ng-container *ngIf="!onlyShowSuccessfulCompileStatus">
-                    <span *ngIf="hasFeedback">
-                        <span class="guided-tour result" (click)="showDetails(result)" [ngbTooltip]="resultTooltip" container="body">{{ resultString }}</span>
-                    </span>
-                    <span *ngIf="!hasFeedback" [ngbTooltip]="resultTooltip" container="body">
-                        {{ result.resultString }}
-                    </span>
-                </ng-container>
-                <ng-container *ngIf="onlyShowSuccessfulCompileStatus">
-                    <span jhiTranslate="artemisApp.editor.buildSuccessful">Build successful</span>
-                </ng-container>
+                <span *ngIf="hasFeedback">
+                    <span class="guided-tour result" (click)="showDetails(result)" [ngbTooltip]="resultTooltip" container="body">{{ resultString }}</span>
+                </span>
+                <span *ngIf="!hasFeedback" [ngbTooltip]="resultTooltip" container="body">
+                    {{ result.resultString }}
+                </span>
                 <span *ngIf="!short"> ({{ result.completionDate! | artemisTimeAgo }}) </span>
                 <!-- TODO in the future we should make sure that result.submission.submissionDate is used here, because submissionDate and completionDate can be different for certain exercise types -->
             </span>
@@ -38,8 +33,8 @@
                     <span jhiTranslate="artemisApp.editor.downloadBuildResult">Download Build Result</span>
                 </a>
             </span>
-            <span *ngIf="showGradedBadge" class="badge" [ngClass]="{ 'badge-info': !result.rated || onlyShowSuccessfulCompileStatus, 'badge-success': result.rated }">
-                {{ (result.rated && !onlyShowSuccessfulCompileStatus ? 'artemisApp.result.graded' : 'artemisApp.result.notGraded') | artemisTranslate | uppercase }}
+            <span *ngIf="showGradedBadge" class="badge" [ngClass]="{ 'badge-info': !result.rated, 'badge-success': result.rated }">
+                {{ (result.rated ? 'artemisApp.result.graded' : 'artemisApp.result.notGraded') | artemisTranslate | uppercase }}
             </span>
         </ng-container>
     </ng-container>
