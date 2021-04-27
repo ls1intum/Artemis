@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.connector.bamboo;
+package de.tum.in.www1.artemis.connector;
 
 import static de.tum.in.www1.artemis.util.FileUtils.loadFileFromResources;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.*;
@@ -30,7 +30,6 @@ import org.springframework.web.util.UriComponentsBuilder;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import de.tum.in.www1.artemis.connector.bitbucket.BitbucketRequestMockProvider;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
@@ -497,7 +496,12 @@ public class BambooRequestMockProvider {
 
     public void mockDeleteBambooBuildPlan(String planKey, boolean buildPlanExists) throws URISyntaxException, JsonProcessingException {
 
-        mockGetBuildPlan(planKey, null, false);
+        if (buildPlanExists) {
+            mockGetBuildPlan(planKey, new BambooBuildPlanDTO(planKey), false);
+        }
+        else {
+            mockGetBuildPlan(planKey, null, false);
+        }
         if (!buildPlanExists) {
             return;
         }
