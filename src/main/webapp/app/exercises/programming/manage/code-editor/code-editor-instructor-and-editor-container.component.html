@@ -111,7 +111,7 @@
                     [spin]="true"
                     class="text-white mr-2"
                 ></fa-icon>
-                <span jhiTranslate="artemisApp.editor.repoSelect.deleteAssignmentRepo">Delete assignment participation</span>
+                <span *ngIf="exercise.isAtLeastInstructor" jhiTranslate="artemisApp.editor.repoSelect.deleteAssignmentRepo">Delete assignment participation</span>
             </button>
         </div>
     </div>
