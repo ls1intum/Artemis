@@ -111,7 +111,7 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     }
 
     @Test
-    @WithMockUser(value = "tutor1", roles = "INSTRUCTOR")
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void deleteTextExercise_notFound() throws Exception {
         TextExercise textExercise = new TextExercise();
         textExercise.setId(114213211L);
