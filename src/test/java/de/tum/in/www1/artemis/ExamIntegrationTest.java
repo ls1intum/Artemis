@@ -1128,7 +1128,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
         // Should save new order
         request.put("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/exercise-groups-order", orderedExerciseGroups, HttpStatus.OK);
-        verify(examAccessService, times(1)).checkCourseAndExamAccessForInstructor(course1.getId(), exam.getId());
+        verify(examAccessService, times(2)).checkCourseAndExamAccessForInstructor(course1.getId(), exam.getId());
         List<ExerciseGroup> savedExerciseGroups = examRepository.findWithExerciseGroupsById(exam.getId()).get().getExerciseGroups();
         assertThat(savedExerciseGroups.get(0).getTitle()).isEqualTo("second");
         assertThat(savedExerciseGroups.get(1).getTitle()).isEqualTo("third");
