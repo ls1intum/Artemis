@@ -391,7 +391,7 @@ This is the same reason as to why you should not name your variables int a, doub
         // Test Code
     }
 
-se appropriate timeouts for test cases and take Bamboo into consideration. For regular test cases, using a ``@StrictTimeout(1)``  annotation is enough. This represents a strict timeout of one second.
+set appropriate timeouts for test cases and take Bamboo into consideration. For regular test cases, using a ``@StrictTimeout(1)``  annotation is enough. This represents a strict timeout of one second.
 The value type of the strict timeout annotation defaults to seconds, if you need, for some reason, a shorter timeout, something like ``@StrictTimeout(value = 500, unit = TimeUnit.MILLISECONDS)`` works as well.
 
 .. code-block:: java
