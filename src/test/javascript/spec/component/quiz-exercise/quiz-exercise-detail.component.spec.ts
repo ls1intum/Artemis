@@ -239,7 +239,9 @@ describe('QuizExercise Management Detail Component', () => {
         });
 
         describe('with exam id', () => {
-            const testRoute = ({ snapshot: { paramMap: convertToParamMap({ courseId: course.id, exerciseId: quizExercise.id, examId: 1, groupId: 2 }) } } as any) as ActivatedRoute;
+            const testRoute = ({
+                snapshot: { paramMap: convertToParamMap({ courseId: course.id, exerciseId: quizExercise.id, examId: 1, exerciseGroupId: 2 }) },
+            } as any) as ActivatedRoute;
             beforeEach(waitForAsync(() => configureTestBed(testRoute)));
             beforeEach(configureFixtureAndServices);
             it('should call exerciseGroupService.find', () => {
@@ -256,7 +258,7 @@ describe('QuizExercise Management Detail Component', () => {
             });
         });
         describe('with exam id but without exercise id', () => {
-            const testRoute = ({ snapshot: { paramMap: convertToParamMap({ courseId: course.id, examId: 1, groupId: 2 }) } } as any) as ActivatedRoute;
+            const testRoute = ({ snapshot: { paramMap: convertToParamMap({ courseId: course.id, examId: 1, exerciseGroupId: 2 }) } } as any) as ActivatedRoute;
             beforeEach(waitForAsync(() => configureTestBed(testRoute)));
             beforeEach(configureFixtureAndServices);
             it('should call exerciseGroupService.find', () => {
@@ -298,10 +300,6 @@ describe('QuizExercise Management Detail Component', () => {
         describe('init', () => {
             let exerciseServiceCategoriesAsStringStub: SinonStub;
             let courseServiceStub: SinonStub;
-            const testExerciseCategories = [
-                { exerciseId: 1, category: 'category1', color: 'color1' },
-                { exerciseId: 2, category: 'category2', color: 'color2' },
-            ];
             const testExistingCategories = [
                 { exerciseId: 1, category: 'eCategory1', color: 'eColor1' },
                 { exerciseId: 2, category: 'eCategory2', color: 'eColor2' },

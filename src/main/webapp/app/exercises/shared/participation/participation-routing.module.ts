@@ -3,18 +3,19 @@ import { ParticipationComponent } from 'app/exercises/shared/participation/parti
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { NgModule } from '@angular/core';
 import { Authority } from 'app/shared/constants/authority.constants';
+import { exerciseTypes } from 'app/entities/exercise.model';
 
-const routes: Routes = [
-    {
-        path: ':courseId/exercises/:exerciseId/participations',
+const routes: Routes = exerciseTypes.map((exerciseType) => {
+    return {
+        path: ':courseId/' + exerciseType + '-exercises/:exerciseId/participations',
         component: ParticipationComponent,
         data: {
             authorities: [Authority.TA, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.participation.home.title',
         },
         canActivate: [UserRouteAccessService],
-    },
-];
+    };
+});
 
 @NgModule({
     imports: [RouterModule.forChild(routes)],

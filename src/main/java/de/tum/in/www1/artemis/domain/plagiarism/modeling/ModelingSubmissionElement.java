@@ -31,4 +31,9 @@ public class ModelingSubmissionElement extends PlagiarismSubmissionElement {
     public void setModelElementId(String modelElementId) {
         this.modelElementId = modelElementId;
     }
+
+    @Override
+    public String toString() {
+        return "ModelingSubmissionElement{" + "modelElementId='" + modelElementId + '\'' + '}';
+    }
 }

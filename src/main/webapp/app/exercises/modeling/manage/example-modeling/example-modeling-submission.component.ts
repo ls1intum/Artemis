@@ -124,6 +124,7 @@ export class ExampleModelingSubmissionComponent implements OnInit {
                     this.result = result;
                     this.feedbacks = this.result.feedbacks || [];
                 }
+                this.checkScoreBoundaries();
             });
         });
     }
@@ -178,18 +179,19 @@ export class ExampleModelingSubmissionComponent implements OnInit {
             this.createNewExampleModelingSubmission();
         }
         this.modelingSubmission.model = JSON.stringify(this.modelingEditor.getCurrentModel());
+
         this.modelingSubmission.explanationText = this.explanationText;
         this.modelingSubmission.exampleSubmission = true;
         if (this.result) {
             this.result.feedbacks = this.feedbacks;
             setLatestSubmissionResult(this.modelingSubmission, this.result);
+            delete this.result.submission;
         }
 
         const exampleSubmission = this.exampleSubmission;
         exampleSubmission.submission = this.modelingSubmission;
         exampleSubmission.exercise = this.exercise;
         exampleSubmission.usedForTutorial = this.usedForTutorial;
-
         this.exampleSubmissionService.update(exampleSubmission, this.exerciseId).subscribe(
             (exampleSubmissionResponse: HttpResponse<ExampleSubmission>) => {
                 this.exampleSubmission = exampleSubmissionResponse.body!;
@@ -366,8 +368,9 @@ export class ExampleModelingSubmissionComponent implements OnInit {
         }
 
         const exampleSubmission = Object.assign({}, this.exampleSubmission);
-
-        setLatestSubmissionResult(exampleSubmission.submission, new Result());
+        const result = new Result();
+        setLatestSubmissionResult(exampleSubmission.submission, result);
+        delete result.submission;
         getLatestSubmissionResult(exampleSubmission.submission)!.feedbacks = this.feedbacks;
 
         this.tutorParticipationService.assessExampleSubmission(exampleSubmission, this.exerciseId).subscribe(

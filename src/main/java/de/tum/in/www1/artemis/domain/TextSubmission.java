@@ -100,4 +100,12 @@ public class TextSubmission extends Submission {
     public String toString() {
         return "TextSubmission{" + "id=" + getId() + ", text='" + getExcerpt() + "'" + ", language='" + getLanguage() + "'" + "}";
     }
+
+    public int countWords() {
+        if (text == null || text.isEmpty()) {
+            return 0;
+        }
+        String[] words = text.split("\\s+");
+        return words.length;
+    }
 }
