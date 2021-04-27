@@ -168,20 +168,6 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     List<Map<String, Object>> getActiveStudents(@Param("exerciseIds") Set<Long> exerciseIds, @Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate);
 
     /**
-     * Fetches the maximum amount of points a student could possibly get at the moment
-     *
-     * @param courseId - id of the course
-     * @param now - the current time in ZonedDateTime format
-     * @return max points
-     */
-    @Query("""
-            SELECT SUM(e.maxPoints)
-            FROM Exercise e
-            WHERE e.course.id = :courseId AND e.assessmentDueDate < :#{#now}
-            """)
-    Double getMaxReachablePointsInCourse(@Param("courseId") Long courseId, @Param("now") ZonedDateTime now);
-
-    /**
      * Fetches the courses to display for the management overview
      *
      * @param now ZonedDateTime of the current time. If an end date is set only courses before this time are returned. May be null to return all

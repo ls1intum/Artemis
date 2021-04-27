@@ -1324,6 +1324,7 @@ public class CourseResource {
                 .filter(exercise -> !exercise.getIncludedInOverallScore().equals(IncludedInOverallScore.NOT_INCLUDED)).collect(Collectors.toSet());
         var averageScoreForCourse = participantScoreRepository.findAvgScore(includedExercises);
         averageScoreForCourse = averageScoreForCourse != null ? averageScoreForCourse : 0.0;
+        var reachablePoints = includedExercises.stream().map(Exercise::getMaxPoints).collect(Collectors.toSet()).stream().mapToDouble(Double::doubleValue).sum();
 
         Set<Long> exerciseIdsOfCourse = includedExercises.stream().map(Exercise::getId).collect(Collectors.toSet());
         CourseManagementDetailViewDTO dto = courseService.getStatsForDetailView(courseId, exerciseIdsOfCourse);
@@ -1366,11 +1367,9 @@ public class CourseResource {
             dto.setCurrentPercentageMoreFeedbacks(0.0);
         }
         // Average Student Score
-        var reachablePoints = courseRepository.getMaxReachablePointsInCourse(courseId, now());
-        double maxPointsAchievableInCourse = reachablePoints != null ? reachablePoints : 0.0;
-        dto.setCurrentMaxAverageScore(maxPointsAchievableInCourse);
-        dto.setCurrentAbsoluteAverageScore(round((averageScoreForCourse / 100.0) * maxPointsAchievableInCourse));
-        if (maxPointsAchievableInCourse > 0.0) {
+        dto.setCurrentMaxAverageScore(reachablePoints);
+        dto.setCurrentAbsoluteAverageScore(round((averageScoreForCourse / 100.0) * reachablePoints));
+        if (reachablePoints > 0.0) {
             dto.setCurrentPercentageAverageScore(round(averageScoreForCourse));
         }
         else {
