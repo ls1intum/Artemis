@@ -803,9 +803,10 @@ public class ProgrammingExerciseService {
         Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
 
         final var instructorGroup = course.getInstructorGroupName();
+        final var editorGroup = course.getEditorGroupName();
         final var teachingAssistantGroup = course.getTeachingAssistantGroupName();
 
-        continuousIntegrationService.get().giveProjectPermissions(exercise.getProjectKey(), List.of(instructorGroup),
+        continuousIntegrationService.get().giveProjectPermissions(exercise.getProjectKey(), List.of(instructorGroup, editorGroup),
                 List.of(CIPermission.CREATE, CIPermission.READ, CIPermission.ADMIN));
         if (teachingAssistantGroup != null) {
             continuousIntegrationService.get().giveProjectPermissions(exercise.getProjectKey(), List.of(teachingAssistantGroup), List.of(CIPermission.READ));
