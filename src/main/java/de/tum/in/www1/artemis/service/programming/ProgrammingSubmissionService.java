@@ -48,6 +48,12 @@ public class ProgrammingSubmissionService extends SubmissionService {
     @Value("${artemis.git.email}")
     private String artemisGitEmail;
 
+    @Value("${artemis.external-system-request.batch-size}")
+    private int externalSystemRequestBatchSize;
+
+    @Value("${artemis.external-system-request.batch-waiting-time}")
+    private int externalSystemRequestBatchWaitingTime;
+
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
     private final ProgrammingSubmissionRepository programmingSubmissionRepository;
@@ -280,13 +286,26 @@ public class ProgrammingSubmissionService extends SubmissionService {
         notifyInstructorAboutStartedExerciseBuildRun(programmingExercise);
         List<ProgrammingExerciseParticipation> participations = new LinkedList<>(programmingExerciseStudentParticipationRepository.findByExerciseId(exerciseId));
 
+        triggerBuildForParticipations(participations);
+
+        // When the instructor build was triggered for the programming exercise, it is not considered 'dirty' anymore.
+        setTestCasesChanged(programmingExercise.getId(), false);
+        // Let the instructor know that the build run is finished.
+        notifyInstructorAboutCompletedExerciseBuildRun(programmingExercise);
+    }
+
+    /**
+     * trigger the build using the batch size approach for all participations
+     * @param participations the participations for which the method triggerBuildAndNotifyUser should be executed.
+     */
+    public void triggerBuildForParticipations(List<ProgrammingExerciseParticipation> participations) {
         var index = 0;
         for (var participation : participations) {
             // Execute requests in batches instead all at once.
-            if (index > 0 && index % EXTERNAL_SYSTEM_REQUEST_BATCH_SIZE == 0) {
+            if (index > 0 && index % externalSystemRequestBatchSize == 0) {
                 try {
-                    log.info("Sleep for {}s during triggerBuild", EXTERNAL_SYSTEM_REQUEST_BATCH_WAIT_TIME_MS / 1000);
-                    Thread.sleep(EXTERNAL_SYSTEM_REQUEST_BATCH_WAIT_TIME_MS);
+                    log.info("Sleep for {}s during triggerBuild", externalSystemRequestBatchWaitingTime / 1000);
+                    Thread.sleep(externalSystemRequestBatchWaitingTime);
                 }
                 catch (InterruptedException ex) {
                     log.error("Exception encountered when pausing before executing successive build for participation " + participation.getId(), ex);
@@ -295,11 +314,6 @@ public class ProgrammingSubmissionService extends SubmissionService {
             triggerBuildAndNotifyUser(participation);
             index++;
         }
-
-        // When the instructor build was triggered for the programming exercise, it is not considered 'dirty' anymore.
-        setTestCasesChanged(programmingExercise.getId(), false);
-        // Let the instructor know that the build run is finished.
-        notifyInstructorAboutCompletedExerciseBuildRun(programmingExercise);
     }
 
     public void logTriggerInstructorBuild(User user, Exercise exercise, Course course) {
@@ -611,7 +625,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
         }
         else {
             submissions = this.submissionRepository.findAllByParticipationExerciseIdAndResultAssessor(exerciseId, tutor);
-            // automatic resutls are null in the received results list. We need to filter them out for the client to display the dashboard correctly
+            // automatic results are null in the received results list. We need to filter them out for the client to display the dashboard correctly
             submissions.forEach(Submission::removeNullResults);
         }
         // strip away all automatic results from the submissions list

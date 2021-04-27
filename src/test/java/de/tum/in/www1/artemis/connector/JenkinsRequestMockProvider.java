@@ -15,7 +15,6 @@ import java.util.Set;
 
 import org.apache.http.client.HttpResponseException;
 import org.mockito.InjectMocks;
-import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -34,7 +33,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Optional;
 import com.offbytwo.jenkins.JenkinsServer;
-import com.offbytwo.jenkins.client.JenkinsHttpClient;
 import com.offbytwo.jenkins.model.*;
 
 import de.tum.in.www1.artemis.domain.Course;
@@ -71,9 +69,6 @@ public class JenkinsRequestMockProvider {
     @SpyBean
     @InjectMocks
     private JenkinsJobPermissionsService jenkinsJobPermissionsService;
-
-    @Mock
-    private JenkinsHttpClient jenkinsClient;
 
     @SpyBean
     @InjectMocks

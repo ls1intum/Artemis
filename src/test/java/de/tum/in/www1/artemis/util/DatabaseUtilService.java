@@ -1327,8 +1327,14 @@ public class DatabaseUtilService {
         return programmingExerciseRepository.save(exercise);
     }
 
+    public Result addResultToParticipation(AssessmentType type, ZonedDateTime completionDate, Participation participation, boolean successful, boolean rated, double score) {
+        Result result = new Result().participation(participation).resultString("x of y passed").successful(successful).rated(rated).score(score).assessmentType(type)
+                .completionDate(completionDate);
+        return resultRepo.save(result);
+    }
+
     public Result addResultToParticipation(AssessmentType assessmentType, ZonedDateTime completionDate, Participation participation) {
-        Result result = new Result().participation(participation).resultString("x of y passed").successful(false).rated(true).score(100D).assessmentType(assessmentType)
+        Result result = new Result().participation(participation).resultString("x of y passed").successful(true).rated(true).score(100D).assessmentType(assessmentType)
                 .completionDate(completionDate);
         return resultRepo.save(result);
     }
@@ -1341,7 +1347,7 @@ public class DatabaseUtilService {
     }
 
     public Result addResultToParticipation(Participation participation, Submission submission) {
-        Result result = new Result().participation(participation).resultString("x of y passed").successful(false).score(100D);
+        Result result = new Result().participation(participation).resultString("x of y passed").successful(true).score(100D);
         result = resultRepo.save(result);
         result.setSubmission(submission);
         submission.addResult(result);
@@ -1889,15 +1895,14 @@ public class DatabaseUtilService {
 
     /**
      * @param programmingExerciseTitle The title of the programming exercise
-     * @return A Course with named programming exercise and test cases
      */
-    public Course addCourseWithNamedProgrammingExerciseAndTestCases(String programmingExerciseTitle) {
+    public void addCourseWithNamedProgrammingExerciseAndTestCases(String programmingExerciseTitle) {
         Course course = addCourseWithNamedProgrammingExercise(programmingExerciseTitle);
         ProgrammingExercise programmingExercise = findProgrammingExerciseWithTitle(course.getExercises(), programmingExerciseTitle);
 
         addTestCasesToProgrammingExercise(programmingExercise);
 
-        return courseRepo.findById(course.getId()).get();
+        courseRepo.findById(course.getId()).get();
     }
 
     public void addTestCasesToProgrammingExercise(ProgrammingExercise programmingExercise) {
