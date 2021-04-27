@@ -101,8 +101,8 @@ public class ExerciseResource {
         // Exam exercise
         if (exercise.isExamExercise()) {
             Exam exam = exercise.getExerciseGroup().getExam();
-            if (authCheckService.isAtLeastInstructorForExercise(exercise, user)) {
-                // instructors and admins should always be able to see exam exercises
+            if (authCheckService.isAtLeastEditorForExercise(exercise, user)) {
+                // instructors editors and admins should always be able to see exam exercises
                 // continue
             }
             else if (authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
