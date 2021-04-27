@@ -158,9 +158,12 @@
                                     [class.disabled]="quizExercise.status === QuizStatus.ACTIVE || quizIsOver(quizExercise)"
                                     [routerLink]="['/course-management', quizExercise.course?.id, 'quiz-exercises', quizExercise.id, 'edit']"
                                     class="btn btn-warning btn-sm mr-1 mb-1"
+                                    style="display: flex; justify-content: center; align-items: center"
                                 >
-                                    <fa-icon [icon]="'wrench'"></fa-icon>
-                                    <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
+                                    <div>
+                                        <fa-icon [icon]="'wrench'"></fa-icon>
+                                        <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
+                                    </div>
                                 </a>
                                 <a
                                     *ngIf="quizExercise.isAtLeastInstructor"
