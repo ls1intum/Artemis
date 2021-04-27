@@ -267,8 +267,9 @@ public class GitService {
      * @return the repository if it could be checked out
      * @throws InterruptedException if the repository could not be checked out.
      * @throws GitAPIException      if the repository could not be checked out.
+     * @throws GitException         if the same repository is attempted to be cloned multiple times.
      */
-    public Repository getOrCheckoutRepository(ProgrammingExerciseParticipation participation, String targetPath) throws InterruptedException, GitAPIException {
+    public Repository getOrCheckoutRepository(ProgrammingExerciseParticipation participation, String targetPath) throws InterruptedException, GitAPIException, GitException {
         var repoUrl = participation.getVcsRepositoryUrl();
         Repository repository = getOrCheckoutRepository(repoUrl, targetPath, true);
         repository.setParticipation(participation);
@@ -326,19 +327,20 @@ public class GitService {
      * @return the repository if it could be checked out.
      * @throws InterruptedException if the repository could not be checked out.
      * @throws GitAPIException      if the repository could not be checked out.
+     * @throws GitException         if the same repository is attempted to be cloned multiple times.
      */
-    public Repository getOrCheckoutRepository(VcsRepositoryUrl repoUrl, String targetPath, boolean pullOnGet) throws InterruptedException, GitAPIException {
+    public Repository getOrCheckoutRepository(VcsRepositoryUrl repoUrl, String targetPath, boolean pullOnGet) throws InterruptedException, GitAPIException, GitException {
         Path localPath = getLocalPathOfRepo(targetPath, repoUrl);
         return getOrCheckoutRepository(repoUrl, localPath, pullOnGet);
     }
 
     public Repository getOrCheckoutRepositoryIntoTargetDirectory(VcsRepositoryUrl repoUrl, VcsRepositoryUrl targetUrl, boolean pullOnGet)
-            throws InterruptedException, GitAPIException {
+            throws InterruptedException, GitAPIException, GitException {
         Path localPath = getDefaultLocalPathOfRepo(targetUrl);
         return getOrCheckoutRepository(repoUrl, targetUrl, localPath, pullOnGet);
     }
 
-    public Repository getOrCheckoutRepository(VcsRepositoryUrl repoUrl, Path localPath, boolean pullOnGet) throws InterruptedException, GitAPIException {
+    public Repository getOrCheckoutRepository(VcsRepositoryUrl repoUrl, Path localPath, boolean pullOnGet) throws InterruptedException, GitAPIException, GitException {
         return getOrCheckoutRepository(repoUrl, repoUrl, localPath, pullOnGet);
     }
 
@@ -352,12 +354,14 @@ public class GitService {
      * @return the repository if it could be checked out.
      * @throws InterruptedException if the repository could not be checked out.
      * @throws GitAPIException      if the repository could not be checked out.
+     * @throws GitException         if the same repository is attempted to be cloned multiple times.
      */
     public Repository getOrCheckoutRepository(VcsRepositoryUrl sourceRepoUrl, VcsRepositoryUrl targetRepoUrl, Path localPath, boolean pullOnGet)
-            throws InterruptedException, GitAPIException {
+            throws InterruptedException, GitAPIException, GitException {
         // First try to just retrieve the git repository from our server, as it might already be checked out.
         // If the sourceRepoUrl differs from the targetRepoUrl, we attempt to clone the source repo into the target directory
         Repository repository = getExistingCheckedOutRepositoryByLocalPath(localPath, targetRepoUrl);
+
         // Note: in case the actual git repository in the file system is corrupt (e.g. by accident), we will get an exception here
         // the exception will then delete the folder, so that the next attempt would be successful.
         if (repository != null) {
@@ -390,8 +394,7 @@ public class GitService {
                 Git result = Git.cloneRepository().setTransportConfigCallback(sshCallback).setURI(gitUriAsString).setDirectory(localPath.toFile()).call();
                 result.close();
             }
-            catch (GitAPIException | RuntimeException | IOException | URISyntaxException e) {
-                log.error("Exception during clone", e);
+            catch (IOException | URISyntaxException | GitAPIException e) {
                 // cleanup the folder to avoid problems in the future.
                 // 'deleteQuietly' is the same as 'deleteDirectory' but is not throwing an exception, thus we avoid a try-catch block.
                 FileUtils.deleteQuietly(localPath.toFile());
@@ -441,19 +444,22 @@ public class GitService {
      * @return the git repository in the localPath or **null** if it does not exist on the server.
      */
     public Repository getExistingCheckedOutRepositoryByLocalPath(@NotNull Path localPath, @Nullable VcsRepositoryUrl remoteRepositoryUrl) {
-        // Check if there is a folder with the provided path of the git repository.
-        if (!Files.exists(localPath)) {
-            // In this case we should remove the repository if cached, because it can't exist anymore.
-            cachedRepositories.remove(localPath);
-            return null;
-        }
-        // Check if the repository is already cached in the server's session.
-        Repository cachedRepository = cachedRepositories.get(localPath);
-        if (cachedRepository != null) {
-            return cachedRepository;
-        }
-        // Else try to retrieve the git repository from our server. It could e.g. be the case that the folder is there, but there is no .git folder in it!
         try {
+            // Check if there is a folder with the provided path of the git repository.
+            if (!Files.exists(localPath)) {
+                // In this case we should remove the repository if cached, because it can't exist anymore.
+                cachedRepositories.remove(localPath);
+                return null;
+            }
+
+            // Check if the repository is already cached in the server's session.
+            Repository cachedRepository = cachedRepositories.get(localPath);
+            if (cachedRepository != null) {
+                return cachedRepository;
+            }
+
+            // Else try to retrieve the git repository from our server. It could e.g. be the case that the folder is there, but there is no .git folder in it!
+
             // Open the repository from the filesystem
             FileRepositoryBuilder builder = new FileRepositoryBuilder();
             final var gitPath = localPath.resolve(".git");
@@ -469,6 +475,7 @@ public class GitService {
             return repository;
         }
         catch (IOException ex) {
+            log.warn("Cannot get existing checkout out repository by local path: " + ex.getMessage());
             return null;
         }
     }
@@ -715,13 +722,14 @@ public class GitService {
             log.debug("Last commit hash is {}", commitHash);
 
             reset(repository, commitHash);
-
+        }
+        catch (GitAPIException ex) {
+            log.warn("Cannot filter the repo {} due to the following exception: {}", repository.getLocalPath(), ex.getMessage());
+        }
+        finally {
             // if repo is not closed, it causes weird IO issues when trying to delete the repo again
             // java.io.IOException: Unable to delete file: ...\.git\objects\pack\...
             repository.close();
-        }
-        catch (GitAPIException | JGitInternalException ex) {
-            log.warn("Cannot filter the repo {} due to the following exception: {}", repository.getLocalPath(), ex.getMessage());
         }
     }
 
@@ -756,13 +764,14 @@ public class GitService {
             var name = optionalStudent.map(User::getName).orElse(artemisGitName);
             var email = optionalStudent.map(User::getEmail).orElse(artemisGitEmail);
             studentGit.commit().setMessage("All student changes in one commit").setCommitter(name, email).call();
-
-            // if repo is not closed, it causes weird IO issues when trying to delete the repo again
-            // java.io.IOException: Unable to delete file: ...\.git\objects\pack\...
-            repository.close();
         }
         catch (EntityNotFoundException | GitAPIException | JGitInternalException ex) {
             log.warn("Cannot reset the repo {} due to the following exception: {}", repository.getLocalPath(), ex.getMessage());
+        }
+        finally {
+            // if repo is not closed, it causes weird IO issues when trying to delete the repo again
+            // java.io.IOException: Unable to delete file: ...\.git\objects\pack\...
+            repository.close();
         }
     }
 
@@ -999,6 +1008,17 @@ public class GitService {
 
         Path zipFilePath = Paths.get(targetPath, "zippedRepos", zipFilenameWithoutSlash);
         Files.createDirectories(Paths.get(targetPath, "zippedRepos"));
+
+        // Remove lock file from git carbage collections
+        Files.walk(repoLocalPath).filter(path -> path.endsWith("gc.log.lock")).forEach(path -> {
+            try {
+                Files.deleteIfExists(path);
+            }
+            catch (IOException ignored) {
+                log.error("Cannot delete gc.log.lock from {}", path);
+            }
+        });
+
         return zipFileService.createZipFileWithFolderContent(zipFilePath, repoLocalPath);
     }
 

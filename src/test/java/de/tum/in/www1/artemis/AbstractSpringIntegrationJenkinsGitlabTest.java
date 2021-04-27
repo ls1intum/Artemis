@@ -3,7 +3,7 @@ package de.tum.in.www1.artemis;
 import static de.tum.in.www1.artemis.config.Constants.*;
 import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.*;
 import static de.tum.in.www1.artemis.util.TestConstants.COMMIT_HASH_OBJECT_ID;
-import static io.github.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
+import static io.github.jhipster.config.JHipsterConstants.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -26,8 +26,8 @@ import org.springframework.test.context.TestPropertySource;
 
 import com.offbytwo.jenkins.JenkinsServer;
 
-import de.tum.in.www1.artemis.connector.gitlab.GitlabRequestMockProvider;
-import de.tum.in.www1.artemis.connector.jenkins.JenkinsRequestMockProvider;
+import de.tum.in.www1.artemis.connector.GitlabRequestMockProvider;
+import de.tum.in.www1.artemis.connector.JenkinsRequestMockProvider;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.participation.AbstractBaseProgrammingExerciseParticipation;

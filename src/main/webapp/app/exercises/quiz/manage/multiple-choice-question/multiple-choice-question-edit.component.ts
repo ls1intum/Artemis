@@ -84,14 +84,23 @@ export class MultipleChoiceQuestionEditComponent implements OnInit, QuizQuestion
     }
 
     /**
-     * 1. Triggers the saving process by cleaning up the question and calling the markdown parse function
-     *    to get the newest values in the editor to update the question attributes
-     * 2. Notify parent component about changes to check the validity of new values of the question attributes
+     * Detect of text changes in the markdown editor
+     * 1. Notify the parent component to check the validity of the text
+     * 2. Parse the text in the editor to get the newest values
+     */
+    changesInMarkdown(): void {
+        this.questionUpdated.emit();
+        this.changeDetector.detectChanges();
+        this.prepareForSave();
+    }
+
+    /**
+     * Triggers the saving process by cleaning up the question and calling the markdown parse function
+     * to get the newest values in the editor to update the question attributes
      */
     prepareForSave(): void {
         this.cleanupQuestion();
         this.markdownEditor.parse();
-        this.questionUpdated.emit();
     }
 
     /**

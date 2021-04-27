@@ -12,7 +12,12 @@
                 "video": "Video",
                 "file": "Datei"
             },
-            "releaseDate": "Veröffentlichungsdatum"
+            "releaseDate": "Veröffentlichungsdatum",
+            "details": {
+                "releaseDateNotSet": "Kein Veröffentlichungsdatum gesetzt!",
+                "releaseDateSet": "Veröffentlichkeitsdatum: ",
+                "attachmentVersion": "Dateiversion: "
+            }
         },
         "textUnit": {
             "created": "Eine neue Texteinheit erstellt",

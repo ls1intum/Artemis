@@ -13,6 +13,7 @@ import { iconsAsHTML } from 'app/utils/icons.utils';
 import { Exam } from 'app/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
+import { AccountService } from 'app/core/auth/account.service';
 
 const cssClasses = {
     alreadyRegistered: 'already-registered',
@@ -48,6 +49,8 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
     isTransitioning = false;
     rowClass: string | undefined = undefined;
 
+    isAdmin = false;
+
     constructor(
         private router: Router,
         private route: ActivatedRoute,
@@ -55,11 +58,13 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
         private eventManager: JhiEventManager,
         private examManagementService: ExamManagementService,
         private userService: UserService,
+        private accountService: AccountService,
     ) {}
 
     ngOnInit() {
         this.isLoading = true;
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
+        this.isAdmin = this.accountService.isAdmin();
         this.route.data.subscribe(({ exam }: { exam: Exam }) => {
             this.exam = exam;
             this.allRegisteredUsers = exam.registeredUsers! || [];

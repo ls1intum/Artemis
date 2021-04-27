@@ -37,6 +37,9 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
     protected GitService gitService;
 
     @SpyBean
+    protected FileService fileService;
+
+    @SpyBean
     protected GroupNotificationService groupNotificationService;
 
     @SpyBean
