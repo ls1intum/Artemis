@@ -44,7 +44,10 @@
 <div class="edit-sqi" *ngIf="exercise.gradingInstructionFeedbackUsed">
 <div class="grading-instructions-update-border">
     <div *ngFor="let criteria of exercise.gradingCriteria">
-        <label class="font-weight-bold" [innerHTML]="criteria!.title! | htmlForMarkdown"></label>
+        <div class="criteria-content" style="padding-bottom: 12px">
+            <div class="row">
+                <input class="form-control" [(ngModel)]="criteria!.title!" placeholder="Criteria Title" style="height: 33px; width: 65%" />
+            </div>
         <div *ngFor="let instruction of criteria.structuredGradingInstructions">
             <div class="instructions">
                 <jhi-markdown-editor
@@ -54,10 +57,10 @@
                     [metaCommands]="[]"
                     [defaultCommands]="[]"
                     [headerCommands]="[]"
-                    [domainCommands]="[]"
                     [colorCommands]="[]"
                     [showEditButton]="false"
                     [showPreviewButton]="false"
+                    [domainCommands]="[]"
                     (markdownChange)="onAnswerOptionChange($event, instruction, criteria)"
                     class="editor"
                     style="width: 65%"

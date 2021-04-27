@@ -13,6 +13,7 @@ import { GradingCriterionCommand } from 'app/shared/markdown-editor/domainComman
 import { Exercise } from 'app/entities/exercise.model';
 import { EditorMode } from 'app/shared/markdown-editor/markdown-editor.component';
 import { cloneDeep } from 'lodash';
+import { escapeStringForUseInRegex } from 'app/shared/util/global.utils';
 
 @Component({
     selector: 'jhi-grading-instructions-details',
@@ -307,14 +308,49 @@ export class GradingInstructionsDetailsComponent implements OnInit {
      * @param {GradingCriterion} criteria
      */
     onAnswerOptionChange(text: string, instruction: GradingInstruction, criteria: GradingCriterion): void {
-        // const criteriaIndex = this.exercise.gradingCriteria!.findIndex((gradingCriteria) => {
-        //     return gradingCriteria.id === criteria.id;
-        // });
-        // const instructionIndex = this.exercise.gradingCriteria![criteriaIndex].structuredGradingInstructions.findIndex((sgi) => {
-        //     return sgi.id === instruction.id;
-        // });
-        // // this.parseAnswerMarkdown(text, this.question.answerOptions![answerIndex!]);
+        const criteriaIndex = this.exercise.gradingCriteria!.findIndex((gradingCriteria) => {
+            return gradingCriteria.id === criteria.id;
+        });
+        const instructionIndex = this.exercise.gradingCriteria![criteriaIndex].structuredGradingInstructions.findIndex((sgi) => {
+            return sgi.id === instruction.id;
+        });
+        this.parseInstruction(text, this.exercise.gradingCriteria![criteriaIndex].structuredGradingInstructions![instructionIndex!]);
     }
+
+    parseInstruction(text: string, instruction: GradingInstruction): void {
+        const domainCommandIdentifiersToParse = this.domainCommands.map((command) => command.getOpeningIdentifier());
+        const commandTextsMappedToCommandIdentifiers: [string, DomainCommand | null][] = [];
+        let remainingMarkdownText = text.slice(0);
+        const commandIdentifiersString = domainCommandIdentifiersToParse
+            .map((tag) => tag.replace('[', '').replace(']', ''))
+            .map(escapeStringForUseInRegex)
+            .join('|');
+        const regex = new RegExp(`(?=\\[(${commandIdentifiersString})\\])`, 'gmi');
+
+        while (remainingMarkdownText.length) {
+            const [textWithCommandIdentifier] = remainingMarkdownText.split(regex, 1);
+            remainingMarkdownText = remainingMarkdownText.substring(textWithCommandIdentifier.length);
+            const commandTextWithCommandIdentifier = this.parseLineForDomainCommand(textWithCommandIdentifier.trim());
+            commandTextsMappedToCommandIdentifiers.push(commandTextWithCommandIdentifier);
+            this.domainCommandsFound(commandTextsMappedToCommandIdentifiers);
+        }
+    }
+
+    private parseLineForDomainCommand = (text: string): [string, DomainCommand | null] => {
+        for (const domainCommand of this.domainCommands) {
+            const possibleOpeningCommandIdentifier = [
+                domainCommand.getOpeningIdentifier(),
+                domainCommand.getOpeningIdentifier().toLowerCase(),
+                domainCommand.getOpeningIdentifier().toUpperCase(),
+            ];
+            if (possibleOpeningCommandIdentifier.some((identifier) => text.indexOf(identifier) !== -1)) {
+                // TODO when closingIdentifiers are used write a method to extract them from the text
+                const trimmedLineWithoutIdentifier = possibleOpeningCommandIdentifier.reduce((line, identifier) => line.replace(identifier, ''), text).trim();
+                return [trimmedLineWithoutIdentifier, domainCommand];
+            }
+        }
+        return [text.trim(), null];
+    };
 
     /**
      * Resets the whole instruction
