@@ -323,7 +323,7 @@ public class GitLabUserManagementService implements VcsUserManagementService {
                     log.warn("Member already exists for group {}", exercise.getProjectKey());
                     return;
                 }
-                throw new GitLabException(String.format("Error adding new user [%d] to group [%s]", userId, exercise.toString()), e);
+                throw new GitLabException(String.format("Error adding new user [%d] to group [%s]", userId, exercise), e);
             }
         }
     }
