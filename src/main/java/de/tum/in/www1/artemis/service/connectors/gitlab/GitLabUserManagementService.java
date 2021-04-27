@@ -94,7 +94,16 @@ public class GitLabUserManagementService implements VcsUserManagementService {
             if (addedGroups != null && !addedGroups.isEmpty()) {
                 final var exercisesWithAddedGroups = programmingExerciseRepository.findAllByInstructorOrEditorOrTAGroupNameIn(addedGroups);
                 for (final var exercise : exercisesWithAddedGroups) {
-                    final var accessLevel = addedGroups.contains(exercise.getCourseViaExerciseGroupOrCourseMember().getInstructorGroupName()) ? MAINTAINER : REPORTER;
+
+                    final AccessLevel accessLevel;
+                    if (addedGroups.contains(exercise.getCourseViaExerciseGroupOrCourseMember().getInstructorGroupName())) {
+                        accessLevel = MAINTAINER;
+                    } else if (addedGroups.contains(exercise.getCourseViaExerciseGroupOrCourseMember().getEditorGroupName())) {
+                        accessLevel = DEVELOPER;
+                    } else {
+                        accessLevel = REPORTER;
+                    }
+
                     try {
                         gitlabApi.getGroupApi().addMember(exercise.getProjectKey(), gitlabUser.getId(), accessLevel);
                     }
@@ -117,11 +126,11 @@ public class GitLabUserManagementService implements VcsUserManagementService {
                     final var course = exercise.getCourseViaExerciseGroupOrCourseMember();
                     if (user.getGroups().contains(course.getInstructorGroupName())) {
                         gitlabApi.getGroupApi().updateMember(exercise.getProjectKey(), gitlabUser.getId(), MAINTAINER);
-                    }
-                    else if (user.getGroups().contains(course.getTeachingAssistantGroupName())) {
+                    } else if (user.getGroups().contains(course.getEditorGroupName())) {
+                        gitlabApi.getGroupApi().updateMember(exercise.getProjectKey(), gitlabUser.getId(), DEVELOPER);
+                    } else if (user.getGroups().contains(course.getTeachingAssistantGroupName())) {
                         gitlabApi.getGroupApi().updateMember(exercise.getProjectKey(), gitlabUser.getId(), REPORTER);
-                    }
-                    else {
+                    } else {
                         // If the user is not a member of any relevant group any more, we can remove him from the exercise
                         try {
                             gitlabApi.getGroupApi().removeMember(exercise.getProjectKey(), gitlabUser.getId());
