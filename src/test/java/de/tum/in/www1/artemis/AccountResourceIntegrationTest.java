@@ -115,9 +115,10 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
         User user = ModelFactory.generateActivatedUser("ab123cd");
         ManagedUserVM userVM = new ManagedUserVM(user);
         assertThat(ManagedUserVM.PASSWORD_MIN_LENGTH).isGreaterThanOrEqualTo(0);
-        if (ManagedUserVM.PASSWORD_MIN_LENGTH == 0)
+        if (ManagedUserVM.PASSWORD_MIN_LENGTH == 0) {
             // if all lengths are accepted it cannot be tested for too short passwords
             return;
+        }
         userVM.setPassword("e".repeat(ManagedUserVM.PASSWORD_MIN_LENGTH - 1));
 
         // make request
