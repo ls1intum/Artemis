@@ -61,14 +61,11 @@ public class GitLabUserManagementService implements VcsUserManagementService {
                 return;
             }
 
-            // Add as member to new groups
             addUserToGroups(gitlabUser.getId(), addedGroups);
 
-            // Remove old groups
-            removeUserFromGroups(gitlabUser.getId(), removedGroups);
-
-            // Update access levels of the user
-            updateUserAccessLevelsForGroups(gitlabUser.getId(), removedGroups);
+            // Remove the user from groups or update it's permissions if the user belongs to multiple
+            // groups of the same course.
+            removeOrUpdateUserFromGroups(gitlabUser.getId(), user.getGroups(), removedGroups);
         }
         catch (GitLabApiException e) {
             throw new GitLabException("Error while trying to update user in GitLab: " + user, e);
@@ -304,50 +301,51 @@ public class GitLabUserManagementService implements VcsUserManagementService {
     }
 
     /**
-     * Updates the user's access levels for the specified groups.
      *
-     * @param gitlabUserId the user id of the Gitlab user
-     * @param groups  the groups to update
-     * @throws GitLabApiException if something when wrong while updating user membership
+     * @param gitlabUserId
+     * @param userGroups groups that the user belongs to
+     * @param groupsToRemove groups where the user should be removed from
+     * @throws GitLabApiException if an error occured while updating the user
      */
-    private void updateUserAccessLevelsForGroups(int gitlabUserId, Set<String> groups) throws GitLabApiException {
-        if (groups == null || groups.isEmpty()) {
+    private void removeOrUpdateUserFromGroups(int gitlabUserId, Set<String> userGroups, Set<String> groupsToRemove) throws GitLabApiException {
+        if (groupsToRemove == null || groupsToRemove.isEmpty()) {
             return;
         }
 
         // Gitlab groups are identified by the project key of the programming exercise
-        var exercises = programmingExerciseRepository.findAllByInstructorOrTAGroupNameIn(groups);
+        var exercises = programmingExerciseRepository.findAllByInstructorOrTAGroupNameIn(groupsToRemove);
         for (var exercise : exercises) {
-            var instructorGroupName = exercise.getCourseViaExerciseGroupOrCourseMember().getInstructorGroupName();
-            var accessLevel = groups.contains(instructorGroupName) ? MAINTAINER : REPORTER;
-            gitlabApi.getGroupApi().updateMember(exercise.getProjectKey(), gitlabUserId, accessLevel);
+            var course = exercise.getCourseViaExerciseGroupOrCourseMember();
+            var instructorGroup = course.getInstructorGroupName();
+            var teachingAssisstantGroup = course.getTeachingAssistantGroupName();
+
+            // Do not remove the user from the group and only update it's access level
+            var shouldUpdateGroupAccess = userGroups.contains(instructorGroup) || userGroups.contains(teachingAssisstantGroup);
+            if (shouldUpdateGroupAccess) {
+                var accessLevel = userGroups.contains(instructorGroup) ? MAINTAINER : REPORTER;
+                gitlabApi.getGroupApi().updateMember(exercise.getProjectKey(), gitlabUserId, accessLevel);
+            }
+            else {
+                removeUserFromGroup(gitlabUserId, exercise.getProjectKey());
+            }
         }
     }
 
     /**
-     * Removes the Gitlab user from the specified groups.
+     * Removes the Gitlab user from the specified group. Doesn't throw
+     * an error if the user isn't member of the group.
      *
      * @param gitlabUserId the user id of the Gitlab user
-     * @param groups the groups to remove the user from.
+     * @param group the group to remove the user from
      */
-    private void removeUserFromGroups(int gitlabUserId, Set<String> groups) {
-        if (groups == null || groups.isEmpty()) {
-            return;
+    private void removeUserFromGroup(int gitlabUserId, String group) {
+        try {
+            gitlabApi.getGroupApi().removeMember(group, gitlabUserId);
         }
-
-        // Gitlab groups are identified by the project key of the programming exercise
-        var exercises = programmingExerciseRepository.findAllByInstructorOrTAGroupNameIn(groups);
-        for (var exercise : exercises) {
-            var gitlabGroup = exercise.getProjectKey();
-            try {
-                gitlabApi.getGroupApi().removeMember(gitlabGroup, gitlabUserId);
-            }
-            catch (GitLabApiException ex) {
-                // If user membership to group is missing on Gitlab, ignore the exception and let artemis synchronize
-                // with GitLab groups
-                if (ex.getHttpStatus() != 404) {
-                    log.error("Gitlab Exception when removing a user " + gitlabUserId + " to a group " + gitlabGroup, ex);
-                }
+        catch (GitLabApiException ex) {
+            // If user membership to group is missing on Gitlab, ignore the exception.
+            if (ex.getHttpStatus() != 404) {
+                log.error("Gitlab Exception when removing a user " + gitlabUserId + " to a group " + group, ex);
             }
         }
     }
