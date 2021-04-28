@@ -281,7 +281,7 @@ public class GitlabRequestMockProvider {
 
     public void mockUpdateVcsUser(String login, de.tum.in.www1.artemis.domain.User user, Set<String> removedGroups, Set<String> addedGroups, boolean shouldSynchronizePassword)
             throws GitLabApiException {
-        var gitlabUser = new User().withUsername(login);
+        var gitlabUser = new User().withUsername(login).withId(1);
         doReturn(gitlabUser).when(userApi).getUser(login);
         if (shouldSynchronizePassword) {
             doReturn(gitlabUser).when(userApi).updateUser(gitlabUser, user.getPassword());
