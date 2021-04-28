@@ -171,13 +171,13 @@ public class GitLabUserManagementService implements VcsUserManagementService {
         // Update the old editor of the group
         final var oldEditors = userRepository.findAllUserInGroupAndNotIn(oldEditorGroup, processedUsers);
         // doUpgrade=true, because these users should be upgraded from TA to editor, if possible.
-        updateOldGroupMembers(exercises, oldEditors, updatedCourse.getEditorGroupName(), updatedCourse.getEditorGroupName(), DEVELOPER, true);
+        updateOldGroupMembers(exercises, oldEditors, updatedCourse.getEditorGroupName(), updatedCourse.getEditorGroupName(), MAINTAINER, true);
         processedUsers.addAll(oldEditors);
 
         // Update the old teaching assistant of the group
         final var oldTeachingAssistants = userRepository.findAllUserInGroupAndNotIn(oldTeachingAssistantGroup, processedUsers);
         // doUpgrade=true, because these users should be upgraded from TA to editor, if possible.
-        updateOldGroupMembers(exercises, oldTeachingAssistants, updatedCourse.getTeachingAssistantGroupName(), updatedCourse.getInstructorGroupName(), MAINTAINER, true);
+        updateOldGroupMembers(exercises, oldTeachingAssistants, updatedCourse.getTeachingAssistantGroupName(), updatedCourse.getInstructorGroupName(), DEVELOPER, true);
         processedUsers.addAll(oldTeachingAssistants);
 
         // Now, we only have to add all users that have not been updated yet AND that are part of one of the new groups

@@ -386,15 +386,18 @@ public class CourseTestService {
     public void testUpdateCourseGroups() throws Exception {
         Course course = database.addCourseWithOneProgrammingExercise();
         var oldInstructorGroup = course.getInstructorGroupName();
+        var oldEditorGroup = course.getEditorGroupName();
         var oldTeachingAssistantGroup = course.getTeachingAssistantGroupName();
 
         course.setInstructorGroupName("new-instructor-group");
+        course.setEditorGroupName("new-editor-group");
         course.setTeachingAssistantGroupName("new-ta-group");
 
-        mockDelegate.mockUpdateCoursePermissions(course, oldInstructorGroup, oldTeachingAssistantGroup);
+        mockDelegate.mockUpdateCoursePermissions(course, oldInstructorGroup, oldEditorGroup, oldTeachingAssistantGroup);
         Course updatedCourse = request.putWithResponseBody("/api/courses", course, Course.class, HttpStatus.OK);
 
         assertThat(updatedCourse.getInstructorGroupName()).isEqualTo("new-instructor-group");
+        assertThat(updatedCourse.getEditorGroupName()).isEqualTo("new-editor-group");
         assertThat(updatedCourse.getTeachingAssistantGroupName()).isEqualTo("new-ta-group");
     }
 
@@ -402,12 +405,14 @@ public class CourseTestService {
     public void testUpdateCourseGroups_InExternalCiUserManagement_failToRemoveUser() throws Exception {
         Course course = database.addCourseWithOneProgrammingExercise();
         var oldInstructorGroup = course.getInstructorGroupName();
+        var oldEditorGroup = course.getEditorGroupName();
         var oldTeachingAssistantGroup = course.getTeachingAssistantGroupName();
 
         course.setInstructorGroupName("new-instructor-group");
+        course.setInstructorGroupName("new-editor-group");
         course.setTeachingAssistantGroupName("new-ta-group");
 
-        mockDelegate.mockFailUpdateCoursePermissionsInCi(course, oldInstructorGroup, oldTeachingAssistantGroup, false, true);
+        mockDelegate.mockFailUpdateCoursePermissionsInCi(course, oldInstructorGroup, oldEditorGroup, oldTeachingAssistantGroup, false, true);
         Course updatedCourse = request.putWithResponseBody("/api/courses", course, Course.class, HttpStatus.INTERNAL_SERVER_ERROR);
 
         assertThat(updatedCourse).isNull();
@@ -417,12 +422,14 @@ public class CourseTestService {
     public void testUpdateCourseGroups_InExternalCiUserManagement_failToAddUser() throws Exception {
         Course course = database.addCourseWithOneProgrammingExercise();
         var oldInstructorGroup = course.getInstructorGroupName();
+        var oldEditorGroup = course.getEditorGroupName();
         var oldTeachingAssistantGroup = course.getTeachingAssistantGroupName();
 
         course.setInstructorGroupName("new-instructor-group");
+        course.setInstructorGroupName("new-editor-group");
         course.setTeachingAssistantGroupName("new-ta-group");
 
-        mockDelegate.mockFailUpdateCoursePermissionsInCi(course, oldInstructorGroup, oldTeachingAssistantGroup, true, false);
+        mockDelegate.mockFailUpdateCoursePermissionsInCi(course, oldInstructorGroup, oldEditorGroup, oldTeachingAssistantGroup, true, false);
         Course updatedCourse = request.putWithResponseBody("/api/courses", course, Course.class, HttpStatus.INTERNAL_SERVER_ERROR);
 
         assertThat(updatedCourse).isNull();
@@ -885,7 +892,7 @@ public class CourseTestService {
             assertThat(courseOnly.getExercises().size()).as("Course without exercises contains no exercises").isZero();
             assertThat(courseOnly.getNumberOfStudents()).as("Amount of students is correct").isEqualTo(8);
             assertThat(courseOnly.getNumberOfTeachingAssistants()).as("Amount of teaching assistants is correct").isEqualTo(5);
-            assertThat(courseOnly.getNumberOfEditors()).as("Amount of editors is correct").isEqualTo(0);
+            assertThat(courseOnly.getNumberOfEditors()).as("Amount of editors is correct").isEqualTo(1);
             assertThat(courseOnly.getNumberOfInstructors()).as("Amount of instructors is correct").isEqualTo(1);
 
             // Assert that course properties on courseWithExercises and courseWithExercisesAndRelevantParticipations match those of courseOnly
@@ -1066,7 +1073,7 @@ public class CourseTestService {
 
         request.postWithoutLocation("/api/courses/" + course.getId() + "/students/student1", null, httpStatus, null);
         request.postWithoutLocation("/api/courses/" + course.getId() + "/tutors/tutor1", null, httpStatus, null);
-        request.postWithoutLocation("/api/courses/" + course.getId() + "/tutors/editor1", null, httpStatus, null);
+        request.postWithoutLocation("/api/courses/" + course.getId() + "/editors/editor1", null, httpStatus, null);
         request.postWithoutLocation("/api/courses/" + course.getId() + "/instructors/instructor1", null, httpStatus, null);
     }
 
@@ -1150,7 +1157,7 @@ public class CourseTestService {
         // Remove users from their group
         request.delete("/api/courses/" + course.getId() + "/students/" + student.getLogin(), httpStatus);
         request.delete("/api/courses/" + course.getId() + "/tutors/" + tutor.getLogin(), httpStatus);
-        request.delete("/api/courses/" + course.getId() + "/editors/" + tutor.getLogin(), httpStatus);
+        request.delete("/api/courses/" + course.getId() + "/editors/" + editor.getLogin(), httpStatus);
         request.delete("/api/courses/" + course.getId() + "/instructors/" + instructor.getLogin(), httpStatus);
     }
 
