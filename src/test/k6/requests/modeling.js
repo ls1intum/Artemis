@@ -1,6 +1,6 @@
 import { fail } from 'k6';
 import { nextAlphanumeric } from '../util/utils.js';
-import { ASSESS_MODELING_SUBMISSION, MODELING_EXERCISE, SUBMIT_MODELING_EXAM } from './endpoints.js';
+import { ASSESS_MODELING_SUBMISSION, MODELING_EXERCISE, SUBMIT_MODELING_EXAM, PARTICIPATIONS, TUTOR_PARTICIPATIONS, MODELING_SUBMISSION_WITHOUT_ASSESSMENT } from './endpoints.js';
 
 export function submitRandomModelingAnswerExam(artemis, exercise, submissionId, participation) {
     const answer = {
@@ -45,7 +45,7 @@ export function newModelingExercise(artemis, exerciseGroup, courseId) {
         exercise.exerciseGroup = exerciseGroup;
     }
 
-    const res = artemis.post(MODELING_EXERCISE, exercise);
+    const res = artemis.post(MODELING_EXERCISES, exercise);
     if (res[0].status !== 201) {
         console.log('ERROR when creating a new modeling exercise. Response headers:');
         for (let [key, value] of Object.entries(res[0].headers)) {
@@ -82,6 +82,22 @@ export function deleteModelingExercise(artemis, exerciseId) {
         fail('FAILTEST: Could not delete exercise (' + res[0].status + ')! Response was + ' + res[0].body);
     }
     console.log('DELETED modeling exercise, ID=' + exerciseId);
+}
+
+export function getExercise(artemis, exerciseId) {
+    const serverRespond = artemis.get(MODELING_EXERCISE(exerciseId));
+    console.log('Server response is ' + JSON.stringify(serverRespond));
+    const res = artemis.get(MODELING_EXERCISE(exerciseId));
+    if (res[0].status !== 200) {
+        console.log('ERROR when getting existing exercise. Response headers:');
+        for (let [key, value] of Object.entries(res[0].headers)) {
+            console.log(`${key}: ${value}`);
+        }
+        fail('FAILTEST: Could not get exercise (status: ' + res[0].status + ')! response: ' + res[0].body);
+    }
+    console.log('SUCCESS: Get existing exercise');
+
+    return JSON.parse(res[0].body);
 }
 
 export function startTutorParticipation(artemis, exerciseId) {

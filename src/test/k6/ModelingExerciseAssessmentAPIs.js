@@ -1,7 +1,14 @@
 import { group, sleep } from 'k6';
-import { addUserToInstructorsInCourse, addUserToTutorsInCourse, deleteCourse, getCourse, newCourse } from './requests/course.js';
-import { evaluateQuizzes } from './requests/exam.js';
-import { assessModelingSubmission, getAndLockModelingSubmission, newModelingExercise, submitRandomModelingAnswerExam } from './requests/modeling.js';
+import { addUserToInstructorsInCourse, deleteCourse, newCourse } from './requests/course.js';
+import {
+    assessModelingSubmission,
+    getAndLockModelingSubmission,
+    getExercise,
+    newModelingExercise,
+    startExercise,
+    startTutorParticipation,
+    submitRandomModelingAnswerExam,
+} from './requests/modeling.js';
 import { login } from './requests/requests.js';
 import { createTutorsIfNeeded, createUsersIfNeeded } from './requests/user.js';
 
@@ -33,13 +40,18 @@ export function setup() {
     console.log('__ENV.USER_OFFSET: ' + __ENV.USER_OFFSET);
     console.log('__ENV.ONLY_PREPARE: ' + onlyPrepare);
 
+    let courseId;
+    let exerciseId;
+    let artemis;
+    const iterations = parseInt(__ENV.ITERATIONS);
+
     if (parseInt(__ENV.COURSE_ID) === 0 || parseInt(__ENV.EXERCISE_ID) === 0) {
         console.log('Creating new exercise as no parameters are given');
 
         // Create course
-        artemis = login(adminUsername, adminPassword);
+        const artemisAdmin = login(adminUsername, adminPassword);
 
-        course = newCourse(artemis);
+        const course = newCourse(artemis);
 
         console.log('Create users with ids starting from ' + userOffset + ' and up to ' + (userOffset + iterations));
         createUsersIfNeeded(artemisAdmin, baseUsername, basePassword, adminUsername, adminPassword, course, userOffset);
@@ -54,7 +66,7 @@ export function setup() {
         addUserToInstructorsInCourse(artemisAdmin, instructorUsername, course.id);
 
         // Login to Artemis
-        let artemis = login(instructorUsername, instructorPassword);
+        artemis = login(instructorUsername, instructorPassword);
 
         // it might be necessary that the newly created groups or accounts are synced with the version control and continuous integration servers, so we wait for 1 minute
         const timeoutExercise = parseFloat(__ENV.TIMEOUT_EXERCISE);
@@ -68,36 +80,41 @@ export function setup() {
         console.log('Created exercise with id ' + exerciseId);
 
         sleep(2);
-
-        for (let i = 1; i <= iterations; i++) {
-            const userId = parseInt(__VU) + userOffset;
-            const currentUsername = baseUsername.replace('USERID', userId);
-            const currentPassword = basePassword.replace('USERID', userId);
-            console.log('Logging in as user ' + currentUsername);
-            artemis = login(currentUsername, currentPassword);
-            // Delay so that not all users start at the same time, batches of 3 users per second
-            const delay = Math.floor(__VU / 3);
-            sleep(delay * 3);
-
-            console.log('Starting exercise ' + exerciseId);
-            let participation = startExercise(artemis, courseId, exerciseId);
-            if (participation) {
-                const submissionId = participation.submissions[0].id;
-                console.log('Submitting submission ' + submissionId);
-                submitRandomModelingAnswerExam(artemis, exercise, submissionId);
-            }
-            sleep(1);
-        }
-
-        sleep(2);
-
-        return { exerciseId: exerciseId, courseId: course.id };
     } else {
-        const exerciseId = parseInt(__ENV.EXERCISE_ID);
-        const courseId = parseInt(__ENV.COURSE_ID);
-        console.log('Using existing course ' + courseId + ' and exercise ' + exerciseId);
-        return { exerciseId, courseId };
+        exerciseId = parseInt(__ENV.EXERCISE_ID);
+        courseId = parseInt(__ENV.COURSE_ID);
     }
+
+    artemis = login(adminUsername, adminPassword);
+
+    console.log('Getting exercise');
+    const exercise = getExercise(artemis, exerciseId);
+
+    for (let i = 1; i <= iterations; i++) {
+        console.log(userOffset);
+        const userId = parseInt(__VU) + userOffset + i;
+        const currentUsername = baseUsername.replace('USERID', userId);
+        const currentPassword = basePassword.replace('USERID', userId);
+        console.log('Logging in as user ' + currentUsername);
+        artemis = login(currentUsername, currentPassword);
+        // Delay so that not all users start at the same time, batches of 3 users per second
+        const delay = Math.floor(__VU / 3);
+        sleep(delay * 3);
+
+        console.log('Starting exercise ' + exerciseId);
+        let participation = startExercise(artemis, courseId, exerciseId);
+        if (participation) {
+            const submissionId = participation.submissions[0].id;
+            console.log('Submitting submission ' + submissionId);
+            submitRandomModelingAnswerExam(artemis, exercise, submissionId);
+        }
+        sleep(1);
+    }
+
+    sleep(2);
+
+    console.log('Using existing course ' + courseId + ' and exercise ' + exerciseId);
+    return { exerciseId, courseId };
 }
 
 export default function (data) {
@@ -121,7 +138,9 @@ export default function (data) {
         if (participation) {
             console.log('Get and lock modeling submission for tutor ' + userId + ' and exercise');
             const submission = getAndLockModelingSubmission(artemis, exerciseId);
+            const submissionId = submission.id;
             console.log('Assess modeling submission ' + submissionId);
+            console.log('Result before manual assessment ' + JSON.stringify(submission.results[0]));
             assessModelingSubmission(artemis, submissionId, submission.results[0].id);
         }
         sleep(1);

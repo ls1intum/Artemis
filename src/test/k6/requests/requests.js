@@ -2,7 +2,7 @@ import http from 'k6/http';
 import ws from 'k6/ws';
 import { fail } from 'k6';
 
-const protocol = 'https'; // https or http
+const protocol = 'http'; // https or http
 const websocketProtocol = 'wss'; // wss if https is used; ws if http is used
 const host = __ENV.BASE_URL; // host including port if differing from 80 (http) or 443 (https)
 const baseUrl = protocol + '://' + host;
@@ -52,7 +52,7 @@ export function login(username, password) {
     let req, res;
 
     console.log('Try to login with ' + username + ':' + password);
-
+    console.log(JSON.stringify(JSON.parse('{"username":"' + username + '","password":"' + password + '","rememberMe":true}')));
     // The user logs in; the authToken gets saved as we need it later
     req = [
         {
