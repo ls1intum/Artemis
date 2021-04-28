@@ -192,7 +192,7 @@ public class ProgrammingExerciseExportService {
      * @param exportErrors              List of failures that occurred during the export
      * @return Path to a zip folder
      */
-    private Path zipFilesAndCleanUp(Path pathToZippedExercise, List<Path> includedFilePaths, Boolean createDirsInZipFile, List<String> exportErrors) {
+    public Path zipFilesAndCleanUp(Path pathToZippedExercise, List<Path> includedFilePaths, Boolean createDirsInZipFile, List<String> exportErrors) {
         try {
             zipFileService.createZipFile(pathToZippedExercise, includedFilePaths, createDirsInZipFile);
             return pathToZippedExercise;

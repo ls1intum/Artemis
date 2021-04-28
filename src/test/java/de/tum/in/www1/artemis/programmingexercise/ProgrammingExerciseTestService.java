@@ -49,6 +49,7 @@ import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildResultDTO;
+import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseExportService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingLanguageFeature;
 import de.tum.in.www1.artemis.service.user.PasswordService;
 import de.tum.in.www1.artemis.util.*;
@@ -71,6 +72,9 @@ public class ProgrammingExerciseTestService {
 
     @Autowired
     private GitService gitService;
+
+    @Autowired
+    private ProgrammingExerciseExportService programmingExerciseExportService;
 
     @Autowired
     private ProgrammingExerciseRepository programmingExerciseRepository;
@@ -111,6 +115,9 @@ public class ProgrammingExerciseTestService {
 
     @Value("${artemis.lti.user-prefix-edx:#{null}}")
     private Optional<String> userPrefixEdx;
+
+    @Value("${artemis.repo-download-clone-path}")
+    private String repoDownloadClonePath;
 
     public Course course;
 
@@ -780,23 +787,22 @@ public class ProgrammingExerciseTestService {
 
     // Test
     public void exportInstructorRepositories_forbidden() throws Exception {
+        // change the group name to enforce a HttpStatus forbidden after having accessed the endpoint
+        course.setInstructorGroupName("test");
+        courseRepository.save(course);
         exportInstructorRepository("TEMPLATE", sourceExerciseRepo.localRepoFile.toPath(), HttpStatus.FORBIDDEN);
         exportInstructorRepository("SOLUTION", sourceSolutionRepo.localRepoFile.toPath(), HttpStatus.FORBIDDEN);
         exportInstructorRepository("TESTS", sourceTestRepo.localRepoFile.toPath(), HttpStatus.FORBIDDEN);
     }
 
     private String exportInstructorRepository(String repositoryType, Path localPathToRepository, HttpStatus expectedStatus) throws Exception {
-        exercise = programmingExerciseRepository.save(exercise);
-        exercise = database.addTemplateParticipationForProgrammingExercise(exercise);
-        exercise = database.addSolutionParticipationForProgrammingExercise(exercise);
-        exercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationById(exercise.getId()).get();
+        generateProgrammingExerciseForExport();
 
         var vcsUrl = exercise.getRepositoryURL(RepositoryType.valueOf(repositoryType));
         var repository = gitService.getExistingCheckedOutRepositoryByLocalPath(localPathToRepository, null);
         doReturn(repository).when(gitService).getOrCheckoutRepository(eq(vcsUrl), anyString(), anyBoolean());
 
         var url = "/api/programming-exercises/" + exercise.getId() + "/export-instructor-repository/" + repositoryType;
-        // return request.postWithResponseBodyFile(url, null, expectedStatus);
         return request.get(url, expectedStatus, String.class);
     }
 
@@ -821,22 +827,14 @@ public class ProgrammingExerciseTestService {
     }
 
     public void exportInstructorProgrammingExercise_forbidden() throws Exception {
+        // change the group name to enforce a HttpStatus forbidden after having accessed the endpoint
+        course.setInstructorGroupName("test");
+        courseRepository.save(course);
         exportInstructorProgrammingExercise(HttpStatus.FORBIDDEN);
     }
 
-    public void exportInstructorProgrammingExercise_IOException() throws Exception {
-        MockedStatic<Files> mockedFiles = mockStatic(Files.class);
-        mockedFiles.when(() -> Files.newOutputStream(any())).thenThrow(IOException.class);
-        request.get("/api/programming-exercises/" + exercise.getId() + "/export-instructor-exercise", HttpStatus.BAD_REQUEST, String.class);
-        mockedFiles.close();
-    }
-
     private java.io.File exportInstructorProgrammingExercise(HttpStatus expectedStatus) throws Exception {
-        exercise = programmingExerciseRepository.save(exercise);
-        exercise = database.addTemplateParticipationForProgrammingExercise(exercise);
-        exercise = database.addSolutionParticipationForProgrammingExercise(exercise);
-        database.addTestCasesToProgrammingExercise(exercise);
-        exercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationById(exercise.getId()).get();
+        generateProgrammingExerciseForExport();
 
         // Mock template repo
         var templateRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(sourceExerciseRepo.localRepoFile.toPath(), null);
@@ -852,6 +850,26 @@ public class ProgrammingExerciseTestService {
 
         var url = "/api/programming-exercises/" + exercise.getId() + "/export-instructor-exercise";
         return request.getFile(url, expectedStatus, new LinkedMultiValueMap<>());
+    }
+
+    private void generateProgrammingExerciseForExport() {
+        exercise = programmingExerciseRepository.save(exercise);
+        exercise = database.addTemplateParticipationForProgrammingExercise(exercise);
+        exercise = database.addSolutionParticipationForProgrammingExercise(exercise);
+        exercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationById(exercise.getId()).get();
+    }
+
+    // Test
+    public void testZipFilesAndCleanUp_shouldReturnNull() {
+        var resultingPath = Path.of("result.zip");
+        var includedFilePaths = new ArrayList<Path>();
+        includedFilePaths.add(Path.of("file1"));
+        includedFilePaths.add(Path.of("file2"));
+        MockedStatic<Files> mockedFiles = mockStatic(Files.class);
+        mockedFiles.when(() -> Files.newOutputStream(any(), any())).thenThrow(IOException.class);
+        var resultingZip = programmingExerciseExportService.zipFilesAndCleanUp(resultingPath, includedFilePaths, false, new ArrayList<String>());
+        mockedFiles.close();
+        assertThat(resultingZip).isEqualTo(null);
     }
 
     // Test
