@@ -275,7 +275,7 @@ public class ProgrammingExerciseExportService {
             gitService.resetToOriginMaster(repository);
 
             // Zip it and return the path to the file
-            return gitService.zipRepository(repository.getLocalPath(), zipFilename, repoProjectPath);
+            return gitService.zipRepository(repository, zipFilename, repoProjectPath);
         }
         finally {
             deleteTempLocalRepository(repository);

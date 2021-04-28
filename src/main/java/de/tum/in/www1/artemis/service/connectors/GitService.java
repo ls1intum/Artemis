@@ -1,8 +1,6 @@
 package de.tum.in.www1.artemis.service.connectors;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
+import java.io.*;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -26,6 +24,7 @@ import org.apache.commons.io.filefilter.HiddenFileFilter;
 import org.eclipse.jgit.api.*;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.JGitInternalException;
+import org.eclipse.jgit.archive.ZipFormat;
 import org.eclipse.jgit.errors.UnsupportedCredentialItem;
 import org.eclipse.jgit.lib.ConfigConstants;
 import org.eclipse.jgit.lib.ObjectId;
@@ -45,6 +44,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.File;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
@@ -986,7 +986,7 @@ public class GitService {
         else {
             zipRepoName += "-" + studentTeamOrDefault + ".zip";
         }
-        return zipRepository(repo.getLocalPath(), zipRepoName, targetPath);
+        return zipRepository(repo, zipRepoName, targetPath);
     }
 
     /**
@@ -998,7 +998,7 @@ public class GitService {
      * @return path to the zip file
      * @throws IOException if the zipping process failed.
      */
-    public Path zipRepository(Path repoLocalPath, String zipFilename, String targetPath) throws IOException {
+    public Path zipRepository(Repository repository, String zipFilename, String targetPath) throws IOException {
         // Strip slashes from name
         var zipFilenameWithoutSlash = zipFilename.replaceAll("\\s", "");
 
@@ -1009,17 +1009,22 @@ public class GitService {
         Path zipFilePath = Paths.get(targetPath, "zippedRepos", zipFilenameWithoutSlash);
         Files.createDirectories(Paths.get(targetPath, "zippedRepos"));
 
-        // Remove lock file from git carbage collections
-        Files.walk(repoLocalPath).filter(path -> path.endsWith("gc.log.lock")).forEach(path -> {
-            try {
-                Files.deleteIfExists(path);
+        try {
+            ArchiveCommand.registerFormat("zip", new ZipFormat());
+            try (OutputStream out = new FileOutputStream(String.valueOf(zipFilePath))) {
+                try (Git git = new Git(repository)) {
+                    git.archive().setTree(repository.resolve("master")).setOutputStream(out).setFilename(zipFilePath.toString()).call();
+                }
             }
-            catch (IOException ignored) {
-                log.error("Cannot delete gc.log.lock from {}", path);
-            }
-        });
 
-        return zipFileService.createZipFileWithFolderContent(zipFilePath, repoLocalPath);
+            return zipFilePath;
+        }
+        catch (GitAPIException e) {
+            throw new IOException(e.getMessage());
+        }
+        finally {
+            ArchiveCommand.unregisterFormat("zip");
+        }
     }
 
     /**
