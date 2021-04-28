@@ -106,7 +106,13 @@ public class GradingInstruction extends DomainObject {
         this.feedbacks = feedbacks;
     }
 
-    @Override
+    @PreRemove
+    public void preRemove() {
+        for (Feedback feedback : feedbacks) {
+            feedback.setGradingInstruction(null);
+        }
+    }
+        @Override
     public String toString() {
         return "GradingInstruction{" + "id=" + getId() + "'" + ", credits='" + getCredits() + "'" + ", gradingScale='" + getGradingScale() + "'" + ", instructionDescription='"
                 + getInstructionDescription() + "'" + ", feedback='" + getFeedback() + "'" + ", usageCount='" + getUsageCount() + "'" + '}';

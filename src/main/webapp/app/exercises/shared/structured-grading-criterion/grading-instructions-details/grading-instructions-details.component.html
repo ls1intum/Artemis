@@ -49,7 +49,7 @@
                 <input class="form-control" [(ngModel)]="criteria!.title!" placeholder="Criteria Title" style="height: 33px; width: 65%" />
             </div>
         <div *ngFor="let instruction of criteria.structuredGradingInstructions">
-            <div class="instructions">
+            <div class="instructions" *ngIf="instruction.id!">
                 <jhi-markdown-editor
                     #markdownEditor
                     [markdown]="generateInstructionText(instruction)"
