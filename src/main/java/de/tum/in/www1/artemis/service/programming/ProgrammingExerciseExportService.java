@@ -420,7 +420,7 @@ public class ProgrammingExerciseExportService {
         final var programmingExercise = programmingExerciseRepository.findWithAllParticipationsById(programmingExerciseId).get();
 
         final var numberOfParticipations = programmingExercise.getStudentParticipations().size();
-        log.info("Download repositories for JPlag programming comparison with {} participations", numberOfParticipations);
+        log.info("Download repositories for JPlag for programming exexericse {} to compare {} participations", programmingExerciseId, numberOfParticipations);
 
         final var targetPath = fileService.getUniquePathString(repoDownloadClonePath);
         List<ProgrammingExerciseParticipation> participations = studentParticipationsForComparison(programmingExercise, minimumScore);
@@ -435,7 +435,7 @@ public class ProgrammingExerciseExportService {
         }
 
         List<Repository> repositories = downloadRepositories(programmingExercise, participations, targetPath);
-        log.info("Downloading repositories done");
+        log.info("Downloading repositories done for programming exercise {}", programmingExerciseId);
 
         final var projectKey = programmingExercise.getProjectKey();
         final var repoFolder = Paths.get(targetPath, projectKey).toString();
@@ -452,16 +452,17 @@ public class ProgrammingExerciseExportService {
         // therefore we limit the results to at least 50% or 0.5 similarity, the passed threshold is between 0 and 100%
         options.setSimilarityThreshold(similarityThreshold);
 
-        log.info("Start JPlag programming comparison");
+        log.info("Start JPlag programming comparison for programming exercise {}", programmingExerciseId);
 
         JPlag jplag = new JPlag(options);
         JPlagResult result = jplag.run();
 
-        log.info("JPlag programming comparison finished with {} comparisons", result.getComparisons().size());
+        log.info("JPlag programming comparison finished with {} comparisons for programming exercise {}", result.getComparisons().size(), programmingExerciseId);
 
         cleanupResourcesAsync(programmingExercise, repositories, targetPath);
 
-        TextPlagiarismResult textPlagiarismResult = new TextPlagiarismResult(result);
+        TextPlagiarismResult textPlagiarismResult = new TextPlagiarismResult();
+        textPlagiarismResult.setJPlagResult(result);
         textPlagiarismResult.setExercise(programmingExercise);
 
         log.info("JPlag programming comparison for {} participations done in {}", numberOfParticipations, TimeLogUtil.formatDurationFrom(start));
@@ -552,11 +553,11 @@ public class ProgrammingExerciseExportService {
 
     private void cleanupResourcesAsync(final ProgrammingExercise programmingExercise, final List<Repository> repositories, final String targetPath) {
         executor.schedule(() -> {
-            log.info("Will delete local repositories");
+            log.info("Will delete local repositories for programming exercise {}", programmingExercise.getId());
             deleteLocalRepositories(repositories);
             // delete project root folder in the repos download folder
             deleteReposDownloadProjectRootDirectory(programmingExercise, targetPath);
-            log.info("Delete repositories done");
+            log.info("Delete repositories done for programming exercise {}", programmingExercise.getId());
         }, 10, TimeUnit.SECONDS);
     }
 
