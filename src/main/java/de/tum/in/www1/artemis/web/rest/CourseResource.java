@@ -295,9 +295,9 @@ public class CourseResource {
         validateOnlineCourseAndRegistrationEnabled(updatedCourse);
         validateShortName(updatedCourse);
 
-        // Based on the old instructors and TAs, we can update all exercises in the course in the VCS (if necessary)
-        // We need the old instructors and TAs, so that the VCS user management service can determine which
-        // users no longer have TA or instructor rights in the related exercise repositories.
+        // Based on the old instructors, editors and TAs, we can update all exercises in the course in the VCS (if necessary)
+        // We need the old instructors, editors and TAs, so that the VCS user management service can determine which
+        // users no longer have TA, editor or instructor rights in the related exercise repositories.
         final var oldInstructorGroup = existingCourse.getInstructorGroupName();
         final var oldEditorGroup = existingCourse.getEditorGroupName();
         final var oldTeachingAssistantGroup = existingCourse.getTeachingAssistantGroupName();

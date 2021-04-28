@@ -170,14 +170,17 @@ public class GitLabUserManagementService implements VcsUserManagementService {
 
         // Update the old editor of the group
         final var oldEditors = userRepository.findAllUserInGroupAndNotIn(oldEditorGroup, processedUsers);
-        // doUpgrade=true, because these users should be upgraded from TA to editor, if possible.
-        updateOldGroupMembers(exercises, oldEditors, updatedCourse.getEditorGroupName(), updatedCourse.getEditorGroupName(), MAINTAINER, true);
+        // doUpgrade=true, because these users should be upgraded from editor to instructor, if possible.
+        updateOldGroupMembers(exercises, oldEditors, updatedCourse.getEditorGroupName(), updatedCourse.getInstructorGroupName(), MAINTAINER, true);
         processedUsers.addAll(oldEditors);
 
         // Update the old teaching assistant of the group
         final var oldTeachingAssistants = userRepository.findAllUserInGroupAndNotIn(oldTeachingAssistantGroup, processedUsers);
+        // doUpgrade=true, because these users should be upgraded from TA to instructor, if possible.
+        updateOldGroupMembers(exercises, oldTeachingAssistants, updatedCourse.getTeachingAssistantGroupName(), updatedCourse.getInstructorGroupName(), MAINTAINER, true);
+        processedUsers.addAll(oldTeachingAssistants);
         // doUpgrade=true, because these users should be upgraded from TA to editor, if possible.
-        updateOldGroupMembers(exercises, oldTeachingAssistants, updatedCourse.getTeachingAssistantGroupName(), updatedCourse.getInstructorGroupName(), DEVELOPER, true);
+        updateOldGroupMembers(exercises, oldTeachingAssistants, updatedCourse.getTeachingAssistantGroupName(), updatedCourse.getEditorGroupName(), DEVELOPER, true);
         processedUsers.addAll(oldTeachingAssistants);
 
         // Now, we only have to add all users that have not been updated yet AND that are part of one of the new groups
@@ -206,10 +209,10 @@ public class GitLabUserManagementService implements VcsUserManagementService {
     }
 
     /**
-     * Updates all exercise groups in GitLab for the new course instructor/TA group names. Removes users that are no longer
-     * in any group and moves users to the new group, if they still have a valid group (e.g. instructor to TA).
+     * Updates all exercise groups in GitLab for the new course instructor/editor/TA group names. Removes users that are no longer
+     * in any group and moves users to the new group, if they still have a valid group (e.g. instructor to editor).
      * If a user still belongs to a group that is valid for the same access level, he will stay on this level. If a user
-     * can be upgraded, i.e. from instructor to TA, this will also be done.
+     * can be upgraded, i.e. from editor to instructor, this will also be done.
      * All cases:
      * <ul>
      *     <li>DOWNGRADE from instructor to editor</li>
