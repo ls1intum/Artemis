@@ -192,21 +192,34 @@ public class GitLabUserManagementService implements VcsUserManagementService {
      * @param updatedCourse         course with updated groups
      */
     private void setPermissionsForNewGroupMembers(List<ProgrammingExercise> programmingExercises, Set<User> newUsers, Course updatedCourse) {
+        final var userApi = gitlabApi.getUserApi();
 
         for (User user : newUsers) {
             Set<String> groups = user.getGroups();
-            if(user.getGroups() != null) {
-                final int userId = getUserId(user.getLogin());
 
-                if (groups.contains(updatedCourse.getInstructorGroupName())) {
-                    addUserToGroups(userId, programmingExercises, MAINTAINER);
-                } else if (groups.contains(updatedCourse.getEditorGroupName())) {
-                    addUserToGroups(userId, programmingExercises, DEVELOPER);
-                } else if (groups.contains(updatedCourse.getTeachingAssistantGroupName())) {
-                    addUserToGroups(userId, programmingExercises, REPORTER);
-                } else {
-                    removeMemberFromExercises(programmingExercises, user);
+            try {
+                var gitlabUser = userApi.getUser(user.getLogin());
+                if (gitlabUser == null) {
+                    log.warn("User {} does not exist in Gitlab and cannot be updated!", user.getLogin());
+                    continue;
                 }
+
+                if(user.getGroups() != null) {
+                    final int userId = getUserId(user.getLogin());
+
+                    if (groups.contains(updatedCourse.getInstructorGroupName())) {
+                        addUserToGroups(userId, programmingExercises, MAINTAINER);
+                    } else if (groups.contains(updatedCourse.getEditorGroupName())) {
+                        addUserToGroups(userId, programmingExercises, DEVELOPER);
+                    } else if (groups.contains(updatedCourse.getTeachingAssistantGroupName())) {
+                        addUserToGroups(userId, programmingExercises, REPORTER);
+                    } else {
+                        removeMemberFromExercises(programmingExercises, gitlabUser.getId());
+                    }
+                }
+
+            } catch (GitLabApiException e) {
+                    throw new GitLabException("Error while trying to set permission for user in GitLab: " + user, e);
             }
         }
 
@@ -221,41 +234,50 @@ public class GitLabUserManagementService implements VcsUserManagementService {
      * @param updatedCourse         course with updated groups
      */
     private void updateOldGroupMembers(List<ProgrammingExercise> programmingExercises, Set<User> oldUsers, Course updatedCourse) {
+        final var userApi = gitlabApi.getUserApi();
 
         for (User user : oldUsers) {
 
-            Set<String> groups = user.getGroups();
-            if(user.getGroups() == null) {
-                removeMemberFromExercises(programmingExercises, user);
+            try {
+                var gitlabUser = userApi.getUser(user.getLogin());
+                if (gitlabUser == null) {
+                    log.warn("User {} does not exist in Gitlab and cannot be updated!", user.getLogin());
+                    continue;
+                }
+
+                Set<String> groups = user.getGroups();
+                if(user.getGroups() == null) {
+                    removeMemberFromExercises(programmingExercises, gitlabUser.getId());
+                }
+
+                if(groups.contains(updatedCourse.getInstructorGroupName())) {
+                    updateMemberExercisePermissions(programmingExercises, gitlabUser.getId(), MAINTAINER);
+                } else if (groups.contains(updatedCourse.getEditorGroupName())){
+                    updateMemberExercisePermissions(programmingExercises, gitlabUser.getId(), DEVELOPER);
+                } else if (groups.contains(updatedCourse.getTeachingAssistantGroupName())) {
+                    updateMemberExercisePermissions(programmingExercises, gitlabUser.getId(), REPORTER);
+                } else {
+                    removeMemberFromExercises(programmingExercises, gitlabUser.getId());
+                }
+            } catch (GitLabApiException e) {
+                throw new GitLabException("Error while trying to update user in GitLab: " + user, e);
             }
 
-            if(groups.contains(updatedCourse.getInstructorGroupName())) {
-                updateMemberExercisePermissions(programmingExercises, user, MAINTAINER);
-            } else if (groups.contains(updatedCourse.getEditorGroupName())){
-                updateMemberExercisePermissions(programmingExercises, user, DEVELOPER);
-            } else if (groups.contains(updatedCourse.getTeachingAssistantGroupName())) {
-                updateMemberExercisePermissions(programmingExercises, user, REPORTER);
-            } else {
-                removeMemberFromExercises(programmingExercises, user);
-            }
         }
 
     }
-
 
     /**
      * Updates the permissions for the passed user to the passed accessLevel
      *
      * @param programmingExercises  all exercises for which the permissions shall be updated
-     * @param user                  user for whom the permissions shall be updated
+     * @param gitlabUserId          gitlabUserId for which the permissions shall be updated
      * @param accessLevel           access level that shall be set for a user
      */
-    private void updateMemberExercisePermissions(List<ProgrammingExercise> programmingExercises, User user, AccessLevel accessLevel) {
-        final int userId = getUserId(user.getLogin());
-
+    private void updateMemberExercisePermissions(List<ProgrammingExercise> programmingExercises, Integer gitlabUserId, AccessLevel accessLevel) {
         programmingExercises.forEach(exercise -> {
             try {
-                gitlabApi.getGroupApi().updateMember(exercise.getProjectKey(), userId, accessLevel);
+                gitlabApi.getGroupApi().updateMember(exercise.getProjectKey(), gitlabUserId, accessLevel);
             } catch (GitLabApiException e) {
                 throw new GitLabException("Error while updating GitLab group " + exercise.getProjectKey(), e);
             }
@@ -263,12 +285,16 @@ public class GitLabUserManagementService implements VcsUserManagementService {
 
     }
 
-    private void removeMemberFromExercises(List<ProgrammingExercise> exercises, User user) {
-        final int userId = getUserId(user.getLogin());
-
-        exercises.forEach(exercise -> {
+    /**
+     * Removes a member from an exercise, e.g. when a group is removed and the user is not part of another group that has permissions.
+     *
+     * @param programmingExercises  all exercises for which the permissions shall be updated
+     * @param gitlabUserId          gitlabUserId for which the permissions shall be updated
+     */
+    private void removeMemberFromExercises(List<ProgrammingExercise> programmingExercises, Integer gitlabUserId) {
+        programmingExercises.forEach(exercise -> {
             try {
-                gitlabApi.getGroupApi().removeMember(exercise.getProjectKey(), userId);
+                gitlabApi.getGroupApi().removeMember(exercise.getProjectKey(), gitlabUserId);
             } catch (GitLabApiException e) {
                 throw new GitLabException("Error while updating GitLab group " + exercise.getProjectKey(), e);
             }
