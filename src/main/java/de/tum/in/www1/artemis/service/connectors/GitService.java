@@ -992,7 +992,7 @@ public class GitService {
     /**
      * Zips the contents of a git repository.
      *
-     * @param repoLocalPath The local path to the repository contents (e.g Repository::getLocalPath())
+     * @param repository The repository
      * @param zipFilename   the name of the zipped file
      * @param targetPath    path where the repo is located on disk
      * @return path to the zip file
@@ -1009,18 +1009,37 @@ public class GitService {
         Path zipFilePath = Paths.get(targetPath, "zippedRepos", zipFilenameWithoutSlash);
         Files.createDirectories(Paths.get(targetPath, "zippedRepos"));
 
+        return archiveRepository(repository, zipFilePath.toString());
+    }
+
+    /**
+     * Executes git archive command to zip the specified repository. The function uses HEAD
+     * as the base of archival.
+     *
+     * @param repository The repository to archive
+     * @param outputFile The filename of the zip file that will be created.
+     * @throws IOException If the outFile is a directory or if git archive command failed.
+     */
+    private Path archiveRepository(Repository repository, String outputFile) throws IOException {
         try {
             ArchiveCommand.registerFormat("zip", new ZipFormat());
-            try (OutputStream out = new FileOutputStream(String.valueOf(zipFilePath))) {
+            try (OutputStream out = new FileOutputStream(outputFile)) {
                 try (Git git = new Git(repository)) {
-                    git.archive().setTree(repository.resolve("origin/master")).setOutputStream(out).setFilename(zipFilePath.toString()).call();
+                    var objectId = repository.resolve("HEAD");
+                    if (objectId != null) {
+                        git.archive().setTree(objectId).setOutputStream(out).setFilename(outputFile).call();
+                        return Path.of(outputFile);
+                    }
+                    else {
+                        log.warn("Skipped archiving repository {} because it doesn't contain HEAD.", repository);
+                        return null;
+                    }
+                }
+                catch (GitAPIException e) {
+                    log.warn("The git archive command failed: {}", e.getMessage());
+                    throw new IOException(e);
                 }
             }
-
-            return zipFilePath;
-        }
-        catch (GitAPIException e) {
-            throw new IOException(e.getMessage());
         }
         finally {
             ArchiveCommand.unregisterFormat("zip");
