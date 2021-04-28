@@ -138,6 +138,14 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
             this.programmingExercise.staticCodeAnalysisEnabled = false;
             this.programmingExercise.maxStaticCodeAnalysisPenalty = undefined;
         }
+
+        // Automatically enable the checkout of the solution repository for Haskell exercises
+        if (this.checkoutSolutionRepositoryAllowed && language === ProgrammingLanguage.HASKELL) {
+            this.programmingExercise.checkoutSolutionRepository = true;
+        } else {
+            this.programmingExercise.checkoutSolutionRepository = false;
+        }
+
         // Don't override the problem statement with the template in edit mode.
         if (this.programmingExercise.id === undefined) {
             this.loadProgrammingLanguageTemplate(language, this.programmingExercise.projectType!);

@@ -3,7 +3,7 @@ import { ActivatedRoute } from '@angular/router';
 import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
 import { JhiEventManager } from 'ng-jhipster';
 import { Subscription } from 'rxjs/Subscription';
-import { catchError, map } from 'rxjs/operators';
+import { catchError, map, take, tap } from 'rxjs/operators';
 import { combineLatest, of } from 'rxjs';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { Submission, SubmissionType } from 'app/entities/submission.model';
@@ -19,7 +19,6 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { TranslateService } from '@ngx-translate/core';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { take, tap } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-participation-submission',
@@ -149,9 +148,12 @@ export class ParticipationSubmissionComponent implements OnInit {
 
     getCommitUrl(submission: ProgrammingSubmission): string | undefined {
         const projectKey = (this.exercise as ProgrammingExercise)?.projectKey!.toLowerCase();
-        let repoSlug;
+        let repoSlug: string | undefined = undefined;
         if (this.participation?.type === ParticipationType.PROGRAMMING) {
-            repoSlug = projectKey + '-' + (this.participation as ProgrammingExerciseStudentParticipation).participantIdentifier;
+            const studentParticipation = this.participation as ProgrammingExerciseStudentParticipation;
+            if (studentParticipation.repositoryUrl) {
+                repoSlug = projectKey + '-' + studentParticipation.participantIdentifier;
+            }
         } else if (this.participation?.type === ParticipationType.TEMPLATE) {
             // In case of a test submisson, we need to use the test repository
             repoSlug = projectKey + (submission?.type === SubmissionType.TEST ? '-tests' : '-exercise');

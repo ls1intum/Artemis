@@ -338,6 +338,19 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
 
     @Test
     @WithMockUser(value = "student1", roles = "USER")
+    public void getDataForTextEditorForNonTextExercise_badRequest() throws Exception {
+        FileUploadExercise fileUploadExercise = ModelFactory.generateFileUploadExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(1),
+            ZonedDateTime.now().plusDays(2), "png,pdf", textExercise.getCourseViaExerciseGroupOrCourseMember());
+        exerciseRepo.save(fileUploadExercise);
+
+        FileUploadSubmission fileUploadSubmission = ModelFactory.generateFileUploadSubmission(true);
+        database.saveFileUploadSubmissionWithResultAndAssessorFeedback(fileUploadExercise, fileUploadSubmission, "student1", "tutor1", new ArrayList<>());
+
+        request.get("/api/text-editor/" + fileUploadSubmission.getParticipation().getId(), HttpStatus.BAD_REQUEST, Participation.class);
+    }
+
+    @Test
+    @WithMockUser(value = "student1", roles = "USER")
     public void getDataForTextEditor_hasTextBlocks() throws Exception {
         TextSubmission textSubmission = ModelFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
         var textBlocks = textExerciseUtilService.generateTextBlocks(1);
@@ -1105,7 +1118,7 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
         assertThat(fetchedParticipation.getSubmissions().size()).isEqualTo(1);
         assertThat(fetchedParticipation.findLatestSubmission().isPresent()).isTrue();
         assertThat(fetchedParticipation.findLatestSubmission().get()).isEqualTo(submissionWithoutFirstAssessment);
-        assertThat(fetchedParticipation.findLatestResult()).isEqualTo(firstSubmittedManualResult);
+        assertThat(fetchedParticipation.findLatestLegalResult()).isEqualTo(firstSubmittedManualResult);
 
         var databaseRelationshipStateOfResultsOverSubmission = studentParticipationRepository
                 .findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseId(exercise.getId());
