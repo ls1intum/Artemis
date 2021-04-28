@@ -129,7 +129,8 @@ public class ProgrammingExerciseExportService {
             // Zip the student and instructor repos together.
             var timestamp = ZonedDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-Hmss"));
             var filename = exercise.getCourseViaExerciseGroupOrCourseMember().getShortName() + "-" + exercise.getTitle() + "-" + exercise.getId() + "-" + timestamp + ".zip";
-            var pathToZippedExercise = Path.of(pathToStoreZipFile, filename);
+            var cleanFilename = fileService.removeIllegalCharacters(filename);
+            var pathToZippedExercise = Path.of(pathToStoreZipFile, cleanFilename);
             zipFileService.createZipFile(pathToZippedExercise, zipFilePathsNonNull, false);
             return pathToZippedExercise;
         }
@@ -168,7 +169,7 @@ public class ProgrammingExerciseExportService {
 
         // Construct the name of the zip file
         String courseShortName = exercise.getCourseViaExerciseGroupOrCourseMember().getShortName();
-        String zippedRepoName = courseShortName + "-" + exercise.getTitle() + "-" + repositoryType.getName();
+        String zippedRepoName = fileService.removeIllegalCharacters(courseShortName + "-" + exercise.getTitle() + "-" + repositoryType.getName());
 
         try {
             // Get the url to the repository and zip it.

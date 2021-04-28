@@ -75,9 +75,10 @@ public class CourseExamExportService {
 
         var timestamp = ZonedDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-Hmss"));
         var courseDirName = course.getShortName() + "-" + course.getTitle() + "-" + timestamp;
+        var cleanCourseDirName = fileService.removeIllegalCharacters(courseDirName);
 
         // Create a temporary directory that will contain the files that will be zipped
-        var courseDirPath = Path.of("./exports", courseDirName, courseDirName);
+        var courseDirPath = Path.of("./exports", cleanCourseDirName, cleanCourseDirName);
         try {
             Files.createDirectories(courseDirPath);
         }
@@ -116,9 +117,10 @@ public class CourseExamExportService {
 
         var timestamp = ZonedDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-Hmss"));
         var examDirName = exam.getId() + "-" + exam.getTitle() + "-" + timestamp;
+        var cleanExamDirName = fileService.removeIllegalCharacters(examDirName);
 
         // Create a temporary directory that will contain the files that will be zipped
-        var examDirPath = Path.of("./exports", examDirName, examDirName);
+        var examDirPath = Path.of("./exports", cleanExamDirName, cleanExamDirName);
         try {
             Files.createDirectories(examDirPath);
         }
@@ -194,7 +196,8 @@ public class CourseExamExportService {
         try {
             // Create exam directory.
             var exam = examRepository.findByIdElseThrow(examId);
-            examDir = Path.of(outputDir, exam.getId() + "-" + exam.getTitle());
+            var cleanExamTitle = fileService.removeIllegalCharacters(exam.getId() + "-" + exam.getTitle());
+            examDir = Path.of(outputDir, cleanExamTitle);
             Files.createDirectory(examDir);
 
             // We retrieve every exercise from each exercise group and flatten the list.
