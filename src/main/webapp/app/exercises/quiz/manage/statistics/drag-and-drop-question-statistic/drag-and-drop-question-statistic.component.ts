@@ -66,6 +66,7 @@ export class DragAndDropQuestionStatisticComponent extends QuestionStatisticComp
         // set label and background color based on the dropLocations
         this.question.dropLocations!.forEach((dropLocation, i) => {
             this.labels.push(this.getLetter(i) + '.');
+            this.solutionLabels.push(this.getLetter(i) + '.');
             this.backgroundColors.push(blueColor);
             this.backgroundSolutionColors.push(greenColor);
         });
