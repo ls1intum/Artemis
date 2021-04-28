@@ -1013,7 +1013,7 @@ public class GitService {
             ArchiveCommand.registerFormat("zip", new ZipFormat());
             try (OutputStream out = new FileOutputStream(String.valueOf(zipFilePath))) {
                 try (Git git = new Git(repository)) {
-                    git.archive().setTree(repository.resolve("master")).setOutputStream(out).setFilename(zipFilePath.toString()).call();
+                    git.archive().setTree(repository.resolve("origin/master")).setOutputStream(out).setFilename(zipFilePath.toString()).call();
                 }
             }
 
