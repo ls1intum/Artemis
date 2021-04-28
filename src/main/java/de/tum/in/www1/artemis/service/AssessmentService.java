@@ -18,7 +18,6 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.connectors.LtiService;
 import de.tum.in.www1.artemis.service.exam.ExamDateService;
-import de.tum.in.www1.artemis.service.programming.ProgrammingAssessmentService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
@@ -115,7 +114,8 @@ public class AssessmentService {
             return resultRepository.findByIdWithEagerAssessor(savedResult.getId()).get(); // to eagerly load assessor
         }
         else {
-            return resultRepository.submitResult(originalResult, exercise);
+            var result = resultRepository.saveResult(originalResult, exercise);
+            return resultRepository.submitResult(result);
         }
     }
 
@@ -245,16 +245,14 @@ public class AssessmentService {
      * For programming exercises we use a different approach see {@link ResultRepository#submitManualAssessment(long)})}
      *
      * @param resultId the id of the result that should be submitted
-     * @param exercise the exercise the assessment belongs to
-     * @param submissionDate the date manual assessment was submitted
      * @return the ResponseEntity with result as body
      */
-    public Result submitManualAssessment(long resultId, Exercise exercise, ZonedDateTime submissionDate) {
+    public Result submitManualAssessment(long resultId) {
         Result result = resultRepository.findWithEagerSubmissionAndFeedbackAndAssessorById(resultId)
                 .orElseThrow(() -> new EntityNotFoundException("No result for the given resultId could be found"));
         // result.setRatedIfNotExceeded(exercise.getDueDate(), submissionDate);
         // result.setCompletionDate(ZonedDateTime.now());
-        result = resultRepository.submitResult(result, exercise);
+        result = resultRepository.submitResult(result);
         // Note: we always need to report the result (independent of the assessment due date) over LTI, otherwise it might never become visible in the external system
         ltiService.onNewResult((StudentParticipation) result.getParticipation());
         return result;
@@ -264,14 +262,12 @@ public class AssessmentService {
      * This function is used for saving a manual assessment/result. It sets the assessment type to MANUAL and sets the assessor attribute. Furthermore, it saves the result in the
      * database. If a result with the given id exists, it will be overridden. if not, a new result will be created.
      *
-     * For programming exercises we use a different approach see {@link ProgrammingAssessmentService#saveManualAssessment(Result)}
-     *
      * @param submission the file upload submission to which the feedback belongs to
      * @param feedbackList the assessment as a feedback list that should be added to the result of the corresponding submission
      * @param resultId resultId of the submission we what to save the @feedbackList to, null if no result exists
      * @return result that was saved in the database
      */
-    public Result saveManualAssessment(final Submission submission, final List<Feedback> feedbackList, Long resultId) {
+    public Result saveManualAssessment(final Submission submission, final List<Feedback> feedbackList, Long resultId, Exercise exercise) {
         Result result = submission.getResults().stream().filter(res -> res.getId().equals(resultId)).findAny().orElse(null);
 
         if (result == null) {
@@ -283,7 +279,13 @@ public class AssessmentService {
             result.setHasComplaint(false);
         }
 
-        if (!(submission instanceof ProgrammingSubmission)) {
+        if (submission instanceof ProgrammingSubmission) {
+            result.setHasFeedback(true);
+            result.setRated(true);
+        }
+        else {
+            // Note: this boolean flag is only used for programming exercises
+            result.setHasFeedback(false);
             result.setExampleResult(submission.isExampleSubmission());
         }
 
@@ -296,15 +298,6 @@ public class AssessmentService {
         var savedFeedbackList = feedbackRepository.saveFeedbacks(feedbackList);
         result.updateAllFeedbackItems(savedFeedbackList, false);
 
-        if (submission instanceof ProgrammingSubmission) {
-            result.setHasFeedback(true);
-            result.setRated(true);
-        }
-        else {
-            // Note: this boolean flag is only used for programming exercises
-            result.setHasFeedback(false);
-        }
-
         result.determineAssessmentType();
 
         if (result.getSubmission() == null) {
@@ -312,10 +305,7 @@ public class AssessmentService {
             submission.addResult(result);
             submissionRepository.save(submission);
         }
-        // Workaround to prevent the assessor turning into a proxy object after saving
-        var assessor = result.getAssessor();
-        result = resultRepository.save(result);
-        result.setAssessor(assessor);
+        result = resultRepository.saveResult(result, exercise);
         return result;
     }
 }

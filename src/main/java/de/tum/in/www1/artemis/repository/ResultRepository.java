@@ -508,12 +508,22 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
     }
 
     /**
-     * submit the result means it is saved with a calculated score, result string and a completion date.
+     * submit the result means it is saved with a completion date.
      * @param result the result which should be set to submitted
-     * @param exercise the exercises to which the result belongs, which is needed to get points and to determine if the result is rated or not
      * @return the saved result
      */
-    default Result submitResult(Result result, Exercise exercise) {
+    default Result submitResult(Result result) {
+        // Workaround to prevent the assessor turning into a proxy object after saving
+        var assessor = result.getAssessor();
+
+        result.setCompletionDate(ZonedDateTime.now());
+        result = save(result);
+        result.setAssessor(assessor);
+        return result;
+    }
+
+    default Result saveResult(Result result, Exercise exercise) {
+
         boolean isProgrammingExercise = exercise instanceof ProgrammingExercise;
         double maxPoints = exercise.getMaxPoints();
         double bonusPoints = Optional.ofNullable(exercise.getBonusPoints()).orElse(0.0);
@@ -526,7 +536,6 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
             result.setRatedIfNotExceeded(exercise.getDueDate(), result.getSubmission().getSubmissionDate());
         }
 
-        result.setCompletionDate(ZonedDateTime.now());
         // Take bonus points into account to achieve a result score > 100%
         double calculatedPoints = isProgrammingExercise ? calculateTotalPointsForProgrammingExercise(result) : calculateTotalPoints(result.getFeedbacks());
         double totalPoints = constrainToRange(calculatedPoints, maxPoints + bonusPoints);

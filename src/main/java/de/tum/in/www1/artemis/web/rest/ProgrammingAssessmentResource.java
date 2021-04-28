@@ -106,7 +106,6 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
      * @return the result saved to the database
      */
     @ResponseStatus(HttpStatus.OK)
-    // @PutMapping("/participations/{participationId}/manual-results")
     @PutMapping("/programming-submissions/{submissionId}/result/{resultId}/assessment")
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<Result> saveProgrammingAssessment(@PathVariable long submissionId, @PathVariable long resultId,
@@ -118,10 +117,6 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
         // if score of 100% then set also result successful
 
         var response = super.saveAssessment(submission, submit, feedbacks, resultId);
-
-        /*
-         * if (submit) { newManualResult = resultRepository.submitManualAssessment(existingManualResult.getId()); }
-         */
 
         return response;
     }

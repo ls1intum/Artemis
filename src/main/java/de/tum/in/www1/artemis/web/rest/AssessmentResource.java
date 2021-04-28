@@ -131,9 +131,9 @@ public abstract class AssessmentResource {
             }
         }
 
-        Result result = assessmentService.saveManualAssessment(submission, feedbackList, resultId);
+        Result result = assessmentService.saveManualAssessment(submission, feedbackList, resultId, exercise);
         if (submit) {
-            result = assessmentService.submitManualAssessment(result.getId(), exercise, submission.getSubmissionDate());
+            result = assessmentService.submitManualAssessment(result.getId());
         }
         var participation = result.getParticipation();
         // remove information about the student for tutors to ensure double-blind assessment
@@ -141,10 +141,6 @@ public abstract class AssessmentResource {
             participation.filterSensitiveInformation();
         }
 
-        if (exercise instanceof ProgrammingExercise) {
-            // Note: we always need to report the result over LTI, otherwise it might never become visible in the external system
-            ltiService.onNewResult((StudentParticipation) participation);
-        }
         if (submit && (participation.getExercise().getAssessmentDueDate() == null || participation.getExercise().getAssessmentDueDate().isBefore(ZonedDateTime.now()))) {
             messagingService.broadcastNewResult(result.getParticipation(), result);
         }
@@ -165,10 +161,10 @@ public abstract class AssessmentResource {
         // as parameter resultId is not set, we use the latest Result, if no latest Result exists, we use null
         Result result;
         if (submission.getLatestResult() == null) {
-            result = assessmentService.saveManualAssessment(submission, feedbacks, null);
+            result = assessmentService.saveManualAssessment(submission, feedbacks, null, exercise);
         }
         else {
-            result = assessmentService.saveManualAssessment(submission, feedbacks, submission.getLatestResult().getId());
+            result = assessmentService.saveManualAssessment(submission, feedbacks, submission.getLatestResult().getId(), exercise);
         }
         return ResponseEntity.ok(result);
     }
