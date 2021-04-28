@@ -106,7 +106,7 @@ describe('ParticipationSubmissionComponent', () => {
         restore();
     });
 
-    it('Should return empty commit url if participation has no repository url', fakeAsync(() => {
+    it('Should return empty commit url if participation has no repository url', () => {
         const exercise: ProgrammingExercise = {
             numberOfAssessmentsOfCorrectionRounds: [],
             secondCorrectionEnabled: false,
@@ -127,7 +127,7 @@ describe('ParticipationSubmissionComponent', () => {
         comp.participation = participation;
         comp.exercise = exercise;
         expect(comp.getCommitUrl(submission)).to.be.empty;
-    }));
+    });
 
     it('Submissions are correctly loaded from server', fakeAsync(() => {
         // set all attributes for comp
