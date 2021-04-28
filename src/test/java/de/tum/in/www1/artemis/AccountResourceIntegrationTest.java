@@ -77,12 +77,21 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
         testWithChangedConfig("registrationEnabled", Optional.of(Boolean.FALSE), test);
     }
 
+    private String getValidPassword() {
+        // verify configuration is valid
+        assertThat(ManagedUserVM.PASSWORD_MIN_LENGTH).isLessThan(ManagedUserVM.PASSWORD_MAX_LENGTH);
+        assertThat(ManagedUserVM.PASSWORD_MIN_LENGTH).isGreaterThanOrEqualTo(0);
+
+        // empty password will always get rejected
+        return "a".repeat(Math.max(1, ManagedUserVM.PASSWORD_MIN_LENGTH));
+    }
+
     @Test
     public void registerAccount() throws Exception {
         // setup user
         User user = ModelFactory.generateActivatedUser("ab123cd");
         ManagedUserVM userVM = new ManagedUserVM(user);
-        userVM.setPassword("password");
+        userVM.setPassword(getValidPassword());
 
         // make request
         request.postWithoutLocation("/api/register", userVM, HttpStatus.CREATED, null);
@@ -93,6 +102,7 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
         // setup user
         User user = ModelFactory.generateActivatedUser("ab123cd");
         ManagedUserVM userVM = new ManagedUserVM(user);
+        assertThat(ManagedUserVM.PASSWORD_MAX_LENGTH).isGreaterThan(0);
         userVM.setPassword("e".repeat(ManagedUserVM.PASSWORD_MAX_LENGTH + 1));
 
         // make request
@@ -104,7 +114,11 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
         // setup user
         User user = ModelFactory.generateActivatedUser("ab123cd");
         ManagedUserVM userVM = new ManagedUserVM(user);
-        userVM.setPassword("e".repeat(Math.max(0, ManagedUserVM.PASSWORD_MIN_LENGTH - 1)));
+        assertThat(ManagedUserVM.PASSWORD_MIN_LENGTH).isGreaterThanOrEqualTo(0);
+        if (ManagedUserVM.PASSWORD_MIN_LENGTH == 0)
+            // if all lengths are accepted it cannot be tested for too short passwords
+            return;
+        userVM.setPassword("e".repeat(ManagedUserVM.PASSWORD_MIN_LENGTH - 1));
 
         // make request
         request.postWithoutLocation("/api/register", userVM, HttpStatus.BAD_REQUEST, null);
@@ -127,7 +141,7 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
             // setup user
             User user = ModelFactory.generateActivatedUser("ab123cd");
             ManagedUserVM userVM = new ManagedUserVM(user);
-            userVM.setPassword("password");
+            userVM.setPassword(getValidPassword());
 
             // make request
             request.postWithoutLocation("/api/register", userVM, HttpStatus.FORBIDDEN, null);
@@ -140,7 +154,7 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
             // setup user
             User user = ModelFactory.generateActivatedUser("ab123cd");
             ManagedUserVM userVM = new ManagedUserVM(user);
-            userVM.setPassword("password");
+            userVM.setPassword(getValidPassword());
 
             // make request
             request.postWithoutLocation("/api/register", userVM, HttpStatus.FORBIDDEN, null);
@@ -155,7 +169,7 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
             User user = ModelFactory.generateActivatedUser("ab123cd");
             user.setEmail("-");
             ManagedUserVM userVM = new ManagedUserVM(user);
-            userVM.setPassword("password");
+            userVM.setPassword(getValidPassword());
 
             // make request
             request.postWithoutLocation("/api/register", userVM, HttpStatus.BAD_REQUEST, null);
@@ -164,13 +178,12 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
 
     @Test
     public void registerAccountEmptyEmailPattern() throws Throwable {
-        // Inject email-pattern to be independent of the config
         testWithChangedConfig("allowedEmailPattern", Optional.empty(), () -> {
             // setup user
             User user = ModelFactory.generateActivatedUser("ab123cd");
             user.setEmail("-");
             ManagedUserVM userVM = new ManagedUserVM(user);
-            userVM.setPassword("password");
+            userVM.setPassword(getValidPassword());
 
             // make request
             request.postWithoutLocation("/api/register", userVM, HttpStatus.CREATED, null);
@@ -389,7 +402,7 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
     public void changePasswordInvalidPassword() throws Exception {
         User user = ModelFactory.generateActivatedUser("authenticateduser");
         User createdUser = userCreationService.createUser(new ManagedUserVM(user));
-        String updatedPassword = "123";
+        String updatedPassword = "";
 
         PasswordChangeDTO pwChange = new PasswordChangeDTO(passwordService.decryptPassword(createdUser.getPassword()), updatedPassword);
         // make request
@@ -408,7 +421,7 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
 
         // init password reset
         // no helper method from request can be used since the String needs to be transferred unaltered; The helpers would add quotes around it
-        // Previous, faulty call:
+        // previous, faulty call:
         // request.postWithoutLocation("/api/account/reset-password/init", createdUser.getEmail(), HttpStatus.OK, null);
         var req = MockMvcRequestBuilders.post(new URI("/api/account/reset-password/init")).contentType(MediaType.APPLICATION_JSON).content(createdUser.getEmail());
         request.getMvc().perform(req).andExpect(status().is(HttpStatus.OK.value())).andReturn();
@@ -423,7 +436,7 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
         assertThat(resetKey).isNotEqualTo(resetKeyBefore);
 
         // finish password reset
-        String newPassword = "password";
+        String newPassword = getValidPassword();
         KeyAndPasswordVM finishResetData = new KeyAndPasswordVM();
         finishResetData.setKey(resetKey);
         finishResetData.setNewPassword(newPassword);
@@ -500,7 +513,7 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
     @WithMockUser("authenticateduser")
     public void passwordResetFinishInvalidKey() throws Throwable {
         KeyAndPasswordVM finishResetData = new KeyAndPasswordVM();
-        finishResetData.setNewPassword("password");
+        finishResetData.setNewPassword(getValidPassword());
         request.postWithoutLocation("/api/account/reset-password/finish", finishResetData, HttpStatus.FORBIDDEN, null);
     }
 }
