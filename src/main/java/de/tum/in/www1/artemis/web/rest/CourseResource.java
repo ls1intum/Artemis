@@ -1332,7 +1332,8 @@ public class CourseResource {
         // Only counting assessments and submissions which are handed in in time
         long numberOfAssessments = resultRepository.countNumberOfAssessments(exerciseIdsOfCourse).inTime();
         dto.setCurrentAbsoluteAssessments(numberOfAssessments);
-        long numberOfSubmissions = submissionRepository.countByCourseIdSubmittedBeforeDueDate(courseId);
+        long numberOfSubmissions = submissionRepository.countByCourseIdSubmittedBeforeDueDate(courseId)
+                + programmingExerciseRepository.countLegalSubmissionsByCourseIdSubmitted(courseId);
         dto.setCurrentMaxAssessments(numberOfSubmissions);
         if (numberOfSubmissions > 0) {
             dto.setCurrentPercentageAssessments(Math.round(numberOfAssessments * 1000.0 / numberOfSubmissions) / 10.0);
