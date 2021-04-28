@@ -256,11 +256,11 @@
                     [width]="470"
                 >
                     <ng-template ngx-datatable-cell-template let-value="value">
-                        <a class="btn btn-primary btn-sm mr-1" href="{{ getRepositoryLink(value) }}">
+                        <a *ngIf="getRepositoryLink(value)" class="btn btn-primary btn-sm mr-1" href="{{ getRepositoryLink(value) }}">
                             <fa-icon [icon]="'code-branch'" class="mr-1"></fa-icon>
                             Repository
                         </a>
-                        <button class="btn btn-primary btn-sm mr-1" jhiBuildPlanButton [projectKey]="projectKey()" [buildPlanId]="buildPlanId(value)!">
+                        <button *ngIf="buildPlanId(value)" class="btn btn-primary btn-sm mr-1" jhiBuildPlanButton [projectKey]="projectKey()" [buildPlanId]="buildPlanId(value)!">
                             <fa-icon class="mr-1" [icon]="['far', 'file-code']"></fa-icon>
                             Build plan
                         </button>

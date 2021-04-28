@@ -220,6 +220,15 @@ public class SubmissionExportIntegrationTest extends AbstractSpringIntegrationBa
         mockedFiles.close();
     }
 
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testExportTextExerciseSubmission_IOException() throws Exception {
+        MockedStatic<Files> mockedFiles = mockStatic(Files.class);
+        mockedFiles.when(() -> Files.newOutputStream(any(), any())).thenThrow(IOException.class);
+        request.postWithResponseBodyFile("/api/text-exercises/" + textExercise.getId() + "/export-submissions", baseExportOptions, HttpStatus.BAD_REQUEST);
+        mockedFiles.close();
+    }
+
     private void assertZipContains(File file, Submission... submissions) {
         try {
             ZipFile zip = new ZipFile(file);
