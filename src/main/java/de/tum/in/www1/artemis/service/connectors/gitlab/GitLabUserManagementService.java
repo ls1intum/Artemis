@@ -81,7 +81,7 @@ public class GitLabUserManagementService implements VcsUserManagementService {
      * @param userLogin the username of the user
      * @param user the Artemis user to update
      * @param shouldUpdatePassword if the Gitlab password should be updated
-     * @return the updates Gitlab user
+     * @return the updated Gitlab user
      * @throws GitLabApiException if the user cannot be retrieved or cannot update the user
      */
     private org.gitlab4j.api.models.User updateBasicUserInformation(String userLogin, User user, boolean shouldUpdatePassword) throws GitLabApiException {
@@ -231,6 +231,7 @@ public class GitLabUserManagementService implements VcsUserManagementService {
      * Gets the Gitlab user id of the Artemis user. Creates
      * a new Gitlab user if it doesn't exist and returns the
      * generated id.
+     *
      * @param user the Artemis user
      * @return the Gitlab user id
      */
@@ -269,7 +270,7 @@ public class GitLabUserManagementService implements VcsUserManagementService {
     }
 
     /**
-     * adds a Gitlab user to a Gitlab group based on the provided exercises (project key) and the given access level
+     * Adds a Gitlab user to all Gitlab groups mapped to the provided exercises.
      *
      * @param userId      the Gitlab user id
      * @param exercises   the list of exercises which project key is used as the Gitlab "group" (i.e. Gitlab project)
@@ -282,9 +283,9 @@ public class GitLabUserManagementService implements VcsUserManagementService {
     }
 
     /**
-     * Adds a Gitlab user to a Gitlab group.
+     * Adds a Gitlab user to a Gitlab group with the given access level.
      *
-     * @param groupName The name of the group
+     * @param groupName The name of the Gitlab group
      * @param gitlabUserId the id of the Gitlab user
      * @param accessLevel the access level to grant to the user
      * @throws GitLabException if the user cannot be added to the group
@@ -304,6 +305,7 @@ public class GitLabUserManagementService implements VcsUserManagementService {
 
     /**
      * Updates the user's access levels for the specified groups.
+     *
      * @param gitlabUserId the user id of the Gitlab user
      * @param groups  the groups to update
      * @throws GitLabApiException if something when wrong while updating user membership
@@ -313,6 +315,7 @@ public class GitLabUserManagementService implements VcsUserManagementService {
             return;
         }
 
+        // Gitlab groups are identified by the project key of the programming exercise
         var exercises = programmingExerciseRepository.findAllByInstructorOrTAGroupNameIn(groups);
         for (var exercise : exercises) {
             var instructorGroupName = exercise.getCourseViaExerciseGroupOrCourseMember().getInstructorGroupName();
@@ -323,6 +326,7 @@ public class GitLabUserManagementService implements VcsUserManagementService {
 
     /**
      * Removes the Gitlab user from the specified groups.
+     *
      * @param gitlabUserId the user id of the Gitlab user
      * @param groups the groups to remove the user from.
      */
@@ -331,16 +335,18 @@ public class GitLabUserManagementService implements VcsUserManagementService {
             return;
         }
 
+        // Gitlab groups are identified by the project key of the programming exercise
         var exercises = programmingExerciseRepository.findAllByInstructorOrTAGroupNameIn(groups);
         for (var exercise : exercises) {
+            var gitlabGroup = exercise.getProjectKey();
             try {
-                gitlabApi.getGroupApi().removeMember(exercise.getProjectKey(), gitlabUserId);
+                gitlabApi.getGroupApi().removeMember(gitlabGroup, gitlabUserId);
             }
             catch (GitLabApiException ex) {
                 // If user membership to group is missing on Gitlab, ignore the exception and let artemis synchronize
                 // with GitLab groups
                 if (ex.getHttpStatus() != 404) {
-                    log.error("Gitlab Exception when removing a user " + gitlabUserId + " to a group " + exercise.getProjectKey(), ex);
+                    log.error("Gitlab Exception when removing a user " + gitlabUserId + " to a group " + gitlabGroup, ex);
                 }
             }
         }
@@ -367,6 +373,7 @@ public class GitLabUserManagementService implements VcsUserManagementService {
     /**
      * Gets the name of the user or its pseudonym if the option
      * is enabled.
+     *
      * @param user the Artemis user
      * @return the name or pseudonym
      */
@@ -383,7 +390,7 @@ public class GitLabUserManagementService implements VcsUserManagementService {
     }
 
     /**
-     * retrieves the user id of the Gitlab user with the given user name
+     * Retrieves the user id of the Gitlab user with the given user name
      *
      * @param username the username for which the user id should be retrieved
      * @return the Gitlab user id
