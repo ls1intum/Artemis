@@ -9,6 +9,7 @@ import { CourseManagementService } from '../course-management.service';
 @Component({
     selector: 'jhi-course-detail-bar-chart',
     templateUrl: './course-detail-bar-chart.component.html',
+    styleUrls: ['./course-detail-bar-chart.component.scss'],
 })
 export class CourseDetailBarChartComponent implements OnChanges {
     @Input()

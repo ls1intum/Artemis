@@ -1,9 +1,19 @@
-.doughnut-chart-container {
+.doughnut {
+    min-width: 200px;
     display: flex;
-    align-items: center;
+    flex-wrap: wrap;
     justify-content: center;
+    height: 100%;
 
-    .doughnut-chart-text {
-        position: absolute;
+    .doughnut-chart-container {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+
+        .doughnut-chart-text {
+            position: absolute;
+            min-height: 50px;
+        }
     }
 }

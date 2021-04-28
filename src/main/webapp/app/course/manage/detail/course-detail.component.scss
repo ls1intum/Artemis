@@ -16,23 +16,16 @@ jhi-secured-image {
 .tab-bar {
     display: flex;
     align-items: center;
+    flex-wrap: wrap;
     min-height: 60px;
     margin: 0 -1.25rem;
     $padding-y: 11px;
 
     padding-top: $padding-y;
-    padding-bottom: $padding-y;
     border-bottom: 1px solid #979797;
 
     .tab-item {
-        cursor: pointer;
-        margin: 0 1em;
-        color: black;
-        font-weight: lighter;
-
-        &.active {
-            box-shadow: 0 2px 0 #353d47;
-        }
+        margin-bottom: $padding-y;
     }
 }
 
@@ -53,4 +46,8 @@ jhi-secured-image {
             max-height: 130px;
         }
     }
+}
+
+.doughnut-container {
+    min-width: 200px;
 }

@@ -1,9 +1,9 @@
 <div class="col">
     <h5 class="col-md-12 text-center" style="margin-top: 15px">{{ 'artemisApp.courseStatistics.activeStudents' | artemisTranslate }}</h5>
-    <div class="row">
+    <div class="row flex-nowrap">
         <fa-icon [icon]="'arrow-left'" size="2x" class="col-md-1 d-flex justify-content-end align-items-center" role="button" (click)="switchTimeSpan(LEFT)"></fa-icon>
         <canvas
-            class="col-md-9"
+            class="course-detail-bar-chart col-md-9"
             baseChart
             height="750"
             width="1500"
