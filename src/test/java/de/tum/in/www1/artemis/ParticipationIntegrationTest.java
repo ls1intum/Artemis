@@ -312,7 +312,7 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationBambo
         exercise = exerciseRepo.save(exercise);
         var participation = ModelFactory.generateProgrammingExerciseStudentParticipation(InitializationState.INACTIVE, exercise, database.getUserByLogin("student1"));
         participationRepo.save(participation);
-        request.putWithResponseBody("/api/courses/" + course.getId() + "/exercises/" + exercise.getId() + "/resume-programming-participation",null, ProgrammingExerciseStudentParticipation.class, HttpStatus.FORBIDDEN);
+        request.putWithResponseBody("/api/courses/" + course.getId() + "/exercises/" + exercise.getId() + "/resume-programming-participation", null, ProgrammingExerciseStudentParticipation.class, HttpStatus.FORBIDDEN);
     }
 
     @Test
