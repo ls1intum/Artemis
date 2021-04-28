@@ -1,14 +1,14 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs/Observable';
-
 import { ExampleSubmission } from 'app/entities/example-submission.model';
+import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 
 export type EntityResponseType = HttpResponse<ExampleSubmission>;
 
 @Injectable({ providedIn: 'root' })
 export class ExampleSubmissionService {
-    constructor(private http: HttpClient) {}
+    constructor(private http: HttpClient, private exerciseService: ExerciseService) {}
 
     /**
      * Creates an example submission
@@ -74,6 +74,12 @@ export class ExampleSubmissionService {
      * Convert a ExampleSubmission to a JSON which can be sent to the server.
      */
     private convert(exampleSubmission: ExampleSubmission): ExampleSubmission {
-        return Object.assign({}, exampleSubmission);
+        const jsonCopy = Object.assign({}, exampleSubmission);
+        if (jsonCopy.exercise) {
+            jsonCopy.exercise = this.exerciseService.convertDateFromClient(jsonCopy.exercise);
+            jsonCopy.exercise = this.exerciseService.setBonusPointsConstrainedByIncludedInOverallScore(jsonCopy.exercise!);
+            jsonCopy.exercise.categories = this.exerciseService.stringifyExerciseCategories(jsonCopy.exercise);
+        }
+        return jsonCopy;
     }
 }
