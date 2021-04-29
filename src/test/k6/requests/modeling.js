@@ -1,6 +1,14 @@
-import { fail } from 'k6';
+import { fail, sleep } from 'k6';
 import { nextAlphanumeric } from '../util/utils.js';
-import { ASSESS_MODELING_SUBMISSION, MODELING_EXERCISE, SUBMIT_MODELING_EXAM, PARTICIPATIONS, TUTOR_PARTICIPATIONS, MODELING_SUBMISSION_WITHOUT_ASSESSMENT } from './endpoints.js';
+import {
+    ASSESS_MODELING_SUBMISSION,
+    MODELING_EXERCISE,
+    SUBMIT_MODELING_EXAM,
+    PARTICIPATIONS,
+    TUTOR_PARTICIPATIONS,
+    MODELING_SUBMISSION_WITHOUT_ASSESSMENT,
+    MODELING_EXERCISES,
+} from './endpoints.js';
 
 export function submitRandomModelingAnswerExam(artemis, exercise, submissionId, participation) {
     const answer = {

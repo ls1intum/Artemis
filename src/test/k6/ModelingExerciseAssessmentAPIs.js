@@ -43,6 +43,7 @@ export function setup() {
     let courseId;
     let exerciseId;
     let artemis;
+    let exercise;
     const iterations = parseInt(__ENV.ITERATIONS);
 
     if (parseInt(__ENV.COURSE_ID) === 0 || parseInt(__ENV.EXERCISE_ID) === 0) {
@@ -51,7 +52,7 @@ export function setup() {
         // Create course
         const artemisAdmin = login(adminUsername, adminPassword);
 
-        const course = newCourse(artemis);
+        const course = newCourse(artemisAdmin);
 
         console.log('Create users with ids starting from ' + userOffset + ' and up to ' + (userOffset + iterations));
         createUsersIfNeeded(artemisAdmin, baseUsername, basePassword, adminUsername, adminPassword, course, userOffset);
@@ -76,19 +77,19 @@ export function setup() {
         }
 
         // Create new exercise
-        exerciseId = newModelingExercise(artemis, course.id);
+        exercise = newModelingExercise(artemis, undefined, course.id);
+        exerciseId = exercise.id;
         console.log('Created exercise with id ' + exerciseId);
 
         sleep(2);
     } else {
         exerciseId = parseInt(__ENV.EXERCISE_ID);
         courseId = parseInt(__ENV.COURSE_ID);
+        artemis = login(adminUsername, adminPassword);
+
+        console.log('Getting exercise');
+        exercise = getExercise(artemis, exerciseId);
     }
-
-    artemis = login(adminUsername, adminPassword);
-
-    console.log('Getting exercise');
-    const exercise = getExercise(artemis, exerciseId);
 
     for (let i = 1; i <= iterations; i++) {
         console.log(userOffset);

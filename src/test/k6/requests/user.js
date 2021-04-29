@@ -112,7 +112,7 @@ export function createTutorsIfNeeded(artemis, baseUsername, basePassword, adminU
     if (shouldCreateUsers) {
         console.log('Try to create ' + iterations + ' users');
         for (let i = 1; i <= iterations; i++) {
-            let userId = newUser(artemis, i + userOffset, baseUsername, basePassword, course.tutorGroupName, course.instructorGroupName);
+            let userId = newUser(artemis, i + userOffset, baseUsername, basePassword, course.teachingAssistantGroupName, course.instructorGroupName);
             if (userId === -1) {
                 // the creation was not successful, most probably because the user already exists, we need to update the group of the user
                 updateUserWithGroup(artemis, i, baseUsername, course, true);
