@@ -341,9 +341,6 @@ export class ResultComponent implements OnInit, OnChanges {
         if (this.templateStatus === ResultTemplateStatus.LATE) {
             return 'result--late';
         }
-        if (this.onlyShowSuccessfulCompileStatus) {
-            return 'text-success';
-        }
         const result = this.result!;
         if (result.score == undefined) {
             if (result.successful) {
