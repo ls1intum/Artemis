@@ -101,7 +101,7 @@ public class ModelingPlagiarismDetectionService {
                 .filter(modelingSubmission -> minimumScore == 0 || modelingSubmission.getLatestResult() != null && modelingSubmission.getLatestResult().getScore() != null
                         && modelingSubmission.getLatestResult().getScore() >= minimumScore)
                 .forEach(modelingSubmission -> {
-                    var progressMessage = "Getting UML diagram for submission: " + processedSubmissionCount + "/" + modelingSubmissions.size();
+                    String progressMessage = "Getting UML diagram for submission: " + processedSubmissionCount + "/" + modelingSubmissions.size();
                     plagiarismWebsocketService.notifyUserAboutPlagiarismState(topic, PlagiarismCheckState.RUNNING, List.of(progressMessage));
 
                     try {
@@ -129,7 +129,7 @@ public class ModelingPlagiarismDetectionService {
         // It is intended to use the classic for loop here, because we only want to check
         // similarity between two different submissions once
         for (int i = 0; i < nonEmptyDiagrams.size(); i++) {
-            var progressMessage = "Comparing submissions: " + (i + 1) + "/" + nonEmptyDiagrams.size();
+            String progressMessage = "Comparing submissions: " + (i + 1) + "/" + nonEmptyDiagrams.size();
             plagiarismWebsocketService.notifyUserAboutPlagiarismState(topic, PlagiarismCheckState.RUNNING, List.of(progressMessage));
 
             for (int j = i + 1; j < nonEmptyDiagrams.size(); j++) {

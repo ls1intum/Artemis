@@ -37,7 +37,7 @@ public class PlagiarismWebsocketService {
         payload.put("state", plagiarismCheckState.toString());
         payload.put("messages", String.join("\n", messages));
 
-        var mapper = new ObjectMapper();
+        ObjectMapper mapper = new ObjectMapper();
         try {
             websocketMessagingService.sendMessage(topic, mapper.writeValueAsString(payload));
         }
