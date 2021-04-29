@@ -15,7 +15,7 @@ import de.tum.in.www1.artemis.service.plagiarism.ModelingPlagiarismDetectionServ
 
 public abstract class AbstractUMLDiagramTest {
 
-    protected ModelingPlagiarismDetectionService modelingPlagiarismDetectionService = new ModelingPlagiarismDetectionService();
+    protected ModelingPlagiarismDetectionService modelingPlagiarismDetectionService = new ModelingPlagiarismDetectionService(null);
 
     protected void compareSubmissions(ModelingSubmission modelingSubmission1, ModelingSubmission modelingSubmission2, double minimumSimilarity, double expectedSimilarity) {
         // not really necessary, but avoids issues.

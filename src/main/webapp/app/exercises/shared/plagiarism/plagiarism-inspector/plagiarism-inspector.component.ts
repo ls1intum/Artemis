@@ -123,9 +123,6 @@ export class PlagiarismInspectorComponent implements OnInit {
             case ExerciseType.PROGRAMMING:
                 topic += 'programming-exercises';
                 break;
-            case ExerciseType.FILE_UPLOAD:
-                topic += 'file-upload-exercises';
-                break;
             case ExerciseType.TEXT:
                 topic += 'text-exercises';
                 break;
@@ -254,13 +251,14 @@ export class PlagiarismInspectorComponent implements OnInit {
     }
 
     handlePlagiarismResult(result: ModelingPlagiarismResult | TextPlagiarismResult) {
-        if (result) {
+        this.detectionInProgress = false;
+
+        if (result?.comparisons) {
             this.sortComparisonsForResult(result);
         }
 
         this.plagiarismResult = result;
         this.selectedComparisonIndex = 0;
-        this.detectionInProgress = false;
     }
 
     sortComparisonsForResult(result: PlagiarismResult<any>) {

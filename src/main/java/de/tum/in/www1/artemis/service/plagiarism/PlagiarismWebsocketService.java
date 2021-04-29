@@ -49,4 +49,12 @@ public class PlagiarismWebsocketService {
     public String getProgrammingExercisePlagiarismCheckTopic(Long programmingExerciseId) {
         return "/topic/programming-exercises/" + programmingExerciseId + "/plagiarism-check";
     }
+
+    public String getTextExercisePlagiarismCheckTopic(Long textExerciseId) {
+        return "/topic/text-exercises/" + textExerciseId + "/plagiarism-check";
+    }
+
+    public String getModelingExercisePlagiarismCheckTopic(Long modelingExerciseId) {
+        return "/topic/modeling-exercises/" + modelingExerciseId + "/plagiarism-check";
+    }
 }

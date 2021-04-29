@@ -99,7 +99,7 @@ public class ProgrammingPlagiarismDetectionService {
         String topic = plagiarismWebsocketService.getProgrammingExercisePlagiarismCheckTopic(programmingExerciseId);
 
         final var programmingExercise = programmingExerciseRepository.findWithAllParticipationsById(programmingExerciseId).get();
-        JPlagResult result = jo(programmingExercise, similarityThreshold, minimumScore);
+        JPlagResult result = getJPlagResult(programmingExercise, similarityThreshold, minimumScore);
         if (result == null) {
             log.info("Insufficient amount of submissions for plagiarism detection. Return empty result.");
             TextPlagiarismResult textPlagiarismResult = new TextPlagiarismResult();
@@ -110,7 +110,6 @@ public class ProgrammingPlagiarismDetectionService {
                     TimeLogUtil.formatDurationFrom(start));
             limitAndSavePlagiarismResult(textPlagiarismResult);
             log.info("Finished plagiarismResultRepository.savePlagiarismResultAndRemovePrevious call in {}", TimeLogUtil.formatDurationFrom(start));
-            plagiarismWebsocketService.notifyUserAboutPlagiarismState(topic, PlagiarismCheckState.COMPLETED, List.of());
             return textPlagiarismResult;
         }
 
@@ -139,7 +138,7 @@ public class ProgrammingPlagiarismDetectionService {
         long start = System.nanoTime();
 
         final var programmingExercise = programmingExerciseRepository.findWithAllParticipationsById(programmingExerciseId).get();
-        JPlagResult result = jo(programmingExercise, similarityThreshold, minimumScore);
+        JPlagResult result = getJPlagResult(programmingExercise, similarityThreshold, minimumScore);
         if (result == null) {
             return null;
         }
@@ -148,7 +147,7 @@ public class ProgrammingPlagiarismDetectionService {
         return generateJPlagReportZip(result, programmingExercise);
     }
 
-    private JPlagResult jo(ProgrammingExercise programmingExercise, float similarityThreshold, int minimumScore) throws ExitException {
+    private JPlagResult getJPlagResult(ProgrammingExercise programmingExercise, float similarityThreshold, int minimumScore) throws ExitException {
         long programmingExerciseId = programmingExercise.getId();
 
         final var numberOfParticipations = programmingExercise.getStudentParticipations().size();
