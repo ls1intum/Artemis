@@ -1,9 +1,12 @@
 package de.tum.in.www1.artemis.domain.plagiarism;
 
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import javax.persistence.*;
+
+import org.jetbrains.annotations.NotNull;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
@@ -16,7 +19,7 @@ import jplag.JPlagComparison;
  */
 @Entity
 @Table(name = "plagiarism_comparison")
-public class PlagiarismComparison<E extends PlagiarismSubmissionElement> extends DomainObject {
+public class PlagiarismComparison<E extends PlagiarismSubmissionElement> extends DomainObject implements Comparable<PlagiarismComparison<E>> {
 
     /**
      * The result this comparison belongs to.
@@ -124,5 +127,36 @@ public class PlagiarismComparison<E extends PlagiarismSubmissionElement> extends
 
     public void setStatus(PlagiarismStatus status) {
         this.status = status;
+    }
+
+    @Override
+    public int compareTo(@NotNull PlagiarismComparison<E> otherComparison) {
+        return Double.compare(similarity, otherComparison.similarity);
+    }
+
+    @Override
+    public String toString() {
+        return "PlagiarismComparison{" + "submissionA=" + submissionA + ", submissionB=" + submissionB + ", similarity=" + similarity + ", status=" + status + '}';
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        if (!super.equals(o)) {
+            return false;
+        }
+        PlagiarismComparison<?> that = (PlagiarismComparison<?>) o;
+        return Double.compare(that.getSimilarity(), getSimilarity()) == 0 && Objects.equals(getSubmissionA(), that.getSubmissionA())
+                && Objects.equals(getSubmissionB(), that.getSubmissionB()) && getStatus() == that.getStatus();
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(super.hashCode(), getSubmissionA(), getSubmissionB(), getSimilarity(), getStatus());
     }
 }

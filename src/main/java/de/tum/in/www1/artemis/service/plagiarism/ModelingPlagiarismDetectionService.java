@@ -58,7 +58,7 @@ public class ModelingPlagiarismDetectionService {
     /**
      * Calculate the similarity distribution of the given comparisons.
      */
-    private int[] calculateSimilarityDistribution(List<PlagiarismComparison<ModelingSubmissionElement>> comparisons) {
+    private int[] calculateSimilarityDistribution(Set<PlagiarismComparison<ModelingSubmissionElement>> comparisons) {
         int[] similarityDistribution = new int[10];
 
         comparisons.stream().map(PlagiarismComparison::getSimilarity).map(percent -> percent / 10).map(Double::intValue).map(index -> index == 10 ? 9 : index)
@@ -103,7 +103,7 @@ public class ModelingPlagiarismDetectionService {
 
         log.info("Found {} modeling submissions with at least {} elements to compare", models.size(), minimumModelSize);
 
-        List<PlagiarismComparison<ModelingSubmissionElement>> comparisons = new ArrayList<>();
+        Set<PlagiarismComparison<ModelingSubmissionElement>> comparisons = new HashSet<>();
         List<UMLDiagram> nonEmptyDiagrams = new ArrayList<>(models.keySet());
 
         long timeBeforeStartInMillis = System.currentTimeMillis();
@@ -154,7 +154,7 @@ public class ModelingPlagiarismDetectionService {
         long durationInMillis = System.currentTimeMillis() - timeBeforeStartInMillis;
         int[] similarityDistribution = calculateSimilarityDistribution(comparisons);
 
-        result.setComparisons(new HashSet<>(comparisons));
+        result.setComparisons(comparisons);
         result.setDuration(durationInMillis);
         result.setSimilarityDistribution(similarityDistribution);
 

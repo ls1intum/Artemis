@@ -124,8 +124,47 @@ Starting the Artemis server should now succeed.
 GitLab
 ------
 
-Gitlab Server Setup
-~~~~~~~~~~~~~~~~~~~
+Gitlab Server Quickstart
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The following steps describes how to set up the Gitlab server in a semi-automated way.
+This is ideal as a quickstart for developers. For a more detailed setup, see `Manual Gitlab Server Setup <#gitlab-server-setup>`__.
+
+1. Start the Gitlab container defined in `src/main/docker/gitlab-jenkins-mysql.yml` by running
+
+   ::
+
+        docker-compose -f src/main/docker/gitlab-jenkins-mysql.yml up --build -d
+
+   The file uses the `GITLAB_OMNIBUS_CONFIG` environment variable to configure the Gitlab instance after the container is started.
+   It disables prometheus monitoring, sets the ssh port to ``2222``, and adjusts the monitoring endpoint whitelist by default.
+
+2. Wait a couple of minutes since Gitlab can take some time to set up. Open the instance in your browser and set a first admin password of your choosing.
+   You can then login using the username ``root`` and your password.
+
+3. Open the Artemis configuration ``application-local.yml`` file and insert the Gitlab admin account:
+
+   .. code:: yaml
+
+       artemis:
+           version-control:
+               user: root
+               password: your.gitlab.admin.password
+
+4. You now need to generate an admin access token. Navigate to ``http://localhost:8081/-/profile/personal_access_tokens`` and generate a token with all scopes.
+   Copy this token into the ``ADMIN_PERSONAL_ACCESS_TOKEN`` field in the ``src/main/docker/gitlab/gitlab-local-setup.sh`` file.
+
+5. Run the following command and copy the generated access tokens into the Artemis configuration ``application-local.yml`` and ``jenkins-casc-config.yml`` files.
+
+   ::
+
+        docker-compose -f src/main/docker/gitlab-jenkins-mysql.yml exec gitlab /bin/sh -c "sh /gitlab-local-setup.sh"
+
+6. You're done! Follow the `Automated Jenkins Server Setup <#automated-jenkins-server-setup>`__ section for configuring Jenkins.
+    There you can skip steps 4 and 5.
+
+Manual Gitlab Server Setup
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 GitLab provides no possibility to set a users password via API without forcing the user to change it afterwards (see `Issue 19141 <https://gitlab.com/gitlab-org/gitlab/-/issues/19141>`__).
 Therefore, you may want to patch the official gitlab docker image.
@@ -422,12 +461,12 @@ If you already have a Gitlab and Mysql instance running, you can comment out all
                 username: artemis_admin
                 password: artemis-admin
             version-control:
-                url: http://172.33.0.2:8081
+                url: http://localhost:8081
                 user: artemis_admin
                 password: artemis_admin
                 ci-token: # generated in step 9
             continuous-integration:
-                url: http://172.33.0.3:8080
+                url: http://localhost:8080
                 user: artemis_admin
                 password: artemis_admin
                 vcs-credentials: artemis_gitlab_admin_credentials
@@ -435,7 +474,16 @@ If you already have a Gitlab and Mysql instance running, you can comment out all
                 artemis-authentication-token-value: artemis_admin
                 secret-push-token: # generated in step 8
 
-10. You're done. You can now run Artemis with the Gitlab/Jenkins environment.
+10. Open the ``src/main/resources/config/appliciation-jenkins.yml`` and change the following:
+
+.. code:: yaml
+
+    jenkins:
+        internal-urls:
+            ci-url: http://jenkins:8080
+            vcs-url: http://gitlab:80
+
+11. You're done. You can now run Artemis with the Gitlab/Jenkins environment.
 
 Manual Jenkins Server Setup
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -470,7 +518,7 @@ Manual Jenkins Server Setup
    This might take a while because Docker will download Java, but this
    is only required once.
 
-3. **If you run your own NGINX or if you install Jenkins on a local development computer, then skip the next steps (4-6)**
+3. **If you run your own NGINX or if you install Jenkins on a local development computer, then skip the next steps (4-7)**
 
 4. Create a file increasing the maximum file size for the nginx proxy.
    The nginx-proxy uses a default file limit that is too small for the
@@ -480,8 +528,48 @@ Manual Jenkins Server Setup
    ::
 
        echo "client_max_body_size 16m;" > client_max_body_size.conf
+5. The NGINX default timeout is pretty low. For plagarism check and unlocking student repos for the exam a higher timeout is advisable. Therefore we write our own nginx.conf and load it in the container.
 
-5. Run the NGINX proxy docker container, this will automatically setup
+
+   .. code:: nginx
+
+            user  nginx;
+            worker_processes  auto;
+
+            error_log  /var/log/nginx/error.log warn;
+            pid        /var/run/nginx.pid;
+
+
+            events {
+                worker_connections  1024;
+            }
+
+
+            http {
+                include       /etc/nginx/mime.types;
+                default_type  application/octet-stream;
+
+                log_format  main  '$remote_addr - $remote_user [$time_local] "$request" '
+                                  '$status $body_bytes_sent "$http_referer" '
+                                  '"$http_user_agent" "$http_x_forwarded_for"';
+
+                access_log  /var/log/nginx/access.log  main;
+
+                fastcgi_read_timeout 300;
+                proxy_read_timeout 300;
+
+                sendfile        on;
+                #tcp_nopush     on;
+
+                keepalive_timeout  65;
+
+                #gzip  on;
+
+                include /etc/nginx/conf.d/*.conf;
+            }
+            daemon off
+
+6. Run the NGINX proxy docker container, this will automatically setup
    all reverse proxies and force https on all connections. (This image
    would also setup proxies for all other running containers that have
    the VIRTUAL_HOST and VIRTUAL_PORT environment variables). **Skip this
@@ -497,9 +585,10 @@ Manual Jenkins Server Setup
            -v /etc/nginx/vhost.d \
            -v /usr/share/nginx/html \
            -v $(pwd)/client_max_body_size.conf:/etc/nginx/conf.d/client_max_body_size.conf:ro \
+           -v $(pwd)/nginx.conf:/etc/nginx/nginx.conf:ro \
            jwilder/nginx-proxy
 
-6. The nginx proxy needs another docker-container to generate
+7. The nginx proxy needs another docker-container to generate
    letsencrypt certificates. Run the following command to start it (make
    sure to change the email-address). **Skip this step if you have your
    own NGINX instance.**
@@ -516,7 +605,7 @@ Manual Jenkins Server Setup
 Start Jenkins
 ^^^^^^^^^^^^^
 
-7.  Run Jenkins by executing the following command (change the hostname
+8.  Run Jenkins by executing the following command (change the hostname
     and choose which port alternative you need)
 
     ::
@@ -535,7 +624,7 @@ Start Jenkins
     If you still need the old setup with python & maven installed locally, use `jenkins-artemis` instead of `jenkins/jenkins:lts`.
     Also note that you can omit the ``-u root``, ``-v /var/run/docker.sock:/var/run/docker.sock`` and ``-v /usr/bin/docker:/usr/bin/docker:ro`` parameters, if you do not want to run Docker builds on the Jenkins master (but e.g. use remote agents).
 
-8. Open Jenkins in your browser (e.g. ``localhost:8082``) and setup the
+9. Open Jenkins in your browser (e.g. ``localhost:8082``) and setup the
     admin user account (install all suggested plugins). You can get the
     initial admin password using the following command.
 
@@ -546,7 +635,7 @@ Start Jenkins
        or alternatively
        docker exec jenkins cat /var/jenkins_home/secrets/initialAdminPassword
 
-9. Set the chosen credentials in the Artemis configuration
+10. Set the chosen credentials in the Artemis configuration
     *application-artemis.yml*
 
     .. code:: yaml

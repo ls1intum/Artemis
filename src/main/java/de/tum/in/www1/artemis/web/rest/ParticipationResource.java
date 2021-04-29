@@ -208,7 +208,7 @@ public class ParticipationResource {
         // Load results of participation as they are not contained in the current object
         participation = studentParticipationRepository.findByIdWithResultsElseThrow(participation.getId());
 
-        Result result = participation.findLatestResult();
+        Result result = participation.findLatestLegalResult();
         if (result != null) {
             participation.setResults(Set.of(result));
         }
@@ -580,24 +580,18 @@ public class ParticipationResource {
 
     private void checkAccessPermissionAtLeastStudent(StudentParticipation participation, User user) {
         Course course = findCourseFromParticipation(participation);
-        if (!authCheckService.isAtLeastStudentInCourse(course, user)) {
-            throw new AccessForbiddenException(NOT_ALLOWED);
-        }
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
     }
 
     private void checkAccessPermissionAtLeastInstructor(StudentParticipation participation, User user) {
         Course course = findCourseFromParticipation(participation);
-        if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
-            throw new AccessForbiddenException(NOT_ALLOWED);
-        }
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, user);
     }
 
     private void checkAccessPermissionOwner(StudentParticipation participation, User user) {
-        Course course = findCourseFromParticipation(participation);
         if (!authCheckService.isOwnerOfParticipation(participation)) {
-            if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
-                throw new AccessForbiddenException(NOT_ALLOWED);
-            }
+            Course course = findCourseFromParticipation(participation);
+            authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, user);
         }
     }
 

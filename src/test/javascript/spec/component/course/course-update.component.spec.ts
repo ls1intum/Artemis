@@ -7,6 +7,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { CourseUpdateComponent } from 'app/course/manage/course-update.component';
 import { Course } from 'app/entities/course.model';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { AlertErrorComponent } from 'app/shared/alert/alert-error.component';
 import { AlertComponent } from 'app/shared/alert/alert.component';
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
@@ -36,6 +37,13 @@ import { base64StringToBlob } from 'blob-util';
 
 chai.use(sinonChai);
 const expect = chai.expect;
+
+@Component({ selector: 'jhi-markdown-editor', template: '' })
+class MarkdownEditorStubComponent {
+    @Input() markdown: string;
+    @Input() enableResize = false;
+    @Output() markdownChange = new EventEmitter<string>();
+}
 
 describe('Course Management Update Component', () => {
     let comp: CourseUpdateComponent;
@@ -87,6 +95,7 @@ describe('Course Management Update Component', () => {
             ],
             declarations: [
                 CourseUpdateComponent,
+                MarkdownEditorStubComponent,
                 MockPipe(ArtemisTranslatePipe),
                 MockDirective(NgbTooltip),
                 MockComponent(AlertErrorComponent),
@@ -232,7 +241,7 @@ describe('Course Management Update Component', () => {
             const fileList = ({
                 0: file,
                 length: 1,
-                item: (index: number) => file,
+                item: () => file,
             } as unknown) as FileList;
             const event = { target: { files: fileList } };
             comp.setCourseImage(event);

@@ -41,6 +41,7 @@ export class CourseCardComponent implements OnChanges {
         },
     ];
     totalScoreOptions: object = {
+        animation: false,
         cutoutPercentage: 75,
         scaleShowVerticalLines: false,
         responsive: false,
@@ -70,7 +71,10 @@ export class CourseCardComponent implements OnChanges {
             this.totalRelativeScore = scores.get('currentRelativeScore')!;
             this.totalAbsoluteScore = scores.get('absoluteScore')!;
             this.totalReachableScore = scores.get('reachableScore')!;
-            this.doughnutChartData[0].data = [this.totalAbsoluteScore, this.totalReachableScore - this.totalAbsoluteScore];
+
+            // Adjust for bonus points, i.e. when the student has achieved more than is reachable
+            const scoreNotReached = Math.max(0, this.totalReachableScore - this.totalAbsoluteScore);
+            this.doughnutChartData[0].data = [this.totalAbsoluteScore, scoreNotReached];
         }
 
         if (this.course.lectures) {

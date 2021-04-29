@@ -32,7 +32,7 @@
 
                 <a
                     *ngIf="programmingExercise.course !== undefined"
-                    [routerLink]="['/course-management', programmingExercise.course.id, 'exercises', programmingExercise.id, 'participations']"
+                    [routerLink]="['/course-management', programmingExercise.course.id, 'programming-exercises', programmingExercise.id, 'participations']"
                     class="btn btn-primary btn-sm mr-1"
                     style="margin-bottom: 10px"
                 >
@@ -41,7 +41,7 @@
                 </a>
                 <a
                     *ngIf="programmingExercise.course !== undefined"
-                    [routerLink]="['/course-management', programmingExercise.course.id, 'exercises', programmingExercise.id, 'scores']"
+                    [routerLink]="['/course-management', programmingExercise.course.id, 'programming-exercises', programmingExercise.id, 'scores']"
                     class="btn btn-info btn-sm mr-1"
                     style="margin-bottom: 10px"
                 >
@@ -61,7 +61,7 @@
 
                 <a
                     *ngIf="programmingExercise.isAtLeastInstructor && programmingExercise.course !== undefined"
-                    [routerLink]="['/course-management', programmingExercise.course?.id, 'exercises', programmingExercise.id, 'hints']"
+                    [routerLink]="['/course-management', programmingExercise.course?.id, 'programming-exercises', programmingExercise.id, 'hints']"
                     class="btn btn-info btn-sm mr-1"
                     style="margin-bottom: 10px"
                 >
@@ -172,7 +172,7 @@
                 </button>
             </div>
             <dl class="row-md jh-entity-details">
-                <jhi-exercise-details [exercise]="programmingExercise"></jhi-exercise-details>
+                <jhi-exercise-details [exercise]="programmingExercise"> </jhi-exercise-details>
                 <ng-container *ngIf="programmingExercise.dueDate">
                     <dt><span jhiTranslate="artemisApp.programmingExercise.timeline.afterDueDate">Automatic Submission Run After Due Date</span></dt>
                     <dd>
@@ -189,6 +189,10 @@
                         <span>{{ programmingExercise.maxStaticCodeAnalysisPenalty == undefined ? '-' : programmingExercise.maxStaticCodeAnalysisPenalty }}</span>
                     </dd>
                 </ng-container>
+                <dt><span jhiTranslate="artemisApp.programmingExercise.preview.label">Preview</span></dt>
+                <dd>
+                    <jhi-programming-exercise-plans-and-repositories-preview [programmingExercise]="programmingExercise"></jhi-programming-exercise-plans-and-repositories-preview>
+                </dd>
                 <dt><span jhiTranslate="artemisApp.programmingExercise.templateRepositoryUrl">Template Repository Url</span></dt>
                 <dd>
                     <div class="d-flex align-items-center" *ngIf="programmingExercise.templateParticipation && programmingExercise.templateParticipation.repositoryUrl">
@@ -315,7 +319,7 @@
                         [routerLink]="[
                             '/course-management',
                             programmingExercise.course.id,
-                            'exercises',
+                            'programming-exercises',
                             programmingExercise.id,
                             'participations',
                             programmingExercise.templateParticipation?.id,
@@ -357,7 +361,7 @@
                         [routerLink]="[
                             '/course-management',
                             programmingExercise.course.id,
-                            'exercises',
+                            'programming-exercises',
                             programmingExercise.id,
                             'participations',
                             programmingExercise.solutionParticipation?.id,

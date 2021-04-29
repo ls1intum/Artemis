@@ -40,20 +40,20 @@ public class TextPlagiarismDetectionService {
      *
      * @param exerciseWithParticipationsAndSubmissions TextExercise with fetched participations and submissions
      * @param minimumScore consider only submissions whose score is greater or equal to this value
-     * @param minimumSize consider only submissions whose size is greater or equal to this value
+     * @param minimumSize consider only submissions whose number of words is greater or equal to this value
      * @return List containing the latest text submission for every participation
      */
     public List<TextSubmission> textSubmissionsForComparison(TextExercise exerciseWithParticipationsAndSubmissions, int minimumScore, int minimumSize) {
         var textSubmissions = exerciseWithParticipationsAndSubmissions.getStudentParticipations().parallelStream().map(Participation::findLatestSubmission)
                 .filter(Optional::isPresent).map(Optional::get).filter(submission -> submission instanceof TextSubmission).map(submission -> (TextSubmission) submission)
-                .filter(submission -> minimumSize == 0 || submission.getText() != null && submission.getText().length() >= minimumSize)
+                .filter(submission -> minimumSize == 0 || submission.getText() != null && submission.countWords() >= minimumSize)
                 .filter(submission -> minimumScore == 0
                         || submission.getLatestResult() != null && submission.getLatestResult().getScore() != null && submission.getLatestResult().getScore() >= minimumScore)
                 .collect(toList());
 
         log.info("Found {} text submissions in exercise {}", textSubmissions.size(), exerciseWithParticipationsAndSubmissions.getId());
 
-        return textSubmissions.parallelStream().filter(textSubmission -> !textSubmission.isEmpty()).collect(toUnmodifiableList());
+        return textSubmissions.parallelStream().filter(textSubmission -> !textSubmission.isEmpty()).toList();
     }
 
     /**
@@ -116,14 +116,15 @@ public class TextPlagiarismDetectionService {
         log.info("Start JPlag Text comparison");
         JPlag jplag = new JPlag(options);
         JPlagResult jPlagResult = jplag.run();
-        log.info("JPlag Text comparison finished with {} comparisons", jPlagResult.getComparisons().size());
+        log.info("JPlag Text comparison finished with {} comparisons. Will limit the number of comparisons to 500", jPlagResult.getComparisons().size());
 
         log.info("Delete submission folder");
         if (submissionFolderFile.exists()) {
             FileSystemUtils.deleteRecursively(submissionFolderFile);
         }
 
-        TextPlagiarismResult textPlagiarismResult = new TextPlagiarismResult(jPlagResult);
+        TextPlagiarismResult textPlagiarismResult = new TextPlagiarismResult();
+        textPlagiarismResult.convertJPlagResult(jPlagResult);
         textPlagiarismResult.setExercise(textExercise);
 
         log.info("JPlag text comparison for {} submissions done in {}", submissionsSize, TimeLogUtil.formatDurationFrom(start));
