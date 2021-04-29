@@ -70,6 +70,14 @@
         <span *ngIf="exercise.assessmentDueDate">{{ exercise.assessmentDueDate | artemisDate }}</span>
         <span *ngIf="!exercise.assessmentDueDate" jhiTranslate="artemisApp.exercise.dateNotSet"></span>
     </dd>
+    <ul>
+        <li class="mb-3" *ngFor="let attachment of lecture!.attachments">
+            <span class="ml-1 badge badge-warning" *ngIf="attachmentNotReleased(attachment)">
+                {{ 'artemisApp.courseOverview.lectureDetails.notReleased' | artemisTranslate }}
+            </span>
+        </li>
+    </ul>
+
 </ng-container>
 <ng-container *ngIf="exercise.type === ExerciseType.PROGRAMMING">
     <dt><span jhiTranslate="artemisApp.programmingExercise.timeline.timelineLabel">Timeline</span></dt>

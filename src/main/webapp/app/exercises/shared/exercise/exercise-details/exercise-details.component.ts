@@ -7,6 +7,9 @@ import { AssessmentType } from 'app/entities/assessment-type.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import {Attachment} from "app/entities/attachment.model";
+import * as moment from 'moment';
+import {Lecture} from "app/entities/lecture.model";
 
 @Component({
     selector: 'jhi-exercise-details',
@@ -22,6 +25,7 @@ export class ExerciseDetailsComponent implements OnInit {
     formattedProblemStatement: SafeHtml;
     formattedGradingInstructions: SafeHtml;
     isExamExercise: boolean;
+    lecture?: Lecture;
 
     constructor(private artemisMarkdown: ArtemisMarkdownService, private accountService: AccountService, public exerciseService: ExerciseService) {}
 
@@ -37,5 +41,9 @@ export class ExerciseDetailsComponent implements OnInit {
         this.isExamExercise = !!this.exercise.exerciseGroup;
         this.exercise.isAtLeastTutor = this.accountService.isAtLeastTutorForExercise(this.exercise);
         this.exercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorForExercise(this.exercise);
+    }
+
+    attachmentNotReleased(attachment: Attachment): boolean {
+        return attachment.releaseDate != undefined && !moment(attachment.releaseDate).isBefore(moment())!;
     }
 }
