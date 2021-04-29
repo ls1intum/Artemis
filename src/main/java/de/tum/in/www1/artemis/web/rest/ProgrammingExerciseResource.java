@@ -42,6 +42,7 @@ import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
+import de.tum.in.www1.artemis.service.plagiarism.ProgrammingPlagiarismDetectionService;
 import de.tum.in.www1.artemis.service.programming.*;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
@@ -102,6 +103,8 @@ public class ProgrammingExerciseResource {
 
     private final GitService gitService;
 
+    private final ProgrammingPlagiarismDetectionService programmingPlagiarismDetectionService;
+
     /**
      * Java package name Regex according to Java 14 JLS (https://docs.oracle.com/javase/specs/jls/se14/html/jls-7.html#jls-7.4.1),
      * with the restriction to a-z,A-Z,_ as "Java letter" and 0-9 as digits due to JavaScript/Browser Unicode character class limitations
@@ -124,7 +127,7 @@ public class ProgrammingExerciseResource {
             PlagiarismResultRepository plagiarismResultRepository, ProgrammingExerciseImportService programmingExerciseImportService,
             ProgrammingExerciseExportService programmingExerciseExportService, StaticCodeAnalysisService staticCodeAnalysisService,
             GradingCriterionRepository gradingCriterionRepository, ProgrammingLanguageFeatureService programmingLanguageFeatureService, TemplateUpgradePolicy templateUpgradePolicy,
-            CourseRepository courseRepository, GitService gitService) {
+            CourseRepository courseRepository, GitService gitService, ProgrammingPlagiarismDetectionService programmingPlagiarismDetectionService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.userRepository = userRepository;
         this.courseService = courseService;
@@ -143,6 +146,7 @@ public class ProgrammingExerciseResource {
         this.templateUpgradePolicy = templateUpgradePolicy;
         this.courseRepository = courseRepository;
         this.gitService = gitService;
+        this.programmingPlagiarismDetectionService = programmingPlagiarismDetectionService;
     }
 
     /**
@@ -1021,7 +1025,7 @@ public class ProgrammingExerciseResource {
         }
 
         long start = System.nanoTime();
-        TextPlagiarismResult result = programmingExerciseExportService.checkPlagiarism(exerciseId, similarityThreshold, minimumScore);
+        TextPlagiarismResult result = programmingPlagiarismDetectionService.checkPlagiarism(exerciseId, similarityThreshold, minimumScore);
         log.info("Finished programmingExerciseExportService.checkPlagiarism call for {} comparisons in {}", result.getComparisons().size(), TimeLogUtil.formatDurationFrom(start));
         result.sortAndLimit(500);
         log.info("Limited number of comparisons to {} to avoid performance issues when saving to database", result.getComparisons().size());
@@ -1062,7 +1066,7 @@ public class ProgrammingExerciseResource {
                     "Artemis does not support plagiarism checks for the programming language " + language)).body(null);
         }
 
-        File zipFile = programmingExerciseExportService.checkPlagiarismWithJPlagReport(exerciseId, similarityThreshold, minimumScore);
+        File zipFile = programmingPlagiarismDetectionService.checkPlagiarismWithJPlagReport(exerciseId, similarityThreshold, minimumScore);
 
         if (zipFile == null) {
             return ResponseEntity.badRequest().headers(
