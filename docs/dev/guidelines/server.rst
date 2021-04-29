@@ -481,7 +481,7 @@ To avoid writing out this full canonical name all the time, you can add a consta
     }
 
 It is possible that students hardcode values to pass a certain set of tests, therefore you should check whether this is the case or not.
-This is especially important in an exam setting, so students don't get awarded points for a solution that does not fulfill the requirements described in the problem statement. (TODO: Code example)
+This is especially important in an exam setting, so students don't get awarded points for a solution that does not fulfill the requirements described in the problem statement.
 
 Avoid relying on a specific order in which students solve the tasks.
 Tests should successfully cover one aspect of the submission without requiring the implementation of a different part of the system even if those aspects are heavily interlinked.
