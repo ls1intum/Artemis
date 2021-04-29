@@ -44,8 +44,8 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
             LEFT JOIN FETCH tp.results tpr
             LEFT JOIN FETCH sp.results spr
             WHERE pe.course.id = :#{#courseId}
-                AND (tpr.id = (SELECT MAX(id) FROM tp.results) OR tpr.id IS NULL)
-                AND (spr.id = (SELECT MAX(id) FROM sp.results) OR spr.id IS NULL)
+                AND (tpr.id = (SELECT MAX(re1.id) FROM tp.results re1) OR tpr.id IS NULL)
+                AND (spr.id = (SELECT MAX(re2.id) FROM sp.results re2) OR spr.id IS NULL)
             """)
     List<ProgrammingExercise> findByCourseIdWithLatestResultForTemplateSolutionParticipations(@Param("courseId") Long courseId);
 
@@ -79,8 +79,8 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
             LEFT JOIN FETCH tpr.submission
             LEFT JOIN FETCH spr.submission
             WHERE pe.id = :#{#exerciseId}
-                AND (tpr.id = (SELECT MAX(id) FROM tp.results) OR tpr.id IS NULL)
-                AND (spr.id = (SELECT MAX(id) FROM sp.results) OR spr.id IS NULL)
+                AND (tpr.id = (SELECT MAX(re1.id) FROM tp.results re1) OR tpr.id IS NULL)
+                AND (spr.id = (SELECT MAX(re2.id) FROM sp.results re2) OR spr.id IS NULL)
             """)
     Optional<ProgrammingExercise> findWithTemplateAndSolutionParticipationLatestResultById(@Param("exerciseId") Long exerciseId);
 
@@ -106,16 +106,39 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
             """)
     List<ProgrammingExercise> findAllToBeScheduled(@Param("now") ZonedDateTime now);
 
-    @Query("SELECT DISTINCT pe FROM ProgrammingExercise pe WHERE pe.course.endDate BETWEEN :#{#endDate1} AND :#{#endDate2}")
+    @Query("""
+            SELECT DISTINCT pe FROM ProgrammingExercise pe
+            WHERE pe.course is not null
+                AND :#{#endDate1} <= pe.course.endDate
+                AND pe.course.endDate <= :#{#endDate2}
+            """)
     List<ProgrammingExercise> findAllByRecentCourseEndDate(@Param("endDate1") ZonedDateTime endDate1, @Param("endDate2") ZonedDateTime endDate2);
 
     @Query("""
             SELECT DISTINCT pe FROM ProgrammingExercise pe
-            LEFT JOIN FETCH pe.studentParticipations
-            WHERE pe.dueDate BETWEEN :#{#endDate1} AND :#{#endDate2}
-                OR pe.exerciseGroup.exam.endDate BETWEEN :#{#endDate1} AND :#{#endDate2}
+            WHERE pe.exerciseGroup is not null
+                AND :#{#endDate1} <= pe.exerciseGroup.exam.endDate
+                AND pe.exerciseGroup.exam.endDate <= :#{#endDate2}
             """)
-    List<ProgrammingExercise> findAllWithStudentParticipationByRecentEndDate(@Param("endDate1") ZonedDateTime endDate1, @Param("endDate2") ZonedDateTime endDate2);
+    List<ProgrammingExercise> findAllByRecentExamEndDate(@Param("endDate1") ZonedDateTime endDate1, @Param("endDate2") ZonedDateTime endDate2);
+
+    @Query("""
+            SELECT DISTINCT pe FROM ProgrammingExercise pe
+            LEFT JOIN FETCH pe.studentParticipations
+            WHERE pe.dueDate is not null
+                AND :#{#endDate1} <= pe.dueDate
+                AND pe.dueDate <= :#{#endDate2}
+            """)
+    List<ProgrammingExercise> findAllWithStudentParticipationByRecentDueDate(@Param("endDate1") ZonedDateTime endDate1, @Param("endDate2") ZonedDateTime endDate2);
+
+    @Query("""
+            SELECT DISTINCT pe FROM ProgrammingExercise pe
+            LEFT JOIN FETCH pe.studentParticipations
+            WHERE pe.exerciseGroup is not null
+                AND :#{#endDate1} <= pe.exerciseGroup.exam.endDate
+                AND pe.exerciseGroup.exam.endDate <= :#{#endDate2}
+            """)
+    List<ProgrammingExercise> findAllWithStudentParticipationByRecentExamEndDate(@Param("endDate1") ZonedDateTime endDate1, @Param("endDate2") ZonedDateTime endDate2);
 
     @Query("""
             SELECT DISTINCT pe FROM ProgrammingExercise pe
@@ -200,15 +223,6 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
      */
     @Query("SELECT pe FROM ProgrammingExercise pe WHERE pe.buildAndTestStudentSubmissionsAfterDueDate > :#{#dateTime}")
     List<ProgrammingExercise> findAllByBuildAndTestStudentSubmissionsAfterDueDateAfterDate(@Param("dateTime") ZonedDateTime dateTime);
-
-    /**
-     * Returns the programming exercises that have manual assessment enabled and a due date higher than the provided date.
-     *
-     * @param dateTime ZonedDateTime object.
-     * @return List<ProgrammingExercise> (can be empty)
-     */
-    @Query("SELECT pe FROM ProgrammingExercise pe WHERE pe.assessmentType <> 'AUTOMATIC' AND pe.dueDate > :#{#dateTime}")
-    List<ProgrammingExercise> findAllByManualAssessmentAndDueDateAfterDate(@Param("dateTime") ZonedDateTime dateTime);
 
     /**
      * Returns all programming exercises that have a due date after {@code now} and have tests marked with

@@ -78,4 +78,9 @@ public class TextSubmissionElement extends PlagiarismSubmissionElement {
     public void setLength(int length) {
         this.length = length;
     }
+
+    @Override
+    public String toString() {
+        return "TextSubmissionElement{" + "column=" + column + ", line=" + line + ", file='" + file + '\'' + ", type=" + type + ", length=" + length + '}';
+    }
 }

@@ -69,7 +69,7 @@
                     [showPreviewButton]="true"
                     [enableResize]="true"
                     [domainCommands]="commandMultipleChoiceQuestions"
-                    (markdownChange)="prepareForSave()"
+                    (markdownChange)="changesInMarkdown()"
                     (textWithDomainCommandsFound)="domainCommandsFound($event)"
                     class="h-auto"
                 >

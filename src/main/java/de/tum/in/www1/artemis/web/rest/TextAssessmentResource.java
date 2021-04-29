@@ -19,6 +19,7 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.jwt.AtheneTrackingTokenProvider;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.exam.ExamService;
@@ -349,9 +350,7 @@ public class TextAssessmentResource extends AssessmentResource {
         final var textExercise = textExerciseRepository.findByIdElseThrow(exerciseId);
 
         // If the user is not at least a tutor for this exercise, return error
-        if (!authCheckService.isAtLeastTeachingAssistantForExercise(textExercise, user)) {
-            return forbidden();
-        }
+       authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, textExercise, user);
         final ExampleSubmission exampleSubmission = exampleSubmissionRepository.findBySubmissionIdWithResultsElseThrow(submissionId);
         Submission submission = exampleSubmission.getSubmission();
 
@@ -411,10 +410,8 @@ public class TextAssessmentResource extends AssessmentResource {
             throw new BadRequestAlertException("Automatic assessments are not enabled for this text exercise or text assessment conflict service is not available!",
                     "textAssessmentConflict", "AutomaticTextAssessmentConflictServiceNotFound");
         }
-
-        final boolean isAtLeastInstructorForExercise = authCheckService.isAtLeastInstructorForExercise(textExercise, user);
-
-        if (result != null && result.getAssessor() != null && !result.getAssessor().getLogin().equals(user.getLogin()) && !isAtLeastInstructorForExercise) {
+        final boolean isInstructorForExercise = authCheckService.isAtLeastInstructorForExercise(textExercise, user);
+        if (result != null && result.getAssessor() != null && !result.getAssessor().getLogin().equals(user.getLogin()) && !isInstructorForExercise) {
             return forbidden();
         }
 
@@ -457,9 +454,9 @@ public class TextAssessmentResource extends AssessmentResource {
         final User firstAssessor = feedbackConflict.getFirstFeedback().getResult().getAssessor();
         final User secondAssessor = feedbackConflict.getSecondFeedback().getResult().getAssessor();
 
-        final boolean isAtLeastInstructorForExercise = authCheckService.isAtLeastInstructorForExercise(textExercise, user);
+        final boolean isInstructorForExercise = authCheckService.isAtLeastInstructorForExercise(textExercise, user);
 
-        if (!isAtLeastInstructorForExercise && !firstAssessor.getLogin().equals(user.getLogin()) && !secondAssessor.getLogin().equals(user.getLogin())) {
+        if (!firstAssessor.getLogin().equals(user.getLogin()) && !secondAssessor.getLogin().equals(user.getLogin()) && !isInstructorForExercise) {
             return forbidden();
         }
 
