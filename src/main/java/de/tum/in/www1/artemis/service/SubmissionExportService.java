@@ -106,7 +106,7 @@ public abstract class SubmissionExportService {
         Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
 
         String zipGroupName = course.getShortName() + "-" + exercise.getTitle() + "-" + exercise.getId();
-        var cleanZipGroupName = fileService.removeIllegalCharacters(zipGroupName);
+        String cleanZipGroupName = fileService.removeIllegalCharacters(zipGroupName);
 
         String zipFileName = cleanZipGroupName + "-" + ZonedDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-Hmss")) + ".zip";
 

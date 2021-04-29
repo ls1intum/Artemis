@@ -1025,7 +1025,7 @@ public class GitService {
             ArchiveCommand.registerFormat("zip", new ZipFormat());
             try (OutputStream out = new FileOutputStream(outputFile)) {
                 try (Git git = new Git(repository)) {
-                    var objectId = repository.resolve("HEAD");
+                    ObjectId objectId = repository.resolve("HEAD");
                     if (objectId != null) {
                         git.archive().setTree(objectId).setOutputStream(out).setFilename(outputFile).call();
                         return Path.of(outputFile);

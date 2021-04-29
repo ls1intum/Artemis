@@ -120,7 +120,7 @@ public class CourseExamExportService {
         var cleanExamDirName = fileService.removeIllegalCharacters(examDirName);
 
         // Create a temporary directory that will contain the files that will be zipped
-        var examDirPath = Path.of("./exports", cleanExamDirName, cleanExamDirName);
+        Path examDirPath = Path.of("./exports", cleanExamDirName, cleanExamDirName);
         try {
             Files.createDirectories(examDirPath);
         }
@@ -202,7 +202,7 @@ public class CourseExamExportService {
         try {
             // Create exam directory.
             var exam = examRepository.findByIdElseThrow(examId);
-            var cleanExamTitle = fileService.removeIllegalCharacters(exam.getId() + "-" + exam.getTitle());
+            String cleanExamTitle = fileService.removeIllegalCharacters(exam.getId() + "-" + exam.getTitle());
             examDir = Path.of(outputDir, cleanExamTitle);
             Files.createDirectory(examDir);
 
