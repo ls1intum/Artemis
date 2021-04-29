@@ -773,7 +773,7 @@ public class ProgrammingExerciseTestService {
 
     // Test
     public void exportInstructorRepositories_shouldReturnFile() throws Exception {
-        var zip = exportInstructorRepository("TEMPLATE", exerciseRepo, HttpStatus.OK);
+        String zip = exportInstructorRepository("TEMPLATE", exerciseRepo, HttpStatus.OK);
         assertThat(zip).isNotNull();
 
         zip = exportInstructorRepository("SOLUTION", solutionRepo, HttpStatus.OK);
