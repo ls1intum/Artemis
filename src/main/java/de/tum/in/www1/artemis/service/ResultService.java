@@ -199,7 +199,7 @@ public class ResultService {
      * @param result           the result with should be saved with the given feedback
      * @param feedbackList     new feedback items which replace the existing feedback
      * @param shouldSave       whether the result should be saved or not
-     * @return the update (and potentially saved) result
+     * @return the updated (and potentially saved) result
      */
     public Result storeFeedbackInResult(@NotNull Result result, List<Feedback> feedbackList, boolean shouldSave) {
         var savedFeedbacks = saveFeedbackWithHibernateWorkaround(result, feedbackList);
@@ -218,7 +218,7 @@ public class ResultService {
      * @param result           the result with should be saved with the given feedback
      * @param feedbackList     new feedback items which should be added to the feedback
      * @param shouldSave       whether the result should be saved or not
-     * @return the update (and potentially saved) result
+     * @return the updated (and potentially saved) result
      */
     @NotNull
     public Result addFeedbackToResult(@NotNull Result result, List<Feedback> feedbackList, boolean shouldSave) {
