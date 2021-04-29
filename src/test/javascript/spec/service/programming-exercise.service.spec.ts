@@ -170,9 +170,8 @@ describe('ProgrammingExercise Service', () => {
         });
 
         it('should make get request', fakeAsync(() => {
-            const expect = chai.expect;
             const expectedBlob = new Blob(['abc', 'cfe']);
-            service.exportInstructorExercise(123).subscribe((resp) => expect(resp.body).equal(expectedBlob));
+            service.exportInstructorExercise(123).subscribe((resp) => expect(resp.body).toEqual(expectedBlob));
             const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/123/export-instructor-exercise` });
             req.flush(expectedBlob);
             tick();
