@@ -234,13 +234,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
                     rows.push(index === 0 ? `data:text/csv;charset=utf-8,${participantName}` : participantName!);
                 }
             });
-            const csvContent = rows.join('\n');
-            const encodedUri = encodeURI(csvContent);
-            const link = document.createElement('a');
-            link.setAttribute('href', encodedUri);
-            link.setAttribute('download', 'results-names.csv');
-            document.body.appendChild(link); // Required for FF
-            link.click();
+            this.resultService.triggerDownloadCSV(rows, 'results-names.csv');
         }
     }
 

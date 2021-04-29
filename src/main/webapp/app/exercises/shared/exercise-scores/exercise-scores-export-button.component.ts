@@ -57,14 +57,7 @@ export class ExerciseScoresExportButtonComponent {
                         rows.push(`${participantName},${participantIdentifier},${score},${repoLink}${optionalStudentsColumnValue}`);
                     }
                 });
-                const csvContent = rows.join('\n');
-                const encodedUri = encodeURI(csvContent);
-                const link = document.createElement('a');
-                link.setAttribute('href', encodedUri);
-                link.setAttribute('download', `${exercise.shortName}-results-scores.csv`);
-                document.body.appendChild(link); // Required for FF
-                link.click();
-                document.body.removeChild(link);
+                this.resultService.triggerDownloadCSV(rows, `${exercise.shortName}-results-scores.csv`);
             });
         });
     }

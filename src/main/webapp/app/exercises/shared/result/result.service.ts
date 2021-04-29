@@ -157,4 +157,17 @@ export class ResultService implements IResultService {
     private durationInMinutes(completionDate: Moment, initializationDate: Moment) {
         return moment(completionDate).diff(initializationDate, 'minutes');
     }
+
+    /**
+     * Utility function used to trigger the download of a CSV file
+     */
+    public triggerDownloadCSV(rows: String[], csvFileName: String) {
+        const csvContent = rows.join('\n');
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement('a');
+        link.setAttribute('href', encodedUri);
+        link.setAttribute('download', `${csvFileName}.csv`);
+        document.body.appendChild(link); // Required for FF
+        link.click();
+    }
 }
