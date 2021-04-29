@@ -1038,8 +1038,7 @@ public class ProgrammingExerciseResource {
      *                            executed
      * @param similarityThreshold ignore comparisons whose similarity is below this threshold (%)
      * @param minimumScore        consider only submissions whose score is greater or equal to this value
-     * @return The ResponseEntity with status 201 (Created) or with status 400 (Bad Request) if the
-     * parameters are invalid
+     * @return The ResponseEntity with status 201 (Created) or with status 400 (Bad Request) if the parameters are invalid
      * @throws ExitException is thrown if JPlag exits unexpectedly
      * @throws IOException   is thrown for file handling errors
      */

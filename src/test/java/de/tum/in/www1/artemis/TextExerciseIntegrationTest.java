@@ -505,7 +505,7 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         course.setTeachingAssistantGroupName("test");
         courseRepository.save(course);
 
-       request.getList("/api/courses/" + course.getId() + "/text-exercises/", HttpStatus.FORBIDDEN, TextExercise.class);
+        request.getList("/api/courses/" + course.getId() + "/text-exercises/", HttpStatus.FORBIDDEN, TextExercise.class);
     }
 
     @Test

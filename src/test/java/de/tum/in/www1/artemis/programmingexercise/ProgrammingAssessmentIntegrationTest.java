@@ -295,7 +295,8 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
         assertThat(response.getParticipation()).isEqualTo(manualResult.getParticipation());
         assertThat(response.getFeedbacks().size()).isEqualTo(manualResult.getFeedbacks().size());
         assertThat(response.isRated()).isEqualTo(Boolean.TRUE);
-        assertThat(response.getCompletionDate()).isEqualToIgnoringNanos(ZonedDateTime.now());
+        var now = ZonedDateTime.now();
+        assertThat(response.getCompletionDate()).isBetween(now.minusSeconds(1), now.plusSeconds(1));
 
         Course course = request.get("/api/courses/" + programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-assessment-dashboard", HttpStatus.OK,
                 Course.class);

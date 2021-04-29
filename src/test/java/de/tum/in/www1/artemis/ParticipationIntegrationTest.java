@@ -6,6 +6,7 @@ import static org.mockito.Mockito.*;
 
 import java.net.URI;
 import java.time.ZonedDateTime;
+import java.util.HashSet;
 import java.util.Optional;
 
 import org.junit.jupiter.api.AfterEach;
@@ -55,6 +56,9 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationBambo
 
     @Autowired
     private FeatureToggleService featureToggleService;
+
+    @Autowired
+    private TeamRepository teamRepository;
 
     private Course course;
 
@@ -302,6 +306,16 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationBambo
     }
 
     @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void resumeProgrammingExerciseParticipation_forbidden() throws Exception {
+        var exercise = ModelFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(2), ZonedDateTime.now().minusDays(1), course);
+        exercise = exerciseRepo.save(exercise);
+        var participation = ModelFactory.generateProgrammingExerciseStudentParticipation(InitializationState.INACTIVE, exercise, database.getUserByLogin("student1"));
+        participationRepo.save(participation);
+        request.putWithResponseBody("/api/courses/" + course.getId() + "/exercises/" + exercise.getId() + "/resume-programming-participation", null, ProgrammingExerciseStudentParticipation.class, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     public void getAllParticipationsForExercise() throws Exception {
         database.createAndSaveParticipationForExercise(textExercise, "student1");
@@ -481,6 +495,31 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationBambo
     public void getParticipation() throws Exception {
         var participation = database.createAndSaveParticipationForExercise(textExercise, "student1");
         var actualParticipation = request.get("/api/exercises/" + textExercise.getId() + "/participation", HttpStatus.OK, StudentParticipation.class);
+        assertThat(actualParticipation).isEqualTo(participation);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void getParticipationForTeamExercise() throws Exception {
+        var now = ZonedDateTime.now();
+        var exercise = ModelFactory.generateTextExercise(now.minusDays(2), now.plusDays(2), now.plusDays(4), course);
+        exercise.setMode(ExerciseMode.TEAM);
+        exercise = exerciseRepo.save(exercise);
+
+        var student = database.getUserByLogin("student1");
+
+        var team = new Team();
+        team.addStudents(student);
+        team.setExercise(exercise);
+        team = teamRepository.save(team);
+
+        var teams = new HashSet<Team>();
+        teams.add(team);
+        exercise.setTeams(teams);
+        exercise = exerciseRepo.save(exercise);
+
+        var participation = database.addTeamParticipationForExercise(exercise, team.getId());
+        var actualParticipation = request.get("/api/exercises/" + exercise.getId() + "/participation", HttpStatus.OK, StudentParticipation.class);
         assertThat(actualParticipation).isEqualTo(participation);
     }
 
