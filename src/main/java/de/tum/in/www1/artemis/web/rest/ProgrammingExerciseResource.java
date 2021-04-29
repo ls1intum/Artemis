@@ -1027,11 +1027,6 @@ public class ProgrammingExerciseResource {
         long start = System.nanoTime();
         TextPlagiarismResult result = programmingPlagiarismDetectionService.checkPlagiarism(exerciseId, similarityThreshold, minimumScore);
         log.info("Finished programmingExerciseExportService.checkPlagiarism call for {} comparisons in {}", result.getComparisons().size(), TimeLogUtil.formatDurationFrom(start));
-        result.sortAndLimit(500);
-        log.info("Limited number of comparisons to {} to avoid performance issues when saving to database", result.getComparisons().size());
-        start = System.nanoTime();
-        plagiarismResultRepository.savePlagiarismResultAndRemovePrevious(result);
-        log.info("Finished plagiarismResultRepository.savePlagiarismResultAndRemovePrevious call in {}", TimeLogUtil.formatDurationFrom(start));
         return ResponseEntity.ok(result);
     }
 
@@ -1053,7 +1048,6 @@ public class ProgrammingExerciseResource {
     public ResponseEntity<Resource> checkPlagiarismWithJPlagReport(@PathVariable long exerciseId, @RequestParam float similarityThreshold, @RequestParam int minimumScore)
             throws ExitException, IOException {
         log.debug("REST request to check plagiarism for ProgrammingExercise with id: {}", exerciseId);
-        long start = System.nanoTime();
 
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, programmingExercise, null);
