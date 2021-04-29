@@ -75,7 +75,7 @@ public class CourseExamExportService {
 
         var timestamp = ZonedDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-Hmss"));
         var courseDirName = course.getShortName() + "-" + course.getTitle() + "-" + timestamp;
-        var cleanCourseDirName = fileService.removeIllegalCharacters(courseDirName);
+        String cleanCourseDirName = fileService.removeIllegalCharacters(courseDirName);
 
         // Create a temporary directory that will contain the files that will be zipped
         var courseDirPath = Path.of("./exports", cleanCourseDirName, cleanCourseDirName);
