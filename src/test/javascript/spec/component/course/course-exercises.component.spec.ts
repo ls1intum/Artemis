@@ -219,7 +219,7 @@ describe('CourseExercisesComponent', () => {
 
     it('should filter all exercises in different situations', () => {
         component.sortingOrder = ExerciseSortingOrder.DESC;
-        const filters: ExerciseFilter[] = Object.values([ExerciseFilter.OVERDUE, ExerciseFilter.NEEDS_WORK]);
+        const filters: ExerciseFilter[] = [ExerciseFilter.OVERDUE, ExerciseFilter.NEEDS_WORK];
         const localStorageSpy = sinon.spy(localStorageService, 'store');
 
         component.toggleFilters(filters);
