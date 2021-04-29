@@ -78,7 +78,7 @@ public class CourseExamExportService {
         String cleanCourseDirName = fileService.removeIllegalCharacters(courseDirName);
 
         // Create a temporary directory that will contain the files that will be zipped
-        var courseDirPath = Path.of("./exports", cleanCourseDirName, cleanCourseDirName);
+        Path courseDirPath = Path.of("./exports", cleanCourseDirName, cleanCourseDirName);
         try {
             Files.createDirectories(courseDirPath);
         }
