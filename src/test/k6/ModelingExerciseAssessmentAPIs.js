@@ -2,6 +2,7 @@ import { group, sleep } from 'k6';
 import { addUserToInstructorsInCourse, deleteCourse, newCourse } from './requests/course.js';
 import {
     assessModelingSubmission,
+    deleteModelingExercise,
     getAndLockModelingSubmission,
     getExercise,
     newModelingExercise,
@@ -53,11 +54,11 @@ export function setup() {
         const artemisAdmin = login(adminUsername, adminPassword);
 
         const course = newCourse(artemisAdmin);
-
+        courseId = course.id;
         console.log('Create users with ids starting from ' + userOffset + ' and up to ' + (userOffset + iterations));
         createUsersIfNeeded(artemisAdmin, baseUsername, basePassword, adminUsername, adminPassword, course, userOffset);
         console.log('Create users with ids starting from ' + (userOffset + iterations) + ' and up to ' + (userOffset + iterations + iterations));
-        createTutorsIfNeeded(artemisAdmin, baseUsername, basePassword, adminUsername, adminPassword, course, userOffset + iterations);
+        createUsersIfNeeded(artemisAdmin, baseUsername, basePassword, adminUsername, adminPassword, course, userOffset + iterations, true);
 
         // Create course
         const instructorUsername = baseUsername.replace('USERID', '1');
