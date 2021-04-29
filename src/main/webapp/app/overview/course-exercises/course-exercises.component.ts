@@ -159,6 +159,14 @@ export class CourseExercisesComponent implements OnInit, OnChanges, OnDestroy {
     }
 
     /**
+     * Checks whether an exercise is visible to students or not
+     * @param exercise The exercise which should be checked
+     */
+    isVisibleToStudents(exercise: Exercise): boolean | undefined {
+        return !this.activeFilters.has(ExerciseFilter.UNRELEASED) || (exercise as QuizExercise)?.visibleToStudents;
+    }
+
+    /**
      * Checks if the given exercise still needs work, i.e. wasn't even started yet or is not graded with 100%
      * @param exercise The exercise which should get checked
      */
