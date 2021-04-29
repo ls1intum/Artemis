@@ -813,7 +813,7 @@ public class ProgrammingExerciseTestService {
         course.setExercises(Set.of(exercise));
         courseRepository.save(course);
 
-        // Createa a programming exercise with solution, template, and tests participations
+        // Create a programming exercise with solution, template, and tests participations
         exercise = programmingExerciseRepository.save(exercise);
         exercise = database.addTemplateParticipationForProgrammingExercise(exercise);
         exercise = database.addSolutionParticipationForProgrammingExercise(exercise);
