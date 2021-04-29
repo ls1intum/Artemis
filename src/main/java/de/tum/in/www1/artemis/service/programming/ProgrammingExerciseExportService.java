@@ -102,6 +102,7 @@ public class ProgrammingExerciseExportService {
      * @return the path to the zip file
      */
     public Path exportProgrammingExercise(ProgrammingExercise exercise, String pathToStoreZipFile, List<String> exportErrors) {
+        log.info("Exporting programming exercise {} with title {}", exercise.getId(), exercise.getTitle());
         // Will contain the zipped files. Note that there can be null elements
         // because e.g exportStudentRepositories returns null if student repositories don't
         // exist.

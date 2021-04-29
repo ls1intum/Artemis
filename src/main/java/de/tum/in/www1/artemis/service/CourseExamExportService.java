@@ -151,6 +151,8 @@ public class CourseExamExportService {
      * @param exportErrors List of failures that occurred during the export
      */
     private void exportCourseExercises(String notificationTopic, Course course, String outputDir, List<String> exportErrors) {
+        log.info("Exporting course exercises for course {} and title {}", course.getId(), course.getTitle());
+
         Path exercisesDir = Path.of(outputDir, "course-exercises");
         try {
             Files.createDirectory(exercisesDir);
@@ -170,6 +172,8 @@ public class CourseExamExportService {
      * @param exportErrors List of failures that occurred during the export
      */
     private void exportCourseExams(String notificationTopic, Course course, String outputDir, List<String> exportErrors) {
+        log.info("Export course exams for course {} and title {}", course.getId(), course.getTitle());
+
         Path examsDir = null;
         try {
             examsDir = Path.of(outputDir, "exams");
@@ -192,6 +196,8 @@ public class CourseExamExportService {
      * @param exportErrors List of failures that occurred during the export
      */
     private void exportExam(String notificationTopic, long examId, String outputDir, List<String> exportErrors) {
+        log.info("Export course exam {}", examId);
+
         Path examDir = null;
         try {
             // Create exam directory.
@@ -221,6 +227,8 @@ public class CourseExamExportService {
     private void exportExercises(String notificationTopic, Set<Exercise> exercises, String outputDir, List<String> exportErrors) {
         AtomicInteger exportedExercises = new AtomicInteger(0);
         exercises.forEach(exercise -> {
+            log.info("Exporting exercise {} with id {} ", exercise.getTitle(), exercise.getId());
+
             // Notify the user after the progress
             exportedExercises.addAndGet(1);
             notifyUserAboutExerciseExportState(notificationTopic, CourseExamExportState.RUNNING, List.of(exportedExercises + "/" + exercises.size() + " done"));
