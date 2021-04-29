@@ -418,7 +418,7 @@ This also hides information about test implementation details.
     }
 
 If the student fails the test, Artemis will display something like org.opentest4j.AssertionFailedError:
-A borrowed book must be unavailable! ==> Expected <false> but was <true>. The part after '==>' should not be shown to the student as it contains implementation detail.
+A borrowed book must be unavailable! ==> Expected <false> but was <true>. The part after '==>' should not be shown to the student as it contains implementation details.
 
 .. code-block:: java
 
