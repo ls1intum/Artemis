@@ -965,7 +965,7 @@ public class GitService {
      * @return path to zip file.
      * @throws IOException if the zipping process failed.
      */
-    public Path zipRepositoryWithParticipation(Repository repo, String targetPath, boolean hideStudentName) throws IOException {
+    public Path zipRepositoryWithParticipation(Repository repo, String targetPath, boolean hideStudentName) throws IOException, UncheckedIOException {
         var exercise = repo.getParticipation().getProgrammingExercise();
         var courseShortName = exercise.getCourseViaExerciseGroupOrCourseMember().getShortName();
         var participation = (ProgrammingExerciseStudentParticipation) repo.getParticipation();
@@ -998,7 +998,7 @@ public class GitService {
      * @return path to the zip file
      * @throws IOException if the zipping process failed.
      */
-    public Path zipRepository(Repository repository, String zipFilename, String targetPath) throws IOException {
+    public Path zipRepository(Repository repository, String zipFilename, String targetPath) throws IOException, UncheckedIOException {
         // Strip slashes from name
         var zipFilenameWithoutSlash = zipFilename.replaceAll("\\s", "");
 
@@ -1020,7 +1020,7 @@ public class GitService {
      * @param outputFile The filename of the zip file that will be created.
      * @throws IOException If the outFile is a directory or if git archive command failed.
      */
-    private Path archiveRepository(Repository repository, String outputFile) throws IOException {
+    private Path archiveRepository(Repository repository, String outputFile) throws IOException, UncheckedIOException {
         try {
             ArchiveCommand.registerFormat("zip", new ZipFormat());
             try (OutputStream out = new FileOutputStream(outputFile)) {

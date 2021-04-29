@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service.programming;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -188,7 +189,7 @@ public class ProgrammingExerciseExportService {
                 return new File(zippedRepo.toString());
             }
         }
-        catch (IOException | GitAPIException | GitException | InterruptedException ex) {
+        catch (IOException | UncheckedIOException | GitAPIException | GitException | InterruptedException ex) {
             var error = "Failed to export instructor repository " + repositoryType + " for programming exercise '" + exercise.getTitle() + "' (id: " + exercise.getId() + ")";
             log.info(error);
             exportErrors.add(error);
@@ -247,7 +248,7 @@ public class ProgrammingExerciseExportService {
                     zippedRepos.add(zippedRepo);
                 }
             }
-            catch (IOException e) {
+            catch (IOException | UncheckedIOException e) {
                 var error = "Failed to export the student repository with participation: " + participation.getId() + " for programming exercise '" + programmingExercise.getTitle()
                         + "' (id: " + programmingExercise.getId() + ") because the repository couldn't be downloaded. ";
                 exportErrors.add(error);
@@ -266,7 +267,8 @@ public class ProgrammingExerciseExportService {
      * @throws GitAPIException if the repo couldn't get checked out
      * @throws InterruptedException if the repo couldn't get checked out
      */
-    private Path createZipForRepository(VcsRepositoryUrl repositoryUrl, String zipFilename) throws IOException, GitAPIException, GitException, InterruptedException {
+    private Path createZipForRepository(VcsRepositoryUrl repositoryUrl, String zipFilename)
+            throws IOException, GitAPIException, GitException, InterruptedException, UncheckedIOException {
         var repoProjectPath = fileService.getUniquePathString(repoDownloadClonePath);
         Repository repository = null;
 
@@ -328,7 +330,7 @@ public class ProgrammingExerciseExportService {
      * @throws IOException if zip file creation failed
      */
     private Path createZipForRepositoryWithParticipation(final ProgrammingExercise programmingExercise, final ProgrammingExerciseStudentParticipation participation,
-            final RepositoryExportOptionsDTO repositoryExportOptions) throws IOException {
+            final RepositoryExportOptionsDTO repositoryExportOptions) throws IOException, UncheckedIOException {
         if (participation.getVcsRepositoryUrl() == null) {
             log.warn("Ignore participation {} for export, because its repository URL is null", participation.getId());
             return null;
