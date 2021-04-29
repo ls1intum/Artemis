@@ -116,14 +116,15 @@ public class TextPlagiarismDetectionService {
         log.info("Start JPlag Text comparison");
         JPlag jplag = new JPlag(options);
         JPlagResult jPlagResult = jplag.run();
-        log.info("JPlag Text comparison finished with {} comparisons", jPlagResult.getComparisons().size());
+        log.info("JPlag Text comparison finished with {} comparisons. Will limit the number of comparisons to 500", jPlagResult.getComparisons().size());
 
         log.info("Delete submission folder");
         if (submissionFolderFile.exists()) {
             FileSystemUtils.deleteRecursively(submissionFolderFile);
         }
 
-        TextPlagiarismResult textPlagiarismResult = new TextPlagiarismResult(jPlagResult);
+        TextPlagiarismResult textPlagiarismResult = new TextPlagiarismResult();
+        textPlagiarismResult.convertJPlagResult(jPlagResult);
         textPlagiarismResult.setExercise(textExercise);
 
         log.info("JPlag text comparison for {} submissions done in {}", submissionsSize, TimeLogUtil.formatDurationFrom(start));
