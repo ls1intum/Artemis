@@ -15,7 +15,6 @@ import java.util.Set;
 
 import org.apache.http.client.HttpResponseException;
 import org.mockito.InjectMocks;
-import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -34,7 +33,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Optional;
 import com.offbytwo.jenkins.JenkinsServer;
-import com.offbytwo.jenkins.client.JenkinsHttpClient;
 import com.offbytwo.jenkins.model.*;
 
 import de.tum.in.www1.artemis.domain.Course;
@@ -71,9 +69,6 @@ public class JenkinsRequestMockProvider {
     @SpyBean
     @InjectMocks
     private JenkinsJobPermissionsService jenkinsJobPermissionsService;
-
-    @Mock
-    private JenkinsHttpClient jenkinsClient;
 
     @SpyBean
     @InjectMocks
@@ -181,6 +176,16 @@ public class JenkinsRequestMockProvider {
         }
     }
 
+    public void mockCheckIfProjectExistsJobIsNull(ProgrammingExercise exercise) throws IOException {
+        doReturn(null).when(jenkinsServer).getJob(exercise.getProjectKey());
+    }
+
+    public void mockCheckIfProjectExistsJobUrlEmptyOrNull(ProgrammingExercise exercise, boolean urlEmpty) throws IOException {
+        var job = mock(JobWithDetails.class);
+        doReturn(job).when(jenkinsServer).getJob(exercise.getProjectKey());
+        doReturn(urlEmpty ? "" : null).when(job).getUrl();
+    }
+
     public void mockCopyBuildPlan(String sourceProjectKey, String targetProjectKey) throws IOException {
         mockGetJobXmlForBuildPlanWith(sourceProjectKey, "<xml></xml>");
         mockSaveJobXml(targetProjectKey);
@@ -237,7 +242,7 @@ public class JenkinsRequestMockProvider {
         mockCopyBuildPlan(projectKey, projectKey);
     }
 
-    private void mockGetJob(String projectKey, String jobName, JobWithDetails jobToReturn, boolean getJobFails) throws IOException {
+    public void mockGetJob(String projectKey, String jobName, JobWithDetails jobToReturn, boolean getJobFails) throws IOException {
         final var folder = new FolderJob();
         mockGetFolderJob(projectKey, folder);
         if (!getJobFails) {
@@ -254,14 +259,15 @@ public class JenkinsRequestMockProvider {
         doReturn(com.google.common.base.Optional.of(folderJobToReturn)).when(jenkinsServer).getFolderJob(jobWithDetails);
     }
 
-    public BuildWithDetails mockGetLatestBuildLogs(ProgrammingExerciseStudentParticipation participation) throws IOException {
+    public BuildWithDetails mockGetLatestBuildLogs(ProgrammingExerciseStudentParticipation participation, boolean useLegacyLogs) throws IOException {
         String projectKey = participation.getProgrammingExercise().getProjectKey();
         String buildPlanId = participation.getBuildPlanId();
 
         final var job = mock(JobWithDetails.class);
         mockGetJob(projectKey, buildPlanId, job, false);
 
-        final var buildLogResponse = loadFileFromResources("test-data/jenkins-response/failed-build-log.html");
+        var buildLogFile = useLegacyLogs ? "legacy-failed-build-log.html" : "failed-build-log.html";
+        final var buildLogResponse = loadFileFromResources("test-data/jenkins-response/" + buildLogFile);
 
         final var build = mock(Build.class);
         doReturn(build).when(job).getLastBuild();
@@ -442,6 +448,16 @@ public class JenkinsRequestMockProvider {
         }
     }
 
+    public void mockDeleteBuildPlanNotFound(String projectKey, String planName) throws IOException {
+        mockGetFolderJob(projectKey, new FolderJob());
+        doThrow(new HttpResponseException(404, "Not found")).when(jenkinsServer).deleteJob(any(FolderJob.class), eq(planName), eq(useCrumb));
+    }
+
+    public void mockDeleteBuildPlanFailWithException(String projectKey, String planName) throws IOException {
+        mockGetFolderJob(projectKey, new FolderJob());
+        doThrow(new IOException("IOException")).when(jenkinsServer).deleteJob(any(FolderJob.class), eq(planName), eq(useCrumb));
+    }
+
     public void mockDeleteBuildPlanProject(String projectKey, boolean shouldFail) throws IOException {
         if (shouldFail) {
             doThrow(new HttpResponseException(400, "Bad Request")).when(jenkinsServer).deleteJob(projectKey, useCrumb);
@@ -495,4 +511,7 @@ public class JenkinsRequestMockProvider {
         }
     }
 
+    public void mockGivePlanPermissionsThrowException(String projectKey, String projectKey1) throws IOException {
+        doThrow(IOException.class).when(jenkinsJobPermissionsService).addInstructorAndTAPermissionsToUsersForJob(any(), any(), eq(projectKey), eq(projectKey1));
+    }
 }
