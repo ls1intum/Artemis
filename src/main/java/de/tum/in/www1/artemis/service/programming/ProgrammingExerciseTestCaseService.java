@@ -67,10 +67,8 @@ public class ProgrammingExerciseTestCaseService {
      * @param testCaseProgrammingExerciseTestCaseDTOS of the test cases to update the weights and visibility of.
      * @return the updated test cases.
      * @throws EntityNotFoundException if the programming exercise could not be found.
-     * @throws IllegalAccessException if the retriever does not have the permissions to fetch information related to the programming exercise.
      */
-    public Set<ProgrammingExerciseTestCase> update(Long exerciseId, Set<ProgrammingExerciseTestCaseDTO> testCaseProgrammingExerciseTestCaseDTOS)
-            throws EntityNotFoundException, IllegalAccessException {
+    public Set<ProgrammingExerciseTestCase> update(Long exerciseId, Set<ProgrammingExerciseTestCaseDTO> testCaseProgrammingExerciseTestCaseDTOS) throws EntityNotFoundException {
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithTestCasesById(exerciseId)
                 .orElseThrow(() -> new EntityNotFoundException("Programming Exercise", exerciseId));
 
