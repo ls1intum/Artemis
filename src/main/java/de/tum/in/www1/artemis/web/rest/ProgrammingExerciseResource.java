@@ -1075,10 +1075,6 @@ public class ProgrammingExerciseResource {
         }
 
         InputStreamResource resource = new InputStreamResource(new FileInputStream(zipFile));
-
-        log.info("Check plagiarism of programming exercise {} with title '{}' was successful in {}.", programmingExercise.getId(), programmingExercise.getTitle(),
-                formatDurationFrom(start));
-
         return ResponseEntity.ok().contentLength(zipFile.length()).contentType(MediaType.APPLICATION_OCTET_STREAM).header("filename", zipFile.getName()).body(resource);
     }
 
