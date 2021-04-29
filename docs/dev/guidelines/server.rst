@@ -404,7 +404,7 @@ The value type of the strict timeout annotation defaults to seconds, if you need
 
 
 
-Avoiding assert statements and using conditional fail() calls instead hides confusing information from the students.
+Avoid assert statements and use conditional ``fail()`` calls instead to hide confusing information from the students.
 This could be considered bad practice in regular conditions but helps to create fail messages that are less confusing, especially for beginners.
 This also hides information about test implementation details.
 
