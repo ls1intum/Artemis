@@ -798,7 +798,7 @@ public class ProgrammingExerciseTestService {
         exercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationById(exercise.getId()).get();
 
         var vcsUrl = exercise.getRepositoryURL(RepositoryType.valueOf(repositoryType));
-        var repository = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepository.localRepoFile.toPath(), null);
+        Repository repository = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepository.localRepoFile.toPath(), null);
         createAndCommitDummyFileInLocalRepository(localRepository, "some-file.java");
         doReturn(repository).when(gitService).getOrCheckoutRepository(eq(vcsUrl), anyString(), anyBoolean());
 
