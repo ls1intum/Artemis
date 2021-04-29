@@ -1094,6 +1094,14 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         assertThat(updatedQuizExercise.isIsOpenForPractice()).isTrue();
     }
 
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void testCreateQuizExercise_asTutor_forbidden() throws Exception{
+        final Course course = database.createCourse();
+        QuizExercise quizExercise = database.createQuiz(course,ZonedDateTime.now(), ZonedDateTime.now().plusHours(5));
+        QuizExercise quizExerciseServer = request.postWithResponseBody("/api/quiz-exercises",quizExercise,QuizExercise.class, HttpStatus.FORBIDDEN);
+    }
+
     /**
      * Check that the general information of two exercises is equal.
      */
