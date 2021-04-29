@@ -1,1 +1,83 @@
-<div></div>
+<div>
+    <jhi-alert></jhi-alert>
+    <jhi-alert-error></jhi-alert-error>
+    <h2>Grading System</h2>
+    <div>
+        <div>
+            <button (click)="generateDefaultGradingScale()" class="btn btn-primary mr-1 mb-1" type="button">
+                <span>Generate Default Grading Scale</span>
+            </button>
+        </div>
+        <div class="form-group">
+            <span class="colon-suffix no-flex-shrink">Grade Type</span>
+            <select class="form-control" [(ngModel)]="gradingScale.gradeType" title="grade type">
+                <option value="GRADE">Grade</option>
+                <option value="BONUS">Bonus</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <span class="colon-suffix no-flex-shrink">Inclusivity</span>
+            <select class="form-control" [(ngModel)]="lowerBoundInclusivity" title="inclusivity">
+                <option [ngValue]="true">Lower Bound Inclusive</option>
+                <option [ngValue]="false">Upper Bound Inclusive</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <span class="colon-suffix no-flex-shrink">First Passing Grade</span>
+            <select class="form-control" title="first passing grade" [(ngModel)]="firstPassingGrade.gradeName">
+                <option *ngFor="let gradeStep of gradingScale.gradeSteps">{{ gradeStep.gradeName }}</option>
+            </select>
+        </div>
+    </div>
+    <div *ngIf="gradingScale.gradeSteps">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>
+                        <span>Min %</span>
+                    </th>
+                    <th>
+                        <span>Max %</span>
+                    </th>
+                    <th [colSpan]="2">
+                        <span>{{ isGradeType() ? 'Grade Names' : 'Outcome' }}</span>
+                    </th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr *ngFor="let gradeStep of gradingScale.gradeSteps; let i = index">
+                    <td>
+                        <input [(ngModel)]="gradeStep.lowerBoundPercentage" />
+                    </td>
+                    <td>
+                        <input [(ngModel)]="gradeStep.upperBoundPercentage" />
+                    </td>
+                    <td>
+                        <input [(ngModel)]="gradeStep.gradeName" />
+                    </td>
+                    <td>
+                        <button (click)="deleteGradeStep(i)" type="button" class="btn btn-danger mb-1"><fa-icon [icon]="'times'"></fa-icon> <span>Delete</span></button>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    <div>
+        <button (click)="createGradeStep()" class="btn btn-success mr-1 mb-1" type="button"><fa-icon [icon]="'plus'"></fa-icon> <span>Add Grade Step</span></button>
+    </div>
+    <div>
+        <button (click)="saveForCourse()" class="btn btn-primary mr-1 mb-1" type="button"><fa-icon [icon]="'save'"></fa-icon>&nbsp;<span>Save</span></button>
+        <button
+            [hidden]="!existingGradingScale"
+            class="mb-1"
+            jhiDeleteButton
+            [entityTitle]="'Grading Scale'"
+            [buttonSize]="ButtonSize.MEDIUM"
+            deleteQuestion="Delete grading scale for course?"
+            deleteConfirmationText="Confirm delete"
+            (delete)="deleteForCourse()"
+        >
+            <fa-icon [icon]="'times'"> <span>Delete</span></fa-icon>
+        </button>
+    </div>
+</div>
