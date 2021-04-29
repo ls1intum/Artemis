@@ -1,4 +1,4 @@
-import { getTestBed, TestBed } from '@angular/core/testing';
+import { fakeAsync, getTestBed, TestBed, tick } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { map, take } from 'rxjs/operators';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
@@ -19,6 +19,10 @@ import { TemplateProgrammingExerciseParticipation } from 'app/entities/participa
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { Result } from 'app/entities/result.model';
 import { SERVER_API_URL } from 'app/app.constants';
+import * as chai from 'chai';
+import * as sinonChai from 'sinon-chai';
+
+chai.use(sinonChai);
 
 describe('ProgrammingExercise Service', () => {
     let injector: TestBed;
@@ -165,15 +169,14 @@ describe('ProgrammingExercise Service', () => {
             req.flush({ status: 200 });
         });
 
-        it('should download instructor material of a ProgrammingExercise', async () => {
+        it('should make get request', fakeAsync(() => {
+            const expect = chai.expect;
             const expectedBlob = new Blob(['abc', 'cfe']);
-            service.exportInstructorExercise(123).subscribe((resp) => {
-                expect(resp.body).toMatchObject(expectedBlob);
-                expect(resp.status).toBe(200);
-            });
+            service.exportInstructorExercise(123).subscribe((resp) => expect(resp.body).equal(expectedBlob));
             const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/123/export-instructor-exercise` });
             req.flush(expectedBlob);
-        });
+            tick();
+        }));
     });
 
     afterEach(() => {
