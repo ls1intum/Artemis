@@ -17,6 +17,8 @@ import { ArtemisPlagiarismModule } from 'app/exercises/shared/plagiarism/plagiar
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { TextPlagiarismResult } from 'app/exercises/shared/plagiarism/types/text/TextPlagiarismResult';
+import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { MockProvider } from 'ng-mocks';
 
 jest.mock('app/shared/util/download.util', () => ({
     downloadFile: jest.fn(),
@@ -69,7 +71,7 @@ describe('Plagiarism Inspector Component', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, ArtemisPlagiarismModule, TranslateTestingModule],
-            providers: [{ provide: ActivatedRoute, useValue: activatedRoute }],
+            providers: [{ provide: ActivatedRoute, useValue: activatedRoute }, MockProvider(JhiWebsocketService)],
         }).compileComponents();
 
         fixture = TestBed.createComponent(PlagiarismInspectorComponent);
