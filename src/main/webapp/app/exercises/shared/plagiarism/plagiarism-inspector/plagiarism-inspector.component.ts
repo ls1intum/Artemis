@@ -16,6 +16,7 @@ import { ProgrammingExerciseService } from 'app/exercises/programming/manage/ser
 import { PlagiarismOptions } from 'app/exercises/shared/plagiarism/types/PlagiarismOptions';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { tap } from 'rxjs/operators';
+import { TranslateService } from '@ngx-translate/core';
 
 export type PlagiarismCheckState = {
     state: 'COMPLETED' | 'RUNNING';
@@ -97,6 +98,7 @@ export class PlagiarismInspectorComponent implements OnInit {
         private programmingExerciseService: ProgrammingExerciseService,
         private textExerciseService: TextExerciseService,
         private websocketService: JhiWebsocketService,
+        private translateService: TranslateService,
     ) {}
 
     ngOnInit() {
@@ -136,10 +138,10 @@ export class PlagiarismInspectorComponent implements OnInit {
     handlePlagiarismCheckStateChange(plagiarismCheckState: PlagiarismCheckState) {
         const { state, messages } = plagiarismCheckState;
         this.detectionInProgress = state === 'RUNNING';
-        this.detectionInProgressMessage = state === 'RUNNING' ? messages : 'Loading...';
+        this.detectionInProgressMessage = state === 'RUNNING' ? messages : this.translateService.instant('artemisApp.plagiarism.loading');
 
         if (state === 'COMPLETED') {
-            this.detectionInProgressMessage = 'Fetching plagiarism results...';
+            this.detectionInProgressMessage = this.translateService.instant('artemisApp.plagiarism.fetching-results');
             this.getLatestPlagiarismResult();
         }
     }

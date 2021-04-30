@@ -28,7 +28,9 @@
             "no-info-available": "Keine Information verfügbar",
             "caution": "Die Plagiatskontrolle kann für große Kurse sehr lange dauern.",
             "detect": "Plagiate finden",
-            "rerun": "Erneut Plagiate finden"
+            "rerun": "Erneut Plagiate finden",
+            "loading": "Laden...",
+            "fetching-results": "Plagiate werden geladen..."
         }
     }
 }
