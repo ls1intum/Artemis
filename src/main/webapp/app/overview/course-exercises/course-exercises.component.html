@@ -3,14 +3,20 @@
         <div class="mt-3 position-relative" *ngIf="course">
             <div class="exercise-controls" *ngIf="course!.exercises && course!.exercises.length > 0">
                 <div class="d-flex align-items-center mr-2">
-                    <label class="d-flex align-items-center mb-0 mr-2">
-                        <input (change)="toggleFilters([filterType.OVERDUE])" [checked]="activeFilters.has(filterType.OVERDUE)" type="checkbox" />
-                        <span class="ml-2" jhiTranslate="artemisApp.courseOverview.exerciseList.overdue">Hide overdue</span>
+                    <label class="d-flex align-items-center mb-0 mr-2" *ngIf="course.isAtLeastTutor">
+                        <input (change)="toggleFilters([filterType.UNRELEASED])" [checked]="activeFilters.has(filterType.UNRELEASED)" type="checkbox" />
+                        <span class="ml-2" jhiTranslate="artemisApp.courseOverview.exerciseList.unreleased">Hide unreleased</span>
                     </label>
-                    <label class="d-flex align-items-center mb-0 mr-2">
-                        <input (change)="toggleFilters([filterType.NEEDS_WORK])" [checked]="activeFilters.has(filterType.NEEDS_WORK)" type="checkbox" />
-                        <span class="ml-2" jhiTranslate="artemisApp.courseOverview.exerciseList.fullScore">Hide full score</span>
-                    </label>
+                    <div class="flex-column">
+                        <label class="d-flex align-items-center mb-0 mr-2">
+                            <input (change)="toggleFilters([filterType.OVERDUE])" [checked]="activeFilters.has(filterType.OVERDUE)" type="checkbox" />
+                            <span class="ml-2" jhiTranslate="artemisApp.courseOverview.exerciseList.overdue">Hide overdue</span>
+                        </label>
+                        <label class="d-flex align-items-center mb-0 mr-2">
+                            <input (change)="toggleFilters([filterType.NEEDS_WORK])" [checked]="activeFilters.has(filterType.NEEDS_WORK)" type="checkbox" />
+                            <span class="ml-2" jhiTranslate="artemisApp.courseOverview.exerciseList.fullScore">Hide full score</span>
+                        </label>
+                    </div>
                     <div aria-label="Button group with nested dropdown" class="btn-group" role="group">
                         <button id="flip" (click)="flipOrder()" class="btn btn-primary">
                             <fa-icon [icon]="sortingOrder === ASC ? 'sort-numeric-up' : 'sort-numeric-down'"></fa-icon>
@@ -39,7 +45,7 @@
                     </div>
                 </div>
             </div>
-            <div class="exercise-row-container mb-3" *ngIf="nextRelevantExercise">
+            <div class="exercise-row-container mb-3" *ngIf="nextRelevantExercise && isVisibleToStudents(nextRelevantExercise)">
                 <h3 class="text-primary">
                     <span *ngIf="nextRelevantExercise.dueDate; else noDueDate">
                         {{ 'artemisApp.courseOverview.exerciseList.currentExerciseGroupHeader' | artemisTranslate: { date: nextRelevantExercise.dueDate | artemisDate } }}
