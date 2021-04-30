@@ -10,10 +10,6 @@
         cursor: pointer;
         height: 75px;
 
-        .card-title {
-            margin-bottom: 0;
-        }
-
         .container-padding {
             padding: 10px;
         }
@@ -169,10 +165,6 @@
 @media screen and (max-width: 700px) {
     .card {
         .card-heading {
-            .card-title {
-                overflow: hidden;
-            }
-
             .card-header-left {
                 flex-direction: column;
                 max-width: 110px;
