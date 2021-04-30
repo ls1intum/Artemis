@@ -70,7 +70,7 @@ export class StatisticsScoreDistributionGraphComponent implements OnInit {
                 // Average exercise score bars
                 label: this.distributionLegend,
                 data: this.scoreDistribution,
-                type: 'bar',
+                fill: false,
                 backgroundColor: GraphColors.DARK_BLUE,
                 borderColor: GraphColors.DARK_BLUE,
                 hoverBackgroundColor: GraphColors.DARK_BLUE,

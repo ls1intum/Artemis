@@ -1,12 +1,10 @@
 package de.tum.in.www1.artemis.web.rest.dto;
 
-import java.util.List;
-
 public class ExerciseManagementStatisticsDTO {
 
     private Double averageScoreOfExercise;
 
-    private List<Double> scoreDistribution;
+    private int[] scoreDistribution;
 
     public Double getAverageScoreOfExercise() {
         return averageScoreOfExercise;
@@ -16,11 +14,11 @@ public class ExerciseManagementStatisticsDTO {
         this.averageScoreOfExercise = averageScoreOfExercise;
     }
 
-    public List<Double> getScoreDistribution() {
+    public int[] getScoreDistribution() {
         return scoreDistribution;
     }
 
-    public void setScoreDistribution(List<Double> scoreDistribution) {
+    public void setScoreDistribution(int[] scoreDistribution) {
         this.scoreDistribution = scoreDistribution;
     }
 }

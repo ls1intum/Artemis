@@ -55,6 +55,20 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
     @Query("""
             select
             new de.tum.in.www1.artemis.domain.statistics.StatisticsEntry(
+                s.submissionDate,
+                count(s.id)
+                )
+            from Submission s
+            where s.submissionDate >= :#{#startDate} and s.submissionDate <= :#{#endDate} and s.participation.exercise.id = :exerciseId
+            group by s.submissionDate
+            order by s.submissionDate asc
+            """)
+    List<StatisticsEntry> getTotalSubmissionsForExercise(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate,
+            @Param("exerciseId") Long exerciseId);
+
+    @Query("""
+            select
+            new de.tum.in.www1.artemis.domain.statistics.StatisticsEntry(
                 s.submissionDate, u.login
                 )
             from User u, Submission s, StudentParticipation p
@@ -345,13 +359,30 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
      */
     default List<StatisticsEntry> getNumberOfEntriesPerTimeSlot(SpanType span, ZonedDateTime startDate, ZonedDateTime endDate, GraphType graphType, StatisticsView view,
             Long entityId) {
-        var exerciseIds = entityId != null ? findExerciseIdsByCourseId(entityId) : null;
+        var exerciseIds = view == StatisticsView.COURSE ? findExerciseIdsByCourseId(entityId) : null;
         switch (graphType) {
             case SUBMISSIONS -> {
-                return entityId == null ? getTotalSubmissions(startDate, endDate) : getTotalSubmissionsForCourse(startDate, endDate, exerciseIds);
+                switch (view) {
+                    case ARTEMIS -> {
+                        return getTotalSubmissions(startDate, endDate);
+                    }
+                    case COURSE -> {
+                        return getTotalSubmissionsForCourse(startDate, endDate, exerciseIds);
+                    }
+                    case EXERCISE -> {
+                        return getTotalSubmissionsForExercise(startDate, endDate, entityId);
+                    }
+                    default -> throw new UnsupportedOperationException("Unsupported view: " + view);
+                }
             }
             case ACTIVE_USERS -> {
-                List<StatisticsEntry> result = entityId == null ? getActiveUsers(startDate, endDate) : getActiveUsersForCourse(startDate, endDate, exerciseIds);
+                List<StatisticsEntry> result;
+                switch (view) {
+                    case ARTEMIS -> result = getActiveUsers(startDate, endDate);
+                    case COURSE -> result = getActiveUsersForCourse(startDate, endDate, exerciseIds);
+                    case EXERCISE -> result = null;
+                    default -> throw new UnsupportedOperationException("Unsupported view: " + view);
+                }
                 return filterDuplicatedUsers(span, result, startDate, graphType);
             }
             case LOGGED_IN_USERS -> {
@@ -361,35 +392,134 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
                 return filterDuplicatedUsers(span, result, startDate, graphType);
             }
             case RELEASED_EXERCISES -> {
-                return entityId == null ? getReleasedExercises(startDate, endDate) : getReleasedExercisesForCourse(startDate, endDate, exerciseIds);
+                switch (view) {
+                    case ARTEMIS -> {
+                        return getReleasedExercises(startDate, endDate);
+                    }
+                    case COURSE -> {
+                        return getReleasedExercisesForCourse(startDate, endDate, exerciseIds);
+                    }
+                    case EXERCISE -> {
+                        return null;
+                    }
+                    default -> throw new UnsupportedOperationException("Unsupported view: " + view);
+                }
             }
             case EXERCISES_DUE -> {
-                return entityId == null ? getExercisesDue(startDate, endDate) : getExercisesDueForCourse(startDate, endDate, exerciseIds);
+                switch (view) {
+                    case ARTEMIS -> {
+                        return getExercisesDue(startDate, endDate);
+                    }
+                    case COURSE -> {
+                        return getExercisesDueForCourse(startDate, endDate, exerciseIds);
+                    }
+                    case EXERCISE -> {
+                        return null;
+                    }
+                    default -> throw new UnsupportedOperationException("Unsupported view: " + view);
+                }
             }
             case CONDUCTED_EXAMS -> {
-                return entityId == null ? getConductedExams(startDate, endDate) : getConductedExamsForCourse(startDate, endDate, entityId);
+                switch (view) {
+                    case ARTEMIS -> {
+                        return getConductedExams(startDate, endDate);
+                    }
+                    case COURSE -> {
+                        return getConductedExamsForCourse(startDate, endDate, entityId);
+                    }
+                    case EXERCISE -> {
+                        return null;
+                    }
+                    default -> throw new UnsupportedOperationException("Unsupported view: " + view);
+                }
             }
             case EXAM_PARTICIPATIONS -> {
-                return entityId == null ? getExamParticipations(startDate, endDate) : getExamParticipationsForCourse(startDate, endDate, entityId);
+                switch (view) {
+                    case ARTEMIS -> {
+                        return getExamParticipations(startDate, endDate);
+                    }
+                    case COURSE -> {
+                        return getExamParticipationsForCourse(startDate, endDate, entityId);
+                    }
+                    case EXERCISE -> {
+                        return null;
+                    }
+                    default -> throw new UnsupportedOperationException("Unsupported view: " + view);
+                }
             }
             case EXAM_REGISTRATIONS -> {
-                return entityId == null ? getExamRegistrations(startDate, endDate) : getExamRegistrationsForCourse(startDate, endDate, entityId);
+                switch (view) {
+                    case ARTEMIS -> {
+                        return getExamRegistrations(startDate, endDate);
+                    }
+                    case COURSE -> {
+                        return getExamRegistrationsForCourse(startDate, endDate, entityId);
+                    }
+                    case EXERCISE -> {
+                        return null;
+                    }
+                    default -> throw new UnsupportedOperationException("Unsupported view: " + view);
+                }
             }
             case ACTIVE_TUTORS -> {
-                List<StatisticsEntry> result = entityId == null ? getActiveTutors(startDate, endDate) : getActiveTutorsForCourse(startDate, endDate, exerciseIds);
+                List<StatisticsEntry> result;
+                switch (view) {
+                    case ARTEMIS -> result = getActiveTutors(startDate, endDate);
+                    case COURSE -> result = getActiveTutorsForCourse(startDate, endDate, exerciseIds);
+                    case EXERCISE -> result = null;
+                    default -> throw new UnsupportedOperationException("Unsupported view: " + view);
+                }
                 return filterDuplicatedUsers(span, result, startDate, graphType);
             }
             case CREATED_RESULTS -> {
-                return entityId == null ? getCreatedResults(startDate, endDate) : getCreatedResultsForCourse(startDate, endDate, exerciseIds);
+                switch (view) {
+                    case ARTEMIS -> {
+                        return getCreatedResults(startDate, endDate);
+                    }
+                    case COURSE -> {
+                        return getCreatedResultsForCourse(startDate, endDate, exerciseIds);
+                    }
+                    case EXERCISE -> {
+                        return null;
+                    }
+                    default -> throw new UnsupportedOperationException("Unsupported view: " + view);
+                }
             }
             case CREATED_FEEDBACKS -> {
-                return entityId == null ? getResultFeedbacks(startDate, endDate) : getResultFeedbacksForCourse(startDate, endDate, exerciseIds);
+                switch (view) {
+                    case ARTEMIS -> {
+                        return getResultFeedbacks(startDate, endDate);
+                    }
+                    case COURSE -> {
+                        return getResultFeedbacksForCourse(startDate, endDate, exerciseIds);
+                    }
+                    case EXERCISE -> {
+                        return null;
+                    }
+                    default -> throw new UnsupportedOperationException("Unsupported view: " + view);
+                }
             }
             case QUESTIONS_ASKED -> {
-                return entityId != null ? getQuestionsAskedForCourse(startDate, endDate, entityId) : new ArrayList<>();
+                switch (view) {
+                    case COURSE -> {
+                        return getQuestionsAskedForCourse(startDate, endDate, entityId);
+                    }
+                    case EXERCISE -> {
+                        return null;
+                    }
+                    default -> throw new UnsupportedOperationException("Unsupported view: " + view);
+                }
             }
             case QUESTIONS_ANSWERED -> {
-                return entityId != null ? getQuestionsAnsweredForCourse(startDate, endDate, entityId) : new ArrayList<>();
+                switch (view) {
+                    case COURSE -> {
+                        return getQuestionsAnsweredForCourse(startDate, endDate, entityId);
+                    }
+                    case EXERCISE -> {
+                        return null;
+                    }
+                    default -> throw new UnsupportedOperationException("Unsupported view: " + view);
+                }
             }
             default -> {
                 return new ArrayList<>();

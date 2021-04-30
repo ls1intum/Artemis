@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import java.util.ArrayList;
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -8,8 +8,13 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.enumeration.GraphType;
 import de.tum.in.www1.artemis.domain.enumeration.SpanType;
+import de.tum.in.www1.artemis.domain.enumeration.StatisticsView;
+import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.web.rest.dto.CourseManagementStatisticsDTO;
 import de.tum.in.www1.artemis.web.rest.dto.ExerciseManagementStatisticsDTO;
@@ -26,8 +31,18 @@ public class StatisticsResource {
 
     private final StatisticsService service;
 
-    public StatisticsResource(StatisticsService service) {
+    private final AuthorizationCheckService authorizationCheckService;
+
+    private final CourseRepository courseRepository;
+
+    private final ExerciseRepository exerciseRepository;
+
+    public StatisticsResource(StatisticsService service, AuthorizationCheckService authorizationCheckService, CourseRepository courseRepository,
+            ExerciseRepository exerciseRepository) {
         this.service = service;
+        this.authorizationCheckService = authorizationCheckService;
+        this.courseRepository = courseRepository;
+        this.exerciseRepository = exerciseRepository;
     }
 
     /**
@@ -42,7 +57,7 @@ public class StatisticsResource {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Integer[]> getChartData(@RequestParam SpanType span, @RequestParam Integer periodIndex, @RequestParam GraphType graphType) {
         log.debug("REST request to get graph data");
-        return ResponseEntity.ok(this.service.getChartData(span, periodIndex, graphType, null));
+        return ResponseEntity.ok(this.service.getChartData(span, periodIndex, graphType, StatisticsView.ARTEMIS, null));
     }
 
     /**
@@ -56,8 +71,13 @@ public class StatisticsResource {
      */
     @GetMapping("management/statistics/data-for-course")
     @PreAuthorize("hasRole('TA')")
-    public ResponseEntity<Integer[]> getChartData(@RequestParam SpanType span, @RequestParam Integer periodIndex, @RequestParam GraphType graphType, @RequestParam Long courseId) {
-        return ResponseEntity.ok(this.service.getChartData(span, periodIndex, graphType, courseId));
+    public ResponseEntity<Integer[]> getChartData(@RequestParam SpanType span, @RequestParam Integer periodIndex, @RequestParam GraphType graphType,
+            @RequestParam StatisticsView view, @RequestParam Long courseId) {
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        if (!authorizationCheckService.isAtLeastTeachingAssistantInCourse(course, null)) {
+            return forbidden();
+        }
+        return ResponseEntity.ok(this.service.getChartData(span, periodIndex, graphType, view, courseId));
     }
 
     /**
@@ -69,6 +89,10 @@ public class StatisticsResource {
     @GetMapping("management/statistics/course-statistics")
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<CourseManagementStatisticsDTO> getCourseStatistics(@RequestParam Long courseId) {
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        if (!authorizationCheckService.isAtLeastTeachingAssistantInCourse(course, null)) {
+            return forbidden();
+        }
         return ResponseEntity.ok(this.service.getCourseStatistics(courseId));
     }
 
@@ -81,13 +105,11 @@ public class StatisticsResource {
     @GetMapping("management/statistics/exercise-statistics")
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<ExerciseManagementStatisticsDTO> getExerciseStatistics(@RequestParam Long exerciseId) {
-        ExerciseManagementStatisticsDTO temp = new ExerciseManagementStatisticsDTO();
-        temp.setAverageScoreOfExercise(exerciseId / 100.0);
-        var test = new ArrayList<Double>();
-        for (int i = 0; i < 10; i++) {
-            test.add(10 + i * 10.0);
+        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
+        if (!authorizationCheckService.isAtLeastTeachingAssistantForExercise(exercise, null)) {
+            return forbidden();
         }
-        temp.setScoreDistribution(test);
+        ExerciseManagementStatisticsDTO temp = service.getExerciseStatistics(exercise);
         return ResponseEntity.ok(temp);
     }
 }
