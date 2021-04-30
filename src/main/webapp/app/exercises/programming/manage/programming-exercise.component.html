@@ -35,7 +35,9 @@
         <table class="table table-striped">
             <thead>
                 <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" [callback]="sortRows.bind(this)">
-                    <th *ngIf="course.isAtLeastEditor" class="d-none d-md-table-cell"></th>
+                    <th *ngIf="course.isAtLeastEditor" class="d-none d-md-table-cell">
+                        <input type="checkbox" (change)="toggleAllProgrammingExercises()" />
+                    </th>
                     <th class="d-none d-md-table-cell" jhiSortBy="id"><span jhiTranslate="global.field.id">ID</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>
                     <th jhiSortBy="title"><span jhiTranslate="artemisApp.exercise.title">Title</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>
                     <th class="d-none d-md-table-cell" jhiSortBy="shortName">
@@ -68,7 +70,7 @@
             <tbody>
                 <tr *ngFor="let programmingExercise of programmingExercises; trackBy: trackId">
                     <td *ngIf="programmingExercise.isAtLeastEditor" class="d-none d-md-table-cell">
-                        <input type="checkbox" (change)="toggleProgrammingExercise(programmingExercise)" />
+                        <input type="checkbox" (change)="toggleProgrammingExercise(programmingExercise)" [ngModel]="isExerciseSelected(programmingExercise)" />
                     </td>
                     <td class="d-none d-md-table-cell">
                         <a [routerLink]="['/course-management', courseId, 'programming-exercises', programmingExercise.id]">{{ programmingExercise.id }}</a>
@@ -340,14 +342,15 @@
             </tbody>
         </table>
         <div *ngIf="selectedProgrammingExercises.length > 0">
-            <button type="submit" (click)="openEditSelectedModal()" class="btn btn-primary btn-sm mr-1 mb-1">
-                <fa-icon [icon]="'pencil-alt'"></fa-icon>
+            <button type="submit" (click)="openEditSelectedModal()" class="btn btn-warning btn-sm mr-1">
+                <fa-icon [icon]="'wrench'"></fa-icon>
                 <span class="d-none d-md-inline" jhiTranslate="entity.action.editSelected">Edit selected</span>
             </button>
-            <button *ngIf="course.isAtLeastInstructor" type="submit" (click)="openRepoExportModal()" class="btn btn-primary btn-sm mr-1 mb-1">
+            <button type="submit" *ngIf="course.isAtLeastInstructor" (click)="openRepoExportModal()" class="btn btn-info btn-sm mr-1">
                 <fa-icon [icon]="'download'"></fa-icon>
-                <span class="d-none d-md-inline" jhiTranslate="entity.action.exportRepos">Download Repos</span>
+                <span class="d-none d-md-inline" jhiTranslate="instructorDashboard.exportSubmissions.title">Download Repos</span>
             </button>
+            <jhi-exercise-scores-export-button *ngIf="course.isAtLeastInstructor" [exercises]="selectedProgrammingExercises"></jhi-exercise-scores-export-button>
         </div>
     </div>
 </div>
