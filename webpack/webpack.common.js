@@ -3,6 +3,7 @@ const CopyWebpackPlugin = require('copy-webpack-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const AngularCompilerPlugin = require('@ngtools/webpack').AngularCompilerPlugin;
 const MergeJsonWebpackPlugin = require("merge-jsons-webpack-plugin");
+const WorkboxPlugin = require('workbox-webpack-plugin');
 
 const utils = require('./utils.js');
 
@@ -101,6 +102,35 @@ module.exports = (options) => ({
             mainPath: utils.root('src/main/webapp/app/app.main.ts'),
             tsConfigPath: utils.root('tsconfig.app.json'),
             sourceMap: true
+        }),
+        new WorkboxPlugin.GenerateSW({
+            clientsClaim: true,
+            skipWaiting: true,
+            runtimeCaching: [
+                {
+                    urlPattern: /\.(?:cc|js|html)$/,
+                    handler: "StaleWhileRevalidate",
+                    options: {
+                        cacheName: "artemisCache",
+                        expiration: {
+                            maxAgeSeconds: 60 * 60 * 24
+                        },
+                        broadcastUpdate: {
+                            channelName: "update-artemisCache"
+                        }
+                    }
+                },
+                {
+                    urlPattern: /\.(?:png|jpg|svg|jpeg|gif|eot|ttf|woff|woff2)$/,
+                    handler: "StaleWhileRevalidate",
+                    options: {
+                        cacheName: "assetCache",
+                        broadcastUpdate: {
+                            channelName: "update-assetCache"
+                        }
+                    }
+                }
+            ]
         })
     ]
 });

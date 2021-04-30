@@ -205,7 +205,7 @@
         "webpack:build": "yarn run cleanup && yarn run webpack:build:main",
         "webpack:prod:main": "yarn run webpack --config webpack/webpack.prod.js --progress",
         "webpack:prod": "yarn run cleanup && yarn run webpack:prod:main && yarn run clean-www",
-        "webpack-dev-server": "node --max-old-space-size=3072 node_modules/webpack-dev-server/bin/webpack-dev-server.js",
-        "webpack": "node --max-old-space-size=3072 --report-on-fatalerror node_modules/webpack/bin/webpack.js"
+        "webpack-dev-server": "node --max-old-space-size=4096 node_modules/webpack-dev-server/bin/webpack-dev-server.js",
+        "webpack": "node --max-old-space-size=4096 --report-on-fatalerror node_modules/webpack/bin/webpack.js"
     }
 }
