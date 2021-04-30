@@ -28,7 +28,9 @@
             "no-info-available": "No information available",
             "caution": "Plagiarism detection can take a long time for large courses.",
             "detect": "Detect plagiarism",
-            "rerun": "Rerun plagiarism detection"
+            "rerun": "Rerun plagiarism detection",
+            "loading": "Loading...",
+            "fetching-results": "Fetching plagiarism results..."
         }
     }
 }
