@@ -407,7 +407,7 @@ If you want to write tests for Programming Exercises to test student's submissio
 =========================
 
 Do not use the ``@SpyBean`` or ``@MockBean`` annotation unless absolutely necessary, or possibly in an abstract Superclass. If you want to see more in detail why, take a look `here <https://www.baeldung.com/spring-tests>`__.
-Basically every time ``@MockBean`` appears in a class, the ApplicationContext cache gets marked as dirty, hence the runner will clean the cache after the test-class is done and restarts the application context.
+Basically, every time ``@MockBean`` appears in a class, the ApplicationContext cache gets marked as dirty, hence the runner will clean the cache after the test-class is done and restarts the application context.
 This leads to a large overhead, which makes the tests tend to take a lot more time.
 
 Here is an example how to replace a ``@SpyBean``. We wanted to test a catch case which is only executed if an IOException gets thrown. We did this by mocking the service method and making it throw an Exception.
