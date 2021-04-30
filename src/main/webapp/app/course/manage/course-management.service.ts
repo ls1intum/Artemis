@@ -423,6 +423,7 @@ export class CourseManagementService {
 
     checkAndSetCourseRights(course: Course) {
         course.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(course);
+        course.isAtLeastEditor = this.accountService.isAtLeastEditorInCourse(course);
         course.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(course);
     }
 

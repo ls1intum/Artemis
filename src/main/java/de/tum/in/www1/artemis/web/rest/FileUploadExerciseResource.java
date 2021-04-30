@@ -85,7 +85,7 @@ public class FileUploadExerciseResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("/file-upload-exercises")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<FileUploadExercise> createFileUploadExercise(@RequestBody FileUploadExercise fileUploadExercise) throws URISyntaxException {
         log.debug("REST request to save FileUploadExercise : {}", fileUploadExercise);
         if (fileUploadExercise.getId() != null) {
@@ -102,7 +102,7 @@ public class FileUploadExerciseResource {
 
         // Check that the user is authorized to create the exercise
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
+        if (!authCheckService.isAtLeastEditorInCourse(course, user)) {
             return forbidden();
         }
 
@@ -158,7 +158,7 @@ public class FileUploadExerciseResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PutMapping("/file-upload-exercises/{exerciseId}")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<FileUploadExercise> updateFileUploadExercise(@RequestBody FileUploadExercise fileUploadExercise,
             @RequestParam(value = "notificationText", required = false) String notificationText, @PathVariable Long exerciseId) throws URISyntaxException {
         log.debug("REST request to update FileUploadExercise : {}", fileUploadExercise);
@@ -174,7 +174,7 @@ public class FileUploadExerciseResource {
 
         // Check that the user is authorized to update the exercise
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
+        if (!authCheckService.isAtLeastEditorInCourse(course, user)) {
             return forbidden();
         }
         FileUploadExercise fileUploadExerciseBeforeUpdate = fileUploadExerciseRepository.findOne(fileUploadExercise.getId());
@@ -241,7 +241,7 @@ public class FileUploadExerciseResource {
             ExerciseGroup exerciseGroup = exerciseGroupRepository.findByIdElseThrow(fileUploadExercise.getExerciseGroup().getId());
             Course course = exerciseGroup.getExam().getCourse();
 
-            if (!authCheckService.isAtLeastInstructorInCourse(course, null)) {
+            if (!authCheckService.isAtLeastEditorInCourse(course, null)) {
                 return forbidden();
             }
             // Set the exerciseGroup, exam and course so that the client can work with those ids

@@ -55,7 +55,7 @@ export const textExerciseRoute: Routes = [
             textExercise: TextExerciseResolver,
         },
         data: {
-            authorities: [Authority.TA, Authority.INSTRUCTOR, Authority.ADMIN],
+            authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.textExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -64,7 +64,7 @@ export const textExerciseRoute: Routes = [
         path: ':courseId/text-exercises/:exerciseId',
         component: TextExerciseDetailComponent,
         data: {
-            authorities: [Authority.TA, Authority.INSTRUCTOR, Authority.ADMIN],
+            authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.textExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -76,7 +76,7 @@ export const textExerciseRoute: Routes = [
             textExercise: TextExerciseResolver,
         },
         data: {
-            authorities: [Authority.TA, Authority.INSTRUCTOR, Authority.ADMIN],
+            authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.textExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -88,7 +88,7 @@ export const textExerciseRoute: Routes = [
             textExercise: TextExerciseResolver,
         },
         data: {
-            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+            authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.textExercise.home.importLabel',
         },
         canActivate: [UserRouteAccessService],
@@ -100,7 +100,7 @@ export const textExerciseRoute: Routes = [
             exercise: TextExerciseResolver,
         },
         data: {
-            authorities: [Authority.TA, Authority.INSTRUCTOR, Authority.ADMIN],
+            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.plagiarism.plagiarism-detection',
         },
         canActivate: [UserRouteAccessService],

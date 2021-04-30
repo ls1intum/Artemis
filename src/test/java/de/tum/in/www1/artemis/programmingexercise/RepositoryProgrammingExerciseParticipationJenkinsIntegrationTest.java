@@ -40,7 +40,7 @@ public class RepositoryProgrammingExerciseParticipationJenkinsIntegrationTest ex
 
     @BeforeEach
     public void setup() throws Exception {
-        database.addUsers(1, 1, 1);
+        database.addUsers(1, 1, 0, 1);
         database.addCourseWithOneProgrammingExerciseAndTestCases();
     }
 

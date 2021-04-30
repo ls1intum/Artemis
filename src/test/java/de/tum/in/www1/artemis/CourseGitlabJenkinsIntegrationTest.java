@@ -310,7 +310,7 @@ public class CourseGitlabJenkinsIntegrationTest extends AbstractSpringIntegratio
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testAddTutorAndInstructorToCourse_failsToAddUserToGroup() throws Exception {
-        courseTestService.testAddTutorAndInstructorToCourse_failsToAddUserToGroup(HttpStatus.INTERNAL_SERVER_ERROR);
+        courseTestService.testAddTutorAndEditorAndInstructorToCourse_failsToAddUserToGroup(HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @Test
@@ -328,7 +328,7 @@ public class CourseGitlabJenkinsIntegrationTest extends AbstractSpringIntegratio
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     public void testUpdateCourse_withExternalUserManagement_vcsUserManagementHasNotBeenCalled() throws Exception {
-        var course = ModelFactory.generateCourse(1L, null, null, new HashSet<>(), "tumuser", "tutor", "instructor");
+        var course = ModelFactory.generateCourse(1L, null, null, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         course = courseTestService.getCourseRepo().save(course);
 
         request.put("/api/courses", course, HttpStatus.OK);
@@ -363,7 +363,7 @@ public class CourseGitlabJenkinsIntegrationTest extends AbstractSpringIntegratio
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testAddStudentOrTutorOrInstructorToCourse() throws Exception {
-        courseTestService.testAddStudentOrTutorOrInstructorToCourse();
+        courseTestService.testAddStudentOrTutorOrEditorOrInstructorToCourse();
     }
 
     @Test
@@ -393,7 +393,7 @@ public class CourseGitlabJenkinsIntegrationTest extends AbstractSpringIntegratio
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testRemoveStudentOrTutorOrInstructorFromCourse_WithNonExistingUser() throws Exception {
-        courseTestService.testRemoveStudentOrTutorOrInstructorFromCourse_WithNonExistingUser();
+        courseTestService.testRemoveStudentOrTutorOrEditorOrInstructorFromCourse_WithNonExistingUser();
     }
 
     @Test

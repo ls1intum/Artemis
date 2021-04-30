@@ -79,7 +79,7 @@ export const textSubmissionAssessmentRoutes: Routes = [
         path: 'assessment',
         component: TextAssessmentDashboardComponent,
         data: {
-            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.TA],
+            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
             pageTitle: 'artemisApp.assessmentDashboard.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -88,7 +88,7 @@ export const textSubmissionAssessmentRoutes: Routes = [
         path: NEW_ASSESSMENT_PATH,
         component: TextSubmissionAssessmentComponent,
         data: {
-            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.TA],
+            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
             pageTitle: 'artemisApp.textAssessment.title',
         },
         resolve: {
@@ -101,7 +101,7 @@ export const textSubmissionAssessmentRoutes: Routes = [
         path: 'submissions/:submissionId/assessment',
         component: TextSubmissionAssessmentComponent,
         data: {
-            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.TA],
+            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
             pageTitle: 'artemisApp.textAssessment.title',
         },
         resolve: {
@@ -127,7 +127,7 @@ export const textSubmissionAssessmentRoutes: Routes = [
         path: 'submissions/:submissionId/text-feedback-conflict/:feedbackId',
         component: TextFeedbackConflictsComponent,
         data: {
-            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.TA],
+            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
             pageTitle: 'artemisApp.textAssessment.title',
         },
         resolve: {

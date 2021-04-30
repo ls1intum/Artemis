@@ -315,7 +315,7 @@ public class RepositoryService {
             throws IllegalAccessException, InterruptedException, GitAPIException {
         User user = userRepository.getUserWithGroupsAndAuthorities(principal.getName());
         Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
-        boolean hasPermissions = authCheckService.isAtLeastInstructorInCourse(course, user);
+        boolean hasPermissions = authCheckService.isAtLeastEditorInCourse(course, user);
         if (!hasPermissions) {
             throw new IllegalAccessException();
         }

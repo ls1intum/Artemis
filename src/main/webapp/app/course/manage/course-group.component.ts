@@ -208,6 +208,8 @@ export class CourseGroupComponent implements OnInit, OnDestroy {
                 return this.course.studentGroupName;
             case CourseGroup.TUTORS:
                 return this.course.teachingAssistantGroupName;
+            case CourseGroup.EDITORS:
+                return this.course.editorGroupName;
             case CourseGroup.INSTRUCTORS:
                 return this.course.instructorGroupName;
         }

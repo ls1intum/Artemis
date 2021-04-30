@@ -68,7 +68,7 @@ public class ResultListenerIntegrationTest extends AbstractSpringIntegrationBamb
     public void setupTestScenario() {
         ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
         // creating the users student1-student5, tutor1-tutor10 and instructors1-instructor10
-        this.database.addUsers(5, 10, 10);
+        this.database.addUsers(5, 10, 0, 10);
         User student1 = userRepository.findOneByLogin("student1").get();
         idOfStudent1 = student1.getId();
         // creating course

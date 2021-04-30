@@ -9,7 +9,7 @@ const routes: Routes = [
         path: ':courseId/modeling-exercises/:exerciseId/statistics',
         component: ModelingStatisticsComponent,
         data: {
-            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.TA],
+            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
             pageTitle: 'artemisApp.assessmentDashboard.home.title',
         },
         canActivate: [UserRouteAccessService],

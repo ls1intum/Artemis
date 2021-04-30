@@ -167,7 +167,7 @@ This is a service file that works on Debian/Ubuntu (using systemd):
 ::
 
    [Unit]
-   Description=ArTEMiS
+   Description=Artemis
    After=syslog.target
    [Service]
    User=artemis
