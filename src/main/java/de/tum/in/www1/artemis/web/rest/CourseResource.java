@@ -1225,9 +1225,25 @@ public class CourseResource {
         // The editor group would be need to be set manually by instructors for the course and manually added to Jira.
         // To increase the usability the group is automatically generated when a user is added.
         if (course.getEditorGroupName() == null) {
-            course.setEditorGroupName(course.getDefaultEditorGroupName());
-            artemisAuthenticationProvider.createGroup(course.getEditorGroupName());
+            try {
+                course.setEditorGroupName(course.getDefaultEditorGroupName());
+                if(!artemisAuthenticationProvider.isGroupAvailable(course.getDefaultEditorGroupName())) {
+                    artemisAuthenticationProvider.createGroup(course.getDefaultEditorGroupName());
+                }
+            }
+            catch (GroupAlreadyExistsException ex) {
+                throw new BadRequestAlertException(
+                    ex.getMessage() + ": One of the groups already exists (in the external user management), because the short name was already used in Artemis before. "
+                        + "Please choose a different short name!",
+                    ENTITY_NAME, "shortNameWasAlreadyUsed", true);
+            }
+            catch (ArtemisAuthenticationException ex) {
+                // a specified group does not exist, notify the client
+                throw new BadRequestAlertException(ex.getMessage(), ENTITY_NAME, "groupNotFound", true);
+            }
+            courseRepository.save(course);
         }
+
         return addUserToCourseGroup(editorLogin, userRepository.getUserWithGroupsAndAuthorities(), course, course.getEditorGroupName());
     }
 
