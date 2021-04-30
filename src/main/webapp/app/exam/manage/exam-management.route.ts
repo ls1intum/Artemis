@@ -457,7 +457,7 @@ export const examManagementRoute: Routes = [
     },
     // Import programming exercise
     {
-        path: ':examId/exercise-groups/:exerciseGroupId/programming-exercises/import/:id',
+        path: ':examId/exercise-groups/:exerciseGroupId/programming-exercises/import/:exerciseId',
         component: ProgrammingExerciseUpdateComponent,
         resolve: {
             programmingExercise: ProgrammingExerciseResolve,
@@ -470,7 +470,7 @@ export const examManagementRoute: Routes = [
     },
     // Edit Programming Exercise
     {
-        path: ':examId/exercise-groups/:exerciseGroupId/programming-exercises/:id/edit',
+        path: ':examId/exercise-groups/:exerciseGroupId/programming-exercises/:exerciseId/edit',
         component: ProgrammingExerciseUpdateComponent,
         resolve: {
             programmingExercise: ProgrammingExerciseResolve,
