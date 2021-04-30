@@ -53,7 +53,7 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBa
 
     @BeforeEach
     public void initTestCase() throws Exception {
-        database.addUsers(1, 1, 1);
+        database.addUsers(1, 1, 0, 1);
         Course course = database.addCourseWithOneModelingExercise();
         classExercise = (ModelingExercise) course.getExercises().iterator().next();
 

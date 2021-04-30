@@ -45,6 +45,7 @@ export class QuizExerciseComponent extends ExerciseComponent {
                 this.quizExercises.forEach((exercise) => {
                     exercise.course = this.course;
                     exercise.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(exercise.course);
+                    exercise.isAtLeastEditor = this.accountService.isAtLeastEditorInCourse(exercise.course);
                     exercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(exercise.course);
                 });
                 this.emitExerciseCount(this.quizExercises.length);
@@ -149,6 +150,7 @@ export class QuizExerciseComponent extends ExerciseComponent {
     private handleNewQuizExercise(newQuizExercise: QuizExercise) {
         const index = this.quizExercises.findIndex((quizExercise) => quizExercise.id === newQuizExercise.id);
         newQuizExercise.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(newQuizExercise.course!);
+        newQuizExercise.isAtLeastEditor = this.accountService.isAtLeastEditorInCourse(newQuizExercise.course!);
         newQuizExercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(newQuizExercise.course!);
         newQuizExercise.status = this.quizExerciseService.getStatus(newQuizExercise);
         if (index === -1) {

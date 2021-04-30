@@ -59,7 +59,7 @@ public class SubmissionExportIntegrationTest extends AbstractSpringIntegrationBa
 
     @BeforeEach
     public void initTestCase() {
-        List<User> users = database.addUsers(3, 1, 1);
+        List<User> users = database.addUsers(3, 1, 0, 1);
         users.remove(database.getUserByLogin("admin"));
         Course course1 = database.addCourseWithModelingAndTextAndFileUploadExercise();
         course1.getExercises().forEach(exercise -> {

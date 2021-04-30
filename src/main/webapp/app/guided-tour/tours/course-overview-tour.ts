@@ -29,7 +29,7 @@ export const courseOverviewTour: GuidedTour = {
             contentTranslateKey: 'tour.courseOverview.courseAdminMenu.content',
             orientation: Orientation.BOTTOMRIGHT,
             highlightPadding: 10,
-            permission: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.TA],
+            permission: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
         }),
         new TextTourStep({
             highlightSelector: '.guided-tour-admin',

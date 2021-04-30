@@ -58,16 +58,18 @@ public class UserTestService {
 
     private User student;
 
-    private final int numberOfStudents = 50;
+    private final static int numberOfStudents = 50;
 
-    private final int numberOfTutors = 1;
+    private final static int numberOfTutors = 1;
 
-    private final int numberOfInstructors = 1;
+    private final static int numberOfEditors = 1;
+
+    private final static int numberOfInstructors = 1;
 
     public void setup(MockDelegate mockDelegate) throws Exception {
         this.mockDelegate = mockDelegate;
 
-        List<User> users = database.addUsers(numberOfStudents, numberOfTutors, numberOfInstructors);
+        List<User> users = database.addUsers(numberOfStudents, numberOfTutors, numberOfEditors, numberOfInstructors);
         student = users.get(0);
         users.forEach(user -> cacheManager.getCache(UserRepository.USERS_CACHE).evict(user.getLogin()));
     }
@@ -440,7 +442,7 @@ public class UserTestService {
         params.add("sortingOrder", "ASCENDING");
         params.add("sortedColumn", "id");
         List<UserDTO> users = request.getList("/api/users", HttpStatus.OK, UserDTO.class, params);
-        assertThat(users).hasSize(numberOfStudents + numberOfTutors + numberOfInstructors + 1); // +1 for admin user himself
+        assertThat(users).hasSize(numberOfStudents + numberOfTutors + numberOfEditors + numberOfInstructors + 1); // +1 for admin user himself
     }
 
     // Test
@@ -478,7 +480,7 @@ public class UserTestService {
     // Test
     public void getAuthorities_asAdmin_isSuccessful() throws Exception {
         List<String> authorities = request.getList("/api/users/authorities", HttpStatus.OK, String.class);
-        assertThat(authorities).isEqualTo(List.of("ROLE_ADMIN", "ROLE_INSTRUCTOR", "ROLE_TA", "ROLE_USER"));
+        assertThat(authorities).isEqualTo(List.of("ROLE_ADMIN", "ROLE_EDITOR", "ROLE_INSTRUCTOR", "ROLE_TA", "ROLE_USER"));
     }
 
     // Test

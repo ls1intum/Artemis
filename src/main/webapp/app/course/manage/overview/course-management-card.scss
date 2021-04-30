@@ -1,18 +1,14 @@
 @import '../../../overview/_overview-vars.scss';
 
 .card {
-    height: 425px;
+    height: 450px;
     max-width: 2000px;
 
     .card-heading {
         position: relative;
         display: flex;
         cursor: pointer;
-        height: 75px;
-
-        .card-title {
-            margin-bottom: 0;
-        }
+        height: 100px;
 
         .container-padding {
             padding: 10px;
@@ -36,16 +32,27 @@
         .card-groups {
             white-space: nowrap;
             display: flex;
-            padding-right: 15px;
+            padding-right: 8px;
             padding-top: 5px;
             padding-bottom: 5px;
             flex-direction: column;
             align-self: center;
             z-index: 1;
 
-            a {
-                color: white;
+            div {
+                div {
+                    padding-right: 7px;
+
+                    a {
+                        color: white;
+                    }
+                }
             }
+        }
+
+        .card-header-left {
+            display: flex;
+            flex-direction: row;
         }
 
         jhi-secured-image {
@@ -143,7 +150,7 @@
     }
 }
 
-@media screen and (max-width: 960px) {
+@media screen and (max-width: 1060px) {
     .card {
         .statistics-card {
             display: none;
@@ -154,31 +161,38 @@
         }
 
         .card-heading {
-            flex-direction: column;
-            height: unset;
-
-            .card-date {
-                justify-content: center;
-            }
-
-            jhi-secured-image {
-                margin: auto;
-                display: flex;
+            .card-description {
+                display: none;
             }
         }
-
-        height: unset;
     }
 }
 
 @media screen and (max-width: 700px) {
     .card {
         .card-heading {
-            .card-description {
-                max-width: 40ch !important;
+            .card-header-left {
+                flex-direction: column;
+                max-width: 110px;
+            }
+
+            .card-date {
+                padding-left: 10px;
+                width: 100px;
+                white-space: pre-wrap;
+                margin-top: auto;
+                margin-bottom: auto;
+            }
+
+            jhi-secured-image {
+                margin-left: auto;
+                margin-right: auto;
+                display: flex;
+                align-content: center;
             }
 
             height: unset;
+            max-height: 135px;
         }
 
         height: unset;

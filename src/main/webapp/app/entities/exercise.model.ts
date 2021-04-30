@@ -110,6 +110,7 @@ export abstract class Exercise implements BaseEntity {
     // helper attributes
     public secondCorrectionEnabled = false;
     public isAtLeastTutor?: boolean;
+    public isAtLeastEditor?: boolean;
     public isAtLeastInstructor?: boolean;
     public teamMode?: boolean;
     public assessmentDueDateError?: boolean;
@@ -124,6 +125,7 @@ export abstract class Exercise implements BaseEntity {
         this.type = type;
         this.bonusPoints = 0; // default value
         this.isAtLeastTutor = false; // default value
+        this.isAtLeastEditor = false; // default value
         this.isAtLeastInstructor = false; // default value
         this.teamMode = false; // default value
         this.assessmentDueDateError = false;

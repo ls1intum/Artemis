@@ -21,7 +21,7 @@ import { problemStatement } from '../../helpers/sample/problemStatement.json';
 import { MockProgrammingExerciseParticipationService } from '../../helpers/mocks/service/mock-programming-exercise-participation.service';
 import { ExerciseHint } from 'app/entities/exercise-hint.model';
 import { DeviceDetectorService } from 'ngx-device-detector';
-import { CodeEditorInstructorContainerComponent } from 'app/exercises/programming/manage/code-editor/code-editor-instructor-container.component';
+import { CodeEditorInstructorAndEditorContainerComponent } from 'app/exercises/programming/manage/code-editor/code-editor-instructor-and-editor-container.component';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { MockCourseExerciseService } from '../../helpers/mocks/service/mock-course-exercise.service';
 import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/manage/exercise-hint.service';
@@ -60,8 +60,8 @@ const expect = chai.expect;
 describe('CodeEditorInstructorIntegration', () => {
     // needed to make sure ace is defined
     ace.acequire('ace/ext/modelist');
-    let container: CodeEditorInstructorContainerComponent;
-    let containerFixture: ComponentFixture<CodeEditorInstructorContainerComponent>;
+    let container: CodeEditorInstructorAndEditorContainerComponent;
+    let containerFixture: ComponentFixture<CodeEditorInstructorAndEditorContainerComponent>;
     let containerDebugElement: DebugElement;
     let domainService: DomainService;
     let route: ActivatedRoute;
@@ -112,7 +112,7 @@ describe('CodeEditorInstructorIntegration', () => {
         })
             .compileComponents()
             .then(() => {
-                containerFixture = TestBed.createComponent(CodeEditorInstructorContainerComponent);
+                containerFixture = TestBed.createComponent(CodeEditorInstructorAndEditorContainerComponent);
                 container = containerFixture.componentInstance;
                 containerDebugElement = containerFixture.debugElement;
 

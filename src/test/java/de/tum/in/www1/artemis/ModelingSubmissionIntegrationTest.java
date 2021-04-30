@@ -89,7 +89,7 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
 
     @BeforeEach
     public void initTestCase() throws Exception {
-        database.addUsers(3, 1, 1);
+        database.addUsers(3, 1, 0, 1);
         course = database.addCourseWithDifferentModelingExercises();
         classExercise = database.findModelingExerciseWithTitle(course.getExercises(), "ClassDiagram");
         activityExercise = database.findModelingExerciseWithTitle(course.getExercises(), "ActivityDiagram");

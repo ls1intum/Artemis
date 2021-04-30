@@ -34,6 +34,71 @@ public class AuthorizationCheckService {
     }
 
     /**
+     * Checks if the currently logged in user is at least an editor in the course of the given exercise.
+     * The course is identified from either {@link Exercise#course(Course)} or {@link Exam#getCourse()}
+     *
+     * @param exercise belongs to a course that will be checked for permission rights
+     * @return true if the currently logged in user is at least an editor (also if the user is instructor or admin), false otherwise
+     */
+    public boolean isAtLeastEditorForExercise(@NotNull Exercise exercise) {
+        return isAtLeastEditorInCourse(exercise.getCourseViaExerciseGroupOrCourseMember(), null);
+    }
+
+    /**
+     * Checks if the currently logged in user is at least an editor in the course of the given exercise.
+     * The course is identified from either exercise.course or exercise.exerciseGroup.exam.course
+     *
+     * @param exercise belongs to a course that will be checked for permission rights
+     * @param user the user whose permissions should be checked
+     * @return true if the currently logged in user is at least an editor, false otherwise
+     */
+    public boolean isAtLeastEditorForExercise(@NotNull Exercise exercise, @Nullable User user) {
+        return isAtLeastEditorInCourse(exercise.getCourseViaExerciseGroupOrCourseMember(), user);
+    }
+
+    /**
+     * Checks if the currently logged in user is at least an editor in the course of the given exercise.
+     * The course is identified from either {@link Exercise#course(Course)} or {@link Exam#getCourse()}
+     * Throws an AccessForbiddenException if the user has no access which returns a 403
+     *
+     * @param exercise belongs to a course that will be checked for permission rights
+     * @param user the user whose permissions should be checked
+     */
+    private void checkIsAtLeastEditorForExerciseElseThrow(@NotNull Exercise exercise, @Nullable User user) {
+        if (!isAtLeastEditorInCourse(exercise.getCourseViaExerciseGroupOrCourseMember(), user)) {
+            throw new AccessForbiddenException("Exercise", exercise.getId());
+        }
+    }
+
+    /**
+     * Checks if the passed user is at least an editor in the given course.
+     * Throws an AccessForbiddenException if the user has no access which returns a 403
+     *
+     * @param course the course that needs to be checked
+     * @param user the user whose permissions should be checked
+     */
+    private void checkIsAtLeastEditorInCourseElseThrow(@NotNull Course course, @Nullable User user) {
+        if (!isAtLeastEditorInCourse(course, user)) {
+            throw new AccessForbiddenException("Course", course.getId());
+        }
+    }
+
+    /**
+     * Checks if the passed user is at least an editor in the given course.
+     *
+     * @param course the course that needs to be checked
+     * @param user the user whose permissions should be checked
+     * @return true if the passed user is at least an editor in the course, false otherwise
+     */
+    public boolean isAtLeastEditorInCourse(@NotNull Course course, @Nullable User user) {
+        if (user == null || user.getGroups() == null) {
+            // only retrieve the user and the groups if the user is null or the groups are missing (to save performance)
+            user = userRepository.getUserWithGroupsAndAuthorities();
+        }
+        return isEditorInCourse(course, user) || isInstructorInCourse(course, user) || isAdmin(user);
+    }
+
+    /**
      * Given any type of exercise, the method returns if the current user is at least TA for the course the exercise belongs to. If exercise is not present, it will return false,
      * because the optional will be empty, and therefore `isPresent()` will return false This is due how `filter` works: If a value is present, apply the provided mapping function
      * to it, and if the result is non-null, return an Optional describing the result. Otherwise return an empty Optional.
@@ -152,7 +217,7 @@ public class AuthorizationCheckService {
             // only retrieve the user and the groups if the user is null or the groups are missing (to save performance)
             user = userRepository.getUserWithGroupsAndAuthorities();
         }
-        return user.getGroups().contains(course.getInstructorGroupName()) || user.getGroups().contains(course.getTeachingAssistantGroupName()) || isAdmin(user);
+        return isTeachingAssistantInCourse(course, user) || isEditorInCourse(course, user) || isInstructorInCourse(course, user) || isAdmin(user);
     }
 
     /**
@@ -180,8 +245,8 @@ public class AuthorizationCheckService {
             // only retrieve the user and the groups if the user is null or the groups are missing (to save performance)
             user = userRepository.getUserWithGroupsAndAuthorities();
         }
-        return user.getGroups().contains(course.getInstructorGroupName()) || user.getGroups().contains(course.getTeachingAssistantGroupName())
-                || user.getGroups().contains(course.getStudentGroupName()) || isAdmin(user);
+        return isStudentInCourse(course, user) || isTeachingAssistantInCourse(course, user) || isEditorInCourse(course, user) || isInstructorInCourse(course, user)
+                || isAdmin(user);
     }
 
     /**
@@ -232,6 +297,7 @@ public class AuthorizationCheckService {
         Consumer<User> consumer = switch (role) {
             case ADMIN -> this::checkIsAdminElseThrow;
             case INSTRUCTOR -> userOrNull -> checkIsAtLeastInstructorForExerciseElseThrow(exercise, userOrNull);
+            case EDITOR -> userOrNull -> checkIsAtLeastEditorForExerciseElseThrow(exercise, userOrNull);
             case TEACHING_ASSISTANT -> userOrNull -> checkIsAtLeastTeachingAssistantForExerciseElseThrow(exercise, userOrNull);
             case STUDENT -> userOrNull -> checkIsAtLeastStudentForExerciseElseThrow(exercise, userOrNull);
             // anonymous users never have access to exercises, so we have to throw an exception
@@ -253,6 +319,7 @@ public class AuthorizationCheckService {
         Consumer<User> consumer = switch (role) {
             case ADMIN -> this::checkIsAdminElseThrow;
             case INSTRUCTOR -> userOrNull -> checkIsAtLeastInstructorInCourseElseThrow(course, userOrNull);
+            case EDITOR -> userOrNull -> checkIsAtLeastEditorInCourseElseThrow(course, userOrNull);
             case TEACHING_ASSISTANT -> userOrNull -> checkIsAtLeastTeachingAssistantInCourseElseThrow(course, userOrNull);
             case STUDENT -> userOrNull -> checkIsAtLeastStudentInCourseElseThrow(course, userOrNull);
             // anonymous users never have access to courses, so we have to throw an exception
@@ -305,6 +372,21 @@ public class AuthorizationCheckService {
     }
 
     /**
+     * checks if the passed user is editor in the given course
+     *
+     * @param course the course that needs to be checked
+     * @param user the user whose permissions should be checked
+     * @return true, if user is an editor of this course, otherwise false
+     */
+    public boolean isEditorInCourse(@NotNull Course course, @Nullable User user) {
+        if (user == null || user.getGroups() == null) {
+            // only retrieve the user and the groups if the user is null or the groups are missing (to save performance)
+            user = userRepository.getUserWithGroupsAndAuthorities();
+        }
+        return user.getGroups().contains(course.getEditorGroupName());
+    }
+
+    /**
      * checks if the currently logged in user is teaching assistant of this course
      *
      * @param course the course that needs to be checked
@@ -320,7 +402,7 @@ public class AuthorizationCheckService {
     }
 
     /**
-     * checks if the currently logged in user is only a student of this course. This means the user is NOT a tutor, NOT an instructor and NOT an ADMIN
+     * checks if the currently logged in user is only a student of this course. This means the user is NOT a tutor, NOT an editor, NOT an instructor and NOT an ADMIN
      *
      * @param course the course that needs to be checked
      * @param user the user whose permissions should be checked

@@ -105,7 +105,8 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
         var roleHierarchy = new RoleHierarchyImpl();
         roleHierarchy.setHierarchy("""
                     ROLE_ADMIN > ROLE_INSTRUCTOR
-                    ROLE_INSTRUCTOR > ROLE_TA
+                    ROLE_INSTRUCTOR > ROLE_EDITOR
+                    ROLE_EDITOR > ROLE_TA
                     ROLE_TA > ROLE_USER
                     ROLE_USER > ROLE_ANONYMOUS
                 """);

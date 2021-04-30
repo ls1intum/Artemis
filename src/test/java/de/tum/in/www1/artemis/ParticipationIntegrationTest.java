@@ -70,7 +70,7 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationBambo
 
     @BeforeEach
     public void initTestCase() {
-        database.addUsers(2, 2, 2);
+        database.addUsers(2, 2, 0, 2);
 
         // Add users that are not in the course/exercise
         userRepo.save(ModelFactory.generateActivatedUser("student3"));
@@ -312,7 +312,8 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationBambo
         exercise = exerciseRepo.save(exercise);
         var participation = ModelFactory.generateProgrammingExerciseStudentParticipation(InitializationState.INACTIVE, exercise, database.getUserByLogin("student1"));
         participationRepo.save(participation);
-        request.putWithResponseBody("/api/courses/" + course.getId() + "/exercises/" + exercise.getId() + "/resume-programming-participation", null, ProgrammingExerciseStudentParticipation.class, HttpStatus.FORBIDDEN);
+        request.putWithResponseBody("/api/courses/" + course.getId() + "/exercises/" + exercise.getId() + "/resume-programming-participation", null,
+                ProgrammingExerciseStudentParticipation.class, HttpStatus.FORBIDDEN);
     }
 
     @Test

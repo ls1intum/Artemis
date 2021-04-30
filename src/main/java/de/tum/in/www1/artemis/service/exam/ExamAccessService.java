@@ -14,6 +14,7 @@ import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 
 /**
@@ -93,6 +94,21 @@ public class ExamAccessService {
      * @param <T>      The type of the return type of the requesting route so that the response can be returned there
      * @return an optional with a typed ResponseEntity. If it is empty all checks passed
      */
+    public <T> Optional<ResponseEntity<T>> checkCourseAccessForEditor(Long courseId) {
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        if (!authorizationCheckService.isAtLeastEditorInCourse(course, null)) {
+            return Optional.of(forbidden());
+        }
+        return Optional.empty();
+    }
+
+    /**
+     * Checks if the current user is allowed to manage exams of the given course.
+     *
+     * @param courseId The id of the course
+     * @param <T>      The type of the return type of the requesting route so that the response can be returned there
+     * @return an optional with a typed ResponseEntity. If it is empty all checks passed
+     */
     public <T> Optional<ResponseEntity<T>> checkCourseAccessForInstructor(Long courseId) {
         Course course = courseRepository.findByIdElseThrow(courseId);
         if (!authorizationCheckService.isAtLeastInstructorInCourse(course, null)) {
@@ -114,6 +130,23 @@ public class ExamAccessService {
             return Optional.of(forbidden());
         }
         return Optional.empty();
+    }
+
+    /**
+     * Checks if the current user is allowed to manage exams of the given course, that the exam exists and that the exam
+     * belongs to the given course.
+     *
+     * @param courseId The id of the course
+     * @param examId   The id of the exam
+     * @param <X>      The type of the return type of the requesting route so that the response can be returned there
+     * @return an optional with a typed ResponseEntity. If it is empty all checks passed
+     */
+    public <X> Optional<ResponseEntity<X>> checkCourseAndExamAccessForEditor(Long courseId, Long examId) {
+        Optional<ResponseEntity<X>> courseAccessFailure = checkCourseAccessForEditor(courseId);
+        if (courseAccessFailure.isPresent()) {
+            return courseAccessFailure;
+        }
+        return checkCourseAndExamAccess(courseId, examId);
     }
 
     /**
@@ -189,6 +222,7 @@ public class ExamAccessService {
      * Checks if the current user is allowed to manage exams of the given course, that the exam exists,
      * that the exam belongs to the given course and the exercise group belongs to the given exam.
      *
+     * @param role            The role of the callee
      * @param courseId        The id of the course
      * @param examId          The id of the exam
      * @param exerciseGroupId The id of the exercise group
@@ -196,8 +230,12 @@ public class ExamAccessService {
      *                        response can be returned there
      * @return an Optional with a typed ResponseEntity. If it is empty all checks passed
      */
-    public <X> Optional<ResponseEntity<X>> checkCourseAndExamAndExerciseGroupAccess(Long courseId, Long examId, Long exerciseGroupId) {
-        Optional<ResponseEntity<X>> courseAndExamAccessFailure = checkCourseAndExamAccessForInstructor(courseId, examId);
+    public <X> Optional<ResponseEntity<X>> checkCourseAndExamAndExerciseGroupAccess(Role role, Long courseId, Long examId, Long exerciseGroupId) {
+        Optional<ResponseEntity<X>> courseAndExamAccessFailure = switch (role) {
+            case INSTRUCTOR -> checkCourseAndExamAccessForInstructor(courseId, examId);
+            case EDITOR -> checkCourseAndExamAccessForEditor(courseId, examId);
+            default -> Optional.of(forbidden());
+        };
         if (courseAndExamAccessFailure.isPresent()) {
             return courseAndExamAccessFailure;
         }
@@ -209,6 +247,23 @@ public class ExamAccessService {
             return Optional.of(conflict());
         }
         return Optional.empty();
+    }
+
+    /**
+     * Checks if the current user is allowed to manage exams of the given course, that the exam exists,
+     * that the exam belongs to the given course and the exercise group belongs to the given exam.
+     *
+     * @param courseId        The id of the course
+     * @param examId          The id of the exam
+     * @param exerciseGroupId The id of the exercise group
+     * @param <X>             The type of the return type of the requesting route so that the
+     *                        response can be returned there
+     * @return an Optional with a typed ResponseEntity. If it is empty all checks passed
+     */
+    // TODO: This method is replaced by checkCourseAndExamAndExerciseGroupAccess(), should be removed once all callees are refacored
+    @Deprecated
+    public <X> Optional<ResponseEntity<X>> checkCourseAndExamAndExerciseGroupAccess(Long courseId, Long examId, Long exerciseGroupId) {
+        return checkCourseAndExamAndExerciseGroupAccess(Role.INSTRUCTOR, courseId, examId, exerciseGroupId);
     }
 
     /**
