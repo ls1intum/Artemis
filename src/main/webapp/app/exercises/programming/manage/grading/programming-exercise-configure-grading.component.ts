@@ -344,8 +344,8 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
                 }
             }),
             catchError((error: HttpErrorResponse) => {
-                if (error.status === 400) {
-                    this.alertService.error(`artemisApp.programmingExercise.configureGrading.testCases.weightSumError`);
+                if (error.status === 400 && error.error?.errorKey) {
+                    this.alertService.error(`artemisApp.programmingExercise.configureGrading.testCases.` + error.error.errorKey, error.error);
                 } else {
                     this.alertService.error(`artemisApp.programmingExercise.configureGrading.testCases.couldNotBeUpdated`, { testCases: testCasesToUpdate });
                 }

@@ -118,7 +118,7 @@ export class ExamManagementComponent implements OnInit, OnDestroy {
      * @param index {number}
      * @param item {Exam}
      */
-    trackId(index: number, item: Exam) {
+    trackId(index: number, item: Exam): number | undefined {
         return item.id;
     }
 

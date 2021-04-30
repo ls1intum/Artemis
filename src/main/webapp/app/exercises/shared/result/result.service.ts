@@ -5,10 +5,15 @@ import { SERVER_API_URL } from 'app/app.constants';
 import * as moment from 'moment';
 import { isMoment } from 'moment';
 import { Result } from '../../../entities/result.model';
+import { Moment } from 'moment';
 import { createRequestOption } from 'app/shared/util/request-util';
 import { Feedback } from 'app/entities/feedback.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { ParticipationType } from 'app/entities/participation/participation.model';
+import { addUserIndependentRepositoryUrl } from 'app/overview/participation-utils';
+import { tap } from 'rxjs/operators';
 
 export type EntityResponseType = HttpResponse<Result>;
 export type EntityArrayResponseType = HttpResponse<Result[]>;
@@ -116,5 +121,53 @@ export class ResultService implements IResultService {
             }
         }
         return participation;
+    }
+
+    /**
+     * Fetches all results for an exercise and returns them
+     */
+    getResults(exercise: Exercise) {
+        return this.getResultsForExercise(exercise.id!, {
+            withSubmissions: exercise.type === ExerciseType.MODELING,
+        }).pipe(
+            tap((res: HttpResponse<Result[]>) => {
+                return res.body!.map((result) => {
+                    result.participation!.results = [result];
+                    (result.participation! as StudentParticipation).exercise = exercise;
+                    if (result.participation!.type === ParticipationType.PROGRAMMING) {
+                        addUserIndependentRepositoryUrl(result.participation!);
+                    }
+                    result.durationInMinutes = this.durationInMinutes(
+                        result.completionDate!,
+                        result.participation!.initializationDate ? result.participation!.initializationDate : exercise.releaseDate!,
+                    );
+                    // Nest submission into participation so that it is available for the result component
+                    if (result.submission) {
+                        result.participation!.submissions = [result.submission];
+                    }
+                    return result;
+                });
+            }),
+        );
+    }
+
+    /**
+     * Utility function
+     */
+    private durationInMinutes(completionDate: Moment, initializationDate: Moment) {
+        return moment(completionDate).diff(initializationDate, 'minutes');
+    }
+
+    /**
+     * Utility function used to trigger the download of a CSV file
+     */
+    public triggerDownloadCSV(rows: String[], csvFileName: String) {
+        const csvContent = rows.join('\n');
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement('a');
+        link.setAttribute('href', encodedUri);
+        link.setAttribute('download', `${csvFileName}.csv`);
+        document.body.appendChild(link); // Required for FF
+        link.click();
     }
 }
