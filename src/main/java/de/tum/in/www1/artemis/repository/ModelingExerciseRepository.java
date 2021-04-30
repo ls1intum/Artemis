@@ -51,13 +51,13 @@ public interface ModelingExerciseRepository extends JpaRepository<ModelingExerci
     @Query("""
             SELECT me FROM ModelingExercise me
             WHERE (me.id IN
-                (SELECT courseMe.id FROM ModelingExercise courseMe
-                WHERE (courseMe.course.instructorGroupName IN :groups OR courseMe.course.editorGroupName IN :groups)
+                    (SELECT courseMe.id FROM ModelingExercise courseMe
+                    WHERE (courseMe.course.instructorGroupName IN :groups OR courseMe.course.editorGroupName IN :groups)
                     AND (courseMe.title LIKE %:partialTitle% OR courseMe.course.title LIKE %:partialCourseTitle%))
-                    OR me.id IN
-                        (SELECT examMe.id FROM ModelingExercise examMe
-                        WHERE (examMe.exerciseGroup.exam.course.instructorGroupName IN :groups OR examMe.exerciseGroup.exam.course.editorGroupName IN :groups)
-                        AND (examMe.title LIKE %:partialTitle% OR examMe.exerciseGroup.exam.course.title LIKE %:partialCourseTitle%)))
+                OR me.id IN
+                    (SELECT examMe.id FROM ModelingExercise examMe
+                    WHERE (examMe.exerciseGroup.exam.course.instructorGroupName IN :groups OR examMe.exerciseGroup.exam.course.editorGroupName IN :groups)
+                    AND (examMe.title LIKE %:partialTitle% OR examMe.exerciseGroup.exam.course.title LIKE %:partialCourseTitle%)))
                         """)
     Page<ModelingExercise> findByTitleInExerciseOrCourseAndUserHasAccessToCourse(@Param("partialTitle") String partialTitle, @Param("partialCourseTitle") String partialCourseTitle,
             @Param("groups") Set<String> groups, Pageable pageable);
