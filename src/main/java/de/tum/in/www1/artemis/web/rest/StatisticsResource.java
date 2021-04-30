@@ -97,7 +97,7 @@ public class StatisticsResource {
     }
 
     /**
-     * GET management/statistics/exercise-statistics : get the data for the score distribution in the exercise statistics
+     * GET management/statistics/exercise-statistics: get the data for the score distribution in the exercise statistics
      *
      * @param exerciseId    the id of the exercise for which the data should be fetched
      * @return the ResponseEntity with status 200 (OK) and the data in body, or status 404 (Not Found)
