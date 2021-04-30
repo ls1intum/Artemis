@@ -45,6 +45,8 @@
             "sampleSolution": "Beispiel Lösung",
             "gradingInstructions": "Benotungshinweise",
             "structuredGradingInstructions": "Strukturierte Benotungshinweise",
+            "addGradingCriteria": "Benotungskriterien hinzufügen",
+            "deleteGradingCriteria": "Benotungskriterien löschen",
             "usageCount": "Maximale Zählung in der Bewertung",
             "DragDropInstruction": "Drag & Drop Benotungshinweis zum Feedback-Element",
             "gradingScale": "Benotungsskala",

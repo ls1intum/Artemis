@@ -45,6 +45,8 @@
             "sampleSolution": "Example Solution",
             "gradingInstructions": "Grading Instructions",
             "structuredGradingInstructions": "Structured Grading Instructions",
+            "addGradingCriteria": "Add Grading Criteria",
+            "deleteGradingCriteria": "Delete This Criteria",
             "usageCount": "Max Count in Score",
             "usageCountHint": "This number specifies how often points for this instruction will be added to the final score",
             "DragDropInstruction": "Drag & Drop instruction to feedback element",

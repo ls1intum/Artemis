@@ -112,7 +112,8 @@ public class GradingInstruction extends DomainObject {
             feedback.setGradingInstruction(null);
         }
     }
-        @Override
+
+    @Override
     public String toString() {
         return "GradingInstruction{" + "id=" + getId() + "'" + ", credits='" + getCredits() + "'" + ", gradingScale='" + getGradingScale() + "'" + ", instructionDescription='"
                 + getInstructionDescription() + "'" + ", feedback='" + getFeedback() + "'" + ", usageCount='" + getUsageCount() + "'" + '}';

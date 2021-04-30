@@ -307,17 +307,18 @@ export class GradingInstructionsDetailsComponent implements OnInit {
      * @param {GradingInstruction} instruction
      * @param {GradingCriterion} criteria
      */
-    onAnswerOptionChange(text: string, instruction: GradingInstruction, criteria: GradingCriterion): void {
+    onInstructionChange(text: string, instruction: GradingInstruction, criteria: GradingCriterion): void {
         const criteriaIndex = this.exercise.gradingCriteria!.findIndex((gradingCriteria) => {
             return gradingCriteria.id === criteria.id;
         });
         const instructionIndex = this.exercise.gradingCriteria![criteriaIndex].structuredGradingInstructions.findIndex((sgi) => {
             return sgi.id === instruction.id;
         });
-        this.parseInstruction(text, this.exercise.gradingCriteria![criteriaIndex].structuredGradingInstructions![instructionIndex!]);
+        // this.parseInstruction(text, this.exercise.gradingCriteria![criteriaIndex].structuredGradingInstructions![instructionIndex!]);
+        this.parseInstruction(text, criteriaIndex, instructionIndex);
     }
 
-    parseInstruction(text: string, instruction: GradingInstruction): void {
+    parseInstruction(text: string, criteriaIndex: number, instructionIndex: number): void {
         const domainCommandIdentifiersToParse = this.domainCommands.map((command) => command.getOpeningIdentifier());
         const commandTextsMappedToCommandIdentifiers: [string, DomainCommand | null][] = [];
         let remainingMarkdownText = text.slice(0);
@@ -332,7 +333,7 @@ export class GradingInstructionsDetailsComponent implements OnInit {
             remainingMarkdownText = remainingMarkdownText.substring(textWithCommandIdentifier.length);
             const commandTextWithCommandIdentifier = this.parseLineForDomainCommand(textWithCommandIdentifier.trim());
             commandTextsMappedToCommandIdentifiers.push(commandTextWithCommandIdentifier);
-            this.domainCommandsFound(commandTextsMappedToCommandIdentifiers);
+            this.setParametersForInstruction(commandTextsMappedToCommandIdentifiers, instructionIndex, criteriaIndex);
         }
     }
 
@@ -351,6 +352,22 @@ export class GradingInstructionsDetailsComponent implements OnInit {
         }
         return [text.trim(), null];
     };
+
+    setParametersForInstruction(domainCommands: [string, DomainCommand | null][], instructionIndex: number, criteriaIndex: number): void {
+        for (const [text, command] of domainCommands) {
+            if (command instanceof CreditsCommand) {
+                this.exercise.gradingCriteria![criteriaIndex].structuredGradingInstructions![instructionIndex!].credits = parseFloat(text);
+            } else if (command instanceof GradingScaleCommand) {
+                this.exercise.gradingCriteria![criteriaIndex].structuredGradingInstructions![instructionIndex!].gradingScale = text;
+            } else if (command instanceof InstructionDescriptionCommand) {
+                this.exercise.gradingCriteria![criteriaIndex].structuredGradingInstructions![instructionIndex!].instructionDescription = text;
+            } else if (command instanceof FeedbackCommand) {
+                this.exercise.gradingCriteria![criteriaIndex].structuredGradingInstructions![instructionIndex!].feedback = text;
+            } else if (command instanceof UsageCountCommand) {
+                this.exercise.gradingCriteria![criteriaIndex].structuredGradingInstructions![instructionIndex!].usageCount = parseInt(text, 10);
+            }
+        }
+    }
 
     /**
      * Resets the whole instruction
@@ -386,5 +403,40 @@ export class GradingInstructionsDetailsComponent implements OnInit {
         const criteriaIndex = this.exercise.gradingCriteria!.indexOf(criteria);
         const instructionIndex = this.exercise.gradingCriteria![criteriaIndex].structuredGradingInstructions.indexOf(instruction);
         this.exercise.gradingCriteria![criteriaIndex].structuredGradingInstructions.splice(instructionIndex, 1);
+    }
+
+    addNewInstruction(criteria: GradingCriterion) {
+        const criteriaIndex = this.exercise.gradingCriteria!.indexOf(criteria);
+        const instruction = new GradingInstruction();
+        this.exercise.gradingCriteria![criteriaIndex].structuredGradingInstructions.push(instruction);
+    }
+
+    addNewGradingCriteria() {
+        const criteria = new GradingCriterion();
+        criteria.structuredGradingInstructions = [];
+        criteria.structuredGradingInstructions.push(new GradingInstruction());
+        // eslint-disable-next-line chai-friendly/no-unused-expressions
+        this.exercise.gradingCriteria?.push(criteria);
+    }
+
+    onCriteriaTitleChange($event: any, criteria: GradingCriterion) {
+        const criteriaIndex = this.exercise.gradingCriteria!.indexOf(criteria);
+        this.exercise.gradingCriteria![criteriaIndex].title = $event.target.value;
+    }
+
+    resetCriteriaTitle(criteria: GradingCriterion) {
+        const criteriaIndex = this.exercise.gradingCriteria!.findIndex((gradingCriteria) => {
+            return gradingCriteria.id === criteria.id;
+        });
+        const backupCriteriaIndex = this.backupExercise.gradingCriteria!.findIndex((gradingCriteria) => {
+            return gradingCriteria.id === criteria.id;
+        });
+        this.exercise.gradingCriteria![criteriaIndex] = cloneDeep(this.backupExercise.gradingCriteria![backupCriteriaIndex]);
+    }
+
+    deleteGradingCriteria(criteria: GradingCriterion) {
+        const criteriaIndex = this.exercise.gradingCriteria!.indexOf(criteria);
+        // eslint-disable-next-line chai-friendly/no-unused-expressions
+        this.exercise.gradingCriteria?.splice(criteriaIndex, 1);
     }
 }
