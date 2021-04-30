@@ -116,9 +116,6 @@ public class ProgrammingExerciseTestCaseResource {
 
             return ResponseEntity.ok(updatedTests);
         }
-        catch (IllegalAccessException ex) {
-            return forbidden();
-        }
         catch (EntityNotFoundException ex) {
             return notFound();
         }
