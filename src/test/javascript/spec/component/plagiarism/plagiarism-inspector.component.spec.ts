@@ -20,6 +20,7 @@ import { TextPlagiarismResult } from 'app/exercises/shared/plagiarism/types/text
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { MockProvider } from 'ng-mocks';
 import * as sinon from 'sinon';
+import { TranslateService } from '@ngx-translate/core';
 
 jest.mock('app/shared/util/download.util', () => ({
     downloadFile: jest.fn(),
@@ -72,7 +73,7 @@ describe('Plagiarism Inspector Component', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, ArtemisPlagiarismModule, TranslateTestingModule],
-            providers: [{ provide: ActivatedRoute, useValue: activatedRoute }, MockProvider(JhiWebsocketService)],
+            providers: [{ provide: ActivatedRoute, useValue: activatedRoute }, MockProvider(JhiWebsocketService), MockProvider(TranslateService)],
         }).compileComponents();
 
         fixture = TestBed.createComponent(PlagiarismInspectorComponent);
