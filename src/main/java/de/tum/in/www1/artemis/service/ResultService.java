@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -188,16 +189,46 @@ public class ResultService {
     }
 
     /**
-     * Save the feedback to the result with a workaround for Hibernate exceptions.
-     *
+     * Store the given feedback to the passed result (by replacing all existing feedback) with a workaround for Hibernate exceptions.
+     * <p>
      * With ordered collections (like result and feedback here), we have to be very careful with the way we persist the objects in the database.
      * We must first persist the child object without a relation to the parent object. Then, we recreate the association and persist the parent object.
-     * @param result the result with should be saved with the given feedback
-     * @param feedbackList new feedback items which should be saved to the feedback
-     * @param shouldSaveResult whether the result should be saved or not
-     * @return the saved result
+     *
+     * If the result is not saved (shouldSave = false), the caller is responsible to save the result (which will persist the feedback changes as well)
+     *
+     * @param result           the result with should be saved with the given feedback
+     * @param feedbackList     new feedback items which replace the existing feedback
+     * @param shouldSave       whether the result should be saved or not
+     * @return the updated (and potentially saved) result
      */
-    public Result storeFeedbackInResult(Result result, List<Feedback> feedbackList, boolean shouldSaveResult) {
+    public Result storeFeedbackInResult(@NotNull Result result, List<Feedback> feedbackList, boolean shouldSave) {
+        var savedFeedbacks = saveFeedbackWithHibernateWorkaround(result, feedbackList);
+        result.setFeedbacks(savedFeedbacks);
+        return shouldSaveResult(result, shouldSave);
+    }
+
+    /**
+     * Add the feedback to the passed result with a workaround for Hibernate exceptions.
+     * <p>
+     * With ordered collections (like result and feedback here), we have to be very careful with the way we persist the objects in the database.
+     * We must first persist the child object without a relation to the parent object. Then, we recreate the association and persist the parent object.
+     *
+     * If the result is not saved (shouldSave = false), the caller is responsible to save the result (which will persist the feedback changes as well)
+     *
+     * @param result           the result with should be saved with the given feedback
+     * @param feedbackList     new feedback items which should be added to the feedback
+     * @param shouldSave       whether the result should be saved or not
+     * @return the updated (and potentially saved) result
+     */
+    @NotNull
+    public Result addFeedbackToResult(@NotNull Result result, List<Feedback> feedbackList, boolean shouldSave) {
+        List<Feedback> savedFeedbacks = saveFeedbackWithHibernateWorkaround(result, feedbackList);
+        result.addFeedbacks(savedFeedbacks);
+        return shouldSaveResult(result, shouldSave);
+    }
+
+    @NotNull
+    private List<Feedback> saveFeedbackWithHibernateWorkaround(@NotNull Result result, List<Feedback> feedbackList) {
         // Avoid hibernate exception
         List<Feedback> savedFeedbacks = new ArrayList<>();
         feedbackList.forEach(feedback -> {
@@ -209,9 +240,12 @@ public class ResultService {
             feedback.setResult(result);
             savedFeedbacks.add(feedback);
         });
+        return savedFeedbacks;
+    }
 
-        result.setFeedbacks(savedFeedbacks);
-        if (shouldSaveResult) {
+    @NotNull
+    private Result shouldSaveResult(@NotNull Result result, boolean shouldSave) {
+        if (shouldSave) {
             // Note: This also saves the feedback objects in the database because of the 'cascade = CascadeType.ALL' option.
             return resultRepository.save(result);
         }
