@@ -67,8 +67,8 @@ describe('OrganizationManagementComponent', () => {
 
         const numOfUsersAndCoursesOfOrganizations = [countOrg1, countOrg2];
 
-        spyOn(organizationService, 'getOrganizations').and.returnValue(Observable.of([organization1, organization2]));
-        spyOn(organizationService, 'getNumberOfUsersAndCoursesOfOrganizations').and.returnValue(Observable.of(numOfUsersAndCoursesOfOrganizations));
+        spyOn(organizationService, 'getOrganizations').and.returnValue(of([organization1, organization2]));
+        spyOn(organizationService, 'getNumberOfUsersAndCoursesOfOrganizations').and.returnValue(of(numOfUsersAndCoursesOfOrganizations));
 
         fixture.detectChanges();
         expect(component).to.be.ok;

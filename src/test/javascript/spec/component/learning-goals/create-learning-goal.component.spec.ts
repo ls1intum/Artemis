@@ -50,7 +50,7 @@ describe('CreateLearningGoal', () => {
                     useValue: {
                         parent: {
                             parent: {
-                                paramMap: Observable.of({
+                                paramMap: of({
                                     get: (key: string) => {
                                         switch (key) {
                                             case 'courseId':

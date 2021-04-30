@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs/Observable';
+import { Observable } from 'rxjs';
 import { ICodeEditorRepositoryFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
 
 @Injectable({ providedIn: 'root' })
@@ -9,7 +9,7 @@ export class MockCodeEditorRepositoryFileService implements ICodeEditorRepositor
     createFile = (fileName: string) => Observable.empty();
     createFolder = (fileName: string) => Observable.empty();
     updateFileContent = (fileName: string) => Observable.empty();
-    updateFiles = (fileUpdates: Array<{ fileName: string; fileContent: string }>) => Observable.of({ fileName: undefined });
+    updateFiles = (fileUpdates: Array<{ fileName: string; fileContent: string }>) => of({ fileName: undefined });
     renameFile = (fileName: string) => Observable.empty();
     deleteFile = (fileName: string) => Observable.empty();
 }

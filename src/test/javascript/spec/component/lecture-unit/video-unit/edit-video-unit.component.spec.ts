@@ -49,7 +49,7 @@ describe('EditVideoUnitComponent', () => {
                 {
                     provide: ActivatedRoute,
                     useValue: {
-                        paramMap: Observable.of({
+                        paramMap: of({
                             get: (key: string) => {
                                 switch (key) {
                                     case 'videoUnitId':
@@ -59,7 +59,7 @@ describe('EditVideoUnitComponent', () => {
                         }),
                         parent: {
                             parent: {
-                                paramMap: Observable.of({
+                                paramMap: of({
                                     get: (key: string) => {
                                         switch (key) {
                                             case 'lectureId':

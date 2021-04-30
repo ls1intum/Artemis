@@ -67,7 +67,7 @@ describe('EditAttachmentUnitComponent', () => {
                 {
                     provide: ActivatedRoute,
                     useValue: {
-                        paramMap: Observable.of({
+                        paramMap: of({
                             get: (key: string) => {
                                 switch (key) {
                                     case 'attachmentUnitId':
@@ -77,7 +77,7 @@ describe('EditAttachmentUnitComponent', () => {
                         }),
                         parent: {
                             parent: {
-                                paramMap: Observable.of({
+                                paramMap: of({
                                     get: (key: string) => {
                                         switch (key) {
                                             case 'lectureId':

@@ -570,8 +570,8 @@ export class CourseExerciseService {
     findAllProgrammingExercisesForCourse(courseId: number): Observable<HttpResponse<ProgrammingExercise[]>> {
         return this.http
             .get<ProgrammingExercise[]>(`${this.resourceUrl}/${courseId}/programming-exercises/`, { observe: 'response' })
-            .map((res: HttpResponse<ProgrammingExercise[]>) => this.convertDateArrayFromServer(res))
-            .map((res: HttpResponse<ProgrammingExercise[]>) => this.exerciseService.convertExerciseCategoryArrayFromServer(res));
+            .pipe(map((res: HttpResponse<ProgrammingExercise[]>) => this.convertDateArrayFromServer(res)))
+            .pipe(map((res: HttpResponse<ProgrammingExercise[]>) => this.exerciseService.convertExerciseCategoryArrayFromServer(res)));
     }
 
     /**
@@ -582,8 +582,8 @@ export class CourseExerciseService {
     findAllModelingExercisesForCourse(courseId: number): Observable<HttpResponse<ModelingExercise[]>> {
         return this.http
             .get<ModelingExercise[]>(`${this.resourceUrl}/${courseId}/modeling-exercises/`, { observe: 'response' })
-            .map((res: HttpResponse<ModelingExercise[]>) => this.convertDateArrayFromServer(res))
-            .map((res: HttpResponse<ModelingExercise[]>) => this.exerciseService.convertExerciseCategoryArrayFromServer(res));
+            .pipe(map((res: HttpResponse<ModelingExercise[]>) => this.convertDateArrayFromServer(res)))
+            .pipe(map((res: HttpResponse<ModelingExercise[]>) => this.exerciseService.convertExerciseCategoryArrayFromServer(res)));
     }
 
     /**
@@ -594,8 +594,8 @@ export class CourseExerciseService {
     findAllTextExercisesForCourse(courseId: number): Observable<HttpResponse<TextExercise[]>> {
         return this.http
             .get<TextExercise[]>(`${this.resourceUrl}/${courseId}/text-exercises/`, { observe: 'response' })
-            .map((res: HttpResponse<TextExercise[]>) => this.convertDateArrayFromServer(res))
-            .map((res: HttpResponse<TextExercise[]>) => this.exerciseService.convertExerciseCategoryArrayFromServer(res));
+            .pipe(map((res: HttpResponse<TextExercise[]>) => this.convertDateArrayFromServer(res)))
+            .pipe(map((res: HttpResponse<TextExercise[]>) => this.exerciseService.convertExerciseCategoryArrayFromServer(res)));
     }
 
     /**
@@ -606,8 +606,8 @@ export class CourseExerciseService {
     findAllFileUploadExercisesForCourse(courseId: number): Observable<HttpResponse<FileUploadExercise[]>> {
         return this.http
             .get<FileUploadExercise[]>(`${this.resourceUrl}/${courseId}/file-upload-exercises/`, { observe: 'response' })
-            .map((res: HttpResponse<FileUploadExercise[]>) => this.convertDateArrayFromServer(res))
-            .map((res: HttpResponse<FileUploadExercise[]>) => this.exerciseService.convertExerciseCategoryArrayFromServer(res));
+            .pipe(map((res: HttpResponse<FileUploadExercise[]>) => this.convertDateArrayFromServer(res)))
+            .pipe(map((res: HttpResponse<FileUploadExercise[]>) => this.exerciseService.convertExerciseCategoryArrayFromServer(res)));
     }
 
     /**
@@ -616,12 +616,14 @@ export class CourseExerciseService {
      * @param exerciseId - the unique identifier of the modelling exercise
      */
     startExercise(courseId: number, exerciseId: number): Observable<StudentParticipation> {
-        return this.http.post<StudentParticipation>(`${this.resourceUrl}/${courseId}/exercises/${exerciseId}/participations`, {}).map((participation: StudentParticipation) => {
-            if (participation.type === ParticipationType.PROGRAMMING) {
-                addUserIndependentRepositoryUrl(participation);
-            }
-            return this.handleParticipation(participation);
-        });
+        return this.http.post<StudentParticipation>(`${this.resourceUrl}/${courseId}/exercises/${exerciseId}/participations`, {}).pipe(
+            map((participation: StudentParticipation) => {
+                if (participation.type === ParticipationType.PROGRAMMING) {
+                    addUserIndependentRepositoryUrl(participation);
+                }
+                return this.handleParticipation(participation);
+            }),
+        );
     }
 
     /**
@@ -630,14 +632,14 @@ export class CourseExerciseService {
      * @param exerciseId - the unique identifier of the modelling exercise
      */
     resumeProgrammingExercise(courseId: number, exerciseId: number): Observable<StudentParticipation> {
-        return this.http
-            .put<StudentParticipation>(`${this.resourceUrl}/${courseId}/exercises/${exerciseId}/resume-programming-participation`, {})
-            .map((participation: StudentParticipation) => {
+        return this.http.put<StudentParticipation>(`${this.resourceUrl}/${courseId}/exercises/${exerciseId}/resume-programming-participation`, {}).pipe(
+            map((participation: StudentParticipation) => {
                 if (participation.type === ParticipationType.PROGRAMMING) {
                     addUserIndependentRepositoryUrl(participation);
                 }
                 return this.handleParticipation(participation);
-            });
+            }),
+        );
     }
 
     /**

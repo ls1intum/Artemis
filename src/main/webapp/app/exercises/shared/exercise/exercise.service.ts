@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
-import { Observable } from 'rxjs/Observable';
+import { Observable } from 'rxjs';
 import { SERVER_API_URL } from 'app/app.constants';
 import * as moment from 'moment';
 import { Exercise, ExerciseType, IncludedInOverallScore, ParticipationStatus } from 'app/entities/exercise.model';
@@ -33,8 +33,8 @@ export class ExerciseService {
         copy.categories = this.stringifyExerciseCategories(copy);
         return this.http
             .post<Exercise>(this.resourceUrl, copy, { observe: 'response' })
-            .map((res: EntityResponseType) => this.convertDateFromServer(res))
-            .map((res: EntityResponseType) => this.convertExerciseCategoriesFromServer(res));
+            .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)))
+            .pipe(map((res: EntityResponseType) => this.convertExerciseCategoriesFromServer(res)));
     }
 
     /**
@@ -46,8 +46,8 @@ export class ExerciseService {
         copy.categories = this.stringifyExerciseCategories(copy);
         return this.http
             .put<Exercise>(this.resourceUrl, copy, { observe: 'response' })
-            .map((res: EntityResponseType) => this.convertDateFromServer(res))
-            .map((res: EntityResponseType) => this.convertExerciseCategoriesFromServer(res));
+            .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)))
+            .pipe(map((res: EntityResponseType) => this.convertExerciseCategoriesFromServer(res)));
     }
 
     /**
@@ -71,9 +71,9 @@ export class ExerciseService {
     find(exerciseId: number): Observable<EntityResponseType> {
         return this.http
             .get<Exercise>(`${this.resourceUrl}/${exerciseId}`, { observe: 'response' })
-            .map((res: EntityResponseType) => this.convertDateFromServer(res))
-            .map((res: EntityResponseType) => this.convertExerciseCategoriesFromServer(res))
-            .map((res: EntityResponseType) => this.checkPermission(res));
+            .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)))
+            .pipe(map((res: EntityResponseType) => this.convertExerciseCategoriesFromServer(res)))
+            .pipe(map((res: EntityResponseType) => this.checkPermission(res)));
     }
 
     /**
@@ -111,21 +111,23 @@ export class ExerciseService {
     getExerciseDetails(exerciseId: number): Observable<EntityResponseType> {
         return this.http
             .get<Exercise>(`${this.resourceUrl}/${exerciseId}/details`, { observe: 'response' })
-            .map((res: EntityResponseType) => this.convertDateFromServer(res))
-            .map((res: EntityResponseType) => this.convertExerciseCategoriesFromServer(res))
-            .map((res: EntityResponseType) => {
-                if (res.body) {
-                    // insert an empty list to avoid additional calls in case the list is empty on the server (because then it would be undefined in the client)
-                    if (res.body.exerciseHints === undefined) {
-                        res.body.exerciseHints = [];
+            .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)))
+            .pipe(map((res: EntityResponseType) => this.convertExerciseCategoriesFromServer(res)))
+            .pipe(
+                map((res: EntityResponseType) => {
+                    if (res.body) {
+                        // insert an empty list to avoid additional calls in case the list is empty on the server (because then it would be undefined in the client)
+                        if (res.body.exerciseHints === undefined) {
+                            res.body.exerciseHints = [];
+                        }
+                        if (res.body.studentQuestions === undefined) {
+                            res.body.studentQuestions = [];
+                        }
                     }
-                    if (res.body.studentQuestions === undefined) {
-                        res.body.studentQuestions = [];
-                    }
-                }
-                return res;
-            })
-            .map((res: EntityResponseType) => this.checkPermission(res));
+                    return res;
+                }),
+            )
+            .pipe(map((res: EntityResponseType) => this.checkPermission(res)));
     }
 
     getUpcomingExercises(): Observable<EntityArrayResponseType> {

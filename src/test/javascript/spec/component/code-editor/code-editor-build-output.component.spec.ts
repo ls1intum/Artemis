@@ -129,7 +129,7 @@ describe('CodeEditorBuildOutputComponent', () => {
         const result = { id: 1 };
         const participation = { id: 1, results: [result] } as Participation;
 
-        subscribeForLatestResultOfParticipationStub.returns(Observable.of(null));
+        subscribeForLatestResultOfParticipationStub.returns(of(null));
         getFeedbackDetailsForResultStub.returns(of({ body: [] }));
         getBuildLogsStub.returns(of(buildLogs));
 
@@ -154,7 +154,7 @@ describe('CodeEditorBuildOutputComponent', () => {
     it('should not retrieve build logs after participation change, if no result is available', () => {
         const participation = { id: 1 } as Participation;
         comp.participation = participation;
-        subscribeForLatestResultOfParticipationStub.returns(Observable.of(null));
+        subscribeForLatestResultOfParticipationStub.returns(of(null));
         triggerChanges(comp, { property: 'participation', currentValue: participation });
         fixture.detectChanges();
         expect(getBuildLogsStub).to.not.have.been.called;
@@ -174,7 +174,7 @@ describe('CodeEditorBuildOutputComponent', () => {
         result.submission = submission;
         const participation = { id: 1, results: [result] } as Participation;
         comp.participation = participation;
-        subscribeForLatestResultOfParticipationStub.returns(Observable.of(null));
+        subscribeForLatestResultOfParticipationStub.returns(of(null));
         getFeedbackDetailsForResultStub.returns(of({ ...result, feedbacks: [] }));
         triggerChanges(comp, { property: 'participation', currentValue: participation });
         fixture.detectChanges();
@@ -252,7 +252,7 @@ describe('CodeEditorBuildOutputComponent', () => {
             text: STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER,
             detailText: JSON.stringify(staticCodeAnalysisIssue),
         } as Feedback;
-        subscribeForLatestResultOfParticipationStub.returns(Observable.of(null));
+        subscribeForLatestResultOfParticipationStub.returns(of(null));
         getFeedbackDetailsForResultStub.returns(of({ body: [feedback] }));
         let emittedAnnotations: Annotation[] = [];
         comp.onAnnotations.subscribe((emitted: any) => {

@@ -397,9 +397,9 @@ describe('GuidedTourService', () => {
                     deleteParticipationStub.reset();
                     deleteGuidedTourSettingStub.reset();
                     navigationStub.reset();
-                    findParticipationStub.returns(Observable.of(httpResponse));
-                    deleteParticipationStub.returns(Observable.of(undefined));
-                    deleteGuidedTourSettingStub.returns(Observable.of(undefined));
+                    findParticipationStub.returns(of(httpResponse));
+                    deleteParticipationStub.returns(of(undefined));
+                    deleteGuidedTourSettingStub.returns(of(undefined));
                 }
 
                 it('should find and delete the student participation for exercise', () => {

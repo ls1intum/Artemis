@@ -48,14 +48,14 @@ describe('EditTextUnitComponent', () => {
                 {
                     provide: ActivatedRoute,
                     useValue: {
-                        paramMap: Observable.of({
+                        paramMap: of({
                             get: () => {
                                 return { textUnitId: 1 };
                             },
                         }),
                         parent: {
                             parent: {
-                                paramMap: Observable.of({
+                                paramMap: of({
                                     get: () => {
                                         return { lectureId: 1 };
                                     },

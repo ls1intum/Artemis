@@ -1,7 +1,7 @@
 import { of } from 'rxjs';
 import { User } from 'app/core/user/user.model';
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
-import { Observable } from 'rxjs/Observable';
+import { Observable } from 'rxjs';
 import 'rxjs/add/observable/of';
 import { Authority } from 'app/shared/constants/authority.constants';
 

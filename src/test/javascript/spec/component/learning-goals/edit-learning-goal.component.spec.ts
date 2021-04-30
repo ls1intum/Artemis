@@ -47,7 +47,7 @@ describe('EditLearningGoalComponent', () => {
                 {
                     provide: ActivatedRoute,
                     useValue: {
-                        paramMap: Observable.of({
+                        paramMap: of({
                             get: (key: string) => {
                                 switch (key) {
                                     case 'learningGoalId':
@@ -57,7 +57,7 @@ describe('EditLearningGoalComponent', () => {
                         }),
                         parent: {
                             parent: {
-                                paramMap: Observable.of({
+                                paramMap: of({
                                     get: (key: string) => {
                                         switch (key) {
                                             case 'courseId':

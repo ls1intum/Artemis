@@ -106,7 +106,7 @@ describe('TextSubmissionAssessmentComponent', () => {
     submission.participation!.results = [getLatestSubmissionResult(submission)!];
     const route = ({
         snapshot: { path: '' },
-        paramMap: Observable.of(
+        paramMap: of(
             convertToParamMap({
                 exerciseId: '1',
             }),
@@ -114,7 +114,7 @@ describe('TextSubmissionAssessmentComponent', () => {
         queryParams: of({
             testRun: 'false',
         }),
-        data: Observable.of({
+        data: of({
             studentParticipation: participation,
         }),
     } as unknown) as ActivatedRoute;

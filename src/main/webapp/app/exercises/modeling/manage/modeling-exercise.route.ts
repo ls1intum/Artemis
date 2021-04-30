@@ -8,7 +8,7 @@ import { ModelingExerciseService } from 'app/exercises/modeling/manage/modeling-
 import { ModelingExercise, UMLDiagramType } from 'app/entities/modeling-exercise.model';
 import { HttpResponse } from '@angular/common/http';
 import { filter, map } from 'rxjs/operators';
-import { Observable } from 'rxjs';
+import { Observable, of } from 'rxjs';
 import { Course } from 'app/entities/course.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
@@ -38,7 +38,7 @@ export class ModelingExerciseResolver implements Resolve<ModelingExercise> {
                 );
             }
         }
-        return Observable.of(new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined));
+        return of(new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined));
     }
 }
 

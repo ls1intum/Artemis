@@ -71,7 +71,7 @@ describe('OrganizationManagementDetailComponent', () => {
         organization1.users = [user];
         organization1.courses = [course];
 
-        spyOn(organizationService, 'getOrganizationByIdWithUsersAndCourses').and.returnValue(Observable.of(organization1));
+        spyOn(organizationService, 'getOrganizationByIdWithUsersAndCourses').and.returnValue(of(organization1));
 
         component.ngOnInit();
         tick();
@@ -118,7 +118,7 @@ describe('OrganizationManagementDetailComponent', () => {
         organization1.users = [user1, user2];
         organization1.courses = [course1];
 
-        spyOn(organizationService, 'getOrganizationByIdWithUsersAndCourses').and.returnValue(Observable.of(organization1));
+        spyOn(organizationService, 'getOrganizationByIdWithUsersAndCourses').and.returnValue(of(organization1));
 
         component.loadAll();
         expect(component.organization.users?.length).toEqual(2);

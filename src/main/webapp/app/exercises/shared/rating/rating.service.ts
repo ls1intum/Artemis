@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs/Observable';
+import { Observable } from 'rxjs';
 import { Rating } from 'app/entities/rating.model';
 import { SERVER_API_URL } from 'app/app.constants';
 
