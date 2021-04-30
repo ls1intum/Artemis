@@ -19,6 +19,7 @@ import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.Feedback;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
+import de.tum.in.www1.artemis.domain.enumeration.Visibility;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseTestCaseService;
@@ -153,6 +154,9 @@ public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegr
         ProgrammingExerciseTestCaseDTO programmingExerciseTestCaseDTO = new ProgrammingExerciseTestCaseDTO();
         programmingExerciseTestCaseDTO.setId(testCase.getId());
         programmingExerciseTestCaseDTO.setWeight(400.0);
+        programmingExerciseTestCaseDTO.setBonusMultiplier(1.0);
+        programmingExerciseTestCaseDTO.setBonusPoints(0.0);
+        programmingExerciseTestCaseDTO.setVisibility(Visibility.ALWAYS);
         programmingExerciseTestCaseDTOS.add(programmingExerciseTestCaseDTO);
 
         assertThat(programmingExercise.getTestCasesChanged()).isFalse();

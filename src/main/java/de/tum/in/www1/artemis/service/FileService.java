@@ -734,4 +734,13 @@ public class FileService implements DisposableBean {
         }
         return uniquePath;
     }
+
+    /**
+     * Removes illegal characters for filenames from the string.
+     * @param string the string with the characters
+     * @return stripped string
+     */
+    public String removeIllegalCharacters(String string) {
+        return string.replaceAll("/[/\\\\?%*:|\"<>]/g", "");
+    }
 }

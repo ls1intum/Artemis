@@ -159,6 +159,8 @@ dependencies {
     // https://mvnrepository.com/artifact/org.eclipse.jgit/org.eclipse.jgit
     implementation "org.eclipse.jgit:org.eclipse.jgit:5.11.0.202103091610-r"
     implementation "org.eclipse.jgit:org.eclipse.jgit.ssh.apache:5.11.0.202103091610-r"
+    // https://mvnrepository.com/artifact/org.eclipse.jgit/org.eclipse.jgit.archive
+    implementation group: 'org.eclipse.jgit', name: 'org.eclipse.jgit.archive', version: '5.11.0.202103091610-r'
     // https://mvnrepository.com/artifact/net.sourceforge.plantuml/plantuml
     implementation "net.sourceforge.plantuml:plantuml:8059"
     implementation "org.imsglobal:basiclti-util:1.2.0"
