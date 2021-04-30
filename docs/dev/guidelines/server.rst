@@ -383,8 +383,6 @@ Try to follow the best practices for Java testing:
 * Write self-contained tests by revealing all relevant parameters, insert data right in the test and prefer composition over inheritance.
 * Write dumb tests by avoiding the reuse of production code and focusing on comparing output values with hard-coded values.
 * KISS > DRY ("Keep it simple, Stupid!" and "Don't repeat yourself!")
-* Test close to production by focusing on testing a complete vertical slide and avoiding in-memory databases.
-* JUnit5 and AssertJ are a very good choice.
 * Invest in a testable implementation by avoiding static access, using constructor injection, using Clocks and separating business logic from asynchronous execution.
 
 For a more detail overview definitely check out: https://phauer.com/2019/modern-best-practices-testing-java/
@@ -400,7 +398,7 @@ https://howtodoinjava.com/best-practices/unit-testing-best-practices-junit-refer
 Also check out this page for spring related testing:
 https://www.baeldung.com/spring-tests
 
-If you want to write tests for Programming Exercises to test student's submission check out `this <https://confluence.ase.in.tum.de/display/ArTEMiS/Best+Practices+for+writing+Java+Programming+Exercise+Tests+in+Artemis>`__.
+If you want to write tests for Programming Exercises to test student's submissions check out `this <https://confluence.ase.in.tum.de/display/ArTEMiS/Best+Practices+for+writing+Java+Programming+Exercise+Tests+in+Artemis>`__.
 
 
 23. Avoid using @MockBean
@@ -426,7 +424,7 @@ Here is an example how to replace a ``@SpyBean``. We wanted to test a catch case
         }
     }
 
-This, as mentioned above, we should really avoid.
+As mentioned above, we should really avoid this
 Instead we can use `Static Mocks <https://asolntsev.github.io/en/2020/07/11/mockito-static-methods/>`_. When we look deeper in the ``export()`` method we find that there is a call of ``File.newOutputStream(..)``.
 Now, instead of mocking the whole Service we can just mock this static method, like this:
 
@@ -445,6 +443,6 @@ Now, instead of mocking the whole Service we can just mock this static method, l
         }
     }
 
-What you notice here is that we can avoid the use of a Bean and also test deeper. Instead of mocking the uppermost method we will only throw the exception at the place where it could actually happen. Very important to mention is that you need to close the mock at the end of the test again.
+You should notice here that we can avoid the use of a Bean and also test deeper. Instead of mocking the uppermost method we will only throw the exception at the place where it could actually happen. Very important to mention is that you need to close the mock at the end of the test again.
 
 For a real example where a SpyBean was replaced with a static mock look at the SubmissionExportIntegrationTest.java in `here <https://github.com/ls1intum/Artemis/commit/4843137aa01cfdf27ea019400c48df00df36ed45>`__.
