@@ -196,6 +196,14 @@ public class CourseResource {
                 checkIfGroupsExists(course.getTeachingAssistantGroupName());
             }
 
+            if (course.getEditorGroupName() == null) {
+                course.setEditorGroupName(course.getDefaultEditorGroupName());
+                artemisAuthenticationProvider.createGroup(course.getEditorGroupName());
+            }
+            else {
+                checkIfGroupsExists(course.getEditorGroupName());
+            }
+
             if (course.getInstructorGroupName() == null) {
                 course.setInstructorGroupName(course.getDefaultInstructorGroupName());
                 artemisAuthenticationProvider.createGroup(course.getInstructorGroupName());
@@ -252,6 +260,9 @@ public class CourseResource {
                 if (!Objects.equals(existingCourse.getTeachingAssistantGroupName(), updatedCourse.getTeachingAssistantGroupName())) {
                     checkIfGroupsExists(updatedCourse.getTeachingAssistantGroupName());
                 }
+                if (!Objects.equals(existingCourse.getEditorGroupName(), updatedCourse.getEditorGroupName())) {
+                    checkIfGroupsExists(updatedCourse.getEditorGroupName());
+                }
                 if (!Objects.equals(existingCourse.getInstructorGroupName(), updatedCourse.getInstructorGroupName())) {
                     checkIfGroupsExists(updatedCourse.getInstructorGroupName());
                 }
@@ -271,6 +282,9 @@ public class CourseResource {
             if (!Objects.equals(existingCourse.getTeachingAssistantGroupName(), updatedCourse.getTeachingAssistantGroupName())) {
                 throw new BadRequestAlertException("The teaching assistant group name cannot be changed", ENTITY_NAME, "teachingAssistantGroupNameCannotChange", true);
             }
+            if (!Objects.equals(existingCourse.getEditorGroupName(), updatedCourse.getEditorGroupName())) {
+                throw new BadRequestAlertException("The editor group name cannot be changed", ENTITY_NAME, "editorGroupNameCannotChange", true);
+            }
             if (!Objects.equals(existingCourse.getInstructorGroupName(), updatedCourse.getInstructorGroupName())) {
                 throw new BadRequestAlertException("The instructor group name cannot be changed", ENTITY_NAME, "instructorGroupNameCannotChange", true);
             }
@@ -281,15 +295,17 @@ public class CourseResource {
         validateOnlineCourseAndRegistrationEnabled(updatedCourse);
         validateShortName(updatedCourse);
 
-        // Based on the old instructors and TAs, we can update all exercises in the course in the VCS (if necessary)
-        // We need the old instructors and TAs, so that the VCS user management service can determine which
-        // users no longer have TA or instructor rights in the related exercise repositories.
+        // Based on the old instructors, editors and TAs, we can update all exercises in the course in the VCS (if necessary)
+        // We need the old instructors, editors and TAs, so that the VCS user management service can determine which
+        // users no longer have TA, editor or instructor rights in the related exercise repositories.
         final var oldInstructorGroup = existingCourse.getInstructorGroupName();
+        final var oldEditorGroup = existingCourse.getEditorGroupName();
         final var oldTeachingAssistantGroup = existingCourse.getTeachingAssistantGroupName();
         Course result = courseRepository.save(updatedCourse);
-        optionalVcsUserManagementService.ifPresent(userManagementService -> userManagementService.updateCoursePermissions(result, oldInstructorGroup, oldTeachingAssistantGroup));
+        optionalVcsUserManagementService
+                .ifPresent(userManagementService -> userManagementService.updateCoursePermissions(result, oldInstructorGroup, oldEditorGroup, oldTeachingAssistantGroup));
         optionalCiUserManagementService
-                .ifPresent(ciUserManagementService -> ciUserManagementService.updateCoursePermissions(result, oldInstructorGroup, oldTeachingAssistantGroup));
+                .ifPresent(ciUserManagementService -> ciUserManagementService.updateCoursePermissions(result, oldInstructorGroup, oldEditorGroup, oldTeachingAssistantGroup));
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, updatedCourse.getTitle())).body(result);
     }
 
@@ -424,7 +440,7 @@ public class CourseResource {
      * @return the list of courses
      */
     @GetMapping("/courses/courses-with-quiz")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @PreAuthorize("hasRole('EDITOR')")
     public List<Course> getAllCoursesWithQuizExercises() {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         if (authCheckService.isAdmin(user)) {
@@ -432,7 +448,7 @@ public class CourseResource {
         }
         else {
             var userGroups = new ArrayList<>(user.getGroups());
-            return courseRepository.getCoursesWithQuizExercisesForWhichUserHasInstructorAccess(userGroups);
+            return courseRepository.getCoursesWithQuizExercisesForWhichUserHasAtLeastEditorAccess(userGroups);
         }
     }
 
@@ -451,6 +467,7 @@ public class CourseResource {
         for (Course course : courses) {
             course.setNumberOfInstructors(userRepository.countUserInGroup(course.getInstructorGroupName()));
             course.setNumberOfTeachingAssistants(userRepository.countUserInGroup(course.getTeachingAssistantGroupName()));
+            course.setNumberOfEditors(userRepository.countUserInGroup(course.getEditorGroupName()));
             course.setNumberOfStudents(userRepository.countUserInGroup(course.getStudentGroupName()));
         }
         long end = System.currentTimeMillis();
@@ -699,6 +716,7 @@ public class CourseResource {
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, null);
         course.setNumberOfInstructors(userRepository.countUserInGroup(course.getInstructorGroupName()));
         course.setNumberOfTeachingAssistants(userRepository.countUserInGroup(course.getTeachingAssistantGroupName()));
+        course.setNumberOfEditors(userRepository.countUserInGroup(course.getEditorGroupName()));
         course.setNumberOfStudents(userRepository.countUserInGroup(course.getStudentGroupName()));
         return ResponseUtil.wrapOrNotFound(Optional.of(course));
     }
@@ -1057,11 +1075,11 @@ public class CourseResource {
      * @return the ResponseEntity with status 200 (OK) and the list of categories or with status 404 (Not Found)
      */
     @GetMapping(value = "/courses/{courseId}/categories")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<Set<String>> getCategoriesInCourse(@PathVariable Long courseId) {
         log.debug("REST request to get categories of Course : {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
         return ResponseEntity.ok().body(exerciseRepository.findAllCategoryNames(course.getId()));
     }
 
@@ -1091,6 +1109,20 @@ public class CourseResource {
         log.debug("REST request to get all tutors in course : {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         return getAllUsersInGroup(course, course.getTeachingAssistantGroupName());
+    }
+
+    /**
+     * GET /courses/:courseId/editors : Returns all users that belong to the editor group of the course
+     *
+     * @param courseId the id of the course
+     * @return list of users with status 200 (OK)
+     */
+    @GetMapping(value = "/courses/{courseId}/editors")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
+    public ResponseEntity<List<User>> getAllEditorsInCourse(@PathVariable Long courseId) {
+        log.debug("REST request to get all editors in course : {}", courseId);
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        return getAllUsersInGroup(course, course.getEditorGroupName());
     }
 
     /**
@@ -1177,6 +1209,45 @@ public class CourseResource {
     }
 
     /**
+     * Post /courses/:courseId/editors/:editorLogin : Add the given user to the editors of the course so that the student can access the course administration
+     *
+     * @param courseId   the id of the course
+     * @param editorLogin the login of the user who should get editor access
+     * @return empty ResponseEntity with status 200 (OK) or with status 404 (Not Found)
+     */
+    @PostMapping(value = "/courses/{courseId}/editors/{editorLogin:" + Constants.LOGIN_REGEX + "}")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
+    public ResponseEntity<Void> addEditorToCourse(@PathVariable Long courseId, @PathVariable String editorLogin) {
+        log.debug("REST request to add {} as editors to course : {}", editorLogin, courseId);
+        Course course = courseRepository.findByIdElseThrow(courseId);
+
+        // Courses that have been created before Artemis version 4.11.9 do not have an editor group.
+        // The editor group would be need to be set manually by instructors for the course and manually added to Jira.
+        // To increase the usability the group is automatically generated when a user is added.
+        if (course.getEditorGroupName() == null) {
+            try {
+                course.setEditorGroupName(course.getDefaultEditorGroupName());
+                if(!artemisAuthenticationProvider.isGroupAvailable(course.getDefaultEditorGroupName())) {
+                    artemisAuthenticationProvider.createGroup(course.getDefaultEditorGroupName());
+                }
+            }
+            catch (GroupAlreadyExistsException ex) {
+                throw new BadRequestAlertException(
+                    ex.getMessage() + ": One of the groups already exists (in the external user management), because the short name was already used in Artemis before. "
+                        + "Please choose a different short name!",
+                    ENTITY_NAME, "shortNameWasAlreadyUsed", true);
+            }
+            catch (ArtemisAuthenticationException ex) {
+                // a specified group does not exist, notify the client
+                throw new BadRequestAlertException(ex.getMessage(), ENTITY_NAME, "groupNotFound", true);
+            }
+            courseRepository.save(course);
+        }
+
+        return addUserToCourseGroup(editorLogin, userRepository.getUserWithGroupsAndAuthorities(), course, course.getEditorGroupName());
+    }
+
+    /**
      * Post /courses/:courseId/instructors/:instructorLogin : Add the given user to the instructors of the course so that the student can access the course administration
      *
      * @param courseId        the id of the course
@@ -1243,6 +1314,21 @@ public class CourseResource {
         log.debug("REST request to remove {} as tutor from course : {}", tutorLogin, courseId);
         var course = courseRepository.findByIdElseThrow(courseId);
         return removeUserFromCourseGroup(tutorLogin, userRepository.getUserWithGroupsAndAuthorities(), course, course.getTeachingAssistantGroupName());
+    }
+
+    /**
+     * DELETE /courses/:courseId/editors/:editorsLogin : Remove the given user from the editors of the course so that the editors cannot access the course administration any more
+     *
+     * @param courseId   the id of the course
+     * @param editorLogin the login of the user who should lose student access
+     * @return empty ResponseEntity with status 200 (OK) or with status 404 (Not Found)
+     */
+    @DeleteMapping(value = "/courses/{courseId}/editors/{editorLogin:" + Constants.LOGIN_REGEX + "}")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
+    public ResponseEntity<Void> removeEditorFromCourse(@PathVariable Long courseId, @PathVariable String editorLogin) {
+        log.debug("REST request to remove {} as editor from course : {}", editorLogin, courseId);
+        var course = courseRepository.findByIdElseThrow(courseId);
+        return removeUserFromCourseGroup(editorLogin, userRepository.getUserWithGroupsAndAuthorities(), course, course.getEditorGroupName());
     }
 
     /**

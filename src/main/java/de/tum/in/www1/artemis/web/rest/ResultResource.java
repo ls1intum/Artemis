@@ -414,7 +414,7 @@ public class ResultResource {
      * @return The newly created result
      */
     @PostMapping("/submissions/{submissionId}/example-result")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<Result> createExampleResult(@PathVariable long submissionId,
             @RequestParam(defaultValue = "false", required = false) boolean isProgrammingExerciseWithFeedback) {
         log.debug("REST request to create a new example result for submission: {}", submissionId);

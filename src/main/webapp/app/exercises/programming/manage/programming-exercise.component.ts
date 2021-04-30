@@ -72,6 +72,7 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
                 this.programmingExercises.forEach((exercise) => {
                     exercise.course = this.course;
                     exercise.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(getCourseFromExercise(exercise));
+                    exercise.isAtLeastEditor = this.accountService.isAtLeastEditorInCourse(getCourseFromExercise(exercise));
                     exercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(getCourseFromExercise(exercise));
                 });
                 this.emitExerciseCount(this.programmingExercises.length);

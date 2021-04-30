@@ -209,12 +209,12 @@ public class ProgrammingExerciseParticipationService {
 
     private boolean canAccessParticipation(SolutionProgrammingExerciseParticipation participation, Principal principal) {
         User user = userRepository.getUserWithGroupsAndAuthorities(principal.getName());
-        return authCheckService.isAtLeastInstructorForExercise(participation.getExercise(), user);
+        return authCheckService.isAtLeastEditorForExercise(participation.getExercise(), user);
     }
 
     private boolean canAccessParticipation(TemplateProgrammingExerciseParticipation participation, Principal principal) {
         User user = userRepository.getUserWithGroupsAndAuthorities(principal.getName());
-        return authCheckService.isAtLeastInstructorForExercise(participation.getExercise(), user);
+        return authCheckService.isAtLeastEditorForExercise(participation.getExercise(), user);
     }
 
     /**

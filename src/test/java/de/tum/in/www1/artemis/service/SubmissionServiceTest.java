@@ -75,7 +75,7 @@ public class SubmissionServiceTest extends AbstractSpringIntegrationBambooBitbuc
 
     @BeforeEach
     void init() {
-        List<User> users = database.addUsers(2, 2, 1);
+        List<User> users = database.addUsers(2, 2, 0, 1);
         student1 = users.get(0);
         tutor1 = users.get(2);
         tutor2 = users.get(3);

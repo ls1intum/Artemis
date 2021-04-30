@@ -24,7 +24,7 @@ class ProgrammingExerciseTest extends AbstractSpringIntegrationBambooBitbucketJi
 
     @BeforeEach
     void init() {
-        database.addUsers(2, 2, 2);
+        database.addUsers(2, 2, 0, 2);
         database.addCourseWithOneProgrammingExercise();
         programmingExerciseId = programmingExerciseRepository.findAll().get(0).getId();
     }

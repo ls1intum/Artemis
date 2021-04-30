@@ -41,7 +41,7 @@ public class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringInt
     public void setUp() {
         bambooRequestMockProvider.enableMockingOfRequests();
         bitbucketRequestMockProvider.enableMockingOfRequests();
-        database.addUsers(1, 1, 1);
+        database.addUsers(1, 1, 0, 1);
         database.addInstructor("other-instructors", "instructorother");
         database.addCourseWithOneProgrammingExerciseAndTestCases();
         additionalEmptyCourse = database.addEmptyCourse();

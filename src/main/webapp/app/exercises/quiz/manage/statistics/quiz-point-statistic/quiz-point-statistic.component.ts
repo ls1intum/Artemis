@@ -66,7 +66,7 @@ export class QuizPointStatisticComponent implements OnInit, OnDestroy, DataSetPr
     ngOnInit() {
         this.sub = this.route.params.subscribe((params) => {
             // use different REST-call if the User is a Student
-            if (this.accountService.hasAnyAuthorityDirect([Authority.ADMIN, Authority.INSTRUCTOR, Authority.TA])) {
+            if (this.accountService.hasAnyAuthorityDirect([Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA])) {
                 this.quizExerciseService.find(params['exerciseId']).subscribe((res) => {
                     this.loadQuizSuccess(res.body!);
                 });
@@ -165,7 +165,7 @@ export class QuizPointStatisticComponent implements OnInit, OnDestroy, DataSetPr
     loadNewData(statistic: QuizPointStatistic) {
         // if the Student finds a way to the Website
         //      -> the Student will be send back to Courses
-        if (!this.accountService.hasAnyAuthorityDirect([Authority.ADMIN, Authority.INSTRUCTOR, Authority.TA])) {
+        if (!this.accountService.hasAnyAuthorityDirect([Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA])) {
             this.router.navigate(['courses']);
         }
         this.quizPointStatistic = statistic;
@@ -181,7 +181,7 @@ export class QuizPointStatisticComponent implements OnInit, OnDestroy, DataSetPr
     loadQuizSuccess(quizExercise: QuizExercise) {
         // if the Student finds a way to the Website
         //      -> the Student will be send back to Courses
-        if (!this.accountService.hasAnyAuthorityDirect([Authority.ADMIN, Authority.INSTRUCTOR, Authority.TA])) {
+        if (!this.accountService.hasAnyAuthorityDirect([Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA])) {
             this.router.navigate(['courses']);
         }
         this.quizExercise = quizExercise;
