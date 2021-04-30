@@ -377,7 +377,7 @@ This is the same reason as to why you should not name your variables int a, doub
         // Test Code
     }
 
-Try to follow the best practices for java Testing:
+Try to follow the best practices for Java testing:
 
 * Write small and specific tests by heavily using helper functions, parameterized tests, AssertJ’s powerful assertions, not overusing variables, asserting only what’s relevant and avoiding one test for all corner cases.
 * Write self-contained tests by revealing all relevant parameters, insert data right in the test and prefer composition over inheritance.
