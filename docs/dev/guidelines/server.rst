@@ -385,7 +385,7 @@ Try to follow the best practices for Java testing:
 * KISS > DRY ("Keep it simple, Stupid!" and "Don't repeat yourself!")
 * Invest in a testable implementation by avoiding static access, using constructor injection, using Clocks and separating business logic from asynchronous execution.
 
-For a more detail overview definitely check out: https://phauer.com/2019/modern-best-practices-testing-java/
+For a more detailed overview definitely check out: https://phauer.com/2019/modern-best-practices-testing-java/
 
 
 Make use of JUnit 5 Features:
@@ -404,11 +404,11 @@ If you want to write tests for Programming Exercises to test student's submissio
 23. Avoid using @MockBean
 =========================
 
-Do not use the ``@SpyBean`` or ``@MockBean`` annotation unless absolutely necessary, or possibly in an abstract Superclass. If you want to see more in detail why, take a look `here <https://www.baeldung.com/spring-tests>`__.
+Do not use the ``@SpyBean`` or ``@MockBean`` annotation unless absolutely necessary, or possibly in an abstract Superclass. If you want to see why in more detail, take a look `here <https://www.baeldung.com/spring-tests>`__.
 Basically, every time ``@MockBean`` appears in a class, the ApplicationContext cache gets marked as dirty, hence the runner will clean the cache after the test-class is done and restarts the application context.
 This leads to a large overhead, which tends to make the tests take a lot more time.
 
-Here is an example how to replace a ``@SpyBean``. We wanted to test a catch case which is only executed if an IOException gets thrown. We did this by mocking the service method and making it throw an Exception.
+Here is an example how to replace a ``@SpyBean``. We wanted to test an edge case which is only executed if an ``IOException`` is thrown. We did this by mocking the service method and making it throw an Exception.
 
 .. code-block:: java
 
@@ -424,9 +424,9 @@ Here is an example how to replace a ``@SpyBean``. We wanted to test a catch case
         }
     }
 
-As mentioned above, we should really avoid this
+As mentioned above, we should really avoid this.
 Instead we can use `Static Mocks <https://asolntsev.github.io/en/2020/07/11/mockito-static-methods/>`_. When we look deeper in the ``export()`` method we find that there is a call of ``File.newOutputStream(..)``.
-Now, instead of mocking the whole Service we can just mock this static method, like this:
+Now, instead of mocking the whole Service, we can just mock the static method, like this:
 
 .. code-block:: java
 
@@ -443,6 +443,6 @@ Now, instead of mocking the whole Service we can just mock this static method, l
         }
     }
 
-You should notice here that we can avoid the use of a Bean and also test deeper. Instead of mocking the uppermost method we will only throw the exception at the place where it could actually happen. Very important to mention is that you need to close the mock at the end of the test again.
+You should notice here that we can avoid the use of a Bean and also test deeper. Instead of mocking the uppermost method we only throw the exception at the place where it could actually happen. Very important to mention is that you need to close the mock at the end of the test again.
 
 For a real example where a SpyBean was replaced with a static mock look at the SubmissionExportIntegrationTest.java in `here <https://github.com/ls1intum/Artemis/commit/4843137aa01cfdf27ea019400c48df00df36ed45>`__.
