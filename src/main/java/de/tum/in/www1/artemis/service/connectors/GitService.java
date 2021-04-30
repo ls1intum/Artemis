@@ -1,8 +1,6 @@
 package de.tum.in.www1.artemis.service.connectors;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
+import java.io.*;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -26,6 +24,7 @@ import org.apache.commons.io.filefilter.HiddenFileFilter;
 import org.eclipse.jgit.api.*;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.JGitInternalException;
+import org.eclipse.jgit.archive.ZipFormat;
 import org.eclipse.jgit.errors.UnsupportedCredentialItem;
 import org.eclipse.jgit.lib.ConfigConstants;
 import org.eclipse.jgit.lib.ObjectId;
@@ -45,11 +44,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.File;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.exception.GitException;
-import de.tum.in.www1.artemis.service.ZipFileService;
+import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Service
@@ -91,18 +91,18 @@ public class GitService {
 
     private final Map<Path, Path> cloneInProgressOperations = new ConcurrentHashMap<>();
 
-    private final ZipFileService zipFileService;
+    private final FileService fileService;
 
     private TransportConfigCallback sshCallback;
 
     private static final int JGIT_TIMEOUT_IN_SECONDS = 5;
 
-    public GitService(ZipFileService zipFileService) {
+    public GitService(FileService fileService) {
         log.info("file.encoding={}", System.getProperty("file.encoding"));
         log.info("sun.jnu.encoding={}", System.getProperty("sun.jnu.encoding"));
         log.info("Default Charset={}", Charset.defaultCharset());
         log.info("Default Charset in Use={}", new OutputStreamWriter(new ByteArrayOutputStream()).getEncoding());
-        this.zipFileService = zipFileService;
+        this.fileService = fileService;
     }
 
     /**
@@ -965,7 +965,7 @@ public class GitService {
      * @return path to zip file.
      * @throws IOException if the zipping process failed.
      */
-    public Path zipRepositoryWithParticipation(Repository repo, String targetPath, boolean hideStudentName) throws IOException {
+    public Path zipRepositoryWithParticipation(Repository repo, String targetPath, boolean hideStudentName) throws IOException, UncheckedIOException {
         var exercise = repo.getParticipation().getProgrammingExercise();
         var courseShortName = exercise.getCourseViaExerciseGroupOrCourseMember().getShortName();
         var participation = (ProgrammingExerciseStudentParticipation) repo.getParticipation();
@@ -979,26 +979,26 @@ public class GitService {
             studentTeamOrDefault = participation.getTeam().get().getName();
         }
 
-        String zipRepoName = courseShortName + "-" + exercise.getTitle();
+        String zipRepoName = fileService.removeIllegalCharacters(courseShortName + "-" + exercise.getTitle());
         if (hideStudentName) {
             zipRepoName += "-student-submission.git.zip";
         }
         else {
             zipRepoName += "-" + studentTeamOrDefault + ".zip";
         }
-        return zipRepository(repo.getLocalPath(), zipRepoName, targetPath);
+        return zipRepository(repo, zipRepoName, targetPath);
     }
 
     /**
      * Zips the contents of a git repository.
      *
-     * @param repoLocalPath The local path to the repository contents (e.g Repository::getLocalPath())
+     * @param repository The repository
      * @param zipFilename   the name of the zipped file
      * @param targetPath    path where the repo is located on disk
      * @return path to the zip file
      * @throws IOException if the zipping process failed.
      */
-    public Path zipRepository(Path repoLocalPath, String zipFilename, String targetPath) throws IOException {
+    public Path zipRepository(Repository repository, String zipFilename, String targetPath) throws IOException, UncheckedIOException {
         // Strip slashes from name
         var zipFilenameWithoutSlash = zipFilename.replaceAll("\\s", "");
 
@@ -1009,17 +1009,41 @@ public class GitService {
         Path zipFilePath = Paths.get(targetPath, "zippedRepos", zipFilenameWithoutSlash);
         Files.createDirectories(Paths.get(targetPath, "zippedRepos"));
 
-        // Remove lock file from git carbage collections
-        Files.walk(repoLocalPath).filter(path -> path.endsWith("gc.log.lock")).forEach(path -> {
-            try {
-                Files.deleteIfExists(path);
-            }
-            catch (IOException ignored) {
-                log.error("Cannot delete gc.log.lock from {}", path);
-            }
-        });
+        return archiveRepository(repository, zipFilePath.toString());
+    }
 
-        return zipFileService.createZipFileWithFolderContent(zipFilePath, repoLocalPath);
+    /**
+     * Executes git archive command to zip the specified repository. The function uses HEAD
+     * as the base of archival.
+     *
+     * @param repository The repository to archive
+     * @param outputFile The filename of the zip file that will be created.
+     * @throws IOException If the outFile is a directory or if git archive command failed.
+     */
+    private Path archiveRepository(Repository repository, String outputFile) throws IOException, UncheckedIOException {
+        try {
+            ArchiveCommand.registerFormat("zip", new ZipFormat());
+            try (OutputStream out = new FileOutputStream(outputFile)) {
+                try (Git git = new Git(repository)) {
+                    ObjectId objectId = repository.resolve("HEAD");
+                    if (objectId != null) {
+                        git.archive().setTree(objectId).setOutputStream(out).setFilename(outputFile).call();
+                        return Path.of(outputFile);
+                    }
+                    else {
+                        log.warn("Skipped archiving repository {} because it doesn't contain HEAD.", repository);
+                        return null;
+                    }
+                }
+                catch (GitAPIException e) {
+                    log.warn("The git archive command failed: {}", e.getMessage());
+                    throw new IOException(e);
+                }
+            }
+        }
+        finally {
+            ArchiveCommand.unregisterFormat("zip");
+        }
     }
 
     /**
