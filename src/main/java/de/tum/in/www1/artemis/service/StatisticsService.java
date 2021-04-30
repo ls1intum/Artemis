@@ -160,14 +160,6 @@ public class StatisticsService {
         var averageScoreForExercise = participantScoreRepository.findAvgScore(Set.of(exercise));
         averageScoreForExercise = averageScoreForExercise != null ? round(averageScoreForExercise) : 0.0;
         exerciseManagementStatisticsDTO.setAverageScoreOfExercise(averageScoreForExercise);
-        /*
-         * var maxPoints = exercise.getIncludedInOverallScore() == IncludedInOverallScore.INCLUDED_AS_BONUS ? exercise.getMaxPoints() + exercise.getBonusPoints() :
-         * exercise.getMaxPoints(); Set<User> usersOfCourse = new HashSet<>(); usersOfCourse.addAll(userRepository.findAllInGroupWithAuthorities(course.getStudentGroupName()));
-         * usersOfCourse.addAll(userRepository.findAllInGroupWithAuthorities(course.getTeachingAssistantGroupName()));
-         * usersOfCourse.addAll(userRepository.findAllInGroupWithAuthorities(course.getInstructorGroupName())); var scoreDTOS =
-         * participantScoreService.calculateScores(Set.of(exercise), usersOfCourse, maxPoints); var scores = scoreDTOS.stream().map(scoreDTO ->
-         * scoreDTO.scoreAchieved).collect(Collectors.toList());
-         */
         var scores = participantScoreRepository.getScoreDistributionForExercise(exercise.getId());
         var scoreDistribution = new int[10];
         Arrays.fill(scoreDistribution, 0);
