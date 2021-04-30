@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.util;
+package de.tum.in.www1.artemis.programmingexercise;
 
 import static de.tum.in.www1.artemis.config.Constants.NEW_RESULT_RESOURCE_PATH;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -19,12 +19,12 @@ import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.service.ResultService;
 import de.tum.in.www1.artemis.service.StaticCodeAnalysisService;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildResultNotificationDTO;
 import de.tum.in.www1.artemis.service.dto.AbstractBuildResultNotificationDTO;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseGradingService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseTestCaseService;
+import de.tum.in.www1.artemis.util.*;
 
 /**
  * Note: this class should be independent of the actual VCS and CIS and contains common test logic for both scenarios:
@@ -56,9 +56,6 @@ public class ProgrammingExerciseResultTestService {
     private ProgrammingExerciseGradingService gradingService;
 
     @Autowired
-    private ResultService resultService;
-
-    @Autowired
     private StaticCodeAnalysisService staticCodeAnalysisService;
 
     @Autowired
@@ -85,7 +82,7 @@ public class ProgrammingExerciseResultTestService {
     private ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipationStaticCodeAnalysis;
 
     public void setup() {
-        database.addUsers(10, 2, 2);
+        database.addUsers(10, 2, 0, 2);
         setupForProgrammingLanguage(ProgrammingLanguage.JAVA);
     }
 

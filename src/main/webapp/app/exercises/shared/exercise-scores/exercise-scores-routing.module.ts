@@ -11,7 +11,7 @@ const routes: Routes = [
             path: ':courseId/' + exerciseType + '-exercises/:exerciseId/scores',
             component: ExerciseScoresComponent,
             data: {
-                authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.TA],
+                authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
                 pageTitle: 'instructorDashboard.exerciseDashboard',
             },
             canActivate: [UserRouteAccessService],

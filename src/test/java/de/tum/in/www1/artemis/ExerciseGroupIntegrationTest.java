@@ -17,6 +17,7 @@ import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.repository.TextExerciseRepository;
+import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
 public class ExerciseGroupIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -36,7 +37,7 @@ public class ExerciseGroupIntegrationTest extends AbstractSpringIntegrationBambo
 
     @BeforeEach
     public void initTestCase() {
-        database.addUsers(1, 1, 1);
+        database.addUsers(1, 1, 1, 1);
         course1 = database.addEmptyCourse();
         exam1 = database.addExamWithExerciseGroup(course1, true);
         exam2 = database.addExamWithExerciseGroup(course1, true);
@@ -72,8 +73,8 @@ public class ExerciseGroupIntegrationTest extends AbstractSpringIntegrationBambo
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testCreateExerciseGroup_asInstructor() throws Exception {
+    @WithMockUser(username = "editor1", roles = "EDITOR")
+    public void testCreateExerciseGroup_asEditor() throws Exception {
         ExerciseGroup exerciseGroup = ModelFactory.generateExerciseGroup(true, exam1);
         exerciseGroup.setId(55L);
         request.post("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exerciseGroups", exerciseGroup, HttpStatus.BAD_REQUEST);
@@ -82,33 +83,33 @@ public class ExerciseGroupIntegrationTest extends AbstractSpringIntegrationBambo
         request.post("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exerciseGroups", exerciseGroup, HttpStatus.CONFLICT);
         exerciseGroup = ModelFactory.generateExerciseGroup(true, exam2);
         request.post("/api/courses/" + course1.getId() + "/exams/" + exam2.getId() + "/exerciseGroups", exerciseGroup, HttpStatus.CREATED);
-        verify(examAccessService, times(1)).checkCourseAndExamAccessForInstructor(course1.getId(), exam2.getId());
+        verify(examAccessService, times(1)).checkCourseAndExamAccessForEditor(course1.getId(), exam2.getId());
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testUpdateExerciseGroup_asInstructor() throws Exception {
+    @WithMockUser(username = "editor1", roles = "EDITOR")
+    public void testUpdateExerciseGroup_asEditor() throws Exception {
         ExerciseGroup exerciseGroup = ModelFactory.generateExerciseGroup(true, exam1);
         exerciseGroup.setExam(null);
         request.put("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exerciseGroups", exerciseGroup, HttpStatus.CONFLICT);
         request.put("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exerciseGroups", exerciseGroup1, HttpStatus.OK);
-        verify(examAccessService, times(1)).checkCourseAndExamAndExerciseGroupAccess(course1.getId(), exam1.getId(), exerciseGroup1.getId());
+        verify(examAccessService, times(1)).checkCourseAndExamAndExerciseGroupAccess(Role.EDITOR, course1.getId(), exam1.getId(), exerciseGroup1.getId());
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testGetExerciseGroup_asInstructor() throws Exception {
+    @WithMockUser(username = "editor1", roles = "EDITOR")
+    public void testGetExerciseGroup_asEditor() throws Exception {
         ExerciseGroup result = request.get("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exerciseGroups/" + exerciseGroup1.getId(), HttpStatus.OK,
                 ExerciseGroup.class);
-        verify(examAccessService, times(1)).checkCourseAndExamAndExerciseGroupAccess(course1.getId(), exam1.getId(), exerciseGroup1.getId());
+        verify(examAccessService, times(1)).checkCourseAndExamAndExerciseGroupAccess(Role.EDITOR, course1.getId(), exam1.getId(), exerciseGroup1.getId());
         assertThat(result.getExam()).isEqualTo(exam1);
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testGetExerciseGroupsForExam_asInstructor() throws Exception {
+    @WithMockUser(username = "editor1", roles = "EDITOR")
+    public void testGetExerciseGroupsForExam_asEditor() throws Exception {
         List<ExerciseGroup> result = request.getList("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exerciseGroups", HttpStatus.OK, ExerciseGroup.class);
-        verify(examAccessService, times(1)).checkCourseAndExamAccessForInstructor(course1.getId(), exam1.getId());
+        verify(examAccessService, times(1)).checkCourseAndExamAccessForEditor(course1.getId(), exam1.getId());
         assertThat(result.size()).isEqualTo(1);
         assertThat(result.get(0).getExercises().size()).isEqualTo(1);
         assertThat(result.get(0).getExercises()).contains(textExercise1);
@@ -121,5 +122,11 @@ public class ExerciseGroupIntegrationTest extends AbstractSpringIntegrationBambo
         request.delete("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exerciseGroups/" + exerciseGroup1.getId(), HttpStatus.OK);
         verify(examAccessService, times(1)).checkCourseAndExamAndExerciseGroupAccess(course1.getId(), exam1.getId(), exerciseGroup1.getId());
         assertThat(textExerciseRepository.findById(textExercise1.getId()).isEmpty()).isTrue();
+    }
+
+    @Test
+    @WithMockUser(username = "editor1", roles = "EDITOR")
+    public void testDeleteExerciseGroup_asEditor() throws Exception {
+        request.delete("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exerciseGroups/" + exerciseGroup1.getId(), HttpStatus.FORBIDDEN);
     }
 }

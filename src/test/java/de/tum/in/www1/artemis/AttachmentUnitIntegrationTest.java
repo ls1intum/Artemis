@@ -38,7 +38,7 @@ public class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationBamb
 
     @BeforeEach
     public void initTestCase() throws Exception {
-        this.database.addUsers(1, 1, 1);
+        this.database.addUsers(1, 1, 0, 1);
         this.attachment = new Attachment().attachmentType(AttachmentType.FILE).link("files/temp/example.txt").name("example");
         this.lecture1 = this.database.createCourseWithLecture(true);
         this.attachmentUnit = new AttachmentUnit();

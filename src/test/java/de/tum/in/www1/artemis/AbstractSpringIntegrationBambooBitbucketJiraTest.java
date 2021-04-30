@@ -3,7 +3,7 @@ package de.tum.in.www1.artemis;
 import static de.tum.in.www1.artemis.config.Constants.*;
 import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.*;
 import static de.tum.in.www1.artemis.util.TestConstants.COMMIT_HASH_OBJECT_ID;
-import static io.github.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
+import static io.github.jhipster.config.JHipsterConstants.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -28,9 +28,9 @@ import com.atlassian.bamboo.specs.api.exceptions.BambooSpecsPublishingException;
 import com.atlassian.bamboo.specs.util.BambooServer;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
-import de.tum.in.www1.artemis.connector.bamboo.BambooRequestMockProvider;
-import de.tum.in.www1.artemis.connector.bitbucket.BitbucketRequestMockProvider;
-import de.tum.in.www1.artemis.connector.jira.JiraRequestMockProvider;
+import de.tum.in.www1.artemis.connector.BambooRequestMockProvider;
+import de.tum.in.www1.artemis.connector.BitbucketRequestMockProvider;
+import de.tum.in.www1.artemis.connector.JiraRequestMockProvider;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
@@ -378,12 +378,12 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
     }
 
     @Override
-    public void mockUpdateCoursePermissions(Course updatedCourse, String oldInstructorGroup, String oldTeachingAssistantGroup) {
+    public void mockUpdateCoursePermissions(Course updatedCourse, String oldInstructorGroup, String oldEditorGroup, String oldTeachingAssistantGroup) {
         // Not needed here.
     }
 
     @Override
-    public void mockFailUpdateCoursePermissionsInCi(Course updatedCourse, String oldInstructorGroup, String oldTeachingAssistantGroup, boolean failToAddUsers,
+    public void mockFailUpdateCoursePermissionsInCi(Course updatedCourse, String oldInstructorGroup, String oldEditorGroup, String oldTeachingAssistantGroup, boolean failToAddUsers,
             boolean failToRemoveUsers) throws Exception {
         // Not needed here
     }
@@ -410,8 +410,7 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
 
     @Override
     public void mockDeleteBuildPlan(String projectKey, String planName, boolean shouldFail) throws Exception {
-        // var planKey = (projectKey + "-" + planName).toUpperCase();
-        bambooRequestMockProvider.mockDeleteBambooBuildPlan(planName, false);
+        bambooRequestMockProvider.mockDeleteBambooBuildPlan(planName, !shouldFail);
     }
 
     @Override

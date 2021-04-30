@@ -607,7 +607,7 @@ public class ProgrammingExerciseService {
     public ProgrammingExercise updateProblemStatement(Long programmingExerciseId, String problemStatement, @Nullable String notificationText) throws EntityNotFoundException {
         var programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExerciseId)
                 .orElseThrow(() -> new EntityNotFoundException("Programming Exercise", programmingExerciseId));
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, programmingExercise, null);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, null);
         programmingExercise.setProblemStatement(problemStatement);
         ProgrammingExercise updatedProgrammingExercise = programmingExerciseRepository.save(programmingExercise);
         if (notificationText != null) {
@@ -803,9 +803,10 @@ public class ProgrammingExerciseService {
         Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
 
         final var instructorGroup = course.getInstructorGroupName();
+        final var editorGroup = course.getEditorGroupName();
         final var teachingAssistantGroup = course.getTeachingAssistantGroupName();
 
-        continuousIntegrationService.get().giveProjectPermissions(exercise.getProjectKey(), List.of(instructorGroup),
+        continuousIntegrationService.get().giveProjectPermissions(exercise.getProjectKey(), List.of(instructorGroup, editorGroup),
                 List.of(CIPermission.CREATE, CIPermission.READ, CIPermission.ADMIN));
         if (teachingAssistantGroup != null) {
             continuousIntegrationService.get().giveProjectPermissions(exercise.getProjectKey(), List.of(teachingAssistantGroup), List.of(CIPermission.READ));

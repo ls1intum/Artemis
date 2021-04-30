@@ -29,12 +29,14 @@ public class JenkinsJobPermissionsService {
      * Assigns teaching assistant and instructor permissions to users for the specified Jenkins job.
      *
      * @param taLogins logins of the teaching assistants
+     * @param editorLogins logins of the editors
      * @param instructorLogins logins of the instructors
      * @param folderName the name of the Jenkins folder
      * @param jobName the name of the Jenkins job
      * @throws IOException exception thrown when retrieving/updating the Jenkins folder failed
      */
-    public void addInstructorAndTAPermissionsToUsersForJob(Set<String> taLogins, Set<String> instructorLogins, String folderName, String jobName) throws IOException {
+    public void addInstructorAndEditorAndTAPermissionsToUsersForJob(Set<String> taLogins, Set<String> editorLogins, Set<String> instructorLogins, String folderName, String jobName)
+            throws IOException {
         var jobConfig = jenkinsJobService.getJobConfig(folderName, jobName);
         if (jobConfig == null) {
             // Job doesn't exist so do nothing.
@@ -44,14 +46,16 @@ public class JenkinsJobPermissionsService {
         // Revoke previously-assigned permissions
         var allPermissions = Set.of(JenkinsJobPermission.values());
         JenkinsJobPermissionsUtils.removePermissionsFromJob(jobConfig, allPermissions, taLogins);
+        JenkinsJobPermissionsUtils.removePermissionsFromJob(jobConfig, allPermissions, editorLogins);
         JenkinsJobPermissionsUtils.removePermissionsFromJob(jobConfig, allPermissions, instructorLogins);
 
         JenkinsJobPermissionsUtils.addPermissionsToJob(jobConfig, JenkinsJobPermission.getTeachingAssistantPermissions(), taLogins);
+        JenkinsJobPermissionsUtils.addPermissionsToJob(jobConfig, JenkinsJobPermission.getEditorPermissions(), editorLogins);
         JenkinsJobPermissionsUtils.addPermissionsToJob(jobConfig, JenkinsJobPermission.getInstructorPermissions(), instructorLogins);
 
         jenkinsJobService.updateJob(folderName, jobName, jobConfig);
 
-        addInstructorAndTAPermissionsToUsersForFolder(taLogins, instructorLogins, folderName);
+        addInstructorAndEditorAndTAPermissionsToUsersForFolder(taLogins, editorLogins, instructorLogins, folderName);
 
     }
 
@@ -59,11 +63,13 @@ public class JenkinsJobPermissionsService {
      * Assigns teaching assistant and instructor permissions to users for the specified Jenkins folder.
      *
      * @param taLogins logins of the teaching assistants
+     * @param editorLogins logins of the editors
      * @param instructorLogins logins of the instructors
      * @param folderName the name of the Jenkins folder
      * @throws IOException exception thrown when retrieving/updating the Jenkins folder failed
      */
-    public void addInstructorAndTAPermissionsToUsersForFolder(Set<String> taLogins, Set<String> instructorLogins, String folderName) throws IOException {
+    public void addInstructorAndEditorAndTAPermissionsToUsersForFolder(Set<String> taLogins, Set<String> editorLogins, Set<String> instructorLogins, String folderName)
+            throws IOException {
         var folderConfig = jenkinsJobService.getFolderConfig(folderName);
         if (folderConfig == null) {
             // Job doesn't exist so do nothing.
@@ -71,10 +77,12 @@ public class JenkinsJobPermissionsService {
         }
         // Revoke previously-assigned permissions
         JenkinsJobPermissionsUtils.removePermissionsFromFolder(folderConfig, Set.of(JenkinsJobPermission.values()), taLogins);
+        JenkinsJobPermissionsUtils.removePermissionsFromFolder(folderConfig, Set.of(JenkinsJobPermission.values()), editorLogins);
         JenkinsJobPermissionsUtils.removePermissionsFromFolder(folderConfig, Set.of(JenkinsJobPermission.values()), instructorLogins);
 
         // Assign teaching assistant permissions
         JenkinsJobPermissionsUtils.addPermissionsToFolder(folderConfig, JenkinsJobPermission.getTeachingAssistantPermissions(), taLogins);
+        JenkinsJobPermissionsUtils.addPermissionsToFolder(folderConfig, JenkinsJobPermission.getEditorPermissions(), editorLogins);
         JenkinsJobPermissionsUtils.addPermissionsToFolder(folderConfig, JenkinsJobPermission.getInstructorPermissions(), instructorLogins);
 
         jenkinsServer.updateJob(folderName, folderConfig.toString(), useCrumb);

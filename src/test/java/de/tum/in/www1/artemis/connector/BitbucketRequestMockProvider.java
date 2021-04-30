@@ -1,8 +1,9 @@
-package de.tum.in.www1.artemis.connector.bitbucket;
+package de.tum.in.www1.artemis.connector;
 
 import static org.hamcrest.text.MatchesPattern.matchesPattern;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.*;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.*;
+import static de.tum.in.www1.artemis.service.connectors.bitbucket.BitbucketPermission.*;
 
 import java.io.IOException;
 import java.net.URI;
@@ -10,6 +11,7 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.*;
 
+import de.tum.in.www1.artemis.service.connectors.bitbucket.BitbucketPermission;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -101,14 +103,17 @@ public class BitbucketRequestMockProvider {
         mockServer.expect(ExpectedCount.once(), requestTo(bitbucketServerUrl + "/rest/api/latest/projects")).andExpect(method(HttpMethod.POST))
                 .andExpect(content().json(mapper.writeValueAsString(body))).andRespond(withStatus(HttpStatus.OK));
 
-        mockGrantGroupPermissionToProject(exercise, adminGroupName, "PROJECT_ADMIN");
-        mockGrantGroupPermissionToProject(exercise, exercise.getCourseViaExerciseGroupOrCourseMember().getInstructorGroupName(), "PROJECT_ADMIN");
+        mockGrantGroupPermissionToProject(exercise, adminGroupName, PROJECT_ADMIN);
+        mockGrantGroupPermissionToProject(exercise, exercise.getCourseViaExerciseGroupOrCourseMember().getInstructorGroupName(), PROJECT_ADMIN);
+        if (exercise.getCourseViaExerciseGroupOrCourseMember().getEditorGroupName() != null) {
+            mockGrantGroupPermissionToProject(exercise, exercise.getCourseViaExerciseGroupOrCourseMember().getEditorGroupName(), PROJECT_WRITE);
+        }
         if (exercise.getCourseViaExerciseGroupOrCourseMember().getTeachingAssistantGroupName() != null) {
-            mockGrantGroupPermissionToProject(exercise, exercise.getCourseViaExerciseGroupOrCourseMember().getTeachingAssistantGroupName(), "PROJECT_WRITE");
+            mockGrantGroupPermissionToProject(exercise, exercise.getCourseViaExerciseGroupOrCourseMember().getTeachingAssistantGroupName(), PROJECT_READ);
         }
     }
 
-    public void mockGrantGroupPermissionToProject(ProgrammingExercise exercise, String groupName, String permission) throws URISyntaxException {
+    public void mockGrantGroupPermissionToProject(ProgrammingExercise exercise, String groupName, BitbucketPermission permission) throws URISyntaxException {
         final var projectKey = exercise.getProjectKey();
         final var permissionPath = UriComponentsBuilder.fromUri(bitbucketServerUrl.toURI()).path("/rest/api/latest/projects/").pathSegment(projectKey).path("/permissions/groups/")
                 .queryParam("name", groupName).queryParam("permission", permission);

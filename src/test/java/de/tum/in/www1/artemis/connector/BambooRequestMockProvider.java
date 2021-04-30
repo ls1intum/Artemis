@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.connector.bamboo;
+package de.tum.in.www1.artemis.connector;
 
 import static de.tum.in.www1.artemis.util.FileUtils.loadFileFromResources;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.*;
@@ -30,7 +30,6 @@ import org.springframework.web.util.UriComponentsBuilder;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import de.tum.in.www1.artemis.connector.bitbucket.BitbucketRequestMockProvider;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
@@ -153,6 +152,12 @@ public class BambooRequestMockProvider {
         final var instructorURI = buildGivePermissionsURIFor(projectKey, exercise.getCourseViaExerciseGroupOrCourseMember().getInstructorGroupName());
         mockServer.expect(requestTo(instructorURI)).andExpect(method(HttpMethod.PUT))
                 .andExpect(content().json(mapper.writeValueAsString(List.of("CREATE", "READ", "ADMINISTRATION")))).andRespond(withStatus(HttpStatus.NO_CONTENT));
+
+        if (exercise.getCourseViaExerciseGroupOrCourseMember().getEditorGroupName() != null) {
+            final var editorURI = buildGivePermissionsURIFor(projectKey, exercise.getCourseViaExerciseGroupOrCourseMember().getEditorGroupName());
+            mockServer.expect(requestTo(editorURI)).andExpect(method(HttpMethod.PUT)).andExpect(content().json(mapper.writeValueAsString(List.of("CREATE", "READ", "ADMINISTRATION"))))
+                .andRespond(withStatus(HttpStatus.NO_CONTENT));
+        }
 
         if (exercise.getCourseViaExerciseGroupOrCourseMember().getTeachingAssistantGroupName() != null) {
             final var tutorURI = buildGivePermissionsURIFor(projectKey, exercise.getCourseViaExerciseGroupOrCourseMember().getTeachingAssistantGroupName());
@@ -497,7 +502,12 @@ public class BambooRequestMockProvider {
 
     public void mockDeleteBambooBuildPlan(String planKey, boolean buildPlanExists) throws URISyntaxException, JsonProcessingException {
 
-        mockGetBuildPlan(planKey, null, false);
+        if (buildPlanExists) {
+            mockGetBuildPlan(planKey, new BambooBuildPlanDTO(planKey), false);
+        }
+        else {
+            mockGetBuildPlan(planKey, null, false);
+        }
         if (!buildPlanExists) {
             return;
         }

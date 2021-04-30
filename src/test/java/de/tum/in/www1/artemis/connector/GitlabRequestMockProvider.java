@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.connector.gitlab;
+package de.tum.in.www1.artemis.connector;
 
 import static org.gitlab4j.api.models.AccessLevel.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -292,7 +292,7 @@ public class GitlabRequestMockProvider {
 
         // Add as member to new groups
         if (addedGroups != null && !addedGroups.isEmpty()) {
-            final var exercisesWithAddedGroups = programmingExerciseRepository.findAllByInstructorOrTAGroupNameIn(addedGroups);
+            final var exercisesWithAddedGroups = programmingExerciseRepository.findAllByInstructorOrEditorOrTAGroupNameIn(addedGroups);
             for (final var exercise : exercisesWithAddedGroups) {
                 final var accessLevel = addedGroups.contains(exercise.getCourseViaExerciseGroupOrCourseMember().getInstructorGroupName()) ? MAINTAINER : GUEST;
                 doReturn(new Member()).when(groupApi).addMember(eq(exercise.getProjectKey()), anyInt(), eq(accessLevel));
@@ -301,7 +301,7 @@ public class GitlabRequestMockProvider {
 
         // Update/remove old groups
         if (removedGroups != null && !removedGroups.isEmpty()) {
-            final var exercisesWithOutdatedGroups = programmingExerciseRepository.findAllByInstructorOrTAGroupNameIn(removedGroups);
+            final var exercisesWithOutdatedGroups = programmingExerciseRepository.findAllByInstructorOrEditorOrTAGroupNameIn(removedGroups);
             for (final var exercise : exercisesWithOutdatedGroups) {
                 // If the the user is still in another group for the exercise (TA -> INSTRUCTOR or INSTRUCTOR -> TA),
                 // then we have to add him as a member with the new access level
@@ -345,9 +345,12 @@ public class GitlabRequestMockProvider {
         // Add user to existing exercises
         if (user.getGroups() != null && user.getGroups().size() > 0) {
             final var instructorExercises = programmingExerciseRepository.findAllByCourse_InstructorGroupNameIn(user.getGroups());
+            final var editorExercises = programmingExerciseRepository.findAllByCourse_EditorGroupNameIn(user.getGroups()).stream()
+                    .filter(programmingExercise -> !instructorExercises.contains(programmingExercise)).collect(Collectors.toList());
             final var teachingAssistantExercises = programmingExerciseRepository.findAllByCourse_TeachingAssistantGroupNameIn(user.getGroups()).stream()
                     .filter(programmingExercise -> !instructorExercises.contains(programmingExercise)).collect(Collectors.toList());
             mockAddUserToGroups(userId, instructorExercises, MAINTAINER);
+            mockAddUserToGroups(userId, editorExercises, DEVELOPER);
             mockAddUserToGroups(userId, teachingAssistantExercises, GUEST);
         }
     }
@@ -367,8 +370,9 @@ public class GitlabRequestMockProvider {
         }
     }
 
-    public void mockUpdateCoursePermissions(Course updatedCourse, String oldInstructorGroup, String oldTeachingAssistantGroup) throws GitLabApiException {
-        if (oldInstructorGroup.equals(updatedCourse.getInstructorGroupName()) && oldTeachingAssistantGroup.equals(updatedCourse.getTeachingAssistantGroupName())) {
+    public void mockUpdateCoursePermissions(Course updatedCourse, String oldInstructorGroup, String oldEditorGroup, String oldTeachingAssistantGroup) throws GitLabApiException {
+        if (oldInstructorGroup.equals(updatedCourse.getInstructorGroupName()) && oldEditorGroup.equals(updatedCourse.getEditorGroupName())
+            && oldTeachingAssistantGroup.equals(updatedCourse.getTeachingAssistantGroupName())) {
             // Do nothing if the group names didn't change
             return;
         }
@@ -379,13 +383,19 @@ public class GitlabRequestMockProvider {
         // Update the old instructors of the course
         final var oldInstructors = userRepository.findAllInGroupWithAuthorities(oldInstructorGroup);
         // doUpgrade=false, because these users already are instructors.
-        mockUpdateOldGroupMembers(exercises, oldInstructors, updatedCourse.getInstructorGroupName(), updatedCourse.getTeachingAssistantGroupName(), GUEST, false);
+        mockUpdateOldGroupMembers(exercises, oldInstructors, updatedCourse.getInstructorGroupName(), updatedCourse.getTeachingAssistantGroupName(), REPORTER, false);
         final var processedUsers = new HashSet<>(oldInstructors);
 
+        // Update the old editors of the group
+        final var oldEditors = userRepository.findAllUserInGroupAndNotIn(oldEditorGroup, processedUsers);
+        // doUpgrade=true, because these users should be upgraded from editor to instructor, if possible.
+        mockUpdateOldGroupMembers(exercises, oldEditors, updatedCourse.getEditorGroupName(), updatedCourse.getInstructorGroupName(), MAINTAINER, true);
+        processedUsers.addAll(oldEditors);
+
         // Update the old teaching assistant of the group
-        final var oldTeachingAssistants = userRepository.findAllUserInGroupAndNotIn(oldTeachingAssistantGroup, oldInstructors);
+        final var oldTeachingAssistants = userRepository.findAllUserInGroupAndNotIn(oldTeachingAssistantGroup, processedUsers);
         // doUpgrade=true, because these users should be upgraded from TA to instructor, if possible.
-        mockUpdateOldGroupMembers(exercises, oldTeachingAssistants, updatedCourse.getTeachingAssistantGroupName(), updatedCourse.getInstructorGroupName(), MAINTAINER, true);
+        mockUpdateOldGroupMembers(exercises, oldTeachingAssistants, updatedCourse.getTeachingAssistantGroupName(), updatedCourse.getInstructorGroupName(), DEVELOPER, true);
         processedUsers.addAll(oldTeachingAssistants);
 
         // Now, we only have to add all users that have not been updated yet AND that are part of one of the new groups
@@ -397,11 +407,18 @@ public class GitlabRequestMockProvider {
         }
         processedUsers.addAll(remainingInstructors);
 
+        // Find all NEW editors that did not belong to the old editors or instructors
+        final var remainingEditors = userRepository.findAllUserInGroupAndNotIn(updatedCourse.getEditorGroupName(), processedUsers);
+        for (var user : remainingEditors) {
+            mockGetUserId(user.getLogin(), true);
+            mockAddUserToGroups(1, exercises, DEVELOPER);
+        }
+
         // Find all NEW TAs that did not belong to the old TAs or instructors
         final var remainingTeachingAssistants = userRepository.findAllUserInGroupAndNotIn(updatedCourse.getTeachingAssistantGroupName(), processedUsers);
         for (var user : remainingTeachingAssistants) {
             mockGetUserId(user.getLogin(), true);
-            mockAddUserToGroups(1, exercises, GUEST);
+            mockAddUserToGroups(1, exercises, REPORTER);
         }
     }
 

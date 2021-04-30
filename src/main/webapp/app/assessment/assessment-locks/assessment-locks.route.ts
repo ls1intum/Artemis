@@ -12,7 +12,7 @@ export const assessmentLocksRoute: Routes = [
             course: CourseResolve,
         },
         data: {
-            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.TA],
+            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
             pageTitle: 'artemisApp.assessment.locks.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -24,7 +24,7 @@ export const assessmentLocksRoute: Routes = [
             course: CourseResolve,
         },
         data: {
-            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.TA],
+            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
             pageTitle: 'artemisApp.assessment.locks.home.title',
         },
         canActivate: [UserRouteAccessService],

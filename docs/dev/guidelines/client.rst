@@ -178,15 +178,16 @@ Some guidelines:
               httpMock.verify();
           });
 
-          it('should make get request', async () => {
+          it('should make get request', fakeAsync( () => {
               const returnedFromApi = {some: 'data'};
 
               component.callServiceMethod()
-                  .subscribe((data) => expect(data).toMatchObject({body: returnedFromApi}));
+                  .subscribe((data) => expect(data.body).toEqual(returnedFromApi));
 
-              const req = httpMock.expectOne({ method: 'GET' });
-              req.flush(JSON.stringify(returnedFromApi));
-          });
+              const req = httpMock.expectOne({ method: 'GET', url: 'urlThatMethodCalls' });
+              req.flush(returnedFromApi);
+              tick();
+          }));
         });
 
 

@@ -1,6 +1,12 @@
-package de.tum.in.www1.artemis.service;
+package de.tum.in.www1.artemis.programmingexercise;
+
+import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.SOLUTION;
+import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.TEMPLATE;
+import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource.Endpoints.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.io.IOException;
+import java.util.List;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -9,15 +15,21 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationJenkinsGitlabTest;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
+import de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource;
 
 public class ProgrammingExerciseIntegrationJenkinsGitlabTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 
     @Autowired
     private ProgrammingExerciseIntegrationServiceTest programmingExerciseIntegrationServiceTest;
+
+    @Autowired
+    private ProgrammingExerciseResource programmingExerciseResource;
 
     @BeforeEach
     void initTestCase() throws Exception {
@@ -89,6 +101,41 @@ public class ProgrammingExerciseIntegrationJenkinsGitlabTest extends AbstractSpr
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void testProgrammingExerciseDelete_failToDeleteBuildPlan() throws Exception {
         programmingExerciseIntegrationServiceTest.testProgrammingExerciseDelete_failToDeleteBuildPlan();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    void testProgrammingExerciseDelete_buildPlanNotFoundInJenkins() throws Exception {
+        var programmingExercise = programmingExerciseIntegrationServiceTest.programmingExercise;
+        final var projectKey = programmingExercise.getProjectKey();
+        final var path = ROOT + PROGRAMMING_EXERCISE.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("deleteStudentReposBuildPlans", "true");
+        params.add("deleteBaseReposBuildPlans", "true");
+
+        for (final var planName : List.of("student1", "student2", TEMPLATE.getName(), SOLUTION.getName())) {
+            jenkinsRequestMockProvider.mockDeleteBuildPlanNotFound(projectKey, projectKey + "-" + planName.toUpperCase());
+        }
+
+        jenkinsRequestMockProvider.mockDeleteBuildPlanProject(projectKey, false);
+        request.delete(path, HttpStatus.OK, params);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    void testProgrammingExerciseDelete_buildPlanFailsInJenkins() throws Exception {
+        var programmingExercise = programmingExerciseIntegrationServiceTest.programmingExercise;
+        final var projectKey = programmingExercise.getProjectKey();
+        final var path = ROOT + PROGRAMMING_EXERCISE.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("deleteStudentReposBuildPlans", "true");
+        params.add("deleteBaseReposBuildPlans", "true");
+
+        for (final var planName : List.of("student1", "student2", TEMPLATE.getName(), SOLUTION.getName())) {
+            jenkinsRequestMockProvider.mockDeleteBuildPlanFailWithException(projectKey, projectKey + "-" + planName.toUpperCase());
+        }
+
+        request.delete(path, HttpStatus.INTERNAL_SERVER_ERROR, params);
     }
 
     @Test
@@ -281,6 +328,28 @@ public class ProgrammingExerciseIntegrationJenkinsGitlabTest extends AbstractSpr
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void createProgrammingExercise_failToCheckIfProjectExistsInCi() throws Exception {
         programmingExerciseIntegrationServiceTest.createProgrammingExercise_failToCheckIfProjectExistsInCi();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void createProgrammingExercise_jenkinsJobIsNullOrUrlEmpty() throws Exception {
+        var programmingExercise = programmingExerciseIntegrationServiceTest.programmingExercise;
+        programmingExercise.setId(null);
+        programmingExercise.setTitle("unique-title");
+        programmingExercise.setShortName("testuniqueshortname");
+        gitlabRequestMockProvider.mockCheckIfProjectExists(programmingExercise, false);
+        jenkinsRequestMockProvider.mockCheckIfProjectExistsJobIsNull(programmingExercise);
+
+        var existsOpt = programmingExerciseResource.checkIfProjectExists(programmingExercise);
+        assertThat(existsOpt).isEmpty();
+
+        jenkinsRequestMockProvider.mockCheckIfProjectExistsJobUrlEmptyOrNull(programmingExercise, true);
+        existsOpt = programmingExerciseResource.checkIfProjectExists(programmingExercise);
+        assertThat(existsOpt).isEmpty();
+
+        jenkinsRequestMockProvider.mockCheckIfProjectExistsJobUrlEmptyOrNull(programmingExercise, false);
+        existsOpt = programmingExerciseResource.checkIfProjectExists(programmingExercise);
+        assertThat(existsOpt).isEmpty();
     }
 
     @Test

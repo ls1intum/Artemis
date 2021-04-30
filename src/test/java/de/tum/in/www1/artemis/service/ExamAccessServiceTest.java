@@ -53,7 +53,7 @@ public class ExamAccessServiceTest extends AbstractSpringIntegrationBambooBitbuc
 
     @BeforeEach
     void init() {
-        List<User> users = database.addUsers(1, 1, 2);
+        List<User> users = database.addUsers(1, 1, 0, 2);
         User instructor1 = users.get(2);
         User instructor2 = users.get(3);
         instructor1.setGroups(Collections.singleton("course1InstructorGroup"));

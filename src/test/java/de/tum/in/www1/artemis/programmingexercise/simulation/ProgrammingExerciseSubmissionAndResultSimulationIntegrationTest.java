@@ -43,7 +43,7 @@ public class ProgrammingExerciseSubmissionAndResultSimulationIntegrationTest ext
 
     @BeforeEach
     void setUp() {
-        database.addUsers(3, 2, 2);
+        database.addUsers(3, 2, 0, 2);
         database.addCourseWithOneProgrammingExerciseAndTestCases();
 
         exercise = programmingExerciseRepository.findAllWithEagerParticipationsAndLegalSubmissions().get(0);
