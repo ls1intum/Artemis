@@ -368,7 +368,7 @@ These comments should contain information about what is tested specifically.
     }
 
 Use appropriate and descriptive names for test cases. This makes it easier for other developers to understand what you actually test without looking deeper into it.
-This is the same reason as to why you should not name your variables int a, double b, String c, and so on. For example, if you want to test the method borrow in the class Book, testBorrowInBook() would be an appropriate name for the test case.
+This is the same reason why you should not name your variables int a, double b, String c, and so on. For example, if you want to test the method borrow in the class Book, testBorrowInBook() would be an appropriate name for the test case.
 
 .. code-block:: java
 
