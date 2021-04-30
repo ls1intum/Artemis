@@ -153,6 +153,8 @@ public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegr
         ProgrammingExerciseTestCaseDTO programmingExerciseTestCaseDTO = new ProgrammingExerciseTestCaseDTO();
         programmingExerciseTestCaseDTO.setId(testCase.getId());
         programmingExerciseTestCaseDTO.setWeight(400.0);
+        programmingExerciseTestCaseDTO.setBonusMultiplier(1.0);
+        programmingExerciseTestCaseDTO.setBonusPoints(0.0);
         programmingExerciseTestCaseDTOS.add(programmingExerciseTestCaseDTO);
 
         assertThat(programmingExercise.getTestCasesChanged()).isFalse();
