@@ -1,17 +1,17 @@
 import { RouterModule, Routes } from '@angular/router';
-import { CodeEditorInstructorContainerComponent } from 'app/exercises/programming/manage/code-editor/code-editor-instructor-container.component';
+import { CodeEditorInstructorAndEditorContainerComponent } from 'app/exercises/programming/manage/code-editor/code-editor-instructor-and-editor-container.component';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { PendingChangesGuard } from 'app/shared/guard/pending-changes.guard';
-import { CodeEditorInstructorOrionContainerComponent } from 'app/exercises/programming/manage/code-editor/code-editor-instructor-orion-container.component';
+import { CodeEditorInstructorAndEditorOrionContainerComponent } from 'app/exercises/programming/manage/code-editor/code-editor-instructor-and-editor-orion-container.component';
 import { NgModule } from '@angular/core';
 import { Authority } from 'app/shared/constants/authority.constants';
 
 const routes: Routes = [
     {
         path: 'test',
-        component: CodeEditorInstructorContainerComponent,
+        component: CodeEditorInstructorAndEditorContainerComponent,
         data: {
-            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+            authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.editor.home.title',
             flushRepositoryCacheAfter: 900000, // 15 min
             participationCache: {},
@@ -22,9 +22,9 @@ const routes: Routes = [
     },
     {
         path: 'ide/test',
-        component: CodeEditorInstructorOrionContainerComponent,
+        component: CodeEditorInstructorAndEditorOrionContainerComponent,
         data: {
-            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+            authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.editor.home.title',
             flushRepositoryCacheAfter: 900000, // 15 min
             participationCache: {},
@@ -35,9 +35,9 @@ const routes: Routes = [
     },
     {
         path: 'ide/:participationId',
-        component: CodeEditorInstructorOrionContainerComponent,
+        component: CodeEditorInstructorAndEditorOrionContainerComponent,
         data: {
-            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+            authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.editor.home.title',
             flushRepositoryCacheAfter: 900000, // 15 min
             participationCache: {},
@@ -48,9 +48,9 @@ const routes: Routes = [
     },
     {
         path: ':participationId',
-        component: CodeEditorInstructorContainerComponent,
+        component: CodeEditorInstructorAndEditorContainerComponent,
         data: {
-            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+            authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.editor.home.title',
             flushRepositoryCacheAfter: 900000, // 15 min
             participationCache: {},

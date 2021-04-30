@@ -34,7 +34,7 @@ public class ExamSessionIntegrationTest extends AbstractSpringIntegrationBambooB
 
     @BeforeEach
     public void initTestCase() {
-        List<User> users = database.addUsers(1, 1, 1);
+        List<User> users = database.addUsers(1, 1, 0, 1);
         Course course1 = database.addEmptyCourse();
         Exam exam1 = database.addActiveExamWithRegisteredUser(course1, users.get(0));
         studentExam1 = database.addStudentExam(exam1);

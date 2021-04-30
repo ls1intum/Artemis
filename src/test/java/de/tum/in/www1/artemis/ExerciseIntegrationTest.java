@@ -54,7 +54,7 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
 
     @BeforeEach
     public void init() {
-        database.addUsers(10, 5, 1);
+        database.addUsers(10, 5, 0, 1);
 
         // Add users that are not in exercise/course
         userRepository.save(ModelFactory.generateActivatedUser("student11"));

@@ -131,7 +131,7 @@ public class ProgrammingExerciseIntegrationServiceTest {
         this.mockDelegate = mockDelegate;
         this.versionControlService = versionControlService; // this can be used like a SpyBean
 
-        database.addUsers(3, 2, 2);
+        database.addUsers(3, 2, 0, 2);
         course = database.addCourseWithOneProgrammingExerciseAndTestCases();
         programmingExercise = programmingExerciseRepository.findAllWithEagerTemplateAndSolutionParticipations().get(0);
         programmingExerciseInExam = database.addCourseExamExerciseGroupWithOneProgrammingExerciseAndTestCases();

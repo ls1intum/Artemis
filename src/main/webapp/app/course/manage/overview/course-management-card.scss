@@ -1,14 +1,14 @@
 @import '../../../overview/_overview-vars.scss';
 
 .card {
-    height: 425px;
+    height: 450px;
     max-width: 2000px;
 
     .card-heading {
         position: relative;
         display: flex;
         cursor: pointer;
-        height: 75px;
+        height: 100px;
 
         .container-padding {
             padding: 10px;
@@ -32,15 +32,21 @@
         .card-groups {
             white-space: nowrap;
             display: flex;
-            padding-right: 15px;
+            padding-right: 8px;
             padding-top: 5px;
             padding-bottom: 5px;
             flex-direction: column;
             align-self: center;
             z-index: 1;
 
-            a {
-                color: white;
+            div {
+                div {
+                    padding-right: 7px;
+
+                    a {
+                        color: white;
+                    }
+                }
             }
         }
 

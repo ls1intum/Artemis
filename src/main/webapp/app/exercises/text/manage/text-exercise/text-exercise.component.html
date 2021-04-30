@@ -3,7 +3,7 @@
         <span *ngIf="course && !showHeading">{{ course.title }} - </span><span *ngIf="textExercises && showHeading">{{ getAmountOfExercisesString(textExercises) }} </span>
         <span jhiTranslate="artemisApp.textExercise.home.title">Text Exercises</span>
         <button
-            *ngIf="course && course.isAtLeastInstructor"
+            *ngIf="course && course.isAtLeastEditor"
             id="jh-import-entity"
             class="btn btn-primary float-right jh-create-entity create-text-exercise mr-1"
             (click)="openImportModal()"
@@ -12,7 +12,7 @@
             <span class="hidden-sm-down" jhiTranslate="artemisApp.textExercise.home.importLabel"> Import new programming exercise </span>
         </button>
         <a
-            *ngIf="course && course.isAtLeastInstructor"
+            *ngIf="course && course.isAtLeastEditor"
             id="jh-create-entity"
             class="btn btn-primary float-right jh-create-entity create-text-exercise mr-1"
             [routerLink]="['/course-management', course.id, 'text-exercises', 'new']"

@@ -27,7 +27,7 @@ public class ParticipationSubmissionIntegrationTest extends AbstractSpringIntegr
 
     @BeforeEach
     public void initTestCase() {
-        database.addUsers(2, 2, 2);
+        database.addUsers(2, 2, 0, 2);
         Course course = database.addCourseWithOneReleasedTextExercise();
         textExercise = database.findTextExerciseWithTitle(course.getExercises(), "Text");
     }

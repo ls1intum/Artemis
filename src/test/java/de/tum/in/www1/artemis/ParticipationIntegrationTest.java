@@ -70,7 +70,7 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationBambo
 
     @BeforeEach
     public void initTestCase() {
-        database.addUsers(2, 2, 2);
+        database.addUsers(2, 2, 0, 2);
 
         // Add users that are not in the course/exercise
         userRepo.save(ModelFactory.generateActivatedUser("student3"));

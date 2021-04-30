@@ -257,12 +257,13 @@ export class ExerciseService {
     }
 
     /**
-     * Look up permissions and add/replace isAtLeastInstuctor and isAtLeastTutor to http request containing a course
+     * Look up permissions and add/replace isAtLeastInstuctor, isAtLeastEditor and isAtLeastTutor to http request containing a course
      * @param { ERT } res - Response from server including a course
      */
     checkPermission<ERT extends EntityResponseType>(res: ERT): ERT {
         if (res.body && res.body.course) {
             res.body.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(res.body.course);
+            res.body.isAtLeastEditor = this.accountService.isAtLeastEditorInCourse(res.body.course);
             res.body.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(res.body.course);
         }
         return res;
