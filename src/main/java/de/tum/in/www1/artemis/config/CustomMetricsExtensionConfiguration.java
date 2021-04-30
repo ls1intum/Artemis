@@ -15,14 +15,14 @@ import io.micrometer.core.annotation.Timed;
 
 /**
  * CustomMetricsExtensionConfiguration.
- * Configuration for custom ArTEMiS metrics.
+ * Configuration for custom Artemis metrics.
  */
 public class CustomMetricsExtensionConfiguration {
 
     @Configuration
     @ConditionalOnClass(Timed.class)
     @AutoConfigureAfter(JHipsterMetricsEndpointConfiguration.class)
-    public class JHipsterMetricsEndpointConfiguration {
+    public static class JHipsterMetricsEndpointConfiguration {
 
         /**
          * customMetricsExtension.

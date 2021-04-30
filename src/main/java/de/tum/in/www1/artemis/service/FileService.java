@@ -691,7 +691,7 @@ public class FileService implements DisposableBean {
         ScheduledFuture<?> future = executor.schedule(() -> {
             try {
                 if (Files.exists(path) && Files.isDirectory(path)) {
-                    log.info("Delete directory {}", path);
+                    log.debug("Delete directory {}", path);
                     FileUtils.deleteDirectory(path.toFile());
                 }
                 futures.remove(path);
