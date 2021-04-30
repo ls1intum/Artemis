@@ -143,8 +143,8 @@
                     "couldNotBeUpdated": "The following test cases could not be updated: {{testCases}}.",
                     "weightSumError": "The sum of all test case weights is 0 or below. Please adjust at least one test case weight to be greater than 0",
                     "showInactive": "Show inactive test cases",
-                    "settingNull": "Test case {{testCase}} must not have settings that are null.",
-                    "settingNegative": "Test case {{testCase}} must not have settings set to negative numbers."
+                    "settingNull": "Test case {{testCase}} must not have settings that are empty.",
+                    "settingNegative": "Test case {{testCase}} must not have settings set to negative values."
                 },
                 "categories": {
                     "title": "Code Analysis Categories",
