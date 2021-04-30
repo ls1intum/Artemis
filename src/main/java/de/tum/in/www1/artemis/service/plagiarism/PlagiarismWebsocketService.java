@@ -46,14 +46,29 @@ public class PlagiarismWebsocketService {
         }
     }
 
+    /**
+     * Return the topic of the plagiarism check for the programming exercise
+     * @param programmingExerciseId the id of the exercise
+     * @return the topic
+     */
     public String getProgrammingExercisePlagiarismCheckTopic(Long programmingExerciseId) {
         return "/topic/programming-exercises/" + programmingExerciseId + "/plagiarism-check";
     }
 
+    /**
+     * Return the topic of the plagiarism check for the text exercise
+     * @param textExerciseId the id of the exercise
+     * @return the topic
+     */
     public String getTextExercisePlagiarismCheckTopic(Long textExerciseId) {
         return "/topic/text-exercises/" + textExerciseId + "/plagiarism-check";
     }
 
+    /**
+     * Return the topic of the plagiarism check for the modeling exercise
+     * @param modelingExerciseId the id of the exercise
+     * @return the topic
+     */
     public String getModelingExercisePlagiarismCheckTopic(Long modelingExerciseId) {
         return "/topic/modeling-exercises/" + modelingExerciseId + "/plagiarism-check";
     }

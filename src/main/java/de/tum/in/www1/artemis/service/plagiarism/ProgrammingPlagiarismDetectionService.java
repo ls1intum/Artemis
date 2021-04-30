@@ -147,6 +147,14 @@ public class ProgrammingPlagiarismDetectionService {
         return generateJPlagReportZip(result, programmingExercise);
     }
 
+    /**
+     * Checks for plagiarism and returns a JPlag result
+     * @param programmingExercise the programming exercise to check
+     * @param similarityThreshold the similartiy threshold
+     * @param minimumScore the minimum score
+     * @return the JPlag result or null if there are not enough participations
+     * @throws ExitException in case JPlag fails
+     */
     private JPlagResult getJPlagResult(ProgrammingExercise programmingExercise, float similarityThreshold, int minimumScore) throws ExitException {
         long programmingExerciseId = programmingExercise.getId();
 
@@ -201,6 +209,15 @@ public class ProgrammingPlagiarismDetectionService {
         plagiarismResultRepository.savePlagiarismResultAndRemovePrevious(textPlagiarismResult);
     }
 
+    /**
+     * Generates a JPlag report and zips it.
+     *
+     * @param jPlagResult The JPlag result
+     * @param programmingExercise the programming exercise
+     * @return the zip file
+     * @throws ExitException if JPlag fails
+     * @throws IOException if the zip file cannot be created
+     */
     public File generateJPlagReportZip(JPlagResult jPlagResult, ProgrammingExercise programmingExercise) throws ExitException, IOException {
         final var targetPath = fileService.getUniquePathString(repoDownloadClonePath);
         final var outputFolder = Paths.get(targetPath, programmingExercise.getProjectKey() + "-output").toString();
@@ -224,6 +241,15 @@ public class ProgrammingPlagiarismDetectionService {
         return zipFile;
     }
 
+    /**
+     * Zips a JPlag report.
+     *
+     * @param programmingExercise the programming exercise
+     * @param targetPath the path where the zip file will be created
+     * @param outputFolderPath the path of the Jplag report
+     * @return the zip file
+     * @throws IOException if the zip file cannot be created
+     */
     private File zipJPlagReport(ProgrammingExercise programmingExercise, String targetPath, Path outputFolderPath) throws IOException {
         log.info("JPlag report zipping to {}", targetPath);
         final var courseShortName = programmingExercise.getCourseViaExerciseGroupOrCourseMember().getShortName();

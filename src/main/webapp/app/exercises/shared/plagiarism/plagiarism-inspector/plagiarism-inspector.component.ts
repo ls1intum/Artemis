@@ -110,6 +110,10 @@ export class PlagiarismInspectorComponent implements OnInit {
         });
     }
 
+    /**
+     * Registers to the websocket topic of the plagiarism check
+     * to get feedback abount the progress
+     */
     registerToPlagarismDetectionTopic() {
         const topic = this.getPlagarismDetectionTopic();
         this.websocketService.subscribe(topic);
@@ -119,6 +123,9 @@ export class PlagiarismInspectorComponent implements OnInit {
             .subscribe();
     }
 
+    /**
+     * Gets the url to the plagiarism detection websocket topic.
+     */
     getPlagarismDetectionTopic() {
         let topic = '/topic/';
         switch (this.exercise.type) {
@@ -135,6 +142,12 @@ export class PlagiarismInspectorComponent implements OnInit {
         return topic + '/' + this.exercise.id + '/plagiarism-check';
     }
 
+    /**
+     * Handles the state change by updating the progress state. Fetches latest
+     * results once plagiarism detection is done.
+     *
+     * @param plagiarismCheckState the state plagiarism check
+     */
     handlePlagiarismCheckStateChange(plagiarismCheckState: PlagiarismCheckState) {
         const { state, messages } = plagiarismCheckState;
         this.detectionInProgress = state === 'RUNNING';
