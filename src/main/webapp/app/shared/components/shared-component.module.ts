@@ -8,9 +8,10 @@ import { CloneRepoButtonComponent } from 'app/shared/components/clone-repo-butto
 import { ExerciseActionButtonComponent } from 'app/shared/components/exercise-action-button.component';
 import { ClipboardModule } from 'ngx-clipboard';
 import { CourseExamArchiveButtonComponent } from 'app/shared/components/course-exam-archive-button/course-exam-archive-button.component';
+import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 
 @NgModule({
-    imports: [ArtemisSharedModule, FeatureToggleModule, ClipboardModule],
+    imports: [ArtemisSharedModule, FeatureToggleModule, ClipboardModule, ArtemisMarkdownModule],
     entryComponents: [ConfirmAutofocusModalComponent],
     declarations: [
         ButtonComponent,

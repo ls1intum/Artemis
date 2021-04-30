@@ -5,6 +5,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
@@ -395,6 +396,17 @@ public class ModelFactory {
         textSubmission.setSubmitted(true);
         textSubmission.setSubmissionDate(ZonedDateTime.now().plusDays(1));
         return textSubmission;
+    }
+
+    public static ProgrammingSubmission generateProgrammingSubmission(boolean submitted, String commitHash, SubmissionType type, @Nullable ZonedDateTime submissionDate) {
+        ProgrammingSubmission programmingSubmission = new ProgrammingSubmission();
+        programmingSubmission.setSubmitted(submitted);
+        if (submitted) {
+            programmingSubmission.setSubmissionDate(ZonedDateTime.now().minusDays(1));
+        }
+        programmingSubmission.setCommitHash(commitHash);
+        programmingSubmission.setType(type);
+        return programmingSubmission;
     }
 
     public static ProgrammingSubmission generateProgrammingSubmission(boolean submitted) {

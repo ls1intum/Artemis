@@ -36,7 +36,11 @@
         </div>
         <div class="d-flex justify-content-end">
             <div class="button-toolbar">
-                <a *ngIf="!exercise.exerciseGroup" [routerLink]="['/course-management', course.id, 'exercises', exercise.id, 'participations']" class="btn btn-primary btn-sm mr-1">
+                <a
+                    *ngIf="!exercise.exerciseGroup"
+                    [routerLink]="['/course-management', course.id, exercise.type + '-exercises', exercise.id, 'participations']"
+                    class="btn btn-primary btn-sm mr-1"
+                >
                     <fa-icon [icon]="'list-alt'"></fa-icon>
                     <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.participations">Participations</span>
                 </a>
@@ -49,7 +53,7 @@
                         exercise.exerciseGroup!.exam!.id!,
                         'exercise-groups',
                         exercise.exerciseGroup!.id!,
-                        'exercises',
+                        exercise.type + '-exercises',
                         exercise.id,
                         'participations'
                     ]"
@@ -63,10 +67,7 @@
                     <fa-icon [icon]="'download'"></fa-icon>
                     <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.exportNames">Export Names</span>
                 </button>
-                <button class="btn btn-info btn-sm mr-1" (click)="exportResults()">
-                    <fa-icon [icon]="'download'"></fa-icon>
-                    <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.exportResults">Export Results</span>
-                </button>
+                <jhi-exercise-scores-export-button [exercise]="exercise"></jhi-exercise-scores-export-button>
                 <jhi-programming-assessment-repo-export
                     *ngIf="exercise.type === ExerciseType.PROGRAMMING"
                     [exerciseId]="exercise.id!"
@@ -157,13 +158,19 @@
                         </span>
                     </ng-template>
                     <ng-template ngx-datatable-cell-template let-value="value">
-                        <a *ngIf="exercise.teamMode; else defaultMode" [routerLink]="['/course-management', exercise.course?.id, 'exercises', exercise.id, 'teams', value.team.id]">
+                        <a
+                            *ngIf="exercise.teamMode; else defaultMode"
+                            [routerLink]="['/course-management', exercise.course?.id, exercise.type + '-exercises', exercise.id, 'teams', value.team.id]"
+                        >
                             {{ value.team.shortName }}
                         </a>
                         <ng-template #defaultMode>
-                            <a [routerLink]="['/admin', 'user-management', value.student.login]">
+                            <a *ngIf="isAdmin; else showLogin" [routerLink]="['/admin', 'user-management', value.student.login]">
                                 {{ value.student.login }}
                             </a>
+                            <ng-template #showLogin>
+                                {{ value.student.login }}
+                            </ng-template>
                         </ng-template>
                     </ng-template>
                 </ngx-datatable-column>
@@ -243,11 +250,11 @@
                     [width]="470"
                 >
                     <ng-template ngx-datatable-cell-template let-value="value">
-                        <a class="btn btn-primary btn-sm mr-1" href="{{ getRepositoryLink(value) }}">
+                        <a *ngIf="getRepositoryLink(value)" class="btn btn-primary btn-sm mr-1" href="{{ getRepositoryLink(value) }}">
                             <fa-icon [icon]="'code-branch'" class="mr-1"></fa-icon>
                             Repository
                         </a>
-                        <button class="btn btn-primary btn-sm mr-1" jhiBuildPlanButton [projectKey]="projectKey()" [buildPlanId]="buildPlanId(value)!">
+                        <button *ngIf="buildPlanId(value)" class="btn btn-primary btn-sm mr-1" jhiBuildPlanButton [projectKey]="projectKey()" [buildPlanId]="buildPlanId(value)!">
                             <fa-icon class="mr-1" [icon]="['far', 'file-code']"></fa-icon>
                             Build plan
                         </button>

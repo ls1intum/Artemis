@@ -106,7 +106,7 @@ export class ModelingExerciseUpdateComponent implements OnInit {
                     if (this.isImport) {
                         if (this.isExamMode) {
                             // The target exerciseGroupId where we want to import into
-                            const exerciseGroupId = params['groupId'];
+                            const exerciseGroupId = params['exerciseGroupId'];
                             const courseId = params['courseId'];
                             const examId = params['examId'];
 
