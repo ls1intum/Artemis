@@ -1219,7 +1219,15 @@ public class CourseResource {
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Void> addEditorToCourse(@PathVariable Long courseId, @PathVariable String editorLogin) {
         log.debug("REST request to add {} as editors to course : {}", editorLogin, courseId);
-        var course = courseRepository.findByIdElseThrow(courseId);
+        Course course = courseRepository.findByIdElseThrow(courseId);
+
+        // Courses that have been created before Artemis version 4.11.9 do not have an editor group.
+        // The editor group would be need to be set manually by instructors for the course and manually added to Jira.
+        // To increase the usability the group is automatically generated when a user is added.
+        if (course.getEditorGroupName() == null) {
+            course.setEditorGroupName(course.getDefaultEditorGroupName());
+            artemisAuthenticationProvider.createGroup(course.getEditorGroupName());
+        }
         return addUserToCourseGroup(editorLogin, userRepository.getUserWithGroupsAndAuthorities(), course, course.getEditorGroupName());
     }
 
