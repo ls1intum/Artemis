@@ -8,7 +8,9 @@
                 <div *ngIf="course.startDate && !course.endDate">
                     <span jhiTranslate="artemisApp.course.startDate">Start Date</span>: {{ course.startDate | artemisDate: 'long-date' }}
                 </div>
-                <div *ngIf="!course.startDate && course.endDate"><span jhiTranslate="artemisApp.course.endDate">End Date</span>: {{ course.endDate | artemisDate: 'long-date' }}</div>
+                <div *ngIf="!course.startDate && course.endDate">
+                    <span jhiTranslate="artemisApp.course.endDate">End Date</span>: {{ course.endDate | artemisDate: 'long-date' }}
+                </div>
             </div>
         </div>
 
