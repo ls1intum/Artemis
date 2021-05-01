@@ -1,4 +1,4 @@
-import { Observable } from 'rxjs';
+import { of } from 'rxjs';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 

@@ -2,6 +2,8 @@ import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testin
 import { HttpResponse, HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
 import { Observable, of } from 'rxjs';
+import 'rxjs/add/observable/throw';
+
 import * as moment from 'moment';
 
 import { ArtemisTestModule } from '../../test.module';

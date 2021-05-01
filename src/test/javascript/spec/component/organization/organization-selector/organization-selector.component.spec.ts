@@ -3,7 +3,7 @@ import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import { OrganizationSelectorComponent } from 'app/shared/organization-selector/organization-selector.component';
 import { ArtemisTestModule } from '../../../test.module';
-import { Observable } from 'rxjs';
+import { of } from 'rxjs';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';

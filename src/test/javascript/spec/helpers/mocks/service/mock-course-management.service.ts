@@ -1,5 +1,5 @@
 import { HttpResponse } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { of } from 'rxjs';
 import { Course } from 'app/entities/course.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { Exercise } from 'app/entities/exercise.model';
