@@ -39,7 +39,6 @@ import * as moment from 'moment';
 import { JhiAlertService, JhiTranslateDirective } from 'ng-jhipster';
 import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
 import { of, throwError } from 'rxjs';
-import 'rxjs/add/observable/throw';
 import * as sinon from 'sinon';
 import { stub } from 'sinon';
 import * as sinonChai from 'sinon-chai';
