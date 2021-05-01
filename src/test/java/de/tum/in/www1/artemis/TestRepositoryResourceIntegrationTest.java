@@ -55,7 +55,7 @@ public class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegra
 
     @BeforeEach
     public void setup() throws Exception {
-        database.addUsers(0, 0, 1);
+        database.addUsers(0, 0, 0, 1);
         Course course = database.addEmptyCourse();
         programmingExercise = ModelFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course);
         testRepo.configureRepos("testLocalRepo", "testOriginRepo");

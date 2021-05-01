@@ -89,11 +89,11 @@ public class StudentQuestionAnswerResource {
         studentQuestionAnswer.setTutorApproved(this.authorizationCheckService.isAtLeastInstructorInCourse(course, user));
         StudentQuestionAnswer result = answerRepository.save(studentQuestionAnswer);
         if (result.getQuestion().getExercise() != null) {
-            groupNotificationService.notifyTutorAndInstructorGroupAboutNewAnswerForExercise(result);
+            groupNotificationService.notifyTutorAndEditorAndInstructorGroupAboutNewAnswerForExercise(result);
             singleUserNotificationService.notifyUserAboutNewAnswerForExercise(result);
         }
         if (result.getQuestion().getLecture() != null) {
-            groupNotificationService.notifyTutorAndInstructorGroupAboutNewAnswerForLecture(result);
+            groupNotificationService.notifyTutorAndEditorAndInstructorGroupAboutNewAnswerForLecture(result);
             singleUserNotificationService.notifyUserAboutNewAnswerForLecture(result);
         }
         return ResponseEntity.created(new URI("/api/courses" + courseId + "/student-question-answers/" + result.getId()))

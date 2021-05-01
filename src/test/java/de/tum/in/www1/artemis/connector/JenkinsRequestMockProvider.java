@@ -129,13 +129,8 @@ public class JenkinsRequestMockProvider {
     }
 
     public void mockGivePlanPermissions(String jobFolder, String job) throws IOException {
-        // jenkinsJobService.getJobConfig(folderName, jobName)
         mockGetJobConfig(jobFolder, job);
-
-        // jenkinsJobService.updateJob(folderName, jobName, jobConfig);
         mockUpdateJob(jobFolder, job);
-
-        // addInstructorAndTAPermissionsToUsersForFolder(taLogins, instructorLogins, folderName);
         mockGetFolderConfig(jobFolder);
         doNothing().when(jenkinsServer).updateJob(eq(jobFolder), anyString(), eq(useCrumb));
     }
@@ -346,7 +341,7 @@ public class JenkinsRequestMockProvider {
             return;
         }
 
-        var exercises = programmingExerciseRepository.findAllByInstructorOrTAGroupNameIn(groupsToRemove);
+        var exercises = programmingExerciseRepository.findAllByInstructorOrEditorOrTAGroupNameIn(groupsToRemove);
         for (ProgrammingExercise exercise : exercises) {
             var folderName = exercise.getProjectKey();
             mockRemovePermissionsFromUserOfFolder(folderName, shouldFail);
@@ -376,13 +371,12 @@ public class JenkinsRequestMockProvider {
     }
 
     public void mockAddUsersToGroups(String login, Set<String> groups, boolean shouldfail) throws IOException {
-        var exercises = programmingExerciseRepository.findAllByInstructorOrTAGroupNameIn(groups);
+        var exercises = programmingExerciseRepository.findAllByInstructorOrEditorOrTAGroupNameIn(groups);
         for (ProgrammingExercise exercise : exercises) {
             var jobName = exercise.getProjectKey();
             var course = exercise.getCourseViaExerciseGroupOrCourseMember();
 
-            if (groups.contains(course.getInstructorGroupName()) || groups.contains(course.getTeachingAssistantGroupName())) {
-                // jenkinsJobPermissionsService.addPermissionsForUserToFolder
+            if (groups.contains(course.getInstructorGroupName()) || groups.contains(course.getEditorGroupName()) || groups.contains(course.getTeachingAssistantGroupName())) {
                 mockGetFolderConfig(jobName);
                 if (shouldfail) {
                     doThrow(IOException.class).when(jenkinsServer).updateJob(eq(jobName), anyString(), eq(useCrumb));
@@ -394,21 +388,22 @@ public class JenkinsRequestMockProvider {
         }
     }
 
-    public void mockUpdateCoursePermissions(Course updatedCourse, String oldInstructorGroup, String oldTeachingAssistantGroup, boolean failToAddUsers, boolean failToRemoveUsers)
+    public void mockUpdateCoursePermissions(Course updatedCourse, String oldInstructorGroup, String oldEditorGroup, String oldTeachingAssistantGroup, boolean failToAddUsers, boolean failToRemoveUsers)
             throws IOException {
         var newInstructorGroup = updatedCourse.getInstructorGroupName();
-        var newTeachingAssistangGroup = updatedCourse.getTeachingAssistantGroupName();
+        var newEditorGroup = updatedCourse.getEditorGroupName();
+        var newTeachingAssistantGroup = updatedCourse.getTeachingAssistantGroupName();
 
         // Don't do anything if the groups didn't change
-        if (newInstructorGroup.equals(oldInstructorGroup) && newTeachingAssistangGroup.equals(oldTeachingAssistantGroup)) {
+        if (newInstructorGroup.equals(oldInstructorGroup) && newEditorGroup.equals(oldEditorGroup) && newTeachingAssistantGroup.equals(oldTeachingAssistantGroup)) {
             return;
         }
 
-        mockRemovePermissionsFromInstructorsAndTAsForCourse(updatedCourse, failToRemoveUsers);
-        mockAssignPermissionsToInstructorAndTAsForCourse(updatedCourse, failToAddUsers);
+        mockRemovePermissionsFromInstructorsAndEditorsAndTAsForCourse(updatedCourse, failToRemoveUsers);
+        mockAssignPermissionsToInstructorAndEditorAndTAsForCourse(updatedCourse, failToAddUsers);
     }
 
-    private void mockRemovePermissionsFromInstructorsAndTAsForCourse(Course course, boolean shouldFailToRemove) throws IOException {
+    private void mockRemovePermissionsFromInstructorsAndEditorsAndTAsForCourse(Course course, boolean shouldFailToRemove) throws IOException {
         var exercises = programmingExerciseRepository.findAllByCourse(course);
         for (var exercise : exercises) {
             if (shouldFailToRemove) {
@@ -420,15 +415,15 @@ public class JenkinsRequestMockProvider {
         }
     }
 
-    private void mockAssignPermissionsToInstructorAndTAsForCourse(Course course, boolean shouldFailToAdd) throws IOException {
+    private void mockAssignPermissionsToInstructorAndEditorAndTAsForCourse(Course course, boolean shouldFailToAdd) throws IOException {
         var exercises = programmingExerciseRepository.findAllByCourse(course);
         for (var exercise : exercises) {
             var job = exercise.getProjectKey();
-            mockAddInstructorAndTAPermissionsToUsersForFolder(job, shouldFailToAdd);
+            mockAddInstructorAndEditorAndTAPermissionsToUsersForFolder(job, shouldFailToAdd);
         }
     }
 
-    private void mockAddInstructorAndTAPermissionsToUsersForFolder(String folderName, boolean shouldFailToAdd) throws IOException {
+    private void mockAddInstructorAndEditorAndTAPermissionsToUsersForFolder(String folderName, boolean shouldFailToAdd) throws IOException {
         mockGetFolderConfig(folderName);
         if (shouldFailToAdd) {
             doThrow(IOException.class).when(jenkinsServer).updateJob(eq(folderName), anyString(), eq(useCrumb));
@@ -512,6 +507,6 @@ public class JenkinsRequestMockProvider {
     }
 
     public void mockGivePlanPermissionsThrowException(String projectKey, String projectKey1) throws IOException {
-        doThrow(IOException.class).when(jenkinsJobPermissionsService).addInstructorAndTAPermissionsToUsersForJob(any(), any(), eq(projectKey), eq(projectKey1));
+        doThrow(IOException.class).when(jenkinsJobPermissionsService).addInstructorAndEditorAndTAPermissionsToUsersForJob(any(), any(), any(), eq(projectKey), eq(projectKey1));
     }
 }

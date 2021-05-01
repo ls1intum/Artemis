@@ -48,7 +48,7 @@ public class StudentExamAccessServiceTest extends AbstractSpringIntegrationBambo
 
     @BeforeEach
     void init() {
-        users = database.addUsers(2, 0, 0);
+        users = database.addUsers(2, 0, 0, 0);
         course1 = database.addEmptyCourse();
         course2 = database.addEmptyCourse();
         course2.setStudentGroupName("another-group");

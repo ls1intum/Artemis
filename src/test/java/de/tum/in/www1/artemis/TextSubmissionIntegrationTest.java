@@ -58,7 +58,7 @@ public class TextSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
 
     @BeforeEach
     public void initTestCase() {
-        User student = database.addUsers(2, 1, 1).get(0);
+        User student = database.addUsers(2, 1, 0, 1).get(0);
         Course course1 = database.addCourseWithOneReleasedTextExercise();
         Course course2 = database.addCourseWithOneFinishedTextExercise();
         releasedTextExercise = database.findTextExerciseWithTitle(course1.getExercises(), "Text");
