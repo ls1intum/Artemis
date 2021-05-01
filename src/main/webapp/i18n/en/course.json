@@ -54,6 +54,7 @@
             },
             "studentGroupName": "Students",
             "teachingAssistantGroupName": "Tutors",
+            "editorGroupName": "Editors",
             "instructorGroupName": "Instructors",
             "description": "Course Description",
             "organizations": "Course Organizations",
@@ -86,9 +87,11 @@
             "students": "Students",
             "participations": "Participations",
             "tutors": "Tutors",
+            "editors": "Editors",
             "instructors": "Instructors",
             "student": "Student",
             "tutor": "Tutor",
+            "editor": "Editor",
             "instructor": "Instructor",
             "form": {
                 "shortname": {

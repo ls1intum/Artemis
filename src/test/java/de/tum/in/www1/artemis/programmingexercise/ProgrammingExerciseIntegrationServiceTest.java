@@ -6,16 +6,16 @@ import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource.ErrorK
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.zip.ZipFile;
 
@@ -32,6 +32,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
@@ -99,7 +100,7 @@ public class ProgrammingExerciseIntegrationServiceTest {
 
     private Course course;
 
-    private ProgrammingExercise programmingExercise;
+    public ProgrammingExercise programmingExercise;
 
     private ProgrammingExercise programmingExerciseInExam;
 
@@ -130,7 +131,7 @@ public class ProgrammingExerciseIntegrationServiceTest {
         this.mockDelegate = mockDelegate;
         this.versionControlService = versionControlService; // this can be used like a SpyBean
 
-        database.addUsers(3, 2, 2);
+        database.addUsers(3, 2, 0, 2);
         course = database.addCourseWithOneProgrammingExerciseAndTestCases();
         programmingExercise = programmingExerciseRepository.findAllWithEagerTemplateAndSolutionParticipations().get(0);
         programmingExerciseInExam = database.addCourseExamExerciseGroupWithOneProgrammingExerciseAndTestCases();
@@ -1131,6 +1132,46 @@ public class ProgrammingExerciseIntegrationServiceTest {
         final var endpoint = ProgrammingExerciseTestCaseResource.Endpoints.UPDATE_TEST_CASES.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
 
         request.patchWithResponseBody(ROOT + endpoint, updates, String.class, HttpStatus.BAD_REQUEST);
+    }
+
+    public void updateTestCases_testCaseMultiplierSmallerThanZero_badRequest() throws Exception {
+        final var testCases = List.copyOf(programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId()));
+        final var updates = transformTestCasesToDto(testCases);
+        updates.get(0).setBonusMultiplier(-1.0);
+        final var endpoint = ProgrammingExerciseTestCaseResource.Endpoints.UPDATE_TEST_CASES.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
+
+        request.getMvc()
+                .perform(MockMvcRequestBuilders.patch(new URI(ROOT + endpoint)).contentType(MediaType.APPLICATION_JSON)
+                        .content(request.getObjectMapper().writeValueAsString(updates)))
+                .andExpect(status().isBadRequest()) //
+                .andExpect(jsonPath("$.errorKey").value("settingNegative")) //
+                .andExpect(jsonPath("$.testCase").value(testCases.get(0).getTestName()));
+    }
+
+    public void updateTestCases_testCaseBonusPointsNull_badRequest() throws Exception {
+        final var testCases = List.copyOf(programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId()));
+        final var updates = transformTestCasesToDto(testCases);
+        updates.get(0).setBonusPoints(null);
+        final var endpoint = ProgrammingExerciseTestCaseResource.Endpoints.UPDATE_TEST_CASES.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
+
+        request.getMvc()
+                .perform(MockMvcRequestBuilders.patch(new URI(ROOT + endpoint)).contentType(MediaType.APPLICATION_JSON)
+                        .content(request.getObjectMapper().writeValueAsString(updates)))
+                .andExpect(status().isBadRequest()) //
+                .andExpect(jsonPath("$.errorKey").value("settingNull")) //
+                .andExpect(jsonPath("$.testCase").value(testCases.get(0).getTestName()));
+    }
+
+    private static List<ProgrammingExerciseTestCaseDTO> transformTestCasesToDto(Collection<ProgrammingExerciseTestCase> testCases) {
+        return testCases.stream().map(testCase -> {
+            final var testCaseUpdate = new ProgrammingExerciseTestCaseDTO();
+            testCaseUpdate.setId(testCase.getId());
+            testCaseUpdate.setVisibility(testCase.getVisibility());
+            testCaseUpdate.setWeight(testCase.getWeight());
+            testCaseUpdate.setBonusMultiplier(testCase.getBonusMultiplier());
+            testCaseUpdate.setBonusPoints(testCase.getBonusPoints());
+            return testCaseUpdate;
+        }).collect(Collectors.toList());
     }
 
     public void resetTestCaseWeights_asInstructor() throws Exception {

@@ -4,7 +4,7 @@
         ><span *ngIf="fileUploadExercises && showHeading">{{ getAmountOfExercisesString(fileUploadExercises) }} </span>
         <span jhiTranslate="artemisApp.fileUploadExercise.home.title">File Upload Exercises</span>
         <a
-            *ngIf="course && course.isAtLeastInstructor"
+            *ngIf="course && course.isAtLeastEditor"
             class="btn btn-primary float-right jh-create-entity create-file-upload-exercise"
             [routerLink]="['/course-management', course.id, 'file-upload-exercises', 'new']"
         >
@@ -89,7 +89,7 @@
                                 <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.teams">Teams</span>
                             </a>
                             <a
-                                *ngIf="fileUploadExercise.isAtLeastInstructor"
+                                *ngIf="fileUploadExercise.isAtLeastEditor"
                                 [routerLink]="['/course-management', courseId, 'file-upload-exercises', fileUploadExercise.id, 'edit']"
                                 class="btn btn-warning btn-sm mr-1"
                             >

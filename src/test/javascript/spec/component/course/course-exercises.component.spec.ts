@@ -33,6 +33,8 @@ import * as moment from 'moment';
 import { Subject } from 'rxjs';
 import { MockTranslateValuesDirective } from './course-scores/course-scores.component.spec';
 import { By } from '@angular/platform-browser';
+import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+import { TextExercise } from 'app/entities/text-exercise.model';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -163,9 +165,61 @@ describe('CourseExercisesComponent', () => {
         expect(component.weeklyIndexKeys).to.deep.equal(['2021-01-10', '2021-01-03']);
     });
 
+    it('should filter all exercises with upcoming release date', () => {
+        // No filters should be set initially
+        component.activeFilters.clear();
+        expect(component.activeFilters).to.deep.equal(new Set());
+
+        // In the following, visibleToStudents is set manually to the corresponding
+        // value. This is usually computed by the server
+        // This exercise should be filtered, since the release date is in the future
+        const newModelingExerciseWithFutureReleaseDate = new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined) as Exercise;
+        newModelingExerciseWithFutureReleaseDate.releaseDate = moment().add(1, 'days');
+        (newModelingExerciseWithFutureReleaseDate as QuizExercise).visibleToStudents = false;
+
+        // This exercise should not be filtered, since the release date is in the past
+        const newModelingExerciseWithPastReleaseDate = new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined) as Exercise;
+        newModelingExerciseWithPastReleaseDate.releaseDate = moment().subtract(1, 'days');
+        (newModelingExerciseWithPastReleaseDate as QuizExercise).visibleToStudents = true;
+
+        // This exercise should be filtered, since the release date is in the future
+        const newTextExerciseWithFutureReleaseDate = new TextExercise(course, undefined) as Exercise;
+        newTextExerciseWithFutureReleaseDate.releaseDate = moment().add(1, 'days');
+        (newTextExerciseWithFutureReleaseDate as QuizExercise).visibleToStudents = false;
+
+        // This exercise should not be filtered, since the release date is in the past
+        const newTextExerciseWithPastReleaseDate = new TextExercise(course, undefined) as Exercise;
+        newTextExerciseWithPastReleaseDate.releaseDate = moment().subtract(1, 'days');
+        (newTextExerciseWithPastReleaseDate as QuizExercise).visibleToStudents = true;
+
+        // Adding the created exercises to the course exercises
+        component.course!.exercises = [
+            newModelingExerciseWithFutureReleaseDate,
+            newModelingExerciseWithPastReleaseDate,
+            newTextExerciseWithFutureReleaseDate,
+            newTextExerciseWithPastReleaseDate,
+        ];
+
+        // Number of exercises in the course must be 4, since we have added 4 exercises
+        expect(component.course!.exercises!.length).to.equal(4);
+        component.toggleFilters([ExerciseFilter.UNRELEASED]);
+
+        // Number of active modeling and text exercises must be 1 respectively, since we have filtered
+        // the exercises with release date in the future
+        expect(component.exerciseCountMap.get('modeling')).to.equal(1);
+        expect(component.exerciseCountMap.get('text')).to.equal(1);
+
+        component.toggleFilters([ExerciseFilter.UNRELEASED]);
+
+        // Number of active modeling and text exercises must be 2 respectively, since we do not filter
+        // the exercises with release date in the future anymore
+        expect(component.exerciseCountMap.get('modeling')).to.equal(2);
+        expect(component.exerciseCountMap.get('text')).to.equal(2);
+    });
+
     it('should filter all exercises in different situations', () => {
         component.sortingOrder = ExerciseSortingOrder.DESC;
-        const filters: ExerciseFilter[] = Object.values(ExerciseFilter);
+        const filters: ExerciseFilter[] = [ExerciseFilter.OVERDUE, ExerciseFilter.NEEDS_WORK];
         const localStorageSpy = sinon.spy(localStorageService, 'store');
 
         component.toggleFilters(filters);

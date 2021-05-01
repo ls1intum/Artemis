@@ -68,7 +68,7 @@ public class ProgrammingExerciseSimulationResource {
      * @return a Response Entity
      */
     @PostMapping(ProgrammingExerciseSimulationResource.Endpoints.EXERCISES_SIMULATION)
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @PreAuthorize("hasRole('EDITOR')")
     @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
     public ResponseEntity<ProgrammingExercise> createProgrammingExerciseWithoutVersionControlAndContinuousIntegrationAvailable(
             @RequestBody ProgrammingExercise programmingExercise) {
@@ -77,7 +77,7 @@ public class ProgrammingExerciseSimulationResource {
         // fetch course from database to make sure client didn't change groups
         Course course = courseRepository.findByIdElseThrow(programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId());
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
+        if (!authCheckService.isAtLeastEditorInCourse(course, user)) {
             return forbidden();
         }
 

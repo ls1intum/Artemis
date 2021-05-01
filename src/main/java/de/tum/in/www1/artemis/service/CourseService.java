@@ -209,6 +209,9 @@ public class CourseService {
         if (course.getTeachingAssistantGroupName().equals(course.getDefaultTeachingAssistantGroupName())) {
             userService.deleteGroup(course.getTeachingAssistantGroupName());
         }
+        if (course.getEditorGroupName().equals(course.getDefaultEditorGroupName())) {
+            userService.deleteGroup(course.getEditorGroupName());
+        }
         if (course.getInstructorGroupName().equals(course.getDefaultInstructorGroupName())) {
             userService.deleteGroup(course.getInstructorGroupName());
         }

@@ -59,7 +59,7 @@ public class SubmissionExportIntegrationTest extends AbstractSpringIntegrationBa
 
     @BeforeEach
     public void initTestCase() {
-        List<User> users = database.addUsers(3, 1, 1);
+        List<User> users = database.addUsers(3, 1, 0, 1);
         users.remove(database.getUserByLogin("admin"));
         Course course1 = database.addCourseWithModelingAndTextAndFileUploadExercise();
         course1.getExercises().forEach(exercise -> {
@@ -217,6 +217,15 @@ public class SubmissionExportIntegrationTest extends AbstractSpringIntegrationBa
         mockedFiles.when(() -> Files.newOutputStream(any(), any())).thenThrow(IOException.class);
         request.postWithResponseBodyFile("/api/file-upload-exercises/" + fileUploadExercise.getId() + "/export-submissions", baseExportOptions, HttpStatus.BAD_REQUEST);
         // the following line resets the mock and prevents it from disturbing any other tests
+        mockedFiles.close();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testExportTextExerciseSubmission_IOException() throws Exception {
+        MockedStatic<Files> mockedFiles = mockStatic(Files.class);
+        mockedFiles.when(() -> Files.newOutputStream(any(), any())).thenThrow(IOException.class);
+        request.postWithResponseBodyFile("/api/text-exercises/" + textExercise.getId() + "/export-submissions", baseExportOptions, HttpStatus.BAD_REQUEST);
         mockedFiles.close();
     }
 

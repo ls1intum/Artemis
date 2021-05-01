@@ -37,7 +37,7 @@ public class AttachmentResourceIntegrationTest extends AbstractSpringIntegration
 
     @BeforeEach
     public void initTestCase() {
-        database.addUsers(0, 1, 1);
+        database.addUsers(0, 1, 0, 1);
 
         attachment = new Attachment().attachmentType(AttachmentType.FILE).link("files/temp/example.txt").name("example");
 

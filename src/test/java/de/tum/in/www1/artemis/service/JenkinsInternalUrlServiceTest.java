@@ -1,9 +1,9 @@
 package de.tum.in.www1.artemis.service;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.*;
 
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Optional;
 
@@ -58,6 +58,18 @@ public class JenkinsInternalUrlServiceTest extends AbstractSpringIntegrationJenk
         var vcsRepositoryUrl = mock(VcsRepositoryUrl.class);
         doReturn(null).when(vcsRepositoryUrl).getURL();
         assertThat(jenkinsInternalUrlService.toInternalVcsUrl(vcsRepositoryUrl)).isEqualTo(vcsRepositoryUrl);
+    }
+
+    @Test
+    @WithMockUser(username = "student1")
+    public void testGetVcsUrlOnInternalVcsUrlMalformed() {
+        var jenkinsInternalUrlServiceSpy = spy(jenkinsInternalUrlService);
+        ReflectionTestUtils.setField(jenkinsInternalUrlServiceSpy, "internalVcsUrl", Optional.of(internalVcsUrl));
+
+        when(jenkinsInternalUrlServiceSpy.replaceUrl(any(), any())).thenAnswer(invocation -> {
+            throw new MalformedURLException("exception");
+        });
+        assertThat(jenkinsInternalUrlServiceSpy.toInternalVcsUrl(vcsRepositoryUrl)).isEqualTo(vcsRepositoryUrl);
     }
 
     @Test

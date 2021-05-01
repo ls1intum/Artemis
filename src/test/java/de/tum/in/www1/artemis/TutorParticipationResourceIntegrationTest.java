@@ -34,7 +34,7 @@ public class TutorParticipationResourceIntegrationTest extends AbstractSpringInt
 
     @BeforeEach
     public void initTestCase() throws Exception {
-        database.addUsers(1, 5, 1);
+        database.addUsers(1, 5, 0, 1);
         database.createCoursesWithExercisesAndLectures(true);
         exercise = exerciseRepository.findAll().get(0);
     }

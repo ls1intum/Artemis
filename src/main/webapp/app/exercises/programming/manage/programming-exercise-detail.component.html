@@ -6,13 +6,13 @@
             <jhi-alert></jhi-alert>
             <jhi-alert-error></jhi-alert-error>
             <div class="text-left">
-                <a *ngIf="programmingExercise.isAtLeastInstructor" [routerLink]="getEditRoute()" class="btn btn-warning btn-sm mr-1" style="margin-bottom: 10px">
+                <a *ngIf="programmingExercise.isAtLeastEditor" [routerLink]="getEditRoute()" class="btn btn-warning btn-sm mr-1" style="margin-bottom: 10px">
                     <fa-icon [icon]="'wrench'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.edit"> Edit</span>
                 </a>
 
                 <a
                     [jhiFeatureToggleLink]="FeatureToggle.PROGRAMMING_EXERCISES"
-                    *ngIf="programmingExercise.isAtLeastInstructor && programmingExercise.templateParticipation && programmingExercise.course !== undefined"
+                    *ngIf="programmingExercise.isAtLeastEditor && programmingExercise.templateParticipation && programmingExercise.course !== undefined"
                     jhiOrionFilter
                     [showInOrionWindow]="false"
                     [routerLink]="[
@@ -60,7 +60,7 @@
                 </a>
 
                 <a
-                    *ngIf="programmingExercise.isAtLeastInstructor && programmingExercise.course !== undefined"
+                    *ngIf="programmingExercise.isAtLeastEditor && programmingExercise.course !== undefined"
                     [routerLink]="['/course-management', programmingExercise.course?.id, 'programming-exercises', programmingExercise.id, 'hints']"
                     class="btn btn-info btn-sm mr-1"
                     style="margin-bottom: 10px"
@@ -128,7 +128,7 @@
                     class="mr-1"
                 >
                 </span>
-                <span class="mr-1" *ngIf="programmingExercise.isAtLeastInstructor">
+                <span class="mr-1" *ngIf="programmingExercise.isAtLeastEditor">
                     <button [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES" type="button" (click)="combineTemplateCommits()" class="btn btn-secondary btn-sm">
                         <span jhiTranslate="artemisApp.programmingExercise.combineTemplateCommits">Combine Template Commits</span>
                     </button>
@@ -138,7 +138,7 @@
                         ngbTooltip="{{ 'artemisApp.programmingExercise.combineTemplateCommitsWarning' | artemisTranslate }}"
                     ></fa-icon>
                 </span>
-                <span *ngIf="programmingExercise.programmingLanguage === ProgrammingLanguage.JAVA && programmingExercise.isAtLeastInstructor" class="mr-1">
+                <span *ngIf="programmingExercise.programmingLanguage === ProgrammingLanguage.JAVA && programmingExercise.isAtLeastEditor" class="mr-1">
                     <button [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES" type="button" (click)="generateStructureOracle()" class="btn btn-secondary btn-sm">
                         <span jhiTranslate="artemisApp.programmingExercise.structureTestOracle">Update Structure Test Oracle</span>
                     </button>
@@ -314,7 +314,7 @@
                         ></jhi-programming-exercise-instructor-trigger-build-button>
                     </div>
                 </dd>
-                <dd *ngIf="programmingExercise.course != undefined && programmingExercise.isAtLeastInstructor && programmingExercise?.templateParticipation">
+                <dd *ngIf="programmingExercise.course != undefined && programmingExercise.isAtLeastEditor && programmingExercise?.templateParticipation">
                     <a
                         [routerLink]="[
                             '/course-management',
@@ -356,7 +356,7 @@
                         ></jhi-programming-exercise-instructor-trigger-build-button>
                     </div>
                 </dd>
-                <dd *ngIf="programmingExercise.course != undefined && programmingExercise.isAtLeastInstructor && programmingExercise?.solutionParticipation">
+                <dd *ngIf="programmingExercise.course != undefined && programmingExercise.isAtLeastEditor && programmingExercise?.solutionParticipation">
                     <a
                         [routerLink]="[
                             '/course-management',
