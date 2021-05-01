@@ -379,6 +379,10 @@ public class AuthorizationCheckService {
      * @return true, if user is an editor of this course, otherwise false
      */
     public boolean isEditorInCourse(@NotNull Course course, @Nullable User user) {
+        if (course.getEditorGroupName() == null) {
+            return false;
+        }
+
         if (user == null || user.getGroups() == null) {
             // only retrieve the user and the groups if the user is null or the groups are missing (to save performance)
             user = userRepository.getUserWithGroupsAndAuthorities();

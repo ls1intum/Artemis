@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service.connectors.jenkins;
 
 import java.io.IOException;
 import java.net.URL;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.http.HttpStatus;
@@ -224,9 +225,11 @@ public class JenkinsBuildPlanService {
         try {
             // Retrieve the TAs and instructors that will be given access to the plan of the programming exercise
             Course course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
-            var teachingAssistants = userRepository.findAllInGroupWithAuthorities(course.getTeachingAssistantGroupName()).stream().map(User::getLogin).collect(Collectors.toSet());
-            var editors = userRepository.findAllInGroupWithAuthorities(course.getEditorGroupName()).stream().map(User::getLogin).collect(Collectors.toSet());
-            var instructors = userRepository.findAllInGroupWithAuthorities(course.getInstructorGroupName()).stream().map(User::getLogin).collect(Collectors.toSet());
+            Set<String> teachingAssistants = userRepository.findAllInGroupWithAuthorities(course.getTeachingAssistantGroupName()).stream().map(User::getLogin)
+                    .collect(Collectors.toSet());
+            Set<String> editors = course.getEditorGroupName() == null ? Set.of()
+                    : userRepository.findAllInGroupWithAuthorities(course.getEditorGroupName()).stream().map(User::getLogin).collect(Collectors.toSet());
+            Set<String> instructors = userRepository.findAllInGroupWithAuthorities(course.getInstructorGroupName()).stream().map(User::getLogin).collect(Collectors.toSet());
 
             // The build plan of the exercise is inside the course folder
             var jobFolder = programmingExercise.getProjectKey();

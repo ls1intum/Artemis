@@ -467,7 +467,9 @@ public class CourseResource {
         for (Course course : courses) {
             course.setNumberOfInstructors(userRepository.countUserInGroup(course.getInstructorGroupName()));
             course.setNumberOfTeachingAssistants(userRepository.countUserInGroup(course.getTeachingAssistantGroupName()));
-            course.setNumberOfEditors(userRepository.countUserInGroup(course.getEditorGroupName()));
+            if (course.getEditorGroupName() != null) {
+                course.setNumberOfEditors(userRepository.countUserInGroup(course.getEditorGroupName()));
+            }
             course.setNumberOfStudents(userRepository.countUserInGroup(course.getStudentGroupName()));
         }
         long end = System.currentTimeMillis();
@@ -1122,6 +1124,11 @@ public class CourseResource {
     public ResponseEntity<List<User>> getAllEditorsInCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all editors in course : {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
+
+        if (course.getEditorGroupName() == null) {
+            return ResponseEntity.ok().body(List.of());
+        }
+
         return getAllUsersInGroup(course, course.getEditorGroupName());
     }
 
@@ -1227,15 +1234,15 @@ public class CourseResource {
         if (course.getEditorGroupName() == null) {
             try {
                 course.setEditorGroupName(course.getDefaultEditorGroupName());
-                if(!artemisAuthenticationProvider.isGroupAvailable(course.getDefaultEditorGroupName())) {
+                if (!artemisAuthenticationProvider.isGroupAvailable(course.getDefaultEditorGroupName())) {
                     artemisAuthenticationProvider.createGroup(course.getDefaultEditorGroupName());
                 }
             }
             catch (GroupAlreadyExistsException ex) {
                 throw new BadRequestAlertException(
-                    ex.getMessage() + ": One of the groups already exists (in the external user management), because the short name was already used in Artemis before. "
-                        + "Please choose a different short name!",
-                    ENTITY_NAME, "shortNameWasAlreadyUsed", true);
+                        ex.getMessage() + ": One of the groups already exists (in the external user management), because the short name was already used in Artemis before. "
+                                + "Please choose a different short name!",
+                        ENTITY_NAME, "shortNameWasAlreadyUsed", true);
             }
             catch (ArtemisAuthenticationException ex) {
                 // a specified group does not exist, notify the client

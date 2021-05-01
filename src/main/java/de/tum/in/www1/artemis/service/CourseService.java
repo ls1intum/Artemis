@@ -202,16 +202,16 @@ public class CourseService {
 
     private void deleteDefaultGroups(Course course) {
         // only delete (default) groups which have been created by Artemis before
-        if (course.getStudentGroupName().equals(course.getDefaultStudentGroupName())) {
+        if (course.getDefaultStudentGroupName().equals(course.getStudentGroupName())) {
             userService.deleteGroup(course.getStudentGroupName());
         }
-        if (course.getTeachingAssistantGroupName().equals(course.getDefaultTeachingAssistantGroupName())) {
+        if (course.getDefaultTeachingAssistantGroupName().equals(course.getTeachingAssistantGroupName())) {
             userService.deleteGroup(course.getTeachingAssistantGroupName());
         }
-        if (course.getEditorGroupName().equals(course.getDefaultEditorGroupName())) {
+        if (course.getDefaultEditorGroupName().equals(course.getEditorGroupName())) {
             userService.deleteGroup(course.getEditorGroupName());
         }
-        if (course.getInstructorGroupName().equals(course.getDefaultInstructorGroupName())) {
+        if (course.getDefaultInstructorGroupName().equals(course.getInstructorGroupName())) {
             userService.deleteGroup(course.getInstructorGroupName());
         }
     }

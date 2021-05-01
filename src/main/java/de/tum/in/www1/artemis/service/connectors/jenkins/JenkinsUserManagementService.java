@@ -239,10 +239,11 @@ public class JenkinsUserManagementService implements CIUserManagementService {
                     throw new JenkinsException("Cannot assign instructor permissions to user: " + userLogin, e);
                 }
             }
-            else if (groups.contains(course.getEditorGroupName())) {
+            else if (course.getEditorGroupName() != null && groups.contains(course.getEditorGroupName())) {
                 try {
                     // We are assigning editor permissions since the exercise's course editor group is the same as the one that is specified.
-                    jenkinsJobPermissionsService.addPermissionsForUserToFolder(userLogin, jobName, JenkinsJobPermission.getEditorPermissions());                }
+                    jenkinsJobPermissionsService.addPermissionsForUserToFolder(userLogin, jobName, JenkinsJobPermission.getEditorPermissions());
+                }
                 catch (IOException e) {
                     throw new JenkinsException("Cannot assign editor permissions to user: " + userLogin, e);
                 }
@@ -292,7 +293,8 @@ public class JenkinsUserManagementService implements CIUserManagementService {
         var newTeachingAssistangGroup = updatedCourse.getTeachingAssistantGroupName();
 
         // Don't do anything if the groups didn't change
-        if (newInstructorGroup.equals(oldInstructorGroup) && newEditorGroup.equals(oldEditorGroup) && newTeachingAssistangGroup.equals(oldTeachingAssistantGroup)) {
+        if (newInstructorGroup.equals(oldInstructorGroup) && (newEditorGroup == null && oldEditorGroup == null || newEditorGroup != null && newEditorGroup.equals(oldEditorGroup))
+                && newTeachingAssistangGroup.equals(oldTeachingAssistantGroup)) {
             return;
         }
 
@@ -310,9 +312,11 @@ public class JenkinsUserManagementService implements CIUserManagementService {
      * @param course the course
      */
     private void assignPermissionsToInstructorAndEditorAndTAsForCourse(Course course) {
-        var instructors = userRepository.findAllInGroupWithAuthorities(course.getInstructorGroupName()).stream().map(User::getLogin).collect(Collectors.toSet());
-        var editors = userRepository.findAllInGroupWithAuthorities(course.getEditorGroupName()).stream().map(User::getLogin).collect(Collectors.toSet());
-        var teachingAssistants = userRepository.findAllInGroupWithAuthorities(course.getTeachingAssistantGroupName()).stream().map(User::getLogin).collect(Collectors.toSet());
+        Set<String> instructors = userRepository.findAllInGroupWithAuthorities(course.getInstructorGroupName()).stream().map(User::getLogin).collect(Collectors.toSet());
+        Set<String> editors = course.getEditorGroupName() == null ? Set.of()
+                : userRepository.findAllInGroupWithAuthorities(course.getEditorGroupName()).stream().map(User::getLogin).collect(Collectors.toSet());
+        Set<String> teachingAssistants = userRepository.findAllInGroupWithAuthorities(course.getTeachingAssistantGroupName()).stream().map(User::getLogin)
+                .collect(Collectors.toSet());
 
         // Courses can have the same groups. We do not want to add/remove users from exercises of other courses belonging to the same group
         var exercises = programmingExerciseRepository.findAllByCourse(course);

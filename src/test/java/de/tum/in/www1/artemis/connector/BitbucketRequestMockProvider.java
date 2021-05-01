@@ -1,9 +1,9 @@
 package de.tum.in.www1.artemis.connector;
 
+import static de.tum.in.www1.artemis.service.connectors.bitbucket.BitbucketPermission.*;
 import static org.hamcrest.text.MatchesPattern.matchesPattern;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.*;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.*;
-import static de.tum.in.www1.artemis.service.connectors.bitbucket.BitbucketPermission.*;
 
 import java.io.IOException;
 import java.net.URI;
@@ -11,7 +11,6 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.*;
 
-import de.tum.in.www1.artemis.service.connectors.bitbucket.BitbucketPermission;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -34,6 +33,7 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.service.UrlService;
+import de.tum.in.www1.artemis.service.connectors.bitbucket.BitbucketPermission;
 import de.tum.in.www1.artemis.service.connectors.bitbucket.dto.*;
 import de.tum.in.www1.artemis.service.user.PasswordService;
 

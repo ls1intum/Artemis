@@ -131,7 +131,7 @@ public class ProgrammingExerciseService {
 
         setupExerciseTemplate(programmingExercise, user);
 
-        // Save programmning exercise to prevent transiant exception
+        // Save programming exercise to prevent transient exception
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
 
         setupBuildPlansForNewExercise(programmingExercise);

@@ -325,7 +325,12 @@ public interface UserRepository extends JpaRepository<User, Long> {
      * @return list of editors for given course
      */
     default List<User> getEditors(Course course) {
-        return findAllInGroupWithAuthorities(course.getEditorGroupName());
+        if (course.getEditorGroupName() != null) {
+            return findAllInGroupWithAuthorities(course.getEditorGroupName());
+        }
+        else {
+            return List.of();
+        }
     }
 
     /**

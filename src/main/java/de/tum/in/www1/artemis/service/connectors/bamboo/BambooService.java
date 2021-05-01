@@ -412,6 +412,10 @@ public class BambooService extends AbstractContinuousIntegrationService {
         final var entity = new HttpEntity<>(permissionData, null);
 
         groupNames.forEach(group -> {
+            if (group == null) {
+                return;
+            }
+
             final var url = serverUrl + "/rest/api/latest/permissions/project/" + projectKey + "/groups/" + group;
             final var response = restTemplate.exchange(url, HttpMethod.PUT, entity, String.class);
             if (response.getStatusCode() != HttpStatus.NO_CONTENT && response.getStatusCode() != HttpStatus.NOT_MODIFIED) {
