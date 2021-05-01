@@ -1678,6 +1678,23 @@ public class DatabaseUtilService {
         return course;
     }
 
+    public Course addCourseWithOneQuizExercise(){return addCourseWithOneQuizExercise("Title");}
+
+    public Course addCourseWithOneQuizExercise(String title){
+        Course course = ModelFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "tumuser", "tutor","editor", "instructor");
+        QuizExercise quizExercise = createQuiz(course,pastTimestamp,futureTimestamp);
+        quizExercise.setTitle(title);
+        course.addExercises(quizExercise);
+        final var exercisesNrBefore = exerciseRepo.count();
+        final var courseNrBefore = courseRepo.count();
+        courseRepo.save(course);
+        exerciseRepo.save(quizExercise);
+        assertThat(exercisesNrBefore + 1).as("one exercise got stored").isEqualTo(exerciseRepo.count());
+        assertThat(courseNrBefore + 1).as("a course got stored").isEqualTo(courseRepo.count());
+        assertThat(courseRepo.findWithEagerExercisesById(course.getId()).getExercises()).as("course contains the exercise").contains(quizExercise);
+        return course;
+    }
+
     public Course addCourseWithOneProgrammingExercise() {
         return addCourseWithOneProgrammingExercise(false);
     }

@@ -1094,12 +1094,43 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         assertThat(updatedQuizExercise.isIsOpenForPractice()).isTrue();
     }
 
+    /**
+     * test tutors cant create quiz exercises
+     * */
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
     public void testCreateQuizExercise_asTutor_forbidden() throws Exception{
         final Course course = database.createCourse();
         QuizExercise quizExercise = database.createQuiz(course,ZonedDateTime.now(), ZonedDateTime.now().plusHours(5));
-        QuizExercise quizExerciseServer = request.postWithResponseBody("/api/quiz-exercises",quizExercise,QuizExercise.class, HttpStatus.FORBIDDEN);
+        request.postWithResponseBody("/api/quiz-exercises",quizExercise,QuizExercise.class, HttpStatus.FORBIDDEN);
+        assertThat(course.getExercises()).isEmpty();
+    }
+
+    /**
+     * test students cant get all quiz exercises
+     * */
+    @Test
+    @WithMockUser(value = "student1", roles = "USER")
+    public void testGetAllQuizExercises_asStudent_forbidden() throws Exception{
+        final Course course = database.addCourseWithOneQuizExercise("Titel");
+        assertThat(course.getExercises()).isNotEmpty();
+        List<QuizExercise> quizExercises;
+        quizExercises = request.getList("/api/courses/" + course.getId() + "/quiz-exercises", HttpStatus.FORBIDDEN, QuizExercise.class);
+        assertThat(quizExercises).isNull();
+    }
+
+    /**
+     * test tutors cant perform start-now, set-visible or open-for-practice on quiz exercises
+     * */
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void testPerformPutAction_asTutor_forbidden() throws Exception{
+        final Course course = database.addCourseWithOneQuizExercise();
+        assertThat(course.getExercises()).isNotEmpty();
+        quizExercise = quizExerciseRepository.findByCourseId(course.getId()).get(0);
+        assertThat(quizExercise.isIsOpenForPractice()).isFalse();
+        request.put("/api/quiz-exercises/" + quizExercise.getId() + "/open-for-practice",quizExercise,HttpStatus.FORBIDDEN);
+        assertThat(quizExerciseRepository.findByCourseId(course.getId()).get(0).isIsOpenForPractice()).isFalse();
     }
 
     /**
