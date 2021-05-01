@@ -13,6 +13,7 @@ import java.util.*;
 import javax.annotation.Nullable;
 
 import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -802,12 +803,16 @@ public class ProgrammingExerciseService {
     public void giveCIProjectPermissions(ProgrammingExercise exercise) {
         Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
 
-        final var instructorGroup = course.getInstructorGroupName();
         final var editorGroup = course.getEditorGroupName();
         final var teachingAssistantGroup = course.getTeachingAssistantGroupName();
 
-        continuousIntegrationService.get().giveProjectPermissions(exercise.getProjectKey(), List.of(instructorGroup, editorGroup),
-                List.of(CIPermission.CREATE, CIPermission.READ, CIPermission.ADMIN));
+        List<String> adminGroups = new ArrayList<>();
+        adminGroups.add(course.getInstructorGroupName());
+        if (StringUtils.isNotEmpty(editorGroup)) {
+            adminGroups.add(editorGroup);
+        }
+
+        continuousIntegrationService.get().giveProjectPermissions(exercise.getProjectKey(), adminGroups, List.of(CIPermission.CREATE, CIPermission.READ, CIPermission.ADMIN));
         if (teachingAssistantGroup != null) {
             continuousIntegrationService.get().giveProjectPermissions(exercise.getProjectKey(), List.of(teachingAssistantGroup), List.of(CIPermission.READ));
         }
