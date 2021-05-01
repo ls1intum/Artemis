@@ -164,7 +164,7 @@
                 </dd>
                 <dt><span jhiTranslate="artemisApp.course.editorGroupName">Editor Group Name</span></dt>
                 <dd>
-                    <a [routerLink]="['/course-management', course.id, 'groups', 'editors']"> {{ course.editorGroupName }} ({{ course.numberOfEditors }})</a>
+                    <a [routerLink]="['/course-management', course.id, 'groups', 'editors']"> {{ course.editorGroupName }} ({{ courseDTO.numberOfEditorsInCourse }})</a>
                 </dd>
                 <dt><span jhiTranslate="artemisApp.course.instructorGroupName">Instructor Group Name</span></dt>
                 <dd>

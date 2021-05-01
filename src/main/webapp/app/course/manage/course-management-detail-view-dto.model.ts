@@ -4,6 +4,7 @@ export class CourseManagementDetailViewDto {
     course: Course;
     numberOfStudentsInCourse: number;
     numberOfTeachingAssistantsInCourse: number;
+    numberOfEditorsInCourse: number;
     numberOfInstructorsInCourse: number;
 
     // Total Assessment

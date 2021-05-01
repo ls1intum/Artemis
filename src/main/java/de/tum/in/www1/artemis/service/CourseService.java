@@ -412,6 +412,7 @@ public class CourseService {
 
         dto.setNumberOfStudentsInCourse(Math.toIntExact(userRepository.countUserInGroup(course.getStudentGroupName())));
         dto.setNumberOfTeachingAssistantsInCourse(Math.toIntExact(userRepository.countUserInGroup(course.getTeachingAssistantGroupName())));
+        dto.setNumberOfEditorsInCourse(Math.toIntExact(userRepository.countUserInGroup(course.getEditorGroupName())));
         dto.setNumberOfInstructorsInCourse(Math.toIntExact(userRepository.countUserInGroup(course.getInstructorGroupName())));
 
         dto.setActiveStudents(getActiveStudents(exerciseIds, 0));

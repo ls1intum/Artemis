@@ -46,6 +46,7 @@ describe('Course Management Detail Component', () => {
         course,
         numberOfStudentsInCourse: 100,
         numberOfTeachingAssistantsInCourse: 5,
+        numberOfEditorsInCourse: 5,
         numberOfInstructorsInCourse: 10,
         // assessments
         currentPercentageAssessments: 50,

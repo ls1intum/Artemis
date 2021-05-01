@@ -10,6 +10,8 @@ public class CourseManagementDetailViewDTO {
 
     private Integer numberOfTeachingAssistantsInCourse;
 
+    private Integer numberOfEditorsInCourse;
+
     private Integer numberOfInstructorsInCourse;
 
     // Total Assessment
@@ -176,5 +178,13 @@ public class CourseManagementDetailViewDTO {
 
     public void setCourse(Course course) {
         this.course = course;
+    }
+
+    public Integer getNumberOfEditorsInCourse() {
+        return numberOfEditorsInCourse;
+    }
+
+    public void setNumberOfEditorsInCourse(Integer numberOfEditorsInCourse) {
+        this.numberOfEditorsInCourse = numberOfEditorsInCourse;
     }
 }
