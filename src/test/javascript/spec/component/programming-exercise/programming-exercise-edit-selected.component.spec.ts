@@ -90,7 +90,7 @@ describe('ProgrammingExercise Edit Selected Component', () => {
             comp.selectedProgrammingExercises = selectedProgrammingExercises;
             comp.newProgrammingExercise = newProgrammingExercise;
 
-            spyOn(programmingExerciseService, 'updateTimeline').and.returnValue(Observable.throwError(new HttpErrorResponse({ status: 500 })));
+            spyOn(programmingExerciseService, 'updateTimeline').and.returnValue(throwError(new HttpErrorResponse({ status: 500 })));
             spyOn(comp, 'closeModal');
             // WHEN
             comp.saveAll();
