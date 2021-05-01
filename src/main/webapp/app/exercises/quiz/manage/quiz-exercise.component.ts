@@ -168,7 +168,7 @@ export class QuizExerciseComponent extends ExerciseComponent {
     exportQuizById(quizExerciseId: number, exportAll: boolean) {
         this.quizExerciseService.find(quizExerciseId).subscribe((res: HttpResponse<QuizExercise>) => {
             const exercise = res.body!;
-            this.quizExerciseService.exportQuiz(exercise.quizQuestions, exportAll);
+            this.quizExerciseService.exportQuiz(exercise.quizQuestions, exportAll, exercise.title);
         });
     }
 
