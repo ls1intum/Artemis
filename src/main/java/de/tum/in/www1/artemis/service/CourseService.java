@@ -312,7 +312,10 @@ public class CourseService {
         LocalDateTime localStartDate = now.toLocalDateTime().with(DayOfWeek.MONDAY);
         LocalDateTime localEndDate = now.toLocalDateTime().with(DayOfWeek.SUNDAY);
         ZoneId zone = now.getZone();
+        // startDate is the starting point of the data collection which is the Monday 3 weeks ago +/- the deviation from the current timeframe
         ZonedDateTime startDate = localStartDate.atZone(zone).minusWeeks(3 + (4 * (-periodIndex))).withHour(0).withMinute(0).withSecond(0).withNano(0);
+        // the endDate depends on whether the current week is shown. If it is, the endDate is the Sunday of the current week at 23:59.
+        // If the timeframe was adapted (periodIndex != 0), the endDate needs to be adapted according to the deviation
         ZonedDateTime endDate = periodIndex != 0 ? localEndDate.atZone(zone).minusWeeks(4 * (-periodIndex)).withHour(23).withMinute(59).withSecond(59)
                 : localEndDate.atZone(zone).withHour(23).withMinute(59).withSecond(59);
 
