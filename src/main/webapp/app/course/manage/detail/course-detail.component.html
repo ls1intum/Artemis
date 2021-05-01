@@ -162,6 +162,10 @@
                         {{ course.teachingAssistantGroupName }} ({{ courseDTO.numberOfTeachingAssistantsInCourse }})</a
                     >
                 </dd>
+                <dt><span jhiTranslate="artemisApp.course.editorGroupName">Editor Group Name</span></dt>
+                <dd>
+                    <a [routerLink]="['/course-management', course.id, 'groups', 'editors']"> {{ course.editorGroupName }} ({{ course.numberOfEditors }})</a>
+                </dd>
                 <dt><span jhiTranslate="artemisApp.course.instructorGroupName">Instructor Group Name</span></dt>
                 <dd>
                     <a [routerLink]="['/course-management', course.id, 'groups', 'instructors']"> {{ course.instructorGroupName }} ({{ courseDTO.numberOfInstructorsInCourse }})</a>
@@ -175,6 +179,10 @@
                 <dt><span jhiTranslate="artemisApp.course.teachingAssistantGroupName">Teaching Assistant Group Name</span></dt>
                 <dd>
                     <span>{{ course.teachingAssistantGroupName }}</span>
+                </dd>
+                <dt><span jhiTranslate="artemisApp.course.editorGroupName">Editor Group Name</span></dt>
+                <dd>
+                    <span>{{ course.editorGroupName }}</span>
                 </dd>
                 <dt><span jhiTranslate="artemisApp.course.instructorGroupName">Instructor Group Name</span></dt>
                 <dd>
