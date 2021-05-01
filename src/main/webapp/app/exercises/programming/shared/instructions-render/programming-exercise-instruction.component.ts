@@ -88,7 +88,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
             .pipe(
                 // Set up the markdown extensions if they are not set up yet so that tasks, UMLs, etc. can be parsed.
                 tap((markdownExtensionsInitialized: boolean) => !markdownExtensionsInitialized && this.setupMarkdownSubscriptions()),
-                switchMap(() => (this.exerciseHints ? of(this.exerciseHints) : this.loadExerciseHints(this.exercise.id!))),
+                switchMap(() => this.loadExerciseHints(this.exercise.id)),
                 tap((hints: ExerciseHint[]) => {
                     this.exerciseHints = hints;
                     this.programmingExerciseTaskWrapper.exerciseHints = hints;
@@ -154,10 +154,19 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
             .subscribe();
     }
 
-    private loadExerciseHints(exerciseId: number) {
+    private loadExerciseHints(exerciseId: number | undefined) {
+        if (this.exerciseHints) {
+            return of(this.exerciseHints);
+        }
+
         if (this.exercise && this.exercise.exerciseHints) {
             return of(this.exercise.exerciseHints);
         }
+
+        if (!exerciseId) {
+            return of([]);
+        }
+
         return this.exerciseHintService.findByExerciseId(exerciseId).pipe(
             map(({ body }) => body),
             catchError(() => of([])),
