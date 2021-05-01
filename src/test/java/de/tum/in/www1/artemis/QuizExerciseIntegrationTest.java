@@ -1095,6 +1095,66 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     }
 
     /**
+     * test tutors cant create quiz exercises
+     * */
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void testCreateQuizExerciseAsTutorForbidden() throws Exception{
+        final Course course = database.createCourse();
+        QuizExercise quizExercise = database.createQuiz(course,ZonedDateTime.now(), ZonedDateTime.now().plusHours(5));
+        request.postWithResponseBody("/api/quiz-exercises",quizExercise,QuizExercise.class, HttpStatus.FORBIDDEN);
+        assertThat(course.getExercises()).isEmpty();
+    }
+
+    /**
+     * test students cant get all quiz exercises
+     * */
+    @Test
+    @WithMockUser(value = "student1", roles = "USER")
+    public void testGetAllQuizExercisesAsStudentForbidden() throws Exception{
+        final Course course = database.addCourseWithOneQuizExercise("Titel");
+        assertThat(course.getExercises()).isNotEmpty();
+        List<QuizExercise> quizExercises;
+        quizExercises = request.getList("/api/courses/" + course.getId() + "/quiz-exercises", HttpStatus.FORBIDDEN, QuizExercise.class);
+        assertThat(quizExercises).isNull();
+    }
+
+    /**
+     * test tutors cant perform start-now, set-visible or open-for-practice on quiz exercises
+     * */
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void testPerformPutActionAsTutorForbidden() throws Exception{
+        final Course course = database.addCourseWithOneQuizExercise();
+        assertThat(course.getExercises()).isNotEmpty();
+        quizExercise = quizExerciseRepository.findByCourseId(course.getId()).get(0);
+        assertThat(quizExercise.isIsOpenForPractice()).isFalse();
+        request.put("/api/quiz-exercises/" + quizExercise.getId() + "/open-for-practice",quizExercise,HttpStatus.FORBIDDEN);
+        assertThat(quizExerciseRepository.findByCourseId(course.getId()).get(0).isIsOpenForPractice()).isFalse();
+    }
+
+    /**
+     * test tutors cant edit quiz exercises
+     * this one is failing for some reason
+     * */
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void testModifyQuizExerciseAsTutorForbidden() throws Exception{
+        final Course course = database.addCourseWithOneQuizExercise("Initial Title");
+        assertThat(course.getExercises()).isNotEmpty();
+        quizExercise = quizExerciseRepository.findByCourseId(course.getId()).get(0);
+        QuizExercise quizBefore = quizExercise;
+        //change some stuff
+        quizExercise.setTitle("New Title");
+        assertThat(quizExercise.getTitle()).isEqualTo("New Title");
+        //put the changes on the server and expect forbidden
+        request.putWithResponseBody("/api/quiz-exercises/" + quizExercise.getId(), quizExercise,
+            QuizExercise.class, HttpStatus.FORBIDDEN);
+        //make sure the original quiz is still in the course
+        assertThat(course.getExercises()).contains(quizBefore);
+    }
+
+    /**
      * Check that the general information of two exercises is equal.
      */
     private void checkQuizExercises(QuizExercise quizExercise, QuizExercise quizExercise2) {
