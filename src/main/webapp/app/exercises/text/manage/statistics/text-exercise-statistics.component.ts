@@ -27,8 +27,6 @@ export class TextExerciseStatisticsComponent implements OnInit {
     paramSub: Subscription;
     exerciseId: number;
 
-    // Score Distribution
-
     exerciseStatistics: ExerciseStatisticsDTO;
 
     constructor(private service: StatisticsService, private route: ActivatedRoute) {}

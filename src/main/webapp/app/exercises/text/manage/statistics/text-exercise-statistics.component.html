@@ -26,4 +26,7 @@
         [scoreDistribution]="exerciseStatistics.scoreDistribution"
     >
     </jhi-statistics-score-distribution-graph>
+    <div *ngFor="let graph of graphTypes; let i = index" id="graph-{{ i }}" class="graph">
+        <jhi-statistics-graph [graphType]="graph" [currentSpan]="currentSpan" [statisticsView]="statisticsView" [entityId]="exerciseId"> </jhi-statistics-graph>
+    </div>
 </div>
