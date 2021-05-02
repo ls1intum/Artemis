@@ -6,7 +6,7 @@ import { TextExercise } from 'app/entities/text-exercise.model';
 import { Injectable } from '@angular/core';
 import { TextExerciseService } from 'app/exercises/text/manage/text-exercise/text-exercise.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { Observable } from 'rxjs';
+import { Observable, of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { filter, map } from 'rxjs/operators';
 import { Course } from 'app/entities/course.model';
@@ -42,7 +42,7 @@ export class TextExerciseResolver implements Resolve<TextExercise> {
                 );
             }
         }
-        return Observable.of(new TextExercise(undefined, undefined));
+        return of(new TextExercise(undefined, undefined));
     }
 }
 

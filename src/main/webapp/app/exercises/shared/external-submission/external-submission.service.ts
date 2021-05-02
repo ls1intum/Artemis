@@ -7,6 +7,7 @@ import { Exercise } from 'app/entities/exercise.model';
 import { User } from 'app/core/user/user.model';
 import { EntityResponseType, ResultService } from 'app/exercises/shared/result/result.service';
 import { Result } from 'app/entities/result.model';
+import { map } from 'rxjs/operators';
 
 @Injectable({ providedIn: 'root' })
 export class ExternalSubmissionService {
@@ -23,7 +24,7 @@ export class ExternalSubmissionService {
         const copy = this.resultService.convertDateFromClient(result);
         return this.http
             .post<Result>(`${SERVER_API_URL}api/exercises/${exercise.id}/external-submission-results?studentLogin=${student.login}`, copy, { observe: 'response' })
-            .map((res: EntityResponseType) => this.resultService.convertDateFromServer(res));
+            .pipe(map((res: EntityResponseType) => this.resultService.convertDateFromServer(res)));
     }
 
     /**

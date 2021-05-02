@@ -63,7 +63,6 @@
         "ngx-webstorage": "7.0.1",
         "papaparse": "5.3.0",
         "rxjs": "6.6.7",
-        "rxjs-compat": "6.6.7",
         "showdown": "1.9.1",
         "showdown-highlight": "2.1.7",
         "showdown-katex": "0.6.0",

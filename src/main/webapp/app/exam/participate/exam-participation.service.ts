@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { SERVER_API_URL } from 'app/app.constants';
-import { Observable, Subject, throwError } from 'rxjs';
+import { Observable, of, Subject, throwError } from 'rxjs';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
@@ -53,7 +53,7 @@ export class ExamParticipationService {
      */
     public loadStudentExamWithExercisesForConductionFromLocalStorage(courseId: number, examId: number): Observable<StudentExam> {
         const localStoredExam: StudentExam = JSON.parse(this.localStorageService.retrieve(ExamParticipationService.getLocalStorageKeyForStudentExam(courseId, examId)));
-        return Observable.of(localStoredExam);
+        return of(localStoredExam);
     }
 
     /**
@@ -79,7 +79,7 @@ export class ExamParticipationService {
             }),
             catchError(() => {
                 const localStoredExam: StudentExam = JSON.parse(this.localStorageService.retrieve(ExamParticipationService.getLocalStorageKeyForStudentExam(courseId, examId)));
-                return Observable.of(localStoredExam);
+                return of(localStoredExam);
             }),
         );
     }
@@ -91,22 +91,26 @@ export class ExamParticipationService {
      */
     public loadStudentExam(courseId: number, examId: number): Observable<StudentExam> {
         const url = this.getResourceURL(courseId, examId) + '/start';
-        return this.httpClient.get<StudentExam>(url).map((studentExam: StudentExam) => {
-            const convertedStudentExam = this.convertStudentExamDateFromServer(studentExam);
-            this.adjustRepositoryUrlsForProgrammingExercises(convertedStudentExam);
-            this.currentlyLoadedStudentExam.next(convertedStudentExam);
-            return convertedStudentExam;
-        });
+        return this.httpClient.get<StudentExam>(url).pipe(
+            map((studentExam: StudentExam) => {
+                const convertedStudentExam = this.convertStudentExamDateFromServer(studentExam);
+                this.adjustRepositoryUrlsForProgrammingExercises(convertedStudentExam);
+                this.currentlyLoadedStudentExam.next(convertedStudentExam);
+                return convertedStudentExam;
+            }),
+        );
     }
 
     public loadTestRunWithExercisesForConduction(courseId: number, examId: number, testRunId: number): Observable<StudentExam> {
         const url = this.getResourceURL(courseId, examId) + '/test-run/' + testRunId + '/conduction';
-        return this.httpClient.get<StudentExam>(url).map((studentExam: StudentExam) => {
-            const convertedStudentExam = this.convertStudentExamDateFromServer(studentExam);
-            this.adjustRepositoryUrlsForProgrammingExercises(convertedStudentExam);
-            this.currentlyLoadedStudentExam.next(convertedStudentExam);
-            return convertedStudentExam;
-        });
+        return this.httpClient.get<StudentExam>(url).pipe(
+            map((studentExam: StudentExam) => {
+                const convertedStudentExam = this.convertStudentExamDateFromServer(studentExam);
+                this.adjustRepositoryUrlsForProgrammingExercises(convertedStudentExam);
+                this.currentlyLoadedStudentExam.next(convertedStudentExam);
+                return convertedStudentExam;
+            }),
+        );
     }
 
     /**
