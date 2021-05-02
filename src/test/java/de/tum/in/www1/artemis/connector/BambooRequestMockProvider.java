@@ -155,8 +155,8 @@ public class BambooRequestMockProvider {
 
         if (exercise.getCourseViaExerciseGroupOrCourseMember().getEditorGroupName() != null) {
             final var editorURI = buildGivePermissionsURIFor(projectKey, exercise.getCourseViaExerciseGroupOrCourseMember().getEditorGroupName());
-            mockServer.expect(requestTo(editorURI)).andExpect(method(HttpMethod.PUT)).andExpect(content().json(mapper.writeValueAsString(List.of("CREATE", "READ", "ADMINISTRATION"))))
-                .andRespond(withStatus(HttpStatus.NO_CONTENT));
+            mockServer.expect(requestTo(editorURI)).andExpect(method(HttpMethod.PUT))
+                    .andExpect(content().json(mapper.writeValueAsString(List.of("CREATE", "READ", "ADMINISTRATION")))).andRespond(withStatus(HttpStatus.NO_CONTENT));
         }
 
         if (exercise.getCourseViaExerciseGroupOrCourseMember().getTeachingAssistantGroupName() != null) {

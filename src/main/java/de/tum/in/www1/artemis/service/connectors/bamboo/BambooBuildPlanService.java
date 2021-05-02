@@ -127,8 +127,8 @@ public class BambooBuildPlanService {
         final String teachingAssistantGroupName = course.getTeachingAssistantGroupName();
         final String editorGroupName = course.getEditorGroupName();
         final String instructorGroupName = course.getInstructorGroupName();
-        final PlanPermissions planPermission = generatePlanPermissions(programmingExercise.getProjectKey(), planKey, teachingAssistantGroupName, editorGroupName, instructorGroupName,
-                adminGroupName);
+        final PlanPermissions planPermission = generatePlanPermissions(programmingExercise.getProjectKey(), planKey, teachingAssistantGroupName, editorGroupName,
+                instructorGroupName, adminGroupName);
         bambooServer.publish(planPermission);
     }
 
@@ -289,7 +289,7 @@ public class BambooBuildPlanService {
     }
 
     private PlanPermissions generatePlanPermissions(String bambooProjectKey, String bambooPlanKey, @Nullable String teachingAssistantGroupName, @Nullable String editorGroupName,
-                                                    String instructorGroupName, String adminGroupName) {
+            String instructorGroupName, String adminGroupName) {
         var permissions = new Permissions().userPermissions(bambooUser, PermissionType.EDIT, PermissionType.BUILD, PermissionType.CLONE, PermissionType.VIEW, PermissionType.ADMIN)
                 .groupPermissions(adminGroupName, PermissionType.CLONE, PermissionType.BUILD, PermissionType.EDIT, PermissionType.VIEW, PermissionType.ADMIN)
                 .groupPermissions(instructorGroupName, PermissionType.CLONE, PermissionType.BUILD, PermissionType.EDIT, PermissionType.VIEW, PermissionType.ADMIN);
