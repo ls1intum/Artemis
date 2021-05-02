@@ -33,6 +33,7 @@
         "nosubmissions": "No existing user was specified or no submission exists.",
         "feedbackCreditsNull": "Error! In case feedback is present, feedback must contain points.",
         "invalidGradeStepFormat": "One or more grade steps are not following the correct format",
-        "invalidGradeStepAdjacency": "The grade steps don't map to a valid grading scale"
+        "invalidGradeStepAdjacency": "The grade steps don't map to a valid grading scale",
+        "emptyGradeSteps": "Grade steps can't be empty"
     }
 }

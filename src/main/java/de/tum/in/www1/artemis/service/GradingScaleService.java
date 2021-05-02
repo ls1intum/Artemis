@@ -86,6 +86,9 @@ public class GradingScaleService {
                 throw new BadRequestAlertException("Grade step set can't match to a valid grading scale.", "gradeStep", "invalidGradeStepAdjacency");
             }
         }
+        else {
+            throw new BadRequestAlertException("Grade steps can't be empty", "gradeStep", "emptyGradeSteps");
+        }
     }
 
     /**
