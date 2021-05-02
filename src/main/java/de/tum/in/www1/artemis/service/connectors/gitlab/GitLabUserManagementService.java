@@ -98,9 +98,11 @@ public class GitLabUserManagementService implements VcsUserManagementService {
                     final AccessLevel accessLevel;
                     if (addedGroups.contains(exercise.getCourseViaExerciseGroupOrCourseMember().getInstructorGroupName())) {
                         accessLevel = MAINTAINER;
-                    } else if (addedGroups.contains(exercise.getCourseViaExerciseGroupOrCourseMember().getEditorGroupName())) {
+                    }
+                    else if (addedGroups.contains(exercise.getCourseViaExerciseGroupOrCourseMember().getEditorGroupName())) {
                         accessLevel = DEVELOPER;
-                    } else {
+                    }
+                    else {
                         accessLevel = REPORTER;
                     }
 
@@ -126,11 +128,14 @@ public class GitLabUserManagementService implements VcsUserManagementService {
                     final var course = exercise.getCourseViaExerciseGroupOrCourseMember();
                     if (user.getGroups().contains(course.getInstructorGroupName())) {
                         gitlabApi.getGroupApi().updateMember(exercise.getProjectKey(), gitlabUser.getId(), MAINTAINER);
-                    } else if (user.getGroups().contains(course.getEditorGroupName())) {
+                    }
+                    else if (user.getGroups().contains(course.getEditorGroupName())) {
                         gitlabApi.getGroupApi().updateMember(exercise.getProjectKey(), gitlabUser.getId(), DEVELOPER);
-                    } else if (user.getGroups().contains(course.getTeachingAssistantGroupName())) {
+                    }
+                    else if (user.getGroups().contains(course.getTeachingAssistantGroupName())) {
                         gitlabApi.getGroupApi().updateMember(exercise.getProjectKey(), gitlabUser.getId(), REPORTER);
-                    } else {
+                    }
+                    else {
                         // If the user is not a member of any relevant group any more, we can remove him from the exercise
                         try {
                             gitlabApi.getGroupApi().removeMember(exercise.getProjectKey(), gitlabUser.getId());
@@ -170,10 +175,11 @@ public class GitLabUserManagementService implements VcsUserManagementService {
 
         for (User user : allUsers) {
             Set<String> userGroups = user.getGroups();
-            if(userGroups != null) {
-                if(userGroups.contains(oldTeachingAssistantGroup) || userGroups.contains(oldEditorGroup) || userGroups.contains(oldInstructorGroup)) {
+            if (userGroups != null) {
+                if (userGroups.contains(oldTeachingAssistantGroup) || userGroups.contains(oldEditorGroup) || userGroups.contains(oldInstructorGroup)) {
                     oldUsers.add(user);
-                } else {
+                }
+                else {
                     newUsers.add(user);
                 }
             }
@@ -204,22 +210,26 @@ public class GitLabUserManagementService implements VcsUserManagementService {
                     continue;
                 }
 
-                if(user.getGroups() != null) {
+                if (user.getGroups() != null) {
                     final int userId = getUserId(user.getLogin());
 
                     if (groups.contains(updatedCourse.getInstructorGroupName())) {
                         addUserToGroups(userId, programmingExercises, MAINTAINER);
-                    } else if (groups.contains(updatedCourse.getEditorGroupName())) {
+                    }
+                    else if (groups.contains(updatedCourse.getEditorGroupName())) {
                         addUserToGroups(userId, programmingExercises, DEVELOPER);
-                    } else if (groups.contains(updatedCourse.getTeachingAssistantGroupName())) {
+                    }
+                    else if (groups.contains(updatedCourse.getTeachingAssistantGroupName())) {
                         addUserToGroups(userId, programmingExercises, REPORTER);
-                    } else {
+                    }
+                    else {
                         removeMemberFromExercises(programmingExercises, gitlabUser.getId());
                     }
                 }
 
-            } catch (GitLabApiException e) {
-                    throw new GitLabException("Error while trying to set permission for user in GitLab: " + user, e);
+            }
+            catch (GitLabApiException e) {
+                throw new GitLabException("Error while trying to set permission for user in GitLab: " + user, e);
             }
         }
 
@@ -246,20 +256,24 @@ public class GitLabUserManagementService implements VcsUserManagementService {
                 }
 
                 Set<String> groups = user.getGroups();
-                if(user.getGroups() == null) {
+                if (user.getGroups() == null) {
                     removeMemberFromExercises(programmingExercises, gitlabUser.getId());
                 }
 
-                if(groups.contains(updatedCourse.getInstructorGroupName())) {
+                if (groups.contains(updatedCourse.getInstructorGroupName())) {
                     updateMemberExercisePermissions(programmingExercises, gitlabUser.getId(), MAINTAINER);
-                } else if (groups.contains(updatedCourse.getEditorGroupName())){
+                }
+                else if (groups.contains(updatedCourse.getEditorGroupName())) {
                     updateMemberExercisePermissions(programmingExercises, gitlabUser.getId(), DEVELOPER);
-                } else if (groups.contains(updatedCourse.getTeachingAssistantGroupName())) {
+                }
+                else if (groups.contains(updatedCourse.getTeachingAssistantGroupName())) {
                     updateMemberExercisePermissions(programmingExercises, gitlabUser.getId(), REPORTER);
-                } else {
+                }
+                else {
                     removeMemberFromExercises(programmingExercises, gitlabUser.getId());
                 }
-            } catch (GitLabApiException e) {
+            }
+            catch (GitLabApiException e) {
                 throw new GitLabException("Error while trying to update user in GitLab: " + user, e);
             }
 
@@ -278,7 +292,8 @@ public class GitLabUserManagementService implements VcsUserManagementService {
         programmingExercises.forEach(exercise -> {
             try {
                 gitlabApi.getGroupApi().updateMember(exercise.getProjectKey(), gitlabUserId, accessLevel);
-            } catch (GitLabApiException e) {
+            }
+            catch (GitLabApiException e) {
                 throw new GitLabException("Error while updating GitLab group " + exercise.getProjectKey(), e);
             }
         });
@@ -295,7 +310,8 @@ public class GitLabUserManagementService implements VcsUserManagementService {
         programmingExercises.forEach(exercise -> {
             try {
                 gitlabApi.getGroupApi().removeMember(exercise.getProjectKey(), gitlabUserId);
-            } catch (GitLabApiException e) {
+            }
+            catch (GitLabApiException e) {
                 throw new GitLabException("Error while updating GitLab group " + exercise.getProjectKey(), e);
             }
         });
