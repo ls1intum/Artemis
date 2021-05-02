@@ -48,7 +48,14 @@ export class GradingSystemComponent implements OnInit {
         }
     }
 
-    private handleFindResponse(gradingScale?: GradingScale) {
+    /**
+     * If the grading scale exists, sorts its grade steps,
+     * and sets the inclusivity and first passing grade properties
+     *
+     * @param gradingScale the grading scale retrieved from the get request
+     * @private
+     */
+    private handleFindResponse(gradingScale?: GradingScale): void {
         if (gradingScale) {
             gradingScale.gradeSteps = this.sortGradeSteps(gradingScale.gradeSteps);
             this.gradingScale = gradingScale;
@@ -58,10 +65,15 @@ export class GradingSystemComponent implements OnInit {
         }
     }
 
+    /**
+     * Sorts the grade steps by lower bound percentage, sets their inclusivity
+     * and passing grade properties and saves the grading scale via the service
+     */
     save(): void {
         this.gradingScale.gradeSteps = this.sortGradeSteps(this.gradingScale.gradeSteps);
         this.gradingScale.gradeSteps = this.setInclusivity(this.gradingScale.gradeSteps);
         this.gradingScale.gradeSteps = this.setPassingGrades(this.gradingScale.gradeSteps);
+        // new grade steps shouldn't have ids set
         this.gradingScale.gradeSteps.forEach((gradeStep) => {
             gradeStep.id = undefined;
         });
@@ -88,6 +100,13 @@ export class GradingSystemComponent implements OnInit {
         }
     }
 
+    /**
+     * Sorts the grading scale's grade steps after it has been saved
+     * and sets the existingGradingScale property
+     *
+     * @param newGradingScale the grading scale that was just saved
+     * @private
+     */
     private handleSaveResponse(newGradingScale?: GradingScale): void {
         if (newGradingScale) {
             newGradingScale.gradeSteps = this.sortGradeSteps(newGradingScale.gradeSteps);
@@ -96,6 +115,9 @@ export class GradingSystemComponent implements OnInit {
         }
     }
 
+    /**
+     * Deletes a grading scale for the given course/exam via the service
+     */
     delete(): void {
         if (!this.existingGradingScale) {
             return;
@@ -113,18 +135,33 @@ export class GradingSystemComponent implements OnInit {
         }
     }
 
+    /**
+     * Sorts grade steps by lower bound percentage
+     *
+     * @param gradeSteps the grade steps to be sorted
+     */
     sortGradeSteps(gradeSteps: GradeStep[]): GradeStep[] {
         return gradeSteps.sort((gradeStep1, gradeStep2) => {
             return gradeStep1.lowerBoundPercentage - gradeStep2.lowerBoundPercentage;
         });
     }
 
+    /**
+     * Sets the lowerBoundInclusivity property based on grade steps based on the grade steps
+     * Called on initialization
+     */
     setBoundInclusivity(): void {
         this.lowerBoundInclusivity = this.gradingScale.gradeSteps.every((gradeStep) => {
             return gradeStep.lowerBoundInclusive || gradeStep.lowerBoundPercentage === 0;
         });
     }
 
+    /**
+     * Sets the inclusivity for all grade steps based on the lowerBoundInclusive property
+     * Called before a post/put request
+     *
+     * @param gradeSteps the grade steps which will be adjusted
+     */
     setInclusivity(gradeSteps: GradeStep[]): GradeStep[] {
         gradeSteps.forEach((gradeStep) => {
             if (this.lowerBoundInclusivity) {
@@ -138,6 +175,10 @@ export class GradingSystemComponent implements OnInit {
         return gradeSteps;
     }
 
+    /**
+     * Sets the firstPassingGrade property based on the grade steps
+     * Called on initialization
+     */
     determineFirstPassingGrade(): void {
         this.firstPassingGrade =
             this.gradingScale.gradeSteps.find((gradeStep) => {
@@ -145,6 +186,12 @@ export class GradingSystemComponent implements OnInit {
             })?.gradeName ?? this.gradingScale.gradeSteps[this.gradingScale.gradeSteps.length - 1].gradeName;
     }
 
+    /**
+     * Sets the isPassingGrade property for all grade steps based on the lowerBoundInclusive property
+     * Called before a post/put request
+     *
+     * @param gradeSteps the grade steps which will be adjusted
+     */
     setPassingGrades(gradeSteps: GradeStep[]): GradeStep[] {
         let passingGrade = false;
         gradeSteps.forEach((gradeStep) => {
@@ -156,10 +203,16 @@ export class GradingSystemComponent implements OnInit {
         return gradeSteps;
     }
 
+    /**
+     * Checks if grading scale has GradeType.GRADE
+     */
     isGradeType(): boolean {
         return this.gradingScale.gradeType === GradeType.GRADE;
     }
 
+    /**
+     * Create a new grade step add the end of the current grade step set
+     */
     createGradeStep(): void {
         const gradeStep: GradeStep = {
             gradeName: '',
@@ -178,17 +231,27 @@ export class GradingSystemComponent implements OnInit {
         this.gradingScale.gradeSteps.push(gradeStep);
     }
 
+    /**
+     * Delete grade step at given index
+     *
+     * @param index the index of the grade step
+     */
     deleteGradeStep(index: number): void {
         this.gradingScale.gradeSteps.splice(index, 1);
     }
 
+    /**
+     * Generates a default grading scale to be used as template
+     */
     generateDefaultGradingScale(): void {
         this.gradingScale = this.getDefaultGradingScale();
-        this.gradingScale.gradeType = GradeType.GRADE;
         this.firstPassingGrade = this.gradingScale.gradeSteps[3].gradeName;
         this.lowerBoundInclusivity = true;
     }
 
+    /**
+     * Returns the mock grading scale from the university course PSE
+     */
     getDefaultGradingScale(): GradingScale {
         const gradeStep1: GradeStep = {
             gradeName: '5.0',
