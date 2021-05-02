@@ -315,7 +315,7 @@ public class QuizExerciseResource {
     }
 
     /**
-     * POST /quiz-exercises/:quizExerciseId/:action : perform the specified action for the quiz now
+     * PUT /quiz-exercises/:quizExerciseId/:action : perform the specified action for the quiz now
      *
      * @param quizExerciseId     the id of the quiz exercise to start
      * @param action the action to perform on the quiz (allowed actions: "start-now", "set-visible", "open-for-practice")

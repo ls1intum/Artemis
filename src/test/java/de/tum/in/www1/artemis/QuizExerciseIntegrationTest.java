@@ -5,9 +5,11 @@ import static org.assertj.core.api.Assertions.*;
 import java.security.Principal;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+import de.tum.in.www1.artemis.domain.User;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -52,6 +54,9 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @Autowired
     private SubmittedAnswerRepository submittedAnswerRepository;
+
+    @Autowired
+    private UserRepository userRepo;
 
     private QuizExercise quizExercise;
 
@@ -1095,65 +1100,72 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     }
 
     /**
-     * test tutors cant create quiz exercises
+     * test non instructors cant create quiz exercises
      * */
     @Test
-    @WithMockUser(value = "tutor1", roles = "TA")
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void testCreateQuizExerciseAsTutorForbidden() throws Exception{
         final Course course = database.createCourse();
         QuizExercise quizExercise = database.createQuiz(course,ZonedDateTime.now(), ZonedDateTime.now().plusHours(5));
+        //remove instructor rights
+        User user = database.getUserByLogin("instructor1");
+        user.setGroups(Collections.emptySet());
+        userRepo.save(user);
         request.postWithResponseBody("/api/quiz-exercises",quizExercise,QuizExercise.class, HttpStatus.FORBIDDEN);
         assertThat(course.getExercises()).isEmpty();
     }
 
     /**
-     * test students cant get all quiz exercises
+     * test non instructors cant get all quiz exercises
      * */
     @Test
-    @WithMockUser(value = "student1", roles = "USER")
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void testGetAllQuizExercisesAsStudentForbidden() throws Exception{
         final Course course = database.addCourseWithOneQuizExercise("Titel");
         assertThat(course.getExercises()).isNotEmpty();
         List<QuizExercise> quizExercises;
+        //remove instructor rights
+        User user = database.getUserByLogin("instructor1");
+        user.setGroups(Collections.emptySet());
+        userRepo.save(user);
         quizExercises = request.getList("/api/courses/" + course.getId() + "/quiz-exercises", HttpStatus.FORBIDDEN, QuizExercise.class);
         assertThat(quizExercises).isNull();
     }
 
     /**
-     * test tutors cant perform start-now, set-visible or open-for-practice on quiz exercises
+     * test non instructors cant perform start-now, set-visible or open-for-practice on quiz exercises
      * */
     @Test
-    @WithMockUser(value = "tutor1", roles = "TA")
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void testPerformPutActionAsTutorForbidden() throws Exception{
         final Course course = database.addCourseWithOneQuizExercise();
         assertThat(course.getExercises()).isNotEmpty();
         quizExercise = quizExerciseRepository.findByCourseId(course.getId()).get(0);
         assertThat(quizExercise.isIsOpenForPractice()).isFalse();
+        //remove instructor rights
+        User user = database.getUserByLogin("instructor1");
+        user.setGroups(Collections.emptySet());
+        userRepo.save(user);
+
         request.put("/api/quiz-exercises/" + quizExercise.getId() + "/open-for-practice",quizExercise,HttpStatus.FORBIDDEN);
         assertThat(quizExerciseRepository.findByCourseId(course.getId()).get(0).isIsOpenForPractice()).isFalse();
     }
 
     /**
-     * test tutors cant edit quiz exercises
-     * this one is failing for some reason
+     * test non instructors cant see the exercise if it is not set to visible
      * */
     @Test
-    @WithMockUser(value = "tutor1", roles = "TA")
-    public void testModifyQuizExerciseAsTutorForbidden() throws Exception{
-        final Course course = database.addCourseWithOneQuizExercise("Initial Title");
-        assertThat(course.getExercises()).isNotEmpty();
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testViewQuizExerciseAsStudentNotVisible() throws Exception{
+        final Course course = database.addCourseWithOneQuizExercise();
         quizExercise = quizExerciseRepository.findByCourseId(course.getId()).get(0);
-        QuizExercise quizBefore = quizExercise;
-        //change some stuff
-        quizExercise.setTitle("New Title");
-        assertThat(quizExercise.getTitle()).isEqualTo("New Title");
-        //put the changes on the server and expect forbidden
-        request.putWithResponseBody("/api/quiz-exercises/" + quizExercise.getId(), quizExercise,
-            QuizExercise.class, HttpStatus.FORBIDDEN);
-        //make sure the original quiz is still in the course
-        assertThat(course.getExercises()).contains(quizBefore);
+        assertThat(quizExercise.isVisibleToStudents()).isFalse();
+        //remove instructor rights in course
+        User user = database.getUserByLogin("instructor1");
+        user.setGroups(Collections.emptySet());
+        userRepo.save(user);
+        request.get("/api/quiz-exercises/" + quizExercise.getId(), HttpStatus.FORBIDDEN, QuizExercise.class);
     }
-
     /**
      * Check that the general information of two exercises is equal.
      */
