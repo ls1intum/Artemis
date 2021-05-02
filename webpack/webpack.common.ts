@@ -9,7 +9,8 @@ const MergeJsonWebpackPlugin = require('merge-jsons-webpack-plugin');
 import { mapTypescriptAliasToWebpackAlias, parseVersion, root } from './utils';
 
 interface Options {
-    env: 'production' | 'development';
+    // note: for some reason we have to use single and double quotes together here '"..."' to avoid warnings during webpack build
+    env: '"production"' | '"development"';
 }
 
 export const commonConfig = (options: Options) => ({
@@ -78,7 +79,7 @@ export const commonConfig = (options: Options) => ({
             'process.env.NODE_ENV': options.env,
             // APP_VERSION is passed as an environment variable from the Gradle / Maven build tasks.
             'process.env.VERSION': `'${process.env.hasOwnProperty('APP_VERSION') && process.env.APP_VERSION !== 'unspecified' ? process.env.APP_VERSION : parseVersion()}'`,
-            'process.env.DEBUG_INFO_ENABLED': options.env === 'development',
+            'process.env.DEBUG_INFO_ENABLED': options.env === '"development"',
             // The root URL for API calls, ending with a '/' - for example: `"https://www.jhipster.tech:8081/myservice/"`.
             // If this URL is left empty (""), then it will be relative to the current context.
             // If you use an API server, in `prod` mode, you will need to enable CORS

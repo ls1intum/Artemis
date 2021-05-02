@@ -12,7 +12,7 @@ import { root } from './utils';
 
 const sass = require('sass');
 
-module.exports = merge(commonConfig({ env: 'production' }), {
+module.exports = merge(commonConfig({ env: '"production"' }), {
     // Enable source maps. Please note that this will slow down the build.
     devtool: 'source-map',
     entry: {

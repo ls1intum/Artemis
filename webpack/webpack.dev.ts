@@ -11,7 +11,7 @@ const ESLintPlugin = require('eslint-webpack-plugin');
 import { commonConfig } from './webpack.common';
 import { root } from './utils';
 
-module.exports = (options: any) => merge(commonConfig({ env: 'development' }), {
+module.exports = (options: any) => merge(commonConfig({ env: '"development"' }), {
     devtool: 'eval-source-map',
     devServer: {
         contentBase: './build/resources/main/static/',
