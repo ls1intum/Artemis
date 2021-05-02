@@ -104,14 +104,14 @@ export class GradingInstructionsDetailsComponent implements OnInit {
             criterion.structuredGradingInstructions = this.instructions;
         }
         for (const instruction of criterion.structuredGradingInstructions) {
-            markdownText = this.generateInstructionText(instruction);
+            markdownText += this.generateInstructionText(instruction);
         }
         return markdownText;
     }
 
     generateInstructionText(instruction: GradingInstruction): string {
         let markdownText = '';
-        markdownText +=
+        markdownText =
             GradingInstructionCommand.identifier +
             '\n' +
             '\t' +
