@@ -86,7 +86,7 @@ export class StatisticsGraphComponent implements OnChanges {
                 ];
             });
         } else {
-            this.service.getChartDataForCourse(this.currentSpan, this.currentPeriod, this.graphType, this.entityId!).subscribe((res: number[]) => {
+            this.service.getChartDataForContent(this.currentSpan, this.currentPeriod, this.graphType, this.statisticsView, this.entityId!).subscribe((res: number[]) => {
                 this.dataForSpanType = res;
                 this.chartData = [
                     {

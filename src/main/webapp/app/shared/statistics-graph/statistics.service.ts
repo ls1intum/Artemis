@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs/Observable';
 import { SERVER_API_URL } from 'app/app.constants';
-import { Graphs, SpanType } from 'app/entities/statistics.model';
+import { Graphs, SpanType, StatisticsView } from 'app/entities/statistics.model';
 import { CourseManagementStatisticsDTO } from 'app/course/manage/course-management-statistics-dto';
 import { ExerciseStatisticsDTO } from 'app/exercises/text/manage/statistics/exercise-statistics-dto';
 
@@ -26,13 +26,14 @@ export class StatisticsService {
     /**
      * Sends a GET request to retrieve the data for a graph based on the graphType in the last *span* days, the given period and the courseId
      */
-    getChartDataForCourse(span: SpanType, periodIndex: number, graphType: Graphs, courseId: number): Observable<number[]> {
+    getChartDataForContent(span: SpanType, periodIndex: number, graphType: Graphs, view: StatisticsView, courseId: number): Observable<number[]> {
         const params = new HttpParams()
             .set('span', '' + span)
             .set('periodIndex', '' + periodIndex)
             .set('graphType', '' + graphType)
+            .set('view', '' + view)
             .set('courseId', '' + courseId);
-        return this.http.get<number[]>(`${this.resourceUrl}data-for-course`, { params });
+        return this.http.get<number[]>(`${this.resourceUrl}data-for-content`, { params });
     }
 
     /**

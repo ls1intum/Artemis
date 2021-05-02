@@ -61,23 +61,30 @@ public class StatisticsResource {
     }
 
     /**
-     * GET management/statistics/data-for-course : get the graph data in the last "span" days in the given period for a specific course.
+     * GET management/statistics/data-for-content : get the graph data in the last "span" days in the given period for a specific entity, like course,
+     *                                              exercise or exam.
      *
      * @param span        the spantime of which the amount should be calculated
      * @param periodIndex an index indicating which time period, 0 is current week, -1 is one week in the past, -2 is two weeks in the past ...
      * @param graphType   the type of graph the data should be fetched
-     * @param courseId    the id of the course for which the data should be fetched
+     * @param entityId    the id of the dentity (Course, exercise or exam) for which the data should be fetched
      * @return the ResponseEntity with status 200 (OK) and the data in body, or status 404 (Not Found)
      */
-    @GetMapping("management/statistics/data-for-course")
+    @GetMapping("management/statistics/data-for-content")
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<Integer[]> getChartData(@RequestParam SpanType span, @RequestParam Integer periodIndex, @RequestParam GraphType graphType,
-            @RequestParam StatisticsView view, @RequestParam Long courseId) {
+            @RequestParam StatisticsView view, @RequestParam Long entityId) {
+        var courseId = 0L;
+        switch (view) {
+            case COURSE -> courseId = entityId;
+            case EXERCISE -> courseId = exerciseRepository.findByIdElseThrow(entityId).getCourseViaExerciseGroupOrCourseMember().getId();
+            default -> throw new UnsupportedOperationException("Unsupported view: " + view);
+        }
         Course course = courseRepository.findByIdElseThrow(courseId);
         if (!authorizationCheckService.isAtLeastTeachingAssistantInCourse(course, null)) {
             return forbidden();
         }
-        return ResponseEntity.ok(this.service.getChartData(span, periodIndex, graphType, view, courseId));
+        return ResponseEntity.ok(this.service.getChartData(span, periodIndex, graphType, view, entityId));
     }
 
     /**
