@@ -41,7 +41,7 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
      * On init load the course information and subscribe to listen for changes in courses.
      */
     ngOnInit() {
-        // There is no course 0 -> will get no course
+        // There is no course 0 -> will fetch no course if route does not provide different courseId
         let courseId = 0;
         this.paramSub = this.route.params.subscribe((params) => {
             courseId = params['courseId'];

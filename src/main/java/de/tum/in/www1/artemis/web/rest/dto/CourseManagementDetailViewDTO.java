@@ -60,6 +60,14 @@ public class CourseManagementDetailViewDTO {
         this.numberOfTeachingAssistantsInCourse = numberOfTeachingAssistantsInCourse;
     }
 
+    public Integer getNumberOfEditorsInCourse() {
+        return numberOfEditorsInCourse;
+    }
+
+    public void setNumberOfEditorsInCourse(Integer numberOfEditorsInCourse) {
+        this.numberOfEditorsInCourse = numberOfEditorsInCourse;
+    }
+
     public Integer getNumberOfInstructorsInCourse() {
         return numberOfInstructorsInCourse;
     }
@@ -178,13 +186,5 @@ public class CourseManagementDetailViewDTO {
 
     public void setCourse(Course course) {
         this.course = course;
-    }
-
-    public Integer getNumberOfEditorsInCourse() {
-        return numberOfEditorsInCourse;
-    }
-
-    public void setNumberOfEditorsInCourse(Integer numberOfEditorsInCourse) {
-        this.numberOfEditorsInCourse = numberOfEditorsInCourse;
     }
 }
