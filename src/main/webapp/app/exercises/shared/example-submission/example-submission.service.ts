@@ -1,8 +1,9 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
-import { Observable } from 'rxjs/Observable';
+import { Observable } from 'rxjs';
 import { ExampleSubmission } from 'app/entities/example-submission.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { map } from 'rxjs/operators';
 
 export type EntityResponseType = HttpResponse<ExampleSubmission>;
 
@@ -21,7 +22,7 @@ export class ExampleSubmissionService {
             .post<ExampleSubmission>(`api/exercises/${exerciseId}/example-submissions`, copy, {
                 observe: 'response',
             })
-            .map((res: EntityResponseType) => this.convertResponse(res));
+            .pipe(map((res: EntityResponseType) => this.convertResponse(res)));
     }
 
     /**
@@ -35,7 +36,7 @@ export class ExampleSubmissionService {
             .put<ExampleSubmission>(`api/exercises/${exerciseId}/example-submissions`, copy, {
                 observe: 'response',
             })
-            .map((res: EntityResponseType) => this.convertResponse(res));
+            .pipe(map((res: EntityResponseType) => this.convertResponse(res)));
     }
 
     /**
@@ -44,10 +45,8 @@ export class ExampleSubmissionService {
      */
     get(exampleSubmissionId: number): Observable<EntityResponseType> {
         return this.http
-            .get<ExampleSubmission>(`api/example-submissions/${exampleSubmissionId}`, {
-                observe: 'response',
-            })
-            .map((res: HttpResponse<ExampleSubmission>) => this.convertResponse(res));
+            .get<ExampleSubmission>(`api/example-submissions/${exampleSubmissionId}`, { observe: 'response' })
+            .pipe(map((res: HttpResponse<ExampleSubmission>) => this.convertResponse(res)));
     }
 
     /**

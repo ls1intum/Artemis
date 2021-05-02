@@ -3,7 +3,7 @@ import { TextSubmissionAssessmentComponent } from 'app/exercises/text/assess/tex
 import { ArtemisAssessmentSharedModule } from 'app/assessment/assessment-shared.module';
 import { ArtemisTestModule } from '../../test.module';
 import { By } from '@angular/platform-browser';
-import { Observable, of } from 'rxjs';
+import { of } from 'rxjs';
 import { stub } from 'sinon';
 import { HttpResponse } from '@angular/common/http';
 import { AssessmentLayoutComponent } from 'app/assessment/assessment-layout/assessment-layout.component';
@@ -106,7 +106,7 @@ describe('TextSubmissionAssessmentComponent', () => {
     submission.participation!.results = [getLatestSubmissionResult(submission)!];
     const route = ({
         snapshot: { path: '' },
-        paramMap: Observable.of(
+        paramMap: of(
             convertToParamMap({
                 exerciseId: '1',
             }),
@@ -114,7 +114,7 @@ describe('TextSubmissionAssessmentComponent', () => {
         queryParams: of({
             testRun: 'false',
         }),
-        data: Observable.of({
+        data: of({
             studentParticipation: participation,
         }),
     } as unknown) as ActivatedRoute;

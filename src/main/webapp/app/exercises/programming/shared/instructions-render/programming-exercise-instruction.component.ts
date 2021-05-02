@@ -120,7 +120,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
                                     this.onNoInstructionsAvailable.emit();
                                     this.isLoading = false;
                                     this.isInitial = false;
-                                    return Observable.of(undefined);
+                                    return of(undefined);
                                 }
                             }),
                             filter((problemStatement) => !!problemStatement),
@@ -239,14 +239,14 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
             // Get the result with the highest id (most recent result)
             const latestResult = findLatestResult(this.participation.results);
             if (!latestResult) {
-                return Observable.of(undefined);
+                return of(undefined);
             }
-            return latestResult.feedbacks ? Observable.of(latestResult) : this.loadAndAttachResultDetails(latestResult);
+            return latestResult.feedbacks ? of(latestResult) : this.loadAndAttachResultDetails(latestResult);
         } else if (this.participation && this.participation.id) {
             // Only load results if the exercise already is in our database, otherwise there can be no build result anyway
             return this.loadLatestResult();
         } else {
-            return Observable.of(undefined);
+            return of(undefined);
         }
     }
 
@@ -256,8 +256,8 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
      */
     loadLatestResult(): Observable<Result | undefined> {
         return this.programmingExerciseParticipationService.getLatestResultWithFeedback(this.participation.id!).pipe(
-            catchError(() => Observable.of(undefined)),
-            flatMap((latestResult: Result) => (latestResult && !latestResult.feedbacks ? this.loadAndAttachResultDetails(latestResult) : Observable.of(latestResult))),
+            catchError(() => of(undefined)),
+            flatMap((latestResult: Result) => (latestResult && !latestResult.feedbacks ? this.loadAndAttachResultDetails(latestResult) : of(latestResult))),
         );
     }
 
@@ -273,7 +273,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
                 result.feedbacks = feedbacks;
                 return result;
             }),
-            catchError(() => Observable.of(result)),
+            catchError(() => of(result)),
         );
     }
 
@@ -284,13 +284,13 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
      */
     loadInstructions(): Observable<string | undefined> {
         if (this.exercise.problemStatement) {
-            return Observable.of(this.exercise.problemStatement);
+            return of(this.exercise.problemStatement);
         } else {
             if (!this.participation.id) {
-                return Observable.of(undefined);
+                return of(undefined);
             }
             return this.repositoryFileService.get(this.participation.id, 'README.md').pipe(
-                catchError(() => Observable.of(undefined)),
+                catchError(() => of(undefined)),
                 // Old readme files contain chars instead of our domain command tags - replace them when loading the file
                 map((fileObj) => fileObj && fileObj.fileContent.replace(new RegExp(/✅/, 'g'), '[task]')),
             );

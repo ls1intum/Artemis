@@ -93,7 +93,7 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnInit, On
                     }),
                     catchError(() => {
                         this.rawBuildLogs = new BuildLogEntryArray();
-                        return Observable.of();
+                        return of();
                     }),
                 )
                 .subscribe(() => this.extractAnnotations());
@@ -159,7 +159,7 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnInit, On
                 catchError(() => {
                     this.onError.emit('failedToLoadBuildLogs');
                     this.rawBuildLogs = new BuildLogEntryArray();
-                    return Observable.of(undefined);
+                    return of(undefined);
                 }),
             )
             .subscribe(() => this.extractAnnotations());

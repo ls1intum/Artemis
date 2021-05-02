@@ -1,9 +1,9 @@
-import { Observable } from 'rxjs/Observable';
+import { of, empty } from 'rxjs';
 import { ICodeEditorRepositoryService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
 
 export class MockCodeEditorRepositoryService implements ICodeEditorRepositoryService {
-    getStatus = () => Observable.of({ repositoryStatus: 'CLEAN' });
-    commit = () => Observable.empty();
-    pull = () => Observable.empty();
-    resetRepository = () => Observable.empty();
+    getStatus = () => of({ repositoryStatus: 'CLEAN' });
+    commit = () => empty();
+    pull = () => empty();
+    resetRepository = () => empty();
 }

@@ -10,7 +10,7 @@ import { MockProvider } from 'ng-mocks';
 import { JhiAlertService } from 'ng-jhipster';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
-import { Observable, of } from 'rxjs';
+import { of } from 'rxjs';
 import { VideoUnit } from 'app/entities/lecture-unit/videoUnit.model';
 import * as moment from 'moment';
 import { HttpResponse } from '@angular/common/http';
@@ -49,7 +49,7 @@ describe('CreateVideoUnitComponent', () => {
                     useValue: {
                         parent: {
                             parent: {
-                                paramMap: Observable.of({
+                                paramMap: of({
                                     get: (key: string) => {
                                         switch (key) {
                                             case 'lectureId':
@@ -58,7 +58,7 @@ describe('CreateVideoUnitComponent', () => {
                                     },
                                 }),
                                 parent: {
-                                    paramMap: Observable.of({
+                                    paramMap: of({
                                         get: (key: string) => {
                                             switch (key) {
                                                 case 'courseId':

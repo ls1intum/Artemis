@@ -2,7 +2,7 @@ import { ActivatedRouteSnapshot, Resolve, RouterModule, Routes } from '@angular/
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { FileUploadExerciseDetailComponent } from './file-upload-exercise-detail.component';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
-import { Observable } from 'rxjs';
+import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { Injectable, NgModule } from '@angular/core';
 import { filter, map } from 'rxjs/operators';
@@ -50,7 +50,7 @@ export class FileUploadExerciseResolve implements Resolve<FileUploadExercise> {
                 );
             }
         }
-        return Observable.of(new FileUploadExercise(undefined, undefined));
+        return of(new FileUploadExercise(undefined, undefined));
     }
 }
 
