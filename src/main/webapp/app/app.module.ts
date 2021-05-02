@@ -26,7 +26,7 @@ import { OrionOutdatedComponent } from 'app/shared/orion/outdated-plugin-warning
 import { ArtemisTeamModule } from 'app/exercises/shared/team/team.module';
 import { LoadingNotificationComponent } from 'app/shared/notification/loading-notification/loading-notification.component';
 import { NotificationPopupComponent } from 'app/shared/notification/notification-popup/notification-popup.component';
-import { GradingSystemComponent } from './grading-system/grading-system.component';
+import { GradingSystemModule } from 'app/grading-system/grading-system.module';
 
 // NOTE: this module should only include the most important modules for normal users, all course management, admin and account functionality should be lazy loaded if possible
 @NgModule({
@@ -45,6 +45,7 @@ import { GradingSystemComponent } from './grading-system/grading-system.componen
         ArtemisSystemNotificationModule,
         ArtemisComplaintsModule,
         ArtemisHeaderExercisePageWithDetailsModule,
+        GradingSystemModule,
     ],
     declarations: [
         JhiMainComponent,
@@ -58,7 +59,6 @@ import { GradingSystemComponent } from './grading-system/grading-system.componen
         NotificationSidebarComponent,
         SystemNotificationComponent,
         LoadingNotificationComponent,
-        GradingSystemComponent,
     ],
     bootstrap: [JhiMainComponent],
 })

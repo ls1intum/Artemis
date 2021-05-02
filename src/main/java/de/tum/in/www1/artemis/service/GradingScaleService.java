@@ -79,11 +79,11 @@ public class GradingScaleService {
      */
     private void checkGradeStepValidity(Set<GradeStep> gradeSteps) {
         if (gradeSteps != null && !gradeSteps.isEmpty()) {
-            if (!gradeSteps.stream().allMatch(GradeStep::isValid)) {
-                throw new BadRequestAlertException("Not all grade steps are following the correct format.", "gradeStep", "invalidFormat");
+            if (!gradeSteps.stream().allMatch(GradeStep::checkValidity)) {
+                throw new BadRequestAlertException("Not all grade steps are following the correct format.", "gradeStep", "invalidGradeStepFormat");
             }
             else if (!gradeStepSetMapsToValidGradingScale(gradeSteps)) {
-                throw new BadRequestAlertException("Grade step set can't match to a valid grading scale.", "gradeStep", "invalidFormat");
+                throw new BadRequestAlertException("Grade step set can't match to a valid grading scale.", "gradeStep", "invalidGradeStepAdjacency");
             }
         }
     }

@@ -93,7 +93,7 @@ public class GradingScaleServiceTest extends AbstractSpringIntegrationBambooBitb
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testMatchPercentageToGradeStepValidMappingExists() {
         GradeStep expectedGradeStep = new GradeStep();
-        expectedGradeStep.setPassingGrade(true);
+        expectedGradeStep.setIsPassingGrade(true);
         expectedGradeStep.setGradeName("Pass");
         expectedGradeStep.setLowerBoundPercentage(60);
         expectedGradeStep.setUpperBoundPercentage(90);
@@ -116,7 +116,7 @@ public class GradingScaleServiceTest extends AbstractSpringIntegrationBambooBitb
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testSaveGradingScaleInvalidGradeStepsNoGradeName() {
         GradeStep gradeStep = new GradeStep();
-        gradeStep.setPassingGrade(true);
+        gradeStep.setIsPassingGrade(true);
         gradeStep.setGradeName("");
         gradeStep.setLowerBoundPercentage(90);
         gradeStep.setUpperBoundPercentage(100);
@@ -139,7 +139,7 @@ public class GradingScaleServiceTest extends AbstractSpringIntegrationBambooBitb
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testSaveGradingScaleInvalidGradeStepsInvalidPercentageValues() {
         GradeStep gradeStep = new GradeStep();
-        gradeStep.setPassingGrade(true);
+        gradeStep.setIsPassingGrade(true);
         gradeStep.setGradeName("Name");
         gradeStep.setLowerBoundPercentage(90);
         gradeStep.setUpperBoundPercentage(80);
