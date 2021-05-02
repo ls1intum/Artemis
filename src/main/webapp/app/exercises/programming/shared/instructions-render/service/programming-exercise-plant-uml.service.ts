@@ -3,6 +3,7 @@ import { SERVER_API_URL } from 'app/app.constants';
 import { HttpClient, HttpParameterCodec, HttpParams } from '@angular/common/http';
 import { Cacheable } from 'ts-cacheable';
 import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 
 @Injectable({ providedIn: 'root' })
 export class ProgrammingExercisePlantUmlService {
@@ -35,7 +36,7 @@ export class ProgrammingExercisePlantUmlService {
                 params: new HttpParams({ encoder: this.encoder }).set('plantuml', plantUml),
                 responseType: 'arraybuffer',
             })
-            .map((res) => this.convertPlantUmlResponseToBase64(res));
+            .pipe(map((res) => this.convertPlantUmlResponseToBase64(res)));
     }
 
     /**

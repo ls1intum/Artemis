@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
-import { Observable } from 'rxjs/Observable';
+import { Observable } from 'rxjs';
 import { SERVER_API_URL } from 'app/app.constants';
 import * as moment from 'moment';
 import { isMoment } from 'moment';
@@ -13,7 +13,7 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { ParticipationType } from 'app/entities/participation/participation.model';
 import { addUserIndependentRepositoryUrl } from 'app/overview/participation-utils';
-import { tap } from 'rxjs/operators';
+import { map, tap } from 'rxjs/operators';
 
 export type EntityResponseType = HttpResponse<Result>;
 export type EntityArrayResponseType = HttpResponse<Result[]>;
@@ -39,13 +39,13 @@ export class ResultService implements IResultService {
     find(resultId: number): Observable<EntityResponseType> {
         return this.http
             .get<Result>(`${this.resultResourceUrl}/${resultId}`, { observe: 'response' })
-            .map((res: EntityResponseType) => this.convertDateFromServer(res));
+            .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
     }
 
     findBySubmissionId(submissionId: number): Observable<EntityResponseType> {
         return this.http
             .get<Result>(`${this.resultResourceUrl}/submission/${submissionId}`, { observe: 'response' })
-            .map((res: EntityResponseType) => this.convertDateFromServer(res));
+            .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
     }
 
     getResultsForExercise(exerciseId: number, req?: any): Observable<EntityArrayResponseType> {
@@ -55,7 +55,7 @@ export class ResultService implements IResultService {
                 params: options,
                 observe: 'response',
             })
-            .map((res: EntityArrayResponseType) => this.convertArrayResponse(res));
+            .pipe(map((res: EntityArrayResponseType) => this.convertArrayResponse(res)));
     }
 
     getFeedbackDetailsForResult(resultId: number): Observable<HttpResponse<Feedback[]>> {

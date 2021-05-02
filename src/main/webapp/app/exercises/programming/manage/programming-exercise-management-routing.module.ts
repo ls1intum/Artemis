@@ -7,7 +7,7 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { map } from 'rxjs/operators';
 import { HttpResponse } from '@angular/common/http';
-import { Observable } from 'rxjs/Observable';
+import { of } from 'rxjs';
 import { ProgrammingExerciseConfigureGradingComponent } from 'app/exercises/programming/manage/grading/programming-exercise-configure-grading.component';
 import { CanDeactivateGuard } from 'app/shared/guard/can-deactivate.guard';
 import { Authority } from 'app/shared/constants/authority.constants';
@@ -22,7 +22,7 @@ export class ProgrammingExerciseResolve implements Resolve<ProgrammingExercise> 
         if (id) {
             return this.service.find(id).pipe(map((programmingExercise: HttpResponse<ProgrammingExercise>) => programmingExercise.body!));
         }
-        return Observable.of(new ProgrammingExercise(undefined, undefined));
+        return of(new ProgrammingExercise(undefined, undefined));
     }
 }
 

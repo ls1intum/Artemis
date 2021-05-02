@@ -1,7 +1,8 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { HttpResponse, HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
-import { Observable, of } from 'rxjs';
+import { of, throwError } from 'rxjs';
+
 import * as moment from 'moment';
 
 import { ArtemisTestModule } from '../../test.module';
@@ -88,7 +89,7 @@ describe('ProgrammingExercise Edit Selected Component', () => {
             comp.selectedProgrammingExercises = selectedProgrammingExercises;
             comp.newProgrammingExercise = newProgrammingExercise;
 
-            spyOn(programmingExerciseService, 'updateTimeline').and.returnValue(Observable.throwError(new HttpErrorResponse({ status: 500 })));
+            spyOn(programmingExerciseService, 'updateTimeline').and.returnValue(throwError(new HttpErrorResponse({ status: 500 })));
             spyOn(comp, 'closeModal');
             // WHEN
             comp.saveAll();

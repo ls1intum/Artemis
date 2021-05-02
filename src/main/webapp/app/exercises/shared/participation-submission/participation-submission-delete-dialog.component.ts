@@ -4,7 +4,7 @@ import { ActivatedRoute } from '@angular/router';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { JhiEventManager } from 'ng-jhipster';
 
-import { Subscription } from 'rxjs/Subscription';
+import { Subscription } from 'rxjs';
 import { ParticipationSubmissionPopupService } from 'app/exercises/shared/participation-submission/participation-submission-popup.service';
 import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
 

@@ -33,5 +33,9 @@ export const EVALUATE_QUIZ_EXAM = (courseId, examId) => `${EXAM(courseId, examId
 export const SUBMIT_EXAM = (courseId, examId) => `${EXAM(courseId, examId)}/student-exams/submit`;
 export const EXAM_CONDUCTION = (courseId, examId) => `${EXAM(courseId, examId)}/student-exams/conduction`;
 export const SUBMIT_TEXT_EXAM = (exerciseId) => `/exercises/${exerciseId}/text-submissions`;
-export const MODELING_EXERCISE = '/modeling-exercises';
+export const MODELING_EXERCISES = '/modeling-exercises';
+export const MODELING_EXERCISE = (exerciseId) => `/modeling-exercises/${exerciseId}`;
 export const SUBMIT_MODELING_EXAM = (exerciseId) => `/exercises/${exerciseId}/modeling-submissions`;
+export const TUTOR_PARTICIPATIONS = (exerciseId) => `/exercises/${exerciseId}/tutor-participations`;
+export const MODELING_SUBMISSION_WITHOUT_ASSESSMENT = (exerciseId) => `/exercises/${exerciseId}/modeling-submission-without-assessment?lock=true`;
+export const ASSESS_MODELING_SUBMISSION = (submissionId, resultId) => `/modeling-submissions/${submissionId}/result/${resultId}/assessment?submit=true`;

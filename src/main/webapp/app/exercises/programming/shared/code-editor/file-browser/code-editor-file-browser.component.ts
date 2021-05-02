@@ -1,6 +1,6 @@
 import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, ViewChild } from '@angular/core';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { Observable, Subscription, throwError } from 'rxjs';
+import { Observable, of, Subscription, throwError } from 'rxjs';
 import { catchError, map as rxMap, switchMap, tap } from 'rxjs/operators';
 import { compose, filter, fromPairs, toPairs } from 'lodash/fp';
 import { TreeviewComponent, TreeviewConfig, TreeviewHelper, TreeviewItem } from 'ngx-treeview';
@@ -182,7 +182,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
                     if (this.isTutorAssessment && this.highlightFileChanges) {
                         return this.loadFilesWithInformationAboutChange();
                     } else {
-                        return Observable.of(undefined);
+                        return of(undefined);
                     }
                 }),
                 tap((filesWithInfoAboutChange) => {
@@ -212,7 +212,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
                 // This should not happen, but needs to be done so that the compiler is satisfied.
                 return mappedCommitState || CommitState.COULD_NOT_BE_RETRIEVED;
             }),
-            catchError(() => Observable.of(CommitState.COULD_NOT_BE_RETRIEVED)),
+            catchError(() => of(CommitState.COULD_NOT_BE_RETRIEVED)),
         );
     };
 
