@@ -25,8 +25,13 @@ export class CourseCardComponent implements OnChanges {
         private exerciseService: ExerciseService,
     ) {}
 
+    /**
+     * returns the exercise with the earliest due date which is not yet successful (no 100%)
+     */
     ngOnChanges() {
-        this.nextRelevantExercise = this.exerciseService.getNextExerciseForDays(this.course.exercises!);
+        this.nextRelevantExercise = this.exerciseService.getNextExerciseForDays(
+            this.course.exercises!.filter((exercise: Exercise) => !exercise.studentParticipations?.[0]?.submissions?.[0]?.results?.[0]?.successful),
+        );
     }
 
     displayTotalRelativeScore(): number {
