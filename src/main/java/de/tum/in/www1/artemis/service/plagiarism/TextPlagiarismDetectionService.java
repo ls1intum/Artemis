@@ -7,12 +7,14 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.util.FileSystemUtils;
 
+import de.tum.in.www1.artemis.domain.PlagiarismCheckState;
 import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.TextSubmission;
 import de.tum.in.www1.artemis.domain.User;
@@ -31,8 +33,11 @@ public class TextPlagiarismDetectionService {
 
     private final TextSubmissionExportService textSubmissionExportService;
 
-    public TextPlagiarismDetectionService(TextSubmissionExportService textSubmissionExportService) {
+    private final PlagiarismWebsocketService plagiarismWebsocketService;
+
+    public TextPlagiarismDetectionService(TextSubmissionExportService textSubmissionExportService, PlagiarismWebsocketService plagiarismWebsocketService) {
         this.textSubmissionExportService = textSubmissionExportService;
+        this.plagiarismWebsocketService = plagiarismWebsocketService;
     }
 
     /**
@@ -68,6 +73,7 @@ public class TextPlagiarismDetectionService {
      */
     public TextPlagiarismResult checkPlagiarism(TextExercise textExercise, float similarityThreshold, int minimumScore, int minimumSize) throws ExitException {
         long start = System.nanoTime();
+        String topic = plagiarismWebsocketService.getTextExercisePlagiarismCheckTopic(textExercise.getId());
 
         // TODO: why do we have such a strange folder name?
         final var submissionsFolderName = "./tmp/submissions";
@@ -87,7 +93,10 @@ public class TextPlagiarismDetectionService {
             return textPlagiarismResult;
         }
 
+        AtomicInteger processedSubmissionCount = new AtomicInteger(1);
         textSubmissions.forEach(submission -> {
+            var progressMessage = "Getting submission: " + processedSubmissionCount + "/" + textSubmissions.size();
+            plagiarismWebsocketService.notifyUserAboutPlagiarismState(topic, PlagiarismCheckState.RUNNING, List.of(progressMessage));
             submission.setResults(new ArrayList<>());
 
             StudentParticipation participation = (StudentParticipation) submission.getParticipation();
@@ -102,6 +111,8 @@ public class TextPlagiarismDetectionService {
             catch (IOException e) {
                 log.error(e.getMessage());
             }
+
+            processedSubmissionCount.getAndIncrement();
         });
 
         log.info("Saving text submissions done");
@@ -116,18 +127,19 @@ public class TextPlagiarismDetectionService {
         log.info("Start JPlag Text comparison");
         JPlag jplag = new JPlag(options);
         JPlagResult jPlagResult = jplag.run();
-        log.info("JPlag Text comparison finished with {} comparisons", jPlagResult.getComparisons().size());
+        log.info("JPlag Text comparison finished with {} comparisons. Will limit the number of comparisons to 500", jPlagResult.getComparisons().size());
 
         log.info("Delete submission folder");
         if (submissionFolderFile.exists()) {
             FileSystemUtils.deleteRecursively(submissionFolderFile);
         }
 
-        TextPlagiarismResult textPlagiarismResult = new TextPlagiarismResult(jPlagResult);
+        TextPlagiarismResult textPlagiarismResult = new TextPlagiarismResult();
+        textPlagiarismResult.convertJPlagResult(jPlagResult);
         textPlagiarismResult.setExercise(textExercise);
 
         log.info("JPlag text comparison for {} submissions done in {}", submissionsSize, TimeLogUtil.formatDurationFrom(start));
-
+        plagiarismWebsocketService.notifyUserAboutPlagiarismState(topic, PlagiarismCheckState.COMPLETED, List.of());
         return textPlagiarismResult;
     }
 }

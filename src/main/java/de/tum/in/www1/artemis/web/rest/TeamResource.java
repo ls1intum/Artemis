@@ -346,14 +346,14 @@ public class TeamResource {
      * @return the ResponseEntity with status 200 (OK) and the list of created teams in body
      */
     @PutMapping("/exercises/{exerciseId}/teams/import-from-list")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<List<Team>> importTeamsFromList(@PathVariable long exerciseId, @RequestBody List<Team> teams, @RequestParam TeamImportStrategyType importStrategyType) {
         log.debug("REST request import given teams into destination exercise with id {}", exerciseId);
 
         User user = userRepository.getUserWithGroupsAndAuthorities();
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
 
-        if (!authCheckService.isAtLeastInstructorForExercise(exercise, user)) {
+        if (!authCheckService.isAtLeastEditorForExercise(exercise, user)) {
             return forbidden();
         }
 
@@ -388,7 +388,7 @@ public class TeamResource {
      * @return the ResponseEntity with status 200 (OK) and the list of created teams in body
      */
     @PutMapping("/exercises/{destinationExerciseId}/teams/import-from-exercise/{sourceExerciseId}")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<List<Team>> importTeamsFromSourceExercise(@PathVariable long destinationExerciseId, @PathVariable long sourceExerciseId,
             @RequestParam TeamImportStrategyType importStrategyType) {
         log.debug("REST request import all teams from source exercise with id {} into destination exercise with id {}", sourceExerciseId, destinationExerciseId);
@@ -396,7 +396,7 @@ public class TeamResource {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         Exercise destinationExercise = exerciseRepository.findByIdElseThrow(destinationExerciseId);
 
-        if (!authCheckService.isAtLeastInstructorForExercise(destinationExercise, user)) {
+        if (!authCheckService.isAtLeastEditorForExercise(destinationExercise, user)) {
             return forbidden();
         }
         if (destinationExerciseId == sourceExerciseId) {

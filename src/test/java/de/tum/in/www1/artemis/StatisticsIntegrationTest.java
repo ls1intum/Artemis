@@ -34,7 +34,7 @@ public class StatisticsIntegrationTest extends AbstractSpringIntegrationBambooBi
 
     @BeforeEach
     public void initTestCase() {
-        database.addUsers(12, 10, 10);
+        database.addUsers(12, 10, 0, 10);
 
         course = database.addCourseWithOneModelingExercise();
         var now = ZonedDateTime.now();

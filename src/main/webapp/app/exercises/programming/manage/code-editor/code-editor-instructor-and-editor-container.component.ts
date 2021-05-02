@@ -16,9 +16,9 @@ import { IncludedInOverallScore } from 'app/entities/exercise.model';
 
 @Component({
     selector: 'jhi-code-editor-instructor',
-    templateUrl: './code-editor-instructor-container.component.html',
+    templateUrl: './code-editor-instructor-and-editor-container.component.html',
 })
-export class CodeEditorInstructorContainerComponent extends CodeEditorInstructorBaseContainerComponent {
+export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorInstructorBaseContainerComponent {
     @ViewChild(UpdatingResultComponent, { static: false }) resultComp: UpdatingResultComponent;
     @ViewChild(ProgrammingExerciseEditableInstructionComponent, { static: false }) editableInstructions: ProgrammingExerciseEditableInstructionComponent;
 

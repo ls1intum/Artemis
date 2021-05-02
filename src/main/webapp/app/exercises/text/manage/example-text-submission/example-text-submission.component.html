@@ -9,7 +9,7 @@
             </h2>
         </div>
 
-        <div class="col-4 text-right" *ngIf="isAtLeastInstructor && !readOnly && !toComplete && exercise">
+        <div class="col-4 text-right" *ngIf="isAtLeastEditor && !readOnly && !toComplete && exercise">
             <div class="row">
                 <div class="form-check col-12 align-baseline">
                     <input
@@ -96,7 +96,7 @@
         *ngIf="state.ui === UIStates.ASSESSMENT"
         [submission]="submission!"
         [(textBlockRefs)]="textBlockRefs"
-        [readOnly]="readOnly || (!isAtLeastInstructor && !toComplete)"
+        [readOnly]="readOnly || (!isAtLeastEditor && !toComplete)"
         (textBlockRefsChange)="validateFeedback()"
         (textBlockRefsAddedRemoved)="recalculateTextBlockRefs()"
     ></jhi-text-assessment-area>

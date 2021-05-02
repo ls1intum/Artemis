@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.service;
+package de.tum.in.www1.artemis.programmingexercise;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -26,7 +26,7 @@ class ProgrammingExerciseServiceTest extends AbstractSpringIntegrationBambooBitb
 
     @BeforeEach
     void init() {
-        database.addUsers(0, 0, 2);
+        database.addUsers(0, 0, 0, 2);
         database.addCourseWithOneProgrammingExercise();
         database.addCourseWithOneProgrammingExercise();
 

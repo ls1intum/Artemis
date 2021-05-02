@@ -90,33 +90,35 @@ public class GroupNotificationService {
     }
 
     /**
-     * Notify instructor groups about an exercise update.
+     * Notify editor and instructor groups about an exercise update.
      *
      * @param exercise         that has been updated
      * @param notificationText that should be displayed
      */
-    public void notifyInstructorGroupAboutExerciseUpdate(Exercise exercise, String notificationText) {
+    public void notifyEditorAndInstructorGroupAboutExerciseUpdate(Exercise exercise, String notificationText) {
+        saveAndSend(createNotification(exercise, null, GroupNotificationType.EDITOR, NotificationType.EXERCISE_UPDATED, notificationText));
         saveAndSend(createNotification(exercise, null, GroupNotificationType.INSTRUCTOR, NotificationType.EXERCISE_UPDATED, notificationText));
     }
 
     /**
-     * Notify tutor and instructor groups about a new question in an exercise.
+     * Notify tutor, editor and instructor groups about a new question in an exercise.
      *
      * @param studentQuestion that has been posted
      */
-    public void notifyTutorAndInstructorGroupAboutNewQuestionForExercise(StudentQuestion studentQuestion) {
+    public void notifyTutorAndEditorAndInstructorGroupAboutNewQuestionForExercise(StudentQuestion studentQuestion) {
         saveAndSend(createNotification(studentQuestion, userRepository.getUser(), GroupNotificationType.TA, NotificationType.NEW_QUESTION_FOR_EXERCISE));
+        saveAndSend(createNotification(studentQuestion, userRepository.getUser(), GroupNotificationType.EDITOR, NotificationType.NEW_QUESTION_FOR_EXERCISE));
         saveAndSend(createNotification(studentQuestion, userRepository.getUser(), GroupNotificationType.INSTRUCTOR, NotificationType.NEW_QUESTION_FOR_EXERCISE));
     }
 
     /**
-     * Notify instructor and tutor groups about duplicate test cases.
+     * Notify editor and instructor groups about duplicate test cases.
      *
      * @param exercise         that has been updated
      * @param notificationText that should be displayed
      */
-    public void notifyInstructorGroupAboutDuplicateTestCasesForExercise(Exercise exercise, String notificationText) {
-        saveAndSend(createNotification(exercise, null, GroupNotificationType.TA, NotificationType.DUPLICATE_TEST_CASE, notificationText));
+    public void notifyEditorAndInstructorGroupAboutDuplicateTestCasesForExercise(Exercise exercise, String notificationText) {
+        saveAndSend(createNotification(exercise, null, GroupNotificationType.EDITOR, NotificationType.DUPLICATE_TEST_CASE, notificationText));
         saveAndSend(createNotification(exercise, null, GroupNotificationType.INSTRUCTOR, NotificationType.DUPLICATE_TEST_CASE, notificationText));
     }
 
@@ -132,32 +134,35 @@ public class GroupNotificationService {
     }
 
     /**
-     * Notify tutor and instructor groups about a new question in a lecture.
+     * Notify tutor, editor and instructor groups about a new question in a lecture.
      *
      * @param studentQuestion that has been posted
      */
-    public void notifyTutorAndInstructorGroupAboutNewQuestionForLecture(StudentQuestion studentQuestion) {
+    public void notifyTutorAndEditorAndInstructorGroupAboutNewQuestionForLecture(StudentQuestion studentQuestion) {
         saveAndSend(createNotification(studentQuestion, userRepository.getUser(), GroupNotificationType.TA, NotificationType.NEW_QUESTION_FOR_LECTURE));
+        saveAndSend(createNotification(studentQuestion, userRepository.getUser(), GroupNotificationType.EDITOR, NotificationType.NEW_QUESTION_FOR_LECTURE));
         saveAndSend(createNotification(studentQuestion, userRepository.getUser(), GroupNotificationType.INSTRUCTOR, NotificationType.NEW_QUESTION_FOR_LECTURE));
     }
 
     /**
-     * Notify tutor and instructor groups about a new answer for an exercise.
+     * Notify tutor, editor and instructor groups about a new answer for an exercise.
      *
      * @param studentQuestionAnswer that has been submitted for a question
      */
-    public void notifyTutorAndInstructorGroupAboutNewAnswerForExercise(StudentQuestionAnswer studentQuestionAnswer) {
+    public void notifyTutorAndEditorAndInstructorGroupAboutNewAnswerForExercise(StudentQuestionAnswer studentQuestionAnswer) {
         saveAndSend(createNotification(studentQuestionAnswer, userRepository.getUser(), GroupNotificationType.TA, NotificationType.NEW_ANSWER_FOR_EXERCISE));
+        saveAndSend(createNotification(studentQuestionAnswer, userRepository.getUser(), GroupNotificationType.EDITOR, NotificationType.NEW_ANSWER_FOR_EXERCISE));
         saveAndSend(createNotification(studentQuestionAnswer, userRepository.getUser(), GroupNotificationType.INSTRUCTOR, NotificationType.NEW_ANSWER_FOR_EXERCISE));
     }
 
     /**
-     * Notify tutor and instructor groups about a new answer for a lecture.
+     * Notify tutor, editor and instructor groups about a new answer for a lecture.
      *
      * @param studentQuestionAnswer that has been submitted for a question
      */
-    public void notifyTutorAndInstructorGroupAboutNewAnswerForLecture(StudentQuestionAnswer studentQuestionAnswer) {
+    public void notifyTutorAndEditorAndInstructorGroupAboutNewAnswerForLecture(StudentQuestionAnswer studentQuestionAnswer) {
         saveAndSend(createNotification(studentQuestionAnswer, userRepository.getUser(), GroupNotificationType.TA, NotificationType.NEW_ANSWER_FOR_LECTURE));
+        saveAndSend(createNotification(studentQuestionAnswer, userRepository.getUser(), GroupNotificationType.EDITOR, NotificationType.NEW_ANSWER_FOR_LECTURE));
         saveAndSend(createNotification(studentQuestionAnswer, userRepository.getUser(), GroupNotificationType.INSTRUCTOR, NotificationType.NEW_ANSWER_FOR_LECTURE));
     }
 

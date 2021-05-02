@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.util;
+package de.tum.in.www1.artemis.programmingexercise;
 
 import static de.tum.in.www1.artemis.config.Constants.PROGRAMMING_SUBMISSION_RESOURCE_API_PATH;
 import static de.tum.in.www1.artemis.domain.enumeration.ExerciseMode.TEAM;
@@ -19,6 +19,7 @@ import java.util.stream.Collectors;
 
 import org.awaitility.Awaitility;
 import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.diff.DiffEntry;
 import org.eclipse.jgit.lib.ObjectReader;
 import org.eclipse.jgit.lib.Repository;
@@ -39,7 +40,6 @@ import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.participation.Participant;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.exception.VersionControlException;
-import de.tum.in.www1.artemis.programmingexercise.MockDelegate;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.ParticipationService;
@@ -48,7 +48,9 @@ import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildResultDTO;
 import de.tum.in.www1.artemis.service.programming.ProgrammingLanguageFeature;
+import de.tum.in.www1.artemis.service.scheduled.AutomaticProgrammingExerciseCleanupService;
 import de.tum.in.www1.artemis.service.user.PasswordService;
+import de.tum.in.www1.artemis.util.*;
 import de.tum.in.www1.artemis.util.GitUtilService.MockFileRepositoryUrl;
 import de.tum.in.www1.artemis.web.rest.ParticipationResource;
 
@@ -82,6 +84,9 @@ public class ProgrammingExerciseTestService {
     private CourseRepository courseRepository;
 
     @Autowired
+    private ExamRepository examRepository;
+
+    @Autowired
     private StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository;
 
     @Autowired
@@ -104,7 +109,10 @@ public class ProgrammingExerciseTestService {
     private PasswordService passwordService;
 
     @Autowired
-    ZipFileTestUtilService zipFileTestUtilService;
+    private ZipFileTestUtilService zipFileTestUtilService;
+
+    @Autowired(required = false)
+    private AutomaticProgrammingExerciseCleanupService automaticProgrammingExerciseCleanupService;
 
     @Value("${artemis.lti.user-prefix-edx:#{null}}")
     private Optional<String> userPrefixEdx;
@@ -115,15 +123,15 @@ public class ProgrammingExerciseTestService {
 
     public ProgrammingExercise examExercise;
 
-    public static final int numberOfStudents = 2;
+    public static final int numberOfStudents = 12;
 
     public static final String studentLogin = "student1";
 
     public static final String teamShortName = "team1";
 
-    public static final String REPOBASEURL = "/api/repository/";
+    public static final String REPO_BASE_URL = "/api/repository/";
 
-    public static final String PARTICIPATIONBASEURL = "/api/participations/";
+    public static final String PARTICIPATION_BASE_URL = "/api/participations/";
 
     public LocalRepository exerciseRepo = new LocalRepository();
 
@@ -145,8 +153,8 @@ public class ProgrammingExerciseTestService {
 
     private MockDelegate mockDelegate;
 
-    public List<User> setupTestUsers(int numberOfStudents, int numberOfTutors, int numberOfInstructors) {
-        return database.addUsers(ProgrammingExerciseTestService.numberOfStudents + numberOfStudents, numberOfTutors + 1, numberOfInstructors + 1);
+    public List<User> setupTestUsers(int numberOfStudents, int numberOfTutors, int numberOfEditors, int numberOfInstructors) {
+        return database.addUsers(ProgrammingExerciseTestService.numberOfStudents + numberOfStudents, numberOfTutors + 1, numberOfEditors + 1, numberOfInstructors + 1);
     }
 
     public void setup(MockDelegate mockDelegate, VersionControlService versionControlService, ContinuousIntegrationService continuousIntegrationService) throws Exception {
@@ -172,7 +180,7 @@ public class ProgrammingExerciseTestService {
         setupRepositoryMocksParticipant(exercise, teamShortName, studentTeamRepo);
     }
 
-    public void tearDown() throws IOException {
+    public void tearDown() throws Exception {
         database.resetDatabase();
         exerciseRepo.resetLocalRepo();
         testRepo.resetLocalRepo();
@@ -765,36 +773,36 @@ public class ProgrammingExerciseTestService {
 
     // Test
     public void exportInstructorRepositories_shouldReturnFile() throws Exception {
-        var zip = exportInstructorRepository("TEMPLATE", sourceExerciseRepo.localRepoFile.toPath(), HttpStatus.OK);
+        String zip = exportInstructorRepository("TEMPLATE", exerciseRepo, HttpStatus.OK);
         assertThat(zip).isNotNull();
 
-        zip = exportInstructorRepository("SOLUTION", sourceSolutionRepo.localRepoFile.toPath(), HttpStatus.OK);
+        zip = exportInstructorRepository("SOLUTION", solutionRepo, HttpStatus.OK);
         assertThat(zip).isNotNull();
 
-        zip = exportInstructorRepository("TESTS", sourceTestRepo.localRepoFile.toPath(), HttpStatus.OK);
+        zip = exportInstructorRepository("TESTS", testRepo, HttpStatus.OK);
         assertThat(zip).isNotNull();
 
     }
 
     // Test
     public void exportInstructorRepositories_forbidden() throws Exception {
-        exportInstructorRepository("TEMPLATE", sourceExerciseRepo.localRepoFile.toPath(), HttpStatus.FORBIDDEN);
-        exportInstructorRepository("SOLUTION", sourceSolutionRepo.localRepoFile.toPath(), HttpStatus.FORBIDDEN);
-        exportInstructorRepository("TESTS", sourceTestRepo.localRepoFile.toPath(), HttpStatus.FORBIDDEN);
+        exportInstructorRepository("TEMPLATE", exerciseRepo, HttpStatus.FORBIDDEN);
+        exportInstructorRepository("SOLUTION", solutionRepo, HttpStatus.FORBIDDEN);
+        exportInstructorRepository("TESTS", testRepo, HttpStatus.FORBIDDEN);
     }
 
-    private String exportInstructorRepository(String repositoryType, Path localPathToRepository, HttpStatus expectedStatus) throws Exception {
+    private String exportInstructorRepository(String repositoryType, LocalRepository localRepository, HttpStatus expectedStatus) throws Exception {
         exercise = programmingExerciseRepository.save(exercise);
         exercise = database.addTemplateParticipationForProgrammingExercise(exercise);
         exercise = database.addSolutionParticipationForProgrammingExercise(exercise);
         exercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationById(exercise.getId()).get();
 
         var vcsUrl = exercise.getRepositoryURL(RepositoryType.valueOf(repositoryType));
-        var repository = gitService.getExistingCheckedOutRepositoryByLocalPath(localPathToRepository, null);
+        Repository repository = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepository.localRepoFile.toPath(), null);
+        createAndCommitDummyFileInLocalRepository(localRepository, "some-file.java");
         doReturn(repository).when(gitService).getOrCheckoutRepository(eq(vcsUrl), anyString(), anyBoolean());
 
         var url = "/api/programming-exercises/" + exercise.getId() + "/export-instructor-repository/" + repositoryType;
-        // return request.postWithResponseBodyFile(url, null, expectedStatus);
         return request.get(url, expectedStatus, String.class);
     }
 
@@ -805,32 +813,34 @@ public class ProgrammingExerciseTestService {
         course.setExercises(Set.of(exercise));
         courseRepository.save(course);
 
+        // Create a programming exercise with solution, template, and tests participations
         exercise = programmingExerciseRepository.save(exercise);
         exercise = database.addTemplateParticipationForProgrammingExercise(exercise);
         exercise = database.addSolutionParticipationForProgrammingExercise(exercise);
         database.addTestCasesToProgrammingExercise(exercise);
 
+        // Add student participation
         exercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationById(exercise.getId()).get();
         var participation = database.addStudentParticipationForProgrammingExercise(exercise, studentLogin);
 
         // Mock student repo
         var studentRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(studentRepo.localRepoFile.toPath(), null);
-        createDummyFileInLocalRepository(studentRepo, "HelloWorld.java");
+        createAndCommitDummyFileInLocalRepository(studentRepo, "HelloWorld.java");
         doReturn(studentRepository).when(gitService).getOrCheckoutRepository(eq(participation.getVcsRepositoryUrl()), anyString(), anyBoolean());
 
         // Mock template repo
-        var templateRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(sourceExerciseRepo.localRepoFile.toPath(), null);
-        createDummyFileInLocalRepository(studentRepo, "Template.java");
+        Repository templateRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(exerciseRepo.localRepoFile.toPath(), null);
+        createAndCommitDummyFileInLocalRepository(exerciseRepo, "Template.java");
         doReturn(templateRepository).when(gitService).getOrCheckoutRepository(eq(exercise.getRepositoryURL(RepositoryType.TEMPLATE)), anyString(), anyBoolean());
 
         // Mock solution repo
-        var solutionRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(sourceSolutionRepo.localRepoFile.toPath(), null);
-        createDummyFileInLocalRepository(studentRepo, "Solution.java");
+        Repository solutionRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(solutionRepo.localRepoFile.toPath(), null);
+        createAndCommitDummyFileInLocalRepository(solutionRepo, "Solution.java");
         doReturn(solutionRepository).when(gitService).getOrCheckoutRepository(eq(exercise.getRepositoryURL(RepositoryType.SOLUTION)), anyString(), anyBoolean());
 
         // Mock tests repo
-        var testsRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(sourceTestRepo.localRepoFile.toPath(), null);
-        createDummyFileInLocalRepository(studentRepo, "Tests.java");
+        Repository testsRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(testRepo.localRepoFile.toPath(), null);
+        createAndCommitDummyFileInLocalRepository(testRepo, "Tests.java");
         doReturn(testsRepository).when(gitService).getOrCheckoutRepository(eq(exercise.getRepositoryURL(RepositoryType.TESTS)), anyString(), anyBoolean());
 
         request.put("/api/courses/" + course.getId() + "/archive", null, HttpStatus.OK);
@@ -838,13 +848,25 @@ public class ProgrammingExerciseTestService {
 
         var updatedCourse = courseRepository.findByIdElseThrow(course.getId());
         assertThat(updatedCourse.getCourseArchivePath()).isNotEmpty();
+
     }
 
-    public void createDummyFileInLocalRepository(LocalRepository localRepository, String filename) throws IOException {
+    /**
+     * Creates a dummy file in the repository and commits it locally
+     * without pushing it.
+     *
+     * @param localRepository the repository
+     * @param filename the file to create
+     * @throws IOException when the file cannot be created
+     * @throws GitAPIException when git can't add or commit the file
+     */
+    public void createAndCommitDummyFileInLocalRepository(LocalRepository localRepository, String filename) throws IOException, GitAPIException {
         var file = Path.of(localRepository.localRepoFile.toPath().toString(), filename);
         if (!Files.exists(file)) {
             Files.createFile(file);
         }
+        localRepository.localGit.add().addFilepattern(file.getFileName().toString()).call();
+        localRepository.localGit.commit().setMessage("Added testfile").call();
     }
 
     // Test
@@ -932,7 +954,7 @@ public class ProgrammingExerciseTestService {
         var logs = List.of(log1, log2, log3, log4, log5, log6, log7, log8, log9, log10);
         // get the failed build log
         mockDelegate.mockGetBuildLogs(participation, logs);
-        var buildLogs = request.get(REPOBASEURL + participation.getId() + "/buildlogs", HttpStatus.OK, List.class);
+        var buildLogs = request.get(REPO_BASE_URL + participation.getId() + "/buildlogs", HttpStatus.OK, List.class);
 
         assertThat(participation.getInitializationState()).as("Participation should be initialized").isEqualTo(InitializationState.INITIALIZED);
         // some build logs have been filtered out
@@ -953,7 +975,7 @@ public class ProgrammingExerciseTestService {
         mockDelegate.resetMockProvider();
         mockDelegate.mockRetrieveArtifacts(participation);
 
-        var artifact = request.get(PARTICIPATIONBASEURL + participation.getId() + "/buildArtifact", HttpStatus.OK, byte[].class);
+        var artifact = request.get(PARTICIPATION_BASE_URL + participation.getId() + "/buildArtifact", HttpStatus.OK, byte[].class);
 
         assertThat(participation.getInitializationState()).as("Participation should be initialized").isEqualTo(InitializationState.INITIALIZED);
         assertThat(artifact).as("No build artifact available for this plan").isEmpty();
@@ -1132,6 +1154,116 @@ public class ProgrammingExerciseTestService {
             // We cannot compare exception messages because each vcs has their own. Maybe simply checking that the exception is not empty is enough?
             assertThat(e.getMessage()).isNotEmpty();
         }
+    }
+
+    // TEST
+    public void automaticCleanupBuildPlans() throws Exception {
+        exercise = programmingExerciseRepository.save(exercise);
+        examExercise = programmingExerciseRepository.save(examExercise);
+
+        var exercise2 = ModelFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(5), ZonedDateTime.now().minusDays(4), course);
+        exercise2.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().plusDays(1));
+        exercise2 = programmingExerciseRepository.save(exercise2);
+
+        var exercise3 = ModelFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(5), ZonedDateTime.now().minusDays(4), course);
+        exercise3.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().minusDays(3));
+        exercise3 = programmingExerciseRepository.save(exercise3);
+
+        var exercise4 = ModelFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(5), ZonedDateTime.now().minusDays(4), course);
+        exercise4.setPublishBuildPlanUrl(true);
+        exercise4 = programmingExerciseRepository.save(exercise4);
+
+        // Note participationXa will always be cleaned up, while participationXb will NOT be cleaned up
+
+        // SuccessfulLatestResultAfter1Days
+        var participation1a = createProgrammingParticipationWithSubmissionAndResult(exercise, "student1", 100D, ZonedDateTime.now().minusDays(2), true);
+        var participation1b = createProgrammingParticipationWithSubmissionAndResult(exercise, "student2", 100D, ZonedDateTime.now().minusHours(6), true);
+        // UnsuccessfulLatestResultAfter5Days
+        var participation2a = createProgrammingParticipationWithSubmissionAndResult(exercise, "student3", 80D, ZonedDateTime.now().minusDays(6), true);
+        var participation2b = createProgrammingParticipationWithSubmissionAndResult(exercise, "student4", 80D, ZonedDateTime.now().minusDays(4), true);
+        // NoResultAfter3Days
+        var participation3a = createProgrammingParticipationWithSubmissionAndResult(exercise, "student5", 80D, ZonedDateTime.now().minusDays(6), false);
+        participation3a.setInitializationDate(ZonedDateTime.now().minusDays(4));
+        var participation3b = createProgrammingParticipationWithSubmissionAndResult(exercise, "student6", 80D, ZonedDateTime.now().minusDays(6), false);
+        participation3b.setInitializationDate(ZonedDateTime.now().minusDays(2));
+
+        var participation4b = createProgrammingParticipationWithSubmissionAndResult(examExercise, "student7", 80D, ZonedDateTime.now().minusDays(6), false);
+        var participation5b = createProgrammingParticipationWithSubmissionAndResult(examExercise, "student8", 80D, ZonedDateTime.now().minusDays(6), false);
+        participation5b.setBuildPlanId(null);
+
+        var participation6b = createProgrammingParticipationWithSubmissionAndResult(examExercise, "student9", 80D, ZonedDateTime.now().minusDays(6), false);
+        participation6b.setParticipant(null);
+
+        var participation7a = createProgrammingParticipationWithSubmissionAndResult(exercise3, "student10", 80D, ZonedDateTime.now().minusDays(4), true);
+        var participation7b = createProgrammingParticipationWithSubmissionAndResult(exercise2, "student11", 80D, ZonedDateTime.now().minusDays(4), true);
+
+        var participation8b = createProgrammingParticipationWithSubmissionAndResult(exercise4, "student12", 100D, ZonedDateTime.now().minusDays(6), true);
+
+        programmingExerciseStudentParticipationRepository.saveAll(Set.of(participation3a, participation3b, participation5b, participation6b));
+
+        mockDelegate.mockDeleteBuildPlan(exercise.getProjectKey(), exercise.getProjectKey() + "-" + participation1a.getParticipantIdentifier().toUpperCase(), false);
+        mockDelegate.mockDeleteBuildPlan(exercise.getProjectKey(), exercise.getProjectKey() + "-" + participation2a.getParticipantIdentifier().toUpperCase(), false);
+        mockDelegate.mockDeleteBuildPlan(exercise.getProjectKey(), exercise.getProjectKey() + "-" + participation3a.getParticipantIdentifier().toUpperCase(), false);
+        mockDelegate.mockDeleteBuildPlan(exercise3.getProjectKey(), exercise3.getProjectKey() + "-" + participation7a.getParticipantIdentifier().toUpperCase(), false);
+        automaticProgrammingExerciseCleanupService.cleanup(); // this call won't do it, because of the missing profile, we execute it anyway to cover at least some code
+        automaticProgrammingExerciseCleanupService.cleanupBuildPlansOnContinuousIntegrationServer();
+
+        assertThat(programmingExerciseStudentParticipationRepository.findByIdElseThrow(participation1a.getId()).getBuildPlanId()).isNull();
+        assertThat(programmingExerciseStudentParticipationRepository.findByIdElseThrow(participation1b.getId()).getBuildPlanId()).isNotNull();
+
+        assertThat(programmingExerciseStudentParticipationRepository.findByIdElseThrow(participation2a.getId()).getBuildPlanId()).isNull();
+        assertThat(programmingExerciseStudentParticipationRepository.findByIdElseThrow(participation2b.getId()).getBuildPlanId()).isNotNull();
+
+        assertThat(programmingExerciseStudentParticipationRepository.findByIdElseThrow(participation3a.getId()).getBuildPlanId()).isNull();
+        assertThat(programmingExerciseStudentParticipationRepository.findByIdElseThrow(participation3b.getId()).getBuildPlanId()).isNotNull();
+
+        assertThat(programmingExerciseStudentParticipationRepository.findByIdElseThrow(participation4b.getId()).getBuildPlanId()).isNotNull();
+        assertThat(programmingExerciseStudentParticipationRepository.findByIdElseThrow(participation5b.getId()).getBuildPlanId()).isNull(); // was already null before
+        assertThat(programmingExerciseStudentParticipationRepository.findByIdElseThrow(participation6b.getId()).getBuildPlanId()).isNotNull();
+
+        assertThat(programmingExerciseStudentParticipationRepository.findByIdElseThrow(participation7a.getId()).getBuildPlanId()).isNull();
+        assertThat(programmingExerciseStudentParticipationRepository.findByIdElseThrow(participation7b.getId()).getBuildPlanId()).isNotNull();
+
+        assertThat(programmingExerciseStudentParticipationRepository.findByIdElseThrow(participation8b.getId()).getBuildPlanId()).isNotNull();
+    }
+
+    private ProgrammingExerciseStudentParticipation createProgrammingParticipationWithSubmissionAndResult(ProgrammingExercise exercise, String studentLogin, double score,
+            ZonedDateTime submissionDate, boolean withResult) {
+        var programmingSubmission = ModelFactory.generateProgrammingSubmission(true, "abcde", SubmissionType.MANUAL, submissionDate);
+        programmingSubmission = database.addProgrammingSubmission(exercise, programmingSubmission, studentLogin);
+        if (withResult) {
+            database.addResultToParticipation(AssessmentType.AUTOMATIC, submissionDate, programmingSubmission.getParticipation(), score >= 100D, true, 100D);
+        }
+        return (ProgrammingExerciseStudentParticipation) programmingSubmission.getParticipation();
+    }
+
+    // TEST
+    public void automaticCleanupGitRepositories() {
+        var startDate = ZonedDateTime.now().minusWeeks(15L);
+        var endDate = startDate.plusDays(5L);
+        exercise.setReleaseDate(startDate);
+        exercise.setDueDate(endDate);
+        exercise = programmingExerciseRepository.save(exercise);
+        exercise.getCourseViaExerciseGroupOrCourseMember().setStartDate(startDate);
+        exercise.getCourseViaExerciseGroupOrCourseMember().setEndDate(endDate);
+        courseRepository.save(exercise.getCourseViaExerciseGroupOrCourseMember());
+
+        examExercise = programmingExerciseRepository.save(examExercise);
+        examExercise.getExerciseGroup().getExam().setStartDate(startDate);
+        examExercise.getExerciseGroup().getExam().setEndDate(endDate);
+        examRepository.save(examExercise.getExerciseGroup().getExam());
+
+        var allProgrammingExercises = programmingExerciseRepository.findAll();
+        assertThat(allProgrammingExercises).hasSize(2);
+
+        createProgrammingParticipationWithSubmissionAndResult(exercise, "student1", 100D, ZonedDateTime.now().minusDays(2L), false);
+        createProgrammingParticipationWithSubmissionAndResult(exercise, "student2", 80D, ZonedDateTime.now().minusDays(6L), false);
+
+        createProgrammingParticipationWithSubmissionAndResult(examExercise, "student3", 100D, ZonedDateTime.now().minusDays(2L), false);
+        createProgrammingParticipationWithSubmissionAndResult(examExercise, "student4", 80D, ZonedDateTime.now().minusDays(6L), false);
+
+        automaticProgrammingExerciseCleanupService.cleanupGitRepositoriesOnArtemisServer();
+        // Note: at the moment, we cannot easily assert something here, it might be possible to verify mocks on gitService, in case we could define it as SpyBean
     }
 
     private void structureOracle(ProgrammingExercise programmingExercise) throws Exception {

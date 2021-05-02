@@ -148,7 +148,7 @@ export class ExamExerciseRowButtonsComponent {
     exportQuizById(exportAll: boolean) {
         this.quizExerciseService.find(this.exercise.id!).subscribe((res: HttpResponse<QuizExercise>) => {
             const exercise = res.body!;
-            this.quizExerciseService.exportQuiz(exercise.quizQuestions, exportAll);
+            this.quizExerciseService.exportQuiz(exercise.quizQuestions, exportAll, exercise.title);
         });
     }
 }

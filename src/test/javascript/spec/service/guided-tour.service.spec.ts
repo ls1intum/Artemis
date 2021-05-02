@@ -5,7 +5,7 @@ import { By } from '@angular/platform-browser';
 import { Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
-import { Observable, of } from 'rxjs';
+import { of } from 'rxjs';
 import { CookieService } from 'ngx-cookie-service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { TranslateService } from '@ngx-translate/core';
@@ -397,9 +397,9 @@ describe('GuidedTourService', () => {
                     deleteParticipationStub.reset();
                     deleteGuidedTourSettingStub.reset();
                     navigationStub.reset();
-                    findParticipationStub.returns(Observable.of(httpResponse));
-                    deleteParticipationStub.returns(Observable.of(undefined));
-                    deleteGuidedTourSettingStub.returns(Observable.of(undefined));
+                    findParticipationStub.returns(of(httpResponse));
+                    deleteParticipationStub.returns(of(undefined));
+                    deleteGuidedTourSettingStub.returns(of(undefined));
                 }
 
                 it('should find and delete the student participation for exercise', () => {

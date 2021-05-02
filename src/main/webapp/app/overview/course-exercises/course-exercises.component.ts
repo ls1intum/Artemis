@@ -2,7 +2,7 @@ import { Component, OnChanges, OnDestroy, OnInit } from '@angular/core';
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ActivatedRoute } from '@angular/router';
-import { Subscription } from 'rxjs/Subscription';
+import { Subscription } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import * as moment from 'moment';
 import { Moment } from 'moment';
@@ -16,10 +16,12 @@ import { LocalStorageService } from 'ngx-webstorage';
 import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 
 export enum ExerciseFilter {
     OVERDUE = 'OVERDUE',
     NEEDS_WORK = 'NEEDS_WORK',
+    UNRELEASED = 'UNRELEASED',
 }
 
 export enum ExerciseSortingOrder {
@@ -157,6 +159,14 @@ export class CourseExercisesComponent implements OnInit, OnChanges, OnDestroy {
     }
 
     /**
+     * Checks whether an exercise is visible to students or not
+     * @param exercise The exercise which should be checked
+     */
+    isVisibleToStudents(exercise: Exercise): boolean | undefined {
+        return !this.activeFilters.has(ExerciseFilter.UNRELEASED) || (exercise as QuizExercise)?.visibleToStudents;
+    }
+
+    /**
      * Checks if the given exercise still needs work, i.e. wasn't even started yet or is not graded with 100%
      * @param exercise The exercise which should get checked
      */
@@ -171,10 +181,12 @@ export class CourseExercisesComponent implements OnInit, OnChanges, OnDestroy {
     private applyFiltersAndOrder() {
         const needsWorkFilterActive = this.activeFilters.has(ExerciseFilter.NEEDS_WORK);
         const overdueFilterActive = this.activeFilters.has(ExerciseFilter.OVERDUE);
+        const unreleasedFilterActive = this.activeFilters.has(ExerciseFilter.UNRELEASED);
         const filtered = this.course?.exercises?.filter(
             (exercise) =>
                 (!needsWorkFilterActive || this.needsWork(exercise)) &&
                 (!exercise.dueDate || !overdueFilterActive || exercise.dueDate.isAfter(moment(new Date()))) &&
+                (!exercise.releaseDate || !unreleasedFilterActive || (exercise as QuizExercise)?.visibleToStudents) &&
                 (!isOrion || exercise.type === ExerciseType.PROGRAMMING),
         );
         this.groupExercises(filtered);

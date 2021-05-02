@@ -44,7 +44,7 @@ public class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationB
 
     @BeforeEach
     public void initTestCase() throws Exception {
-        database.addUsers(1, 1, 1);
+        database.addUsers(1, 1, 0, 1);
         Course course = database.addCourseWithModelingAndTextExercise();
         modelingExercise = (ModelingExercise) course.getExercises().stream().filter(exercise -> exercise instanceof ModelingExercise).findFirst().get();
         textExercise = (TextExercise) course.getExercises().stream().filter(exercise -> exercise instanceof TextExercise).findFirst().get();

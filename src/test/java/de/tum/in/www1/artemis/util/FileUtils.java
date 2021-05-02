@@ -18,7 +18,7 @@ public class FileUtils {
         java.io.File file = ResourceUtils.getFile("classpath:" + path);
         StringBuilder builder = new StringBuilder();
         Files.lines(file.toPath()).forEach(builder::append);
-        assertThat(builder.toString()).as("file has been correctly read from file").isNotEqualTo("");
+        assertThat(builder.toString()).as("file has been correctly read from file").isNotBlank();
         return builder.toString();
     }
 }
