@@ -71,7 +71,7 @@ public class LectureResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("/lectures")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<Lecture> createLecture(@RequestBody Lecture lecture) throws URISyntaxException {
         log.debug("REST request to save Lecture : {}", lecture);
         if (lecture.getId() != null) {
@@ -95,14 +95,14 @@ public class LectureResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PutMapping("/lectures")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<Lecture> updateLecture(@RequestBody Lecture lecture) throws URISyntaxException {
         log.debug("REST request to update Lecture : {}", lecture);
         if (lecture.getId() == null) {
             throw new BadRequestAlertException("Invalid id", ENTITY_NAME, "idnull");
         }
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isInstructorInCourse(lecture.getCourse(), user) && !authCheckService.isAdmin(user)) {
+        if (!(authCheckService.isEditorInCourse(lecture.getCourse(), user) || authCheckService.isInstructorInCourse(lecture.getCourse(), user) || authCheckService.isAdmin(user))) {
             return forbidden();
         }
 
@@ -124,13 +124,13 @@ public class LectureResource {
      * @return the ResponseEntity with status 200 (OK) and the list of lectures in body
      */
     @GetMapping(value = "/courses/{courseId}/lectures")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<Set<Lecture>> getLecturesForCourse(@PathVariable Long courseId, @RequestParam(required = false, defaultValue = "false") boolean withLectureUnits) {
         log.debug("REST request to get all Lectures for the course with id : {}", courseId);
 
         User user = userRepository.getUserWithGroupsAndAuthorities();
         Course course = courseRepository.findByIdElseThrow(courseId);
-        if (!authCheckService.isInstructorInCourse(course, user) && !authCheckService.isAdmin(user)) {
+        if (!(authCheckService.isEditorInCourse(course, user) || authCheckService.isInstructorInCourse(course, user) || authCheckService.isAdmin(user))) {
             return forbidden();
         }
 
