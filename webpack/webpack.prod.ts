@@ -15,7 +15,6 @@ const sass = require('sass');
 
 module.exports = merge(commonConfig({ env: ENV }), {
     // Enable source maps. Please note that this will slow down the build.
-    // You have to enable it in Terser config below and in tsconfig.app.json as well
     devtool: 'source-map',
     entry: {
         global: './src/main/webapp/content/scss/global.scss',
@@ -135,17 +134,12 @@ module.exports = merge(commonConfig({ env: ENV }), {
     },
     plugins: [
         new MiniCssExtractPlugin({
-            // Options similar to the same options in webpackOptions.output
-            // both options are optional
+            // Options similar to the same options in webpackOptions.output, both options are optional
             filename: 'content/[name].[contenthash].css',
             chunkFilename: '[id].css'
         }),
         new MomentLocalesPlugin({
-            localesToKeep: [
-                'en',
-                'de'
-                // jhipster-needle-i18n-language-moment-webpack - JHipster will add/remove languages in this array
-            ]
+            localesToKeep: ['en', 'de']
         }),
         new BundleAnalyzerPlugin({
             analyzerMode: 'static',
