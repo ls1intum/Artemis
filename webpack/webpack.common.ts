@@ -1,4 +1,4 @@
-import * as webpack from 'webpack';
+const webpack = require('webpack');
 import 'webpack-dev-server';
 
 const CopyWebpackPlugin = require('copy-webpack-plugin');
