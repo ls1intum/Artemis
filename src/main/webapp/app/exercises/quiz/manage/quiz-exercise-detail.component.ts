@@ -300,9 +300,9 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
      * displays the alert for confirming refreshing or closing the page if there are unsaved changes
      */
     @HostListener('window:beforeunload', ['$event'])
-    unloadNotification($event: any) {
+    unloadNotification(event: any) {
         if (!this.canDeactivate()) {
-            $event.returnValue = this.translateService.instant('pendingChanges');
+            event.returnValue = this.translateService.instant('pendingChanges');
         }
     }
 
@@ -524,11 +524,11 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
 
     /**
      * Assigns the uploaded import file
-     * @param $event object containing the uploaded file
+     * @param event object containing the uploaded file
      */
-    setImportFile($event: any): void {
-        if ($event.target.files.length) {
-            const fileList: FileList = $event.target.files;
+    setImportFile(event: any): void {
+        if (event.target.files.length) {
+            const fileList: FileList = event.target.files;
             this.importFile = fileList[0];
             this.importFileName = this.importFile['name'];
         }

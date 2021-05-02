@@ -17,7 +17,7 @@ import { DomainCommand } from 'app/shared/markdown-editor/domainCommands/domainC
 import { ExplanationCommand } from 'app/shared/markdown-editor/domainCommands/explanation.command';
 import { HintCommand } from 'app/shared/markdown-editor/domainCommands/hint.command';
 import { MarkdownEditorComponent } from 'app/shared/markdown-editor/markdown-editor.component';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe.ts';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import * as chai from 'chai';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { DndModule } from 'ng2-dnd';

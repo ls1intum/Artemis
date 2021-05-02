@@ -24,7 +24,7 @@
             <jhi-team-participate-info-box
                 [exercise]="textExercise"
                 [participation]="participation"
-                [typing$]="textEditorInputStream$"
+                [typing$]="textEditorInputObservable"
                 [dockedToRightSide]="true"
             ></jhi-team-participate-info-box>
         </div>
@@ -52,7 +52,7 @@
                 <jhi-team-submission-sync
                     *ngIf="textExercise?.teamMode"
                     [exerciseType]="textExercise.type!"
-                    [submission$]="submissionStream$"
+                    [submissionObservable]="submissionObservable"
                     [participation]="participation"
                     (receiveSubmission)="onReceiveSubmissionFromTeam($event)"
                 ></jhi-team-submission-sync>

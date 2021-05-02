@@ -362,10 +362,10 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
     /**
      * @function toggleEditorCollapse
      * @desc Calls the parent (editorComponent) toggleCollapse method
-     * @param $event
+     * @param event
      */
-    toggleEditorCollapse($event: any) {
-        this.onToggleCollapse.emit({ event: $event, horizontal: true, interactable: this.interactResizable, resizableMinWidth: this.resizableMinWidth });
+    toggleEditorCollapse(event: any) {
+        this.onToggleCollapse.emit({ event, horizontal: true, interactable: this.interactResizable, resizableMinWidth: this.resizableMinWidth });
     }
 
     /**
@@ -373,8 +373,8 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
      * and emit the changes to the parent.
      * After rename the rename state is exited.
      **/
-    onRenameFile($event: any) {
-        const newFileName: string = $event as string;
+    onRenameFile(event: any) {
+        const newFileName = event as string;
         // It is possible, that multiple events fire at once and come back when the creation mode is already turned off.
         if (!this.renamingFile) {
             return;

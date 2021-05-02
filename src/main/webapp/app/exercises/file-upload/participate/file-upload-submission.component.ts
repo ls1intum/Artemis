@@ -170,11 +170,11 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
 
     /**
      * Sets file submission for exercise
-     * @param $event {object} Event object which contains the uploaded file
+     * @param event {object} Event object which contains the uploaded file
      */
-    setFileSubmissionForExercise($event: any): void {
-        if ($event.target.files.length) {
-            const fileList: FileList = $event.target.files;
+    setFileSubmissionForExercise(event: any): void {
+        if (event.target.files.length) {
+            const fileList: FileList = event.target.files;
             const submissionFile = fileList[0];
             const allowedFileExtensions = this.fileUploadExercise.filePattern!.split(',');
             if (!allowedFileExtensions.some((extension) => submissionFile.name.toLowerCase().endsWith(extension))) {

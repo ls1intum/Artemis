@@ -25,7 +25,7 @@ import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
 import { mockTeams, MockTeamService } from '../../helpers/mocks/service/mock-team.service';
 import { MockExerciseService } from '../../helpers/mocks/service/mock-exercise.service';
-import { teamRoute } from 'app/exercises/shared/team/team.route.ts';
+import { teamRoute } from 'app/exercises/shared/team/team.route';
 import { RouterTestingModule } from '@angular/router/testing';
 import { Router, convertToParamMap } from '@angular/router';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';

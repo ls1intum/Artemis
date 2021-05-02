@@ -149,12 +149,12 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
 
     /**
      * Cleans up programming exercise
-     * @param $event contains additional checks from the dialog
+     * @param event contains additional checks from the dialog
      */
-    cleanupProgrammingExercise($event: { [key: string]: boolean }) {
-        return this.exerciseService.cleanup(this.programmingExercise.id!, $event.deleteRepositories).subscribe(
+    cleanupProgrammingExercise(event: { [key: string]: boolean }) {
+        return this.exerciseService.cleanup(this.programmingExercise.id!, event.deleteRepositories).subscribe(
             () => {
-                if ($event.deleteRepositories) {
+                if (event.deleteRepositories) {
                     this.jhiAlertService.success('artemisApp.programmingExercise.cleanup.successMessageWithRepositories');
                 } else {
                     this.jhiAlertService.success('artemisApp.programmingExercise.cleanup.successMessage');
@@ -165,8 +165,8 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         );
     }
 
-    public deleteProgrammingExercise($event: { [key: string]: boolean }) {
-        this.programmingExerciseService.delete(this.programmingExercise.id!, $event.deleteStudentReposBuildPlans, $event.deleteBaseReposBuildPlans).subscribe(
+    public deleteProgrammingExercise(event: { [key: string]: boolean }) {
+        this.programmingExerciseService.delete(this.programmingExercise.id!, event.deleteStudentReposBuildPlans, event.deleteBaseReposBuildPlans).subscribe(
             () => {
                 this.eventManager.broadcast({
                     name: 'programmingExerciseListModification',

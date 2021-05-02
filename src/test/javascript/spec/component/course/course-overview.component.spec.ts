@@ -39,7 +39,7 @@ import { MockActivatedRouteWithSubjects } from '../../helpers/mocks/activated-ro
 import { TeamService } from 'app/exercises/shared/team/team.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe.ts';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 chai.use(sinonChai);
 const expect = chai.expect;

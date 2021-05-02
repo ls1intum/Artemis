@@ -75,7 +75,7 @@ export const commonConfig = (options: Options) => ({
             process: 'process/browser',
         }),
         new webpack.DefinePlugin({
-            'process.env.NODE_ENV': JSON.stringify(`'${options.env}'`),
+            'process.env.NODE_ENV': options.env,
             // APP_VERSION is passed as an environment variable from the Gradle / Maven build tasks.
             'process.env.VERSION': `'${process.env.hasOwnProperty('APP_VERSION') && process.env.APP_VERSION !== 'unspecified' ? process.env.APP_VERSION : parseVersion()}'`,
             'process.env.DEBUG_INFO_ENABLED': options.env === 'development',

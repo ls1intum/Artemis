@@ -234,7 +234,7 @@
                                     [entityTitle]="exercise.teamMode ? value.team?.name : value.student?.name"
                                     deleteQuestion="artemisApp.participation.delete.question"
                                     (delete)="deleteParticipation(value.id, $event)"
-                                    [dialogError]="dialogError$"
+                                    [dialogError]="dialogError"
                                     [additionalChecks]="
                                         exercise.type === ExerciseType.PROGRAMMING
                                             ? { deleteBuildPlan: 'artemisApp.participation.deleteBuildPlan', deleteRepository: 'artemisApp.participation.deleteRepository' }
@@ -250,7 +250,7 @@
                                     [actionType]="ActionType.Cleanup"
                                     deleteQuestion="artemisApp.participation.cleanupBuildPlan.question"
                                     (delete)="cleanupProgrammingExerciseParticipation(value)"
-                                    [dialogError]="dialogError$"
+                                    [dialogError]="dialogError"
                                     [entityTitle]="exercise.teamMode ? value.team?.name : value.student?.name"
                                 >
                                     <fa-icon [icon]="'eraser'"></fa-icon>

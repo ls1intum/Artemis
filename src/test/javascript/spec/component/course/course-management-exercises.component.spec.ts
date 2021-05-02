@@ -13,11 +13,11 @@ import { QuizExerciseComponent } from 'app/exercises/quiz/manage/quiz-exercise.c
 import { TextExerciseComponent } from 'app/exercises/text/manage/text-exercise/text-exercise.component';
 import { AlertComponent } from 'app/shared/alert/alert.component';
 import { OrionFilterDirective } from 'app/shared/orion/orion-filter.directive';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe.ts';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import * as chai from 'chai';
 import { JhiTranslateDirective } from 'ng-jhipster';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { of } from 'rxjs/internal/observable/of';
+import { of } from 'rxjs';
 import * as sinon from 'sinon';
 import * as sinonChai from 'sinon-chai';
 import { ArtemisTestModule } from '../../test.module';

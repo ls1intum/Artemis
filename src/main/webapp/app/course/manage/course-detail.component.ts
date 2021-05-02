@@ -23,7 +23,7 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
     course: Course;
     private eventSubscriber: Subscription;
     private dialogErrorSource = new Subject<string>();
-    dialogError$ = this.dialogErrorSource.asObservable();
+    dialogError = this.dialogErrorSource.asObservable();
 
     constructor(
         private eventManager: JhiEventManager,

@@ -14,7 +14,7 @@ import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.dire
 import { ColorSelectorComponent } from 'app/shared/color-selector/color-selector.component';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe.ts';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import * as chai from 'chai';
 import { JhiTranslateDirective } from 'ng-jhipster';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
@@ -25,7 +25,7 @@ import * as sinon from 'sinon';
 import * as sinonChai from 'sinon-chai';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { ArtemisTestModule } from '../../test.module';
-import { RemoveKeysPipe } from 'app/shared/pipes/remove-keys.pipe.ts';
+import { RemoveKeysPipe } from 'app/shared/pipes/remove-keys.pipe';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { stub } from 'sinon';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';

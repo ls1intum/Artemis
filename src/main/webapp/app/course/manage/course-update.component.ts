@@ -213,22 +213,22 @@ export class CourseUpdateComponent implements OnInit {
 
     /**
      * @function set course icon
-     * @param $event {object} Event object which contains the uploaded file
+     * @param event {object} Event object which contains the uploaded file
      */
-    setCourseImage($event: any): void {
-        this.imageChangedEvent = $event;
-        if ($event.target.files.length) {
-            const fileList: FileList = $event.target.files;
+    setCourseImage(event: any): void {
+        this.imageChangedEvent = event;
+        if (event.target.files.length) {
+            const fileList: FileList = event.target.files;
             this.courseImageFile = fileList[0];
             this.courseImageFileName = this.courseImageFile['name'];
         }
     }
 
     /**
-     * @param $event
+     * @param event
      */
-    imageCropped($event: ImageCroppedEvent) {
-        this.croppedImage = $event.base64;
+    imageCropped(event: ImageCroppedEvent) {
+        this.croppedImage = event.base64;
     }
 
     imageLoaded() {

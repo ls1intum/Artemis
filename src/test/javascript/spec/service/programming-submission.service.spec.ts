@@ -1,7 +1,7 @@
 import * as chai from 'chai';
 import * as moment from 'moment';
 import { SinonStub, spy, stub } from 'sinon';
-import { BehaviorSubject, of, Subject } from 'rxjs';
+import { BehaviorSubject, lastValueFrom, of, Subject } from 'rxjs';
 import { range as _range } from 'lodash';
 import * as sinonChai from 'sinon-chai';
 import { MockWebsocketService } from '../helpers/mocks/service/mock-websocket.service';
@@ -257,7 +257,7 @@ describe('ProgrammingSubmissionService', () => {
         httpGetStub.returns(of(pendingSubmissions));
 
         // This load the submissions for participation 1 and 2, but not for 3.
-        submissionService.getSubmissionStateOfExercise(exerciseId).toPromise();
+        lastValueFrom(submissionService.getSubmissionStateOfExercise(exerciseId));
         submissionService.getLatestPendingSubmissionByParticipationId(participation1.id!, exerciseId, true).subscribe(({ submissionState: state, submission: sub }) => {
             submissionState = state;
             submission = sub;

@@ -15,7 +15,7 @@ import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.di
 import { OrionFilterDirective } from 'app/shared/orion/orion-filter.directive';
 import { ParticipantScoresService, ScoresDTO } from 'app/shared/participant-scores/participant-scores.service';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe.ts';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { round } from 'app/shared/util/utils';
 import * as chai from 'chai';
 import * as moment from 'moment';

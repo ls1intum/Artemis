@@ -226,9 +226,9 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate {
 
     // displays the alert for confirming refreshing or closing the page if there are unsaved changes
     @HostListener('window:beforeunload', ['$event'])
-    unloadNotification($event: any) {
+    unloadNotification(event: any) {
         if (!this.canDeactivate()) {
-            $event.returnValue = this.translateService.instant('pendingChanges');
+            event.returnValue = this.translateService.instant('pendingChanges');
         }
     }
 

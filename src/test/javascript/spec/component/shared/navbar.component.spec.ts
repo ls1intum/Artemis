@@ -23,7 +23,7 @@ import { JhiTranslateDirective } from 'ng-jhipster';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { ChartsModule } from 'ng2-charts';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { of } from 'rxjs/internal/observable/of';
+import { of } from 'rxjs';
 import * as sinon from 'sinon';
 import * as sinonChai from 'sinon-chai';
 import { MockRouter } from '../../helpers/mocks/mock-router';

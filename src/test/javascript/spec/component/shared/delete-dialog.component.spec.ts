@@ -14,7 +14,7 @@ import { stub } from 'sinon';
 import { Observable, Subject } from 'rxjs';
 import { AlertComponent } from 'app/shared/alert/alert.component';
 import { MockPipe } from 'ng-mocks';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe.ts';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 chai.use(sinonChai);
 const expect = chai.expect;
