@@ -173,8 +173,8 @@
         "workbox-webpack-plugin": "6.1.5"
     },
     "engines": {
-        "node": ">=14.16.1",
-        "yarn": ">=1.22.5"
+        "node": ">=14.15.0 <15",
+        "yarn": ">=1.22.4 <2"
     },
     "lint-staged": {
         "src/{main/webapp,test}/**/*.{json,js,ts,css,scss,html}": "prettier --write",
