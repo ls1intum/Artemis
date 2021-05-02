@@ -1,17 +1,19 @@
-const webpack = require('webpack');
+import * as webpack from 'webpack';
+import 'webpack-dev-server';
+
 const CopyWebpackPlugin = require('copy-webpack-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
-const AngularCompilerPlugin = require('@ngtools/webpack').AngularCompilerPlugin;
+import { AngularWebpackPlugin } from '@ngtools/webpack';
 const MergeJsonWebpackPlugin = require('merge-jsons-webpack-plugin');
 
-const utils = require('./utils.js');
+import { mapTypescriptAliasToWebpackAlias, parseVersion, root } from './utils';
 
-module.exports = (options) => ({
+export const commonConfig = (options: any) => ({
     resolve: {
         extensions: ['.ts', '.js'],
         modules: ['node_modules'],
         mainFields: ['es2015', 'browser', 'module', 'main'],
-        alias: utils.mapTypescriptAliasToWebpackAlias(),
+        alias: mapTypescriptAliasToWebpackAlias(),
         fallback: {
             crypto: require.resolve('crypto-browserify'),
             stream: require.resolve('stream-browserify'),
@@ -44,7 +46,7 @@ module.exports = (options) => ({
                         minifyCSS: false,
                     },
                 },
-                exclude: utils.root('src/main/webapp/index.html'),
+                exclude: root('src/main/webapp/index.html'),
             },
             {
                 test: /\.(jpe?g|png|gif|svg|woff2?|ttf|eot)$/i,
@@ -73,7 +75,7 @@ module.exports = (options) => ({
                 NODE_ENV: `'${options.env}'`,
                 BUILD_TIMESTAMP: `'${new Date().getTime()}'`,
                 // APP_VERSION is passed as an environment variable from the Gradle / Maven build tasks.
-                VERSION: `'${process.env.hasOwnProperty('APP_VERSION') && process.env.APP_VERSION !== 'unspecified' ? process.env.APP_VERSION : utils.parseVersion()}'`,
+                VERSION: `'${process.env.hasOwnProperty('APP_VERSION') && process.env.APP_VERSION !== 'unspecified' ? process.env.APP_VERSION : parseVersion()}'`,
                 DEBUG_INFO_ENABLED: options.env === 'development',
                 // The root URL for API calls, ending with a '/' - for example: `"https://www.jhipster.tech:8081/myservice/"`.
                 // If this URL is left empty (""), then it will be relative to the current context.
@@ -105,10 +107,8 @@ module.exports = (options) => ({
             inject: 'body',
             base: '/',
         }),
-        new AngularCompilerPlugin({
-            mainPath: utils.root('src/main/webapp/app/app.main.ts'),
-            tsConfigPath: utils.root('tsconfig.app.json'),
-            sourceMap: true,
+        new AngularWebpackPlugin({
+            tsconfig: root('tsconfig.app.json')
         }),
     ],
 });

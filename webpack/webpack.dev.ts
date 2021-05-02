@@ -8,12 +8,12 @@ const path = require('path');
 const sass = require('sass');
 const ESLintPlugin = require('eslint-webpack-plugin');
 
-const utils = require('./utils.js');
-const commonConfig = require('./webpack.common.js');
+import { commonConfig } from './webpack.common';
+import { root } from './utils';
 
 const ENV = 'development';
 
-module.exports = (options) => merge(commonConfig({ env: ENV }), {
+module.exports = (options: any) => merge(commonConfig({ env: ENV }), {
     devtool: 'eval-source-map',
     devServer: {
         contentBase: './build/resources/main/static/',
@@ -25,7 +25,7 @@ module.exports = (options) => merge(commonConfig({ env: ENV }), {
             secure: false,
             changeOrigin: options.tls,
             headers: { host: 'localhost:9000' }
-        },{
+        }, {
             context: [
                 '/websocket'
             ],
@@ -44,7 +44,7 @@ module.exports = (options) => merge(commonConfig({ env: ENV }), {
         main: './src/main/webapp/app/app.main'
     },
     output: {
-        path: utils.root('build/resources/main/static/'),
+        path: root('build/resources/main/static/'),
         filename: 'app/[name].bundle.js',
         chunkFilename: 'app/[id].chunk.js'
     },
@@ -98,7 +98,7 @@ module.exports = (options) => merge(commonConfig({ env: ENV }), {
                 target: `http${options.tls ? 's' : ''}://localhost:9060`,
                 ws: true,
                 proxyOptions: {
-                    changeOrigin: false  //pass the Host header to the server unchanged  https://github.com/Browsersync/browser-sync/issues/430
+                    changeOrigin: false  // pass the Host header to the server unchanged  https://github.com/Browsersync/browser-sync/issues/430
                 }
             },
             socket: {
@@ -114,7 +114,7 @@ module.exports = (options) => merge(commonConfig({ env: ENV }), {
             path.resolve(__dirname, './src/main/webapp')
         ),
         new webpack.WatchIgnorePlugin({
-            paths: [utils.root('src/test')],
+            paths: [root('src/test')],
         }),
         new WebpackNotifierPlugin({
             title: 'Artemis'
