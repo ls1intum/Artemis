@@ -1,4 +1,4 @@
-import { Component, OnInit, Input, ViewChild } from '@angular/core';
+import { Component, OnInit, Input, ViewChildren, QueryList } from '@angular/core';
 import { GradingCriterion } from 'app/exercises/shared/structured-grading-criterion/grading-criterion.model';
 import { UsageCountCommand } from 'app/shared/markdown-editor/domainCommands/usageCount.command';
 import { CreditsCommand } from 'app/shared/markdown-editor/domainCommands/credits.command';
@@ -13,7 +13,6 @@ import { GradingCriterionCommand } from 'app/shared/markdown-editor/domainComman
 import { Exercise } from 'app/entities/exercise.model';
 import { EditorMode } from 'app/shared/markdown-editor/markdown-editor.component';
 import { cloneDeep } from 'lodash';
-import { escapeStringForUseInRegex } from 'app/shared/util/global.utils';
 
 @Component({
     selector: 'jhi-grading-instructions-details',
@@ -23,8 +22,8 @@ import { escapeStringForUseInRegex } from 'app/shared/util/global.utils';
 export class GradingInstructionsDetailsComponent implements OnInit {
     /** Ace Editor configuration constants **/
     questionEditorText = '';
-    @ViewChild('markdownEditor', { static: false })
-    private markdownEditor: MarkdownEditorComponent;
+    @ViewChildren('markdownEditor')
+    private markdownEditors: QueryList<MarkdownEditorComponent>;
     @Input()
     exercise: Exercise;
     private instructions: GradingInstruction[];
@@ -49,6 +48,14 @@ export class GradingInstructionsDetailsComponent implements OnInit {
         this.usageCountCommand,
         this.gradingCriterionCommand,
         this.gradingInstructionCommand,
+    ];
+
+    domainCommandsGradingInstructions: DomainCommand[] = [
+        this.creditsCommand,
+        this.gradingScaleCommand,
+        this.instructionDescriptionCommand,
+        this.feedbackCommand,
+        this.usageCountCommand,
     ];
 
     constructor() {}
@@ -167,7 +174,7 @@ export class GradingInstructionsDetailsComponent implements OnInit {
     }
 
     prepareForSave(): void {
-        this.markdownEditor.parse();
+        this.markdownEditors.forEach((component) => component.parse());
     }
 
     hasCriterionCommand(domainCommands: [string, DomainCommand | null][]): boolean {
@@ -302,75 +309,29 @@ export class GradingInstructionsDetailsComponent implements OnInit {
     }
 
     /**
-     * parse the new text, hint and explanation using the markdown service and assign it to the passed answer
-     * @param {string} text
+     * @function onInstructionChange
+     * @desc 1. Gets a tuple of text and domainCommandIdentifiers and assigns text values according to the domainCommandIdentifiers
+     *       2. The tupple order is the same as the order of the commands in the markdown text inserted by the user
+     * @param domainCommands containing tuples of [text, domainCommandIdentifiers]
      * @param {GradingInstruction} instruction
      * @param {GradingCriterion} criteria
      */
-    onInstructionChange(text: string, instruction: GradingInstruction, criteria: GradingCriterion): void {
+    onInstructionChange(domainCommands: [string, DomainCommand | null][], instruction: GradingInstruction, criteria: GradingCriterion): void {
         const criteriaIndex = this.exercise.gradingCriteria!.findIndex((gradingCriteria) => {
             return gradingCriteria.id === criteria.id;
         });
         const instructionIndex = this.exercise.gradingCriteria![criteriaIndex].structuredGradingInstructions.findIndex((sgi) => {
             return sgi.id === instruction.id;
         });
-        // this.parseInstruction(text, this.exercise.gradingCriteria![criteriaIndex].structuredGradingInstructions![instructionIndex!]);
-        this.parseInstruction(text, criteriaIndex, instructionIndex);
-    }
-
-    parseInstruction(text: string, criteriaIndex: number, instructionIndex: number): void {
-        const domainCommandIdentifiersToParse = this.domainCommands.map((command) => command.getOpeningIdentifier());
-        const commandTextsMappedToCommandIdentifiers: [string, DomainCommand | null][] = [];
-        let remainingMarkdownText = text.slice(0);
-        const commandIdentifiersString = domainCommandIdentifiersToParse
-            .map((tag) => tag.replace('[', '').replace(']', ''))
-            .map(escapeStringForUseInRegex)
-            .join('|');
-        const regex = new RegExp(`(?=\\[(${commandIdentifiersString})\\])`, 'gmi');
-
-        while (remainingMarkdownText.length) {
-            const [textWithCommandIdentifier] = remainingMarkdownText.split(regex, 1);
-            remainingMarkdownText = remainingMarkdownText.substring(textWithCommandIdentifier.length);
-            const commandTextWithCommandIdentifier = this.parseLineForDomainCommand(textWithCommandIdentifier.trim());
-            commandTextsMappedToCommandIdentifiers.push(commandTextWithCommandIdentifier);
-            this.setParametersForInstruction(commandTextsMappedToCommandIdentifiers, instructionIndex, criteriaIndex);
-        }
-    }
-
-    private parseLineForDomainCommand = (text: string): [string, DomainCommand | null] => {
-        for (const domainCommand of this.domainCommands) {
-            const possibleOpeningCommandIdentifier = [
-                domainCommand.getOpeningIdentifier(),
-                domainCommand.getOpeningIdentifier().toLowerCase(),
-                domainCommand.getOpeningIdentifier().toUpperCase(),
-            ];
-            if (possibleOpeningCommandIdentifier.some((identifier) => text.indexOf(identifier) !== -1)) {
-                // TODO when closingIdentifiers are used write a method to extract them from the text
-                const trimmedLineWithoutIdentifier = possibleOpeningCommandIdentifier.reduce((line, identifier) => line.replace(identifier, ''), text).trim();
-                return [trimmedLineWithoutIdentifier, domainCommand];
-            }
-        }
-        return [text.trim(), null];
-    };
-
-    setParametersForInstruction(domainCommands: [string, DomainCommand | null][], instructionIndex: number, criteriaIndex: number): void {
-        for (const [text, command] of domainCommands) {
-            if (command instanceof CreditsCommand) {
-                this.exercise.gradingCriteria![criteriaIndex].structuredGradingInstructions![instructionIndex!].credits = parseFloat(text);
-            } else if (command instanceof GradingScaleCommand) {
-                this.exercise.gradingCriteria![criteriaIndex].structuredGradingInstructions![instructionIndex!].gradingScale = text;
-            } else if (command instanceof InstructionDescriptionCommand) {
-                this.exercise.gradingCriteria![criteriaIndex].structuredGradingInstructions![instructionIndex!].instructionDescription = text;
-            } else if (command instanceof FeedbackCommand) {
-                this.exercise.gradingCriteria![criteriaIndex].structuredGradingInstructions![instructionIndex!].feedback = text;
-            } else if (command instanceof UsageCountCommand) {
-                this.exercise.gradingCriteria![criteriaIndex].structuredGradingInstructions![instructionIndex!].usageCount = parseInt(text, 10);
-            }
-        }
+        this.instructions = [];
+        this.instructions.push(instruction);
+        this.setInstructionParameters(domainCommands);
+        this.exercise.gradingCriteria![criteriaIndex].structuredGradingInstructions![instructionIndex!] = this.instructions[0];
     }
 
     /**
-     * Resets the whole instruction
+     * @function resetInstruction
+     * @desc Resets the whole instruction
      * @param instruction {GradingInstruction} the instruction, which will be reset
      * @param criteria {GradingCriterion} the criteria, which includes the instruction that will be reset
      */
@@ -395,9 +356,10 @@ export class GradingInstructionsDetailsComponent implements OnInit {
     }
 
     /**
-     * Delete the instruction
+     * @function deleteInstruction
+     * @desc Deletes selected instruction
      * @param instruction {GradingInstruction} the instruction which should be deleted
-     * @param criteria {GradingCriterion} the criteria, which includes the instruction that will be reset
+     * @param criteria {GradingCriterion} the criteria, which includes the instruction that will be deleted
      */
     deleteInstruction(instruction: GradingInstruction, criteria: GradingCriterion) {
         const criteriaIndex = this.exercise.gradingCriteria!.indexOf(criteria);
@@ -405,12 +367,21 @@ export class GradingInstructionsDetailsComponent implements OnInit {
         this.exercise.gradingCriteria![criteriaIndex].structuredGradingInstructions.splice(instructionIndex, 1);
     }
 
+    /**
+     * @function addNewInstruction
+     * @desc Adds new grading instruction for desired grading criteria
+     * @param criteria {GradingCriterion} the criteria, which includes the instruction that will be inserted
+     */
     addNewInstruction(criteria: GradingCriterion) {
         const criteriaIndex = this.exercise.gradingCriteria!.indexOf(criteria);
         const instruction = new GradingInstruction();
         this.exercise.gradingCriteria![criteriaIndex].structuredGradingInstructions.push(instruction);
     }
 
+    /**
+     * @function addNewGradingCriteria
+     * @desc Adds new grading criteria for the exercise
+     */
     addNewGradingCriteria() {
         const criteria = new GradingCriterion();
         criteria.structuredGradingInstructions = [];
@@ -419,11 +390,21 @@ export class GradingInstructionsDetailsComponent implements OnInit {
         this.exercise.gradingCriteria?.push(criteria);
     }
 
+    /**
+     * @function onCriteriaTitleChange
+     * @desc Detects changes for grading criteria title
+     * @param {GradingCriterion} criteria the criteria, which includes title that will be changed
+     */
     onCriteriaTitleChange($event: any, criteria: GradingCriterion) {
         const criteriaIndex = this.exercise.gradingCriteria!.indexOf(criteria);
         this.exercise.gradingCriteria![criteriaIndex].title = $event.target.value;
     }
 
+    /**
+     * @function resetCriteriaTitle
+     * @desc Resets the whole grading criteria title
+     * @param criteria {GradingCriterion} the criteria, which includes title that will be reset
+     */
     resetCriteriaTitle(criteria: GradingCriterion) {
         const criteriaIndex = this.exercise.gradingCriteria!.findIndex((gradingCriteria) => {
             return gradingCriteria.id === criteria.id;
@@ -434,6 +415,11 @@ export class GradingInstructionsDetailsComponent implements OnInit {
         this.exercise.gradingCriteria![criteriaIndex] = cloneDeep(this.backupExercise.gradingCriteria![backupCriteriaIndex]);
     }
 
+    /**
+     * @function deleteGradingCriteria
+     * @desc Deletes the grading criteria with sub-grading instructions
+     * @param criteria {GradingCriterion} the criteria, which will be deleted
+     */
     deleteGradingCriteria(criteria: GradingCriterion) {
         const criteriaIndex = this.exercise.gradingCriteria!.indexOf(criteria);
         // eslint-disable-next-line chai-friendly/no-unused-expressions

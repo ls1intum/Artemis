@@ -75,8 +75,9 @@
                         [colorCommands]="[]"
                         [showEditButton]="false"
                         [showPreviewButton]="false"
-                        [domainCommands]="[]"
-                        (markdownChange)="onInstructionChange($event, instruction, criteria)"
+                        [domainCommands]="domainCommandsGradingInstructions"
+                        (markdownChange)="prepareForSave()"
+                        (textWithDomainCommandsFound)="onInstructionChange($event, instruction, criteria)"
                         class="editor"
                         style="width: 65%"
                          ></jhi-markdown-editor>
